@@ -1,0 +1,538 @@
+{
+ "quality_failures": [],
+ "groups": [
+  {
+   "provider": "cpu",
+   "mode": "cold",
+   "path": "text",
+   "workload": "cold-start",
+   "concurrency": 1,
+   "language": "csharp",
+   "impl": "library",
+   "runs": 1,
+   "n": 5,
+   "batch": 1,
+   "median_ms": 3461.044021,
+   "median_ci95_ms": [
+    3303.452918,
+    4141.618751
+   ],
+   "run_medians_ms": [
+    3461.044021
+   ],
+   "p5_ms": null,
+   "p95_ms": null,
+   "p99_ms": null,
+   "items_per_s": 0.26404677763992956,
+   "items_per_s_range": [
+    0.26404677763992956,
+    0.26404677763992956
+   ],
+   "stage_median_ms": {
+    "spawn_to_main": 39.055814,
+    "fixture_read": 148.8067,
+    "session_create": 2637.7087,
+    "tokenizer_load": 344.3528,
+    "prepare": 55.0457,
+    "inference": 164.7066,
+    "decode": 19.8087,
+    "main_to_result": 3433.4021,
+    "process_wall": 3662.049
+   },
+   "quality_max_abs": null,
+   "quality_finite": true
+  },
+  {
+   "provider": "cpu",
+   "mode": "warm",
+   "path": "text",
+   "workload": "short-l1",
+   "concurrency": 1,
+   "language": "csharp",
+   "impl": "library",
+   "runs": 1,
+   "n": 30,
+   "batch": 1,
+   "median_ms": 129.9832,
+   "median_ci95_ms": [
+    115.47939250000002,
+    140.28115000000003
+   ],
+   "run_medians_ms": [
+    129.9832
+   ],
+   "p5_ms": 76.45507,
+   "p95_ms": 186.14424499999998,
+   "p99_ms": null,
+   "items_per_s": 7.714194245982512,
+   "items_per_s_range": [
+    7.714194245982512,
+    7.714194245982512
+   ],
+   "stage_median_ms": {
+    "prepare": 0.20605,
+    "inference": 129.73309999999998,
+    "decode": 0.0191
+   },
+   "quality_max_abs": null,
+   "quality_finite": true
+  },
+  {
+   "provider": "cpu",
+   "mode": "warm",
+   "path": "text",
+   "workload": "short-l12",
+   "concurrency": 1,
+   "language": "csharp",
+   "impl": "library",
+   "runs": 1,
+   "n": 30,
+   "batch": 1,
+   "median_ms": 185.3074,
+   "median_ci95_ms": [
+    172.16279000000003,
+    205.1387
+   ],
+   "run_medians_ms": [
+    185.3074
+   ],
+   "p5_ms": 138.62980000000002,
+   "p95_ms": 315.51051499999994,
+   "p99_ms": null,
+   "items_per_s": 5.000706683199447,
+   "items_per_s_range": [
+    5.000706683199447,
+    5.000706683199447
+   ],
+   "stage_median_ms": {
+    "prepare": 0.38155,
+    "inference": 184.8644,
+    "decode": 0.03945
+   },
+   "quality_max_abs": null,
+   "quality_finite": true
+  },
+  {
+   "provider": "cpu",
+   "mode": "warm",
+   "path": "text",
+   "workload": "short-l2-b8",
+   "concurrency": 1,
+   "language": "csharp",
+   "impl": "library",
+   "runs": 1,
+   "n": 9,
+   "batch": 8,
+   "median_ms": 734.3291,
+   "median_ci95_ms": [
+    679.9643,
+    819.379
+   ],
+   "run_medians_ms": [
+    734.3291
+   ],
+   "p5_ms": null,
+   "p95_ms": null,
+   "p99_ms": null,
+   "items_per_s": 10.9199657058477,
+   "items_per_s_range": [
+    10.9199657058477,
+    10.9199657058477
+   ],
+   "stage_median_ms": {
+    "prepare": 1.2573,
+    "inference": 733.1651,
+    "decode": 0.0648
+   },
+   "quality_max_abs": null,
+   "quality_finite": true
+  },
+  {
+   "provider": "cpu",
+   "mode": "warm",
+   "path": "text",
+   "workload": "short-l3",
+   "concurrency": 1,
+   "language": "csharp",
+   "impl": "library",
+   "runs": 1,
+   "n": 30,
+   "batch": 1,
+   "median_ms": 145.83485000000002,
+   "median_ci95_ms": [
+    129.46215,
+    160.20715
+   ],
+   "run_medians_ms": [
+    145.83485000000002
+   ],
+   "p5_ms": 89.579205,
+   "p95_ms": 227.217375,
+   "p99_ms": null,
+   "items_per_s": 6.719711170686576,
+   "items_per_s_range": [
+    6.719711170686576,
+    6.719711170686576
+   ],
+   "stage_median_ms": {
+    "prepare": 0.2538,
+    "inference": 145.54895,
+    "decode": 0.0259
+   },
+   "quality_max_abs": null,
+   "quality_finite": true
+  },
+  {
+   "provider": "cpu",
+   "mode": "warm",
+   "path": "text",
+   "workload": "short-l5",
+   "concurrency": 1,
+   "language": "csharp",
+   "impl": "library",
+   "runs": 1,
+   "n": 30,
+   "batch": 1,
+   "median_ms": 157.882,
+   "median_ci95_ms": [
+    140.5797,
+    176.98845
+   ],
+   "run_medians_ms": [
+    157.882
+   ],
+   "p5_ms": 122.727285,
+   "p95_ms": 258.90214,
+   "p99_ms": null,
+   "items_per_s": 5.931103119938173,
+   "items_per_s_range": [
+    5.931103119938173,
+    5.931103119938173
+   ],
+   "stage_median_ms": {
+    "prepare": 0.31105,
+    "inference": 157.5478,
+    "decode": 0.034850000000000006
+   },
+   "quality_max_abs": null,
+   "quality_finite": true
+  },
+  {
+   "provider": "cpu",
+   "mode": "warm",
+   "path": "text",
+   "workload": "words100-l3",
+   "concurrency": 1,
+   "language": "csharp",
+   "impl": "library",
+   "runs": 1,
+   "n": 9,
+   "batch": 1,
+   "median_ms": 459.0026,
+   "median_ci95_ms": [
+    439.0527,
+    464.9278
+   ],
+   "run_medians_ms": [
+    459.0026
+   ],
+   "p5_ms": null,
+   "p95_ms": null,
+   "p99_ms": null,
+   "items_per_s": 2.1735500501196494,
+   "items_per_s_range": [
+    2.1735500501196494,
+    2.1735500501196494
+   ],
+   "stage_median_ms": {
+    "prepare": 1.0753,
+    "inference": 457.8535,
+    "decode": 0.0801
+   },
+   "quality_max_abs": null,
+   "quality_finite": true
+  },
+  {
+   "provider": "cpu",
+   "mode": "warm",
+   "path": "text",
+   "workload": "words250-l3",
+   "concurrency": 1,
+   "language": "csharp",
+   "impl": "library",
+   "runs": 1,
+   "n": 6,
+   "batch": 1,
+   "median_ms": 1208.02965,
+   "median_ci95_ms": [
+    1130.8307,
+    1453.10305
+   ],
+   "run_medians_ms": [
+    1208.02965
+   ],
+   "p5_ms": null,
+   "p95_ms": null,
+   "p99_ms": null,
+   "items_per_s": 0.7911461254805223,
+   "items_per_s_range": [
+    0.7911461254805223,
+    0.7911461254805223
+   ],
+   "stage_median_ms": {
+    "prepare": 3.15595,
+    "inference": 1200.50575,
+    "decode": 0.15015
+   },
+   "quality_max_abs": null,
+   "quality_finite": true
+  },
+  {
+   "provider": "cpu",
+   "mode": "warm",
+   "path": "text",
+   "workload": "words400-l3",
+   "concurrency": 1,
+   "language": "csharp",
+   "impl": "library",
+   "runs": 1,
+   "n": 6,
+   "batch": 1,
+   "median_ms": 2167.568,
+   "median_ci95_ms": [
+    2081.2867,
+    2295.75985
+   ],
+   "run_medians_ms": [
+    2167.568
+   ],
+   "p5_ms": null,
+   "p95_ms": null,
+   "p99_ms": null,
+   "items_per_s": 0.4583918693383925,
+   "items_per_s_range": [
+    0.4583918693383925,
+    0.4583918693383925
+   ],
+   "stage_median_ms": {
+    "prepare": 3.75765,
+    "inference": 2163.3974,
+    "decode": 0.25005
+   },
+   "quality_max_abs": null,
+   "quality_finite": true
+  }
+ ],
+ "csharp_vs_python": [],
+ "direct_vs_python": [],
+ "adapter_overhead_p95": [],
+ "runs": [
+  {
+   "run_id": "64f295b4-92de-4ca9-9fe1-f2a9c92135cf",
+   "language": "csharp",
+   "impl": "library",
+   "provider": "cpu",
+   "mode": "warm",
+   "threads": 6,
+   "started_utc": "2026-10-13T17:37:26.3987598Z",
+   "git_commit": "92d5fd75a3e6bf0e57ccbaa2a5a3b26e46bc601f",
+   "git_dirty": false,
+   "model_sha256": "0ba2db95b18116906ae4ec21aa62ef493e69e0780dcfdfa98c4456ecf4123265",
+   "tokenizer_sha256": "1b7fbabfb4c690bed84c6793bfecae9b8dfe205751b04f9ffd1e76a1e7df9c16",
+   "packages": {
+    "Microsoft.ML.OnnxRuntime.Managed": "1.30.0",
+    "Microsoft.ML.OnnxRuntime": "1.30.0",
+    "Starlings.Runtime.Onnx": "0.1.0-preview.5+42d93dd3573b43939329120fd1e4e55786ef8509",
+    "Starlings.Tokenizers": "0.3.0-preview.1+79a5863e861edcfed79142293dafabb688c199b9",
+    "Starlings.Models.Gliner2": "0.1.0-preview.5+42d93dd3573b43939329120fd1e4e55786ef8509"
+   },
+   "load_before": {
+    "loadavg": [
+     10.18,
+     19.79,
+     21.82
+    ],
+    "gpus": [
+     {
+      "index": "0",
+      "name": "NVIDIA GeForce RTX 3090",
+      "pci_bus_id": "00000000:03:00.0",
+      "util_pct": "100",
+      "mem_used_mib": "10995",
+      "mem_total_mib": "24576",
+      "sm_clock_mhz": "1830",
+      "pstate": "P2",
+      "power_w": "319.54",
+      "temp_c": "66"
+     },
+     {
+      "index": "1",
+      "name": "NVIDIA GeForce RTX 4060 Ti",
+      "pci_bus_id": "00000000:04:00.0",
+      "util_pct": "0",
+      "mem_used_mib": "844",
+      "mem_total_mib": "16380",
+      "sm_clock_mhz": "210",
+      "pstate": "P8",
+      "power_w": "10.81",
+      "temp_c": "51"
+     }
+    ]
+   },
+   "load_after": {
+    "loadavg": [
+     17.35,
+     19.42,
+     21.47
+    ],
+    "gpus": [
+     {
+      "index": "0",
+      "name": "NVIDIA GeForce RTX 3090",
+      "pci_bus_id": "00000000:03:00.0",
+      "util_pct": "96",
+      "mem_used_mib": "10995",
+      "mem_total_mib": "24576",
+      "sm_clock_mhz": "1860",
+      "pstate": "P2",
+      "power_w": "323.08",
+      "temp_c": "68"
+     },
+     {
+      "index": "1",
+      "name": "NVIDIA GeForce RTX 4060 Ti",
+      "pci_bus_id": "00000000:04:00.0",
+      "util_pct": "7",
+      "mem_used_mib": "825",
+      "mem_total_mib": "16380",
+      "sm_clock_mhz": "210",
+      "pstate": "P8",
+      "power_w": "10.98",
+      "temp_c": "51"
+     }
+    ]
+   },
+   "quality": {
+    "items": 54,
+    "synthetic_items": 0,
+    "entities_exact": 54,
+    "confidence_max_abs": 1.817941665649414e-06,
+    "confidence_tolerance": 2e-05,
+    "finite": true,
+    "failures": [],
+    "pass": true,
+    "reference": "model-pipeline/protected/gliner2-base-v1/onnx-fp32-cpu/extraction.jsonl",
+    "tolerance_file": "model-pipeline/protected/gliner2-base-v1/onnx-fp32-cpu/tolerances.yaml",
+    "cases": 54,
+    "excluded_out_of_contract": 4,
+    "preliminary_pass": true,
+    "series_pass": true,
+    "failed_series": []
+   }
+  },
+  {
+   "run_id": "d895ff2f-386f-4eb4-bc29-c1bc8391f2d4",
+   "language": "csharp",
+   "impl": "library",
+   "provider": "cpu",
+   "mode": "cold",
+   "threads": 6,
+   "started_utc": "2026-10-13T17:39:11.9446247Z",
+   "git_commit": "92d5fd75a3e6bf0e57ccbaa2a5a3b26e46bc601f",
+   "git_dirty": false,
+   "model_sha256": "0ba2db95b18116906ae4ec21aa62ef493e69e0780dcfdfa98c4456ecf4123265",
+   "tokenizer_sha256": "1b7fbabfb4c690bed84c6793bfecae9b8dfe205751b04f9ffd1e76a1e7df9c16",
+   "packages": {
+    "Microsoft.ML.OnnxRuntime.Managed": "1.30.0",
+    "Microsoft.ML.OnnxRuntime": "1.30.0",
+    "Starlings.Runtime.Onnx": "0.1.0-preview.5+42d93dd3573b43939329120fd1e4e55786ef8509",
+    "Starlings.Tokenizers": "0.3.0-preview.1+79a5863e861edcfed79142293dafabb688c199b9",
+    "Starlings.Models.Gliner2": "0.1.0-preview.5+42d93dd3573b43939329120fd1e4e55786ef8509"
+   },
+   "load_before": {
+    "loadavg": [
+     16.85,
+     19.28,
+     21.41
+    ],
+    "gpus": [
+     {
+      "index": "0",
+      "name": "NVIDIA GeForce RTX 3090",
+      "pci_bus_id": "00000000:03:00.0",
+      "util_pct": "96",
+      "mem_used_mib": "10995",
+      "mem_total_mib": "24576",
+      "sm_clock_mhz": "1800",
+      "pstate": "P2",
+      "power_w": "325.98",
+      "temp_c": "67"
+     },
+     {
+      "index": "1",
+      "name": "NVIDIA GeForce RTX 4060 Ti",
+      "pci_bus_id": "00000000:04:00.0",
+      "util_pct": "7",
+      "mem_used_mib": "825",
+      "mem_total_mib": "16380",
+      "sm_clock_mhz": "210",
+      "pstate": "P8",
+      "power_w": "11.06",
+      "temp_c": "51"
+     }
+    ]
+   },
+   "load_after": {
+    "loadavg": [
+     15.7,
+     18.8,
+     21.19
+    ],
+    "gpus": [
+     {
+      "index": "0",
+      "name": "NVIDIA GeForce RTX 3090",
+      "pci_bus_id": "00000000:03:00.0",
+      "util_pct": "93",
+      "mem_used_mib": "10995",
+      "mem_total_mib": "24576",
+      "sm_clock_mhz": "1755",
+      "pstate": "P2",
+      "power_w": "331.62",
+      "temp_c": "68"
+     },
+     {
+      "index": "1",
+      "name": "NVIDIA GeForce RTX 4060 Ti",
+      "pci_bus_id": "00000000:04:00.0",
+      "util_pct": "0",
+      "mem_used_mib": "729",
+      "mem_total_mib": "16380",
+      "sm_clock_mhz": "210",
+      "pstate": "P8",
+      "power_w": "10.72",
+      "temp_c": "51"
+     }
+    ]
+   },
+   "quality": {
+    "reference": "model-pipeline/protected/gliner2-base-v1/onnx-fp32-cpu/extraction.jsonl",
+    "cases": 1,
+    "cold_first_request": {
+     "items": 1,
+     "synthetic_items": 0,
+     "entities_exact": 1,
+     "confidence_max_abs": 0,
+     "confidence_tolerance": 2e-05,
+     "finite": true,
+     "failures": [],
+     "pass": true
+    },
+    "pass": true,
+    "preliminary_pass": true,
+    "series_pass": true,
+    "failed_series": []
+   }
+  }
+ ]
+}

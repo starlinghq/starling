@@ -4,6 +4,8 @@ How the repository measures performance for gate G5 ("controlled benchmark with 
 
 **Budgets are maintainer decisions.** A harness measures and checks quality; it never decides whether a profile is fast enough. The G5 performance budget of each profile is chosen by the maintainer (production-readiness plan, action M2) and recorded in the manifest's gate entry with the evidence link. Until a budget exists, a G5 entry cannot pass, whatever the numbers. The figures in plan section 11 (p95 adapter overhead no more than the larger of 1 ms or 10%; at least 95% of matched native-backend decode throughput; alert on a repeatable regression above 5%) are proposals to calibrate, not budgets.
 
+Development runs of each harness (uncontrolled, not G5 evidence): [GLiNER2](gliner2-2026-10-13.md), [EmbeddingGemma 2](embeddinggemma2-2026-10-13.md), [Qwen3.5](qwen35-2026-10-13.md).
+
 ## Harnesses
 
 | Harness | Profile(s) | Paths and workloads (`ai-dotnet/benchmarks/workloads/`) | Stages timed | Quality checked on every series |
@@ -57,6 +59,7 @@ Options common to the model harnesses: `--only <workloads>`, `--samples-scale F`
 ## Gaps
 
 - **Python same-backend comparison** (plan 11, second question) exists for e5 only. GLiNER2: the Python preprocessing is the upstream `gliner2` package on PyTorch, so a same-backend Python runner needs that environment plus a NumPy port of the decode; not straightforward from `model-pipeline/reference/gliner2/`. EmbeddingGemma 2 text: feasible (`tokenizers` + ONNX Runtime + NumPy pooling, as for e5), but `bench_e5_matched.py` is e5-specific and needs to be factored into a shared runner first.
+- **Qwen native comparison**: no same-backend runner (ONNX Runtime GenAI C API or Python `onnxruntime-genai`) yet, so the plan's decode-throughput objective (at least 95% of matched native decode throughput) cannot be evaluated.
 - **Video** (EmbeddingGemma 2): needs decoded-frame fixtures that do not depend on FFmpeg, or a run with the FFmpeg adapter.
 - **CUDA**: no CUDA build of the model harnesses; GPU runs need M6.
 - **Resources**: allocations, GC pauses, native memory and VRAM are not recorded by the workload harnesses (G4's soak covers memory trends); no latency-bound concurrency sweep beyond the e5 harness's concurrency 4.
