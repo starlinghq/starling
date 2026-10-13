@@ -1,0 +1,11 @@
+total 100404
+drwxr-xr-x 1 mark mark      336 Oct 13 12:04 .
+drwxr-xr-x 1 mark mark       82 Oct 13 12:04 ..
+-rwxr-xr-x 1 mark mark  3772872 Oct 13 12:04 AotConsumer
+-rwxr-xr-x 1 mark mark  7479240 Oct 13 12:04 AotConsumer.dbg
+-rwxr--r-- 1 mark mark 37415960 Sep 28 16:45 libonnxruntime-genai.so
+-rwxr--r-- 1 mark mark    14632 Sep  9 23:39 libonnxruntime_providers_shared.so
+-rwxr--r-- 1 mark mark 28985152 Sep  9 23:48 libonnxruntime.so
+-rwxr--r-- 1 mark mark 16462648 Sep 10 00:02 onnxruntime.dll
+-rwxr--r-- 1 mark mark  8645944 Sep 28 16:54 onnxruntime-genai.dll
+-rwxr--r-- 1 mark mark    21816 Sep 10 00:00 onnxruntime_providers_shared.dll

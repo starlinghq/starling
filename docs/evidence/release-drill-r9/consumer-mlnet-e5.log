@@ -1,0 +1,12 @@
+assembly: Microsoft.ML.Data 5.0.0
+assembly: Starlings.Models.E5.MLNet 0.1.0-preview.5
+ok:   e5: output column type Vector<Single, 384> (expected Vector<Single, 384>)
+ok:   e5: row-wise transform vs typed API one text per call: 3 rows, max abs 0 (exact)
+ok:   e5: look-ahead batched transform vs typed batch: 3 rows, max abs 0 (exact)
+ok:   e5: token-count column 34,22,16 equals the typed API's 34,22,16
+ok:   e5: transform from verified files (own session) vs typed queries: 3 rows, max abs 0 (exact)
+ok:   e5: query 'how much protein should a female eat' ranks passage 0 first (expected 0)
+ok:   e5: query 'Warum rostet Eisen?' ranks passage 1 first (expected 1)
+ok:   e5: query '日本の首都はどこですか' ranks passage 2 first (expected 2)
+ok:   e5: ML.NET Save of the transformer is rejected (persistence unsupported)
+RESULT: PASS

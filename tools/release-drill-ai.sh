@@ -25,6 +25,10 @@
 #      download; tokenizer.json is always downloaded, onnx/model.onnx too unless seeded),
 #   7. runs the sample and the checker with no network: search results, the Extensions.AI and ML.NET paths, and embeddings against
 #      the protected fixtures within the bounds read from the protected tolerances file,
+#   8c. runs the ML.NET checker (tools/release-drill/mlnet-consumer) on e5 with no network: Starlings.Models.E5.MLNet's
+#      column type, row-wise and look-ahead batched transforms equal to the typed API, token counts, ranking, Save
+#      rejected; with --seed-embeddinggemma2-from the same for Starlings.Models.EmbeddingGemma2.MLNet (9e), plus a
+#      Matryoshka 256 column,
 #   8b. with --seed-embeddinggemma2-from: seeds the EmbeddingGemma 2 text-path graph (release not published yet) into
 #      the isolated cache, acquires tokenizer.json and config_sentence_transformers.json from the Hub through the
 #      EmbeddingGemma2Search sample's download step, and runs its search with no network (expected top documents, the
@@ -42,7 +46,14 @@
 #      chat_template.jinja; their hosting repository is private for now and the drill runs without a token) into the
 #      isolated cache, verifies them through the QwenChat sample's explicit download step, and asks one question with no
 #      network (streamed answer, stop at <|im_end|>, usage), through the typed API and through the IChatClient
-#      adapter (the same answer).
+#      adapter (the same answer),
+#  11. with --public-hosting: downloads the GLiNER2, EmbeddingGemma 2 and Qwen 3.5 files from their public hosting into
+#      a new empty cache with no token and no seed, then runs each sample offline from that cache. Disabled by default
+#      until maintainer action M3 makes the hosting public; it then prints "skipped: hosting private". Even when
+#      enabled, a model whose packaged library still records its hosting as private or a placeholder is skipped with
+#      the same message,
+#  12. with --aot: tools/aot-check-ai.sh on the drill's feed and model cache (Native AOT publish of a consumer per
+#      package, trim/AOT warnings recorded, AOT results compared with JIT results).
 #
 #   tools/release-drill-ai.sh                                   # downloads both files (487 MB) from the Hub
 #   tools/release-drill-ai.sh --seed-model-from <snapshot dir>  # copies onnx/model.onnx from a local snapshot into the
@@ -68,6 +79,10 @@
 #                                                               # video search; FFmpeg is never shipped or downloaded
 #   ... --seed-qwen35-from <dir>                                # also run the QwenChat sample on CPU; <dir> is a bundle built
 #                                                               # by build_ortgenai_bundle.py --variant fp32x (3.1 GB)
+#   ... --public-hosting                                        # also download GLiNER2, EmbeddingGemma 2 and Qwen 3.5
+#                                                               # from public hosting (no token, no seed; ~7 GB); only
+#                                                               # once maintainer action M3 has made the hosting public
+#   ... --aot                                                   # also run the Native AOT check (tools/aot-check-ai.sh)
 #   DRILL_KEEP=1 tools/release-drill-ai.sh ...                  # keep the temporary directory for inspection
 #
 # Uncommitted changes are not part of the drill: it builds exactly the committed HEAD.
@@ -100,6 +115,8 @@ gliner2_seed=""
 eg2_seed=""
 qwen_seed=""
 ffmpeg_dir=""
+public_hosting=0
+aot=0
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --seed-model-from) mode="seed"; seed="$(cd "$2" && pwd)"; shift 2 ;;
@@ -108,6 +125,8 @@ while [[ $# -gt 0 ]]; do
         --seed-qwen35-from) qwen_seed="$(cd "$2" && pwd)"; shift 2 ;;
         --ffmpeg-dir) ffmpeg_dir="$(cd "$2" && pwd)"; shift 2 ;;
         --no-model) mode="no-model"; shift ;;
+        --public-hosting) public_hosting=1; shift ;;
+        --aot) aot=1; shift ;;
         *) echo "unknown argument: $1" >&2; exit 2 ;;
     esac
 done
@@ -333,7 +352,7 @@ ls "$feed"
 
 step "6. Clean consumers outside the repository"
 apps="$work/apps"
-mkdir -p "$apps/E5Search" "$apps/Gliner2Ner" "$apps/QwenChat" "$apps/EmbeddingGemma2Search" "$apps/AiConsumer" "$work/fixtures"
+mkdir -p "$apps/E5Search" "$apps/Gliner2Ner" "$apps/QwenChat" "$apps/EmbeddingGemma2Search" "$apps/AiConsumer" "$apps/MlNetConsumer" "$work/fixtures"
 # Only the sample's sources and project file; nothing above it (its Directory.Build.* files exist only to stop
 # repository imports inside the checkout).
 cp "$src/ai-dotnet/samples/E5Search/Program.cs" "$src/ai-dotnet/samples/E5Search/E5Search.csproj" "$apps/E5Search/"
@@ -342,6 +361,8 @@ cp "$src/ai-dotnet/samples/EmbeddingGemma2Search/Program.cs" "$src/ai-dotnet/sam
 cp "$src/ai-dotnet/samples/QwenChat/Program.cs" "$src/ai-dotnet/samples/QwenChat/QwenChat.csproj" "$apps/QwenChat/"
 cp "$src/tools/release-drill/ai-consumer/Program.cs" "$apps/AiConsumer/"
 sed "s/@VERSION@/$ai_version/" "$src/tools/release-drill/ai-consumer/AiConsumer.csproj.in" >"$apps/AiConsumer/AiConsumer.csproj"
+cp "$src/tools/release-drill/mlnet-consumer/Program.cs" "$apps/MlNetConsumer/"
+sed "s/@VERSION@/$ai_version/" "$src/tools/release-drill/mlnet-consumer/MlNetConsumer.csproj.in" >"$apps/MlNetConsumer/MlNetConsumer.csproj"
 cp "$src/$fixtures_rel/embeddings.jsonl" "$src/$fixtures_rel/tokenizer.jsonl" "$work/fixtures/"
 cat >"$apps/NuGet.config" <<EOF
 <?xml version="1.0" encoding="utf-8"?>
@@ -366,11 +387,11 @@ cat >"$apps/NuGet.config" <<EOF
 </configuration>
 EOF
 export NUGET_PACKAGES="$work/nuget-consumer" NUGET_HTTP_CACHE_PATH="$work/nuget-http-consumer"
-for app in E5Search Gliner2Ner QwenChat EmbeddingGemma2Search AiConsumer; do
+for app in E5Search Gliner2Ner QwenChat EmbeddingGemma2Search AiConsumer MlNetConsumer; do
     (cd "$apps/$app" && dotnet restore >"$work/restore-$app.log" 2>&1) || { cat "$work/restore-$app.log"; fail "$app restore failed"; }
     (cd "$apps/$app" && dotnet list package --include-transitive) | tee "$work/$app-packages.txt"
 done
-python3 - "$pack" "$tok_sha512" "$apps/E5Search/obj/project.assets.json" "$apps/AiConsumer/obj/project.assets.json" "$apps/Gliner2Ner/obj/project.assets.json" "$apps/QwenChat/obj/project.assets.json" "$apps/EmbeddingGemma2Search/obj/project.assets.json" <<'EOF' || fail "restore graph check failed"
+python3 - "$pack" "$tok_sha512" "$apps/E5Search/obj/project.assets.json" "$apps/AiConsumer/obj/project.assets.json" "$apps/Gliner2Ner/obj/project.assets.json" "$apps/QwenChat/obj/project.assets.json" "$apps/EmbeddingGemma2Search/obj/project.assets.json" "$apps/MlNetConsumer/obj/project.assets.json" <<'EOF' || fail "restore graph check failed"
 import base64, hashlib, json, os, re, sys
 pack, tok_sha512 = sys.argv[1], sys.argv[2]
 for path in sys.argv[3:]:
@@ -413,6 +434,8 @@ for path in sys.argv[3:]:
                         "Microsoft.Extensions.AI.Abstractions", "Starlings.Models.EmbeddingGemma2.Imaging.SkiaSharp",
                         "SkiaSharp", "SkiaSharp.NativeAssets.Linux.NoDependencies",
                         "Starlings.Models.EmbeddingGemma2.Video.FFmpeg"] if app == "EmbeddingGemma2Search"
+                  else ["Starlings.Models.E5", "Starlings.Models.E5.MLNet", "Starlings.Models.EmbeddingGemma2",
+                        "Starlings.Models.EmbeddingGemma2.MLNet", "Microsoft.ML"] if app == "MlNetConsumer"
                   else ["Starlings.Models.E5", "Starlings.Models.E5.Extensions.AI"])
     if app == "AiConsumer":
         # The checker also consumes the ML.NET adapter: Microsoft.ML must come without any tokenizer package.
@@ -434,7 +457,7 @@ if find "$NUGET_PACKAGES" -iname '*tokeni[sz]er*' | grep -vi '/starlings\.tokeni
     fail "foreign tokenizer files in the consumer package cache"
 fi
 echo "ok:   consumer package cache holds only: $(ls "$NUGET_PACKAGES" | tr '\n' ' ')"
-for app in E5Search Gliner2Ner QwenChat EmbeddingGemma2Search AiConsumer; do
+for app in E5Search Gliner2Ner QwenChat EmbeddingGemma2Search AiConsumer MlNetConsumer; do
     (cd "$apps/$app" && dotnet build --configuration Release --no-restore >"$work/build-$app.log" 2>&1) \
         || { cat "$work/build-$app.log"; fail "$app build failed"; }
 done
@@ -457,6 +480,7 @@ gliner2_sample=(dotnet "$apps/Gliner2Ner/bin/Release/net10.0/Gliner2Ner.dll")
 eg2_sample=(dotnet "$apps/EmbeddingGemma2Search/bin/Release/net10.0/EmbeddingGemma2Search.dll")
 qwen_sample=(dotnet "$apps/QwenChat/bin/Release/net10.0/QwenChat.dll")
 checker=(dotnet "$apps/AiConsumer/bin/Release/net10.0/AiConsumer.dll")
+mlnet_checker=(dotnet "$apps/MlNetConsumer/bin/Release/net10.0/MlNetConsumer.dll")
 models="$work/models"
 mkdir -p "$models"
 
@@ -465,6 +489,7 @@ if [[ "$mode" == "no-model" ]]; then
     "${checker[@]}" tokenizer "$models" "$work/fixtures" | tee "$work/consumer-tokenizer.log" || fail "checker failed"
     grep -qx 'RESULT: PASS' "$work/consumer-tokenizer.log" || fail "checker did not pass"
     echo "note: --no-model: the model download, offline search and embedding checks were skipped"
+    echo "note: --no-model: the ML.NET packages were packed, inspected and their checker built, but not run"
 else
     step "7. Explicit acquisition into an isolated empty cache (real Hub download)"
     if [[ "$mode" == "seed" ]]; then
@@ -504,6 +529,10 @@ else
     offline "${checker[@]}" full "$models" "$work/fixtures" "$embedding_bound" "$batch_bound" | tee "$work/consumer-full.log" \
         || fail "checker failed"
     grep -qx 'RESULT: PASS' "$work/consumer-full.log" || fail "checker did not pass"
+
+    step "8c. Offline: ML.NET checker on e5 (Starlings.Models.E5.MLNet)"
+    offline "${mlnet_checker[@]}" e5 "$models" | tee "$work/consumer-mlnet-e5.log" || fail "ML.NET checker (e5) failed"
+    grep -qx 'RESULT: PASS' "$work/consumer-mlnet-e5.log" || fail "ML.NET checker (e5) did not pass"
 fi
 
 if [[ -n "$gliner2_seed" ]]; then
@@ -552,6 +581,9 @@ if [[ -n "$eg2_seed" ]]; then
     grep -q '^matryoshka 256: 256 dimensions' "$work/sample-eg2-search.log" || fail "EmbeddingGemma 2 Matryoshka 256 missing"
     grep -Eq '^long input rejected: [0-9]+ tokens > 8192' "$work/sample-eg2-search.log" || fail "EmbeddingGemma 2 did not reject the long input"
     echo "ok:   EmbeddingGemma 2 sample ranks the expected document first offline, Extensions.AI equals the typed API, rejects > 8,192 tokens"
+    step "9e. Offline: ML.NET checker on EmbeddingGemma 2 (Starlings.Models.EmbeddingGemma2.MLNet)"
+    offline "${mlnet_checker[@]}" eg2 "$models" | tee "$work/consumer-mlnet-eg2.log" || fail "ML.NET checker (EmbeddingGemma 2) failed"
+    grep -qx 'RESULT: PASS' "$work/consumer-mlnet-eg2.log" || fail "ML.NET checker (EmbeddingGemma 2) did not pass"
     if [[ -f "$eg2_seed/${eg2_image_graphs[0]}" && -f "$eg2_seed/${eg2_image_graphs[1]}" && -d "$eg2_seed/images" ]]; then
         step "9c. EmbeddingGemma 2 images: seeded vision and multimodal graphs, image lock verified, offline text-to-image search"
         for g in "${eg2_image_graphs[@]}"; do
@@ -599,7 +631,7 @@ if [[ -n "$eg2_seed" ]]; then
         echo "note: no videos/ in $eg2_seed or no --ffmpeg-dir: the video search was built but not run"
     fi
 else
-    echo "note: no --seed-embeddinggemma2-from: the EmbeddingGemma 2 packages were packed, inspected and the sample built, but not run"
+    echo "note: no --seed-embeddinggemma2-from: the EmbeddingGemma 2 packages (including the ML.NET adapter) were packed, inspected and the sample and checker built, but not run"
 fi
 
 if [[ -n "$qwen_seed" ]]; then
@@ -639,9 +671,68 @@ else
     echo "note: no --seed-qwen35-from: the pilot LLM packages were packed, inspected and the QwenChat sample built, but not run"
 fi
 
+step "11. Download from public hosting (no token, no seed)"
+# Each entry: label|source file in the clone|C# constant that records the hosting as private or a placeholder.
+hosting=(
+    "GLiNER2|ai-dotnet/src/Starlings.Models.Gliner2/Gliner2ModelAssets.cs|ModelSourceIsPlaceholder = true"
+    "EmbeddingGemma 2|ai-dotnet/src/Starlings.Models.EmbeddingGemma2/EmbeddingGemma2ModelAssets.cs|ModelSourceIsPlaceholder = true"
+    "Qwen 3.5|ai-dotnet/src/Starlings.Models.Qwen35/Qwen35ModelAssets.cs|HostingIsPrivate = true"
+)
+public_ran=""
+if [[ "$public_hosting" != 1 ]]; then
+    echo "skipped: hosting private (maintainer action M3 pending: the GLiNER2, EmbeddingGemma 2 and Qwen 3.5 files are in private repositories; pass --public-hosting once they are public)"
+else
+    public_models="$work/models-public"
+    mkdir -p "$public_models"
+    [[ -z "${HF_TOKEN:-}" ]] || fail "HF_TOKEN is set inside the drill"
+    for entry in "${hosting[@]}"; do
+        IFS='|' read -r label file marker <<<"$entry"
+        if grep -qF "$marker" "$src/$file"; then
+            echo "skipped: hosting private ($label: $file still records $marker)"
+            continue
+        fi
+        case "$label" in
+            GLiNER2)
+                "${gliner2_sample[@]}" download --cache "$public_models" | tee "$work/public-gliner2-download.log" || fail "GLiNER2 public download failed"
+                grep -q "^$gliner2_graph: downloaded," "$work/public-gliner2-download.log" || fail "GLiNER2 graph was not downloaded"
+                offline "${gliner2_sample[@]}" extract --cache "$public_models" | tee "$work/public-gliner2-extract.log" || fail "GLiNER2 extract from public files failed"
+                grep -Eq '^ *person: Tim Cook \[10, 18\)' "$work/public-gliner2-extract.log" || fail "GLiNER2 from public files: expected 'person: Tim Cook [10, 18)'"
+                ;;
+            "EmbeddingGemma 2")
+                "${eg2_sample[@]}" download --cache "$public_models" | tee "$work/public-eg2-download.log" || fail "EmbeddingGemma 2 public download failed"
+                grep -q "^$eg2_graph: downloaded," "$work/public-eg2-download.log" || fail "EmbeddingGemma 2 graph was not downloaded"
+                offline "${eg2_sample[@]}" search --cache "$public_models" | tee "$work/public-eg2-search.log" || fail "EmbeddingGemma 2 search from public files failed"
+                grep -A1 -xF "query: how much protein should a female eat" "$work/public-eg2-search.log" | grep -q "^  top: protein " || fail "EmbeddingGemma 2 from public files: expected 'protein' first"
+                ;;
+            "Qwen 3.5")
+                "${qwen_sample[@]}" download --cache "$public_models" | tee "$work/public-qwen-download.log" || fail "Qwen 3.5 public download failed"
+                grep -q '^ortgenai-fp32x/model.onnx.data: downloaded,' "$work/public-qwen-download.log" || fail "Qwen 3.5 graph was not downloaded"
+                offline "${qwen_sample[@]}" ask --cache "$public_models" --max-new 64 "What is the capital of France? Answer in one sentence." \
+                    | tee "$work/public-qwen-ask.log" || fail "QwenChat from public files failed"
+                grep -q '^assistant: .*Paris' "$work/public-qwen-ask.log" || fail "QwenChat from public files: expected Paris"
+                ;;
+        esac
+        echo "ok:   $label downloaded from public hosting with no token and no seed, and ran offline from that cache"
+        public_ran="$public_ran${public_ran:+, }$label"
+    done
+fi
+
+if [[ "$aot" == 1 ]]; then
+    step "12. Native AOT check (tools/aot-check-ai.sh on the drill feed and model cache)"
+    aot_download=()
+    [[ "$mode" == "no-model" ]] || aot_download=(--download)
+    "$src/tools/aot-check-ai.sh" --feed "$feed" --models "$models" --out "$work/aot" "${aot_download[@]}" | tee "$work/aot-check.log" \
+        || fail "the Native AOT check failed"
+else
+    echo "note: no --aot: the Native AOT check was not run"
+fi
+
 out="$root/artifacts/release-drill-ai"
 rm -rf "$out"
 mkdir -p "$out"
 cp "$pack"/*.nupkg "$pack"/*.snupkg "$work"/*-packages.txt "$out/"
-cp "$work"/sample-*.log "$work"/consumer-*.log "$out/" 2>/dev/null || true
-step "DRILL PASS ($mode${gliner2_seed:+, GLiNER2 run}${eg2_seed:+, EmbeddingGemma 2 run}${ffmpeg_dir:+ with FFmpeg $ffmpeg_dir}${qwen_seed:+, Qwen3.5 run}): Starlings $ai_version + Tokenizers $tok_version from $sha (packages and logs in artifacts/release-drill-ai/)"
+cp "$work"/sample-*.log "$work"/consumer-*.log "$work"/public-*.log "$work"/aot-check.log "$out/" 2>/dev/null || true
+if [[ -d "$work/aot" ]]; then cp -r "$work/aot" "$out/aot"; fi
+aot_label=""
+[[ "$aot" != 1 ]] || aot_label=", AOT check"
+step "DRILL PASS ($mode${gliner2_seed:+, GLiNER2 run}${eg2_seed:+, EmbeddingGemma 2 run}${ffmpeg_dir:+ with FFmpeg $ffmpeg_dir}${qwen_seed:+, Qwen3.5 run}${public_ran:+, public hosting: $public_ran}$aot_label): Starlings $ai_version + Tokenizers $tok_version from $sha (packages and logs in artifacts/release-drill-ai/)"

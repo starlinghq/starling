@@ -1,0 +1,14 @@
+assembly: Microsoft.ML.Data 5.0.0
+assembly: Starlings.Models.EmbeddingGemma2.MLNet 0.1.0-preview.5
+ok:   EmbeddingGemma 2: output column type Vector<Single, 768> (expected Vector<Single, 768>)
+ok:   EmbeddingGemma 2: row-wise transform vs typed API one text per call: 3 rows, max abs 0 (exact)
+ok:   EmbeddingGemma 2: look-ahead batched transform vs typed batch: 3 rows, max abs 0 (exact)
+ok:   EmbeddingGemma 2: token-count column 39,25,18 equals the typed API's 39,25,18
+ok:   EmbeddingGemma 2: transform from verified files (own session) vs typed queries: 3 rows, max abs 0 (exact)
+ok:   EmbeddingGemma 2: query 'how much protein should a female eat' ranks passage 0 first (expected 0)
+ok:   EmbeddingGemma 2: query 'Warum rostet Eisen?' ranks passage 1 first (expected 1)
+ok:   EmbeddingGemma 2: query '日本の首都はどこですか' ranks passage 2 first (expected 2)
+ok:   EmbeddingGemma 2: ML.NET Save of the transformer is rejected (persistence unsupported)
+ok:   EmbeddingGemma 2 Matryoshka column type Vector<Single, 256>
+ok:   EmbeddingGemma 2 Matryoshka 256 column vs typed API at 256: 3 rows, max abs 0 (exact)
+RESULT: PASS

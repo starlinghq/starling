@@ -256,7 +256,10 @@ capabilities:
   cancellation: experimental
   persistence: unsupported
   training: unsupported
-  aot: untested
+  # aot: Native AOT publish on Linux x64 CPU, no trim/AOT warnings, results equal to JIT bit for bit
+  # (video from decoded frames; docs/evidence/aot/README.md).
+  # The FFmpeg decoder adapter under Native AOT is untested.
+  aot: experimental
   extensions_ai: experimental
   mlnet: unsupported  # no video column in the ML.NET transform (text only)
   concurrent_calls: experimental
