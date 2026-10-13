@@ -1,0 +1,82 @@
+# Production readiness plan
+
+Goal: take every registered model to **Stable** (plan section 14): documented contract, all qualification gates G0 to G7 passed in full (plan section 10), an owner, a compatibility matrix, and regression support. The manifest validator enforces part of this already: a `stable` profile needs every gate `passed` and no `untested` capability (`model-pipeline/src/model_pipeline/manifest.py`).
+
+Audit date: 2026-10-13, at `fb27658`. Baseline on the workstation: 711 .NET tests, 473 pass, 0 fail, 238 skipped (weight-dependent tests skip without a local model cache).
+
+## Starting point
+
+| Profile | Maturity | G0 | G1 | G2 | G3 | G4 | G5 | G6 | G7 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| multilingual-e5-small `onnx-fp32-cpu` | preview | passed | passed* | passed* | checklist | checklist | checklist | passed | checklist |
+| multilingual-e5-small `onnx-fp32-cuda` | experimental | checklist | not-run | not-run | none | none | none | not-run | none |
+| gliner2-base-v1 `onnx-fp32-cpu` | experimental | checklist | checklist* | checklist* | none | none | none | none | none |
+| qwen3.5-0.8b `ortgenai-fp32x-cpu`, `-fp32x-cuda`, `-fp16x-cuda` | experimental | checklist | checklist | checklist | none | none | none | none | none |
+| embeddinggemma-2 text/image/video × cpu/cuda (6) | experimental | checklist | not-run | not-run | none | none | none | none | none |
+
+\* Passed on agent-written development fixtures, and at tokenizer `0.1.0-preview.4`. The pin is now `0.3.0-preview.1`, and the model gates were not rerun.
+
+Browser profiles for e5 (`onnx-{fp32,int8embed}-{wasm,webgpu}`) have protected tolerances but no registry manifest or package yet.
+
+### Blockers common to all models
+
+1. **No protected release sets (P-030).** Every G1/G2 pass so far is on development fixtures. No model has a held-out task metric (G3). Only the maintainer may author these sets.
+2. **Hosting.** The GLiNER2, EmbeddingGemma 2 and Qwen graphs sit in private Hugging Face repositories (`source_status: placeholder`), so no clean install can acquire them (G0, G6).
+3. **No qualification CI (P-018).** CI is `ubuntu-latest` only, model tests skip there, there is no Windows job, and nothing runs on a schedule. That means no compatibility matrix evidence beyond Linux x64, and no regression support.
+4. **No soak harness (plan 10.2).** No one-hour repeated-request and load/unload run exists for any model (G4).
+5. **Benchmarks.** Only e5 has a benchmark (one uncontrolled workstation). GLiNER2, EmbeddingGemma 2 and Qwen have none (G5).
+6. **Nothing is published.** The `release` environment, NuGet prefix reservation and branch protection are still manual steps (`docs/kickoff.md`).
+
+## Order of promotion
+
+Follow plan section 17: one Stable model first, the others to Preview, then Stable as evidence lands.
+
+1. **e5 `onnx-fp32-cpu` to Stable.** Closest; it needs G3, G4, G5 and G7 formalized, `aot` resolved, a G1/G2 rerun, Windows evidence and qualification CI.
+2. **GLiNER2 CPU, Qwen fp32x CPU, EmbeddingGemma 2 text CPU to Preview.** They need hosting, the G1/G2 rerun on P-030 sets, and G3 to G7 checklists.
+3. **CUDA profiles to Preview.** These need GPU runs of the protected evaluator; EmbeddingGemma 2 also needs W2 (the CUDA evaluator mode).
+4. **The rest to Stable,** as each meets the full gate set. Qwen fp16x CUDA likely stays Preview, because of near-tie divergences (18/22 greedy).
+
+## Agent workstreams
+
+Each workstream is one draft PR. Agents never edit `model-pipeline/protected/` or `tolerances.*`, and never flip a gate to `passed` or a maturity upward; they produce the evidence and tooling, and the maintainer records the result.
+
+### Wave 1 (independent, run in parallel)
+
+| ID | Workstream | Gates | Deliverables |
+| --- | --- | --- | --- |
+| R1 | Operational qualification harness | G4 | One soak tool for all four models (repeated requests, load/unload cycles, working-set/native/VRAM sampling, plateau report; one-hour default, short mode for CI). Missing plan 10.2 tests per model: queue saturation, timed-out requests, failed init, malformed lock or manifest, unsupported provider, cancellation then reuse, disposal during shutdown, cancellation latency. |
+| R2 | Benchmark harnesses | G5 | GLiNER2, EmbeddingGemma 2 (text/image/video) and Qwen generation harnesses modeled on `Starlings.Benchmarks.E5Harness`: raw results, environment manifest, warm/cold split, stage timing. Protocol doc. |
+| R3 | Catalog and compatibility matrix | P-021, section 14 | Generator in `model-pipeline` producing the public catalog and a compatibility matrix from the manifests (no hand-kept list), checked in CI for staleness. |
+| R4 | Manifest hygiene and gate records | G0 to G7 | G3 to G7 entries (`not-run` or `checklist`, with evidence links) in every manifest. Stale text fixed (EmbeddingGemma 2 FFmpeg.AutoGen references, Qwen hosting text). GLiNER2 `mlnet` corrected to `unsupported`. GLiNER2 `onnx-fp32-cuda` manifest drafted. G1/G2 rerun at tokenizer `0.3.0-preview.1` on the development fixtures, with evidence. |
+| R5 | Task-quality evaluators | G3 | Evaluator tasks in `model-pipeline evaluate`: retrieval (nDCG@10 and recall@k; e5 and EmbeddingGemma 2; the int8 top-10 overlap metric for browser profiles), NER span F1 (GLiNER2), and a generation task with the template stage machine-checked against the protected tolerances (Qwen). Dataset paths come from the maintainer's P-030 sets; the agent supplies only the format, a public smoke example, and tests. |
+
+### Wave 2 (after wave 1 merges)
+
+| ID | Workstream | Gates | Deliverables |
+| --- | --- | --- | --- |
+| R6 | Qualification CI (P-018) | all | A Windows x64 CPU job. A scheduled qualification workflow that restores pinned models from a cache, runs the model tests, the protected evaluator and a short soak, and uploads evidence. Release credentials stay out of PR jobs. Maintainer approves `.github/` changes. |
+| R7 | EmbeddingGemma 2 follow-up | G1, G2, G4 | W2 (CUDA mode for the fidelity tool), W1 (frame-call measurement, GPU), W3 (long-input fixture proposal, 2,049 to 8,192 tokens), W4 (FFmpeg 9 adapter). |
+| R8 | Qwen template and LLM gaps | G1, G3, G4 | P-029 template corpus beyond the 21 prompts. Long-context tests above 1,666 tokens, or a narrowed claim. A drafted upstream report for the concurrent CUDA generator defect (the maintainer files it). |
+| R9 | Distribution | G6 | AOT check for every core package (to `supported` or `unsupported`). A Windows clean-install drill. The ML.NET package run in the release drill. A download-from-public-hosting drill step, enabled once hosting is public. |
+| R10 | Stable contract docs | section 14 | A support policy, a per-model Stable contract (the README "Stable waits for P-018" text replaced), and the M3 maintained-update and rollback drill (P-020, P-022). |
+
+## Maintainer decisions and actions
+
+These cannot be done by an agent. Each row names what it unblocks.
+
+| ID | Action | Unblocks |
+| --- | --- | --- |
+| M1 | Curate P-030 release sets: tokenizer and retrieval sets for e5 and EmbeddingGemma 2 (text, image, video), a NER set for GLiNER2, and a generation set for Qwen. Commit them under `model-pipeline/protected/`. | G1 to G3 for every model |
+| M2 | Choose G3 datasets (licensed) and quality budgets, and G5 performance budgets per profile. | G3, G5 |
+| M3 | Make graph hosting public: GitHub release assets (`embeddinggemma-2-onnx-r1`, `-vision-onnx-r1`, GLiNER2) and the Qwen `ortgenai` build. Replace `source_status: placeholder`. | G0, G6 |
+| M4 | Legal: D2 (FFmpeg adapter); sign-off on licenses stated only in model cards (e5 MIT, GLiNER2 Apache-2.0). | G0, adapter publish |
+| M5 | Repository settings: branch protection, the `release` environment, the NuGet `Starlings` prefix reservation (`docs/kickoff.md`). | G6, any publish |
+| M6 | Hardware: GPU time for CUDA evaluator runs and soaks, a quiet machine for controlled benchmarks, and Windows evidence (CI runner approval). | G2/G4/G5 on CUDA, compatibility matrix |
+| M7 | Name a second release owner and a first named consumer (P-028). | Stable, G7 |
+| M8 | Accept the e5 CUDA `PROPOSED.md` decisions. Decide whether a tokenizer bump requires a model G1/G2 rerun or whether the tokenizer conformance suite suffices. | e5 CUDA, every tokenizer bump |
+| M9 | File the upstream onnxruntime-genai concurrent-generator report (drafted in R8). Confirm CUDA serialization as the documented behavior. | Qwen G4 |
+| M10 | Record gate results and promote maturity once evidence exists. | Every promotion |
+
+## Tracking
+
+Each workstream PR updates this document's tables when it lands. The catalog (R3) becomes the source of truth for status once it exists.
