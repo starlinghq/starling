@@ -101,6 +101,35 @@ jobs:
           done
           exit "$status"
 
+  # Windows x64 CPU (plan 13.1: CPU qualification on Linux x64 and Windows x64; P-018). The same build and weight-free
+  # tests as the Linux job: model tests skip without the graphs (the scheduled qualification workflow runs them on
+  # Linux). The pinned tokenizer.json assets are public and SHA-256 verified, as on Linux. Then the Windows clean-install
+  # drill (tools/release-drill-ai.ps1 from #10, R9; the counterpart of the Linux drill job), without the model.
+  ai-dotnet-windows:
+    name: ai-dotnet (windows x64)
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+      - uses: actions/setup-dotnet@26b0ec14cb23fa6904739307f278c14f94c95bf1 # v5
+        with:
+          global-json-file: global.json
+      # The SDK that global.json resolves to; restores run in locked mode, so a different SDK can change the lock files.
+      - run: dotnet --version
+      - uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        with:
+          path: .models
+          key: tokenizer-assets-windows-${{ hashFiles('tools/fetch-tokenizer-assets.sh') }}
+      - name: Fetch pinned tokenizer assets
+        shell: bash
+        run: tools/fetch-tokenizer-assets.sh
+      - run: dotnet build ai-dotnet/AI.slnx --configuration Release
+      - run: dotnet test --solution ai-dotnet/AI.slnx --configuration Release --no-build
+      # Packs from a clean clone, installs into consumers outside the checkout from a local feed, checks the restore
+      # graph and runs the checkers; -NoModel skips the 470 MB model download, as on Linux. First run on Windows.
+      - name: Windows clean-install drill (no model)
+        shell: pwsh
+        run: ./tools/release-drill-ai.ps1 -NoModel
+
   model-pipeline:
     runs-on: ubuntu-latest
     defaults:
