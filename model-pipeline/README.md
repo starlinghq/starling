@@ -33,8 +33,13 @@ ruff check . && ruff format --check .
 
 The onboarding runner orchestrates model-specific reference/backend/.NET tools with resumable stages,
 and workflows aggregate independent per-model records. The reference implementations in `reference/`
-remain model-specific. Additional model routes, upstream change detection (P-020), and catalog
-generation (P-021) remain follow-on work.
+remain model-specific. Additional model routes and catalog generation (P-021) remain follow-on work.
+
+Upstream change detection (P-020): `model-pipeline upstream registry [--json <path>] [--responses <recorded.json>]`
+compares each manifest's pinned Hugging Face revisions with the Hub's current ones and with
+`maintenance.latest_known_upstream_revision`, lists changed files by kind, and proposes the gates to rerun. It is
+read-only (exit 0 nothing new, 1 a new revision, 2 error); `--responses` runs offline on recorded API responses.
+Design and drills: `docs/plan/maintained-update-drill.md`.
 Acquisition and verified loading (P-009) is the C# `Starlings.Acquisition` library and tool in `ai-dotnet/`.
 
 ## Staged fidelity evaluator (P-007)
