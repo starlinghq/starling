@@ -31,6 +31,7 @@
 //   --growth-limit-mb <mb>    Floor of the growth limit (default 32; the limit is max(floor, 2% of the plateau)).
 //   --note <text>             Free-text machine note recorded in the manifest.
 //   --seed <n>                Seed of the deadline delays (default 1).
+//   --checkpoint-interval <t> Rewrite the JSON and report at most this often during the run (default 60s).
 //   --malloc-trim             Diagnostic (glibc only): after each unloaded sample, call malloc_trim(0) and sample again
 //                             (series "trimmed"). Memory that malloc_trim returns was freed but kept by the allocator,
 //                             not leaked. Changes allocator behaviour for the rest of the run; off by default.
@@ -111,6 +112,8 @@ internal sealed record SoakOptions
 
     public int Seed { get; init; } = 1;
 
+    public TimeSpan CheckpointInterval { get; init; } = TimeSpan.FromSeconds(60);
+
     public bool MallocTrim { get; init; }
 
     public bool IsQualificationLength => Duration >= TimeSpan.FromHours(1);
@@ -135,6 +138,7 @@ internal sealed record SoakOptions
                 "--growth-limit-mb" => o with { GrowthLimitMb = double.Parse(Next(), CultureInfo.InvariantCulture) },
                 "--note" => o with { Note = Next() },
                 "--seed" => o with { Seed = int.Parse(Next(), CultureInfo.InvariantCulture) },
+                "--checkpoint-interval" => o with { CheckpointInterval = ParseTime(Next()) },
                 "--malloc-trim" => o with { MallocTrim = true },
                 _ => throw new ArgumentException($"unknown option '{args[i]}'"),
             };
@@ -300,7 +304,7 @@ internal sealed class SoakRunner(SoakWorkload workload, SoakOptions options)
                 }
 
                 // Checkpoint, so a run killed from outside (for example by an out-of-memory daemon) leaves its data.
-                if (clock.Elapsed - lastCheckpoint > TimeSpan.FromSeconds(60))
+                if (clock.Elapsed - lastCheckpoint > options.CheckpointInterval)
                 {
                     lastCheckpoint = clock.Elapsed;
                     Write(final: false);

@@ -62,7 +62,8 @@ internal static class SoakEnvironment
             ["git_commit"] = commit,
             ["git_dirty"] = dirty,
             ["command_line"] = string.Join(' ', Environment.GetCommandLineArgs().Skip(1)),
-            ["load_before"] = loadBefore,
+            // Collect runs at every checkpoint; a JsonNode can have one parent, so attach a copy.
+            ["load_before"] = loadBefore.DeepClone(),
             ["load_after"] = Load(),
             ["machine_note"] = note,
         };

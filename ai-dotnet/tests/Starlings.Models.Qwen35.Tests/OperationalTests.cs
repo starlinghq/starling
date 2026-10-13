@@ -9,7 +9,7 @@ namespace Starlings.Models.Qwen35.Tests;
 /// Gate G4 operational tests (plan 10.2) for <c>qwen3.5-0.8b</c> fp32x on CPU that the other classes do not cover:
 /// failed initialization (template, configuration, graph), malformed locks and snapshots, unsupported provider and
 /// variant, queue saturation, timed-out requests with their cancellation latency, and disposal during an in-flight
-/// request. Cancellation between steps then reuse and concurrent requests are in <see cref="CpuModelTests"/>; the
+/// request (<see cref="DisposalTests"/>). Cancellation between steps then reuse and concurrent requests are in <see cref="CpuModelTests"/>; the
 /// one-hour soak is ai-dotnet/tools/Starlings.Soak.Tool. Tests that need the bundle or the tokenizer skip without them.
 /// </summary>
 public sealed class OperationalTests(Qwen35CpuFixture fixture, ITestOutputHelper output) : IClassFixture<Qwen35CpuFixture>, IDisposable
@@ -137,12 +137,27 @@ public sealed class OperationalTests(Qwen35CpuFixture fixture, ITestOutputHelper
             TimeSpan.FromSeconds(5),
             output);
     }
+}
+
+/// <summary>Runs alone, after the parallel classes have released their models: it loads its own 3.1 GB model to dispose it.</summary>
+[CollectionDefinition(Name, DisableParallelization = true)]
+public sealed class OwnModelTestGroup
+{
+    public const string Name = "own model (not parallel)";
+}
+
+/// <summary>Disposal during an in-flight request (plan 10.2), on a model loaded for the test.</summary>
+[Collection(OwnModelTestGroup.Name)]
+public sealed class DisposalTests(ITestOutputHelper output)
+{
+    private static CancellationToken Ct => TestContext.Current.CancellationToken;
 
     [Fact]
     public void DisposalDuringAnInFlightRequestLetsItFinishThenRejectsNewOnes()
     {
-        var files = Files();
-        var model = Qwen35ChatModel.Load(files);
+        var (files, reason) = Qwen35TestAssets.FindModel(Qwen35Variant.Fp32x);
+        Assert.SkipWhen(files is null, reason);
+        var model = Qwen35ChatModel.Load(files!);
         var c = Qwen35TestAssets.LoadCases().Single(c => c.Id == "en-short");
         var prompt = Qwen35Prompt.FromTokenIds(c.PromptIds);
         var results = new List<ImmutableArray<int>>();
