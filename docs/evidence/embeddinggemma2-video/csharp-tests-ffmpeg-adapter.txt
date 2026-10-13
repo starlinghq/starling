@@ -1,0 +1,21 @@
+== AnotherFFmpegMajorIsNamedInTheError Passed
+FFmpeg 8.x shared library libavcodec.so.62 could not be loaded from /usr/lib. Found libavcodec.so.63 instead (another FFmpeg major; FFmpeg 9 is libavcodec.so.63 and is not supported by this adapter version). Install FFmpeg 8.x shared libraries (an LGPL build; this package ships none) and set EmbeddingGemma2FFmpegOptions.LibraryDirectory or STARLING_FFMPEG_DIR.
+== LicensesAreClassified Passed
+== MetadataDerivesDurationAndRate Passed
+== OptionsAreValidated Passed
+== AMissingDirectoryIsATypedNotFoundError Passed
+== RotationMapsToTorchcodecTransforms Passed
+== StreamsAndMemoryDecodeLikeFiles Passed
+== NonVideoInputIsATypedError Passed
+== TheLoadedFFmpegIsTheGatedMajorAndLgpl Passed
+FFmpeg n8.1.3-17-gc389840894-20261011 from /home/mark/Projects/AI-models/embeddinggemma2/video-spike/ffmpeg/ffmpeg-n8.1.3-17-gc389840894-linux64-lgpl-shared-8.1/lib: libavutil 60.26.103, libavcodec 62.28.103, libavformat 62.12.103, libswscale 9.5.103, libavfilter 11.14.103
+licenses: libavutil: LGPL version 3 or later, libavcodec: LGPL version 3 or later, libavformat: LGPL version 3 or later, libswscale: LGPL version 3 or later, libavfilter: LGPL version 3 or later
+== FrameLimitsAreEnforced Passed
+== SampledFramesEqualTorchcodecBitForBit Passed
+22 videos, 176 sampled frames: decoded RGB equal to torchcodec on FFmpeg 8 (bound: exact)
+== EveryDecodedFrameEqualsTorchcodecBitForBit Passed
+22 videos, all 5367 frames: decoded RGB equal to torchcodec on FFmpeg 8
+== AllFramesCarryTheTimingAndSampleLikeTheFile Passed
+== CancellationStopsDecoding Passed
+== MetadataAndSampledIndicesEqualTorchcodec Passed
+22 videos: frame count, duration, begin/end, average rate, size, codec, rotation and sampled indices equal torchcodec 0.17.0

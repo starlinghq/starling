@@ -1,0 +1,18 @@
+# Binding tolerances, set by Mark on 2026-10-08 (PR #4), plan 10.1.
+# Valid only with the CUDA EP option use_tf32=0; TF32 on is a different profile and fails these bounds.
+# Observed worst (RTX 4060 Ti): hidden 2.1e-6, embedding 1.9e-7.
+profile: multilingual-e5-small/onnx-fp32-cuda
+provider_options: { use_tf32: 0 }
+reference: PyTorch fp32 embeddings and recomputed hidden states from model-pipeline/protected/multilingual-e5-small/onnx-fp32-cpu/
+discrete:
+  token_ids: exact
+  attention_mask: exact
+  offsets: exact
+float:
+  last_hidden_state_max_abs: 1.0e-4
+  embedding_max_abs: 1.0e-5
+  padded_batch_vs_single_embedding_max_abs: 1.0e-5
+  nan_or_inf: fail
+  report_only: [mean_abs, p99_abs, min_cosine]
+csharp_vs_python_same_machine_and_provider:
+  embedding_max_abs: 1.0e-6

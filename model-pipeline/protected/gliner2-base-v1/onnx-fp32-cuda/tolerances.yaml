@@ -1,0 +1,30 @@
+# Binding tolerances, set by Mark on 2026-10-10, plan 10.1. Values from docs/m0/gliner2-p014.md section 6.
+# Valid only with the CUDA EP option use_tf32=0; TF32 on is a different profile and fails these bounds.
+# Observed worst (RTX 4060 Ti, use_tf32=0): hidden 2.5e-5, span logits 4.0e-3 abs, scores 2.5e-6; entities 58/58.
+profile: gliner2-base-v1/onnx-fp32-cuda
+provider_options: { use_tf32: 0 }
+reference: PyTorch fp32 CPU in model-pipeline/protected/gliner2-base-v1/onnx-fp32-cpu/extraction.jsonl
+discrete:
+  normalized_text: exact
+  words: exact
+  character_maps: exact
+  token_ids: exact
+  attention_mask: exact
+  word_positions: exact
+  schema_positions: exact
+  gate_decision: exact
+float:
+  last_hidden_state_max_abs: 1.0e-4
+  count_logits_max_abs: 5.0e-4
+  span_logits_relative: 1.0e-4
+  scores_max_abs: 2.0e-5
+  confidence_max_abs: 2.0e-5
+  padded_batch_vs_single_span_logits_relative: 1.0e-4
+  nan_or_inf: fail
+  report_only: [mean_abs, p99_abs]
+entities:
+  identity: exact
+  order_swap_max_confidence_delta: 2.0e-5
+  threshold_flip_max_score_margin: 2.0e-5
+csharp_vs_python_same_machine_and_provider:
+  span_logits_relative: 1.0e-6

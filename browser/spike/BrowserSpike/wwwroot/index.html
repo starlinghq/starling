@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Browser spike</title>
+    <base href="/" />
+    <link rel="preload" id="webassembly" />
+    <script type="importmap"></script>
+</head>
+
+<body>
+    <div id="app">loading</div>
+    <script>
+        // The harness waits for this flag: set when the .NET runtime has started and the app rendered.
+        window.spikeStart = performance.now();
+    </script>
+    <script src="_framework/blazor.webassembly#[.{fingerprint}].js"></script>
+</body>
+
+</html>

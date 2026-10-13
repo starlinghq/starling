@@ -1,0 +1,14 @@
+<Project>
+  <!--
+    Packing turns a ProjectReference into a package dependency with a lower bound only (">= version"). The ai-dotnet
+    packages are qualified with one exact set of sibling packages and one exact tokenizer version (the e5 manifests pin
+    processing.tokenizer.version; plan 14: a newer tokenizer is not automatically certified), so every
+    Starlings.* dependency created from a ProjectReference is written as an exact range "[version]".
+    A consumer can still override it explicitly (NuGet reports NU1608).
+  -->
+  <Target Name="StarlingsPinProjectReferenceVersions" AfterTargets="_GetProjectReferenceVersions">
+    <ItemGroup>
+      <_ProjectReferencesWithVersions Update="@(_ProjectReferencesWithVersions)" ProjectVersion="[%(_ProjectReferencesWithVersions.ProjectVersion)]" />
+    </ItemGroup>
+  </Target>
+</Project>

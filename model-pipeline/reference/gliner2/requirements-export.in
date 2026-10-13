@@ -1,0 +1,5 @@
+# P-014 spike, CPU: the GLiNER2 reference (same pins as requirements.in) plus ONNX export and ONNX Runtime CPU.
+-r requirements.in
+onnx==1.23.1
+onnxscript
+onnxruntime==1.30.0

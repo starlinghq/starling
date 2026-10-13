@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <IsPackable>true</IsPackable>
+    <Description>Experimental text-only Qwen3-0.6B and Qwen2.5-0.5B-Instruct CPU fp32 generation with owned templates and tokenization. Fresh evidence is proposed; protected release qualification remains unapproved.</Description>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="" />
+    <None Include="THIRD-PARTY-NOTICES.md" Pack="true" PackagePath="" />
+    <None Include="LICENSE.Qwen.txt" Pack="true" PackagePath="" />
+    <ProjectReference Include="../Starlings.Generation.OnnxGenAI/Starlings.Generation.OnnxGenAI.csproj" />
+    <PackageReference Include="Starlings.Tokenizers" />
+  </ItemGroup>
+</Project>

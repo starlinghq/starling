@@ -1,0 +1,127 @@
+{
+ "onnxruntime": "1.30.0",
+ "provider": "cpu",
+ "variants": {
+  "spike": {
+   "disable_all": {
+    "max_abs": 0.0,
+    "identical": true
+   },
+   "basic": {
+    "max_abs": 0.0,
+    "identical": true
+   },
+   "extended": {
+    "max_abs": 0.0030364990234375,
+    "identical": false
+   },
+   "all": {
+    "max_abs": 0.0030364990234375,
+    "identical": false
+   },
+   "extended_node_differences": [
+    {
+     "node": [
+      "FusedMatMul",
+      "com.microsoft",
+      [
+       "alpha=0.04419417306780815",
+       "transA=0",
+       "transB=0",
+       "transBatchA=0",
+       "transBatchB=0"
+      ]
+     ],
+     "released": 0,
+     "spike": 1
+    },
+    {
+     "node": [
+      "FusedMatMul",
+      "com.microsoft",
+      [
+       "alpha=0.9999999403953552",
+       "transA=0",
+       "transB=0",
+       "transBatchA=0",
+       "transBatchB=0"
+      ]
+     ],
+     "released": 1,
+     "spike": 0
+    },
+    {
+     "node": [
+      "Unsqueeze",
+      "",
+      []
+     ],
+     "released": 57,
+     "spike": 58
+    },
+    {
+     "node": [
+      "Where",
+      "",
+      []
+     ],
+     "released": 2,
+     "spike": 3
+    }
+   ]
+  },
+  "release": {
+   "disable_all": {
+    "max_abs": 0.0,
+    "identical": true
+   },
+   "basic": {
+    "max_abs": 0.0,
+    "identical": true
+   },
+   "extended": {
+    "max_abs": 0.0,
+    "identical": true
+   },
+   "all": {
+    "max_abs": 0.0,
+    "identical": true
+   },
+   "extended_node_differences": [
+    {
+     "node": [
+      "FusedMatMul",
+      "com.microsoft",
+      [
+       "alpha=0.04419417306780815",
+       "transA=0",
+       "transB=0",
+       "transBatchA=0",
+       "transBatchB=0"
+      ]
+     ],
+     "released": 0,
+     "release": 1
+    },
+    {
+     "node": [
+      "Unsqueeze",
+      "",
+      []
+     ],
+     "released": 57,
+     "release": 58
+    },
+    {
+     "node": [
+      "Where",
+      "",
+      []
+     ],
+     "released": 2,
+     "release": 4
+    }
+   ]
+  }
+ }
+}

@@ -1,0 +1,191 @@
+# Proposed CUDA execution profile for the P0 encoder (intfloat/multilingual-e5-small), same graph and
+# reference as onnx-fp32-cpu. Evidence: docs/m0/e5-gpu.md and the proposed (not accepted) parity results in
+# model-pipeline/protected/multilingual-e5-small/onnx-fp32-cuda/. Not reviewed by the maintainer.
+schema_version: 1
+id: multilingual-e5-small/onnx-fp32-cuda
+maturity: experimental
+
+origin:
+  # The Hub repository holds both the sentence-transformers configuration and the weights.
+  code:
+    url: https://huggingface.co/intfloat/multilingual-e5-small
+    revision: "614241f622f53c4eeff9890bdc4f31cfecc418b3"
+  weights:
+    url: https://huggingface.co/intfloat/multilingual-e5-small
+    revision: "614241f622f53c4eeff9890bdc4f31cfecc418b3"
+  files:
+    - path: README.md
+      sha256: "0038de97aee16258cecbad7ffda4b4febd6953e747a00e0ddbc8e6ed241e9c1c"
+      size: 497538
+    - path: config.json
+      sha256: "69137736cab8b8903a07fe8afaafdda25aac55415a12a55d1bffa9f581abf959"
+      size: 655
+    - path: modules.json
+      sha256: "c6e29747481e8b5dd2b58401966aeac910de39092f90cda9a704b1545f902b04"
+      size: 387
+    - path: sentence_bert_config.json
+      sha256: "948201d8329907aae938fa62f9ceeed53f5694dacc2b87b9f3b78b37ee986529"
+      size: 57
+    - path: 1_Pooling/config.json
+      sha256: "987f7a67a38fa564c849bb5d277c52ab9088a84368fc0be31a354125aebb12a0"
+      size: 200
+    - path: model.safetensors
+      sha256: "1a55775f53449dac10a2bcbc312469fac40b96d53198c407081a831f81c98477"
+      size: 470641600
+    - path: onnx/config.json
+      sha256: "bbb7c1333fc4b3e27fbc9cd5d2070aabcc1d4dfb99917c3633e772f97545a6b6"
+      size: 653
+    - path: onnx/model.onnx
+      sha256: "ca456c06b3a9505ddfd9131408916dd79290368331e7d76bb621f1cba6bc8665"
+      size: 470268510
+    - path: tokenizer.json
+      sha256: "0b44a9d7b51c3c62626640cda0e2c2f70fdacdc25bbbd68038369d14ebdf4c39"
+      size: 17082730
+    - path: tokenizer_config.json
+      sha256: "a1d6bc8734a6f635dc158508bef000f8e2e5a759c7d92f984b2c86e5ff53425b"
+      size: 443
+    - path: special_tokens_map.json
+      sha256: "d05497f1da52c5e09554c0cd874037a083e1dc1b9cfd48034d1c717f1afc07a7"
+      size: 167
+    - path: sentencepiece.bpe.model
+      sha256: "cfc8146abe2a0488e9e2a0c56de7952f7c11ab059eca145a0a727afce0db2865"
+      size: 5069051
+  attribution: >-
+    multilingual-e5-small by Liang Wang, Nan Yang, Xiaolong Huang, Linjun Yang, Rangan Majumder and
+    Furu Wei (Microsoft), "Multilingual E5 Text Embeddings: A Technical Report", arXiv:2402.05672.
+    Tokenizer vocabulary from XLM-RoBERTa (Conneau et al.).
+
+rights:
+  code_license: MIT
+  weights_license: MIT
+  tokenizer_terms: MIT
+  redistribution: download
+  notes: >-
+    MIT is stated only in the model card front matter (README.md at the pinned revision, line 97);
+    the repository has no LICENSE file. The tokenizer assets ship in the same repository under the
+    same card. Weights are fetched from the Hub at the pinned revision, not bundled: the C# package
+    ships the lock (E5ModelAssets.Lock: onnx/model.onnx and tokenizer.json with the digests above) and
+    Starlings.Acquisition downloads and verifies it explicitly (P-009).
+
+behavior:
+  tasks: [embedding]
+  max_input_tokens: 512
+  offsets_unit: none
+  truncation: truncate-right
+  defaults:
+    pooling: mean over attention mask
+    normalize: l2
+    dimension: 384
+    input_prefix: >-
+      Callers add "query: " or "passage: " themselves (model card). The profile does not insert
+      prefixes.
+  unsupported:
+    - pair encoding as an embedding input (the tokenizer supports pairs; the embedding task does not use them)
+    - token_type_ids other than 0
+    - quantized ONNX variants (onnx/model_O4.onnx, onnx/model_qint8_avx512_vnni.onnx) in this profile
+    - OpenVINO files
+    - TF32 math (ORT CUDA EP use_tf32=1, the ORT default); it moves hidden states by up to 1.5e-3 and is a separate candidate
+    - fp16 graphs or autocast in this profile (separate candidate, see docs/m0/e5-gpu.md)
+    - TensorRT execution provider (not tested)
+
+processing:
+  # Tokenizer 0.1.0-preview.3 (2026-10-10) added the Qwen byte-level BPE components and 0.1.0-preview.4 (2026-10-10) the
+  # Gemma BPE components (byte fallback, unknown token, String Split, Sequence/Replace/ByteFallback/Fuse decoders); the
+  # Unigram path is unchanged in behavior and passes every tokenizer fixture of this profile again (tokenizer test suite).
+  # Model gates were not rerun.
+  tokenizer:
+    # 0.3.0-preview.1 is the published tokenizer (starlinghq/tokenizers): the qualified 0.1.0-preview.4 behavior plus BERT WordPiece components this profile does not use; every conformance fixture passes unchanged.
+    package: Starlings.Tokenizers
+    version: 0.3.0-preview.1
+    profile_id: xlmr-unigram-e5
+    algorithm: unigram
+    assets:
+      - path: tokenizer.json
+        sha256: "0b44a9d7b51c3c62626640cda0e2c2f70fdacdc25bbbd68038369d14ebdf4c39"
+        size: 17082730
+    backend_tokenizer_dependency: false
+  decoding:
+    reference_tokenizer: >-
+      The pinned tokenizer.json as read by tokenizers 0.23.2. transformers 5.18.0 XLMRobertaTokenizer
+      (used by sentence-transformers 6.1.0) rebuilds a different pipeline and differs on 5 of 46 corpus
+      cases; slow SentencePiece differs on 6. See docs/m0/reference-runs.md.
+
+execution:
+  backend:
+    name: onnxruntime
+    version: 1.30.0
+    binding: Microsoft.ML.OnnxRuntime.Gpu
+    binding_version: 1.30.0
+  precision: fp32
+  variant: reference
+  graph:
+    inputs:
+      - { name: input_ids, type: int64, shape: [batch_size, sequence_length] }
+      - { name: attention_mask, type: int64, shape: [batch_size, sequence_length] }
+      - { name: token_type_ids, type: int64, shape: [batch_size, sequence_length] }
+    outputs:
+      - { name: last_hidden_state, type: float32, shape: [batch_size, sequence_length, 384] }
+  # CUDAExecutionProvider options, passed to ORT as given. use_tf32 must be 0: ORT 1.30.0 defaults it to 1.
+  # ORT places 2 shape nodes (Gather, Unsqueeze) on CPUExecutionProvider by design; 349 nodes run on CUDA.
+  # The schema has no field for the execution provider name or the allowed fallback set.
+  provider_options:
+    use_tf32: 0
+
+capabilities:
+  # batch and cancellation: C# Starlings.Models.E5 (P-005/P-006) on fixture ids with the CUDA EP
+  # (Microsoft.ML.OnnxRuntime.Gpu.Linux 1.30.0, use_tf32=0); see ai-dotnet/README.md.
+  batch: experimental
+  streaming: unsupported
+  cancellation: experimental
+  persistence: unsupported
+  training: unsupported
+  aot: untested
+  extensions_ai: untested  # the P-011 adapter is provider-agnostic but has not been run over a CUDA session
+  mlnet: untested  # the P-012 transform is provider-agnostic but has not been run over a CUDA session
+
+compatibility:
+  # Linux x64 CUDA: Python and C# ORT runs on one RTX 4060 Ti (sm_89), driver 610.57.04, CUDA 13.0 runtime,
+  # cuDNN 9.24 from the nvidia-* wheels. One machine is not qualification.
+  - os: linux
+    arch: x64
+    provider: cuda
+    status: experimental
+    verified: 2026-10-08
+  - os: windows
+    arch: x64
+    provider: cuda
+    status: untested
+
+qualification:
+  reference_runner: model-pipeline/reference/encoder/run_e5_cuda.py
+  # The reference is shared with onnx-fp32-cpu (same graph, same PyTorch fp32 CPU embeddings). CUDA parity
+  # results are proposed separately in protected/multilingual-e5-small/onnx-fp32-cuda/ (PROPOSED.md there).
+  fixtures: model-pipeline/protected/multilingual-e5-small/onnx-fp32-cpu
+  # Binding tolerances set by Mark on 2026-10-08 (PR #4).
+  tolerances: model-pipeline/protected/multilingual-e5-small/onnx-fp32-cuda/tolerances.yaml
+  gates:
+    G0: { status: checklist, evidence: docs/m0/hub-pins.md, date: 2026-10-05 }
+    G1: { status: not-run }
+    G2: { status: not-run }
+    G6: { status: not-run }
+
+maintenance:
+  owner: Mark
+  latest_known_upstream_revision: "614241f622f53c4eeff9890bdc4f31cfecc418b3"
+  latest_verified_upstream_revision: "614241f622f53c4eeff9890bdc4f31cfecc418b3"
+  last_checked: 2026-10-05
+  review_date: 2027-01-05
+  known_issues:
+    - >-
+      The pinned tokenizer.json emits a lone "▁" token before special-token literals and for trailing
+      whitespace, where SentencePiece and transformers 5.18 emit none. The owned profile follows
+      tokenizer.json; the difference is recorded, not fixed.
+    - >-
+      tokenizer.json leaves decomposed Hangul jamo uncomposed, while SentencePiece composes them.
+    - >-
+      Native runtime: Microsoft.ML.OnnxRuntime.Gpu 1.30.0 needs CUDA 13 runtime libraries and cuDNN 9 on the
+      loader path; the package does not ship them. The schema has no field for native runtime, driver or GPU
+      requirements, so they are recorded here and in docs/m0/e5-gpu.md.
+    - >-
+      With use_tf32 0, ORT CUDA matches the PyTorch fp32 CPU hidden states to 2.1e-6 and the protected
+      embeddings to 1.9e-7 on the M0 corpus; C# and Python ORT CUDA hidden states are bit-identical.

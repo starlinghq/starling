@@ -1,0 +1,1513 @@
+{
+ "e5-fp32-wasm.json": {
+  "latency_js": {
+   "passage34-b1": {
+    "batch": 1,
+    "seq": 34,
+    "warmup": 3,
+    "samples_ms": [
+     28.564999997615814,
+     29.415000021457672,
+     29.0450000166893,
+     27.32499998807907,
+     30.519999980926514,
+     28.100000023841858,
+     26.90499997138977,
+     27.314999997615814,
+     26.660000026226044,
+     26.769999980926514,
+     26.375,
+     26.8400000333786,
+     26.959999978542328,
+     29.5,
+     30.30000001192093,
+     26.944999992847443,
+     27.00499999523163,
+     26.875,
+     33.439999997615814,
+     27.169999957084656
+    ]
+   },
+   "short-b8": {
+    "batch": 8,
+    "seq": 44,
+    "warmup": 3,
+    "samples_ms": [
+     179.5450000166893,
+     148.00999999046326,
+     143.2300000190735,
+     147.60000002384186,
+     141.9749999642372,
+     152.36500000953674,
+     170.14000004529953,
+     167.98499995470047,
+     147.05000001192093,
+     145.85000002384186,
+     148.3299999833107,
+     185.9399999976158,
+     141.70000004768372,
+     154.44999998807907,
+     162.15499997138977,
+     145.28500002622604,
+     188.36500000953674,
+     209.92499995231628,
+     201.66999995708466,
+     208.16000002622604
+    ]
+   },
+   "long512-b1": {
+    "batch": 1,
+    "seq": 512,
+    "warmup": 3,
+    "samples_ms": [
+     308.5849999785423,
+     282.07499998807907,
+     322.68000000715256,
+     329.1650000214577,
+     296.6899999976158
+    ]
+   }
+  },
+  "latency_e2e": {
+   "passage34-b1": [
+    20.015,
+    19.435,
+    20.565,
+    20.54,
+    21.635,
+    27.18,
+    26.795,
+    28.06,
+    26.93,
+    27.435,
+    28.7,
+    20.215,
+    20.455,
+    19.915,
+    22.5,
+    19.425,
+    19.835,
+    27.49,
+    20.525,
+    20.005
+   ],
+   "short-b8": [
+    172.565,
+    157.755,
+    149.62,
+    145.235,
+    151.575,
+    172.63,
+    171.445,
+    148.18,
+    152.205,
+    168.175,
+    180.635,
+    221.03,
+    213.375,
+    178.935,
+    151.235,
+    215.635,
+    147.465,
+    220.86,
+    238.075,
+    238.13
+   ]
+  },
+  "run_download": {
+   "/data/models/model-fp32.onnx": {
+    "bytes": 470268510,
+    "uncompressed": 470268510,
+    "encoding": null
+   },
+   "/ort/ort-wasm-simd-threaded.asyncify.mjs": {
+    "bytes": 318342,
+    "uncompressed": 318342,
+    "encoding": null
+   },
+   "/ort/ort-wasm-simd-threaded.asyncify.wasm": {
+    "bytes": 26781914,
+    "uncompressed": 26781914,
+    "encoding": null
+   },
+   "/data/fixtures/multilingual-e5-small/onnx-fp32-cpu/embeddings.jsonl": {
+    "bytes": 224774,
+    "uncompressed": 224774,
+    "encoding": null
+   },
+   "/data/tok/intfloat/multilingual-e5-small/614241f622f53c4eeff9890bdc4f31cfecc418b3/tokenizer.json": {
+    "bytes": 17082730,
+    "uncompressed": 17082730,
+    "encoding": null
+   },
+   "/data/fixtures/multilingual-e5-small/onnx-fp32-cpu/tokenizer.jsonl": {
+    "bytes": 338568,
+    "uncompressed": 338568,
+    "encoding": null
+   }
+  },
+  "gpu_before": "0, NVIDIA GeForce RTX 3090, 377 MiB, 0 %\n1, NVIDIA GeForce RTX 4060 Ti, 804 MiB, 0 %",
+  "gpu_during": null,
+  "gpu_after": "0, NVIDIA GeForce RTX 3090, 377 MiB, 0 %\n1, NVIDIA GeForce RTX 4060 Ti, 814 MiB, 0 %",
+  "console_warnings": []
+ },
+ "e5-fp32-webgpu.json": {
+  "latency_js": {
+   "passage34-b1": {
+    "batch": 1,
+    "seq": 34,
+    "warmup": 3,
+    "samples_ms": [
+     17.730000019073486,
+     17.10999995470047,
+     19.314999997615814,
+     18.125,
+     16.97999995946884,
+     16.200000047683716,
+     16.32499998807907,
+     38.875,
+     16.469999969005585,
+     16.22000002861023
+    ]
+   },
+   "short-b8": {
+    "batch": 8,
+    "seq": 44,
+    "warmup": 3,
+    "samples_ms": [
+     17.72999995946884,
+     17.080000042915344,
+     19.62000000476837,
+     16.8649999499321,
+     16.174999952316284,
+     16.225000023841858,
+     16.540000021457672,
+     16.110000014305115,
+     17.634999990463257,
+     16.12000000476837
+    ]
+   },
+   "long512-b1": {
+    "batch": 1,
+    "seq": 512,
+    "warmup": 3,
+    "samples_ms": [
+     16.110000014305115,
+     17.730000019073486,
+     16.0799999833107
+    ]
+   }
+  },
+  "latency_e2e": {
+   "passage34-b1": [
+    17.71,
+    18.47,
+    17.93,
+    17.485,
+    17.575,
+    18.635,
+    17.83,
+    18.135,
+    16.795,
+    16.51
+   ],
+   "short-b8": [
+    27.87,
+    29.195,
+    20.415,
+    19.485,
+    20.205,
+    23.5,
+    20.455,
+    18.46,
+    18.23,
+    18.095
+   ]
+  },
+  "run_download": {
+   "/data/models/model-fp32.onnx": {
+    "bytes": 470268510,
+    "uncompressed": 470268510,
+    "encoding": null
+   },
+   "/ort/ort-wasm-simd-threaded.asyncify.mjs": {
+    "bytes": 318342,
+    "uncompressed": 318342,
+    "encoding": null
+   },
+   "/ort/ort-wasm-simd-threaded.asyncify.wasm": {
+    "bytes": 26781914,
+    "uncompressed": 26781914,
+    "encoding": null
+   },
+   "/data/fixtures/multilingual-e5-small/onnx-fp32-cpu/embeddings.jsonl": {
+    "bytes": 224774,
+    "uncompressed": 224774,
+    "encoding": null
+   },
+   "/data/tok/intfloat/multilingual-e5-small/614241f622f53c4eeff9890bdc4f31cfecc418b3/tokenizer.json": {
+    "bytes": 17082730,
+    "uncompressed": 17082730,
+    "encoding": null
+   },
+   "/data/fixtures/multilingual-e5-small/onnx-fp32-cpu/tokenizer.jsonl": {
+    "bytes": 338568,
+    "uncompressed": 338568,
+    "encoding": null
+   }
+  },
+  "gpu_before": "0, NVIDIA GeForce RTX 3090, 377 MiB, 0 %\n1, NVIDIA GeForce RTX 4060 Ti, 814 MiB, 0 %",
+  "gpu_during": "0, NVIDIA GeForce RTX 3090, 377 MiB, 0 %\n1, NVIDIA GeForce RTX 4060 Ti, 1412 MiB, 0 %",
+  "gpu_after": "0, NVIDIA GeForce RTX 3090, 377 MiB, 0 %\n1, NVIDIA GeForce RTX 4060 Ti, 804 MiB, 13 %",
+  "console_warnings": [
+   "error: \u001b[0;93m2026-10-11 21:18:05.326279 [W:onnxruntime:, session_state.cc:1397 VerifyEachNodeIsAssignedToAnEp] Some nodes were not assigned to the preferred execution providers which may or may not have an negative impact on performance. e.g. ORT explicitly assigns shape related ops to CPU to impro",
+   "error: \u001b[0;93m2026-10-11 21:18:05.331454 [W:onnxruntime:, session_state.cc:1399 VerifyEachNodeIsAssignedToAnEp] Rerunning with verbose output on a non-minimal build will show node assignments.\u001b[m"
+  ]
+ },
+ "e5-fp16-wasm.json": {
+  "latency_js": {
+   "passage34-b1": {
+    "batch": 1,
+    "seq": 34,
+    "warmup": 3,
+    "samples_ms": [
+     30.25499999523163,
+     30.67500001192093,
+     31.035000026226044,
+     30.849999964237213,
+     30.930000007152557,
+     30.99500000476837,
+     30.889999985694885,
+     31.8850000500679,
+     34.669999957084656,
+     32.285000026226044,
+     31.569999992847443,
+     31.149999976158142,
+     31.360000014305115,
+     31.025000035762787,
+     31.365000009536743,
+     31.564999997615814,
+     31.774999976158142,
+     31.490000009536743,
+     31.42500001192093,
+     35.799999952316284
+    ]
+   },
+   "short-b8": {
+    "batch": 8,
+    "seq": 44,
+    "warmup": 3,
+    "samples_ms": [
+     154.91500002145767,
+     169.1850000023842,
+     158.8149999976158,
+     160.3149999976158,
+     190.11000001430511,
+     153.87999999523163,
+     154.7249999642372,
+     152.74000000953674,
+     212.29000002145767,
+     216.03500002622604,
+     231.2399999499321,
+     178.68499994277954,
+     229.24000000953674,
+     175.2750000357628,
+     152.71999996900558,
+     152.3550000190735,
+     182.23500001430511,
+     154.17500001192093,
+     150.27999997138977,
+     153.87999999523163
+    ]
+   },
+   "long512-b1": {
+    "batch": 1,
+    "seq": 512,
+    "warmup": 3,
+    "samples_ms": [
+     337.05000001192093,
+     331.30000001192093,
+     305.28500002622604,
+     307.38499999046326,
+     304.5450000166893
+    ]
+   }
+  },
+  "latency_e2e": {
+   "passage34-b1": [
+    36.1,
+    26.745,
+    24.855,
+    24.88,
+    24.975,
+    41.675,
+    37.825,
+    38.48,
+    40.365,
+    38.695,
+    36.335,
+    36.245,
+    38.16,
+    33.995,
+    31.815,
+    25.565,
+    25.185,
+    35.325,
+    23.77,
+    25.725
+   ],
+   "short-b8": [
+    223.115,
+    214.665,
+    208.1,
+    160.25,
+    158.29,
+    183.16,
+    158.415,
+    154.365,
+    174.57,
+    158.91,
+    156.485,
+    181.975,
+    164.975,
+    192.995,
+    153.3,
+    159.12,
+    156.39,
+    158.81,
+    185.755,
+    152.105
+   ]
+  },
+  "run_download": {
+   "/data/models/model-fp16.onnx": {
+    "bytes": 235336673,
+    "uncompressed": 235336673,
+    "encoding": null
+   },
+   "/ort/ort-wasm-simd-threaded.asyncify.mjs": {
+    "bytes": 318342,
+    "uncompressed": 318342,
+    "encoding": null
+   },
+   "/ort/ort-wasm-simd-threaded.asyncify.wasm": {
+    "bytes": 26781914,
+    "uncompressed": 26781914,
+    "encoding": null
+   },
+   "/data/fixtures/multilingual-e5-small/onnx-fp32-cpu/embeddings.jsonl": {
+    "bytes": 224774,
+    "uncompressed": 224774,
+    "encoding": null
+   },
+   "/data/tok/intfloat/multilingual-e5-small/614241f622f53c4eeff9890bdc4f31cfecc418b3/tokenizer.json": {
+    "bytes": 17082730,
+    "uncompressed": 17082730,
+    "encoding": null
+   },
+   "/data/fixtures/multilingual-e5-small/onnx-fp32-cpu/tokenizer.jsonl": {
+    "bytes": 338568,
+    "uncompressed": 338568,
+    "encoding": null
+   }
+  },
+  "gpu_before": "0, NVIDIA GeForce RTX 3090, 377 MiB, 0 %\n1, NVIDIA GeForce RTX 4060 Ti, 804 MiB, 0 %",
+  "gpu_during": null,
+  "gpu_after": "0, NVIDIA GeForce RTX 3090, 377 MiB, 0 %\n1, NVIDIA GeForce RTX 4060 Ti, 805 MiB, 0 %",
+  "console_warnings": []
+ },
+ "e5-int8-dynamic-wasm.json": {
+  "latency_js": {
+   "passage34-b1": {
+    "batch": 1,
+    "seq": 34,
+    "warmup": 3,
+    "samples_ms": [
+     20.134999990463257,
+     20.740000009536743,
+     20.0799999833107,
+     19.969999969005585,
+     20.2950000166893,
+     20.274999976158142,
+     20.17500001192093,
+     20.780000030994415,
+     20.314999997615814,
+     20.599999964237213,
+     21.235000014305115,
+     20.240000009536743,
+     20.055000007152557,
+     20.094999969005585,
+     20.09500002861023,
+     20.099999964237213,
+     20.00499999523163,
+     20.105000019073486,
+     20.435000002384186,
+     20.310000002384186
+    ]
+   },
+   "short-b8": {
+    "batch": 8,
+    "seq": 44,
+    "warmup": 3,
+    "samples_ms": [
+     120,
+     93.9200000166893,
+     101.32499998807907,
+     145.2750000357628,
+     135.77999997138977,
+     134.0900000333786,
+     133.3299999833107,
+     119.5,
+     86.83500003814697,
+     86.37999999523163,
+     91.12999999523163,
+     93.05500000715256,
+     114.46999996900558,
+     91.3400000333786,
+     86.70999997854233,
+     89.24000000953674,
+     90.25,
+     112.11000001430511,
+     118.14499998092651,
+     87.93000000715256
+    ]
+   },
+   "long512-b1": {
+    "batch": 1,
+    "seq": 512,
+    "warmup": 3,
+    "samples_ms": [
+     219.91500002145767,
+     204.66499996185303,
+     240.40500003099442,
+     226.25499999523163,
+     199.44499999284744
+    ]
+   }
+  },
+  "latency_e2e": {
+   "passage34-b1": [
+    24.675,
+    24.795,
+    23.875,
+    23.785,
+    22.78,
+    26.635,
+    25.155,
+    24.7,
+    24.735,
+    24.56,
+    25.125,
+    21.26,
+    16.845,
+    16.05,
+    16.99,
+    15.87,
+    17.285,
+    25.26,
+    16.04,
+    16.105
+   ],
+   "short-b8": [
+    93.575,
+    91.745,
+    96.365,
+    88.19,
+    93.34,
+    125.395,
+    99.035,
+    90.805,
+    111.445,
+    131.87,
+    92.46,
+    91.36,
+    89.075,
+    98.95,
+    93.73,
+    111.775,
+    157.46,
+    150.38,
+    149.755,
+    149.39
+   ]
+  },
+  "run_download": {
+   "/data/models/model-int8-dynamic.onnx": {
+    "bytes": 118101091,
+    "uncompressed": 118101091,
+    "encoding": null
+   },
+   "/ort/ort-wasm-simd-threaded.asyncify.mjs": {
+    "bytes": 318342,
+    "uncompressed": 318342,
+    "encoding": null
+   },
+   "/ort/ort-wasm-simd-threaded.asyncify.wasm": {
+    "bytes": 26781914,
+    "uncompressed": 26781914,
+    "encoding": null
+   },
+   "/data/fixtures/multilingual-e5-small/onnx-fp32-cpu/embeddings.jsonl": {
+    "bytes": 224774,
+    "uncompressed": 224774,
+    "encoding": null
+   },
+   "/data/tok/intfloat/multilingual-e5-small/614241f622f53c4eeff9890bdc4f31cfecc418b3/tokenizer.json": {
+    "bytes": 17082730,
+    "uncompressed": 17082730,
+    "encoding": null
+   },
+   "/data/fixtures/multilingual-e5-small/onnx-fp32-cpu/tokenizer.jsonl": {
+    "bytes": 338568,
+    "uncompressed": 338568,
+    "encoding": null
+   }
+  },
+  "gpu_before": "0, NVIDIA GeForce RTX 3090, 377 MiB, 0 %\n1, NVIDIA GeForce RTX 4060 Ti, 805 MiB, 0 %",
+  "gpu_during": null,
+  "gpu_after": "0, NVIDIA GeForce RTX 3090, 377 MiB, 0 %\n1, NVIDIA GeForce RTX 4060 Ti, 804 MiB, 2 %",
+  "console_warnings": []
+ },
+ "e5-int8-dynamic-webgpu.json": {
+  "latency_js": {
+   "passage34-b1": {
+    "batch": 1,
+    "seq": 34,
+    "warmup": 3,
+    "samples_ms": [
+     263.52999997138977,
+     268.69499999284744,
+     316.4350000023842,
+     331,
+     274.8499999642372,
+     266.4950000047684,
+     266.9399999976158,
+     368.5250000357628,
+     254.68000000715256,
+     254.62000000476837
+    ]
+   },
+   "short-b8": {
+    "batch": 8,
+    "seq": 44,
+    "warmup": 3,
+    "samples_ms": [
+     497.9050000309944,
+     494.6100000143051,
+     488.3899999856949,
+     523.7950000166893,
+     508.0949999690056,
+     492.9050000309944,
+     501.9299999475479,
+     487.6149999499321,
+     537.6500000357628,
+     536.6899999976158
+    ]
+   },
+   "long512-b1": {
+    "batch": 1,
+    "seq": 512,
+    "warmup": 3,
+    "samples_ms": [
+     723.4300000071526,
+     768.3249999880791,
+     761.9250000119209
+    ]
+   }
+  },
+  "latency_e2e": {
+   "passage34-b1": [
+    276.475,
+    263.895,
+    262.305,
+    254.645,
+    254.315,
+    260.485,
+    261.355,
+    268.13,
+    267.515,
+    255.355
+   ],
+   "short-b8": [
+    509.12,
+    514.685,
+    486.705,
+    483.435,
+    496.03,
+    511.605,
+    476.545,
+    495.11,
+    506.835,
+    500.265
+   ]
+  },
+  "run_download": {
+   "/data/models/model-int8-dynamic.onnx": {
+    "bytes": 118101091,
+    "uncompressed": 118101091,
+    "encoding": null
+   },
+   "/ort/ort-wasm-simd-threaded.asyncify.mjs": {
+    "bytes": 318342,
+    "uncompressed": 318342,
+    "encoding": null
+   },
+   "/ort/ort-wasm-simd-threaded.asyncify.wasm": {
+    "bytes": 26781914,
+    "uncompressed": 26781914,
+    "encoding": null
+   },
+   "/data/fixtures/multilingual-e5-small/onnx-fp32-cpu/embeddings.jsonl": {
+    "bytes": 224774,
+    "uncompressed": 224774,
+    "encoding": null
+   },
+   "/data/tok/intfloat/multilingual-e5-small/614241f622f53c4eeff9890bdc4f31cfecc418b3/tokenizer.json": {
+    "bytes": 17082730,
+    "uncompressed": 17082730,
+    "encoding": null
+   },
+   "/data/fixtures/multilingual-e5-small/onnx-fp32-cpu/tokenizer.jsonl": {
+    "bytes": 338568,
+    "uncompressed": 338568,
+    "encoding": null
+   }
+  },
+  "gpu_before": "0, NVIDIA GeForce RTX 3090, 377 MiB, 0 %\n1, NVIDIA GeForce RTX 4060 Ti, 804 MiB, 2 %",
+  "gpu_during": "0, NVIDIA GeForce RTX 3090, 377 MiB, 0 %\n1, NVIDIA GeForce RTX 4060 Ti, 965 MiB, 29 %",
+  "gpu_after": "0, NVIDIA GeForce RTX 3090, 377 MiB, 0 %\n1, NVIDIA GeForce RTX 4060 Ti, 804 MiB, 2 %",
+  "console_warnings": [
+   "error: \u001b[0;93m2026-10-11 21:21:48.022024 [W:onnxruntime:, session_state.cc:1397 VerifyEachNodeIsAssignedToAnEp] Some nodes were not assigned to the preferred execution providers which may or may not have an negative impact on performance. e.g. ORT explicitly assigns shape related ops to CPU to impro",
+   "error: \u001b[0;93m2026-10-11 21:21:48.034834 [W:onnxruntime:, session_state.cc:1399 VerifyEachNodeIsAssignedToAnEp] Rerunning with verbose output on a non-minimal build will show node assignments.\u001b[m"
+  ]
+ },
+ "e5-int8-dynamic-pc-wasm.json": {
+  "latency_js": {
+   "passage34-b1": {
+    "batch": 1,
+    "seq": 34,
+    "warmup": 3,
+    "samples_ms": [
+     26.0799999833107,
+     24.085000038146973,
+     23.50499999523163,
+     23.264999985694885,
+     23.25499999523163,
+     23.305000007152557,
+     23.280000030994415,
+     23.25499999523163,
+     23.259999990463257,
+     23.314999997615814,
+     23.264999985694885,
+     23.290000021457672,
+     23.189999997615814,
+     23.12000000476837,
+     23.230000019073486,
+     23.189999997615814,
+     23.1599999666214,
+     23.115000009536743,
+     23.930000007152557,
+     23.525000035762787
+    ]
+   },
+   "short-b8": {
+    "batch": 8,
+    "seq": 44,
+    "warmup": 3,
+    "samples_ms": [
+     148.47000002861023,
+     105.30500000715256,
+     91.18999999761581,
+     88.49500000476837,
+     91.69999998807907,
+     92.03000003099442,
+     90.77999997138977,
+     91.43000000715256,
+     88.64999997615814,
+     89.18500000238419,
+     98.27000004053116,
+     94.31999999284744,
+     118.96999996900558,
+     88.68000000715256,
+     88.81999999284744,
+     91.64500004053116,
+     92.46999996900558,
+     89.73000001907349,
+     93.97500002384186,
+     90.85499995946884
+    ]
+   },
+   "long512-b1": {
+    "batch": 1,
+    "seq": 512,
+    "warmup": 3,
+    "samples_ms": [
+     267.72000002861023,
+     215.7249999642372,
+     199.42500001192093,
+     223.1850000023842,
+     200.65500003099442
+    ]
+   }
+  },
+  "latency_e2e": {
+   "passage34-b1": [
+    17.09,
+    15.925,
+    16.745,
+    16.975,
+    16.72,
+    21.06,
+    20.52,
+    21.175,
+    22.895,
+    21.4,
+    21.405,
+    21.6,
+    17.03,
+    17.755,
+    21.17,
+    23.655,
+    23.17,
+    25.255,
+    15.895,
+    16.765
+   ],
+   "short-b8": [
+    100.545,
+    125.7,
+    92.345,
+    118.465,
+    138.375,
+    133.64,
+    134.03,
+    137.575,
+    117.175,
+    90.56,
+    89.935,
+    114.535,
+    94.475,
+    95.655,
+    94.31,
+    90.995,
+    91.73,
+    116.955,
+    110.14,
+    104.155
+   ]
+  },
+  "run_download": {
+   "/data/models/model-int8-dynamic-pc.onnx": {
+    "bytes": 118308811,
+    "uncompressed": 118308811,
+    "encoding": null
+   },
+   "/ort/ort-wasm-simd-threaded.asyncify.mjs": {
+    "bytes": 318342,
+    "uncompressed": 318342,
+    "encoding": null
+   },
+   "/ort/ort-wasm-simd-threaded.asyncify.wasm": {
+    "bytes": 26781914,
+    "uncompressed": 26781914,
+    "encoding": null
+   },
+   "/data/fixtures/multilingual-e5-small/onnx-fp32-cpu/embeddings.jsonl": {
+    "bytes": 224774,
+    "uncompressed": 224774,
+    "encoding": null
+   },
+   "/data/tok/intfloat/multilingual-e5-small/614241f622f53c4eeff9890bdc4f31cfecc418b3/tokenizer.json": {
+    "bytes": 17082730,
+    "uncompressed": 17082730,
+    "encoding": null
+   },
+   "/data/fixtures/multilingual-e5-small/onnx-fp32-cpu/tokenizer.jsonl": {
+    "bytes": 338568,
+    "uncompressed": 338568,
+    "encoding": null
+   }
+  },
+  "gpu_before": "0, NVIDIA GeForce RTX 3090, 377 MiB, 0 %\n1, NVIDIA GeForce RTX 4060 Ti, 804 MiB, 2 %",
+  "gpu_during": null,
+  "gpu_after": "0, NVIDIA GeForce RTX 3090, 377 MiB, 0 %\n1, NVIDIA GeForce RTX 4060 Ti, 804 MiB, 2 %",
+  "console_warnings": []
+ },
+ "e5-int8-dynamic-pc-webgpu.json": {
+  "latency_js": {
+   "passage34-b1": {
+    "batch": 1,
+    "seq": 34,
+    "warmup": 3,
+    "samples_ms": [
+     327.1399999856949,
+     252.7950000166893,
+     262.64999997615814,
+     281.5600000023842,
+     313.4549999833107,
+     303.1700000166893,
+     265.8149999976158,
+     324.4549999833107,
+     255.24500000476837,
+     257.69499999284744
+    ]
+   },
+   "short-b8": {
+    "batch": 8,
+    "seq": 44,
+    "warmup": 3,
+    "samples_ms": [
+     525.0450000166893,
+     570.0300000309944,
+     529.0799999833107,
+     474.5,
+     506.39999997615814,
+     483.8850000500679,
+     501.06999999284744,
+     496.2950000166893,
+     500.289999961853,
+     502.2300000190735
+    ]
+   },
+   "long512-b1": {
+    "batch": 1,
+    "seq": 512,
+    "warmup": 3,
+    "samples_ms": [
+     774.9050000309944,
+     702.789999961853,
+     689.1999999880791
+    ]
+   }
+  },
+  "latency_e2e": {
+   "passage34-b1": [
+    261.835,
+    263.13,
+    255.14,
+    255.405,
+    264.135,
+    271.415,
+    310.915,
+    261.865,
+    265.815,
+    278.29
+   ],
+   "short-b8": [
+    512.555,
+    503.54,
+    512.47,
+    509.92,
+    532.39,
+    507.045,
+    500.96,
+    519.765,
+    492.805,
+    562.475
+   ]
+  },
+  "run_download": {
+   "/data/models/model-int8-dynamic-pc.onnx": {
+    "bytes": 118308811,
+    "uncompressed": 118308811,
+    "encoding": null
+   },
+   "/ort/ort-wasm-simd-threaded.asyncify.mjs": {
+    "bytes": 318342,
+    "uncompressed": 318342,
+    "encoding": null
+   },
+   "/ort/ort-wasm-simd-threaded.asyncify.wasm": {
+    "bytes": 26781914,
+    "uncompressed": 26781914,
+    "encoding": null
+   },
+   "/data/fixtures/multilingual-e5-small/onnx-fp32-cpu/embeddings.jsonl": {
+    "bytes": 224774,
+    "uncompressed": 224774,
+    "encoding": null
+   },
+   "/data/tok/intfloat/multilingual-e5-small/614241f622f53c4eeff9890bdc4f31cfecc418b3/tokenizer.json": {
+    "bytes": 17082730,
+    "uncompressed": 17082730,
+    "encoding": null
+   },
+   "/data/fixtures/multilingual-e5-small/onnx-fp32-cpu/tokenizer.jsonl": {
+    "bytes": 338568,
+    "uncompressed": 338568,
+    "encoding": null
+   }
+  },
+  "gpu_before": "0, NVIDIA GeForce RTX 3090, 377 MiB, 0 %\n1, NVIDIA GeForce RTX 4060 Ti, 804 MiB, 2 %",
+  "gpu_during": "0, NVIDIA GeForce RTX 3090, 377 MiB, 0 %\n1, NVIDIA GeForce RTX 4060 Ti, 959 MiB, 10 %",
+  "gpu_after": "0, NVIDIA GeForce RTX 3090, 377 MiB, 0 %\n1, NVIDIA GeForce RTX 4060 Ti, 804 MiB, 6 %",
+  "console_warnings": [
+   "error: \u001b[0;93m2026-10-11 21:24:44.630794 [W:onnxruntime:, session_state.cc:1397 VerifyEachNodeIsAssignedToAnEp] Some nodes were not assigned to the preferred execution providers which may or may not have an negative impact on performance. e.g. ORT explicitly assigns shape related ops to CPU to impro",
+   "error: \u001b[0;93m2026-10-11 21:24:44.636564 [W:onnxruntime:, session_state.cc:1399 VerifyEachNodeIsAssignedToAnEp] Rerunning with verbose output on a non-minimal build will show node assignments.\u001b[m"
+  ]
+ },
+ "e5-int8-embed-wasm.json": {
+  "latency_js": {
+   "passage34-b1": {
+    "batch": 1,
+    "seq": 34,
+    "warmup": 3,
+    "samples_ms": [
+     28.92500001192093,
+     29.014999985694885,
+     29.139999985694885,
+     29.085000038146973,
+     30.019999980926514,
+     28.944999992847443,
+     29.235000014305115,
+     29.05000001192093,
+     29.305000007152557,
+     29.125,
+     29.4549999833107,
+     29.024999976158142,
+     29.1149999499321,
+     29.39500004053116,
+     30.344999969005585,
+     33.09500002861023,
+     32.589999973773956,
+     29.12000000476837,
+     29.685000002384186,
+     32.27000004053116
+    ]
+   },
+   "short-b8": {
+    "batch": 8,
+    "seq": 44,
+    "warmup": 3,
+    "samples_ms": [
+     225.60499995946884,
+     218.71000003814697,
+     148.48500001430511,
+     173.29499995708466,
+     153.6500000357628,
+     147.52999997138977,
+     144.39500004053116,
+     166.31999999284744,
+     177.19499999284744,
+     147.8550000190735,
+     149.91999995708466,
+     148.47500002384186,
+     144.86500000953674,
+     142.78999996185303,
+     146.5250000357628,
+     179.1449999809265,
+     154.05500000715256,
+     155.74500000476837,
+     147.45999997854233,
+     146.40500003099442
+    ]
+   },
+   "long512-b1": {
+    "batch": 1,
+    "seq": 512,
+    "warmup": 3,
+    "samples_ms": [
+     294.4850000143051,
+     311.0900000333786,
+     277.039999961853,
+     278.64000004529953,
+     295.5349999666214
+    ]
+   }
+  },
+  "latency_e2e": {
+   "passage34-b1": [
+    30.78,
+    30.715,
+    22.73,
+    20.39,
+    20.42,
+    27.73,
+    27.33,
+    27.525,
+    28.17,
+    27.85,
+    29.365,
+    21.96,
+    24.115,
+    27.095,
+    32.525,
+    30.265,
+    27.2,
+    28.155,
+    19.85,
+    20.11
+   ],
+   "short-b8": [
+    144.81,
+    152.195,
+    145.115,
+    155.76,
+    214.695,
+    214.675,
+    146.045,
+    173.42,
+    147.995,
+    150.48,
+    147.68,
+    156.505,
+    210.205,
+    147.365,
+    167.535,
+    217.88,
+    211.755,
+    199.455,
+    216.86,
+    195.33
+   ]
+  },
+  "run_download": {
+   "/data/models/model-int8-embed.onnx": {
+    "bytes": 181715582,
+    "uncompressed": 181715582,
+    "encoding": null
+   },
+   "/ort/ort-wasm-simd-threaded.asyncify.mjs": {
+    "bytes": 318342,
+    "uncompressed": 318342,
+    "encoding": null
+   },
+   "/ort/ort-wasm-simd-threaded.asyncify.wasm": {
+    "bytes": 26781914,
+    "uncompressed": 26781914,
+    "encoding": null
+   },
+   "/data/fixtures/multilingual-e5-small/onnx-fp32-cpu/embeddings.jsonl": {
+    "bytes": 224774,
+    "uncompressed": 224774,
+    "encoding": null
+   },
+   "/data/tok/intfloat/multilingual-e5-small/614241f622f53c4eeff9890bdc4f31cfecc418b3/tokenizer.json": {
+    "bytes": 17082730,
+    "uncompressed": 17082730,
+    "encoding": null
+   },
+   "/data/fixtures/multilingual-e5-small/onnx-fp32-cpu/tokenizer.jsonl": {
+    "bytes": 338568,
+    "uncompressed": 338568,
+    "encoding": null
+   }
+  },
+  "gpu_before": "0, NVIDIA GeForce RTX 3090, 377 MiB, 0 %\n1, NVIDIA GeForce RTX 4060 Ti, 804 MiB, 0 %",
+  "gpu_during": null,
+  "gpu_after": "0, NVIDIA GeForce RTX 3090, 377 MiB, 0 %\n1, NVIDIA GeForce RTX 4060 Ti, 804 MiB, 1 %",
+  "console_warnings": []
+ },
+ "e5-int8-embed-webgpu.json": {
+  "latency_js": {
+   "passage34-b1": {
+    "batch": 1,
+    "seq": 34,
+    "warmup": 3,
+    "samples_ms": [
+     21.644999980926514,
+     17.660000026226044,
+     19.399999976158142,
+     19.314999997615814,
+     17.0799999833107,
+     17.139999985694885,
+     17.735000014305115,
+     16.735000014305115,
+     17.344999969005585,
+     20.27000004053116
+    ]
+   },
+   "short-b8": {
+    "batch": 8,
+    "seq": 44,
+    "warmup": 3,
+    "samples_ms": [
+     16.884999990463257,
+     18.634999990463257,
+     19.460000038146973,
+     17.105000019073486,
+     16.060000002384186,
+     16.789999961853027,
+     16.485000014305115,
+     16.625,
+     17.144999980926514,
+     16.389999985694885
+    ]
+   },
+   "long512-b1": {
+    "batch": 1,
+    "seq": 512,
+    "warmup": 3,
+    "samples_ms": [
+     17.9549999833107,
+     17.55000001192093,
+     16.639999985694885
+    ]
+   }
+  },
+  "latency_e2e": {
+   "passage34-b1": [
+    16.46,
+    16.42,
+    16.77,
+    16.295,
+    16.62,
+    16.72,
+    16.785,
+    16.5,
+    17.095,
+    16.05
+   ],
+   "short-b8": [
+    21.89,
+    22.035,
+    18.68,
+    22.76,
+    18.095,
+    18.265,
+    21.345,
+    18.005,
+    18.36,
+    17.78
+   ]
+  },
+  "run_download": {
+   "/data/models/model-int8-embed.onnx": {
+    "bytes": 181715582,
+    "uncompressed": 181715582,
+    "encoding": null
+   },
+   "/ort/ort-wasm-simd-threaded.asyncify.mjs": {
+    "bytes": 318342,
+    "uncompressed": 318342,
+    "encoding": null
+   },
+   "/ort/ort-wasm-simd-threaded.asyncify.wasm": {
+    "bytes": 26781914,
+    "uncompressed": 26781914,
+    "encoding": null
+   },
+   "/data/fixtures/multilingual-e5-small/onnx-fp32-cpu/embeddings.jsonl": {
+    "bytes": 224774,
+    "uncompressed": 224774,
+    "encoding": null
+   },
+   "/data/tok/intfloat/multilingual-e5-small/614241f622f53c4eeff9890bdc4f31cfecc418b3/tokenizer.json": {
+    "bytes": 17082730,
+    "uncompressed": 17082730,
+    "encoding": null
+   },
+   "/data/fixtures/multilingual-e5-small/onnx-fp32-cpu/tokenizer.jsonl": {
+    "bytes": 338568,
+    "uncompressed": 338568,
+    "encoding": null
+   }
+  },
+  "gpu_before": "0, NVIDIA GeForce RTX 3090, 377 MiB, 0 %\n1, NVIDIA GeForce RTX 4060 Ti, 804 MiB, 1 %",
+  "gpu_during": "0, NVIDIA GeForce RTX 3090, 377 MiB, 0 %\n1, NVIDIA GeForce RTX 4060 Ti, 1144 MiB, 0 %",
+  "gpu_after": "0, NVIDIA GeForce RTX 3090, 377 MiB, 0 %\n1, NVIDIA GeForce RTX 4060 Ti, 804 MiB, 2 %",
+  "console_warnings": [
+   "error: \u001b[0;93m2026-10-11 21:27:46.156820 [W:onnxruntime:, session_state.cc:1397 VerifyEachNodeIsAssignedToAnEp] Some nodes were not assigned to the preferred execution providers which may or may not have an negative impact on performance. e.g. ORT explicitly assigns shape related ops to CPU to impro",
+   "error: \u001b[0;93m2026-10-11 21:27:46.161939 [W:onnxruntime:, session_state.cc:1399 VerifyEachNodeIsAssignedToAnEp] Rerunning with verbose output on a non-minimal build will show node assignments.\u001b[m"
+  ]
+ },
+ "e5-fp32-wasm-interp.json": {
+  "latency_js": {
+   "passage34-b1": {
+    "batch": 1,
+    "seq": 34,
+    "warmup": 3,
+    "samples_ms": [
+     28.730000019073486,
+     30.725000023841858,
+     28.039999961853027,
+     20.2950000166893,
+     23.314999997615814,
+     18.600000023841858,
+     20.069999992847443,
+     18.930000007152557,
+     18.9549999833107,
+     21.275000035762787,
+     18.509999990463257,
+     18.694999992847443,
+     18.605000019073486,
+     19.569999992847443,
+     18.714999973773956,
+     19.125,
+     22.02000004053116,
+     19.0799999833107,
+     19.42500001192093,
+     19.735000014305115
+    ]
+   },
+   "short-b8": {
+    "batch": 8,
+    "seq": 44,
+    "warmup": 3,
+    "samples_ms": [
+     149.25999999046326,
+     172.43000000715256,
+     199.53000003099442,
+     147.47999995946884,
+     147.59500002861023,
+     140.9800000190735,
+     149.74500000476837,
+     157.66499996185303,
+     158.7600000500679,
+     169.9749999642372,
+     186.5,
+     145.00999999046326,
+     158.1700000166893,
+     145.65500003099442,
+     179.40499997138977,
+     142.10000002384186,
+     145.4399999976158,
+     146.03500002622604,
+     141.0600000023842,
+     171.19499999284744
+    ]
+   },
+   "long512-b1": {
+    "batch": 1,
+    "seq": 512,
+    "warmup": 3,
+    "samples_ms": [
+     440.24000000953674,
+     359.8349999785423,
+     281.1650000214577,
+     314.17500001192093,
+     283.0799999833107
+    ]
+   }
+  },
+  "latency_e2e": {
+   "passage34-b1": [
+    30.255,
+    39.275,
+    41.375,
+    45.47,
+    37.005,
+    39.545,
+    38.115,
+    35.535,
+    36.935,
+    35.5,
+    28.295,
+    30.47,
+    28.105,
+    27.745,
+    29.265,
+    29.56,
+    29.07,
+    29.125,
+    29.915,
+    21.705
+   ],
+   "short-b8": [
+    169.23,
+    185.965,
+    155.115,
+    147.27,
+    162.755,
+    187.705,
+    212.225,
+    236.995,
+    177.765,
+    160.995,
+    151.915,
+    152.25,
+    167.07,
+    152.825,
+    215.195,
+    151.525,
+    158.2,
+    169.08,
+    151.25,
+    154.12
+   ]
+  },
+  "run_download": {
+   "/data/models/model-fp32.onnx": {
+    "bytes": 470268510,
+    "uncompressed": 470268510,
+    "encoding": null
+   },
+   "/ort/ort-wasm-simd-threaded.asyncify.mjs": {
+    "bytes": 318342,
+    "uncompressed": 318342,
+    "encoding": null
+   },
+   "/ort/ort-wasm-simd-threaded.asyncify.wasm": {
+    "bytes": 26781914,
+    "uncompressed": 26781914,
+    "encoding": null
+   },
+   "/data/fixtures/multilingual-e5-small/onnx-fp32-cpu/embeddings.jsonl": {
+    "bytes": 224774,
+    "uncompressed": 224774,
+    "encoding": null
+   },
+   "/data/tok/intfloat/multilingual-e5-small/614241f622f53c4eeff9890bdc4f31cfecc418b3/tokenizer.json": {
+    "bytes": 17082730,
+    "uncompressed": 17082730,
+    "encoding": null
+   },
+   "/data/fixtures/multilingual-e5-small/onnx-fp32-cpu/tokenizer.jsonl": {
+    "bytes": 338568,
+    "uncompressed": 338568,
+    "encoding": null
+   }
+  },
+  "gpu_before": "0, NVIDIA GeForce RTX 3090, 377 MiB, 0 %\n1, NVIDIA GeForce RTX 4060 Ti, 804 MiB, 2 %",
+  "gpu_during": null,
+  "gpu_after": "0, NVIDIA GeForce RTX 3090, 377 MiB, 0 %\n1, NVIDIA GeForce RTX 4060 Ti, 804 MiB, 0 %",
+  "console_warnings": []
+ },
+ "e5-int8-embed-wasm-t1.json": {
+  "latency_js": {
+   "passage34-b1": {
+    "batch": 1,
+    "seq": 34,
+    "warmup": 3,
+    "samples_ms": [
+     81.60000002384186,
+     79.5,
+     80,
+     78.80000001192093,
+     78.09999996423721,
+     78.80000001192093,
+     79.30000001192093,
+     80.30000001192093,
+     79.39999997615814,
+     79.60000002384186,
+     79.19999998807907,
+     80.69999998807907,
+     80.80000001192093,
+     80.09999996423721,
+     78.90000003576279,
+     79.19999998807907,
+     79.39999997615814,
+     79,
+     81.5,
+     83.40000003576279
+    ]
+   },
+   "short-b8": {
+    "batch": 8,
+    "seq": 44,
+    "warmup": 3,
+    "samples_ms": [
+     788.3000000119209,
+     826.5,
+     793.8999999761581,
+     787.7000000476837,
+     788.6999999880791,
+     788,
+     787.5999999642372,
+     787.9000000357628,
+     783,
+     811.8000000119209,
+     807.8999999761581,
+     794,
+     802.3999999761581,
+     790.6000000238419,
+     788.6000000238419,
+     786.3999999761581,
+     790.3999999761581,
+     798.6000000238419,
+     811.8000000119209,
+     793.1999999880791
+    ]
+   },
+   "long512-b1": {
+    "batch": 1,
+    "seq": 512,
+    "warmup": 3,
+    "samples_ms": [
+     1492.8999999761581,
+     1540,
+     1508.1000000238419,
+     1490,
+     1470.699999988079
+    ]
+   }
+  },
+  "latency_e2e": {
+   "passage34-b1": [
+    83.8,
+    82.7,
+    83.4,
+    82.5,
+    84,
+    83,
+    84,
+    80,
+    86.3,
+    81,
+    83.4,
+    79.3,
+    79.9,
+    78.9,
+    80.6,
+    79.3,
+    88.4,
+    84.4,
+    82.6,
+    81.1
+   ],
+   "short-b8": [
+    775.3,
+    781.2,
+    782.8,
+    805.6,
+    779.8,
+    775.1,
+    780.2,
+    789,
+    774.9,
+    785.9,
+    780.2,
+    772.7,
+    843.3,
+    787.1,
+    772.2,
+    770.2,
+    773.4,
+    784.6,
+    787.4,
+    776.8
+   ]
+  },
+  "run_download": {
+   "/data/models/model-int8-embed.onnx": {
+    "bytes": 181715582,
+    "uncompressed": 181715582,
+    "encoding": null
+   },
+   "/ort/ort-wasm-simd-threaded.asyncify.wasm": {
+    "bytes": 26781914,
+    "uncompressed": 26781914,
+    "encoding": null
+   },
+   "/data/fixtures/multilingual-e5-small/onnx-fp32-cpu/embeddings.jsonl": {
+    "bytes": 224774,
+    "uncompressed": 224774,
+    "encoding": null
+   },
+   "/data/tok/intfloat/multilingual-e5-small/614241f622f53c4eeff9890bdc4f31cfecc418b3/tokenizer.json": {
+    "bytes": 17082730,
+    "uncompressed": 17082730,
+    "encoding": null
+   },
+   "/data/fixtures/multilingual-e5-small/onnx-fp32-cpu/tokenizer.jsonl": {
+    "bytes": 338568,
+    "uncompressed": 338568,
+    "encoding": null
+   }
+  },
+  "gpu_before": "0, NVIDIA GeForce RTX 3090, 377 MiB, 0 %\n1, NVIDIA GeForce RTX 4060 Ti, 808 MiB, 2 %",
+  "gpu_during": null,
+  "gpu_after": "0, NVIDIA GeForce RTX 3090, 377 MiB, 0 %\n1, NVIDIA GeForce RTX 4060 Ti, 804 MiB, 2 %",
+  "console_warnings": []
+ }
+}

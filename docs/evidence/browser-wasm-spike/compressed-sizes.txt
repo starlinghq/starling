@@ -1,0 +1,14 @@
+# browser/spike/harness/compressed_sizes.sh (bytes): raw, gzip -9, brotli (q9 for graphs, q11 for tokenizer.json)
+e5 model-fp32.onnx             raw=470268510 gzip9=272489197 br9=249324210
+e5 model-fp16.onnx             raw=235336673 gzip9=216600900 br9=216070890
+e5 model-int8-dynamic.onnx     raw=118101091 gzip9=78978142  br9=76985014
+e5 model-int8-embed.onnx       raw=181715582 gzip9=115385639 br9=109324794
+xlmr-unigram-e5 tokenizer.json raw=17082730  gzip9=3893276   br11=2464934
+qwen35-bpe-chat tokenizer.json raw=19989339  gzip9=3760606   br11=2685648
+gemma-bpe-embeddinggemma2 tokenizer.json raw=32170510 gzip9=5411038 br11=3498865
+# onnxruntime-web 1.30.0 dist (brotli q11)
+ort-wasm-simd-threaded.wasm          raw=14239897 gzip9=3659955 br11=2300583
+ort-wasm-simd-threaded.asyncify.wasm raw=26781914 gzip9=6578721 br11=3866678
+ort-wasm-simd-threaded.jsep.wasm     raw=28312028 gzip9=6623433 br11=3815553
+ort.webgpu.min.mjs                   raw=66349    gzip9=20610   br11=18294
+ort.wasm.min.mjs                     raw=50126    gzip9=16169   br11=14543

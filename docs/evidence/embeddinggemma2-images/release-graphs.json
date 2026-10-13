@@ -1,0 +1,193 @@
+{
+ "run_a": {
+  "torch": "2.14.1+cpu",
+  "onnx": "1.23.1",
+  "onnxruntime": "1.30.0",
+  "vision": {
+   "path": "embeddinggemma2-vision-fp32.onnx",
+   "size": 671256072,
+   "sha256": "6c97f477a82f6863d22d800476de6d0a618b23e514aa9b65a46b220c4b106b92",
+   "nodes": 1760,
+   "nodes_with_cleared_text": 1724,
+   "opset": [
+    {
+     "domain": "",
+     "version": 20
+    }
+   ],
+   "producer": "pytorch 2.14.1+cpu",
+   "inputs": [
+    "pixel_values",
+    "pixel_position_ids"
+   ],
+   "outputs": [
+    "soft_tokens",
+    "pooled",
+    "soft_token_mask"
+   ],
+   "seconds": 53.7,
+   "ort_cpu_vs_torch_random_patches": {
+    "two-images-padded": {
+     "soft_tokens_max_abs_valid": 3.063678741455078e-05,
+     "pooled_max_abs_valid": 0.0350341796875,
+     "mask_equal": true,
+     "finite": true
+    },
+    "one-image-unpadded": {
+     "soft_tokens_max_abs_valid": 2.3126602172851562e-05,
+     "pooled_max_abs_valid": 0.022705078125,
+     "mask_equal": true,
+     "finite": true
+    }
+   }
+  },
+  "text_mm": {
+   "path": "embeddinggemma2-text-mm-fp32.onnx",
+   "size": 1084327898,
+   "sha256": "a2c22e072ec230b105b35c2787dcfccba186254e6a921e729c45b40e50dbbb74",
+   "nodes": 2606,
+   "nodes_with_cleared_text": 0,
+   "opset": [
+    {
+     "domain": "",
+     "version": 20
+    }
+   ],
+   "producer": "pytorch 2.14.1+cpu",
+   "inputs": [
+    "input_ids",
+    "attention_mask",
+    "multimodal_embeds",
+    "multimodal_mask"
+   ],
+   "outputs": [
+    "last_hidden_state",
+    "token_embeddings"
+   ],
+   "seconds": 6.0,
+   "source": {
+    "path": "embeddinggemma2-text-fp32.onnx",
+    "sha256": "02cc7ecccbfcb29d812eb104e4c6ea6c599bc87e94f01082606f6a11f0252d11"
+   },
+   "added_tensors": {
+    "mixed": "inputs_embeds_mixed",
+    "per_layer_projection_mixed": "per_layer_projection_mixed"
+   },
+   "text_only_vs_released": {
+    "max_abs": 0.0,
+    "identical": true,
+    "optimization": "ORT_ENABLE_ALL",
+    "shapes": [
+     [
+      1,
+      14
+     ],
+     [
+      2,
+      300
+     ],
+     [
+      3,
+      700
+     ]
+    ]
+   }
+  }
+ },
+ "run_b": {
+  "torch": "2.14.1+cpu",
+  "onnx": "1.23.1",
+  "onnxruntime": "1.30.0",
+  "vision": {
+   "path": "embeddinggemma2-vision-fp32.onnx",
+   "size": 671256072,
+   "sha256": "6c97f477a82f6863d22d800476de6d0a618b23e514aa9b65a46b220c4b106b92",
+   "nodes": 1760,
+   "nodes_with_cleared_text": 1724,
+   "opset": [
+    {
+     "domain": "",
+     "version": 20
+    }
+   ],
+   "producer": "pytorch 2.14.1+cpu",
+   "inputs": [
+    "pixel_values",
+    "pixel_position_ids"
+   ],
+   "outputs": [
+    "soft_tokens",
+    "pooled",
+    "soft_token_mask"
+   ],
+   "seconds": 55.7,
+   "ort_cpu_vs_torch_random_patches": {
+    "two-images-padded": {
+     "soft_tokens_max_abs_valid": 3.063678741455078e-05,
+     "pooled_max_abs_valid": 0.0350341796875,
+     "mask_equal": true,
+     "finite": true
+    },
+    "one-image-unpadded": {
+     "soft_tokens_max_abs_valid": 2.3126602172851562e-05,
+     "pooled_max_abs_valid": 0.022705078125,
+     "mask_equal": true,
+     "finite": true
+    }
+   }
+  },
+  "text_mm": {
+   "path": "embeddinggemma2-text-mm-fp32.onnx",
+   "size": 1084327898,
+   "sha256": "a2c22e072ec230b105b35c2787dcfccba186254e6a921e729c45b40e50dbbb74",
+   "nodes": 2606,
+   "nodes_with_cleared_text": 0,
+   "opset": [
+    {
+     "domain": "",
+     "version": 20
+    }
+   ],
+   "producer": "pytorch 2.14.1+cpu",
+   "inputs": [
+    "input_ids",
+    "attention_mask",
+    "multimodal_embeds",
+    "multimodal_mask"
+   ],
+   "outputs": [
+    "last_hidden_state",
+    "token_embeddings"
+   ],
+   "seconds": 6.1,
+   "source": {
+    "path": "embeddinggemma2-text-fp32.onnx",
+    "sha256": "02cc7ecccbfcb29d812eb104e4c6ea6c599bc87e94f01082606f6a11f0252d11"
+   },
+   "added_tensors": {
+    "mixed": "inputs_embeds_mixed",
+    "per_layer_projection_mixed": "per_layer_projection_mixed"
+   },
+   "text_only_vs_released": {
+    "max_abs": 0.0,
+    "identical": true,
+    "optimization": "ORT_ENABLE_ALL",
+    "shapes": [
+     [
+      1,
+      14
+     ],
+     [
+      2,
+      300
+     ],
+     [
+      3,
+      700
+     ]
+    ]
+   }
+  }
+ },
+ "byte_identical": true
+}

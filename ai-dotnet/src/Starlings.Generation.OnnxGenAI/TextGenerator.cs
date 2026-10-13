@@ -1,0 +1,249 @@
+using System.Collections.Immutable;
+using System.Diagnostics;
+using System.Text;
+using Starlings.Tokenizers;
+
+namespace Starlings.Generation.OnnxGenAI;
+
+/// <summary>
+/// The owned decode loop over ONNX Runtime GenAI: pre-tokenized prompt ids in, completion ids and text out. One
+/// <see cref="GenAISequence"/> per request, so concurrent requests on one <see cref="TextGenerator"/> share the model
+/// weights but no generation state. Thread-safe.
+/// </summary>
+/// <remarks>
+/// <para>
+/// Per request: check cancellation, run the prompt through the model in one prefill (blocking, not interruptible), then
+/// one decode step at a time: check cancellation, stop at <see cref="GenerationOptions.MaxNewTokens"/> completion
+/// tokens, generate a token (greedy unless <see cref="GenerationOptions.Sampling"/> is set), stop at a stop token id
+/// (not part of the completion), detokenize incrementally with the owned tokenizer (never half a character), and stop
+/// at a stop sequence (cut before the match).
+/// </para>
+/// <para>
+/// Cancellation is checked before the prefill and between decode steps. A token passed in cancels at the next check:
+/// the call throws <see cref="OperationCanceledException"/> and the native generator is released. It cannot interrupt
+/// a prefill or a step already running.
+/// </para>
+/// <para>
+/// The APIs are synchronous on purpose: every step is blocking native work, and wrapping it in a task would only move
+/// it to another thread (plan 5.1). Callers that need an asynchronous stream run the enumeration on a worker thread.
+/// </para>
+/// </remarks>
+public sealed class TextGenerator
+{
+    private readonly HashSet<int> _stopIds;
+    private readonly Func<GenAISequenceOptions, IGenerationSequence> _createSequence;
+    private readonly int? _padTokenId;
+    private readonly int _contextLength;
+
+    /// <summary>Creates a generator over a loaded model and the owned tokenizer that produced its prompt ids.</summary>
+    /// <param name="model">The loaded model. Not owned: dispose it separately after the generator's last request.</param>
+    /// <param name="tokenizer">The owned tokenizer; its decoder turns completion ids into text.</param>
+    /// <param name="additionalStopTokenIds">Stop ids in addition to <see cref="GenAIModel.EosTokenIds"/>.</param>
+    public TextGenerator(GenAIModel model, Tokenizer tokenizer, IEnumerable<int>? additionalStopTokenIds = null)
+    {
+        ArgumentNullException.ThrowIfNull(model);
+        ArgumentNullException.ThrowIfNull(tokenizer);
+        Model = model;
+        Tokenizer = tokenizer;
+        _createSequence = model.CreateSequence;
+        _padTokenId = model.PadTokenId;
+        _contextLength = model.ContextLength;
+        _stopIds = [.. model.EosTokenIds, .. additionalStopTokenIds ?? []];
+        StopTokenIds = [.. _stopIds.Order()];
+    }
+
+    /// <summary>Test seam: the decode loop over any sequence implementation (no native model).</summary>
+    internal TextGenerator(Func<GenAISequenceOptions, IGenerationSequence> createSequence, Tokenizer tokenizer, IEnumerable<int> eosTokenIds, int contextLength, int? padTokenId)
+    {
+        Model = null!;
+        Tokenizer = tokenizer;
+        _createSequence = createSequence;
+        _padTokenId = padTokenId;
+        _contextLength = contextLength;
+        _stopIds = [.. eosTokenIds];
+        StopTokenIds = [.. _stopIds.Order()];
+    }
+
+    /// <summary>The model.</summary>
+    public GenAIModel Model { get; }
+
+    /// <summary>The owned tokenizer used for detokenization.</summary>
+    public Tokenizer Tokenizer { get; }
+
+    /// <summary>Stop token ids applied to every request (the model's end-of-sequence ids and the constructor's).</summary>
+    public ImmutableArray<int> StopTokenIds { get; }
+
+    /// <summary>Generates a completion for <paramref name="promptIds"/>.</summary>
+    /// <exception cref="OperationCanceledException">Cancelled before the prefill or between decode steps.</exception>
+    /// <exception cref="GenerationContextLengthException">Prompt plus <see cref="GenerationOptions.MaxNewTokens"/> exceed the context length.</exception>
+    public GenerationResult Generate(IReadOnlyList<int> promptIds, GenerationOptions? options = null, CancellationToken cancellationToken = default)
+    {
+        GenerationResult? result = null;
+        foreach (var update in GenerateStreaming(promptIds, options, cancellationToken))
+        {
+            result = update.Result;
+        }
+
+        return result!;
+    }
+
+    /// <summary>
+    /// Streams a completion for <paramref name="promptIds"/>: lazily, one or more decode steps per update. Arguments are
+    /// validated when this method is called; generation starts on the first <c>MoveNext</c>. Disposing the enumerator
+    /// early releases the native generator.
+    /// </summary>
+    public IEnumerable<GenerationUpdate> GenerateStreaming(IReadOnlyList<int> promptIds, GenerationOptions? options = null, CancellationToken cancellationToken = default) =>
+        GenerateStreamingCore(promptIds, options, null, cancellationToken);
+
+    /// <summary>As <see cref="GenerateStreaming"/>; <paramref name="step0Logits"/> receives the logits after the prefill (fidelity evidence).</summary>
+    internal IEnumerable<GenerationUpdate> GenerateStreamingCore(
+        IReadOnlyList<int> promptIds, GenerationOptions? options, Action<float[]>? step0Logits, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(promptIds);
+        options ??= new GenerationOptions();
+        options.Validate();
+        if (promptIds.Count == 0)
+        {
+            throw new ArgumentException("The prompt needs at least one token id.", nameof(promptIds));
+        }
+
+        int[] prompt = [.. promptIds];
+        if (_padTokenId is int pad && Array.IndexOf(prompt, pad) >= 0)
+        {
+            // GenAI masks prompt positions equal to the pad id, which would silently change the output.
+            throw new ArgumentException(
+                $"The prompt contains token id {pad}, the model's pad id, which ONNX Runtime GenAI masks out of attention. " +
+                "Load the model with a GenAIModelOptions.PadTokenId the tokenizer never produces.",
+                nameof(promptIds));
+        }
+
+        long total = (long)prompt.Length + options.MaxNewTokens;
+        if (total > _contextLength)
+        {
+            throw new GenerationContextLengthException(
+                $"{prompt.Length} prompt tokens plus {options.MaxNewTokens} new tokens exceed the context length {_contextLength}.")
+            {
+                PromptTokens = prompt.Length,
+                MaxNewTokens = options.MaxNewTokens,
+                ContextLength = _contextLength,
+            };
+        }
+
+        HashSet<int> stopIds = options.AdditionalStopTokenIds.Count == 0 ? _stopIds : [.. _stopIds, .. options.AdditionalStopTokenIds];
+        return Run(prompt, options, stopIds, step0Logits, cancellationToken);
+    }
+
+    private IEnumerable<GenerationUpdate> Run(int[] prompt, GenerationOptions options, HashSet<int> stopIds, Action<float[]>? step0Logits, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        using IGenerationSequence sequence = _createSequence(new GenAISequenceOptions
+        {
+            MaxLength = prompt.Length + options.MaxNewTokens,
+            Sampling = options.Sampling,
+        });
+
+        var clock = Stopwatch.StartNew();
+        int chunk = options.PrefillChunkTokens ?? prompt.Length;
+        for (int start = 0; start < prompt.Length; start += chunk)
+        {
+            // Between prefill chunks too: a long prompt can be cancelled at chunk boundaries.
+            if (start > 0)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+            }
+
+            sequence.AppendTokens(prompt.AsSpan(start, Math.Min(chunk, prompt.Length - start)));
+        }
+
+        TimeSpan prefill = clock.Elapsed;
+        if (step0Logits is not null)
+        {
+            float[] logits = new float[sequence.VocabularySize];
+            sequence.CopyLastLogits(logits);
+            step0Logits(logits);
+        }
+
+        var detokenizer = new IncrementalDetokenizer(Tokenizer);
+        var stops = new StopSequenceMatcher(options.StopSequences);
+        var all = ImmutableArray.CreateBuilder<int>();
+        var pendingIds = ImmutableArray.CreateBuilder<int>();
+        var text = new StringBuilder();
+        GenerationFinishReason finish;
+        int? stopTokenId = null;
+        string? stopSequence = null;
+        string finalText = string.Empty;
+        while (true)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            if (all.Count == options.MaxNewTokens)
+            {
+                finish = GenerationFinishReason.Length;
+                break;
+            }
+
+            if (sequence.IsDone)
+            {
+                // GenAI ends a sequence only at its end-of-sequence ids (handled below) or at its maximum length, which
+                // is the prompt plus MaxNewTokens (handled above).
+                throw new GenAIModelException($"ONNX Runtime GenAI ended the sequence unexpectedly after {all.Count} tokens.");
+            }
+
+            int id = sequence.GenerateNextToken();
+            if (stopIds.Contains(id))
+            {
+                finish = GenerationFinishReason.Stop;
+                stopTokenId = id;
+                break;
+            }
+
+            all.Add(id);
+            pendingIds.Add(id);
+            var (emit, matched) = stops.Push(detokenizer.Push(id));
+            if (matched is not null)
+            {
+                finish = GenerationFinishReason.StopSequence;
+                stopSequence = matched;
+                finalText = emit;
+                break;
+            }
+
+            if (emit.Length > 0)
+            {
+                text.Append(emit);
+                yield return new GenerationUpdate { Text = emit, TokenIds = pendingIds.ToImmutable() };
+                pendingIds.Clear();
+            }
+        }
+
+        if (finish != GenerationFinishReason.StopSequence)
+        {
+            // Text held back for an incomplete UTF-8 sequence or a possible stop-sequence start is released now; a stop
+            // sequence can still complete in it.
+            var (emit, matched) = stops.Push(detokenizer.Flush());
+            if (matched is not null)
+            {
+                finish = GenerationFinishReason.StopSequence;
+                stopSequence = matched;
+                stopTokenId = null;
+                finalText = emit;
+            }
+            else
+            {
+                finalText = emit + stops.Flush();
+            }
+        }
+
+        text.Append(finalText);
+        var result = new GenerationResult
+        {
+            Text = text.ToString(),
+            TokenIds = all.ToImmutable(),
+            FinishReason = finish,
+            StopTokenId = stopTokenId,
+            StopSequence = stopSequence,
+            Usage = new GenerationUsage(prompt.Length, all.Count),
+            Timings = new GenerationTimings(prefill, clock.Elapsed - prefill),
+        };
+        yield return new GenerationUpdate { Text = finalText, TokenIds = pendingIds.ToImmutable(), Result = result };
+    }
+}

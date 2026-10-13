@@ -1,0 +1,385 @@
+using Starlings.Runtime.Onnx;
+using Microsoft.ML.OnnxRuntime;
+
+namespace Starlings.Models.Gliner2;
+
+/// <summary>
+/// GLiNER2 entity extraction (<c>fastino/gliner2-base-v1</c>, GLiNER2 2.0.0) on ONNX Runtime: text and entity labels
+/// in, labelled spans with offsets and confidences out, as <c>GLiNER2.extract_entities(text, labels, threshold,
+/// include_spans=True, include_confidence=True)</c> computes them for English text.
+/// </summary>
+/// <remarks>
+/// <para>
+/// <b>Pipeline.</b> GLiNER2 text normalization, the Python-compatible word splitter and lower-casing, the schema
+/// prefix encoded with the owned tokenizer (<see cref="Prepare"/>); one ONNX graph from token ids and routing positions
+/// to count and span logits (<see cref="RunModel"/>); the count gate, float32 sigmoid, threshold, per-label greedy
+/// overlap suppression and result order of GLiNER2's span decoder; offsets mapped onto the caller's text
+/// (<see cref="Gliner2Entity"/>).
+/// </para>
+/// <para>
+/// <b>Limits.</b> Texts above <see cref="Gliner2ExtractorOptions.MaxSequenceLength"/> tokens (default 512, schema
+/// prefix included) are rejected with <see cref="Gliner2InputTooLongException"/>; nothing is truncated. One call uses
+/// one label set: the graph's label projection depends on the whole label set, so a padded batch cannot mix label
+/// sets. Classification, relations, structured extraction and GLiNER2's plain (de-duplicated, string-only) output are
+/// not offered (<see cref="Gliner2Capabilities"/>).
+/// </para>
+/// <para>
+/// <b>Threading and lifetime.</b> Methods are synchronous and safe to call concurrently. Cancellation follows E5 and
+/// <see cref="OnnxModelSession"/>: checked while preparing each text, before each chunk of
+/// <see cref="Gliner2ExtractorOptions.MaxBatchSize"/> texts and between graph nodes inside a run. A cancelled call
+/// throws <see cref="OperationCanceledException"/> and returns nothing; the extractor stays usable.
+/// </para>
+/// </remarks>
+public sealed class Gliner2EntityExtractor : IDisposable
+{
+    /// <summary>Graph input: token ids, int64 [batch, sequence].</summary>
+    public const string InputIdsName = "input_ids";
+
+    /// <summary>Graph input: attention mask, int64 [batch, sequence].</summary>
+    public const string AttentionMaskName = "attention_mask";
+
+    /// <summary>Graph input: first-subword position of each word, int64 [batch, words].</summary>
+    public const string WordIndexName = "word_index";
+
+    /// <summary>Graph input: positions of <c>[P]</c> and each <c>[E]</c>, int64 [batch, 1 + labels].</summary>
+    public const string SchemaIndexName = "schema_index";
+
+    /// <summary>Graph output: count logits, float [batch, 20].</summary>
+    public const string CountLogitsName = "count_logits";
+
+    /// <summary>Graph output: span logits, float [batch, labels, words, max width].</summary>
+    public const string SpanLogitsName = "span_logits";
+
+    private static readonly string[] InputNames = [InputIdsName, AttentionMaskName, WordIndexName, SchemaIndexName];
+    private static readonly string[] OutputNames = [CountLogitsName, SpanLogitsName];
+
+    private readonly OnnxModelSession _session;
+    private readonly bool _ownsSession;
+    private readonly Gliner2Preprocessor _preprocessor;
+    private readonly Gliner2ExtractorOptions _options;
+    private int _disposed;
+
+    private Gliner2EntityExtractor(OnnxModelSession session, bool ownsSession, Gliner2Preprocessor preprocessor, Gliner2ExtractorOptions options)
+    {
+        ValidateSignature(session);
+        _session = session;
+        _ownsSession = ownsSession;
+        _preprocessor = preprocessor;
+        _options = options;
+    }
+
+    /// <summary>Options in effect.</summary>
+    public Gliner2ExtractorOptions Options => _options;
+
+    /// <summary>The underlying session, for diagnostics and placement.</summary>
+    public OnnxModelSession Session => _session;
+
+    /// <summary>
+    /// Loads the verified files of <see cref="Gliner2ModelAssets.Lock"/> and owns the session. Unless
+    /// <paramref name="options"/> sets <see cref="OnnxSessionOptions.ExpectedModelSha256"/>, the graph must match
+    /// <see cref="Gliner2ModelAssets.ModelSha256"/>.
+    /// </summary>
+    public static Gliner2EntityExtractor Create(Gliner2ModelFiles files, Gliner2ExtractorOptions? options = null)
+    {
+        ArgumentNullException.ThrowIfNull(files);
+        options ??= new Gliner2ExtractorOptions();
+        if (options.Session is { ExpectedModelSha256: null } session)
+        {
+            options = options with { Session = session with { ExpectedModelSha256 = Gliner2ModelAssets.ModelSha256 } };
+        }
+
+        return Create(files.ModelPath, files.TokenizerPath, options);
+    }
+
+    /// <summary>
+    /// Loads a graph and a <c>tokenizer.json</c> and owns the session. The tokenizer must be the pinned file
+    /// (<see cref="Gliner2ModelAssets.TokenizerSha256"/>); the graph is checked only when
+    /// <see cref="OnnxSessionOptions.ExpectedModelSha256"/> is set.
+    /// </summary>
+    /// <exception cref="InvalidDataException">The tokenizer file is not the pinned one.</exception>
+    /// <exception cref="NotSupportedException">The graph does not have the route A signature.</exception>
+    public static Gliner2EntityExtractor Create(string modelPath, string tokenizerPath, Gliner2ExtractorOptions? options = null)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(modelPath);
+        ArgumentException.ThrowIfNullOrEmpty(tokenizerPath);
+        options ??= new Gliner2ExtractorOptions();
+        options.Validate();
+        var preprocessor = Gliner2Preprocessor.FromFile(tokenizerPath, Gliner2ModelAssets.TokenizerSha256);
+        var session = OnnxModelSession.Create(modelPath, options.Session);
+        try
+        {
+            return new Gliner2EntityExtractor(session, ownsSession: true, preprocessor, options);
+        }
+        catch
+        {
+            session.Dispose();
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Wraps an existing session over the route A graph; <paramref name="options"/>.<see cref="Gliner2ExtractorOptions.Session"/>
+    /// is ignored because the session is already configured.
+    /// </summary>
+    /// <exception cref="InvalidDataException">The tokenizer file is not the pinned one.</exception>
+    /// <exception cref="NotSupportedException">The graph does not have the route A signature.</exception>
+    public static Gliner2EntityExtractor Create(OnnxModelSession session, string tokenizerPath, Gliner2ExtractorOptions? options = null, bool ownsSession = false)
+    {
+        ArgumentNullException.ThrowIfNull(session);
+        ArgumentException.ThrowIfNullOrEmpty(tokenizerPath);
+        options ??= new Gliner2ExtractorOptions();
+        options.Validate();
+        return new Gliner2EntityExtractor(session, ownsSession, Gliner2Preprocessor.FromFile(tokenizerPath, Gliner2ModelAssets.TokenizerSha256), options);
+    }
+
+    /// <summary>Extracts entities of the given labels from one text.</summary>
+    /// <param name="text">English text (valid Unicode).</param>
+    /// <param name="labels">Entity labels; duplicates are ignored after the first, order and case matter to the model.</param>
+    /// <param name="threshold">Score threshold in [0, 1]; null for <see cref="Gliner2ExtractorOptions.Threshold"/>.</param>
+    /// <param name="cancellationToken">Cancels before or during the run.</param>
+    /// <exception cref="Gliner2InputTooLongException">The text needs more than <see cref="Gliner2ExtractorOptions.MaxSequenceLength"/> tokens.</exception>
+    /// <exception cref="ArgumentException">No labels, an empty label, or text with an unpaired surrogate.</exception>
+    public Gliner2ExtractionResult Extract(string text, IReadOnlyList<string> labels, float? threshold = null, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(text);
+        return ExtractBatch([text], labels, threshold, cancellationToken)[0];
+    }
+
+    /// <summary>
+    /// Extracts entities of one label set from several texts, in padded batches of
+    /// <see cref="Gliner2ExtractorOptions.MaxBatchSize"/>. Every text is prepared and validated before any inference
+    /// runs. Results are those of single calls (padding does not change valid logits; see the README for the evidence).
+    /// </summary>
+    /// <exception cref="Gliner2InputTooLongException">A text needs more than <see cref="Gliner2ExtractorOptions.MaxSequenceLength"/> tokens.</exception>
+    public IReadOnlyList<Gliner2ExtractionResult> ExtractBatch(IReadOnlyList<string> texts, IReadOnlyList<string> labels, float? threshold = null, CancellationToken cancellationToken = default) =>
+        ExtractBatch(texts, labels, null, threshold, cancellationToken);
+
+    /// <summary>
+    /// As <see cref="ExtractBatch(IReadOnlyList{string}, IReadOnlyList{string}, float?, CancellationToken)"/>, with label
+    /// descriptions (label to description), which GLiNER2 adds to the schema prompt. Untested: one development case
+    /// only (<see cref="Gliner2Capabilities"/>).
+    /// </summary>
+    public IReadOnlyList<Gliner2ExtractionResult> ExtractBatch(
+        IReadOnlyList<string> texts, IReadOnlyList<string> labels, IReadOnlyDictionary<string, string>? descriptions, float? threshold = null, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(texts);
+        float t = threshold ?? _options.Threshold;
+        Gliner2ExtractorOptions.ValidateThreshold(t, nameof(threshold));
+        var normalizedLabels = Gliner2Preprocessor.NormalizeLabels(labels, nameof(labels));
+        var inputs = new Gliner2ModelInput[texts.Count];
+        for (int i = 0; i < inputs.Length; i++)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            string text = texts[i] ?? throw new ArgumentException($"Text {i} is null.", nameof(texts));
+            inputs[i] = _preprocessor.Build(text, normalizedLabels, descriptions);
+            CheckLength(inputs[i], i);
+        }
+
+        var outputs = RunModel(inputs, cancellationToken);
+        var results = new Gliner2ExtractionResult[inputs.Length];
+        for (int i = 0; i < inputs.Length; i++)
+        {
+            results[i] = Decode(inputs[i], outputs[i], t);
+        }
+
+        return results;
+    }
+
+    /// <summary>
+    /// Stage 1: builds the model input GLiNER2 would build (normalization, words, schema prefix, token ids, routing
+    /// positions). Does not check the length limit; <see cref="RunModel"/> does.
+    /// </summary>
+    public Gliner2ModelInput Prepare(string text, IReadOnlyList<string> labels, IReadOnlyDictionary<string, string>? descriptions = null)
+    {
+        ArgumentNullException.ThrowIfNull(text);
+        ObjectDisposedException.ThrowIf(Volatile.Read(ref _disposed) != 0, this);
+        return _preprocessor.Build(text, Gliner2Preprocessor.NormalizeLabels(labels, nameof(labels)), descriptions);
+    }
+
+    /// <summary>
+    /// Stage 2: runs the graph on prepared inputs in right-padded batches of <see cref="Gliner2ExtractorOptions.MaxBatchSize"/>
+    /// (ids and mask padded with 0, word positions padded with 0). All inputs must share one label count.
+    /// </summary>
+    /// <exception cref="Gliner2InputTooLongException">An input exceeds <see cref="Gliner2ExtractorOptions.MaxSequenceLength"/>.</exception>
+    /// <exception cref="ArgumentException">Inputs with different label counts.</exception>
+    public IReadOnlyList<Gliner2ModelOutput> RunModel(IReadOnlyList<Gliner2ModelInput> inputs, CancellationToken cancellationToken = default) =>
+        RunModelCore(inputs, enforceLengthLimit: true, cancellationToken);
+
+    /// <summary>
+    /// <see cref="Prepare"/> with GLiNER2's <c>max_len</c> word cap, for fidelity evidence on fixture cases outside the
+    /// contract. Not public: the word cap is unsupported.
+    /// </summary>
+    internal Gliner2ModelInput PrepareOutsideContract(string text, IReadOnlyList<string> labels, IReadOnlyDictionary<string, string>? descriptions, int? maxWords)
+    {
+        ArgumentNullException.ThrowIfNull(text);
+        ObjectDisposedException.ThrowIf(Volatile.Read(ref _disposed) != 0, this);
+        return _preprocessor.Build(text, Gliner2Preprocessor.NormalizeLabels(labels, nameof(labels)), descriptions, maxWords);
+    }
+
+    /// <summary>
+    /// <see cref="RunModel"/> without the length limit, for fidelity evidence on fixture inputs outside the contract
+    /// (the graph itself accepts any length). Not public: the profile rejects such inputs.
+    /// </summary>
+    internal IReadOnlyList<Gliner2ModelOutput> RunModelOutsideContract(IReadOnlyList<Gliner2ModelInput> inputs, CancellationToken cancellationToken = default) =>
+        RunModelCore(inputs, enforceLengthLimit: false, cancellationToken);
+
+    private Gliner2ModelOutput[] RunModelCore(IReadOnlyList<Gliner2ModelInput> inputs, bool enforceLengthLimit, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(inputs);
+        ObjectDisposedException.ThrowIf(Volatile.Read(ref _disposed) != 0, this);
+        for (int i = 0; i < inputs.Count; i++)
+        {
+            ArgumentNullException.ThrowIfNull(inputs[i], nameof(inputs));
+            if (enforceLengthLimit)
+            {
+                CheckLength(inputs[i], i);
+            }
+
+            if (inputs[i].Labels.Count != inputs[0].Labels.Count)
+            {
+                throw new ArgumentException(
+                    $"Input {i} has {inputs[i].Labels.Count} labels, input 0 has {inputs[0].Labels.Count}; one call runs one label set.", nameof(inputs));
+            }
+        }
+
+        var outputs = new Gliner2ModelOutput[inputs.Count];
+        for (int start = 0; start < inputs.Count; start += _options.MaxBatchSize)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            int count = Math.Min(_options.MaxBatchSize, inputs.Count - start);
+            RunChunk(inputs, start, count, outputs, cancellationToken);
+        }
+
+        return outputs;
+    }
+
+    /// <summary>Stage 3: GLiNER2's span decoding of one input's graph outputs, mapped onto the input text.</summary>
+    /// <param name="input">The prepared input.</param>
+    /// <param name="output">Its graph outputs.</param>
+    /// <param name="threshold">Score threshold in [0, 1]; null for <see cref="Gliner2ExtractorOptions.Threshold"/>.</param>
+    public Gliner2ExtractionResult Decode(Gliner2ModelInput input, Gliner2ModelOutput output, float? threshold = null)
+    {
+        ArgumentNullException.ThrowIfNull(input);
+        ArgumentNullException.ThrowIfNull(output);
+        float t = threshold ?? _options.Threshold;
+        Gliner2ExtractorOptions.ValidateThreshold(t, nameof(threshold));
+        if (output.LabelCount != input.Labels.Count || output.WordCount != input.WordCount)
+        {
+            throw new ArgumentException("The output does not belong to this input (label or word count differs).", nameof(output));
+        }
+
+        return Gliner2Decoder.ToResult(input, Gliner2Decoder.DecodeUpstream(input, output, t));
+    }
+
+    /// <summary>Disposes the session if this extractor owns it. Idempotent.</summary>
+    public void Dispose()
+    {
+        if (Interlocked.Exchange(ref _disposed, 1) == 0 && _ownsSession)
+        {
+            _session.Dispose();
+        }
+    }
+
+    private static void ValidateSignature(OnnxModelSession session)
+    {
+        var inputs = session.Inputs.ToDictionary(i => i.Name, StringComparer.Ordinal);
+        foreach (var name in InputNames)
+        {
+            if (!inputs.TryGetValue(name, out var info) || info.ElementType != "Int64" || info.Dimensions.Count != 2)
+            {
+                throw new NotSupportedException($"Graph input '{name}' (int64, rank 2) is missing or has another type; this is not the GLiNER2 route A graph.");
+            }
+        }
+
+        var unknown = inputs.Keys.Except(InputNames, StringComparer.Ordinal).ToList();
+        if (unknown.Count > 0)
+        {
+            throw new NotSupportedException($"Graph has inputs this extractor does not feed: {string.Join(", ", unknown)}.");
+        }
+
+        var outputs = session.Outputs.ToDictionary(o => o.Name, StringComparer.Ordinal);
+        if (!outputs.TryGetValue(CountLogitsName, out var count) || count.ElementType != "Float" || count.Dimensions.Count != 2)
+        {
+            throw new NotSupportedException($"Graph output '{CountLogitsName}' (float, rank 2) is missing.");
+        }
+
+        if (!outputs.TryGetValue(SpanLogitsName, out var span) || span.ElementType != "Float" || span.Dimensions.Count != 4)
+        {
+            throw new NotSupportedException($"Graph output '{SpanLogitsName}' (float, rank 4) is missing.");
+        }
+    }
+
+    private void CheckLength(Gliner2ModelInput input, int index)
+    {
+        if (input.TokenCount > _options.MaxSequenceLength)
+        {
+            throw new Gliner2InputTooLongException(
+                $"Text {index} needs {input.TokenCount} tokens (schema prefix included); the maximum is {_options.MaxSequenceLength}. " +
+                "Nothing is truncated: split or shorten the text.")
+            {
+                InputIndex = index,
+                TokenCount = input.TokenCount,
+                MaxTokens = _options.MaxSequenceLength,
+            };
+        }
+    }
+
+    private void RunChunk(IReadOnlyList<Gliner2ModelInput> inputs, int start, int count, Gliner2ModelOutput[] outputs, CancellationToken cancellationToken)
+    {
+        int sequence = 0;
+        int words = 0;
+        int slots = inputs[start].SchemaIndex.Length;
+        for (int r = 0; r < count; r++)
+        {
+            sequence = Math.Max(sequence, inputs[start + r].TokenCount);
+            words = Math.Max(words, inputs[start + r].WordCount);
+        }
+
+        var ids = new long[count * sequence];
+        var mask = new long[count * sequence];
+        var wordIndex = new long[count * words];
+        var schemaIndex = new long[count * slots];
+        for (int r = 0; r < count; r++)
+        {
+            var input = inputs[start + r];
+            input.InputIds.CopyTo(ids.AsSpan(r * sequence));
+            mask.AsSpan(r * sequence, input.TokenCount).Fill(1);
+            input.WordIndex.CopyTo(wordIndex.AsSpan(r * words));
+            input.SchemaIndex.CopyTo(schemaIndex.AsSpan(r * slots));
+        }
+
+        using var idsValue = OrtValue.CreateTensorValueFromMemory(ids, [count, sequence]);
+        using var maskValue = OrtValue.CreateTensorValueFromMemory(mask, [count, sequence]);
+        using var wordValue = OrtValue.CreateTensorValueFromMemory(wordIndex, [count, words]);
+        using var schemaValue = OrtValue.CreateTensorValueFromMemory(schemaIndex, [count, slots]);
+        using var results = _session.Run(InputNames, [idsValue, maskValue, wordValue, schemaValue], OutputNames, cancellationToken);
+
+        var countShape = results[0].GetTensorTypeAndShape().Shape;
+        var spanShape = results[1].GetTensorTypeAndShape().Shape;
+        int countWidth = (int)countShape[1];
+        int labels = (int)spanShape[1];
+        int maxWidth = (int)spanShape[3];
+        if (spanShape[0] != count || spanShape[2] != words || labels != slots - 1 || countShape[0] != count)
+        {
+            throw new InvalidOperationException(
+                $"Unexpected graph output shapes: count_logits [{string.Join(", ", countShape)}], span_logits [{string.Join(", ", spanShape)}].");
+        }
+
+        var countData = results[0].GetTensorDataAsSpan<float>();
+        var spanData = results[1].GetTensorDataAsSpan<float>();
+        for (int r = 0; r < count; r++)
+        {
+            var input = inputs[start + r];
+            int n = input.WordCount;
+            var countLogits = countData.Slice(r * countWidth, countWidth).ToArray();
+            var spans = new float[labels * n * maxWidth];
+            for (int label = 0; label < labels; label++)
+            {
+                var source = spanData.Slice(((r * labels + label) * words) * maxWidth, n * maxWidth);
+                source.CopyTo(spans.AsSpan(label * n * maxWidth));
+            }
+
+            outputs[start + r] = new Gliner2ModelOutput(countLogits, spans, labels, n, maxWidth);
+        }
+    }
+}

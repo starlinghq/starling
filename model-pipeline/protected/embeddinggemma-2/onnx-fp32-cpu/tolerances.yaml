@@ -1,0 +1,23 @@
+# Binding tolerances, set by Mark on 2026-10-10, plan 10.1. Values from docs/m0/embeddinggemma2-spike.md section 8.
+# Observed worst (ORT 1.30.0 CPU, 1 and 12 threads, 138 rows up to 1,750 tokens): embedding 4.2e-7, batch vs single
+# 1.8e-7, token embeddings 6.2e-6 relative; C# 3.7e-7. The 512-wide hidden state is diagnostic only, not a gate.
+profile: embeddinggemma-2/onnx-fp32-cpu
+provider_options: {}
+reference: sentence-transformers fp32 CPU in model-pipeline/protected/embeddinggemma-2/onnx-fp32-cpu/embeddings.jsonl
+discrete:
+  token_ids: exact
+  attention_mask: exact
+  offsets: exact
+float:
+  embedding_max_abs: 5.0e-6
+  padded_batch_vs_single_embedding_max_abs: 5.0e-6
+  # Token embeddings reach about 3,900, so the bound is relative.
+  # per case: max|d| / max(1, max|ref|) <= 1e-4; derived from the spike's per-case 6.2e-6.
+  # Wording clarified by Mark on 2026-10-11; the value is unchanged.
+  token_embeddings_relative: 1.0e-4
+  # Minimum cosine against the reference embedding (float64). Not yet implemented by the evaluator; reported until then.
+  min_cosine: 0.9999999
+  nan_or_inf: fail
+  report_only: [mean_abs, p99_abs]
+csharp_vs_python_same_machine_and_provider:
+  embedding_max_abs: 1.0e-6

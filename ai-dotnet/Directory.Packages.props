@@ -1,0 +1,87 @@
+<Project>
+  <ItemGroup>
+    <PackageVersion Include="xunit.v3" Version="4.0.1" />
+    <!-- Managed micro-benchmarks (benchmarks/, P-008). Never referenced by a project under src/. -->
+    <PackageVersion Include="BenchmarkDotNet" Version="0.15.8" />
+  </ItemGroup>
+
+  <!--
+    The owned tokenizer (starlinghq/tokenizers), pinned exactly: the model manifests record the tokenizer version each
+    profile was qualified with (processing.tokenizer.version), and a newer tokenizer is not automatically certified.
+  -->
+  <ItemGroup>
+    <PackageVersion Include="Starlings.Tokenizers" Version="[0.3.0-preview.1]" />
+  </ItemGroup>
+
+
+  <!--
+    ONNX Runtime, pinned to the version the e5 profiles were qualified with (manifest execution.backend).
+    Library projects reference only the managed binding. The native runtime is a deployment choice:
+    Microsoft.ML.OnnxRuntime for CPU, Microsoft.ML.OnnxRuntime.Gpu.Linux for CUDA on Linux x64.
+    Both ship libonnxruntime under the same file name, so one application references exactly one of them.
+  -->
+  <ItemGroup>
+    <PackageVersion Include="Microsoft.ML.OnnxRuntime.Managed" Version="[1.30.0]" />
+    <PackageVersion Include="Microsoft.ML.OnnxRuntime" Version="[1.30.0]" />
+    <PackageVersion Include="Microsoft.ML.OnnxRuntime.Gpu.Linux" Version="[1.30.0]" />
+  </ItemGroup>
+
+  <!--
+    ONNX Runtime GenAI (P-016), pinned to the version the pilot LLM bundle was built and qualified with (the graph and
+    genai_config.json come from the 0.17.1 builder; GenAI and builder versions must match). Library projects reference
+    only the managed binding. The application picks the natives: Microsoft.ML.OnnxRuntimeGenAI (CPU; brings
+    Microsoft.ML.OnnxRuntime 1.30.0) or Microsoft.ML.OnnxRuntimeGenAI.Cuda (brings Microsoft.ML.OnnxRuntime.Gpu 1.30.0).
+    Both ship libonnxruntime-genai under the same file name, so one application references exactly one of them.
+  -->
+  <ItemGroup>
+    <PackageVersion Include="Microsoft.ML.OnnxRuntimeGenAI.Managed" Version="[0.17.1]" />
+    <PackageVersion Include="Microsoft.ML.OnnxRuntimeGenAI" Version="[0.17.1]" />
+    <PackageVersion Include="Microsoft.ML.OnnxRuntimeGenAI.Cuda" Version="[0.17.1]" />
+  </ItemGroup>
+
+  <!--
+    Microsoft.Extensions.AI (P-011). The adapter library references only the abstractions and the DI abstractions;
+    the Microsoft.Extensions.AI middleware package and the DI container are test-only (pipeline compatibility tests).
+  -->
+  <ItemGroup>
+    <PackageVersion Include="Microsoft.Extensions.AI.Abstractions" Version="10.10.1" />
+    <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.12" />
+    <PackageVersion Include="Microsoft.Extensions.AI" Version="10.10.0" />
+    <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="10.0.12" />
+    <PackageVersion Include="Microsoft.Extensions.Logging" Version="10.0.12" />
+  </ItemGroup>
+
+  <!--
+    ML.NET (P-012). Only the adapter package Starlings.Models.E5.MLNet and its tests reference it. Microsoft.ML
+    brings Microsoft.ML.CpuMath, Microsoft.ML.DataView, Newtonsoft.Json, System.CodeDom and the LdaNative/CpuMathNative
+    native libraries; it does not bring Microsoft.ML.Tokenizers (CI dependency-boundary check).
+  -->
+  <ItemGroup>
+    <PackageVersion Include="Microsoft.ML" Version="5.0.0" />
+  </ItemGroup>
+
+  <!--
+    SkiaSharp (MIT), pinned to the version the EmbeddingGemma 2 image spike tested against PIL (decoded RGB equal on
+    every supported fixture image; docs/m0/embeddinggemma2-image-spike.md section 6). Only the adapter package
+    Starlings.Models.EmbeddingGemma2.Imaging.SkiaSharp and its tests reference it (CI dependency-boundary
+    check). The natives package bundles third-party code under its own notices (ai-dotnet/THIRD-PARTY-NOTICES.md).
+    ImageSharp must not be referenced anywhere (Split License, not OSI-approved; CI check "No ImageSharp anywhere").
+  -->
+  <ItemGroup>
+    <PackageVersion Include="SkiaSharp" Version="[4.153.1]" />
+    <PackageVersion Include="SkiaSharp.NativeAssets.Linux.NoDependencies" Version="[4.153.1]" />
+  </ItemGroup>
+
+  <!--
+    FFmpeg.AutoGen (MIT; managed bindings only, no native code), pinned to the version the EmbeddingGemma 2 video spike
+    tested against torchcodec (decoded RGB equal on all 22 fixture videos; docs/m0/embeddinggemma2-video-spike.md
+    section 6). It binds the FFmpeg 8.x ABI (libavcodec.so.62). Only the adapter package
+    Starlings.Models.EmbeddingGemma2.Video.FFmpeg and its tests reference it (CI dependency-boundary check).
+    FFmpeg itself is never shipped: the adapter loads the user's own (LGPL) FFmpeg shared libraries at run time.
+    The Sdcb FFmpeg bindings (LGPL) and any package that bundles FFmpeg binaries must not be referenced anywhere (CI check "No bundled
+    FFmpeg anywhere").
+  -->
+  <ItemGroup>
+    <PackageVersion Include="FFmpeg.AutoGen" Version="[8.1.0]" />
+  </ItemGroup>
+</Project>

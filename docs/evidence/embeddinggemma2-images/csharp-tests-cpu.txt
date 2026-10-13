@@ -1,0 +1,36 @@
+== RenderedIdsEqualTheFixtureOnEveryRow Passed
+43 rows (29 image-only, 6 interleaved or prompted, 8 text): ids exact with the owned tokenizer
+== PartsAreTextOrImages Passed
+== MediaPlaceholdersInTextAreRejected(text: "<image|>") Passed
+== MediaPlaceholdersInTextAreRejected(text: "<|audio|>") Passed
+== MediaPlaceholdersInTextAreRejected(text: "a <|video|> b") Passed
+== MediaPlaceholdersInTextAreRejected(text: "caption <|image>") Passed
+== MediaPlaceholdersInTextAreRejected(text: "<|image|>") Passed
+== ImagesAboveThePixelLimitAreRejected Passed
+== OptionsValidate Passed
+== InputsOverTheContextAreRejectedBeforeInference Passed
+== PreprocessingOfTheFixtureImagesIsBitExact Passed
+28 images: decoded RGB, resized bytes, pixel values and positions equal the reference digests
+== QueriesRetrieveTheirImages Passed
+q-cat: top photo-chelsea 0.7051, runner-up synth-text 0.6078
+q-coffee: top photo-coffee 0.7384, runner-up photo-chelsea 0.6036
+q-rocket: top photo-rocket 0.7069, runner-up photo-astronaut 0.6348
+q-astronaut: top photo-astronaut 0.7590, runner-up photo-rocket 0.6408
+q-galaxies: top photo-hubble-deep-field 0.7463, runner-up photo-rocket 0.5883
+q-cameraman: top photo-camera 0.7335, runner-up synth-text 0.5830
+q-shapes: top synth-shapes 0.7329, runner-up photo-hubble-deep-field 0.6148
+q-text: top synth-text 0.6839, runner-up photo-hubble-deep-field 0.6565
+== SessionsUseTheLockedGraphs Passed
+== CancellationStopsBeforeTheVisionGraph Passed
+== BatchesMatchSingleRows Passed
+vision batch 8, text batch 4: 9 rows in batches vs single rows: max abs 0.00E+000, mean 0.00E+000, p99 0.00E+000, min cosine 1.000000000000000 (worst q-cat); bound 1.0E-005
+padded to 2,520, vision batch 3: 9 rows in batches vs single rows: max abs 0.00E+000, mean 0.00E+000, p99 0.00E+000, min cosine 1.000000000000000 (worst q-cat); bound 1.0E-005
+== MatryoshkaAppliesToImageEmbeddings Passed
+== TextOnlyInputsUseTheReleasedTextGraph Passed
+== RowsMatchTheReference Passed
+42 rows (in contract; mode-gray16 is rejected by contract) vs reference: max abs 2.24E-006, mean 5.57E-008, p99 5.35E-007, min cosine 0.999999999892578 (worst photo-hubble-deep-field)
+  image and interleaved rows: max abs 2.24E-006, mean 6.59E-008, p99 5.86E-007, min cosine 0.999999999892578 (worst photo-hubble-deep-field)
+  text-only rows (released text graph): max abs 1.19E-007, mean 1.27E-008, p99 4.36E-008, min cosine 0.999999999999866 (worst q-cameraman)
+bounds: embedding_max_abs 1.0E-005, min_cosine 0.9999995 (model-pipeline/protected/embeddinggemma-2/image-fp32-cpu/tolerances.yaml)
+soft tokens row-relative worst 1.57E-004 (photo-camera/image0); bound 1.0E-003
+token embeddings row-relative worst 4.54E-005 (photo-rocket); bound 1.0E-003

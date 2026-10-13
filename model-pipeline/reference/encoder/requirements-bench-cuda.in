@@ -1,0 +1,12 @@
+# Benchmark environment for bench_e5_matched.py on CUDA (P-008), Linux x64. Same ONNX Runtime version as the C# harness
+# (Microsoft.ML.OnnxRuntime.Gpu.Linux 1.30.0); the C# harness loads the CUDA 13 and cuDNN 9 libraries of these wheels.
+onnxruntime-gpu[cuda,cudnn]==1.30.0
+numpy==2.4.6
+tokenizers==0.23.2
+# Same CUDA library versions as requirements-cuda.txt (the onnx-fp32-cuda evidence environment).
+nvidia-cublas==13.1.1.3
+nvidia-cuda-nvrtc==13.0.88
+nvidia-cuda-runtime==13.0.96
+nvidia-cudnn-cu13==9.24.0.43
+nvidia-cufft==12.0.0.61
+nvidia-curand==10.4.0.35

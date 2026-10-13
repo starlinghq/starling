@@ -1,0 +1,50 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Starlings.Models.Bert/Starlings.Models.Bert.csproj" />
+    <Project Path="src/Starlings.Models.QwenChat/Starlings.Models.QwenChat.csproj" />
+    <Project Path="src/Starlings.Models.EmbeddingGemma2.Extensions.AI/Starlings.Models.EmbeddingGemma2.Extensions.AI.csproj" />
+    <Project Path="src/Starlings.Models.EmbeddingGemma2.MLNet/Starlings.Models.EmbeddingGemma2.MLNet.csproj" />
+    <Project Path="src/Starlings.Models.EmbeddingGemma2/Starlings.Models.EmbeddingGemma2.csproj" />
+    <Project Path="src/Starlings.Models.EmbeddingGemma2.Imaging.SkiaSharp/Starlings.Models.EmbeddingGemma2.Imaging.SkiaSharp.csproj" />
+    <Project Path="src/Starlings.Models.EmbeddingGemma2.Video.FFmpeg/Starlings.Models.EmbeddingGemma2.Video.FFmpeg.csproj" />
+    <Project Path="src/Starlings.Models.Gliner2/Starlings.Models.Gliner2.csproj" />
+    <Project Path="src/Starlings.Runtime.Onnx/Starlings.Runtime.Onnx.csproj" />
+    <Project Path="src/Starlings.Models.E5.Extensions.AI/Starlings.Models.E5.Extensions.AI.csproj" />
+    <Project Path="src/Starlings.Models.E5.MLNet/Starlings.Models.E5.MLNet.csproj" />
+    <Project Path="src/Starlings.Models.E5/Starlings.Models.E5.csproj" />
+    <Project Path="src/Starlings.Acquisition/Starlings.Acquisition.csproj" />
+    <Project Path="src/Starlings.Generation.OnnxGenAI/Starlings.Generation.OnnxGenAI.csproj" />
+    <Project Path="src/Starlings.Models.Qwen35/Starlings.Models.Qwen35.csproj" />
+    <Project Path="src/Starlings.Models.Qwen35.Extensions.AI/Starlings.Models.Qwen35.Extensions.AI.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Starlings.Models.Bert.Tests/Starlings.Models.Bert.Tests.csproj" />
+    <Project Path="tests/Starlings.Models.QwenChat.Tests/Starlings.Models.QwenChat.Tests.csproj" />
+    <Project Path="tests/Starlings.Runtime.Onnx.Tests/Starlings.Runtime.Onnx.Tests.csproj" />
+    <Project Path="tests/Starlings.Models.E5.Extensions.AI.Tests/Starlings.Models.E5.Extensions.AI.Tests.csproj" />
+    <Project Path="tests/Starlings.Models.E5.MLNet.Tests/Starlings.Models.E5.MLNet.Tests.csproj" />
+    <Project Path="tests/Starlings.Models.E5.Tests/Starlings.Models.E5.Tests.csproj" />
+    <Project Path="tests/Starlings.Acquisition.Tests/Starlings.Acquisition.Tests.csproj" />
+    <Project Path="tests/Starlings.Models.EmbeddingGemma2.Extensions.AI.Tests/Starlings.Models.EmbeddingGemma2.Extensions.AI.Tests.csproj" />
+    <Project Path="tests/Starlings.Models.EmbeddingGemma2.MLNet.Tests/Starlings.Models.EmbeddingGemma2.MLNet.Tests.csproj" />
+    <Project Path="tests/Starlings.Models.EmbeddingGemma2.Tests/Starlings.Models.EmbeddingGemma2.Tests.csproj" />
+    <Project Path="tests/Starlings.Models.EmbeddingGemma2.Imaging.SkiaSharp.Tests/Starlings.Models.EmbeddingGemma2.Imaging.SkiaSharp.Tests.csproj" />
+    <Project Path="tests/Starlings.Models.EmbeddingGemma2.Video.FFmpeg.Tests/Starlings.Models.EmbeddingGemma2.Video.FFmpeg.Tests.csproj" />
+    <Project Path="tests/Starlings.Models.Gliner2.Tests/Starlings.Models.Gliner2.Tests.csproj" />
+    <Project Path="tests/Starlings.Generation.OnnxGenAI.Tests/Starlings.Generation.OnnxGenAI.Tests.csproj" />
+    <Project Path="tests/Starlings.Models.Qwen35.Tests/Starlings.Models.Qwen35.Tests.csproj" />
+    <Project Path="tests/Starlings.Models.Qwen35.Extensions.AI.Tests/Starlings.Models.Qwen35.Extensions.AI.Tests.csproj" />
+  </Folder>
+  <Folder Name="/benchmarks/">
+    <Project Path="benchmarks/Starlings.Benchmarks.Micro/Starlings.Benchmarks.Micro.csproj" />
+    <Project Path="benchmarks/Starlings.Benchmarks.E5Harness/Starlings.Benchmarks.E5Harness.csproj" />
+    <Project Path="benchmarks/Starlings.Benchmarks.Tests/Starlings.Benchmarks.Tests.csproj" />
+  </Folder>
+  <Folder Name="/tools/">
+    <Project Path="tools/Starlings.Bert.Fidelity.Tool/Starlings.Bert.Fidelity.Tool.csproj" />
+    <Project Path="tools/Starlings.Generation.Fidelity/Starlings.Generation.Fidelity.csproj" />
+    <Project Path="tools/Starlings.Acquisition.Tool/Starlings.Acquisition.Tool.csproj" />
+    <Project Path="tools/Starlings.Fidelity.Tool/Starlings.Fidelity.Tool.csproj" />
+    <Project Path="tools/Starlings.Qwen35.Fidelity/Starlings.Qwen35.Fidelity.csproj" />
+  </Folder>
+</Solution>

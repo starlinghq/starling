@@ -1,0 +1,293 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/starlinghq/starling/model-pipeline/schemas/model-manifest.schema.json",
+  "title": "Model profile manifest",
+  "description": "One tested combination of model bundle, runtime profile, and evidence (plan section 9). Draft for P-002; must validate a real encoder before P-002 closes.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "id",
+    "maturity",
+    "origin",
+    "rights",
+    "behavior",
+    "processing",
+    "execution",
+    "capabilities",
+    "compatibility",
+    "qualification",
+    "maintenance"
+  ],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "id": {
+      "description": "<family>/<profile>, lowercase.",
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9.-]*/[a-z0-9][a-z0-9.-]*$"
+    },
+    "synthetic": {
+      "description": "True for test fixtures that describe no real model. Synthetic manifests are never published.",
+      "type": "boolean"
+    },
+    "maturity": { "enum": ["experimental", "preview", "stable", "maintenance", "deprecated"] },
+
+    "origin": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["code", "weights", "files", "attribution"],
+      "properties": {
+        "code": { "$ref": "#/$defs/pinnedSource" },
+        "weights": { "$ref": "#/$defs/pinnedSource" },
+        "files": {
+          "description": "Immutable source lock: every file the bundle uses, with digest.",
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/file" }
+        },
+        "attribution": { "type": "string", "minLength": 1 }
+      }
+    },
+
+    "rights": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["code_license", "weights_license", "tokenizer_terms", "redistribution"],
+      "properties": {
+        "code_license": { "$ref": "#/$defs/license" },
+        "weights_license": { "$ref": "#/$defs/license" },
+        "tokenizer_terms": { "$ref": "#/$defs/license" },
+        "dataset_terms": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["dataset", "license"],
+            "properties": {
+              "dataset": { "type": "string" },
+              "license": { "$ref": "#/$defs/license" }
+            }
+          }
+        },
+        "redistribution": {
+          "description": "How users obtain the weights. 'blocked' means no public bundle (gate G0).",
+          "enum": ["bundled", "download", "gated-download", "blocked"]
+        },
+        "notes": { "type": "string" }
+      }
+    },
+
+    "behavior": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["tasks", "max_input_tokens", "offsets_unit", "truncation", "unsupported"],
+      "properties": {
+        "tasks": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "enum": ["embedding", "image-embedding", "video-embedding", "classification", "extraction", "reranking", "generation", "decision"] }
+        },
+        "max_input_tokens": { "type": "integer", "minimum": 1 },
+        "offsets_unit": {
+          "description": "Unit of any offsets in results. Never reinterpreted silently.",
+          "enum": ["utf8-bytes", "unicode-scalars", "utf16-code-units", "none"]
+        },
+        "truncation": { "enum": ["error", "truncate-right", "truncate-left", "chunk"] },
+        "defaults": { "type": "object" },
+        "unsupported": {
+          "description": "Upstream features this profile does not implement.",
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+
+    "processing": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["tokenizer"],
+      "properties": {
+        "tokenizer": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["package", "version", "profile_id", "assets", "backend_tokenizer_dependency"],
+          "properties": {
+            "package": { "type": "string" },
+            "version": { "$ref": "#/$defs/semver" },
+            "source_revision": { "$ref": "#/$defs/gitSha" },
+            "profile_id": { "type": "string" },
+            "algorithm": { "enum": ["bpe", "byte-level-bpe", "wordpiece", "unigram", "tiktoken"] },
+            "assets": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/file" } },
+            "backend_tokenizer_dependency": {
+              "description": "True when the execution backend tokenizes or renders templates itself (plan 6.4). Tokenizer independence is then unsupported for this profile.",
+              "type": "boolean"
+            }
+          }
+        },
+        "template": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["asset", "renderer"],
+          "properties": {
+            "asset": { "$ref": "#/$defs/file" },
+            "renderer": { "enum": ["owned", "backend"] }
+          }
+        },
+        "decoding": { "type": "object" },
+        "image_processor": { "type": "object" },
+        "audio_processor": { "type": "object" }
+      }
+    },
+
+    "execution": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["backend", "precision", "variant"],
+      "properties": {
+        "backend": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["name", "version"],
+          "properties": {
+            "name": { "enum": ["onnxruntime", "onnxruntime-genai", "llama.cpp", "torchsharp", "managed"] },
+            "version": { "type": "string", "minLength": 1 },
+            "binding": { "type": "string" },
+            "binding_version": { "type": "string" }
+          }
+        },
+        "precision": { "enum": ["fp32", "fp16", "bf16", "int8", "int4", "mixed"] },
+        "variant": {
+          "description": "Reference variants carry fidelity claims; quantized and approximate variants carry quality budgets (ADR-09).",
+          "enum": ["reference", "quantized", "approximate"]
+        },
+        "graph": {
+          "type": "object",
+          "properties": {
+            "opset": { "type": "integer" },
+            "inputs": { "type": "array" },
+            "outputs": { "type": "array" }
+          }
+        },
+        "provider_options": { "type": "object" }
+      }
+    },
+
+    "capabilities": {
+      "description": "Every listed capability must have an explicit status. Missing never implies support (plan section 9).",
+      "type": "object",
+      "required": ["batch", "streaming", "cancellation", "persistence", "training", "aot", "extensions_ai", "mlnet"],
+      "additionalProperties": { "$ref": "#/$defs/status" },
+      "properties": {
+        "batch": { "$ref": "#/$defs/status" },
+        "streaming": { "$ref": "#/$defs/status" },
+        "cancellation": { "$ref": "#/$defs/status" },
+        "persistence": { "$ref": "#/$defs/status" },
+        "training": { "$ref": "#/$defs/status" },
+        "aot": { "$ref": "#/$defs/status" },
+        "extensions_ai": { "$ref": "#/$defs/status" },
+        "mlnet": { "$ref": "#/$defs/status" }
+      }
+    },
+
+    "compatibility": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["os", "arch", "provider", "status"],
+        "properties": {
+          "os": { "enum": ["linux", "windows", "macos"] },
+          "arch": { "enum": ["x64", "arm64"] },
+          "provider": { "enum": ["cpu", "cuda", "directml", "coreml", "rocm", "metal", "vulkan"] },
+          "status": { "$ref": "#/$defs/status" },
+          "verified": { "type": "string", "format": "date" }
+        }
+      }
+    },
+
+    "qualification": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["reference_runner", "fixtures", "tolerances", "gates"],
+      "properties": {
+        "reference_runner": { "type": "string" },
+        "fixtures": { "type": "string", "description": "Path to protected fixtures, relative to the repository root." },
+        "tolerances": { "type": "string", "description": "Path to the protected tolerances file." },
+        "quality_budgets": { "type": "object" },
+        "performance_protocol": { "type": "string" },
+        "gates": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "G0": { "$ref": "#/$defs/gate" },
+            "G1": { "$ref": "#/$defs/gate" },
+            "G2": { "$ref": "#/$defs/gate" },
+            "G3": { "$ref": "#/$defs/gate" },
+            "G4": { "$ref": "#/$defs/gate" },
+            "G5": { "$ref": "#/$defs/gate" },
+            "G6": { "$ref": "#/$defs/gate" },
+            "G7": { "$ref": "#/$defs/gate" }
+          }
+        }
+      }
+    },
+
+    "maintenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["owner", "latest_verified_upstream_revision", "review_date"],
+      "properties": {
+        "owner": { "type": "string", "minLength": 1 },
+        "latest_known_upstream_revision": { "$ref": "#/$defs/gitSha" },
+        "latest_verified_upstream_revision": { "$ref": "#/$defs/gitSha" },
+        "last_checked": { "type": "string", "format": "date" },
+        "review_date": { "type": "string", "format": "date" },
+        "known_issues": { "type": "array", "items": { "type": "string" } },
+        "replaced_by": { "type": "string" },
+        "support_ends": { "type": "string", "format": "date" }
+      }
+    }
+  },
+
+  "$defs": {
+    "status": { "enum": ["supported", "unsupported", "experimental", "untested"] },
+    "gitSha": {
+      "description": "Full commit SHA. Branch and tag names are mutable and not accepted.",
+      "type": "string",
+      "pattern": "^[0-9a-f]{40}$"
+    },
+    "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "semver": { "type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+(-[0-9A-Za-z.-]+)?$" },
+    "license": { "type": "string", "minLength": 1, "description": "SPDX identifier, or 'custom: <url>'." },
+    "pinnedSource": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["url", "revision"],
+      "properties": {
+        "url": { "type": "string", "format": "uri" },
+        "revision": { "$ref": "#/$defs/gitSha" }
+      }
+    },
+    "file": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256", "size"],
+      "properties": {
+        "path": { "type": "string", "minLength": 1 },
+        "sha256": { "$ref": "#/$defs/sha256" },
+        "size": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "gate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status"],
+      "properties": {
+        "status": { "enum": ["passed", "failed", "checklist", "not-run"] },
+        "evidence": { "type": "string" },
+        "date": { "type": "string", "format": "date" }
+      }
+    }
+  }
+}

@@ -1,0 +1,238 @@
+{
+  "batch_size": 8,
+  "cases": 46,
+  "cases_with_different_entities": [],
+  "confidence_max_abs": 3.5762786865234375e-07,
+  "rows": [
+    {
+      "id": "basic-multi-label",
+      "same_entities": true,
+      "confidence_max_abs": 0.0
+    },
+    {
+      "id": "basic-plo",
+      "same_entities": true,
+      "confidence_max_abs": 0.0
+    },
+    {
+      "id": "empty-text",
+      "same_entities": true,
+      "confidence_max_abs": 0.0
+    },
+    {
+      "id": "whitespace-only",
+      "same_entities": true,
+      "confidence_max_abs": 0.0
+    },
+    {
+      "id": "no-entities",
+      "same_entities": true,
+      "confidence_max_abs": 3.5762786865234375e-07
+    },
+    {
+      "id": "no-matching-label",
+      "same_entities": true,
+      "confidence_max_abs": 0.0
+    },
+    {
+      "id": "punctuation-only",
+      "same_entities": true,
+      "confidence_max_abs": 0.0
+    },
+    {
+      "id": "nested-org-location",
+      "same_entities": true,
+      "confidence_max_abs": 0.0
+    },
+    {
+      "id": "nested-university",
+      "same_entities": true,
+      "confidence_max_abs": 0.0
+    },
+    {
+      "id": "same-span-two-labels",
+      "same_entities": true,
+      "confidence_max_abs": 0.0
+    },
+    {
+      "id": "adjacent-entities",
+      "same_entities": true,
+      "confidence_max_abs": 0.0
+    },
+    {
+      "id": "repeated-entity",
+      "same_entities": true,
+      "confidence_max_abs": 0.0
+    },
+    {
+      "id": "repeated-person",
+      "same_entities": true,
+      "confidence_max_abs": 0.0
+    },
+    {
+      "id": "repeated-case-variants",
+      "same_entities": true,
+      "confidence_max_abs": 0.0
+    },
+    {
+      "id": "label-order-a",
+      "same_entities": true,
+      "confidence_max_abs": 0.0
+    },
+    {
+      "id": "label-order-b",
+      "same_entities": true,
+      "confidence_max_abs": 0.0
+    },
+    {
+      "id": "label-order-c",
+      "same_entities": true,
+      "confidence_max_abs": 0.0
+    },
+    {
+      "id": "label-subset",
+      "same_entities": true,
+      "confidence_max_abs": 0.0
+    },
+    {
+      "id": "label-duplicate",
+      "same_entities": true,
+      "confidence_max_abs": 0.0
+    },
+    {
+      "id": "label-case",
+      "same_entities": true,
+      "confidence_max_abs": 0.0
+    },
+    {
+      "id": "label-multiword",
+      "same_entities": true,
+      "confidence_max_abs": 0.0
+    },
+    {
+      "id": "many-labels",
+      "same_entities": true,
+      "confidence_max_abs": 5.960464477539063e-08
+    },
+    {
+      "id": "threshold-0.5",
+      "same_entities": true,
+      "confidence_max_abs": 1.1920928955078125e-07
+    },
+    {
+      "id": "wide-entity-8-words",
+      "same_entities": true,
+      "confidence_max_abs": 0.0
+    },
+    {
+      "id": "wide-entity-over-8-words",
+      "same_entities": true,
+      "confidence_max_abs": 0.0
+    },
+    {
+      "id": "no-final-punct",
+      "same_entities": true,
+      "confidence_max_abs": 0.0
+    },
+    {
+      "id": "ends-question",
+      "same_entities": true,
+      "confidence_max_abs": 0.0
+    },
+    {
+      "id": "ends-exclaim",
+      "same_entities": true,
+      "confidence_max_abs": 0.0
+    },
+    {
+      "id": "entity-last-word",
+      "same_entities": true,
+      "confidence_max_abs": 0.0
+    },
+    {
+      "id": "email-url-handle",
+      "same_entities": true,
+      "confidence_max_abs": 1.1920928955078125e-07
+    },
+    {
+      "id": "hyphenated-names",
+      "same_entities": true,
+      "confidence_max_abs": 0.0
+    },
+    {
+      "id": "numbers-money",
+      "same_entities": true,
+      "confidence_max_abs": 2.384185791015625e-07
+    },
+    {
+      "id": "apostrophes",
+      "same_entities": true,
+      "confidence_max_abs": 1.1920928955078125e-07
+    },
+    {
+      "id": "latin-accents",
+      "same_entities": true,
+      "confidence_max_abs": 0.0
+    },
+    {
+      "id": "latin-nordic",
+      "same_entities": true,
+      "confidence_max_abs": 0.0
+    },
+    {
+      "id": "turkish-dotted-i",
+      "same_entities": true,
+      "confidence_max_abs": 0.0
+    },
+    {
+      "id": "emoji-before-entity",
+      "same_entities": true,
+      "confidence_max_abs": 0.0
+    },
+    {
+      "id": "math-alnum",
+      "same_entities": true,
+      "confidence_max_abs": 0.0
+    },
+    {
+      "id": "nbsp-and-dashes",
+      "same_entities": true,
+      "confidence_max_abs": 0.0
+    },
+    {
+      "id": "curly-quotes",
+      "same_entities": true,
+      "confidence_max_abs": 0.0
+    },
+    {
+      "id": "combining-accent",
+      "same_entities": true,
+      "confidence_max_abs": 0.0
+    },
+    {
+      "id": "zero-width",
+      "same_entities": true,
+      "confidence_max_abs": 0.0
+    },
+    {
+      "id": "fullwidth-latin",
+      "same_entities": true,
+      "confidence_max_abs": 0.0
+    },
+    {
+      "id": "descriptions",
+      "same_entities": true,
+      "confidence_max_abs": 0.0
+    },
+    {
+      "id": "long-over-512-tokens",
+      "same_entities": true,
+      "confidence_max_abs": 0.0
+    },
+    {
+      "id": "long-over-1024-tokens",
+      "same_entities": true,
+      "confidence_max_abs": 0.0
+    }
+  ]
+}

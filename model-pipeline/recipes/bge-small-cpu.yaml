@@ -1,0 +1,6 @@
+recipe_version: 1
+id: bge-small-cpu
+plugin: bert-onnx-cpu-v1
+manifest: model-pipeline/candidates/bge-small/profile.json
+reference_corpus: model-pipeline/corpora/five-models/bge.jsonl
+reference_environment: model-pipeline/reference/encoder/requirements.txt

@@ -1,0 +1,43 @@
+EmbeddingGemma 2 text-path ONNX graph (embeddinggemma2-text-fp32.onnx)
+Release: embeddinggemma-2-onnx-r1, hosted at https://huggingface.co/Starlinghq/embeddinggemma-2-onnx (tag r1)
+
+This file is a derivative of the EmbeddingGemma 2 model weights published by Google DeepMind:
+
+    Model:     google/embeddinggemma-2
+    Source:    https://huggingface.co/google/embeddinggemma-2
+    Revision:  914f7f89142e33e77833254d9c9b90c3cef7303b
+    Weights:   model.safetensors, SHA-256 197a32965d4b1105faf060417baa899e193fb73cd401f42ec9295234d5553d79
+    License:   Apache License, Version 2.0 (model card front matter "license: apache-2.0"; the card's license link,
+               https://ai.google.dev/gemma/docs/gemma_4_license, presents the Apache License 2.0 text)
+               https://www.apache.org/licenses/LICENSE-2.0
+
+Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
+the License. You may obtain a copy of the License at
+
+    https://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
+an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
+specific language governing permissions and limitations under the License.
+
+Usage policy. The model card (Ethics and safety section, at the revision above) states, verbatim:
+
+    Deployments must adhere to the [Gemma Prohibited Use Policy](https://ai.google.dev/gemma/prohibited_use_policy).
+
+Modifications made by StarlingHq (Apache-2.0, section 4(b)):
+
+  - Only the text path is included: the token embedding, the per-layer embeddings, the 24 encoder layers, the final
+    norm and the 512-to-768 embedding_projection of EmbeddingGemma2TextModel. The vision and audio towers are not
+    included; image, audio and video inputs are not supported.
+  - The weights were converted from bfloat16 to float32 and exported to ONNX (opset 20) with the PyTorch dynamo
+    exporter (torch 2.14.1, transformers 5.19.0, onnx 1.23.1, onnxscript 0.7.2). The attention masks are built in the
+    graph from the 2-D attention mask as additive float32 masks (bidirectional; sliding window |q - k| <= 512 on the
+    sliding layers). Outputs: last_hidden_state (512) and token_embeddings (768).
+  - Exporter metadata and doc strings were removed so the file is reproducible; the weights are stored inline.
+  - Mean pooling, L2 normalization, prompts and Matryoshka truncation are not part of the graph.
+
+Reproduction: model-pipeline/reference/embeddinggemma2/export_embeddinggemma2_onnx.py followed by
+release_embeddinggemma2_onnx.py in https://github.com/starlinghq/starling (pinned environment requirements.txt).
+The expected size and SHA-256 are in ai-dotnet/src/Starlings.Models.EmbeddingGemma2/EmbeddingGemma2ModelAssets.cs.
+
+"Gemma" is a trademark of Google LLC. StarlingHq is not affiliated with or endorsed by Google.

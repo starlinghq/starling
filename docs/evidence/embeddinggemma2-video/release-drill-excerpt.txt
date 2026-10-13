@@ -1,0 +1,71 @@
+mode:      no-model; EmbeddingGemma 2 graph seed: <models>/drill-seed-video; user FFmpeg: <models>/video-spike/ffmpeg/ffmpeg-n8.1.3-17-gc389840894-linux64-lgpl-shared-8.1/lib
+ok:   Starlings.Models.EmbeddingGemma2.Video.FFmpeg 0.1.0-preview.4: MIT, README and description labeled Preview, repository commit, SourceLink to the commit; dependencies: Starlings.Models.EmbeddingGemma2 [0.1.0-preview.4] FFmpeg.AutoGen [8.1.0] 
+      sha256 606f6277a2e0c26ef385dc829ed014dd1e2a5632016f4cbf8a6d64d27058a1d1
+ok:   only packages; Starlings.* sha512 equal the packed .nupkg files; no foreign tokenizer, no GPU natives
+ok:   only packages; Starlings.* sha512 equal the packed .nupkg files; no foreign tokenizer, no GPU natives
+ok:   only packages; Starlings.* sha512 equal the packed .nupkg files; no foreign tokenizer, no GPU natives
+ok:   only packages; Starlings.* sha512 equal the packed .nupkg files; no foreign tokenizer, no GPU natives
+ok:   only packages; Starlings.* sha512 equal the packed .nupkg files; no foreign tokenizer, no GPU natives
+ok:   no FFmpeg library in the consumer package cache or any build output (the video adapter binds FFmpeg.AutoGen only)
+== 9b. EmbeddingGemma 2: seeded graph, tokenizer.json and prompt config from the Hub, offline search
+seeded: onnx/embeddinggemma2-text-fp32.onnx from <models>/drill-seed-video (the store verifies size and SHA-256 before use)
+lock:  embeddinggemma-2 (google/embeddinggemma-2@914f7f89142e33e77833254d9c9b90c3cef7303b, 3 files)
+cache: <work>/models
+onnx/embeddinggemma2-text-fp32.onnx: already cached, 1084327317 bytes, sha256 02cc7ecccbfcb29d812eb104e4c6ea6c599bc87e94f01082606f6a11f0252d11 verified
+tokenizer.json: downloaded, 32170510 bytes, sha256 4d777ef5bdc1aa36227abdfb77c3e49e7b9c892d16e1b6bda41c393504828be4 verified
+config_sentence_transformers.json: downloaded, 1565 bytes, sha256 031e56a498d33c349ab489a21885bcfe25b4fcba841149dc99e1e90d4a7c28f5 verified
+snapshot: <work>/models/google/embeddinggemma-2/914f7f89142e33e77833254d9c9b90c3cef7303b
+packages: Starlings.Models.EmbeddingGemma2 0.1.0-preview.4, Starlings.Tokenizers 0.1.0-preview.4, Starlings.Models.EmbeddingGemma2.Extensions.AI 0.1.0-preview.4
+onnxruntime: native 1.30.0, managed 1.30.0, session providers CPUExecutionProvider
+query: how much protein should a female eat
+  top: protein (0.8328); next: summit (0.5447)
+query: Warum rostet Eisen?
+  top: rust (0.8248); next: bread (0.5460)
+query: 日本の首都はどこですか
+  top: tokyo (0.7962); next: summit (0.5587)
+query: highest mountain in the world
+  top: summit (0.7944); next: tokyo (0.5785)
+extensions.ai: starlings.onnxruntime google/embeddinggemma-2@914f7f89142e33e77833254d9c9b90c3cef7303b dims 768; 4 embeddings, 59 tokens, max abs difference from the typed API 0
+matryoshka 256: 256 dimensions; same top document for 4 of 4 queries
+long input rejected: 9002 tokens > 8192
+ok:   EmbeddingGemma 2 sample ranks the expected document first offline, Extensions.AI equals the typed API, rejects > 8,192 tokens
+
+== 9c. EmbeddingGemma 2 images: seeded vision and multimodal graphs, image lock verified, offline text-to-image search
+onnx/embeddinggemma2-text-fp32.onnx: already cached, 1084327317 bytes, sha256 02cc7ecccbfcb29d812eb104e4c6ea6c599bc87e94f01082606f6a11f0252d11 verified
+tokenizer.json: already cached, 32170510 bytes, sha256 4d777ef5bdc1aa36227abdfb77c3e49e7b9c892d16e1b6bda41c393504828be4 verified
+config_sentence_transformers.json: already cached, 1565 bytes, sha256 031e56a498d33c349ab489a21885bcfe25b4fcba841149dc99e1e90d4a7c28f5 verified
+onnx/embeddinggemma2-vision-fp32.onnx: already cached, 671256072 bytes, sha256 6c97f477a82f6863d22d800476de6d0a618b23e514aa9b65a46b220c4b106b92 verified
+onnx/embeddinggemma2-text-mm-fp32.onnx: already cached, 1084327898 bytes, sha256 a2c22e072ec230b105b35c2787dcfccba186254e6a921e729c45b40e50dbbb74 verified
+snapshot: <work>/models/google/embeddinggemma-2/914f7f89142e33e77833254d9c9b90c3cef7303b
+images: 5 decoded from <work>/eg2-images; vision session providers CPUExecutionProvider
+image query: a photo of a cat
+  top: chelsea.png (0.7051); next: hubble_deep_field.jpg (0.5971)
+image query: a cup of coffee
+  top: coffee.png (0.7384); next: chelsea.png (0.6036)
+image query: a rocket launch
+  top: rocket.jpg (0.7069); next: astronaut.png (0.6348)
+image query: portrait of an astronaut
+  top: astronaut.png (0.7590); next: rocket.jpg (0.6408)
+image query: deep space full of galaxies
+  top: hubble_deep_field.jpg (0.7463); next: rocket.jpg (0.5883)
+interleaved: 768 dimensions, cosine to the image alone 0.8490
+extensions.ai images: 5 embeddings, 1311 tokens, max abs difference from the typed API 0
+ok:   EmbeddingGemma 2 image search ranks the expected photo first offline; Extensions.AI images equal the typed API
+
+== 9d. EmbeddingGemma 2 videos: user-supplied FFmpeg 8 (<models>/video-spike/ffmpeg/ffmpeg-n8.1.3-17-gc389840894-linux64-lgpl-shared-8.1/lib), offline text-to-video search
+ffmpeg: n8.1.3-17-gc389840894-20261011 (LGPL) from <models>/video-spike/ffmpeg/ffmpeg-n8.1.3-17-gc389840894-linux64-lgpl-shared-8.1/lib; Starlings.Models.EmbeddingGemma2.Video.FFmpeg 0.1.0-preview.4
+decoded h264-1.9s-320x240-30fps.mp4: h264 320x240, 57 frames, 1.90 s -> frames [0]
+decoded h264-1fps-64x48-8s.mp4: h264 64x48, 8 frames, 8.00 s -> frames [0, 1, 2, 3, 4, 5, 6, 7]
+decoded h264-portrait-360x640-30fps-4s.mp4: h264 360x640, 120 frames, 4.00 s -> frames [0, 30, 60, 90]
+video query: colour bars test pattern with a moving white square
+  top: h264-1fps-64x48-8s.mp4 (0.7780); next: h264-portrait-360x640-30fps-4s.mp4 (0.7098)
+video query: colourful circles and rectangles moving over a dark background
+  top: h264-1.9s-320x240-30fps.mp4 (0.7831); next: h264-1fps-64x48-8s.mp4 (0.6976)
+video query: white words scrolling across a colour gradient
+  top: h264-portrait-360x640-30fps-4s.mp4 (0.7420); next: h264-1fps-64x48-8s.mp4 (0.6985)
+extensions.ai videos: h264-1.9s-320x240-30fps.mp4, 134 tokens, max abs difference from the typed API 0
+frames without timing rejected: EmbeddingGemma2VideoTimingRequiredException
+ok:   EmbeddingGemma 2 video search ranks the expected clip first offline on the user-supplied FFmpeg; Extensions.AI videos equal the typed API
+note: no --seed-qwen35-from: the pilot LLM packages were packed, inspected and the QwenChat sample built, but not run
+
+== DRILL PASS (no-model, EmbeddingGemma 2 run with FFmpeg <models>/video-spike/ffmpeg/ffmpeg-n8.1.3-17-gc389840894-linux64-lgpl-shared-8.1/lib): Starlings 0.1.0-preview.4 + Tokenizers 0.1.0-preview.4 from dd1ed7f3727aef5cb91c72b9954123f3f053e8f6 (packages and logs in artifacts/release-drill-ai/)

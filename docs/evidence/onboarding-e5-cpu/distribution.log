@@ -1,0 +1,181 @@
+Command: ["bash","/home/mark/Projects/AI-pipeline/artifacts/onboarding/e5-cpu/stages/distribution/79873c3d20f9415abf77a6d60185bba0/output/committed-drill-vokhp98v/source/tools/release-drill-ai.sh","--seed-model-from","/home/mark/Projects/AI-models/e5/snapshot-614241f6"]
+
+== 0. Inputs
+commit:    b8d2395d47be6e1811988ac711b9aa69cd4c4cd3
+dotnet:    /home/mark/.dotnet/dotnet (SDK in the clone: pinned by global.json; outside: 10.0.401)
+mode:      seed (seed: /home/mark/Projects/AI-models/e5/snapshot-614241f6)
+offline:   network namespace without interfaces (unshare -rn)
+work dir:  /tmp/starlings-drill.0VDAm4
+
+== 1. Clean checkout of b8d2395d47be6e1811988ac711b9aa69cd4c4cd3
+ok:   no build outputs, caches or untracked files in the checkout
+
+== 2. Versions
+Starlings.Tokenizers: 0.1.0-preview.3
+ai-dotnet packages:            0.1.0-preview.3
+ok:   sample references 0.1.0-preview.3; manifest pins tokenizer 0.1.0-preview.3
+
+== 3. Pack (locked restore, empty package cache)
+Starlings.Acquisition.0.1.0-preview.3.nupkg
+Starlings.Acquisition.0.1.0-preview.3.snupkg
+Starlings.Models.E5.0.1.0-preview.3.nupkg
+Starlings.Models.E5.0.1.0-preview.3.snupkg
+Starlings.Models.E5.Extensions.AI.0.1.0-preview.3.nupkg
+Starlings.Models.E5.Extensions.AI.0.1.0-preview.3.snupkg
+Starlings.Models.E5.MLNet.0.1.0-preview.3.nupkg
+Starlings.Models.E5.MLNet.0.1.0-preview.3.snupkg
+Starlings.Models.Gliner2.0.1.0-preview.3.nupkg
+Starlings.Models.Gliner2.0.1.0-preview.3.snupkg
+Starlings.Runtime.Onnx.0.1.0-preview.3.nupkg
+Starlings.Runtime.Onnx.0.1.0-preview.3.snupkg
+Starlings.Tokenizers.0.1.0-preview.3.nupkg
+Starlings.Tokenizers.0.1.0-preview.3.snupkg
+
+== 4. Inspect packages
+ok:   Starlings.Tokenizers 0.1.0-preview.3: MIT, README, preview version, repository commit, SourceLink to the commit; dependencies: none 
+      sha256 b326d85052a6274bc192554fae2244acbef5ed9b0acedaa691f87317f5c93422
+ok:   Starlings.Acquisition 0.1.0-preview.3: MIT, README and description labeled Preview, repository commit, SourceLink to the commit; dependencies: none 
+      sha256 cbb6a77e7e2cb3e54ac50a55f393143c9cee348021dd596bdd0d9c456f5011ce
+ok:   Starlings.Runtime.Onnx 0.1.0-preview.3: MIT, README and description labeled Preview, repository commit, SourceLink to the commit; dependencies: Microsoft.ML.OnnxRuntime.Managed [1.30.0] 
+      sha256 dadd25158c79c1000d425eec6e36ac2e8fcec465b98b41ed6046cd32bb48ceb5
+ok:   Starlings.Models.E5 0.1.0-preview.3: MIT, README and description labeled Preview, repository commit, SourceLink to the commit; dependencies: Starlings.Acquisition [0.1.0-preview.3] Starlings.Runtime.Onnx [0.1.0-preview.3] Starlings.Tokenizers [0.1.0-preview.3] 
+      sha256 73e9c01669825ceaf477accd286f290c88e5a8221b66ff093cd7e70942e402d3
+ok:   Starlings.Models.E5.Extensions.AI 0.1.0-preview.3: MIT, README and description labeled Preview, repository commit, SourceLink to the commit; dependencies: Starlings.Models.E5 [0.1.0-preview.3] Microsoft.Extensions.AI.Abstractions 10.10.1 Microsoft.Extensions.DependencyInjection.Abstractions 10.0.12 
+      sha256 6f9b212787996f945d483aae1bcd0ade39a9eb889f9a4a1365482b22f68c1363
+ok:   Starlings.Models.E5.MLNet 0.1.0-preview.3: MIT, README and description labeled Preview, repository commit, SourceLink to the commit; dependencies: Starlings.Models.E5 [0.1.0-preview.3] Microsoft.ML 5.0.0 
+      sha256 17b8093a2a3e23a1bde7fb0758abe4069cf0c28a0be400f1bdbb7e65997ca319
+ok:   Starlings.Models.Gliner2 0.1.0-preview.3: MIT, README and description labeled Preview, repository commit, SourceLink to the commit; dependencies: Starlings.Acquisition [0.1.0-preview.3] Starlings.Runtime.Onnx [0.1.0-preview.3] Starlings.Tokenizers [0.1.0-preview.3] 
+      sha256 8e2c532b01902f40348e4a39cd7844066fa8773db68db53c5f08f75f6b6e0895
+
+== 5. Push to a local folder feed (never nuget.org)
+Starlings.Acquisition.0.1.0-preview.3.nupkg
+Starlings.Models.E5.0.1.0-preview.3.nupkg
+Starlings.Models.E5.Extensions.AI.0.1.0-preview.3.nupkg
+Starlings.Models.E5.MLNet.0.1.0-preview.3.nupkg
+Starlings.Models.Gliner2.0.1.0-preview.3.nupkg
+Starlings.Runtime.Onnx.0.1.0-preview.3.nupkg
+Starlings.Tokenizers.0.1.0-preview.3.nupkg
+
+== 6. Clean consumers outside the repository
+  Determining projects to restore...
+  All projects are up-to-date for restore.
+Project 'E5Search' has the following package references
+   [net10.0]: 
+   Top-level Package                                 Requested         Resolved       
+   > Starlings.Models.E5.Extensions.AI      0.1.0-preview.3   0.1.0-preview.3
+   > Microsoft.ML.OnnxRuntime                        1.30.0            1.30.0         
+
+   Transitive Package                                           Resolved       
+   > Starlings.Acquisition                             0.1.0-preview.3
+   > Starlings.Models.E5                               0.1.0-preview.3
+   > Starlings.Runtime.Onnx                            0.1.0-preview.3
+   > Starlings.Tokenizers                              0.1.0-preview.3
+   > Microsoft.Extensions.AI.Abstractions                       10.10.1        
+   > Microsoft.Extensions.DependencyInjection.Abstractions      10.0.12        
+   > Microsoft.ML.OnnxRuntime.Managed                           1.30.0         
+   > System.Numerics.Tensors                                    9.0.0          
+
+  Determining projects to restore...
+  All projects are up-to-date for restore.
+Project 'Gliner2Ner' has the following package references
+   [net10.0]: 
+   Top-level Package                        Requested         Resolved       
+   > Starlings.Models.Gliner2      0.1.0-preview.3   0.1.0-preview.3
+   > Microsoft.ML.OnnxRuntime               1.30.0            1.30.0         
+
+   Transitive Package                      Resolved       
+   > Starlings.Acquisition        0.1.0-preview.3
+   > Starlings.Runtime.Onnx       0.1.0-preview.3
+   > Starlings.Tokenizers         0.1.0-preview.3
+   > Microsoft.ML.OnnxRuntime.Managed      1.30.0         
+   > System.Numerics.Tensors               9.0.0          
+
+  Determining projects to restore...
+  All projects are up-to-date for restore.
+Project 'AiConsumer' has the following package references
+   [net10.0]: 
+   Top-level Package                                 Requested           Resolved       
+   > Starlings.Models.E5.Extensions.AI      [0.1.0-preview.3]   0.1.0-preview.3
+   > Starlings.Models.E5.MLNet              [0.1.0-preview.3]   0.1.0-preview.3
+   > Microsoft.ML.OnnxRuntime                        1.30.0              1.30.0         
+
+   Transitive Package                                           Resolved       
+   > Starlings.Acquisition                             0.1.0-preview.3
+   > Starlings.Models.E5                               0.1.0-preview.3
+   > Starlings.Runtime.Onnx                            0.1.0-preview.3
+   > Starlings.Tokenizers                              0.1.0-preview.3
+   > Microsoft.Bcl.AsyncInterfaces                              9.0.4          
+   > Microsoft.Extensions.AI.Abstractions                       10.10.1        
+   > Microsoft.Extensions.DependencyInjection.Abstractions      10.0.12        
+   > Microsoft.ML                                               5.0.0          
+   > Microsoft.ML.CpuMath                                       5.0.0          
+   > Microsoft.ML.DataView                                      5.0.0          
+   > Microsoft.ML.OnnxRuntime.Managed                           1.30.0         
+   > Newtonsoft.Json                                            13.0.3         
+   > System.CodeDom                                             9.0.4          
+   > System.Numerics.Tensors                                    9.0.4          
+
+E5Search: 10 packages: Starlings.Acquisition/0.1.0-preview.3, Starlings.Models.E5.Extensions.AI/0.1.0-preview.3, Starlings.Models.E5/0.1.0-preview.3, Starlings.Runtime.Onnx/0.1.0-preview.3, Starlings.Tokenizers/0.1.0-preview.3, Microsoft.Extensions.AI.Abstractions/10.10.1, Microsoft.Extensions.DependencyInjection.Abstractions/10.0.12, Microsoft.ML.OnnxRuntime.Managed/1.30.0, Microsoft.ML.OnnxRuntime/1.30.0, System.Numerics.Tensors/9.0.0
+ok:   only packages; Starlings.* sha512 equal the packed .nupkg files; no foreign tokenizer, no GPU natives
+AiConsumer: 17 packages: Starlings.Acquisition/0.1.0-preview.3, Starlings.Models.E5.Extensions.AI/0.1.0-preview.3, Starlings.Models.E5.MLNet/0.1.0-preview.3, Starlings.Models.E5/0.1.0-preview.3, Starlings.Runtime.Onnx/0.1.0-preview.3, Starlings.Tokenizers/0.1.0-preview.3, Microsoft.Bcl.AsyncInterfaces/9.0.4, Microsoft.Extensions.AI.Abstractions/10.10.1, Microsoft.Extensions.DependencyInjection.Abstractions/10.0.12, Microsoft.ML.CpuMath/5.0.0, Microsoft.ML.DataView/5.0.0, Microsoft.ML.OnnxRuntime.Managed/1.30.0, Microsoft.ML.OnnxRuntime/1.30.0, Microsoft.ML/5.0.0, Newtonsoft.Json/13.0.3, System.CodeDom/9.0.4, System.Numerics.Tensors/9.0.4
+ok:   only packages; Starlings.* sha512 equal the packed .nupkg files; no foreign tokenizer, no GPU natives
+Gliner2Ner: 7 packages: Starlings.Acquisition/0.1.0-preview.3, Starlings.Models.Gliner2/0.1.0-preview.3, Starlings.Runtime.Onnx/0.1.0-preview.3, Starlings.Tokenizers/0.1.0-preview.3, Microsoft.ML.OnnxRuntime.Managed/1.30.0, Microsoft.ML.OnnxRuntime/1.30.0, System.Numerics.Tensors/9.0.0
+ok:   only packages; Starlings.* sha512 equal the packed .nupkg files; no foreign tokenizer, no GPU natives
+ok:   consumer package cache holds only: starlings.acquisition starlings.models.e5 starlings.models.e5.extensions.ai starlings.models.e5.mlnet starlings.models.gliner2 starlings.runtime.onnx starlings.tokenizers microsoft.bcl.asyncinterfaces microsoft.extensions.ai.abstractions microsoft.extensions.dependencyinjection.abstractions microsoft.ml microsoft.ml.cpumath microsoft.ml.dataview microsoft.ml.onnxruntime microsoft.ml.onnxruntime.managed newtonsoft.json system.codedom system.numerics.tensors 
+ok:   no file in the consumers (sources, NuGet.config, obj, bin) names the repository path
+ok:   build outputs hold no tokenizer library other than Starlings.Tokenizers.dll
+
+== 7. Explicit acquisition into an isolated empty cache (real Hub download)
+seeded: onnx/model.onnx from /home/mark/Projects/AI-models/e5/snapshot-614241f6 (the store verifies size and SHA-256 before use)
+lock:  multilingual-e5-small (intfloat/multilingual-e5-small@614241f622f53c4eeff9890bdc4f31cfecc418b3, 2 files)
+cache: /tmp/starlings-drill.0VDAm4/models
+onnx/model.onnx: already cached, 470268510 bytes, sha256 ca456c06b3a9505ddfd9131408916dd79290368331e7d76bb621f1cba6bc8665 verified
+tokenizer.json: downloaded, 17082730 bytes, sha256 0b44a9d7b51c3c62626640cda0e2c2f70fdacdc25bbbd68038369d14ebdf4c39 verified
+snapshot: /tmp/starlings-drill.0VDAm4/models/intfloat/multilingual-e5-small/614241f622f53c4eeff9890bdc4f31cfecc418b3
+ok:   cache content: ./.downloads/intfloat/multilingual-e5-small/614241f622f53c4eeff9890bdc4f31cfecc418b3/onnx/model.onnx.lock ./.downloads/intfloat/multilingual-e5-small/614241f622f53c4eeff9890bdc4f31cfecc418b3/tokenizer.json.lock ./intfloat/multilingual-e5-small/614241f622f53c4eeff9890bdc4f31cfecc418b3/onnx/model.onnx ./intfloat/multilingual-e5-small/614241f622f53c4eeff9890bdc4f31cfecc418b3/tokenizer.json 
+
+== 8. Offline: sample search and fixture checks with no network
+ok:   huggingface.co unreachable inside the wrapper (network namespace without interfaces (unshare -rn))
+packages: Starlings.Models.E5 0.1.0-preview.3, Starlings.Tokenizers 0.1.0-preview.3, Starlings.Models.E5.Extensions.AI 0.1.0-preview.3
+onnxruntime: native 1.30.0, managed 1.30.0, session providers CPUExecutionProvider
+query: how much protein should a female eat
+  top: protein (0.9252); next: bread (0.7764)
+query: Warum rostet Eisen?
+  top: rust (0.9142); next: bread (0.7373)
+query: 日本の首都はどこですか
+  top: tokyo (0.8890); next: summit (0.7167)
+query: highest mountain in the world
+  top: summit (0.8816); next: tokyo (0.7594)
+extensions.ai: starlings.onnxruntime intfloat/multilingual-e5-small@614241f622f53c4eeff9890bdc4f31cfecc418b3 dims 384; 9 embeddings, 176 tokens, max abs difference from the typed API 0
+ok:   sample ranks the expected passage first for all four queries; Extensions.AI vectors equal the typed API
+bounds (protected model-pipeline/protected/multilingual-e5-small/onnx-fp32-cpu/tolerances.yaml): float.embedding_max_abs 1.0e-5, float.padded_batch_vs_single_embedding_max_abs 1.0e-5
+assembly: Starlings.Acquisition 0.1.0-preview.3+b8d2395d47be6e1811988ac711b9aa69cd4c4cd3 (/tmp/starlings-drill.0VDAm4/apps/AiConsumer/bin/Release/net10.0/Starlings.Acquisition.dll)
+assembly: Starlings.Runtime.Onnx 0.1.0-preview.3+b8d2395d47be6e1811988ac711b9aa69cd4c4cd3 (/tmp/starlings-drill.0VDAm4/apps/AiConsumer/bin/Release/net10.0/Starlings.Runtime.Onnx.dll)
+assembly: Starlings.Tokenizers 0.1.0-preview.3+b8d2395d47be6e1811988ac711b9aa69cd4c4cd3 (/tmp/starlings-drill.0VDAm4/apps/AiConsumer/bin/Release/net10.0/Starlings.Tokenizers.dll)
+assembly: Starlings.Models.E5 0.1.0-preview.3+b8d2395d47be6e1811988ac711b9aa69cd4c4cd3 (/tmp/starlings-drill.0VDAm4/apps/AiConsumer/bin/Release/net10.0/Starlings.Models.E5.dll)
+assembly: Starlings.Models.E5.Extensions.AI 0.1.0-preview.3+b8d2395d47be6e1811988ac711b9aa69cd4c4cd3 (/tmp/starlings-drill.0VDAm4/apps/AiConsumer/bin/Release/net10.0/Starlings.Models.E5.Extensions.AI.dll)
+assembly: Starlings.Models.E5.MLNet 0.1.0-preview.3+b8d2395d47be6e1811988ac711b9aa69cd4c4cd3 (/tmp/starlings-drill.0VDAm4/apps/AiConsumer/bin/Release/net10.0/Starlings.Models.E5.MLNet.dll)
+assembly: Microsoft.ML.Data 5.0.0+efefa92f4486a43047c5b47618885a71bf7f0967 (/tmp/starlings-drill.0VDAm4/apps/AiConsumer/bin/Release/net10.0/Microsoft.ML.Data.dll)
+runtime:  .NET 10.0.12 linux-x64
+ok:   ONNX Runtime native 1.30.0, managed 1.30.0 (expected 1.30.0)
+ok:   providers: CPUExecutionProvider
+ok:   fixture cases: 46 (expected 46)
+tokenizer.json: /tmp/starlings-drill.0VDAm4/models/intfloat/multilingual-e5-small/614241f622f53c4eeff9890bdc4f31cfecc418b3/tokenizer.json
+ok:   owned tokenizer ids and masks exact: 46/46
+session: CPUExecutionProvider, model sha256 ca456c06b3a9505ddfd9131408916dd79290368331e7d76bb621f1cba6bc8665
+ok:   typed API, one text per call vs protected: 46 rows, max abs 2.33E-07, mean abs 1.95E-08, min cosine 0.99999999999945 (bound 1E-05)
+ok:   typed API, one batch of 46 vs protected: 46 rows, max abs 2.33E-07, mean abs 1.95E-08, min cosine 0.99999999999945 (bound 1E-05)
+ok:   typed API, batch vs own single rows: 46 rows, max abs 0, mean abs 0, min cosine 1.00000000000000 (bound 1E-05)
+ok:   Extensions.AI generator vs protected: 46 rows, max abs 2.33E-07, mean abs 1.95E-08, min cosine 0.99999999999945 (bound 1E-05)
+ok:   Extensions.AI generator vs typed batch (report): 46 rows, max abs 0, mean abs 0, min cosine 1.00000000000000 (report only)
+ok:   Extensions.AI usage: 1689 input tokens (fixture ids: 1689)
+ok:   ML.NET transform, row-wise, vs typed API one per call (exact): 46 rows, max abs 0, mean abs 0, min cosine 1.00000000000000 (bound 0)
+ok:   ML.NET transform vs protected: 46 rows, max abs 2.33E-07, mean abs 1.95E-08, min cosine 0.99999999999945 (bound 1E-05)
+ok:   ML.NET transform, look-ahead batch of 46, vs typed batch (exact): 46 rows, max abs 0, mean abs 0, min cosine 1.00000000000000 (bound 0)
+ok:   ML.NET Save of the e5 transformer is rejected (persistence unsupported)
+ok:   no other managed tokenizer assembly loaded ()
+ok:   no native tokenizers library mapped ()
+RESULT: PASS
+note: no --seed-gliner2-from: the GLiNER2 package was packed, inspected and its sample built, but not run
+
+== DRILL PASS (seed): Starlings 0.1.0-preview.3 + Tokenizers 0.1.0-preview.3 from b8d2395d47be6e1811988ac711b9aa69cd4c4cd3 (packages and logs in artifacts/release-drill-ai/)

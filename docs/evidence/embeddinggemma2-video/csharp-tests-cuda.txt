@@ -1,0 +1,20 @@
+== QueriesRetrieveVideosOfTheirScene Passed
+q-bars: top h264-1fps-64x48-8s (bars) 0.7780, runner-up h264-bars-640x360-30fps-5s 0.7675
+q-shapes: top h264-1.9s-320x240-30fps (shapes) 0.7831, runner-up h264-1s-320x240-30fps 0.7769
+q-text: top h264-portrait-360x640-30fps-4s (text) 0.7420, runner-up h264-rot90-640x360-30fps-3s 0.7246
+== SessionsUseCudaWithTf32Disabled Passed
+6c97f477a82f: CUDAExecutionProvider, CPUExecutionProvider; use_tf32=0; CUDA_VISIBLE_DEVICES=1
+a2c22e072ec2: CUDAExecutionProvider, CPUExecutionProvider; use_tf32=0; CUDA_VISIBLE_DEVICES=1
+== BatchesMatchSingleRows Passed
+frame calls of 4, text batch 4: 10 rows in batches vs single rows: max abs 8.94E-008, mean 1.26E-008, p99 5.09E-008, min cosine 0.999999999999761 (worst h264-1fps-64x48-8s); bound 1.0E-005
+== TextOnlyInputsUseTheReleasedTextGraph Passed
+== RowsMatchTheReference Passed
+35 rows (default contract; vid-array-no-metadata needs the opt-in) vs reference: max abs 3.27E-006, mean 5.05E-008, p99 8.28E-007, min cosine 0.999999999683311 (worst av1-640x360-30fps-3s)
+video and interleaved rows: max abs 3.27E-006, mean 5.68E-008, p99 8.90E-007, min cosine 0.999999999683311 (worst av1-640x360-30fps-3s)
+text-only rows (released text graph): max abs 6.71E-008, mean 1.31E-008, p99 4.47E-008, min cosine 0.999999999999848 (worst q-bars)
+time per row: q-bars 4.1 s, h264-33s-160x120-30fps 3.2 s, h264-long-320x240-30fps-40s 3.2 s, h264-32s-160x120-30fps 3.1 s, mm-image-and-video 1.1 s; total 27 s
+bounds: embedding_max_abs 1.0E-005, min_cosine 0.9999995 (model-pipeline/protected/embeddinggemma-2/video-fp32-cuda/tolerances.yaml)
+soft tokens row-relative worst 2.96E-005 (h264-long-320x240-30fps-40s/video0) over 31 videos; bound 1.0E-003
+token embeddings row-relative worst 8.24E-005 (av1-640x360-30fps-3s) over 30 rows; bound 1.0E-003
+== FramesWithoutTimingNeedTheOptIn Passed
+vid-array-no-metadata with AllowVideosWithoutTiming vs reference: max abs 1.79E-007, mean 3.18E-008, p99 1.05E-007, min cosine 0.999999999999367 (worst vid-array-no-metadata); vs the same file sampled at 1 fps: cosine 0.9653 (upstream quirk, documented)

@@ -1,0 +1,220 @@
+{
+  "threads_1": {
+    "rounds": 8,
+    "requests": 48,
+    "mismatching_requests": 0,
+    "mismatches": []
+  },
+  "threads_2": {
+    "rounds": 8,
+    "requests": 48,
+    "mismatching_requests": 14,
+    "mismatches": [
+      {
+        "round": 0,
+        "id": "ja",
+        "first_divergence": 30,
+        "generated": 32
+      },
+      {
+        "round": 0,
+        "id": "en-list",
+        "first_divergence": 21,
+        "generated": 32
+      },
+      {
+        "round": 0,
+        "id": "th",
+        "first_divergence": 6,
+        "generated": 32
+      },
+      {
+        "round": 1,
+        "id": "ja",
+        "first_divergence": 0,
+        "generated": 32
+      },
+      {
+        "round": 1,
+        "id": "en-list",
+        "first_divergence": 17,
+        "generated": 32
+      },
+      {
+        "round": 1,
+        "id": "th",
+        "first_divergence": 26,
+        "generated": 32
+      },
+      {
+        "round": 2,
+        "id": "zh",
+        "first_divergence": 23,
+        "generated": 32
+      },
+      {
+        "round": 3,
+        "id": "en-list",
+        "first_divergence": 20,
+        "generated": 32
+      },
+      {
+        "round": 4,
+        "id": "ja",
+        "first_divergence": 13,
+        "generated": 32
+      },
+      {
+        "round": 4,
+        "id": "th",
+        "first_divergence": 17,
+        "generated": 32
+      },
+      {
+        "round": 5,
+        "id": "ja",
+        "first_divergence": 30,
+        "generated": 32
+      },
+      {
+        "round": 6,
+        "id": "ja",
+        "first_divergence": 29,
+        "generated": 32
+      },
+      {
+        "round": 6,
+        "id": "en-list",
+        "first_divergence": 21,
+        "generated": 32
+      },
+      {
+        "round": 7,
+        "id": "zh",
+        "first_divergence": 16,
+        "generated": 32
+      }
+    ]
+  },
+  "threads_4": {
+    "rounds": 8,
+    "requests": 48,
+    "mismatching_requests": 19,
+    "mismatches": [
+      {
+        "round": 0,
+        "id": "zh",
+        "first_divergence": 23,
+        "generated": 32
+      },
+      {
+        "round": 1,
+        "id": "en-list",
+        "first_divergence": 21,
+        "generated": 32
+      },
+      {
+        "round": 1,
+        "id": "th",
+        "first_divergence": 17,
+        "generated": 32
+      },
+      {
+        "round": 2,
+        "id": "zh",
+        "first_divergence": 9,
+        "generated": 32
+      },
+      {
+        "round": 2,
+        "id": "ja",
+        "first_divergence": 13,
+        "generated": 32
+      },
+      {
+        "round": 3,
+        "id": "zh",
+        "first_divergence": 22,
+        "generated": 32
+      },
+      {
+        "round": 3,
+        "id": "ja",
+        "first_divergence": 7,
+        "generated": 32
+      },
+      {
+        "round": 3,
+        "id": "th",
+        "first_divergence": 27,
+        "generated": 32
+      },
+      {
+        "round": 4,
+        "id": "zh",
+        "first_divergence": 28,
+        "generated": 32
+      },
+      {
+        "round": 4,
+        "id": "ja",
+        "first_divergence": 31,
+        "generated": 32
+      },
+      {
+        "round": 4,
+        "id": "en-list",
+        "first_divergence": 20,
+        "generated": 32
+      },
+      {
+        "round": 5,
+        "id": "zh",
+        "first_divergence": 25,
+        "generated": 30
+      },
+      {
+        "round": 6,
+        "id": "zh",
+        "first_divergence": 31,
+        "generated": 32
+      },
+      {
+        "round": 6,
+        "id": "en-list",
+        "first_divergence": 21,
+        "generated": 32
+      },
+      {
+        "round": 6,
+        "id": "th",
+        "first_divergence": 20,
+        "generated": 32
+      },
+      {
+        "round": 7,
+        "id": "zh",
+        "first_divergence": 16,
+        "generated": 32
+      },
+      {
+        "round": 7,
+        "id": "ja",
+        "first_divergence": 0,
+        "generated": 32
+      },
+      {
+        "round": 7,
+        "id": "en-list",
+        "first_divergence": 18,
+        "generated": 32
+      },
+      {
+        "round": 7,
+        "id": "th",
+        "first_divergence": 1,
+        "generated": 32
+      }
+    ]
+  }
+}

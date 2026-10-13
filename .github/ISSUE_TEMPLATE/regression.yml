@@ -1,0 +1,28 @@
+name: Regression report
+description: A released profile behaves worse than before.
+labels: [regression]
+body:
+  - type: textarea
+    id: identity
+    attributes:
+      label: Identities
+      description: Output of the diagnostic command, or package version, model bundle ID, runtime profile, and OS/architecture/provider.
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Minimal reproducer
+      description: Inputs and code. Do not include sensitive prompt or user data.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected versus actual
+    validations:
+      required: true
+  - type: input
+    id: last-good
+    attributes:
+      label: Last known good version

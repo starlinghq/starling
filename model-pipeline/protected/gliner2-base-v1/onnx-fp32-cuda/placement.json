@@ -1,0 +1,412 @@
+[
+  {
+    "graph": "A-dynamo",
+    "use_tf32": 0,
+    "placement": [
+      {
+        "providers": [
+          "CUDAExecutionProvider",
+          "CPUExecutionProvider"
+        ],
+        "provider_options": {
+          "CPUExecutionProvider": {},
+          "CUDAExecutionProvider": {
+            "sdpa_kernel": "0",
+            "use_tf32": "0",
+            "fuse_conv_bias": "0",
+            "prefer_nhwc": "0",
+            "tunable_op_max_tuning_duration_ms": "0",
+            "tunable_op_enable": "0",
+            "tunable_op_tuning_enable": "0",
+            "enable_cudnn": "1",
+            "use_ep_level_unified_stream": "0",
+            "device_id": "0",
+            "has_user_compute_stream": "0",
+            "gpu_external_empty_cache": "0",
+            "cudnn_conv_algo_search": "EXHAUSTIVE",
+            "cudnn_conv1d_pad_to_nc1d": "0",
+            "gpu_mem_limit": "18446744073709551615",
+            "gpu_external_alloc": "0",
+            "gpu_external_free": "0",
+            "arena_extend_strategy": "kSameAsRequested",
+            "do_copy_in_default_stream": "1",
+            "enable_cuda_graph": "0",
+            "user_compute_stream": "0",
+            "cudnn_conv_use_max_workspace": "1"
+          }
+        },
+        "nodes_by_provider": {
+          "CUDAExecutionProvider": 759,
+          "CPUExecutionProvider": 33
+        },
+        "cpu_node_ops": {
+          "Add": 1,
+          "Concat": 17,
+          "Mul": 2,
+          "Reshape": 3,
+          "Slice": 6,
+          "Squeeze": 4
+        }
+      }
+    ]
+  },
+  {
+    "graph": "A-dynamo",
+    "use_tf32": 1,
+    "placement": [
+      {
+        "providers": [
+          "CUDAExecutionProvider",
+          "CPUExecutionProvider"
+        ],
+        "provider_options": {
+          "CPUExecutionProvider": {},
+          "CUDAExecutionProvider": {
+            "sdpa_kernel": "0",
+            "use_tf32": "1",
+            "fuse_conv_bias": "0",
+            "prefer_nhwc": "0",
+            "tunable_op_max_tuning_duration_ms": "0",
+            "tunable_op_enable": "0",
+            "tunable_op_tuning_enable": "0",
+            "enable_cudnn": "1",
+            "use_ep_level_unified_stream": "0",
+            "device_id": "0",
+            "has_user_compute_stream": "0",
+            "gpu_external_empty_cache": "0",
+            "cudnn_conv_algo_search": "EXHAUSTIVE",
+            "cudnn_conv1d_pad_to_nc1d": "0",
+            "gpu_mem_limit": "18446744073709551615",
+            "gpu_external_alloc": "0",
+            "gpu_external_free": "0",
+            "arena_extend_strategy": "kSameAsRequested",
+            "do_copy_in_default_stream": "1",
+            "enable_cuda_graph": "0",
+            "user_compute_stream": "0",
+            "cudnn_conv_use_max_workspace": "1"
+          }
+        },
+        "nodes_by_provider": {
+          "CUDAExecutionProvider": 759,
+          "CPUExecutionProvider": 33
+        },
+        "cpu_node_ops": {
+          "Add": 1,
+          "Concat": 17,
+          "Mul": 2,
+          "Reshape": 3,
+          "Slice": 6,
+          "Squeeze": 4
+        }
+      }
+    ]
+  },
+  {
+    "graph": "B-dynamo+H-dynamo",
+    "use_tf32": 0,
+    "placement": [
+      {
+        "providers": [
+          "CUDAExecutionProvider",
+          "CPUExecutionProvider"
+        ],
+        "provider_options": {
+          "CPUExecutionProvider": {},
+          "CUDAExecutionProvider": {
+            "sdpa_kernel": "0",
+            "use_tf32": "0",
+            "fuse_conv_bias": "0",
+            "prefer_nhwc": "0",
+            "tunable_op_max_tuning_duration_ms": "0",
+            "tunable_op_enable": "0",
+            "tunable_op_tuning_enable": "0",
+            "enable_cudnn": "1",
+            "use_ep_level_unified_stream": "0",
+            "device_id": "0",
+            "has_user_compute_stream": "0",
+            "gpu_external_empty_cache": "0",
+            "cudnn_conv_algo_search": "EXHAUSTIVE",
+            "cudnn_conv1d_pad_to_nc1d": "0",
+            "gpu_mem_limit": "18446744073709551615",
+            "gpu_external_alloc": "0",
+            "gpu_external_free": "0",
+            "arena_extend_strategy": "kSameAsRequested",
+            "do_copy_in_default_stream": "1",
+            "enable_cuda_graph": "0",
+            "user_compute_stream": "0",
+            "cudnn_conv_use_max_workspace": "1"
+          }
+        },
+        "nodes_by_provider": {
+          "CUDAExecutionProvider": 598,
+          "CPUExecutionProvider": 12
+        },
+        "cpu_node_ops": {
+          "Concat": 8,
+          "Mul": 1,
+          "Reshape": 1,
+          "Squeeze": 2
+        }
+      },
+      {
+        "providers": [
+          "CUDAExecutionProvider",
+          "CPUExecutionProvider"
+        ],
+        "provider_options": {
+          "CPUExecutionProvider": {},
+          "CUDAExecutionProvider": {
+            "sdpa_kernel": "0",
+            "use_tf32": "0",
+            "fuse_conv_bias": "0",
+            "prefer_nhwc": "0",
+            "tunable_op_max_tuning_duration_ms": "0",
+            "tunable_op_enable": "0",
+            "tunable_op_tuning_enable": "0",
+            "enable_cudnn": "1",
+            "use_ep_level_unified_stream": "0",
+            "device_id": "0",
+            "has_user_compute_stream": "0",
+            "gpu_external_empty_cache": "0",
+            "cudnn_conv_algo_search": "EXHAUSTIVE",
+            "cudnn_conv1d_pad_to_nc1d": "0",
+            "gpu_mem_limit": "18446744073709551615",
+            "gpu_external_alloc": "0",
+            "gpu_external_free": "0",
+            "arena_extend_strategy": "kSameAsRequested",
+            "do_copy_in_default_stream": "1",
+            "enable_cuda_graph": "0",
+            "user_compute_stream": "0",
+            "cudnn_conv_use_max_workspace": "1"
+          }
+        },
+        "nodes_by_provider": {
+          "CUDAExecutionProvider": 156,
+          "CPUExecutionProvider": 23
+        },
+        "cpu_node_ops": {
+          "Add": 1,
+          "Concat": 10,
+          "Mul": 1,
+          "Reshape": 2,
+          "Slice": 6,
+          "Squeeze": 3
+        }
+      }
+    ]
+  },
+  {
+    "graph": "B-dynamo+H-dynamo",
+    "use_tf32": 1,
+    "placement": [
+      {
+        "providers": [
+          "CUDAExecutionProvider",
+          "CPUExecutionProvider"
+        ],
+        "provider_options": {
+          "CPUExecutionProvider": {},
+          "CUDAExecutionProvider": {
+            "sdpa_kernel": "0",
+            "use_tf32": "1",
+            "fuse_conv_bias": "0",
+            "prefer_nhwc": "0",
+            "tunable_op_max_tuning_duration_ms": "0",
+            "tunable_op_enable": "0",
+            "tunable_op_tuning_enable": "0",
+            "enable_cudnn": "1",
+            "use_ep_level_unified_stream": "0",
+            "device_id": "0",
+            "has_user_compute_stream": "0",
+            "gpu_external_empty_cache": "0",
+            "cudnn_conv_algo_search": "EXHAUSTIVE",
+            "cudnn_conv1d_pad_to_nc1d": "0",
+            "gpu_mem_limit": "18446744073709551615",
+            "gpu_external_alloc": "0",
+            "gpu_external_free": "0",
+            "arena_extend_strategy": "kSameAsRequested",
+            "do_copy_in_default_stream": "1",
+            "enable_cuda_graph": "0",
+            "user_compute_stream": "0",
+            "cudnn_conv_use_max_workspace": "1"
+          }
+        },
+        "nodes_by_provider": {
+          "CUDAExecutionProvider": 598,
+          "CPUExecutionProvider": 12
+        },
+        "cpu_node_ops": {
+          "Concat": 8,
+          "Mul": 1,
+          "Reshape": 1,
+          "Squeeze": 2
+        }
+      },
+      {
+        "providers": [
+          "CUDAExecutionProvider",
+          "CPUExecutionProvider"
+        ],
+        "provider_options": {
+          "CPUExecutionProvider": {},
+          "CUDAExecutionProvider": {
+            "sdpa_kernel": "0",
+            "use_tf32": "1",
+            "fuse_conv_bias": "0",
+            "prefer_nhwc": "0",
+            "tunable_op_max_tuning_duration_ms": "0",
+            "tunable_op_enable": "0",
+            "tunable_op_tuning_enable": "0",
+            "enable_cudnn": "1",
+            "use_ep_level_unified_stream": "0",
+            "device_id": "0",
+            "has_user_compute_stream": "0",
+            "gpu_external_empty_cache": "0",
+            "cudnn_conv_algo_search": "EXHAUSTIVE",
+            "cudnn_conv1d_pad_to_nc1d": "0",
+            "gpu_mem_limit": "18446744073709551615",
+            "gpu_external_alloc": "0",
+            "gpu_external_free": "0",
+            "arena_extend_strategy": "kSameAsRequested",
+            "do_copy_in_default_stream": "1",
+            "enable_cuda_graph": "0",
+            "user_compute_stream": "0",
+            "cudnn_conv_use_max_workspace": "1"
+          }
+        },
+        "nodes_by_provider": {
+          "CUDAExecutionProvider": 156,
+          "CPUExecutionProvider": 23
+        },
+        "cpu_node_ops": {
+          "Add": 1,
+          "Concat": 10,
+          "Mul": 1,
+          "Reshape": 2,
+          "Slice": 6,
+          "Squeeze": 3
+        }
+      }
+    ]
+  },
+  {
+    "graph": "A-legacy",
+    "use_tf32": 0,
+    "placement": [
+      {
+        "providers": [
+          "CUDAExecutionProvider",
+          "CPUExecutionProvider"
+        ],
+        "provider_options": {
+          "CPUExecutionProvider": {},
+          "CUDAExecutionProvider": {
+            "sdpa_kernel": "0",
+            "use_tf32": "0",
+            "fuse_conv_bias": "0",
+            "prefer_nhwc": "0",
+            "tunable_op_max_tuning_duration_ms": "0",
+            "tunable_op_enable": "0",
+            "tunable_op_tuning_enable": "0",
+            "enable_cudnn": "1",
+            "use_ep_level_unified_stream": "0",
+            "device_id": "0",
+            "has_user_compute_stream": "0",
+            "gpu_external_empty_cache": "0",
+            "cudnn_conv_algo_search": "EXHAUSTIVE",
+            "cudnn_conv1d_pad_to_nc1d": "0",
+            "gpu_mem_limit": "18446744073709551615",
+            "gpu_external_alloc": "0",
+            "gpu_external_free": "0",
+            "arena_extend_strategy": "kSameAsRequested",
+            "do_copy_in_default_stream": "1",
+            "enable_cuda_graph": "0",
+            "user_compute_stream": "0",
+            "cudnn_conv_use_max_workspace": "1"
+          }
+        },
+        "nodes_by_provider": {
+          "CUDAExecutionProvider": 1010,
+          "CPUExecutionProvider": 984
+        },
+        "cpu_node_ops": {
+          "Add": 3,
+          "Cast": 38,
+          "Concat": 117,
+          "Div": 17,
+          "Equal": 40,
+          "Gather": 71,
+          "Mul": 42,
+          "Not": 12,
+          "Pow": 2,
+          "Reshape": 28,
+          "Slice": 172,
+          "Sqrt": 36,
+          "Squeeze": 172,
+          "Unsqueeze": 206,
+          "Where": 28
+        }
+      }
+    ]
+  },
+  {
+    "graph": "A-legacy",
+    "use_tf32": 1,
+    "placement": [
+      {
+        "providers": [
+          "CUDAExecutionProvider",
+          "CPUExecutionProvider"
+        ],
+        "provider_options": {
+          "CPUExecutionProvider": {},
+          "CUDAExecutionProvider": {
+            "sdpa_kernel": "0",
+            "use_tf32": "1",
+            "fuse_conv_bias": "0",
+            "prefer_nhwc": "0",
+            "tunable_op_max_tuning_duration_ms": "0",
+            "tunable_op_enable": "0",
+            "tunable_op_tuning_enable": "0",
+            "enable_cudnn": "1",
+            "use_ep_level_unified_stream": "0",
+            "device_id": "0",
+            "has_user_compute_stream": "0",
+            "gpu_external_empty_cache": "0",
+            "cudnn_conv_algo_search": "EXHAUSTIVE",
+            "cudnn_conv1d_pad_to_nc1d": "0",
+            "gpu_mem_limit": "18446744073709551615",
+            "gpu_external_alloc": "0",
+            "gpu_external_free": "0",
+            "arena_extend_strategy": "kSameAsRequested",
+            "do_copy_in_default_stream": "1",
+            "enable_cuda_graph": "0",
+            "user_compute_stream": "0",
+            "cudnn_conv_use_max_workspace": "1"
+          }
+        },
+        "nodes_by_provider": {
+          "CUDAExecutionProvider": 1010,
+          "CPUExecutionProvider": 984
+        },
+        "cpu_node_ops": {
+          "Add": 3,
+          "Cast": 38,
+          "Concat": 117,
+          "Div": 17,
+          "Equal": 40,
+          "Gather": 71,
+          "Mul": 42,
+          "Not": 12,
+          "Pow": 2,
+          "Reshape": 28,
+          "Slice": 172,
+          "Sqrt": 36,
+          "Squeeze": 172,
+          "Unsqueeze": 206,
+          "Where": 28
+        }
+      }
+    ]
+  }
+]

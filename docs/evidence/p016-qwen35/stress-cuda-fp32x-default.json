@@ -1,0 +1,20 @@
+{
+  "threads_1": {
+    "rounds": 8,
+    "requests": 48,
+    "mismatching_requests": 0,
+    "mismatches": []
+  },
+  "threads_2": {
+    "rounds": 8,
+    "requests": 48,
+    "mismatching_requests": 0,
+    "mismatches": []
+  },
+  "threads_4": {
+    "rounds": 8,
+    "requests": 48,
+    "mismatching_requests": 0,
+    "mismatches": []
+  }
+}

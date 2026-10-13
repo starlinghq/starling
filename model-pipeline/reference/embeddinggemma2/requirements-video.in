@@ -1,0 +1,19 @@
+# EmbeddingGemma 2 video spike, CPU: the requirements.in environment plus video decoders.
+# torchcodec is the decoder that transformers 5.19.0 (BaseVideoProcessor.fetch_videos) and
+# sentence-transformers 6.1.0 (torchcodec VideoDecoder inputs) use. It loads FFmpeg shared libraries
+# at run time (LD_LIBRARY_PATH; the pinned build comes from fetch_eg2_ffmpeg.sh, LGPL variant).
+# PyAV and OpenCV bundle their own FFmpeg builds; they are compared as alternative decoders only.
+torch==2.14.1
+transformers==5.19.0
+sentence-transformers==6.1.0
+tokenizers==0.23.3
+onnx==1.23.1
+onnxscript==0.7.2
+onnxruntime==1.30.0
+numpy
+safetensors
+pillow
+torchvision
+torchcodec==0.17.0
+av==18.1.0
+opencv-python-headless==5.0.0.93

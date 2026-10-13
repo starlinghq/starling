@@ -1,0 +1,3 @@
+<Project>
+  <!-- Stops the import of ai-dotnet/Directory.Build.targets (packing rules for the libraries); see Directory.Build.props. -->
+</Project>

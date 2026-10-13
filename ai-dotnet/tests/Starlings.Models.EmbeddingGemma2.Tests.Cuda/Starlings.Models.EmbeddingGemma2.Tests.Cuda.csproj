@@ -1,0 +1,34 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Local-only EmbeddingGemma 2 CUDA tests (Linux x64). Not part of AI.slnx, so CI does not restore the GPU package.
+    Opt in with STARLING_CUDA_TESTS=1, CUDA_DEVICE_ORDER=PCI_BUS_ID and an explicit CUDA_VISIBLE_DEVICES;
+    see ai-dotnet/README.md.
+  -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="xunit.v3" />
+    <!-- CUDA native runtime (includes the CPU provider). The CUDA 13 runtime and cuDNN 9 are not in the package. -->
+    <PackageReference Include="Microsoft.ML.OnnxRuntime.Gpu.Linux" />
+    <Using Include="Xunit" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="../Shared/EmbeddingGemma2/*.cs" Link="Shared/EmbeddingGemma2/%(Filename)%(Extension)" />
+    <Compile Include="../Shared/EmbeddingGemma2Images/*.cs" Link="Shared/EmbeddingGemma2Images/%(Filename)%(Extension)" />
+    <Compile Include="../Shared/EmbeddingGemma2Videos/*.cs" Link="Shared/EmbeddingGemma2Videos/%(Filename)%(Extension)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../src/Starlings.Models.EmbeddingGemma2/Starlings.Models.EmbeddingGemma2.csproj" />
+    <!-- Test-only: decodes the fixture images. -->
+    <ProjectReference Include="../../src/Starlings.Models.EmbeddingGemma2.Imaging.SkiaSharp/Starlings.Models.EmbeddingGemma2.Imaging.SkiaSharp.csproj" />
+    <!-- Test-only: decodes the fixture videos (the adapter's own tests check its RGB equals torchcodec's). -->
+    <ProjectReference Include="../../src/Starlings.Models.EmbeddingGemma2.Video.FFmpeg/Starlings.Models.EmbeddingGemma2.Video.FFmpeg.csproj" />
+  </ItemGroup>
+
+</Project>

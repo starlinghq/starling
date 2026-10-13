@@ -1,0 +1,116 @@
+{
+  "behavior": {
+    "architecture": "bert",
+    "graph_file": "onnx/model.onnx",
+    "hidden_size": 384,
+    "max_tokens": 512,
+    "normalize": "l2",
+    "output_name": "last_hidden_state",
+    "pad_token_id": 0,
+    "padding_side": "right",
+    "pooling": "cls",
+    "prompts": {
+      "none": "",
+      "query": "Represent this sentence for searching relevant passages: "
+    },
+    "tokenizer_file": "tokenizer.json",
+    "tokenizer_profile": "bert-wordpiece-uncased",
+    "truncation": "longest_first",
+    "vocabulary_size": 30522
+  },
+  "evaluation": {
+    "policy": {
+      "attention_mask": "exact",
+      "embedding_max_abs": 1e-05,
+      "hidden_max_abs": 0.0001,
+      "non_finite": "fail",
+      "padded_batch_max_abs": 1e-05,
+      "required_paths": [
+        "reference",
+        "python-onnx",
+        "dotnet-ids",
+        "dotnet-text"
+      ],
+      "same_backend_max_abs": 1e-05,
+      "score_max_abs": 0.0001,
+      "token_ids": "exact",
+      "token_type_ids": "exact"
+    },
+    "status": "proposed"
+  },
+  "format_version": 1,
+  "id": "bge-small-en-v1.5/onnx-fp32-cpu",
+  "origin": {
+    "files": [
+      {
+        "path": "1_Pooling/config.json",
+        "sha256": "d1caf60c96f5fba2157c0c26b76d80818fad6cf0b8eb5e73ec372ff9818eba5c",
+        "size": 190
+      },
+      {
+        "path": "README.md",
+        "sha256": "ddb964361a55c6e5dfca6361615854b260c9c960205d04c7520151aaa1d75837",
+        "size": 94783
+      },
+      {
+        "path": "config.json",
+        "sha256": "094f8e891b932f2000c92cfc663bac4c62069f5d8af5b5278c4306aef3084750",
+        "size": 743
+      },
+      {
+        "path": "config_sentence_transformers.json",
+        "sha256": "940d5f50db195fa6e5e6a4f122c095f77880de259d74b14a65779ed48bdd7c56",
+        "size": 124
+      },
+      {
+        "path": "model.safetensors",
+        "sha256": "3c9f31665447c8911517620762200d2245a2518d6e7208acc78cd9db317e21ad",
+        "size": 133466304
+      },
+      {
+        "path": "modules.json",
+        "sha256": "84e40c8e006c9b1d6c122e02cba9b02458120b5fb0c87b746c41e0207cf642cf",
+        "size": 349
+      },
+      {
+        "path": "onnx/model.onnx",
+        "sha256": "828e1496d7fabb79cfa4dcd84fa38625c0d3d21da474a00f08db0f559940cf35",
+        "size": 133093490
+      },
+      {
+        "path": "sentence_bert_config.json",
+        "sha256": "84e39fda68ccbff05bfa723ae9c0e70e23e2ec373b76e0f8c6e71af72a693cbf",
+        "size": 52
+      },
+      {
+        "path": "special_tokens_map.json",
+        "sha256": "b6d346be366a7d1d48332dbc9fdf3bf8960b5d879522b7799ddba59e76237ee3",
+        "size": 125
+      },
+      {
+        "path": "tokenizer.json",
+        "sha256": "d241a60d5e8f04cc1b2b3e9ef7a4921b27bf526d9f6050ab90f9267a1f9e5c66",
+        "size": 711396
+      },
+      {
+        "path": "tokenizer_config.json",
+        "sha256": "9261e7d79b44c8195c1cada2b453e55b00aeb81e907a6664974b4d7776172ab3",
+        "size": 366
+      },
+      {
+        "path": "vocab.txt",
+        "sha256": "07eced375cec144d27c900241f3e339478dec958f92fddbc551f295c992038a3",
+        "size": 231508
+      }
+    ],
+    "repo": "BAAI/bge-small-en-v1.5",
+    "revision": "5c38ec7c405ec4b44b94cc5a9bb96e735b38267a"
+  },
+  "runtime": {
+    "backend": "onnx",
+    "precision": "fp32",
+    "provider": "CPUExecutionProvider",
+    "version": "1.30.0"
+  },
+  "task": "embeddings"
+}

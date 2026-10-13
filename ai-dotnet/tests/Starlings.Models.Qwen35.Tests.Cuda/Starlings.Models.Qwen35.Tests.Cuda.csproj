@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Local-only pilot LLM CUDA tests (Linux x64). Not part of AI.slnx, so CI does not restore the GPU package.
+    Opt in with STARLING_CUDA_TESTS=1, CUDA_DEVICE_ORDER=PCI_BUS_ID and an explicit CUDA_VISIBLE_DEVICES;
+    see ai-dotnet/README.md.
+  -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="xunit.v3" />
+    <!-- CUDA natives (include the CPU provider). The CUDA 13 runtime and cuBLAS are not in the package. -->
+    <PackageReference Include="Microsoft.ML.OnnxRuntimeGenAI.Cuda" />
+    <Using Include="Xunit" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="../Shared/Qwen35/*.cs" Link="Shared/Qwen35/%(Filename)%(Extension)" />
+    <Compile Include="../Shared/Qwen35ExtensionsAI/*.cs" Link="Shared/Qwen35ExtensionsAI/%(Filename)%(Extension)" />
+    <None Include="../Starlings.Models.Qwen35.Tests/TestData/**/*" CopyToOutputDirectory="PreserveNewest" LinkBase="TestData" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../src/Starlings.Models.Qwen35/Starlings.Models.Qwen35.csproj" />
+    <!-- The IChatClient adapter on CUDA (P-017). -->
+    <ProjectReference Include="../../src/Starlings.Models.Qwen35.Extensions.AI/Starlings.Models.Qwen35.Extensions.AI.csproj" />
+  </ItemGroup>
+
+</Project>

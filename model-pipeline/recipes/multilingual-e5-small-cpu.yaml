@@ -1,0 +1,6 @@
+recipe_version: 1
+id: multilingual-e5-small-cpu
+plugin: e5-onnx-cpu-v1
+manifest: model-pipeline/registry/multilingual-e5-small/onnx-fp32-cpu/manifest.yaml
+reference_corpus: model-pipeline/reference/corpus/tokenizer-corpus-v1.jsonl
+reference_environment: model-pipeline/reference/encoder/requirements.txt

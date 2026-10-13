@@ -1,0 +1,33 @@
+{
+  "runner": "ai-dotnet/tools/Starlings.Qwen35.Fidelity",
+  "backend": "df-qwen35-cuda-ortgenai-fp16x",
+  "profile": "qwen3.5-0.8b/ortgenai-fp16x",
+  "checkpoint": "Qwen/Qwen3.5-0.8B@2fc06364715b967f1860aea9cf38778875588b17",
+  "genai_version": "0.17.1",
+  "tokenizer": "Starlings.Tokenizers profile qwen35-bpe-chat, tokenizer.json a5cd9732badce41de57e6efce8302930ded1c1188c5f81feb2bd6c24c4a1941f",
+  "chat_template": "owned C# renderer of chat_template.jinja 273d8e0e683b885071fb17e08d71e5f2a5ddfb5309756181681de4f5a1822d80 (text subset)",
+  "config_overlays": [
+    "{\"model\":{\"pad_token_id\":248319}}"
+  ],
+  "provider_options": {
+    "device_id": "0",
+    "use_tf32": "0"
+  },
+  "stop_token_ids": [
+    248044,
+    248046
+  ],
+  "threads": 0,
+  "prefill_chunk_tokens": 512,
+  "serializes_native_calls": true,
+  "model_load_ms": 2139.5045,
+  "prompts_sha256": "7b236f0d013ce1057f075f7d2d941dde836618ba0f848d6a123e0f86c4b928d2",
+  "reference": "<p016>/ref-cpu",
+  "dotnet": "10.0.12",
+  "os": "Omarchy",
+  "cpu_count": 12,
+  "loadavg_start": "8.36 9.69 10.59 5/3519 3227328",
+  "cuda_visible_devices": "1",
+  "source_revision": "2dd211eca89b9f0bf0e5ab1a6a4b7deb57165911",
+  "loadavg_end": "5.75 8.02 9.82 5/3511 3234947"
+}

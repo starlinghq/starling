@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    BenchmarkDotNet micro-benchmarks (P-008): owned tokenizer encode (single and batch), e5 embedding from ids and from
+    text. CPU native runtime; CUDA cases run only from ../Starlings.Benchmarks.Micro.Cuda with
+    STARLING_BENCH_CUDA=1. CI builds this project so it cannot rot; it never runs benchmarks.
+  -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <RootNamespace>Starlings.Benchmarks</RootNamespace>
+    <ServerGarbageCollection>false</ServerGarbageCollection>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="BenchmarkDotNet" />
+    <PackageReference Include="Microsoft.ML.OnnxRuntime" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="../Shared/*.cs" Link="Shared/%(Filename)%(Extension)" />
+    <Compile Include="../../tests/Shared/E5/E5TestAssets.cs" Link="Shared/E5TestAssets.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../src/Starlings.Models.E5/Starlings.Models.E5.csproj" />
+  </ItemGroup>
+
+</Project>

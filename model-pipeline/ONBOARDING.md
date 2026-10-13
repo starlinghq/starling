@@ -1,0 +1,103 @@
+# Recipe-driven model onboarding
+
+The onboarding CLI runs a versioned recipe, records exact inputs and outputs, resumes verified stages, and exports evidence for review. The first execution plugin wraps the existing **multilingual-e5-small / ONNX fp32 CPU** tools. Additional experimental BERT and Qwen plugins run the [five-model CPU workflow](FIVE_MODELS.md) with proposed development comparisons. These routes support Linux CPU execution; other models still need their own execution plugin and independent qualification contract.
+
+This is the implementation of the first operational increment in [the work plan](../docs/plan/model-onboarding-pipeline.md). Python coordinates development/reference work; delivered .NET inference still has no Python dependency.
+
+## Prepare
+
+Run from the repository root. Use the .NET SDK pinned by `global.json` and Python 3.11. Put the SDK's `dotnet` executable on `PATH` (a runtime-only installation is insufficient).
+
+```sh
+uv venv --python 3.11 .venv
+uv pip install --python .venv/bin/python -e './model-pipeline[dev]'
+
+uv venv --python 3.11 .models/venv-reference
+uv pip install --python .models/venv-reference/bin/python --require-hashes \
+  -r model-pipeline/reference/encoder/requirements.txt \
+  --index-url https://pypi.org/simple \
+  --extra-index-url https://download.pytorch.org/whl/cpu \
+  --index-strategy unsafe-best-match
+uv pip install --python .models/venv-reference/bin/python -e model-pipeline
+```
+
+Supply a full local snapshot of `intfloat/multilingual-e5-small` at commit `614241f622f53c4eeff9890bdc4f31cfecc418b3`, including the reference weights, configuration/tokenizer files, and `onnx/model.onnx`. The runtime-only two-file acquisition cache is insufficient for executing the original Python reference. The `assets` stage verifies every file declared by the registry manifest against its size and SHA-256 before running anything expensive. It also records ancillary files that upstream libraries may read. This command does not download or mutate source snapshots.
+
+The reference environment is separate from pipeline development dependencies. A run records installed versions and rejects a mismatch with the reference requirements lock. Environment installation should use the lock's hashes; the runtime check verifies installed version identities, not the provenance of every installed wheel. Model execution runs in offline mode; package restore and the optional distribution drill may need network access.
+
+## Inspect and plan
+
+```sh
+.venv/bin/model-pipeline inspect /path/to/pinned-snapshot
+.venv/bin/model-pipeline plan model-pipeline/recipes/multilingual-e5-small-cpu.yaml
+```
+
+Inspection reads bounded local JSON files without importing upstream model code. It reports observed architecture/configuration, tokenizer operations and parameters, sentence-transformers modules, and missing or unknown capabilities. A suggested route is a **candidate**, not a supported-model claim. Malformed or unsupported metadata remains visible. Inspection currently describes the tokenizer implementation in this checkout; it does not predict future component support.
+
+Recipes contain a plugin ID and repository-relative paths to the existing manifest, corpus, and reference environment. They contain no shell commands. Unknown fields, unsupported plugins, duplicate keys, traversal, and escaping paths are rejected. `plan` does not need weights, the reference environment, or an installed .NET SDK.
+
+## Execute and resume
+
+```sh
+.venv/bin/model-pipeline run model-pipeline/recipes/multilingual-e5-small-cpu.yaml \
+  --snapshot /path/to/pinned-snapshot \
+  --reference-python .models/venv-reference/bin/python \
+  --out artifacts/onboarding/e5-cpu \
+  --threads 2 --timeout 1800
+```
+
+Stages:
+
+| Stage | Evidence |
+| --- | --- |
+| `assets` | Verified source lock and observed ancillary-file digests |
+| `environment` | Python packages, SDK/runtime, host identity, lock validation |
+| `reference` | Fresh Python reference outputs, explicitly proposed fixtures |
+| `export` | Python ONNX Runtime and original-framework comparison on protected fixture inputs |
+| `dotnet` | Owned tokenizer and C# outputs from IDs and text, including padded batches |
+| `evaluate` | Existing protected evaluator report; G1 and G2 are required to pass |
+| `distribution` (optional) | Real-model clean-consumer drill from committed code |
+| `review` | Source lock, environment, fidelity report, scope and qualification limitations |
+
+Progress goes to stderr; stdout contains a compact JSON summary. `run.json` contains the full execution record. Each attempt has a separate directory under `stages/<name>/`, command logs, timings, fingerprints, and digests of output files. Failed attempts remain available. A failed run also produces `failure-task-<run-id>.json` for a bounded human or LLM investigation; no LLM service is called automatically.
+
+Run the same command with `--resume` to reuse completed work. Reuse requires matching input, code, environment, and dependency identities **and** intact output files. Failed or interrupted stages rerun. Changed/corrupt/missing artifacts invalidate their stage and dependents; independent valid stages can remain cached. Extra output files also invalidate a cache entry. Only one process may write a run directory at a time. SIGINT is recorded and child process groups are stopped. After a hard process kill, the next resume retries the unfinished attempt.
+
+Outputs inside the repository must live below `artifacts/` or `.models/`. They cannot overlap input snapshots or protected evidence. Stage callbacks are trusted repository code, not a sandbox for arbitrary upstream code; they must declare all behavior-affecting dependencies and write only to the supplied output directory. Execute untrusted upstream implementations in an appropriately isolated worker as described by the main plan.
+
+## Check package consumption
+
+Commit the candidate before requesting distribution validation:
+
+```sh
+.venv/bin/model-pipeline run model-pipeline/recipes/multilingual-e5-small-cpu.yaml \
+  --snapshot /path/to/pinned-snapshot \
+  --reference-python .models/venv-reference/bin/python \
+  --out artifacts/onboarding/e5-cpu \
+  --threads 2 --timeout 1800 --resume --distribution
+```
+
+This invokes the existing `tools/release-drill-ai.sh --seed-model-from` in a temporary clone. It packs committed source, installs into a clean external consumer with isolated NuGet/model caches, acquires the pinned tokenizer, and checks real embeddings plus adapters during offline execution. The full model is seeded from the verified snapshot; this is not `--no-model`. Relevant source changes must be committed so the drill and fidelity candidate cannot silently differ. The drill's logs and package evidence are retained in the stage output.
+
+Passing this pipeline proves the checks recorded in its reports. It does **not** approve a release, change registry support statuses, establish controlled performance, or satisfy every release gate. Fresh reference fixtures remain proposals and never overwrite protected fixtures or tolerances. Fixture adoption is a separate maintainer-reviewed change.
+
+## Export for review
+
+```sh
+.venv/bin/model-pipeline propose artifacts/onboarding/e5-cpu \
+  --out artifacts/onboarding/e5-review
+```
+
+The destination must be new. Before copying artifacts, the exporter verifies the completed run's identity/metadata records, dependency links, and complete output trees. The bundle contains portable stage files plus the original run record (which retains original execution paths). Review `stages/review/review.md`, `review.json`, and the fidelity report. These local digests detect accidental corruption; they are not a signed release attestation. Publication and PR creation remain explicit external actions.
+
+Exit codes: `0` means the requested operation completed; `1` means a pipeline stage failed; `2` means invalid arguments, inputs, or a refused operation. Existing `evaluate` and `check-protected` exit codes are unchanged.
+
+## Add another execution plugin
+
+1. Specify the upstream behavior contract and exact source assets in a reviewed registry manifest or proposed candidate contract. Reuse existing tokenizer/runtime components only where their supported parameters match.
+2. Implement `describe_plan` and `build_stages` using `Stage(name, dependencies, inputs, parameters, execute)`. Register the plugin in recipe validation and CLI dispatch. The first plugin deliberately rejects non-E5 or different-precision profiles.
+3. Declare file inputs, dependency outputs, algorithm/configuration parameters, relevant source/build files, and toolchain identity. Do not include unrelated Markdown or a blanket Git HEAD in expensive-stage keys. Include the committed candidate identity for distribution and review.
+4. Produce the evidence format required by the route's independent evaluator. Protected routes use the existing stage-results format; proposed candidates use their task-specific development reports. New tasks such as generation need their own checks for templates, logits, caching, stopping, isolation, and streaming; an embedding evaluator cannot qualify them.
+5. Add cheap orchestration/failure tests, then qualify an actual model and retain a small evidence summary. A fixture-generating implementation cannot approve its own goldens or loosen thresholds.
+
+Measure hands-on time, elapsed time, cache reuse, and compute per model. Shared capabilities and reliable resume should reduce repeated work; no numerical speedup is claimed until representative onboarding runs establish it.

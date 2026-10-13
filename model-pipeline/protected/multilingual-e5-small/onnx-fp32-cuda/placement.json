@@ -1,0 +1,284 @@
+{
+  "ort-cuda-fp32-tf32-off": {
+    "providers": [
+      "CUDAExecutionProvider",
+      "CPUExecutionProvider"
+    ],
+    "provider_options": {
+      "CPUExecutionProvider": {},
+      "CUDAExecutionProvider": {
+        "sdpa_kernel": "0",
+        "use_tf32": "0",
+        "fuse_conv_bias": "0",
+        "prefer_nhwc": "0",
+        "tunable_op_max_tuning_duration_ms": "0",
+        "tunable_op_enable": "0",
+        "tunable_op_tuning_enable": "0",
+        "enable_cudnn": "1",
+        "use_ep_level_unified_stream": "0",
+        "device_id": "0",
+        "has_user_compute_stream": "0",
+        "gpu_external_empty_cache": "0",
+        "cudnn_conv_algo_search": "EXHAUSTIVE",
+        "cudnn_conv1d_pad_to_nc1d": "0",
+        "gpu_mem_limit": "18446744073709551615",
+        "gpu_external_alloc": "0",
+        "gpu_external_free": "0",
+        "arena_extend_strategy": "kNextPowerOfTwo",
+        "do_copy_in_default_stream": "1",
+        "enable_cuda_graph": "0",
+        "user_compute_stream": "0",
+        "cudnn_conv_use_max_workspace": "1"
+      }
+    },
+    "intra_op_num_threads": null,
+    "source": "ORT profile of the first run (optimized graph, one entry per executed node)",
+    "nodes_per_provider": {
+      "CPUExecutionProvider": 2,
+      "CUDAExecutionProvider": 349
+    },
+    "ops_per_provider": {
+      "CPUExecutionProvider": {
+        "Gather": 1,
+        "Unsqueeze": 1
+      },
+      "CUDAExecutionProvider": {
+        "Add": 98,
+        "BiasGelu": 12,
+        "Cast": 1,
+        "FusedMatMul": 12,
+        "Gather": 3,
+        "LayerNormalization": 25,
+        "MatMul": 84,
+        "Mul": 1,
+        "Reshape": 48,
+        "Shape": 1,
+        "Slice": 1,
+        "Softmax": 12,
+        "Sub": 1,
+        "Transpose": 48,
+        "Unsqueeze": 2
+      }
+    },
+    "ort_log_lines": [
+      "2026-10-05 15:37:17.376693975 [I:onnxruntime:, fallback_cpu_capability.cc:89 operator()] Candidate for fallback CPU execution: /embeddings/Gather",
+      "2026-10-05 15:37:17.380266090 [I:onnxruntime:, fallback_cpu_capability.cc:167 GetCpuPreferredNodes] ORT optimization- Force fallback to CPU execution for node: /embeddings/Gather because the CPU execution path is deemed faster than overhead involved with execution on other EPs capable of executing this node",
+      "2026-10-05 15:37:17.380288631 [I:onnxruntime:, fallback_cpu_capability.cc:167 GetCpuPreferredNodes] ORT optimization- Force fallback to CPU execution for node: /embeddings/Unsqueeze because the CPU execution path is deemed faster than overhead involved with execution on other EPs capable of executing this node",
+      "2026-10-05 15:37:17.469390084 [I:onnxruntime:, graph_transformer.cc:15 Apply] GraphTransformer MemcpyTransformer modified: 0 with status: OK",
+      "2026-10-05 15:37:17.469628676 [V:onnxruntime:, session_state.cc:1383 VerifyEachNodeIsAssignedToAnEp]  Node(s) placed on [CPUExecutionProvider]. Number of nodes: 2",
+      "2026-10-05 15:37:17.469644032 [V:onnxruntime:, session_state.cc:1383 VerifyEachNodeIsAssignedToAnEp]  Node(s) placed on [CUDAExecutionProvider]. Number of nodes: 349"
+    ]
+  },
+  "ort-cuda-fp32-default": {
+    "providers": [
+      "CUDAExecutionProvider",
+      "CPUExecutionProvider"
+    ],
+    "provider_options": {
+      "CPUExecutionProvider": {},
+      "CUDAExecutionProvider": {
+        "sdpa_kernel": "0",
+        "use_tf32": "1",
+        "fuse_conv_bias": "0",
+        "prefer_nhwc": "0",
+        "tunable_op_max_tuning_duration_ms": "0",
+        "tunable_op_enable": "0",
+        "tunable_op_tuning_enable": "0",
+        "enable_cudnn": "1",
+        "use_ep_level_unified_stream": "0",
+        "device_id": "0",
+        "has_user_compute_stream": "0",
+        "gpu_external_empty_cache": "0",
+        "cudnn_conv_algo_search": "EXHAUSTIVE",
+        "cudnn_conv1d_pad_to_nc1d": "0",
+        "gpu_mem_limit": "18446744073709551615",
+        "gpu_external_alloc": "0",
+        "gpu_external_free": "0",
+        "arena_extend_strategy": "kNextPowerOfTwo",
+        "do_copy_in_default_stream": "1",
+        "enable_cuda_graph": "0",
+        "user_compute_stream": "0",
+        "cudnn_conv_use_max_workspace": "1"
+      }
+    },
+    "intra_op_num_threads": null,
+    "source": "ORT profile of the first run (optimized graph, one entry per executed node)",
+    "nodes_per_provider": {
+      "CPUExecutionProvider": 2,
+      "CUDAExecutionProvider": 349
+    },
+    "ops_per_provider": {
+      "CPUExecutionProvider": {
+        "Gather": 1,
+        "Unsqueeze": 1
+      },
+      "CUDAExecutionProvider": {
+        "Add": 98,
+        "BiasGelu": 12,
+        "Cast": 1,
+        "FusedMatMul": 12,
+        "Gather": 3,
+        "LayerNormalization": 25,
+        "MatMul": 84,
+        "Mul": 1,
+        "Reshape": 48,
+        "Shape": 1,
+        "Slice": 1,
+        "Softmax": 12,
+        "Sub": 1,
+        "Transpose": 48,
+        "Unsqueeze": 2
+      }
+    },
+    "ort_log_lines": [
+      "2026-10-05 15:37:21.400497483 [I:onnxruntime:, fallback_cpu_capability.cc:89 operator()] Candidate for fallback CPU execution: /embeddings/Gather",
+      "2026-10-05 15:37:21.408272663 [I:onnxruntime:, fallback_cpu_capability.cc:167 GetCpuPreferredNodes] ORT optimization- Force fallback to CPU execution for node: /embeddings/Gather because the CPU execution path is deemed faster than overhead involved with execution on other EPs capable of executing this node",
+      "2026-10-05 15:37:21.408306377 [I:onnxruntime:, fallback_cpu_capability.cc:167 GetCpuPreferredNodes] ORT optimization- Force fallback to CPU execution for node: /embeddings/Unsqueeze because the CPU execution path is deemed faster than overhead involved with execution on other EPs capable of executing this node",
+      "2026-10-05 15:37:21.471696509 [I:onnxruntime:, graph_transformer.cc:15 Apply] GraphTransformer MemcpyTransformer modified: 0 with status: OK",
+      "2026-10-05 15:37:21.474269406 [V:onnxruntime:, session_state.cc:1383 VerifyEachNodeIsAssignedToAnEp]  Node(s) placed on [CPUExecutionProvider]. Number of nodes: 2",
+      "2026-10-05 15:37:21.474284225 [V:onnxruntime:, session_state.cc:1383 VerifyEachNodeIsAssignedToAnEp]  Node(s) placed on [CUDAExecutionProvider]. Number of nodes: 349"
+    ]
+  },
+  "ort-cpu-fp32-threads1": {
+    "providers": [
+      "CPUExecutionProvider"
+    ],
+    "provider_options": {
+      "CPUExecutionProvider": {}
+    },
+    "intra_op_num_threads": 1,
+    "source": "ORT profile of the first run (optimized graph, one entry per executed node)",
+    "nodes_per_provider": {
+      "CPUExecutionProvider": 351
+    },
+    "ops_per_provider": {
+      "CPUExecutionProvider": {
+        "Add": 98,
+        "BiasGelu": 12,
+        "Cast": 1,
+        "FusedMatMul": 12,
+        "Gather": 4,
+        "LayerNormalization": 25,
+        "MatMul": 84,
+        "Mul": 1,
+        "Reshape": 48,
+        "Shape": 1,
+        "Slice": 1,
+        "Softmax": 12,
+        "Sub": 1,
+        "Transpose": 48,
+        "Unsqueeze": 3
+      }
+    },
+    "ort_log_lines": [
+      "2026-10-05 15:37:23.751247476 [I:onnxruntime:, graph_transformer.cc:15 Apply] GraphTransformer MemcpyTransformer modified: 0 with status: OK",
+      "2026-10-05 15:37:23.751468555 [V:onnxruntime:, session_state.cc:1380 VerifyEachNodeIsAssignedToAnEp]  All nodes placed on [CPUExecutionProvider]. Number of nodes: 351"
+    ]
+  },
+  "ort-cpu-fp32-threads12": {
+    "providers": [
+      "CPUExecutionProvider"
+    ],
+    "provider_options": {
+      "CPUExecutionProvider": {}
+    },
+    "intra_op_num_threads": 12,
+    "source": "ORT profile of the first run (optimized graph, one entry per executed node)",
+    "nodes_per_provider": {
+      "CPUExecutionProvider": 351
+    },
+    "ops_per_provider": {
+      "CPUExecutionProvider": {
+        "Add": 98,
+        "BiasGelu": 12,
+        "Cast": 1,
+        "FusedMatMul": 12,
+        "Gather": 4,
+        "LayerNormalization": 25,
+        "MatMul": 84,
+        "Mul": 1,
+        "Reshape": 48,
+        "Shape": 1,
+        "Slice": 1,
+        "Softmax": 12,
+        "Sub": 1,
+        "Transpose": 48,
+        "Unsqueeze": 3
+      }
+    },
+    "ort_log_lines": [
+      "2026-10-05 15:38:06.380894619 [I:onnxruntime:, graph_transformer.cc:15 Apply] GraphTransformer MemcpyTransformer modified: 0 with status: OK",
+      "2026-10-05 15:38:06.381090622 [V:onnxruntime:, session_state.cc:1380 VerifyEachNodeIsAssignedToAnEp]  All nodes placed on [CPUExecutionProvider]. Number of nodes: 351"
+    ]
+  },
+  "ort-cuda-fp16-graph": {
+    "providers": [
+      "CUDAExecutionProvider",
+      "CPUExecutionProvider"
+    ],
+    "provider_options": {
+      "CPUExecutionProvider": {},
+      "CUDAExecutionProvider": {
+        "sdpa_kernel": "0",
+        "use_tf32": "1",
+        "fuse_conv_bias": "0",
+        "prefer_nhwc": "0",
+        "tunable_op_max_tuning_duration_ms": "0",
+        "tunable_op_enable": "0",
+        "tunable_op_tuning_enable": "0",
+        "enable_cudnn": "1",
+        "use_ep_level_unified_stream": "0",
+        "device_id": "0",
+        "has_user_compute_stream": "0",
+        "gpu_external_empty_cache": "0",
+        "cudnn_conv_algo_search": "EXHAUSTIVE",
+        "cudnn_conv1d_pad_to_nc1d": "0",
+        "gpu_mem_limit": "18446744073709551615",
+        "gpu_external_alloc": "0",
+        "gpu_external_free": "0",
+        "arena_extend_strategy": "kNextPowerOfTwo",
+        "do_copy_in_default_stream": "1",
+        "enable_cuda_graph": "0",
+        "user_compute_stream": "0",
+        "cudnn_conv_use_max_workspace": "1"
+      }
+    },
+    "intra_op_num_threads": null,
+    "source": "ORT profile of the first run (optimized graph, one entry per executed node)",
+    "nodes_per_provider": {
+      "CPUExecutionProvider": 2,
+      "CUDAExecutionProvider": 350
+    },
+    "ops_per_provider": {
+      "CPUExecutionProvider": {
+        "Gather": 1,
+        "Unsqueeze": 1
+      },
+      "CUDAExecutionProvider": {
+        "Add": 98,
+        "BiasGelu": 12,
+        "Cast": 2,
+        "FusedMatMul": 12,
+        "Gather": 3,
+        "LayerNormalization": 25,
+        "MatMul": 84,
+        "Mul": 1,
+        "Reshape": 48,
+        "Shape": 1,
+        "Slice": 1,
+        "Softmax": 12,
+        "Sub": 1,
+        "Transpose": 48,
+        "Unsqueeze": 2
+      }
+    },
+    "ort_log_lines": [
+      "2026-10-05 15:38:56.519799960 [I:onnxruntime:, fallback_cpu_capability.cc:89 operator()] Candidate for fallback CPU execution: /embeddings/Gather",
+      "2026-10-05 15:38:56.529618446 [I:onnxruntime:, fallback_cpu_capability.cc:167 GetCpuPreferredNodes] ORT optimization- Force fallback to CPU execution for node: /embeddings/Gather because the CPU execution path is deemed faster than overhead involved with execution on other EPs capable of executing this node",
+      "2026-10-05 15:38:56.529654062 [I:onnxruntime:, fallback_cpu_capability.cc:167 GetCpuPreferredNodes] ORT optimization- Force fallback to CPU execution for node: /embeddings/Unsqueeze because the CPU execution path is deemed faster than overhead involved with execution on other EPs capable of executing this node",
+      "2026-10-05 15:38:56.611768317 [I:onnxruntime:, graph_transformer.cc:15 Apply] GraphTransformer MemcpyTransformer modified: 0 with status: OK",
+      "2026-10-05 15:38:56.613672874 [V:onnxruntime:, session_state.cc:1383 VerifyEachNodeIsAssignedToAnEp]  Node(s) placed on [CPUExecutionProvider]. Number of nodes: 2",
+      "2026-10-05 15:38:56.613686683 [V:onnxruntime:, session_state.cc:1383 VerifyEachNodeIsAssignedToAnEp]  Node(s) placed on [CUDAExecutionProvider]. Number of nodes: 350"
+    ]
+  }
+}

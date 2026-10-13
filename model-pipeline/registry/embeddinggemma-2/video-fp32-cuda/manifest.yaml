@@ -1,0 +1,317 @@
+# EmbeddingGemma 2 video-embedding profile (CUDA execution provider, use_tf32 0, same graphs and reference as video-fp32-cpu): contract extended to video by Mark on 2026-10-11
+# (model-pipeline/admissions/embeddinggemma-2.md, Decision update, video): video-only and interleaved text/image/video
+# embeddings at the checkpoint's settings (1 fps, at most 32 frames, 140 soft tokens per frame, no timestamps),
+# Experimental. Spike: docs/m0/embeddinggemma2-video-spike.md. Package: ai-dotnet/src/Starlings.Models.EmbeddingGemma2
+# (EmbeddingGemma2MultimodalEmbedder, EmbeddingGemma2Video; EmbeddingGemma2ModelAssets.ImageLock pins the files below: no
+# new graph) and the optional decoding adapter Starlings.Models.EmbeddingGemma2.Video.FFmpeg (user-supplied
+# FFmpeg 8.x; none shipped). Accepted fixtures (PR #47) and binding tolerances set on 2026-10-11 (qualification).
+schema_version: 1
+id: embeddinggemma-2/video-fp32-cuda
+maturity: experimental
+
+origin:
+  code:
+    url: https://huggingface.co/google/embeddinggemma-2
+    revision: "914f7f89142e33e77833254d9c9b90c3cef7303b"
+  weights:
+    url: https://huggingface.co/google/embeddinggemma-2
+    revision: "914f7f89142e33e77833254d9c9b90c3cef7303b"
+  files:
+    - path: README.md
+      sha256: "b677a0ee2818c36f091b65fd3d9b4baea9f04d53b02b49cae916c74bf9682037"
+      size: 21730
+    - path: config.json
+      sha256: "b8f1e9931b57fbc054acdb445c41765d55b0074c58d145fa82839941ad1b5bb3"
+      size: 4455
+    - path: config_sentence_transformers.json
+      sha256: "031e56a498d33c349ab489a21885bcfe25b4fcba841149dc99e1e90d4a7c28f5"
+      size: 1565
+    - path: modules.json
+      sha256: "3d02572a0455b832de67fb8e63a54981bc7e8b46e337c95e917bd8122a533bfd"
+      size: 413
+    - path: sentence_bert_config.json
+      sha256: "b1bcd9f2dce3ae863b359e87d0710b5dbc3314a59ecb4e2f97c7778fc8e4b228"
+      size: 747
+    - path: 1_Pooling/config.json
+      sha256: "8759bdf7c77efc7df7723f64856a593c8943b71ee38baf2a88771fbaf78438f9"
+      size: 90
+    - path: 2_Normalize/config.json
+      sha256: "cdb09dfca347a56aa2d691744e38d5ad3c7cbc2834e7181272b9a15328b82524"
+      size: 97
+    - path: model.safetensors
+      sha256: "197a32965d4b1105faf060417baa899e193fb73cd401f42ec9295234d5553d79"
+      size: 1488915288
+    - path: tokenizer.json
+      sha256: "4d777ef5bdc1aa36227abdfb77c3e49e7b9c892d16e1b6bda41c393504828be4"
+      size: 32170510
+    - path: tokenizer.model
+      sha256: "e594c8a90eb08d8bda498ff4747977dc827ae0c3c56b5c0d41a605a22d02ef03"
+      size: 4689013
+    - path: tokenizer_config.json
+      sha256: "17bd5d6e9364ca49a534e1502076593317c298d4a663623091ed45388f004874"
+      size: 1599
+    - path: chat_template.jinja
+      sha256: "4b852efc0b9960283e735363331e6f325b33bc74bdbaa076f595bc4e9b94d85e"
+      size: 1016
+    - path: processor_config.json
+      sha256: "168f6a08522f3ce5dea596d94d003af2fd691742d4f41fe1f9d8cce76bfbf69c"
+      size: 1788
+    - path: preprocessor_config.json
+      sha256: "ea2ae257e901064abdd98dceb19f2b0da06af600bed15e0f99f5c85c37ee9d78"
+      size: 511
+    # Not in the Hub repository: Starling's export of the text path of model.safetensors above
+    # (execution.graph.asset).
+    - path: onnx/embeddinggemma2-text-fp32.onnx
+      sha256: "02cc7ecccbfcb29d812eb104e4c6ea6c599bc87e94f01082606f6a11f0252d11"
+      size: 1084327317
+    # Not in the Hub repository: Starling's image-path graphs (execution.graph.assets), release
+    # embeddinggemma-2-vision-onnx-r1.
+    - path: onnx/embeddinggemma2-vision-fp32.onnx
+      sha256: "6c97f477a82f6863d22d800476de6d0a618b23e514aa9b65a46b220c4b106b92"
+      size: 671256072
+    - path: onnx/embeddinggemma2-text-mm-fp32.onnx
+      sha256: "a2c22e072ec230b105b35c2787dcfccba186254e6a921e729c45b40e50dbbb74"
+      size: 1084327898
+  attribution: >-
+    EmbeddingGemma 2 by Google DeepMind (google/embeddinggemma-2). Apache-2.0. The model card states: "Deployments must
+    adhere to the [Gemma Prohibited Use Policy](https://ai.google.dev/gemma/prohibited_use_policy)."
+
+rights:
+  code_license: Apache-2.0
+  weights_license: Apache-2.0
+  tokenizer_terms: Apache-2.0
+  redistribution: download
+  notes: >-
+    As embeddinggemma-2/image-fp32-cpu (same graphs, same release embeddinggemma-2-vision-onnx-r1). Video decoding is
+    optional and separate: the adapter binds FFmpeg through FFmpeg.AutoGen 8.1.0 (MIT, managed bindings only) and loads
+    the user's own FFmpeg 8.x shared libraries at run time; Starling ships no FFmpeg binary, so the LGPL
+    obligations of FFmpeg fall on whoever distributes FFmpeg (an LGPL build is expected; GPL and nonfree builds are
+    rejected unless explicitly allowed). Codec patents (H.264 and HEVC licensing pools; VP9 and AV1 offered royalty-free
+    by their developers) are the deployer's responsibility; ai-dotnet/THIRD-PARTY-NOTICES.md and the adapter README
+    state this as information, not legal advice. The fixture videos are original works generated by
+    make_eg2_videos.py (MIT) and are not committed.
+
+behavior:
+  tasks: [video-embedding]
+  # The card's context window, media tokens included: each sampled frame adds its soft tokens (at most 140) plus
+  # <|image> and <image|>; one 32-frame video at 140 tokens per frame is 4,544 tokens. Longer inputs are rejected before
+  # inference (EmbeddingGemma2InputTooLongException).
+  max_input_tokens: 8192
+  offsets_unit: none
+  truncation: error
+  defaults:
+    pooling: mean over every token, video and image tokens and prompt included (1_Pooling include_prompt true)
+    normalize: l2
+    dimension: 768
+    matryoshka_dimensions: [768, 512, 256, 128]
+    frame_sampling: >-
+      EmbeddingGemma2VideoProcessor.sample_frames restated exactly (fps 1, max_frames 32, overflow uniform): n =
+      max(1, int(duration)) candidates, candidate i = min(total - 1, int(i * average_fps)) by frame index, then more than
+      32 thinned as np.linspace(0, n - 1, 32, dtype=int). Upstream quirks kept for parity: one frame for clips under 2 s;
+      index-based sampling (variable frame rate samples frames, not seconds).
+    video_input: >-
+      Decoded 8-bit RGB frames: every frame with the average frame rate and duration (the package samples), or up to 32
+      pre-sampled frames (the caller's choice, used as given). Frames without timing are rejected by default
+      (EmbeddingGemma2VideoTimingRequiredException); EmbeddingGemma2MultimodalOptions.AllowVideosWithoutTiming opts in to
+      upstream's behaviour for an array without metadata (every frame, thinned to 32), which gives a different embedding
+      than the same file (cosine 0.965 on a 5 s fixture clip).
+    frame_processing: >-
+      Each sampled frame as an image at max_soft_tokens 140 (1,260 patches): aspect-preserving target size with sides
+      multiple of 48, PyTorch's uint8 antialiased bicubic resize (ported bit for bit), x float32(0.00392156862745098),
+      16x16 patches with (x, y) positions; all frames through the vision graph in calls of at most
+      MaxVideoFramesPerVisionCall (default 2).
+    video_rendering: >-
+      Each frame becomes <|image> + n x <|video|> + <image|> (<|video|> id 258884), frames concatenated with no separator
+      and no timestamps; soft tokens replace the <|video|> token embeddings in order; text parts concatenated with no
+      separator; a prompt (not recommended for media by the card) is rendered first.
+    video_decoding: >-
+      Optional adapter Starlings.Models.EmbeddingGemma2.Video.FFmpeg: torchcodec 0.17.0's packet-scan metadata,
+      the display matrix applied, FFmpeg's default RGB conversion as torchcodec calls it (swscale for widths multiple of
+      32 without rotation, a filter graph otherwise; FFmpeg's default 10-bit conversion kept); only sampled frames kept.
+    input_prefix: >-
+      As embeddinggemma-2/onnx-fp32-cpu: explicit prompts only, never inserted. The card: "Prefixes apply to text only.
+      Pass images, video, and audio without any prefix."
+    graph_routing: >-
+      Inputs with a video or an image run on the vision graph and the multimodal text graph; text-only inputs run on the
+      released text graph (equal to embeddinggemma-2/onnx-fp32-cpu).
+    decoded_size_limit: 50 megapixels per frame (configurable; upstream has none)
+    pad_token_id: 0
+  unsupported:
+    - decoded frames without timing metadata, by default (typed rejection; explicit opt-in to upstream's behaviour)
+    - timestamps (add_timestamps), other sampling rates, frame caps or per-frame budgets
+    - audio tracks (ignored, as upstream)
+    - inputs above 8,192 tokens after media expansion (rejected, not truncated; two maximal videos are 9,090 tokens)
+    - frames above the decoded-size limit (rejected)
+    - FFmpeg majors other than 8 in the adapter (typed error); GPL or nonfree FFmpeg builds unless explicitly allowed
+    - media placeholder text in text parts (<|video|> and the other media tokens; rejected)
+    - TF32 math on CUDA (separate profile video-fp32-cuda pins use_tf32 0)
+    - bfloat16, float16 and quantized variants
+
+processing:
+  tokenizer:
+    # 0.3.0-preview.1 is the published tokenizer (starlinghq/tokenizers): the qualified 0.1.0-preview.4 behavior plus BERT WordPiece components this profile does not use; every conformance fixture passes unchanged.
+    package: Starlings.Tokenizers
+    version: 0.3.0-preview.1
+    profile_id: gemma-bpe-embeddinggemma2
+    algorithm: bpe
+    assets:
+      - path: tokenizer.json
+        sha256: "4d777ef5bdc1aa36227abdfb77c3e49e7b9c892d16e1b6bda41c393504828be4"
+        size: 32170510
+    backend_tokenizer_dependency: false
+  decoding:
+    reference_tokenizer: >-
+      The pinned tokenizer.json as read by tokenizers 0.23.3. The owned tokenizer on the expanded placeholder string
+      gives the reference's rendered ids on all 36 fixture rows (video-embeddings.jsonl).
+    video_decoder: >-
+      Optional adapter Starlings.Models.EmbeddingGemma2.Video.FFmpeg (FFmpeg.AutoGen 8.1.0 on FFmpeg
+      n8.1.3-17-gc389840894, BtbN LGPL shared build): metadata, sampled indices and the RGB of every decoded frame equal
+      torchcodec 0.17.0's on the 22 fixture videos (H.264 High and High 10, HEVC, VP9, AV1; 0.5 to 40 s; rotation 90;
+      BT.709, full range, untagged, 10-bit; odd 321x179).
+
+execution:
+  backend:
+    name: onnxruntime
+    version: 1.30.0
+    binding: Microsoft.ML.OnnxRuntime.Gpu.Linux
+    binding_version: 1.30.0
+  precision: fp32
+  variant: reference
+  graph:
+    # The released image-path graphs, unchanged (the video spike confirmed they take frames as images of at most
+    # 1,260 patches, mask at <|video|>; SHA-256 equal to image-fp32-cpu). Three files. The vision graph (eg2_vision.VisionPath, dynamo exporter, opset 20) and the multimodal text graph (the
+    # released text graph plus two inputs and five nodes, eg2_vision.add_multimodal_inputs_release) are made by
+    # release_embeddinggemma2_vision_onnx.py; two independent runs gave byte-identical files (2026-10-11).
+    assets:
+      - path: onnx/embeddinggemma2-vision-fp32.onnx
+        sha256: "6c97f477a82f6863d22d800476de6d0a618b23e514aa9b65a46b220c4b106b92"
+        size: 671256072
+        # TODO(maintainer): placeholder until the GitHub release exists (EmbeddingGemma2ModelAssets.ImageModelSourceIsPlaceholder).
+        source: https://huggingface.co/Starlinghq/embeddinggemma-2-vision-onnx/resolve/1a22d40bf395c7f0a42388df72c883b661a7b3d6/embeddinggemma2-vision-fp32.onnx
+        source_status: placeholder
+        notice: model-pipeline/reference/embeddinggemma2/NOTICE-embeddinggemma2-vision-onnx.txt
+        produced_by:
+          - model-pipeline/reference/embeddinggemma2/release_embeddinggemma2_vision_onnx.py
+        inputs:
+          - { name: pixel_values, type: float32, shape: [batch, patches, 768] }
+          - { name: pixel_position_ids, type: int64, shape: [batch, patches, 2] }
+        outputs:
+          - { name: soft_tokens, type: float32, shape: [batch, patches / 9, 512] }
+          - { name: pooled, type: float32, shape: [batch, patches / 9, 768] }
+          - { name: soft_token_mask, type: bool, shape: [batch, patches / 9] }
+      - path: onnx/embeddinggemma2-text-mm-fp32.onnx
+        sha256: "a2c22e072ec230b105b35c2787dcfccba186254e6a921e729c45b40e50dbbb74"
+        size: 1084327898
+        # TODO(maintainer): placeholder until the GitHub release exists (EmbeddingGemma2ModelAssets.ImageModelSourceIsPlaceholder).
+        source: https://huggingface.co/Starlinghq/embeddinggemma-2-vision-onnx/resolve/1a22d40bf395c7f0a42388df72c883b661a7b3d6/embeddinggemma2-text-mm-fp32.onnx
+        source_status: placeholder
+        notice: model-pipeline/reference/embeddinggemma2/NOTICE-embeddinggemma2-vision-onnx.txt
+        produced_by:
+          - model-pipeline/reference/embeddinggemma2/release_embeddinggemma2_vision_onnx.py
+        inputs:
+          - { name: input_ids, type: int64, shape: [batch, sequence] }
+          - { name: attention_mask, type: int64, shape: [batch, sequence] }
+          - { name: multimodal_embeds, type: float32, shape: [batch, sequence, 512] }
+          - { name: multimodal_mask, type: bool, shape: [batch, sequence] }
+        outputs:
+          - { name: last_hidden_state, type: float32, shape: [batch, sequence, 512] }
+          - { name: token_embeddings, type: float32, shape: [batch, sequence, 768] }
+      - path: onnx/embeddinggemma2-text-fp32.onnx
+        sha256: "02cc7ecccbfcb29d812eb104e4c6ea6c599bc87e94f01082606f6a11f0252d11"
+        size: 1084327317
+        # Text-only inputs; the asset of embeddinggemma-2/onnx-fp32-cpu (release embeddinggemma-2-onnx-r1, placeholder).
+        source: https://huggingface.co/Starlinghq/embeddinggemma-2-onnx/resolve/92a02ae2887a91180e611776dd9c286dc5fa35da/embeddinggemma2-text-fp32.onnx
+        source_status: placeholder
+        notice: model-pipeline/reference/embeddinggemma2/NOTICE-embeddinggemma2-onnx.txt
+    opset: 20
+  # CUDAExecutionProvider options. use_tf32 must be 0 (ORT 1.30.0 defaults it to 1; TF32 moves the video embeddings by
+  # up to 4.9e-4 and fails the bound); Starlings.Runtime.Onnx always sets it.
+  provider_options:
+    use_tf32: 0
+
+capabilities:
+  # Starlings.Models.EmbeddingGemma2 (EmbeddingGemma2MultimodalEmbedder, EmbeddingGemma2Video) and the FFmpeg
+  # adapter; evidence in ai-dotnet/README.md and docs/evidence/embeddinggemma2-video/. Experimental means tested from
+  # adapter-decoded frames (equal to torchcodec's) against the accepted video fixtures with the protected tolerances.
+  video: experimental
+  video_decoded_frames_with_timing: experimental
+  video_pre_sampled_frames: experimental
+  video_frames_without_timing: unsupported  # rejected by default
+  video_frames_without_timing_opt_in: experimental  # upstream's behaviour; differs from the file
+  video_interleaved_text: experimental
+  video_interleaved_image: experimental
+  video_multiple_per_input: experimental
+  video_prompts: experimental
+  video_batch: experimental
+  video_matryoshka: experimental
+  video_timestamps: unsupported
+  video_variable_frame_rate: untested
+  video_interlaced: untested
+  video_hdr: untested
+  video_audio_track: unsupported
+  video_decode_ffmpeg8: experimental
+  video_decode_ffmpeg9: unsupported
+  video_decode_rotation_90: experimental
+  video_decode_rotation_other: untested
+  video_decode_streams: experimental
+  image: experimental
+  text_only_inputs: experimental
+  batch: experimental
+  streaming: unsupported
+  cancellation: experimental
+  persistence: unsupported
+  training: unsupported
+  aot: untested
+  extensions_ai: untested  # tested over a CPU session
+  mlnet: unsupported  # no video column in the ML.NET transform (text only)
+  concurrent_calls: experimental
+  input_over_8192_tokens: unsupported
+  audio: unsupported
+
+compatibility:
+  # One RTX 4060 Ti (sm_89, GPU 1 only), CUDA 13 runtime and cuDNN 9 from the nvidia-* wheels, GPU shared with another
+  # process. One machine is not qualification.
+  - os: linux
+    arch: x64
+    provider: cuda
+    status: experimental
+    verified: 2026-10-11
+  - os: windows
+    arch: x64
+    provider: cuda
+    status: untested
+
+qualification:
+  reference_runner: model-pipeline/reference/embeddinggemma2/run_embeddinggemma2_video.py
+  # Accepted development fixtures (PR #47) and binding tolerances (set 2026-10-11). Reference environment:
+  # model-pipeline/reference/embeddinggemma2/requirements-video.txt (torchcodec 0.17.0 on the pinned FFmpeg 8.1).
+  fixtures: model-pipeline/protected/embeddinggemma-2/video-fp32-cpu
+  tolerances: model-pipeline/protected/embeddinggemma-2/video-fp32-cuda/tolerances.yaml
+  gates:
+    G0: { status: checklist, evidence: docs/m0/embeddinggemma2-video-spike.md, date: 2026-10-11 }
+    G1: { status: not-run }
+    G2: { status: not-run }
+
+maintenance:
+  owner: Mark
+  latest_known_upstream_revision: "914f7f89142e33e77833254d9c9b90c3cef7303b"
+  latest_verified_upstream_revision: "914f7f89142e33e77833254d9c9b90c3cef7303b"
+  last_checked: 2026-10-11
+  review_date: 2027-01-05
+  known_issues:
+    - >-
+      The hosted graphs' download addresses are placeholders until the maintainer creates the GitHub release
+      embeddinggemma-2-vision-onnx-r1; acquisition of the graphs is untested until then.
+    - >-
+      Synthetic fixture videos only (no camera footage); default settings only; no variable frame rate, interlaced or
+      HDR video. One CPU architecture (AVX2) produced the reference and the decoder comparison: swscale's SIMD paths on
+      other CPUs (ARM in particular) may differ by a level, for upstream as well.
+    - >-
+      The decoder profile binds FFmpeg 8 (FFmpeg.AutoGen 8.1.0, libavcodec.so.62). torchcodec on FFmpeg 9.0.1 gave the
+      same RGB in the spike (reported, not gated); this adapter version cannot load FFmpeg 9.
+    - >-
+      GPU memory: frames run in vision calls of MaxVideoFramesPerVisionCall (default 2, 2,520 patches, the padded size
+      of one full-budget image), safe with about 5 GB free; larger calls trade memory for throughput.
+    - >-
+      Native runtime: Microsoft.ML.OnnxRuntime.Gpu.Linux 1.30.0 needs the CUDA 13 runtime and cuDNN 9 on the loader path
+      (the vision graph's ReduceMax runs through cuDNN); the package does not ship them.

@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Throwaway clean consumer for tools/release-drill-ai.sh. The script copies this file outside the repository and
+    replaces @VERSION@. Its only dependencies are the drill's packages from the local feed and the CPU natives of
+    ONNX Runtime from nuget.org (the application's choice; the libraries reference only the managed binding).
+  -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Starlings.Models.E5.Extensions.AI" Version="[@VERSION@]" />
+    <PackageReference Include="Starlings.Models.E5.MLNet" Version="[@VERSION@]" />
+    <PackageReference Include="Microsoft.ML.OnnxRuntime" Version="1.30.0" />
+  </ItemGroup>
+
+</Project>

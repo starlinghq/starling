@@ -1,0 +1,73 @@
+{
+  "recipe": "model-pipeline/reference/generation/build_ortgenai_bundle.py",
+  "repository": "Qwen/Qwen3.5-0.8B",
+  "revision": "2fc06364715b967f1860aea9cf38778875588b17",
+  "builder": {
+    "package": "onnxruntime-genai",
+    "version": "0.17.1",
+    "source_commit": "83de55a1f3886cddbb32a5517e26adb3f9d65159"
+  },
+  "packages": {
+    "torch": "2.14.1+cu130",
+    "transformers": "5.18.0",
+    "onnxruntime": "1.30.0",
+    "onnx": "1.23.1",
+    "onnx-ir": "1.0.0",
+    "numpy": "2.5.3"
+  },
+  "python": "3.12.14",
+  "float32_config_sha256": "295154cd6039372b0b16a30336b11deea6591320bf21ee4dc053a305684da311",
+  "variants": {
+    "fp32x": {
+      "precision": "fp32",
+      "ep": "cpu"
+    },
+    "fp16x": {
+      "precision": "fp16",
+      "ep": "cuda"
+    }
+  },
+  "extra_options": "exclude_mtp=true",
+  "files": {
+    "chat_template.jinja": {
+      "sha256": "273d8e0e683b885071fb17e08d71e5f2a5ddfb5309756181681de4f5a1822d80",
+      "size": 7755,
+      "matches_pin": true
+    },
+    "ortgenai-fp16x/genai_config.json": {
+      "sha256": "ded164b67284883a13c6454d7445f814014a1e12277ce323011683cd6a69d055",
+      "size": 2109,
+      "matches_pin": true
+    },
+    "ortgenai-fp16x/model.onnx": {
+      "sha256": "26895023e4be1f528aef04ce3a07a14e70a2421cfb400a49fec639ea9a14f46d",
+      "size": 316521,
+      "matches_pin": true
+    },
+    "ortgenai-fp16x/model.onnx.data": {
+      "sha256": "47f6ee15d95080acc66f7c4acdf4012c83b20063cf0cfeb59a6b7ae09950a3b2",
+      "size": 1572143104,
+      "matches_pin": true
+    },
+    "ortgenai-fp32x/genai_config.json": {
+      "sha256": "e7e1957b2544fdad6170a9cc81cbbb1b88c8819b7016a609170ad7cbebba81ba",
+      "size": 1935,
+      "matches_pin": true
+    },
+    "ortgenai-fp32x/model.onnx": {
+      "sha256": "4a052c4a1444c9437e00ffd48baecb0838d3d9ca1703c3153dbd46e945e84703",
+      "size": 308301,
+      "matches_pin": true
+    },
+    "ortgenai-fp32x/model.onnx.data": {
+      "sha256": "129c58a320b6de7192713cc9c7e4ba744dcf7fabb0f57c6535021b45b3dc5143",
+      "size": 3077177344,
+      "matches_pin": true
+    },
+    "transformers-5.18.0/tokenizer.json": {
+      "sha256": "a5cd9732badce41de57e6efce8302930ded1c1188c5f81feb2bd6c24c4a1941f",
+      "size": 19989339,
+      "matches_pin": true
+    }
+  }
+}

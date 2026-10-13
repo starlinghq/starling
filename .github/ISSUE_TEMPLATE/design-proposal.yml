@@ -1,0 +1,26 @@
+name: Design proposal
+description: New public API, backend, model family, or fidelity policy change.
+labels: [design]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem and consumer
+      description: Who needs this, and what can they not do today?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposal
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence and gates affected
+      description: Which qualification gates (G0 to G7) does this change?

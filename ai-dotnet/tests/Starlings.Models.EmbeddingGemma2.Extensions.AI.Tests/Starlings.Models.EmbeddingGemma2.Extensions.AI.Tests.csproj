@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="xunit.v3" />
+    <!-- CPU native runtime. -->
+    <PackageReference Include="Microsoft.ML.OnnxRuntime" />
+    <!-- Middleware (logging, caching) and the builder/DI helpers, to prove standard-contract compatibility. -->
+    <PackageReference Include="Microsoft.Extensions.AI" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
+    <PackageReference Include="Microsoft.Extensions.Logging" />
+    <Using Include="Xunit" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="../Shared/EmbeddingGemma2/*.cs" Link="Shared/EmbeddingGemma2/%(Filename)%(Extension)" />
+    <Compile Include="../Shared/EmbeddingGemma2Fakes/*.cs" Link="Shared/EmbeddingGemma2Fakes/%(Filename)%(Extension)" />
+    <Compile Include="../Shared/TestModels/*.cs" Link="Shared/TestModels/%(Filename)%(Extension)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../src/Starlings.Models.EmbeddingGemma2.Extensions.AI/Starlings.Models.EmbeddingGemma2.Extensions.AI.csproj" />
+  </ItemGroup>
+
+</Project>

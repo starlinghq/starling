@@ -1,0 +1,67 @@
+
+== 0. Inputs
+commit:    faeb9693b0f6c7be9a91af72c1fb5c8df1f4e343
+dotnet:    /home/mark/.dotnet/dotnet (10.0.100)
+work dir:  /tmp/df-tokenizers-drill.PM0nT0
+ok:   intfloat/multilingual-e5-small@614241f622f53c4eeff9890bdc4f31cfecc418b3/tokenizer.json (present)
+ok:   fastino/gliner2-base-v1@f9634218e53580c56edf0de97ca1a7d3f1c2354e/tokenizer.json (present)
+
+== 1. Clean checkout of faeb9693b0f6c7be9a91af72c1fb5c8df1f4e343
+ok:   no build outputs, caches or untracked files in the checkout
+
+== 2. Optional Microsoft comparator disabled
+ok:   no project, props, targets or solution file under tokenizers-dotnet/ references Microsoft.ML.Tokenizers
+ok:   upstream contributions merged: none (tokenizers-dotnet/PROVENANCE.md); the package ships local changes L1-L10
+
+== 3. Test with assets required (locked restore)
+Running tests from /tmp/df-tokenizers-drill.PM0nT0/src/tokenizers-dotnet/tests/Starlings.Tokenizers.Tests/bin/Release/net10.0/Starlings.Tokenizers.Tests.dll (net10.0|x64)
+[+229/x0/?0] Starlings.Tokenizers.Tests.dll (net10.0|x64)(2s)
+
+[+231/x0/?0] Starlings.Tokenizers.Tests.dll (net10.0|x64)(5s)
+
+/tmp/df-tokenizers-drill.PM0nT0/src/tokenizers-dotnet/tests/Starlings.Tokenizers.Tests/bin/Release/net10.0/Starlings.Tokenizers.Tests.dll (net10.0|x64) passed (6s 445ms)
+
+Test run summary: Passed!
+  total: 233
+  failed: 0
+  succeeded: 233
+  skipped: 0
+  duration: 6s 696ms
+ok:   tokenizers-dotnet/src/Starlings.Tokenizers/Starlings.Tokenizers.csproj
+
+== 4. Pack
+version:   0.1.0-preview.2
+ok:   Starlings.Tokenizers.0.1.0-preview.2.nupkg sha256 fd6282e00773a946e544b3070744c560a7f6edd195007f6079a9bb70e6728f4a
+ok:   nuspec: MIT expression, repository commit faeb9693b0f6c7be9a91af72c1fb5c8df1f4e343, no dependencies; packs README, notices, profiles
+
+== 5. Push to a local folder feed (never nuget.org)
+Starlings.Tokenizers.0.1.0-preview.2.nupkg
+
+== 6. Clean consumer outside the repository
+  Determining projects to restore...
+  All projects are up-to-date for restore.
+Project 'Consumer' has the following package references
+   [net10.0]: 
+   Top-level Package                    Requested           Resolved       
+   > Starlings.Tokenizers      [0.1.0-preview.2]   0.1.0-preview.2
+
+assets libraries: Starlings.Tokenizers/0.1.0-preview.2
+ok:   restored package sha512 equals the packed .nupkg (from the local feed)
+ok:   consumer package cache holds only: starlings.tokenizers 
+ok:   no file in the consumer (sources, NuGet.config, obj, bin) names the repository path
+
+== 7. Run the consumer against the pinned asset and the protected fixtures
+library:  Starlings.Tokenizers 0.1.0-preview.2+faeb9693b0f6c7be9a91af72c1fb5c8df1f4e343
+location: /tmp/df-tokenizers-drill.PM0nT0/consumer/bin/Release/net10.0/Starlings.Tokenizers.dll
+runtime:  .NET 10.0.12
+loaded tokenizer assemblies: Starlings.Tokenizers
+asset:    /home/mark/Projects/AI-models/tok/intfloat/multilingual-e5-small/614241f622f53c4eeff9890bdc4f31cfecc418b3/tokenizer.json sha256 0b44a9d7b51c3c62626640cda0e2c2f70fdacdc25bbbd68038369d14ebdf4c39
+encode:   49/49 cases exact (ids, tokens, type ids, masks, both offset units, sequence ids)
+decode:   49/49 cases exact (skip and keep special tokens)
+truncate: 2/2 cases exact
+batch:    6/6 padded rows exact
+L5 case unknown-char: ids [0,51,69723,19,6,3,21441,136,6,3,3525,56,28,121505,2]
+L5 case combining-stack: ids [0,567,3,244403,3,245914,3,248774,248781,3,247778,3,246687,3,100628,2]
+RESULT: PASS
+
+== DRILL PASS: Starlings.Tokenizers 0.1.0-preview.2 from faeb9693b0f6c7be9a91af72c1fb5c8df1f4e343 (packages and logs in artifacts/release-drill/)

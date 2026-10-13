@@ -1,0 +1,9 @@
+{
+  "name": "starlings-browser-spike",
+  "private": true,
+  "description": "Pins onnxruntime-web for the browser feasibility spike (docs/m0/browser-wasm-spike.md). Not shipped.",
+  "license": "MIT",
+  "dependencies": {
+    "onnxruntime-web": "1.30.0"
+  }
+}

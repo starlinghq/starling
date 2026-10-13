@@ -1,0 +1,115 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/starlinghq/starling/model-pipeline/schemas/benchmark-raw.schema.json",
+  "title": "Raw benchmark record (starlings-bench-raw/1)",
+  "description": "One line of a raw benchmark result file (JSON lines), written by every harness of the matched-backend comparison (P-008, plan section 11). A 'run' record identifies one process: artifacts, environment, settings and the quality measured in that same process. 'series' records hold raw per-sample timings for one workload, path, concurrency level and mode, and point at their run by run_id. Summaries are computed from these records, never stored instead of them.",
+  "oneOf": [{ "$ref": "#/$defs/run" }, { "$ref": "#/$defs/series" }],
+  "$defs": {
+    "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "quality": {
+      "type": "object",
+      "required": ["max_abs", "min_cosine", "finite"],
+      "properties": {
+        "max_abs": { "type": "number", "minimum": 0 },
+        "min_cosine": { "type": "number" },
+        "finite": { "type": "boolean" }
+      }
+    },
+    "msArray": { "type": "array", "items": { "type": "number", "minimum": 0 }, "minItems": 1 },
+    "load": {
+      "type": "object",
+      "required": ["loadavg", "gpus"],
+      "properties": {
+        "loadavg": { "type": ["array", "null"], "items": { "type": "number" } },
+        "gpus": { "type": ["array", "null"], "items": { "type": "object" } }
+      }
+    },
+    "run": {
+      "type": "object",
+      "required": ["schema", "kind", "run_id", "started_utc", "mode", "model", "harness", "artifacts", "environment", "settings", "quality"],
+      "properties": {
+        "schema": { "const": "starlings-bench-raw/1" },
+        "kind": { "const": "run" },
+        "run_id": { "type": "string", "minLength": 1 },
+        "started_utc": { "type": "string" },
+        "mode": { "enum": ["warm", "cold"] },
+        "model": { "type": "string" },
+        "harness": {
+          "type": "object",
+          "required": ["name", "language", "impl", "version"],
+          "properties": {
+            "name": { "type": "string" },
+            "language": { "enum": ["csharp", "python"] },
+            "impl": { "type": "string", "description": "csharp: library (product API) or direct (raw InferenceSession); python: python-ort." },
+            "version": { "type": "string" }
+          }
+        },
+        "artifacts": {
+          "type": "object",
+          "required": ["model_sha256", "tokenizer_sha256", "workload_sha256", "fixture_sha256", "git_commit", "git_dirty", "packages"],
+          "properties": {
+            "model_sha256": { "$ref": "#/$defs/sha256" },
+            "tokenizer_sha256": { "$ref": "#/$defs/sha256" },
+            "workload_sha256": { "$ref": "#/$defs/sha256" },
+            "fixture_sha256": { "type": "object", "additionalProperties": { "$ref": "#/$defs/sha256" } },
+            "git_commit": { "type": ["string", "null"] },
+            "git_dirty": { "type": ["boolean", "null"] },
+            "packages": { "type": "object", "additionalProperties": { "type": ["string", "null"] } }
+          }
+        },
+        "environment": {
+          "type": "object",
+          "required": [
+            "cpu_model", "cpu_flags", "physical_cores", "logical_cpus", "ram_bytes", "os", "kernel", "runtime",
+            "ort_version", "ort_available_providers", "gpu", "cpu_governor", "load_before", "load_after"
+          ],
+          "properties": {
+            "cpu_flags": { "type": "array", "items": { "type": "string" } },
+            "gpu": { "type": ["object", "null"] },
+            "load_before": { "$ref": "#/$defs/load" },
+            "load_after": { "$ref": "#/$defs/load" }
+          }
+        },
+        "settings": {
+          "type": "object",
+          "required": ["provider", "intra_op_num_threads", "inter_op_num_threads", "execution_mode", "graph_optimization_level", "provider_options"],
+          "properties": {
+            "provider": { "enum": ["cpu", "cuda"] },
+            "intra_op_num_threads": { "type": ["integer", "null"] },
+            "inter_op_num_threads": { "type": ["integer", "null"] }
+          }
+        },
+        "quality": {
+          "type": "object",
+          "required": ["reference", "embedding_max_abs_tolerance", "cases", "pass"],
+          "properties": {
+            "embedding_max_abs_tolerance": { "type": "number" },
+            "cases": { "type": "integer", "minimum": 1 },
+            "pass": { "type": "boolean" }
+          }
+        }
+      }
+    },
+    "series": {
+      "type": "object",
+      "required": ["schema", "kind", "run_id", "mode", "path", "workload", "input", "batch", "concurrency", "warmup_calls", "n", "wall_ms", "ms", "stages_ms", "quality"],
+      "properties": {
+        "schema": { "const": "starlings-bench-raw/1" },
+        "kind": { "const": "series" },
+        "run_id": { "type": "string", "minLength": 1 },
+        "mode": { "enum": ["warm", "cold"] },
+        "path": { "enum": ["ids", "text"] },
+        "workload": { "type": "string" },
+        "input": { "type": "string" },
+        "batch": { "type": "integer", "minimum": 1 },
+        "concurrency": { "type": "integer", "minimum": 1 },
+        "warmup_calls": { "type": "integer", "minimum": 0 },
+        "n": { "type": "integer", "minimum": 1 },
+        "wall_ms": { "type": "number", "minimum": 0 },
+        "ms": { "$ref": "#/$defs/msArray" },
+        "stages_ms": { "type": "object", "additionalProperties": { "$ref": "#/$defs/msArray" } },
+        "quality": { "$ref": "#/$defs/quality" }
+      }
+    }
+  }
+}

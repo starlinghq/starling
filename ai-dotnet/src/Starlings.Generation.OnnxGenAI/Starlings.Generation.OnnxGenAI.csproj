@@ -1,0 +1,35 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <IsPackable>true</IsPackable>
+    <Description>Preview. Text generation on ONNX Runtime GenAI 0.17.1 behind a Starling adapter: model loading with explicit provider selection (no silent fallback, TF32 off by default), runtime config overlays, reference-counted disposal, and an owned decode loop over pre-tokenized ids (greedy or seeded sampling, max new tokens, stop token ids and stop strings, streaming with UTF-8-safe incremental detokenization through the owned tokenizer Starlings.Tokenizers, cancellation between decode steps, usage accounting). References only Microsoft.ML.OnnxRuntimeGenAI.Managed: the application adds Microsoft.ML.OnnxRuntimeGenAI (CPU) or Microsoft.ML.OnnxRuntimeGenAI.Cuda.</Description>
+    <PackageTags>llm;text-generation;onnxruntime-genai;onnxruntime;streaming</PackageTags>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageReleaseNotes>https://github.com/starlinghq/starling/blob/main/ai-dotnet/README.md#generation-backend-and-pilot-llm-p-016</PackageReleaseNotes>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!--
+      Managed binding only (it brings Microsoft.Extensions.AI.Abstractions for its own IChatClient, which this package
+      does not use). The native runtime is the application's choice: Microsoft.ML.OnnxRuntimeGenAI (CPU, brings
+      Microsoft.ML.OnnxRuntime) or Microsoft.ML.OnnxRuntimeGenAI.Cuda (brings Microsoft.ML.OnnxRuntime.Gpu).
+    -->
+    <PackageReference Include="Microsoft.ML.OnnxRuntimeGenAI.Managed" />
+    <PackageReference Include="Starlings.Tokenizers" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Starlings.Generation.OnnxGenAI.Tests" />
+    <InternalsVisibleTo Include="Starlings.Models.Qwen35.Tests" />
+    <InternalsVisibleTo Include="Starlings.Models.Qwen35.Tests.Cuda" />
+    <!-- Scripted sequences under the Extensions.AI adapter (CI tests without the model). -->
+    <InternalsVisibleTo Include="Starlings.Models.Qwen35.Extensions.AI.Tests" />
+    <!-- Step-0 logits for the fidelity runner. -->
+    <InternalsVisibleTo Include="Starlings.Qwen35.Fidelity" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,16 @@
+# Binding tolerances, set by Mark on 2026-10-08 (PR #4), plan 10.1.
+# Observed worst (cloud Xeon and AVX2 Haswell): hidden 2.9e-6, embedding 2.3e-7, C# vs Python 1.04e-7.
+profile: multilingual-e5-small/onnx-fp32-cpu
+reference: PyTorch fp32 embeddings and recomputed hidden states from model-pipeline/protected/multilingual-e5-small/onnx-fp32-cpu/
+discrete:
+  token_ids: exact
+  attention_mask: exact
+  offsets: exact
+float:
+  last_hidden_state_max_abs: 1.0e-4
+  embedding_max_abs: 1.0e-5
+  padded_batch_vs_single_embedding_max_abs: 1.0e-5
+  nan_or_inf: fail
+  report_only: [mean_abs, p99_abs, min_cosine]
+csharp_vs_python_same_machine_and_provider:
+  embedding_max_abs: 1.0e-6

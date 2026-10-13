@@ -1,0 +1,149 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/starlinghq/starling/model-pipeline/schemas/stage-results.schema.json",
+  "title": "Stage results",
+  "description": "Candidate outputs of one fidelity stage for one profile (backlog P-007, P-015). Outputs only: thresholds come from the profile's protected tolerances file and are rejected here. Version 1: numeric outputs, task embedding (implicit). Version 2: adds a required task and typed outputs (strings, string lists, entity results) for extraction. See src/model_pipeline/results.py.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["format", "format_version", "profile", "stage", "candidate", "producer", "cases"],
+  "properties": {
+    "format": { "const": "starlings.stage-results" },
+    "format_version": { "enum": [1, 2] },
+    "task": {
+      "description": "Version 2 only (required there). The evaluator task the outputs belong to; must match the manifest's behavior.tasks (entity-extraction for a manifest task 'extraction').",
+      "enum": ["embedding", "entity-extraction", "image-embedding", "video-embedding"]
+    },
+    "profile": { "type": "string", "pattern": "^[a-z0-9][a-z0-9.-]*/[a-z0-9][a-z0-9.-]*$" },
+    "stage": {
+      "description": "tokenizer: owned tokenizer outputs (for extraction: the processor, i.e. normalization, word splitting, schema prefix, subword ids and routing positions). export: Python backend on the exported artifact against the framework reference. dotnet: the C# implementation.",
+      "enum": ["tokenizer", "export", "dotnet"]
+    },
+    "candidate": { "type": "string", "minLength": 1 },
+    "producer": {
+      "type": "object",
+      "required": ["name"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "repository_commit": { "type": ["string", "null"] }
+      }
+    },
+    "environment": {
+      "type": "object",
+      "properties": {
+        "machine": { "type": "string", "description": "Identifies the host; equal values mean same machine for same-machine bounds." },
+        "provider": { "type": "string" },
+        "provider_options": { "type": "object" }
+      }
+    },
+    "assets": {
+      "description": "Digests of the artifacts the stage loaded. Must match the manifest's origin.files.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["path", "sha256"],
+        "properties": {
+          "path": { "type": "string", "minLength": 1 },
+          "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" }
+        }
+      }
+    },
+    "cases": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": { "$ref": "#/$defs/output" }
+      }
+    },
+    "batches": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["output", "case_ids", "values"],
+        "properties": {
+          "output": { "type": "string", "description": "The per-case output these rows are the batched form of." },
+          "case_ids": { "type": "array", "items": { "type": "string" } },
+          "values": { "type": "array", "items": { "$ref": "#/$defs/output" } }
+        }
+      }
+    },
+    "tensors": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["file", "dtype", "sha256", "cases"],
+        "properties": {
+          "file": { "type": "string", "pattern": "^[^/\\\\.][^/\\\\]*$" },
+          "dtype": { "const": "float32" },
+          "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+          "cases": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["id", "shape"],
+              "properties": {
+                "id": { "type": "string" },
+                "shape": { "type": "array", "items": { "type": "integer", "minimum": 0 } }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "format_version": { "const": 1 } } },
+      "then": {
+        "not": { "required": ["task"] },
+        "properties": {
+          "cases": { "additionalProperties": { "additionalProperties": { "$ref": "#/$defs/numbers" } } },
+          "batches": { "additionalProperties": { "properties": { "values": { "items": { "$ref": "#/$defs/numbers" } } } } }
+        }
+      }
+    },
+    {
+      "if": { "properties": { "format_version": { "const": 2 } } },
+      "then": { "required": ["task"] }
+    }
+  ],
+  "$defs": {
+    "numbers": { "type": "array", "items": { "type": "number" } },
+    "output": {
+      "description": "Version 1 allows numbers only (enforced above). Version 2 also allows a string, a list of strings, or an entity result.",
+      "anyOf": [
+        { "$ref": "#/$defs/numbers" },
+        { "type": "string" },
+        { "type": "array", "items": { "type": "string" } },
+        { "$ref": "#/$defs/entity_result" }
+      ]
+    },
+    "entity_result": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["gate_open", "entities"],
+      "properties": {
+        "gate_open": { "type": "boolean", "description": "The count gate's decision (argmax of the count logits > 0). Closed means no entities." },
+        "entities": {
+          "description": "In output order: grouped by label in schema label order, then in the order the implementation returns within each label.",
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["label", "text", "start", "end", "confidence"],
+            "properties": {
+              "label": { "type": "string" },
+              "text": { "type": "string" },
+              "start": { "type": "integer", "minimum": 0 },
+              "end": { "type": "integer", "minimum": 0 },
+              "confidence": { "type": "number" }
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,7 @@
+<Project>
+  <!--
+    Samples are package consumers, not part of the repository build: this file stops MSBuild from importing the
+    repository's Directory.Build.props (central package management, locked restore, analyzer settings), so a sample
+    builds the same inside the checkout and in a copy anywhere else (tools/release-drill-ai.sh builds the copy).
+  -->
+</Project>

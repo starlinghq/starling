@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <IsPackable>true</IsPackable>
+    <Description>Preview. ML.NET estimator and transformer for the multilingual-e5-small text embedder (Starlings.Models.E5): a text column to a fixed-size Vector&lt;Single, 384&gt; embedding column and an optional token-count column, with one inference per row however many getters are requested, explicit e5 prefixes and optional look-ahead batching. Pipeline composition only: saving the transformer is unsupported (it throws); the model is resolved from its asset lock at run time.</Description>
+    <PackageTags>embeddings;e5;multilingual-e5-small;ml.net;mlnet;idataview;onnxruntime</PackageTags>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- IEstimator, ITransformer, IDataView, MLContext. Brings no tokenizer package (checked in CI and by the release drill). -->
+    <PackageReference Include="Microsoft.ML" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../Starlings.Models.E5/Starlings.Models.E5.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Starlings.Models.E5.MLNet.Tests" />
+  </ItemGroup>
+
+</Project>

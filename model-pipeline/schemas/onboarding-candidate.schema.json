@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["format_version", "id", "task", "origin", "runtime", "behavior", "evaluation"],
+  "properties": {
+    "format_version": {"const": 1},
+    "id": {"type": "string", "minLength": 1},
+    "task": {"enum": ["embeddings", "reranking", "generation"]},
+    "origin": {
+      "type": "object", "additionalProperties": false,
+      "required": ["repo", "revision", "files"],
+      "properties": {
+        "repo": {"type": "string", "pattern": "^[^/]+/[^/]+$"},
+        "revision": {"type": "string", "pattern": "^[a-f0-9]{40}$"},
+        "files": {
+          "type": "array", "minItems": 2,
+          "items": {
+            "type": "object", "additionalProperties": false,
+            "required": ["path", "size", "sha256"],
+            "properties": {
+              "path": {"type": "string", "minLength": 1},
+              "size": {"type": "integer", "minimum": 0},
+              "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+            }
+          }
+        }
+      }
+    },
+    "runtime": {
+      "type": "object", "additionalProperties": false,
+      "required": ["backend", "version", "provider", "precision"],
+      "properties": {
+        "backend": {"enum": ["onnx", "ortgenai"]},
+        "version": {"enum": ["1.30.0", "0.17.1"]},
+        "provider": {"const": "CPUExecutionProvider"},
+        "precision": {"const": "fp32"}
+      }
+    },
+    "behavior": {"type": "object", "minProperties": 1},
+    "evaluation": {
+      "type": "object", "additionalProperties": false,
+      "required": ["status", "policy"],
+      "properties": {"status": {"const": "proposed"}, "policy": {"type": "object", "minProperties": 1}}
+    }
+  }
+}

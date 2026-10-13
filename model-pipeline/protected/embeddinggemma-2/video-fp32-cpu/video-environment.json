@@ -1,0 +1,198 @@
+{
+  "fixture_format_version": 1,
+  "runner": "model-pipeline/reference/embeddinggemma2/run_embeddinggemma2_video.py",
+  "runner_repository_commit": "0af7a57726c26fbdbbd85222864f021649e6164d",
+  "model": {
+    "repo": "google/embeddinggemma-2",
+    "revision": "914f7f89142e33e77833254d9c9b90c3cef7303b"
+  },
+  "assets": [
+    {
+      "path": "config.json",
+      "sha256": "b8f1e9931b57fbc054acdb445c41765d55b0074c58d145fa82839941ad1b5bb3",
+      "size": 4455
+    },
+    {
+      "path": "processor_config.json",
+      "sha256": "168f6a08522f3ce5dea596d94d003af2fd691742d4f41fe1f9d8cce76bfbf69c",
+      "size": 1788
+    },
+    {
+      "path": "chat_template.jinja",
+      "sha256": "4b852efc0b9960283e735363331e6f325b33bc74bdbaa076f595bc4e9b94d85e",
+      "size": 1016
+    },
+    {
+      "path": "tokenizer.json",
+      "sha256": "4d777ef5bdc1aa36227abdfb77c3e49e7b9c892d16e1b6bda41c393504828be4",
+      "size": 32170510
+    },
+    {
+      "path": "model.safetensors",
+      "sha256": "197a32965d4b1105faf060417baa899e193fb73cd401f42ec9295234d5553d79",
+      "size": 1488915288
+    }
+  ],
+  "videos": {
+    "generator": "model-pipeline/reference/embeddinggemma2/make_eg2_videos.py",
+    "seed": 20261011,
+    "ffmpeg_build": "BtbN/FFmpeg-Builds autobuild-2026-10-11-13-04, FFmpeg n8.1.3-17-gc389840894",
+    "encoder": "ffmpeg version n8.1.3-17-gc389840894-20261011 Copyright (c) 2000-2026 the FFmpeg developers",
+    "framemd5_decoder": "ffmpeg version n8.1.3-17-gc389840894-20261011 Copyright (c) 2000-2026 the FFmpeg developers",
+    "numpy": "2.4.6",
+    "pillow": "12.3.0",
+    "files": [
+      {
+        "id": "h264-bars-640x360-30fps-5s",
+        "file": "h264-bars-640x360-30fps-5s.mp4",
+        "sha256": "6ff9558db469f4304865734e15551794881012f7955fd29c2985fae88ae49c48"
+      },
+      {
+        "id": "h264-shapes-1280x720-25fps-10s",
+        "file": "h264-shapes-1280x720-25fps-10s.mp4",
+        "sha256": "5f3a94e063a55c4096b2701d51cf02e001634dc043d76d948b1adab9ddd1e994"
+      },
+      {
+        "id": "h264-long-320x240-30fps-40s",
+        "file": "h264-long-320x240-30fps-40s.mp4",
+        "sha256": "048d2a50a1db1a35ef0c6dd0140d84723c92a594207ce7bbb34f463e7dbfa633"
+      },
+      {
+        "id": "h264-32s-160x120-30fps",
+        "file": "h264-32s-160x120-30fps.mp4",
+        "sha256": "3895b2337e191723ee1ff53e7fb935662f1fdcc70862b568b1c8d5969efc5555"
+      },
+      {
+        "id": "h264-33s-160x120-30fps",
+        "file": "h264-33s-160x120-30fps.mp4",
+        "sha256": "9b9241b4bfdc6d2f52d6851c0604023a19664e1d82753de8ff8df9b4cc1e338a"
+      },
+      {
+        "id": "h264-short-320x240-24fps-0.5s",
+        "file": "h264-short-320x240-24fps-0.5s.mp4",
+        "sha256": "39d8031d908567c16a58f1787dd6d1a37aa24e81d8df3d65df03060df5715a98"
+      },
+      {
+        "id": "h264-1s-320x240-30fps",
+        "file": "h264-1s-320x240-30fps.mp4",
+        "sha256": "e1d9751caf0a172286e351f887548cf37c89db8790868be7b44ef23450297cbe"
+      },
+      {
+        "id": "h264-1.9s-320x240-30fps",
+        "file": "h264-1.9s-320x240-30fps.mp4",
+        "sha256": "2ac7bd9207f0e2ac1db8045376041bd0348817aaa2d6db577ca0cf466e31a4b3"
+      },
+      {
+        "id": "h264-ntsc-640x480-29.97fps-12s",
+        "file": "h264-ntsc-640x480-29.97fps-12s.mp4",
+        "sha256": "39e9acff64cfec7dec439ce2538ed7ea2d348300a25ba7df5b2d7a554a28f6ac"
+      },
+      {
+        "id": "h264-60fps-480x270-3s",
+        "file": "h264-60fps-480x270-3s.mp4",
+        "sha256": "bdd058cc8e67e25e32db94349c07e03349f1f508193e67640d124c97d031b2b1"
+      },
+      {
+        "id": "h264-1fps-64x48-8s",
+        "file": "h264-1fps-64x48-8s.mp4",
+        "sha256": "4669ce09a154e5183cb09c7808d2d1d3fd4cc5d0a8d1af1103be07cc108a8fa2"
+      },
+      {
+        "id": "h264-portrait-360x640-30fps-4s",
+        "file": "h264-portrait-360x640-30fps-4s.mp4",
+        "sha256": "26761c3521e256c84ce9eaa0547568955df4ff6ef8b3f7ade00c6b6691b745a5"
+      },
+      {
+        "id": "h264-330x186-30fps-3s",
+        "file": "h264-330x186-30fps-3s.mp4",
+        "sha256": "158d3942a4d5e6475d2b6c32a581ef14b97cd002c0d15344b2ac4a54728e7bc8"
+      },
+      {
+        "id": "h264-rot90-640x360-30fps-3s",
+        "file": "h264-rot90-640x360-30fps-3s.mp4",
+        "sha256": "7449e5b669909501281e379a7507edf021c1bb37ac22674887bf0205ea2d0224"
+      },
+      {
+        "id": "h264-fullrange-640x360-30fps-3s",
+        "file": "h264-fullrange-640x360-30fps-3s.mp4",
+        "sha256": "f14be7a5414906dd59dc78dc98ac6ec6eae78d1cce83f45a087e93f668723147"
+      },
+      {
+        "id": "h264-untagged-640x360-30fps-3s",
+        "file": "h264-untagged-640x360-30fps-3s.mp4",
+        "sha256": "7c696fdf0b435c70fadd67c7c258026c2c87cc4aae4b823eec8c334df99b9502"
+      },
+      {
+        "id": "h264-10bit-640x360-30fps-3s",
+        "file": "h264-10bit-640x360-30fps-3s.mp4",
+        "sha256": "9765ba3d4edd061bf82ec1601bc15936133c389996258127d156734e7638e534"
+      },
+      {
+        "id": "h264-1080p-1920x1080-30fps-4s",
+        "file": "h264-1080p-1920x1080-30fps-4s.mp4",
+        "sha256": "e559e3b28bc60c3b2ed0a238d6871d2296e3526dece3e1802daa51d9bfce1217"
+      },
+      {
+        "id": "vp9-640x360-30fps-6s",
+        "file": "vp9-640x360-30fps-6s.webm",
+        "sha256": "603a10c38abbb3f09c4064ae2d3d110aa57c2d69c979b553f8e435631da61f7b"
+      },
+      {
+        "id": "vp9-odd-321x179-30fps-3s",
+        "file": "vp9-odd-321x179-30fps-3s.webm",
+        "sha256": "d8ab07b93e5f767c23a090a040654f99c659d80ebb5e4e9044f7c6d6cf76ba6f"
+      },
+      {
+        "id": "hevc-640x360-30fps-4s",
+        "file": "hevc-640x360-30fps-4s.mp4",
+        "sha256": "ef52fbfdcb98950bf1c36b4b4166f250866f4ef88958dc0b38e8e45f0996c4b2"
+      },
+      {
+        "id": "av1-640x360-30fps-3s",
+        "file": "av1-640x360-30fps-3s.mp4",
+        "sha256": "b4b0d9ff04240f6022f4b953909c3cfe0c9234a630514575191b38a150cec1dc"
+      }
+    ]
+  },
+  "environment": {
+    "python": "3.11.16",
+    "platform": "Linux-7.2.5-3-omarchy-x86_64-with-glibc2.44",
+    "machine": "x86_64",
+    "cpu": "Intel(R) Core(TM) i7-5820K CPU @ 3.30GHz",
+    "cpu_count": 12,
+    "packages": {
+      "torch": "2.14.1+cpu",
+      "torchvision": "0.29.1+cpu",
+      "torchcodec": "0.17.0+cpu",
+      "transformers": "5.19.0",
+      "sentence-transformers": "6.1.0",
+      "tokenizers": "0.23.3",
+      "numpy": "2.4.6"
+    },
+    "torch_threads": 6,
+    "torch_cpu_capability": "AVX2",
+    "torchcodec_ffmpeg": {
+      "libavfilter": [
+        11,
+        14,
+        103
+      ],
+      "libavutil": [
+        60,
+        26,
+        103
+      ],
+      "libavcodec": [
+        62,
+        28,
+        103
+      ],
+      "libavformat": [
+        62,
+        12,
+        103
+      ],
+      "ffmpeg_version": "n8.1.3-17-gc389840894-20261011"
+    }
+  }
+}

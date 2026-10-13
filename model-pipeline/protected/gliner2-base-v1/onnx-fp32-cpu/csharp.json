@@ -1,0 +1,48 @@
+{
+  "smoke": "/home/mark/Projects/AI-models/gliner2/csharp (throwaway, not committed)",
+  "runs": {
+    "cpu-threads1": {
+      "cases": 58,
+      "inputs_exact": 58,
+      "entities_equal_reference": 58,
+      "entity_sets_equal_reference": 58,
+      "span_logits_max_abs_vs_reference": 0.00775146484375,
+      "span_logits_max_abs_vs_python_ort": 0.0,
+      "confidence_max_abs_vs_reference": 1.817941665649414e-06,
+      "cases_with_different_entities": []
+    },
+    "cpu-threads12": {
+      "cases": 58,
+      "inputs_exact": 58,
+      "entities_equal_reference": 58,
+      "entity_sets_equal_reference": 58,
+      "span_logits_max_abs_vs_reference": 0.00775146484375,
+      "span_logits_max_abs_vs_python_ort": 0.0,
+      "confidence_max_abs_vs_reference": 1.817941665649414e-06,
+      "cases_with_different_entities": []
+    },
+    "cuda-tf32-0": {
+      "cases": 58,
+      "inputs_exact": 58,
+      "entities_equal_reference": 58,
+      "entity_sets_equal_reference": 58,
+      "span_logits_max_abs_vs_reference": 0.0040283203125,
+      "span_logits_max_abs_vs_python_ort": 0.0,
+      "confidence_max_abs_vs_reference": 1.9073486328125e-06,
+      "cases_with_different_entities": []
+    },
+    "cuda-tf32-1": {
+      "cases": 58,
+      "inputs_exact": 58,
+      "entities_equal_reference": 56,
+      "entity_sets_equal_reference": 57,
+      "span_logits_max_abs_vs_reference": 2.379974365234375,
+      "span_logits_max_abs_vs_python_ort": 2.378387451171875,
+      "confidence_max_abs_vs_reference": 0.0003560781478881836,
+      "cases_with_different_entities": [
+        "threshold-near-below-patient",
+        "long-over-1024-tokens"
+      ]
+    }
+  }
+}

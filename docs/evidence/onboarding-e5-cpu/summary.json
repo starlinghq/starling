@@ -1,0 +1,104 @@
+{
+  "format": "starlings.onboarding-validation",
+  "format_version": 1,
+  "implementation_commit": "b8d2395d47be6e1811988ac711b9aa69cd4c4cd3",
+  "profile": "multilingual-e5-small/onnx-fp32-cpu",
+  "upstream_revision": "614241f622f53c4eeff9890bdc4f31cfecc418b3",
+  "host": "Linux x64 CPU",
+  "threads": 2,
+  "gates": {
+    "G1": {
+      "status": "passed",
+      "reason": "every check passed or is not applicable by the manifest"
+    },
+    "G2": {
+      "status": "passed",
+      "reason": "every check passed or is not applicable by the manifest"
+    }
+  },
+  "protected_evidence": {
+    "status": "verified",
+    "base": "ee3172db0154fe74782d8fef3c41c01fb3a78703",
+    "detail": "merge base of HEAD and origin/main",
+    "changed": [],
+    "sha256": {
+      "model-pipeline/protected/multilingual-e5-small/onnx-fp32-cpu/tolerances.yaml": "d6a18d85059f0401b2449d7a01d91b9f8b93ce5098639aee211e03ddd6358e12",
+      "model-pipeline/protected/multilingual-e5-small/onnx-fp32-cpu/tokenizer.jsonl": "cb0e61fe1de97956fef1a847a102f2aadd675a2ed7efbfc1a48ac9db2f4b61a1",
+      "model-pipeline/protected/multilingual-e5-small/onnx-fp32-cpu/embeddings.jsonl": "cb7c1fcd618bcddeb664dc05fb14f896c253b1151c2969ab87a1b819a6415ae1"
+    }
+  },
+  "distribution": {
+    "status": "passed",
+    "mode": "seed-model-from",
+    "candidate_commit": "b8d2395d47be6e1811988ac711b9aa69cd4c4cd3"
+  },
+  "fresh_run": {
+    "id": "b427a4b626db4c92b0e223c989a5f346",
+    "duration_seconds": 285.68892970401794,
+    "stage_durations_seconds": {
+      "assets": 11.709519006020855,
+      "distribution": 113.17212232999736,
+      "dotnet": 58.298803090001456,
+      "environment": 0.020695659972261637,
+      "evaluate": 4.111253927985672,
+      "export": 43.75322800700087,
+      "reference": 54.151502373977564,
+      "review": 0.07340442598797381
+    }
+  },
+  "verified_resume": {
+    "id": "1b4574eec6dc433881a285905e1750fb",
+    "duration_seconds": 9.260106697969604,
+    "stages": {
+      "assets": "cached",
+      "distribution": "cached",
+      "dotnet": "cached",
+      "environment": "cached",
+      "evaluate": "cached",
+      "export": "cached",
+      "reference": "cached",
+      "review": "cached"
+    }
+  },
+  "corruption_test": {
+    "proposal_exit_code": 2,
+    "repair_status": "completed",
+    "stages_after_repair": {
+      "assets": "cached",
+      "distribution": "cached",
+      "dotnet": "cached",
+      "environment": "cached",
+      "evaluate": "cached",
+      "export": "cached",
+      "reference": "cached",
+      "review": "executed"
+    }
+  },
+  "asset_mismatch_test": {
+    "exit_code": 1,
+    "first_failed_stage": "assets",
+    "reference_executed": false,
+    "failure": "asset mismatch for config.json: expected size=655 sha256=69137736cab8b8903a07fe8afaafdda25aac55415a12a55d1bffa9f581abf959; actual size=2 sha256=44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a; acquire the exact pinned snapshot"
+  },
+  "regressions": {
+    "python": {
+      "passed": 271,
+      "failed": 0
+    },
+    "tokenizers_dotnet": {
+      "passed": 1117,
+      "failed": 0,
+      "skipped": 0
+    },
+    "ai_dotnet": {
+      "passed": 233,
+      "failed": 0,
+      "skipped": 10,
+      "skip_scope": "optional network/acquisition checks and unrelated GLiNER2 graph"
+    },
+    "ruff": "passed",
+    "manifest_validation": "3 valid",
+    "tokenizer_independence": "passed"
+  },
+  "release_qualification": "incomplete; no support status or release authority changed"
+}

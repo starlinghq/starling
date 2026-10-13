@@ -1,0 +1,116 @@
+{
+  "reference": "sentence-transformers 6.1.0 modules on PIL images opened from the files (Image.open), PyTorch fp32 CPU, sdpa attention, one input per call, full checkpoint",
+  "rows": 43,
+  "batched8_vs_single": {
+    "max_abs": 2.337619662284851e-07,
+    "mean_abs": 9.70741306814666e-09
+  },
+  "encode_end_to_end_vs_forward": {
+    "max_abs": 0.0,
+    "mean_abs": 0.0
+  },
+  "restated_vision_padded_vs_upstream_soft_tokens_max_abs": 1.5497207641601562e-06,
+  "restated_vision_padded_vs_upstream_pooled_max_abs": 0.0,
+  "restated_vision_unpadded_vs_upstream_soft_tokens_max_abs": 7.987022399902344e-05,
+  "query_image_cosine": {
+    "q-cat": {
+      "photo-chelsea": 0.7051225900650024,
+      "photo-coffee": 0.5419936180114746,
+      "photo-camera": 0.5640538930892944,
+      "photo-astronaut": 0.5781601071357727,
+      "photo-rocket": 0.5416765809059143,
+      "photo-hubble-deep-field": 0.597083568572998,
+      "synth-shapes": 0.5767649412155151,
+      "synth-text": 0.607832133769989
+    },
+    "q-coffee": {
+      "photo-chelsea": 0.6036187410354614,
+      "photo-coffee": 0.7383679151535034,
+      "photo-camera": 0.5599380135536194,
+      "photo-astronaut": 0.5948212146759033,
+      "photo-rocket": 0.5547924637794495,
+      "photo-hubble-deep-field": 0.5873057246208191,
+      "synth-shapes": 0.5802158117294312,
+      "synth-text": 0.5762290954589844
+    },
+    "q-rocket": {
+      "photo-chelsea": 0.5309479236602783,
+      "photo-coffee": 0.5401686429977417,
+      "photo-camera": 0.5818250775337219,
+      "photo-astronaut": 0.6348162889480591,
+      "photo-rocket": 0.7069170475006104,
+      "photo-hubble-deep-field": 0.6243884563446045,
+      "synth-shapes": 0.5806317925453186,
+      "synth-text": 0.5766822099685669
+    },
+    "q-astronaut": {
+      "photo-chelsea": 0.5808570384979248,
+      "photo-coffee": 0.5445339679718018,
+      "photo-camera": 0.6097441911697388,
+      "photo-astronaut": 0.758976936340332,
+      "photo-rocket": 0.6407873034477234,
+      "photo-hubble-deep-field": 0.6405280828475952,
+      "synth-shapes": 0.5522620677947998,
+      "synth-text": 0.5560482740402222
+    },
+    "q-galaxies": {
+      "photo-chelsea": 0.5220915675163269,
+      "photo-coffee": 0.5101255774497986,
+      "photo-camera": 0.5273150205612183,
+      "photo-astronaut": 0.5864059329032898,
+      "photo-rocket": 0.588329553604126,
+      "photo-hubble-deep-field": 0.7463443875312805,
+      "synth-shapes": 0.5353405475616455,
+      "synth-text": 0.5527950525283813
+    },
+    "q-cameraman": {
+      "photo-chelsea": 0.5126461982727051,
+      "photo-coffee": 0.49399274587631226,
+      "photo-camera": 0.7335121631622314,
+      "photo-astronaut": 0.5785648822784424,
+      "photo-rocket": 0.525132954120636,
+      "photo-hubble-deep-field": 0.5804276466369629,
+      "synth-shapes": 0.5136401057243347,
+      "synth-text": 0.5829956531524658
+    },
+    "q-shapes": {
+      "photo-chelsea": 0.5560648441314697,
+      "photo-coffee": 0.541394829750061,
+      "photo-camera": 0.5176048278808594,
+      "photo-astronaut": 0.5565025806427002,
+      "photo-rocket": 0.5304045677185059,
+      "photo-hubble-deep-field": 0.614821195602417,
+      "synth-shapes": 0.7328675985336304,
+      "synth-text": 0.5771719217300415
+    },
+    "q-text": {
+      "photo-chelsea": 0.5999728441238403,
+      "photo-coffee": 0.5486947298049927,
+      "photo-camera": 0.5654177069664001,
+      "photo-astronaut": 0.6006289124488831,
+      "photo-rocket": 0.5740290284156799,
+      "photo-hubble-deep-field": 0.656493067741394,
+      "synth-shapes": 0.6072784662246704,
+      "synth-text": 0.6839461922645569
+    }
+  },
+  "query_top1": {
+    "q-cat": "photo-chelsea",
+    "q-coffee": "photo-coffee",
+    "q-rocket": "photo-rocket",
+    "q-astronaut": "photo-astronaut",
+    "q-galaxies": "photo-hubble-deep-field",
+    "q-cameraman": "photo-camera",
+    "q-shapes": "synth-shapes",
+    "q-text": "synth-text"
+  },
+  "eager_vs_sdpa_every_third_image": {
+    "max_abs": 2.4051405489444733e-07,
+    "mean_abs": 2.2414091475109536e-08
+  },
+  "text_and_vision_load_vs_full_every_third_image": {
+    "max_abs": 0.0,
+    "mean_abs": 0.0
+  },
+  "nan_or_inf_rows": []
+}

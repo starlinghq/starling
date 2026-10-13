@@ -1,0 +1,53 @@
+Running tests from /home/mark/Projects/AI/.claude/worktrees/agent-aa96f7a08e5265fad/ai-dotnet/tests/Starlings.Models.E5.Tests/bin/Release/net10.0/Starlings.Models.E5.Tests.dll (net10.0|x64)
+Running tests from /home/mark/Projects/AI/.claude/worktrees/agent-aa96f7a08e5265fad/ai-dotnet/tests/Starlings.Acquisition.Tests/bin/Release/net10.0/Starlings.Acquisition.Tests.dll (net10.0|x64)
+Running tests from /home/mark/Projects/AI/.claude/worktrees/agent-aa96f7a08e5265fad/ai-dotnet/tests/Starlings.Runtime.Onnx.Tests/bin/Release/net10.0/Starlings.Runtime.Onnx.Tests.dll (net10.0|x64)
+Running tests from /home/mark/Projects/AI/.claude/worktrees/agent-aa96f7a08e5265fad/ai-dotnet/benchmarks/Starlings.Benchmarks.Tests/bin/Release/net10.0/Starlings.Benchmarks.Tests.dll (net10.0|x64)
+Running tests from /home/mark/Projects/AI/.claude/worktrees/agent-aa96f7a08e5265fad/ai-dotnet/tests/Starlings.Models.E5.Extensions.AI.Tests/bin/Release/net10.0/Starlings.Models.E5.Extensions.AI.Tests.dll (net10.0|x64)
+skipped Starlings.Acquisition.Tests.HubIntegrationTests.RealGatedRepositoryWithoutTokenIsAccessDenied (0ms)
+  Set STARLING_NETWORK_TESTS=1 to run real Hub downloads.
+  from /home/mark/Projects/AI/.claude/worktrees/agent-aa96f7a08e5265fad/ai-dotnet/tests/Starlings.Acquisition.Tests/bin/Release/net10.0/Starlings.Acquisition.Tests.dll (net10.0|x64)
+skipped Starlings.Models.E5.Tests.AcquisitionTests.ExplicitDownloadThenOfflineLoadAndEmbed (0ms)
+  multilingual-e5-small: 2 of 2 files of intfloat/multilingual-e5-small@614241f622f53c4eeff9890bdc4f31cfecc418b3 are not in /home/mark/Projects/AI/.claude/worktrees/agent-aa96f7a08e5265fad/.models/intfloat/multilingual-e5-small/614241f622f53c4eeff9890bdc4f31cfecc418b3: onnx/model.onnx, tokenizer.json. Nothing is downloaded implicitly. Download explicitly with `await new ModelAssetStore(options).DownloadAsync(lock)` (from a repository checkout: `dotnet run --project ai-dotnet/tools/Starlings.Acquisition.Tool -- download multilingual-e5-small`), or point ModelAcquisitionOptions.CacheDirectory or $STARLING_MODELS at a cache that has them (searched: /home/mark/Projects/AI/.claude/worktrees/agent-aa96f7a08e5265fad/.models). (or set STARLING_NETWORK_TESTS=1 to download it in this test)
+  from /home/mark/Projects/AI/.claude/worktrees/agent-aa96f7a08e5265fad/ai-dotnet/tests/Starlings.Models.E5.Tests/bin/Release/net10.0/Starlings.Models.E5.Tests.dll (net10.0|x64)
+skipped Starlings.Acquisition.Tests.HubIntegrationTests.RealMissingRevisionIsNotFoundOrDenied (0ms)
+  Set STARLING_NETWORK_TESTS=1 to run real Hub downloads.
+  from /home/mark/Projects/AI/.claude/worktrees/agent-aa96f7a08e5265fad/ai-dotnet/tests/Starlings.Acquisition.Tests/bin/Release/net10.0/Starlings.Acquisition.Tests.dll (net10.0|x64)
+skipped Starlings.Acquisition.Tests.HubIntegrationTests.RealDownloadThenOfflineReuse (0ms)
+  Set STARLING_NETWORK_TESTS=1 to run real Hub downloads.
+  from /home/mark/Projects/AI/.claude/worktrees/agent-aa96f7a08e5265fad/ai-dotnet/tests/Starlings.Acquisition.Tests/bin/Release/net10.0/Starlings.Acquisition.Tests.dll (net10.0|x64)
+/home/mark/Projects/AI/.claude/worktrees/agent-aa96f7a08e5265fad/ai-dotnet/benchmarks/Starlings.Benchmarks.Tests/bin/Release/net10.0/Starlings.Benchmarks.Tests.dll (net10.0|x64) passed (948ms)
+/home/mark/Projects/AI/.claude/worktrees/agent-aa96f7a08e5265fad/ai-dotnet/tests/Starlings.Acquisition.Tests/bin/Release/net10.0/Starlings.Acquisition.Tests.dll (net10.0|x64) passed (1s 881ms)
+/home/mark/Projects/AI/.claude/worktrees/agent-aa96f7a08e5265fad/ai-dotnet/tests/Starlings.Runtime.Onnx.Tests/bin/Release/net10.0/Starlings.Runtime.Onnx.Tests.dll (net10.0|x64) passed (2s 219ms)
+[+33/x0/?1] Starlings.Models.E5.Tests.dll (net10.0|x64)(2s)
+[+21/x0/?0] Starlings.Models.E5.Extensions.AI.Tests.dll (net10.0|x64)(2s)
+
+[+34/x0/?1] Starlings.Models.E5.Tests.dll (net10.0|x64)(5s)
+[+21/x0/?0] Starlings.Models.E5.Extensions.AI.Tests.dll (net10.0|x64)(5s)
+
+[+38/x0/?1] Starlings.Models.E5.Tests.dll (net10.0|x64)(8s)
+[+22/x0/?0] Starlings.Models.E5.Extensions.AI.Tests.dll (net10.0|x64)(8s)
+
+[+39/x0/?1] Starlings.Models.E5.Tests.dll (net10.0|x64)(11s)
+[+22/x0/?0] Starlings.Models.E5.Extensions.AI.Tests.dll (net10.0|x64)(11s)
+
+[+39/x0/?1] Starlings.Models.E5.Tests.dll (net10.0|x64)(14s)
+[+22/x0/?0] Starlings.Models.E5.Extensions.AI.Tests.dll (net10.0|x64)(14s)
+
+[+42/x0/?1] Starlings.Models.E5.Tests.dll (net10.0|x64)(17s)
+[+23/x0/?0] Starlings.Models.E5.Extensions.AI.Tests.dll (net10.0|x64)(17s)
+
+/home/mark/Projects/AI/.claude/worktrees/agent-aa96f7a08e5265fad/ai-dotnet/tests/Starlings.Models.E5.Tests/bin/Release/net10.0/Starlings.Models.E5.Tests.dll (net10.0|x64) passed (18s 105ms)
+/home/mark/Projects/AI/.claude/worktrees/agent-aa96f7a08e5265fad/ai-dotnet/tests/Starlings.Models.E5.Extensions.AI.Tests/bin/Release/net10.0/Starlings.Models.E5.Extensions.AI.Tests.dll (net10.0|x64) passed (19s 864ms)
+
+Test run summary: Passed!
+  /home/mark/Projects/AI/.claude/worktrees/agent-aa96f7a08e5265fad/ai-dotnet/tests/Starlings.Models.E5.Tests/bin/Release/net10.0/Starlings.Models.E5.Tests.dll (net10.0|x64) passed (18s 105ms)
+  /home/mark/Projects/AI/.claude/worktrees/agent-aa96f7a08e5265fad/ai-dotnet/benchmarks/Starlings.Benchmarks.Tests/bin/Release/net10.0/Starlings.Benchmarks.Tests.dll (net10.0|x64) passed (948ms)
+  /home/mark/Projects/AI/.claude/worktrees/agent-aa96f7a08e5265fad/ai-dotnet/tests/Starlings.Models.E5.Extensions.AI.Tests/bin/Release/net10.0/Starlings.Models.E5.Extensions.AI.Tests.dll (net10.0|x64) passed (19s 864ms)
+  /home/mark/Projects/AI/.claude/worktrees/agent-aa96f7a08e5265fad/ai-dotnet/tests/Starlings.Acquisition.Tests/bin/Release/net10.0/Starlings.Acquisition.Tests.dll (net10.0|x64) passed (1s 881ms)
+  /home/mark/Projects/AI/.claude/worktrees/agent-aa96f7a08e5265fad/ai-dotnet/tests/Starlings.Runtime.Onnx.Tests/bin/Release/net10.0/Starlings.Runtime.Onnx.Tests.dll (net10.0|x64) passed (2s 219ms)
+
+  total: 141
+  failed: 0
+  succeeded: 137
+  skipped: 4
+  duration: 20s 182ms

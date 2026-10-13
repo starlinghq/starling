@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/starlinghq/starling/model-pipeline/schemas/onboarding-recipe.schema.json",
+  "title": "Model onboarding recipe",
+  "description": "Strict inputs for a versioned, repository-local model onboarding route.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["recipe_version", "id", "plugin", "manifest", "reference_corpus", "reference_environment"],
+  "properties": {
+    "recipe_version": { "const": 1 },
+    "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9.-]*$", "minLength": 1, "maxLength": 128 },
+    "plugin": { "type": "string", "minLength": 1 },
+    "manifest": { "$ref": "#/$defs/repositoryPath" },
+    "reference_corpus": { "$ref": "#/$defs/repositoryPath" },
+    "reference_environment": { "$ref": "#/$defs/repositoryPath" }
+  },
+  "$defs": {
+    "repositoryPath": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^(?!/)(?!.*\\\\)(?!.*(?:^|/)\\.\\.?(/|$)).+$"
+    }
+  }
+}

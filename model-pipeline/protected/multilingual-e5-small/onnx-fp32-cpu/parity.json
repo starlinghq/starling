@@ -1,0 +1,520 @@
+{
+  "reference": "sentence-transformers modules (Transformer, Pooling, Normalize; PyTorch fp32 CPU), one row per call",
+  "candidate": "Python ONNX Runtime, CPUExecutionProvider, onnx/model.onnx from the same snapshot, fp32",
+  "inputs": "identical token ids from the pinned tokenizer.json (tokenizers library), truncated to 512; token_type_ids all 0",
+  "cases": 46,
+  "last_hidden_state_ort_vs_torch": {
+    "max_abs": 2.086162567138672e-06,
+    "mean_abs": 1.534857858587202e-07,
+    "p99_abs": 5.662441253662109e-07
+  },
+  "embedding_ort_vs_st": {
+    "max_abs": 2.086162567138672e-07,
+    "mean_abs": 1.982315467330409e-08,
+    "p99_abs": 7.29877527305689e-08,
+    "min_cosine": 0.9999999403953552
+  },
+  "embedding_numpy_pooling_on_torch_hidden_vs_st_max_abs": 8.940696716308594e-08,
+  "st_padded_batch16_vs_single": {
+    "max_abs": 1.7136335372924805e-07,
+    "mean_abs": 1.9777633752937618e-08,
+    "p99_abs": 7.82310962677002e-08
+  },
+  "st_encode_end_to_end_vs_reference_max_abs_where_ids_agree": 0.0,
+  "ort_padded_batch_vs_st_batch1": {
+    "max_abs": 2.086162567138672e-07,
+    "mean_abs": 2.172358115615225e-08,
+    "p99_abs": 7.811933500079249e-08
+  },
+  "st_tokenizer_differs_from_tokenizer_json": [
+    {
+      "id": "space-only",
+      "tokenizer_json": [
+        0,
+        6,
+        2
+      ],
+      "sentence_transformers": [
+        0,
+        2
+      ]
+    },
+    {
+      "id": "ws-leading-trailing",
+      "tokenizer_json": [
+        0,
+        105207,
+        136,
+        141037,
+        214,
+        6,
+        2
+      ],
+      "sentence_transformers": [
+        0,
+        105207,
+        136,
+        141037,
+        214,
+        2
+      ]
+    },
+    {
+      "id": "control-chars",
+      "tokenizer_json": [
+        0,
+        87219,
+        56574,
+        3,
+        144281,
+        154109,
+        501,
+        418,
+        97636,
+        3564,
+        2
+      ],
+      "sentence_transformers": [
+        0,
+        87219,
+        56574,
+        3,
+        144281,
+        154109,
+        501,
+        418,
+        3564,
+        2
+      ]
+    },
+    {
+      "id": "special-literal-s",
+      "tokenizer_json": [
+        0,
+        0,
+        15659,
+        289,
+        4034,
+        6,
+        2,
+        15659,
+        289,
+        3564,
+        2
+      ],
+      "sentence_transformers": [
+        0,
+        0,
+        15659,
+        289,
+        4034,
+        2,
+        15659,
+        289,
+        3564,
+        2
+      ]
+    },
+    {
+      "id": "special-literal-mask",
+      "tokenizer_json": [
+        0,
+        26292,
+        70,
+        6,
+        250001,
+        22936,
+        4,
+        136,
+        6,
+        1,
+        6,
+        3,
+        2
+      ],
+      "sentence_transformers": [
+        0,
+        26292,
+        70,
+        250001,
+        22936,
+        4,
+        136,
+        1,
+        3,
+        2
+      ]
+    }
+  ],
+  "nan_or_inf_cases": [],
+  "per_case": [
+    {
+      "id": "empty",
+      "tokens": 2,
+      "hidden_max_abs": 1.2814998626708984e-06,
+      "embedding_max_abs": 2.086162567138672e-07,
+      "cosine_ort_st": 1.0,
+      "nan_or_inf": false
+    },
+    {
+      "id": "space-only",
+      "tokens": 3,
+      "hidden_max_abs": 8.940696716308594e-07,
+      "embedding_max_abs": 1.341104507446289e-07,
+      "cosine_ort_st": 1.0000001192092896,
+      "nan_or_inf": false
+    },
+    {
+      "id": "ascii-sentence",
+      "tokens": 15,
+      "hidden_max_abs": 1.1026859283447266e-06,
+      "embedding_max_abs": 1.1362135410308838e-07,
+      "cosine_ort_st": 1.0000001192092896,
+      "nan_or_inf": false
+    },
+    {
+      "id": "ascii-punct",
+      "tokens": 44,
+      "hidden_max_abs": 1.5348196029663086e-06,
+      "embedding_max_abs": 9.313225746154785e-08,
+      "cosine_ort_st": 1.0,
+      "nan_or_inf": false
+    },
+    {
+      "id": "ascii-case",
+      "tokens": 16,
+      "hidden_max_abs": 8.940696716308594e-07,
+      "embedding_max_abs": 8.521601557731628e-08,
+      "cosine_ort_st": 1.0000001192092896,
+      "nan_or_inf": false
+    },
+    {
+      "id": "digits",
+      "tokens": 14,
+      "hidden_max_abs": 1.1324882507324219e-06,
+      "embedding_max_abs": 1.0058283805847168e-07,
+      "cosine_ort_st": 1.0,
+      "nan_or_inf": false
+    },
+    {
+      "id": "ws-leading-trailing",
+      "tokens": 7,
+      "hidden_max_abs": 8.121132850646973e-07,
+      "embedding_max_abs": 8.940696716308594e-08,
+      "cosine_ort_st": 1.0,
+      "nan_or_inf": false
+    },
+    {
+      "id": "ws-multi-space",
+      "tokens": 6,
+      "hidden_max_abs": 7.152557373046875e-07,
+      "embedding_max_abs": 7.450580596923828e-08,
+      "cosine_ort_st": 1.0,
+      "nan_or_inf": false
+    },
+    {
+      "id": "ws-tab-newline",
+      "tokens": 10,
+      "hidden_max_abs": 7.674098014831543e-07,
+      "embedding_max_abs": 5.4249539971351624e-08,
+      "cosine_ort_st": 1.0,
+      "nan_or_inf": false
+    },
+    {
+      "id": "ws-unicode-spaces",
+      "tokens": 13,
+      "hidden_max_abs": 9.238719940185547e-07,
+      "embedding_max_abs": 8.195638656616211e-08,
+      "cosine_ort_st": 1.0,
+      "nan_or_inf": false
+    },
+    {
+      "id": "ws-zero-width",
+      "tokens": 14,
+      "hidden_max_abs": 6.854534149169922e-07,
+      "embedding_max_abs": 6.705522537231445e-08,
+      "cosine_ort_st": 1.0,
+      "nan_or_inf": false
+    },
+    {
+      "id": "control-chars",
+      "tokens": 11,
+      "hidden_max_abs": 7.152557373046875e-07,
+      "embedding_max_abs": 7.636845111846924e-08,
+      "cosine_ort_st": 1.0000001192092896,
+      "nan_or_inf": false
+    },
+    {
+      "id": "bom",
+      "tokens": 8,
+      "hidden_max_abs": 9.387731552124023e-07,
+      "embedding_max_abs": 7.450580596923828e-08,
+      "cosine_ort_st": 1.0,
+      "nan_or_inf": false
+    },
+    {
+      "id": "replacement-char",
+      "tokens": 5,
+      "hidden_max_abs": 5.066394805908203e-07,
+      "embedding_max_abs": 6.705522537231445e-08,
+      "cosine_ort_st": 1.0000001192092896,
+      "nan_or_inf": false
+    },
+    {
+      "id": "accents-precomposed",
+      "tokens": 10,
+      "hidden_max_abs": 8.642673492431641e-07,
+      "embedding_max_abs": 7.450580596923828e-08,
+      "cosine_ort_st": 1.0000001192092896,
+      "nan_or_inf": false
+    },
+    {
+      "id": "accents-decomposed",
+      "tokens": 10,
+      "hidden_max_abs": 8.642673492431641e-07,
+      "embedding_max_abs": 7.450580596923828e-08,
+      "cosine_ort_st": 1.0000001192092896,
+      "nan_or_inf": false
+    },
+    {
+      "id": "combining-stack",
+      "tokens": 16,
+      "hidden_max_abs": 1.1026859283447266e-06,
+      "embedding_max_abs": 9.685754776000977e-08,
+      "cosine_ort_st": 0.9999999403953552,
+      "nan_or_inf": false
+    },
+    {
+      "id": "devanagari",
+      "tokens": 11,
+      "hidden_max_abs": 8.046627044677734e-07,
+      "embedding_max_abs": 8.940696716308594e-08,
+      "cosine_ort_st": 1.0,
+      "nan_or_inf": false
+    },
+    {
+      "id": "thai",
+      "tokens": 11,
+      "hidden_max_abs": 8.940696716308594e-07,
+      "embedding_max_abs": 6.332993507385254e-08,
+      "cosine_ort_st": 0.9999999403953552,
+      "nan_or_inf": false
+    },
+    {
+      "id": "arabic",
+      "tokens": 12,
+      "hidden_max_abs": 6.407499313354492e-07,
+      "embedding_max_abs": 6.332993507385254e-08,
+      "cosine_ort_st": 1.0,
+      "nan_or_inf": false
+    },
+    {
+      "id": "hebrew",
+      "tokens": 9,
+      "hidden_max_abs": 6.705522537231445e-07,
+      "embedding_max_abs": 6.705522537231445e-08,
+      "cosine_ort_st": 1.0000001192092896,
+      "nan_or_inf": false
+    },
+    {
+      "id": "rtl-mixed",
+      "tokens": 12,
+      "hidden_max_abs": 8.344650268554688e-07,
+      "embedding_max_abs": 7.543712854385376e-08,
+      "cosine_ort_st": 1.0000001192092896,
+      "nan_or_inf": false
+    },
+    {
+      "id": "chinese",
+      "tokens": 10,
+      "hidden_max_abs": 5.960464477539062e-07,
+      "embedding_max_abs": 5.960464477539063e-08,
+      "cosine_ort_st": 1.0000001192092896,
+      "nan_or_inf": false
+    },
+    {
+      "id": "japanese",
+      "tokens": 19,
+      "hidden_max_abs": 7.748603820800781e-07,
+      "embedding_max_abs": 7.078051567077637e-08,
+      "cosine_ort_st": 1.0000001192092896,
+      "nan_or_inf": false
+    },
+    {
+      "id": "korean",
+      "tokens": 9,
+      "hidden_max_abs": 7.152557373046875e-07,
+      "embedding_max_abs": 6.332993507385254e-08,
+      "cosine_ort_st": 0.9999999403953552,
+      "nan_or_inf": false
+    },
+    {
+      "id": "korean-jamo",
+      "tokens": 11,
+      "hidden_max_abs": 8.642673492431641e-07,
+      "embedding_max_abs": 6.891787052154541e-08,
+      "cosine_ort_st": 1.0000001192092896,
+      "nan_or_inf": false
+    },
+    {
+      "id": "cyrillic-greek",
+      "tokens": 13,
+      "hidden_max_abs": 8.377246558666229e-07,
+      "embedding_max_abs": 7.636845111846924e-08,
+      "cosine_ort_st": 1.0000001192092896,
+      "nan_or_inf": false
+    },
+    {
+      "id": "german-turkish-case",
+      "tokens": 12,
+      "hidden_max_abs": 8.046627044677734e-07,
+      "embedding_max_abs": 6.891787052154541e-08,
+      "cosine_ort_st": 1.0000001192092896,
+      "nan_or_inf": false
+    },
+    {
+      "id": "nfkc-compat",
+      "tokens": 14,
+      "hidden_max_abs": 1.1771917343139648e-06,
+      "embedding_max_abs": 9.685754776000977e-08,
+      "cosine_ort_st": 1.0000001192092896,
+      "nan_or_inf": false
+    },
+    {
+      "id": "math-alnum-astral",
+      "tokens": 5,
+      "hidden_max_abs": 8.791685104370117e-07,
+      "embedding_max_abs": 1.2293457984924316e-07,
+      "cosine_ort_st": 1.0,
+      "nan_or_inf": false
+    },
+    {
+      "id": "emoji-basic",
+      "tokens": 12,
+      "hidden_max_abs": 8.046627044677734e-07,
+      "embedding_max_abs": 6.705522537231445e-08,
+      "cosine_ort_st": 1.0,
+      "nan_or_inf": false
+    },
+    {
+      "id": "emoji-zwj",
+      "tokens": 18,
+      "hidden_max_abs": 7.748603820800781e-07,
+      "embedding_max_abs": 6.984919309616089e-08,
+      "cosine_ort_st": 1.0,
+      "nan_or_inf": false
+    },
+    {
+      "id": "emoji-modifiers",
+      "tokens": 24,
+      "hidden_max_abs": 1.0207295417785645e-06,
+      "embedding_max_abs": 8.614733815193176e-08,
+      "cosine_ort_st": 1.0000001192092896,
+      "nan_or_inf": false
+    },
+    {
+      "id": "cjk-ext-b",
+      "tokens": 8,
+      "hidden_max_abs": 7.450580596923828e-07,
+      "embedding_max_abs": 7.450580596923828e-08,
+      "cosine_ort_st": 1.0000001192092896,
+      "nan_or_inf": false
+    },
+    {
+      "id": "unknown-char",
+      "tokens": 15,
+      "hidden_max_abs": 7.450580596923828e-07,
+      "embedding_max_abs": 5.960464477539063e-08,
+      "cosine_ort_st": 1.0000001192092896,
+      "nan_or_inf": false
+    },
+    {
+      "id": "special-literal-s",
+      "tokens": 11,
+      "hidden_max_abs": 5.662441253662109e-07,
+      "embedding_max_abs": 6.332993507385254e-08,
+      "cosine_ort_st": 1.0000001192092896,
+      "nan_or_inf": false
+    },
+    {
+      "id": "special-literal-mask",
+      "tokens": 13,
+      "hidden_max_abs": 8.493661880493164e-07,
+      "embedding_max_abs": 7.636845111846924e-08,
+      "cosine_ort_st": 1.0,
+      "nan_or_inf": false
+    },
+    {
+      "id": "special-lookalike-spaced",
+      "tokens": 25,
+      "hidden_max_abs": 2.086162567138672e-06,
+      "embedding_max_abs": 2.0302832126617432e-07,
+      "cosine_ort_st": 1.0,
+      "nan_or_inf": false
+    },
+    {
+      "id": "special-lookalike-qwen",
+      "tokens": 31,
+      "hidden_max_abs": 9.238719940185547e-07,
+      "embedding_max_abs": 8.195638656616211e-08,
+      "cosine_ort_st": 1.0000001192092896,
+      "nan_or_inf": false
+    },
+    {
+      "id": "special-lookalike-gliner",
+      "tokens": 25,
+      "hidden_max_abs": 1.0728836059570312e-06,
+      "embedding_max_abs": 1.1175870895385742e-07,
+      "cosine_ort_st": 0.9999999403953552,
+      "nan_or_inf": false
+    },
+    {
+      "id": "e5-query-prefix",
+      "tokens": 12,
+      "hidden_max_abs": 8.67992639541626e-07,
+      "embedding_max_abs": 8.195638656616211e-08,
+      "cosine_ort_st": 1.0,
+      "nan_or_inf": false
+    },
+    {
+      "id": "e5-passage-prefix",
+      "tokens": 34,
+      "hidden_max_abs": 1.2218952178955078e-06,
+      "embedding_max_abs": 7.82310962677002e-08,
+      "cosine_ort_st": 1.0000001192092896,
+      "nan_or_inf": false
+    },
+    {
+      "id": "repeated-char",
+      "tokens": 63,
+      "hidden_max_abs": 8.940696716308594e-07,
+      "embedding_max_abs": 6.705522537231445e-08,
+      "cosine_ort_st": 1.0,
+      "nan_or_inf": false
+    },
+    {
+      "id": "no-spaces-long-word",
+      "tokens": 22,
+      "hidden_max_abs": 1.0728836059570312e-06,
+      "embedding_max_abs": 8.381903171539307e-08,
+      "cosine_ort_st": 1.0,
+      "nan_or_inf": false
+    },
+    {
+      "id": "long-english",
+      "tokens": 512,
+      "hidden_max_abs": 1.6987323760986328e-06,
+      "embedding_max_abs": 7.450580596923828e-08,
+      "cosine_ort_st": 1.0,
+      "nan_or_inf": false
+    },
+    {
+      "id": "long-mixed",
+      "tokens": 512,
+      "hidden_max_abs": 1.2814998626708984e-06,
+      "embedding_max_abs": 1.043081283569336e-07,
+      "cosine_ort_st": 1.0000001192092896,
+      "nan_or_inf": false
+    }
+  ]
+}

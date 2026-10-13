@@ -1,0 +1,23 @@
+== 9b. EmbeddingGemma 2: seeded graph, tokenizer.json and prompt config from the Hub, offline search
+  top: protein (0.8328); next: summit (0.5447)
+  top: rust (0.8248); next: bread (0.5460)
+  top: tokyo (0.7962); next: summit (0.5587)
+  top: summit (0.7944); next: tokyo (0.5785)
+extensions.ai: starlings.onnxruntime google/embeddinggemma-2@914f7f89142e33e77833254d9c9b90c3cef7303b dims 768; 4 embeddings, 59 tokens, max abs difference from the typed API 0
+ok:   EmbeddingGemma 2 sample ranks the expected document first offline, Extensions.AI equals the typed API, rejects > 8,192 tokens
+== 9c. EmbeddingGemma 2 images: seeded vision and multimodal graphs, image lock verified, offline text-to-image search
+image query: a photo of a cat
+  top: chelsea.png (0.7051); next: hubble_deep_field.jpg (0.5971)
+image query: a cup of coffee
+  top: coffee.png (0.7384); next: chelsea.png (0.6036)
+image query: a rocket launch
+  top: rocket.jpg (0.7069); next: astronaut.png (0.6348)
+image query: portrait of an astronaut
+  top: astronaut.png (0.7590); next: rocket.jpg (0.6408)
+image query: deep space full of galaxies
+  top: hubble_deep_field.jpg (0.7463); next: rocket.jpg (0.5883)
+interleaved: 768 dimensions, cosine to the image alone 0.8490
+extensions.ai images: 6 embeddings, 1571 tokens, max abs difference from the typed API 0
+ok:   EmbeddingGemma 2 image search ranks the expected photo first offline; Extensions.AI images equal the typed API
+note: no --seed-qwen35-from: the pilot LLM packages were packed, inspected and the QwenChat sample built, but not run
+== DRILL PASS (no-model, EmbeddingGemma 2 run): Starlings 0.1.0-preview.4 + Tokenizers 0.1.0-preview.4 from 093c35dbad69b16c27f2dbf956544d7e0c110566 (packages and logs in artifacts/release-drill-ai/)

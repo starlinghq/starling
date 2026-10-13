@@ -1,0 +1,59 @@
+EmbeddingGemma 2 image-path ONNX graphs
+    embeddinggemma2-vision-fp32.onnx    (vision graph)
+    embeddinggemma2-text-mm-fp32.onnx   (multimodal text graph)
+Release: embeddinggemma-2-vision-onnx-r1, hosted at https://huggingface.co/Starlinghq/embeddinggemma-2-vision-onnx (tag r1)
+
+These files are derivatives of the EmbeddingGemma 2 model weights published by Google DeepMind:
+
+    Model:     google/embeddinggemma-2
+    Source:    https://huggingface.co/google/embeddinggemma-2
+    Revision:  914f7f89142e33e77833254d9c9b90c3cef7303b
+    Weights:   model.safetensors, SHA-256 197a32965d4b1105faf060417baa899e193fb73cd401f42ec9295234d5553d79
+    License:   Apache License, Version 2.0 (model card front matter "license: apache-2.0"; the card's license link,
+               https://ai.google.dev/gemma/docs/gemma_4_license, presents the Apache License 2.0 text)
+               https://www.apache.org/licenses/LICENSE-2.0
+
+Licensed under the Apache License, Version 2.0 (the "License"); you may not use these files except in compliance with
+the License. You may obtain a copy of the License at
+
+    https://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
+an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
+specific language governing permissions and limitations under the License.
+
+Usage policy. The model card (Ethics and safety section, at the revision above) states, verbatim:
+
+    Deployments must adhere to the [Gemma Prohibited Use Policy](https://ai.google.dev/gemma/prohibited_use_policy).
+
+Modifications made by StarlingHq (Apache-2.0, section 4(b)):
+
+  embeddinggemma2-vision-fp32.onnx
+  - Only the image path is included: the vision tower (patch embedder with its x and y position tables, 16 encoder
+    layers), the 3x3 average pooling to soft tokens with the sqrt(768) scale, and embed_vision (RMSNorm without scale,
+    Linear 768 to 512) of EmbeddingGemma2Model. The text and audio towers are not included.
+  - The forward pass was restated for export (model-pipeline/reference/embeddinggemma2/eg2_vision.py, VisionPath): a
+    fixed pooling kernel of 3, an equality against arange in place of one_hot, an additive float32 attention mask for
+    padding patches, and fixed-shape outputs (soft_tokens [batch, patches / 9, 512], pooled [batch, patches / 9, 768],
+    soft_token_mask [batch, patches / 9]); upstream's stripping of padding soft tokens is left to the caller.
+  - The weights were converted from bfloat16 to float32 and exported to ONNX (opset 20) with the PyTorch dynamo
+    exporter (torch 2.14.1, transformers 5.19.0, onnx 1.23.1, onnxscript 0.7.2).
+
+  embeddinggemma2-text-mm-fp32.onnx
+  - The released text-path graph of release embeddinggemma-2-onnx-r1 (embeddinggemma2-text-fp32.onnx, SHA-256
+    02cc7ecccbfcb29d812eb104e4c6ea6c599bc87e94f01082606f6a11f0252d11; its own notice lists its modifications) with two
+    more inputs, multimodal_embeds (float32, [batch, sequence, 512]) and multimodal_mask (bool, [batch, sequence]), and
+    five more nodes: where the mask is set, the soft token replaces the scaled token embedding, and its per-layer
+    embedding projection (same weights) replaces the token's. No weight was changed or added; with an all-false mask
+    the graph gives the released graph's outputs.
+
+  Both files
+  - Exporter metadata and doc strings were removed so the files are reproducible; the weights are stored inline.
+  - Image decoding, the image processor (resize, rescale, patches), the placement of soft tokens, mean pooling, L2
+    normalization, prompts and Matryoshka truncation are not part of the graphs.
+
+Reproduction: model-pipeline/reference/embeddinggemma2/release_embeddinggemma2_vision_onnx.py in
+https://github.com/starlinghq/starling (pinned environment requirements.txt). The expected sizes and SHA-256 are in
+ai-dotnet/src/Starlings.Models.EmbeddingGemma2/EmbeddingGemma2ModelAssets.cs (ImageLock).
+
+"Gemma" is a trademark of Google LLC. StarlingHq is not affiliated with or endorsed by Google.

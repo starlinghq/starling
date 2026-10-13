@@ -1,0 +1,236 @@
+{
+  "fixture_format_version": 1,
+  "runner": "model-pipeline/reference/embeddinggemma2/run_embeddinggemma2_image.py",
+  "runner_repository_commit": "f176f6fbfb58fd99959cf3ed0008396bc8320d99",
+  "model": {
+    "repo": "google/embeddinggemma-2",
+    "revision": "914f7f89142e33e77833254d9c9b90c3cef7303b"
+  },
+  "assets": [
+    {
+      "path": "config.json",
+      "sha256": "b8f1e9931b57fbc054acdb445c41765d55b0074c58d145fa82839941ad1b5bb3",
+      "size": 4455
+    },
+    {
+      "path": "processor_config.json",
+      "sha256": "168f6a08522f3ce5dea596d94d003af2fd691742d4f41fe1f9d8cce76bfbf69c",
+      "size": 1788
+    },
+    {
+      "path": "chat_template.jinja",
+      "sha256": "4b852efc0b9960283e735363331e6f325b33bc74bdbaa076f595bc4e9b94d85e",
+      "size": 1016
+    },
+    {
+      "path": "tokenizer.json",
+      "sha256": "4d777ef5bdc1aa36227abdfb77c3e49e7b9c892d16e1b6bda41c393504828be4",
+      "size": 32170510
+    },
+    {
+      "path": "model.safetensors",
+      "sha256": "197a32965d4b1105faf060417baa899e193fb73cd401f42ec9295234d5553d79",
+      "size": 1488915288
+    }
+  ],
+  "images": {
+    "seed": 20261011,
+    "skimage_commit": "b700edc8005e4ee9e74fc83259f09e8df3213f15",
+    "pillow": "12.3.0",
+    "numpy": "2.4.6",
+    "files": [
+      {
+        "id": "photo-chelsea",
+        "file": "chelsea.png",
+        "sha256": "596aa1e7cb875eb79f437e310381d26b338a81c2da23439704a73c4651e8c4bb",
+        "decoded_sha256": "416b729128bfb2c3d1eb69bf9b1734a796293abc17939267b2dc94f8a5784031"
+      },
+      {
+        "id": "photo-coffee",
+        "file": "coffee.png",
+        "sha256": "cc02f8ca188b167c775a7101b5d767d1e71792cf762c33d6fa15a4599b5a8de7",
+        "decoded_sha256": "0ce2b51640b9c95f19617f03eabf40c3f0368589cc1ee1190b70966165ac184f"
+      },
+      {
+        "id": "photo-camera",
+        "file": "camera.png",
+        "sha256": "b0793d2adda0fa6ae899c03989482bff9a42d3d5690fc7e3648f2795d730c23a",
+        "decoded_sha256": "5cb24482a53416f99052258be2b1ee38cd31c559a70c8a8b321cba231b332e21"
+      },
+      {
+        "id": "photo-astronaut",
+        "file": "astronaut.png",
+        "sha256": "88431cd9653ccd539741b555fb0a46b61558b301d4110412b5bc28b5e3ea6cb5",
+        "decoded_sha256": "a8c429c18afa7b0fd5673e598d73a21225d94c864a71bbb3885126fdecb41071"
+      },
+      {
+        "id": "photo-rocket",
+        "file": "rocket.jpg",
+        "sha256": "c2dd0de7c538df8d111e479619b129464d0269d0ae5fd18ca91d33a7fdfea95c",
+        "decoded_sha256": "3d4435cc745752b7f9724df88c6e18817de3ce7e3d2d71c55f85f7831e68f197"
+      },
+      {
+        "id": "photo-hubble-deep-field",
+        "file": "hubble_deep_field.jpg",
+        "sha256": "3a19c5dd8a927a9334bb1229a6d63711b1c0c767fb27e2286e7c84a3e2c2f5f4",
+        "decoded_sha256": "9a3ea9548188f81e63435188456e74de45a981ebeb791e265abe79a26d3b528b"
+      },
+      {
+        "id": "synth-gradient",
+        "file": "synth-gradient.png",
+        "sha256": "367a85f43712c7a3abca1072ade85357ec90b49329df43cd329d5f83a1d8fa84",
+        "decoded_sha256": "aa7d50601081507d2bc9b576e496d88fe1468c017633846d17d4eb556060709a"
+      },
+      {
+        "id": "synth-shapes",
+        "file": "synth-shapes.png",
+        "sha256": "b80f0e87fcbc45985d258449486f727db06e6e689e1608bbe2c3494bce7bfd30",
+        "decoded_sha256": "94a3965db2b990a5b8d563d59863351de1f179365c85befb452c2a23cb17ef98"
+      },
+      {
+        "id": "synth-text",
+        "file": "synth-text.png",
+        "sha256": "be3d86f7951995db8e60b36f362047ddf3e0fa092cfdf1ab5c387f9a2502c99c",
+        "decoded_sha256": "60fc5615b2960c9cb7d19a4d8fa2b2f59f5982d47259ada95bdc7bb776dea04e"
+      },
+      {
+        "id": "synth-checker",
+        "file": "synth-checker.png",
+        "sha256": "6caa4a607d248c5207d68ba347e34f462a09dffffbf383d060c86ed460f0174e",
+        "decoded_sha256": "bbd6ed4b5da241797b71fd36685106ddabe27774f1432149fcc78277759f3b5e"
+      },
+      {
+        "id": "synth-noise",
+        "file": "synth-noise.png",
+        "sha256": "9009995618e65f7691d7f986471a370bb15f628f883526e0b880abbe9bd85817",
+        "decoded_sha256": "4540bda4108dc14249276d2fa27499f09d1cccd4ee6d91f92e3cc9518e9ad75d"
+      },
+      {
+        "id": "size-1x1",
+        "file": "size-1x1.png",
+        "sha256": "ec40ef426bcb40daaf1d42788cda35bead1597449e8f05a31090449b1f172e79",
+        "decoded_sha256": "31404ab7f8a7f0bf4647e0f7e3124e575aec8631251bdfeda2501f58497bb918"
+      },
+      {
+        "id": "size-tiny-8x6",
+        "file": "size-tiny-8x6.png",
+        "sha256": "8d85cebcdc1261cb0e0799a08bff038d869bc5243b46ae9f376fd5f19ee8cdf1",
+        "decoded_sha256": "7c98dd4e619abba9aceb7f4773ec17adf7c1786ce7cbd881654a52726c1bc186"
+      },
+      {
+        "id": "size-exact-864x672",
+        "file": "size-exact-864x672.png",
+        "sha256": "0ce8670f5ac237119e47bf245a35f79e772d86504c5ed0e71b22b6e1da56c939",
+        "decoded_sha256": "35c78598984ca36bf224c2759bbaa9267b146c9d4b35fe222d310fa03590f763"
+      },
+      {
+        "id": "size-huge-4000x3000",
+        "file": "size-huge-4000x3000.png",
+        "sha256": "620dc517d5c835e7f8db2fa649c859c987e4d18369b5da5d141f7ef7cb459287",
+        "decoded_sha256": "8f2a9a613f65a4c27efe39efb8e28906afd7405cd0f7f59f0ac7216f962e46ee"
+      },
+      {
+        "id": "aspect-wide-2000x40",
+        "file": "aspect-wide-2000x40.png",
+        "sha256": "b217cc907f8c81580a54a7e01dca6cfd0574c74977eac2d011320da8c75308b4",
+        "decoded_sha256": "2480f0f99b66fe1be27b2c113992617a0060537389ab5ef0f7e39d5cb38beb47"
+      },
+      {
+        "id": "aspect-tall-30x1500",
+        "file": "aspect-tall-30x1500.png",
+        "sha256": "160f6adc8d2e30d3828088bbe11fc12f78aa7f6bc7ff6bdc71051bc0f54d7287",
+        "decoded_sha256": "7a52538b91f9207fd7321cc8a1fabcf39e3ccef9fb4eab56e43aef8e0077cd91"
+      },
+      {
+        "id": "aspect-extreme-4000x8",
+        "file": "aspect-extreme-4000x8.png",
+        "sha256": "872bdd9dda0e8961486b5091e95be1fdbf61cacf96042f48d2ea265d49b38731",
+        "decoded_sha256": "3880df6e60f08607b40b8e943d36d06857f70676185005173905b6f90526ebd9"
+      },
+      {
+        "id": "mode-gray-L",
+        "file": "mode-gray-L.png",
+        "sha256": "61f156832b1570122634e4e5a2037094c8f4e538a8d7b82d17b946e1aba089b6",
+        "decoded_sha256": "cd822d0a5b86379f987b3120f75a6e7c7be64e292b25a23bd858af5c9db1fed6"
+      },
+      {
+        "id": "mode-rgba",
+        "file": "mode-rgba.png",
+        "sha256": "346bd6f9859b0b6712380e06b405ba9c4fec1dc27a7d0bcaef519d9be18ff413",
+        "decoded_sha256": "9022a4c316022d2afd37a22375d0573b5801de173db8a514431777beb24f1420"
+      },
+      {
+        "id": "mode-la",
+        "file": "mode-la.png",
+        "sha256": "acb6b519279f64d183ee675ded36263959f5e0bc966e58069dfd706ab0563953",
+        "decoded_sha256": "97335314524d2a3a498fbb1da1e3a026a0a7f47f479d98cc4c8c7e7f54268c2b"
+      },
+      {
+        "id": "mode-palette",
+        "file": "mode-palette.png",
+        "sha256": "dcc30e1b27489ea93685d46006f405333ef318d5f781cbcdf3e5f86417734461",
+        "decoded_sha256": "0579c5a32579ed0053b509e699b2b0295df21f65a94e77e0d03778d3cdc3543e"
+      },
+      {
+        "id": "mode-palette-transparent",
+        "file": "mode-palette-transparent.png",
+        "sha256": "c8616a8aa713ef5d4d9f091df2f05bd49edeccc53e99741690483d82a6537fba",
+        "decoded_sha256": "14a6f22200c2bb3babe54c00648927bca771832cfba8225649cccacfcb992b74"
+      },
+      {
+        "id": "mode-1bit",
+        "file": "mode-1bit.png",
+        "sha256": "88a47d9b485216e43281353bbf881831283eb5a5c1b75692adf8d702b7cbe1bf",
+        "decoded_sha256": "57ccc5cfb2491e7df9bd6a60c01a4f122463de00a1e1d97bf978e80a904590b8"
+      },
+      {
+        "id": "mode-gray16",
+        "file": "mode-gray16.png",
+        "sha256": "ae9bf2a171113698482a11c99551572f8987ff7000ba713a00c74ddbe63c849b",
+        "decoded_sha256": "3466b08c290ab514fff4573b5bf6e3821be5c51d95b475e1f8c324f06dff1d02"
+      },
+      {
+        "id": "jpeg-cmyk",
+        "file": "jpeg-cmyk.jpg",
+        "sha256": "8e525fa1e8dea97edb5d50641aade2dd4afbaa4c47629c246e3a1ec16a17916a",
+        "decoded_sha256": "4ce1748ba1225476e373cfc1210a3e0d055fbf4bc6083263dd5e53e919dbdb62"
+      },
+      {
+        "id": "jpeg-420-progressive",
+        "file": "jpeg-420-progressive.jpg",
+        "sha256": "db55928723f3ae6c98ab754afb776f3f3db8723d9ec1af0480f5a6b0c3bc1ec7",
+        "decoded_sha256": "8854cb6542939baada0c7f1bc3b18f584223e42162e1cbe3efb5ca05ed07a358"
+      },
+      {
+        "id": "jpeg-444",
+        "file": "jpeg-444.jpg",
+        "sha256": "0091c4664ee0715b45c88dff118d311eb49bc5402daa8d9f0b36f0751bc31285",
+        "decoded_sha256": "84b04885d13f0741b586050b7d12c6be75acf576057fbdad60b956dafe3c69e6"
+      },
+      {
+        "id": "jpeg-exif-orientation",
+        "file": "jpeg-exif-orientation.jpg",
+        "sha256": "6f92ad2a4792b97303e259062e9e1ab258c3c4e035a62baab2bd35b116d054f3",
+        "decoded_sha256": "99365d6f0fe7d68a2b186f977ef177016dfb1e20c5af65538f668d87430489cc"
+      }
+    ]
+  },
+  "environment": {
+    "python": "3.11.16",
+    "platform": "Linux-7.2.5-3-omarchy-x86_64-with-glibc2.44",
+    "machine": "x86_64",
+    "cpu": "Intel(R) Core(TM) i7-5820K CPU @ 3.30GHz",
+    "cpu_count": 12,
+    "packages": {
+      "torch": "2.14.1+cpu",
+      "torchvision": "0.29.1+cpu",
+      "transformers": "5.19.0",
+      "sentence-transformers": "6.1.0",
+      "tokenizers": "0.23.3",
+      "numpy": "2.4.6",
+      "pillow": "12.3.0"
+    },
+    "torch_threads": 6,
+    "torch_cpu_capability": "AVX2"
+  }
+}

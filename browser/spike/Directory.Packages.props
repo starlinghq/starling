@@ -1,0 +1,15 @@
+<Project>
+  <ItemGroup>
+    <!-- Same patch as the browser-wasm runtime pack of the wasm-tools workload used for the spike (10.0.12). -->
+    <PackageVersion Include="Microsoft.AspNetCore.Components.WebAssembly" Version="10.0.12" />
+  </ItemGroup>
+
+  <!--
+    The owned tokenizer (starlinghq/tokenizers), pinned exactly: the model manifests record the tokenizer version each
+    profile was qualified with (processing.tokenizer.version), and a newer tokenizer is not automatically certified.
+  -->
+  <ItemGroup>
+    <PackageVersion Include="Starlings.Tokenizers" Version="[0.3.0-preview.1]" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    CUDA build of the e5 workload harness (Linux x64), same sources as ../Starlings.Benchmarks.E5Harness.
+    Local only: not in AI.slnx, so CI does not restore the GPU package. The CUDA 13 runtime and cuDNN 9 are not in
+    the package; see ai-dotnet/benchmarks/README.md.
+  -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <RootNamespace>Starlings.Benchmarks</RootNamespace>
+    <DefineConstants>$(DefineConstants);ORT_CUDA</DefineConstants>
+    <ServerGarbageCollection>false</ServerGarbageCollection>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.ML.OnnxRuntime.Gpu.Linux" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="../Starlings.Benchmarks.E5Harness/Program.cs" Link="Program.cs" />
+    <Compile Include="../Starlings.Benchmarks.E5Harness/Pipelines.cs" Link="Pipelines.cs" />
+    <Compile Include="../Shared/*.cs" Link="Shared/%(Filename)%(Extension)" />
+    <Compile Include="../../tests/Shared/E5/E5TestAssets.cs" Link="Shared/E5TestAssets.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../src/Starlings.Models.E5/Starlings.Models.E5.csproj" />
+  </ItemGroup>
+
+</Project>

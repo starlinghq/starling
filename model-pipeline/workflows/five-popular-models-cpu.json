@@ -1,0 +1,26 @@
+{
+  "workflow_version": 1,
+  "id": "five-popular-models-cpu",
+  "models": [
+    {
+      "id": "qwen3",
+      "recipe": "model-pipeline/recipes/qwen3-cpu.yaml"
+    },
+    {
+      "id": "qwen25",
+      "recipe": "model-pipeline/recipes/qwen25-cpu.yaml"
+    },
+    {
+      "id": "minilm",
+      "recipe": "model-pipeline/recipes/minilm-cpu.yaml"
+    },
+    {
+      "id": "bge-small",
+      "recipe": "model-pipeline/recipes/bge-small-cpu.yaml"
+    },
+    {
+      "id": "ms-marco",
+      "recipe": "model-pipeline/recipes/ms-marco-cpu.yaml"
+    }
+  ]
+}

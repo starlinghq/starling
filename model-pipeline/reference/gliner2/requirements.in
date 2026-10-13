@@ -1,0 +1,14 @@
+# GLiNER2 caps transformers below 5; use the newest 4.x and its tokenizers range.
+torch==2.14.1
+transformers==4.57.6
+tokenizers==0.22.2
+sentencepiece==0.2.2
+protobuf
+safetensors
+numpy
+pydantic>=2,<3
+requests
+tqdm
+urllib3
+peft
+gliner2 @ git+https://github.com/fastino-ai/GLiNER2@55656fbfa01d3d4a77485e1a1eeeaf682990ccdf

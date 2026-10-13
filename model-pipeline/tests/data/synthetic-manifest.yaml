@@ -1,0 +1,81 @@
+# Synthetic fixture for schema tests. Describes no real model; every digest and revision is made up.
+schema_version: 1
+id: synthetic-encoder/fp32-cpu
+synthetic: true
+maturity: preview
+
+origin:
+  code:
+    url: https://example.invalid/synthetic-encoder
+    revision: "0123456789abcdef0123456789abcdef01234567"
+  weights:
+    url: https://example.invalid/synthetic-encoder-weights
+    revision: "89abcdef0123456789abcdef0123456789abcdef"
+  files:
+    - path: model.onnx
+      sha256: "0000000000000000000000000000000000000000000000000000000000000001"
+      size: 1024
+  attribution: Synthetic test fixture.
+
+rights:
+  code_license: MIT
+  weights_license: Apache-2.0
+  tokenizer_terms: Apache-2.0
+  redistribution: download
+
+behavior:
+  tasks: [embedding]
+  max_input_tokens: 512
+  offsets_unit: none
+  truncation: truncate-right
+  unsupported: [pair-encoding]
+
+processing:
+  tokenizer:
+    package: Starlings.Tokenizers
+    version: 0.1.0-alpha
+    profile_id: synthetic-wordpiece
+    algorithm: wordpiece
+    assets:
+      - path: tokenizer.json
+        sha256: "0000000000000000000000000000000000000000000000000000000000000002"
+        size: 2048
+    backend_tokenizer_dependency: false
+
+execution:
+  backend:
+    name: onnxruntime
+    version: 1.0.0
+  precision: fp32
+  variant: reference
+
+capabilities:
+  batch: supported
+  streaming: unsupported
+  cancellation: experimental
+  persistence: unsupported
+  training: unsupported
+  aot: untested
+  extensions_ai: untested
+  mlnet: untested
+
+compatibility:
+  - os: linux
+    arch: x64
+    provider: cpu
+    status: supported
+
+qualification:
+  reference_runner: synthetic
+  fixtures: model-pipeline/protected/synthetic-encoder
+  tolerances: model-pipeline/protected/synthetic-encoder/tolerances.yaml
+  gates:
+    G0: { status: passed }
+    G1: { status: passed }
+    G2: { status: passed }
+    G6: { status: passed }
+
+maintenance:
+  owner: Mark
+  latest_verified_upstream_revision: "0123456789abcdef0123456789abcdef01234567"
+  review_date: 2026-12-01

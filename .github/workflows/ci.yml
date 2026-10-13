@@ -1,0 +1,155 @@
+name: ci
+
+# Fast PR checks (plan section 13.1). No secrets are used or exposed here.
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  DOTNET_NOLOGO: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+  CI: true
+
+jobs:
+  # Names of an unrelated older project must never enter this repository (tools/check-boundary.py): files, file
+  # names, embedded base64/hex data, commit authors and messages.
+  boundary:
+    name: boundary
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - run: python3 -I tools/check-boundary.py
+
+  # P-010: the ai-dotnet packages pack from a clean clone, install from a local folder feed (and the published
+  # Starlings.Tokenizers from nuget.org, checked against the lock files) into the sample and a checker outside the checkout (isolated NuGet cache, no project references, no Microsoft.ML.Tokenizers
+  # or other tokenizer anywhere), load the ONNX Runtime CPU natives, download tokenizer.json from the Hub and match the
+  # e5 fixtures. --no-model skips the 470 MB model download and the embedding checks (run locally, see
+  # docs/releases/). Nothing is published.
+  ai-release-drill:
+    name: ai release-candidate drill
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-dotnet@v5
+        with:
+          global-json-file: global.json
+      - name: Release-candidate drill (no model)
+        run: tools/release-drill-ai.sh --no-model
+
+  ai-dotnet:
+    name: ai-dotnet
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-dotnet@v5
+        with:
+          global-json-file: global.json
+      # CPU only. The e5 parity tests skip without the model (not in Git); the CUDA test project is
+      # local-only and not in AI.slnx (ai-dotnet/README.md).
+      # dotnet test builds only test projects and their references; this builds every project in AI.slnx,
+      # including tools/ (the acquisition command) and the CPU benchmark projects under benchmarks/, so they
+      # cannot rot. Benchmarks are never executed in CI (timings on shared runners are not evidence).
+      # The pinned tokenizer.json files (public, SHA-256 verified, never committed) let the GLiNER2 input-exactness
+      # and weight-free-graph tests run; the model tests still skip without the graphs.
+      - uses: actions/cache@v4
+        with:
+          path: .models
+          key: tokenizer-assets-${{ hashFiles('tools/fetch-tokenizer-assets.sh') }}
+      - name: Fetch pinned tokenizer assets
+        run: tools/fetch-tokenizer-assets.sh
+      - run: dotnet build ai-dotnet/AI.slnx --configuration Release
+      - run: dotnet test --solution ai-dotnet/AI.slnx --configuration Release --no-build
+      - name: Library dependency boundaries
+        shell: bash
+        run: |
+          status=0
+          for proj in ai-dotnet/src/*/*.csproj; do
+            deps="$(dotnet list "$proj" package --include-transitive)"
+            # Native packages are the application's choice: ONNX Runtime (CPU or GPU) and ONNX Runtime GenAI (CPU or
+            # CUDA). Libraries reference only the managed bindings (.Managed).
+            if grep -Eqi 'Microsoft\.ML\.Tokenizers|Microsoft\.ML\.OnnxRuntime(\.Gpu[.A-Za-z]*)?[[:space:]]|Microsoft\.ML\.OnnxRuntimeGenAI(\.Cuda)?[[:space:]]' <<<"$deps"; then
+              echo "FAIL: $proj references Microsoft.ML.Tokenizers or an ONNX Runtime or ONNX Runtime GenAI native package" >&2
+              status=1
+            # ML.NET (Microsoft.ML, its DataView/CpuMath parts) stays in the ML.NET adapter packages (P-012:
+            # Models.E5.MLNet; Models.EmbeddingGemma2.MLNet).
+            elif [[ "$proj" != */Starlings.Models.E5.MLNet.csproj && "$proj" != */Starlings.Models.EmbeddingGemma2.MLNet.csproj ]] && grep -Eqi '>[[:space:]]+Microsoft\.ML(\.DataView|\.CpuMath)?[[:space:]]' <<<"$deps"; then
+              echo "FAIL: $proj references ML.NET; only the ML.NET adapter packages may" >&2
+              status=1
+            # SkiaSharp (image decoding, native) stays in the EmbeddingGemma 2 imaging adapter package.
+            elif [[ "$proj" != */Starlings.Models.EmbeddingGemma2.Imaging.SkiaSharp.csproj ]] && grep -Eqi '>[[:space:]]+SkiaSharp' <<<"$deps"; then
+              echo "FAIL: $proj references SkiaSharp; only Starlings.Models.EmbeddingGemma2.Imaging.SkiaSharp may" >&2
+              status=1
+            # FFmpeg.AutoGen (managed FFmpeg bindings; FFmpeg itself is user-supplied) stays in the EmbeddingGemma 2 video adapter.
+            elif [[ "$proj" != */Starlings.Models.EmbeddingGemma2.Video.FFmpeg.csproj ]] && grep -Eqi '>[[:space:]]+FFmpeg\.AutoGen' <<<"$deps"; then
+              echo "FAIL: $proj references FFmpeg.AutoGen; only Starlings.Models.EmbeddingGemma2.Video.FFmpeg may" >&2
+              status=1
+            else
+              echo "ok:   $proj"
+            fi
+          done
+          exit "$status"
+
+  model-pipeline:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: model-pipeline
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+      - run: pip install -e '.[dev]'
+      - run: ruff check .
+      - run: ruff format --check .
+      - run: pytest
+      - run: model-pipeline validate registry
+
+  repo:
+    name: repository checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+      - name: Backlog parses from the plan
+        run: python tools/create_backlog_issues.py > /dev/null
+      - name: No model weights committed
+        run: |
+          if git ls-files | grep -Ei '\.(onnx|safetensors|gguf|pt|pth|ckpt|h5)$'; then
+            echo "Model weights must not be committed (plan section 9)." >&2
+            exit 1
+          fi
+      - name: No ImageSharp anywhere
+        # SixLabors.ImageSharp is excluded (Split License, not OSI-approved; model-pipeline/admissions/embeddinggemma-2.md).
+        # Lock files hold every direct and transitive package of every .NET project (src, tests, tools, samples).
+        run: |
+          if git ls-files -z -- '*.csproj' '*.props' '*.targets' '*packages.lock.json' | xargs -0 grep -il 'SixLabors\.ImageSharp'; then
+            echo "SixLabors.ImageSharp must not be referenced, directly or transitively." >&2
+            exit 1
+          fi
+      - name: No bundled FFmpeg anywhere
+        # FFmpeg is user-supplied (LGPL, loaded at run time by Starlings.Models.EmbeddingGemma2.Video.FFmpeg);
+        # no project may bring Sdcb.FFmpeg (LGPL bindings) or a package that ships FFmpeg binaries, and no FFmpeg library
+        # file may be committed (model-pipeline/admissions/embeddinggemma-2.md, video decision).
+        run: |
+          if git ls-files -z -- '*.csproj' '*.props' '*.targets' '*packages.lock.json' | xargs -0 grep -Eil 'Sdcb\.FFmpeg|"FFmpeg\.(Native|Runtime|Redist)[^"]*"|FFmpeg\.AutoGen\.(Redist|Runtime)|FFMpegCore\.Binaries|Xabe\.FFmpeg\.Downloader'; then
+            echo "Sdcb.FFmpeg and packages bundling FFmpeg binaries must not be referenced, directly or transitively." >&2
+            exit 1
+          fi
+          if git ls-files | grep -Ei '(^|/)(lib)?(avcodec|avformat|avutil|avfilter|avdevice|swscale|swresample|postproc)([-.][0-9]+)*\.(so|dll|dylib)(\.[0-9]+)*$'; then
+            echo "FFmpeg library files must not be committed." >&2
+            exit 1
+          fi

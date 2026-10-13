@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Realistic-workload harness for e5-small (P-008): warm series with stage timings and concurrency, cold starts in
+    fresh processes, quality attached to every run. CPU native runtime. The CUDA build of the same sources is
+    ../Starlings.Benchmarks.E5Harness.Cuda (local only, not in AI.slnx). Not packed; never run in CI.
+  -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <RootNamespace>Starlings.Benchmarks</RootNamespace>
+    <ServerGarbageCollection>false</ServerGarbageCollection>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.ML.OnnxRuntime" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="../Shared/*.cs" Link="Shared/%(Filename)%(Extension)" />
+    <Compile Include="../../tests/Shared/E5/E5TestAssets.cs" Link="Shared/E5TestAssets.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../src/Starlings.Models.E5/Starlings.Models.E5.csproj" />
+  </ItemGroup>
+
+</Project>

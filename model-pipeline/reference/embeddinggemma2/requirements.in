@@ -1,0 +1,14 @@
+# EmbeddingGemma 2 spike, CPU: sentence-transformers reference, tokenizer fixtures, ONNX export and ONNX Runtime CPU.
+# transformers 5.19.0 is the first release that defines embedding_gemma2 (5.18.0 does not).
+torch==2.14.1
+transformers==5.19.0
+sentence-transformers==6.1.0
+tokenizers==0.23.3
+onnx==1.23.1
+onnxscript==0.7.2
+onnxruntime==1.30.0
+numpy
+safetensors
+# sentence-transformers loads EmbeddingGemma2Processor even for text: it needs PIL and torchvision (Gemma 4 image processor).
+pillow
+torchvision

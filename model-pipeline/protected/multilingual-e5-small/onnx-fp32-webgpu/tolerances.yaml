@@ -1,0 +1,13 @@
+# Binding tolerances, set by Mark on 2026-10-12, plan 10.1. Values from docs/m0/browser-wasm-spike.md section 3.4.
+# Observed worst (Chrome for Testing 153, onnxruntime-web 1.30.0): embedding 2.1e-7, padded batch vs single 1.5e-7.
+profile: multilingual-e5-small/onnx-fp32-webgpu
+reference: PyTorch fp32 embeddings from model-pipeline/protected/multilingual-e5-small/onnx-fp32-cpu/
+discrete:
+  token_ids: exact
+  attention_mask: exact
+  offsets: exact
+float:
+  embedding_max_abs: 1.0e-5
+  padded_batch_vs_single_embedding_max_abs: 1.0e-5
+  nan_or_inf: fail
+  report_only: [mean_abs, p99_abs, min_cosine]

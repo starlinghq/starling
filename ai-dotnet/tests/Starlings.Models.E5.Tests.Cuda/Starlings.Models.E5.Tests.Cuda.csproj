@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Local-only CUDA tests (Linux x64). Not part of AI.slnx, so CI does not restore the 500 MB GPU package.
+    Opt in with STARLING_CUDA_TESTS=1 and an explicit CUDA_VISIBLE_DEVICES; see ai-dotnet/README.md.
+  -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="xunit.v3" />
+    <!-- CUDA native runtime (includes the CPU provider). The CUDA 13 runtime and cuDNN 9 are not in the package. -->
+    <PackageReference Include="Microsoft.ML.OnnxRuntime.Gpu.Linux" />
+    <Using Include="Xunit" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="../Shared/E5/*.cs" Link="Shared/E5/%(Filename)%(Extension)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../src/Starlings.Models.E5/Starlings.Models.E5.csproj" />
+  </ItemGroup>
+
+</Project>

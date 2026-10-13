@@ -1,0 +1,22 @@
+== QueriesRetrieveTheirImages Passed
+q-cat: top photo-chelsea 0.7051, runner-up synth-text 0.6078
+q-coffee: top photo-coffee 0.7384, runner-up photo-chelsea 0.6036
+q-rocket: top photo-rocket 0.7069, runner-up photo-astronaut 0.6348
+q-astronaut: top photo-astronaut 0.7590, runner-up photo-rocket 0.6408
+q-galaxies: top photo-hubble-deep-field 0.7463, runner-up photo-rocket 0.5883
+q-cameraman: top photo-camera 0.7335, runner-up synth-text 0.5830
+q-shapes: top synth-shapes 0.7329, runner-up photo-hubble-deep-field 0.6148
+q-text: top synth-text 0.6839, runner-up photo-hubble-deep-field 0.6565
+== TextOnlyInputsUseTheReleasedTextGraph Passed
+== BatchesMatchSingleRows Passed
+vision batch 1 (GPU default), text batch 4: 9 rows in batches vs single rows: max abs 1.29E-007, mean 1.10E-008, p99 6.33E-008, min cosine 0.999999999999518 (worst size-tiny-8x6); bound 1.0E-005
+== SessionsUseCudaWithTf32Disabled Passed
+6c97f477a82f: CUDAExecutionProvider, CPUExecutionProvider; use_tf32=0; CUDA_VISIBLE_DEVICES=1
+a2c22e072ec2: CUDAExecutionProvider, CPUExecutionProvider; use_tf32=0; CUDA_VISIBLE_DEVICES=1
+== RowsMatchTheReference Passed
+42 rows (in contract; mode-gray16 is rejected by contract) vs reference: max abs 9.88E-007, mean 4.22E-008, p99 3.43E-007, min cosine 0.999999999969851 (worst photo-rocket)
+  image and interleaved rows: max abs 9.88E-007, mean 4.94E-008, p99 3.73E-007, min cosine 0.999999999969851 (worst photo-rocket)
+  text-only rows (released text graph): max abs 8.94E-008, mean 1.16E-008, p99 4.10E-008, min cosine 0.999999999999905 (worst q-coffee)
+bounds: embedding_max_abs 1.0E-005, min_cosine 0.9999995 (model-pipeline/protected/embeddinggemma-2/image-fp32-cuda/tolerances.yaml)
+soft tokens row-relative worst 2.28E-005 (photo-coffee/image0); bound 1.0E-003
+token embeddings row-relative worst 7.48E-005 (mm-text-then-image-no-placeholder); bound 1.0E-003

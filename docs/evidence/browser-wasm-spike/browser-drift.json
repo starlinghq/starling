@@ -1,0 +1,851 @@
+[
+ {
+  "file": "e5-fp32-wasm.json",
+  "label": "aot",
+  "variant": "fp32",
+  "backend": "wasm",
+  "threads": 6,
+  "load": {
+   "ort_version": "1.30.0",
+   "cross_origin_isolated": true,
+   "hardware_concurrency": 12,
+   "num_threads": 6,
+   "fetch_ms": 411.89999997615814,
+   "model_bytes": 470268510,
+   "create_ms": 1457.1800000071526,
+   "inputs": [
+    "input_ids",
+    "attention_mask",
+    "token_type_ids"
+   ],
+   "outputs": [
+    "last_hidden_state"
+   ]
+  },
+  "drift_vs_reference": {
+   "cases": 46,
+   "max_abs": 1.374581718449619e-07,
+   "mean_abs": 2.141917792156038e-08,
+   "p99_abs": 7.436053548887098e-08,
+   "min_cosine": 0.9999999999996804,
+   "min_cosine_case": "space-only",
+   "nan_or_inf": false
+  },
+  "vs_native_ort": {
+   "cases": 46,
+   "max_abs": 2.0116567611694336e-07,
+   "mean_abs": 1.670333050617995e-08,
+   "p99_abs": 6.332993507385254e-08,
+   "min_cosine": 0.9999999999996145,
+   "min_cosine_case": "special-lookalike-spaced",
+   "nan_or_inf": false
+  },
+  "batch8_vs_single_max_abs": 1.0058283805847168e-07,
+  "first_run_ms": 83.85,
+  "latency_js_median_ms": {
+   "passage34-b1": 27.242499977350235,
+   "short-b8": 153.4074999988079,
+   "long512-b1": 308.5849999785423
+  },
+  "latency_e2e_median_ms": {
+   "passage34-b1": 20.552500000000002,
+   "short-b8": 172.005
+  },
+  "memory": {
+   "backend": "wasm",
+   "js_heap_used": 537143726,
+   "js_heap_total": 539155810,
+   "ua_specific_bytes": 1447924204,
+   "ua_breakdown": [
+    {
+     "bytes": 1445565678,
+     "types": [
+      "JavaScript"
+     ],
+     "scope": "Window"
+    },
+    {
+     "bytes": 2325590,
+     "types": [
+      "Shared"
+     ],
+     "scope": null
+    }
+   ]
+  },
+  "peak_rss_tree_bytes": 3541340160,
+  "peak_rss_renderer_bytes": 2444484608
+ },
+ {
+  "file": "e5-fp32-webgpu.json",
+  "label": "aot",
+  "variant": "fp32",
+  "backend": "webgpu",
+  "threads": 6,
+  "load": {
+   "ort_version": "1.30.0",
+   "cross_origin_isolated": true,
+   "hardware_concurrency": 12,
+   "num_threads": 6,
+   "adapter": {
+    "vendor": "nvidia",
+    "architecture": "lovelace",
+    "device": "",
+    "description": ""
+   },
+   "adapter_limits": {
+    "maxBufferSize": 4294967292,
+    "maxStorageBufferBindingSize": 2147483644
+   },
+   "fetch_ms": 513.4399999976158,
+   "model_bytes": 470268510,
+   "create_ms": 2039.4300000071526,
+   "inputs": [
+    "input_ids",
+    "attention_mask",
+    "token_type_ids"
+   ],
+   "outputs": [
+    "last_hidden_state"
+   ]
+  },
+  "drift_vs_reference": {
+   "cases": 46,
+   "max_abs": 2.0510326385198008e-07,
+   "mean_abs": 2.6646074234074894e-08,
+   "p99_abs": 9.706802240314048e-08,
+   "min_cosine": 0.9999999999992034,
+   "min_cosine_case": "space-only",
+   "nan_or_inf": false
+  },
+  "vs_native_ort": {
+   "cases": 46,
+   "max_abs": 2.062879502773285e-07,
+   "mean_abs": 2.558222495676803e-08,
+   "p99_abs": 9.568408131599237e-08,
+   "min_cosine": 0.9999999999992952,
+   "min_cosine_case": "space-only",
+   "nan_or_inf": false
+  },
+  "batch8_vs_single_max_abs": 1.4901161193847656e-07,
+  "first_run_ms": 697.83,
+  "latency_js_median_ms": {
+   "passage34-b1": 17.044999957084656,
+   "short-b8": 16.702499985694885,
+   "long512-b1": 16.110000014305115
+  },
+  "latency_e2e_median_ms": {
+   "passage34-b1": 17.77,
+   "short-b8": 20.31
+  },
+  "memory": {
+   "backend": "webgpu",
+   "js_heap_used": 38231717,
+   "js_heap_total": 45897781,
+   "ua_specific_bytes": 1832517288,
+   "ua_breakdown": [
+    {
+     "bytes": 1999922,
+     "types": [
+      "Shared"
+     ],
+     "scope": null
+    },
+    {
+     "bytes": 1830484430,
+     "types": [
+      "JavaScript"
+     ],
+     "scope": "Window"
+    }
+   ]
+  },
+  "peak_rss_tree_bytes": 5209493504,
+  "peak_rss_renderer_bytes": 3206881280
+ },
+ {
+  "file": "e5-fp16-wasm.json",
+  "label": "aot",
+  "variant": "fp16",
+  "backend": "wasm",
+  "threads": 6,
+  "load": {
+   "ort_version": "1.30.0",
+   "cross_origin_isolated": true,
+   "hardware_concurrency": 12,
+   "num_threads": 6,
+   "fetch_ms": 270.4950000047684,
+   "model_bytes": 235336673,
+   "create_ms": 1632.6949999928474,
+   "inputs": [
+    "input_ids",
+    "attention_mask",
+    "token_type_ids"
+   ],
+   "outputs": [
+    "last_hidden_state"
+   ]
+  },
+  "drift_vs_reference": {
+   "cases": 46,
+   "max_abs": 0.00011557886304473797,
+   "mean_abs": 1.2021857583795134e-05,
+   "p99_abs": 4.6251426733187125e-05,
+   "min_cosine": 0.999999749858783,
+   "min_cosine_case": "ascii-sentence",
+   "nan_or_inf": false
+  },
+  "vs_native_ort": {
+   "cases": 46,
+   "max_abs": 4.437565803527832e-05,
+   "mean_abs": 5.303040178243161e-06,
+   "p99_abs": 1.937314867973323e-05,
+   "min_cosine": 0.9999999642269362,
+   "min_cosine_case": "space-only",
+   "nan_or_inf": false
+  },
+  "batch8_vs_single_max_abs": 3.447011113166809e-05,
+  "first_run_ms": 75.52,
+  "latency_js_median_ms": {
+   "passage34-b1": 31.36250001192093,
+   "short-b8": 159.5649999976158,
+   "long512-b1": 307.38499999046326
+  },
+  "latency_e2e_median_ms": {
+   "passage34-b1": 34.66,
+   "short-b8": 159.685
+  },
+  "memory": {
+   "backend": "wasm",
+   "js_heap_used": 24684177,
+   "js_heap_total": 26559237,
+   "ua_specific_bytes": 786294070,
+   "ua_breakdown": [
+    {
+     "bytes": 785145446,
+     "types": [
+      "JavaScript"
+     ],
+     "scope": "Window"
+    },
+    {
+     "bytes": 1115688,
+     "types": [
+      "Shared"
+     ],
+     "scope": null
+    }
+   ]
+  },
+  "peak_rss_tree_bytes": 2597134336,
+  "peak_rss_renderer_bytes": 1504456704
+ },
+ {
+  "file": "e5-int8-dynamic-wasm.json",
+  "label": "aot",
+  "variant": "int8-dynamic",
+  "backend": "wasm",
+  "threads": 6,
+  "load": {
+   "ort_version": "1.30.0",
+   "cross_origin_isolated": true,
+   "hardware_concurrency": 12,
+   "num_threads": 6,
+   "fetch_ms": 176.3149999976158,
+   "model_bytes": 118101091,
+   "create_ms": 1234.339999973774,
+   "inputs": [
+    "input_ids",
+    "attention_mask",
+    "token_type_ids"
+   ],
+   "outputs": [
+    "last_hidden_state"
+   ]
+  },
+  "drift_vs_reference": {
+   "cases": 46,
+   "max_abs": 0.0459807482473568,
+   "mean_abs": 0.006079917590288666,
+   "p99_abs": 0.0226041622683103,
+   "min_cosine": 0.9624379559957911,
+   "min_cosine_case": "repeated-char",
+   "nan_or_inf": false
+  },
+  "vs_native_ort": {
+   "cases": 46,
+   "max_abs": 0.01669541047886014,
+   "mean_abs": 0.0028569060777677282,
+   "p99_abs": 0.01011433448642492,
+   "min_cosine": 0.9933932115623646,
+   "min_cosine_case": "empty",
+   "nan_or_inf": false
+  },
+  "batch8_vs_single_max_abs": 0.026789940893650055,
+  "first_run_ms": 108.745,
+  "latency_js_median_ms": {
+   "passage34-b1": 20.207500010728836,
+   "short-b8": 97.62250000238419,
+   "long512-b1": 219.91500002145767
+  },
+  "latency_e2e_median_ms": {
+   "passage34-b1": 23.83,
+   "short-b8": 97.6575
+  },
+  "memory": {
+   "backend": "wasm",
+   "js_heap_used": 37783496,
+   "js_heap_total": 39447716,
+   "ua_specific_bytes": 456491342,
+   "ua_breakdown": [
+    {
+     "bytes": 455803215,
+     "types": [
+      "JavaScript"
+     ],
+     "scope": "Window"
+    }
+   ]
+  },
+  "peak_rss_tree_bytes": 2204020736,
+  "peak_rss_renderer_bytes": 1105301504
+ },
+ {
+  "file": "e5-int8-dynamic-webgpu.json",
+  "label": "aot",
+  "variant": "int8-dynamic",
+  "backend": "webgpu",
+  "threads": 6,
+  "load": {
+   "ort_version": "1.30.0",
+   "cross_origin_isolated": true,
+   "hardware_concurrency": 12,
+   "num_threads": 6,
+   "adapter": {
+    "vendor": "nvidia",
+    "architecture": "lovelace",
+    "device": "",
+    "description": ""
+   },
+   "adapter_limits": {
+    "maxBufferSize": 4294967292,
+    "maxStorageBufferBindingSize": 2147483644
+   },
+   "fetch_ms": 161.20999997854233,
+   "model_bytes": 118101091,
+   "create_ms": 1679.339999973774,
+   "inputs": [
+    "input_ids",
+    "attention_mask",
+    "token_type_ids"
+   ],
+   "outputs": [
+    "last_hidden_state"
+   ]
+  },
+  "drift_vs_reference": {
+   "cases": 46,
+   "max_abs": 0.051104117643089676,
+   "mean_abs": 0.006095803685547961,
+   "p99_abs": 0.022906646428783258,
+   "min_cosine": 0.9634459306315647,
+   "min_cosine_case": "repeated-char",
+   "nan_or_inf": false
+  },
+  "vs_native_ort": {
+   "cases": 46,
+   "max_abs": 0.0166954156011343,
+   "mean_abs": 0.002860529868872535,
+   "p99_abs": 0.010010571666061873,
+   "min_cosine": 0.9933932114041533,
+   "min_cosine_case": "empty",
+   "nan_or_inf": false
+  },
+  "batch8_vs_single_max_abs": 0.029825430363416672,
+  "first_run_ms": 399.085,
+  "latency_js_median_ms": {
+   "passage34-b1": 267.8174999952316,
+   "short-b8": 499.91749998927116,
+   "long512-b1": 761.9250000119209
+  },
+  "latency_e2e_median_ms": {
+   "passage34-b1": 261.83000000000004,
+   "short-b8": 498.1475
+  },
+  "memory": {
+   "backend": "webgpu",
+   "js_heap_used": 13513407,
+   "js_heap_total": 15210703,
+   "ua_specific_bytes": 553033372,
+   "ua_breakdown": [
+    {
+     "bytes": 551849393,
+     "types": [
+      "JavaScript"
+     ],
+     "scope": "Window"
+    },
+    {
+     "bytes": 1151043,
+     "types": [
+      "Shared"
+     ],
+     "scope": null
+    }
+   ]
+  },
+  "peak_rss_tree_bytes": 2658672640,
+  "peak_rss_renderer_bytes": 1322905600
+ },
+ {
+  "file": "e5-int8-dynamic-pc-wasm.json",
+  "label": "aot",
+  "variant": "int8-dynamic-pc",
+  "backend": "wasm",
+  "threads": 6,
+  "load": {
+   "ort_version": "1.30.0",
+   "cross_origin_isolated": true,
+   "hardware_concurrency": 12,
+   "num_threads": 6,
+   "fetch_ms": 151.13499999046326,
+   "model_bytes": 118308811,
+   "create_ms": 1249.1100000143051,
+   "inputs": [
+    "input_ids",
+    "attention_mask",
+    "token_type_ids"
+   ],
+   "outputs": [
+    "last_hidden_state"
+   ]
+  },
+  "drift_vs_reference": {
+   "cases": 46,
+   "max_abs": 0.02567002378345394,
+   "mean_abs": 0.0033016965181995608,
+   "p99_abs": 0.011721768906358006,
+   "min_cosine": 0.9888423889995945,
+   "min_cosine_case": "long-english",
+   "nan_or_inf": false
+  },
+  "vs_native_ort": {
+   "cases": 46,
+   "max_abs": 0.026251081144437194,
+   "mean_abs": 0.0036931257156415822,
+   "p99_abs": 0.013832661546766756,
+   "min_cosine": 0.9872412274259911,
+   "min_cosine_case": "special-literal-mask",
+   "nan_or_inf": false
+  },
+  "batch8_vs_single_max_abs": 0.02945881336927414,
+  "first_run_ms": 100.08,
+  "latency_js_median_ms": {
+   "passage34-b1": 23.264999985694885,
+   "short-b8": 91.53750002384186,
+   "long512-b1": 215.7249999642372
+  },
+  "latency_e2e_median_ms": {
+   "passage34-b1": 20.79,
+   "short-b8": 107.14750000000001
+  },
+  "memory": {
+   "backend": "wasm",
+   "js_heap_used": 37783432,
+   "js_heap_total": 39447716,
+   "ua_specific_bytes": 457017218,
+   "ua_breakdown": [
+    {
+     "bytes": 456165752,
+     "types": [
+      "JavaScript"
+     ],
+     "scope": "Window"
+    }
+   ]
+  },
+  "peak_rss_tree_bytes": 2196275200,
+  "peak_rss_renderer_bytes": 1102077952
+ },
+ {
+  "file": "e5-int8-dynamic-pc-webgpu.json",
+  "label": "aot",
+  "variant": "int8-dynamic-pc",
+  "backend": "webgpu",
+  "threads": 6,
+  "load": {
+   "ort_version": "1.30.0",
+   "cross_origin_isolated": true,
+   "hardware_concurrency": 12,
+   "num_threads": 6,
+   "adapter": {
+    "vendor": "nvidia",
+    "architecture": "lovelace",
+    "device": "",
+    "description": ""
+   },
+   "adapter_limits": {
+    "maxBufferSize": 4294967292,
+    "maxStorageBufferBindingSize": 2147483644
+   },
+   "fetch_ms": 132.4000000357628,
+   "model_bytes": 118308811,
+   "create_ms": 1683.1100000143051,
+   "inputs": [
+    "input_ids",
+    "attention_mask",
+    "token_type_ids"
+   ],
+   "outputs": [
+    "last_hidden_state"
+   ]
+  },
+  "drift_vs_reference": {
+   "cases": 46,
+   "max_abs": 0.023374734594830512,
+   "mean_abs": 0.0033181595333171233,
+   "p99_abs": 0.011701968908183324,
+   "min_cosine": 0.9885970035175384,
+   "min_cosine_case": "long-english",
+   "nan_or_inf": false
+  },
+  "vs_native_ort": {
+   "cases": 46,
+   "max_abs": 0.026251075556501746,
+   "mean_abs": 0.003683945723697776,
+   "p99_abs": 0.013724714890122405,
+   "min_cosine": 0.9872412267669384,
+   "min_cosine_case": "special-literal-mask",
+   "nan_or_inf": false
+  },
+  "batch8_vs_single_max_abs": 0.029966436326503754,
+  "first_run_ms": 385.8199,
+  "latency_js_median_ms": {
+   "passage34-b1": 273.6875,
+   "short-b8": 501.65000000596046,
+   "long512-b1": 702.789999961853
+  },
+  "latency_e2e_median_ms": {
+   "passage34-b1": 263.6325,
+   "short-b8": 511.19500000000005
+  },
+  "memory": {
+   "backend": "webgpu",
+   "js_heap_used": 14471471,
+   "js_heap_total": 16003063,
+   "ua_specific_bytes": 553624836,
+   "ua_breakdown": [
+    {
+     "bytes": 1321221,
+     "types": [
+      "Shared"
+     ],
+     "scope": null
+    },
+    {
+     "bytes": 552270679,
+     "types": [
+      "JavaScript"
+     ],
+     "scope": "Window"
+    }
+   ]
+  },
+  "peak_rss_tree_bytes": 2668568576,
+  "peak_rss_renderer_bytes": 1333661696
+ },
+ {
+  "file": "e5-int8-embed-wasm.json",
+  "label": "aot",
+  "variant": "int8-embed",
+  "backend": "wasm",
+  "threads": 6,
+  "load": {
+   "ort_version": "1.30.0",
+   "cross_origin_isolated": true,
+   "hardware_concurrency": 12,
+   "num_threads": 6,
+   "fetch_ms": 209.9350000023842,
+   "model_bytes": 181715582,
+   "create_ms": 1298.5300000309944,
+   "inputs": [
+    "input_ids",
+    "attention_mask",
+    "token_type_ids"
+   ],
+   "outputs": [
+    "last_hidden_state"
+   ]
+  },
+  "drift_vs_reference": {
+   "cases": 46,
+   "max_abs": 0.003506991829195019,
+   "mean_abs": 0.00038302784715409,
+   "p99_abs": 0.0015497956910906793,
+   "min_cosine": 0.9998038199600109,
+   "min_cosine_case": "repeated-char",
+   "nan_or_inf": false
+  },
+  "vs_native_ort": {
+   "cases": 46,
+   "max_abs": 1.341104507446289e-07,
+   "mean_abs": 1.660661558669306e-08,
+   "p99_abs": 5.960464477539063e-08,
+   "min_cosine": 0.9999999999997071,
+   "min_cosine_case": "space-only",
+   "nan_or_inf": false
+  },
+  "batch8_vs_single_max_abs": 1.043081283569336e-07,
+  "first_run_ms": 101.8549,
+  "latency_js_median_ms": {
+   "passage34-b1": 29.1875,
+   "short-b8": 149.20249998569489,
+   "long512-b1": 294.4850000143051
+  },
+  "latency_e2e_median_ms": {
+   "passage34-b1": 27.4275,
+   "short-b8": 162.01999999999998
+  },
+  "memory": {
+   "backend": "wasm",
+   "js_heap_used": 24722466,
+   "js_heap_total": 26493722,
+   "ua_specific_bytes": 589396358,
+   "ua_breakdown": [
+    {
+     "bytes": 588879270,
+     "types": [
+      "JavaScript"
+     ],
+     "scope": "Window"
+    }
+   ]
+  },
+  "peak_rss_tree_bytes": 2395992064,
+  "peak_rss_renderer_bytes": 1297031168
+ },
+ {
+  "file": "e5-int8-embed-webgpu.json",
+  "label": "aot",
+  "variant": "int8-embed",
+  "backend": "webgpu",
+  "threads": 6,
+  "load": {
+   "ort_version": "1.30.0",
+   "cross_origin_isolated": true,
+   "hardware_concurrency": 12,
+   "num_threads": 6,
+   "adapter": {
+    "vendor": "nvidia",
+    "architecture": "lovelace",
+    "device": "",
+    "description": ""
+   },
+   "adapter_limits": {
+    "maxBufferSize": 4294967292,
+    "maxStorageBufferBindingSize": 2147483644
+   },
+   "fetch_ms": 199.62000000476837,
+   "model_bytes": 181715582,
+   "create_ms": 1651.5450000166893,
+   "inputs": [
+    "input_ids",
+    "attention_mask",
+    "token_type_ids"
+   ],
+   "outputs": [
+    "last_hidden_state"
+   ]
+  },
+  "drift_vs_reference": {
+   "cases": 46,
+   "max_abs": 0.003506991829195019,
+   "mean_abs": 0.0003830273753412048,
+   "p99_abs": 0.0015498163757650615,
+   "min_cosine": 0.9998038243373254,
+   "min_cosine_case": "repeated-char",
+   "nan_or_inf": false
+  },
+  "vs_native_ort": {
+   "cases": 46,
+   "max_abs": 1.7508864402770996e-07,
+   "mean_abs": 2.499178605770682e-08,
+   "p99_abs": 8.940696716308594e-08,
+   "min_cosine": 0.9999999999994243,
+   "min_cosine_case": "space-only",
+   "nan_or_inf": false
+  },
+  "batch8_vs_single_max_abs": 1.601874828338623e-07,
+  "first_run_ms": 319.7149,
+  "latency_js_median_ms": {
+   "passage34-b1": 17.69750002026558,
+   "short-b8": 16.837499976158142,
+   "long512-b1": 17.55000001192093
+  },
+  "latency_e2e_median_ms": {
+   "passage34-b1": 16.560000000000002,
+   "short-b8": 18.52
+  },
+  "memory": {
+   "backend": "webgpu",
+   "js_heap_used": 14229336,
+   "js_heap_total": 23206236,
+   "ua_specific_bytes": 589770820,
+   "ua_breakdown": [
+    {
+     "bytes": 1936235,
+     "types": [
+      "Shared"
+     ],
+     "scope": null
+    },
+    {
+     "bytes": 587801649,
+     "types": [
+      "JavaScript"
+     ],
+     "scope": "Window"
+    }
+   ]
+  },
+  "peak_rss_tree_bytes": 2894479360,
+  "peak_rss_renderer_bytes": 1472819200
+ },
+ {
+  "file": "e5-fp32-wasm-interp.json",
+  "label": "interp",
+  "variant": "fp32",
+  "backend": "wasm",
+  "threads": 6,
+  "load": {
+   "ort_version": "1.30.0",
+   "cross_origin_isolated": true,
+   "hardware_concurrency": 12,
+   "num_threads": 6,
+   "fetch_ms": 437.1850000023842,
+   "model_bytes": 470268510,
+   "create_ms": 1445.9200000166893,
+   "inputs": [
+    "input_ids",
+    "attention_mask",
+    "token_type_ids"
+   ],
+   "outputs": [
+    "last_hidden_state"
+   ]
+  },
+  "drift_vs_reference": {
+   "cases": 46,
+   "max_abs": 1.374581718449619e-07,
+   "mean_abs": 2.141917792156038e-08,
+   "p99_abs": 7.436053548887098e-08,
+   "min_cosine": 0.9999999999996804,
+   "min_cosine_case": "space-only",
+   "nan_or_inf": false
+  },
+  "vs_native_ort": {
+   "cases": 46,
+   "max_abs": 2.0116567611694336e-07,
+   "mean_abs": 1.670333050617995e-08,
+   "p99_abs": 6.332993507385254e-08,
+   "min_cosine": 0.9999999999996145,
+   "min_cosine_case": "special-lookalike-spaced",
+   "nan_or_inf": false
+  },
+  "batch8_vs_single_max_abs": 1.0058283805847168e-07,
+  "first_run_ms": 86.5,
+  "latency_js_median_ms": {
+   "passage34-b1": 19.497500002384186,
+   "short-b8": 149.5024999976158,
+   "long512-b1": 314.17500001192093
+  },
+  "latency_e2e_median_ms": {
+   "passage34-b1": 30.362499999999997,
+   "short-b8": 161.875
+  },
+  "memory": {
+   "backend": "wasm",
+   "js_heap_used": 512524079,
+   "js_heap_total": 514677967,
+   "ua_specific_bytes": 1454231922,
+   "ua_breakdown": [
+    {
+     "bytes": 2418108,
+     "types": [
+      "Shared"
+     ],
+     "scope": null
+    },
+    {
+     "bytes": 1451780878,
+     "types": [
+      "JavaScript"
+     ],
+     "scope": "Window"
+    }
+   ]
+  },
+  "peak_rss_tree_bytes": 3495960576,
+  "peak_rss_renderer_bytes": 2395725824
+ },
+ {
+  "file": "e5-int8-embed-wasm-t1.json",
+  "label": "aot",
+  "variant": "int8-embed",
+  "backend": "wasm",
+  "threads": 1,
+  "load": {
+   "ort_version": "1.30.0",
+   "cross_origin_isolated": false,
+   "hardware_concurrency": 12,
+   "num_threads": 1,
+   "fetch_ms": 215.89999997615814,
+   "model_bytes": 181715582,
+   "create_ms": 1190,
+   "inputs": [
+    "input_ids",
+    "attention_mask",
+    "token_type_ids"
+   ],
+   "outputs": [
+    "last_hidden_state"
+   ]
+  },
+  "drift_vs_reference": {
+   "cases": 46,
+   "max_abs": 0.003506991829195019,
+   "mean_abs": 0.00038302784715409,
+   "p99_abs": 0.0015497956910906793,
+   "min_cosine": 0.9998038199600109,
+   "min_cosine_case": "repeated-char",
+   "nan_or_inf": false
+  },
+  "vs_native_ort": {
+   "cases": 46,
+   "max_abs": 1.341104507446289e-07,
+   "mean_abs": 1.660661558669306e-08,
+   "p99_abs": 5.960464477539063e-08,
+   "min_cosine": 0.9999999999997071,
+   "min_cosine_case": "space-only",
+   "nan_or_inf": false
+  },
+  "batch8_vs_single_max_abs": 1.043081283569336e-07,
+  "first_run_ms": 82,
+  "latency_js_median_ms": {
+   "passage34-b1": 79.44999998807907,
+   "short-b8": 790.5,
+   "long512-b1": 1492.8999999761581
+  },
+  "latency_e2e_median_ms": {
+   "passage34-b1": 82.65,
+   "short-b8": 780.2
+  },
+  "memory": {
+   "backend": "wasm",
+   "js_heap_used": 23805072,
+   "js_heap_total": 26901728
+  },
+  "peak_rss_tree_bytes": 2368471040,
+  "peak_rss_renderer_bytes": 1261969408
+ }
+]

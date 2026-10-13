@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <IsPackable>true</IsPackable>
+    <Description>Preview. intfloat/multilingual-e5-small (revision 614241f6) sentence embeddings on ONNX Runtime, from text through the owned tokenizer (Starlings.Tokenizers: no Microsoft.ML.Tokenizers, no native tokenizer) or from token ids: right padding, mean pooling, L2 normalization. Ships the model's asset lock, not the weights; acquire them explicitly. Profile multilingual-e5-small/onnx-fp32-cpu (Linux x64, experimental). The application adds the ONNX Runtime native package.</Description>
+    <PackageTags>embeddings;e5;multilingual-e5-small;sentence-embeddings;onnxruntime;semantic-search</PackageTags>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../Starlings.Runtime.Onnx/Starlings.Runtime.Onnx.csproj" />
+    <PackageReference Include="Starlings.Tokenizers" />
+  </ItemGroup>
+
+  <!-- Asset lock and explicit acquisition of the pinned model files (P-009). BCL only, no further dependencies. -->
+  <ItemGroup>
+    <ProjectReference Include="../Starlings.Acquisition/Starlings.Acquisition.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Starlings.Models.E5.Tests" />
+  </ItemGroup>
+
+</Project>

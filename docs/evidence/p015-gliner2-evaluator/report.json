@@ -1,0 +1,636 @@
+{
+  "format": "starlings.fidelity-report",
+  "format_version": 2,
+  "task": "entity-extraction",
+  "profile": "gliner2-base-v1/onnx-fp32-cpu",
+  "date": "2026-10-10",
+  "evaluator": {
+    "name": "model-pipeline evaluate",
+    "version": "0.1.0",
+    "repository_commit": "626bbbc8d5ac933009aadbfc3652e5127a132c06"
+  },
+  "inputs": {
+    "manifest": {
+      "path": "model-pipeline/registry/gliner2-base-v1/onnx-fp32-cpu/manifest.yaml",
+      "sha256": "9f36d88ab9aad5476e8b40926898e5462986fb2c3b16583b21a1eadd37e91011"
+    },
+    "tolerances": {
+      "path": "model-pipeline/protected/gliner2-base-v1/onnx-fp32-cpu/tolerances.yaml",
+      "sha256": null,
+      "missing": true
+    },
+    "fixtures": [
+      {
+        "path": "model-pipeline/protected/gliner2-base-v1/onnx-fp32-cpu/extraction.jsonl",
+        "sha256": "5b381443248fac8a454ec2b6abda166f5b7488a6d05ef954db7a65384a3a5ae0"
+      }
+    ],
+    "results": {
+      "tokenizer": {
+        "path": "/home/mark/Projects/AI/.claude/worktrees/agent-a5b936e303b251059/.models/g2-stage/tokenizer.results.json",
+        "sha256": "b7b963f400feb1d6ec67be0a6f4508ceb4e18bda929cf9a91a8d597787e6e4a4",
+        "candidate": "GLiNER2 Python processor (ExtractorCollator, inference mode, fast tokenizer): reproducibility of the fixture processor path, not the owned C# processor",
+        "producer": {
+          "name": "model-pipeline/reference/gliner2/stage_gliner2.py",
+          "repository_commit": "29df85a12b6c77e4eecaa3cd6b1bf6d79a299153-dirty"
+        },
+        "environment": {
+          "python": "3.11.16",
+          "platform": "Linux-7.2.5-3-omarchy-x86_64-with-glibc2.44",
+          "machine": "omarchy",
+          "cpu": "Intel(R) Core(TM) i7-5820K CPU @ 3.30GHz",
+          "cpu_count": 12,
+          "packages": {
+            "gliner2": "2.0.0",
+            "torch": "2.14.1+cpu",
+            "transformers": "4.57.6",
+            "tokenizers": "0.22.2",
+            "onnxruntime": "1.30.0",
+            "numpy": "2.4.6"
+          },
+          "provider": "cpu"
+        },
+        "assets": [
+          {
+            "path": "tokenizer.json",
+            "sha256": "1b7fbabfb4c690bed84c6793bfecae9b8dfe205751b04f9ffd1e76a1e7df9c16"
+          }
+        ]
+      },
+      "export": {
+        "path": "/home/mark/Projects/AI/.claude/worktrees/agent-a5b936e303b251059/.models/g2-stage/export.results.json",
+        "sha256": "6eecfa615465ace4975a7af30325c1e158654a8db1f094075baf21150067e758",
+        "candidate": "Python onnxruntime 1.30.0 CPUExecutionProvider on gliner2-A-dynamo.onnx (route A, fixture inputs); entities decoded with gliner2_entity.decode_entities; reference hidden states from the GLiNER2 encoder on torch 2.14.1+cpu fp32 CPU, same ids",
+        "producer": {
+          "name": "model-pipeline/reference/gliner2/stage_gliner2.py",
+          "repository_commit": "29df85a12b6c77e4eecaa3cd6b1bf6d79a299153-dirty"
+        },
+        "environment": {
+          "python": "3.11.16",
+          "platform": "Linux-7.2.5-3-omarchy-x86_64-with-glibc2.44",
+          "machine": "omarchy",
+          "cpu": "Intel(R) Core(TM) i7-5820K CPU @ 3.30GHz",
+          "cpu_count": 12,
+          "packages": {
+            "gliner2": "2.0.0",
+            "torch": "2.14.1+cpu",
+            "transformers": "4.57.6",
+            "tokenizers": "0.22.2",
+            "onnxruntime": "1.30.0",
+            "numpy": "2.4.6"
+          },
+          "provider": "cpu",
+          "provider_options": {},
+          "onnxruntime_providers": [
+            "CPUExecutionProvider"
+          ],
+          "intra_op_threads": 1,
+          "torch_threads": 6
+        },
+        "assets": [
+          {
+            "path": "onnx/gliner2-entity-route-a.onnx",
+            "sha256": "2991ae526181efb72ef4b265d97f651d133a238122a7bb6f9ba120b9cbf53887"
+          },
+          {
+            "path": "onnx/gliner2-entity-route-a.onnx.data",
+            "sha256": "6fb5d8ca47ed44970d851b0de33fe870f62d631bcfded9c532668ae1a0e5a02d"
+          },
+          {
+            "path": "model.safetensors",
+            "sha256": "845fc4bd93c525b86124c58ab4f56c9eacf8587953086b14c501fab25957c007"
+          }
+        ]
+      }
+    }
+  },
+  "protected_evidence": {
+    "status": "verified",
+    "base": "626bbbc8d5ac933009aadbfc3652e5127a132c06",
+    "detail": "base HEAD",
+    "changed": [],
+    "sha256": {
+      "model-pipeline/protected/gliner2-base-v1/onnx-fp32-cpu/extraction.jsonl": "5b381443248fac8a454ec2b6abda166f5b7488a6d05ef954db7a65384a3a5ae0"
+    }
+  },
+  "report_only_metrics": [],
+  "stages": {
+    "tokenizer": "incomplete",
+    "export": "incomplete",
+    "dotnet-ids": "incomplete",
+    "dotnet-text": "incomplete"
+  },
+  "first_divergence": null,
+  "findings": [],
+  "gates": {
+    "G1": {
+      "status": "not-run",
+      "reason": "the profile has no protected tolerances file; no bound is set, so no gate can pass"
+    },
+    "G2": {
+      "status": "not-run",
+      "reason": "the profile has no protected tolerances file; no bound is set, so no gate can pass"
+    }
+  },
+  "manifest_gates": {},
+  "checks": [
+    {
+      "id": "export.identity",
+      "stage": "export",
+      "substage": "export",
+      "gate": "G2",
+      "title": "export: profile and artifact digests match the manifest",
+      "tolerance_key": null,
+      "bound": null,
+      "status": "passed",
+      "metrics": {},
+      "detail": ""
+    },
+    {
+      "id": "tokenizer.identity",
+      "stage": "tokenizer",
+      "substage": "tokenizer",
+      "gate": "G1",
+      "title": "tokenizer: profile and artifact digests match the manifest",
+      "tolerance_key": null,
+      "bound": null,
+      "status": "passed",
+      "metrics": {},
+      "detail": ""
+    },
+    {
+      "id": "tokenizer.normalized_text",
+      "stage": "tokenizer",
+      "substage": "tokenizer",
+      "gate": "G1",
+      "title": "processor normalized_text exact",
+      "tolerance_key": "discrete.normalized_text",
+      "bound": null,
+      "status": "not-run",
+      "metrics": {},
+      "detail": "discrete.normalized_text is not in the protected tolerances"
+    },
+    {
+      "id": "tokenizer.words",
+      "stage": "tokenizer",
+      "substage": "tokenizer",
+      "gate": "G1",
+      "title": "processor words exact",
+      "tolerance_key": "discrete.words",
+      "bound": null,
+      "status": "not-run",
+      "metrics": {},
+      "detail": "discrete.words is not in the protected tolerances"
+    },
+    {
+      "id": "tokenizer.start_map",
+      "stage": "tokenizer",
+      "substage": "tokenizer",
+      "gate": "G1",
+      "title": "processor start_map exact",
+      "tolerance_key": "discrete.character_maps",
+      "bound": null,
+      "status": "not-run",
+      "metrics": {},
+      "detail": "discrete.character_maps is not in the protected tolerances"
+    },
+    {
+      "id": "tokenizer.end_map",
+      "stage": "tokenizer",
+      "substage": "tokenizer",
+      "gate": "G1",
+      "title": "processor end_map exact",
+      "tolerance_key": "discrete.character_maps",
+      "bound": null,
+      "status": "not-run",
+      "metrics": {},
+      "detail": "discrete.character_maps is not in the protected tolerances"
+    },
+    {
+      "id": "tokenizer.input_ids",
+      "stage": "tokenizer",
+      "substage": "tokenizer",
+      "gate": "G1",
+      "title": "processor input_ids exact",
+      "tolerance_key": "discrete.token_ids",
+      "bound": null,
+      "status": "not-run",
+      "metrics": {},
+      "detail": "discrete.token_ids is not in the protected tolerances"
+    },
+    {
+      "id": "tokenizer.attention_mask",
+      "stage": "tokenizer",
+      "substage": "tokenizer",
+      "gate": "G1",
+      "title": "processor attention_mask exact",
+      "tolerance_key": "discrete.attention_mask",
+      "bound": null,
+      "status": "not-run",
+      "metrics": {},
+      "detail": "discrete.attention_mask is not in the protected tolerances"
+    },
+    {
+      "id": "tokenizer.word_index",
+      "stage": "tokenizer",
+      "substage": "tokenizer",
+      "gate": "G1",
+      "title": "processor word_index exact",
+      "tolerance_key": "discrete.word_positions",
+      "bound": null,
+      "status": "not-run",
+      "metrics": {},
+      "detail": "discrete.word_positions is not in the protected tolerances"
+    },
+    {
+      "id": "tokenizer.schema_index",
+      "stage": "tokenizer",
+      "substage": "tokenizer",
+      "gate": "G1",
+      "title": "processor schema_index exact",
+      "tolerance_key": "discrete.schema_positions",
+      "bound": null,
+      "status": "not-run",
+      "metrics": {},
+      "detail": "discrete.schema_positions is not in the protected tolerances"
+    },
+    {
+      "id": "tokenizer.character_maps.well_formed",
+      "stage": "tokenizer",
+      "substage": "tokenizer",
+      "gate": "G1",
+      "title": "processor character maps are well formed",
+      "tolerance_key": null,
+      "bound": null,
+      "status": "passed",
+      "metrics": {
+        "malformed_cases": {}
+      },
+      "detail": ""
+    },
+    {
+      "id": "export.inputs",
+      "stage": "export",
+      "substage": "export",
+      "gate": "G2",
+      "title": "export: ran on the protected fixture inputs",
+      "tolerance_key": null,
+      "bound": null,
+      "status": "passed",
+      "metrics": {},
+      "detail": ""
+    },
+    {
+      "id": "export.finite",
+      "stage": "export",
+      "substage": "export",
+      "gate": "G2",
+      "title": "export: no NaN or Inf in any output",
+      "tolerance_key": "float.nan_or_inf",
+      "bound": null,
+      "status": "not-run",
+      "metrics": {},
+      "detail": "float.nan_or_inf: None has no implemented meaning (only 'fail')"
+    },
+    {
+      "id": "export.last_hidden_state",
+      "stage": "export",
+      "substage": "export",
+      "gate": "G2",
+      "title": "Python ORT hidden states vs PyTorch hidden states",
+      "tolerance_key": "float.last_hidden_state_max_abs",
+      "bound": null,
+      "status": "not-run",
+      "metrics": {
+        "max_abs": 2.288818359375e-05,
+        "mean_abs": 3.747330469167277e-07,
+        "p99_abs": 2.562999725341797e-06,
+        "values": 2824704,
+        "cases": 58,
+        "worst_case": "label-order-a",
+        "non_finite_cases": [],
+        "reference_rerun_bit_identical_to_fixture_cases": 58
+      },
+      "detail": "no numeric bound for float.last_hidden_state_max_abs in the protected tolerances"
+    },
+    {
+      "id": "export.count_logits",
+      "stage": "export",
+      "substage": "export",
+      "gate": "G2",
+      "title": "export: count logits vs reference",
+      "tolerance_key": "float.count_logits_max_abs",
+      "bound": null,
+      "status": "not-run",
+      "metrics": {
+        "max_abs": 4.7999999999603915e-05,
+        "mean_abs": 1.1409999137951938e-05,
+        "p99_abs": 3.7999999999343e-05,
+        "values": 1160,
+        "cases": 58,
+        "worst_case": "nested-org-location",
+        "non_finite_cases": []
+      },
+      "detail": "no numeric bound for float.count_logits_max_abs in the protected tolerances"
+    },
+    {
+      "id": "export.gate_decision",
+      "stage": "export",
+      "substage": "export",
+      "gate": "G2",
+      "title": "export: count gate decision exact",
+      "tolerance_key": "discrete.gate_decision",
+      "bound": null,
+      "status": "not-run",
+      "metrics": {},
+      "detail": "discrete.gate_decision is not in the protected tolerances"
+    },
+    {
+      "id": "export.span_logits",
+      "stage": "export",
+      "substage": "export",
+      "gate": "G2",
+      "title": "export: span logits (valid spans) vs reference, relative",
+      "tolerance_key": "float.span_logits_relative",
+      "bound": null,
+      "status": "not-run",
+      "metrics": {
+        "max_abs": 0.0077599999999620195,
+        "mean_abs": 9.293702119323889e-05,
+        "p99_abs": 0.0006959999999979516,
+        "values": 56150,
+        "cases": 58,
+        "worst_case": "label-duplicate",
+        "non_finite_cases": [],
+        "max_rel": 2.3961961611906066e-05,
+        "worst_case_rel": "truncation-max-len-200"
+      },
+      "detail": "no numeric bound for float.span_logits_relative in the protected tolerances"
+    },
+    {
+      "id": "export.scores",
+      "stage": "export",
+      "substage": "export",
+      "gate": "G2",
+      "title": "export: scores (float32 sigmoid of span logits) vs reference",
+      "tolerance_key": "float.scores_max_abs",
+      "bound": null,
+      "status": "not-run",
+      "metrics": {
+        "max_abs": 3.635883331298828e-06,
+        "mean_abs": 7.658395551790324e-10,
+        "p99_abs": 2.5015651772265318e-11,
+        "values": 56150,
+        "cases": 58,
+        "worst_case": "nested-org-location",
+        "non_finite_cases": []
+      },
+      "detail": "no numeric bound for float.scores_max_abs in the protected tolerances"
+    },
+    {
+      "id": "export.entities",
+      "stage": "export",
+      "substage": "export",
+      "gate": "G2",
+      "title": "export: entities decoded from Python ORT logits vs reference",
+      "tolerance_key": "entities.identity",
+      "bound": {
+        "entities.identity": null,
+        "entities.order_swap_max_confidence_delta": null,
+        "entities.threshold_flip_max_score_margin": null
+      },
+      "status": "not-run",
+      "metrics": {},
+      "detail": "entities.identity, entities.order_swap_max_confidence_delta, entities.threshold_flip_max_score_margin not in the protected tolerances"
+    },
+    {
+      "id": "export.entities.confidence",
+      "stage": "export",
+      "substage": "export",
+      "gate": "G2",
+      "title": "export: entities confidence vs reference (matched items)",
+      "tolerance_key": "float.confidence_max_abs",
+      "bound": null,
+      "status": "not-run",
+      "metrics": {},
+      "detail": "entities were not compared: entities.identity, entities.order_swap_max_confidence_delta, entities.threshold_flip_max_score_margin not in the protected tolerances"
+    },
+    {
+      "id": "export.batch_evidence.span_logits",
+      "stage": "export",
+      "substage": "export",
+      "gate": "G2",
+      "title": "export: a padded batch exercises 'span_logits'",
+      "tolerance_key": "float.padded_batch_vs_single_span_logits_relative",
+      "bound": null,
+      "status": "passed",
+      "metrics": {
+        "batches": [
+          "by-label-count-batch8"
+        ],
+        "padding_batches": [
+          "by-label-count-batch8"
+        ]
+      },
+      "detail": ""
+    },
+    {
+      "id": "export.batch.by-label-count-batch8.vs_single",
+      "stage": "export",
+      "substage": "export",
+      "gate": "G2",
+      "title": "export: batch 'by-label-count-batch8' vs own single rows",
+      "tolerance_key": "float.padded_batch_vs_single_span_logits_relative",
+      "bound": null,
+      "status": "not-run",
+      "metrics": {
+        "max_abs": 0.0,
+        "mean_abs": 0.0,
+        "p99_abs": 0.0,
+        "values": 50234,
+        "cases": 56,
+        "worst_case": "adjacent-entities",
+        "non_finite_cases": [],
+        "max_rel": 0.0,
+        "worst_case_rel": "adjacent-entities"
+      },
+      "detail": "no numeric bound for float.padded_batch_vs_single_span_logits_relative in the protected tolerances"
+    },
+    {
+      "id": "export.batch.by-label-count-batch8.vs_reference",
+      "stage": "export",
+      "substage": "export",
+      "gate": "G2",
+      "title": "export: batch 'by-label-count-batch8' vs reference",
+      "tolerance_key": "float.span_logits_relative",
+      "bound": null,
+      "status": "not-run",
+      "metrics": {
+        "max_abs": 0.0077599999999620195,
+        "mean_abs": 8.840239558865492e-05,
+        "p99_abs": 0.0006493399999948189,
+        "values": 50234,
+        "cases": 56,
+        "worst_case": "label-duplicate",
+        "non_finite_cases": [],
+        "max_rel": 2.06936742462825e-05,
+        "worst_case_rel": "truncation-max-len-40"
+      },
+      "detail": "no numeric bound for float.span_logits_relative in the protected tolerances"
+    },
+    {
+      "id": "export.batch.by-label-count-batch8-count.vs_single",
+      "stage": "export",
+      "substage": "export",
+      "gate": "G2",
+      "title": "export: batch 'by-label-count-batch8-count' vs own single rows",
+      "tolerance_key": "float.count_logits_max_abs",
+      "bound": null,
+      "status": "not-run",
+      "metrics": {
+        "max_abs": 0.0,
+        "mean_abs": 0.0,
+        "p99_abs": 0.0,
+        "values": 1120,
+        "cases": 56,
+        "worst_case": "adjacent-entities",
+        "non_finite_cases": []
+      },
+      "detail": "no numeric bound for float.count_logits_max_abs in the protected tolerances"
+    },
+    {
+      "id": "export.batch.by-label-count-batch8-count.vs_reference",
+      "stage": "export",
+      "substage": "export",
+      "gate": "G2",
+      "title": "export: batch 'by-label-count-batch8-count' vs reference",
+      "tolerance_key": "float.count_logits_max_abs",
+      "bound": null,
+      "status": "not-run",
+      "metrics": {
+        "max_abs": 4.7999999999603915e-05,
+        "mean_abs": 1.1610713392897035e-05,
+        "p99_abs": 3.800000000218518e-05,
+        "values": 1120,
+        "cases": 56,
+        "worst_case": "nested-org-location",
+        "non_finite_cases": []
+      },
+      "detail": "no numeric bound for float.count_logits_max_abs in the protected tolerances"
+    },
+    {
+      "id": "dotnet.count_logits",
+      "stage": "dotnet",
+      "substage": "dotnet-ids",
+      "gate": "G2",
+      "title": "dotnet: count_logits",
+      "tolerance_key": "float.count_logits_max_abs",
+      "bound": null,
+      "status": "not-run",
+      "metrics": {},
+      "detail": "no results for stage 'dotnet'"
+    },
+    {
+      "id": "dotnet.gate_decision",
+      "stage": "dotnet",
+      "substage": "dotnet-ids",
+      "gate": "G2",
+      "title": "dotnet: gate_decision",
+      "tolerance_key": "discrete.gate_decision",
+      "bound": null,
+      "status": "not-run",
+      "metrics": {},
+      "detail": "no results for stage 'dotnet'"
+    },
+    {
+      "id": "dotnet.span_logits",
+      "stage": "dotnet",
+      "substage": "dotnet-ids",
+      "gate": "G2",
+      "title": "dotnet: span_logits",
+      "tolerance_key": "float.span_logits_relative",
+      "bound": null,
+      "status": "not-run",
+      "metrics": {},
+      "detail": "no results for stage 'dotnet'"
+    },
+    {
+      "id": "dotnet.scores",
+      "stage": "dotnet",
+      "substage": "dotnet-ids",
+      "gate": "G2",
+      "title": "dotnet: scores",
+      "tolerance_key": "float.scores_max_abs",
+      "bound": null,
+      "status": "not-run",
+      "metrics": {},
+      "detail": "no results for stage 'dotnet'"
+    },
+    {
+      "id": "dotnet.entities",
+      "stage": "dotnet",
+      "substage": "dotnet-ids",
+      "gate": "G2",
+      "title": "dotnet: entities",
+      "tolerance_key": "entities.identity",
+      "bound": null,
+      "status": "not-run",
+      "metrics": {},
+      "detail": "no results for stage 'dotnet'"
+    },
+    {
+      "id": "dotnet.finite",
+      "stage": "dotnet",
+      "substage": "dotnet-ids",
+      "gate": "G2",
+      "title": "dotnet: finite",
+      "tolerance_key": "float.nan_or_inf",
+      "bound": null,
+      "status": "not-run",
+      "metrics": {},
+      "detail": "no results for stage 'dotnet'"
+    },
+    {
+      "id": "dotnet.text_entities",
+      "stage": "dotnet",
+      "substage": "dotnet-text",
+      "gate": "G2",
+      "title": "dotnet: text_entities",
+      "tolerance_key": "entities.identity",
+      "bound": null,
+      "status": "not-run",
+      "metrics": {},
+      "detail": "no results for stage 'dotnet'"
+    }
+  ],
+  "entity_exceptions": [],
+  "expected_tolerance_keys": {
+    "profile": "<family>/<profile>, must equal the manifest id",
+    "reference": "free text naming the reference outputs",
+    "discrete.normalized_text": "exact",
+    "discrete.words": "exact",
+    "discrete.character_maps": "exact",
+    "discrete.token_ids": "exact",
+    "discrete.attention_mask": "exact",
+    "discrete.word_positions": "exact",
+    "discrete.schema_positions": "exact",
+    "discrete.gate_decision": "exact",
+    "float.last_hidden_state_max_abs": 0.0001,
+    "float.count_logits_max_abs": 0.0005,
+    "float.span_logits_relative": 0.0001,
+    "float.scores_max_abs": 2e-05,
+    "float.confidence_max_abs": 2e-05,
+    "float.padded_batch_vs_single_span_logits_relative": 0.0001,
+    "float.nan_or_inf": "fail",
+    "float.report_only": [
+      "mean_abs",
+      "p99_abs"
+    ],
+    "entities.identity": "exact",
+    "entities.order_swap_max_confidence_delta": 2e-05,
+    "entities.threshold_flip_max_score_margin": 2e-05,
+    "provider_options": "{} on CPU; {use_tf32: 0} on CUDA",
+    "csharp_vs_python_same_machine_and_provider.span_logits_relative": "optional; not in the P-014 proposal"
+  },
+  "exit_code": 4
+}

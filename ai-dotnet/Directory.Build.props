@@ -1,0 +1,14 @@
+<Project>
+  <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '$(MSBuildThisFileDirectory)../'))" />
+
+  <PropertyGroup>
+    <!--
+      The ai-dotnet packages (Runtime.Onnx, Acquisition, Models.E5, Models.E5.Extensions.AI, Models.E5.MLNet) share one version and
+      release together from one commit (P-010). Scheme as for the tokenizer (docs/releasing.md in starlinghq/tokenizers, "Versions"): SemVer 2, 0.MINOR.PATCH-preview.N until the first Stable release; a published version is
+      immutable. The tokenizer keeps its own version and cadence; Directory.Packages.props pins it exactly.
+    -->
+    <VersionPrefix>0.1.0</VersionPrefix>
+    <VersionSuffix>preview.5</VersionSuffix>
+    <PackageReleaseNotes>https://github.com/starlinghq/starling/blob/main/docs/releases/ai-0.1.0-preview.5.md</PackageReleaseNotes>
+  </PropertyGroup>
+</Project>

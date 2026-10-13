@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="xunit.v3" />
+    <Using Include="Xunit" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="../Shared/EmbeddingGemma2/EmbeddingGemma2TestAssets.cs" Link="Shared/EmbeddingGemma2/EmbeddingGemma2TestAssets.cs" />
+    <Compile Include="../Shared/EmbeddingGemma2Images/EmbeddingGemma2ImageTestAssets.cs" Link="Shared/EmbeddingGemma2Images/EmbeddingGemma2ImageTestAssets.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../src/Starlings.Models.EmbeddingGemma2.Imaging.SkiaSharp/Starlings.Models.EmbeddingGemma2.Imaging.SkiaSharp.csproj" />
+  </ItemGroup>
+
+</Project>

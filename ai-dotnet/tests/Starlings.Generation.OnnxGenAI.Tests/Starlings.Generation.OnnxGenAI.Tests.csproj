@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="xunit.v3" />
+    <!-- CPU native runtime (native load and provider-failure tests). -->
+    <PackageReference Include="Microsoft.ML.OnnxRuntimeGenAI" />
+    <Using Include="Xunit" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="../Shared/Qwen35/*.cs" Link="Shared/Qwen35/%(Filename)%(Extension)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../src/Starlings.Generation.OnnxGenAI/Starlings.Generation.OnnxGenAI.csproj" />
+    <!-- Asset constants and the tokenizer location only. -->
+    <ProjectReference Include="../../src/Starlings.Models.Qwen35/Starlings.Models.Qwen35.csproj" />
+  </ItemGroup>
+
+</Project>

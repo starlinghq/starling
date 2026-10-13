@@ -1,0 +1,5 @@
+# Benchmark environment for bench_e5_matched.py on CPU (P-008). Same ONNX Runtime version as the C# harness
+# (Microsoft.ML.OnnxRuntime 1.30.0); same NumPy and tokenizers as the reference environment.
+onnxruntime==1.30.0
+numpy==2.4.6
+tokenizers==0.23.2

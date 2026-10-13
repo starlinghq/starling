@@ -1,0 +1,21 @@
+name: Upstream change
+description: An admitted model, tokenizer, or dependency changed upstream.
+labels: [upstream-change]
+body:
+  - type: input
+    id: upstream
+    attributes:
+      label: Upstream project and new revision
+    validations:
+      required: true
+  - type: input
+    id: verified
+    attributes:
+      label: Latest verified revision here
+  - type: textarea
+    id: impact
+    attributes:
+      label: What changed
+      description: Weights, tokenizer, template, config, code, or dependency. Tokenizer changes invalidate downstream fidelity.
+    validations:
+      required: true

@@ -1,0 +1,18 @@
+# Binding tolerances, set by Mark on 2026-10-08 (PR #4), plan 10.1.
+# Applies to ONNX Runtime fp32 (CPU EP, or CUDA EP with use_tf32=0) against CPU PyTorch fp32
+# at Kev code 6b719c3c, weights 9a45d25e, on decision-v7 and transfer-v4 development partitions.
+# Observed worst: 8.3e-5 (CPU), 8.1e-5 (CUDA); cached 1.7e-6; batch 6e-7; C# vs Python 3.0e-7.
+# The CPU LinearAttention kernel accounts for most of the error (kev.md, GPU results).
+profile: kev-0.8b/onnx-fp32
+reference: CPU PyTorch fp32, upstream kev.benchmark default LoadOptions
+float:
+  probability_max_abs: 2.0e-4
+  cached_vs_uncached_probability_max_abs: 1.0e-5
+  padded_batch_vs_single_probability_max_abs: 1.0e-5
+  nan_or_inf: fail
+  report_only: [mean_abs, p99_abs]
+discrete:
+  argmax_flips: 0  # except questions whose reference top-two margin is below 1.0e-4, each listed
+  accuracy: identical
+csharp_vs_python_same_machine_and_provider:
+  probability_max_abs: 1.0e-6

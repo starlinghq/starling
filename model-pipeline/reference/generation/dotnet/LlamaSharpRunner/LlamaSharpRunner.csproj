@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- M0 generation-backend check, lane B: llama.cpp through LLamaSharp. Versions in ../Directory.Packages.props. -->
+  <PropertyGroup>
+    <RootNamespace>GenCheck.LlamaSharpRunner</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="LLamaSharp" />
+    <PackageReference Include="LLamaSharp.Backend.Cpu" />
+    <PackageReference Include="LLamaSharp.Backend.Cuda12" />
+  </ItemGroup>
+</Project>

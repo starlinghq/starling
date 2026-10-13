@@ -1,0 +1,6 @@
+recipe_version: 1
+id: ms-marco-cpu
+plugin: bert-onnx-cpu-v1
+manifest: model-pipeline/candidates/ms-marco/profile.json
+reference_corpus: model-pipeline/corpora/five-models/reranking.jsonl
+reference_environment: model-pipeline/reference/encoder/requirements.txt

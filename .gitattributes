@@ -1,0 +1,9 @@
+* text=auto eol=lf
+*.cs text diff=csharp
+*.sln text eol=crlf
+*.ps1 text eol=crlf
+*.json text
+# Conformance fixtures must not be normalized: byte-exact expectations.
+model-pipeline/protected/** -text
+# Staged (unprotected) pilot LLM generation fixture: byte-exact as make_generation_fixture.py wrote it.
+ai-dotnet/tests/*/TestData/** -text

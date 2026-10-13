@@ -1,0 +1,24 @@
+name: Tokenizer issue
+description: Token IDs, offsets, decoding, or template output differ from the reference.
+labels: [tokenizers]
+body:
+  - type: input
+    id: profile
+    attributes:
+      label: Tokenizer package version and profile ID
+    validations:
+      required: true
+  - type: textarea
+    id: input
+    attributes:
+      label: Input text
+      description: Paste as-is. Mention invisible characters, normalization form, or encoding.
+    validations:
+      required: true
+  - type: textarea
+    id: diff
+    attributes:
+      label: Reference output versus our output
+      description: Name the reference implementation and its exact version.
+    validations:
+      required: true

@@ -1,0 +1,8 @@
+# Browser feasibility spike (docs/m0/browser-wasm-spike.md): quantized e5-small graphs, the native ONNX Runtime check
+# of them, and the headless browser driver. Same ONNX Runtime as the reference and the C# harness (1.30.0); the
+# quantizer and the fp16 converter are the ones shipped inside that wheel (onnxruntime.quantization,
+# onnxruntime.transformers.float16).
+onnxruntime==1.30.0
+onnx==1.23.1
+numpy==2.4.6
+playwright==1.63.0

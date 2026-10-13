@@ -1,0 +1,17 @@
+# P-014 spike, GPU (Linux x64, NVIDIA driver with CUDA 13 support). torch 2.14.1 from PyPI is the CUDA 13.0
+# build on Linux; onnxruntime-gpu 1.30.0 is built for CUDA 13. Same GLiNER2 pins as requirements.in.
+torch==2.14.1
+transformers==4.57.6
+tokenizers==0.22.2
+sentencepiece==0.2.2
+protobuf
+safetensors
+numpy
+pydantic>=2,<3
+requests
+tqdm
+urllib3
+peft
+gliner2 @ git+https://github.com/fastino-ai/GLiNER2@55656fbfa01d3d4a77485e1a1eeeaf682990ccdf
+onnx==1.23.1
+onnxruntime-gpu[cuda,cudnn]==1.30.0

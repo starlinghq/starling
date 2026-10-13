@@ -1,0 +1,540 @@
+# ai-dotnet
+
+.NET libraries, backend adapters, model implementations, samples, and benchmarks.
+
+Solution: `AI.slnx` (CPU projects and tests; what CI runs). Projects under `src/` and `tests/` inherit the shared build settings from `Directory.Build.props` and `Directory.Packages.props`. Packages are created when a real consumer needs them (plan section 4). `samples/` holds package consumers that are not in `AI.slnx` and do not inherit those settings.
+
+```sh
+export DOTNET_ROOT=~/.dotnet PATH=~/.dotnet:$PATH
+dotnet test --solution ai-dotnet/AI.slnx
+```
+
+## Packages
+
+| Package | Purpose | Status |
+| --- | --- | --- |
+| `Starlings.Runtime.Onnx` | ONNX Runtime session ownership, provider selection and validation, diagnostics, cancellation. | 0.1.0-preview.5 candidate, P-005 |
+| `Starlings.Models.E5` | multilingual-e5-small embeddings from text (owned tokenizer, `E5Tokenizer`) or token ids: right padding, mean pooling, L2 normalization, single and batch APIs. Ships the e5 asset lock (`E5ModelAssets`). | 0.1.0-preview.5 candidate, P-006 |
+| `Starlings.Acquisition` | Explicit download, verification and offline resolution of locked model assets. BCL only. | 0.1.0-preview.5 candidate, P-009 |
+| `Starlings.Models.E5.Extensions.AI` | Microsoft.Extensions.AI `IEmbeddingGenerator<string, Embedding<float>>` over `E5TextEmbedder`, with DI registration. Depends on `Microsoft.Extensions.AI.Abstractions` and `Microsoft.Extensions.DependencyInjection.Abstractions` only. | 0.1.0-preview.5 candidate, P-011 |
+| `Starlings.Models.<Encoder>` | Further encoders. | Later |
+| `Starlings.Models.Qwen35.Extensions.AI` | Microsoft.Extensions.AI `IChatClient` over `Qwen35ChatModel`: text roles, streaming text deltas that reassemble the response, finish reasons and usage, seeded sampling, strict option rejection, dedicated-thread execution, DI registration. Depends on `Models.Qwen35`, `Microsoft.Extensions.AI.Abstractions` and `Microsoft.Extensions.DependencyInjection.Abstractions` only. | 0.1.0-preview.5 candidate, P-017 |
+| `Starlings.Models.E5.MLNet` | ML.NET estimator and transformer over `E5TextEmbedder`: text column to `Vector<Single, 384>` (and an optional token-count column), one inference per row, optional look-ahead batching. Pipeline composition only; saving is unsupported. Depends on `Microsoft.ML` only. | 0.1.0-preview.5 candidate, P-012 |
+| `Starlings.Models.Gliner2` | GLiNER2 (`fastino/gliner2-base-v1`) English entity extraction with labels and threshold: Python-compatible text handling, owned tokenizer, one ONNX graph, GLiNER2's span decoding, offsets into the original text. Ships the asset lock (`Gliner2ModelAssets`). | 0.1.0-preview.5 candidate, P-015 |
+| `Starlings.Generation.OnnxGenAI` | ONNX Runtime GenAI 0.17.1 behind an adapter (provider selection without fallback, TF32 off, config overlays, reference-counted disposal) and the owned decode loop over pre-tokenized ids: greedy or seeded sampling, stop ids and strings, chunked prefill, UTF-8-safe streaming through the owned tokenizer, cancellation between steps, usage. References only `Microsoft.ML.OnnxRuntimeGenAI.Managed`. | 0.1.0-preview.5 candidate, P-016 |
+| `Starlings.Models.Qwen35` | Pilot LLM `Qwen/Qwen3.5-0.8B` chat: the pinned chat template rendered in C# (text subset), owned tokenizer, model defaults, asset locks (`Qwen35ModelAssets`), capability descriptor. | 0.1.0-preview.5 candidate, P-016 |
+| `Starlings.Models.EmbeddingGemma2` | EmbeddingGemma 2 (`google/embeddinggemma-2`) embeddings, **experimental**: text from the owned tokenizer (`EmbeddingGemma2Tokenizer`) or token ids, explicit named prompts, mean pooling with prompt tokens, L2 normalization, Matryoshka 768/512/256/128, inputs above 8,192 tokens rejected; images and interleaved text and images from decoded RGB (`EmbeddingGemma2MultimodalEmbedder`, no native dependency); videos and interleaved text, images and videos from decoded RGB frames (`EmbeddingGemma2Video`, upstream sampling at 1 fps up to 32 frames, 140 tokens per frame). Ships the asset locks (`EmbeddingGemma2ModelAssets.Lock` and `ImageLock`: Starling's graphs, release assets `embeddinggemma-2-onnx-r1` and `embeddinggemma-2-vision-onnx-r1`, placeholders until published). | 0.1.0-preview.5 candidate |
+| `Starlings.Models.EmbeddingGemma2.Extensions.AI` | `IEmbeddingGenerator<string, Embedding<float>>` over `EmbeddingGemma2TextEmbedder`; `IEmbeddingGenerator<DataContent, Embedding<float>>` and `IEmbeddingGenerator<IEnumerable<AIContent>, Embedding<float>>` over `EmbeddingGemma2MultimodalEmbedder` (image and video decoder hooks, unsupported content rejected): `Dimensions` maps to the Matryoshka sizes, explicit prompt option, DI. | 0.1.0-preview.5 candidate |
+| `Starlings.Models.EmbeddingGemma2.Imaging.SkiaSharp` | Decodes PNG and JPEG (GIF, BMP, WebP untested) with SkiaSharp 4.153.1 into `EmbeddingGemma2Image` with PIL's `convert("RGB")` rules (decoded RGB equal to PIL on the fixture images); 16-bit images rejected; EXIF orientation opt-in (deviation from upstream); 50 MP limit. The only ai-dotnet package with a native image dependency (`THIRD-PARTY-NOTICES.md`). | 0.1.0-preview.5 candidate |
+| `Starlings.Models.EmbeddingGemma2.Video.FFmpeg` | Decodes video files and streams into `EmbeddingGemma2Video` as torchcodec does (packet-scan metadata, upstream sampling, display matrix, FFmpeg's default RGB conversion; every frame of the 22 fixture videos equal to torchcodec's on FFmpeg 8.1) on the user's own FFmpeg 8.x shared libraries, through FFmpeg.AutoGen 8.1.0 (MIT bindings). Ships no FFmpeg binaries; GPL or nonfree builds rejected unless allowed; codec licensing is the deployer's (`THIRD-PARTY-NOTICES.md`). | 0.1.0-preview.5 candidate, built and drilled; **held from publishing** until the FFmpeg legal review (kickoff D2) |
+| `Starlings.Models.EmbeddingGemma2.MLNet` | ML.NET estimator and transformer: text column to `Vector<Single, 768/512/256/128>`, explicit prompt, look-ahead batching; Save unsupported. | 0.1.0-preview.5 candidate |
+| `Starlings.Abstractions` | Task contracts, capability metadata, result types. | When a second model family needs shared contracts. |
+| `Starlings.Hosting` | DI, resource admission, diagnostics. | P-019, if a measured workload justifies it. |
+
+The tokenizer is the published `Starlings.Tokenizers` package from [starlinghq/tokenizers](https://github.com/starlinghq/tokenizers), released on its own cadence. `ai-dotnet/Directory.Packages.props` pins it to one exact version (`[0.3.0-preview.1]`), and every model package depends on exactly that version: a newer tokenizer is not automatically certified for a qualified profile (plan 14), so the manifests record the qualified version (`processing.tokenizer.version`). An application can still reference a newer tokenizer explicitly; NuGet then warns with NU1608. The lock files record the package's SHA-512, and CI restores in locked mode, so every build uses the exact bytes that were qualified. To change tokenizer behavior, release a new tokenizer version first, then raise the pin and the manifests together.
+
+## Install and release candidate (P-010)
+
+The ai-dotnet packages share one version, `0.1.0-preview.5`, and are labeled **Preview** (plan 14): the declared scope passes the phased gates by hand (G0, G1, G2 and G6 in full, G3 to G5 and G7 as checklists), but the API and platform support may still change. Stable waits for qualification CI and controlled hardware (P-018). Scheme as for the tokenizer: SemVer 2, `0.MINOR.PATCH-preview.N` until Stable, published versions immutable. Evidence page: [`docs/releases/e5-0.1.0-preview.2.md`](../docs/releases/e5-0.1.0-preview.2.md); 0.1.0-preview.3 rebuilds the same code against tokenizer 0.1.0-preview.3 ([`docs/releases/e5-0.1.0-preview.3.md`](../docs/releases/e5-0.1.0-preview.3.md)), 0.1.0-preview.4 against tokenizer 0.1.0-preview.4 ([`docs/releases/e5-0.1.0-preview.4.md`](../docs/releases/e5-0.1.0-preview.4.md)); 0.1.0-preview.5 adds the EmbeddingGemma 2 packages against the same tokenizer ([`docs/releases/ai-0.1.0-preview.5.md`](../docs/releases/ai-0.1.0-preview.5.md)).
+
+```sh
+dotnet add package Starlings.Models.E5.Extensions.AI --version 0.1.0-preview.5   # or Starlings.Models.E5 alone
+dotnet add package Microsoft.ML.OnnxRuntime --version 1.30.0                              # the application picks CPU or GPU natives
+```
+
+Not on nuget.org yet: publishing waits for the `release` environment and the `Starlings` prefix reservation (`docs/kickoff.md`). Every package packs its README, MIT license expression, repository commit and symbols (`.snupkg`, SourceLink to the commit). Dependencies: `Runtime.Onnx` on `Microsoft.ML.OnnxRuntime.Managed [1.30.0]` only (never a native package); `Acquisition` on nothing; `Models.E5` on `Runtime.Onnx`, `Acquisition` and `Starlings.Tokenizers`, all exact; `Models.E5.Extensions.AI` on `Models.E5` (exact), `Microsoft.Extensions.AI.Abstractions` and `Microsoft.Extensions.DependencyInjection.Abstractions`; `Models.E5.MLNet` on `Models.E5` (exact) and `Microsoft.ML` (which brings no tokenizer package); `Models.Gliner2` on `Runtime.Onnx`, `Acquisition` and `Starlings.Tokenizers`, all exact; `Generation.OnnxGenAI` on `Microsoft.ML.OnnxRuntimeGenAI.Managed [0.17.1]` (never a native package; it brings `Microsoft.Extensions.AI.Abstractions` 9.8.0) and `Starlings.Tokenizers`, exact; `Models.Qwen35` on `Generation.OnnxGenAI`, `Acquisition` and `Starlings.Tokenizers`, all exact; `Models.Qwen35.Extensions.AI` on `Models.Qwen35` (exact), `Microsoft.Extensions.AI.Abstractions` 10.10.1 (which replaces the 9.8.0 the GenAI binding asks for) and `Microsoft.Extensions.DependencyInjection.Abstractions`.
+
+Samples: [`samples/E5Search`](samples/E5Search/README.md), explicit acquisition, offline load, e5 prefixes, cosine search, and the same through the Extensions.AI generator; [`samples/Gliner2Ner`](samples/Gliner2Ner/README.md), GLiNER2 entity extraction; [`samples/QwenChat`](samples/QwenChat/README.md), streaming console chat with the pilot LLM, through the typed API or (`--chat-client`) the `IChatClient` adapter. They reference packages only and build outside the repository.
+
+Release drill (`tools/release-drill-ai.sh`): from a clean clone of the committed `HEAD` and an empty private NuGet cache, packs the tokenizer and the ai-dotnet packages, checks every nuspec (version, MIT, readme, Preview label, commit, exact dependency list), the packed files (no model assets) and the symbols (SourceLink), pushes them to a temporary local folder feed, and copies the sample and a checker (`tools/release-drill/ai-consumer`) to a temporary directory outside the repository. Their `NuGet.config` lists only that feed (`Starlings.*`) and nuget.org, with no fallback folders and an isolated package cache. The drill fails on a project reference in the restore graph, a restored package that differs from the packed one, Microsoft.ML.Tokenizers or any other tokenizer package or native library in the graph, cache or build output, GPU natives in the CPU app, or a consumer file that names the repository path. It then acquires the model into an empty cache through the sample's `download` step (a real Hub download; `--seed-model-from <snapshot>` copies only `onnx/model.onnx` from a local snapshot first, `tokenizer.json` is always downloaded), and runs the sample's search and the checker without network (`unshare -rn` when available): expected top results, Extensions.AI equal to the typed API, the ML.NET transform equal to the typed API (row-wise and look-ahead batched) and its `Save` rejected, ids exact and embeddings within the bounds read from the protected `tolerances.yaml`. `--no-model` (CI job `ai release-candidate drill`) downloads only `tokenizer.json` and skips the embedding checks. The GLiNER2 package is packed, inspected and its sample built in every mode; `--seed-gliner2-from <dir>` (a directory holding `onnx/gliner2-entities-fp32.onnx`, needed while the graph's hosting is a placeholder) also seeds the graph into the isolated cache, downloads its `tokenizer.json` from the Hub through the sample's `download` step and runs the sample's extraction offline (expected entities, the 512-token rejection). The pilot LLM packages are packed and inspected and the QwenChat sample is restored (GenAI CPU natives, no GPU natives, no foreign tokenizer) and built in every mode; `--seed-qwen35-from <bundle>` also seeds the bundle's fp32x files, runtime `tokenizer.json` and `chat_template.jinja` (the hosting repository is private for now and the drill runs without a token), verifies them from the isolated cache through the sample's `download` step and asks one question offline (answer mentions Paris, `Stop` with 24 prompt tokens, no stop token in the text), then asks it again through the `IChatClient` adapter (`--chat-client`: the same answer, finish reason and usage). The restore check also requires exactly one `Microsoft.Extensions.AI.Abstractions`, 10.10.1, in the QwenChat graph. Packages and logs land in `artifacts/release-drill-ai/`.
+
+### ONNX Runtime packages
+
+The libraries reference only `Microsoft.ML.OnnxRuntime.Managed` (exactly 1.30.0, the version both e5 profiles were qualified with). The application picks the native runtime:
+
+| Deployment | Native package | Notes |
+| --- | --- | --- |
+| CPU (Linux x64, Windows x64, others ORT ships) | `Microsoft.ML.OnnxRuntime` 1.30.0 | CPU execution provider only. |
+| CUDA (Linux x64) | `Microsoft.ML.OnnxRuntime.Gpu.Linux` 1.30.0 | Contains the CPU provider too. Needs the CUDA 13 runtime (`libcudart`, `libcublas`, `libcublasLt`) and, for operators that use it, cuDNN 9 on the loader path. The package does not ship them. |
+
+Both native packages ship `libonnxruntime` under the same file name: reference exactly one. CPU users never download GPU natives. At session creation the component checks that the native library loads and reports the same version as the managed binding, and fails with `OnnxRuntimeUnavailableException` otherwise. CI checks that no `src/` project references a native ORT package or `Microsoft.ML.Tokenizers`, directly or transitively.
+
+## Runtime component (P-005)
+
+`OnnxModelSession.Create(path | bytes, OnnxSessionOptions)` loads a model once; reuse it.
+
+- **Ownership.** The session owns the native `InferenceSession`, `SessionOptions` and CUDA provider options. `Dispose` is idempotent; later calls throw `ObjectDisposedException`. A run already executing when `Dispose` is called finishes, and the native session is released when the last such run returns (reference count), so native memory is never freed under an active run. Outputs returned by `Run` belong to the caller. The encoder feeds ORT through `OrtValue`s over pooled (`ArrayPool`) buffers for inputs and the hidden-state output, disposed before the buffers go back to the pool; there is no per-call native output allocation on that path.
+- **Providers.** `Cpu`, or `Cuda` with `use_tf32=0` always set and read back (TF32 is a different, unsupported profile; there is no option to enable it). If the native package has no CUDA provider, its library cannot load, or the device is not visible, creation throws `OnnxProviderUnavailableException`. There is no silent CPU fallback. ORT still places some nodes on the CPU provider inside a CUDA session by design; `CapturePlacement = true` profiles the first run and publishes `Placement` (nodes and operators per provider, read from ORT's profiler output; ORT's C# API has no direct placement query).
+- **Diagnostics.** `Diagnostics`: native and managed ORT versions, available providers, session providers in priority order, provider options as ORT reports them, thread settings, optimization level, model path, size and SHA-256 (or verification against `ExpectedModelSha256`), model metadata, and input/output names, element types and (symbolic) dimensions.
+- **Threads.** `IntraOpNumThreads` and `InterOpNumThreads` (null keeps ORT defaults). Execution mode is sequential. On the M0 workstation 1 thread and the default give bit-identical e5 embeddings.
+- **Concurrency.** `Run` is safe to call from multiple threads on one session. `RunOptions` is per call, so one call's cancellation never affects another.
+- **Cancellation (plan 5.1).** Synchronous API only; nothing is wrapped in `Task.Run`. A token cancelled before the call prevents the run. A token cancelled during a run sets ORT's terminate flag, which the executor checks between graph nodes: the current operator finishes (on CUDA, kernels already queued complete), then the call throws `OperationCanceledException`. Latency is bounded by the longest single node. The session stays usable afterwards. The e5 encoder also checks the token between chunks of `MaxBatchSize` rows.
+
+## e5 encoder (P-006, partial)
+
+```csharp
+using var encoder = E5Encoder.Create(".../onnx/model.onnx", new E5EncoderOptions
+{
+    Session = new OnnxSessionOptions { ExpectedModelSha256 = "ca456c06b3a9505ddfd9131408916dd79290368331e7d76bb621f1cba6bc8665" },
+});
+float[] one = encoder.Embed(new EncoderInput(ids));                 // ids include <s> ... </s>, at most 512
+float[][] many = encoder.EmbedBatch(inputs);                        // or EmbedBatch(inputs, Span<float> destination)
+```
+
+- **Input.** `EncoderInput(ReadOnlyMemory<long> inputIds[, attentionMask])`: ids from the tokenizer with special tokens, already truncated. Longer than `MaxSequenceLength` (512), empty, ids outside the vocabulary, masks of another length, mask values other than 0/1, or an all-zero mask are rejected with `ArgumentException` before any inference runs. The encoder does not truncate: truncation (right) is the tokenizer's job.
+- **Batching.** Rows are right-padded with id 1 (`<pad>`) and mask 0 to the longest row of each chunk of `MaxBatchSize` (default 32) rows. `token_type_ids` are fed as zeros when the graph has that input (the e5 graph does). Padded rows already carrying a mask are accepted.
+- **Pooling.** Mean over positions with mask 1 (double accumulation, divide by `max(count, 1e-9)`), then `x / max(‖x‖₂, 1e-12)`, rounded to float once. Matches sentence-transformers `Pooling(mean)` + `Normalize`.
+- **Prefixes.** e5 expects `"query: "` or `"passage: "` at the start of the text. The encoder never sees text; whoever tokenizes adds the prefix to the text first. `E5TextEmbedder` does not add one either (`QueryPrefix` and `PassagePrefix` constants are provided).
+- **Tokenizer seam.** `IEncoderTokenizer.Tokenize(string) -> EncoderInput` and `E5TextEmbedder(IEncoderTokenizer, E5Encoder)`. `E5Tokenizer.FromFile(path, expectedSha256)` implements it over the owned tokenizer (`Starlings.Tokenizers`, profile `xlmr-unigram-e5`): special tokens added, right truncation to 512, no padding, optional SHA-256 check of `tokenizer.json`.
+
+## Model acquisition (P-009)
+
+Model weights are never in Git or in a code package (plan section 9). A package ships an **asset lock** instead: the Hub repository, the full commit SHA, and the exact files with size and SHA-256. The e5 lock is `E5ModelAssets.Lock` (`onnx/model.onnx` and `tokenizer.json`, 487 MB; a test checks it against `origin.files` of both registry manifests). Acquisition is a separate, explicit step; inference never downloads.
+
+```csharp
+// Setup (once, explicit, needs the network):
+await E5ModelAssets.DownloadAsync(new ModelAcquisitionOptions(), progress, ct);
+
+// Startup (offline; verifies, never downloads):
+E5ModelFiles files = E5ModelAssets.OpenLocal();
+using var encoder = E5Encoder.Create(files.ModelPath, new E5EncoderOptions
+{
+    Session = new OnnxSessionOptions { ExpectedModelSha256 = E5ModelAssets.ModelSha256 },
+});
+var tokenizer = E5Tokenizer.FromFile(files.TokenizerPath, E5ModelAssets.TokenizerSha256);
+var embedder = new E5TextEmbedder(tokenizer, encoder);
+```
+
+From a checkout: `ai-dotnet/tools/fetch-e5-model.sh [cache-dir]`, a wrapper over `dotnet run --project ai-dotnet/tools/Starlings.Acquisition.Tool -- download multilingual-e5-small [--cache <dir>]`. The tool also has `verify` (offline check), `lock` (print the lock as JSON) and `path`, and accepts a JSON lock file (`ModelAssetLock.ToJson`/`Load`) in place of the name.
+
+Generic API (`Starlings.Acquisition`, no dependencies beyond the BCL):
+
+- `ModelAssetLock(name, repository, revision, files)`: validated at construction. The revision must be a 40-character lowercase commit SHA (branch and tag names are rejected); file paths must be relative with forward slashes and no `..`, so a lock cannot write outside its snapshot. JSON format version 1.
+- `ModelAssetStore(options, httpClient?)`:
+  - `DownloadAsync(lock, progress?, ct)` is the only member that uses the network. It fetches `{Endpoint}/{repo}/resolve/{commit}/{path}`, streams to a partial file while hashing, checks size and SHA-256, flushes, then renames into the snapshot (atomic on one file system). Cached files are verified rather than downloaded again; a cached file that fails verification is downloaded again and replaced.
+  - `OpenLocal(lock)` is offline: it verifies the cached files and returns a `ModelSnapshot` (absolute paths through `GetFilePath`).
+  - `VerifyDirectory(lock, dir)` (static) verifies an existing directory, such as a Hub snapshot or a copied bundle.
+- **Cache.** `<root>/<owner>/<name>/<commit>/<path>`, the layout `tools/fetch-tokenizer-assets.sh` already uses. The root is `ModelAcquisitionOptions.CacheDirectory`, else `$STARLING_MODELS`, else the user cache directory (`$XDG_CACHE_HOME` or `~/.cache` + `/starlings/models` on Linux, `~/Library/Caches/starlings/models` on macOS, `%LOCALAPPDATA%\starlings\models` on Windows). Partial files and lock files live under `<root>/.downloads/`, so a snapshot directory only ever holds complete, verified files.
+- **Verification.** `CacheVerification.Sha256` (default) hashes every cached file on each resolution, about 1.7 s for the 487 MB e5 lock on the M0 workstation. `CacheVerification.Size` checks sizes only: it is cheap, but it does not detect same-size corruption. Use it when the consumer checks the digest itself (`ExpectedModelSha256` does for the model). Fresh downloads are always checked by size and SHA-256.
+- **Interruption and retries.** Network errors, truncated bodies, 408, 429 and 5xx are retried (`MaxAttempts`, default 4, with exponential `RetryDelay`). Each retry re-hashes the partial file and resumes with an HTTP range request. A server that ignores the range restarts from zero. If a resumed file fails the digest, the store starts over once from zero. Cancellation and process kills keep the partial file for the next call.
+- **Concurrency.** Acquisitions of the same file, in one process or across processes, serialize on an exclusive lock file (`FileShare.None`: a share mode on Windows, `flock` on Unix). The second caller finds the verified file and does not download it.
+- **Gated repositories.** `ModelAcquisitionOptions.HuggingFaceToken`, else `$HF_TOKEN` (turn this off with `UseEnvironmentToken = false`). The token is sent as `Authorization: Bearer` only to the endpoint (same scheme, host and port) for Hub-layout files, and to explicit sources whose address is `https://huggingface.co/...` (`ModelAcquisitionOptions.TokenHosts`, exact host, default port; any other source host never receives it). The store follows redirects itself (at most 10, no https-to-http downgrade) and attaches the header per hop only when that hop qualifies: a relative redirect on huggingface.co keeps it, the redirect to the Hub's storage or CDN host (`cas-bridge.xethub.hf.co`, `*.cdn.hf.co`, signed URLs) does not get it. 401/403 on a huggingface.co source maps to `ModelAssetAccessDeniedException` with private-repository and token guidance. The token never appears in messages or `ToString`.
+- **Failures** (all derive from `ModelAcquisitionException`, with repository, revision and asset path):
+
+| Exception | When | Message includes |
+| --- | --- | --- |
+| `ModelAssetMissingException` | Offline resolution finds files absent. | Missing paths, the directory searched, and the exact API call and repository command that download them. |
+| `ModelAssetIntegrityException` | Size or SHA-256 differs (cache or download). | Expected and actual size and digest, file path. |
+| `ModelAssetAccessDeniedException` | HTTP 401/403. | Gated, private or unknown repository; accept the license on the repository page and pass a token, or check the token that was sent. `TokenProvided` tells which. |
+| `ModelAssetNotFoundException` | HTTP 404. | The revision or file does not exist; the lock may be wrong or the revision was removed upstream. |
+| `ModelAssetDownloadException` | Network or server failure after all attempts, or an unexpected status. | Last status, attempts, where the partial file is kept. |
+
+Not done: the resolved lock is not written next to the cache (the lock is already immutable and shipped in code); no parallel per-file downloads; no `HF_ENDPOINT` or proxy settings beyond an injected `HttpClient`; no read-idle timeout on the body (cancellation bounds it); no cache eviction or garbage collection.
+
+## Microsoft.Extensions.AI embedding generator (P-011)
+
+`Starlings.Models.E5.Extensions.AI` exposes e5 through the standard contract, so code written against `IEmbeddingGenerator<string, Embedding<float>>` (and Microsoft.Extensions.AI middleware such as logging, caching or OpenTelemetry) uses it unchanged.
+
+```csharp
+E5ModelFiles files = E5ModelAssets.OpenLocal();                       // offline, verified (P-009)
+using IEmbeddingGenerator<string, Embedding<float>> generator = E5EmbeddingGenerator.Create(files,
+    new E5EmbeddingGeneratorOptions { InputType = E5InputType.Query }); // default: E5InputType.None
+var embeddings = await generator.GenerateAsync(["how much protein should a female eat"]);
+
+// Or with DI; the container owns the generator, which owns the encoder and session.
+services.AddE5EmbeddingGenerator(files);
+services.AddEmbeddingGenerator(sp => sp.GetRequiredService<E5EmbeddingGenerator>()).UseLogging(); // optional middleware
+```
+
+- **Why one adapter package per model family.** The plan's single `Starlings.Extensions.AI` would make every embedding consumer depend on the generation backend that P-017's `IChatClient` needs, and the reverse, before a shared abstractions package exists (plan section 4 creates `Starlings.Abstractions` only when a second model family needs it). Plan 15.1 asks to keep the Microsoft.Extensions.AI dependency in the adapter; this keeps it there and keeps `Starlings.Models.E5` free of it.
+- **Construction and ownership.** `E5EmbeddingGenerator.Create(E5ModelFiles, options)` loads the model and tokenizer with both SHA-256 digests enforced and owns the encoder and session. `new E5EmbeddingGenerator(E5TextEmbedder, options)` wraps an existing embedder and owns nothing, so one loaded model can serve both the typed API and the adapter. `Dispose` is idempotent; afterwards calls fail with `ObjectDisposedException`. `AddE5EmbeddingGenerator(files | factory)` registers the concrete generator as a singleton created on first resolution and `IEmbeddingGenerator<string, Embedding<float>>` resolving to the same instance (`TryAdd`, so a pipeline registered with `AddEmbeddingGenerator` afterwards takes over that service).
+- **Metadata.** `GetService(typeof(EmbeddingGeneratorMetadata))`: provider `starlings.onnxruntime`, model id `intfloat/multilingual-e5-small@614241f622f53c4eeff9890bdc4f31cfecc418b3` (repository and full commit SHA), dimensions 384, no provider URI. Each `Embedding<float>` carries the same model id and a creation time. `GetService` also returns the `E5TextEmbedder` and `E5Encoder` (session diagnostics).
+- **Prefixes are explicit.** e5 expects `"query: "` or `"passage: "`. The generator adds nothing by default (`E5InputType.None`). `E5EmbeddingGeneratorOptions.InputType = Query | Passage` prepends the prefix to every value; one request can override it with `AdditionalProperties["e5_input_type"]` (an `E5InputType` or its name). Existing prefixes are never detected or removed.
+- **Request options.** `Dimensions` must be null or 384 (no Matryoshka truncation), `ModelId` null or the generator's model id, `RawRepresentationFactory` null, and `AdditionalProperties` may hold only `e5_input_type`. Anything else fails with `NotSupportedException` instead of being ignored.
+- **Batching.** One call embeds all values in input order through `E5TextEmbedder.EmbedBatch`: the encoder runs consecutive ONNX Runtime calls of at most `MaxBatchSize` rows (default 32, set through `E5EmbeddingGeneratorOptions.Encoder`), each right-padded to its own longest row. All values are tokenized first and all vectors are held until the call returns; temporary tensors are bounded by `MaxBatchSize`. `Usage.InputTokenCount` and `TotalTokenCount` are the tokens fed to the model (special tokens and any prefix included, after truncation to 512).
+- **Synchronous execution.** `GenerateAsync` tokenizes and runs ONNX Runtime on the calling thread and returns a completed task; it does not offload to the thread pool (plan 5.1). Wrap it in `Task.Run` if the caller must not block. Errors are reported through the returned task, never thrown synchronously.
+- **Cancellation.** A token cancelled before the call returns a cancelled task without tokenizing. During the call it is checked before each value is tokenized, before each `MaxBatchSize` chunk, and between graph nodes inside a run (the runtime component's node-boundary semantics above): the current operator finishes, then the task is cancelled. Nothing partial is returned and the generator stays usable. Measured on the real model: 32 x 512 tokens cancelled 200 ms in returned 2.9 ms later.
+- **Concurrency.** Concurrent calls on one generator are safe (the encoder is).
+
+Evidence (`tests/Starlings.Models.E5.Extensions.AI.Tests`, 25 tests, 2026-10-09, M0 workstation CPU): on the real model, all 46 fixture texts in one call are bit-identical to `E5TextEmbedder.EmbedBatch` and, one value per call, to `E5TextEmbedder.Embed`; against the protected embeddings max abs 2.33e-7 (bound 1e-5 from the protected `tolerances.yaml`); usage equals the protected token counts. On the weight-free e5-signature graph (runs in CI): chunked batch order, usage, prefixes, option rejection, synchronous completion, cancellation before and during tokenization and before the first chunk, disposal and ownership, concurrent calls, the generic interface and its extension methods (`GenerateVectorAsync`, `GenerateAndZipAsync`), a `UseLogging().UseDistributedCache()` pipeline built with `AsBuilder()`, and DI with and without `AddEmbeddingGenerator(...).UseLogging()`.
+
+Not done: no `IEmbeddingGenerator<string, Embedding<Half>>` or other embedding types; no automatic offload or bounded queue; no CUDA run of the adapter (it has no provider-specific code); `CreatedAt` uses the system clock rather than an injected `TimeProvider`.
+
+## ML.NET embedding transform (P-012)
+
+`Starlings.Models.E5.MLNet` composes e5 into ML.NET pipelines: `IEstimator<E5EmbeddingTransformer>` and `ITransformer` that map a text column to an embedding column. It is a composition adapter over `E5TextEmbedder`, not a second implementation.
+
+```csharp
+var ml = new MLContext();
+var pipeline = ml.Transforms.ApplyE5Embedding(E5ModelAssets.OpenLocal(), "Embedding", "Text",
+    new E5EmbeddingOptions { Prefix = E5TextPrefix.Passage, TokenCountColumnName = "Tokens" });
+using var model = pipeline.Fit(data);          // validates the schema and loads the model; trains nothing
+IDataView embedded = model.Transform(data);    // lazy; Vector<Single, 384> "Embedding", Int32 "Tokens"
+// ml.Transforms.ApplyE5Embedding(embedder, ...) wraps an existing E5TextEmbedder instead (owns nothing).
+```
+
+- **Name.** One adapter package per model family, as for `Starlings.Models.E5.Extensions.AI` (reasons above): `Models.E5` stays free of ML.NET, and an ML.NET user does not pull Microsoft.Extensions.AI or the reverse. `MLNet` rather than `ML` because ML.NET's own namespace is `Microsoft.ML`: a `...Models.E5.ML` namespace makes `ML.` ambiguous next to it, and `MLNet` is the name this table and the plan already used.
+- **Schema.** The output schema is the input schema (every column at its own index) plus the embedding column, `Vector<Single, 384>` of known size (the dimension comes from the graph; the estimator declares 384 before loading and checks it at `Fit`), plus the optional `Int32` token-count column (special tokens and any prefix included, after truncation to 512). An output name equal to an input name hides that column, as in every ML.NET transform. The text column must be a scalar `String` (`ReadOnlyMemory<char>`); a missing column or another type fails in `Fit`, both `GetOutputSchema` overloads, `Transform` and `GetRowToRowMapper` with `ArgumentOutOfRangeException` naming the column. Results are fixed-size, so no variable-length representation is needed.
+- **Cursor and getter lifecycle, no repeated inference.** `Transform` computes nothing. A cursor that requests an output column embeds a row the first time one of its output getters is called on it and caches the vector and token count for that row (keyed by position and text, so a prediction engine whose position does not advance never gets a stale row); every further call to either getter on that row reuses them. Rows whose getters are never called are not embedded; cursors that request only pass-through columns do not read the text column. Getter type mismatches and inactive columns fail with `InvalidOperationException`.
+- **Batching.** A row cursor pulls one row at a time, so it cannot batch by itself (plan 15.2). `BatchSize = 1` (default) embeds row by row, bit-identical to `E5TextEmbedder.Embed`. `BatchSize > 1` enables look-ahead batching on sequential unshuffled cursors: a second input cursor over the text column reads the next `BatchSize` texts, which are embedded with one `EmbedBatch` call (chunked to `MaxBatchSize` and padded to the longest row, as the typed API does); upstream transforms of the text column therefore run twice. Each main-cursor row id is compared with the look-ahead row id, and a mismatch (an input whose cursors disagree on row order) throws instead of misaligning vectors. Shuffled cursors and prediction engines stay row-wise; with batching, `GetRowCursorSet` returns one batched cursor (the contract allows fewer cursors than requested). Measured once on the M0 workstation CPU, warm session: 256 similar 15-token texts in 0.80 s batched (16) against 2.2 s row-wise; the 46 fixture texts (2 to 512 tokens) in 2.8 s batched against 0.64 s row-wise, because short rows are padded to the longest. Hence opt-in. For bulk feature generation the typed batch API stays the fastest route (sort by length, then `EmbedBatch`), and its results load with `LoadFromEnumerable`.
+- **Threads.** The transformer and its views are immutable. Row-wise, `GetRowCursorSet` wraps each input cursor, so `n` cursors embed concurrently on the shared encoder (safe for concurrent calls); each cursor is used by one thread at a time, as ML.NET requires.
+- **Null and empty text.** ML.NET has no null text: a null `string` becomes an empty `ReadOnlyMemory<char>`. Both are embedded as the empty string (`<s></s>`, 2 tokens), like `E5TextEmbedder.Embed("")`.
+- **Prefixes are explicit.** `E5EmbeddingOptions.Prefix` = `Query` or `Passage` prepends `"query: "` or `"passage: "`; the default `None` adds nothing, as in the Extensions.AI adapter. Existing prefixes are never detected.
+- **Cancellation.** None: ML.NET cursors and getters take no `CancellationToken`. A getter that is embedding returns when its row or batch is done; stop calling `MoveNext` and dispose the cursor to stop. Cancellable work uses the typed API.
+- **Ownership.** `ApplyE5Embedding(E5ModelFiles, ...)` loads the model at each `Fit` (model and tokenizer SHA-256 enforced), and the returned transformer owns the encoder and session; `TransformerChain.Dispose` disposes it. `ApplyE5Embedding(E5TextEmbedder, ...)` and `new E5EmbeddingTransformer(embedder, ...)` own nothing. `Dispose` is idempotent; afterwards `Transform` fails with `ObjectDisposedException`, and getters of earlier views of an owning transformer fail when they reach the disposed encoder.
+- **Persistence: unsupported (P-013 boundary).** Plan 15.2 keeps persistence unsupported until an external consumer can restore the full model contract without undocumented internal APIs. Loading a custom transformer through `MLContext.Model.Load` needs ML.NET's loader registration (`LoadableClass` and the `ModelLoadContext` machinery), and a fresh-process round trip that resolves the assets through the P-009 lock has not been built or tested. So `Save` throws `NotSupportedException` (also inside a chain) naming the external-bundle route: the model contract is `E5ModelAssets.Lock` (repository, full commit SHA, SHA-256 per file) plus the column names and `E5EmbeddingOptions`; save the rest of the pipeline and, after loading it, append `ApplyE5Embedding(E5ModelAssets.OpenLocal(), ...)` with the same names and options.
+- **Dependencies.** `Microsoft.ML` 5.0.0, which brings Microsoft.ML.CpuMath, Microsoft.ML.DataView, Newtonsoft.Json, System.CodeDom, System.Numerics.Tensors and the LdaNative/CpuMathNative native libraries, and no tokenizer package. CI's dependency-boundary step fails if Microsoft.ML.Tokenizers appears under any library, or ML.NET in a library other than this adapter. `SchemaShape.Column` has no public constructor in ML.NET 5, so the estimator derives its output shape through a public custom-mapping estimator rather than reflection.
+
+Evidence (`tests/Starlings.Models.E5.MLNet.Tests`, 25 tests, 2026-10-10, M0 workstation CPU): on the real model, the 46 fixture texts through the fitted transformer are bit-identical to `E5TextEmbedder.Embed` (max abs 2.33e-7 against the protected embeddings, bound 1e-5 from the protected `tolerances.yaml`), token counts equal the protected ids, look-ahead batches of 16 are bit-identical to `EmbedBatch` over the same rows (and, on this CPU, to the row-wise values), and disposing a fitted chain releases its session. On the weight-free e5-signature graph (runs in CI): output schema and estimator shape, hidden input columns, schema errors for a missing, numeric and vector column, option validation, exactly one inference per row with five getter calls per row, no inference or text read for pass-through cursors, getter type errors, null and empty text, `CreateEnumerable` round trip, prefixes, `Fit`/`Transform`/`Preview` in a chain, a four-cursor `GetRowCursorSet` on four threads (each row once, values exact), look-ahead batching (batch sizes, skipped rows, the row-order mismatch error, row-wise fallback for shuffled cursors and cursor sets), a prediction engine, `Save` rejected alone and in a chain, disposal and ownership, and the capability descriptor.
+
+Not done: persistence (P-013); a CUDA run of the transform; classification or reranking transforms; a batch-to-feature helper beyond the typed API; length bucketing inside look-ahead batches.
+
+## Fidelity stage results (P-007)
+
+`tools/Starlings.Fidelity.Tool` runs the C# e5 path on the protected fixture cases and writes stage results for `model-pipeline evaluate` (format: `model-pipeline/src/model_pipeline/results.py`): `tokenizer.results.json` (stage 1, `E5Tokenizer` ids and masks per fixture text) and `dotnet.results.json` (stage 3: embeddings from fixture ids, from text, the protected padded batch, all cases in padded batches of 16, one text batch, and with `--hidden` the last hidden states from the same session). It applies no thresholds and never writes under `model-pipeline/protected/`; the evaluator reads the bounds from the profile's protected `tolerances.yaml`.
+
+```sh
+dotnet run --project ai-dotnet/tools/Starlings.Fidelity.Tool -c Release -- e5 --out <dir> [--snapshot <dir>] [--hidden]
+```
+
+The model is resolved like the tests do (`--snapshot`, else `$STARLING_E5_SNAPSHOT`, else the acquisition cache), with the tokenizer and model SHA-256 enforced. The tool references the CPU native runtime and runs the `onnx-fp32-cpu` profile only. See `model-pipeline/README.md` for the evaluator and `model-pipeline/reference/README.md` for the end-to-end commands.
+
+## GLiNER2 entity extraction (P-015)
+
+`Starlings.Models.Gliner2` implements the declared GLiNER2 profile `gliner2-base-v1/onnx-fp32-cpu` (`model-pipeline/registry/gliner2-base-v1/onnx-fp32-cpu/manifest.yaml`; spike and feature inventory in [`docs/m0/gliner2-p014.md`](../docs/m0/gliner2-p014.md)). Contract (kickoff, settled 2026-10-08, and the maintainer's P-015 decisions of 2026-10-10): English entity extraction with labels and a threshold.
+
+```csharp
+using var extractor = Gliner2EntityExtractor.Create(Gliner2ModelAssets.OpenLocal());
+Gliner2ExtractionResult r = extractor.Extract(text, ["person", "organization", "location"], threshold: 0.5f);
+// r.Entities: Label, Text, Start/End (UTF-16), ScalarStart/ScalarEnd (Unicode scalars), Confidence; r.GateOpen
+IReadOnlyList<Gliner2ExtractionResult> many = extractor.ExtractBatch(texts, labels);   // one label set per call
+// Staged API (fidelity, diagnostics): Prepare(text, labels) -> Gliner2ModelInput; RunModel(inputs) -> Gliner2ModelOutput; Decode(input, output, threshold)
+```
+
+- **Graph.** The Hub repository has no ONNX file. Starling exports route A (one graph from token ids and routing positions to count and span logits) with the pinned dynamo exporter (torch 2.14.1, opset 18; `model-pipeline/reference/gliner2/export_gliner2_onnx.py`), then `release_gliner2_onnx.py` strips the exporter's run-dependent metadata and inlines the weights: one 829,284,599-byte file, SHA-256 `0ba2db95b18116906ae4ec21aa62ef493e69e0780dcfdfa98c4456ecf4123265`, the same from two independent exports. `Gliner2ModelAssets.Lock` pins it with an explicit download source (the acquisition library's new per-file `https` source, lock `schema_version` 2) next to `tokenizer.json` from the Hub. The source is a placeholder until the maintainer creates the GitHub release (`Gliner2ModelAssets.ModelSourceIsPlaceholder`); until then place the graph in the snapshot directory or use `Gliner2ModelAssets.OpenDirectory`.
+- **Text semantics.** GLiNER2's normalization (append `.` unless the text ends in `.`, `!` or `?`), its regular-expression word splitter and per-word `str.lower()` are ported with CPython 3.11 semantics (Unicode 14): a scanner over Unicode scalars, Python's `\s` and `\w`, the four IGNORECASE folds of `[a-z]`, the full lower-case mapping of U+0130 and Final_Sigma. Unpaired surrogates are rejected. Characters unassigned in Unicode 14 may differ (newer .NET Unicode data).
+- **Order and thresholds.** Exact, except items whose reference confidences are within 2e-5 may swap, and a threshold flip is allowed only when the reference score is within 2e-5 of the threshold (decision 2).
+- **Long inputs.** Texts above 512 tokens, schema prefix included, throw `Gliner2InputTooLongException` (an `ArgumentException` with `TokenCount`, `MaxTokens`, `InputIndex`); nothing is truncated. GLiNER2 itself does not truncate (decision 3).
+- **Offsets.** Into the original text, never past its end: GLiNER2's offsets index the normalized text, so a span over the appended `.` ends one past the input. Such spans are clamped to the input length (whitespace exposed by the clamp trimmed), and a span of only the appended `.` is dropped; `Text == input[Start..End]` always. No fixture case at its threshold has such a span, so public results equal GLiNER2's on the corpus (decision 4).
+- **Not offered** (`Gliner2Capabilities.All`, unsupported): classification, relation and structured extraction, GLiNER2's plain de-duplicated output, inputs over 512 tokens, the `max_len` word cap, `extract_long`, per-label thresholds, explicit overlap policies, mixed label sets in one batch, TF32, fp16. Label descriptions are implemented but untested (one development case). The closed count gate is implemented but has no fixture (untested).
+
+Evidence, 2026-10-10, Linux x64 i7-5820K and RTX 4060 Ti (GPU 1), ORT 1.30.0, against the protected development fixtures `model-pipeline/protected/gliner2-base-v1/onnx-fp32-cpu/extraction.jsonl` (58 cases, accepted in PR #19) with the bounds read from each profile's protected `tolerances.yaml` (set in PR #21; the values proposed in `docs/m0/gliner2-p014.md` section 6). 54 cases are in the contract (2 over 512 tokens are rejected as specified, 2 use the `max_len` word cap):
+
+| Run | Inputs exact | Entities | Count logits max abs | Span logits max abs / max rel | Scores max abs | Confidence max abs | Padded batch vs single (span logits) |
+| --- | --- | --- | ---: | ---: | ---: | ---: | ---: |
+| CPU | 54/54 | 54/54 exact, 0 swaps, 0 flips | 4.6e-5 | 7.8e-3 / 1.9e-5 | 3.7e-6 | 1.8e-6 | 0 (bit-identical) |
+| CUDA, `use_tf32=0` | 54/54 | 54/54 exact, 0 swaps, 0 flips | 5.0e-5 | 4.0e-3 / 1.2e-5 | 2.5e-6 | 1.9e-6 | 1.4e-5 relative |
+
+Discrete checks without the model: the splitter and lower-casing match recorded Python output on 46 tokenizer-fixture cases, 58 extraction cases and 15 adversarial strings run through GLiNER2's own splitter (`tests/Starlings.Models.Gliner2.Tests/Data/`); Python's `\s`, `\w`, `str.lower()` and Final_Sigma context are compared over every Unicode scalar value; the reference logits of all 58 cases decode to the reference entities exactly. The staged evaluator on the C# stage results (fidelity tool below) and the Python export stage, with the protected tolerances: every check of stages 1 to 4 passed, G1 and G2 passed, C# span logits bit-identical to Python ONNX Runtime (`docs/evidence/p015-gliner2-dotnet/`). CUDA placement: 759 nodes on CUDA, 33 shape nodes on CPU, as in P-014.
+
+Tests: `tests/Starlings.Models.Gliner2.Tests` (in `AI.slnx`; the text-semantics, splitter, decoder, asset and capability tests run in CI; the input-exactness and weight-free-graph behaviour tests need the pinned `tokenizer.json`; model tests need the graph) and `tests/Starlings.Models.Gliner2.Tests.Cuda` (local only, opt-in as for e5). Assets: `$STARLING_GLINER2_SNAPSHOT` (a directory with `tokenizer.json` and `onnx/gliner2-entities-fp32.onnx`), else the acquisition cache; `tokenizer.json` alone is also found where `tools/fetch-tokenizer-assets.sh` puts it.
+
+Stage results for `model-pipeline evaluate` (task `entity-extraction`, format version 2):
+
+```sh
+dotnet run --project ai-dotnet/tools/Starlings.Fidelity.Tool -c Release -- gliner2 --out <dir> [--snapshot <dir>] [--threads 1]
+```
+
+It writes `tokenizer.results.json` (the owned C# processor) and `dotnet.results.json` (stage 3 from the fixture inputs: ids, positions, count logits, valid span logits, entities; stage 4 from text: `text_entities`; padded batches of both). Entity offsets are Unicode scalars of the normalized text. The four cases outside the contract are produced through internal paths of the package (the word cap; no length limit) so the report covers every protected case, and are listed in `environment.cases_outside_contract`.
+
+## Generation backend and pilot LLM (P-016)
+
+Two packages, split as `Runtime.Onnx` and the model packages are:
+
+- `Starlings.Generation.OnnxGenAI`: the backend adapter and the owned decode loop. ONNX Runtime GenAI's C# API is labeled preview upstream, so its types stay inside this package (plan 5.2); the decode loop (stop handling, streaming detokenization, cancellation, usage) is model-independent and serves the next decoder too. References only `Microsoft.ML.OnnxRuntimeGenAI.Managed` (exactly 0.17.1) and the owned tokenizer.
+- `Starlings.Models.Qwen35`: the pilot LLM profile. `Qwen/Qwen3.5-0.8B` at `2fc06364715b967f1860aea9cf38778875588b17` (kickoff, settled 2026-10-08): the asset locks, the chat template rendered in C#, the `qwen35-bpe-chat` tokenizer profile, model defaults and the capability descriptor. Manifests: `model-pipeline/registry/qwen3.5-0.8b/{ortgenai-fp32x-cpu,ortgenai-fp32x-cuda,ortgenai-fp16x-cuda}/manifest.yaml`.
+
+```csharp
+using var model = Qwen35ChatModel.Load(Qwen35ModelAssets.OpenLocal(Qwen35Variant.Fp32x));   // CPU; Fp16x needs the CUDA provider
+var messages = new[] { Qwen35Message.System("Be brief."), Qwen35Message.User("Why is the sky blue?") };
+foreach (GenerationUpdate u in model.GenerateStreaming(messages, new Qwen35ChatOptions { MaxNewTokens = 256 }, ct))
+{
+    Console.Write(u.Text);                      // complete text; never half a character
+    if (u.Result is { } r) { /* r.FinishReason (Stop | StopSequence | Length), r.Usage, r.StopTokenId, r.Timings */ }
+}
+GenerationResult r2 = model.Generate(messages, new Qwen35ChatOptions { EnableThinking = true, StopSequences = ["\n\n"] });
+// Advanced: Qwen35Prompt p = model.CreatePrompt(messages); model.Generate(Qwen35Prompt.FromTokenIds(ids));
+// Backend-level: TextGenerator over GenAIModel with any owned Tokenizer; GenAISequence for step-level access.
+```
+
+- **Prompt path.** `Qwen35ChatTemplate` renders the pinned `chat_template.jinja` (`273d8e0e...`) in C# for text conversations: system (first message only), user, assistant with optional reasoning content, `enable_thinking`, the generation prompt; Jinja `trim` with Python `str.strip()` semantics, reasoning extraction from `<think>` tags, the template's own errors ("No user query found in messages.", "System message must be at the beginning."). Tools, tool messages and images cannot be expressed (unsupported). The model checks the template file's SHA-256 at load. The owned tokenizer (`qwen35-bpe-chat`) turns the rendering into ids; GenAI receives ids only (`Generator.AppendTokens`), and its tokenizer, template engine and bundled `IChatClient` are never used. This replaces the declared interim dependency on GenAI's template engine: that engine cannot pass `enable_thinking` and needs a renamed tokenizer class to load (M0), while the C# subset renders all 21 text prompts of `prompts-v1` exactly. P-029 still owns qualification on a template corpus. The GenAI native library contains a tokenizer implementation (ONNX Runtime Extensions); no code path calls it.
+- **Decode loop** (`TextGenerator`). One GenAI generator per request. Prefill in chunks (`PrefillChunkTokens`; `Qwen35ChatOptions` defaults to 512 on CUDA and one call on CPU: GenAI computes logits for every position it is given, about 1 MB per prompt token in fp32, and a one-call 1,666-token prefill did not fit next to the fp32x weights on the shared 16 GB GPU; on CPU chunks gave bit-identical logits but were slower), then one step at a time: greedy (GenAI's argmax) or seeded sampling (temperature, top-k, top-p, explicit seed), stop at `<|im_end|>` / `<|endoftext|>` or extra stop ids (never part of the completion), stop strings (text cut before the match, held back while it could still match), incremental detokenization through the owned ByteLevel decoder (text held back until a UTF-8 sequence completes; the concatenation always equals one `Decode` of the ids).
+- **Semantics.** `MaxNewTokens` bounds completion tokens; at the limit no further step runs, so a stop token that would come next is not generated and the finish reason is `Length` (as transformers). Usage: prompt tokens fed, completion tokens returned (stop token excluded; stop-string tokens included). Cancellation is checked before the prefill, between prefill chunks and between decode steps, and throws `OperationCanceledException`; a running chunk or step is not interrupted. Streaming updates concatenate to the result; every update but the last carries text; the last carries the result. The APIs are synchronous on purpose (each step is blocking native work, plan 5.1); P-017's `IChatClient` offloads the enumeration.
+- **Fixed at load.** TF32 off on CUDA (`use_tf32=0`); `pad_token_id` overlaid to 248319, an embedding row the tokenizer never produces, because GenAI masks prompt positions equal to the configured pad id 248044, which is `<|endoftext|>` and can be typed by users (M0: step-0 log-probabilities off by 2.46 on that prompt). Overlays are recorded in `Qwen35ModelInfo.ConfigOverlays`; `genai_config.json` is never edited. A generic `TextGenerator` refuses prompts that contain the configured pad id.
+- **Requests and conversations.** Each request renders and prefills its whole conversation; concurrent requests share the weights only. On CUDA the native work of concurrent requests is serialized by default (`SerializeNativeCalls`): concurrent ONNX Runtime GenAI 0.17.1 generators on the CUDA provider produced wrong tokens, reproduced with the plain GenAI API. Requests still interleave step by step; CUDA throughput does not scale with concurrent requests. CPU requests run concurrently. Reusing a generator's state for the next turn is not offered: the template drops the think block of earlier assistant turns, so the state after turn one is not a prefix of turn two's rendering, and partial rewind is unsupported on the recurrent layers (M0). Batching several prompts in one generator is not offered.
+- **Assets.** Neither the GenAI build nor the runtime tokenizer is on the Hub. `model-pipeline/reference/generation/build_ortgenai_bundle.py` builds them from the pinned snapshot with the float32 `config.json` overlay and the onnxruntime-genai 0.17.1 builder (`exclude_mtp=true`; fp32x `-p fp32 -e cpu`, fp16x `-p fp16 -e cuda`); two builds give byte-identical files equal to the M0 digests. `Qwen35ModelAssets` locks each variant (graph files, `transformers-5.18.0/tokenizer.json`, `chat_template.jinja`).
+- **Hosting.** Every file of both locks, the upstream `chat_template.jinja` included, downloads from one place: the Hugging Face repository `Starlinghq/qwen3.5-0.8b-ortgenai` pinned at commit `95a690c1774f144957cb7b76986a9126e8b1bb5f` (`Qwen35ModelAssets.HostingRepository`, `HostingRevision`; sources are `https://huggingface.co/Starlinghq/qwen3.5-0.8b-ortgenai/resolve/95a690c1774f144957cb7b76986a9126e8b1bb5f/<snapshot path>`). Its layout equals the snapshot layout, and it also holds a README, NOTICE, LICENSE (Apache-2.0) and SHA256SUMS. The lock's digests, not the address, pin the bytes. **The repository is private for now** (`HostingIsPrivate`) and moves to an organization later: `Qwen35ModelAssets.DownloadAsync` needs a Hugging Face read token with access to it (`ModelAcquisitionOptions.HuggingFaceToken` or `$HF_TOKEN`); without one it fails with `ModelAssetAccessDeniedException` (401, message names the token options). Files already in the cache need no token, and `OpenLocal`/`OpenDirectory` never use the network. A bundle built with `build_ortgenai_bundle.py` (same digests) can be copied into the snapshot directory instead.
+
+### ONNX Runtime GenAI packages
+
+| Deployment | Native package (the application's choice) | Notes |
+| --- | --- | --- |
+| CPU | `Microsoft.ML.OnnxRuntimeGenAI` 0.17.1 | Brings `Microsoft.ML.OnnxRuntime` 1.30.0 (CPU). GenAI natives for linux-x64, linux-arm64, win-x64, win-arm64, osx-arm64; exercised on linux-x64 only. |
+| CUDA | `Microsoft.ML.OnnxRuntimeGenAI.Cuda` 0.17.1 | Brings `Microsoft.ML.OnnxRuntime.Gpu` 1.30.0. linux-x64 and win-x64 (CUDA 13 build); the CUDA runtime and cuBLAS are not shipped. Exercised on linux-x64 only. |
+
+Both ship `libonnxruntime-genai` under the same file name: reference exactly one. CPU users never download GPU natives. The libraries reference only the managed binding; CI fails a `src/` project that references a GenAI or ONNX Runtime native package. `GenAIModel.Load` checks the GenAI package versions in the application's dependency manifest against 0.17.1 (the managed assembly carries no version) and maps a missing native library, an unusable CUDA provider and a rejected model directory to `GenAIRuntimeUnavailableException`, `GenAIProviderUnavailableException` and `GenAIModelException`; there is no fallback to another provider. An application that also uses `Runtime.Onnx` (e5, GLiNER2) gets ONNX Runtime 1.30.0 from both, the one native stack the kickoff decision relies on; with CUDA it references `Microsoft.ML.OnnxRuntimeGenAI.Cuda` (which brings `Microsoft.ML.OnnxRuntime.Gpu`) instead of `Microsoft.ML.OnnxRuntime.Gpu.Linux`. That combination is untested.
+
+### Evidence
+
+2026-10-10, Linux x64 i7-5820K and RTX 4060 Ti (GPU 1, shared with another process), against the transformers 5.18.0 fp32 CPU reference on `prompts-v1` (22 prompts, greedy, 128 tokens; proposed as fixtures in `model-pipeline/protected/qwen3.5-0.8b/reference/`). Full record: [`docs/evidence/p016-qwen35/README.md`](../docs/evidence/p016-qwen35/README.md).
+
+| Variant, provider | Identical sequences | Step-0 max abs dlogp (all / top 5) | Template / prompt ids | Streaming, usage |
+| --- | ---: | --- | --- | --- |
+| fp32x, CPU | 22/22 | 1.38e-3 / 6.2e-4 | 21/21 / 22/22 exact | 22/22 |
+| fp32x graph, CUDA, `use_tf32=0` | 22/22 | 1.36e-3 / 6.0e-4 | same | 22/22 |
+| fp16x, CUDA | 18/22 (divergences only at reference margins below 0.015) | 0.065 / 0.027 | same | 22/22 |
+
+Max-token boundary, stop strings, extra stop ids, cached against uncached logits (3.4e-5 CPU, 6.6e-5 CUDA fp32x), chunked prefill (bit-identical on CPU), cancellation (3 ms after the token at the next step, then correct reuse), seeded sampling and the text path were checked in all three runs. Concurrent requests: ONNX Runtime GenAI 0.17.1 produced wrong tokens when generators stepped concurrently on the CUDA provider (10 to 19 of 48 requests, also with the plain GenAI API), so CUDA requests are serialized by default (0 of 144 wrong); CPU requests run concurrently (0 of 144 wrong).
+
+Tests: `tests/Starlings.Generation.OnnxGenAI.Tests` (decode loop against scripted sequences with the real tokenizer: stop tokens, the max-token boundary, stop strings, chunked prefill, cancellation, UTF-8 safety on 300 random byte-level sequences, validation, native load and provider-failure mapping; CI) and `tests/Starlings.Models.Qwen35.Tests` (template against the reference renderings, owned-tokenizer ids at the boundary, locks against the manifests, capability statuses in CI; CPU model tests skip without the bundle), plus the local-only `tests/Starlings.Models.Qwen35.Tests.Cuda` (all 22 prompts on fp32x CUDA, fp16x with the near-tie rule; opt-in as for e5). Assets: `$STARLING_QWEN35_SNAPSHOT` (a bundle directory), else the acquisition cache; `tokenizer.json` alone is also found where `tools/fetch-tokenizer-assets.sh` puts it. The tests read the reference fixture from `model-pipeline/protected/qwen3.5-0.8b/reference/` once accepted, else the staged copy in `tests/Starlings.Models.Qwen35.Tests/TestData/generation-v1/`.
+
+Fidelity runner (results in the format of `model-pipeline/reference/generation/compare.py`; no thresholds):
+
+```sh
+dotnet run --project ai-dotnet/tools/Starlings.Qwen35.Fidelity -c Release [-p:UseCuda=true] -- \
+  --bundle <dir> --variant fp32x|fp16x --device cpu|cuda --prompts model-pipeline/reference/generation/prompts-v1.jsonl \
+  --reference <run_reference.py output or the fixture dir> --out <dir> [--prefill-chunk 512] [--modes parity,semantics,stress]
+python model-pipeline/reference/generation/compare.py --reference <ref> --candidate <out>
+```
+
+## Microsoft.Extensions.AI chat client (P-017)
+
+`Starlings.Models.Qwen35.Extensions.AI` exposes the pilot LLM through the standard `IChatClient` contract, so code written against it (and Microsoft.Extensions.AI middleware such as logging, caching or OpenTelemetry) uses it unchanged. It is a mapping over `Qwen35ChatModel`, not a second decode loop: same template, tokenizer, decode loop, tokens. GenAI's bundled `OnnxRuntimeGenAIChatClient` is not used (it repeats the last piece at EOS and counts the stop token as output, `docs/m0/generation-backend-check.md`).
+
+```csharp
+using IChatClient client = Qwen35ChatClient.Create(Qwen35ModelAssets.OpenLocal(Qwen35Variant.Fp32x));   // owns the model
+ChatResponse r = await client.GetResponseAsync("Why is the sky blue?", new ChatOptions { MaxOutputTokens = 256 });
+await foreach (ChatResponseUpdate u in client.GetStreamingResponseAsync(messages, options, ct)) Console.Write(u.Text);
+// new Qwen35ChatClient(model) wraps a loaded model and owns nothing; services.AddQwen35ChatClient(files) registers it.
+```
+
+- **Why a per-family package.** As for the e5 adapter (P-011): a single `Starlings.Extensions.AI` would make every embedding consumer depend on the GenAI backend and the reverse. `Models.Qwen35` stays free of a direct Microsoft.Extensions.AI reference.
+- **Version.** `Microsoft.Extensions.AI.Abstractions` 10.10.1, the central version the e5 adapter uses. `Microsoft.ML.OnnxRuntimeGenAI.Managed` 0.17.1 asks for `>= 9.8.0` for its own chat client; the adapter's direct reference lifts the graph to 10.10.1 (lock files, release drill), and no Starling code touches GenAI's chat client, so the 9.8-compiled type is never loaded.
+- **Messages.** `ChatRole.System` (first message only, the template's rule), `User` and `Assistant` with `TextContent` (several are concatenated); `TextReasoningContent` in an assistant message becomes that turn's reasoning. `ChatOptions.Instructions` becomes the system message when the conversation has none (with one it is rejected). Tool messages, function calls and results, images, URIs and other content, and `AuthorName` fail with `NotSupportedException`; the template's own errors (`Qwen35TemplateException`) pass through.
+- **Responses.** One assistant message. `FinishReason` `Stop` (stop token or stop sequence) or `Length`; `Usage` input = prompt ids fed, output = completion ids returned (stop token excluded, tokens of a matched stop sequence included), total = sum; `ModelId` `Qwen/Qwen3.5-0.8B@2fc06364715b967f1860aea9cf38778875588b17`; `RawRepresentation` the `GenerationResult`. With thinking on, the text holds reasoning, `</think>` and answer unsplit (reasoning split unsupported).
+- **Streaming.** One `ChatResponseUpdate` per decoded text delta from the owned incremental detokenizer (never half a character, never a possible stop-sequence start that later matches). The last update carries any remaining text, `FinishReason` and a `UsageContent` equal to the non-streamed usage. All updates share `ResponseId`, `MessageId` (equal), `CreatedAt` and `ModelId`; `RawRepresentation` is the `GenerationUpdate`. Updates concatenate to the non-streamed text; `ToChatResponse()` gives the same text, finish reason and usage.
+- **Execution (plan 5.1).** Every prefill chunk and decode step is a blocking native call, so neither method is asynchronous I/O. Each request runs on its own dedicated background thread (`new Thread`, named `Qwen35ChatClient request`), never on the caller's thread or synchronization context and never on a thread-pool thread, which a multi-second generation would otherwise block. The native generator is created, stepped and released on that one thread, as in the synchronous API P-016 tested. The streaming worker runs at most `StreamingBufferCapacity` (default 16) updates ahead of the consumer and then waits, so a slow consumer slows generation instead of growing memory. `GetResponseAsync` returns its task before generation starts; validation errors are reported through the task or at the first `MoveNextAsync`.
+- **Cancellation.** A token already cancelled starts no work (no generator is created). Afterwards the token (and the enumerator's `WithCancellation` token) is checked between prefill chunks and between decode steps: the running chunk or step finishes, the request ends with `OperationCanceledException` (`GetResponseAsync`'s task is `Canceled`), the generator is released and the model stays usable. Breaking out of or disposing a stream cancels the worker the same way, and disposal waits for it, so no native work outlives the enumeration. On CPU the default prefill is one call and cannot be cancelled before it ends; set `Qwen35ChatClientOptions.Defaults.PrefillChunkTokens` to bound that. Latency is one decode step or one chunk (measured below).
+- **Concurrency.** Concurrent calls on one client are safe and independent. On CUDA the model serializes native work step by step (`SerializeNativeCalls`, P-016); on CPU requests run in parallel.
+- **Metadata and services.** `GetService(typeof(ChatClientMetadata))`: provider `starlings.onnxruntime-genai`, default model id as above, no provider URI. `GetService` also returns the client, the `Qwen35ChatModel` and its `Qwen35ModelInfo` (variant, provider, overlays); keyed requests return null. `AddQwen35ChatClient(files[, modelOptions, options] | factory)` registers the client as a singleton created on first resolution and `IChatClient` resolving to the same instance (`TryAdd`, so `services.AddChatClient(sp => sp.GetRequiredService<Qwen35ChatClient>()).UseLogging()` afterwards takes over that service). `Dispose` is idempotent; a client from `Create` disposes its model.
+
+Option mapping (anything not listed as mapped or accepted fails with `NotSupportedException`; a test fails if a Microsoft.Extensions.AI upgrade adds a `ChatOptions` property without a decision):
+
+| `ChatOptions` | Mapping |
+| --- | --- |
+| `MaxOutputTokens` | `Qwen35ChatOptions.MaxNewTokens` (at least 1). Default `Defaults.MaxNewTokens` (512). |
+| `StopSequences` | `Qwen35ChatOptions.StopSequences`, replacing the defaults. Finish reason `Stop`. |
+| `Temperature`, `TopP`, `TopK`, `Seed` | Greedy unless `Temperature > 0`, `TopP` or `TopK` is set; sampling then needs `Seed` (0 to 2^31-1) or a seeded `Defaults.Sampling`, else `NotSupportedException` (unseeded sampling is unsupported so that every sampled response is reproducible, P-016). `Temperature = 0` is greedy (with `TopP`/`TopK` rejected). `Seed` without sampling parameters re-seeds a sampling default, and has no effect on greedy decoding, which is deterministic. Unset fields come from `Defaults.Sampling` or the GenAI defaults (temperature 1, top-k 50, top-p 1). |
+| `AdditionalProperties["enable_thinking"]` | The template's `enable_thinking` (`bool` or JSON `true`/`false`); any other key is rejected. |
+| `Instructions` | The system message, when the conversation has none. |
+| `ModelId` | Null or the client's model id. |
+| `ResponseFormat` | Null or `ChatResponseFormat.Text`; JSON and JSON schema rejected (structured output unsupported). |
+| `Tools`, `ToolMode`, `AllowMultipleToolCalls` | No tools: accepted (`ToolMode` None/Auto and `AllowMultipleToolCalls` have no effect without tools). Any tool or `ToolMode` Required: rejected. |
+| `FrequencyPenalty`, `PresencePenalty` | Null or 0; anything else rejected. |
+| `Reasoning` | Rejected: no effort levels, reasoning not split; use `enable_thinking`. |
+| `ConversationId`, `AllowBackgroundResponses = true`, `ContinuationToken`, `RawRepresentationFactory` | Rejected: no server-side state, background responses or provider options object. |
+
+Evidence (2026-10-10, M0 workstation, Linux x64 i7-5820K under a load average of 10 to 16 from other processes; RTX 4060 Ti, GPU 1, shared with a resident process using 10.8 GB): `tests/Starlings.Models.Qwen35.Extensions.AI.Tests` (in `AI.slnx`). With scripted native sequences under the real template, tokenizer, decode loop and detokenizer (runs in CI with the pinned `tokenizer.json`): text, finish reasons (`<|im_end|>`, `<|endoftext|>`, stop sequence, length) and usage in both modes; streamed updates reassemble the response with emoji and CJK split across byte-level tokens; `ToChatResponse()`; prompt ids equal the typed API for roles, concatenated contents, reasoning content, instructions and `enable_thinking`; 24 unsupported requests rejected before any generation in both modes; invalid values; sampling mapping; the `ChatOptions` property guard; dedicated-thread execution with an unblocked caller; cancellation before start, between prefill chunks and between steps, early stream exit, reuse afterwards; concurrent requests equal sequential ones; metadata, services, disposal; a `UseFunctionInvocation().UseLogging().UseDistributedCache()` pipeline (cache hit, streaming, tools rejected through function invocation, cancellation) and DI with and without `AddChatClient(...).UseLogging()`. On the real model, from messages through the owned template (the 21 text prompts of `prompts-v1`; the tools prompt cannot be expressed), the non-streamed text equals the decoded reference completion, the streamed updates concatenate to it, and finish reason and usage (input = reference prompt ids, output without the stop token) are equal in both modes:
+
+| Run | Prompts, tokens | Cancel between steps (`Cancel()` to exception) | Cancel during chunked prefill of the 1,666-token prompt | Concurrent `GetResponseAsync` |
+| --- | --- | ---: | --- | --- |
+| fp32x CPU (24 tests, 242 s) | 21/21, first 32 tokens (`$STARLING_QWEN35_CHAT_TOKENS`) | 119 ms (one decode step on the loaded CPU) | 64-token chunks, cancelled 1 s in: 652 ms (one chunk), call 1.7 s instead of about 12 s | 4 prompts x 2 rounds equal the sequential and reference results |
+| fp32x CUDA, `use_tf32=0`, 128-token chunks (local, `tests/Starlings.Models.Qwen35.Tests.Cuda`, 24 tests) | 21/21, all 128 tokens | 24 ms | 16-token chunks, cancelled 300 ms in: 38 ms, call 342 ms | 4 prompts x 4 rounds (serialized) equal |
+
+After every cancellation the same client answered the next prompt equal to the reference. One CUDA finding: 6 simultaneous requests failed at generator creation with an ONNX Runtime BFC arena allocation error (1 MB) in the about 5.5 GB the resident process left: serialization orders native calls but does not bound how many generators hold device memory at once. With 4 the test passes. Bounding live requests is admission control (P-019); until then callers limit concurrency themselves on a shared GPU.
+
+Not done: function invocation, structured output, image input, reasoning split into `TextReasoningContent`, `ChatOptions.Reasoning`; no OpenTelemetry pipeline test; no fp16x run of the adapter (provider-agnostic, untested); no bounded request queue or admission control (P-019); `CreatedAt` uses the system clock.
+
+## EmbeddingGemma 2 text embeddings
+
+`Starlings.Models.EmbeddingGemma2` (+ `.Extensions.AI`, `.MLNet`) follows the e5 shape for `google/embeddinggemma-2` at `914f7f89142e33e77833254d9c9b90c3cef7303b`, admitted at Experimental (`model-pipeline/admissions/embeddinggemma-2.md`); images are the next section.
+
+```csharp
+var files = EmbeddingGemma2ModelAssets.OpenLocal();                                  // offline, verified
+using var encoder = EmbeddingGemma2Encoder.Create(files.ModelPath, new EmbeddingGemma2EncoderOptions
+{
+    Session = new OnnxSessionOptions { ExpectedModelSha256 = EmbeddingGemma2ModelAssets.ModelSha256 },
+});
+var embedder = new EmbeddingGemma2TextEmbedder(EmbeddingGemma2Tokenizer.FromFile(files.TokenizerPath), encoder);
+float[] q = embedder.Embed("how much protein should a female eat", EmbeddingGemma2Prompt.Query);
+// IEmbeddingGenerator: EmbeddingGemma2EmbeddingGenerator.Create(files), Dimensions = 768/512/256/128.
+```
+
+- **Graph.** The Hub repository has no ONNX file. `model-pipeline/reference/embeddinggemma2/export_embeddinggemma2_onnx.py` (dynamo, opset 20) then `release_embeddinggemma2_onnx.py` give one self-contained file, 1,084,327,317 bytes, SHA-256 `02cc7ecc...`; two independent exports were byte-identical. Inputs `input_ids`, `attention_mask`; outputs `last_hidden_state` (512, diagnostic) and `token_embeddings` (768, after `embedding_projection`). Hosted as a GitHub release asset (`embeddinggemma-2-onnx-r1`) with `NOTICE-embeddinggemma2-onnx.txt` (Apache-2.0, the card's Gemma Prohibited Use Policy sentence, modifications); `ModelSourceIsPlaceholder` stays true until the release exists.
+- **Pooling and prompts.** Mean over every attended token, prompt tokens included (`include_prompt: true`), double accumulation, L2 normalization. Prompts are the 20 names of `config_sentence_transformers.json` (`EmbeddingGemma2Prompt`), default none, never inserted implicitly; the prompt text is prepended before tokenization.
+- **Matryoshka.** 512, 256, 128: leading dimensions, normalized again (sentence-transformers `truncate_dim`); any other size is rejected.
+- **Limits.** More than 8,192 tokens (special tokens and prompt included) throws `EmbeddingGemma2InputTooLongException`; nothing is truncated. The text encoder rejects media placeholder and boundary ids (`<|image|>`, `<|audio|>`, `<|video|>`, ...), also when they come from literals in text; images go through `EmbeddingGemma2MultimodalEmbedder`.
+- **Batching.** Chunks in input order bounded by `MaxBatchSize` (16) and `MaxBatchTokens` (8,192 padded cells), right-padded with `<pad>` 0.
+- **CUDA.** `use_tf32=0`, forced by Runtime.Onnx.
+
+Evidence (2026-10-10/11, M0 workstation, i7-5820K, ORT 1.30.0; CUDA on GPU 1, RTX 4060 Ti shared with a 10.8 GB resident process), binding tolerances read from `model-pipeline/protected/embeddinggemma-2/*/tolerances.yaml`:
+
+| Check | CPU | CUDA (`use_tf32=0`) | Bound |
+| --- | --- | --- | --- |
+| 138 rows from ids vs reference, max abs / min cosine | 3.7e-7 / 0.99999999999473 | 3.6e-7 / 0.99999999999536 | 5e-6 / 0.9999999 |
+| 138 rows from text (owned tokenizer, ids exact) | 3.7e-7 | 3.6e-7 | 5e-6 |
+| Padded batches vs single rows | 1.8e-7 | 2.5e-7 | 5e-6 |
+| Sliding-window lengths 511 to 2,049, batch vs single | 0 (short row 1.8e-7) | 1.5e-7 (short row 3.1e-7) | 5e-6 |
+| Matryoshka 512/256/128 vs sliced reference | 2.7e-7 | 3.7e-7 | 5e-6 |
+| C# vs Python ORT, same machine (evaluator) | 4.2e-7 | not run | 1e-6 |
+
+`model-pipeline evaluate --require-gates G1,G2` on the CPU stages (`docs/evidence/embeddinggemma2-dotnet/`): G1 passed (138 cases, ids and masks exact); G2 passed. Every .NET check passed. `export.token_embeddings` (Python ORT vs PyTorch, not .NET) is bound per case, `max |d| / max(1, max |ref|) <= 1e-4` (maintainer decision 2026-10-11, the reading the admission spike reported): worst case 6.2e-6. The per-value figure `|d| / max(1, |ref|)`, 1.7e-2, is reported only.
+
+Not done: inputs of 2,050 to 8,192 tokens against a reference (an 8,192-token row runs, 80 s on CPU); the 18 task prompts other than query and document have no fixture rows; no CUDA evaluator run of the C# stage (the fidelity tool is CPU only); no Windows or macOS.
+
+## EmbeddingGemma 2 images
+
+Contract of 2026-10-11 (Mark; `model-pipeline/admissions/embeddinggemma-2.md`): image-only and interleaved text-and-image embeddings, default 280-token vision budget, Experimental. Profiles `embeddinggemma-2/image-fp32-cpu` and `image-fp32-cuda`; spike `docs/m0/embeddinggemma2-image-spike.md`; evidence `docs/evidence/embeddinggemma2-images/`.
+
+```csharp
+var files = EmbeddingGemma2ModelAssets.OpenLocalImageAssets();            // text files + two image graphs, verified
+using var embedder = EmbeddingGemma2MultimodalEmbedder.Create(files);
+var photo = EmbeddingGemma2ImageDecoder.DecodeFile("cat.jpg");           // .Imaging.SkiaSharp, or your own RGB24
+float[] e = embedder.Embed(photo);                                        // no prompt for images (the card)
+float[] mixed = embedder.Embed(EmbeddingGemma2MultimodalInput.Create("A cat on a blanket. ", photo));
+```
+
+- **API boundary.** The model package takes decoded RGB (`EmbeddingGemma2Image.FromRgb24`, `FromRgba32` drops alpha): exact parity, no native dependency. Decoding is the separate `Starlings.Models.EmbeddingGemma2.Imaging.SkiaSharp` package (PIL-equal RGB on the fixture images, 16-bit rejected with `EmbeddingGemma2UnsupportedImageException`, EXIF orientation ignored unless `ApplyExifOrientation`, a documented deviation). ImageSharp is not referenced anywhere (CI check).
+- **Preprocessing.** `EmbeddingGemma2ImageProcessor`: transformers' target size, a port of PyTorch's uint8 antialiased bicubic resize (`TorchAntialiasResampler`, integer arithmetic, provenance in `PROVENANCE.md`), `x float32(1/255)`, 16x16 patches with positions. Frame-ready for video (140-token budget, same resize).
+- **Graphs.** A vision graph (671,256,072 bytes, SHA-256 `6c97f477...`) and a multimodal text graph (1,084,327,898 bytes, `a2c22e07...`): the released text graph with inputs `multimodal_embeds` and `multimodal_mask` and five nodes. Text-only inputs keep the released text graph; the multimodal graph equals it bit for bit on text-only input (CPU and CUDA). `model-pipeline/reference/embeddinggemma2/release_embeddinggemma2_vision_onnx.py` makes both; two runs were byte-identical. Release `embeddinggemma-2-vision-onnx-r1` with `NOTICE-embeddinggemma2-vision-onnx.txt`; `ImageModelSourceIsPlaceholder` stays true until it exists.
+- **The 1e-3 text-only difference of the spike graph.** Not a dtype issue: ONNX Runtime's `MatMulScaleFusion` (extended optimization level) folds `embed_scale` and the per-layer-embedding projection scale into one `FusedMatMul(alpha = 0.99999994)` in the released graph; the spike's `Where` sat between the two, so only the second scale was folded and the input rounded differently (3.0e-3 CPU, 4.6e-3 CUDA, on token embeddings of about 2,000; identical with optimizations off or basic). The release layout keeps every released node's inputs and mixes the soft tokens' own projection in after the fact (`investigate_embeddinggemma2_mm_text_only.py`).
+- **Limits.** 8,192 tokens after image expansion (each image adds its soft tokens plus two), 50 MP per image (`MaxImagePixels`), budgets other than 280 untested.
+- **Memory.** `MaxVisionBatchSize = 1` by default (two 2,520-patch images did not fit in 5.5 GB of GPU memory in the spike); on CPU vision batches equal single images bit for bit. The vision graph on CUDA needs cuDNN 9 (`ReduceMax`).
+
+Evidence (2026-10-11, M0 workstation, ORT 1.30.0; CUDA on GPU 1 only, `CUDA_DEVICE_ORDER=PCI_BUS_ID CUDA_VISIBLE_DEVICES=1`), bounds read from `model-pipeline/protected/embeddinggemma-2/image-fp32-*/tolerances.yaml`, 42 in-contract rows (28 images alone, 6 interleaved or prompted, 8 text queries; the 16-bit image is rejected by contract):
+
+| Check | CPU | CUDA (`use_tf32=0`) | Bound |
+| --- | --- | --- | --- |
+| Rendered ids (owned tokenizer on the expanded placeholders), 43 rows | exact | | exact |
+| Decoded RGB (SkiaSharp) vs PIL, 28 images | exact | | exact |
+| Resized bytes, pixel values, positions, 28 images | exact | | exact |
+| Soft tokens, row-relative | 1.6e-4 | 2.3e-5 | 1e-3 |
+| Token embeddings, row-relative | 4.5e-5 | 7.5e-5 | 1e-3 |
+| Embedding max abs / min cosine | 2.24e-6 / 0.99999999989 | 9.9e-7 / 0.99999999997 | 1e-5 / 0.9999995 |
+| Batches vs single rows (vision batch 8; padded to 2,520) | 0 / 0 | 1.3e-7 (vision batch 1, text batch 4) | 1e-5 |
+| Retrieval sanity (8 queries rank their image first) | 8/8 | 8/8 | |
+
+## EmbeddingGemma 2 videos
+
+Contract of 2026-10-11 (Mark; `model-pipeline/admissions/embeddinggemma-2.md`, video): video-only and interleaved text/image/video embeddings at the checkpoint's settings (1 frame per second, at most 32 frames, 140 soft tokens per frame, no timestamps), Experimental; upstream quirks kept for parity. Profiles `embeddinggemma-2/video-fp32-cpu` and `video-fp32-cuda`; spike `docs/m0/embeddinggemma2-video-spike.md`; evidence `docs/evidence/embeddinggemma2-video/`.
+
+```csharp
+var files = EmbeddingGemma2ModelAssets.OpenLocalImageAssets();            // the image graphs: no new graph for video
+using var embedder = EmbeddingGemma2MultimodalEmbedder.Create(files);
+var decoder = new EmbeddingGemma2VideoDecoder(new EmbeddingGemma2FFmpegOptions { LibraryDirectory = "/opt/ffmpeg-8/lib" }); // .Video.FFmpeg
+var clip = decoder.DecodeFile("clip.mp4");                               // torchcodec's metadata, sampled frames
+float[] e = embedder.Embed(clip.Video);                                    // or EmbeddingGemma2Video.FromDecodedFrames(frames, fps, duration)
+```
+
+- **API boundary.** The model package takes decoded RGB frames (`EmbeddingGemma2Video`): every frame with the frame rate and duration (the package samples exactly as upstream, `EmbeddingGemma2VideoSampling`), or up to 32 pre-sampled frames (the caller's choice). Frames without timing throw `EmbeddingGemma2VideoTimingRequiredException` unless `AllowVideosWithoutTiming` opts in to upstream's array behaviour (a different embedding than the file: cosine 0.965). Decoding is the optional `Starlings.Models.EmbeddingGemma2.Video.FFmpeg` adapter: FFmpeg.AutoGen 8.1.0 (MIT) over the user's own FFmpeg 8.x (no binaries shipped; typed errors when missing, another major or a GPL/nonfree build). Neither Sdcb.FFmpeg nor any package bundling FFmpeg is referenced (CI check "No bundled FFmpeg anywhere").
+- **Pipeline.** Per sampled frame the image preprocessing at 140 tokens (same resize port), the vision graph in calls of `MaxVideoFramesPerVisionCall` frames (default 2: 2,520 patches, the size of one full-budget image, safe with about 5 GB of GPU memory free), soft tokens at the `<|video|>` positions (id 258884) of `<|image>` + n x `<|video|>` + `<image|>` per frame, mean pooling over every token. The released graphs are used unchanged (SHA-256 checked).
+- **Limits.** 8,192 tokens per input (one maximal video is 4,544; two do not fit), 50 MP per frame.
+
+Evidence (2026-10-11, M0 workstation, ORT 1.30.0; FFmpeg n8.1.3 LGPL shared build; CUDA on GPU 1 only, `CUDA_DEVICE_ORDER=PCI_BUS_ID CUDA_VISIBLE_DEVICES=1`), bounds read from `model-pipeline/protected/embeddinggemma-2/video-fp32-*/tolerances.yaml`, 35 default-contract rows (22 videos alone, 6 interleaved or prompted, 2 input forms, 5 text queries):
+
+| Check | CPU | CUDA (`use_tf32=0`) | Bound |
+| --- | --- | --- | --- |
+| Sampled indices: 20,849 upstream cases; 22 fixture videos | exact | | exact |
+| Rendered ids (owned tokenizer on the expanded placeholders), 36 rows | exact | | exact |
+| Decoded RGB (FFmpeg adapter) vs torchcodec: every frame of 22 videos (5,367 frames); metadata | exact | | exact |
+| Resized frames, pixel values, positions, 32 video inputs | exact | | exact |
+| Soft tokens, row-relative | 5.8e-5 | 3.0e-5 | 1e-3 |
+| Token embeddings, row-relative | 2.1e-4 | 8.2e-5 | 1e-3 |
+| Embedding max abs / min cosine | 1.69e-6 / 0.99999999992 | 3.27e-6 / 0.99999999968 | 1e-5 / 0.9999995 |
+| Batches vs single rows (frame calls of 2 and padded 1,260; CUDA frame calls of 4) | 0 / 0 | 8.9e-8 | 1e-5 |
+| Frames without timing, opt-in, vs upstream's array row | 1.2e-7 | 1.8e-7 | 1e-5 |
+| Retrieval sanity (3 scene queries rank a clip of their scene first) | 3/3 | 3/3 | |
+
+## Capability status
+
+| Capability | Status | Evidence |
+| --- | --- | --- |
+| Embedding from token ids, CPU (Linux x64) | experimental | 46 fixture cases within the binding tolerance, one machine. |
+| Embedding from token ids, CUDA (Linux x64, `use_tf32=0`) | experimental | Same, RTX 4060 Ti. |
+| Embedding from text (owned tokenizer), CPU (Linux x64) | experimental | 46 fixture texts: ids and masks exact against `tokenizer.jsonl`; embeddings max abs 2.3e-7 against `embeddings.jsonl` (bound 1e-5), one per call and one batch call. |
+| Batch | experimental | Padded batches equal single rows within tolerance, CPU and CUDA. |
+| Cancellation | experimental | Node-boundary semantics above, measured on CPU and CUDA. |
+| Concurrent calls on one session or encoder | experimental | Tested on CPU and CUDA. |
+| Streaming, training, persistence | unsupported | |
+| Pair input, non-zero `token_type_ids`, truncation in the encoder, automatic prefix insertion or detection | unsupported | Prefixes are added only on explicit request (`E5InputType` in the Extensions.AI adapter). |
+| Microsoft.Extensions.AI `IEmbeddingGenerator`, CPU (Linux x64) | experimental | Bit-identical to `E5TextEmbedder` on 46 fixture texts; batching, usage, options rejection, cancellation, disposal, middleware and DI tested. One machine. |
+| Microsoft.Extensions.AI `IEmbeddingGenerator` over a CUDA session | untested | No provider-specific code, but not run. |
+| `EmbeddingGenerationOptions.Dimensions` other than 384 (truncation) | unsupported | Rejected with `NotSupportedException`. |
+| ML.NET pipeline composition (`ApplyE5Embedding`, row-wise), CPU (Linux x64) | experimental | Bit-identical to `E5TextEmbedder.Embed` on 46 fixture texts (max abs 2.33e-7 vs protected); schema, one inference per row, parallel cursor sets, prediction engine, `CreateEnumerable`, `Preview` tested. One machine. |
+| ML.NET look-ahead batching (`BatchSize > 1`) | experimental | Bit-identical to `E5TextEmbedder.EmbedBatch` over the same rows; row-id check tested. Faster only for similar-length texts (measured once). |
+| ML.NET transform over a CUDA session | untested | No provider-specific code, but not run. |
+| ML.NET model save/load, portable asset packaging | unsupported | `Save` throws `NotSupportedException`; re-append the transform after loading (P-013). |
+| ML.NET cancellation, training | unsupported | Cursors take no `CancellationToken`; `Fit` loads a pretrained model and trains nothing. |
+| TF32, fp16, quantized graphs, TensorRT | unsupported | Separate profiles if ever needed. |
+| Windows x64 (CPU or CUDA), macOS, ARM64 | untested | |
+| Native AOT, trimming | untested | |
+| Explicit acquisition of the e5 lock (download, verify, offline reuse), Linux x64 | experimental | Unit tests against an in-process fake Hub. Real download of both files from huggingface.co: 487 MB in 5.9 s, digests equal to `sha256sum`. Resumed after a `SIGKILL` at 62 MB. One machine. |
+| Gated-repository download with a token | experimental | 401/403 handling tested with the fake Hub, and 401 without a token against a real gated repository. Token scoping (huggingface.co only, not forwarded on cross-host redirects) tested with the fake Hub. Real download with a token from a private repository: the Qwen3.5 fp16x lock below. |
+| Explicit acquisition of the Qwen3.5-0.8B locks from the private hosting repository, Linux x64 | experimental | Opt-in test (`HostingDownloadTests`, 2026-10-10): the fp16x lock (`chat_template.jinja`, runtime `tokenizer.json`, fp16x graph; 1.59 GB) downloaded with a read token into an empty cache in 55 s and verified; `model.onnx.data` came through the Hub's 302 to its CDN host. Without a token: `ModelAssetAccessDeniedException` (401) on the first file. The fp32x lock (3.08 GB data file, same repository and code path) was not downloaded. One machine. |
+| Clean install from the packed packages, CPU natives, offline run (Linux x64) | experimental | `tools/release-drill-ai.sh` on 2026-10-09 (`docs/releases/e5-0.1.0-preview.1.md`, G6; rerun for preview.2, `docs/releases/e5-0.1.0-preview.2.md`); CI runs it without the model. One machine. |
+| Install from packages with the CUDA natives | untested | |
+| Pilot LLM greedy chat, fp32x on CPU / fp32x on CUDA (`use_tf32=0`) / fp16x on CUDA (Linux x64) | experimental | 22/22 / 22/22 / 18/22 prompts identical to the transformers fp32 reference (fp16x diverges only at reference margins below 0.015); details under P-016 above. |
+| Pilot LLM chat template (C# renderer, text subset), owned tokenizer at the backend boundary | experimental | 21/21 text renderings and 22/22 prompt ids exact; P-029 qualifies the renderer. |
+| Pilot LLM streaming, stop tokens and strings, max-token boundary, usage, chunked prefill, cancellation, concurrent requests, seeded sampling | experimental | Unit tests and the fidelity runner (P-016). Concurrent requests on CUDA: see the P-016 evidence. |
+| Pilot LLM tools, tool calls, vision, reasoning split, batching, conversation state reuse, quantized variants, TF32 | unsupported | `Qwen35Capabilities.All`. |
+| Pilot LLM on Windows, macOS, ARM64; Native AOT; prompts above 1,666 tokens | untested | |
+| Pilot LLM Microsoft.Extensions.AI `IChatClient` (text roles, streaming, finish reasons, usage, seeded sampling, cancellation, concurrency, middleware, DI), fp32x on CPU / fp32x on CUDA (Linux x64) | experimental | 21/21 text prompts: streamed = non-streamed = reference, usage and finish equal; scripted-sequence contract tests in CI; P-017 above. |
+| Pilot LLM `IChatClient` on fp16x CUDA | untested | Variant-agnostic, not run. |
+| Pilot LLM `IChatClient` tools, structured output, images, unseeded sampling, `ChatOptions.Reasoning`, penalties, `ConversationId`, background responses | unsupported | Rejected with `NotSupportedException` (`Qwen35Capabilities.All`, `extensions_ai.*`). |
+| EmbeddingGemma 2 text embeddings from text or ids, CPU and CUDA (`use_tf32=0`), Linux x64, up to 2,049 tokens; query and document prompts; Matryoshka 512/256/128; batch; cancellation; Extensions.AI and ML.NET on CPU | experimental | Section "EmbeddingGemma 2 text embeddings"; `EmbeddingGemma2Capabilities.All`. |
+| EmbeddingGemma 2 inputs of 2,050 to 8,192 tokens, the 18 task prompts, adapters over CUDA, graph download from the release | untested | No reference evidence yet; release not published. |
+| EmbeddingGemma 2 images and interleaved text and images from decoded RGB, 280-token budget, CPU and CUDA (`use_tf32=0`), Linux x64; batch; Matryoshka; SkiaSharp decoding of PNG and JPEG; EXIF opt-in; Extensions.AI image generator on CPU | experimental | Section "EmbeddingGemma 2 images"; `EmbeddingGemma2Capabilities.All` (`image.*`). |
+| EmbeddingGemma 2 image budgets 70/140/560/1,120, GIF/BMP/WebP decoding, image graph download from the release | untested | Accepted, no evidence; release not published. |
+| EmbeddingGemma 2 videos and interleaved text, images and videos from decoded RGB frames (1 fps, at most 32 frames, 140 tokens per frame), CPU and CUDA (`use_tf32=0`), Linux x64; pre-sampled frames; upstream's metadata-less behaviour on opt-in; batch; Matryoshka; FFmpeg adapter on FFmpeg 8 (files, streams, memory; rotation 90; 8- and 10-bit); Extensions.AI video generator on CPU | experimental | Section "EmbeddingGemma 2 videos"; `EmbeddingGemma2Capabilities.All` (`video.*`). |
+| EmbeddingGemma 2 variable frame rate, interlaced or HDR video, rotations other than 90, FFmpeg adapter on ARM64 or non-AVX2 CPUs, Windows or macOS | untested | No evidence. |
+| EmbeddingGemma 2 audio, video frames without timing (by default), timestamps or other sampling settings, FFmpeg 9 in the adapter, ML.NET video column, media placeholders in text, inputs above 8,192 tokens, images above 50 MP or 16 bits per channel, alpha compositing, ML.NET image column, truncation, other Matryoshka sizes, TF32, fp16 | unsupported | Rejected. |
+| Acquisition on Windows or macOS | untested | Default cache paths and the lock-file behavior are implemented but not run there. |
+
+`E5Capabilities.All` exposes the same statuses in code (`asset_acquisition`, `extensions_ai.*`, `mlnet.*`).
+
+## Evidence (2026-10-08, Linux x64, i7-5820K AVX2, RTX 4060 Ti, ORT 1.30.0)
+
+Fixture ids from `model-pipeline/protected/multilingual-e5-small/onnx-fp32-cpu/` (`embeddings.jsonl`, `tokenizer-batch.json`); bounds read from each profile's protected `tolerances.yaml` (embedding max abs 1e-5, padded batch vs single 1e-5).
+
+| Run | Embedding max abs | Mean abs | p99 abs | Min cosine | 6-row padded batch vs protected | Batch vs own single | 46 in batches of 16 vs protected |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| CPU, ORT default threads | 2.33e-7 | 1.95e-8 | 7.26e-8 | 0.99999999999945 | 2.09e-7 | 0 | 2.33e-7 |
+| CUDA, `use_tf32=0` | 1.94e-7 | 1.82e-8 | 6.71e-8 | 0.99999999999957 | 1.02e-7 | 7.17e-8 | 1.42e-7 |
+
+These equal the M0 C# probe (`docs/m0/e5-gpu.md` section 2). CUDA placement: 349 nodes on CUDA, 2 on CPU (`/embeddings/Gather`, `/embeddings/Unsqueeze`), equal to the accepted `placement.json`. The C# path does not compare hidden states: the fixtures do not store them.
+
+## Running the model tests
+
+The e5 model is not in Git. The real-model tests resolve `E5ModelAssets.Lock` offline through the acquisition library: from `$STARLING_E5_SNAPSHOT` (an existing snapshot directory) if set, else from the cache at `$STARLING_MODELS` or `<repo>/.models`. Both `onnx/model.onnx` and `tokenizer.json` must be present. The tests check sizes there, and the session enforces the model's SHA-256. When the files are absent the tests skip with the reason, so CI stays green. Run `ai-dotnet/tools/fetch-e5-model.sh` to acquire them.
+
+Tests that measure process memory (`ModelMemoryTests`) are in an xunit collection with parallelization disabled, so model fixtures and tokenizer loads in other classes do not run during the measurement.
+
+Real downloads run only when opted in: `STARLING_NETWORK_TESTS=1` enables the Hub integration tests (tokenizer.json download and offline reuse, 404/401 for a bogus revision, 401 for a gated repository without a token), the e5 explicit-download-then-offline-embed test, and the Qwen3.5 hosting tests (401 without a token; with `HF_TOKEN` granting access to the private hosting repository, the 1.59 GB fp16x download and verification).
+
+CUDA tests are a separate, local-only project (`tests/Starlings.Models.E5.Tests.Cuda`, not in `AI.slnx`, references `Microsoft.ML.OnnxRuntime.Gpu.Linux`). They run only when opted in, and refuse to run without an explicit device:
+
+```sh
+export STARLING_CUDA_TESTS=1 CUDA_DEVICE_ORDER=PCI_BUS_ID CUDA_VISIBLE_DEVICES=1   # the GPU to use
+export STARLING_E5_SNAPSHOT=/path/to/snapshot
+# If the CUDA 13 runtime is not in the ldconfig cache, add it (and cuDNN 9) to LD_LIBRARY_PATH,
+# for example from the nvidia-* wheels of model-pipeline/reference/encoder/requirements-cuda.txt.
+dotnet test --project ai-dotnet/tests/Starlings.Models.E5.Tests.Cuda
+```
+
+EmbeddingGemma 2 image tests need, besides `STARLING_EMBEDDINGGEMMA2_SNAPSHOT` (a directory with `tokenizer.json`, `config_sentence_transformers.json` and the three graphs under `onnx/`), the image set in `STARLING_EMBEDDINGGEMMA2_IMAGES` (regenerated byte for byte by `model-pipeline/reference/embeddinggemma2/make_eg2_images.py --out <dir>`; files checked against `images.json`) and, for the soft-token and token-embedding checks, `STARLING_EMBEDDINGGEMMA2_IMAGE_TENSORS` (the `.npz` files of `run_embeddinggemma2_image.py --tensors`, checked against `tensors.json`). Each skips with the reason when absent. On the shared workstation the CUDA tests run only on GPU 1 (`CUDA_VISIBLE_DEVICES=1`; GPU 0 belongs to another workload), with cuDNN 9 on `LD_LIBRARY_PATH` for the vision graph.
+
+EmbeddingGemma 2 video tests need the same snapshot, the fixture videos in `STARLING_EMBEDDINGGEMMA2_VIDEOS` (regenerated byte for byte by `model-pipeline/reference/embeddinggemma2/make_eg2_videos.py --out <dir>` with the pinned FFmpeg GPL build of `fetch_eg2_ffmpeg.sh`; files checked against `videos.json`), an FFmpeg 8.x LGPL shared build in `STARLING_FFMPEG_DIR` (the `lib` directory; `fetch_eg2_ffmpeg.sh` fetches the pinned one) and, for the soft-token and token-embedding checks, `STARLING_EMBEDDINGGEMMA2_VIDEO_TENSORS` (`run_embeddinggemma2_video.py --tensors`, checked against `tensors.json`); `STARLING_EMBEDDINGGEMMA2_SAMPLING_CASES` adds the full 20,849-case sampling comparison (`make_eg2_sampling_cases.py`). The sampling subset, the rendered ids and the video plumbing on weight-free graphs run in CI. The CPU video parity run takes about 12 minutes on the 12-thread workstation.
+
+On the M0 workstation the tests pass both with the system CUDA 13.3 runtime (`/opt/cuda`, no cuDNN installed) and with the CUDA 13.0 and cuDNN 9.24 wheels on `LD_LIBRARY_PATH`. The e5 graph has no operator that needed cuDNN in these runs; that is an observation, not a requirement change.
+
+## Benchmarks (P-008)
+
+`benchmarks/`: BenchmarkDotNet micro-benchmarks, the realistic e5 workload harness (CPU in `AI.slnx`; CUDA builds local only), the shared workload file and `run-e5-matched.sh`, which runs the matched C#-versus-Python comparison on the same ONNX Runtime version, model file and thread settings. Raw results use `starlings-bench-raw/1` and are summarized by `model-pipeline bench summarize`. CI builds the projects and never runs them. See `benchmarks/README.md`; the first results are in `docs/benchmarks/e5-2026-10-09.md`.
+
+## Rules
+
+- Backend tensor types stay out of the common public API. `OnnxModelSession.Run` takes `OrtValue`s and is the advanced backend API; model packages expose plain arrays and spans.
+- Do not wrap blocking work in `Task.Run` and call it async. Document what cancellation interrupts.
+- Every capability is reported as supported, unsupported, experimental, or untested.
+- No network calls during normal inference. Model assets are acquired explicitly and verified by digest.
+- Native AOT is claimed per package and backend only after a standalone executable test.

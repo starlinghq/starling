@@ -1,0 +1,24 @@
+# Binding tolerances, set by Mark on 2026-10-11, plan 10.1. Values from docs/m0/embeddinggemma2-image-spike.md.
+# Reference: transformers 5.19.0 / sentence-transformers fp32 CPU in image-fp32-cpu/image-embeddings.jsonl.
+# The evaluator has no image task yet; until it does, the image package tests enforce these bounds.
+# Observed worst (ORT 1.30.0 CPU, 1 and 12 threads, 43 rows): embedding 2.3e-6, min cosine 0.99999995;
+# C# preprocessing exact (29/29 images); C# end to end 2.3e-6.
+profile: embeddinggemma-2/image-fp32-cpu
+provider_options: {}
+discrete:
+  token_ids: exact
+  resized_pixels: exact
+  pixel_values: exact
+  image_positions: exact
+float:
+  # Row-relative: per row, max|d| / max|ref row| <= bound (values reach about 23,000 on image rows).
+  soft_tokens_row_relative: 1.0e-3
+  token_embeddings_row_relative: 1.0e-3
+  embedding_max_abs: 1.0e-5
+  min_cosine: 0.9999995
+  padded_batch_vs_single_embedding_max_abs: 1.0e-5
+  nan_or_inf: fail
+  report_only: [mean_abs, p99_abs, per_value_relative]
+decoder_skiasharp:
+  # The SkiaSharp decoding adapter must reproduce PIL's decoded RGB exactly on the supported formats.
+  decoded_rgb_vs_pil: exact

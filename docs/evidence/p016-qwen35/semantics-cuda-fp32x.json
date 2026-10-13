@@ -1,0 +1,183 @@
+{
+  "max_token_boundary": {
+    "prompt": "en-short",
+    "reference_content_tokens": 7,
+    "runs": [
+      {
+        "max_new_tokens": 1,
+        "completion_tokens": 1,
+        "finish": "Length",
+        "ids_prefix_of_reference": true,
+        "expected_finish": "Length",
+        "ok": true
+      },
+      {
+        "max_new_tokens": 6,
+        "completion_tokens": 6,
+        "finish": "Length",
+        "ids_prefix_of_reference": true,
+        "expected_finish": "Length",
+        "ok": true
+      },
+      {
+        "max_new_tokens": 7,
+        "completion_tokens": 7,
+        "finish": "Length",
+        "ids_prefix_of_reference": true,
+        "expected_finish": "Length",
+        "ok": true
+      },
+      {
+        "max_new_tokens": 8,
+        "completion_tokens": 7,
+        "finish": "Stop",
+        "ids_prefix_of_reference": true,
+        "expected_finish": "Stop",
+        "ok": true
+      }
+    ]
+  },
+  "stop_sequences": {
+    "prompt": "en-short",
+    "stop": " of France",
+    "text": "The capital",
+    "finish": "StopSequence",
+    "text_is_reference_before_stop": true,
+    "no_piece_contains_stop": true,
+    "stream_concat_equals_text": true,
+    "completion_tokens": 4,
+    "absent_stop_equals_plain": true
+  },
+  "additional_stop_token": {
+    "prompt": "en-list",
+    "stop_id": 14542,
+    "finish": "Stop",
+    "stop_token_id": 14542,
+    "completion_tokens": 3,
+    "ok": true
+  },
+  "cached_vs_uncached": {
+    "prompt": "en-list",
+    "steps": 12,
+    "tokens_equal_uncached_argmax": 12,
+    "max_abs_logprob": 6.580352783203125E-05,
+    "generated_equals_reference_prefix": true,
+    "per_step": [
+      {
+        "step": 1,
+        "max_abs_logprob": 0,
+        "aligned_with": "prefix before token k"
+      },
+      {
+        "step": 2,
+        "max_abs_logprob": 2.86102294921875E-05,
+        "aligned_with": "prefix before token k"
+      },
+      {
+        "step": 3,
+        "max_abs_logprob": 2.6702880859375E-05,
+        "aligned_with": "prefix before token k"
+      },
+      {
+        "step": 4,
+        "max_abs_logprob": 4.38690185546875E-05,
+        "aligned_with": "prefix before token k"
+      },
+      {
+        "step": 5,
+        "max_abs_logprob": 6.580352783203125E-05,
+        "aligned_with": "prefix before token k"
+      },
+      {
+        "step": 6,
+        "max_abs_logprob": 4.57763671875E-05,
+        "aligned_with": "prefix before token k"
+      },
+      {
+        "step": 7,
+        "max_abs_logprob": 3.814697265625E-05,
+        "aligned_with": "prefix before token k"
+      },
+      {
+        "step": 8,
+        "max_abs_logprob": 4.57763671875E-05,
+        "aligned_with": "prefix before token k"
+      },
+      {
+        "step": 9,
+        "max_abs_logprob": 2.765655517578125E-05,
+        "aligned_with": "prefix before token k"
+      },
+      {
+        "step": 10,
+        "max_abs_logprob": 3.814697265625E-05,
+        "aligned_with": "prefix before token k"
+      },
+      {
+        "step": 11,
+        "max_abs_logprob": 3.4332275390625E-05,
+        "aligned_with": "prefix before token k"
+      },
+      {
+        "step": 12,
+        "max_abs_logprob": 3.0517578125E-05,
+        "aligned_with": "prefix before token k"
+      }
+    ]
+  },
+  "cancellation": {
+    "outcome": "OperationCanceledException after 10 updates",
+    "cancel_to_exception_ms": 3.1403,
+    "already_cancelled_token": "OperationCanceledException before prefill",
+    "reuse_after_cancel_equals_reference": true
+  },
+  "concurrency": {
+    "parallel_two_threads_prefix_equal": {
+      "ja": true,
+      "en-math": true,
+      "zh": true,
+      "code-py": true
+    },
+    "interleaved_streams_prefix_equal": {
+      "zh": true,
+      "code-cs": true
+    }
+  },
+  "sampling": {
+    "same_seed_identical": true,
+    "other_seed_differs": true,
+    "top_k_1_equals_greedy_reference_prefix": true,
+    "sample_text_seed7": "Here are three practical tips for writing clear technical documentation:\n\n1.  **Focus on User Value and Problem-Solution Mapping**: Don't just list the code"
+  },
+  "text_path_prefix_equal": {
+    "thinking-on": true,
+    "multi-turn": true,
+    "special-endoftext": true
+  },
+  "chunked_prefill": {
+    "long-license/128": {
+      "whole_prefill_error": "ONNX Runtime GenAI failed: /onnxruntime_src/onnxruntime/core/framework/bfc_arena.cc:360 void* onnxruntime::BFCArena::AllocateRawInternal(size_t, bool, onnxruntime::Stream*) Failed to allocate memory for requested buffer of size 1654804480",
+      "tokens_equal_whole": null,
+      "equal_reference_prefix": true,
+      "step0_max_abs_logprob_vs_whole": null,
+      "prefill_ms_whole": null,
+      "prefill_ms_chunked": 1693.4385
+    },
+    "long-license/100": {
+      "whole_prefill_error": "ONNX Runtime GenAI failed: /onnxruntime_src/onnxruntime/core/framework/bfc_arena.cc:360 void* onnxruntime::BFCArena::AllocateRawInternal(size_t, bool, onnxruntime::Stream*) Failed to allocate memory for requested buffer of size 1654804480",
+      "tokens_equal_whole": null,
+      "equal_reference_prefix": true,
+      "step0_max_abs_logprob_vs_whole": null,
+      "prefill_ms_whole": null,
+      "prefill_ms_chunked": 2325.1156
+    },
+    "multi-turn/7": {
+      "whole_prefill_error": null,
+      "tokens_equal_whole": true,
+      "equal_reference_prefix": true,
+      "step0_max_abs_logprob_vs_whole": 2.6702880859375E-05,
+      "prefill_ms_whole": 71.6788,
+      "prefill_ms_chunked": 581.799
+    }
+  }
+}

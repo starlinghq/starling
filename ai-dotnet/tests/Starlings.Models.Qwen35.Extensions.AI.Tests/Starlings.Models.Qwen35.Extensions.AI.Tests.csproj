@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="xunit.v3" />
+    <!-- CPU native runtime. -->
+    <PackageReference Include="Microsoft.ML.OnnxRuntimeGenAI" />
+    <!-- Middleware (logging, caching, function invocation) and the builder/DI helpers, to prove standard-contract compatibility. -->
+    <PackageReference Include="Microsoft.Extensions.AI" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
+    <PackageReference Include="Microsoft.Extensions.Logging" />
+    <Using Include="Xunit" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="../Shared/Qwen35/*.cs;../Shared/Qwen35ExtensionsAI/*.cs" Link="Shared/%(RecursiveDir)%(Filename)%(Extension)" />
+    <None Include="../Starlings.Models.Qwen35.Tests/TestData/**/*" CopyToOutputDirectory="PreserveNewest" LinkBase="TestData" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../src/Starlings.Models.Qwen35.Extensions.AI/Starlings.Models.Qwen35.Extensions.AI.csproj" />
+  </ItemGroup>
+
+</Project>

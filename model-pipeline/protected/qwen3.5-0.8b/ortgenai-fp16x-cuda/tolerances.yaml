@@ -1,0 +1,22 @@
+# Binding tolerances, set by Mark on 2026-10-10, plan 10.1. Values from docs/evidence/p016-qwen35/README.md section 9.
+# Reference: transformers fp32 CPU greedy generation in model-pipeline/protected/qwen3.5-0.8b/reference/generation.jsonl.
+# The evaluator has no generation task yet (evidence doc section 10); until it does, these bounds are checked by the
+# Starlings.Models.Qwen35 tests and the fidelity tool.
+# fp16x graph on CUDA EP (preview variant), requests serialized. Observed: 18/22 (divergences at margins 0.0004-0.0142); step-0 0.065 / 0.027; cached 0.046.
+profile: qwen3.5-0.8b/ortgenai-fp16x-cuda
+provider_options: { use_tf32: 0 }
+discrete:
+  template_rendering: exact
+  prompt_ids: exact
+  step0_argmax: equal
+  streaming_reassembly: exact
+  usage: exact
+  concurrent_requests: equal_to_sequential
+  greedy_ids: equal_until_first_divergence_at_margin_below_0.05
+  finish_reason: equal_when_ids_equal
+float:
+  step0_logprob_max_abs: 0.15
+  step0_top5_logprob_max_abs: 0.06
+  cached_vs_uncached_logprob_max_abs: 0.1
+  chunked_vs_one_call_prefill_logprob_max_abs: 0.1
+  nan_or_inf: fail

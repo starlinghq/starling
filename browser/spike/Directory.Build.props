@@ -1,0 +1,14 @@
+<Project>
+  <!--
+    Browser feasibility spike (docs/m0/browser-wasm-spike.md). Exploratory and not shipped: nothing here is packable,
+    and the projects are in no solution that CI builds, because the AOT build needs the wasm-tools workload
+    (dotnet workload install wasm-tools) that the CI runners do not install. The repository settings still apply
+    (central versions, locked restore, warnings as errors).
+  -->
+  <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '$(MSBuildThisFileDirectory)../'))" />
+
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+  </PropertyGroup>
+</Project>

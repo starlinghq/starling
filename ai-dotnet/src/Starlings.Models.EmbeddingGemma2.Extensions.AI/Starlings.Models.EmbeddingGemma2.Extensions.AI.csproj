@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <IsPackable>true</IsPackable>
+    <Description>Preview. Experimental. Microsoft.Extensions.AI IEmbeddingGenerator&lt;string, Embedding&lt;float&gt;&gt; over the EmbeddingGemma 2 text embedder (Starlings.Models.EmbeddingGemma2): explicit named prompts, Dimensions mapped to the Matryoshka sizes 768/512/256/128 (others rejected), batching, usage, node-boundary cancellation, model metadata and DI registration. Images and videos: IEmbeddingGenerator over DataContent and over content lists (text, image and video parts), with image and video decoder hooks (no decoder or native dependency of its own). Deployments must adhere to the Gemma Prohibited Use Policy.</Description>
+    <PackageTags>embeddings;embeddinggemma;embeddinggemma-2;matryoshka;microsoft.extensions.ai;iembeddinggenerator;onnxruntime</PackageTags>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.AI.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../Starlings.Models.EmbeddingGemma2/Starlings.Models.EmbeddingGemma2.csproj" />
+  </ItemGroup>
+
+</Project>

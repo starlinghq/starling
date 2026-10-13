@@ -1,0 +1,22 @@
+# Binding tolerances, set by Mark on 2026-10-10, plan 10.1. Values from docs/evidence/p016-qwen35/README.md section 9.
+# Reference: transformers fp32 CPU greedy generation in model-pipeline/protected/qwen3.5-0.8b/reference/generation.jsonl.
+# The evaluator has no generation task yet (evidence doc section 10); until it does, these bounds are checked by the
+# Starlings.Models.Qwen35 tests and the fidelity tool.
+# fp32x graph, CPU EP. Observed: 22/22 identical; step-0 1.38e-3 / top-5 6.2e-4; cached 3.4e-5; chunked 0.
+profile: qwen3.5-0.8b/ortgenai-fp32x-cpu
+provider_options: {}
+discrete:
+  template_rendering: exact
+  prompt_ids: exact
+  step0_argmax: equal
+  streaming_reassembly: exact
+  usage: exact
+  concurrent_requests: equal_to_sequential
+  greedy_ids: exact_except_listed_margin_below_1e-3
+  finish_reason: equal
+float:
+  step0_logprob_max_abs: 5.0e-3
+  step0_top5_logprob_max_abs: 2.0e-3
+  cached_vs_uncached_logprob_max_abs: 2.0e-4
+  chunked_vs_one_call_prefill_logprob_max_abs: 1.0e-4
+  nan_or_inf: fail

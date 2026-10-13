@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- UseCuda=true swaps the CPU native package for the CUDA one (the two ship the same native file names). -->
+  <PropertyGroup>
+    <RootNamespace>GenCheck</RootNamespace>
+    <RuntimeIdentifier>linux-x64</RuntimeIdentifier>
+    <SelfContained>false</SelfContained>
+    <NuGetLockFilePath Condition="'$(UseCuda)' == 'true'">packages.cuda.lock.json</NuGetLockFilePath>
+  </PropertyGroup>
+  <ItemGroup Condition="'$(UseCuda)' != 'true'">
+    <PackageReference Include="Microsoft.ML.OnnxRuntimeGenAI" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(UseCuda)' == 'true'">
+    <PackageReference Include="Microsoft.ML.OnnxRuntimeGenAI.Cuda" />
+  </ItemGroup>
+</Project>

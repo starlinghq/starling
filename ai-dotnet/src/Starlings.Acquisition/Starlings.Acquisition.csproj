@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <IsPackable>true</IsPackable>
+    <Description>Preview. Explicit, verified acquisition of model assets: downloads the files of an immutable asset lock (Hub repository, full commit SHA, per-file size and SHA-256) into a local cache, verifies them, and resolves them offline afterwards. No network access happens unless DownloadAsync is called. No dependencies beyond the BCL.</Description>
+    <PackageTags>huggingface;model;download;cache;sha256;offline</PackageTags>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Starlings.Acquisition.Tests" />
+  </ItemGroup>
+
+</Project>

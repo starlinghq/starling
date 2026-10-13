@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.ML.OnnxRuntimeGenAI" />
+    <ProjectReference Include="../../src/Starlings.Models.QwenChat/Starlings.Models.QwenChat.csproj" />
+  </ItemGroup>
+</Project>

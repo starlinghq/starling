@@ -1,0 +1,32 @@
+# Kev-0.8B GPU follow-up (P-027, kev.md "GPU results (2026-10-05)"). Linux x86-64, Python 3.12.14.
+#
+# Base for every environment: Kev's own lock at 6b719c3c3f367295f6ef336f4f751cf5ff970abc, exported with
+#   uv export --project <kev checkout> --frozen --no-dev --extra serve --no-hashes --no-emit-project
+# and installed unchanged (torch 2.8.0 from PyPI is the CUDA 12.8 build, torch.__version__ 2.8.0+cu128;
+# transformers 5.17.0, peft 0.21.0; triton 3.4.0; nvidia-*-cu12 12.8 libraries).
+# Then `uv pip install --no-deps -e <kev checkout>`.
+#
+# Environment "env-cuda" (PyTorch CUDA reference with upstream's CUDA kernels), on top of the lock. The same set as
+# upstream's Modal image (modal_app.py at 6b719c3c): fla pinned to 0.5.2, triton >= 3.7.1, causal-conv1d's prebuilt
+# wheel installed with --no-deps so its torch requirement does not pull triton back to 3.4.0.
+flash-linear-attention==0.5.2
+fla-core==0.5.2
+einops==0.8.1
+triton==3.7.1
+# installed with --no-deps:
+# causal-conv1d @ https://github.com/Dao-AILab/causal-conv1d/releases/download/v1.7.0/causal_conv1d-1.7.0%2Bcu12torch2.8cxx11abiTRUE-cp312-cp312-linux_x86_64.whl
+#
+# Environment "env-ortgpu" (ONNX Runtime CUDA EP and the CUDA builder exports), on top of the lock, without the
+# packages above:
+#   onnxruntime-gpu[cuda,cudnn]==1.30.0   (CUDA 13.0 build; extras resolved to nvidia-cuda-runtime 13.4.92,
+#                                          nvidia-cuda-nvrtc 13.4.92, nvidia-cublas 13.8.1.7, nvidia-cufft 12.4.0.43,
+#                                          nvidia-curand 10.4.4.72, nvidia-nvjitlink 13.4.92,
+#                                          nvidia-cudnn-cu13 9.27.0.42, flatbuffers 25.12.19, protobuf 7.36.2)
+#   onnx==1.23.1  onnx-ir==1.0.0  ml-dtypes==0.6.0
+#   onnxruntime-genai==0.17.1             (--no-deps: its onnxruntime>=1.30.0 requirement would add the CPU package)
+# Note: nvidia-cudnn-cu13 and the lock's nvidia-cudnn-cu12 install into the same nvidia/cudnn/lib directory, so the
+# cu13 files replace the cu12 ones in this environment. Its torch was used only for tokenization on CPU.
+#
+# Environment "env-cpu" (CPU PyTorch reference and ORT CPU EP, as the first spike): the lock with torch 2.8.0+cpu
+# from https://download.pytorch.org/whl/cpu (--no-deps) instead of the CUDA wheel and the nvidia/triton packages,
+# plus onnxruntime==1.30.0 onnxruntime-genai==0.17.1 onnx==1.23.1 onnx-ir==1.0.0.

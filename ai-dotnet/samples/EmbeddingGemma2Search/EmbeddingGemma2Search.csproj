@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Semantic search with google/embeddinggemma-2 (text, text to image and text to video) from the published packages only: no project references,
+    no repository paths. tools/release-drill-ai.sh copies this directory outside the checkout and restores it from a
+    local feed.
+  -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <!-- The release drill fails if this differs from the version it packs. -->
+    <StarlingsVersion>0.1.0-preview.5</StarlingsVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Brings Starlings.Models.EmbeddingGemma2, .Runtime.Onnx, .Acquisition and .Tokenizers at their pinned versions. -->
+    <PackageReference Include="Starlings.Models.EmbeddingGemma2.Extensions.AI" Version="$(StarlingsVersion)" />
+    <!-- Decodes image files for the text-to-image search (brings SkiaSharp and its Linux natives). -->
+    <PackageReference Include="Starlings.Models.EmbeddingGemma2.Imaging.SkiaSharp" Version="$(StarlingsVersion)" />
+    <!-- Decodes video files for the text-to-video search on the user's own FFmpeg 8.x shared libraries (brings FFmpeg.AutoGen, MIT bindings; no FFmpeg binaries). -->
+    <PackageReference Include="Starlings.Models.EmbeddingGemma2.Video.FFmpeg" Version="$(StarlingsVersion)" />
+    <!-- The application picks the ONNX Runtime natives (CPU here; Microsoft.ML.OnnxRuntime.Gpu.Linux for CUDA). -->
+    <PackageReference Include="Microsoft.ML.OnnxRuntime" Version="1.30.0" />
+  </ItemGroup>
+
+</Project>

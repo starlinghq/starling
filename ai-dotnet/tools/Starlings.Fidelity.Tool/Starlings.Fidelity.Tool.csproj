@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Writes C# outputs in the stage results format for the staged fidelity evaluator (P-007,
+    model-pipeline evaluate). Applies no thresholds. Not packed.
+  -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- CPU native runtime: the tool runs the onnx-fp32-cpu profile. -->
+    <PackageReference Include="Microsoft.ML.OnnxRuntime" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../src/Starlings.Models.E5/Starlings.Models.E5.csproj" />
+    <ProjectReference Include="../../src/Starlings.Models.Gliner2/Starlings.Models.Gliner2.csproj" />
+    <ProjectReference Include="../../src/Starlings.Models.EmbeddingGemma2/Starlings.Models.EmbeddingGemma2.csproj" />
+    <ProjectReference Include="../../src/Starlings.Models.EmbeddingGemma2.Imaging.SkiaSharp/Starlings.Models.EmbeddingGemma2.Imaging.SkiaSharp.csproj" />
+    <ProjectReference Include="../../src/Starlings.Models.EmbeddingGemma2.Video.FFmpeg/Starlings.Models.EmbeddingGemma2.Video.FFmpeg.csproj" />
+  </ItemGroup>
+
+</Project>

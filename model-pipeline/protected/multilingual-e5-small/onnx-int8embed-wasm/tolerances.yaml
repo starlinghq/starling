@@ -1,0 +1,19 @@
+# Binding tolerances, set by Mark on 2026-10-12, plan 10.1. Values from docs/m0/browser-wasm-spike.md section 3.4.
+# Observed worst: embedding 3.5e-3, min cosine 0.99980, padded batch vs single 1.6e-7, browser vs native ORT 1.8e-7.
+# Before Preview: retrieval top-10 overlap with fp32 at least 0.95 on a P-030 held-out query set.
+profile: multilingual-e5-small/onnx-int8embed-wasm
+reference: PyTorch fp32 embeddings from model-pipeline/protected/multilingual-e5-small/onnx-fp32-cpu/
+discrete:
+  token_ids: exact
+  attention_mask: exact
+  offsets: exact
+float:
+  embedding_max_abs: 1.0e-2
+  min_cosine: 0.9995
+  padded_batch_vs_single_embedding_max_abs: 1.0e-5
+  nan_or_inf: fail
+  report_only: [mean_abs, p99_abs]
+browser_vs_native_same_graph:
+  embedding_max_abs: 1.0e-5
+task_metric_before_preview:
+  retrieval_top10_overlap_vs_fp32: 0.95

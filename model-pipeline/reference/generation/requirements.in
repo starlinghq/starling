@@ -1,0 +1,12 @@
+# Generation-backend check (M0): transformers reference, ONNX Runtime GenAI builder, GGUF conversion helpers.
+# torch from the CUDA 13.0 index (download.pytorch.org/whl/cu130); see README in ../README.md.
+torch==2.14.1
+transformers==5.18.0
+onnxruntime-genai==0.17.1
+onnxruntime==1.30.0
+onnx==1.23.1
+onnx-ir
+numpy
+safetensors
+sentencepiece
+protobuf

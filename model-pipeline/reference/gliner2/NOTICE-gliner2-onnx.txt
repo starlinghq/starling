@@ -1,0 +1,16 @@
+gliner2-entities-fp32.onnx
+
+This file is a converted (ONNX) form of the GLiNER2 base model, fastino/gliner2-base-v1
+(https://huggingface.co/fastino/gliner2-base-v1) at revision f9634218e53580c56edf0de97ca1a7d3f1c2354e,
+licensed under the Apache License, Version 2.0, as stated in the model card. The model code is GLiNER2
+(https://github.com/fastino-ai/GLiNER2) at 55656fbfa01d3d4a77485e1a1eeeaf682990ccdf, also Apache-2.0.
+
+Modifications by StarlingHq: the entity-extraction path (DeBERTa-v3 backbone, span and label heads)
+was exported to a single ONNX graph with the torch.onnx dynamo exporter (torch 2.14.1, opset 18) and
+written as one file with inline weights, by model-pipeline/reference/gliner2/release_gliner2_onnx.py in
+the starlinghq/starling repository. No weights were changed. Relations, structured extraction and
+classification heads are not part of this graph.
+
+SHA-256 0ba2db95b18116906ae4ec21aa62ef493e69e0780dcfdfa98c4456ecf4123265, 829,284,599 bytes.
+
+The full license text is in LICENSE-Apache-2.0.txt.

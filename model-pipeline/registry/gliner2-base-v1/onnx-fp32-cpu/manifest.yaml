@@ -1,0 +1,225 @@
+# GLiNER2 profile: P-014 spike (docs/m0/gliner2-p014.md) and the P-015 C# package
+# ai-dotnet/src/Starlings.Models.Gliner2 (Gliner2ModelAssets.Lock pins the same files). Feature contract from
+# docs/kickoff.md (settled 2026-10-08) and the maintainer's P-015 decisions (2026-10-10): English entity extraction with
+# labels and threshold; offsets into the original text; inputs above 512 tokens rejected. The Hub repository ships no
+# ONNX file: the graph is Starling's reproducible conversion (execution.graph), listed in origin.files with its
+# digest. Development fixtures accepted (PR #19) and binding tolerances set (PR #21) on 2026-10-10.
+schema_version: 1
+id: gliner2-base-v1/onnx-fp32-cpu
+maturity: experimental
+
+origin:
+  code:
+    url: https://github.com/fastino-ai/GLiNER2
+    revision: "55656fbfa01d3d4a77485e1a1eeeaf682990ccdf"
+  weights:
+    url: https://huggingface.co/fastino/gliner2-base-v1
+    revision: "f9634218e53580c56edf0de97ca1a7d3f1c2354e"
+  files:
+    - path: README.md
+      sha256: "ec5c9215186974ec78e851af8894a5d433e1205a33f8e1dca3f49a70a159c30a"
+      size: 6784
+    - path: config.json
+      sha256: "33d8aa009deed4b5435d162e08b5a720b252a0084e59d30d366b37da8c0193c5"
+      size: 236
+    - path: encoder_config/config.json
+      sha256: "9840a4db70bc007e6b65d336ebe2bddc53bc2ce210dc5757e50d5bb17122f7cd"
+      size: 823
+    - path: model.safetensors
+      sha256: "845fc4bd93c525b86124c58ab4f56c9eacf8587953086b14c501fab25957c007"
+      size: 833938108
+    - path: tokenizer.json
+      sha256: "1b7fbabfb4c690bed84c6793bfecae9b8dfe205751b04f9ffd1e76a1e7df9c16"
+      size: 8650701
+    - path: tokenizer_config.json
+      sha256: "4e6c6a8d26478b670692916266438485403b0c54af31fd1a12bab8a465d062e9"
+      size: 3240
+    - path: added_tokens.json
+      sha256: "3c274ca559be8b7b18febf616724ec05f8a8abccd428bd2744608f45f7a0b067"
+      size: 230
+    - path: special_tokens_map.json
+      sha256: "84ea70143f533d7e99b393d87f20010887a9ac2cba955828ef313886e4e83f4f"
+      size: 2414
+    - path: spm.model
+      sha256: "c679fbf93643d19aab7ee10c0b99e460bdbc02fedf34b92b05af343b4af586fd"
+      size: 2464616
+    # Not in the Hub repository: Starling's conversion of model.safetensors above (execution.graph.asset).
+    - path: onnx/gliner2-entities-fp32.onnx
+      sha256: "0ba2db95b18116906ae4ec21aa62ef493e69e0780dcfdfa98c4456ecf4123265"
+      size: 829284599
+  attribution: >-
+    GLiNER2 by Fastino AI (fastino/gliner2-base-v1, github.com/fastino-ai/GLiNER2). Backbone initialised from
+    microsoft/deberta-v3-base (He, Gao and Chen, "DeBERTaV3", arXiv:2111.09543).
+
+rights:
+  code_license: Apache-2.0
+  weights_license: Apache-2.0
+  tokenizer_terms: Apache-2.0
+  redistribution: download
+  notes: >-
+    Code: Apache-2.0 LICENSE file at the pinned GLiNER2 commit. Weights and tokenizer: Apache-2.0 in the model
+    card front matter only (no LICENSE file in the Hub repository); the card names "multi-domain datasets" as
+    training data without listing them. The backbone microsoft/deberta-v3-base is MIT. Apache-2.0 permits
+    redistributing a converted ONNX file with the license and attribution; Starling exports and hosts the
+    graph (maintainer decision 2026-10-10, P-015), with this attribution and the license in the package README.
+
+behavior:
+  tasks: [extraction]
+  # GLiNER2 itself does not truncate: extract() runs any length through DeBERTa's relative attention (checked to
+  # 1,329 tokens). 512 is the backbone's max_position_embeddings. Decision 2026-10-10: the C# package rejects texts
+  # above 512 tokens (schema prefix included) with Gliner2InputTooLongException; nothing is truncated.
+  max_input_tokens: 512
+  # Fixtures record Unicode scalar values of the normalized text. The C# results carry both units, into the original
+  # text: Start/End (UTF-16 code units) and ScalarStart/ScalarEnd (Unicode scalar values).
+  offsets_unit: unicode-scalars
+  truncation: error
+  defaults:
+    threshold: 0.5
+    overlap: >-
+      Per label, confidence-first greedy suppression of character-overlapping spans (GLiNER2's default for span
+      checkpoints). Spans of different labels may overlap.
+    max_span_width_words: 8
+    text_normalization: >-
+      '.' appended unless the text ends in . ! or ?. Upstream offsets index the normalized text and can end one past
+      the input; the C# package maps them onto the input: end clamped to the input length, whitespace exposed by the
+      clamp trimmed, spans covering only the appended '.' dropped, so Text == input[Start..End] always.
+    result_order: >-
+      descending confidence within each label, ties in start then width order. Order and thresholding compare exactly,
+      except items whose reference confidences are within 2e-5 may swap, and a threshold flip is allowed only when the
+      reference score is within 2e-5 of the threshold (maintainer decision 2026-10-10).
+  unsupported:
+    - relation extraction
+    - structured (JSON) extraction
+    - text classification (named candidate; kickoff decision)
+    - label descriptions as a contract feature (implemented; one development case only, untested)
+    - inputs above 512 tokens (rejected, not truncated)
+    - GLiNER2's plain output format (strings de-duplicated on lower-cased text)
+    - per-label thresholds, dtype "str", regex validators, entity attributes
+    - explicit overlap policies (allow, nested, flat, longest)
+    - extract_long chunking and the max_len word cap
+    - char word splitter (CJK) and non-English text
+    - LoRA adapters, fp16 (quantize), torch.compile, flashdeberta
+    - mixed label counts in one padded batch (graph input contract)
+
+processing:
+  # Tokenizer 0.1.0-preview.3 (2026-10-10) added the Qwen byte-level BPE components and 0.1.0-preview.4 (2026-10-10) the
+  # Gemma BPE components (byte fallback, unknown token, String Split, Sequence/Replace/ByteFallback/Fuse decoders); the
+  # Unigram path is unchanged in behavior and passes every tokenizer fixture of this profile again (tokenizer test suite).
+  # Model gates were not rerun.
+  tokenizer:
+    # 0.3.0-preview.1 is the published tokenizer (starlinghq/tokenizers): the qualified 0.1.0-preview.4 behavior plus BERT WordPiece components this profile does not use; every conformance fixture passes unchanged.
+    package: Starlings.Tokenizers
+    version: 0.3.0-preview.1
+    profile_id: gliner2-base-v1-unigram
+    algorithm: unigram
+    assets:
+      - path: tokenizer.json
+        sha256: "1b7fbabfb4c690bed84c6793bfecae9b8dfe205751b04f9ffd1e76a1e7df9c16"
+        size: 8650701
+    backend_tokenizer_dependency: false
+  decoding:
+    reference_tokenizer: DebertaV2TokenizerFast (transformers 4.57.6, tokenizers 0.22.2), per word, no template
+    word_splitter: GLiNER2 WhitespaceTokenSplitter (URL | email | @handle | word | single non-space), Python re semantics
+    lower_casing: Python str.lower() on each word (full mapping), not the tokenizer's
+
+execution:
+  backend:
+    name: onnxruntime
+    version: 1.30.0
+    binding: Microsoft.ML.OnnxRuntime
+  precision: fp32
+  variant: reference
+  graph:
+    # Route A, torch.onnx dynamo exporter (torch 2.14.1, requirements-export.txt), opset 18, then the release step that
+    # strips the exporter's run-dependent metadata and inlines the weights (one file). Two exports of the same snapshot
+    # give the same digest.
+    asset:
+      path: onnx/gliner2-entities-fp32.onnx
+      sha256: "0ba2db95b18116906ae4ec21aa62ef493e69e0780dcfdfa98c4456ecf4123265"
+      size: 829284599
+      # TODO(maintainer): placeholder until the GitHub release exists (Gliner2ModelAssets.ModelSourceIsPlaceholder).
+      source: https://huggingface.co/Starlinghq/gliner2-base-v1-onnx/resolve/c02c3350a0dcaf0bd6d2878043cc6a4ba950dccb/gliner2-entities-fp32.onnx
+      source_status: placeholder
+      produced_by:
+        - model-pipeline/reference/gliner2/export_gliner2_onnx.py --routes A --exporters dynamo
+        - model-pipeline/reference/gliner2/release_gliner2_onnx.py
+    opset: 18
+    inputs:
+      - { name: input_ids, type: int64, shape: [batch, sequence] }
+      - { name: attention_mask, type: int64, shape: [batch, sequence] }
+      - { name: word_index, type: int64, shape: [batch, words] }
+      - { name: schema_index, type: int64, shape: [batch, schema_slots] }
+    outputs:
+      - { name: count_logits, type: float32, shape: [batch, 20] }
+      - { name: span_logits, type: float32, shape: [batch, labels, words, 8] }
+      - { name: last_hidden_state, type: float32, shape: [batch, sequence, 768] }
+
+capabilities:
+  # Starlings.Models.Gliner2 (P-015); per-capability evidence in ai-dotnet/README.md. Experimental means tested
+  # against the protected development fixtures with the protected tolerances (CPU and, local only, CUDA).
+  batch: experimental
+  streaming: unsupported
+  cancellation: experimental
+  persistence: unsupported
+  training: unsupported
+  aot: untested
+  extensions_ai: unsupported
+  mlnet: untested
+  entity_extraction: experimental
+  offsets_original_text: experimental
+  concurrent_calls: experimental
+  label_descriptions: untested
+  count_gate_closed: untested
+  input_over_512_tokens: unsupported
+  plain_deduplicated_output: unsupported
+  mixed_label_sets_in_batch: unsupported
+  classification: unsupported
+  relation_extraction: unsupported
+  structured_extraction: unsupported
+
+compatibility:
+  - os: linux
+    arch: x64
+    provider: cpu
+    status: experimental
+    verified: 2026-10-10
+  - os: linux
+    arch: x64
+    provider: cuda
+    status: experimental
+    verified: 2026-10-10
+  - os: windows
+    arch: x64
+    provider: cpu
+    status: untested
+
+qualification:
+  reference_runner: model-pipeline/reference/gliner2/run_gliner2_extraction.py
+  # Development fixtures (accepted 2026-10-10, PR #19; agent-written corpus, not the P-030 release set) and binding
+  # tolerances (set 2026-10-10, PR #21). Evaluator run on the C# stages: docs/evidence/p015-gliner2-dotnet/.
+  fixtures: model-pipeline/protected/gliner2-base-v1/onnx-fp32-cpu
+  tolerances: model-pipeline/protected/gliner2-base-v1/onnx-fp32-cpu/tolerances.yaml
+  gates:
+    G0: { status: checklist, evidence: docs/m0/gliner2-p014.md, date: 2026-10-10 }
+    G1: { status: checklist, evidence: docs/m0/gliner2-p014.md, date: 2026-10-10 }
+    G2: { status: checklist, evidence: docs/m0/gliner2-p014.md, date: 2026-10-10 }
+
+maintenance:
+  owner: Mark
+  latest_known_upstream_revision: "55656fbfa01d3d4a77485e1a1eeeaf682990ccdf"
+  latest_verified_upstream_revision: "55656fbfa01d3d4a77485e1a1eeeaf682990ccdf"
+  last_checked: 2026-10-10
+  review_date: 2027-01-05
+  known_issues:
+    - >-
+      Results are ordered by confidence; most entity scores saturate to exactly 1.0 in fp32, so near-ties make the
+      order sensitive to backend noise (ORT CUDA with TF32 reorders one 1,329-token case with the same entity set).
+    - >-
+      Upstream span offsets index the normalized text: a span that includes the appended '.' ends one past the
+      original text (seen at threshold 0.0). The C# package maps such spans onto the input (behavior.defaults).
+    - >-
+      The hosted graph's download address is a placeholder until the maintainer creates the GitHub release; acquisition
+      of the graph is untested until then (offline verification of a local copy works).
+    - >-
+      The count gate (count_pred argmax 0 gives an empty result) never closed on the development corpus, so that
+      path has no fixture.

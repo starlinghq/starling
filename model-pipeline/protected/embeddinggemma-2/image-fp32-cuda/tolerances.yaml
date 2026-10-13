@@ -1,0 +1,24 @@
+# Binding tolerances, set by Mark on 2026-10-11, plan 10.1. Values from docs/m0/embeddinggemma2-image-spike.md.
+# Reference: transformers 5.19.0 / sentence-transformers fp32 CPU in image-fp32-cpu/image-embeddings.jsonl.
+# The evaluator has no image task yet; until it does, the image package tests enforce these bounds.
+# Valid only with use_tf32=0; TF32 on (ORT default) drifts to 1.4e-3 and fails these bounds.
+# Observed worst (RTX 4060 Ti, use_tf32=0): embedding 1.5e-6, min cosine 0.99999995. Parity: image-fp32-cpu/parity-cuda.json.
+profile: embeddinggemma-2/image-fp32-cuda
+provider_options: { use_tf32: 0 }
+discrete:
+  token_ids: exact
+  resized_pixels: exact
+  pixel_values: exact
+  image_positions: exact
+float:
+  # Row-relative: per row, max|d| / max|ref row| <= bound (values reach about 23,000 on image rows).
+  soft_tokens_row_relative: 1.0e-3
+  token_embeddings_row_relative: 1.0e-3
+  embedding_max_abs: 1.0e-5
+  min_cosine: 0.9999995
+  padded_batch_vs_single_embedding_max_abs: 1.0e-5
+  nan_or_inf: fail
+  report_only: [mean_abs, p99_abs, per_value_relative]
+decoder_skiasharp:
+  # The SkiaSharp decoding adapter must reproduce PIL's decoded RGB exactly on the supported formats.
+  decoded_rgb_vs_pil: exact

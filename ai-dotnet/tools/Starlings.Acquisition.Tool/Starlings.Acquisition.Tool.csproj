@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Repository command for explicit model acquisition (P-009). Not packed; libraries expose the same API. -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../src/Starlings.Acquisition/Starlings.Acquisition.csproj" />
+    <ProjectReference Include="../../src/Starlings.Models.E5/Starlings.Models.E5.csproj" />
+    <ProjectReference Include="../../src/Starlings.Models.Gliner2/Starlings.Models.Gliner2.csproj" />
+    <ProjectReference Include="../../src/Starlings.Models.EmbeddingGemma2/Starlings.Models.EmbeddingGemma2.csproj" />
+  </ItemGroup>
+
+</Project>

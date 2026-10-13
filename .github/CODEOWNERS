@@ -1,0 +1,12 @@
+# Default owner
+*                                   @MarkWalls
+
+# Protected evidence: fixtures, tolerances, release evaluation sets (plan 10.1).
+/model-pipeline/protected/          @MarkWalls
+**/tolerances.*                     @MarkWalls
+
+# Release and CI authority
+/.github/                           @MarkWalls
+/global.json                        @MarkWalls
+**/Directory.Packages.props         @MarkWalls
+**/packages.lock.json               @MarkWalls

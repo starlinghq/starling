@@ -1,0 +1,236 @@
+# Pilot LLM profile (P-016): Qwen/Qwen3.5-0.8B on ONNX Runtime GenAI 0.17.1, variant fp32x on the CPU provider,
+# through ai-dotnet/src/Starlings.Models.Qwen35 (Qwen35ModelAssets pins the same files). Backend decision:
+# docs/kickoff.md (settled 2026-10-08) and docs/m0/generation-backend-check.md. The Hub repository ships no GenAI build:
+# the graph is Starling's reproducible build (model-pipeline/reference/generation/build_ortgenai_bundle.py: float32
+# config overlay, builder -p fp32 -e cpu, exclude_mtp=true), listed in origin.files with its digests. Development fixtures
+# and tolerances are proposed separately; nothing here is qualified.
+schema_version: 1
+id: qwen3.5-0.8b/ortgenai-fp32x-cpu
+maturity: experimental
+
+origin:
+  code:
+    url: https://github.com/microsoft/onnxruntime-genai
+    # Builder source: the rel-0.17.1 branch head (the repository has no v0.17.1 tag).
+    revision: "83de55a1f3886cddbb32a5517e26adb3f9d65159"
+  weights:
+    url: https://huggingface.co/Qwen/Qwen3.5-0.8B
+    revision: "2fc06364715b967f1860aea9cf38778875588b17"
+  files:
+    # Hub files the build and the runtime read (docs/m0/hub-pins.md, "Pilot LLM").
+    - path: config.json
+      sha256: "b90b86f35c8e6925ef74ee04d0e758f0a845c83a42089ad82bbaa948de9b4204"
+      size: 2907
+    - path: model.safetensors-00001-of-00001.safetensors
+      sha256: "04b1c301231dd422b8860db31311ab2721511346a32cb1e079c4c4e5f1fe4696"
+      size: 1746942600
+    - path: model.safetensors.index.json
+      sha256: "d8a08838a613b025eb7952ed9db11696213e57e76a375661ef5c12f9dd5dcf4e"
+      size: 50900
+    - path: chat_template.jinja
+      sha256: "273d8e0e683b885071fb17e08d71e5f2a5ddfb5309756181681de4f5a1822d80"
+      size: 7755
+    - path: LICENSE
+      sha256: "bbedc3fda3305820b977265f01b8619d87570a6739de3a5582c3464840f1e57a"
+      size: 11544
+    # Not in the Hub repository: Starling's build of the weights above (execution.graph) and the transformers
+    # 5.18.0 runtime tokenizer the builder writes (processing.tokenizer).
+    - path: transformers-5.18.0/tokenizer.json
+      sha256: "a5cd9732badce41de57e6efce8302930ded1c1188c5f81feb2bd6c24c4a1941f"
+      size: 19989339
+    - path: ortgenai-fp32x/genai_config.json
+      sha256: "e7e1957b2544fdad6170a9cc81cbbb1b88c8819b7016a609170ad7cbebba81ba"
+      size: 1935
+    - path: ortgenai-fp32x/model.onnx
+      sha256: "4a052c4a1444c9437e00ffd48baecb0838d3d9ca1703c3153dbd46e945e84703"
+      size: 308301
+    - path: ortgenai-fp32x/model.onnx.data
+      sha256: "129c58a320b6de7192713cc9c7e4ba744dcf7fabb0f57c6535021b45b3dc5143"
+      size: 3077177344
+  attribution: >-
+    Qwen3.5-0.8B by the Qwen team, Alibaba Cloud (Qwen/Qwen3.5-0.8B, Apache-2.0). ONNX Runtime GenAI model builder by
+    Microsoft (MIT).
+
+rights:
+  code_license: MIT
+  weights_license: Apache-2.0
+  tokenizer_terms: Apache-2.0
+  redistribution: download
+  notes: >-
+    Weights and tokenizer: Apache-2.0 (card front matter and the LICENSE file at the pinned commit). The built ONNX
+    files are a conversion of those weights; Apache-2.0 permits redistributing them with the license and attribution.
+    code_license names the builder (onnxruntime-genai, MIT) and this repository's code (MIT). Hosting: every file in
+    the snapshot layout, with README, NOTICE, LICENSE and SHA256SUMS, in the Hugging Face repository
+    Starlinghq/qwen3.5-0.8b-ortgenai (execution.graph.hosting), private while the packages are in preview; downloading
+    needs a Hugging Face read token with access to it.
+
+behavior:
+  tasks: [generation]
+  # The model's context_length (genai_config.json). Tested only up to 1,666 prompt tokens (prompts-v1 long-license);
+  # longer prompts are untested, not rejected. Prompt plus max_new_tokens above this fails with
+  # GenerationContextLengthException; nothing is truncated.
+  max_input_tokens: 262144
+  offsets_unit: none
+  truncation: error
+  defaults:
+    decoding: greedy
+    max_new_tokens: 512
+    stop_token_ids: [248046, 248044]   # <|im_end|>, <|endoftext|>; never part of the completion or the usage count
+    enable_thinking: false             # the template default (an empty think block after the generation prompt)
+    max_new_tokens_boundary: >-
+      max_new_tokens bounds the completion tokens. When the limit is reached no further step runs, so a stop token that
+      would come next is not generated and the finish reason is length (as transformers' max_new_tokens).
+    stop_sequences: >-
+      ordinal match on the completion text; the text is cut before the first match and the matched string is not
+      returned; the tokens that produced it stay in the completion ids and the usage count.
+    usage: prompt tokens = ids fed to the model; completion tokens = generated ids excluding a stop token id.
+    cancellation: checked before the prefill, between prefill chunks and between decode steps; a running chunk or step is not interrupted.
+    prefill_chunk_tokens: "512 on CUDA, one call on CPU (Qwen35ChatOptions default); a one-call prefill allocates about 1 MB of fp32 logits per prompt token"
+    concurrency: >-
+      concurrent: CPU requests run in parallel; repeated rounds on 2 and 4 threads matched the reference.
+    request_state: >-
+      one GenAI generator per request; concurrent requests share the weights only. Each request renders and prefills
+      the whole conversation (state reuse across turns is not offered: the template drops earlier think blocks, so the
+      earlier state is not a prefix of the next rendering).
+    pad_token_id_overlay: >-
+      248319 (an embedding row the tokenizer never produces) instead of 248044, because ONNX Runtime GenAI masks prompt
+      positions equal to pad_token_id and 248044 is <|endoftext|>, which users can type.
+  unsupported:
+    - tool definitions, tool calls and tool messages (the owned template renderer has no tools input)
+    - image and video content (the checkpoint's vision tower is not built)
+    - reasoning extraction (with enable_thinking the reasoning stays in the completion text)
+    - batching several prompts in one generator
+    - conversation state reuse and partial rewind (recurrent state)
+    - cancellation inside a decode step or a prefill chunk (checked between them)
+    - beam search, repetition penalties, min_length, logit processors
+    - the MTP head and speculative decoding (built with exclude_mtp=true)
+    - quantized variants (4-bit fidelity unusable in M0)
+    - TF32 on CUDA
+    - the ONNX Runtime GenAI tokenizer, template engine and bundled IChatClient
+
+processing:
+  # Tokenizer 0.1.0-preview.4 (2026-10-10) adds the Gemma BPE components; the byte-level BPE path is unchanged in
+  # behavior and passes every qwen35-bpe-chat fixture and differential dump again (tokenizer test suite). Model gates
+  # were not rerun.
+  tokenizer:
+    # 0.3.0-preview.1 is the published tokenizer (starlinghq/tokenizers): the qualified 0.1.0-preview.4 behavior plus BERT WordPiece components this profile does not use; every conformance fixture passes unchanged.
+    package: Starlings.Tokenizers
+    version: 0.3.0-preview.1
+    profile_id: qwen35-bpe-chat
+    algorithm: byte-level-bpe
+    assets:
+      - path: transformers-5.18.0/tokenizer.json
+        sha256: "a5cd9732badce41de57e6efce8302930ded1c1188c5f81feb2bd6c24c4a1941f"
+        size: 19989339
+    # Prompt ids come from the owned tokenizer and completion text from its decoder; ONNX Runtime GenAI receives ids
+    # only (Generator.AppendTokens) and its tokenizer is never loaded.
+    backend_tokenizer_dependency: false
+  template:
+    asset:
+      path: chat_template.jinja
+      sha256: "273d8e0e683b885071fb17e08d71e5f2a5ddfb5309756181681de4f5a1822d80"
+      size: 7755
+    # C# port of the pinned template for text conversations (Qwen35ChatTemplate); P-029 qualifies it on a template
+    # corpus. Equal to transformers 5.18.0 apply_chat_template on the 21 text prompts of prompts-v1.
+    renderer: owned
+  decoding:
+    loop: Starlings.Generation.OnnxGenAI TextGenerator over the GenAI Generator (AppendTokens, GenerateNextToken)
+    detokenization: incremental through the owned ByteLevel decoder; text is held back until a UTF-8 sequence completes
+    token_selection: ONNX Runtime GenAI greedy search (do_sample false), or its sampler with an explicit seed
+
+execution:
+  backend:
+    name: onnxruntime-genai
+    version: 0.17.1
+    binding: Microsoft.ML.OnnxRuntimeGenAI
+    binding_version: 0.17.1
+  precision: fp32
+  variant: reference
+  graph:
+    # onnxruntime-genai 0.17.1 builder from a copy of the snapshot whose config.json declares float32 (sha256
+    # 295154cd6039372b0b16a30336b11deea6591320bf21ee4dc053a305684da311), -p fp32 -e cpu,
+    # --extra_options exclude_mtp=true. Two builds give the same digests.
+    hosting:
+      # Download location of every file in the origin.files lock that Qwen35ModelAssets uses (chat_template.jinja,
+      # transformers-5.18.0/tokenizer.json, ortgenai-*/): <source_base><path>. Private repository (maintainer decision
+      # 2026-10-10); the token is sent only to https://huggingface.co. The digests, not the address, pin the bytes.
+      repository: https://huggingface.co/Starlinghq/qwen3.5-0.8b-ortgenai
+      revision: "95a690c1774f144957cb7b76986a9126e8b1bb5f"
+      source_base: https://huggingface.co/Starlinghq/qwen3.5-0.8b-ortgenai/resolve/95a690c1774f144957cb7b76986a9126e8b1bb5f/
+      source_status: private
+    inputs:
+      - { name: input_ids, type: int64, shape: [batch, sequence] }
+      - { name: attention_mask, type: int64, shape: [batch, total_sequence] }
+      - { name: position_ids, type: int64, shape: [batch, sequence] }
+      - { name: "past_key_values.%d.key/value", type: kv-cache, shape: "6 full-attention layers" }
+      - { name: "past.%d.conv/recurrent", type: recurrent-state, shape: "18 Gated DeltaNet layers" }
+    outputs:
+      - { name: logits, type: float32, shape: [batch, sequence, 248320] }
+
+capabilities:
+  # Starlings.Models.Qwen35 (Qwen35Capabilities); evidence in docs/evidence/p016-qwen35/README.md. Experimental means
+  # tested against the transformers fp32 reference on prompts-v1 and by the decode-loop unit tests, not qualified.
+  batch: unsupported
+  streaming: experimental
+  cancellation: experimental
+  persistence: unsupported
+  training: unsupported
+  aot: untested
+  extensions_ai: experimental  # IChatClient (Starlings.Models.Qwen35.Extensions.AI, P-017): 21 text prompts, streaming = non-streamed = reference, cancellation, concurrency
+  mlnet: unsupported
+  greedy_generation: experimental
+  sampling_seeded: experimental
+  stop_tokens: experimental
+  stop_sequences: experimental
+  max_new_tokens: experimental
+  usage: experimental
+  concurrent_requests: "experimental"
+  step0_logits: experimental
+  chat_template_owned_text: experimental
+  enable_thinking: experimental
+  tokenizer_owned: experimental
+  cancellation_inside_a_step: unsupported
+  chunked_prefill: experimental
+  conversation_state_reuse: unsupported
+  tool_calling: unsupported
+  reasoning_split: unsupported
+  structured_output: unsupported
+  vision: unsupported
+  long_context_over_1666_tokens: untested
+
+compatibility:
+  - os: linux
+    arch: x64
+    provider: cpu
+    status: experimental
+    verified: 2026-10-10
+  - os: windows
+    arch: x64
+    provider: cpu
+    status: untested
+
+qualification:
+  reference_runner: model-pipeline/reference/generation/run_reference.py
+  # Proposed (separate pull request): the transformers fp32 CPU reference on prompts-v1, shared by every profile of this
+  # model. Tolerances are proposed as values in docs/evidence/p016-qwen35/README.md; the maintainer sets the binding file.
+  fixtures: model-pipeline/protected/qwen3.5-0.8b/reference
+  tolerances: model-pipeline/protected/qwen3.5-0.8b/ortgenai-fp32x-cpu/tolerances.yaml
+  gates:
+    G0: { status: checklist, evidence: docs/evidence/p016-qwen35/README.md, date: 2026-10-10 }
+    G1: { status: checklist, evidence: docs/evidence/p016-qwen35/README.md, date: 2026-10-10 }
+    G2: { status: checklist, evidence: docs/evidence/p016-qwen35/README.md, date: 2026-10-10 }
+
+maintenance:
+  owner: Mark
+  latest_known_upstream_revision: "2fc06364715b967f1860aea9cf38778875588b17"
+  latest_verified_upstream_revision: "2fc06364715b967f1860aea9cf38778875588b17"
+  last_checked: 2026-10-10
+  review_date: 2027-01-05
+  known_issues:
+    - >-
+      The ONNX Runtime GenAI C# API is labeled preview upstream; Starlings.Generation.OnnxGenAI isolates it.
+      The runtime version must equal the builder version that wrote the graph (0.17.1).
+    - >-
+      The hosting repository (execution.graph.hosting) is private for now: Qwen35ModelAssets.DownloadAsync needs a Hugging
+      Face read token with access to it (HF_TOKEN), else ModelAssetAccessDeniedException. It moves to an organization
+      later (new sources, same digests).

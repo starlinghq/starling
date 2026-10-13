@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    CUDA build of the micro-benchmarks (Linux x64), same sources as ../Starlings.Benchmarks.Micro. Local only:
+    not in AI.slnx. CUDA cases are added only with STARLING_BENCH_CUDA=1 and an explicit CUDA_VISIBLE_DEVICES.
+  -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <RootNamespace>Starlings.Benchmarks</RootNamespace>
+    <DefineConstants>$(DefineConstants);ORT_CUDA</DefineConstants>
+    <ServerGarbageCollection>false</ServerGarbageCollection>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="BenchmarkDotNet" />
+    <PackageReference Include="Microsoft.ML.OnnxRuntime.Gpu.Linux" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="../Starlings.Benchmarks.Micro/Program.cs" Link="Program.cs" />
+    <Compile Include="../Starlings.Benchmarks.Micro/MicroBenchmarks.cs" Link="MicroBenchmarks.cs" />
+    <Compile Include="../Shared/*.cs" Link="Shared/%(Filename)%(Extension)" />
+    <Compile Include="../../tests/Shared/E5/E5TestAssets.cs" Link="Shared/E5TestAssets.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../src/Starlings.Models.E5/Starlings.Models.E5.csproj" />
+  </ItemGroup>
+
+</Project>

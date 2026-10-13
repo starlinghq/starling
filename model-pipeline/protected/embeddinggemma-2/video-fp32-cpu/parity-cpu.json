@@ -1,0 +1,667 @@
+{
+ "provider": "cpu",
+ "provider_options": {},
+ "threads": 12,
+ "frame_batch": 8,
+ "onnxruntime": "1.30.0",
+ "vision_graph": "embeddinggemma2-vision-fp32.onnx",
+ "text_graph": "embeddinggemma2-text-mm-fp32.onnx",
+ "session_load_s": 2.2,
+ "timing_single_rows": {
+  "vision_s": 629.3,
+  "text_s": 103.7,
+  "frames": 276
+ },
+ "rows": 36,
+ "worst": {
+  "soft_tokens_padded_row_rel": 5.813692974734928e-05,
+  "soft_tokens_unpadded_row_rel": 5.813692974734928e-05,
+  "soft_tokens_unpadded_vs_padded_max_abs": 0.0,
+  "token_embeddings_row_rel": 0.00021018393454141915,
+  "embedding_max_abs": 1.695007085800171e-06,
+  "min_cosine": 0.9999999082493721,
+  "text_batch4_vs_single_max_abs": 8.940696716308594e-08
+ },
+ "nan_or_inf": false,
+ "per_row": {
+  "h264-bars-640x360-30fps-5s": {
+   "kind": "video",
+   "tokens": 612,
+   "videos": [
+    {
+     "video": "h264-bars-640x360-30fps-5s",
+     "frames": 5,
+     "soft_tokens_per_frame": 120,
+     "soft_tokens_padded_max_abs": 0.0002009868621826172,
+     "soft_tokens_padded_row_rel": 3.213891452970208e-05,
+     "soft_tokens_unpadded_max_abs": 0.0002009868621826172,
+     "soft_tokens_unpadded_row_rel": 3.213891452970208e-05,
+     "unpadded_vs_padded_max_abs": 0.0
+    }
+   ],
+   "token_embeddings_row_rel": 9.568115274305455e-06,
+   "embedding_max_abs": 2.0116567611694336e-07,
+   "cosine": 1.0000000103283426
+  },
+  "h264-shapes-1280x720-25fps-10s": {
+   "kind": "video",
+   "tokens": 1222,
+   "videos": [
+    {
+     "video": "h264-shapes-1280x720-25fps-10s",
+     "frames": 10,
+     "soft_tokens_per_frame": 120,
+     "soft_tokens_padded_max_abs": 6.395578384399414e-05,
+     "soft_tokens_padded_row_rel": 1.002272290461013e-05,
+     "soft_tokens_unpadded_max_abs": 6.395578384399414e-05,
+     "soft_tokens_unpadded_row_rel": 1.002272290461013e-05,
+     "unpadded_vs_padded_max_abs": 0.0
+    }
+   ],
+   "token_embeddings_row_rel": 3.720990889632958e-06,
+   "embedding_max_abs": 2.384185791015625e-07,
+   "cosine": 1.0000000256519765
+  },
+  "h264-long-320x240-30fps-40s": {
+   "kind": "video",
+   "tokens": 4226,
+   "videos": [
+    {
+     "video": "h264-long-320x240-30fps-40s",
+     "frames": 32,
+     "soft_tokens_per_frame": 130,
+     "soft_tokens_padded_max_abs": 0.0003650188446044922,
+     "soft_tokens_padded_row_rel": 5.813692974734928e-05,
+     "soft_tokens_unpadded_max_abs": 0.0003650188446044922,
+     "soft_tokens_unpadded_row_rel": 5.813692974734928e-05,
+     "unpadded_vs_padded_max_abs": 0.0
+    }
+   ],
+   "token_embeddings_row_rel": 5.1518607506295666e-05,
+   "embedding_max_abs": 3.129243850708008e-07,
+   "cosine": 1.000000001587849
+  },
+  "h264-32s-160x120-30fps": {
+   "kind": "video",
+   "tokens": 4226,
+   "videos": [
+    {
+     "video": "h264-32s-160x120-30fps",
+     "frames": 32,
+     "soft_tokens_per_frame": 130,
+     "soft_tokens_padded_max_abs": 0.0001747608184814453,
+     "soft_tokens_padded_row_rel": 2.8518994973497954e-05,
+     "soft_tokens_unpadded_max_abs": 0.0001747608184814453,
+     "soft_tokens_unpadded_row_rel": 2.8518994973497954e-05,
+     "unpadded_vs_padded_max_abs": 0.0
+    }
+   ],
+   "token_embeddings_row_rel": 0.00021018393454141915,
+   "embedding_max_abs": 4.172325134277344e-07,
+   "cosine": 0.999999964101032
+  },
+  "h264-33s-160x120-30fps": {
+   "kind": "video",
+   "tokens": 4226,
+   "videos": [
+    {
+     "video": "h264-33s-160x120-30fps",
+     "frames": 32,
+     "soft_tokens_per_frame": 130,
+     "soft_tokens_padded_max_abs": 0.0001747608184814453,
+     "soft_tokens_padded_row_rel": 2.8518994973497954e-05,
+     "soft_tokens_unpadded_max_abs": 0.0001747608184814453,
+     "soft_tokens_unpadded_row_rel": 2.8518994973497954e-05,
+     "unpadded_vs_padded_max_abs": 0.0
+    }
+   ],
+   "token_embeddings_row_rel": 0.00019722846627701074,
+   "embedding_max_abs": 7.301568984985352e-07,
+   "cosine": 1.0000000237628222
+  },
+  "h264-short-320x240-24fps-0.5s": {
+   "kind": "video",
+   "tokens": 134,
+   "videos": [
+    {
+     "video": "h264-short-320x240-24fps-0.5s",
+     "frames": 1,
+     "soft_tokens_per_frame": 130,
+     "soft_tokens_padded_max_abs": 4.9233436584472656e-05,
+     "soft_tokens_padded_row_rel": 7.523159490908343e-06,
+     "soft_tokens_unpadded_max_abs": 4.9233436584472656e-05,
+     "soft_tokens_unpadded_row_rel": 7.523159490908343e-06,
+     "unpadded_vs_padded_max_abs": 0.0
+    }
+   ],
+   "token_embeddings_row_rel": 8.328048352268524e-06,
+   "embedding_max_abs": 1.30385160446167e-07,
+   "cosine": 1.0000000767578796
+  },
+  "h264-1s-320x240-30fps": {
+   "kind": "video",
+   "tokens": 134,
+   "videos": [
+    {
+     "video": "h264-1s-320x240-30fps",
+     "frames": 1,
+     "soft_tokens_per_frame": 130,
+     "soft_tokens_padded_max_abs": 4.124641418457031e-05,
+     "soft_tokens_padded_row_rel": 7.202403954277974e-06,
+     "soft_tokens_unpadded_max_abs": 4.124641418457031e-05,
+     "soft_tokens_unpadded_row_rel": 7.202403954277974e-06,
+     "unpadded_vs_padded_max_abs": 0.0
+    }
+   ],
+   "token_embeddings_row_rel": 1.3802124385620118e-06,
+   "embedding_max_abs": 1.0151416063308716e-07,
+   "cosine": 1.000000044156374
+  },
+  "h264-1.9s-320x240-30fps": {
+   "kind": "video",
+   "tokens": 134,
+   "videos": [
+    {
+     "video": "h264-1.9s-320x240-30fps",
+     "frames": 1,
+     "soft_tokens_per_frame": 130,
+     "soft_tokens_padded_max_abs": 5.888938903808594e-05,
+     "soft_tokens_padded_row_rel": 9.615360659331898e-06,
+     "soft_tokens_unpadded_max_abs": 5.888938903808594e-05,
+     "soft_tokens_unpadded_row_rel": 9.615360659331898e-06,
+     "unpadded_vs_padded_max_abs": 0.0
+    }
+   ],
+   "token_embeddings_row_rel": 2.477969019309967e-06,
+   "embedding_max_abs": 1.4156103134155273e-07,
+   "cosine": 1.0000001035712442
+  },
+  "h264-ntsc-640x480-29.97fps-12s": {
+   "kind": "video",
+   "tokens": 1586,
+   "videos": [
+    {
+     "video": "h264-ntsc-640x480-29.97fps-12s",
+     "frames": 12,
+     "soft_tokens_per_frame": 130,
+     "soft_tokens_padded_max_abs": 0.0002770423889160156,
+     "soft_tokens_padded_row_rel": 4.992427149660936e-05,
+     "soft_tokens_unpadded_max_abs": 0.0002770423889160156,
+     "soft_tokens_unpadded_row_rel": 4.992427149660936e-05,
+     "unpadded_vs_padded_max_abs": 0.0
+    }
+   ],
+   "token_embeddings_row_rel": 6.314142956398427e-05,
+   "embedding_max_abs": 5.364418029785156e-07,
+   "cosine": 1.0000000047726478
+  },
+  "h264-60fps-480x270-3s": {
+   "kind": "video",
+   "tokens": 368,
+   "videos": [
+    {
+     "video": "h264-60fps-480x270-3s",
+     "frames": 3,
+     "soft_tokens_per_frame": 120,
+     "soft_tokens_padded_max_abs": 8.404254913330078e-05,
+     "soft_tokens_padded_row_rel": 1.3907028300427791e-05,
+     "soft_tokens_unpadded_max_abs": 8.404254913330078e-05,
+     "soft_tokens_unpadded_row_rel": 1.3907028300427791e-05,
+     "unpadded_vs_padded_max_abs": 0.0
+    }
+   ],
+   "token_embeddings_row_rel": 3.635831944848178e-06,
+   "embedding_max_abs": 1.1920928955078125e-07,
+   "cosine": 1.0000000229359687
+  },
+  "h264-1fps-64x48-8s": {
+   "kind": "video",
+   "tokens": 1058,
+   "videos": [
+    {
+     "video": "h264-1fps-64x48-8s",
+     "frames": 8,
+     "soft_tokens_per_frame": 130,
+     "soft_tokens_padded_max_abs": 9.47117805480957e-05,
+     "soft_tokens_padded_row_rel": 1.5567203450750345e-05,
+     "soft_tokens_unpadded_max_abs": 9.47117805480957e-05,
+     "soft_tokens_unpadded_row_rel": 1.5567203450750345e-05,
+     "unpadded_vs_padded_max_abs": 0.0
+    }
+   ],
+   "token_embeddings_row_rel": 4.991395144315902e-06,
+   "embedding_max_abs": 2.980232238769531e-07,
+   "cosine": 1.0000000555265192
+  },
+  "h264-portrait-360x640-30fps-4s": {
+   "kind": "video",
+   "tokens": 490,
+   "videos": [
+    {
+     "video": "h264-portrait-360x640-30fps-4s",
+     "frames": 4,
+     "soft_tokens_per_frame": 120,
+     "soft_tokens_padded_max_abs": 0.00015151500701904297,
+     "soft_tokens_padded_row_rel": 2.7260364665179665e-05,
+     "soft_tokens_unpadded_max_abs": 0.00015151500701904297,
+     "soft_tokens_unpadded_row_rel": 2.7260364665179665e-05,
+     "unpadded_vs_padded_max_abs": 0.0
+    }
+   ],
+   "token_embeddings_row_rel": 3.41339036822319e-05,
+   "embedding_max_abs": 3.6135315895080566e-07,
+   "cosine": 1.0000000796746893
+  },
+  "h264-330x186-30fps-3s": {
+   "kind": "video",
+   "tokens": 368,
+   "videos": [
+    {
+     "video": "h264-330x186-30fps-3s",
+     "frames": 3,
+     "soft_tokens_per_frame": 120,
+     "soft_tokens_padded_max_abs": 9.560585021972656e-05,
+     "soft_tokens_padded_row_rel": 1.6194980783706218e-05,
+     "soft_tokens_unpadded_max_abs": 9.560585021972656e-05,
+     "soft_tokens_unpadded_row_rel": 1.6194980783706218e-05,
+     "unpadded_vs_padded_max_abs": 0.0
+    }
+   ],
+   "token_embeddings_row_rel": 3.369246314832708e-06,
+   "embedding_max_abs": 2.384185791015625e-07,
+   "cosine": 0.9999999082493721
+  },
+  "h264-rot90-640x360-30fps-3s": {
+   "kind": "video",
+   "tokens": 368,
+   "videos": [
+    {
+     "video": "h264-rot90-640x360-30fps-3s",
+     "frames": 3,
+     "soft_tokens_per_frame": 120,
+     "soft_tokens_padded_max_abs": 0.0002224445343017578,
+     "soft_tokens_padded_row_rel": 3.9746102070375733e-05,
+     "soft_tokens_unpadded_max_abs": 0.0002224445343017578,
+     "soft_tokens_unpadded_row_rel": 3.9746102070375733e-05,
+     "unpadded_vs_padded_max_abs": 0.0
+    }
+   ],
+   "token_embeddings_row_rel": 1.011169752018759e-05,
+   "embedding_max_abs": 3.501772880554199e-07,
+   "cosine": 1.0000000902573252
+  },
+  "h264-fullrange-640x360-30fps-3s": {
+   "kind": "video",
+   "tokens": 368,
+   "videos": [
+    {
+     "video": "h264-fullrange-640x360-30fps-3s",
+     "frames": 3,
+     "soft_tokens_per_frame": 120,
+     "soft_tokens_padded_max_abs": 0.0001277923583984375,
+     "soft_tokens_padded_row_rel": 2.0283639451042978e-05,
+     "soft_tokens_unpadded_max_abs": 0.0001277923583984375,
+     "soft_tokens_unpadded_row_rel": 2.0283639451042978e-05,
+     "unpadded_vs_padded_max_abs": 0.0
+    }
+   ],
+   "token_embeddings_row_rel": 5.4436541176983155e-06,
+   "embedding_max_abs": 2.8265640139579773e-07,
+   "cosine": 0.999999977449364
+  },
+  "h264-untagged-640x360-30fps-3s": {
+   "kind": "video",
+   "tokens": 368,
+   "videos": [
+    {
+     "video": "h264-untagged-640x360-30fps-3s",
+     "frames": 3,
+     "soft_tokens_per_frame": 120,
+     "soft_tokens_padded_max_abs": 0.00016594678163528442,
+     "soft_tokens_padded_row_rel": 2.6535811214414825e-05,
+     "soft_tokens_unpadded_max_abs": 0.00016594678163528442,
+     "soft_tokens_unpadded_row_rel": 2.6535811214414825e-05,
+     "unpadded_vs_padded_max_abs": 0.0
+    }
+   ],
+   "token_embeddings_row_rel": 7.020053089945577e-06,
+   "embedding_max_abs": 1.825392246246338e-07,
+   "cosine": 1.000000071655716
+  },
+  "h264-10bit-640x360-30fps-3s": {
+   "kind": "video",
+   "tokens": 368,
+   "videos": [
+    {
+     "video": "h264-10bit-640x360-30fps-3s",
+     "frames": 3,
+     "soft_tokens_per_frame": 120,
+     "soft_tokens_padded_max_abs": 0.00013911724090576172,
+     "soft_tokens_padded_row_rel": 2.2360732300761852e-05,
+     "soft_tokens_unpadded_max_abs": 0.00013911724090576172,
+     "soft_tokens_unpadded_row_rel": 2.2360732300761852e-05,
+     "unpadded_vs_padded_max_abs": 0.0
+    }
+   ],
+   "token_embeddings_row_rel": 8.329747652169317e-05,
+   "embedding_max_abs": 5.603651516139507e-07,
+   "cosine": 1.0000000220104264
+  },
+  "h264-1080p-1920x1080-30fps-4s": {
+   "kind": "video",
+   "tokens": 490,
+   "videos": [
+    {
+     "video": "h264-1080p-1920x1080-30fps-4s",
+     "frames": 4,
+     "soft_tokens_per_frame": 120,
+     "soft_tokens_padded_max_abs": 8.940696716308594e-05,
+     "soft_tokens_padded_row_rel": 1.4640022918077477e-05,
+     "soft_tokens_unpadded_max_abs": 8.940696716308594e-05,
+     "soft_tokens_unpadded_row_rel": 1.4640022918077477e-05,
+     "unpadded_vs_padded_max_abs": 0.0
+    }
+   ],
+   "token_embeddings_row_rel": 2.432381188555155e-05,
+   "embedding_max_abs": 3.0919909477233887e-07,
+   "cosine": 1.0000000565436236
+  },
+  "vp9-640x360-30fps-6s": {
+   "kind": "video",
+   "tokens": 734,
+   "videos": [
+    {
+     "video": "vp9-640x360-30fps-6s",
+     "frames": 6,
+     "soft_tokens_per_frame": 120,
+     "soft_tokens_padded_max_abs": 6.818771362304688e-05,
+     "soft_tokens_padded_row_rel": 1.1422389416892612e-05,
+     "soft_tokens_unpadded_max_abs": 6.818771362304688e-05,
+     "soft_tokens_unpadded_row_rel": 1.1422389416892612e-05,
+     "unpadded_vs_padded_max_abs": 0.0
+    }
+   ],
+   "token_embeddings_row_rel": 1.1367438673914876e-05,
+   "embedding_max_abs": 2.384185791015625e-07,
+   "cosine": 0.99999998095112
+  },
+  "vp9-odd-321x179-30fps-3s": {
+   "kind": "video",
+   "tokens": 368,
+   "videos": [
+    {
+     "video": "vp9-odd-321x179-30fps-3s",
+     "frames": 3,
+     "soft_tokens_per_frame": 120,
+     "soft_tokens_padded_max_abs": 0.00018402934074401855,
+     "soft_tokens_padded_row_rel": 3.0447574513178047e-05,
+     "soft_tokens_unpadded_max_abs": 0.00018402934074401855,
+     "soft_tokens_unpadded_row_rel": 3.0447574513178047e-05,
+     "unpadded_vs_padded_max_abs": 0.0
+    }
+   ],
+   "token_embeddings_row_rel": 1.273547240998596e-05,
+   "embedding_max_abs": 2.8312206268310547e-07,
+   "cosine": 1.0000000351824487
+  },
+  "hevc-640x360-30fps-4s": {
+   "kind": "video",
+   "tokens": 490,
+   "videos": [
+    {
+     "video": "hevc-640x360-30fps-4s",
+     "frames": 4,
+     "soft_tokens_per_frame": 120,
+     "soft_tokens_padded_max_abs": 7.414817810058594e-05,
+     "soft_tokens_padded_row_rel": 1.2147858578614613e-05,
+     "soft_tokens_unpadded_max_abs": 7.414817810058594e-05,
+     "soft_tokens_unpadded_row_rel": 1.2147858578614613e-05,
+     "unpadded_vs_padded_max_abs": 0.0
+    }
+   ],
+   "token_embeddings_row_rel": 8.371330295631196e-06,
+   "embedding_max_abs": 1.4901161193847656e-07,
+   "cosine": 1.0000000521059966
+  },
+  "av1-640x360-30fps-3s": {
+   "kind": "video",
+   "tokens": 368,
+   "videos": [
+    {
+     "video": "av1-640x360-30fps-3s",
+     "frames": 3,
+     "soft_tokens_per_frame": 120,
+     "soft_tokens_padded_max_abs": 0.00016412138938903809,
+     "soft_tokens_padded_row_rel": 2.8074181500220638e-05,
+     "soft_tokens_unpadded_max_abs": 0.00016412138938903809,
+     "soft_tokens_unpadded_row_rel": 2.8074181500220638e-05,
+     "unpadded_vs_padded_max_abs": 0.0
+    }
+   ],
+   "token_embeddings_row_rel": 4.1395418520551175e-05,
+   "embedding_max_abs": 1.695007085800171e-06,
+   "cosine": 1.0000000500897654
+  },
+  "mm-caption-then-video": {
+   "kind": "multimodal",
+   "tokens": 620,
+   "videos": [
+    {
+     "video": "h264-bars-640x360-30fps-5s",
+     "frames": 5,
+     "soft_tokens_per_frame": 120,
+     "soft_tokens_padded_max_abs": 0.0002009868621826172,
+     "soft_tokens_padded_row_rel": 3.213891452970208e-05,
+     "soft_tokens_unpadded_max_abs": 0.0002009868621826172,
+     "soft_tokens_unpadded_row_rel": 3.213891452970208e-05,
+     "unpadded_vs_padded_max_abs": 0.0
+    }
+   ],
+   "token_embeddings_row_rel": 0.0001064392999978736,
+   "embedding_max_abs": 1.1324882507324219e-06,
+   "cosine": 1.0000000611579534
+  },
+  "mm-placeholder": {
+   "kind": "multimodal",
+   "tokens": 1231,
+   "videos": [
+    {
+     "video": "h264-shapes-1280x720-25fps-10s",
+     "frames": 10,
+     "soft_tokens_per_frame": 120,
+     "soft_tokens_padded_max_abs": 6.395578384399414e-05,
+     "soft_tokens_padded_row_rel": 1.002272290461013e-05,
+     "soft_tokens_unpadded_max_abs": 6.395578384399414e-05,
+     "soft_tokens_unpadded_row_rel": 1.002272290461013e-05,
+     "unpadded_vs_padded_max_abs": 0.0
+    }
+   ],
+   "token_embeddings_row_rel": 4.325032023189124e-06,
+   "embedding_max_abs": 1.4156103134155273e-07,
+   "cosine": 1.0000000333844279
+  },
+  "mm-two-videos": {
+   "kind": "multimodal",
+   "tokens": 1347,
+   "videos": [
+    {
+     "video": "h264-bars-640x360-30fps-5s",
+     "frames": 5,
+     "soft_tokens_per_frame": 120,
+     "soft_tokens_padded_max_abs": 0.0002009868621826172,
+     "soft_tokens_padded_row_rel": 3.213891452970208e-05,
+     "soft_tokens_unpadded_max_abs": 0.0002009868621826172,
+     "soft_tokens_unpadded_row_rel": 3.213891452970208e-05,
+     "unpadded_vs_padded_max_abs": 0.0
+    },
+    {
+     "video": "vp9-640x360-30fps-6s",
+     "frames": 6,
+     "soft_tokens_per_frame": 120,
+     "soft_tokens_padded_max_abs": 6.818771362304688e-05,
+     "soft_tokens_padded_row_rel": 1.1422389416892612e-05,
+     "soft_tokens_unpadded_max_abs": 6.818771362304688e-05,
+     "soft_tokens_unpadded_row_rel": 1.1422389416892612e-05,
+     "unpadded_vs_padded_max_abs": 0.0
+    }
+   ],
+   "token_embeddings_row_rel": 1.4458189980359748e-05,
+   "embedding_max_abs": 2.0116567611694336e-07,
+   "cosine": 1.0000000206174517
+  },
+  "mm-image-and-video": {
+   "kind": "multimodal",
+   "tokens": 1496,
+   "videos": [
+    {
+     "video": "h264-shapes-1280x720-25fps-10s",
+     "frames": 10,
+     "soft_tokens_per_frame": 120,
+     "soft_tokens_padded_max_abs": 6.395578384399414e-05,
+     "soft_tokens_padded_row_rel": 1.002272290461013e-05,
+     "soft_tokens_unpadded_max_abs": 6.395578384399414e-05,
+     "soft_tokens_unpadded_row_rel": 1.002272290461013e-05,
+     "unpadded_vs_padded_max_abs": 0.0
+    }
+   ],
+   "token_embeddings_row_rel": 3.471725449344376e-06,
+   "embedding_max_abs": 4.470348358154297e-07,
+   "cosine": 1.0000000075976476
+  },
+  "mm-document-prompt": {
+   "kind": "multimodal",
+   "tokens": 1598,
+   "videos": [
+    {
+     "video": "h264-ntsc-640x480-29.97fps-12s",
+     "frames": 12,
+     "soft_tokens_per_frame": 130,
+     "soft_tokens_padded_max_abs": 0.0002770423889160156,
+     "soft_tokens_padded_row_rel": 4.992427149660936e-05,
+     "soft_tokens_unpadded_max_abs": 0.0002770423889160156,
+     "soft_tokens_unpadded_row_rel": 4.992427149660936e-05,
+     "unpadded_vs_padded_max_abs": 0.0
+    }
+   ],
+   "token_embeddings_row_rel": 2.065881017188076e-05,
+   "embedding_max_abs": 4.023313522338867e-07,
+   "cosine": 0.9999999812060776
+  },
+  "vid-query-prompt": {
+   "kind": "video",
+   "tokens": 620,
+   "videos": [
+    {
+     "video": "h264-bars-640x360-30fps-5s",
+     "frames": 5,
+     "soft_tokens_per_frame": 120,
+     "soft_tokens_padded_max_abs": 0.0002009868621826172,
+     "soft_tokens_padded_row_rel": 3.213891452970208e-05,
+     "soft_tokens_unpadded_max_abs": 0.0002009868621826172,
+     "soft_tokens_unpadded_row_rel": 3.213891452970208e-05,
+     "unpadded_vs_padded_max_abs": 0.0
+    }
+   ],
+   "token_embeddings_row_rel": 3.3024356525857e-05,
+   "embedding_max_abs": 2.7939677238464355e-07,
+   "cosine": 0.9999999930606893
+  },
+  "vid-array-with-metadata": {
+   "kind": "video",
+   "tokens": 612,
+   "videos": [
+    {
+     "video": "h264-bars-640x360-30fps-5s",
+     "frames": 5,
+     "soft_tokens_per_frame": 120,
+     "soft_tokens_padded_max_abs": 0.0002009868621826172,
+     "soft_tokens_padded_row_rel": 3.213891452970208e-05,
+     "soft_tokens_unpadded_max_abs": 0.0002009868621826172,
+     "soft_tokens_unpadded_row_rel": 3.213891452970208e-05,
+     "unpadded_vs_padded_max_abs": 0.0
+    }
+   ],
+   "token_embeddings_row_rel": 9.568115274305455e-06,
+   "embedding_max_abs": 2.0116567611694336e-07,
+   "cosine": 1.0000000103283426
+  },
+  "vid-array-no-metadata": {
+   "kind": "video",
+   "tokens": 3906,
+   "videos": [
+    {
+     "video": "h264-bars-640x360-30fps-5s",
+     "frames": 32,
+     "soft_tokens_per_frame": 120,
+     "soft_tokens_padded_max_abs": 0.0002617835998535156,
+     "soft_tokens_padded_row_rel": 3.931226310602109e-05,
+     "soft_tokens_unpadded_max_abs": 0.0002617835998535156,
+     "soft_tokens_unpadded_row_rel": 3.931226310602109e-05,
+     "unpadded_vs_padded_max_abs": 0.0
+    }
+   ],
+   "token_embeddings_row_rel": 2.4503033273504116e-05,
+   "embedding_max_abs": 3.8743019104003906e-07,
+   "cosine": 1.0000000284171333
+  },
+  "vid-decoder-object": {
+   "kind": "video",
+   "tokens": 1222,
+   "videos": [
+    {
+     "video": "h264-shapes-1280x720-25fps-10s",
+     "frames": 10,
+     "soft_tokens_per_frame": 120,
+     "soft_tokens_padded_max_abs": 6.395578384399414e-05,
+     "soft_tokens_padded_row_rel": 1.002272290461013e-05,
+     "soft_tokens_unpadded_max_abs": 6.395578384399414e-05,
+     "soft_tokens_unpadded_row_rel": 1.002272290461013e-05,
+     "unpadded_vs_padded_max_abs": 0.0
+    }
+   ],
+   "token_embeddings_row_rel": 3.720990889632958e-06,
+   "embedding_max_abs": 2.384185791015625e-07,
+   "cosine": 1.0000000256519765
+  },
+  "q-bars": {
+   "kind": "text",
+   "tokens": 18,
+   "videos": [],
+   "token_embeddings_row_rel": 4.0980791027322994e-07,
+   "embedding_max_abs": 6.332993507385254e-08,
+   "cosine": 1.0000000598264651
+  },
+  "q-shapes": {
+   "kind": "text",
+   "tokens": 18,
+   "videos": [],
+   "token_embeddings_row_rel": 4.994511755285203e-07,
+   "embedding_max_abs": 7.264316082000732e-08,
+   "cosine": 0.9999999748048696
+  },
+  "q-text": {
+   "kind": "text",
+   "tokens": 16,
+   "videos": [],
+   "token_embeddings_row_rel": 2.242104386596111e-07,
+   "embedding_max_abs": 7.450580596923828e-08,
+   "cosine": 1.0000000785196264
+  },
+  "q-tiny": {
+   "kind": "text",
+   "tokens": 14,
+   "videos": [],
+   "token_embeddings_row_rel": 2.3291659090318717e-07,
+   "embedding_max_abs": 6.705522537231445e-08,
+   "cosine": 1.0000000663949304
+  },
+  "q-cat": {
+   "kind": "text",
+   "tokens": 14,
+   "videos": [],
+   "token_embeddings_row_rel": 2.95515604875618e-07,
+   "embedding_max_abs": 8.940696716308594e-08,
+   "cosine": 1.000000071027638
+  }
+ }
+}

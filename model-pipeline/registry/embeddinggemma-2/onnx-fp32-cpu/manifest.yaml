@@ -1,0 +1,233 @@
+# EmbeddingGemma 2 text-embedding profile: admission (model-pipeline/admissions/embeddinggemma-2.md, admitted 2026-10-10
+# at maturity Experimental, text embeddings only), spike (docs/m0/embeddinggemma2-spike.md) and the C# package
+# ai-dotnet/src/Starlings.Models.EmbeddingGemma2 (EmbeddingGemma2ModelAssets.Lock pins the graph, tokenizer.json
+# and config_sentence_transformers.json below). The Hub repository ships no ONNX file: the graph is Starling's
+# reproducible export of the text path (execution.graph), listed in origin.files with its digest. Development fixtures
+# accepted (PR #29) and binding tolerances set on 2026-10-10.
+schema_version: 1
+id: embeddinggemma-2/onnx-fp32-cpu
+maturity: experimental
+
+origin:
+  code:
+    url: https://huggingface.co/google/embeddinggemma-2
+    revision: "914f7f89142e33e77833254d9c9b90c3cef7303b"
+  weights:
+    url: https://huggingface.co/google/embeddinggemma-2
+    revision: "914f7f89142e33e77833254d9c9b90c3cef7303b"
+  files:
+    - path: README.md
+      sha256: "b677a0ee2818c36f091b65fd3d9b4baea9f04d53b02b49cae916c74bf9682037"
+      size: 21730
+    - path: config.json
+      sha256: "b8f1e9931b57fbc054acdb445c41765d55b0074c58d145fa82839941ad1b5bb3"
+      size: 4455
+    - path: config_sentence_transformers.json
+      sha256: "031e56a498d33c349ab489a21885bcfe25b4fcba841149dc99e1e90d4a7c28f5"
+      size: 1565
+    - path: modules.json
+      sha256: "3d02572a0455b832de67fb8e63a54981bc7e8b46e337c95e917bd8122a533bfd"
+      size: 413
+    - path: sentence_bert_config.json
+      sha256: "b1bcd9f2dce3ae863b359e87d0710b5dbc3314a59ecb4e2f97c7778fc8e4b228"
+      size: 747
+    - path: 1_Pooling/config.json
+      sha256: "8759bdf7c77efc7df7723f64856a593c8943b71ee38baf2a88771fbaf78438f9"
+      size: 90
+    - path: 2_Normalize/config.json
+      sha256: "cdb09dfca347a56aa2d691744e38d5ad3c7cbc2834e7181272b9a15328b82524"
+      size: 97
+    - path: model.safetensors
+      sha256: "197a32965d4b1105faf060417baa899e193fb73cd401f42ec9295234d5553d79"
+      size: 1488915288
+    - path: tokenizer.json
+      sha256: "4d777ef5bdc1aa36227abdfb77c3e49e7b9c892d16e1b6bda41c393504828be4"
+      size: 32170510
+    - path: tokenizer.model
+      sha256: "e594c8a90eb08d8bda498ff4747977dc827ae0c3c56b5c0d41a605a22d02ef03"
+      size: 4689013
+    - path: tokenizer_config.json
+      sha256: "17bd5d6e9364ca49a534e1502076593317c298d4a663623091ed45388f004874"
+      size: 1599
+    - path: chat_template.jinja
+      sha256: "4b852efc0b9960283e735363331e6f325b33bc74bdbaa076f595bc4e9b94d85e"
+      size: 1016
+    - path: processor_config.json
+      sha256: "168f6a08522f3ce5dea596d94d003af2fd691742d4f41fe1f9d8cce76bfbf69c"
+      size: 1788
+    - path: preprocessor_config.json
+      sha256: "ea2ae257e901064abdd98dceb19f2b0da06af600bed15e0f99f5c85c37ee9d78"
+      size: 511
+    # Not in the Hub repository: Starling's export of the text path of model.safetensors above
+    # (execution.graph.asset).
+    - path: onnx/embeddinggemma2-text-fp32.onnx
+      sha256: "02cc7ecccbfcb29d812eb104e4c6ea6c599bc87e94f01082606f6a11f0252d11"
+      size: 1084327317
+  attribution: >-
+    EmbeddingGemma 2 by Google DeepMind (google/embeddinggemma-2). Apache-2.0. The model card states: "Deployments must
+    adhere to the [Gemma Prohibited Use Policy](https://ai.google.dev/gemma/prohibited_use_policy)."
+
+rights:
+  code_license: Apache-2.0
+  weights_license: Apache-2.0
+  tokenizer_terms: Apache-2.0
+  redistribution: download
+  notes: >-
+    Apache-2.0 in the card front matter and the card's license link (ai.google.dev/gemma/docs/gemma_4_license, the
+    Apache License 2.0 text); no LICENSE file in the repository; not gated. Maintainer decision 2026-10-10: Starling
+    exports and hosts the text-path ONNX graph (GitHub release asset embeddinggemma-2-onnx-r1) with the Apache-2.0
+    license, attribution, the list of modifications and the card's Gemma Prohibited Use Policy sentence in the asset
+    notice (model-pipeline/reference/embeddinggemma2/NOTICE-embeddinggemma2-onnx.txt) and the package README.
+    tokenizer.json and config_sentence_transformers.json are fetched from the Hub at the pinned revision, not bundled.
+
+behavior:
+  tasks: [embedding]
+  # The card's validated context window. sentence-transformers sets no max_seq_length and would run longer input
+  # silently; decision 2026-10-10: the C# package rejects inputs above 8,192 tokens (special tokens and prompt included)
+  # with EmbeddingGemma2InputTooLongException. Inputs of 2,050 to 8,192 tokens have no reference evidence (untested).
+  max_input_tokens: 8192
+  offsets_unit: none
+  truncation: error
+  defaults:
+    pooling: mean over attention mask, prompt tokens included (1_Pooling include_prompt true)
+    normalize: l2
+    dimension: 768
+    matryoshka_dimensions: [768, 512, 256, 128]
+    matryoshka: >-
+      keep the leading dimensions and L2-normalize again (sentence-transformers truncate_dim with normalize_embeddings);
+      any other size is rejected.
+    input_prefix: >-
+      Prompts are explicit: the caller chooses one of the 20 names in config_sentence_transformers.json (query =
+      "task: search result | query: ", document = "title: none | text: ") or none. default_prompt_name is null; the
+      package never inserts a prompt. The prompt text is prepended to the text before tokenization.
+    pad_token_id: 0
+  unsupported:
+    - image, audio and video embeddings (vision and audio towers are not in the graph)
+    - media placeholder and boundary tokens in text (<|image|>, <|audio|>, <|video|>, <|image>, <image|>, <|audio>, <audio|>; rejected)
+    - inputs above 8,192 tokens (rejected, not truncated)
+    - truncation of any kind
+    - pair encoding as an embedding input
+    - bfloat16, float16 and quantized variants (the card says never float16)
+    - TF32 math on CUDA (separate profile onnx-fp32-cuda pins use_tf32 0)
+    - Matryoshka sizes other than 768, 512, 256, 128
+
+processing:
+  # Owned profile gemma-bpe-embeddinggemma2 (profiles/gemma-bpe-embeddinggemma2.yaml in starlinghq/tokenizers): the 49 accepted
+  # fixture cases exact, 0 differential mismatches. EmbeddingGemma2Tokenizer adds <bos>/<eos> and never truncates.
+  tokenizer:
+    # 0.3.0-preview.1 is the published tokenizer (starlinghq/tokenizers): the qualified 0.1.0-preview.4 behavior plus BERT WordPiece components this profile does not use; every conformance fixture passes unchanged.
+    package: Starlings.Tokenizers
+    version: 0.3.0-preview.1
+    profile_id: gemma-bpe-embeddinggemma2
+    algorithm: bpe
+    assets:
+      - path: tokenizer.json
+        sha256: "4d777ef5bdc1aa36227abdfb77c3e49e7b9c892d16e1b6bda41c393504828be4"
+        size: 32170510
+    backend_tokenizer_dependency: false
+  decoding:
+    reference_tokenizer: >-
+      The pinned tokenizer.json as read by tokenizers 0.23.3 (SentencePiece-style BPE with byte fallback, <bos> $A <eos>).
+      transformers 5.19.0 GemmaTokenizer equals it field by field; sentence-transformers 6.1.0 chat-template
+      preprocessing gives the ids of tokenizer.json on prompt + text (tokenizer-implementations.json).
+
+execution:
+  backend:
+    name: onnxruntime
+    version: 1.30.0
+    binding: Microsoft.ML.OnnxRuntime
+  precision: fp32
+  variant: reference
+  graph:
+    # Text path of EmbeddingGemma2TextModel (eg2_text.TextPath), torch.onnx dynamo exporter (torch 2.14.1,
+    # transformers 5.19.0, requirements.txt), opset 20, then the release step that strips the exporter's run-dependent
+    # metadata and inlines the weights (one file, below the 2 GiB protobuf limit). Two independent exports gave the same
+    # digest (2026-10-10).
+    asset:
+      path: onnx/embeddinggemma2-text-fp32.onnx
+      sha256: "02cc7ecccbfcb29d812eb104e4c6ea6c599bc87e94f01082606f6a11f0252d11"
+      size: 1084327317
+      # TODO(maintainer): placeholder until the GitHub release exists (EmbeddingGemma2ModelAssets.ModelSourceIsPlaceholder).
+      source: https://huggingface.co/Starlinghq/embeddinggemma-2-onnx/resolve/92a02ae2887a91180e611776dd9c286dc5fa35da/embeddinggemma2-text-fp32.onnx
+      source_status: placeholder
+      notice: model-pipeline/reference/embeddinggemma2/NOTICE-embeddinggemma2-onnx.txt
+      produced_by:
+        - model-pipeline/reference/embeddinggemma2/export_embeddinggemma2_onnx.py --exporters dynamo
+        - model-pipeline/reference/embeddinggemma2/release_embeddinggemma2_onnx.py
+    opset: 20
+    inputs:
+      - { name: input_ids, type: int64, shape: [batch, sequence] }
+      - { name: attention_mask, type: int64, shape: [batch, sequence] }
+    outputs:
+      - { name: last_hidden_state, type: float32, shape: [batch, sequence, 512] }
+      - { name: token_embeddings, type: float32, shape: [batch, sequence, 768] }
+
+capabilities:
+  # Starlings.Models.EmbeddingGemma2; per-capability evidence in ai-dotnet/README.md. Experimental means tested
+  # from fixture ids against the protected development fixtures with the protected tolerances.
+  batch: experimental
+  streaming: unsupported
+  cancellation: experimental
+  persistence: unsupported
+  training: unsupported
+  aot: untested
+  extensions_ai: experimental
+  mlnet: experimental
+  embedding_pretokenized: experimental
+  embedding_text: experimental
+  tokenizer_owned: experimental
+  prompts_query_document: experimental
+  prompts_task: untested
+  matryoshka: experimental
+  input_up_to_2049_tokens: experimental
+  input_2050_to_8192_tokens: untested
+  input_over_8192_tokens: unsupported
+  concurrent_calls: experimental
+  image: unsupported
+  audio: unsupported
+  video: unsupported
+
+compatibility:
+  - os: linux
+    arch: x64
+    provider: cpu
+    status: experimental
+    verified: 2026-10-10
+  - os: windows
+    arch: x64
+    provider: cpu
+    status: untested
+
+qualification:
+  reference_runner: model-pipeline/reference/embeddinggemma2/run_embeddinggemma2.py
+  # Development fixtures (accepted 2026-10-10, PR #29) and binding tolerances (set 2026-10-10).
+  fixtures: model-pipeline/protected/embeddinggemma-2/onnx-fp32-cpu
+  tolerances: model-pipeline/protected/embeddinggemma-2/onnx-fp32-cpu/tolerances.yaml
+  gates:
+    G0: { status: checklist, evidence: docs/m0/hub-pins.md, date: 2026-10-10 }
+    G1: { status: not-run }
+    G2: { status: not-run }
+
+maintenance:
+  owner: Mark
+  latest_known_upstream_revision: "914f7f89142e33e77833254d9c9b90c3cef7303b"
+  latest_verified_upstream_revision: "914f7f89142e33e77833254d9c9b90c3cef7303b"
+  last_checked: 2026-10-10
+  review_date: 2027-01-05
+  known_issues:
+    - >-
+      Evaluator run 2026-10-11 (docs/evidence/embeddinggemma2-dotnet/, CPU): G1 passed; G2 failed only on
+      export.token_embeddings (Python ORT vs PyTorch): the tolerance file's |d| <= 1e-4 * max(1, |ref|) judged per value
+      gives 1.7e-2, while the per-case max |d| / max(1, max |ref|) the bound was set from is 6.2e-6. Which reading binds
+      is a maintainer decision; every .NET check passed.
+    - >-
+      The hosted graph's download address is a placeholder until the maintainer creates the GitHub release; acquisition
+      of the graph is untested until then (offline verification of a local copy works).
+    - >-
+      Fixtures reach 1,750 tokens and batch-independence checks 2,049; 2,050 to 8,192 tokens has no reference evidence.
+      One 8,192-token row took 80 s on the 12-thread workstation CPU (process peak working set 5.9 GB during the test
+      run); temporary memory grows with the square of the length in the full-attention layers.
+    - >-
+      The fixtures cover the none, query and document prompts only; the other 18 names map to prompt texts without
+      fixture rows. Matryoshka sizes are checked against the reference sliced and renormalized (the fixtures hold no
+      truncated rows; the spike probe showed sentence-transformers truncate_dim equals that within 6e-8).

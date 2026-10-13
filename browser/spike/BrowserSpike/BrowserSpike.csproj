@@ -1,0 +1,35 @@
+<Project Sdk="Microsoft.NET.Sdk.BlazorWebAssembly">
+
+  <!--
+    Browser feasibility spike (docs/m0/browser-wasm-spike.md). Standalone Blazor WebAssembly app: the owned tokenizer
+    (project reference) runs the protected conformance fixtures in the browser, and e5-small runs through
+    onnxruntime-web over JS interop. Served by ../harness/serve.py, which also serves the fixtures, the pinned
+    tokenizer.json assets, the graphs and onnxruntime-web from outside the published app.
+
+    Publish variants:
+      dotnet publish -c Release                              (Mono interpreter, the default)
+      dotnet publish -c Release -p:RunAOTCompilation=true    (AOT; needs the wasm-tools workload)
+  -->
+  <PropertyGroup>
+    <RootNamespace>Starlings.BrowserSpike</RootNamespace>
+    <AssemblyName>BrowserSpike</AssemblyName>
+    <OverrideHtmlAssetPlaceholders>true</OverrideHtmlAssetPlaceholders>
+    <!--
+      Trimming is on for Blazor publish, but Blazor hides trim warnings by default; show them (and the analyzer) so a
+      trim-unsafe change fails the build (warnings are errors). The spike publishes with zero trim warnings.
+    -->
+    <EnableTrimAnalyzer>true</EnableTrimAnalyzer>
+    <SuppressTrimAnalysisWarnings>false</SuppressTrimAnalysisWarnings>
+    <TrimmerSingleWarn>false</TrimmerSingleWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Starlings.Tokenizers" />
+    <Compile Include="../Shared/*.cs" LinkBase="Shared" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,12 @@
+# EmbeddingGemma 2 spike, GPU parity (Linux x64, NVIDIA driver with CUDA 13 support).
+# torch 2.14.1 from PyPI is the CUDA 13.0 build on Linux; onnxruntime-gpu 1.30.0 is built for CUDA 13.
+torch==2.14.1
+transformers==5.19.0
+sentence-transformers==6.1.0
+tokenizers==0.23.3
+onnxruntime-gpu[cuda,cudnn]==1.30.0
+onnx==1.23.1
+numpy
+safetensors
+pillow
+torchvision

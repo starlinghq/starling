@@ -1,0 +1,299 @@
+# EmbeddingGemma 2 image-embedding profile on the CUDA execution provider (use_tf32 0), same graphs and
+# reference as image-fp32-cpu;: contract extended to images by Mark on 2026-10-11
+# (model-pipeline/admissions/embeddinggemma-2.md, Decision update): image-only and interleaved text-and-image embeddings,
+# default 280-token vision budget, Experimental. Spike: docs/m0/embeddinggemma2-image-spike.md. Package:
+# ai-dotnet/src/Starlings.Models.EmbeddingGemma2 (EmbeddingGemma2MultimodalEmbedder; EmbeddingGemma2ModelAssets.ImageLock
+# pins the files below) and the decoding adapter Starlings.Models.EmbeddingGemma2.Imaging.SkiaSharp. The Hub
+# repository ships no ONNX file: the three graphs are Starling's reproducible exports (execution.graph). Accepted
+# fixtures (PR #42) and binding tolerances set on 2026-10-11 (qualification).
+schema_version: 1
+id: embeddinggemma-2/image-fp32-cuda
+maturity: experimental
+
+origin:
+  code:
+    url: https://huggingface.co/google/embeddinggemma-2
+    revision: "914f7f89142e33e77833254d9c9b90c3cef7303b"
+  weights:
+    url: https://huggingface.co/google/embeddinggemma-2
+    revision: "914f7f89142e33e77833254d9c9b90c3cef7303b"
+  code:
+    url: https://huggingface.co/google/embeddinggemma-2
+    revision: "914f7f89142e33e77833254d9c9b90c3cef7303b"
+  weights:
+    url: https://huggingface.co/google/embeddinggemma-2
+    revision: "914f7f89142e33e77833254d9c9b90c3cef7303b"
+  files:
+    - path: README.md
+      sha256: "b677a0ee2818c36f091b65fd3d9b4baea9f04d53b02b49cae916c74bf9682037"
+      size: 21730
+    - path: config.json
+      sha256: "b8f1e9931b57fbc054acdb445c41765d55b0074c58d145fa82839941ad1b5bb3"
+      size: 4455
+    - path: config_sentence_transformers.json
+      sha256: "031e56a498d33c349ab489a21885bcfe25b4fcba841149dc99e1e90d4a7c28f5"
+      size: 1565
+    - path: modules.json
+      sha256: "3d02572a0455b832de67fb8e63a54981bc7e8b46e337c95e917bd8122a533bfd"
+      size: 413
+    - path: sentence_bert_config.json
+      sha256: "b1bcd9f2dce3ae863b359e87d0710b5dbc3314a59ecb4e2f97c7778fc8e4b228"
+      size: 747
+    - path: 1_Pooling/config.json
+      sha256: "8759bdf7c77efc7df7723f64856a593c8943b71ee38baf2a88771fbaf78438f9"
+      size: 90
+    - path: 2_Normalize/config.json
+      sha256: "cdb09dfca347a56aa2d691744e38d5ad3c7cbc2834e7181272b9a15328b82524"
+      size: 97
+    - path: model.safetensors
+      sha256: "197a32965d4b1105faf060417baa899e193fb73cd401f42ec9295234d5553d79"
+      size: 1488915288
+    - path: tokenizer.json
+      sha256: "4d777ef5bdc1aa36227abdfb77c3e49e7b9c892d16e1b6bda41c393504828be4"
+      size: 32170510
+    - path: tokenizer.model
+      sha256: "e594c8a90eb08d8bda498ff4747977dc827ae0c3c56b5c0d41a605a22d02ef03"
+      size: 4689013
+    - path: tokenizer_config.json
+      sha256: "17bd5d6e9364ca49a534e1502076593317c298d4a663623091ed45388f004874"
+      size: 1599
+    - path: chat_template.jinja
+      sha256: "4b852efc0b9960283e735363331e6f325b33bc74bdbaa076f595bc4e9b94d85e"
+      size: 1016
+    - path: processor_config.json
+      sha256: "168f6a08522f3ce5dea596d94d003af2fd691742d4f41fe1f9d8cce76bfbf69c"
+      size: 1788
+    - path: preprocessor_config.json
+      sha256: "ea2ae257e901064abdd98dceb19f2b0da06af600bed15e0f99f5c85c37ee9d78"
+      size: 511
+    # Not in the Hub repository: Starling's export of the text path of model.safetensors above
+    # (execution.graph.asset).
+    - path: onnx/embeddinggemma2-text-fp32.onnx
+      sha256: "02cc7ecccbfcb29d812eb104e4c6ea6c599bc87e94f01082606f6a11f0252d11"
+      size: 1084327317
+    # Not in the Hub repository: Starling's image-path graphs (execution.graph.assets), release
+    # embeddinggemma-2-vision-onnx-r1.
+    - path: onnx/embeddinggemma2-vision-fp32.onnx
+      sha256: "6c97f477a82f6863d22d800476de6d0a618b23e514aa9b65a46b220c4b106b92"
+      size: 671256072
+    - path: onnx/embeddinggemma2-text-mm-fp32.onnx
+      sha256: "a2c22e072ec230b105b35c2787dcfccba186254e6a921e729c45b40e50dbbb74"
+      size: 1084327898
+  attribution: >-
+    EmbeddingGemma 2 by Google DeepMind (google/embeddinggemma-2). Apache-2.0. The model card states: "Deployments must
+    adhere to the [Gemma Prohibited Use Policy](https://ai.google.dev/gemma/prohibited_use_policy)."
+
+rights:
+  code_license: Apache-2.0
+  weights_license: Apache-2.0
+  tokenizer_terms: Apache-2.0
+  redistribution: download
+  notes: >-
+    As embeddinggemma-2/onnx-fp32-cpu. Maintainer decision 2026-10-11: Starling hosts the vision graph and the
+    multimodal text graph as GitHub release assets (embeddinggemma-2-vision-onnx-r1) with the Apache-2.0 license,
+    attribution, the list of modifications and the card's Gemma Prohibited Use Policy sentence
+    (model-pipeline/reference/embeddinggemma2/NOTICE-embeddinggemma2-vision-onnx.txt). Image decoding uses SkiaSharp
+    (MIT; bundled native notices include an MPL-1.1 GIF decoder and the Adobe DNG SDK license,
+    ai-dotnet/THIRD-PARTY-NOTICES.md); ImageSharp is excluded. Test photos come from scikit-image at commit
+    b700edc8005e4ee9e74fc83259f09e8df3213f15 (CC0 or public domain) and are not committed.
+
+behavior:
+  tasks: [image-embedding]
+  # The card's context window, image tokens included: each image adds its soft tokens (at most 280) plus <|image> and
+  # <image|>. Longer inputs are rejected before inference (EmbeddingGemma2InputTooLongException).
+  max_input_tokens: 8192
+  offsets_unit: none
+  truncation: error
+  defaults:
+    pooling: mean over every token, image tokens and prompt included (1_Pooling include_prompt true)
+    normalize: l2
+    dimension: 768
+    matryoshka_dimensions: [768, 512, 256, 128]
+    image_processing: >-
+      From decoded 8-bit RGB (PIL convert("RGB") semantics): aspect-preserving target size with sides multiple of 48 and
+      at most 2,520 patches (max_soft_tokens 280), PyTorch's uint8 antialiased bicubic resize (ported bit for bit),
+      x float32(0.00392156862745098), 16x16 patches with (x, y) positions; vision graph; 3x3 pooling to soft tokens.
+    image_rendering: >-
+      Each image becomes <|image> + n x <|image|> + <image|> at its position (n = its soft-token count); text parts are
+      concatenated with no separator; a prompt (not recommended for images by the card) is rendered first.
+    input_prefix: >-
+      As embeddinggemma-2/onnx-fp32-cpu: explicit prompts only, never inserted. The card: "Prefixes apply to text only.
+      Pass images, video, and audio without any prefix."
+    graph_routing: >-
+      Inputs with images run on the vision graph and the multimodal text graph; text-only inputs run on the released
+      text graph (equal to embeddinggemma-2/onnx-fp32-cpu). The multimodal graph equals the released graph bit for bit
+      on text-only input.
+    decoded_size_limit: 50 megapixels (configurable; upstream has none)
+    exif_orientation: ignored, as upstream; an explicit opt-in applies it (deviation from upstream)
+    alpha: dropped, not composited, as upstream
+    pad_token_id: 0
+  unsupported:
+    - images with more than 8 bits per channel (rejected; upstream saturates 16-bit images to white)
+    - video and audio
+    - inputs above 8,192 tokens after image expansion (rejected, not truncated)
+    - images above the decoded-size limit (rejected)
+    - image formats other than PNG, JPEG, GIF, BMP and WebP in the SkiaSharp adapter (rejected)
+    - media placeholder text in text parts (<|image|> and the other media tokens; rejected)
+    - TF32 math (ORT CUDA EP use_tf32 1, the ORT default)
+    - bfloat16, float16 and quantized variants
+
+processing:
+  tokenizer:
+    # 0.3.0-preview.1 is the published tokenizer (starlinghq/tokenizers): the qualified 0.1.0-preview.4 behavior plus BERT WordPiece components this profile does not use; every conformance fixture passes unchanged.
+    package: Starlings.Tokenizers
+    version: 0.3.0-preview.1
+    profile_id: gemma-bpe-embeddinggemma2
+    algorithm: bpe
+    assets:
+      - path: tokenizer.json
+        sha256: "4d777ef5bdc1aa36227abdfb77c3e49e7b9c892d16e1b6bda41c393504828be4"
+        size: 32170510
+    backend_tokenizer_dependency: false
+  decoding:
+    reference_tokenizer: >-
+      The pinned tokenizer.json as read by tokenizers 0.23.3. The owned tokenizer on the expanded placeholder string
+      gives the reference's rendered ids on all 43 fixture rows (image-embeddings.jsonl).
+    image_decoder: >-
+      Optional adapter Starlings.Models.EmbeddingGemma2.Imaging.SkiaSharp (SkiaSharp 4.153.1): decoded RGB equal
+      to PIL 12.3.0's convert("RGB") on the 28 supported fixture images (PNG RGB, L, RGBA, LA, P, P with transparency,
+      1-bit; JPEG baseline, progressive 4:2:0, 4:4:4, CMYK, EXIF-rotated).
+
+execution:
+  backend:
+    name: onnxruntime
+    version: 1.30.0
+    binding: Microsoft.ML.OnnxRuntime.Gpu.Linux
+    binding_version: 1.30.0
+  precision: fp32
+  variant: reference
+  graph:
+    # Three files. The vision graph (eg2_vision.VisionPath, dynamo exporter, opset 20) and the multimodal text graph (the
+    # released text graph plus two inputs and five nodes, eg2_vision.add_multimodal_inputs_release) are made by
+    # release_embeddinggemma2_vision_onnx.py; two independent runs gave byte-identical files (2026-10-11).
+    assets:
+      - path: onnx/embeddinggemma2-vision-fp32.onnx
+        sha256: "6c97f477a82f6863d22d800476de6d0a618b23e514aa9b65a46b220c4b106b92"
+        size: 671256072
+        # TODO(maintainer): placeholder until the GitHub release exists (EmbeddingGemma2ModelAssets.ImageModelSourceIsPlaceholder).
+        source: https://huggingface.co/Starlinghq/embeddinggemma-2-vision-onnx/resolve/1a22d40bf395c7f0a42388df72c883b661a7b3d6/embeddinggemma2-vision-fp32.onnx
+        source_status: placeholder
+        notice: model-pipeline/reference/embeddinggemma2/NOTICE-embeddinggemma2-vision-onnx.txt
+        produced_by:
+          - model-pipeline/reference/embeddinggemma2/release_embeddinggemma2_vision_onnx.py
+        inputs:
+          - { name: pixel_values, type: float32, shape: [batch, patches, 768] }
+          - { name: pixel_position_ids, type: int64, shape: [batch, patches, 2] }
+        outputs:
+          - { name: soft_tokens, type: float32, shape: [batch, patches / 9, 512] }
+          - { name: pooled, type: float32, shape: [batch, patches / 9, 768] }
+          - { name: soft_token_mask, type: bool, shape: [batch, patches / 9] }
+      - path: onnx/embeddinggemma2-text-mm-fp32.onnx
+        sha256: "a2c22e072ec230b105b35c2787dcfccba186254e6a921e729c45b40e50dbbb74"
+        size: 1084327898
+        # TODO(maintainer): placeholder until the GitHub release exists (EmbeddingGemma2ModelAssets.ImageModelSourceIsPlaceholder).
+        source: https://huggingface.co/Starlinghq/embeddinggemma-2-vision-onnx/resolve/1a22d40bf395c7f0a42388df72c883b661a7b3d6/embeddinggemma2-text-mm-fp32.onnx
+        source_status: placeholder
+        notice: model-pipeline/reference/embeddinggemma2/NOTICE-embeddinggemma2-vision-onnx.txt
+        produced_by:
+          - model-pipeline/reference/embeddinggemma2/release_embeddinggemma2_vision_onnx.py
+        inputs:
+          - { name: input_ids, type: int64, shape: [batch, sequence] }
+          - { name: attention_mask, type: int64, shape: [batch, sequence] }
+          - { name: multimodal_embeds, type: float32, shape: [batch, sequence, 512] }
+          - { name: multimodal_mask, type: bool, shape: [batch, sequence] }
+        outputs:
+          - { name: last_hidden_state, type: float32, shape: [batch, sequence, 512] }
+          - { name: token_embeddings, type: float32, shape: [batch, sequence, 768] }
+      - path: onnx/embeddinggemma2-text-fp32.onnx
+        sha256: "02cc7ecccbfcb29d812eb104e4c6ea6c599bc87e94f01082606f6a11f0252d11"
+        size: 1084327317
+        # Text-only inputs; the asset of embeddinggemma-2/onnx-fp32-cpu (release embeddinggemma-2-onnx-r1, placeholder).
+        source: https://huggingface.co/Starlinghq/embeddinggemma-2-onnx/resolve/92a02ae2887a91180e611776dd9c286dc5fa35da/embeddinggemma2-text-fp32.onnx
+        source_status: placeholder
+        notice: model-pipeline/reference/embeddinggemma2/NOTICE-embeddinggemma2-onnx.txt
+    opset: 20
+  # CUDAExecutionProvider options. use_tf32 must be 0 (ORT 1.30.0 defaults it to 1; TF32 moves the image embeddings by
+  # up to 1.4e-3 and fails the bound); Starlings.Runtime.Onnx always sets it.
+  provider_options:
+    use_tf32: 0
+
+capabilities:
+  # Starlings.Models.EmbeddingGemma2 (EmbeddingGemma2MultimodalEmbedder); evidence in ai-dotnet/README.md and
+  # docs/evidence/embeddinggemma2-images/. Experimental means tested from decoded RGB (SkiaSharp, equal to PIL's) against
+  # the accepted image fixtures with the protected tolerances.
+  image: experimental
+  image_interleaved_text: experimental
+  image_multiple_per_input: experimental
+  image_prompts: experimental
+  image_budget_280: experimental
+  image_budget_other: untested
+  image_batch: experimental
+  image_matryoshka: experimental
+  image_decode_png_jpeg: experimental
+  image_decode_gif_bmp_webp: untested
+  image_exif_orientation_opt_in: experimental
+  image_16_bit: unsupported
+  image_alpha_compositing: unsupported
+  text_only_inputs: experimental
+  batch: experimental
+  streaming: unsupported
+  cancellation: experimental
+  persistence: unsupported
+  training: unsupported
+  aot: untested
+  extensions_ai: untested  # tested over a CPU session
+  mlnet: unsupported  # no image column in the ML.NET transform (text only)
+  concurrent_calls: experimental
+  input_over_8192_tokens: unsupported
+  audio: unsupported
+  video: unsupported
+
+compatibility:
+  # One RTX 4060 Ti (sm_89), CUDA 13 runtime and cuDNN 9 from the nvidia-* wheels (the vision graph needs cuDNN: its
+  # ReduceMax runs through cuDNN), GPU shared with another process. One machine is not qualification.
+  - os: linux
+    arch: x64
+    provider: cuda
+    status: experimental
+    verified: 2026-10-11
+  - os: windows
+    arch: x64
+    provider: cuda
+    status: untested
+
+qualification:
+  reference_runner: model-pipeline/reference/embeddinggemma2/run_embeddinggemma2_image.py
+  # Accepted development fixtures (PR #42) and binding tolerances (set 2026-10-11).
+  fixtures: model-pipeline/protected/embeddinggemma-2/image-fp32-cpu
+  tolerances: model-pipeline/protected/embeddinggemma-2/image-fp32-cuda/tolerances.yaml
+  gates:
+    G0: { status: checklist, evidence: docs/m0/embeddinggemma2-image-spike.md, date: 2026-10-11 }
+    G1: { status: not-run }
+    G2: { status: not-run }
+
+maintenance:
+  owner: Mark
+  latest_known_upstream_revision: "914f7f89142e33e77833254d9c9b90c3cef7303b"
+  latest_verified_upstream_revision: "914f7f89142e33e77833254d9c9b90c3cef7303b"
+  last_checked: 2026-10-11
+  review_date: 2027-01-05
+  known_issues:
+    - >-
+      The evaluator (model-pipeline evaluate) has no image task: the image package tests enforce the protected bounds
+      (docs/evidence/embeddinggemma2-images/). G1/G2 are not run for this profile.
+    - >-
+      The hosted graphs' download addresses are placeholders until the maintainer creates the GitHub release
+      embeddinggemma-2-vision-onnx-r1; acquisition of the image graphs is untested until then.
+    - >-
+      One CPU architecture (AVX2) produced the reference; PyTorch's generic uint8 kernel is expected to give the same
+      resized bytes (same int16 weights), not verified. The C# resampler is integer arithmetic and machine-independent.
+    - >-
+      The 16-bit fixture image (mode-gray16) has a reference row that no C# path reproduces: upstream renders it white,
+      this profile rejects it.
+    - >-
+      GPU memory: one 2,520-patch image needs about 610 MB of attention buffer per vision layer on ONNX Runtime CUDA; a
+      vision batch of two failed with about 5.5 GB free in the spike. EmbeddingGemma2MultimodalOptions.MaxVisionBatchSize
+      defaults to 1; the three graphs take about 2.9 GB of GPU memory when text-only inputs are also embedded.
+    - >-
+      Native runtime: Microsoft.ML.OnnxRuntime.Gpu.Linux 1.30.0 needs the CUDA 13 runtime and cuDNN 9 on the loader path;
+      the package does not ship them.

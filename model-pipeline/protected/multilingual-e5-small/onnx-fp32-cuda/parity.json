@@ -1,0 +1,2072 @@
+{
+  "reference": "protected onnx-fp32-cpu/embeddings.jsonl (sentence-transformers, PyTorch fp32 CPU); hidden states recomputed here with the same modules on CPU",
+  "inputs": "input_ids from embeddings.jsonl (tokenizer.json ids, truncated to 512); attention_mask all 1 for single rows; token_type_ids all 0; padded batches right-padded with id 1",
+  "pooling": "NumPy float32 mean over the attention mask, then L2 normalization",
+  "reference_recompute": {
+    "description": "PyTorch fp32 CPU sentence-transformers embedding recomputed in this environment against the protected embeddings.jsonl; its hidden states are the hidden-state reference below",
+    "torch_threads": 6,
+    "embedding_max_abs": 1.862645149230957e-07
+  },
+  "candidates": {
+    "ort-cuda-fp32-tf32-off": {
+      "candidate": "Python ORT CUDA EP, onnx/model.onnx fp32, use_tf32=0",
+      "cases": 46,
+      "last_hidden_state_vs_torch_cpu_fp32": {
+        "max_abs": 2.112152287736535e-06,
+        "mean_abs": 1.8131960219741775e-07,
+        "p99_abs": 6.780028343200684e-07
+      },
+      "embedding_vs_protected": {
+        "max_abs": 1.9371509552001953e-07,
+        "mean_abs": 1.868702690816845e-08,
+        "p99_abs": 6.705522537231445e-08,
+        "min_cosine": 0.9999999999995568
+      },
+      "padded_batch_fixture_vs_protected": {
+        "max_abs": 1.0058283805847168e-07,
+        "mean_abs": 1.9094767051481337e-08,
+        "p99_abs": 6.705522537231445e-08
+      },
+      "padded_batch_fixture_vs_own_single": {
+        "max_abs": 7.264316082000732e-08,
+        "mean_abs": 1.3128162853111766e-08,
+        "p99_abs": 5.21540641784668e-08
+      },
+      "padded_batch16_all_cases_vs_protected": {
+        "max_abs": 1.4156103134155273e-07,
+        "mean_abs": 1.9620209560093496e-08,
+        "p99_abs": 7.078051567077637e-08
+      },
+      "padded_batch16_all_cases_vs_own_single": {
+        "max_abs": 9.685754776000977e-08,
+        "mean_abs": 1.3607250411786336e-08,
+        "p99_abs": 4.842877388000488e-08
+      },
+      "rerun_same_session_max_abs_hidden": 0.0,
+      "worst_hidden_case": {
+        "id": "long-english",
+        "tokens": 512,
+        "max_abs": 2.112152287736535e-06
+      },
+      "nan_or_inf_cases": [],
+      "per_case": [
+        {
+          "id": "empty",
+          "tokens": 2,
+          "hidden_max_abs": 6.854534149169922e-07,
+          "embedding_max_abs": 8.940696716308594e-08,
+          "cosine": 0.9999999999997884,
+          "nan_or_inf": false
+        },
+        {
+          "id": "space-only",
+          "tokens": 3,
+          "hidden_max_abs": 6.258487701416016e-07,
+          "embedding_max_abs": 1.0803341865539551e-07,
+          "cosine": 0.9999999999997473,
+          "nan_or_inf": false
+        },
+        {
+          "id": "ascii-sentence",
+          "tokens": 15,
+          "hidden_max_abs": 1.2442469596862793e-06,
+          "embedding_max_abs": 1.1548399925231934e-07,
+          "cosine": 0.9999999999998197,
+          "nan_or_inf": false
+        },
+        {
+          "id": "ascii-punct",
+          "tokens": 44,
+          "hidden_max_abs": 1.4454126358032227e-06,
+          "embedding_max_abs": 6.705522537231445e-08,
+          "cosine": 0.9999999999999012,
+          "nan_or_inf": false
+        },
+        {
+          "id": "ascii-case",
+          "tokens": 16,
+          "hidden_max_abs": 8.344650268554688e-07,
+          "embedding_max_abs": 7.450580596923828e-08,
+          "cosine": 0.999999999999899,
+          "nan_or_inf": false
+        },
+        {
+          "id": "digits",
+          "tokens": 14,
+          "hidden_max_abs": 8.642673492431641e-07,
+          "embedding_max_abs": 8.940696716308594e-08,
+          "cosine": 0.9999999999998685,
+          "nan_or_inf": false
+        },
+        {
+          "id": "ws-leading-trailing",
+          "tokens": 7,
+          "hidden_max_abs": 7.040798664093018e-07,
+          "embedding_max_abs": 8.195638656616211e-08,
+          "cosine": 0.9999999999998648,
+          "nan_or_inf": false
+        },
+        {
+          "id": "ws-multi-space",
+          "tokens": 6,
+          "hidden_max_abs": 7.152557373046875e-07,
+          "embedding_max_abs": 7.82310962677002e-08,
+          "cosine": 0.9999999999998996,
+          "nan_or_inf": false
+        },
+        {
+          "id": "ws-tab-newline",
+          "tokens": 10,
+          "hidden_max_abs": 6.891787052154541e-07,
+          "embedding_max_abs": 5.587935447692871e-08,
+          "cosine": 0.9999999999999252,
+          "nan_or_inf": false
+        },
+        {
+          "id": "ws-unicode-spaces",
+          "tokens": 13,
+          "hidden_max_abs": 6.854534149169922e-07,
+          "embedding_max_abs": 5.960464477539063e-08,
+          "cosine": 0.999999999999923,
+          "nan_or_inf": false
+        },
+        {
+          "id": "ws-zero-width",
+          "tokens": 14,
+          "hidden_max_abs": 8.344650268554688e-07,
+          "embedding_max_abs": 6.705522537231445e-08,
+          "cosine": 0.999999999999942,
+          "nan_or_inf": false
+        },
+        {
+          "id": "control-chars",
+          "tokens": 11,
+          "hidden_max_abs": 1.043081283569336e-06,
+          "embedding_max_abs": 6.51925802230835e-08,
+          "cosine": 0.9999999999999173,
+          "nan_or_inf": false
+        },
+        {
+          "id": "bom",
+          "tokens": 8,
+          "hidden_max_abs": 5.960464477539062e-07,
+          "embedding_max_abs": 7.82310962677002e-08,
+          "cosine": 0.9999999999999134,
+          "nan_or_inf": false
+        },
+        {
+          "id": "replacement-char",
+          "tokens": 5,
+          "hidden_max_abs": 5.662441253662109e-07,
+          "embedding_max_abs": 7.078051567077637e-08,
+          "cosine": 0.999999999999907,
+          "nan_or_inf": false
+        },
+        {
+          "id": "accents-precomposed",
+          "tokens": 10,
+          "hidden_max_abs": 8.791685104370117e-07,
+          "embedding_max_abs": 7.078051567077637e-08,
+          "cosine": 0.9999999999998982,
+          "nan_or_inf": false
+        },
+        {
+          "id": "accents-decomposed",
+          "tokens": 10,
+          "hidden_max_abs": 8.791685104370117e-07,
+          "embedding_max_abs": 7.078051567077637e-08,
+          "cosine": 0.9999999999998982,
+          "nan_or_inf": false
+        },
+        {
+          "id": "combining-stack",
+          "tokens": 16,
+          "hidden_max_abs": 1.043081283569336e-06,
+          "embedding_max_abs": 8.381903171539307e-08,
+          "cosine": 0.9999999999998688,
+          "nan_or_inf": false
+        },
+        {
+          "id": "devanagari",
+          "tokens": 11,
+          "hidden_max_abs": 6.854534149169922e-07,
+          "embedding_max_abs": 7.078051567077637e-08,
+          "cosine": 0.9999999999999167,
+          "nan_or_inf": false
+        },
+        {
+          "id": "thai",
+          "tokens": 11,
+          "hidden_max_abs": 8.344650268554688e-07,
+          "embedding_max_abs": 6.426125764846802e-08,
+          "cosine": 0.99999999999992,
+          "nan_or_inf": false
+        },
+        {
+          "id": "arabic",
+          "tokens": 12,
+          "hidden_max_abs": 6.631016731262207e-07,
+          "embedding_max_abs": 5.21540641784668e-08,
+          "cosine": 0.9999999999999344,
+          "nan_or_inf": false
+        },
+        {
+          "id": "hebrew",
+          "tokens": 9,
+          "hidden_max_abs": 6.854534149169922e-07,
+          "embedding_max_abs": 5.587935447692871e-08,
+          "cosine": 0.9999999999999292,
+          "nan_or_inf": false
+        },
+        {
+          "id": "rtl-mixed",
+          "tokens": 12,
+          "hidden_max_abs": 8.866190910339355e-07,
+          "embedding_max_abs": 6.332993507385254e-08,
+          "cosine": 0.9999999999998928,
+          "nan_or_inf": false
+        },
+        {
+          "id": "chinese",
+          "tokens": 10,
+          "hidden_max_abs": 7.003545761108398e-07,
+          "embedding_max_abs": 5.587935447692871e-08,
+          "cosine": 0.9999999999999452,
+          "nan_or_inf": false
+        },
+        {
+          "id": "japanese",
+          "tokens": 19,
+          "hidden_max_abs": 9.98377799987793e-07,
+          "embedding_max_abs": 6.705522537231445e-08,
+          "cosine": 0.9999999999999288,
+          "nan_or_inf": false
+        },
+        {
+          "id": "korean",
+          "tokens": 9,
+          "hidden_max_abs": 8.270144462585449e-07,
+          "embedding_max_abs": 5.960464477539063e-08,
+          "cosine": 0.9999999999999205,
+          "nan_or_inf": false
+        },
+        {
+          "id": "korean-jamo",
+          "tokens": 11,
+          "hidden_max_abs": 8.493661880493164e-07,
+          "embedding_max_abs": 6.705522537231445e-08,
+          "cosine": 0.999999999999909,
+          "nan_or_inf": false
+        },
+        {
+          "id": "cyrillic-greek",
+          "tokens": 13,
+          "hidden_max_abs": 6.854534149169922e-07,
+          "embedding_max_abs": 7.450580596923828e-08,
+          "cosine": 0.9999999999998725,
+          "nan_or_inf": false
+        },
+        {
+          "id": "german-turkish-case",
+          "tokens": 12,
+          "hidden_max_abs": 7.748603820800781e-07,
+          "embedding_max_abs": 7.82310962677002e-08,
+          "cosine": 0.9999999999998932,
+          "nan_or_inf": false
+        },
+        {
+          "id": "nfkc-compat",
+          "tokens": 14,
+          "hidden_max_abs": 1.1026859283447266e-06,
+          "embedding_max_abs": 7.450580596923828e-08,
+          "cosine": 0.9999999999998989,
+          "nan_or_inf": false
+        },
+        {
+          "id": "math-alnum-astral",
+          "tokens": 5,
+          "hidden_max_abs": 7.748603820800781e-07,
+          "embedding_max_abs": 1.1362135410308838e-07,
+          "cosine": 0.9999999999998597,
+          "nan_or_inf": false
+        },
+        {
+          "id": "emoji-basic",
+          "tokens": 12,
+          "hidden_max_abs": 7.748603820800781e-07,
+          "embedding_max_abs": 6.705522537231445e-08,
+          "cosine": 0.9999999999999116,
+          "nan_or_inf": false
+        },
+        {
+          "id": "emoji-zwj",
+          "tokens": 18,
+          "hidden_max_abs": 1.1026859283447266e-06,
+          "embedding_max_abs": 5.960464477539063e-08,
+          "cosine": 0.9999999999999123,
+          "nan_or_inf": false
+        },
+        {
+          "id": "emoji-modifiers",
+          "tokens": 24,
+          "hidden_max_abs": 1.1026859283447266e-06,
+          "embedding_max_abs": 8.568167686462402e-08,
+          "cosine": 0.9999999999998553,
+          "nan_or_inf": false
+        },
+        {
+          "id": "cjk-ext-b",
+          "tokens": 8,
+          "hidden_max_abs": 9.238719940185547e-07,
+          "embedding_max_abs": 7.078051567077637e-08,
+          "cosine": 0.9999999999998875,
+          "nan_or_inf": false
+        },
+        {
+          "id": "unknown-char",
+          "tokens": 15,
+          "hidden_max_abs": 6.854534149169922e-07,
+          "embedding_max_abs": 5.960464477539063e-08,
+          "cosine": 0.9999999999999265,
+          "nan_or_inf": false
+        },
+        {
+          "id": "special-literal-s",
+          "tokens": 11,
+          "hidden_max_abs": 6.109476089477539e-07,
+          "embedding_max_abs": 5.960464477539063e-08,
+          "cosine": 0.9999999999999367,
+          "nan_or_inf": false
+        },
+        {
+          "id": "special-literal-mask",
+          "tokens": 13,
+          "hidden_max_abs": 9.238719940185547e-07,
+          "embedding_max_abs": 8.568167686462402e-08,
+          "cosine": 0.9999999999998987,
+          "nan_or_inf": false
+        },
+        {
+          "id": "special-lookalike-spaced",
+          "tokens": 25,
+          "hidden_max_abs": 1.4454126358032227e-06,
+          "embedding_max_abs": 1.9371509552001953e-07,
+          "cosine": 0.9999999999995568,
+          "nan_or_inf": false
+        },
+        {
+          "id": "special-lookalike-qwen",
+          "tokens": 31,
+          "hidden_max_abs": 1.430511474609375e-06,
+          "embedding_max_abs": 8.940696716308594e-08,
+          "cosine": 0.9999999999998891,
+          "nan_or_inf": false
+        },
+        {
+          "id": "special-lookalike-gliner",
+          "tokens": 25,
+          "hidden_max_abs": 1.430511474609375e-06,
+          "embedding_max_abs": 7.450580596923828e-08,
+          "cosine": 0.9999999999998964,
+          "nan_or_inf": false
+        },
+        {
+          "id": "e5-query-prefix",
+          "tokens": 12,
+          "hidden_max_abs": 6.556510925292969e-07,
+          "embedding_max_abs": 5.587935447692871e-08,
+          "cosine": 0.999999999999926,
+          "nan_or_inf": false
+        },
+        {
+          "id": "e5-passage-prefix",
+          "tokens": 34,
+          "hidden_max_abs": 1.0132789611816406e-06,
+          "embedding_max_abs": 8.940696716308594e-08,
+          "cosine": 0.9999999999998832,
+          "nan_or_inf": false
+        },
+        {
+          "id": "repeated-char",
+          "tokens": 63,
+          "hidden_max_abs": 1.5050172805786133e-06,
+          "embedding_max_abs": 5.960464477539063e-08,
+          "cosine": 0.9999999999999273,
+          "nan_or_inf": false
+        },
+        {
+          "id": "no-spaces-long-word",
+          "tokens": 22,
+          "hidden_max_abs": 1.2218952178955078e-06,
+          "embedding_max_abs": 7.450580596923828e-08,
+          "cosine": 0.99999999999987,
+          "nan_or_inf": false
+        },
+        {
+          "id": "long-english",
+          "tokens": 512,
+          "hidden_max_abs": 2.112152287736535e-06,
+          "embedding_max_abs": 8.195638656616211e-08,
+          "cosine": 0.9999999999999063,
+          "nan_or_inf": false
+        },
+        {
+          "id": "long-mixed",
+          "tokens": 512,
+          "hidden_max_abs": 1.6093254089355469e-06,
+          "embedding_max_abs": 1.1920928955078125e-07,
+          "cosine": 0.9999999999999061,
+          "nan_or_inf": false
+        }
+      ]
+    },
+    "ort-cuda-fp32-default": {
+      "candidate": "Python ORT CUDA EP, onnx/model.onnx fp32, provider defaults (use_tf32 as ORT ships it)",
+      "cases": 46,
+      "last_hidden_state_vs_torch_cpu_fp32": {
+        "max_abs": 0.0015431046485900879,
+        "mean_abs": 7.573238074520255e-05,
+        "p99_abs": 0.00027408357709646225
+      },
+      "embedding_vs_protected": {
+        "max_abs": 7.419352186843753e-05,
+        "mean_abs": 9.793438951728719e-06,
+        "p99_abs": 3.737937659025179e-05,
+        "min_cosine": 0.9999998793418089
+      },
+      "padded_batch_fixture_vs_protected": {
+        "max_abs": 0.00013735145330429077,
+        "mean_abs": 1.529677585823366e-05,
+        "p99_abs": 7.445007562637327e-05
+      },
+      "padded_batch_fixture_vs_own_single": {
+        "max_abs": 0.00012129358947277069,
+        "mean_abs": 1.6239383359422594e-05,
+        "p99_abs": 6.679064594209195e-05
+      },
+      "padded_batch16_all_cases_vs_protected": {
+        "max_abs": 0.00014588236808776855,
+        "mean_abs": 1.3676836728578841e-05,
+        "p99_abs": 4.97942231595516e-05
+      },
+      "padded_batch16_all_cases_vs_own_single": {
+        "max_abs": 0.00011426210403442383,
+        "mean_abs": 1.3748841831444551e-05,
+        "p99_abs": 5.159188993275165e-05
+      },
+      "rerun_same_session_max_abs_hidden": 0.0,
+      "worst_hidden_case": {
+        "id": "special-lookalike-spaced",
+        "tokens": 25,
+        "max_abs": 0.0015431046485900879
+      },
+      "nan_or_inf_cases": [],
+      "per_case": [
+        {
+          "id": "empty",
+          "tokens": 2,
+          "hidden_max_abs": 0.00041753053665161133,
+          "embedding_max_abs": 5.473196506500244e-05,
+          "cosine": 0.9999999269356796,
+          "nan_or_inf": false
+        },
+        {
+          "id": "space-only",
+          "tokens": 3,
+          "hidden_max_abs": 0.00037744641304016113,
+          "embedding_max_abs": 5.48437237739563e-05,
+          "cosine": 0.9999999403396193,
+          "nan_or_inf": false
+        },
+        {
+          "id": "ascii-sentence",
+          "tokens": 15,
+          "hidden_max_abs": 0.00039221346378326416,
+          "embedding_max_abs": 3.9422884583473206e-05,
+          "cosine": 0.9999999699232641,
+          "nan_or_inf": false
+        },
+        {
+          "id": "ascii-punct",
+          "tokens": 44,
+          "hidden_max_abs": 0.0006928667426109314,
+          "embedding_max_abs": 5.807727575302124e-05,
+          "cosine": 0.999999953846721,
+          "nan_or_inf": false
+        },
+        {
+          "id": "ascii-case",
+          "tokens": 16,
+          "hidden_max_abs": 0.0003504529595375061,
+          "embedding_max_abs": 2.9398128390312195e-05,
+          "cosine": 0.9999999824611446,
+          "nan_or_inf": false
+        },
+        {
+          "id": "digits",
+          "tokens": 14,
+          "hidden_max_abs": 0.0005071163177490234,
+          "embedding_max_abs": 3.352668136358261e-05,
+          "cosine": 0.9999999681239187,
+          "nan_or_inf": false
+        },
+        {
+          "id": "ws-leading-trailing",
+          "tokens": 7,
+          "hidden_max_abs": 0.00038344040513038635,
+          "embedding_max_abs": 3.3486634492874146e-05,
+          "cosine": 0.9999999788999538,
+          "nan_or_inf": false
+        },
+        {
+          "id": "ws-multi-space",
+          "tokens": 6,
+          "hidden_max_abs": 0.00025725364685058594,
+          "embedding_max_abs": 3.2514333724975586e-05,
+          "cosine": 0.9999999786666866,
+          "nan_or_inf": false
+        },
+        {
+          "id": "ws-tab-newline",
+          "tokens": 10,
+          "hidden_max_abs": 0.00034123659133911133,
+          "embedding_max_abs": 2.934783697128296e-05,
+          "cosine": 0.9999999818570079,
+          "nan_or_inf": false
+        },
+        {
+          "id": "ws-unicode-spaces",
+          "tokens": 13,
+          "hidden_max_abs": 0.0003132820129394531,
+          "embedding_max_abs": 2.5324523448944092e-05,
+          "cosine": 0.9999999893258902,
+          "nan_or_inf": false
+        },
+        {
+          "id": "ws-zero-width",
+          "tokens": 14,
+          "hidden_max_abs": 0.00030612945556640625,
+          "embedding_max_abs": 3.0346214771270752e-05,
+          "cosine": 0.9999999831491144,
+          "nan_or_inf": false
+        },
+        {
+          "id": "control-chars",
+          "tokens": 11,
+          "hidden_max_abs": 0.0003476142883300781,
+          "embedding_max_abs": 4.6374392695724964e-05,
+          "cosine": 0.9999999613849491,
+          "nan_or_inf": false
+        },
+        {
+          "id": "bom",
+          "tokens": 8,
+          "hidden_max_abs": 0.0003184080123901367,
+          "embedding_max_abs": 2.8464943170547485e-05,
+          "cosine": 0.9999999840207715,
+          "nan_or_inf": false
+        },
+        {
+          "id": "replacement-char",
+          "tokens": 5,
+          "hidden_max_abs": 0.00021710991859436035,
+          "embedding_max_abs": 2.9515475034713745e-05,
+          "cosine": 0.9999999813477705,
+          "nan_or_inf": false
+        },
+        {
+          "id": "accents-precomposed",
+          "tokens": 10,
+          "hidden_max_abs": 0.0003614872694015503,
+          "embedding_max_abs": 3.1031668186187744e-05,
+          "cosine": 0.9999999776119897,
+          "nan_or_inf": false
+        },
+        {
+          "id": "accents-decomposed",
+          "tokens": 10,
+          "hidden_max_abs": 0.0003614872694015503,
+          "embedding_max_abs": 3.1031668186187744e-05,
+          "cosine": 0.9999999776119897,
+          "nan_or_inf": false
+        },
+        {
+          "id": "combining-stack",
+          "tokens": 16,
+          "hidden_max_abs": 0.00042141973972320557,
+          "embedding_max_abs": 3.6250799894332886e-05,
+          "cosine": 0.9999999725263468,
+          "nan_or_inf": false
+        },
+        {
+          "id": "devanagari",
+          "tokens": 11,
+          "hidden_max_abs": 0.00026926398277282715,
+          "embedding_max_abs": 3.1381845474243164e-05,
+          "cosine": 0.9999999833111648,
+          "nan_or_inf": false
+        },
+        {
+          "id": "thai",
+          "tokens": 11,
+          "hidden_max_abs": 0.000394970178604126,
+          "embedding_max_abs": 4.003196954727173e-05,
+          "cosine": 0.9999999722100718,
+          "nan_or_inf": false
+        },
+        {
+          "id": "arabic",
+          "tokens": 12,
+          "hidden_max_abs": 0.00024369359016418457,
+          "embedding_max_abs": 2.1899119019508362e-05,
+          "cosine": 0.9999999891662751,
+          "nan_or_inf": false
+        },
+        {
+          "id": "hebrew",
+          "tokens": 9,
+          "hidden_max_abs": 0.00022673606872558594,
+          "embedding_max_abs": 2.5395303964614868e-05,
+          "cosine": 0.9999999852038671,
+          "nan_or_inf": false
+        },
+        {
+          "id": "rtl-mixed",
+          "tokens": 12,
+          "hidden_max_abs": 0.00031244754791259766,
+          "embedding_max_abs": 3.069266676902771e-05,
+          "cosine": 0.9999999765912173,
+          "nan_or_inf": false
+        },
+        {
+          "id": "chinese",
+          "tokens": 10,
+          "hidden_max_abs": 0.0002802908420562744,
+          "embedding_max_abs": 3.306567668914795e-05,
+          "cosine": 0.9999999780648436,
+          "nan_or_inf": false
+        },
+        {
+          "id": "japanese",
+          "tokens": 19,
+          "hidden_max_abs": 0.0004622340202331543,
+          "embedding_max_abs": 5.922093987464905e-05,
+          "cosine": 0.9999999386344841,
+          "nan_or_inf": false
+        },
+        {
+          "id": "korean",
+          "tokens": 9,
+          "hidden_max_abs": 0.00030225329101085663,
+          "embedding_max_abs": 2.5101006031036377e-05,
+          "cosine": 0.9999999848836231,
+          "nan_or_inf": false
+        },
+        {
+          "id": "korean-jamo",
+          "tokens": 11,
+          "hidden_max_abs": 0.00031828880310058594,
+          "embedding_max_abs": 4.009157419204712e-05,
+          "cosine": 0.9999999741014328,
+          "nan_or_inf": false
+        },
+        {
+          "id": "cyrillic-greek",
+          "tokens": 13,
+          "hidden_max_abs": 0.000356137752532959,
+          "embedding_max_abs": 3.7726014852523804e-05,
+          "cosine": 0.9999999769004382,
+          "nan_or_inf": false
+        },
+        {
+          "id": "german-turkish-case",
+          "tokens": 12,
+          "hidden_max_abs": 0.0003767162561416626,
+          "embedding_max_abs": 3.4421682357788086e-05,
+          "cosine": 0.9999999792931049,
+          "nan_or_inf": false
+        },
+        {
+          "id": "nfkc-compat",
+          "tokens": 14,
+          "hidden_max_abs": 0.0004012882709503174,
+          "embedding_max_abs": 4.522502422332764e-05,
+          "cosine": 0.9999999692220388,
+          "nan_or_inf": false
+        },
+        {
+          "id": "math-alnum-astral",
+          "tokens": 5,
+          "hidden_max_abs": 0.0002622753381729126,
+          "embedding_max_abs": 3.458000719547272e-05,
+          "cosine": 0.9999999767271924,
+          "nan_or_inf": false
+        },
+        {
+          "id": "emoji-basic",
+          "tokens": 12,
+          "hidden_max_abs": 0.0003753490746021271,
+          "embedding_max_abs": 3.0003488063812256e-05,
+          "cosine": 0.9999999796348579,
+          "nan_or_inf": false
+        },
+        {
+          "id": "emoji-zwj",
+          "tokens": 18,
+          "hidden_max_abs": 0.00038621947169303894,
+          "embedding_max_abs": 4.307180643081665e-05,
+          "cosine": 0.999999956316276,
+          "nan_or_inf": false
+        },
+        {
+          "id": "emoji-modifiers",
+          "tokens": 24,
+          "hidden_max_abs": 0.000472337007522583,
+          "embedding_max_abs": 5.615502595901489e-05,
+          "cosine": 0.9999999464821612,
+          "nan_or_inf": false
+        },
+        {
+          "id": "cjk-ext-b",
+          "tokens": 8,
+          "hidden_max_abs": 0.00026929378509521484,
+          "embedding_max_abs": 2.6034656912088394e-05,
+          "cosine": 0.9999999836172349,
+          "nan_or_inf": false
+        },
+        {
+          "id": "unknown-char",
+          "tokens": 15,
+          "hidden_max_abs": 0.0002597123384475708,
+          "embedding_max_abs": 3.0588358640670776e-05,
+          "cosine": 0.9999999832439231,
+          "nan_or_inf": false
+        },
+        {
+          "id": "special-literal-s",
+          "tokens": 11,
+          "hidden_max_abs": 0.0003479421138763428,
+          "embedding_max_abs": 3.0510127544403076e-05,
+          "cosine": 0.9999999831711368,
+          "nan_or_inf": false
+        },
+        {
+          "id": "special-literal-mask",
+          "tokens": 13,
+          "hidden_max_abs": 0.0003552436828613281,
+          "embedding_max_abs": 3.261864185333252e-05,
+          "cosine": 0.9999999756039254,
+          "nan_or_inf": false
+        },
+        {
+          "id": "special-lookalike-spaced",
+          "tokens": 25,
+          "hidden_max_abs": 0.0015431046485900879,
+          "embedding_max_abs": 7.419352186843753e-05,
+          "cosine": 0.9999998793418089,
+          "nan_or_inf": false
+        },
+        {
+          "id": "special-lookalike-qwen",
+          "tokens": 31,
+          "hidden_max_abs": 0.0004985854029655457,
+          "embedding_max_abs": 4.9017369747161865e-05,
+          "cosine": 0.9999999461268535,
+          "nan_or_inf": false
+        },
+        {
+          "id": "special-lookalike-gliner",
+          "tokens": 25,
+          "hidden_max_abs": 0.0004377588629722595,
+          "embedding_max_abs": 5.142390727996826e-05,
+          "cosine": 0.9999999485052945,
+          "nan_or_inf": false
+        },
+        {
+          "id": "e5-query-prefix",
+          "tokens": 12,
+          "hidden_max_abs": 0.00032395124435424805,
+          "embedding_max_abs": 3.859400749206543e-05,
+          "cosine": 0.9999999766749984,
+          "nan_or_inf": false
+        },
+        {
+          "id": "e5-passage-prefix",
+          "tokens": 34,
+          "hidden_max_abs": 0.0004021376371383667,
+          "embedding_max_abs": 3.635883331298828e-05,
+          "cosine": 0.9999999699014479,
+          "nan_or_inf": false
+        },
+        {
+          "id": "repeated-char",
+          "tokens": 63,
+          "hidden_max_abs": 0.0004877746105194092,
+          "embedding_max_abs": 2.4804845452308655e-05,
+          "cosine": 0.9999999844369842,
+          "nan_or_inf": false
+        },
+        {
+          "id": "no-spaces-long-word",
+          "tokens": 22,
+          "hidden_max_abs": 0.0005436092615127563,
+          "embedding_max_abs": 6.0092657804489136e-05,
+          "cosine": 0.9999999146798462,
+          "nan_or_inf": false
+        },
+        {
+          "id": "long-english",
+          "tokens": 512,
+          "hidden_max_abs": 0.0012530088424682617,
+          "embedding_max_abs": 4.4576823711395264e-05,
+          "cosine": 0.9999999710742815,
+          "nan_or_inf": false
+        },
+        {
+          "id": "long-mixed",
+          "tokens": 512,
+          "hidden_max_abs": 0.0005385642871260643,
+          "embedding_max_abs": 3.659352660179138e-05,
+          "cosine": 0.9999999647667717,
+          "nan_or_inf": false
+        }
+      ]
+    },
+    "ort-cpu-fp32-threads1": {
+      "candidate": "Python ORT CPU EP, onnx/model.onnx fp32, intra_op_num_threads=1, inter_op_num_threads=1",
+      "cases": 46,
+      "last_hidden_state_vs_torch_cpu_fp32": {
+        "max_abs": 2.8908252716064453e-06,
+        "mean_abs": 1.9988795018460493e-07,
+        "p99_abs": 7.599592208862305e-07
+      },
+      "embedding_vs_protected": {
+        "max_abs": 2.3096799850463867e-07,
+        "mean_abs": 1.9914460341644135e-08,
+        "p99_abs": 7.450580596923828e-08,
+        "min_cosine": 0.99999999999945
+      },
+      "padded_batch_fixture_vs_protected": {
+        "max_abs": 2.086162567138672e-07,
+        "mean_abs": 2.1515167721493828e-08,
+        "p99_abs": 7.811933755874559e-08
+      },
+      "padded_batch_fixture_vs_own_single": {
+        "max_abs": 0.0,
+        "mean_abs": 0.0,
+        "p99_abs": 0.0
+      },
+      "padded_batch16_all_cases_vs_protected": {
+        "max_abs": 2.3096799850463867e-07,
+        "mean_abs": 1.9914460341644135e-08,
+        "p99_abs": 7.450580596923828e-08
+      },
+      "padded_batch16_all_cases_vs_own_single": {
+        "max_abs": 0.0,
+        "mean_abs": 0.0,
+        "p99_abs": 0.0
+      },
+      "rerun_same_session_max_abs_hidden": 0.0,
+      "worst_hidden_case": {
+        "id": "special-lookalike-spaced",
+        "tokens": 25,
+        "max_abs": 2.8908252716064453e-06
+      },
+      "nan_or_inf_cases": [],
+      "per_case": [
+        {
+          "id": "empty",
+          "tokens": 2,
+          "hidden_max_abs": 6.92903995513916e-07,
+          "embedding_max_abs": 2.086162567138672e-07,
+          "cosine": 0.9999999999997227,
+          "nan_or_inf": false
+        },
+        {
+          "id": "space-only",
+          "tokens": 3,
+          "hidden_max_abs": 7.227063179016113e-07,
+          "embedding_max_abs": 1.341104507446289e-07,
+          "cosine": 0.9999999999997025,
+          "nan_or_inf": false
+        },
+        {
+          "id": "ascii-sentence",
+          "tokens": 15,
+          "hidden_max_abs": 1.30385160446167e-06,
+          "embedding_max_abs": 1.1362135410308838e-07,
+          "cosine": 0.9999999999998117,
+          "nan_or_inf": false
+        },
+        {
+          "id": "ascii-punct",
+          "tokens": 44,
+          "hidden_max_abs": 1.3187527656555176e-06,
+          "embedding_max_abs": 8.940696716308594e-08,
+          "cosine": 0.9999999999998834,
+          "nan_or_inf": false
+        },
+        {
+          "id": "ascii-case",
+          "tokens": 16,
+          "hidden_max_abs": 9.5367431640625e-07,
+          "embedding_max_abs": 8.521601557731628e-08,
+          "cosine": 0.9999999999998624,
+          "nan_or_inf": false
+        },
+        {
+          "id": "digits",
+          "tokens": 14,
+          "hidden_max_abs": 1.2814998626708984e-06,
+          "embedding_max_abs": 1.0058283805847168e-07,
+          "cosine": 0.9999999999998399,
+          "nan_or_inf": false
+        },
+        {
+          "id": "ws-leading-trailing",
+          "tokens": 7,
+          "hidden_max_abs": 8.642673492431641e-07,
+          "embedding_max_abs": 8.940696716308594e-08,
+          "cosine": 0.9999999999998479,
+          "nan_or_inf": false
+        },
+        {
+          "id": "ws-multi-space",
+          "tokens": 6,
+          "hidden_max_abs": 9.5367431640625e-07,
+          "embedding_max_abs": 7.450580596923828e-08,
+          "cosine": 0.9999999999998674,
+          "nan_or_inf": false
+        },
+        {
+          "id": "ws-tab-newline",
+          "tokens": 10,
+          "hidden_max_abs": 9.08970832824707e-07,
+          "embedding_max_abs": 5.4249539971351624e-08,
+          "cosine": 0.9999999999999232,
+          "nan_or_inf": false
+        },
+        {
+          "id": "ws-unicode-spaces",
+          "tokens": 13,
+          "hidden_max_abs": 7.152557373046875e-07,
+          "embedding_max_abs": 8.195638656616211e-08,
+          "cosine": 0.9999999999999014,
+          "nan_or_inf": false
+        },
+        {
+          "id": "ws-zero-width",
+          "tokens": 14,
+          "hidden_max_abs": 8.344650268554688e-07,
+          "embedding_max_abs": 6.705522537231445e-08,
+          "cosine": 0.9999999999999284,
+          "nan_or_inf": false
+        },
+        {
+          "id": "control-chars",
+          "tokens": 11,
+          "hidden_max_abs": 8.791685104370117e-07,
+          "embedding_max_abs": 7.636845111846924e-08,
+          "cosine": 0.999999999999899,
+          "nan_or_inf": false
+        },
+        {
+          "id": "bom",
+          "tokens": 8,
+          "hidden_max_abs": 8.195638656616211e-07,
+          "embedding_max_abs": 7.450580596923828e-08,
+          "cosine": 0.9999999999998994,
+          "nan_or_inf": false
+        },
+        {
+          "id": "replacement-char",
+          "tokens": 5,
+          "hidden_max_abs": 6.631016731262207e-07,
+          "embedding_max_abs": 6.705522537231445e-08,
+          "cosine": 0.9999999999999045,
+          "nan_or_inf": false
+        },
+        {
+          "id": "accents-precomposed",
+          "tokens": 10,
+          "hidden_max_abs": 9.462237358093262e-07,
+          "embedding_max_abs": 7.450580596923828e-08,
+          "cosine": 0.9999999999998935,
+          "nan_or_inf": false
+        },
+        {
+          "id": "accents-decomposed",
+          "tokens": 10,
+          "hidden_max_abs": 9.462237358093262e-07,
+          "embedding_max_abs": 7.450580596923828e-08,
+          "cosine": 0.9999999999998935,
+          "nan_or_inf": false
+        },
+        {
+          "id": "combining-stack",
+          "tokens": 16,
+          "hidden_max_abs": 1.1473894119262695e-06,
+          "embedding_max_abs": 9.685754776000977e-08,
+          "cosine": 0.999999999999855,
+          "nan_or_inf": false
+        },
+        {
+          "id": "devanagari",
+          "tokens": 11,
+          "hidden_max_abs": 7.152557373046875e-07,
+          "embedding_max_abs": 8.940696716308594e-08,
+          "cosine": 0.9999999999999181,
+          "nan_or_inf": false
+        },
+        {
+          "id": "thai",
+          "tokens": 11,
+          "hidden_max_abs": 8.940696716308594e-07,
+          "embedding_max_abs": 6.332993507385254e-08,
+          "cosine": 0.999999999999924,
+          "nan_or_inf": false
+        },
+        {
+          "id": "arabic",
+          "tokens": 12,
+          "hidden_max_abs": 6.854534149169922e-07,
+          "embedding_max_abs": 6.332993507385254e-08,
+          "cosine": 0.9999999999999144,
+          "nan_or_inf": false
+        },
+        {
+          "id": "hebrew",
+          "tokens": 9,
+          "hidden_max_abs": 7.748603820800781e-07,
+          "embedding_max_abs": 6.705522537231445e-08,
+          "cosine": 0.999999999999919,
+          "nan_or_inf": false
+        },
+        {
+          "id": "rtl-mixed",
+          "tokens": 12,
+          "hidden_max_abs": 1.1846423149108887e-06,
+          "embedding_max_abs": 7.543712854385376e-08,
+          "cosine": 0.9999999999998933,
+          "nan_or_inf": false
+        },
+        {
+          "id": "chinese",
+          "tokens": 10,
+          "hidden_max_abs": 6.854534149169922e-07,
+          "embedding_max_abs": 5.960464477539063e-08,
+          "cosine": 0.999999999999929,
+          "nan_or_inf": false
+        },
+        {
+          "id": "japanese",
+          "tokens": 19,
+          "hidden_max_abs": 8.791685104370117e-07,
+          "embedding_max_abs": 7.078051567077637e-08,
+          "cosine": 0.9999999999999103,
+          "nan_or_inf": false
+        },
+        {
+          "id": "korean",
+          "tokens": 9,
+          "hidden_max_abs": 7.82310962677002e-07,
+          "embedding_max_abs": 6.332993507385254e-08,
+          "cosine": 0.9999999999999221,
+          "nan_or_inf": false
+        },
+        {
+          "id": "korean-jamo",
+          "tokens": 11,
+          "hidden_max_abs": 9.5367431640625e-07,
+          "embedding_max_abs": 6.891787052154541e-08,
+          "cosine": 0.9999999999998817,
+          "nan_or_inf": false
+        },
+        {
+          "id": "cyrillic-greek",
+          "tokens": 13,
+          "hidden_max_abs": 8.493661880493164e-07,
+          "embedding_max_abs": 7.636845111846924e-08,
+          "cosine": 0.9999999999998852,
+          "nan_or_inf": false
+        },
+        {
+          "id": "german-turkish-case",
+          "tokens": 12,
+          "hidden_max_abs": 8.922070264816284e-07,
+          "embedding_max_abs": 6.891787052154541e-08,
+          "cosine": 0.9999999999998904,
+          "nan_or_inf": false
+        },
+        {
+          "id": "nfkc-compat",
+          "tokens": 14,
+          "hidden_max_abs": 1.5944242477416992e-06,
+          "embedding_max_abs": 9.685754776000977e-08,
+          "cosine": 0.9999999999998603,
+          "nan_or_inf": false
+        },
+        {
+          "id": "math-alnum-astral",
+          "tokens": 5,
+          "hidden_max_abs": 8.326023817062378e-07,
+          "embedding_max_abs": 1.2293457984924316e-07,
+          "cosine": 0.9999999999997777,
+          "nan_or_inf": false
+        },
+        {
+          "id": "emoji-basic",
+          "tokens": 12,
+          "hidden_max_abs": 8.344650268554688e-07,
+          "embedding_max_abs": 6.705522537231445e-08,
+          "cosine": 0.999999999999903,
+          "nan_or_inf": false
+        },
+        {
+          "id": "emoji-zwj",
+          "tokens": 18,
+          "hidden_max_abs": 1.0132789611816406e-06,
+          "embedding_max_abs": 7.450580596923828e-08,
+          "cosine": 0.9999999999998914,
+          "nan_or_inf": false
+        },
+        {
+          "id": "emoji-modifiers",
+          "tokens": 24,
+          "hidden_max_abs": 1.296401023864746e-06,
+          "embedding_max_abs": 7.916241884231567e-08,
+          "cosine": 0.999999999999879,
+          "nan_or_inf": false
+        },
+        {
+          "id": "cjk-ext-b",
+          "tokens": 8,
+          "hidden_max_abs": 7.748603820800781e-07,
+          "embedding_max_abs": 7.450580596923828e-08,
+          "cosine": 0.9999999999998745,
+          "nan_or_inf": false
+        },
+        {
+          "id": "unknown-char",
+          "tokens": 15,
+          "hidden_max_abs": 9.238719940185547e-07,
+          "embedding_max_abs": 5.960464477539063e-08,
+          "cosine": 0.999999999999936,
+          "nan_or_inf": false
+        },
+        {
+          "id": "special-literal-s",
+          "tokens": 11,
+          "hidden_max_abs": 8.046627044677734e-07,
+          "embedding_max_abs": 6.332993507385254e-08,
+          "cosine": 0.9999999999999374,
+          "nan_or_inf": false
+        },
+        {
+          "id": "special-literal-mask",
+          "tokens": 13,
+          "hidden_max_abs": 1.0132789611816406e-06,
+          "embedding_max_abs": 7.636845111846924e-08,
+          "cosine": 0.9999999999998721,
+          "nan_or_inf": false
+        },
+        {
+          "id": "special-lookalike-spaced",
+          "tokens": 25,
+          "hidden_max_abs": 2.8908252716064453e-06,
+          "embedding_max_abs": 2.3096799850463867e-07,
+          "cosine": 0.99999999999945,
+          "nan_or_inf": false
+        },
+        {
+          "id": "special-lookalike-qwen",
+          "tokens": 31,
+          "hidden_max_abs": 1.4901161193847656e-06,
+          "embedding_max_abs": 8.195638656616211e-08,
+          "cosine": 0.9999999999998997,
+          "nan_or_inf": false
+        },
+        {
+          "id": "special-lookalike-gliner",
+          "tokens": 25,
+          "hidden_max_abs": 1.430511474609375e-06,
+          "embedding_max_abs": 7.078051567077637e-08,
+          "cosine": 0.999999999999889,
+          "nan_or_inf": false
+        },
+        {
+          "id": "e5-query-prefix",
+          "tokens": 12,
+          "hidden_max_abs": 8.791685104370117e-07,
+          "embedding_max_abs": 8.195638656616211e-08,
+          "cosine": 0.9999999999998619,
+          "nan_or_inf": false
+        },
+        {
+          "id": "e5-passage-prefix",
+          "tokens": 34,
+          "hidden_max_abs": 1.043081283569336e-06,
+          "embedding_max_abs": 7.078051567077637e-08,
+          "cosine": 0.9999999999998652,
+          "nan_or_inf": false
+        },
+        {
+          "id": "repeated-char",
+          "tokens": 63,
+          "hidden_max_abs": 1.296401023864746e-06,
+          "embedding_max_abs": 6.705522537231445e-08,
+          "cosine": 0.9999999999999278,
+          "nan_or_inf": false
+        },
+        {
+          "id": "no-spaces-long-word",
+          "tokens": 22,
+          "hidden_max_abs": 1.4007091522216797e-06,
+          "embedding_max_abs": 8.568167686462402e-08,
+          "cosine": 0.999999999999864,
+          "nan_or_inf": false
+        },
+        {
+          "id": "long-english",
+          "tokens": 512,
+          "hidden_max_abs": 2.418702933937311e-06,
+          "embedding_max_abs": 8.940696716308594e-08,
+          "cosine": 0.9999999999998926,
+          "nan_or_inf": false
+        },
+        {
+          "id": "long-mixed",
+          "tokens": 512,
+          "hidden_max_abs": 1.6689300537109375e-06,
+          "embedding_max_abs": 1.1920928955078125e-07,
+          "cosine": 0.9999999999999074,
+          "nan_or_inf": false
+        }
+      ]
+    },
+    "ort-cpu-fp32-threads12": {
+      "candidate": "Python ORT CPU EP, onnx/model.onnx fp32, intra_op_num_threads=12, inter_op_num_threads=1",
+      "cases": 46,
+      "last_hidden_state_vs_torch_cpu_fp32": {
+        "max_abs": 2.8908252716064453e-06,
+        "mean_abs": 1.9988795018460493e-07,
+        "p99_abs": 7.599592208862305e-07
+      },
+      "embedding_vs_protected": {
+        "max_abs": 2.3096799850463867e-07,
+        "mean_abs": 1.9914460341644135e-08,
+        "p99_abs": 7.450580596923828e-08,
+        "min_cosine": 0.99999999999945
+      },
+      "padded_batch_fixture_vs_protected": {
+        "max_abs": 2.086162567138672e-07,
+        "mean_abs": 2.1515167721493828e-08,
+        "p99_abs": 7.811933755874559e-08
+      },
+      "padded_batch_fixture_vs_own_single": {
+        "max_abs": 0.0,
+        "mean_abs": 0.0,
+        "p99_abs": 0.0
+      },
+      "padded_batch16_all_cases_vs_protected": {
+        "max_abs": 2.3096799850463867e-07,
+        "mean_abs": 1.9914460341644135e-08,
+        "p99_abs": 7.450580596923828e-08
+      },
+      "padded_batch16_all_cases_vs_own_single": {
+        "max_abs": 0.0,
+        "mean_abs": 0.0,
+        "p99_abs": 0.0
+      },
+      "rerun_same_session_max_abs_hidden": 0.0,
+      "worst_hidden_case": {
+        "id": "special-lookalike-spaced",
+        "tokens": 25,
+        "max_abs": 2.8908252716064453e-06
+      },
+      "nan_or_inf_cases": [],
+      "per_case": [
+        {
+          "id": "empty",
+          "tokens": 2,
+          "hidden_max_abs": 6.92903995513916e-07,
+          "embedding_max_abs": 2.086162567138672e-07,
+          "cosine": 0.9999999999997227,
+          "nan_or_inf": false
+        },
+        {
+          "id": "space-only",
+          "tokens": 3,
+          "hidden_max_abs": 7.227063179016113e-07,
+          "embedding_max_abs": 1.341104507446289e-07,
+          "cosine": 0.9999999999997025,
+          "nan_or_inf": false
+        },
+        {
+          "id": "ascii-sentence",
+          "tokens": 15,
+          "hidden_max_abs": 1.30385160446167e-06,
+          "embedding_max_abs": 1.1362135410308838e-07,
+          "cosine": 0.9999999999998117,
+          "nan_or_inf": false
+        },
+        {
+          "id": "ascii-punct",
+          "tokens": 44,
+          "hidden_max_abs": 1.3187527656555176e-06,
+          "embedding_max_abs": 8.940696716308594e-08,
+          "cosine": 0.9999999999998834,
+          "nan_or_inf": false
+        },
+        {
+          "id": "ascii-case",
+          "tokens": 16,
+          "hidden_max_abs": 9.5367431640625e-07,
+          "embedding_max_abs": 8.521601557731628e-08,
+          "cosine": 0.9999999999998624,
+          "nan_or_inf": false
+        },
+        {
+          "id": "digits",
+          "tokens": 14,
+          "hidden_max_abs": 1.2814998626708984e-06,
+          "embedding_max_abs": 1.0058283805847168e-07,
+          "cosine": 0.9999999999998399,
+          "nan_or_inf": false
+        },
+        {
+          "id": "ws-leading-trailing",
+          "tokens": 7,
+          "hidden_max_abs": 8.642673492431641e-07,
+          "embedding_max_abs": 8.940696716308594e-08,
+          "cosine": 0.9999999999998479,
+          "nan_or_inf": false
+        },
+        {
+          "id": "ws-multi-space",
+          "tokens": 6,
+          "hidden_max_abs": 9.5367431640625e-07,
+          "embedding_max_abs": 7.450580596923828e-08,
+          "cosine": 0.9999999999998674,
+          "nan_or_inf": false
+        },
+        {
+          "id": "ws-tab-newline",
+          "tokens": 10,
+          "hidden_max_abs": 9.08970832824707e-07,
+          "embedding_max_abs": 5.4249539971351624e-08,
+          "cosine": 0.9999999999999232,
+          "nan_or_inf": false
+        },
+        {
+          "id": "ws-unicode-spaces",
+          "tokens": 13,
+          "hidden_max_abs": 7.152557373046875e-07,
+          "embedding_max_abs": 8.195638656616211e-08,
+          "cosine": 0.9999999999999014,
+          "nan_or_inf": false
+        },
+        {
+          "id": "ws-zero-width",
+          "tokens": 14,
+          "hidden_max_abs": 8.344650268554688e-07,
+          "embedding_max_abs": 6.705522537231445e-08,
+          "cosine": 0.9999999999999284,
+          "nan_or_inf": false
+        },
+        {
+          "id": "control-chars",
+          "tokens": 11,
+          "hidden_max_abs": 8.791685104370117e-07,
+          "embedding_max_abs": 7.636845111846924e-08,
+          "cosine": 0.999999999999899,
+          "nan_or_inf": false
+        },
+        {
+          "id": "bom",
+          "tokens": 8,
+          "hidden_max_abs": 8.195638656616211e-07,
+          "embedding_max_abs": 7.450580596923828e-08,
+          "cosine": 0.9999999999998994,
+          "nan_or_inf": false
+        },
+        {
+          "id": "replacement-char",
+          "tokens": 5,
+          "hidden_max_abs": 6.631016731262207e-07,
+          "embedding_max_abs": 6.705522537231445e-08,
+          "cosine": 0.9999999999999045,
+          "nan_or_inf": false
+        },
+        {
+          "id": "accents-precomposed",
+          "tokens": 10,
+          "hidden_max_abs": 9.462237358093262e-07,
+          "embedding_max_abs": 7.450580596923828e-08,
+          "cosine": 0.9999999999998935,
+          "nan_or_inf": false
+        },
+        {
+          "id": "accents-decomposed",
+          "tokens": 10,
+          "hidden_max_abs": 9.462237358093262e-07,
+          "embedding_max_abs": 7.450580596923828e-08,
+          "cosine": 0.9999999999998935,
+          "nan_or_inf": false
+        },
+        {
+          "id": "combining-stack",
+          "tokens": 16,
+          "hidden_max_abs": 1.1473894119262695e-06,
+          "embedding_max_abs": 9.685754776000977e-08,
+          "cosine": 0.999999999999855,
+          "nan_or_inf": false
+        },
+        {
+          "id": "devanagari",
+          "tokens": 11,
+          "hidden_max_abs": 7.152557373046875e-07,
+          "embedding_max_abs": 8.940696716308594e-08,
+          "cosine": 0.9999999999999181,
+          "nan_or_inf": false
+        },
+        {
+          "id": "thai",
+          "tokens": 11,
+          "hidden_max_abs": 8.940696716308594e-07,
+          "embedding_max_abs": 6.332993507385254e-08,
+          "cosine": 0.999999999999924,
+          "nan_or_inf": false
+        },
+        {
+          "id": "arabic",
+          "tokens": 12,
+          "hidden_max_abs": 6.854534149169922e-07,
+          "embedding_max_abs": 6.332993507385254e-08,
+          "cosine": 0.9999999999999144,
+          "nan_or_inf": false
+        },
+        {
+          "id": "hebrew",
+          "tokens": 9,
+          "hidden_max_abs": 7.748603820800781e-07,
+          "embedding_max_abs": 6.705522537231445e-08,
+          "cosine": 0.999999999999919,
+          "nan_or_inf": false
+        },
+        {
+          "id": "rtl-mixed",
+          "tokens": 12,
+          "hidden_max_abs": 1.1846423149108887e-06,
+          "embedding_max_abs": 7.543712854385376e-08,
+          "cosine": 0.9999999999998933,
+          "nan_or_inf": false
+        },
+        {
+          "id": "chinese",
+          "tokens": 10,
+          "hidden_max_abs": 6.854534149169922e-07,
+          "embedding_max_abs": 5.960464477539063e-08,
+          "cosine": 0.999999999999929,
+          "nan_or_inf": false
+        },
+        {
+          "id": "japanese",
+          "tokens": 19,
+          "hidden_max_abs": 8.791685104370117e-07,
+          "embedding_max_abs": 7.078051567077637e-08,
+          "cosine": 0.9999999999999103,
+          "nan_or_inf": false
+        },
+        {
+          "id": "korean",
+          "tokens": 9,
+          "hidden_max_abs": 7.82310962677002e-07,
+          "embedding_max_abs": 6.332993507385254e-08,
+          "cosine": 0.9999999999999221,
+          "nan_or_inf": false
+        },
+        {
+          "id": "korean-jamo",
+          "tokens": 11,
+          "hidden_max_abs": 9.5367431640625e-07,
+          "embedding_max_abs": 6.891787052154541e-08,
+          "cosine": 0.9999999999998817,
+          "nan_or_inf": false
+        },
+        {
+          "id": "cyrillic-greek",
+          "tokens": 13,
+          "hidden_max_abs": 8.493661880493164e-07,
+          "embedding_max_abs": 7.636845111846924e-08,
+          "cosine": 0.9999999999998852,
+          "nan_or_inf": false
+        },
+        {
+          "id": "german-turkish-case",
+          "tokens": 12,
+          "hidden_max_abs": 8.922070264816284e-07,
+          "embedding_max_abs": 6.891787052154541e-08,
+          "cosine": 0.9999999999998904,
+          "nan_or_inf": false
+        },
+        {
+          "id": "nfkc-compat",
+          "tokens": 14,
+          "hidden_max_abs": 1.5944242477416992e-06,
+          "embedding_max_abs": 9.685754776000977e-08,
+          "cosine": 0.9999999999998603,
+          "nan_or_inf": false
+        },
+        {
+          "id": "math-alnum-astral",
+          "tokens": 5,
+          "hidden_max_abs": 8.326023817062378e-07,
+          "embedding_max_abs": 1.2293457984924316e-07,
+          "cosine": 0.9999999999997777,
+          "nan_or_inf": false
+        },
+        {
+          "id": "emoji-basic",
+          "tokens": 12,
+          "hidden_max_abs": 8.344650268554688e-07,
+          "embedding_max_abs": 6.705522537231445e-08,
+          "cosine": 0.999999999999903,
+          "nan_or_inf": false
+        },
+        {
+          "id": "emoji-zwj",
+          "tokens": 18,
+          "hidden_max_abs": 1.0132789611816406e-06,
+          "embedding_max_abs": 7.450580596923828e-08,
+          "cosine": 0.9999999999998914,
+          "nan_or_inf": false
+        },
+        {
+          "id": "emoji-modifiers",
+          "tokens": 24,
+          "hidden_max_abs": 1.296401023864746e-06,
+          "embedding_max_abs": 7.916241884231567e-08,
+          "cosine": 0.999999999999879,
+          "nan_or_inf": false
+        },
+        {
+          "id": "cjk-ext-b",
+          "tokens": 8,
+          "hidden_max_abs": 7.748603820800781e-07,
+          "embedding_max_abs": 7.450580596923828e-08,
+          "cosine": 0.9999999999998745,
+          "nan_or_inf": false
+        },
+        {
+          "id": "unknown-char",
+          "tokens": 15,
+          "hidden_max_abs": 9.238719940185547e-07,
+          "embedding_max_abs": 5.960464477539063e-08,
+          "cosine": 0.999999999999936,
+          "nan_or_inf": false
+        },
+        {
+          "id": "special-literal-s",
+          "tokens": 11,
+          "hidden_max_abs": 8.046627044677734e-07,
+          "embedding_max_abs": 6.332993507385254e-08,
+          "cosine": 0.9999999999999374,
+          "nan_or_inf": false
+        },
+        {
+          "id": "special-literal-mask",
+          "tokens": 13,
+          "hidden_max_abs": 1.0132789611816406e-06,
+          "embedding_max_abs": 7.636845111846924e-08,
+          "cosine": 0.9999999999998721,
+          "nan_or_inf": false
+        },
+        {
+          "id": "special-lookalike-spaced",
+          "tokens": 25,
+          "hidden_max_abs": 2.8908252716064453e-06,
+          "embedding_max_abs": 2.3096799850463867e-07,
+          "cosine": 0.99999999999945,
+          "nan_or_inf": false
+        },
+        {
+          "id": "special-lookalike-qwen",
+          "tokens": 31,
+          "hidden_max_abs": 1.4901161193847656e-06,
+          "embedding_max_abs": 8.195638656616211e-08,
+          "cosine": 0.9999999999998997,
+          "nan_or_inf": false
+        },
+        {
+          "id": "special-lookalike-gliner",
+          "tokens": 25,
+          "hidden_max_abs": 1.430511474609375e-06,
+          "embedding_max_abs": 7.078051567077637e-08,
+          "cosine": 0.999999999999889,
+          "nan_or_inf": false
+        },
+        {
+          "id": "e5-query-prefix",
+          "tokens": 12,
+          "hidden_max_abs": 8.791685104370117e-07,
+          "embedding_max_abs": 8.195638656616211e-08,
+          "cosine": 0.9999999999998619,
+          "nan_or_inf": false
+        },
+        {
+          "id": "e5-passage-prefix",
+          "tokens": 34,
+          "hidden_max_abs": 1.043081283569336e-06,
+          "embedding_max_abs": 7.078051567077637e-08,
+          "cosine": 0.9999999999998652,
+          "nan_or_inf": false
+        },
+        {
+          "id": "repeated-char",
+          "tokens": 63,
+          "hidden_max_abs": 1.296401023864746e-06,
+          "embedding_max_abs": 6.705522537231445e-08,
+          "cosine": 0.9999999999999278,
+          "nan_or_inf": false
+        },
+        {
+          "id": "no-spaces-long-word",
+          "tokens": 22,
+          "hidden_max_abs": 1.4007091522216797e-06,
+          "embedding_max_abs": 8.568167686462402e-08,
+          "cosine": 0.999999999999864,
+          "nan_or_inf": false
+        },
+        {
+          "id": "long-english",
+          "tokens": 512,
+          "hidden_max_abs": 2.418702933937311e-06,
+          "embedding_max_abs": 8.940696716308594e-08,
+          "cosine": 0.9999999999998926,
+          "nan_or_inf": false
+        },
+        {
+          "id": "long-mixed",
+          "tokens": 512,
+          "hidden_max_abs": 1.6689300537109375e-06,
+          "embedding_max_abs": 1.1920928955078125e-07,
+          "cosine": 0.9999999999999074,
+          "nan_or_inf": false
+        }
+      ]
+    },
+    "torch-cuda-fp32": {
+      "candidate": "PyTorch CUDA fp32 (sentence-transformers Transformer module), TF32 matmul off, deterministic algorithms",
+      "cases": 46,
+      "last_hidden_state_vs_torch_cpu_fp32": {
+        "max_abs": 1.8775463104248047e-06,
+        "mean_abs": 1.9011186400627605e-07,
+        "p99_abs": 6.854534149169922e-07
+      },
+      "embedding_vs_protected": {
+        "max_abs": 2.0675361156463623e-07,
+        "mean_abs": 2.125863131263084e-08,
+        "p99_abs": 7.82310962677002e-08,
+        "min_cosine": 0.9999999999993885
+      },
+      "padded_batch_fixture_vs_protected": {
+        "max_abs": 1.0244548320770264e-07,
+        "mean_abs": 2.1368811707765822e-08,
+        "p99_abs": 7.450580596923828e-08
+      },
+      "padded_batch_fixture_vs_own_single": {
+        "max_abs": 8.940696716308594e-08,
+        "mean_abs": 1.2869296344635789e-08,
+        "p99_abs": 4.842877388000488e-08
+      },
+      "padded_batch16_all_cases_vs_protected": {
+        "max_abs": 1.9744038581848145e-07,
+        "mean_abs": 2.2426765320832983e-08,
+        "p99_abs": 8.195638656616211e-08
+      },
+      "padded_batch16_all_cases_vs_own_single": {
+        "max_abs": 9.685754776000977e-08,
+        "mean_abs": 1.3871404662594337e-08,
+        "p99_abs": 4.842877388000488e-08
+      },
+      "rerun_same_session_max_abs_hidden": 0.0,
+      "worst_hidden_case": {
+        "id": "special-lookalike-spaced",
+        "tokens": 25,
+        "max_abs": 1.8775463104248047e-06
+      },
+      "nan_or_inf_cases": [],
+      "per_case": [
+        {
+          "id": "empty",
+          "tokens": 2,
+          "hidden_max_abs": 6.854534149169922e-07,
+          "embedding_max_abs": 7.450580596923828e-08,
+          "cosine": 0.9999999999998597,
+          "nan_or_inf": false
+        },
+        {
+          "id": "space-only",
+          "tokens": 3,
+          "hidden_max_abs": 6.705522537231445e-07,
+          "embedding_max_abs": 1.043081283569336e-07,
+          "cosine": 0.999999999999786,
+          "nan_or_inf": false
+        },
+        {
+          "id": "ascii-sentence",
+          "tokens": 15,
+          "hidden_max_abs": 1.1324882507324219e-06,
+          "embedding_max_abs": 1.1920928955078125e-07,
+          "cosine": 0.9999999999997022,
+          "nan_or_inf": false
+        },
+        {
+          "id": "ascii-punct",
+          "tokens": 44,
+          "hidden_max_abs": 1.2218952178955078e-06,
+          "embedding_max_abs": 1.043081283569336e-07,
+          "cosine": 0.9999999999998281,
+          "nan_or_inf": false
+        },
+        {
+          "id": "ascii-case",
+          "tokens": 16,
+          "hidden_max_abs": 8.940696716308594e-07,
+          "embedding_max_abs": 8.66129994392395e-08,
+          "cosine": 0.999999999999883,
+          "nan_or_inf": false
+        },
+        {
+          "id": "digits",
+          "tokens": 14,
+          "hidden_max_abs": 9.685754776000977e-07,
+          "embedding_max_abs": 8.195638656616211e-08,
+          "cosine": 0.9999999999998328,
+          "nan_or_inf": false
+        },
+        {
+          "id": "ws-leading-trailing",
+          "tokens": 7,
+          "hidden_max_abs": 7.413327693939209e-07,
+          "embedding_max_abs": 8.940696716308594e-08,
+          "cosine": 0.9999999999998246,
+          "nan_or_inf": false
+        },
+        {
+          "id": "ws-multi-space",
+          "tokens": 6,
+          "hidden_max_abs": 8.940696716308594e-07,
+          "embedding_max_abs": 9.685754776000977e-08,
+          "cosine": 0.9999999999998579,
+          "nan_or_inf": false
+        },
+        {
+          "id": "ws-tab-newline",
+          "tokens": 10,
+          "hidden_max_abs": 9.201467037200928e-07,
+          "embedding_max_abs": 7.450580596923828e-08,
+          "cosine": 0.9999999999998983,
+          "nan_or_inf": false
+        },
+        {
+          "id": "ws-unicode-spaces",
+          "tokens": 13,
+          "hidden_max_abs": 7.748603820800781e-07,
+          "embedding_max_abs": 6.705522537231445e-08,
+          "cosine": 0.999999999999925,
+          "nan_or_inf": false
+        },
+        {
+          "id": "ws-zero-width",
+          "tokens": 14,
+          "hidden_max_abs": 8.642673492431641e-07,
+          "embedding_max_abs": 5.21540641784668e-08,
+          "cosine": 0.9999999999999245,
+          "nan_or_inf": false
+        },
+        {
+          "id": "control-chars",
+          "tokens": 11,
+          "hidden_max_abs": 9.98377799987793e-07,
+          "embedding_max_abs": 6.705522537231445e-08,
+          "cosine": 0.999999999999898,
+          "nan_or_inf": false
+        },
+        {
+          "id": "bom",
+          "tokens": 8,
+          "hidden_max_abs": 7.152557373046875e-07,
+          "embedding_max_abs": 7.450580596923828e-08,
+          "cosine": 0.9999999999998852,
+          "nan_or_inf": false
+        },
+        {
+          "id": "replacement-char",
+          "tokens": 5,
+          "hidden_max_abs": 6.92903995513916e-07,
+          "embedding_max_abs": 5.587935447692871e-08,
+          "cosine": 0.9999999999999063,
+          "nan_or_inf": false
+        },
+        {
+          "id": "accents-precomposed",
+          "tokens": 10,
+          "hidden_max_abs": 1.0579824447631836e-06,
+          "embedding_max_abs": 8.195638656616211e-08,
+          "cosine": 0.9999999999998564,
+          "nan_or_inf": false
+        },
+        {
+          "id": "accents-decomposed",
+          "tokens": 10,
+          "hidden_max_abs": 1.0579824447631836e-06,
+          "embedding_max_abs": 8.195638656616211e-08,
+          "cosine": 0.9999999999998564,
+          "nan_or_inf": false
+        },
+        {
+          "id": "combining-stack",
+          "tokens": 16,
+          "hidden_max_abs": 1.043081283569336e-06,
+          "embedding_max_abs": 8.940696716308594e-08,
+          "cosine": 0.9999999999998411,
+          "nan_or_inf": false
+        },
+        {
+          "id": "devanagari",
+          "tokens": 11,
+          "hidden_max_abs": 8.046627044677734e-07,
+          "embedding_max_abs": 8.568167686462402e-08,
+          "cosine": 0.9999999999998683,
+          "nan_or_inf": false
+        },
+        {
+          "id": "thai",
+          "tokens": 11,
+          "hidden_max_abs": 8.642673492431641e-07,
+          "embedding_max_abs": 7.450580596923828e-08,
+          "cosine": 0.9999999999998954,
+          "nan_or_inf": false
+        },
+        {
+          "id": "arabic",
+          "tokens": 12,
+          "hidden_max_abs": 6.407499313354492e-07,
+          "embedding_max_abs": 5.21540641784668e-08,
+          "cosine": 0.9999999999999363,
+          "nan_or_inf": false
+        },
+        {
+          "id": "hebrew",
+          "tokens": 9,
+          "hidden_max_abs": 7.152557373046875e-07,
+          "embedding_max_abs": 5.960464477539063e-08,
+          "cosine": 0.9999999999999265,
+          "nan_or_inf": false
+        },
+        {
+          "id": "rtl-mixed",
+          "tokens": 12,
+          "hidden_max_abs": 9.890645742416382e-07,
+          "embedding_max_abs": 7.869675755500793e-08,
+          "cosine": 0.9999999999998811,
+          "nan_or_inf": false
+        },
+        {
+          "id": "chinese",
+          "tokens": 10,
+          "hidden_max_abs": 8.642673492431641e-07,
+          "embedding_max_abs": 6.332993507385254e-08,
+          "cosine": 0.9999999999999218,
+          "nan_or_inf": false
+        },
+        {
+          "id": "japanese",
+          "tokens": 19,
+          "hidden_max_abs": 9.834766387939453e-07,
+          "embedding_max_abs": 6.705522537231445e-08,
+          "cosine": 0.9999999999999124,
+          "nan_or_inf": false
+        },
+        {
+          "id": "korean",
+          "tokens": 9,
+          "hidden_max_abs": 8.568167686462402e-07,
+          "embedding_max_abs": 7.82310962677002e-08,
+          "cosine": 0.9999999999998901,
+          "nan_or_inf": false
+        },
+        {
+          "id": "korean-jamo",
+          "tokens": 11,
+          "hidden_max_abs": 8.046627044677734e-07,
+          "embedding_max_abs": 6.51925802230835e-08,
+          "cosine": 0.9999999999998852,
+          "nan_or_inf": false
+        },
+        {
+          "id": "cyrillic-greek",
+          "tokens": 13,
+          "hidden_max_abs": 9.238719940185547e-07,
+          "embedding_max_abs": 9.313225746154785e-08,
+          "cosine": 0.9999999999998541,
+          "nan_or_inf": false
+        },
+        {
+          "id": "german-turkish-case",
+          "tokens": 12,
+          "hidden_max_abs": 8.121132850646973e-07,
+          "embedding_max_abs": 9.685754776000977e-08,
+          "cosine": 0.9999999999999005,
+          "nan_or_inf": false
+        },
+        {
+          "id": "nfkc-compat",
+          "tokens": 14,
+          "hidden_max_abs": 1.341104507446289e-06,
+          "embedding_max_abs": 1.1175870895385742e-07,
+          "cosine": 0.9999999999998608,
+          "nan_or_inf": false
+        },
+        {
+          "id": "math-alnum-astral",
+          "tokens": 5,
+          "hidden_max_abs": 7.450580596923828e-07,
+          "embedding_max_abs": 1.1920928955078125e-07,
+          "cosine": 0.9999999999998119,
+          "nan_or_inf": false
+        },
+        {
+          "id": "emoji-basic",
+          "tokens": 12,
+          "hidden_max_abs": 9.5367431640625e-07,
+          "embedding_max_abs": 9.685754776000977e-08,
+          "cosine": 0.9999999999998863,
+          "nan_or_inf": false
+        },
+        {
+          "id": "emoji-zwj",
+          "tokens": 18,
+          "hidden_max_abs": 8.977949619293213e-07,
+          "embedding_max_abs": 6.705522537231445e-08,
+          "cosine": 0.9999999999999118,
+          "nan_or_inf": false
+        },
+        {
+          "id": "emoji-modifiers",
+          "tokens": 24,
+          "hidden_max_abs": 1.2665987014770508e-06,
+          "embedding_max_abs": 7.450580596923828e-08,
+          "cosine": 0.999999999999866,
+          "nan_or_inf": false
+        },
+        {
+          "id": "cjk-ext-b",
+          "tokens": 8,
+          "hidden_max_abs": 7.450580596923828e-07,
+          "embedding_max_abs": 6.705522537231445e-08,
+          "cosine": 0.9999999999999082,
+          "nan_or_inf": false
+        },
+        {
+          "id": "unknown-char",
+          "tokens": 15,
+          "hidden_max_abs": 8.195638656616211e-07,
+          "embedding_max_abs": 7.82310962677002e-08,
+          "cosine": 0.9999999999999002,
+          "nan_or_inf": false
+        },
+        {
+          "id": "special-literal-s",
+          "tokens": 11,
+          "hidden_max_abs": 7.152557373046875e-07,
+          "embedding_max_abs": 6.705522537231445e-08,
+          "cosine": 0.9999999999999205,
+          "nan_or_inf": false
+        },
+        {
+          "id": "special-literal-mask",
+          "tokens": 13,
+          "hidden_max_abs": 8.493661880493164e-07,
+          "embedding_max_abs": 8.66129994392395e-08,
+          "cosine": 0.9999999999998828,
+          "nan_or_inf": false
+        },
+        {
+          "id": "special-lookalike-spaced",
+          "tokens": 25,
+          "hidden_max_abs": 1.8775463104248047e-06,
+          "embedding_max_abs": 2.0675361156463623e-07,
+          "cosine": 0.9999999999993885,
+          "nan_or_inf": false
+        },
+        {
+          "id": "special-lookalike-qwen",
+          "tokens": 31,
+          "hidden_max_abs": 1.3709068298339844e-06,
+          "embedding_max_abs": 8.940696716308594e-08,
+          "cosine": 0.9999999999998835,
+          "nan_or_inf": false
+        },
+        {
+          "id": "special-lookalike-gliner",
+          "tokens": 25,
+          "hidden_max_abs": 1.2516975402832031e-06,
+          "embedding_max_abs": 8.940696716308594e-08,
+          "cosine": 0.9999999999998859,
+          "nan_or_inf": false
+        },
+        {
+          "id": "e5-query-prefix",
+          "tokens": 12,
+          "hidden_max_abs": 8.344650268554688e-07,
+          "embedding_max_abs": 7.450580596923828e-08,
+          "cosine": 0.9999999999999054,
+          "nan_or_inf": false
+        },
+        {
+          "id": "e5-passage-prefix",
+          "tokens": 34,
+          "hidden_max_abs": 1.080334186553955e-06,
+          "embedding_max_abs": 8.242204785346985e-08,
+          "cosine": 0.9999999999998767,
+          "nan_or_inf": false
+        },
+        {
+          "id": "repeated-char",
+          "tokens": 63,
+          "hidden_max_abs": 1.3262033462524414e-06,
+          "embedding_max_abs": 1.2665987014770508e-07,
+          "cosine": 0.9999999999997393,
+          "nan_or_inf": false
+        },
+        {
+          "id": "no-spaces-long-word",
+          "tokens": 22,
+          "hidden_max_abs": 1.1622905731201172e-06,
+          "embedding_max_abs": 7.82310962677002e-08,
+          "cosine": 0.9999999999998572,
+          "nan_or_inf": false
+        },
+        {
+          "id": "long-english",
+          "tokens": 512,
+          "hidden_max_abs": 1.8477439880371094e-06,
+          "embedding_max_abs": 1.30385160446167e-07,
+          "cosine": 0.9999999999996414,
+          "nan_or_inf": false
+        },
+        {
+          "id": "long-mixed",
+          "tokens": 512,
+          "hidden_max_abs": 1.650303602218628e-06,
+          "embedding_max_abs": 1.2665987014770508e-07,
+          "cosine": 0.9999999999997542,
+          "nan_or_inf": false
+        }
+      ]
+    }
+  }
+}

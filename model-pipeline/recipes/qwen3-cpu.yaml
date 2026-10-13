@@ -1,0 +1,6 @@
+recipe_version: 1
+id: qwen3-cpu
+plugin: qwen-genai-cpu-v1
+manifest: model-pipeline/candidates/qwen3/profile.json
+reference_corpus: model-pipeline/corpora/five-models/chat.jsonl
+reference_environment: model-pipeline/reference/generation/requirements.txt

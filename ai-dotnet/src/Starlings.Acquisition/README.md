@@ -1,0 +1,18 @@
+# Starlings.Acquisition
+
+**Preview.** Explicit, verified acquisition of model files. An asset lock names a Hub repository, a full 40-character commit SHA, and each file's size and SHA-256. `ModelAssetStore.DownloadAsync` downloads (with retries and resume) into a local cache and verifies every file; `OpenLocal` resolves the cache offline and never touches the network. No dependencies beyond the BCL. The API may still change.
+
+```csharp
+using Starlings.Acquisition;
+
+var assetLock = new ModelAssetLock("my-model", "owner/name", "<40-character commit sha>",
+    [new ModelAssetFile("tokenizer.json", 17082730, "<sha256>")]);
+using var store = new ModelAssetStore(new ModelAcquisitionOptions { CacheDirectory = "/var/cache/models" });
+ModelSnapshot downloaded = await store.DownloadAsync(assetLock);     // network, explicit
+ModelSnapshot local = store.OpenLocal(assetLock);                    // offline, verified
+string path = local.GetFilePath("tokenizer.json");
+```
+
+Cache root: `ModelAcquisitionOptions.CacheDirectory`, else `$STARLING_MODELS`, else the user cache directory. Gated repositories: `HuggingFaceToken` or `$HF_TOKEN`, sent only to the Hub endpoint and to explicit sources on `https://huggingface.co` (redirects are followed per hop; the token never goes to the Hub's storage or CDN hosts or to any other host). A file that is not in the Hub repository (for example a converted ONNX graph published as a release asset or in another Hugging Face repository) carries an explicit `https` source, `new ModelAssetFile(path, size, sha256, new Uri("https://..."))`: it is downloaded from that address (with the token only if the address is on huggingface.co) and verified in the same snapshot directory (lock JSON `schema_version` 2 with a per-file `url`; locks without explicit sources stay `schema_version` 1). Model packages ship their lock, for example `E5ModelAssets.Lock` in `Starlings.Models.E5`. Documentation: [ai-dotnet/README.md](https://github.com/starlinghq/starling/blob/main/ai-dotnet/README.md#model-acquisition-p-009).
+
+Status: Linux x64 experimental; Windows and macOS untested.

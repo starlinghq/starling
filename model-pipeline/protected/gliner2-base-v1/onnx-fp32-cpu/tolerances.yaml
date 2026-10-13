@@ -1,0 +1,30 @@
+# Binding tolerances, set by Mark on 2026-10-10, plan 10.1. Values from docs/m0/gliner2-p014.md section 6.
+# Observed worst (route A dynamo, ORT 1.30.0 CPU, 1 and 12 threads): hidden 2.3e-5, span logits 2.4e-5 relative,
+# scores 3.7e-6, confidence 1.8e-6; entities 58/58; C# logits bit-identical to Python ORT.
+profile: gliner2-base-v1/onnx-fp32-cpu
+provider_options: {}
+reference: PyTorch fp32 CPU in model-pipeline/protected/gliner2-base-v1/onnx-fp32-cpu/extraction.jsonl
+discrete:
+  normalized_text: exact
+  words: exact
+  character_maps: exact
+  token_ids: exact
+  attention_mask: exact
+  word_positions: exact
+  schema_positions: exact
+  gate_decision: exact
+float:
+  last_hidden_state_max_abs: 1.0e-4
+  count_logits_max_abs: 5.0e-4
+  span_logits_relative: 1.0e-4
+  scores_max_abs: 2.0e-5
+  confidence_max_abs: 2.0e-5
+  padded_batch_vs_single_span_logits_relative: 1.0e-4
+  nan_or_inf: fail
+  report_only: [mean_abs, p99_abs]
+entities:
+  identity: exact
+  order_swap_max_confidence_delta: 2.0e-5
+  threshold_flip_max_score_margin: 2.0e-5
+csharp_vs_python_same_machine_and_provider:
+  span_logits_relative: 1.0e-6

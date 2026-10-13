@@ -1,0 +1,211 @@
+{
+  "tools": {
+    "onnxruntime": "1.30.0",
+    "onnx": "1.23.1",
+    "python": "3.11.16"
+  },
+  "variants": [
+    {
+      "file": "model.onnx",
+      "sha256": "ca456c06b3a9505ddfd9131408916dd79290368331e7d76bb621f1cba6bc8665",
+      "bytes": 470268510,
+      "opset": [
+        {
+          "domain": "",
+          "version": 11
+        }
+      ],
+      "node_types": {
+        "Add": 172,
+        "Cast": 1,
+        "Concat": 48,
+        "Constant": 284,
+        "Div": 49,
+        "Erf": 12,
+        "Gather": 100,
+        "MatMul": 96,
+        "Mul": 50,
+        "Pow": 25,
+        "ReduceMean": 50,
+        "Reshape": 48,
+        "Shape": 97,
+        "Slice": 1,
+        "Softmax": 12,
+        "Sqrt": 25,
+        "Sub": 26,
+        "Transpose": 48,
+        "Unsqueeze": 99
+      },
+      "initializer_dtypes": {
+        "FLOAT": 197,
+        "INT64": 1
+      },
+      "call": "source: intfloat/multilingual-e5-small@614241f6 onnx/model.onnx",
+      "variant": "fp32"
+    },
+    {
+      "variant": "fp16",
+      "file": "model-fp16.onnx",
+      "sha256": "f49ade3f9d605f6ee2ea96b41ef3df3d513bdd6d837267c193647c05cd87833c",
+      "bytes": 235336673,
+      "opset": [
+        {
+          "domain": "",
+          "version": 11
+        }
+      ],
+      "node_types": {
+        "Add": 172,
+        "Cast": 2,
+        "Concat": 48,
+        "Constant": 284,
+        "Div": 49,
+        "Erf": 12,
+        "Gather": 100,
+        "MatMul": 96,
+        "Mul": 50,
+        "Pow": 25,
+        "ReduceMean": 50,
+        "Reshape": 48,
+        "Shape": 97,
+        "Slice": 1,
+        "Softmax": 12,
+        "Sqrt": 25,
+        "Sub": 26,
+        "Transpose": 48,
+        "Unsqueeze": 99
+      },
+      "initializer_dtypes": {
+        "FLOAT16": 197,
+        "INT64": 1
+      },
+      "call": "convert_float_to_float16(onnx.load(model), keep_io_types=True)"
+    },
+    {
+      "variant": "int8-dynamic",
+      "file": "model-int8-dynamic.onnx",
+      "sha256": "8da4c9ba0ad59f58e8566839425d7fd6339d31414d0ce5cba2d7d0afb75dd8b6",
+      "bytes": 118101091,
+      "opset": [
+        {
+          "domain": "",
+          "version": 11
+        }
+      ],
+      "node_types": {
+        "Add": 172,
+        "Cast": 73,
+        "Concat": 48,
+        "Constant": 284,
+        "DequantizeLinear": 3,
+        "Div": 49,
+        "DynamicQuantizeLinear": 48,
+        "Erf": 12,
+        "Gather": 100,
+        "MatMul": 24,
+        "MatMulInteger": 72,
+        "Mul": 194,
+        "Pow": 25,
+        "ReduceMean": 50,
+        "Reshape": 48,
+        "Shape": 97,
+        "Slice": 1,
+        "Softmax": 12,
+        "Sqrt": 25,
+        "Sub": 26,
+        "Transpose": 48,
+        "Unsqueeze": 99
+      },
+      "initializer_dtypes": {
+        "FLOAT": 197,
+        "INT64": 1,
+        "INT8": 144,
+        "UINT8": 6
+      },
+      "call": "quantize_dynamic(model, out, weight_type=QuantType.QInt8, per_channel=False, reduce_range=False)"
+    },
+    {
+      "variant": "int8-dynamic-pc",
+      "file": "model-int8-dynamic-pc.onnx",
+      "sha256": "739c8f25bbe6d8a6001cd2f048701da9879140cc67d4e9327716111e869dd717",
+      "bytes": 118308811,
+      "opset": [
+        {
+          "domain": "",
+          "version": 11
+        }
+      ],
+      "node_types": {
+        "Add": 172,
+        "Cast": 73,
+        "Concat": 48,
+        "Constant": 284,
+        "DequantizeLinear": 3,
+        "Div": 49,
+        "DynamicQuantizeLinear": 48,
+        "Erf": 12,
+        "Gather": 100,
+        "MatMul": 24,
+        "MatMulInteger": 72,
+        "Mul": 194,
+        "Pow": 25,
+        "ReduceMean": 50,
+        "Reshape": 48,
+        "Shape": 97,
+        "Slice": 1,
+        "Softmax": 12,
+        "Sqrt": 25,
+        "Sub": 26,
+        "Transpose": 48,
+        "Unsqueeze": 99
+      },
+      "initializer_dtypes": {
+        "FLOAT": 197,
+        "INT64": 1,
+        "INT8": 144,
+        "UINT8": 6
+      },
+      "call": "quantize_dynamic(model, out, weight_type=QuantType.QInt8, per_channel=True, reduce_range=False)"
+    },
+    {
+      "variant": "int8-embed",
+      "file": "model-int8-embed.onnx",
+      "sha256": "374a3cc034a1dba112ecd1a9fba920be63f295cada3c65ab15a0a3a84739fb19",
+      "bytes": 181715582,
+      "opset": [
+        {
+          "domain": "",
+          "version": 11
+        }
+      ],
+      "node_types": {
+        "Add": 172,
+        "Cast": 1,
+        "Concat": 48,
+        "Constant": 284,
+        "DequantizeLinear": 3,
+        "Div": 49,
+        "Erf": 12,
+        "Gather": 100,
+        "MatMul": 96,
+        "Mul": 50,
+        "Pow": 25,
+        "ReduceMean": 50,
+        "Reshape": 48,
+        "Shape": 97,
+        "Slice": 1,
+        "Softmax": 12,
+        "Sqrt": 25,
+        "Sub": 26,
+        "Transpose": 48,
+        "Unsqueeze": 99
+      },
+      "initializer_dtypes": {
+        "FLOAT": 197,
+        "INT64": 1,
+        "UINT8": 6
+      },
+      "call": "quantize_dynamic(model, out, weight_type=QuantType.QInt8, op_types_to_quantize=['Gather'])"
+    }
+  ]
+}

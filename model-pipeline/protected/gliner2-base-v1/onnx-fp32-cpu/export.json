@@ -1,0 +1,613 @@
+{
+  "torch": "2.14.1+cpu",
+  "onnx": "1.23.1",
+  "environment": {
+    "python": "3.11.16",
+    "platform": "Linux-7.2.5-3-omarchy-x86_64-with-glibc2.44",
+    "machine": "x86_64",
+    "cpu": "Intel(R) Core(TM) i7-5820K CPU @ 3.30GHz",
+    "cpu_count": 12,
+    "packages": {
+      "torch": "2.14.1+cpu",
+      "onnx": "1.23.1",
+      "onnxscript": "0.7.2",
+      "onnx-ir": "1.0.0",
+      "onnxruntime": "1.30.0",
+      "transformers": "4.57.6",
+      "gliner2": "2.0.0"
+    }
+  },
+  "attempts": [
+    {
+      "route": "B",
+      "exporter": "legacy",
+      "path": "gliner2-B-legacy.onnx",
+      "opset": 18,
+      "seconds": 4.8,
+      "status": "exported",
+      "nodes": 4588,
+      "op_types": {
+        "Abs": 1,
+        "Add": 182,
+        "And": 1,
+        "Cast": 128,
+        "Ceil": 1,
+        "Clip": 13,
+        "Concat": 192,
+        "Constant": 1813,
+        "ConstantOfShape": 48,
+        "Div": 62,
+        "Equal": 36,
+        "Erf": 12,
+        "Expand": 48,
+        "Gather": 157,
+        "GatherElements": 24,
+        "Greater": 1,
+        "Identity": 24,
+        "If": 12,
+        "LayerNormalization": 26,
+        "Less": 1,
+        "LessOrEqual": 1,
+        "Log": 1,
+        "MatMul": 144,
+        "Mul": 88,
+        "Neg": 12,
+        "Not": 13,
+        "Range": 1,
+        "Reshape": 192,
+        "Shape": 374,
+        "Sign": 1,
+        "Slice": 183,
+        "Softmax": 12,
+        "Sqrt": 36,
+        "Squeeze": 184,
+        "Sub": 1,
+        "Tile": 24,
+        "Transpose": 120,
+        "Unsqueeze": 381,
+        "Where": 38
+      },
+      "files": [
+        {
+          "path": "gliner2-B-legacy.onnx",
+          "sha256": "f745d82d5ad875c06657e94949e5e4ce26e5d9c1b0759ea8f99025695081f5e5",
+          "size": 735961686
+        }
+      ],
+      "inputs": [
+        [
+          "input_ids",
+          [
+            "batch",
+            "sequence"
+          ]
+        ],
+        [
+          "attention_mask",
+          [
+            "batch",
+            "sequence"
+          ]
+        ]
+      ],
+      "outputs": [
+        [
+          "last_hidden_state",
+          [
+            "batch",
+            "sequence",
+            768
+          ]
+        ]
+      ],
+      "onnx_checker": "ok"
+    },
+    {
+      "route": "A",
+      "exporter": "dynamo",
+      "path": "gliner2-A-dynamo.onnx",
+      "opset": 18,
+      "seconds": 32.1,
+      "status": "exported",
+      "nodes": 1068,
+      "op_types": {
+        "Abs": 1,
+        "Add": 188,
+        "And": 1,
+        "Cast": 6,
+        "Ceil": 1,
+        "Clip": 2,
+        "Concat": 20,
+        "Div": 50,
+        "Einsum": 1,
+        "Erf": 12,
+        "Expand": 33,
+        "Gather": 10,
+        "GatherElements": 28,
+        "Gemm": 4,
+        "Greater": 1,
+        "LayerNormalization": 30,
+        "Less": 2,
+        "LessOrEqual": 1,
+        "Log": 1,
+        "MatMul": 166,
+        "Mul": 37,
+        "Neg": 1,
+        "Not": 1,
+        "Range": 2,
+        "Relu": 9,
+        "Reshape": 197,
+        "Shape": 7,
+        "Sigmoid": 2,
+        "Sign": 1,
+        "Slice": 7,
+        "Softmax": 14,
+        "Split": 2,
+        "Squeeze": 9,
+        "Sub": 2,
+        "Tanh": 1,
+        "Tile": 24,
+        "Transpose": 160,
+        "Unsqueeze": 18,
+        "Where": 16
+      },
+      "files": [
+        {
+          "path": "gliner2-A-dynamo.onnx",
+          "sha256": "2991ae526181efb72ef4b265d97f651d133a238122a7bb6f9ba120b9cbf53887",
+          "size": 3031379
+        },
+        {
+          "path": "gliner2-A-dynamo.onnx.data",
+          "sha256": "6fb5d8ca47ed44970d851b0de33fe870f62d631bcfded9c532668ae1a0e5a02d",
+          "size": 829129728
+        }
+      ],
+      "inputs": [
+        [
+          "input_ids",
+          [
+            "batch",
+            "sequence"
+          ]
+        ],
+        [
+          "attention_mask",
+          [
+            "batch",
+            "sequence"
+          ]
+        ],
+        [
+          "word_index",
+          [
+            "batch",
+            "words"
+          ]
+        ],
+        [
+          "schema_index",
+          [
+            "batch",
+            "schema_slots"
+          ]
+        ]
+      ],
+      "outputs": [
+        [
+          "count_logits",
+          [
+            "batch",
+            20
+          ]
+        ],
+        [
+          "span_logits",
+          [
+            "batch",
+            "schema_slots - 1",
+            "words",
+            8
+          ]
+        ],
+        [
+          "last_hidden_state",
+          [
+            "batch",
+            "sequence",
+            768
+          ]
+        ]
+      ],
+      "onnx_checker": "ok"
+    },
+    {
+      "route": "B",
+      "exporter": "dynamo",
+      "path": "gliner2-B-dynamo.onnx",
+      "opset": 18,
+      "seconds": 24.5,
+      "status": "exported",
+      "nodes": 877,
+      "op_types": {
+        "Abs": 1,
+        "Add": 159,
+        "And": 1,
+        "Cast": 6,
+        "Ceil": 1,
+        "Clip": 2,
+        "Concat": 8,
+        "Div": 50,
+        "Erf": 12,
+        "Expand": 26,
+        "Gather": 1,
+        "GatherElements": 24,
+        "Greater": 1,
+        "LayerNormalization": 26,
+        "Less": 1,
+        "LessOrEqual": 1,
+        "Log": 1,
+        "MatMul": 144,
+        "Mul": 29,
+        "Neg": 1,
+        "Not": 1,
+        "Range": 1,
+        "Reshape": 169,
+        "Shape": 2,
+        "Sign": 1,
+        "Softmax": 12,
+        "Squeeze": 5,
+        "Sub": 1,
+        "Tile": 24,
+        "Transpose": 144,
+        "Unsqueeze": 8,
+        "Where": 14
+      },
+      "files": [
+        {
+          "path": "gliner2-B-dynamo.onnx",
+          "sha256": "edc8d3d82d696a2804c9169758e77f5fce5ee2c842cb13b1ec0b2ca1e7871a93",
+          "size": 2567971
+        },
+        {
+          "path": "gliner2-B-dynamo.onnx.data",
+          "sha256": "a8235d6c3df28c0d2043e4928a726e81f123020ae23f5a63a69d9582127e8acc",
+          "size": 735085568
+        }
+      ],
+      "inputs": [
+        [
+          "input_ids",
+          [
+            "batch",
+            "sequence"
+          ]
+        ],
+        [
+          "attention_mask",
+          [
+            "batch",
+            "sequence"
+          ]
+        ]
+      ],
+      "outputs": [
+        [
+          "last_hidden_state",
+          [
+            "batch",
+            "sequence",
+            768
+          ]
+        ]
+      ],
+      "onnx_checker": "ok"
+    },
+    {
+      "route": "H",
+      "exporter": "dynamo",
+      "path": "gliner2-H-dynamo.onnx",
+      "opset": 18,
+      "seconds": 5.8,
+      "status": "exported",
+      "nodes": 188,
+      "op_types": {
+        "Add": 29,
+        "Concat": 13,
+        "Einsum": 1,
+        "Expand": 5,
+        "Gather": 9,
+        "GatherElements": 2,
+        "Gemm": 4,
+        "LayerNormalization": 4,
+        "Less": 1,
+        "MatMul": 22,
+        "Mul": 8,
+        "Range": 1,
+        "Relu": 9,
+        "Reshape": 28,
+        "Shape": 6,
+        "Sigmoid": 2,
+        "Slice": 7,
+        "Softmax": 2,
+        "Split": 2,
+        "Squeeze": 5,
+        "Sub": 1,
+        "Tanh": 1,
+        "Transpose": 16,
+        "Unsqueeze": 8,
+        "Where": 2
+      },
+      "files": [
+        {
+          "path": "gliner2-H-dynamo.onnx",
+          "sha256": "210f02661937bfc619f9389c83d53e48112f5b1c168d4154cdd4224086cf7ce9",
+          "size": 324619
+        },
+        {
+          "path": "gliner2-H-dynamo.onnx.data",
+          "sha256": "65b94e47af19da998f4f3299ff99a99602385bc9bacdf3ca0d21c2363b14c02e",
+          "size": 94109696
+        }
+      ],
+      "inputs": [
+        [
+          "words",
+          [
+            "batch",
+            "words",
+            768
+          ]
+        ],
+        [
+          "schema",
+          [
+            "batch",
+            "schema_slots",
+            768
+          ]
+        ]
+      ],
+      "outputs": [
+        [
+          "count_logits",
+          [
+            "batch",
+            20
+          ]
+        ],
+        [
+          "span_logits",
+          [
+            "batch",
+            "schema_slots - 1",
+            "words",
+            8
+          ]
+        ]
+      ],
+      "onnx_checker": "ok"
+    },
+    {
+      "route": "A",
+      "exporter": "legacy",
+      "path": "gliner2-A-legacy.onnx",
+      "opset": 18,
+      "explicit_attention": true,
+      "seconds": 5.3,
+      "status": "exported",
+      "nodes": 4996,
+      "op_types": {
+        "Abs": 1,
+        "Add": 216,
+        "And": 1,
+        "Cast": 136,
+        "Ceil": 1,
+        "Clip": 13,
+        "Concat": 209,
+        "Constant": 1943,
+        "ConstantOfShape": 55,
+        "Div": 70,
+        "Einsum": 1,
+        "Equal": 42,
+        "Erf": 12,
+        "Expand": 54,
+        "Gather": 172,
+        "GatherElements": 28,
+        "Gemm": 2,
+        "Greater": 1,
+        "Identity": 24,
+        "If": 12,
+        "LayerNormalization": 30,
+        "Less": 2,
+        "LessOrEqual": 1,
+        "Log": 1,
+        "MatMul": 168,
+        "Mul": 109,
+        "Neg": 12,
+        "Not": 13,
+        "Pow": 2,
+        "Range": 2,
+        "Relu": 9,
+        "Reshape": 209,
+        "Shape": 394,
+        "Sigmoid": 2,
+        "Sign": 1,
+        "Slice": 198,
+        "Softmax": 14,
+        "Sqrt": 36,
+        "Squeeze": 186,
+        "Sub": 2,
+        "Tanh": 1,
+        "Tile": 24,
+        "Transpose": 128,
+        "Unsqueeze": 413,
+        "Where": 46
+      },
+      "files": [
+        {
+          "path": "gliner2-A-legacy.onnx",
+          "sha256": "20ed2e2e3ed6094d599a18139ac3d6a019a8fe5628882b6b5ef271f3b8a3c804",
+          "size": 830078423
+        }
+      ],
+      "inputs": [
+        [
+          "input_ids",
+          [
+            "batch",
+            "sequence"
+          ]
+        ],
+        [
+          "attention_mask",
+          [
+            "batch",
+            "sequence"
+          ]
+        ],
+        [
+          "word_index",
+          [
+            "batch",
+            "words"
+          ]
+        ],
+        [
+          "schema_index",
+          [
+            "batch",
+            "schema_slots"
+          ]
+        ]
+      ],
+      "outputs": [
+        [
+          "count_logits",
+          [
+            "batch",
+            20
+          ]
+        ],
+        [
+          "span_logits",
+          [
+            "batch",
+            "labels",
+            "words",
+            8
+          ]
+        ],
+        [
+          "last_hidden_state",
+          [
+            "batch",
+            "sequence",
+            768
+          ]
+        ]
+      ],
+      "onnx_checker": "ok"
+    },
+    {
+      "route": "H",
+      "exporter": "legacy",
+      "path": "gliner2-H-legacy.onnx",
+      "opset": 18,
+      "explicit_attention": true,
+      "seconds": 0.5,
+      "status": "exported",
+      "nodes": 373,
+      "op_types": {
+        "Add": 34,
+        "Cast": 8,
+        "Concat": 15,
+        "Constant": 119,
+        "ConstantOfShape": 5,
+        "Div": 8,
+        "Einsum": 1,
+        "Equal": 4,
+        "Expand": 4,
+        "Gather": 14,
+        "GatherElements": 2,
+        "Gemm": 2,
+        "LayerNormalization": 4,
+        "Less": 1,
+        "MatMul": 24,
+        "Mul": 19,
+        "Pow": 2,
+        "Range": 1,
+        "Relu": 9,
+        "Reshape": 15,
+        "Shape": 17,
+        "Sigmoid": 2,
+        "Slice": 15,
+        "Softmax": 2,
+        "Squeeze": 2,
+        "Sub": 1,
+        "Tanh": 1,
+        "Transpose": 8,
+        "Unsqueeze": 28,
+        "Where": 6
+      },
+      "files": [
+        {
+          "path": "gliner2-H-legacy.onnx",
+          "sha256": "4052a79cdb9c66d2768c6a5bdfc86a304bba319972fdd5b5f43347cdf0c0a0ab",
+          "size": 94104142
+        }
+      ],
+      "inputs": [
+        [
+          "words",
+          [
+            "batch",
+            "words",
+            768
+          ]
+        ],
+        [
+          "schema",
+          [
+            "batch",
+            "schema_slots",
+            768
+          ]
+        ]
+      ],
+      "outputs": [
+        [
+          "count_logits",
+          [
+            "batch",
+            20
+          ]
+        ],
+        [
+          "span_logits",
+          [
+            "batch",
+            "labels",
+            "words",
+            8
+          ]
+        ]
+      ],
+      "onnx_checker": "ok"
+    }
+  ],
+  "failures_before_repair": [
+    {
+      "route": "A,H",
+      "exporter": "legacy",
+      "repair": null,
+      "error": "UnsupportedOperatorError: Exporting the operator 'aten::_transformer_encoder_layer_fwd' to ONNX opset version 18 is not supported"
+    },
+    {
+      "route": "A,H",
+      "exporter": "legacy",
+      "repair": "1 (MHA fast path disabled)",
+      "error": "ORT Reshape '/heads/transformer/transformer/layers.0/self_attn/Reshape_4': input {5,1,128}, requested {3,4,32} (label count of the trace baked into nn.MultiheadAttention reshapes)"
+    }
+  ]
+}

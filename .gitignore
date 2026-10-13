@@ -1,0 +1,38 @@
+# .NET
+bin/
+obj/
+artifacts/
+*.user
+*.suo
+.vs/
+TestResults/
+BenchmarkDotNet.Artifacts/
+*.nupkg
+*.snupkg
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# Model weights and large assets never go in Git (plan section 9).
+# Acquire them with the pipeline's acquisition command into .models/.
+.models/
+*.onnx
+*.onnx.data
+*.safetensors
+*.gguf
+*.bin
+*.pt
+*.pth
+*.ckpt
+*.h5
+
+# Editors and OS
+.idea/
+.vscode/
+.DS_Store
