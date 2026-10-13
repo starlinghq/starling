@@ -527,6 +527,17 @@ EmbeddingGemma 2 video tests need the same snapshot, the fixture videos in `STAR
 
 On the M0 workstation the tests pass both with the system CUDA 13.3 runtime (`/opt/cuda`, no cuDNN installed) and with the CUDA 13.0 and cuDNN 9.24 wheels on `LD_LIBRARY_PATH`. The e5 graph has no operator that needed cuDNN in these runs; that is an observation, not a requirement change.
 
+## Operational qualification (gate G4)
+
+`tools/Starlings.Soak.Tool` is the plan 10.2 soak for every model profile: repeated requests from concurrent callers, load/unload cycles, timed-out (deadline) requests with their cancellation latency, a state-leakage check of every request against the first cycle's output, and memory sampling (managed heap, working set, private bytes, `RssAnon`/`RssFile` on Linux, this process's GPU memory from `nvidia-smi`). It reports the post-warmup plateau and growth slope of the settled per-cycle series and fails (exit 1) on reproducible growth, a wrong output or an unexpected error. The default duration is one hour (the qualification run); `--duration 5m` is a short development or CI run and the report says so.
+
+```sh
+STARLING_MODELS=<cache> dotnet run --project ai-dotnet/tools/Starlings.Soak.Tool -c Release [-p:UseCuda=true] -- \
+  <e5|gliner2|embeddinggemma2|embeddinggemma2-image|qwen35|all> --out <dir> [--duration 1h] [--cuda] [--concurrency 2] [--threads n]
+```
+
+Each model test project has an `OperationalTests` class (failed initialization, malformed lock and snapshot, unsupported provider, queue saturation, timed-out requests with cancellation latency, disposal during in-flight work) next to the existing cancellation, concurrency and memory tests; `docs/evidence/g4-soak/README.md` maps each plan 10.2 item to its tests and holds the soak reports.
+
 ## Benchmarks (P-008)
 
 `benchmarks/`: BenchmarkDotNet micro-benchmarks, the realistic e5 workload harness (CPU in `AI.slnx`; CUDA builds local only), the shared workload file and `run-e5-matched.sh`, which runs the matched C#-versus-Python comparison on the same ONNX Runtime version, model file and thread settings. Raw results use `starlings-bench-raw/1` and are summarized by `model-pipeline bench summarize`. CI builds the projects and never runs them. See `benchmarks/README.md`; the first results are in `docs/benchmarks/e5-2026-10-09.md`.

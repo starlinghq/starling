@@ -46,5 +46,6 @@
     <Project Path="tools/Starlings.Acquisition.Tool/Starlings.Acquisition.Tool.csproj" />
     <Project Path="tools/Starlings.Fidelity.Tool/Starlings.Fidelity.Tool.csproj" />
     <Project Path="tools/Starlings.Qwen35.Fidelity/Starlings.Qwen35.Fidelity.csproj" />
+    <Project Path="tools/Starlings.Soak.Tool/Starlings.Soak.Tool.csproj" />
   </Folder>
 </Solution>

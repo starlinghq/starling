@@ -15,6 +15,7 @@
   <ItemGroup>
     <Compile Include="../Shared/Gliner2/*.cs" Link="Shared/Gliner2/%(Filename)%(Extension)" />
     <Compile Include="../Shared/TestModels/*.cs" Link="Shared/TestModels/%(Filename)%(Extension)" />
+    <Compile Include="../Shared/Operational/*.cs" Link="Shared/Operational/%(Filename)%(Extension)" />
     <None Include="Data/*.json" CopyToOutputDirectory="PreserveNewest" LinkBase="Data" />
   </ItemGroup>
 
