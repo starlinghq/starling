@@ -3,7 +3,7 @@
   <PropertyGroup>
     <IsPackable>true</IsPackable>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <Description>Preview. Experimental. Decodes video files and streams into Starlings.Models.EmbeddingGemma2 videos the way upstream does (torchcodec 0.17 on FFmpeg): torchcodec's packet-scan metadata, upstream's 1 frame per second sampling (at most 32 frames), the display matrix applied, and FFmpeg's default RGB conversion (swscale or filter graph, as torchcodec calls them), so the decoded RGB equals torchcodec's bit for bit on the same FFmpeg major (tested on 22 fixture videos with FFmpeg 8.1, x86-64). Ships NO FFmpeg binaries: it loads the user's own FFmpeg 8.x shared libraries at run time through FFmpeg.AutoGen (MIT bindings); an LGPL build is expected and GPL or nonfree builds are rejected unless explicitly allowed. Codec licensing (H.264 and HEVC patent pools; VP9 and AV1 offered royalty-free) is the deployer's responsibility; see the README.</Description>
+    <Description>Preview. Experimental. Decodes video files and streams into Starlings.Models.EmbeddingGemma2 videos the way upstream does (torchcodec 0.17 on FFmpeg): torchcodec's packet-scan metadata, upstream's 1 frame per second sampling (at most 32 frames), the display matrix applied, and FFmpeg's default RGB conversion (swscale or filter graph, as torchcodec calls them), so the decoded RGB equals torchcodec's bit for bit on the same FFmpeg major (tested on 22 fixture videos with FFmpeg 8.1, x86-64). Ships NO FFmpeg binaries: it loads the user's own FFmpeg 8.x shared libraries at run time through its own bindings, generated from the FFmpeg 8.1 headers; an LGPL build is expected and GPL or nonfree builds are rejected unless explicitly allowed. Codec licensing (H.264 and HEVC patent pools; VP9 and AV1 offered royalty-free) is the deployer's responsibility; see the README.</Description>
     <PackageTags>embeddings;embeddinggemma;embeddinggemma-2;video-embeddings;ffmpeg;video-decoding</PackageTags>
     <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
@@ -11,11 +11,6 @@
   <ItemGroup>
     <None Include="README.md" Pack="true" PackagePath="" />
     <None Include="../../THIRD-PARTY-NOTICES.md" Pack="true" PackagePath="" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <!-- FFmpeg.AutoGen is referenced only by this adapter package (CI dependency-boundary check). Managed bindings only. -->
-    <PackageReference Include="FFmpeg.AutoGen" />
   </ItemGroup>
 
   <ItemGroup>

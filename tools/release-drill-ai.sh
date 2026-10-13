@@ -11,7 +11,7 @@
 #      Models.EmbeddingGemma2.Imaging.SkiaSharp, Models.EmbeddingGemma2.Video.FFmpeg,
 #      Models.Qwen35.Extensions.AI), locked restore, empty private NuGet cache,
 #   2. inspects every nuspec (version, MIT OR Apache-2.0, readme, repository commit, exact dependency list: no native ONNX Runtime or
-#      ONNX Runtime GenAI, no Microsoft.ML.Tokenizers; FFmpeg.AutoGen only in the video adapter), the packed files (no
+#      ONNX Runtime GenAI, no Microsoft.ML.Tokenizers, no FFmpeg bindings package), the packed files (no
 #      model assets, no FFmpeg library) and the symbol packages
 #      (SourceLink to the commit),
 #   3. pushes them to a local folder feed only (never nuget.org),
@@ -88,7 +88,6 @@ eg2_commit="914f7f89142e33e77833254d9c9b90c3cef7303b"
 eg2_graph="onnx/embeddinggemma2-text-fp32.onnx"
 eg2_image_graphs=(onnx/embeddinggemma2-vision-fp32.onnx onnx/embeddinggemma2-text-mm-fp32.onnx)
 skia_version="4.153.1"
-ffmpeg_autogen_version="8.1.0"
 manifest_rel="model-pipeline/registry/multilingual-e5-small/onnx-fp32-cpu/manifest.yaml"
 ort_version="1.30.0"
 genai_version="0.17.1"
@@ -267,8 +266,7 @@ expect_deps() {
             echo "SkiaSharp [$skia_version]"
             echo "SkiaSharp.NativeAssets.Linux.NoDependencies [$skia_version]" ;;
         Starlings.Models.EmbeddingGemma2.Video.FFmpeg)
-            echo "Starlings.Models.EmbeddingGemma2 [$ai_version]"
-            echo "FFmpeg.AutoGen [$ffmpeg_autogen_version]" ;;
+            echo "Starlings.Models.EmbeddingGemma2 [$ai_version]" ;;
         Starlings.Generation.OnnxGenAI)
             echo "Starlings.Tokenizers [$tok_version]"
             echo "Microsoft.ML.OnnxRuntimeGenAI.Managed [$genai_version]" ;;
@@ -390,11 +388,11 @@ for path in sys.argv[3:]:
     app = path.split("/")[-3]
     skia = [n for n in names if n.lower().startswith("skiasharp")]
     assert not skia or app == "EmbeddingGemma2Search", f"SkiaSharp restored outside the image sample: {skia}"
-    # FFmpeg: bindings only (FFmpeg.AutoGen, MIT) and only for the video sample; never Sdcb.FFmpeg or FFmpeg binaries.
+    # FFmpeg: the video adapter carries its own generated bindings; no FFmpeg bindings package and never FFmpeg binaries.
     bundled = [n for n in names if re.search(r"sdcb\.ffmpeg|ffmpeg\.(native|runtime|redist)|ffmpeg\.autogen\.(redist|runtime)|ffmpegcore\.binaries|xabe\.ffmpeg\.downloader", n, re.I)]
     assert not bundled, f"FFmpeg binaries or Sdcb.FFmpeg restored: {bundled}"
-    autogen = [n for n in names if n.lower().startswith("ffmpeg.autogen/")]
-    assert autogen == ([f"FFmpeg.AutoGen/8.1.0"] if app == "EmbeddingGemma2Search" else []), f"FFmpeg.AutoGen restored as {autogen} in {app}"
+    bindings = [n for n in names if re.match(r"(ffmpeg\.autogen|ffmpegcore|sdcb\.ffmpeg)/", n, re.I)]
+    assert not bindings, f"FFmpeg bindings package restored in {app}: {bindings}"
     if app == "QwenChat":
         # The pilot LLM: GenAI CPU natives (which bring ONNX Runtime CPU); no Runtime.Onnx, e5 or GLiNER2 packages.
         common = ["Starlings.Tokenizers", "Starlings.Acquisition", "Microsoft.ML.OnnxRuntime",
@@ -414,7 +412,7 @@ for path in sys.argv[3:]:
                   else ["Starlings.Models.EmbeddingGemma2", "Starlings.Models.EmbeddingGemma2.Extensions.AI",
                         "Microsoft.Extensions.AI.Abstractions", "Starlings.Models.EmbeddingGemma2.Imaging.SkiaSharp",
                         "SkiaSharp", "SkiaSharp.NativeAssets.Linux.NoDependencies",
-                        "Starlings.Models.EmbeddingGemma2.Video.FFmpeg", "FFmpeg.AutoGen"] if app == "EmbeddingGemma2Search"
+                        "Starlings.Models.EmbeddingGemma2.Video.FFmpeg"] if app == "EmbeddingGemma2Search"
                   else ["Starlings.Models.E5", "Starlings.Models.E5.Extensions.AI"])
     if app == "AiConsumer":
         # The checker also consumes the ML.NET adapter: Microsoft.ML must come without any tokenizer package.
@@ -452,7 +450,7 @@ if find "$NUGET_PACKAGES" "$apps" -regextype posix-extended -iregex '.*/(lib)?(a
     find "$NUGET_PACKAGES" "$apps" -regextype posix-extended -iregex '.*/(lib)?(avcodec|avformat|avutil|avfilter|avdevice|swscale|swresample|postproc)([-.][0-9]+)*\.(so|dll|dylib)(\.[0-9]+)*'
     fail "an FFmpeg library is in the consumer package cache or a build output (FFmpeg must be user-supplied)"
 fi
-echo "ok:   no FFmpeg library in the consumer package cache or any build output (the video adapter binds FFmpeg.AutoGen only)"
+echo "ok:   no FFmpeg library in the consumer package cache or any build output (the video adapter loads the user's FFmpeg through its own bindings)"
 
 sample=(dotnet "$apps/E5Search/bin/Release/net10.0/E5Search.dll")
 gliner2_sample=(dotnet "$apps/Gliner2Ner/bin/Release/net10.0/Gliner2Ner.dll")

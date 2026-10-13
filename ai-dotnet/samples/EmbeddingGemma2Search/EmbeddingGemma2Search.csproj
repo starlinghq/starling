@@ -20,7 +20,7 @@
     <PackageReference Include="Starlings.Models.EmbeddingGemma2.Extensions.AI" Version="$(StarlingsVersion)" />
     <!-- Decodes image files for the text-to-image search (brings SkiaSharp and its Linux natives). -->
     <PackageReference Include="Starlings.Models.EmbeddingGemma2.Imaging.SkiaSharp" Version="$(StarlingsVersion)" />
-    <!-- Decodes video files for the text-to-video search on the user's own FFmpeg 8.x shared libraries (brings FFmpeg.AutoGen, MIT bindings; no FFmpeg binaries). -->
+    <!-- Decodes video files for the text-to-video search on the user's own FFmpeg 8.x shared libraries (the adapter carries its own generated bindings; no FFmpeg binaries). -->
     <PackageReference Include="Starlings.Models.EmbeddingGemma2.Video.FFmpeg" Version="$(StarlingsVersion)" />
     <!-- The application picks the ONNX Runtime natives (CPU here; Microsoft.ML.OnnxRuntime.Gpu.Linux for CUDA). -->
     <PackageReference Include="Microsoft.ML.OnnxRuntime" Version="1.30.0" />
