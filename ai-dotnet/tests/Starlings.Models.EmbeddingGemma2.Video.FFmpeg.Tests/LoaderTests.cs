@@ -1,6 +1,9 @@
 using Starlings.TestSupport;
-
+#if STARLINGS_FFMPEG9
+namespace Starlings.Models.EmbeddingGemma2.Video.FFmpeg9.Tests;
+#else
 namespace Starlings.Models.EmbeddingGemma2.Video.FFmpeg.Tests;
+#endif
 
 /// <summary>The library loader's typed errors and rules that need no FFmpeg (CI), and what the machine's FFmpeg is (reported).</summary>
 public sealed class LoaderTests(ITestOutputHelper output)
@@ -57,18 +60,20 @@ public sealed class LoaderTests(ITestOutputHelper output)
     }
 
     /// <summary>
-    /// Report (not gated): an FFmpeg 9 installation (libavcodec.so.63) is not loadable by this adapter version; the error
-    /// names the other major. The torchcodec-on-FFmpeg-9 comparison of the spike (22 of 22 equal) is evidence only.
+    /// The not-found error names the bound library (FFmpeg 8: libavcodec.so.62; FFmpeg 9: libavcodec.so.63) and every other
+    /// major it finds in the directory, so a user with the other FFmpeg major learns which adapter package to use.
     /// </summary>
     [Fact]
     public void AnotherFFmpegMajorIsNamedInTheError()
     {
-        string message = EmbeddingGemma2FFmpeg.NotFoundMessage("/usr/lib", "avcodec", 62);
+        int bound = FFmpegNative.AVCODEC_MAJOR;
+        Assert.Equal(EmbeddingGemma2FFmpeg.SupportedFFmpegMajor == 8 ? 62 : 63, bound);
+        string message = EmbeddingGemma2FFmpeg.NotFoundMessage("/usr/lib", "avcodec", bound);
         output.WriteLine(message);
-        Assert.Contains("libavcodec.so.62", message, StringComparison.Ordinal);
-        if (File.Exists("/usr/lib/libavcodec.so.63"))
+        Assert.Contains($"libavcodec.so.{bound}", message, StringComparison.Ordinal);
+        foreach (int other in Enumerable.Range(62, 2).Where(m => m != bound && File.Exists($"/usr/lib/libavcodec.so.{m}")))
         {
-            Assert.Contains("libavcodec.so.63", message, StringComparison.Ordinal);
+            Assert.Contains($"libavcodec.so.{other}", message, StringComparison.Ordinal);
         }
     }
 }

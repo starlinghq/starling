@@ -54,7 +54,20 @@ Weight-free checks in CI: the sampling subset, the rendered ids of all 36 rows (
 | Decoded RGB of **every** frame, 22 videos (5,367 frames; H.264 High and High 10, HEVC, VP9, AV1; BT.601, BT.709, full range, untagged; rotation 90; odd 321x179) | exact | exact |
 | Seekable stream and in-memory input vs file | identical metadata and frames | |
 | Loaded FFmpeg | `n8.1.3-17-gc389840894`, libavcodec 62.28.103, all five libraries "LGPL version 3 or later" | `supported_ffmpeg_major: 8` |
-| System FFmpeg 9.0.1 (`/usr/lib`, libavcodec.so.63) | not loadable by this adapter version; the typed error names `libavcodec.so.63` (reported, not gated; the spike's torchcodec-on-FFmpeg-9 comparison was 22/22 equal) | |
+| System FFmpeg 9.0.1 (`/usr/lib`, libavcodec.so.63) | not loadable by this adapter; the typed error names `libavcodec.so.63`. Since 2026-10-13 the separate FFmpeg 9 adapter covers it (below) | |
+
+### FFmpeg 9 adapter (R7 W4, 2026-10-13)
+
+`Starlings.Models.EmbeddingGemma2.Video.FFmpeg9`: the adapter code above, shared as source, with bindings generated from the FFmpeg 9.0.1 headers (commit `bf1b838f2ab88b4f8fd83443325c782ea0e0f7fa`). CPU, x86-64, the machine's FFmpeg n9.0.1 (libavcodec 63.1.101; a GPL distribution build, loaded with `AllowNonLgplBuild`).
+
+| Check | Result | Bound |
+| --- | --- | --- |
+| torchcodec 0.17.0 on FFmpeg 9.0.1 vs the protected digests (torchcodec on FFmpeg 8.1), every frame of the 22 videos (`torchcodec_eg2_frames.py`) | 5,367 of 5,367 equal; metadata and sampled indices equal | (the reference of the FFmpeg 9 gate) |
+| FFmpeg 9 adapter: metadata and sampled indices, 22 videos | equal to torchcodec | |
+| FFmpeg 9 adapter: decoded RGB of the sampled frames (176) and of every frame (5,367) | exact | `decoder_ffmpeg9.decoded_rgb_vs_torchcodec: exact`, proposed (`model-pipeline/proposed/embeddinggemma-2/decoder-ffmpeg9/`) |
+| FFmpeg 9 adapter: streams and memory vs file; GPL build refused without the opt-in | pass | |
+
+The `decoder_ffmpeg9` tolerance section is the maintainer's to commit; until then the evaluator adds no FFmpeg 9 check and the manifests' G1 does not cover the FFmpeg 9 adapter. No LGPL FFmpeg 9 build was tested.
 
 ## Staged evaluator
 

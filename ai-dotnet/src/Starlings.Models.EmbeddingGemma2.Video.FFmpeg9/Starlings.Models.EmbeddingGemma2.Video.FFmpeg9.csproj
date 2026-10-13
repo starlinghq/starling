@@ -1,0 +1,36 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    The FFmpeg 9 video adapter (decision D3, docs/plan/embeddinggemma2-follow-up.md): a separate package per FFmpeg major,
+    each with its own bindings and its own exactness gate. The adapter code is shared with the FFmpeg 8 package
+    (../Shared/EmbeddingGemma2.Video.FFmpeg, compiled here with STARLINGS_FFMPEG9 for the namespace, the bound major and the
+    library-directory variable); FFmpegNative.g.cs is generated from the FFmpeg 9.0.1 headers
+    (tools/generate-ffmpeg-bindings.py with major 9). Held from publishing until the D2 legal review, like the FFmpeg 8 package.
+  -->
+  <PropertyGroup>
+    <IsPackable>true</IsPackable>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <DefineConstants>$(DefineConstants);STARLINGS_FFMPEG9</DefineConstants>
+    <Description>Preview. Experimental. The FFmpeg 9 counterpart of Starlings.Models.EmbeddingGemma2.Video.FFmpeg: decodes video files and streams into Starlings.Models.EmbeddingGemma2 videos the way upstream does (torchcodec 0.17 on FFmpeg): torchcodec's packet-scan metadata, upstream's 1 frame per second sampling (at most 32 frames), the display matrix applied, and FFmpeg's default RGB conversion, so the decoded RGB equals torchcodec's bit for bit on the same FFmpeg major (tested on 22 fixture videos with FFmpeg 9.0.1, x86-64). Ships NO FFmpeg binaries: it loads the user's own FFmpeg 9.x shared libraries at run time through its own bindings, generated from the FFmpeg 9.0.1 headers; an LGPL build is expected and GPL or nonfree builds are rejected unless explicitly allowed. Codec licensing (H.264 and HEVC patent pools; VP9 and AV1 offered royalty-free) is the deployer's responsibility; see the README.</Description>
+    <PackageTags>embeddings;embeddinggemma;embeddinggemma-2;video-embeddings;ffmpeg;video-decoding</PackageTags>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="" />
+    <None Include="../../THIRD-PARTY-NOTICES.md" Pack="true" PackagePath="" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="../Shared/EmbeddingGemma2.Video.FFmpeg/*.cs" Link="Shared/%(Filename)%(Extension)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../Starlings.Models.EmbeddingGemma2/Starlings.Models.EmbeddingGemma2.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Starlings.Models.EmbeddingGemma2.Video.FFmpeg9.Tests" />
+  </ItemGroup>
+
+</Project>

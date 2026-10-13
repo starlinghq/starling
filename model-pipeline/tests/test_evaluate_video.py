@@ -172,10 +172,14 @@ class Repo:
             task="video-embedding",
         )
 
-    def stage1(self, edit=None, drop: str | None = None, include_excluded=False, ffmpeg_major=8) -> None:
+    def stage1(
+        self, edit=None, drop: str | None = None, include_excluded=False, ffmpeg_major=8, extra_majors=()
+    ) -> None:
         env = {"ffmpeg_version": f"n{ffmpeg_major}.1.3", "ffmpeg_major": ffmpeg_major}
         if ffmpeg_major is None:
             env = {}
+        if extra_majors:
+            env["decoders"] = [{"ffmpeg_major": m, "ffmpeg_version": f"n{m}.0.1"} for m in extra_majors]
         data = self._base("tokenizer", ["tokenizer.json"], env)
         for row in ROWS:
             if row["id"] == drop or (row["id"] == "vid-array-no-metadata" and not include_excluded):
@@ -184,6 +188,8 @@ class Repo:
             for k, v in enumerate(row["videos"]):
                 outs[f"video{k}_frame_indices"] = list(v["sampled_indices"])
                 outs[f"video{k}_frame_sha256"] = list(v["frame_sha256"])
+                for m in extra_majors:
+                    outs[f"video{k}_frame_sha256_ffmpeg{m}"] = list(v["frame_sha256"])
                 outs[f"video{k}_frames_sha256"] = v["digests"]["frames_uint8"]
                 outs[f"video{k}_resized_sha256"] = v["digests"]["resized_uint8"]
                 outs[f"video{k}_pixel_values_sha256"] = v["digests"]["pixel_values"]
@@ -347,6 +353,72 @@ def test_a_missing_ffmpeg_major_is_not_run(repo):
     assert c["status"] == "not-run" and "ffmpeg_major" in c["detail"]
 
 
+TOLERANCES_FFMPEG9 = {
+    **TOLERANCES,
+    "decoder_ffmpeg9": {"decoded_rgb_vs_torchcodec": "exact", "supported_ffmpeg_major": 9},
+}
+
+
+@pytest.fixture
+def repo9(tmp_path):
+    return Repo(tmp_path / "repo9", TOLERANCES_FFMPEG9)
+
+
+def test_without_the_ffmpeg9_section_no_ffmpeg9_check_is_added(repo):
+    repo.stage1(extra_majors=(9,))
+    repo.stage3()
+    ev = repo.run(require_gates=("G1", "G2"))
+    assert ev.exit_code == evaluate.EXIT_OK
+    assert not [c for c in ev.report["checks"] if "ffmpeg9" in c["id"]]
+
+
+def test_both_decoder_profiles_pass_from_one_evaluation(repo9):
+    repo9.stage1(extra_majors=(9,))
+    repo9.stage3()
+    ev = repo9.run(require_gates=("G1", "G2"))
+    assert ev.exit_code == evaluate.EXIT_OK, [
+        c for c in ev.report["checks"] if c["status"] not in ("passed", "not-applicable")
+    ]
+    c8, c9 = check(ev, "tokenizer.decoder_frame_sha256"), check(ev, "tokenizer.decoder_ffmpeg9_frame_sha256")
+    assert (c8["status"], c8["metrics"]["ffmpeg_major"], c8["metrics"]["videos"]) == ("passed", 8, 2)
+    assert (c9["status"], c9["metrics"]["ffmpeg_major"], c9["metrics"]["videos"]) == ("passed", 9, 2)
+    assert c9["tolerance_key"] == "decoder_ffmpeg9.decoded_rgb_vs_torchcodec"
+    assert not [c for c in ev.report["checks"] if c["id"].endswith("unknown_tolerance_keys")]
+
+
+def test_the_ffmpeg9_profile_without_ffmpeg9_results_is_not_run_and_g1_cannot_pass(repo9):
+    repo9.stage1()
+    repo9.stage3()
+    ev = repo9.run(require_gates=("G1",))
+    c = check(ev, "tokenizer.decoder_ffmpeg9_frame_sha256")
+    assert c["status"] == "not-run" and "not the gated major 9" in c["detail"]
+    assert check(ev, "tokenizer.decoder_frame_sha256")["status"] == "passed"
+    assert ev.report["gates"]["G1"]["status"] == "not-run"
+    assert ev.exit_code == evaluate.EXIT_GATE_NOT_PASSED
+
+
+def test_ffmpeg9_frames_that_differ_fail(repo9):
+    def edit(row_id, outs):
+        if "video0_frame_sha256_ffmpeg9" in outs and row_id == ROWS[0]["id"]:
+            outs["video0_frame_sha256_ffmpeg9"] = [digest("other")] * len(outs["video0_frame_sha256_ffmpeg9"])
+
+    repo9.stage1(edit, extra_majors=(9,))
+    repo9.stage3()
+    ev = repo9.run()
+    c = check(ev, "tokenizer.decoder_ffmpeg9_frame_sha256")
+    assert c["status"] == "failed" and f"{ROWS[0]['id']}/video0" in c["detail"]
+    assert check(ev, "tokenizer.decoder_frame_sha256")["status"] == "passed"
+
+
+def test_the_main_decoder_can_be_ffmpeg9_with_ffmpeg8_as_the_extra_one(repo9):
+    repo9.stage1(ffmpeg_major=9, extra_majors=(8,))
+    repo9.stage3()
+    ev = repo9.run(require_gates=("G1",))
+    assert check(ev, "tokenizer.decoder_frame_sha256")["metrics"]["ffmpeg_major"] == 8
+    assert check(ev, "tokenizer.decoder_ffmpeg9_frame_sha256")["metrics"]["ffmpeg_major"] == 9
+    assert ev.report["gates"]["G1"]["status"] == "passed"
+
+
 def test_embedding_soft_token_and_batch_bounds(repo):
     repo.stage1()
     repo.stage3(noise=2e-5, soft_noise=0.1, batch_noise=5e-5)
@@ -435,4 +507,9 @@ def test_expected_keys_match_the_binding_tolerances_layout():
     from model_pipeline.evaluate import expected_tolerance_keys, flatten
 
     keys = set(expected_tolerance_keys("video-embedding"))
-    assert keys == set(flatten(TOLERANCES))
+    # The FFmpeg 9 decoder section is optional: checked when the protected tolerances carry it.
+    assert keys == set(flatten(TOLERANCES_FFMPEG9))
+    assert keys - set(flatten(TOLERANCES)) == {
+        "decoder_ffmpeg9.decoded_rgb_vs_torchcodec",
+        "decoder_ffmpeg9.supported_ffmpeg_major",
+    }

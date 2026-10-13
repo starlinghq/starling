@@ -13,7 +13,13 @@
 //
 //   dotnet run --project ai-dotnet/tools/Starlings.Fidelity.Tool -c Release -- embeddinggemma2-videos --out <dir>
 //       --videos <dir> [--ffmpeg <FFmpeg 8 lib dir>] [--snapshot <dir>] [--fixtures <dir>] [--profile <id>] [--threads <n>]
-//       [--device cpu|cuda[:N]]
+//       [--device cpu|cuda[:N]] [--ffmpeg9 <FFmpeg 9 lib dir>] [--ffmpeg-allow-non-lgpl]
+//
+// --ffmpeg9 also decodes every video input with the FFmpeg 9 adapter (Starlings.Models.EmbeddingGemma2.Video.FFmpeg9) and
+// writes its sampled frames' SHA-256 as video<k>_frame_sha256_ffmpeg9, with the FFmpeg 9 libraries in the tokenizer stage's
+// environment.decoders, so one evaluation holds both decoder profiles (decoder_ffmpeg, decoder_ffmpeg9). Everything else
+// (rendering, preprocessing, embeddings) uses the FFmpeg 8 adapter's frames. --ffmpeg-allow-non-lgpl accepts GPL builds
+// (AllowNonLgplBuild; decoding is identical), for example a distribution's FFmpeg 9.
 //
 // --device cuda needs the CUDA build (ai-dotnet/tools/Starlings.Fidelity.Tool.Cuda) and defaults the profile to
 // embeddinggemma-2/video-fp32-cuda (same fixtures, rows and batch layouts). Single rows run in vision calls of 8 frames on
@@ -27,6 +33,7 @@ using Starlings.Acquisition;
 using Starlings.Models.EmbeddingGemma2;
 using Starlings.Models.EmbeddingGemma2.Video.FFmpeg;
 using Starlings.Runtime.Onnx;
+using FFmpeg9 = Starlings.Models.EmbeddingGemma2.Video.FFmpeg9;
 
 internal static class EmbeddingGemma2VideoDump
 {
@@ -38,6 +45,8 @@ internal static class EmbeddingGemma2VideoDump
         string? snapshot = Environment.GetEnvironmentVariable("STARLING_EMBEDDINGGEMMA2_SNAPSHOT");
         string? videosDir = Environment.GetEnvironmentVariable("STARLING_EMBEDDINGGEMMA2_VIDEOS");
         string? ffmpegDir = null;
+        string? ffmpeg9Dir = null;
+        bool allowNonLgpl = false;
         string? fixturesDir = null;
         string? profile = null;
         int? threads = null;
@@ -57,6 +66,12 @@ internal static class EmbeddingGemma2VideoDump
                     break;
                 case "--ffmpeg" when i + 1 < args.Length:
                     ffmpegDir = args[++i];
+                    break;
+                case "--ffmpeg9" when i + 1 < args.Length:
+                    ffmpeg9Dir = args[++i];
+                    break;
+                case "--ffmpeg-allow-non-lgpl":
+                    allowNonLgpl = true;
                     break;
                 case "--fixtures" when i + 1 < args.Length:
                     fixturesDir = args[++i];
@@ -102,12 +117,17 @@ internal static class EmbeddingGemma2VideoDump
 
         EmbeddingGemma2ImageModelFiles files;
         EmbeddingGemma2VideoDecoder decoder;
+        FFmpeg9.EmbeddingGemma2VideoDecoder? decoder9 = null;
         try
         {
             files = string.IsNullOrEmpty(snapshot) ? EmbeddingGemma2ModelAssets.OpenLocalImageAssets() : EmbeddingGemma2ModelAssets.OpenImageDirectory(snapshot);
-            decoder = new EmbeddingGemma2VideoDecoder(new EmbeddingGemma2FFmpegOptions { LibraryDirectory = ffmpegDir });
+            decoder = new EmbeddingGemma2VideoDecoder(new EmbeddingGemma2FFmpegOptions { LibraryDirectory = ffmpegDir, AllowNonLgplBuild = allowNonLgpl });
+            if (ffmpeg9Dir is not null)
+            {
+                decoder9 = new FFmpeg9.EmbeddingGemma2VideoDecoder(new FFmpeg9.EmbeddingGemma2FFmpegOptions { LibraryDirectory = ffmpeg9Dir, AllowNonLgplBuild = allowNonLgpl });
+            }
         }
-        catch (Exception ex) when (ex is ModelAcquisitionException or EmbeddingGemma2FFmpegException)
+        catch (Exception ex) when (ex is ModelAcquisitionException or EmbeddingGemma2FFmpegException or FFmpeg9.EmbeddingGemma2FFmpegException)
         {
             Console.Error.WriteLine(ex.Message);
             return 2;
@@ -155,6 +175,24 @@ internal static class EmbeddingGemma2VideoDump
             ["ffmpeg_license"] = libs.Licenses["avcodec"],
             ["max_video_frames_per_vision_call"] = options.MaxVideoFramesPerVisionCall,
         };
+        if (decoder9 is not null)
+        {
+            // A second decoder profile in the same evaluation (model-pipeline evaluate_video.py): its frames are the
+            // case outputs video<k>_frame_sha256_ffmpeg9.
+            var libs9 = decoder9.Libraries;
+            environment["decoders"] = new[]
+            {
+                new Dictionary<string, object?>
+                {
+                    ["video_decoder"] = "Starlings.Models.EmbeddingGemma2.Video.FFmpeg9 (generated FFmpeg 9.0.1 bindings)",
+                    ["ffmpeg_version"] = libs9.Version,
+                    ["ffmpeg_major"] = FFmpeg9.EmbeddingGemma2FFmpeg.SupportedFFmpegMajor,
+                    ["ffmpeg_libraries"] = libs9.LibraryVersions,
+                    ["ffmpeg_license"] = libs9.Licenses["avcodec"],
+                },
+            };
+        }
+
         device.Describe(environment);
         var tokenizerAsset = new Asset(EmbeddingGemma2ModelAssets.TokenizerFile, EmbeddingGemma2ModelAssets.TokenizerSha256);
         Asset[] graphAssets =
@@ -167,6 +205,14 @@ internal static class EmbeddingGemma2VideoDump
         // Stage 1: decoding, sampling, rendering and preprocessing.
         var stage1 = new StageWriter(profile, "tokenizer", $"FFmpeg adapter on FFmpeg {libs.Version}; EmbeddingGemma2VideoSampling; EmbeddingGemma2ImageProcessor at 140 soft tokens; EmbeddingGemma2MultimodalEmbedder rendering with EmbeddingGemma2Tokenizer", commit, environment, [tokenizerAsset], task: "video-embedding");
         var inputs = new Dictionary<string, EmbeddingGemma2MultimodalInput>(StringComparer.Ordinal);
+        var sampled9 = new Dictionary<string, EmbeddingGemma2Video>(StringComparer.Ordinal);
+        var all9 = new Dictionary<string, EmbeddingGemma2Video>(StringComparer.Ordinal);
+        EmbeddingGemma2Video Video9For(FFmpeg9.EmbeddingGemma2VideoDecoder d9, string id, string form) => form switch
+        {
+            "array+metadata" => all9.TryGetValue(id, out var a) ? a : all9[id] = d9.DecodeAllFrames(PathOf(id)).Video,
+            "array" => EmbeddingGemma2Video.FromFramesWithoutTiming((all9.TryGetValue(id, out var b) ? b : all9[id] = d9.DecodeAllFrames(PathOf(id)).Video).Frames),
+            _ => sampled9.TryGetValue(id, out var s) ? s : sampled9[id] = d9.DecodeFile(PathOf(id)).Video,
+        };
         foreach (var r in rows)
         {
             var videos = r.Videos.Select(v => VideoFor(v.Video, v.Form)).ToList();
@@ -186,6 +232,12 @@ internal static class EmbeddingGemma2VideoDump
                     .Add($"video{k}_resized_sha256", Sha(patches.Select(p => p.ResizedPixels.ToArray())))
                     .Add($"video{k}_pixel_values_sha256", Sha(patches.Select(p => MemoryMarshal.AsBytes(p.PixelValues.Span).ToArray())))
                     .Add($"video{k}_positions_sha256", Sha(patches.Select(p => MemoryMarshal.AsBytes(p.Positions.Span).ToArray())));
+                if (decoder9 is not null)
+                {
+                    var video9 = Video9For(decoder9, r.Videos[k].Video, r.Videos[k].Form);
+                    int[] indices9 = video9.GetSampledFrameIndices(allowWithoutTiming: true);
+                    c.Add($"video{k}_frame_sha256_ffmpeg9", indices9.Select(i => Sha(video9.Frames[i].Pixels.Span)).ToArray());
+                }
             }
 
             if (still is not null)

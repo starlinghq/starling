@@ -23,6 +23,17 @@ files of `run_embeddinggemma2_video.py --tensors`, each array checked against th
 `tensors.json` before use (`reference_tensors`, CLI `--reference-tensors`). Without them those two checks are
 not-run, so G2 cannot pass.
 
+Decoder profiles, one per FFmpeg adapter package (decision D3): tolerance section `decoder_ffmpeg` binds the FFmpeg 8
+adapter and `decoder_ffmpeg9` the FFmpeg 9 adapter; each holds `decoded_rgb_vs_torchcodec` and `supported_ffmpeg_major`.
+One evaluation holds decoder results for several majors: the tokenizer stage's own frames (`video<k>_frame_sha256`, the
+major in `environment.ffmpeg_major`) and, per further adapter, `video<k>_frame_sha256_ffmpeg<major>` with an entry
+`{"ffmpeg_major": <major>, "ffmpeg_version": ...}` in `environment.decoders`. Each section present in the protected
+tolerances is checked against the results of its major (check `tokenizer.decoder_frame_sha256` for `decoder_ffmpeg`,
+`tokenizer.decoder_ffmpeg9_frame_sha256` for `decoder_ffmpeg9`) and is not-run when the results hold no frames of that
+major, so a bound nobody checked never passes. The expected digests are the protected `frame_sha256` (torchcodec on
+FFmpeg 8); torchcodec 0.17.0 on FFmpeg 9.0.1 gives the same digests for every frame (`torchcodec_eg2_frames.py`). A
+section absent from the protected tolerances adds no check.
+
 Tolerance keys (flattened YAML paths) read from the profile's protected tolerances file only: `EXPECTED_KEYS`.
 """
 
@@ -65,8 +76,17 @@ EXPECTED_KEYS: dict[str, Any] = {
     "float.report_only": ["mean_abs", "p99_abs", "per_value_relative"],
     "decoder_ffmpeg.decoded_rgb_vs_torchcodec": "exact",
     "decoder_ffmpeg.supported_ffmpeg_major": 8,
+    # The FFmpeg 9 adapter's decoder profile (W4; text proposed for the maintainer to commit). Checked when present.
+    "decoder_ffmpeg9.decoded_rgb_vs_torchcodec": "exact",
+    "decoder_ffmpeg9.supported_ffmpeg_major": 9,
 }
 KNOWN_KEYS = set(EXPECTED_KEYS)
+# Decoder tolerance sections: (section, check id, required). A required section is checked (not-run when unset); an
+# optional one only when the protected tolerances carry it.
+DECODER_SECTIONS = (
+    ("decoder_ffmpeg", "tokenizer.decoder_frame_sha256", True),
+    ("decoder_ffmpeg9", "tokenizer.decoder_ffmpeg9_frame_sha256", False),
+)
 EXCLUDED_ROWS = {
     "vid-array-no-metadata": "decoded frames without timing metadata (rejected by contract unless opted in)",
 }
@@ -219,22 +239,52 @@ class VideoEvaluator(im.ImageEvaluator):
             )
             self._add(still)
 
-        self._decoder(stage)
+        for section, check_id, required in DECODER_SECTIONS:
+            if required or any(k.startswith(f"{section}.") for k in self.tol):
+                self._decoder(stage, section, check_id)
 
-    def _decoder(self, stage: results.StageResults) -> None:
-        key = "decoder_ffmpeg.decoded_rgb_vs_torchcodec"
-        check = Check("tokenizer.decoder_frame_sha256", "tokenizer", "FFmpeg decoder: each sampled frame's RGB exact")
+    @staticmethod
+    def _decoder_results(stage: results.StageResults) -> dict[str, tuple[str, dict[str, Any]]]:
+        """Decoder results by FFmpeg major (as a string): (case output suffix, environment of that decoder)."""
+        found: dict[str, tuple[str, dict[str, Any]]] = {}
+        env = stage.environment
+        if env.get("ffmpeg_major") is not None:
+            found[str(env["ffmpeg_major"])] = ("frame_sha256", env)
+        for extra in env.get("decoders") or []:
+            major = extra.get("ffmpeg_major") if isinstance(extra, dict) else None
+            if major is not None and str(major) not in found:
+                found[str(major)] = (f"frame_sha256_ffmpeg{major}", extra)
+        return found
+
+    def _decoder(self, stage: results.StageResults, section: str, check_id: str) -> None:
+        key = f"{section}.decoded_rgb_vs_torchcodec"
+        title = (
+            "FFmpeg decoder: each sampled frame's RGB exact"
+            if section == "decoder_ffmpeg"
+            else f"FFmpeg decoder ({section}): each sampled frame's RGB exact"
+        )
+        check = Check(check_id, "tokenizer", title)
         if not self._exact_key(check, key):
             return
-        want = self.tol.get("decoder_ffmpeg.supported_ffmpeg_major")
+        want = self.tol.get(f"{section}.supported_ffmpeg_major")
+        decoders = self._decoder_results(stage)
+        if want is not None and str(want) in decoders:
+            suffix, env = decoders[str(want)]
+            check.metrics = {"ffmpeg_major": env.get("ffmpeg_major"), "ffmpeg_version": env.get("ffmpeg_version")}
+            self._per_video(check, stage, suffix, lambda v: v.get("frame_sha256") or None)
+            return
         have = stage.environment.get("ffmpeg_major")
         check.metrics = {"ffmpeg_major": have, "ffmpeg_version": stage.environment.get("ffmpeg_version")}
         if want is None:
-            check.detail = "decoder_ffmpeg.supported_ffmpeg_major is not set in the protected tolerances"
+            check.detail = f"{section}.supported_ffmpeg_major is not set in the protected tolerances"
             self._add(check)
             return
         if have is None:
-            check.detail = "stage 'tokenizer' environment has no ffmpeg_major"
+            check.detail = (
+                "stage 'tokenizer' environment has no ffmpeg_major"
+                if not decoders
+                else f"no decoder results for FFmpeg major {want} (have {sorted(decoders)})"
+            )
             self._add(check)
             return
         self._per_video(check, stage, "frame_sha256", lambda v: v.get("frame_sha256") or None)
