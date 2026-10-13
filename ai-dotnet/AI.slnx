@@ -38,6 +38,9 @@
   <Folder Name="/benchmarks/">
     <Project Path="benchmarks/Starlings.Benchmarks.Micro/Starlings.Benchmarks.Micro.csproj" />
     <Project Path="benchmarks/Starlings.Benchmarks.E5Harness/Starlings.Benchmarks.E5Harness.csproj" />
+    <Project Path="benchmarks/Starlings.Benchmarks.Gliner2Harness/Starlings.Benchmarks.Gliner2Harness.csproj" />
+    <Project Path="benchmarks/Starlings.Benchmarks.EmbeddingGemma2Harness/Starlings.Benchmarks.EmbeddingGemma2Harness.csproj" />
+    <Project Path="benchmarks/Starlings.Benchmarks.Qwen35Harness/Starlings.Benchmarks.Qwen35Harness.csproj" />
     <Project Path="benchmarks/Starlings.Benchmarks.Tests/Starlings.Benchmarks.Tests.csproj" />
   </Folder>
   <Folder Name="/tools/">

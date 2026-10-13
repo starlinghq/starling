@@ -20,6 +20,7 @@
   <ItemGroup>
     <Compile Include="../Starlings.Benchmarks.Micro/Program.cs" Link="Program.cs" />
     <Compile Include="../Starlings.Benchmarks.Micro/MicroBenchmarks.cs" Link="MicroBenchmarks.cs" />
+    <Compile Include="../Core/*.cs" Link="Core/%(Filename)%(Extension)" />
     <Compile Include="../Shared/*.cs" Link="Shared/%(Filename)%(Extension)" />
     <Compile Include="../../tests/Shared/E5/E5TestAssets.cs" Link="Shared/E5TestAssets.cs" />
   </ItemGroup>

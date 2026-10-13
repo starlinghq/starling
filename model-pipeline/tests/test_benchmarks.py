@@ -221,3 +221,72 @@ def test_summary_excludes_every_series_of_a_run_whose_quality_failed(tmp_path):
     summary = benchmarks.summarize(results, resamples=50)
     assert summary["groups"] == []
     assert summary["quality_failures"][0]["reason"] == "run quality failed"
+
+
+def generation_records(run_id: str, passed: bool = True) -> list[dict]:
+    """A model-harness run (no embedding tolerance) with one generation series carrying metrics and its own verdict."""
+    run = run_record(run_id, "csharp", "library")
+    run["model"] = "qwen3.5-0.8b"
+    run["profile"] = "ortgenai-fp32x-cpu"
+    run["quality"] = {"reference": "generation.jsonl", "cases": 22, "pass": True}
+    series = series_record(run_id, [100.0 + i for i in range(20)], workload="short-decode64")
+    series["stages_ms"] = {"template": [0.0] * 20, "prefill": [10.0] * 20, "decode": [90.0] * 20}
+    series["metrics"] = {"ttft_ms": [12.0] * 20, "decode_tokens_per_s": [40.0 + i for i in range(20)]}
+    series["quality"] = {"check": "greedy ids", "generations": 5, "equal": 5 if passed else 4, "pass": passed}
+    return [run, series]
+
+
+def test_model_harness_records_validate_and_summarize_metrics(tmp_path):
+    path = tmp_path / "raw.jsonl"
+    write(path, generation_records("g1"))
+    results, problems = benchmarks.load([path])
+    assert problems == []
+    summary = benchmarks.summarize(results, resamples=50)
+    (group,) = summary["groups"]
+    assert group["quality_max_abs"] is None
+    assert group["metric_median"]["ttft_ms"] == 12.0
+    assert group["metric_median"]["decode_tokens_per_s"] == 49.5
+    text = benchmarks.markdown(summary)
+    assert "Per-sample metrics (medians)" in text
+    assert "22 cases, True" in text
+
+
+def test_model_harness_series_failing_its_own_check_is_excluded(tmp_path):
+    path = tmp_path / "raw.jsonl"
+    write(path, generation_records("g1", passed=False))
+    results, problems = benchmarks.load([path])
+    assert problems == []
+    summary = benchmarks.summarize(results, resamples=50)
+    assert summary["groups"] == []
+    (failure,) = summary["quality_failures"]
+    assert failure["reason"] == "series failed its own check"
+    assert failure["max_abs"] is None
+    assert "Quality failures: excluded" in benchmarks.markdown(summary)
+
+
+def test_metric_arrays_must_match_the_sample_count(tmp_path):
+    run, series = generation_records("g1")
+    series["metrics"]["ttft_ms"] = [1.0]
+    path = tmp_path / "raw.jsonl"
+    write(path, [run, series])
+    _, problems = benchmarks.load([path])
+    assert any("metric ttft_ms has 1 values" in p for p in problems)
+
+
+def test_series_quality_needs_embedding_errors_or_a_verdict(tmp_path):
+    run, series = generation_records("g1")
+    series["quality"] = {"check": "greedy ids"}
+    path = tmp_path / "raw.jsonl"
+    write(path, [run, series])
+    _, problems = benchmarks.load([path])
+    assert problems
+
+
+def test_runs_of_different_models_are_not_pooled(tmp_path):
+    a = generation_records("g1")
+    b = generation_records("g2")
+    b[0]["model"] = "gliner2-base-v1"
+    path = tmp_path / "raw.jsonl"
+    write(path, a + b)
+    results, _ = benchmarks.load([path])
+    assert len(benchmarks.summarize(results, resamples=50)["groups"]) == 2

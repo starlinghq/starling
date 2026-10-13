@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-  <!-- Unit tests for the benchmark harness logic that decides whether a run's results are valid (P-008). -->
+  <!-- Unit tests for the benchmark harness logic: whether a run's results are valid (P-008), the shared timing core and the G5 workload files. -->
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <GenerateDocumentationFile>false</GenerateDocumentationFile>
@@ -13,7 +13,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Include="../Shared/QualityGate.cs" Link="Shared/QualityGate.cs" />
+    <Compile Include="../Core/QualityGate.cs" Link="Core/QualityGate.cs" />
+    <Compile Include="../Core/HarnessCore.cs" Link="Core/HarnessCore.cs" />
+    <Compile Include="../Core/WorkloadSpec.cs" Link="Core/WorkloadSpec.cs" />
   </ItemGroup>
 
 </Project>

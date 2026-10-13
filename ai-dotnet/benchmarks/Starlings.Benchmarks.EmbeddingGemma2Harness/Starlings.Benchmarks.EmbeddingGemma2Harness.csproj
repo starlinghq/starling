@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Realistic-workload harness for EmbeddingGemma 2, text and image paths (G5): warm series with stage timings, cold
+    starts in fresh processes, quality attached to every series. Shared harness core in ../Core. CPU native runtime.
+    Video is not benchmarked (its fixtures need FFmpeg). Not packed; never run in CI.
+  -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <RootNamespace>Starlings.Benchmarks</RootNamespace>
+    <ServerGarbageCollection>false</ServerGarbageCollection>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.ML.OnnxRuntime" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="../Core/*.cs" Link="Core/%(Filename)%(Extension)" />
+    <Compile Include="../../tests/Shared/EmbeddingGemma2/EmbeddingGemma2TestAssets.cs" Link="Shared/EmbeddingGemma2TestAssets.cs" />
+    <Compile Include="../../tests/Shared/EmbeddingGemma2Images/EmbeddingGemma2ImageTestAssets.cs" Link="Shared/EmbeddingGemma2ImageTestAssets.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../src/Starlings.Models.EmbeddingGemma2/Starlings.Models.EmbeddingGemma2.csproj" />
+    <ProjectReference Include="../../src/Starlings.Models.EmbeddingGemma2.Imaging.SkiaSharp/Starlings.Models.EmbeddingGemma2.Imaging.SkiaSharp.csproj" />
+  </ItemGroup>
+
+</Project>
