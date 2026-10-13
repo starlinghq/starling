@@ -105,7 +105,7 @@ processing:
   # Tokenizer 0.1.0-preview.3 (2026-10-10) added the Qwen byte-level BPE components and 0.1.0-preview.4 (2026-10-10) the
   # Gemma BPE components (byte fallback, unknown token, String Split, Sequence/Replace/ByteFallback/Fuse decoders); the
   # Unigram path is unchanged in behavior and passes every tokenizer fixture of this profile again (tokenizer test suite).
-  # Model gates were not rerun.
+  # Model gates rerun at 0.3.0-preview.1 on the development fixtures (qualification, below).
   tokenizer:
     # 0.3.0-preview.1 is the published tokenizer (starlinghq/tokenizers): the qualified 0.1.0-preview.4 behavior plus BERT WordPiece components this profile does not use; every conformance fixture passes unchanged.
     package: Starlings.Tokenizers
@@ -199,6 +199,9 @@ qualification:
   # tolerances (set 2026-10-10, PR #21). Evaluator run on the C# stages: docs/evidence/p015-gliner2-dotnet/.
   fixtures: model-pipeline/protected/gliner2-base-v1/onnx-fp32-cpu
   tolerances: model-pipeline/protected/gliner2-base-v1/onnx-fp32-cpu/tolerances.yaml
+  # Rerun at Starlings.Tokenizers 0.3.0-preview.1 (2026-10-13, R4): model-pipeline evaluate --require-gates G1,G2
+  # gave G1 passed, G2 passed on the development fixtures, which are not P-030 release sets
+  # (docs/evidence/rerun-tokenizer-0.3.0-preview.1/). The gate entries below are unchanged; recording a result is the maintainer's act.
   gates:
     G0: { status: checklist, evidence: docs/m0/gliner2-p014.md, date: 2026-10-10 }
     G1: { status: checklist, evidence: docs/m0/gliner2-p014.md, date: 2026-10-10 }

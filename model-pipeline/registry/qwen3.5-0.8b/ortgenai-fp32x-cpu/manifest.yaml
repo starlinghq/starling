@@ -111,7 +111,7 @@ behavior:
 processing:
   # Tokenizer 0.1.0-preview.4 (2026-10-10) adds the Gemma BPE components; the byte-level BPE path is unchanged in
   # behavior and passes every qwen35-bpe-chat fixture and differential dump again (tokenizer test suite). Model gates
-  # were not rerun.
+  # were rerun at 0.3.0-preview.1 for this profile on the development fixtures (qualification, below).
   tokenizer:
     # 0.3.0-preview.1 is the published tokenizer (starlinghq/tokenizers): the qualified 0.1.0-preview.4 behavior plus BERT WordPiece components this profile does not use; every conformance fixture passes unchanged.
     package: Starlings.Tokenizers
@@ -215,6 +215,10 @@ qualification:
   # model. Tolerances are proposed as values in docs/evidence/p016-qwen35/README.md; the maintainer sets the binding file.
   fixtures: model-pipeline/protected/qwen3.5-0.8b/reference
   tolerances: model-pipeline/protected/qwen3.5-0.8b/ortgenai-fp32x-cpu/tolerances.yaml
+  # Rerun at Starlings.Tokenizers 0.3.0-preview.1 (2026-10-13, R4): Starlings.Qwen35.Fidelity parity mode and
+  # compare.py against the protected generation.jsonl: renderings and prompt ids 21/21, greedy ids 22/22, step-0
+  # 1.38e-3 / top-5 6.2e-4, within the protected tolerances, on the development fixtures, which are not P-030 release
+  # sets (docs/evidence/rerun-tokenizer-0.3.0-preview.1/). The gate entries below are unchanged.
   gates:
     G0: { status: checklist, evidence: docs/evidence/p016-qwen35/README.md, date: 2026-10-10 }
     G1: { status: checklist, evidence: docs/evidence/p016-qwen35/README.md, date: 2026-10-10 }

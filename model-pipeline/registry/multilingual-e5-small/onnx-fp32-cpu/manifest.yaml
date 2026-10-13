@@ -91,7 +91,7 @@ processing:
   # Tokenizer 0.1.0-preview.3 (2026-10-10) added the Qwen byte-level BPE components and 0.1.0-preview.4 (2026-10-10) the
   # Gemma BPE components (byte fallback, unknown token, String Split, Sequence/Replace/ByteFallback/Fuse decoders); the
   # Unigram path is unchanged in behavior and passes every tokenizer fixture of this profile again (tokenizer test suite).
-  # Model gates were not rerun.
+  # Model gates rerun at 0.3.0-preview.1 on the development fixtures (qualification, below).
   tokenizer:
     # 0.3.0-preview.1 is the published tokenizer (starlinghq/tokenizers): the qualified 0.1.0-preview.4 behavior plus BERT WordPiece components this profile does not use; every conformance fixture passes unchanged.
     package: Starlings.Tokenizers
@@ -163,6 +163,9 @@ qualification:
   tolerances: model-pipeline/protected/multilingual-e5-small/onnx-fp32-cpu/tolerances.yaml
   # Hand qualification of the 0.1.0-preview.1 candidate (P-010); G1, G2 and G6 rerun for 0.1.0-preview.2. G6 covers Linux x64 CPU only (clean install from
   # packed packages, ONNX Runtime CPU natives, offline execution, version diagnostics); other platforms untested.
+  # Rerun at Starlings.Tokenizers 0.3.0-preview.1 (2026-10-13, R4): model-pipeline evaluate --require-gates G1,G2
+  # gave G1 passed, G2 passed on the development fixtures, which are not P-030 release sets
+  # (docs/evidence/rerun-tokenizer-0.3.0-preview.1/). The gate entries below are unchanged; recording a result is the maintainer's act.
   gates:
     G0: { status: passed, evidence: docs/releases/e5-0.1.0-preview.1.md, date: 2026-10-09 }
     G1: { status: passed, evidence: docs/releases/e5-0.1.0-preview.2/fidelity-report.md, date: 2026-10-09 }

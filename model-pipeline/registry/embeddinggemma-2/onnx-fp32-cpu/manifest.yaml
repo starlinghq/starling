@@ -203,6 +203,9 @@ qualification:
   # Development fixtures (accepted 2026-10-10, PR #29) and binding tolerances (set 2026-10-10).
   fixtures: model-pipeline/protected/embeddinggemma-2/onnx-fp32-cpu
   tolerances: model-pipeline/protected/embeddinggemma-2/onnx-fp32-cpu/tolerances.yaml
+  # Rerun at Starlings.Tokenizers 0.3.0-preview.1 (2026-10-13, R4): model-pipeline evaluate --require-gates G1,G2
+  # gave G1 passed, G2 passed on the development fixtures, which are not P-030 release sets
+  # (docs/evidence/rerun-tokenizer-0.3.0-preview.1/). The gate entries below are unchanged; recording a result is the maintainer's act.
   gates:
     G0: { status: checklist, evidence: docs/m0/hub-pins.md, date: 2026-10-10 }
     G1: { status: not-run }
