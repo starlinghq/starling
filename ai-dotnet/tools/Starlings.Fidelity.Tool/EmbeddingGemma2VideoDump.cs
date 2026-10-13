@@ -13,8 +13,12 @@
 //
 //   dotnet run --project ai-dotnet/tools/Starlings.Fidelity.Tool -c Release -- embeddinggemma2-videos --out <dir>
 //       --videos <dir> [--ffmpeg <FFmpeg 8 lib dir>] [--snapshot <dir>] [--fixtures <dir>] [--profile <id>] [--threads <n>]
+//       [--device cpu|cuda[:N]]
 //
-// CPU only (the tool references the CPU native runtime). Applies no bounds; writes nothing under protected/.
+// --device cuda needs the CUDA build (ai-dotnet/tools/Starlings.Fidelity.Tool.Cuda) and defaults the profile to
+// embeddinggemma-2/video-fp32-cuda (same fixtures, rows and batch layouts). Single rows run in vision calls of 8 frames on
+// CPU and of the package default (MaxVideoFramesPerVisionCall 2) on CUDA, where the GPU is shared. Applies no bounds;
+// writes nothing under protected/.
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Text;
@@ -35,8 +39,9 @@ internal static class EmbeddingGemma2VideoDump
         string? videosDir = Environment.GetEnvironmentVariable("STARLING_EMBEDDINGGEMMA2_VIDEOS");
         string? ffmpegDir = null;
         string? fixturesDir = null;
-        string profile = "embeddinggemma-2/video-fp32-cpu";
+        string? profile = null;
         int? threads = null;
+        var device = ToolDevice.Cpu;
         for (int i = 0; i < args.Length; i++)
         {
             switch (args[i])
@@ -63,6 +68,10 @@ internal static class EmbeddingGemma2VideoDump
                     threads = n;
                     i++;
                     break;
+                case "--device" when i + 1 < args.Length && ToolDevice.TryParse(args[i + 1], out var parsed):
+                    device = parsed;
+                    i++;
+                    break;
                 default:
                     Console.Error.WriteLine($"error: unknown option {args[i]}");
                     return 2;
@@ -74,6 +83,14 @@ internal static class EmbeddingGemma2VideoDump
             Console.Error.WriteLine("error: --out and --videos (the make_eg2_videos.py output) are required");
             return 2;
         }
+
+        if (device.Unavailable() is { } unavailable)
+        {
+            Console.Error.WriteLine($"error: {unavailable}");
+            return 2;
+        }
+
+        profile ??= device.Profile("embeddinggemma-2/video-fp32-cpu");
 
         string? repoRoot = ToolSupport.FindRepositoryRoot();
         fixturesDir ??= repoRoot is null ? null : Path.Combine(repoRoot, "model-pipeline", "protected", "embeddinggemma-2", "video-fp32-cpu");
@@ -98,8 +115,10 @@ internal static class EmbeddingGemma2VideoDump
 
         Directory.CreateDirectory(outDir);
         string? commit = ToolSupport.GitHead(repoRoot);
-        var session = new OnnxSessionOptions { IntraOpNumThreads = threads };
-        var options = new EmbeddingGemma2MultimodalOptions { Session = session, AllowVideosWithoutTiming = true, MaxVideoFramesPerVisionCall = 8, MaxVisionBatchPatches = 8 * 1_260 };
+        var session = device.Apply(new OnnxSessionOptions { IntraOpNumThreads = threads });
+        var options = device.IsCuda
+            ? new EmbeddingGemma2MultimodalOptions { Session = session, AllowVideosWithoutTiming = true }
+            : new EmbeddingGemma2MultimodalOptions { Session = session, AllowVideosWithoutTiming = true, MaxVideoFramesPerVisionCall = 8, MaxVisionBatchPatches = 8 * 1_260 };
         using var embedder = EmbeddingGemma2MultimodalEmbedder.Create(files, options);
         var videoFiles = ReadVideoFiles(Path.Combine(fixturesDir, "videos.json"));
         var rows = ReadRows(Path.Combine(fixturesDir, "video-embeddings.jsonl"));
@@ -119,7 +138,7 @@ internal static class EmbeddingGemma2VideoDump
         var environment = new Dictionary<string, object?>
         {
             ["machine"] = Environment.MachineName,
-            ["provider"] = "cpu",
+            ["provider"] = device.Name,
             ["provider_options"] = vd.ProviderOptions.ToDictionary(kv => kv.Key, kv => (object?)kv.Value),
             ["dotnet"] = RuntimeInformation.FrameworkDescription,
             ["os"] = RuntimeInformation.OSDescription,
@@ -136,6 +155,7 @@ internal static class EmbeddingGemma2VideoDump
             ["ffmpeg_license"] = libs.Licenses["avcodec"],
             ["max_video_frames_per_vision_call"] = options.MaxVideoFramesPerVisionCall,
         };
+        device.Describe(environment);
         var tokenizerAsset = new Asset(EmbeddingGemma2ModelAssets.TokenizerFile, EmbeddingGemma2ModelAssets.TokenizerSha256);
         Asset[] graphAssets =
         [
@@ -178,7 +198,7 @@ internal static class EmbeddingGemma2VideoDump
         Console.WriteLine($"stage 1: {rows.Count} rows ({sampled.Count + all.Count} decoded videos)");
 
         // Stage 3: every row alone, with its soft tokens and token embeddings.
-        var stage3 = new StageWriter(profile, "dotnet", $"C# EmbeddingGemma2MultimodalEmbedder, ONNX Runtime {vd.OrtVersion} CPU (managed binding {vd.ManagedBindingVersion}), frames from the FFmpeg adapter", commit, environment, [.. graphAssets, tokenizerAsset], task: "video-embedding");
+        var stage3 = new StageWriter(profile, "dotnet", $"C# EmbeddingGemma2MultimodalEmbedder, ONNX Runtime {vd.OrtVersion} {device.Label} (managed binding {vd.ManagedBindingVersion}), frames from the FFmpeg adapter", commit, environment, [.. graphAssets, tokenizerAsset], task: "video-embedding");
         var collector = new Collector();
         foreach (var r in rows)
         {

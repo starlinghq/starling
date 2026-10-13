@@ -10,9 +10,11 @@
 //                            vision batches of 8 and padded to 2,520 patches.
 //
 //   dotnet run --project ai-dotnet/tools/Starlings.Fidelity.Tool -c Release -- embeddinggemma2-images --out <dir>
-//       --images <dir> [--snapshot <dir>] [--fixtures <dir>] [--profile <id>] [--threads <n>]
+//       --images <dir> [--snapshot <dir>] [--fixtures <dir>] [--profile <id>] [--threads <n>] [--device cpu|cuda[:N]]
 //
-// CPU only (the tool references the CPU native runtime). Applies no bounds; writes nothing under protected/.
+// --device cuda needs the CUDA build (ai-dotnet/tools/Starlings.Fidelity.Tool.Cuda) and defaults the profile to
+// embeddinggemma-2/image-fp32-cuda (same fixtures, same rows and batch layouts). Applies no bounds; writes nothing under
+// protected/.
 using System.Text;
 using System.Text.Json;
 using Starlings.Acquisition;
@@ -28,8 +30,9 @@ internal static class EmbeddingGemma2ImageDump
         string? snapshot = Environment.GetEnvironmentVariable("STARLING_EMBEDDINGGEMMA2_SNAPSHOT");
         string? imagesDir = Environment.GetEnvironmentVariable("STARLING_EMBEDDINGGEMMA2_IMAGES");
         string? fixturesDir = null;
-        string profile = "embeddinggemma-2/image-fp32-cpu";
+        string? profile = null;
         int? threads = null;
+        var device = ToolDevice.Cpu;
         for (int i = 0; i < args.Length; i++)
         {
             switch (args[i])
@@ -53,6 +56,10 @@ internal static class EmbeddingGemma2ImageDump
                     threads = n;
                     i++;
                     break;
+                case "--device" when i + 1 < args.Length && ToolDevice.TryParse(args[i + 1], out var parsed):
+                    device = parsed;
+                    i++;
+                    break;
                 default:
                     Console.Error.WriteLine($"error: unknown option {args[i]}");
                     return 2;
@@ -64,6 +71,14 @@ internal static class EmbeddingGemma2ImageDump
             Console.Error.WriteLine("error: --out and --images (the make_eg2_images.py output) are required");
             return 2;
         }
+
+        if (device.Unavailable() is { } unavailable)
+        {
+            Console.Error.WriteLine($"error: {unavailable}");
+            return 2;
+        }
+
+        profile ??= device.Profile("embeddinggemma-2/image-fp32-cpu");
 
         string? repoRoot = ToolSupport.FindRepositoryRoot();
         fixturesDir ??= repoRoot is null ? null : Path.Combine(repoRoot, "model-pipeline", "protected", "embeddinggemma-2", "image-fp32-cpu");
@@ -86,7 +101,7 @@ internal static class EmbeddingGemma2ImageDump
 
         Directory.CreateDirectory(outDir);
         string? commit = ToolSupport.GitHead(repoRoot);
-        var session = new OnnxSessionOptions { IntraOpNumThreads = threads };
+        var session = device.Apply(new OnnxSessionOptions { IntraOpNumThreads = threads });
         using var embedder = EmbeddingGemma2MultimodalEmbedder.Create(files, new EmbeddingGemma2MultimodalOptions { Session = session });
         var manifest = ReadManifest(Path.Combine(fixturesDir, "images.json"));
         var rows = ReadRows(Path.Combine(fixturesDir, "image-embeddings.jsonl"))
@@ -100,7 +115,7 @@ internal static class EmbeddingGemma2ImageDump
         var environment = new Dictionary<string, object?>
         {
             ["machine"] = Environment.MachineName,
-            ["provider"] = "cpu",
+            ["provider"] = device.Name,
             ["provider_options"] = vd.ProviderOptions.ToDictionary(kv => kv.Key, kv => (object?)kv.Value),
             ["dotnet"] = System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription,
             ["os"] = System.Runtime.InteropServices.RuntimeInformation.OSDescription,
@@ -112,6 +127,7 @@ internal static class EmbeddingGemma2ImageDump
             ["intra_op_threads"] = vd.IntraOpNumThreads,
             ["image_decoder"] = "Starlings.Models.EmbeddingGemma2.Imaging.SkiaSharp (SkiaSharp 4.153.1)",
         };
+        device.Describe(environment);
         var tokenizerAsset = new Asset(EmbeddingGemma2ModelAssets.TokenizerFile, EmbeddingGemma2ModelAssets.TokenizerSha256);
         Asset[] graphAssets =
         [
@@ -142,7 +158,7 @@ internal static class EmbeddingGemma2ImageDump
         stage1.Write(Path.Combine(outDir, "tokenizer.results.json"));
 
         // Stage 3: every row alone, with its soft tokens and token embeddings.
-        var stage3 = new StageWriter(profile, "dotnet", $"C# EmbeddingGemma2MultimodalEmbedder, ONNX Runtime {vd.OrtVersion} CPU (managed binding {vd.ManagedBindingVersion})", commit, environment, [.. graphAssets, tokenizerAsset], task: "image-embedding");
+        var stage3 = new StageWriter(profile, "dotnet", $"C# EmbeddingGemma2MultimodalEmbedder, ONNX Runtime {vd.OrtVersion} {device.Label} (managed binding {vd.ManagedBindingVersion})", commit, environment, [.. graphAssets, tokenizerAsset], task: "image-embedding");
         var collector = new Collector();
         var singles = new Dictionary<string, float[]>(StringComparer.Ordinal);
         foreach (var r in rows)
