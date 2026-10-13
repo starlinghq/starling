@@ -90,9 +90,10 @@ jobs:
             elif [[ "$proj" != */Starlings.Models.EmbeddingGemma2.Imaging.SkiaSharp.csproj ]] && grep -Eqi '>[[:space:]]+SkiaSharp' <<<"$deps"; then
               echo "FAIL: $proj references SkiaSharp; only Starlings.Models.EmbeddingGemma2.Imaging.SkiaSharp may" >&2
               status=1
-            # FFmpeg.AutoGen (managed FFmpeg bindings; FFmpeg itself is user-supplied) stays in the EmbeddingGemma 2 video adapter.
-            elif [[ "$proj" != */Starlings.Models.EmbeddingGemma2.Video.FFmpeg.csproj ]] && grep -Eqi '>[[:space:]]+FFmpeg\.AutoGen' <<<"$deps"; then
-              echo "FAIL: $proj references FFmpeg.AutoGen; only Starlings.Models.EmbeddingGemma2.Video.FFmpeg may" >&2
+            # FFmpeg bindings are generated into the EmbeddingGemma 2 video adapter (tools/generate-ffmpeg-bindings.py); no
+            # project may take a third-party FFmpeg bindings package (FFmpeg itself is user-supplied).
+            elif grep -Eqi '>[[:space:]]+(FFmpeg\.AutoGen|FFmpegCore|Sdcb\.FFmpeg)' <<<"$deps"; then
+              echo "FAIL: $proj references a third-party FFmpeg bindings package; the video adapter carries its own bindings" >&2
               status=1
             else
               echo "ok:   $proj"

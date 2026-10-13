@@ -1,9 +1,7 @@
-using FFmpeg.AutoGen;
-
 namespace Starlings.Models.EmbeddingGemma2.Video.FFmpeg;
 
 /// <summary>
-/// Loads the user's own FFmpeg 8.x shared libraries (once per process) through FFmpeg.AutoGen and checks them: the
+/// Loads the user's own FFmpeg 8.x shared libraries (once per process) through this package's bindings and checks them: the
 /// library majors this adapter binds (libavcodec 62, libavformat 62, libavutil 60, libswscale 9, libavfilter 11), and the
 /// build's license (LGPL expected; GPL and nonfree builds are rejected unless allowed). This package ships no FFmpeg
 /// binaries.
@@ -12,16 +10,17 @@ namespace Starlings.Models.EmbeddingGemma2.Video.FFmpeg;
 /// <para>
 /// <b>Where the libraries come from.</b> <see cref="EmbeddingGemma2FFmpegOptions.LibraryDirectory"/>, else the directory in
 /// <see cref="LibraryDirectoryEnvironmentVariable"/>, else the operating system's standard library search (on Linux
-/// <c>dlopen("libavcodec.so.62")</c>: <c>LD_LIBRARY_PATH</c>, the loader cache, <c>/usr/lib</c>). FFmpeg.AutoGen keeps one
-/// library location per process, so every decoder in a process must use the same directory.
+/// <c>dlopen("libavcodec.so.62")</c>: <c>LD_LIBRARY_PATH</c>, the loader cache, <c>/usr/lib</c>). The runtime keeps the
+/// libraries it loaded for the process, so every decoder in a process must use the same directory.
 /// </para>
 /// <para>
-/// <b>Versions.</b> FFmpeg 8.x only (the ABI FFmpeg.AutoGen 8.1.0 binds). FFmpeg 9 has other library majors
+/// <b>Versions.</b> FFmpeg 8.x only (the ABI the bindings were generated for, from the FFmpeg 8.1 headers by
+/// <c>tools/generate-ffmpeg-bindings.py</c>). FFmpeg 9 has other library majors
 /// (<c>libavcodec.so.63</c>) and is rejected with <see cref="EmbeddingGemma2FFmpegVersionException"/>; FFmpeg 7 and older
 /// are rejected the same way.
 /// </para>
 /// </remarks>
-public static class EmbeddingGemma2FFmpeg
+public static unsafe class EmbeddingGemma2FFmpeg
 {
     /// <summary>Environment variable naming the directory of the FFmpeg shared libraries (used when the options give none).</summary>
     public const string LibraryDirectoryEnvironmentVariable = "STARLING_FFMPEG_DIR";
@@ -31,11 +30,11 @@ public static class EmbeddingGemma2FFmpeg
 
     private static readonly (string Name, int Major)[] Libraries =
     [
-        ("avutil", ffmpeg.LIBAVUTIL_VERSION_MAJOR),
-        ("avcodec", ffmpeg.LIBAVCODEC_VERSION_MAJOR),
-        ("avformat", ffmpeg.LIBAVFORMAT_VERSION_MAJOR),
-        ("swscale", ffmpeg.LIBSWSCALE_VERSION_MAJOR),
-        ("avfilter", ffmpeg.LIBAVFILTER_VERSION_MAJOR),
+        ("avutil", FFmpegNative.AVUTIL_MAJOR),
+        ("avcodec", FFmpegNative.AVCODEC_MAJOR),
+        ("avformat", FFmpegNative.AVFORMAT_MAJOR),
+        ("swscale", FFmpegNative.SWSCALE_MAJOR),
+        ("avfilter", FFmpegNative.AVFILTER_MAJOR),
     ];
 
     private static readonly Lock Gate = new();
@@ -70,7 +69,7 @@ public static class EmbeddingGemma2FFmpeg
         string? directory = ResolveDirectory(options.LibraryDirectory);
         if (directory is not null && !System.IO.Directory.Exists(directory))
         {
-            throw new EmbeddingGemma2FFmpegNotFoundException($"The FFmpeg library directory {directory} does not exist. Install FFmpeg {SupportedFFmpegMajor}.x shared libraries (an LGPL build) and point EmbeddingGemma2FFmpegOptions.LibraryDirectory or {LibraryDirectoryEnvironmentVariable} at the directory holding libavcodec.so.{ffmpeg.LIBAVCODEC_VERSION_MAJOR}.");
+            throw new EmbeddingGemma2FFmpegNotFoundException($"The FFmpeg library directory {directory} does not exist. Install FFmpeg {SupportedFFmpegMajor}.x shared libraries (an LGPL build) and point EmbeddingGemma2FFmpegOptions.LibraryDirectory or {LibraryDirectoryEnvironmentVariable} at the directory holding {FFmpegNative.FileName("avcodec", FFmpegNative.AVCODEC_MAJOR)}.");
         }
 
         lock (Gate)
@@ -79,7 +78,7 @@ public static class EmbeddingGemma2FFmpeg
             {
                 if (!string.Equals(loaded.Directory, directory, StringComparison.Ordinal))
                 {
-                    throw new InvalidOperationException($"FFmpeg is already loaded from {Describe(loaded.Directory)} in this process; FFmpeg.AutoGen keeps one library location per process, so {Describe(directory)} cannot be loaded as well.");
+                    throw new InvalidOperationException($"FFmpeg is already loaded from {Describe(loaded.Directory)} in this process; the runtime keeps the libraries it loaded for the process, so {Describe(directory)} cannot be loaded as well.");
                 }
 
                 CheckLicense(loaded, options.AllowNonLgplBuild);
@@ -88,11 +87,14 @@ public static class EmbeddingGemma2FFmpeg
 
             if (_bound && !string.Equals(_boundDirectory, directory, StringComparison.Ordinal))
             {
-                throw new InvalidOperationException($"FFmpeg libraries were already loaded from {Describe(_boundDirectory)} in this process (the load failed its checks); FFmpeg.AutoGen keeps loaded libraries for the process, so {Describe(directory)} needs a new process.");
+                throw new InvalidOperationException($"FFmpeg libraries were already loaded from {Describe(_boundDirectory)} in this process (the load failed its checks); the runtime keeps loaded libraries for the process, so {Describe(directory)} needs a new process.");
             }
 
-            ffmpeg.RootPath = directory ?? string.Empty;
-            DynamicallyLoadedBindings.Initialize();
+            if (!FFmpegNative.Configure(directory))
+            {
+                throw new InvalidOperationException($"FFmpeg libraries were already configured for another directory in this process; the runtime keeps loaded libraries for the process, so {Describe(directory)} needs a new process.");
+            }
+
             var versions = new Dictionary<string, string>(StringComparer.Ordinal);
             var licenses = new Dictionary<string, string>(StringComparer.Ordinal);
             foreach (var (name, major) in Libraries)
@@ -103,11 +105,11 @@ public static class EmbeddingGemma2FFmpeg
                 {
                     (version, license) = name switch
                     {
-                        "avutil" => (ffmpeg.avutil_version(), ffmpeg.avutil_license()),
-                        "avcodec" => (ffmpeg.avcodec_version(), ffmpeg.avcodec_license()),
-                        "avformat" => (ffmpeg.avformat_version(), ffmpeg.avformat_license()),
-                        "swscale" => (ffmpeg.swscale_version(), ffmpeg.swscale_license()),
-                        _ => (ffmpeg.avfilter_version(), ffmpeg.avfilter_license()),
+                        "avutil" => (FFmpegNative.avutil_version(), FFmpegNative.Utf8(FFmpegNative.avutil_license())),
+                        "avcodec" => (FFmpegNative.avcodec_version(), FFmpegNative.Utf8(FFmpegNative.avcodec_license())),
+                        "avformat" => (FFmpegNative.avformat_version(), FFmpegNative.Utf8(FFmpegNative.avformat_license())),
+                        "swscale" => (FFmpegNative.swscale_version(), FFmpegNative.Utf8(FFmpegNative.swscale_license())),
+                        _ => (FFmpegNative.avfilter_version(), FFmpegNative.Utf8(FFmpegNative.avfilter_license())),
                     };
                 }
                 catch (Exception ex) when (ex is NotSupportedException or DllNotFoundException or EntryPointNotFoundException or BadImageFormatException)
@@ -126,8 +128,8 @@ public static class EmbeddingGemma2FFmpeg
                 }
             }
 
-            var libraries = new EmbeddingGemma2FFmpegLibraries(directory, ffmpeg.av_version_info(), versions, licenses, ffmpeg.avcodec_configuration());
-            ffmpeg.av_log_set_level(ffmpeg.AV_LOG_ERROR);
+            var libraries = new EmbeddingGemma2FFmpegLibraries(directory, FFmpegNative.Utf8(FFmpegNative.av_version_info()), versions, licenses, FFmpegNative.Utf8(FFmpegNative.avcodec_configuration()));
+            FFmpegNative.av_log_set_level(FFmpegNative.AV_LOG_ERROR);
 
             // Recorded before the license check: the libraries stay loaded in the process either way.
             _loaded = libraries;
@@ -155,7 +157,7 @@ public static class EmbeddingGemma2FFmpeg
 
     internal static string NotFoundMessage(string? directory, string name, int major)
     {
-        string expected = OperatingSystem.IsWindows() ? $"{name}-{major}.dll" : OperatingSystem.IsMacOS() ? $"lib{name}.{major}.dylib" : $"lib{name}.so.{major}";
+        string expected = FFmpegNative.FileName(name, major);
         string hint = string.Empty;
         var dirs = directory is not null ? [directory] : new[] { "/usr/lib", "/usr/lib/x86_64-linux-gnu", "/usr/lib64", "/usr/local/lib" };
         var other = new List<string>();

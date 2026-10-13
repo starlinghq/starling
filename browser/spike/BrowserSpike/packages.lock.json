@@ -21,6 +21,12 @@
           "Microsoft.JSInterop.WebAssembly": "10.0.12"
         }
       },
+      "Microsoft.DotNet.HotReload.WebAssembly.Browser": {
+        "type": "Direct",
+        "requested": "[10.0.100, )",
+        "resolved": "10.0.100",
+        "contentHash": "bTCi3TK6L54rXu7pA0duoG6/OFt//LI1tK+oPD3HTrT4ghzGi5Jgn52X8xeFGpqadSIGf5JgIxRV/uvKXNP+ig=="
+      },
       "Microsoft.NET.ILLink.Tasks": {
         "type": "Direct",
         "requested": "[10.0.0, )",
@@ -32,6 +38,12 @@
         "requested": "[10.0.12, )",
         "resolved": "10.0.12",
         "contentHash": "MIeBVeWkbKdggl3kmmIUnx8ZNEgjD2m1gTN/0W+TDRn6zcL1WZdq5hXhGQ0wjuSlw/8tvwwCg79PemfkJ3+5JA=="
+      },
+      "Starlings.Tokenizers": {
+        "type": "Direct",
+        "requested": "[0.3.0-preview.1, 0.3.0-preview.1]",
+        "resolved": "0.3.0-preview.1",
+        "contentHash": "OE5QIlXWK9M/q/eeGuvw1yrun9nIHt9z/NXqyAPDAYS+qgZvxTt9DPuBCrzPOqUHptPEkKhGXrplXpUYZoI4Nw=="
       },
       "Microsoft.AspNetCore.Authorization": {
         "type": "Transitive",
@@ -253,9 +265,6 @@
         "dependencies": {
           "Microsoft.JSInterop": "10.0.12"
         }
-      },
-      "starlings.tokenizers": {
-        "type": "Project"
       }
     },
     "net10.0/browser-wasm": {}

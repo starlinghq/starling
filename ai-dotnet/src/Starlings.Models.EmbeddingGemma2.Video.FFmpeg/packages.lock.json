@@ -2,12 +2,6 @@
   "version": 2,
   "dependencies": {
     "net10.0": {
-      "FFmpeg.AutoGen": {
-        "type": "Direct",
-        "requested": "[8.1.0, 8.1.0]",
-        "resolved": "8.1.0",
-        "contentHash": "j7YbmE4QGst6OPk0w1D/EMBv7Ig1CoCnAVtSEYh/88q9MAVEzhu3FjgVFGYqH83jhz2opvaqZe90qG73RLMBWQ=="
-      },
       "System.Numerics.Tensors": {
         "type": "Transitive",
         "resolved": "9.0.0",

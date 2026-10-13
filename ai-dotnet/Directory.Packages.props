@@ -72,16 +72,4 @@
     <PackageVersion Include="SkiaSharp.NativeAssets.Linux.NoDependencies" Version="[4.153.1]" />
   </ItemGroup>
 
-  <!--
-    FFmpeg.AutoGen (MIT; managed bindings only, no native code), pinned to the version the EmbeddingGemma 2 video spike
-    tested against torchcodec (decoded RGB equal on all 22 fixture videos; docs/m0/embeddinggemma2-video-spike.md
-    section 6). It binds the FFmpeg 8.x ABI (libavcodec.so.62). Only the adapter package
-    Starlings.Models.EmbeddingGemma2.Video.FFmpeg and its tests reference it (CI dependency-boundary check).
-    FFmpeg itself is never shipped: the adapter loads the user's own (LGPL) FFmpeg shared libraries at run time.
-    The Sdcb FFmpeg bindings (LGPL) and any package that bundles FFmpeg binaries must not be referenced anywhere (CI check "No bundled
-    FFmpeg anywhere").
-  -->
-  <ItemGroup>
-    <PackageVersion Include="FFmpeg.AutoGen" Version="[8.1.0]" />
-  </ItemGroup>
 </Project>

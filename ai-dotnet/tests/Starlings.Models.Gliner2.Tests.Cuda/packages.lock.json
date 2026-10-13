@@ -151,7 +151,7 @@
         "dependencies": {
           "Starlings.Acquisition": "[0.1.0-preview.5, )",
           "Starlings.Runtime.Onnx": "[0.1.0-preview.5, )",
-          "Starlings.Tokenizers": "[0.1.0-preview.4, )"
+          "Starlings.Tokenizers": "[0.3.0-preview.1, 0.3.0-preview.1]"
         }
       },
       "starlings.runtime.onnx": {
@@ -159,9 +159,6 @@
         "dependencies": {
           "Microsoft.ML.OnnxRuntime.Managed": "[1.30.0, 1.30.0]"
         }
-      },
-      "starlings.tokenizers": {
-        "type": "Project"
       },
       "Microsoft.ML.OnnxRuntime.Managed": {
         "type": "CentralTransitive",
@@ -171,6 +168,12 @@
         "dependencies": {
           "System.Numerics.Tensors": "9.0.0"
         }
+      },
+      "Starlings.Tokenizers": {
+        "type": "CentralTransitive",
+        "requested": "[0.3.0-preview.1, 0.3.0-preview.1]",
+        "resolved": "0.3.0-preview.1",
+        "contentHash": "OE5QIlXWK9M/q/eeGuvw1yrun9nIHt9z/NXqyAPDAYS+qgZvxTt9DPuBCrzPOqUHptPEkKhGXrplXpUYZoI4Nw=="
       }
     }
   }

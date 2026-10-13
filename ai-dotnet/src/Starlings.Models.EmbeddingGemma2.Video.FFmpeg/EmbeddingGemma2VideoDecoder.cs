@@ -1,5 +1,4 @@
 using System.Runtime.InteropServices;
-using FFmpeg.AutoGen;
 
 namespace Starlings.Models.EmbeddingGemma2.Video.FFmpeg;
 
@@ -35,7 +34,6 @@ namespace Starlings.Models.EmbeddingGemma2.Video.FFmpeg;
 public sealed unsafe class EmbeddingGemma2VideoDecoder
 {
     private const int IoBufferSize = 64 * 1024;
-    private const int Eio = 5; // POSIX EIO (FFmpeg.AutoGen does not define it).
 
     private readonly EmbeddingGemma2FFmpegOptions _options;
 
@@ -181,15 +179,15 @@ public sealed unsafe class EmbeddingGemma2VideoDecoder
         var st = fmt->streams[si];
         long begin = long.MaxValue, end = long.MinValue;
         int n = 0;
-        var pkt = ffmpeg.av_packet_alloc();
+        var pkt = FFmpegNative.av_packet_alloc();
         try
         {
             int r;
-            while ((r = ffmpeg.av_read_frame(fmt, pkt)) >= 0)
+            while ((r = FFmpegNative.av_read_frame(fmt, pkt)) >= 0)
             {
-                if (pkt->stream_index == si && (pkt->flags & ffmpeg.AV_PKT_FLAG_DISCARD) == 0)
+                if (pkt->stream_index == si && (pkt->flags & FFmpegNative.AV_PKT_FLAG_DISCARD) == 0)
                 {
-                    long pts = pkt->pts != ffmpeg.AV_NOPTS_VALUE ? pkt->pts : pkt->dts;
+                    long pts = pkt->pts != FFmpegNative.AV_NOPTS_VALUE ? pkt->pts : pkt->dts;
                     begin = Math.Min(begin, pts);
                     end = Math.Max(end, pts + pkt->duration);
                     n++;
@@ -199,17 +197,17 @@ public sealed unsafe class EmbeddingGemma2VideoDecoder
                     }
                 }
 
-                ffmpeg.av_packet_unref(pkt);
+                FFmpegNative.av_packet_unref(pkt);
             }
 
-            if (r != ffmpeg.AVERROR_EOF)
+            if (r != FFmpegNative.AVERROR_EOF)
             {
                 throw new EmbeddingGemma2VideoDecodeException($"{input.Name}: reading packets failed: {Error(r)}.");
             }
         }
         finally
         {
-            ffmpeg.av_packet_free(&pkt);
+            FFmpegNative.av_packet_free(&pkt);
         }
 
         if (n == 0)
@@ -220,16 +218,10 @@ public sealed unsafe class EmbeddingGemma2VideoDecoder
         var tb = st->time_base;
         double Seconds(long pts) => (double)pts * tb.num / tb.den;
         double? rotation = null;
-        var sd = ffmpeg.av_packet_side_data_get(st->codecpar->coded_side_data, st->codecpar->nb_coded_side_data, AVPacketSideDataType.AV_PKT_DATA_DISPLAYMATRIX);
+        var sd = FFmpegNative.av_packet_side_data_get(st->codecpar->coded_side_data, st->codecpar->nb_coded_side_data, FFmpegNative.AV_PKT_DATA_DISPLAYMATRIX);
         if (sd != null && sd->size >= 9 * sizeof(int))
         {
-            var matrix = new int_array9();
-            for (uint k = 0; k < 9; k++)
-            {
-                matrix[k] = ((int*)sd->data)[k];
-            }
-
-            double degrees = ffmpeg.av_display_rotation_get(matrix);
+            double degrees = FFmpegNative.av_display_rotation_get((int*)sd->data);
             if (!double.IsNaN(degrees))
             {
                 rotation = degrees;
@@ -245,8 +237,8 @@ public sealed unsafe class EmbeddingGemma2VideoDecoder
             quarter ? st->codecpar->height : st->codecpar->width,
             quarter ? st->codecpar->width : st->codecpar->height,
             rotation,
-            ffmpeg.avcodec_get_name(st->codecpar->codec_id),
-            ffmpeg.av_get_pix_fmt_name((AVPixelFormat)st->codecpar->format) ?? "unknown",
+            FFmpegNative.Utf8(FFmpegNative.avcodec_get_name(st->codecpar->codec_id)),
+            PixelFormatName(st->codecpar->format),
             si);
     }
 
@@ -269,22 +261,22 @@ public sealed unsafe class EmbeddingGemma2VideoDecoder
 
         int last = indices.Max();
         var output = new EmbeddingGemma2Image?[indices.Length];
-        var codec = ffmpeg.avcodec_find_decoder(st->codecpar->codec_id);
+        var codec = FFmpegNative.avcodec_find_decoder(st->codecpar->codec_id);
         if (codec == null)
         {
             throw new EmbeddingGemma2VideoDecodeException($"{input.Name}: the FFmpeg build has no decoder for {metadata.Codec}.");
         }
 
-        AVCodecContext* cc = ffmpeg.avcodec_alloc_context3(codec);
-        AVPacket* pkt = ffmpeg.av_packet_alloc();
-        AVFrame* frame = ffmpeg.av_frame_alloc();
+        AVCodecContext* cc = FFmpegNative.avcodec_alloc_context3(codec);
+        AVPacket* pkt = FFmpegNative.av_packet_alloc();
+        AVFrame* frame = FFmpegNative.av_frame_alloc();
         using var converter = new Converter(quarterTurns, _options.MaxFramePixels, input.Name);
         try
         {
-            Check(ffmpeg.avcodec_parameters_to_context(cc, st->codecpar), input.Name, "avcodec_parameters_to_context");
+            Check(FFmpegNative.avcodec_parameters_to_context(cc, st->codecpar), input.Name, "avcodec_parameters_to_context");
             cc->thread_count = _options.DecoderThreads;
             cc->pkt_timebase = st->time_base;
-            Check(ffmpeg.avcodec_open2(cc, codec, null), input.Name, "avcodec_open2");
+            Check(FFmpegNative.avcodec_open2(cc, codec, null), input.Name, "avcodec_open2");
             int index = 0;
             bool flushing = false;
             while (index <= last)
@@ -292,16 +284,16 @@ public sealed unsafe class EmbeddingGemma2VideoDecoder
                 cancellationToken.ThrowIfCancellationRequested();
                 if (!flushing)
                 {
-                    int r = ffmpeg.av_read_frame(fmt, pkt);
+                    int r = FFmpegNative.av_read_frame(fmt, pkt);
                     if (r < 0)
                     {
-                        if (r != ffmpeg.AVERROR_EOF)
+                        if (r != FFmpegNative.AVERROR_EOF)
                         {
                             throw new EmbeddingGemma2VideoDecodeException($"{input.Name}: reading packets failed: {Error(r)}.");
                         }
 
                         flushing = true;
-                        Check(ffmpeg.avcodec_send_packet(cc, null), input.Name, "avcodec_send_packet (flush)");
+                        Check(FFmpegNative.avcodec_send_packet(cc, null), input.Name, "avcodec_send_packet (flush)");
                     }
                     else
                     {
@@ -309,25 +301,25 @@ public sealed unsafe class EmbeddingGemma2VideoDecoder
                         {
                             if (pkt->stream_index == si)
                             {
-                                Check(ffmpeg.avcodec_send_packet(cc, pkt), input.Name, "avcodec_send_packet");
+                                Check(FFmpegNative.avcodec_send_packet(cc, pkt), input.Name, "avcodec_send_packet");
                             }
                         }
                         finally
                         {
-                            ffmpeg.av_packet_unref(pkt);
+                            FFmpegNative.av_packet_unref(pkt);
                         }
                     }
                 }
 
                 while (index <= last)
                 {
-                    int r = ffmpeg.avcodec_receive_frame(cc, frame);
-                    if (r == ffmpeg.AVERROR(ffmpeg.EAGAIN))
+                    int r = FFmpegNative.avcodec_receive_frame(cc, frame);
+                    if (r == FFmpegNative.AVERROR_EAGAIN)
                     {
                         break;
                     }
 
-                    if (r == ffmpeg.AVERROR_EOF)
+                    if (r == FFmpegNative.AVERROR_EOF)
                     {
                         throw new EmbeddingGemma2VideoDecodeException($"{input.Name}: the decoder produced {index} frames; frame {last} was requested (the packet scan counted {metadata.FrameCount}).");
                     }
@@ -346,7 +338,7 @@ public sealed unsafe class EmbeddingGemma2VideoDecoder
                     }
                     finally
                     {
-                        ffmpeg.av_frame_unref(frame);
+                        FFmpegNative.av_frame_unref(frame);
                     }
 
                     index++;
@@ -355,9 +347,9 @@ public sealed unsafe class EmbeddingGemma2VideoDecoder
         }
         finally
         {
-            ffmpeg.av_frame_free(&frame);
-            ffmpeg.av_packet_free(&pkt);
-            ffmpeg.avcodec_free_context(&cc);
+            FFmpegNative.av_frame_free(&frame);
+            FFmpegNative.av_packet_free(&pkt);
+            FFmpegNative.avcodec_free_context(&cc);
         }
 
         return output.Select(f => f!).ToList();
@@ -394,8 +386,14 @@ public sealed unsafe class EmbeddingGemma2VideoDecoder
     {
         const int Size = 256;
         byte* buffer = stackalloc byte[Size];
-        ffmpeg.av_strerror(code, buffer, Size);
+        _ = FFmpegNative.av_strerror(code, buffer, Size); // FFmpeg writes a message even for an unknown code.
         return Marshal.PtrToStringUTF8((IntPtr)buffer) ?? code.ToString(System.Globalization.CultureInfo.InvariantCulture);
+    }
+
+    internal static string PixelFormatName(int format)
+    {
+        byte* name = FFmpegNative.av_get_pix_fmt_name(format);
+        return name == null ? "unknown" : FFmpegNative.Utf8(name);
     }
 
     /// <summary>An opened container (file or stream) with its best video stream; can be rewound for a second pass.</summary>
@@ -406,8 +404,6 @@ public sealed unsafe class EmbeddingGemma2VideoDecoder
         private AVFormatContext* _format;
         private AVIOContext* _io;
         private GCHandle _self;
-        private avio_alloc_context_read_packet? _read;
-        private avio_alloc_context_seek? _seek;
 
         private Input(string? path, Stream? stream)
         {
@@ -473,17 +469,15 @@ public sealed unsafe class EmbeddingGemma2VideoDecoder
                         _streamStart = _stream.Position;
                     }
 
-                    fmt = ffmpeg.avformat_alloc_context();
+                    fmt = FFmpegNative.avformat_alloc_context();
                     _self = GCHandle.Alloc(this);
-                    _read = Read;
-                    _seek = Seek;
-                    byte* buffer = (byte*)ffmpeg.av_malloc(IoBufferSize);
-                    _io = ffmpeg.avio_alloc_context(buffer, IoBufferSize, 0, (void*)GCHandle.ToIntPtr(_self), _read, null, _seek);
+                    byte* buffer = (byte*)FFmpegNative.av_malloc(IoBufferSize);
+                    _io = FFmpegNative.avio_alloc_context(buffer, IoBufferSize, 0, (void*)GCHandle.ToIntPtr(_self), &ReadPacket, null, &SeekPacket);
                     fmt->pb = _io;
-                    fmt->flags |= ffmpeg.AVFMT_FLAG_CUSTOM_IO;
+                    fmt->flags |= FFmpegNative.AVFMT_FLAG_CUSTOM_IO;
                 }
 
-                int r = ffmpeg.avformat_open_input(&fmt, _path, null, null);
+                int r = FFmpegNative.avformat_open_input(&fmt, _path, null, null);
                 if (r < 0)
                 {
                     // avformat_open_input frees the context on failure.
@@ -492,8 +486,8 @@ public sealed unsafe class EmbeddingGemma2VideoDecoder
                 }
 
                 _format = fmt;
-                Check(ffmpeg.avformat_find_stream_info(_format, null), Name, "avformat_find_stream_info");
-                int si = ffmpeg.av_find_best_stream(_format, AVMediaType.AVMEDIA_TYPE_VIDEO, -1, -1, null, 0);
+                Check(FFmpegNative.avformat_find_stream_info(_format, null), Name, "avformat_find_stream_info");
+                int si = FFmpegNative.av_find_best_stream(_format, FFmpegNative.AVMEDIA_TYPE_VIDEO, -1, -1, null, 0);
                 if (si < 0)
                 {
                     throw new EmbeddingGemma2VideoDecodeException($"{Name}: no video stream ({Error(si)}).");
@@ -505,7 +499,7 @@ public sealed unsafe class EmbeddingGemma2VideoDecoder
             {
                 if (fmt != null && _format == null)
                 {
-                    ffmpeg.avformat_free_context(fmt);
+                    FFmpegNative.avformat_free_context(fmt);
                 }
 
                 Close();
@@ -513,28 +507,36 @@ public sealed unsafe class EmbeddingGemma2VideoDecoder
             }
         }
 
-        private int Read(void* opaque, byte* buffer, int size)
+        [UnmanagedCallersOnly]
+        private static int ReadPacket(void* opaque, byte* buffer, int size) =>
+            ((Input)GCHandle.FromIntPtr((IntPtr)opaque).Target!).Read(buffer, size);
+
+        [UnmanagedCallersOnly]
+        private static long SeekPacket(void* opaque, long offset, int whence) =>
+            ((Input)GCHandle.FromIntPtr((IntPtr)opaque).Target!).Seek(offset, whence);
+
+        private int Read(byte* buffer, int size)
         {
             try
             {
                 int n = _stream!.Read(new Span<byte>(buffer, size));
-                return n == 0 ? ffmpeg.AVERROR_EOF : n;
+                return n == 0 ? FFmpegNative.AVERROR_EOF : n;
             }
 #pragma warning disable CA1031 // Errors cannot cross the native boundary; FFmpeg receives an error code.
             catch
 #pragma warning restore CA1031
             {
-                return ffmpeg.AVERROR(Eio);
+                return FFmpegNative.AVERROR_EIO;
             }
         }
 
-        private long Seek(void* opaque, long offset, int whence)
+        private long Seek(long offset, int whence)
         {
             try
             {
                 var s = _stream!;
                 long length = s.Length - _streamStart;
-                if ((whence & ffmpeg.AVSEEK_SIZE) != 0)
+                if ((whence & FFmpegNative.AVSEEK_SIZE) != 0)
                 {
                     return length;
                 }
@@ -548,7 +550,7 @@ public sealed unsafe class EmbeddingGemma2VideoDecoder
                 };
                 if (target < 0)
                 {
-                    return ffmpeg.AVERROR(ffmpeg.EINVAL);
+                    return FFmpegNative.AVERROR_EINVAL;
                 }
 
                 s.Position = _streamStart + target;
@@ -558,7 +560,7 @@ public sealed unsafe class EmbeddingGemma2VideoDecoder
             catch
 #pragma warning restore CA1031
             {
-                return ffmpeg.AVERROR(Eio);
+                return FFmpegNative.AVERROR_EIO;
             }
         }
 
@@ -567,15 +569,15 @@ public sealed unsafe class EmbeddingGemma2VideoDecoder
             if (_format != null)
             {
                 var f = _format;
-                ffmpeg.avformat_close_input(&f);
+                FFmpegNative.avformat_close_input(&f);
                 _format = null;
             }
 
             if (_io != null)
             {
-                ffmpeg.av_freep(&_io->buffer);
+                FFmpegNative.av_freep(&_io->buffer);
                 var io = _io;
-                ffmpeg.avio_context_free(&io);
+                FFmpegNative.avio_context_free(&io);
                 _io = null;
             }
 
@@ -592,7 +594,7 @@ public sealed unsafe class EmbeddingGemma2VideoDecoder
     private sealed class Converter(int quarterTurns, long maxPixels, string name) : IDisposable
     {
         private SwsContext* _sws;
-        private (int W, int H, int Format, AVColorSpace Space, AVColorRange Range) _swsKey;
+        private (int W, int H, int Format, int Space, int Range) _swsKey;
         private AVFilterGraph* _graph;
         private AVFilterContext* _source;
         private AVFilterContext* _sink;
@@ -616,41 +618,39 @@ public sealed unsafe class EmbeddingGemma2VideoDecoder
             {
                 if (_sws != null)
                 {
-                    ffmpeg.sws_freeContext(_sws);
+                    FFmpegNative.sws_freeContext(_sws);
                 }
 
-                _sws = ffmpeg.sws_getContext(w, h, (AVPixelFormat)f->format, w, h, AVPixelFormat.AV_PIX_FMT_RGB24, 0, null, null, null);
+                _sws = FFmpegNative.sws_getContext(w, h, f->format, w, h, FFmpegNative.AV_PIX_FMT_RGB24, 0, null, null, null);
                 if (_sws == null)
                 {
-                    throw new EmbeddingGemma2VideoDecodeException($"{name}: sws_getContext failed for {ffmpeg.av_get_pix_fmt_name((AVPixelFormat)f->format)} {w}x{h}.");
+                    throw new EmbeddingGemma2VideoDecodeException($"{name}: sws_getContext failed for {PixelFormatName(f->format)} {w}x{h}.");
                 }
 
                 int* invTable;
                 int* table;
                 int srcRange, dstRange, brightness, contrast, saturation;
-                Check(ffmpeg.sws_getColorspaceDetails(_sws, &invTable, &srcRange, &table, &dstRange, &brightness, &contrast, &saturation), name, "sws_getColorspaceDetails");
-                if (f->color_range != AVColorRange.AVCOL_RANGE_UNSPECIFIED)
+                Check(FFmpegNative.sws_getColorspaceDetails(_sws, &invTable, &srcRange, &table, &dstRange, &brightness, &contrast, &saturation), name, "sws_getColorspaceDetails");
+                if (f->color_range != FFmpegNative.AVCOL_RANGE_UNSPECIFIED)
                 {
-                    srcRange = f->color_range == AVColorRange.AVCOL_RANGE_JPEG ? 1 : 0;
+                    srcRange = f->color_range == FFmpegNative.AVCOL_RANGE_JPEG ? 1 : 0;
                 }
 
-                int* coefficients = ffmpeg.sws_getCoefficients((int)f->colorspace);
-                var c4 = new int_array4();
-                for (uint i = 0; i < 4; i++)
-                {
-                    c4[i] = coefficients[i];
-                }
-
-                Check(ffmpeg.sws_setColorspaceDetails(_sws, c4, srcRange, c4, dstRange, brightness, contrast, saturation), name, "sws_setColorspaceDetails");
+                int* coefficients = FFmpegNative.sws_getCoefficients(f->colorspace);
+                Check(FFmpegNative.sws_setColorspaceDetails(_sws, coefficients, srcRange, coefficients, dstRange, brightness, contrast, saturation), name, "sws_setColorspaceDetails");
                 _swsKey = key;
             }
 
             var rgb = new byte[checked(w * h * 3)];
             fixed (byte* p = rgb)
             {
-                var dst = new byte_ptrArray4 { [0] = p };
-                var dstStride = new int_array4 { [0] = w * 3 };
-                int rows = ffmpeg.sws_scale(_sws, f->data, f->linesize, 0, h, dst, dstStride);
+                byte** dst = stackalloc byte*[4];
+                int* dstStride = stackalloc int[4];
+                dst[0] = p;
+                dst[1] = dst[2] = dst[3] = null;
+                dstStride[0] = w * 3;
+                dstStride[1] = dstStride[2] = dstStride[3] = 0;
+                int rows = FFmpegNative.sws_scale(_sws, (byte**)f->data, f->linesize, 0, h, dst, dstStride);
                 if (rows != h)
                 {
                     throw new EmbeddingGemma2VideoDecodeException($"{name}: sws_scale converted {rows} of {h} rows.");
@@ -670,55 +670,55 @@ public sealed unsafe class EmbeddingGemma2VideoDecoder
                 _graphKey = key;
             }
 
-            Check(ffmpeg.av_buffersrc_write_frame(_source, f), name, "av_buffersrc_write_frame");
-            AVFrame* o = ffmpeg.av_frame_alloc();
+            Check(FFmpegNative.av_buffersrc_write_frame(_source, f), name, "av_buffersrc_write_frame");
+            AVFrame* o = FFmpegNative.av_frame_alloc();
             try
             {
-                Check(ffmpeg.av_buffersink_get_frame(_sink, o), name, "av_buffersink_get_frame");
-                if ((AVPixelFormat)o->format != AVPixelFormat.AV_PIX_FMT_RGB24)
+                Check(FFmpegNative.av_buffersink_get_frame(_sink, o), name, "av_buffersink_get_frame");
+                if (o->format != FFmpegNative.AV_PIX_FMT_RGB24)
                 {
-                    throw new EmbeddingGemma2VideoDecodeException($"{name}: the filter graph produced {ffmpeg.av_get_pix_fmt_name((AVPixelFormat)o->format)}, not rgb24.");
+                    throw new EmbeddingGemma2VideoDecodeException($"{name}: the filter graph produced {PixelFormatName(o->format)}, not rgb24.");
                 }
 
                 int w = o->width, h = o->height;
                 var rgb = new byte[checked(w * h * 3)];
                 for (int y = 0; y < h; y++)
                 {
-                    new ReadOnlySpan<byte>(o->data[0] + ((long)y * o->linesize[0]), w * 3).CopyTo(rgb.AsSpan(y * w * 3, w * 3));
+                    new ReadOnlySpan<byte>(((byte**)o->data)[0] + ((long)y * o->linesize[0]), w * 3).CopyTo(rgb.AsSpan(y * w * 3, w * 3));
                 }
 
                 return EmbeddingGemma2Image.FromRgb24(w, h, rgb);
             }
             finally
             {
-                ffmpeg.av_frame_free(&o);
+                FFmpegNative.av_frame_free(&o);
             }
         }
 
         private void BuildGraph(AVFrame* f, AVRational timeBase)
         {
-            _graph = ffmpeg.avfilter_graph_alloc();
-            var parameters = ffmpeg.av_buffersrc_parameters_alloc();
+            _graph = FFmpegNative.avfilter_graph_alloc();
+            var parameters = FFmpegNative.av_buffersrc_parameters_alloc();
             parameters->format = f->format;
             parameters->width = f->width;
             parameters->height = f->height;
             parameters->sample_aspect_ratio = f->sample_aspect_ratio;
             parameters->time_base = timeBase;
-            _source = ffmpeg.avfilter_graph_alloc_filter(_graph, ffmpeg.avfilter_get_by_name("buffer"), "in");
-            int r = ffmpeg.av_buffersrc_parameters_set(_source, parameters);
-            ffmpeg.av_free(parameters);
+            _source = FFmpegNative.avfilter_graph_alloc_filter(_graph, FFmpegNative.avfilter_get_by_name("buffer"), "in");
+            int r = FFmpegNative.av_buffersrc_parameters_set(_source, parameters);
+            FFmpegNative.av_free(parameters);
             Check(r, name, "av_buffersrc_parameters_set");
-            Check(ffmpeg.avfilter_init_str(_source, null), name, "buffer init");
-            _sink = ffmpeg.avfilter_graph_alloc_filter(_graph, ffmpeg.avfilter_get_by_name("buffersink"), "out");
-            Check(ffmpeg.av_opt_set(_sink, "pixel_formats", "rgb24", ffmpeg.AV_OPT_SEARCH_CHILDREN), name, "buffersink pixel_formats");
-            Check(ffmpeg.avfilter_init_str(_sink, null), name, "buffersink init");
-            var outputs = ffmpeg.avfilter_inout_alloc();
-            outputs->name = ffmpeg.av_strdup("in");
+            Check(FFmpegNative.avfilter_init_str(_source, null), name, "buffer init");
+            _sink = FFmpegNative.avfilter_graph_alloc_filter(_graph, FFmpegNative.avfilter_get_by_name("buffersink"), "out");
+            Check(FFmpegNative.av_opt_set(_sink, "pixel_formats", "rgb24", FFmpegNative.AV_OPT_SEARCH_CHILDREN), name, "buffersink pixel_formats");
+            Check(FFmpegNative.avfilter_init_str(_sink, null), name, "buffersink init");
+            var outputs = FFmpegNative.avfilter_inout_alloc();
+            outputs->name = FFmpegNative.av_strdup("in");
             outputs->filter_ctx = _source;
             outputs->pad_idx = 0;
             outputs->next = null;
-            var inputs = ffmpeg.avfilter_inout_alloc();
-            inputs->name = ffmpeg.av_strdup("out");
+            var inputs = FFmpegNative.avfilter_inout_alloc();
+            inputs->name = FFmpegNative.av_strdup("out");
             inputs->filter_ctx = _sink;
             inputs->pad_idx = 0;
             inputs->next = null;
@@ -731,15 +731,15 @@ public sealed unsafe class EmbeddingGemma2VideoDecoder
             };
             try
             {
-                Check(ffmpeg.avfilter_graph_parse_ptr(_graph, description, &inputs, &outputs, null), name, "avfilter_graph_parse_ptr");
+                Check(FFmpegNative.avfilter_graph_parse_ptr(_graph, description, &inputs, &outputs, null), name, "avfilter_graph_parse_ptr");
             }
             finally
             {
-                ffmpeg.avfilter_inout_free(&inputs);
-                ffmpeg.avfilter_inout_free(&outputs);
+                FFmpegNative.avfilter_inout_free(&inputs);
+                FFmpegNative.avfilter_inout_free(&outputs);
             }
 
-            Check(ffmpeg.avfilter_graph_config(_graph, null), name, "avfilter_graph_config");
+            Check(FFmpegNative.avfilter_graph_config(_graph, null), name, "avfilter_graph_config");
         }
 
         private void FreeGraph()
@@ -747,7 +747,7 @@ public sealed unsafe class EmbeddingGemma2VideoDecoder
             if (_graph != null)
             {
                 var g = _graph;
-                ffmpeg.avfilter_graph_free(&g);
+                FFmpegNative.avfilter_graph_free(&g);
                 _graph = null;
                 _source = null;
                 _sink = null;
@@ -758,7 +758,7 @@ public sealed unsafe class EmbeddingGemma2VideoDecoder
         {
             if (_sws != null)
             {
-                ffmpeg.sws_freeContext(_sws);
+                FFmpegNative.sws_freeContext(_sws);
                 _sws = null;
             }
 

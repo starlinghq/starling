@@ -129,7 +129,7 @@ internal static class EmbeddingGemma2VideoDump
             ["onnxruntime_managed"] = vd.ManagedBindingVersion,
             ["session_providers"] = vd.SessionProviders,
             ["intra_op_threads"] = vd.IntraOpNumThreads,
-            ["video_decoder"] = "Starlings.Models.EmbeddingGemma2.Video.FFmpeg (FFmpeg.AutoGen 8.1.0)",
+            ["video_decoder"] = "Starlings.Models.EmbeddingGemma2.Video.FFmpeg (generated FFmpeg 8.1 bindings)",
             ["ffmpeg_version"] = libs.Version,
             ["ffmpeg_major"] = EmbeddingGemma2FFmpeg.SupportedFFmpegMajor, // the loader accepts only the FFmpeg 8 library majors
             ["ffmpeg_libraries"] = libs.LibraryVersions,
