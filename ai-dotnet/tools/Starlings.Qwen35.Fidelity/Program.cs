@@ -12,6 +12,9 @@
 // semantics: max-token boundary, stop sequences, additional stop ids, cached vs uncached logits, cancellation and
 //            reuse, concurrent and interleaved requests, seeded sampling, the text path with enable_thinking:
 //            semantics.json.
+// longcontext: per prompt, greedy decoding on the native sequence with chunked prefill (--prefill-chunk, default 512),
+//            the chosen-token log-probability at every step against the reference's (transformers' cached decoding),
+//            and cached vs uncached logits at a few steps (a fresh chunked prefill of the same prefix): longcontext.json.
 // Score with: python model-pipeline/reference/generation/compare.py --reference <ref> --candidate <out>.
 using System.Collections.Concurrent;
 using System.Collections.Immutable;
@@ -91,6 +94,11 @@ if (opt.Modes.Contains("semantics"))
 if (opt.Modes.Contains("stress"))
 {
     Stress();
+}
+
+if (opt.Modes.Contains("longcontext"))
+{
+    LongContext();
 }
 
 
@@ -574,6 +582,140 @@ void RawStress()
     }
 
     File.WriteAllText(Path.Combine(opt.Out, "rawstress.json"), res.ToJsonString(Json.Indented) + "\n");
+}
+
+void LongContext()
+{
+    int chunk = opt.PrefillChunk ?? 512;
+    Directory.CreateDirectory(Path.Combine(opt.Out, "step0"));
+    string refPath = File.Exists(Path.Combine(opt.Reference, "generation.jsonl")) ? Path.Combine(opt.Reference, "generation.jsonl") : Path.Combine(opt.Reference, "results.jsonl");
+    var refRows = File.ReadAllText(refPath, Encoding.UTF8).Split('\n').Where(l => l.Trim().Length > 0)
+        .Select(l => JsonNode.Parse(l)!.AsObject()).ToDictionary(r => (string)r["id"]!);
+    var rows = new JsonArray();
+    foreach (var c in cases)
+    {
+        var refRow = refRows[c.Id];
+        double[] refLp = [.. refRow["step_logprob"]!.AsArray().Select(x => (double)x!)];
+        double[] refMargin = [.. refRow["step_margin"]!.AsArray().Select(x => (double)x!)];
+        int steps = c.MaxNewTokens;
+        int[] checkpoints = [.. new[] { 2, steps / 2, steps }.Where(k => k >= 2).Distinct()];
+        var gen = new List<int>();
+        var chosenLp = new List<double>();
+        var cachedAt = new Dictionary<int, float[]>();
+        float[] step0;
+        var clock = Stopwatch.StartNew();
+        double prefillMs;
+        using (var seq = model.Backend.CreateSequence(new GenAISequenceOptions { MaxLength = c.RefPromptIds.Length + steps }))
+        {
+            for (int i = 0; i < c.RefPromptIds.Length; i += chunk)
+            {
+                seq.AppendTokens(c.RefPromptIds.AsSpan(i, Math.Min(chunk, c.RefPromptIds.Length - i)));
+            }
+
+            prefillMs = clock.Elapsed.TotalMilliseconds;
+            var l0 = new float[seq.VocabularySize];
+            seq.CopyLastLogits(l0);
+            step0 = LogSoftmax(l0);
+            WriteF32(Path.Combine(opt.Out, "step0", c.Id + ".f32"), step0);
+            for (int k = 1; k <= steps && !seq.IsDone; k++)
+            {
+                int t = seq.GenerateNextToken();
+                gen.Add(t);
+
+                // After GenerateNextToken, GenAI reports the logits that selected t (P-016 evidence, section 4).
+                var l = new float[seq.VocabularySize];
+                seq.CopyLastLogits(l);
+                var lp = LogSoftmax(l);
+                chosenLp.Add(lp[t]);
+                if (checkpoints.Contains(k))
+                {
+                    cachedAt[k] = lp;
+                }
+
+                if (model.Info.StopTokenIds.Contains(t))
+                {
+                    break;
+                }
+            }
+        }
+
+        double decodeMs = clock.Elapsed.TotalMilliseconds - prefillMs;
+        int n = 0;
+        while (n < gen.Count && n < c.RefOutputIds.Length && gen[n] == c.RefOutputIds[n])
+        {
+            n++;
+        }
+
+        // Chosen-token log-probability against the reference over the common prefix.
+        double lpWorst = 0;
+        for (int k = 0; k < n; k++)
+        {
+            lpWorst = Math.Max(lpWorst, Math.Abs(chosenLp[k] - refLp[k]));
+        }
+
+        var cache = new JsonArray();
+        double cacheWorst = 0;
+        foreach (int k in checkpoints.Where(k => k <= gen.Count))
+        {
+            int[] prefix = [.. c.RefPromptIds, .. gen.Take(k - 1)];
+            var t0 = Stopwatch.GetTimestamp();
+            var unc = LogSoftmax(PrefillChunked(prefix, chunk));
+            double d = MaxAbs(cachedAt[k], unc);
+            cacheWorst = Math.Max(cacheWorst, d);
+            cache.Add(new JsonObject
+            {
+                ["step"] = k,
+                ["prefix_tokens"] = prefix.Length,
+                ["max_abs_logprob"] = d,
+                ["uncached_argmax_equals_token"] = ArgMax(unc) == gen[k - 1],
+                ["uncached_chosen_logprob_minus_reference"] = k - 1 < n ? unc[gen[k - 1]] - refLp[k - 1] : null,
+                ["uncached_prefill_ms"] = Stopwatch.GetElapsedTime(t0).TotalMilliseconds,
+            });
+        }
+
+        int[] refOut = c.RefOutputIds;
+        var row = new JsonObject
+        {
+            ["id"] = c.Id,
+            ["prompt_tokens"] = c.RefPromptIds.Length,
+            ["prefill_chunk_tokens"] = chunk,
+            ["generated"] = gen.Count,
+            ["reference_generated"] = refOut.Length,
+            ["exact"] = gen.SequenceEqual(refOut),
+            ["common_prefix"] = n,
+            ["first_divergence_reference_margin"] = n < Math.Min(gen.Count, refOut.Length) ? refMargin[n] : null,
+            ["min_reference_margin"] = refMargin.Take(Math.Max(n, 1)).Min(),
+            ["step0_argmax"] = ArgMax(step0),
+            ["step0_argmax_equals_reference"] = ArgMax(step0) == refOut[0],
+            ["chosen_logprob_max_abs_vs_reference"] = lpWorst,
+            ["cached_vs_uncached_max_abs_logprob"] = cacheWorst,
+            ["cached_vs_uncached"] = cache,
+            ["output_ids"] = Ints(gen),
+            ["output_text"] = model.Tokenizer.Decode(gen.Where(i => !model.Info.StopTokenIds.Contains(i)).ToArray(), false),
+            ["prefill_ms"] = prefillMs,
+            ["decode_ms"] = decodeMs,
+        };
+        rows.Add(row);
+        Console.WriteLine(string.Create(CultureInfo.InvariantCulture,
+            $"{c.Id,-14} prompt {c.RefPromptIds.Length,6} gen {gen.Count,3} {((bool)row["exact"]! ? "exact" : $"DIFF@{n}")} " +
+            $"step0 {((bool)row["step0_argmax_equals_reference"]! ? "eq" : "NE")} chosen-lp {lpWorst:E2} cache {cacheWorst:E2} " +
+            $"prefill {prefillMs / 1000:F1}s decode {decodeMs / 1000:F1}s"));
+    }
+
+    File.WriteAllText(Path.Combine(opt.Out, "longcontext.json"), rows.ToJsonString(Json.Indented) + "\n");
+}
+
+float[] PrefillChunked(int[] ids, int chunk)
+{
+    using var seq = model.Backend.CreateSequence(new GenAISequenceOptions { MaxLength = ids.Length + 1 });
+    for (int i = 0; i < ids.Length; i += chunk)
+    {
+        seq.AppendTokens(ids.AsSpan(i, Math.Min(chunk, ids.Length - i)));
+    }
+
+    var l = new float[seq.VocabularySize];
+    seq.CopyLastLogits(l);
+    return l;
 }
 
 float[] Prefill(int[] ids)

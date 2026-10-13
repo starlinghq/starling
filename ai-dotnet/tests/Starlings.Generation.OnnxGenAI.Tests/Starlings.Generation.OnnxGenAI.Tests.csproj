@@ -13,7 +13,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Include="../Shared/Qwen35/*.cs" Link="Shared/Qwen35/%(Filename)%(Extension)" />
+    <!-- Qwen35LogitChecks needs Qwen35ChatModel internals, which this project does not see. -->
+    <Compile Include="../Shared/Qwen35/*.cs" Exclude="../Shared/Qwen35/Qwen35LogitChecks.cs" Link="Shared/Qwen35/%(Filename)%(Extension)" />
   </ItemGroup>
 
   <ItemGroup>

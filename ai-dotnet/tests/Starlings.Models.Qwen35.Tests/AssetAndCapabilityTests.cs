@@ -101,6 +101,49 @@ public sealed class AssetAndCapabilityTests
         Assert.Equal(Qwen35CapabilityStatus.Unsupported, all["cancellation.inside_a_step"]);
     }
 
+    /// <summary>
+    /// Batch independence (plan 10.1) does not apply because batching is not offered (capability "batch" unsupported):
+    /// no public entry point of the model or the generation backend takes several prompts or conversations, and no
+    /// option asks GenAI for a batch or several return sequences. One request is one sequence; concurrency is tested
+    /// separately (ConcurrentRequestsAreIndependent).
+    /// </summary>
+    [Fact]
+    public void BatchIsNotOfferedByAnyPublicEntryPoint()
+    {
+        Assert.Equal(Qwen35CapabilityStatus.Unsupported, Qwen35Capabilities.All["batch"]);
+        var types = typeof(Qwen35ChatModel).Assembly.GetExportedTypes().Concat(typeof(TextGenerator).Assembly.GetExportedTypes()).ToList();
+        foreach (var type in types)
+        {
+            foreach (var member in type.GetMembers(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Static))
+            {
+                Assert.False(member.Name.Contains("Batch", StringComparison.OrdinalIgnoreCase) || member.Name.Contains("ReturnSequences", StringComparison.OrdinalIgnoreCase), $"{type.Name}.{member.Name}");
+            }
+
+            foreach (var method in type.GetMethods().Cast<System.Reflection.MethodBase>().Concat(type.GetConstructors()))
+            {
+                foreach (var p in method.GetParameters())
+                {
+                    Assert.False(IsCollectionOfPrompts(p.ParameterType), $"{type.Name}.{method.Name}({p.Name}: {p.ParameterType})");
+                }
+            }
+        }
+
+        static bool IsCollectionOfPrompts(Type t)
+        {
+            var element = t.IsArray ? t.GetElementType() : t.GetInterfaces().Append(t)
+                .FirstOrDefault(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IEnumerable<>))?.GetGenericArguments()[0];
+            if (element is null || element == typeof(char))
+            {
+                return false;
+            }
+
+            bool sequenceOfIds = element.IsArray && element.GetElementType() == typeof(int) ||
+                element.GetInterfaces().Append(element).Any(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IEnumerable<>) && i.GetGenericArguments()[0] == typeof(int));
+            bool conversation = element.GetInterfaces().Append(element).Any(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IEnumerable<>) && i.GetGenericArguments()[0] == typeof(Qwen35Message));
+            return sequenceOfIds || conversation || element == typeof(Qwen35Prompt);
+        }
+    }
+
     [Fact]
     public void PadOverlayIsOutsideTheTokenizerVocabulary()
     {

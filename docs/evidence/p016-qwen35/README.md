@@ -86,7 +86,7 @@ CUDA_DEVICE_ORDER=PCI_BUS_ID CUDA_VISIBLE_DEVICES=<gpu> dotnet run --project ai-
   --reference <reference dir> --out <dir> --modes rawstress
 ```
 
-Not yet reported upstream (microsoft/onnxruntime-genai); the cause inside GenAI or the ORT CUDA provider was not investigated.
+Not yet reported upstream (microsoft/onnxruntime-genai); the cause inside GenAI or the ORT CUDA provider was not investigated. A report with a standalone reproducer (no Starling code) is drafted in `upstream-report-draft.md` for the maintainer to file (production-readiness M9).
 
 ## 6. Failures during the runs
 
