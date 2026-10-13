@@ -116,6 +116,8 @@ jobs:
       - run: ruff format --check .
       - run: pytest
       - run: model-pipeline validate registry
+      # P-021: docs/catalog is generated from the registry; fail when the committed catalog is stale.
+      - run: model-pipeline catalog --check
 
   repo:
     name: repository checks

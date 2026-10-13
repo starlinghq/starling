@@ -15,6 +15,7 @@ The delivery system: model registry, manifest schema, admission records, referen
 | `reference/` | Reference runners with pinned requirements, and the tokenizer conformance corpus. See `reference/README.md`. | P-003, P-004, P-027 |
 | `src/model_pipeline/` | CLI and stage implementations: `manifest.py` (validation), `fixtures.py` (fixture format), `results.py` (stage results format), `evaluate.py` (staged fidelity evaluator), `protection.py` (protected evidence rules). | P-002 onward |
 | `tests/` | Pipeline tests with synthetic fixtures. | |
+| `src/model_pipeline/catalog.py` | Generates `docs/catalog/` (README, compatibility matrix, `catalog.json`) from the registry; `model-pipeline catalog --check` runs in CI. | P-021 |
 
 ## Commands
 
@@ -26,6 +27,7 @@ Qwen text generation with proposed development comparisons.
 ```sh
 pip install -e '.[dev]'
 model-pipeline validate registry
+model-pipeline catalog [--check]            # P-021: regenerate docs/catalog (or fail if stale)
 model-pipeline bench summarize <raw.jsonl>   # P-008: medians, p5-p95, bootstrap CIs, C# vs Python
 pytest
 ruff check . && ruff format --check .
@@ -33,8 +35,7 @@ ruff check . && ruff format --check .
 
 The onboarding runner orchestrates model-specific reference/backend/.NET tools with resumable stages,
 and workflows aggregate independent per-model records. The reference implementations in `reference/`
-remain model-specific. Additional model routes, upstream change detection (P-020), and catalog
-generation (P-021) remain follow-on work.
+remain model-specific. Additional model routes and upstream change detection (P-020) remain follow-on work.
 Acquisition and verified loading (P-009) is the C# `Starlings.Acquisition` library and tool in `ai-dotnet/`.
 
 ## Staged fidelity evaluator (P-007)
