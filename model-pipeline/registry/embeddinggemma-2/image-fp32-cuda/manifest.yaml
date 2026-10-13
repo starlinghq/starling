@@ -270,6 +270,11 @@ qualification:
     G0: { status: checklist, evidence: docs/m0/embeddinggemma2-image-spike.md, date: 2026-10-11 }
     G1: { status: not-run }
     G2: { status: not-run }
+    G3: { status: not-run }
+    G4: { status: not-run }
+    G5: { status: not-run }
+    G6: { status: not-run }
+    G7: { status: not-run }
 
 maintenance:
   owner: Mark

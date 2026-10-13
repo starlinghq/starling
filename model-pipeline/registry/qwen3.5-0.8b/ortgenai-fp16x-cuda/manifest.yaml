@@ -224,6 +224,13 @@ qualification:
     G0: { status: checklist, evidence: docs/evidence/p016-qwen35/README.md, date: 2026-10-10 }
     G1: { status: checklist, evidence: docs/evidence/p016-qwen35/README.md, date: 2026-10-10 }
     G2: { status: checklist, evidence: docs/evidence/p016-qwen35/README.md, date: 2026-10-10 }
+    G3: { status: not-run }
+    # G4 checklist: plan 10.1 LLM semantics (max tokens, stop, EOS, cache, chunked prefill, cancellation, isolation,
+    # seeded sampling) in section 4; CUDA concurrency defect and serialization in section 5. No soak (plan 10.2).
+    G4: { status: checklist, evidence: docs/evidence/p016-qwen35/README.md, date: 2026-10-10 }
+    G5: { status: not-run }
+    G6: { status: not-run }
+    G7: { status: not-run }
 
 maintenance:
   owner: Mark

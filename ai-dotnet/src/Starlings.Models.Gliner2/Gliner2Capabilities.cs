@@ -62,5 +62,6 @@ public static class Gliner2Capabilities
         ["persistence"] = Gliner2CapabilityStatus.Unsupported,
         ["training"] = Gliner2CapabilityStatus.Unsupported,
         ["extensions_ai"] = Gliner2CapabilityStatus.Unsupported,
+        ["mlnet"] = Gliner2CapabilityStatus.Unsupported,
     };
 }
