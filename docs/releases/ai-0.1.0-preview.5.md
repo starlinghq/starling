@@ -2,7 +2,7 @@
 
 Named `ai-*` rather than `e5-*` because the set now covers e5, GLiNER2, Qwen 3.5 and EmbeddingGemma 2; earlier records (`e5-0.1.0-preview.1` to `.4`) keep their names.
 
-**Not published.** Nothing is on nuget.org, no tag exists and no GitHub release was made. Publishing is a maintainer action and still waits for the `release` environment and the `Starlings` prefix reservation (`docs/kickoff.md`).
+**Publishing.** The `release` workflow publishes this candidate from the tag `ai-v0.1.0-preview.5`, after a maintainer approves the `release` environment: the 13 packages of the publishable set below, through NuGet trusted publishing, plus a GitHub release with this record as notes. Until that run, nothing is on nuget.org.
 
 **FFmpeg adapter held.** `Starlings.Models.EmbeddingGemma2.Video.FFmpeg` 0.1.0-preview.5 is built and drilled locally, but it is **not part of the publishable set**. It stays out of every published release until the legal review of the FFmpeg adapter is done (decision D2, Mark, 2026-10-12). The review covers dynamic loading of the user's own LGPL FFmpeg, shipping no FFmpeg binaries, rejecting GPL and nonfree builds unless the caller opts in, leaving codec patent responsibility with the deployer, and FFmpeg.AutoGen 8.1.0 under MIT (`ai-dotnet/THIRD-PARTY-NOTICES.md`). No other package depends on it, so holding it back leaves the rest of the set whole.
 
@@ -12,11 +12,11 @@ This candidate exists because ai-dotnet source changed after 0.1.0-preview.4 (`7
 
 ## Packages
 
-All packages target `net10.0`, are MIT-licensed and have SourceLink to the commit. Platform statuses come from the package READMEs and the capability table in `ai-dotnet/README.md`, where every capability not listed as experimental is untested or unsupported.
+All packages target `net10.0`, are licensed MIT OR Apache-2.0 and have SourceLink to the commit. Platform statuses come from the package READMEs and the capability table in `ai-dotnet/README.md`, where every capability not listed as experimental is untested or unsupported.
 
 | Package | Version | Set | Change since 0.1.0-preview.4 | Platform statuses |
 | --- | --- | --- | --- | --- |
-| `Starlings.Tokenizers` | 0.1.0-preview.4 | publishable (released on its own, P-025) | none (no version bump) | Linux x64 experimental for all five profiles; Windows, macOS, ARM64 untested |
+| `Starlings.Tokenizers` | 0.3.0-preview.1 | dependency (published from starlinghq/tokenizers) | now the published package, pinned exactly: the qualified 0.1.0-preview.4 behavior for these profiles, every conformance fixture unchanged | Linux x64 experimental for all five profiles; Windows, macOS, ARM64 untested |
 | `Starlings.Runtime.Onnx` | 0.1.0-preview.5 | publishable | version only | Linux x64 CPU and CUDA (through the model profiles) experimental; Windows, macOS, ARM64, Native AOT untested |
 | `Starlings.Acquisition` | 0.1.0-preview.5 | publishable | version only | Linux x64 experimental; Windows, macOS untested |
 | `Starlings.Models.E5` | 0.1.0-preview.5 | publishable | version only | `onnx-fp32-cpu` Linux x64 **preview** (qualified); `onnx-fp32-cuda` experimental; Windows, macOS, ARM64, Native AOT untested |
@@ -61,7 +61,7 @@ The sentence appears in the description and README of `Starlings.Models.Embeddin
 | `Starlings.Models.EmbeddingGemma2.Imaging.SkiaSharp` 0.1.0-preview.5 (new) | PIL-compatible PNG and JPEG decoding into `EmbeddingGemma2Image`; EXIF orientation opt-in; 50 MP limit. |
 | `Starlings.Models.EmbeddingGemma2.Video.FFmpeg` 0.1.0-preview.5 (new, **held**) | torchcodec-equivalent decoding on the user's FFmpeg 8.x through FFmpeg.AutoGen 8.1.0; ships no FFmpeg binaries. |
 | `Runtime.Onnx`, `Acquisition`, `Models.E5`, `Models.E5.Extensions.AI`, `Models.E5.MLNet`, `Models.Gliner2`, `Generation.OnnxGenAI`, `Models.Qwen35`, `Models.Qwen35.Extensions.AI` 0.1.0-preview.5 | Version only, with an unchanged exact tokenizer dependency `[0.1.0-preview.4]`. No source change: `git diff 74da978 -- ai-dotnet/src` touches only the five EmbeddingGemma 2 directories. The `Models.E5`, `Models.E5.Extensions.AI` and `Models.E5.MLNet` READMEs link to this record. |
-| `Starlings.Tokenizers` 0.1.0-preview.4 | Unchanged; not re-versioned. |
+| `Starlings.Tokenizers` 0.3.0-preview.1 | The published tokenizer from starlinghq/tokenizers (renamed from the planning-era package; output unchanged). Restored from nuget.org with the bytes the lock files record. |
 
 The version wiring after the bump:
 
@@ -106,3 +106,9 @@ A note on the test command: the first attempt passed `-m:4` to `dotnet test --so
 
 - The EmbeddingGemma 2 and GLiNER2 graphs and the Qwen 3.5 hosting repository are not public yet (release assets unpublished, hosting repository private). A clean install can acquire the tokenizer and config files but not the graphs.
 - The other known issues are those of the earlier records ([0.1.0-preview.2](e5-0.1.0-preview.2.md#known-issues)) and the per-package READMEs.
+
+## Repository move (2026-10-13)
+
+The candidate moved to `starlinghq/starling` as a single commit (`a20f19f`). The tokenizer is now the published `Starlings.Tokenizers` 0.3.0-preview.1, and the GLiNER2, EmbeddingGemma 2 and Qwen 3.5 files are hosted in the Starlinghq organization on Hugging Face, pinned by commit (private during the preview; byte-identical to the earlier files).
+
+Rerun on `a20f19f` (Linux x64): `tools/release-drill-ai.sh --no-model` passed. 14 packages packed and inspected (13 publishable plus the held FFmpeg adapter); five consumers outside the checkout restored the packed packages and `Starlings.Tokenizers` from nuget.org with the locked bytes; e5 tokenizer ids exact 46/46. ai-dotnet tests: 593 passed, 118 skipped (GPU and opt-in), 0 failed, the same outcomes as before the move. model-pipeline: 459 passed; 12 manifests valid.

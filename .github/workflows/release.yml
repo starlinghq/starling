@@ -1,0 +1,162 @@
+name: release
+
+# Release the ai-dotnet packages (Starlings.*) to nuget.org.
+#
+#   git tag ai-v0.1.0-preview.5 && git push origin ai-v0.1.0-preview.5
+#
+# 1. candidate: boundary check; the tag must equal the ai-dotnet version, point at a commit on main and have a release
+#    record docs/releases/ai-<version>.md. The release drill (tools/release-drill-ai.sh --no-model) then packs every
+#    package from a clean clone, inspects each nuspec, and installs them into clean consumers outside the checkout. The
+#    publishable set (every drilled package except those listed in HELD) is uploaded as the `packages` artifact.
+# 2. publish: waits for approval on the `release` environment, pushes exactly those bytes to nuget.org with NuGet
+#    trusted publishing (a short-lived key from GitHub OIDC; no stored API key), and creates the GitHub release with the
+#    release record as notes.
+#
+# The tokenizer is not released here: it is the published Starlings.Tokenizers (starlinghq/tokenizers), pinned exactly.
+# Run by hand (workflow_dispatch) it builds the candidate only and never publishes.
+on:
+  push:
+    tags: ["ai-v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  DOTNET_NOLOGO: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+  # Built and drilled but never published until its legal review is done (docs/kickoff.md, EmbeddingGemma 2 admission).
+  HELD: "Starlings.Models.EmbeddingGemma2.Video.FFmpeg"
+
+jobs:
+  candidate:
+    name: release candidate
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          fetch-depth: 0
+      - name: Boundary check
+        run: python3 -I tools/check-boundary.py
+      - uses: actions/setup-dotnet@26b0ec14cb23fa6904739307f278c14f94c95bf1 # v5
+        with:
+          global-json-file: global.json
+      - name: Version
+        id: version
+        run: |
+          version="$(dotnet msbuild ai-dotnet/src/Starlings.Models.E5 -getProperty:Version)"
+          echo "version=${version}" >>"$GITHUB_OUTPUT"
+          echo "version ${version}"
+          if [[ "${GITHUB_REF_TYPE}" == "tag" ]]; then
+            if [[ "${GITHUB_REF_NAME}" != "ai-v${version}" ]]; then
+              echo "::error::Tag ${GITHUB_REF_NAME} does not match the ai-dotnet version ${version} (ai-dotnet/Directory.Build.props)."
+              exit 1
+            fi
+            git fetch --quiet origin main
+            if ! git merge-base --is-ancestor "${GITHUB_SHA}" origin/main; then
+              echo "::error::Tag ${GITHUB_REF_NAME} points at ${GITHUB_SHA}, which is not on main."
+              exit 1
+            fi
+          fi
+          if [[ ! -f "docs/releases/ai-${version}.md" ]]; then
+            echo "::error::No release record docs/releases/ai-${version}.md."
+            exit 1
+          fi
+      # Pack, nuspec checks, local-feed push and clean consumers outside the checkout; the e5 tokenizer.json is
+      # downloaded from the Hub and matched against the fixtures. --no-model skips the 470 MB model download.
+      - name: Release drill
+        run: tools/release-drill-ai.sh --no-model
+      - name: Publishable set
+        run: |
+          mkdir -p packages
+          for nupkg in artifacts/release-drill-ai/*.nupkg; do
+            id="$(basename "$nupkg" ".${{ steps.version.outputs.version }}.nupkg")"
+            if [[ " ${HELD} " == *" ${id} "* ]]; then
+              echo "held: ${id}"
+              continue
+            fi
+            cp "$nupkg" "${nupkg%.nupkg}.snupkg" packages/
+          done
+          ls -l packages
+          sha256sum packages/*.nupkg
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: packages
+          path: packages/
+          if-no-files-found: error
+          retention-days: 90
+
+  publish:
+    name: publish to nuget.org
+    needs: candidate
+    if: github.ref_type == 'tag'
+    runs-on: ubuntu-latest
+    environment: release # required reviewer; NUGET_USER is a variable of this environment
+    permissions:
+      contents: write # create the GitHub release
+      id-token: write # NuGet trusted publishing
+    env:
+      VERSION: ${{ needs.candidate.outputs.version }}
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+      - uses: actions/setup-dotnet@26b0ec14cb23fa6904739307f278c14f94c95bf1 # v5
+        with:
+          global-json-file: global.json
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: packages
+          path: packages
+      - name: Packages are the drilled candidate
+        run: |
+          ls -l packages
+          for id in ${HELD}; do
+            if [[ -e "packages/${id}.${VERSION}.nupkg" ]]; then
+              echo "::error::${id} is held from publishing."
+              exit 1
+            fi
+          done
+          sha256sum packages/*.nupkg packages/*.snupkg
+      - name: NuGet login (OIDC)
+        id: nuget
+        uses: NuGet/login@8d196754b4036150537f80ac539e15c2f1028841 # v1.2.0
+        with:
+          user: ${{ vars.NUGET_USER }}
+      # Dependencies first, so every package's exact sibling pins resolve as soon as it is listed. No --skip-duplicate:
+      # a published version is immutable, so pushing one twice must fail.
+      - name: Push to nuget.org
+        env:
+          NUGET_API_KEY: ${{ steps.nuget.outputs.NUGET_API_KEY }}
+        run: |
+          order=(
+            Starlings.Acquisition Starlings.Runtime.Onnx Starlings.Generation.OnnxGenAI
+            Starlings.Models.E5 Starlings.Models.Gliner2 Starlings.Models.EmbeddingGemma2 Starlings.Models.Qwen35
+          )
+          pushed=()
+          push() {
+            dotnet nuget push "packages/$1.${VERSION}.nupkg" --api-key "${NUGET_API_KEY}" \
+              --source https://api.nuget.org/v3/index.json
+            pushed+=("$1")
+          }
+          for id in "${order[@]}"; do
+            [[ -f "packages/${id}.${VERSION}.nupkg" ]] && push "${id}"
+          done
+          for nupkg in packages/*.nupkg; do
+            id="$(basename "$nupkg" ".${VERSION}.nupkg")"
+            [[ " ${pushed[*]} " == *" ${id} "* ]] || push "${id}"
+          done
+          echo "pushed ${#pushed[@]} packages: ${pushed[*]}"
+      - name: GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          prerelease=()
+          [[ "${VERSION}" == *-* ]] && prerelease=(--prerelease)
+          gh release create "${GITHUB_REF_NAME}" "${prerelease[@]}" \
+            --title "Starlings ${VERSION}" --notes-file "docs/releases/ai-${VERSION}.md" \
+            packages/*.nupkg packages/*.snupkg
