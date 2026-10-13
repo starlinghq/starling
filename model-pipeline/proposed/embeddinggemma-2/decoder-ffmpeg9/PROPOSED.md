@@ -30,7 +30,10 @@ The bound is "exact against torchcodec on FFmpeg 9". torchcodec 0.17.0 on the ma
 | Same: streams and memory vs file; loader errors; GPL build refused without the opt-in | pass (15 of 15 tests) |
 | FFmpeg 8 adapter, same tests on the pinned LGPL FFmpeg n8.1.3-17-gc389840894, after the code moved to shared source | pass (15 of 15), every frame exact |
 | `Starlings.Fidelity.Tool embeddinggemma2-videos --ffmpeg9`: FFmpeg 9 frames of the 32 video inputs | equal to the FFmpeg 8 adapter's |
-| `model-pipeline evaluate` on those results | EVALUATION_PLACEHOLDER |
+| `model-pipeline evaluate` (`video-fp32-cpu`) on those stage 1 results, protected tolerances as committed | protected evidence verified; G1 passed, first divergence none; no FFmpeg 9 check added (`tokenizer.decoder_frame_sha256` passed, 32 video inputs) |
+| The same results in a scratch clone with this proposal appended to the tolerances (never pushed) | `tokenizer.decoder_frame_sha256` passed (FFmpeg 8) and `tokenizer.decoder_ffmpeg9_frame_sha256` passed (FFmpeg 9), 32 video inputs each |
+
+Stage 3 (embeddings) was not rerun for this change: the frames the embeddings use come from the FFmpeg 8 adapter, whose decoding is unchanged and still exact.
 
 Not covered: an LGPL FFmpeg 9 build (none was installed; decoding does not depend on the license flags), other CPUs, FFmpeg 9 point releases other than 9.0.1.
 
