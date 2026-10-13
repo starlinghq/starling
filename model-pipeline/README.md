@@ -13,7 +13,7 @@ The delivery system: model registry, manifest schema, admission records, referen
 | `admissions/` | Admission records; start from `TEMPLATE.md`. | P-027, stage 1 |
 | `protected/` | Reference fixtures and tolerances. Maintainer review only. | P-003, P-007 |
 | `reference/` | Reference runners with pinned requirements, and the tokenizer conformance corpus. See `reference/README.md`. | P-003, P-004, P-027 |
-| `src/model_pipeline/` | CLI and stage implementations: `manifest.py` (validation), `fixtures.py` (fixture format), `results.py` (stage results format), `evaluate.py` (staged fidelity evaluator), `protection.py` (protected evidence rules). | P-002 onward |
+| `src/model_pipeline/` | CLI and stage implementations: `manifest.py` (validation), `fixtures.py` (fixture format), `results.py` (stage results format), `evaluate.py` (staged fidelity evaluator; per task `evaluate_*.py`), `evaluate_task_quality.py` (G3 task metrics), `protection.py` (protected evidence rules). | P-002 onward |
 | `tests/` | Pipeline tests with synthetic fixtures. | |
 
 ## Commands
@@ -74,7 +74,7 @@ These make an unreviewed threshold change fail visibly. They do not replace code
 
 Evidence for the e5 CPU profile on real model output: `docs/evidence/p007-e5-onnx-fp32-cpu/`.
 
-Implemented for the `embedding` task, the `entity-extraction` task (manifest task `extraction`, below), the `image-embedding` task (EmbeddingGemma 2 images, below) and the `video-embedding` task (EmbeddingGemma 2 videos, below). The Kev tolerances (`protected/kev-0.8b/onnx-fp32/`) use other keys (probabilities, argmax flips, cached vs uncached) and have no registry manifest yet; the evaluator rejects tasks it has no checks for.
+Implemented for the `embedding` task, the `entity-extraction` task (manifest task `extraction`, below), the `image-embedding` task (EmbeddingGemma 2 images, below), the `video-embedding` task (EmbeddingGemma 2 videos, below) and the `generation` task (Qwen3.5, below). Task-quality metrics (G3) are `--g3`, below. The Kev tolerances (`protected/kev-0.8b/onnx-fp32/`) use other keys (probabilities, argmax flips, cached vs uncached) and have no registry manifest yet; the evaluator rejects tasks it has no checks for.
 
 A profile whose manifest names a tolerances path that does not exist yet (the path must still lie inside `model-pipeline/protected/`, in an existing directory) is measured, never qualified: every check that needs a bound is `not-run`, both gates are `not-run` (or `failed` if a structural or identity check fails), the report lists `expected_tolerance_keys`, and the exit code is 4. Deleting an existing tolerances file is a protected change (exit 3). A tolerances file placed anywhere else, for example in the results directory, is never read.
 
@@ -159,5 +159,72 @@ csharp_vs_python_same_machine_and_provider:          # optional; without it the 
 ```
 
 The GLiNER2 stage 1 and 2 producer is `reference/gliner2/stage_gliner2.py` (see `reference/README.md`).
+
+### Generation (P-016, workstream R5)
+
+`src/model_pipeline/evaluate_generation.py`, manifest task `generation` (profiles `qwen3.5-0.8b/ortgenai-*`). It makes the binding Qwen tolerances machine-checked; before it, only the C# tests and `reference/generation/compare.py` checked them. Fixture: `generation.jsonl` in the profile's protected fixtures directory (`protected/qwen3.5-0.8b/reference/`, format `starlings.generation-fixture` version 1). Readers (rows, ids, float32 sidecars) are shared with `evaluate_generation_candidate.py`.
+
+`--results` is the output directory of `ai-dotnet/tools/Starlings.Qwen35.Fidelity --modes parity,semantics` as it is, not stage results files: `results.jsonl` (per case `rendered`, `render_error`, `backend_prompt_ids`, `prompt_ids` fed, `output_ids` with the stop token, `finish_reason`, the streaming and usage fields), `step0/<id>.f32` (log-softmax after the prefill, float32 little-endian), `semantics.json` and `environment.json`. A `threshold`-like key anywhere in them is refused (exit 3).
+
+| Stage | Checks (tolerance key) | Gate |
+| --- | --- | --- |
+| template (`tokenizer`) | owned template rendering exact (`discrete.template_rendering`); owned tokenizer ids exact (`discrete.prompt_ids`); the tools prompt must be rejected (excluded by contract, listed) | G1 |
+| `dotnet-ids`, generation from the fixture prompt ids | greedy ids (`discrete.greedy_ids`: `exact`, `exact_except_listed_margin_below_<m>` or `equal_until_first_divergence_at_margin_below_<m>`; a divergence is allowed only where the fixture `step_margin` at the first differing step is below `m`, and each one is listed); `discrete.finish_reason` (`equal` or `equal_when_ids_equal`); `discrete.step0_argmax`; `float.step0_top5_logprob_max_abs` (reference top 5 from the fixture); `float.step0_logprob_max_abs` (full vocabulary); `float.nan_or_inf`; `discrete.streaming_reassembly`; `discrete.usage`; `provider_options` against `environment.json` | G2 |
+| `dotnet-text`, runtime semantics | `float.cached_vs_uncached_logprob_max_abs`, `float.chunked_vs_one_call_prefill_logprob_max_abs` (chunk runs whose one-call prefill failed are listed, not measured), `discrete.concurrent_requests` (`equal_to_sequential`) from `semantics.json` | G2 |
+
+The full reference step-0 vectors (22 x 248,320 float32) are not in Git; the fixture keeps the top 64 per case and each vector's SHA-256. Pass `--reference-tensors <dir>` with `step0/<id>.f32` from `run_reference.py`; every file is checked against the fixture digest. Without them `float.step0_logprob_max_abs` is measured on the 64 reference ids only: above the bound it fails (the full maximum can only be larger), otherwise it is not-run and G2 cannot pass. A missing `semantics.json` or `environment.json` leaves its checks not-run.
+
+```sh
+dotnet run --project ai-dotnet/tools/Starlings.Qwen35.Fidelity -c Release -- --bundle <snapshot> --variant fp32x \
+  --device cpu --prompts model-pipeline/reference/generation/prompts-v1.jsonl \
+  --reference model-pipeline/protected/qwen3.5-0.8b/reference --out <run> --modes parity,semantics
+model-pipeline evaluate registry/qwen3.5-0.8b/ortgenai-fp32x-cpu/manifest.yaml --results <run> --out <report> \
+  [--reference-tensors <reference run dir>]
+```
+
+These are the accepted development fixtures (agent-written prompts), not the P-030 release set; a pass here is G1/G2 evidence on development fixtures only.
+
+## Task quality (G3, workstream R5)
+
+`src/model_pipeline/evaluate_task_quality.py`: held-out task metrics for plan section 10 G3, through `model-pipeline evaluate --g3 retrieval|ner`. It computes metrics on a dataset and compares them with a quality budget read only from the maintainer-owned file `task-quality.yaml` in the profile's protected directory (the directory of the manifest's `qualification.tolerances`, for example `protected/multilingual-e5-small/onnx-fp32-cpu/task-quality.yaml`). **No such file exists yet.** Without it, without an entry for the task, or when the dataset digest is not the one the entry names, the report says "no budget: not a gate result", G3 is `not-run`, and the exit code is 4. With a budget, every listed metric must meet its minimum (exit 0) or G3 fails (exit 1); a changed or untracked budget file is exit 3, as for tolerances.
+
+**Choosing the real G3 datasets (licensed, held out) and the budgets is a maintainer decision: M1/M2 in `docs/plan/production-readiness.md`.** This repository supplies only the formats, the metrics, and a SMOKE example under `model-pipeline/tests/fixtures/g3-smoke/` (hand-written, labeled `SMOKE` in each `dataset.json`, never gate evidence). Agents do not author the sets or the budget file.
+
+Budget file (every value is a minimum; metric names as in the report):
+
+```yaml
+profile: multilingual-e5-small/onnx-fp32-cpu
+retrieval:
+  dataset_sha256: <report dataset.sha256>
+  minimum: {ndcg@10: <m>, recall@100: <m>, mrr@10: <m>}
+  # int8 browser profiles (kickoff decision 3: at least 0.95 against fp32): needs --baseline
+  # minimum: {top10_overlap_vs_baseline.mean: 0.95}
+ner:
+  dataset_sha256: <digest>
+  minimum: {exact.micro.f1: <m>, partial.micro.f1: <m>}
+```
+
+The dataset digest is the SHA-256 over `<file name>\0<file sha256>\n` of `queries.jsonl`, `corpus.jsonl`, `qrels.jsonl` (retrieval) or of the gold file (NER); every report prints it. Candidate files carry outputs only: a `threshold`-like key is refused (exit 3).
+
+### Retrieval (e5, EmbeddingGemma 2)
+
+Dataset: a directory with
+
+| File | One JSON object per line |
+| --- | --- |
+| `queries.jsonl` | `{"id": str, "text": str}` |
+| `corpus.jsonl` | `{"id": str, "text": str}` (only `text` is embedded) |
+| `qrels.jsonl` | `{"query_id": str, "doc_id": str, "relevance": int >= 0}`; every query needs at least one judgment above 0 |
+| `dataset.json` (optional) | name, status, provenance, license; copied into the report |
+
+Candidate (`--results`, and `--baseline`): JSON lines `{"kind": "query" | "document", "id": str, "embedding": [float], "prompt": str (optional)}`, one per query and document of the dataset, same dimension, finite. The producer applies the model's prompts (e5 `query: ` / `passage: `; EmbeddingGemma 2 query and document prompts). Producer: `dotnet run --project ai-dotnet/tools/Starlings.Fidelity.Tool -c Release -- retrieval --model e5|embeddinggemma2 --dataset <dir> --out <file>`; the reference runners can write the same format.
+
+Metrics: exhaustive ranking by cosine similarity (ties by document id); per query, then averaged: `ndcg@10` (gain = relevance, log2 discount, as trec_eval and BEIR), `recall@1|5|10|100` (relevant = relevance > 0), `mrr@10`. With `--baseline <fp32 embeddings>`: `top10_overlap_vs_baseline.mean` and `.min`, per query |top 10 of the candidate ∩ top 10 of the baseline| / 10, the browser int8 metric. Image and video retrieval use the same format once a producer embeds media.
+
+### Named-entity recognition (GLiNER2)
+
+Gold: one JSON lines file, per row `{"id": str, "text": str, "labels": [str] (the label set queried), "entities": [{"start": int, "end": int, "label": str}]}`, offsets in Unicode code points of `text` (Python `str` indices), end exclusive; `entities` may be empty; a gold entity may carry `text` (ignored). Predictions (`--results`): per row `{"id": str, "entities": [{"start", "end", "label", ...}]}` with the same offset unit; labels must be in the row's labels. Producer: `dotnet run --project ai-dotnet/tools/Starlings.Fidelity.Tool -c Release -- ner --dataset <gold.jsonl> --out <file>` (`Gliner2EntityExtractor.Extract(text, labels)` at the extractor's default operating point).
+
+Metrics: span-level precision, recall and F1, `exact` (same start, end and label) and `partial` (same label, any overlap), with one-to-one matching (largest overlap first), so a duplicate prediction is a false positive. Per label (`exact.label.<label>.f1`), micro (pooled counts: `exact.micro.f1`) and macro (mean over labels with at least one gold entity; labels without gold entities are listed and not averaged).
 
 Python runs reference and export jobs only. Certified in-process C# inference never needs it.

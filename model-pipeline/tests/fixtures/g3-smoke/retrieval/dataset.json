@@ -1,0 +1,7 @@
+{
+  "name": "g3-smoke-retrieval",
+  "status": "SMOKE: format example and test input only; not a G3 dataset, never gate evidence",
+  "provenance": "Written by hand for this repository (workstream R5); no third-party text.",
+  "license": "MIT (this repository)",
+  "note": "Real G3 datasets and budgets are maintainer decisions M1/M2 (docs/plan/production-readiness.md)."
+}

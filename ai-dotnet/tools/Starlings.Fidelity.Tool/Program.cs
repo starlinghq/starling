@@ -12,6 +12,8 @@
 // EmbeddingGemma 2: `-- embeddinggemma2 --out <dir>`; see EmbeddingGemma2Dump.cs. Images: `-- embeddinggemma2-images
 // --out <dir> --images <dir>`; see EmbeddingGemma2ImageDump.cs. Videos: `-- embeddinggemma2-videos --out <dir> --videos <dir>
 // [--ffmpeg <dir>]`; see EmbeddingGemma2VideoDump.cs.
+// Task quality (G3): `-- retrieval --model e5|embeddinggemma2 --dataset <dir> --out <file>` and `-- ner --dataset
+// <gold.jsonl> --out <file>`; see TaskQualityDump.cs (inputs of `model-pipeline evaluate --g3`).
 // Then `model-pipeline evaluate` compares them with the protected fixtures and tolerances. This tool applies
 // no thresholds and writes nothing under model-pipeline/protected/.
 //
@@ -32,6 +34,11 @@ using Starlings.Acquisition;
 using Starlings.Models.E5;
 using Starlings.Runtime.Onnx;
 using Microsoft.ML.OnnxRuntime;
+
+if (args.Length >= 1 && args[0] is "retrieval" or "ner")
+{
+    return TaskQualityDump.Run(args[0], args[1..]);
+}
 
 if (args.Length >= 1 && args[0] == "gliner2")
 {

@@ -24,11 +24,15 @@ CHECKS = {
 }
 
 
-def _rows(path: Path) -> dict[str, dict]:
+def read_rows(path: Path) -> dict[str, dict]:
+    """JSON lines keyed by a unique, non-empty string `id`; an empty file is an error.
+
+    Shared with the protected generation task (`evaluate_generation.py`), for fixtures and runner results alike.
+    """
     result = {}
     try:
         with path.open(encoding="utf-8") as stream:
-            lines = list(stream)
+            lines = [line for line in stream if line.strip()]
         for line in lines:
             row = json.loads(line)
             name = row["id"]
@@ -42,7 +46,11 @@ def _rows(path: Path) -> dict[str, dict]:
     return result
 
 
-def _ids(value: object, vocabulary: int, *, empty: bool = True) -> bool:
+_rows = read_rows
+
+
+def valid_ids(value: object, vocabulary: int, *, empty: bool = True) -> bool:
+    """A list of token ids in [0, vocabulary) (non-empty unless `empty`)."""
     return (
         isinstance(value, list)
         and (empty or bool(value))
@@ -50,32 +58,52 @@ def _ids(value: object, vocabulary: int, *, empty: bool = True) -> bool:
     )
 
 
+_ids = valid_ids
+
+
+def read_float32(directory: Path, relative: str, count: int, sha256: str | None = None) -> array.array:
+    """Read `count` little-endian float32 values from `directory/relative`, confined to `directory`.
+
+    With `sha256`, the file's digest must equal it. Non-finite values are returned, not rejected: callers decide.
+    """
+    path_text = PurePosixPath(relative)
+    if path_text.is_absolute() or ".." in path_text.parts or "\\" in relative:
+        raise PipelineError(f"unsafe tensor path {relative!r}")
+    path = directory / path_text
+    if not path.resolve().is_relative_to(directory.resolve()):
+        raise PipelineError(f"tensor path {relative!r} escapes {directory}")
+    try:
+        raw = path.read_bytes()
+    except OSError as exc:
+        raise PipelineError(f"cannot read tensor {path}: {exc}") from exc
+    if len(raw) != count * 4:
+        raise PipelineError(f"{path}: {len(raw)} bytes, expected {count} float32 values")
+    if sha256 is not None and hashlib.sha256(raw).hexdigest() != sha256:
+        raise PipelineError(f"{path}: SHA-256 differs from the recorded digest")
+    values = array.array("f")
+    values.frombytes(raw)
+    if sys.byteorder != "little":
+        values.byteswap()
+    return values
+
+
 def _logits(directory: Path, row: dict, vocabulary: int) -> array.array:
     try:
         tensor = row["initial_logits"]
-        relative = PurePosixPath(tensor["path"])
-        if relative.is_absolute() or ".." in relative.parts or "\\" in tensor["path"]:
-            raise PipelineError("unsafe logits path")
-        path = directory / relative
-        if not path.resolve().is_relative_to(directory.resolve()):
-            raise PipelineError("logits escape evidence directory")
         if (
             tensor["dtype"] != "float32-le"
             or tensor["shape"] != [1, vocabulary]
             or any(type(dimension) is not int for dimension in tensor["shape"])
         ):
             raise PipelineError("wrong logits dtype/shape")
-        raw = path.read_bytes()
-        if len(raw) != vocabulary * 4 or hashlib.sha256(raw).hexdigest() != tensor["sha256"]:
-            raise PipelineError("logits size/hash mismatch")
-        values = array.array("f")
-        values.frombytes(raw)
-        if sys.byteorder != "little":
-            values.byteswap()
+        try:
+            values = read_float32(directory, tensor["path"], vocabulary, tensor["sha256"])
+        except PipelineError as exc:
+            raise PipelineError(f"logits size/hash mismatch or unsafe path: {exc}") from exc
         if not all(math.isfinite(v) for v in values):
             raise PipelineError("non-finite initial logits")
         return values
-    except (OSError, KeyError, TypeError, ValueError) as exc:
+    except (KeyError, TypeError, ValueError) as exc:
         raise PipelineError(f"invalid logits evidence: {exc}") from exc
 
 

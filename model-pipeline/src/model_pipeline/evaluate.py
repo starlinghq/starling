@@ -16,8 +16,9 @@ The evaluator is deterministic and pure Python. It writes a JSON report and a Ma
 with max, mean and p99 absolute errors and pass/fail per tolerance key, and gate statuses in the
 manifest's vocabulary. It never edits manifests, fixtures or tolerances.
 
-Implemented for the `embedding` task (encoder profiles, this module) and the `entity-extraction`
-task (manifest task `extraction`, GLiNER2 span models: `evaluate_extraction.py`). Other tasks are
+Implemented for the `embedding` task (encoder profiles, this module), the `entity-extraction`
+task (manifest task `extraction`, GLiNER2 span models: `evaluate_extraction.py`), the image and video
+embedding tasks, and the `generation` task (Qwen3.5: `evaluate_generation.py`). Other tasks are
 rejected explicitly. A profile without a protected tolerances file is measured but never qualified:
 every bound-dependent check is not-run, no gate can pass, and the exit code is 4.
 """
@@ -1007,6 +1008,7 @@ TASK_OF_MANIFEST_TASK = {
     "extraction": "entity-extraction",
     "image-embedding": "image-embedding",
     "video-embedding": "video-embedding",
+    "generation": "generation",
 }
 
 
@@ -1029,6 +1031,10 @@ def expected_tolerance_keys(task: str) -> dict[str, Any]:
         from model_pipeline import evaluate_video
 
         return dict(evaluate_video.EXPECTED_KEYS)
+    if task == "generation":
+        from model_pipeline import evaluate_generation
+
+        return dict(evaluate_generation.EXPECTED_KEYS)
     from model_pipeline import evaluate_extraction
 
     return dict(evaluate_extraction.EXPECTED_KEYS)
@@ -1059,14 +1065,30 @@ def evaluate(
     # unset, so every bound-dependent check is not-run and no gate can pass (exit code 4).
     tolerances_missing = not tol_path.exists()
     tol = {} if tolerances_missing else load_tolerances(tol_path, man["id"])
-    stages = results.load_directory(results_dir)
-    if not stages:
-        raise EvaluationError(f"{results_dir}: no *{results.RESULTS_SUFFIX} files")
+    run = None
+    if task == "generation":
+        from model_pipeline import evaluate_generation as ge
+
+        # The generation task reads the C# runner's output directory, not stage results files.
+        stages = {}
+        run = ge.load_results(results_dir)
+    else:
+        stages = results.load_directory(results_dir)
+        if not stages:
+            raise EvaluationError(f"{results_dir}: no *{results.RESULTS_SUFFIX} files")
     for s in stages.values():
         if s.task != task:
             raise EvaluationError(f"{s.path}: results are for task {s.task!r}; the profile is evaluated as {task!r}")
 
-    if task == "embedding":
+    generation = None
+    if task == "generation":
+        fx = ge.load_fixtures(fixtures_dir)
+        verification = protection.verify_unchanged(root, [tol_path, *fx.files], protected_base)
+        generation = ge.GenerationEvaluator(man, fx, tol, run, reference_tensors)
+        checks = generation.run_checks()
+        first, findings = ge.diagnose(checks)
+        exceptions = None
+    elif task == "embedding":
         fx = load_fixtures(fixtures_dir)
         verification = protection.verify_unchanged(root, [tol_path, *fx.files], protected_base)
         checks = EncoderEvaluator(man, fx, tol, stages).run()
@@ -1126,7 +1148,9 @@ def evaluate(
             "manifest": {"path": rel(manifest_path), "sha256": fixtures.sha256_file(manifest_path)},
             "tolerances": tolerances_input,
             "fixtures": [{"path": rel(p), "sha256": fixtures.sha256_file(p)} for p in fx.files],
-            "results": {
+            "results": run.describe(rel)
+            if run is not None
+            else {
                 name: {
                     "path": rel(s.path),
                     "sha256": s.sha256,
@@ -1155,6 +1179,10 @@ def evaluate(
         report["excluded_by_contract"] = fx.excluded
         if task == "video-embedding":
             report["evaluated_although_excluded"] = sorted(fx.optional_included)
+        report["reference_tensors"] = None if reference_tensors is None else {"directory": str(reference_tensors)}
+    if generation is not None:
+        report["greedy_divergences"] = generation.divergences
+        report["excluded_by_contract"] = generation.excluded
         report["reference_tensors"] = None if reference_tensors is None else {"directory": str(reference_tensors)}
     if tolerances_missing:
         report["expected_tolerance_keys"] = expected_tolerance_keys(task)
@@ -1206,6 +1234,10 @@ def markdown(report: dict[str, Any]) -> str:
         from model_pipeline import evaluate_video
 
         return evaluate_video.markdown(report)
+    if report.get("task") == "generation":
+        from model_pipeline import evaluate_generation
+
+        return evaluate_generation.markdown(report)
     if report.get("task", "embedding") != "embedding":
         from model_pipeline import evaluate_extraction
 
