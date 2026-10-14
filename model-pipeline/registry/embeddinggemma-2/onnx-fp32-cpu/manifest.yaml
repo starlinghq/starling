@@ -84,7 +84,7 @@ behavior:
   tasks: [embedding]
   # The card's validated context window. sentence-transformers sets no max_seq_length and would run longer input
   # silently; decision 2026-10-10: the C# package rejects inputs above 8,192 tokens (special tokens and prompt included)
-  # with EmbeddingGemma2InputTooLongException. Inputs of 2,050 to 8,192 tokens have no reference evidence (untested).
+  # with EmbeddingGemma2InputTooLongException. Inputs of 2,050 to 8,192 tokens: proposed long-input rows (capability closure 2026-10-14).
   max_input_tokens: 8192
   offsets_unit: none
   truncation: error
@@ -180,10 +180,15 @@ capabilities:
   embedding_text: experimental
   tokenizer_owned: experimental
   prompts_query_document: experimental
-  prompts_task: untested
+  # prompts_task (capability closure 2026-10-14, docs/evidence/capability-closure-2026-10-14/README.md): all 20 prompt names on four public texts
+  # (proposed task-prompt rows from sentence-transformers): ids exact, embedding max abs 3.6e-7 (CpuParityTests.TaskPromptParityWithTheOwnedTokenizer).
+  # Proposed rows, protected bounds.
+  prompts_task: experimental
   matryoshka: experimental
   input_up_to_2049_tokens: experimental
-  input_2050_to_8192_tokens: untested  # fixtures proposed, not accepted: model-pipeline/proposed/embeddinggemma-2/long-input
+  # input_2050_to_8192_tokens (capability closure 2026-10-14): the C# CPU run in model-pipeline/proposed/embeddinggemma-2/long-input/csharp-compare.md: 8 text rows of 2,600 to 8,192 tokens, embedding max abs 1.0e-7, ids exact, rejections over 8,192
+  # exact, within the protected text bound. Proposed rows (not accepted), protected bounds.
+  input_2050_to_8192_tokens: experimental
   input_over_8192_tokens: unsupported
   concurrent_calls: experimental
   image: unsupported
@@ -237,10 +242,11 @@ maintenance:
       The hosted graph is public since 2026-10-14. The 0.1.0-preview.6 release drill downloaded it with no token into an
       empty cache, verified it and ran the sample offline (Linux x64, one machine); other platforms are untested.
     - >-
-      Fixtures reach 1,750 tokens and batch-independence checks 2,049; 2,050 to 8,192 tokens has no reference evidence.
+      Accepted fixtures reach 1,750 tokens and batch-independence checks 2,049; 2,050 to 8,192 tokens is covered by the
+      proposed long-input rows (not yet accepted).
       One 8,192-token row took 80 s on the 12-thread workstation CPU (process peak working set 5.9 GB during the test
       run); temporary memory grows with the square of the length in the full-attention layers.
     - >-
-      The fixtures cover the none, query and document prompts only; the other 18 names map to prompt texts without
-      fixture rows. Matryoshka sizes are checked against the reference sliced and renormalized (the fixtures hold no
+      The accepted fixtures cover the none, query and document prompts only; the other 18 names are covered by the
+      proposed task-prompt rows (model-pipeline/proposed/embeddinggemma-2/task-prompts, not yet accepted). Matryoshka sizes are checked against the reference sliced and renormalized (the fixtures hold no
       truncated rows; the spike probe showed sentence-transformers truncate_dim equals that within 6e-8).

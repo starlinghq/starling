@@ -14,8 +14,13 @@ against the SHA-256 in the protected `videos.json`.
 Writes `--out` (the frames file, `video-frames.json` layout plus the FFmpeg versions) and `--summary` (the
 comparison with the protected file: per video equal or the differing fields and frames).
 
+With `--manifest <json>` (a `videos.json`-layout file of other videos, for example `edge-videos.json` of
+`make_eg2_edge_videos.py`), the videos of that manifest are decoded and written in the same layout; there is no
+protected file to compare with, so the summary lists each video's frame count only.
+
 Usage:
     EG2_TORCHCODEC_FFMPEG_MAJOR=9 python torchcodec_eg2_frames.py --videos <dir> --out <json> --summary <json>
+        [--manifest <json>]
 """
 
 from __future__ import annotations
@@ -70,14 +75,44 @@ def frames_of(path: Path) -> dict:
     }
 
 
+def decode_manifest(args) -> int:
+    """The frames file for the videos of `--manifest` (each checked against its SHA-256), with no comparison."""
+    manifest = json.loads(args.manifest.read_text())["videos"]
+    frames = {}
+    for v in manifest:
+        path = args.videos / v["file"]
+        digest = hashlib.sha256(path.read_bytes()).hexdigest()
+        if digest != v["sha256"]:
+            raise SystemExit(f"{path}: SHA-256 {digest}, expected {v['sha256']} ({args.manifest.name})")
+        frames[v["id"]] = frames_of(path)
+        print(v["id"], len(frames[v["id"]]["all_frame_sha256"]), frames[v["id"]]["metadata"], flush=True)
+    args.out.parent.mkdir(parents=True, exist_ok=True)
+    args.out.write_text(json.dumps(frames, indent=1) + "\n")
+    summary = {
+        "decoder": f"torchcodec {torchcodec.__version__} (VideoDecoder seek_mode exact, num_ffmpeg_threads 0, CPU)",
+        "ffmpeg": tc_core.get_ffmpeg_library_versions(),
+        "ffmpeg_major_pinned": int(os.environ.get("EG2_TORCHCODEC_FFMPEG_MAJOR", "8")),
+        "manifest": args.manifest.name,
+        "manifest_sha256": hashlib.sha256(args.manifest.read_bytes()).hexdigest(),
+        "frames_file_sha256": hashlib.sha256(args.out.read_bytes()).hexdigest(),
+        "videos": {k: len(v["all_frame_sha256"]) for k, v in frames.items()},
+    }
+    args.summary.parent.mkdir(parents=True, exist_ok=True)
+    args.summary.write_text(json.dumps(summary, indent=1) + "\n")
+    return 0
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--videos", type=Path, required=True)
     parser.add_argument("--out", type=Path, required=True)
     parser.add_argument("--summary", type=Path, required=True)
     parser.add_argument("--threads", type=int, default=4)
+    parser.add_argument("--manifest", type=Path, help="decode the videos of this manifest instead (no comparison)")
     args = parser.parse_args()
     torch.set_num_threads(args.threads)
+    if args.manifest:
+        return decode_manifest(args)
     manifest = json.loads((PROTECTED / "videos.json").read_text())["videos"]
     protected = json.loads((PROTECTED / "video-frames.json").read_text())
     versions = tc_core.get_ffmpeg_library_versions()

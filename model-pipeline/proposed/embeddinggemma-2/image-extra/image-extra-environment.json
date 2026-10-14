@@ -1,0 +1,39 @@
+{
+ "runner": "model-pipeline/reference/embeddinggemma2/run_embeddinggemma2_image_extra.py",
+ "model": {
+  "repo": "google/embeddinggemma-2",
+  "revision": "914f7f89142e33e77833254d9c9b90c3cef7303b"
+ },
+ "assets": {
+  "config.json": "b8f1e9931b57fbc054acdb445c41765d55b0074c58d145fa82839941ad1b5bb3",
+  "processor_config.json": "168f6a08522f3ce5dea596d94d003af2fd691742d4f41fe1f9d8cce76bfbf69c",
+  "tokenizer.json": "4d777ef5bdc1aa36227abdfb77c3e49e7b9c892d16e1b6bda41c393504828be4",
+  "model.safetensors": "197a32965d4b1105faf060417baa899e193fb73cd401f42ec9295234d5553d79"
+ },
+ "python": "3.11.16",
+ "packages": {
+  "torch": "2.14.1+cpu",
+  "torchvision": "0.29.1+cpu",
+  "transformers": "5.19.0",
+  "sentence-transformers": "6.1.0",
+  "tokenizers": "0.23.3",
+  "numpy": "2.4.6",
+  "pillow": "12.3.0"
+ },
+ "cpu": "x86_64",
+ "threads": 6,
+ "budgets": [
+  70,
+  140,
+  560,
+  1120
+ ],
+ "budget_images": [
+  "photo-astronaut",
+  "photo-coffee",
+  "photo-camera",
+  "aspect-wide-2000x40",
+  "size-tiny-8x6",
+  "size-huge-4000x3000"
+ ]
+}

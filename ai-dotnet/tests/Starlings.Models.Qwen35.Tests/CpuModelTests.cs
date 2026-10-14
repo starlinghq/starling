@@ -153,6 +153,7 @@ public sealed class CpuModelTests(Qwen35CpuFixture fixture) : IClassFixture<Qwen
         Assert.Contains(Qwen35ChatTemplate.TemplateSha256, info.ChatTemplate, StringComparison.Ordinal);
         Assert.Contains(info.ConfigOverlays, o => o.Contains("248319", StringComparison.Ordinal));
         Assert.Equal([248044, 248046], info.StopTokenIds);
-        Assert.Equal(262144, info.ContextLength);
+        Assert.Equal(Qwen35ChatModel.MaxContextTokens, info.ContextLength);
+        Assert.Equal(262144, info.ModelContextLength);
     }
 }

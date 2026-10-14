@@ -30,7 +30,7 @@ IDataView embedded = transformer.Transform(data);
 - `BatchSize` above 1 batches sequential, unshuffled cursors with a look-ahead cursor; row ids are checked.
 - Saving the transformer throws (`mlnet.persistence: unsupported`); cursors take no cancellation token.
 
-Status: Linux x64 CPU experimental; over a CUDA session untested.
+Status: Linux x64 CPU experimental; over a CUDA session experimental (document rows within the CUDA profile's bound).
 
 ## License and usage policy
 

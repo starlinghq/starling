@@ -10,3 +10,7 @@ Nothing here is binding, and nothing here changes a tolerance, gate or capabilit
 | `qwen3.5-0.8b/long-context/` | Long-context evidence above 1,666 tokens (fp32x CPU) | R8 |
 | `embeddinggemma-2/decoder-ffmpeg9/` | The `decoder_ffmpeg9` tolerance section for the FFmpeg 9 video adapter | R7 W4 |
 | `embeddinggemma-2/long-input/` | Long-input fixtures, 2,049 to 8,192 tokens (text, interleaved text and images, video at the 32-frame limit, rejections just over 8,192) | R7 W3 |
+| `embeddinggemma-2/task-prompts/` | All 20 named prompts on four public texts (capability `prompts_task`) | Capability closure |
+| `embeddinggemma-2/image-extra/` | Image budgets 70/140/560/1,120 and GIF/BMP/WebP decoding digests | Capability closure |
+| `embeddinggemma-2/video-edge/` | Edge-case videos: rotation -90 and 180, HDR, interlaced, variable frame rate (torchcodec frames) | Capability closure |
+| `gliner2-base-v1/capability-cases/` | 22 public-text cases: label descriptions and a closed count gate | Capability closure |

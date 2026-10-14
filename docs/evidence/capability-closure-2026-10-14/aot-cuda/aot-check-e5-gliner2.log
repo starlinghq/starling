@@ -1,0 +1,34 @@
+
+== 0. Inputs
+commit:  e9e33ca762a8f920814dee508f534ad863c4ba54
+dotnet:  10.0.401, RID linux-x64
+models:  <model-cache>
+offline: network namespace without interfaces (unshare -rn)
+linker:  /usr/bin/clang
+provider: cuda (CUDA_VISIBLE_DEVICES=0)
+
+== 1. Packages from <work>/aot-feed
+version: 0.1.0-preview.6
+
+== AOT target e5
+packages: Starlings.Acquisition Starlings.Models.E5 Starlings.Runtime.Onnx Starlings.Tokenizers 
+publish: yes; warnings: 0 in Starlings.* code, 0 elsewhere (details: <work>/aot-cuda-out/e5/warnings.txt)
+ok:   AOT results equal JIT: 9 strings exact, 12 vectors max abs 0
+
+== AOT target e5-meai
+packages: Starlings.Acquisition Starlings.Models.E5 Starlings.Models.E5.Extensions.AI Starlings.Runtime.Onnx Starlings.Tokenizers 
+publish: yes; warnings: 0 in Starlings.* code, 0 elsewhere (details: <work>/aot-cuda-out/e5-meai/warnings.txt)
+ok:   AOT results equal JIT: 5 strings exact, 6 vectors max abs 0
+
+== AOT target gliner2
+packages: Starlings.Acquisition Starlings.Models.Gliner2 Starlings.Runtime.Onnx Starlings.Tokenizers 
+publish: yes; warnings: 0 in Starlings.* code, 0 elsewhere (details: <work>/aot-cuda-out/gliner2/warnings.txt)
+ok:   AOT results equal JIT: 5 strings exact, 2 vectors max abs 0
+
+== Summary (<work>/aot-cuda-out/summary.md)
+| Target | Packages | Starlings.* warnings | Other warnings | AOT publish | AOT run | JIT vs AOT |
+| --- | --- | --- | --- | --- | --- | --- |
+| e5 | Starlings.Acquisition Starlings.Models.E5 Starlings.Runtime.Onnx Starlings.Tokenizers  | 0 | 0 | ok (3.8M) | ok | 9 strings exact, 12 vectors max abs 0 |
+| e5-meai | Starlings.Acquisition Starlings.Models.E5 Starlings.Models.E5.Extensions.AI Starlings.Runtime.Onnx Starlings.Tokenizers  | 0 | 0 | ok (3.9M) | ok | 5 strings exact, 6 vectors max abs 0 |
+| gliner2 | Starlings.Acquisition Starlings.Models.Gliner2 Starlings.Runtime.Onnx Starlings.Tokenizers  | 0 | 0 | ok (4.0M) | ok | 5 strings exact, 2 vectors max abs 0 |
+AOT CHECK PASS

@@ -1,0 +1,13 @@
+xUnit.net v3 In-Process Runner v4.0.1+8ed8aa354c (64-bit .NET 10.0.12)
+  Discovering: Starlings.Models.Qwen35.Extensions.AI.Tests
+  Discovered:  Starlings.Models.Qwen35.Extensions.AI.Tests
+  Starting:    Starlings.Models.Qwen35.Extensions.AI.Tests
+    Starlings.Models.Qwen35.Extensions.AI.Tests.RealModelTests.FunctionInvocationLoopCompletesOnTheRealModel [OUTPUT] invoked: [Paris]
+    Starlings.Models.Qwen35.Extensions.AI.Tests.RealModelTests.FunctionInvocationLoopCompletesOnTheRealModel [OUTPUT] assistant: call get_weather(city=Paris)
+    Starlings.Models.Qwen35.Extensions.AI.Tests.RealModelTests.FunctionInvocationLoopCompletesOnTheRealModel [OUTPUT] tool: result 18 C and sunny in Paris.
+    Starlings.Models.Qwen35.Extensions.AI.Tests.RealModelTests.FunctionInvocationLoopCompletesOnTheRealModel [OUTPUT] assistant: text Today in Paris, the weather is 18 degrees Celsius and sunny.
+    Starlings.Models.Qwen35.Extensions.AI.Tests.RealModelTests.CancellationDuringChunkedPrefillThenReuse [OUTPUT] cpu cancel during prefill (64-token chunks, 1,666-token prompt, cancelled 1 s in): 271.8 ms from Cancel() to OperationCanceledException, call 1276 ms
+    Starlings.Models.Qwen35.Extensions.AI.Tests.RealModelTests.CancellationBetweenStepsThenReuse [OUTPUT] cpu cancel between steps: 122.8 ms from Cancel() to OperationCanceledException
+  Finished:    Starlings.Models.Qwen35.Extensions.AI.Tests (ID = '1f2cf857854fc980ecd5344ca3ee3cfb1d32f9ce8d609494298ccf338eec22b8')
+=== TEST EXECUTION SUMMARY ===
+   Starlings.Models.Qwen35.Extensions.AI.Tests  Total: 223, Errors: 0, Failed: 0, Skipped: 0, Not Run: 0, Time: 274.810s

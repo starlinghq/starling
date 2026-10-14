@@ -1,0 +1,118 @@
+{
+  "batch_size": 8,
+  "cases": 22,
+  "cases_with_different_entities": [],
+  "confidence_max_abs": 1.0728836059570312e-06,
+  "rows": [
+    {
+      "id": "gate-closed-chemical-president",
+      "same_entities": true,
+      "confidence_max_abs": 0.0
+    },
+    {
+      "id": "gate-closed-protein-gene-labor",
+      "same_entities": true,
+      "confidence_max_abs": 0.0
+    },
+    {
+      "id": "gate-closed-contact-new-states",
+      "same_entities": true,
+      "confidence_max_abs": 0.0
+    },
+    {
+      "id": "gate-closed-software-senator",
+      "same_entities": true,
+      "confidence_max_abs": 0.0
+    },
+    {
+      "id": "gate-closed-medical-impeachment",
+      "same_entities": true,
+      "confidence_max_abs": 0.0
+    },
+    {
+      "id": "gate-closed-finance-rules",
+      "same_entities": true,
+      "confidence_max_abs": 0.0
+    },
+    {
+      "id": "gate-closed-spacecraft-citizens",
+      "same_entities": true,
+      "confidence_max_abs": 0.0
+    },
+    {
+      "id": "gate-closed-medical-falling",
+      "same_entities": true,
+      "confidence_max_abs": 0.0
+    },
+    {
+      "id": "gate-closed-contact-party",
+      "same_entities": true,
+      "confidence_max_abs": 0.0
+    },
+    {
+      "id": "gate-closed-protein-gene-fury",
+      "same_entities": true,
+      "confidence_max_abs": 0.0
+    },
+    {
+      "id": "gate-closed-finance-mouse",
+      "same_entities": true,
+      "confidence_max_abs": 0.0
+    },
+    {
+      "id": "gate-closed-description-protein",
+      "same_entities": true,
+      "confidence_max_abs": 0.0
+    },
+    {
+      "id": "descriptions-party",
+      "same_entities": true,
+      "confidence_max_abs": 0.0
+    },
+    {
+      "id": "descriptions-falling",
+      "same_entities": true,
+      "confidence_max_abs": 0.0
+    },
+    {
+      "id": "descriptions-caterpillar",
+      "same_entities": true,
+      "confidence_max_abs": 0.0
+    },
+    {
+      "id": "descriptions-mouse",
+      "same_entities": true,
+      "confidence_max_abs": 1.1920928955078125e-07
+    },
+    {
+      "id": "descriptions-opening",
+      "same_entities": true,
+      "confidence_max_abs": 1.1920928955078125e-07
+    },
+    {
+      "id": "descriptions-president",
+      "same_entities": true,
+      "confidence_max_abs": 0.0
+    },
+    {
+      "id": "descriptions-impeachment",
+      "same_entities": true,
+      "confidence_max_abs": 1.0728836059570312e-06
+    },
+    {
+      "id": "descriptions-partial-senator",
+      "same_entities": true,
+      "confidence_max_abs": 4.172325134277344e-07
+    },
+    {
+      "id": "descriptions-citizens",
+      "same_entities": true,
+      "confidence_max_abs": 5.960464477539062e-07
+    },
+    {
+      "id": "descriptions-new-states",
+      "same_entities": true,
+      "confidence_max_abs": 1.1920928955078125e-07
+    }
+  ]
+}

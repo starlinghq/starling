@@ -66,10 +66,11 @@ rights:
 
 behavior:
   tasks: [generation]
-  # The model's context_length (genai_config.json). Tested only up to 1,666 prompt tokens (prompts-v1 long-license);
-  # longer prompts are untested, not rejected. Prompt plus max_new_tokens above this fails with
-  # GenerationContextLengthException; nothing is truncated.
-  max_input_tokens: 262144
+  # The accepted sequence: prompt plus max_new_tokens up to 8,192 tokens (Qwen35ChatModel.MaxContextTokens; the model's
+  # own context_length is 262,144). The reference evidence ends at an 8,213-token prompt with 32 greedy tokens; at
+  # 16,391 tokens cached versus uncached decoding reached 4.1e-4, above the protected 2e-4. Longer requests fail with
+  # GenerationContextLengthException before any native call; nothing is truncated (capability closure 2026-10-14).
+  max_input_tokens: 8192
   offsets_unit: none
   truncation: error
   defaults:
@@ -203,7 +204,14 @@ capabilities:
   reasoning_split: unsupported
   structured_output: unsupported
   vision: unsupported
-  long_context_over_1666_tokens: untested
+  # Long context (capability closure 2026-10-14, docs/evidence/capability-closure-2026-10-14/README.md): prompts of 4,112 and 8,213 tokens
+  # (proposed fixture model-pipeline/proposed/qwen3.5-0.8b/long-context, transformers fp32 CPU reference) gave exact
+  # greedy ids, step-0 log-probabilities within the protected bounds and cached vs uncached within the protected 2e-4
+  # (docs/evidence/r8-qwen35-long-context/). Judged with the protected bounds on a proposed, not accepted, fixture.
+  long_context_1667_to_8192_tokens: experimental
+  # Above 8,192 tokens: cached vs uncached reached 4.1e-4 at 16,391 tokens (> 2e-4); rejected with
+  # GenerationContextLengthException.
+  long_context_over_8192_tokens: unsupported
 
 compatibility:
   - os: linux

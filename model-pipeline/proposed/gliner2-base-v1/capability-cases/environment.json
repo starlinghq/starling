@@ -1,0 +1,85 @@
+{
+  "fixture_format_version": 1,
+  "runner": "model-pipeline/reference/gliner2/run_gliner2_extraction.py",
+  "runner_repository_commit": "697c9782fc6c7c94e5db630bf24aec30d10f2a56-dirty",
+  "model": {
+    "repo": "fastino/gliner2-base-v1",
+    "revision": "f9634218e53580c56edf0de97ca1a7d3f1c2354e"
+  },
+  "gliner2_source": {
+    "url": "https://github.com/fastino-ai/GLiNER2",
+    "revision": "55656fbfa01d3d4a77485e1a1eeeaf682990ccdf",
+    "version": "2.0.0"
+  },
+  "entry_point": "GLiNER2.extract(text, Schema().entities(labels), threshold, include_confidence=True, include_spans=True, max_len=max_len); default overlap policy (span checkpoint: confidence-first greedy)",
+  "precision": "fp32",
+  "device": "cpu",
+  "torch_threads": 1,
+  "assets": [
+    {
+      "path": "tokenizer.json",
+      "sha256": "1b7fbabfb4c690bed84c6793bfecae9b8dfe205751b04f9ffd1e76a1e7df9c16",
+      "size": 8650701
+    },
+    {
+      "path": "tokenizer_config.json",
+      "sha256": "4e6c6a8d26478b670692916266438485403b0c54af31fd1a12bab8a465d062e9",
+      "size": 3240
+    },
+    {
+      "path": "special_tokens_map.json",
+      "sha256": "84ea70143f533d7e99b393d87f20010887a9ac2cba955828ef313886e4e83f4f",
+      "size": 2414
+    },
+    {
+      "path": "added_tokens.json",
+      "sha256": "3c274ca559be8b7b18febf616724ec05f8a8abccd428bd2744608f45f7a0b067",
+      "size": 230
+    },
+    {
+      "path": "spm.model",
+      "sha256": "c679fbf93643d19aab7ee10c0b99e460bdbc02fedf34b92b05af343b4af586fd",
+      "size": 2464616
+    },
+    {
+      "path": "config.json",
+      "sha256": "33d8aa009deed4b5435d162e08b5a720b252a0084e59d30d366b37da8c0193c5",
+      "size": 236
+    },
+    {
+      "path": "encoder_config/config.json",
+      "sha256": "9840a4db70bc007e6b65d336ebe2bddc53bc2ce210dc5757e50d5bb17122f7cd",
+      "size": 823
+    },
+    {
+      "path": "model.safetensors",
+      "sha256": "845fc4bd93c525b86124c58ab4f56c9eacf8587953086b14c501fab25957c007",
+      "size": 833938108
+    }
+  ],
+  "corpus": {
+    "path": "gliner2-cases.jsonl",
+    "sha256": "736cf9be5f5bedb236a1fd6d5e5be94be70543127976b1f780985b403777a359",
+    "size": 12276
+  },
+  "offset_units": {
+    "start_map, end_map, output start/end": "Unicode scalar indices into normalized_text, exclusive end",
+    "normalized_text": "text with '.' appended unless it ends in . ! or ? (empty text becomes '.')"
+  },
+  "environment": {
+    "python": "3.11.16",
+    "platform": "Linux-7.2.5-3-omarchy-x86_64-with-glibc2.44",
+    "machine": "x86_64",
+    "cpu": "Intel(R) Core(TM) i7-5820K CPU @ 3.30GHz",
+    "cpu_count": 12,
+    "packages": {
+      "gliner2": "2.0.0",
+      "transformers": "4.57.6",
+      "tokenizers": "0.22.2",
+      "sentencepiece": "0.2.2",
+      "torch": "2.14.1+cpu",
+      "numpy": "2.4.6",
+      "safetensors": "0.8.0"
+    }
+  }
+}

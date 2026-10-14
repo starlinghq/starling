@@ -36,6 +36,10 @@ public sealed class CudaImageParityTests(EmbeddingGemma2ImageCudaFixture fixture
     public void BatchesMatchSingleRows() =>
         EmbeddingGemma2ImageParityChecks.BatchesAgainstSingles(fixture, new EmbeddingGemma2MultimodalOptions { MaxBatchSize = 4 }, Tolerances, output, "vision batch 1 (GPU default), text batch 4");
 
+    /// <summary>Capability <c>image_budget_other</c> (proposed rows, protected bounds of this profile).</summary>
+    [Fact]
+    public void OtherBudgetsMatchTheReference() => EmbeddingGemma2ImageParityChecks.OtherBudgets(fixture, Tolerances, output);
+
     [Fact]
     public void QueriesRetrieveTheirImages() => EmbeddingGemma2ImageParityChecks.RetrievalSanity(fixture, output);
 

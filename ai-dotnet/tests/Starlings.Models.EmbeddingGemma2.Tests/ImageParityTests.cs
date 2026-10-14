@@ -37,6 +37,10 @@ public sealed class ImageParityTests(EmbeddingGemma2ImageCpuFixture fixture, ITe
         EmbeddingGemma2ImageParityChecks.BatchesAgainstSingles(fixture, new EmbeddingGemma2MultimodalOptions { MaxVisionBatchSize = 3, MaxVisionBatchPatches = 3 * 2_520, PadImagesToMaxPatches = true }, Tolerances, output, "padded to 2,520, vision batch 3");
     }
 
+    /// <summary>Capability <c>image_budget_other</c> (proposed rows, protected bounds of this profile).</summary>
+    [Fact]
+    public void OtherBudgetsMatchTheReference() => EmbeddingGemma2ImageParityChecks.OtherBudgets(fixture, Tolerances, output);
+
     [Fact]
     public void QueriesRetrieveTheirImages() => EmbeddingGemma2ImageParityChecks.RetrievalSanity(fixture, output);
 

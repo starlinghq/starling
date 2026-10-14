@@ -1,0 +1,10 @@
+/tmp/starlings-aot.cMKJiF/apps/qwen35/Program.cs(352,6): warning CS8321: The local function 'PutVector' is declared but never used [/tmp/starlings-aot.cMKJiF/apps/qwen35/AotConsumer.csproj]
+  AotConsumer -> /tmp/starlings-aot.cMKJiF/apps/qwen35/bin/Release/net10.0/AotConsumer.dll
+
+Build succeeded.
+
+/tmp/starlings-aot.cMKJiF/apps/qwen35/Program.cs(352,6): warning CS8321: The local function 'PutVector' is declared but never used [/tmp/starlings-aot.cMKJiF/apps/qwen35/AotConsumer.csproj]
+    1 Warning(s)
+    0 Error(s)
+
+Time Elapsed 00:00:01.65

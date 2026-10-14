@@ -1,0 +1,28 @@
+
+== 0. Inputs
+commit:  e9e33ca762a8f920814dee508f534ad863c4ba54
+dotnet:  10.0.401, RID linux-x64
+models:  <model-cache>
+offline: network namespace without interfaces (unshare -rn)
+linker:  /usr/bin/clang
+provider: cuda (CUDA_VISIBLE_DEVICES=0)
+
+== 1. Packages from <work>/aot-feed
+version: 0.1.0-preview.6
+
+== AOT target qwen35
+packages: Starlings.Acquisition Starlings.Generation.OnnxGenAI Starlings.Models.Qwen35 Starlings.Tokenizers 
+publish: yes; warnings: 0 in Starlings.* code, 0 elsewhere (details: <work>/aot-cuda-out/qwen35/warnings.txt)
+ok:   AOT results equal JIT: 10 strings exact, 0 vectors max abs 0; Fp16x.genai.version differs (reported only): JIT '0.17.1', AOT 'unknown (qualified with 0.17.1)'; genai.version differs (reported only): JIT '0.17.1', AOT 'unknown (qualified with 0.17.1)'
+
+== AOT target qwen35-meai
+packages: Starlings.Acquisition Starlings.Generation.OnnxGenAI Starlings.Models.Qwen35 Starlings.Models.Qwen35.Extensions.AI Starlings.Tokenizers 
+publish: yes; warnings: 0 in Starlings.* code, 0 elsewhere (details: <work>/aot-cuda-out/qwen35-meai/warnings.txt)
+ok:   AOT results equal JIT: 10 strings exact, 0 vectors max abs 0; Fp16x.genai.version differs (reported only): JIT '0.17.1', AOT 'unknown (qualified with 0.17.1)'; genai.version differs (reported only): JIT '0.17.1', AOT 'unknown (qualified with 0.17.1)'
+
+== Summary (<work>/aot-cuda-out/summary.md)
+| Target | Packages | Starlings.* warnings | Other warnings | AOT publish | AOT run | JIT vs AOT |
+| --- | --- | --- | --- | --- | --- | --- |
+| qwen35 | Starlings.Acquisition Starlings.Generation.OnnxGenAI Starlings.Models.Qwen35 Starlings.Tokenizers  | 0 | 0 | ok (3.4M) | ok | 10 strings exact, 0 vectors max abs 0; Fp16x.genai.version differs (reported only): JIT '0.17.1', AOT 'unknown (qualified with 0.17.1)'; genai.version differs (reported only): JIT '0.17.1', AOT 'unknown (qualified with 0.17.1)' |
+| qwen35-meai | Starlings.Acquisition Starlings.Generation.OnnxGenAI Starlings.Models.Qwen35 Starlings.Models.Qwen35.Extensions.AI Starlings.Tokenizers  | 0 | 0 | ok (5.6M) | ok | 10 strings exact, 0 vectors max abs 0; Fp16x.genai.version differs (reported only): JIT '0.17.1', AOT 'unknown (qualified with 0.17.1)'; genai.version differs (reported only): JIT '0.17.1', AOT 'unknown (qualified with 0.17.1)' |
+AOT CHECK PASS

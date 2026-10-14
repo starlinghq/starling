@@ -71,6 +71,12 @@ bool aot = !System.Runtime.CompilerServices.RuntimeFeature.IsDynamicCodeCompiled
 Console.WriteLine($"target:  {target}");
 Console.WriteLine($"mode:    {(aot ? "Native AOT" : "JIT")} ({RuntimeInformation.FrameworkDescription}, {RuntimeInformation.RuntimeIdentifier}, dynamic code {(System.Runtime.CompilerServices.RuntimeFeature.IsDynamicCodeSupported ? "supported" : "not supported")})");
 Put("target", target);
+#if AOT_CUDA
+const string Provider = "cuda";
+#else
+const string Provider = "cpu";
+#endif
+Put("provider", Provider);
 
 string[] queries = ["query: how much protein should a female eat", "query: 南瓜的家常做法", "query: Warum rostet Eisen?"];
 string[] passages =
@@ -107,7 +113,7 @@ if (args.Length == 3)
 // Runtime.Onnx only: native resolution and one raw session run over fixed ids (e5's graph, no tokenizer).
 Put("ort", $"native {OnnxRuntimeInfo.NativeVersion}, managed {OnnxRuntimeInfo.ManagedVersion}, providers {string.Join(",", OnnxRuntimeInfo.AvailableProviders)}");
 string e5Graph = Path.Combine(cache, "intfloat/multilingual-e5-small/614241f622f53c4eeff9890bdc4f31cfecc418b3/onnx/model.onnx");
-using (var session = OnnxModelSession.Create(e5Graph, new OnnxSessionOptions()))
+using (var session = OnnxModelSession.Create(e5Graph, Sessions()))
 {
     Put("session.inputs", string.Join(",", session.Inputs.Select(i => i.Name)));
     Put("session.outputs", string.Join(",", session.Outputs.Select(o => o.Name)));
@@ -140,8 +146,9 @@ using (var session = OnnxModelSession.Create(e5Graph, new OnnxSessionOptions()))
 #if AOT_E5
 E5ModelFiles e5Files = E5ModelAssets.OpenLocal(acquisition);
 var e5Tokenizer = E5Tokenizer.FromFile(e5Files.TokenizerPath, E5ModelAssets.TokenizerSha256);
-using (var encoder = E5Encoder.Create(e5Files.ModelPath, new E5EncoderOptions { Session = new OnnxSessionOptions { ExpectedModelSha256 = E5ModelAssets.ModelSha256 } }))
+using (var encoder = E5Encoder.Create(e5Files.ModelPath, new E5EncoderOptions { Session = Sessions() with { ExpectedModelSha256 = E5ModelAssets.ModelSha256 } }))
 {
+    Put("session.provider", encoder.Session.Diagnostics.SessionProviders[0]);
     var embedder = new E5TextEmbedder(e5Tokenizer, encoder);
     string[] texts = [.. queries, .. passages];
     for (int i = 0; i < texts.Length; i++)
@@ -159,8 +166,9 @@ using (var encoder = E5Encoder.Create(e5Files.ModelPath, new E5EncoderOptions { 
 #endif
 
 #if AOT_E5_MEAI
-using (var generator = E5EmbeddingGenerator.Create(E5ModelAssets.OpenLocal(acquisition)))
+using (var generator = E5EmbeddingGenerator.Create(E5ModelAssets.OpenLocal(acquisition), new E5EmbeddingGeneratorOptions { Encoder = new E5EncoderOptions { Session = Sessions() } }))
 {
+    Put("session.provider", generator.Embedder.Encoder.Session.Diagnostics.SessionProviders[0]);
     GeneratedEmbeddings<Embedding<float>> generated = await generator.GenerateAsync([.. queries, .. passages]);
     for (int i = 0; i < generated.Count; i++)
     {
@@ -174,7 +182,7 @@ using (var generator = E5EmbeddingGenerator.Create(E5ModelAssets.OpenLocal(acqui
 
 #if AOT_E5_MLNET
 E5ModelFiles mlFiles = E5ModelAssets.OpenLocal(acquisition);
-using (var encoder = E5Encoder.Create(mlFiles.ModelPath))
+using (var encoder = E5Encoder.Create(mlFiles.ModelPath, new E5EncoderOptions { Session = Sessions() }))
 {
     var embedder = new E5TextEmbedder(E5Tokenizer.FromFile(mlFiles.TokenizerPath, E5ModelAssets.TokenizerSha256), encoder);
     var ml = new MLContext(seed: 1);
@@ -189,13 +197,14 @@ using (var encoder = E5Encoder.Create(mlFiles.ModelPath))
 #endif
 
 #if AOT_GLINER2
-using (var extractor = Gliner2EntityExtractor.Create(Gliner2ModelAssets.OpenLocal(acquisition), new Gliner2ExtractorOptions { Session = new OnnxSessionOptions() }))
+using (var extractor = Gliner2EntityExtractor.Create(Gliner2ModelAssets.OpenLocal(acquisition), new Gliner2ExtractorOptions { Session = Sessions() }))
 {
     string[] texts =
     [
         "Apple CEO Tim Cook announced the iPhone 15 in Cupertino on September 12, 2023.",
         "Marie Curie won the Nobel Prize in Physics in 1903 together with Pierre Curie",
     ];
+    Put("session.provider", extractor.Session.Diagnostics.SessionProviders[0]);
     var extracted = extractor.ExtractBatch(texts, ["person", "organization", "location", "date", "product"], 0.5f);
     for (int i = 0; i < texts.Length; i++)
     {
@@ -207,8 +216,9 @@ using (var extractor = Gliner2EntityExtractor.Create(Gliner2ModelAssets.OpenLoca
 
 #if AOT_EG2
 EmbeddingGemma2ModelFiles eg2Files = EmbeddingGemma2ModelAssets.OpenLocal(acquisition);
-using (var encoder = EmbeddingGemma2Encoder.Create(eg2Files.ModelPath, new EmbeddingGemma2EncoderOptions { Session = new OnnxSessionOptions { ExpectedModelSha256 = EmbeddingGemma2ModelAssets.ModelSha256 } }))
+using (var encoder = EmbeddingGemma2Encoder.Create(eg2Files.ModelPath, new EmbeddingGemma2EncoderOptions { Session = Sessions() with { ExpectedModelSha256 = EmbeddingGemma2ModelAssets.ModelSha256 } }))
 {
+    Put("session.provider", encoder.Session.Diagnostics.SessionProviders[0]);
     var embedder = new EmbeddingGemma2TextEmbedder(EmbeddingGemma2Tokenizer.FromFile(eg2Files.TokenizerPath), encoder);
     float[][] q = embedder.EmbedBatch([.. queries.Select(StripPrefix)], EmbeddingGemma2Prompt.Query);
     float[][] d = embedder.EmbedBatch([.. passages.Select(StripPrefix)], EmbeddingGemma2Prompt.Document);
@@ -220,7 +230,7 @@ using (var encoder = EmbeddingGemma2Encoder.Create(eg2Files.ModelPath, new Embed
 }
 
 // Image path: a synthetic RGB gradient (no decoder package), vision graph plus multimodal text graph.
-using (var multimodal = EmbeddingGemma2MultimodalEmbedder.Create(EmbeddingGemma2ModelAssets.OpenLocalImageAssets(acquisition)))
+using (var multimodal = EmbeddingGemma2MultimodalEmbedder.Create(EmbeddingGemma2ModelAssets.OpenLocalImageAssets(acquisition), new EmbeddingGemma2MultimodalOptions { Session = Sessions() }))
 {
     const int W = 96, H = 64;
     byte[] rgb = new byte[W * H * 3];
@@ -235,6 +245,8 @@ using (var multimodal = EmbeddingGemma2MultimodalEmbedder.Create(EmbeddingGemma2
         }
     }
 
+    Put("vision.provider", multimodal.VisionSession.Diagnostics.SessionProviders[0]);
+    Put("multimodal.provider", multimodal.MultimodalSession.Diagnostics.SessionProviders[0]);
     var image = EmbeddingGemma2Image.FromRgb24(W, H, rgb);
     PutVector("image", multimodal.Embed(image));
     PutVector("interleaved", multimodal.Embed(EmbeddingGemma2MultimodalInput.Create("A gradient: ", image)));
@@ -259,8 +271,9 @@ using (var multimodal = EmbeddingGemma2MultimodalEmbedder.Create(EmbeddingGemma2
 #endif
 
 #if AOT_EG2_MEAI
-using (var generator = EmbeddingGemma2EmbeddingGenerator.Create(EmbeddingGemma2ModelAssets.OpenLocal(acquisition), new EmbeddingGemma2EmbeddingGeneratorOptions { Prompt = EmbeddingGemma2Prompt.Query }))
+using (var generator = EmbeddingGemma2EmbeddingGenerator.Create(EmbeddingGemma2ModelAssets.OpenLocal(acquisition), new EmbeddingGemma2EmbeddingGeneratorOptions { Prompt = EmbeddingGemma2Prompt.Query, Encoder = new EmbeddingGemma2EncoderOptions { Session = Sessions() } }))
 {
+    Put("session.provider", generator.Embedder.Encoder.Session.Diagnostics.SessionProviders[0]);
     GeneratedEmbeddings<Embedding<float>> generated = await generator.GenerateAsync([.. queries.Select(StripPrefix)]);
     for (int i = 0; i < generated.Count; i++)
     {
@@ -278,7 +291,7 @@ EmbeddingGemma2ModelFiles eg2MlFiles = EmbeddingGemma2ModelAssets.OpenLocal(acqu
 {
     var ml = new MLContext(seed: 1);
     IDataView view = ml.Data.LoadFromEnumerable([.. passages.Select(t => new TextRow { Text = StripPrefix(t) })]);
-    using var transformer = ml.Transforms.ApplyEmbeddingGemma2Embedding(eg2MlFiles, "Embedding", "Text", new EmbeddingGemma2EmbeddingOptions { Prompt = EmbeddingGemma2Prompt.Document, BatchSize = 3 }).Fit(view);
+    using var transformer = ml.Transforms.ApplyEmbeddingGemma2Embedding(eg2MlFiles, "Embedding", "Text", new EmbeddingGemma2EmbeddingOptions { Prompt = EmbeddingGemma2Prompt.Document, BatchSize = 3, Encoder = new EmbeddingGemma2EncoderOptions { Session = Sessions() } }).Fit(view);
     float[][] rows = [.. transformer.Transform(view).GetColumn<float[]>("Embedding")];
     for (int i = 0; i < rows.Length; i++)
     {
@@ -288,29 +301,37 @@ EmbeddingGemma2ModelFiles eg2MlFiles = EmbeddingGemma2ModelAssets.OpenLocal(acqu
 #endif
 
 #if AOT_QWEN35 || AOT_QWEN35_MEAI
-using (var model = Qwen35ChatModel.Load(Qwen35ModelAssets.OpenLocal(Qwen35Variant.Fp32x, acquisition), new Qwen35ModelOptions { Provider = GenAIExecutionProvider.Cpu }))
+#if AOT_CUDA
+// On CUDA both variants: fp32x and fp16x (fp16x is built for CUDA only).
+Qwen35Variant[] variants = [Qwen35Variant.Fp32x, Qwen35Variant.Fp16x];
+#else
+Qwen35Variant[] variants = [Qwen35Variant.Fp32x];
+#endif
+foreach (var variant in variants)
+using (var model = Qwen35ChatModel.Load(Qwen35ModelAssets.OpenLocal(variant, acquisition), new Qwen35ModelOptions { Provider = Provider == "cuda" ? GenAIExecutionProvider.Cuda : GenAIExecutionProvider.Cpu }))
 {
-    Put("model", $"{model.Info.Profile} {model.Info.Provider}");
+    string v = variant == Qwen35Variant.Fp32x ? string.Empty : $"{variant}.";
+    Put(v + "model", $"{model.Info.Profile} {model.Info.Provider}");
     // Reported, not compared: GenAI's version comes from the .deps.json, which a Native AOT binary does not have.
-    Info("genai.version", model.Info.GenAIVersion);
+    Info(v + "genai.version", model.Info.GenAIVersion);
     const string Question = "What is the capital of France? Answer in one sentence.";
 #if AOT_QWEN35
     GenerationResult result = model.Generate([Qwen35Message.User(Question)], new Qwen35ChatOptions { MaxNewTokens = 32 });
-    Put("text", result.Text);
-    Put("token_ids", string.Join(",", result.TokenIds));
-    Put("finish", $"{result.FinishReason} {result.Usage.PromptTokens}+{result.Usage.CompletionTokens}");
+    Put(v + "text", result.Text);
+    Put(v + "token_ids", string.Join(",", result.TokenIds));
+    Put(v + "finish", $"{result.FinishReason} {result.Usage.PromptTokens}+{result.Usage.CompletionTokens}");
 #else
     using IChatClient client = new Qwen35ChatClient(model, new Qwen35ChatClientOptions { Defaults = new Qwen35ChatOptions { MaxNewTokens = 32 } });
     ChatResponse response = await client.GetResponseAsync([new ChatMessage(ChatRole.User, Question)]);
-    Put("text", response.Text);
-    Put("finish", $"{response.FinishReason} {response.Usage?.InputTokenCount}+{response.Usage?.OutputTokenCount}");
+    Put(v + "text", response.Text);
+    Put(v + "finish", $"{response.FinishReason} {response.Usage?.InputTokenCount}+{response.Usage?.OutputTokenCount}");
     var streamed = new StringBuilder();
     await foreach (ChatResponseUpdate update in client.GetStreamingResponseAsync([new ChatMessage(ChatRole.User, Question)]))
     {
         streamed.Append(update.Text);
     }
 
-    Put("streamed", streamed.ToString());
+    Put(v + "streamed", streamed.ToString());
 #endif
 }
 #endif
@@ -330,6 +351,16 @@ void Row(string kind, string key, string value) =>
 
 void PutVector(string key, float[] values) =>
     results.Append("vec\t").Append(key).Append('\t').AppendJoin(',', values.Select(v => v.ToString("R", CultureInfo.InvariantCulture))).Append('\n');
+
+#if AOT_RUNTIME || AOT_E5 || AOT_E5_MEAI || AOT_E5_MLNET || AOT_GLINER2 || AOT_EG2 || AOT_EG2_MEAI || AOT_EG2_MLNET
+// Session settings of this build's provider: CUDA device 0 (TF32 off, forced by Starlings.Runtime.Onnx) or the CPU.
+static OnnxSessionOptions Sessions() =>
+#if AOT_CUDA
+    new() { Provider = OnnxExecutionProvider.Cuda, CudaDeviceId = 0 };
+#else
+    new();
+#endif
+#endif
 
 #if AOT_EG2 || AOT_EG2_MEAI || AOT_EG2_MLNET
 static string StripPrefix(string text) => text[(text.IndexOf(':', StringComparison.Ordinal) + 2)..];

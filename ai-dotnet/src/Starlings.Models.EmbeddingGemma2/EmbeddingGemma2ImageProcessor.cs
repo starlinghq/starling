@@ -17,7 +17,7 @@ namespace Starlings.Models.EmbeddingGemma2;
 /// </para>
 /// <para>
 /// Frame-ready: video frames use the same resize, rescale and patching with a budget of 140 soft tokens (1,260
-/// patches). Budgets other than 280 are untested in this package version.
+/// patches). Budgets 70, 140, 560 and 1,120 are experimental (proposed rows, within the protected bounds).
 /// </para>
 /// </remarks>
 public static class EmbeddingGemma2ImageProcessor
@@ -43,7 +43,7 @@ public static class EmbeddingGemma2ImageProcessor
     /// </summary>
     public const float RescaleFactor = (float)0.00392156862745098;
 
-    /// <summary>Budgets the processor accepts (<c>_SUPPORTED_SOFT_TOKENS</c>). Only 280 is tested.</summary>
+    /// <summary>Budgets the processor accepts (<c>_SUPPORTED_SOFT_TOKENS</c>); 280 against the accepted fixtures, the others against proposed rows.</summary>
     public static IReadOnlyList<int> SupportedSoftTokenBudgets { get; } = [70, 140, 280, 560, 1_120];
 
     /// <summary>Patches for a budget: <c>maxSoftTokens * 9</c>.</summary>
@@ -171,7 +171,7 @@ public static class EmbeddingGemma2ImageProcessor
     {
         if (maxSoftTokens is not (70 or 140 or 280 or 560 or 1_120))
         {
-            throw new ArgumentOutOfRangeException(nameof(maxSoftTokens), maxSoftTokens, "Supported image budgets are 70, 140, 280, 560 and 1,120 soft tokens (280 is the tested default).");
+            throw new ArgumentOutOfRangeException(nameof(maxSoftTokens), maxSoftTokens, "Supported image budgets are 70, 140, 280, 560 and 1,120 soft tokens (280 is the default).");
         }
     }
 }

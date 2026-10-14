@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Starlings.Generation.OnnxGenAI;
 using Starlings.TestSupport;
 using Microsoft.Extensions.AI;
 
@@ -31,7 +32,18 @@ public sealed class TemplateCorpusChatClientTests
 
         // Text parts are concatenated by the adapter, as the template concatenates them.
         bool rendersHere = c.Owned == "render" || c.UnsupportedFeature == "content_parts";
-        if (rendersHere)
+        if (rendersHere && c.PromptIds is { } promptIds && promptIds.Length + GenerationOptions.DefaultMaxNewTokens > Qwen35ChatModel.MaxContextTokens)
+        {
+            // Beyond the accepted context (long_context_over_8192_tokens: unsupported): rejected before any native call,
+            // with the rendered prompt's length; with the limit lifted (test seam) the prompt is the upstream one.
+            var ex = await Assert.ThrowsAsync<GenerationContextLengthException>(() => client.GetResponseAsync(messages, options, Ct));
+            Assert.Equal(promptIds.Length, ex.PromptTokens);
+            Assert.Empty(backend.Sequences);
+            backend.Model.EnforcedContextTokens = int.MaxValue;
+            await client.GetResponseAsync(messages, options, Ct);
+            Assert.Equal(c.PromptIds, backend.Single().Prompt);
+        }
+        else if (rendersHere)
         {
             await client.GetResponseAsync(messages, options, Ct);
             Assert.Equal(c.PromptIds, backend.Single().Prompt);

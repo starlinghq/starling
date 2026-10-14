@@ -251,9 +251,13 @@ capabilities:
   video_batch: experimental
   video_matryoshka: experimental
   video_timestamps: unsupported
-  video_variable_frame_rate: untested
-  video_interlaced: untested
-  video_hdr: untested
+  # Capability closure 2026-10-14 (docs/evidence/capability-closure-2026-10-14/README.md): nine generated edge-case videos (proposed
+  # model-pipeline/proposed/embeddinggemma-2/video-edge): metadata, sampled indices and every decoded frame equal to
+  # torchcodec 0.17.0 (decoder bound: exact) with the FFmpeg 8 adapter (and the FFmpeg 9 adapter). As upstream: index
+  # sampling from the average rate, no deinterlacing, no tone mapping (HDR is converted like any 10-bit stream).
+  video_variable_frame_rate: experimental  # durations 1/30 then 1/15 s; alternating 1/20 and 1/60 s
+  video_interlaced: experimental  # H.264 interlaced, top and bottom field first
+  video_hdr: experimental  # HEVC Main 10 BT.2020 PQ (with HDR10 SEI) and HLG; signalling only, synthetic content
   video_audio_track: unsupported
   video_decode_ffmpeg8: experimental
   # Starlings.Models.EmbeddingGemma2.Video.FFmpeg9: exact against torchcodec on FFmpeg 9.0.1 (every frame of the 22
@@ -261,7 +265,7 @@ capabilities:
   # (model-pipeline/proposed/embeddinggemma-2/decoder-ffmpeg9/), not yet in the protected tolerances.
   video_decode_ffmpeg9: experimental
   video_decode_rotation_90: experimental
-  video_decode_rotation_other: untested
+  video_decode_rotation_other: experimental  # display rotation -90 and 180 (edge-case videos), equal to torchcodec
   video_decode_streams: experimental
   image: experimental
   text_only_inputs: experimental
@@ -270,8 +274,12 @@ capabilities:
   cancellation: experimental
   persistence: unsupported
   training: unsupported
-  aot: untested
-  extensions_ai: untested  # tested over a CPU session
+  # aot: Native AOT publish on Linux x64 against Microsoft.ML.OnnxRuntime.Gpu.Linux 1.30.0, no trim/AOT warnings, video
+  # from decoded frames on CUDA equal to JIT on CUDA (tools/aot-check-ai.sh --cuda; docs/evidence/capability-closure-2026-10-14/README.md).
+  aot: experimental
+  # extensions_ai: CudaAdapterTests, the multimodal generator over CUDA sessions on six video rows (FFmpeg 8 adapter as
+  # the decoder), max abs 2.7e-7.
+  extensions_ai: experimental
   mlnet: unsupported  # no video column in the ML.NET transform (text only)
   concurrent_calls: experimental
   input_over_8192_tokens: unsupported

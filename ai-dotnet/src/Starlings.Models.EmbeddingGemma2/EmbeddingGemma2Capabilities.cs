@@ -36,9 +36,10 @@ public static class EmbeddingGemma2Capabilities
         ["tokenizer.owned"] = EmbeddingGemma2CapabilityStatus.Experimental,
 
         // Explicit named prompts from config_sentence_transformers.json (never inserted silently; default none). The
-        // fixtures cover none, query and document; the other 18 names map to prompt texts without fixture rows.
+        // accepted fixtures cover none, query and document; all 20 names on four public texts are in the proposed
+        // task-prompt rows (ids exact, within the protected text bound on CPU and CUDA; docs/evidence/capability-closure-2026-10-14/).
         ["prompts.query_document"] = EmbeddingGemma2CapabilityStatus.Experimental,
-        ["prompts.task"] = EmbeddingGemma2CapabilityStatus.Untested,
+        ["prompts.task"] = EmbeddingGemma2CapabilityStatus.Experimental,
         ["prompt_insertion.implicit"] = EmbeddingGemma2CapabilityStatus.Unsupported,
 
         // Truncate the leading dimensions, then L2-normalize again (equal to sentence-transformers truncate_dim).
@@ -47,10 +48,11 @@ public static class EmbeddingGemma2Capabilities
         ["matryoshka.128"] = EmbeddingGemma2CapabilityStatus.Experimental,
         ["matryoshka.other_sizes"] = EmbeddingGemma2CapabilityStatus.Unsupported,
 
-        // Input length, special tokens and prompt included. Fixtures reach 1,750 tokens, batch-independence checks
-        // 2,049; 2,050 to 8,192 tokens has no reference evidence. Longer input is rejected, never truncated.
+        // Input length, special tokens and prompt included. Accepted fixtures reach 1,750 tokens, batch-independence
+        // checks 2,049; 2,050 to 8,192 tokens is covered by the proposed long-input rows (8 text rows on CPU and CUDA
+        // within the protected bound). Longer input is rejected, never truncated.
         ["input.up_to_2049_tokens"] = EmbeddingGemma2CapabilityStatus.Experimental,
-        ["input.2050_to_8192_tokens"] = EmbeddingGemma2CapabilityStatus.Untested,
+        ["input.2050_to_8192_tokens"] = EmbeddingGemma2CapabilityStatus.Experimental,
         ["input.over_8192_tokens"] = EmbeddingGemma2CapabilityStatus.Unsupported,
         ["truncation"] = EmbeddingGemma2CapabilityStatus.Unsupported,
 
@@ -73,7 +75,7 @@ public static class EmbeddingGemma2Capabilities
         ["image.multiple_per_input"] = EmbeddingGemma2CapabilityStatus.Experimental,
         ["image.prompts"] = EmbeddingGemma2CapabilityStatus.Experimental, // rendered as upstream; the card recommends none
         ["image.budget_280"] = EmbeddingGemma2CapabilityStatus.Experimental,
-        ["image.budget_other"] = EmbeddingGemma2CapabilityStatus.Untested, // 70, 140, 560, 1,120: accepted, no evidence
+        ["image.budget_other"] = EmbeddingGemma2CapabilityStatus.Experimental, // 70, 140, 560, 1,120: proposed rows, within the protected bounds
         ["image.batch"] = EmbeddingGemma2CapabilityStatus.Experimental,
         ["image.matryoshka"] = EmbeddingGemma2CapabilityStatus.Experimental,
         ["image.over_8192_tokens"] = EmbeddingGemma2CapabilityStatus.Unsupported, // rejected before inference
@@ -81,9 +83,11 @@ public static class EmbeddingGemma2Capabilities
         ["image.alpha_compositing"] = EmbeddingGemma2CapabilityStatus.Unsupported, // alpha is dropped, as upstream
         ["image.16_bit_per_channel"] = EmbeddingGemma2CapabilityStatus.Unsupported, // rejected by the decoder; upstream renders white
         // Decoding is in Starlings.Models.EmbeddingGemma2.Imaging.SkiaSharp: PNG and JPEG decoded RGB equal to PIL
-        // on the fixture images; GIF, BMP and WebP decoded without evidence; EXIF orientation ignored unless opted in.
+        // on the fixture images, GIF, BMP and WebP on 12 files written from them; a GIF with transparent pixels is
+        // rejected (PIL keeps their palette colour); EXIF orientation ignored unless opted in.
         ["image.decode.png_jpeg"] = EmbeddingGemma2CapabilityStatus.Experimental,
-        ["image.decode.gif_bmp_webp"] = EmbeddingGemma2CapabilityStatus.Untested,
+        ["image.decode.gif_bmp_webp"] = EmbeddingGemma2CapabilityStatus.Experimental,
+        ["image.decode.gif_transparency"] = EmbeddingGemma2CapabilityStatus.Unsupported, // EmbeddingGemma2ImageRejection.GifTransparency
         ["image.decode.other_formats"] = EmbeddingGemma2CapabilityStatus.Unsupported,
         ["image.exif_orientation_opt_in"] = EmbeddingGemma2CapabilityStatus.Experimental, // deviation from upstream
         ["image.graph_download"] = EmbeddingGemma2CapabilityStatus.Untested, // release embeddinggemma-2-vision-onnx-r1 not published
@@ -111,9 +115,10 @@ public static class EmbeddingGemma2Capabilities
         ["video.sub_2s_one_frame"] = EmbeddingGemma2CapabilityStatus.Experimental, // upstream quirk kept for parity
         ["video.timestamps"] = EmbeddingGemma2CapabilityStatus.Unsupported, // add_timestamps is off in the checkpoint
         ["video.other_fps_max_frames_or_budget"] = EmbeddingGemma2CapabilityStatus.Unsupported, // not configurable
-        ["video.variable_frame_rate"] = EmbeddingGemma2CapabilityStatus.Untested, // index-based sampling, as upstream
-        ["video.interlaced"] = EmbeddingGemma2CapabilityStatus.Untested,
-        ["video.hdr"] = EmbeddingGemma2CapabilityStatus.Untested, // 10-bit SDR is covered (FFmpeg adapter)
+        // Edge-case videos (proposed video-edge): every frame, metadata and sampled indices equal torchcodec's.
+        ["video.variable_frame_rate"] = EmbeddingGemma2CapabilityStatus.Experimental, // index-based sampling, as upstream
+        ["video.interlaced"] = EmbeddingGemma2CapabilityStatus.Experimental, // no deinterlacing, as upstream
+        ["video.hdr"] = EmbeddingGemma2CapabilityStatus.Experimental, // PQ and HLG signalling; no tone mapping, as upstream
         ["video.audio_track"] = EmbeddingGemma2CapabilityStatus.Unsupported, // ignored, as upstream
         ["video.over_8192_tokens"] = EmbeddingGemma2CapabilityStatus.Unsupported, // rejected before inference
         ["video.frames_over_50_megapixels"] = EmbeddingGemma2CapabilityStatus.Unsupported, // default limit, configurable
@@ -123,7 +128,7 @@ public static class EmbeddingGemma2Capabilities
         ["video.decode.ffmpeg8"] = EmbeddingGemma2CapabilityStatus.Experimental,
         ["video.decode.ffmpeg9"] = EmbeddingGemma2CapabilityStatus.Unsupported, // other ABI; rejected with a typed error
         ["video.decode.rotation_90"] = EmbeddingGemma2CapabilityStatus.Experimental,
-        ["video.decode.rotation_other"] = EmbeddingGemma2CapabilityStatus.Untested, // -90, 180: torchcodec's transforms, no fixture
+        ["video.decode.rotation_other"] = EmbeddingGemma2CapabilityStatus.Experimental, // -90, 180: equal to torchcodec on the edge-case videos
         ["video.decode.streams"] = EmbeddingGemma2CapabilityStatus.Experimental, // seekable streams and memory, equal to files
         ["video.decode.arm64_or_non_avx2"] = EmbeddingGemma2CapabilityStatus.Untested, // swscale SIMD paths may differ by a level
         ["video.graph_download"] = EmbeddingGemma2CapabilityStatus.Untested, // same graphs as images; release not published
@@ -143,20 +148,23 @@ public static class EmbeddingGemma2Capabilities
         ["training"] = EmbeddingGemma2CapabilityStatus.Unsupported,
 
         // Microsoft.Extensions.AI IEmbeddingGenerator, in Starlings.Models.EmbeddingGemma2.Extensions.AI.
-        // Tested on the CPU profile with the owned tokenizer.
+        // Tested on the CPU profile with the owned tokenizer, and over CUDA sessions (EmbeddingGemma2.Tests.Cuda).
         ["extensions_ai.embedding_generator"] = EmbeddingGemma2CapabilityStatus.Experimental,
-        ["extensions_ai.embedding_generator.cuda"] = EmbeddingGemma2CapabilityStatus.Untested,
+        ["extensions_ai.embedding_generator.cuda"] = EmbeddingGemma2CapabilityStatus.Experimental,
         ["extensions_ai.dimensions_matryoshka"] = EmbeddingGemma2CapabilityStatus.Experimental,
 
         // ML.NET estimator/transformer, in Starlings.Models.EmbeddingGemma2.MLNet. Persistence: Save throws.
         ["mlnet.embedding_transform"] = EmbeddingGemma2CapabilityStatus.Experimental,
-        ["mlnet.embedding_transform.cuda"] = EmbeddingGemma2CapabilityStatus.Untested,
+        ["mlnet.embedding_transform.cuda"] = EmbeddingGemma2CapabilityStatus.Experimental,
         ["mlnet.batching"] = EmbeddingGemma2CapabilityStatus.Experimental,
         ["mlnet.persistence"] = EmbeddingGemma2CapabilityStatus.Unsupported,
         ["mlnet.cancellation"] = EmbeddingGemma2CapabilityStatus.Unsupported,
         ["mlnet.training"] = EmbeddingGemma2CapabilityStatus.Unsupported,
 
-        ["aot"] = EmbeddingGemma2CapabilityStatus.Untested,
+        // Native AOT on Linux x64, CPU and CUDA natives: no trim/AOT warnings, equal to JIT (docs/evidence/aot/,
+        // docs/evidence/capability-closure-2026-10-14/). The ML.NET adapter does not run under Native AOT.
+        ["aot"] = EmbeddingGemma2CapabilityStatus.Experimental,
+        ["mlnet.aot"] = EmbeddingGemma2CapabilityStatus.Unsupported,
         ["windows"] = EmbeddingGemma2CapabilityStatus.Untested,
         ["macos"] = EmbeddingGemma2CapabilityStatus.Untested,
         ["arm64"] = EmbeddingGemma2CapabilityStatus.Untested,

@@ -1,0 +1,11 @@
+xUnit.net v3 In-Process Runner v4.0.1+8ed8aa354c (64-bit .NET 10.0.12)
+  Discovering: Starlings.Models.EmbeddingGemma2.Tests.Cuda
+  Discovered:  Starlings.Models.EmbeddingGemma2.Tests.Cuda
+  Starting:    Starlings.Models.EmbeddingGemma2.Tests.Cuda
+    Starlings.Models.EmbeddingGemma2.Tests.Cuda.CudaAdapterTests.MLNetTransformOverCudaMeetsTheProtectedTolerance [OUTPUT] ML.NET transform over CUDA, 44 document rows in look-ahead batches of 4 vs protected: max abs 3.28E-007, mean 2.20E-008, p99 8.94E-008, min cosine 0.999999999996727 (worst ascii-sentence@document)
+    Starlings.Models.EmbeddingGemma2.Tests.Cuda.CudaAdapterTests.TextGeneratorOverCudaMeetsTheProtectedTolerance [OUTPUT] EmbeddingGemma2EmbeddingGenerator over CUDA, prompts none/query/document, vs protected: max abs 4.32E-007, mean 2.36E-008, p99 9.69E-008, min cosine 0.999999999993839 (worst ascii-sentence@document); bounds from model-pipeline/protected/embeddinggemma-2/onnx-fp32-cuda/tolerances.yaml
+    Starlings.Models.EmbeddingGemma2.Tests.Cuda.CudaAdapterTests.MultimodalGeneratorOverCudaMeetsTheProtectedImageAndVideoTolerances [OUTPUT] multimodal generator over CUDA, 28 images vs protected: max abs 3.75E-006, mean 9.08E-008, p99 1.06E-006, min cosine 0.999999999639957 (worst photo-rocket); bounds from model-pipeline/protected/embeddinggemma-2/image-fp32-cuda/tolerances.yaml
+    Starlings.Models.EmbeddingGemma2.Tests.Cuda.CudaAdapterTests.MultimodalGeneratorOverCudaMeetsTheProtectedImageAndVideoTolerances [OUTPUT] multimodal generator over CUDA, 6 videos vs protected: max abs 2.72E-007, mean 4.27E-008, p99 1.57E-007, min cosine 0.999999999998266 (worst h264-short-320x240-24fps-0.5s); bounds from model-pipeline/protected/embeddinggemma-2/video-fp32-cuda/tolerances.yaml
+  Finished:    Starlings.Models.EmbeddingGemma2.Tests.Cuda (ID = '69647e303bb3d1016fdaac1e6de4fcd582717f604f5e7fac96813f0aa8ddff3e')
+=== TEST EXECUTION SUMMARY ===
+   Starlings.Models.EmbeddingGemma2.Tests.Cuda  Total: 3, Errors: 0, Failed: 0, Skipped: 0, Not Run: 0, Time: 40.421s

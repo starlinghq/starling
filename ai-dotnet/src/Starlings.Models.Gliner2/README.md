@@ -48,9 +48,9 @@ This is the contract a Stable `gliner2-base-v1/onnx-fp32-cpu` profile would comm
 | Output | Entities with label, text, confidence and offsets into the original text: `Start`/`End` in UTF-16 code units, and `ScalarStart`/`ScalarEnd` in Unicode scalar values. `Text == input[Start..End]` always. Order: labels in request order, then descending confidence. Per label, confidence-first suppression of overlapping spans; spans of different labels may overlap. |
 | Numerical bound | The protected tolerances of the profile (span logits relative 1e-4; order and threshold ties within 2e-5 of the reference, per the maintainer decision of 2026-10-10). |
 | Supported | None yet. |
-| Experimental | entity extraction (CPU and CUDA), the staged API, threshold, original-text offsets, batch, cancellation, concurrent calls, offline asset resolution. Linux x64. |
-| Untested | label descriptions, the closed count gate, asset download (the graph is not hosted yet), Native AOT, Windows. |
-| Unsupported | inputs over 512 tokens, truncation, the `max_len` word cap, `extract_long`, GLiNER2's plain de-duplicated output, mixed label sets in one batch, classification, relation extraction, structured (JSON) extraction, per-label thresholds, overlap policies, the character splitter, non-English text, TF32, fp16, quantized graphs, streaming, persistence, training, Microsoft.Extensions.AI, ML.NET (`unsupported` from draft PR #6; no adapter exists). |
+| Experimental | entity extraction (CPU and CUDA), the staged API, threshold, original-text offsets, batch, cancellation, concurrent calls (serialized on CUDA by default), label descriptions, the closed count gate, offline asset resolution, Native AOT (CPU and CUDA natives). Linux x64. |
+| Untested | Windows. |
+| Unsupported | inputs over 512 tokens, unserialized concurrent calls on CUDA (wrong entities in 6 of 8 test runs), truncation, the `max_len` word cap, `extract_long`, GLiNER2's plain de-duplicated output, mixed label sets in one batch, classification, relation extraction, structured (JSON) extraction, per-label thresholds, overlap policies, the character splitter, non-English text, TF32, fp16, quantized graphs, streaming, persistence, training, Microsoft.Extensions.AI, ML.NET (`unsupported` from draft PR #6; no adapter exists). |
 
 ## Status
 
@@ -67,6 +67,6 @@ The order of promotion (`docs/plan/production-readiness.md`) takes this profile 
 - [ ] G5 performance: the benchmark harness is in draft PR #7 (its run is uncontrolled and is not G5 evidence). Needs a controlled run against a budget (M2, M6).
 - [ ] G6 distribution: the release drill on a seeded graph is a checklist (draft PR #6). Needs acquisition from public hosting (R9 after M3), and Windows x64 (R6, R9).
 - [ ] G7 integration: no adapter exists. Needs a representative downstream use, or the scope stays without integration badges (M7).
-- [ ] `label_descriptions`, `count_gate_closed`, `aot`: tested to `supported`/`experimental`, or recorded `unsupported`. The validator refuses Stable with any `untested` capability.
+- [x] `label_descriptions`, `count_gate_closed`, `aot`: experimental ([capability closure](https://github.com/starlinghq/starling/blob/main/docs/evidence/capability-closure-2026-10-14/README.md); the capability cases are proposed, not yet accepted fixtures). The validator refuses Stable with any `untested` capability.
 - [ ] CUDA profile: the GPU run of the protected evaluator for the draft `onnx-fp32-cuda` manifest (M6).
 - [ ] Qualification CI (P-018, R6), the compatibility matrix rows, the support policy, and a second release owner (M7).

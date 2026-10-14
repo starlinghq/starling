@@ -1,0 +1,24 @@
+txt-alice-2600-none: embedded (2600 tokens, 5.38 s)
+txt-alice-4096-query: embedded (4096 tokens, 0.3 s)
+txt-alice-6144-document: embedded (6144 tokens, 0.54 s)
+txt-alice-8191-document: embedded (8191 tokens, 0.8 s)
+txt-alice-8192-none: embedded (8192 tokens, 0.81 s)
+txt-alice-8192-query: embedded (8192 tokens, 0.81 s)
+txt-constitution-document: embedded (5950 tokens, 0.46 s)
+txt-corpus-cycle-8192-none: embedded (8192 tokens, 0.81 s)
+txt-alice-8193-none: rejected ( tokens, 0.02 s)
+txt-alice-8192-text-document-prompt: rejected ( tokens, 0.02 s)
+mm-alice-6-images-6000-none: embedded (6000 tokens, 1.39 s)
+mm-alice-8-images-8192-document: embedded (8192 tokens, 2.03 s)
+mm-alice-6-images-8193-none: rejected ( tokens, 0.02 s)
+mm-alice-video32-7000-none: embedded (7000 tokens, 2.33 s)
+mm-alice-video32-8192-query: embedded (8192 tokens, 2.5 s)
+mm-alice-two-videos-image-8192-document: embedded (8192 tokens, 3.17 s)
+mm-alice-video32-8193-none: rejected ( tokens, 0.02 s)
+[1;31m2026-10-14 08:23:18.830753322 [E:onnxruntime:, sequential_executor.cc:671 ExecuteKernel] Non-zero status code returned while running MatMul node. Name:'node_MatMul_203' Status Message: /onnxruntime_src/onnxruntime/core/framework/bfc_arena.cc:360 void* onnxruntime::BFCArena::AllocateRawInternal(size_t, bool, onnxruntime::Stream*) Failed to allocate memory for requested buffer of size 2147483648
+[m
+batch text-2600-and-8192: not run ([ErrorCode:Fail] Non-zero status code returned while running MatMul node. Name:'node_MatMul_203' Status Message: /onnxruntime_src/onnxruntime/core/framework/bfc_arena.cc:360 void* onnxruntime::BFCArena::AllocateRawInternal(size_t, bool, onnxruntime::Stream*) Failed to allocate memory for requested buffer of size 2147483648)
+[1;31m2026-10-14 08:23:32.975662191 [E:onnxruntime:, sequential_executor.cc:671 ExecuteKernel] Non-zero status code returned while running FusedMatMul node. Name:'mm_ple_linear/MatMulScaleFusion/' Status Message: /onnxruntime_src/onnxruntime/core/framework/bfc_arena.cc:360 void* onnxruntime::BFCArena::AllocateRawInternal(size_t, bool, onnxruntime::Stream*) Failed to allocate memory for requested buffer of size 688128000
+[m
+batch six-images-and-32-frame-video: not run ([ErrorCode:Fail] Non-zero status code returned while running FusedMatMul node. Name:'mm_ple_linear/MatMulScaleFusion/' Status Message: /onnxruntime_src/onnxruntime/core/framework/bfc_arena.cc:360 void* onnxruntime::BFCArena::AllocateRawInternal(size_t, bool, onnxruntime::Stream*) Failed to allocate memory for requested buffer of size 688128000)
+wrote <work>/long-cuda/long.results.json: 17 rows, 2 batches

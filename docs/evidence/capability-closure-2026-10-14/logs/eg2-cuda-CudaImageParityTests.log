@@ -1,0 +1,50 @@
+xUnit.net v3 In-Process Runner v4.0.1+8ed8aa354c (64-bit .NET 10.0.12)
+  Discovering: Starlings.Models.EmbeddingGemma2.Tests.Cuda
+  Discovered:  Starlings.Models.EmbeddingGemma2.Tests.Cuda
+  Starting:    Starlings.Models.EmbeddingGemma2.Tests.Cuda
+    Starlings.Models.EmbeddingGemma2.Tests.Cuda.CudaImageParityTests.BatchesMatchSingleRows [OUTPUT] vision batch 1 (GPU default), text batch 4: 9 rows in batches vs single rows: max abs 1.24E-007, mean 1.30E-008, p99 7.45E-008, min cosine 0.999999999999289 (worst size-tiny-8x6); bound 1.0E-005
+    Starlings.Models.EmbeddingGemma2.Tests.Cuda.CudaImageParityTests.QueriesRetrieveTheirImages [OUTPUT] q-cat: top photo-chelsea 0.7051, runner-up synth-text 0.6078
+    Starlings.Models.EmbeddingGemma2.Tests.Cuda.CudaImageParityTests.QueriesRetrieveTheirImages [OUTPUT] q-coffee: top photo-coffee 0.7384, runner-up photo-chelsea 0.6036
+    Starlings.Models.EmbeddingGemma2.Tests.Cuda.CudaImageParityTests.QueriesRetrieveTheirImages [OUTPUT] q-rocket: top photo-rocket 0.7069, runner-up photo-astronaut 0.6348
+    Starlings.Models.EmbeddingGemma2.Tests.Cuda.CudaImageParityTests.QueriesRetrieveTheirImages [OUTPUT] q-astronaut: top photo-astronaut 0.7590, runner-up photo-rocket 0.6408
+    Starlings.Models.EmbeddingGemma2.Tests.Cuda.CudaImageParityTests.QueriesRetrieveTheirImages [OUTPUT] q-galaxies: top photo-hubble-deep-field 0.7463, runner-up photo-rocket 0.5883
+    Starlings.Models.EmbeddingGemma2.Tests.Cuda.CudaImageParityTests.QueriesRetrieveTheirImages [OUTPUT] q-cameraman: top photo-camera 0.7335, runner-up synth-text 0.5830
+    Starlings.Models.EmbeddingGemma2.Tests.Cuda.CudaImageParityTests.QueriesRetrieveTheirImages [OUTPUT] q-shapes: top synth-shapes 0.7329, runner-up photo-hubble-deep-field 0.6148
+    Starlings.Models.EmbeddingGemma2.Tests.Cuda.CudaImageParityTests.QueriesRetrieveTheirImages [OUTPUT] q-text: top synth-text 0.6839, runner-up photo-hubble-deep-field 0.6565
+    Starlings.Models.EmbeddingGemma2.Tests.Cuda.CudaImageParityTests.SessionsUseCudaWithTf32Disabled [OUTPUT] 6c97f477a82f: CUDAExecutionProvider, CPUExecutionProvider; use_tf32=0; CUDA_VISIBLE_DEVICES=0
+    Starlings.Models.EmbeddingGemma2.Tests.Cuda.CudaImageParityTests.SessionsUseCudaWithTf32Disabled [OUTPUT] a2c22e072ec2: CUDAExecutionProvider, CPUExecutionProvider; use_tf32=0; CUDA_VISIBLE_DEVICES=0
+    Starlings.Models.EmbeddingGemma2.Tests.Cuda.CudaImageParityTests.RowsMatchTheReference [OUTPUT] 42 rows (in contract; mode-gray16 is rejected by contract) vs reference: max abs 3.64E-006, mean 7.96E-008, p99 8.52E-007, min cosine 0.999999999654997 (worst photo-rocket)
+    Starlings.Models.EmbeddingGemma2.Tests.Cuda.CudaImageParityTests.RowsMatchTheReference [OUTPUT]   image and interleaved rows: max abs 3.64E-006, mean 9.55E-008, p99 9.46E-007, min cosine 0.999999999654997 (worst photo-rocket)
+    Starlings.Models.EmbeddingGemma2.Tests.Cuda.CudaImageParityTests.RowsMatchTheReference [OUTPUT]   text-only rows (released text graph): max abs 1.49E-007, mean 1.21E-008, p99 4.10E-008, min cosine 0.999999999999881 (worst q-coffee)
+    Starlings.Models.EmbeddingGemma2.Tests.Cuda.CudaImageParityTests.RowsMatchTheReference [OUTPUT] bounds: embedding_max_abs 1.0E-005, min_cosine 0.9999995 (model-pipeline/protected/embeddinggemma-2/image-fp32-cuda/tolerances.yaml)
+    Starlings.Models.EmbeddingGemma2.Tests.Cuda.CudaImageParityTests.RowsMatchTheReference [OUTPUT] soft tokens / token embeddings: not compared: set STARLING_EMBEDDINGGEMMA2_IMAGE_TENSORS to the directory of run_embeddinggemma2_image.py --tensors output (<row id>.npz) for the soft-token and token-embedding checks.
+    Starlings.Models.EmbeddingGemma2.Tests.Cuda.CudaImageParityTests.OtherBudgetsMatchTheReference [OUTPUT] budget 70: 6 images, preprocessing and ids exact; embeddings vs reference: max abs 1.30E-006, mean 9.99E-008, p99 5.28E-007, min cosine 0.999999999970002 (worst aspect-wide-2000x40@70)
+    Starlings.Models.EmbeddingGemma2.Tests.Cuda.CudaImageParityTests.OtherBudgetsMatchTheReference [OUTPUT] budget 140: 6 images, preprocessing and ids exact; embeddings vs reference: max abs 4.69E-007, mean 8.17E-008, p99 2.93E-007, min cosine 0.999999999991270 (worst aspect-wide-2000x40@140)
+    Starlings.Models.EmbeddingGemma2.Tests.Cuda.CudaImageParityTests.OtherBudgetsMatchTheReference [OUTPUT] budget 560: 6 images, preprocessing and ids exact; embeddings vs reference: max abs 2.42E-006, mean 1.98E-007, p99 1.22E-006, min cosine 0.999999999851428 (worst photo-camera@560)
+2026-10-14 08:16:11.947699740 [E:onnxruntime:, sequential_executor.cc:671 ExecuteKernel] Non-zero status code returned while running Gather node. Name:'node_embedding' Status Message: /onnxruntime_src/onnxruntime/core/framework/bfc_arena.cc:360 void* onnxruntime::BFCArena::AllocateRawInternal(size_t, bool, onnxruntime::Stream*) Failed to allocate memory for requested buffer of size 2220032
+
+    Starlings.Models.EmbeddingGemma2.Tests.Cuda.CudaImageParityTests.OtherBudgetsMatchTheReference [FAIL]
+      Microsoft.ML.OnnxRuntime.OnnxRuntimeException : [ErrorCode:Fail] Non-zero status code returned while running Gather node. Name:'node_embedding' Status Message: /onnxruntime_src/onnxruntime/core/framework/bfc_arena.cc:360 void* onnxruntime::BFCArena::AllocateRawInternal(size_t, bool, onnxruntime::Stream*) Failed to allocate memory for requested buffer of size 2220032
+      
+      Stack Trace:
+           at Microsoft.ML.OnnxRuntime.InferenceSession.Run(RunOptions runOptions, IReadOnlyCollection`1 inputNames, IReadOnlyCollection`1 inputValues, IReadOnlyCollection`1 outputNames, IReadOnlyCollection`1 outputValues)
+        ai-dotnet/src/Starlings.Runtime.Onnx/OnnxModelSession.cs(366,0): at Starlings.Runtime.Onnx.OnnxModelSession.RunOnce(Action`1 run, CancellationToken cancellationToken)
+        ai-dotnet/src/Starlings.Runtime.Onnx/OnnxModelSession.cs(154,0): at Starlings.Runtime.Onnx.OnnxModelSession.Run(IReadOnlyCollection`1 inputNames, IReadOnlyCollection`1 inputValues, IReadOnlyCollection`1 outputNames, IReadOnlyCollection`1 outputValues, CancellationToken cancellationToken)
+        ai-dotnet/src/Starlings.Models.EmbeddingGemma2/EmbeddingGemma2MultimodalEmbedder.cs(788,0): at Starlings.Models.EmbeddingGemma2.EmbeddingGemma2MultimodalEmbedder.RunMultimodal(Int64[] ids, Int64[] mask, Single[] mmEmbeds, Boolean[] mmMask, Single[] tokens, Int32 rows, Int32 width, CancellationToken cancellationToken)
+        ai-dotnet/src/Starlings.Models.EmbeddingGemma2/EmbeddingGemma2MultimodalEmbedder.cs(663,0): at Starlings.Models.EmbeddingGemma2.EmbeddingGemma2MultimodalEmbedder.EmbedImageChunk(PreparedInput[] chunk, Span`1 destination, IEmbeddingGemma2Diagnostics diagnostics, CancellationToken cancellationToken)
+        ai-dotnet/src/Starlings.Models.EmbeddingGemma2/EmbeddingGemma2MultimodalEmbedder.cs(369,0): at Starlings.Models.EmbeddingGemma2.EmbeddingGemma2MultimodalEmbedder.EmbedCore(IReadOnlyList`1 inputs, EmbeddingGemma2Prompt prompt, Span`1 destination, Span`1 tokenCounts, IEmbeddingGemma2Diagnostics diagnostics, CancellationToken cancellationToken)
+        ai-dotnet/src/Starlings.Models.EmbeddingGemma2/EmbeddingGemma2MultimodalEmbedder.cs(265,0): at Starlings.Models.EmbeddingGemma2.EmbeddingGemma2MultimodalEmbedder.EmbedBatch(IReadOnlyList`1 inputs, EmbeddingGemma2Prompt prompt, Span`1 tokenCounts, CancellationToken cancellationToken)
+        ai-dotnet/src/Starlings.Models.EmbeddingGemma2/EmbeddingGemma2MultimodalEmbedder.cs(250,0): at Starlings.Models.EmbeddingGemma2.EmbeddingGemma2MultimodalEmbedder.EmbedBatch(IReadOnlyList`1 inputs, EmbeddingGemma2Prompt prompt, CancellationToken cancellationToken)
+        ai-dotnet/src/Starlings.Models.EmbeddingGemma2/EmbeddingGemma2MultimodalEmbedder.cs(224,0): at Starlings.Models.EmbeddingGemma2.EmbeddingGemma2MultimodalEmbedder.Embed(EmbeddingGemma2MultimodalInput input, EmbeddingGemma2Prompt prompt, CancellationToken cancellationToken)
+        ai-dotnet/src/Starlings.Models.EmbeddingGemma2/EmbeddingGemma2MultimodalEmbedder.cs(210,0): at Starlings.Models.EmbeddingGemma2.EmbeddingGemma2MultimodalEmbedder.Embed(EmbeddingGemma2Image image, CancellationToken cancellationToken)
+        ai-dotnet/tests/Shared/EmbeddingGemma2Images/EmbeddingGemma2ImageParityChecks.cs(298,0): at Starlings.TestSupport.EmbeddingGemma2ImageParityChecks.OtherBudgets(EmbeddingGemma2ImageModelFixture fixture, EmbeddingGemma2Tolerances tolerances, ITestOutputHelper output)
+        ai-dotnet/tests/Starlings.Models.EmbeddingGemma2.Tests.Cuda/CudaImageParityTests.cs(41,0): at Starlings.Models.EmbeddingGemma2.Tests.Cuda.CudaImageParityTests.OtherBudgetsMatchTheReference()
+           at System.Reflection.MethodBaseInvoker.InterpretedInvoke_Method(Object obj, IntPtr* args)
+           at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)
+      Output:
+        budget 70: 6 images, preprocessing and ids exact; embeddings vs reference: max abs 1.30E-006, mean 9.99E-008, p99 5.28E-007, min cosine 0.999999999970002 (worst aspect-wide-2000x40@70)
+        budget 140: 6 images, preprocessing and ids exact; embeddings vs reference: max abs 4.69E-007, mean 8.17E-008, p99 2.93E-007, min cosine 0.999999999991270 (worst aspect-wide-2000x40@140)
+        budget 560: 6 images, preprocessing and ids exact; embeddings vs reference: max abs 2.42E-006, mean 1.98E-007, p99 1.22E-006, min cosine 0.999999999851428 (worst photo-camera@560)
+  Finished:    Starlings.Models.EmbeddingGemma2.Tests.Cuda (ID = '69647e303bb3d1016fdaac1e6de4fcd582717f604f5e7fac96813f0aa8ddff3e')
+=== TEST EXECUTION SUMMARY ===
+   Starlings.Models.EmbeddingGemma2.Tests.Cuda  Total: 6, Errors: 0, Failed: 1, Skipped: 0, Not Run: 0, Time: 87.441s

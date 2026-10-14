@@ -1,0 +1,11 @@
+xUnit.net v3 In-Process Runner v4.0.1+8ed8aa354c (64-bit .NET 10.0.12)
+  Discovering: Starlings.Models.Gliner2.Tests
+  Discovered:  Starlings.Models.Gliner2.Tests
+  Starting:    Starlings.Models.Gliner2.Tests
+    Starlings.Models.Gliner2.Tests.CpuParityTests.CountGateAndDescriptionCasesMatchTheReference [OUTPUT] in-contract cases 22; inputs exact 22; entities exact 22, within rules 22 (allowed swaps 0, allowed flips 0)
+    Starlings.Models.Gliner2.Tests.CpuParityTests.CountGateAndDescriptionCasesMatchTheReference [OUTPUT] count_logits max abs 4.20E-005, max rel 3.28E-006 (worst descriptions-new-states); span_logits(valid) max abs 4.03E-003, max rel 1.67E-005 (worst descriptions-president); scores max abs 2.55E-006, max rel 0.00E+000 (worst descriptions-president); confidence max abs 2.26E-006, max rel 0.00E+000 (worst descriptions-falling)
+    Starlings.Models.Gliner2.Tests.CpuParityTests.CountGateAndDescriptionCasesMatchTheReference [OUTPUT] bounds: model-pipeline/protected/gliner2-base-v1/onnx-fp32-cpu/tolerances.yaml
+    Starlings.Models.Gliner2.Tests.CpuParityTests.CountGateAndDescriptionCasesMatchTheReference [OUTPUT] padded batches (max 8 rows, grouped by label count), 22 rows vs single runs: span logits max abs 3.81E-006, max rel 1.07E-007 (worst gate-closed-description-protein); entities identical
+  Finished:    Starlings.Models.Gliner2.Tests (ID = 'f527a8597c951332fe26cd456820c1b80f14de0e47ec9d1392a8eafa45d38852')
+=== TEST EXECUTION SUMMARY ===
+   Starlings.Models.Gliner2.Tests  Total: 1, Errors: 0, Failed: 0, Skipped: 0, Not Run: 0, Time: 30.349s

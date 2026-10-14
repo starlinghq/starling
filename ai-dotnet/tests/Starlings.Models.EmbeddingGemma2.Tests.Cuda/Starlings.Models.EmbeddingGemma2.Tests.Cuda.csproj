@@ -29,6 +29,9 @@
     <ProjectReference Include="../../src/Starlings.Models.EmbeddingGemma2.Imaging.SkiaSharp/Starlings.Models.EmbeddingGemma2.Imaging.SkiaSharp.csproj" />
     <!-- Test-only: decodes the fixture videos (the adapter's own tests check its RGB equals torchcodec's). -->
     <ProjectReference Include="../../src/Starlings.Models.EmbeddingGemma2.Video.FFmpeg/Starlings.Models.EmbeddingGemma2.Video.FFmpeg.csproj" />
+    <!-- The adapters over CUDA sessions (capabilities extensions_ai and mlnet of the CUDA profiles). -->
+    <ProjectReference Include="../../src/Starlings.Models.EmbeddingGemma2.Extensions.AI/Starlings.Models.EmbeddingGemma2.Extensions.AI.csproj" />
+    <ProjectReference Include="../../src/Starlings.Models.EmbeddingGemma2.MLNet/Starlings.Models.EmbeddingGemma2.MLNet.csproj" />
   </ItemGroup>
 
 </Project>

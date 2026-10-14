@@ -1,0 +1,41 @@
+{
+ "decoder": "torchcodec 0.17.0+cpu (VideoDecoder seek_mode exact, num_ffmpeg_threads 0, CPU)",
+ "ffmpeg": {
+  "libavfilter": [
+   11,
+   14,
+   103
+  ],
+  "libavutil": [
+   60,
+   26,
+   103
+  ],
+  "libavcodec": [
+   62,
+   28,
+   103
+  ],
+  "libavformat": [
+   62,
+   12,
+   103
+  ],
+  "ffmpeg_version": "n8.1.3-17-gc389840894-20261011"
+ },
+ "ffmpeg_major_pinned": 8,
+ "manifest": "edge-videos.json",
+ "manifest_sha256": "21beb8d73ca04042d9d3be9cac2b8a78a76760100521554c92c728d401ac4092",
+ "frames_file_sha256": "c74e3337078d822235456c4184b0ca15800ac22d6691cb46b578d6e8f6382cf2",
+ "videos": {
+  "h264-rot180-640x360-30fps-3s": 90,
+  "h264-rot-90-640x360-30fps-3s": 90,
+  "h264-rot180-portrait-360x640-30fps-2s": 60,
+  "hevc-hdr-pq-640x360-30fps-3s": 90,
+  "hevc-hdr-hlg-640x360-30fps-3s": 90,
+  "h264-interlaced-tff-720x480-29.97fps-3s": 90,
+  "h264-interlaced-bff-720x576-25fps-3s": 75,
+  "h264-vfr-30-then-15fps-640x360": 90,
+  "h264-vfr-alternating-320x240": 120
+ }
+}

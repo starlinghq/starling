@@ -27,8 +27,21 @@
       },
       "Microsoft.Bcl.AsyncInterfaces": {
         "type": "Transitive",
-        "resolved": "6.0.0",
-        "contentHash": "UcSjPsst+DfAdJGVDsu346FX0ci0ah+lw3WRtn18NUwEqRt70HaOQ7lI72vy3+1LxtqI3T5GWwV39rQSrCzAeg=="
+        "resolved": "9.0.4",
+        "contentHash": "9VGI5kxIvrNG2mqLQZnUR6y/3fcnygD8eNpHR+CqfbnIXvea6nehnYknDKQTxZVPMpzpNca+7DxLBmpdB3q0Bw=="
+      },
+      "Microsoft.ML.CpuMath": {
+        "type": "Transitive",
+        "resolved": "5.0.0",
+        "contentHash": "Qv0OeYmFkzDC9AjfJfUUTiIYcnb49K5oGtUUOIkr0BrApqWm6niHZqCrD3iJJi2BORbto/eEfP7/+uNqHxGvYg==",
+        "dependencies": {
+          "System.Numerics.Tensors": "9.0.4"
+        }
+      },
+      "Microsoft.ML.DataView": {
+        "type": "Transitive",
+        "resolved": "5.0.0",
+        "contentHash": "G8onJ9msBpLYea29WyG+NRV010rg75hJDUIEK3+sSDFAR0OV5p74QjZWnpNbyhT8OkAJdSNkif4l9/iCWZ2LOQ=="
       },
       "Microsoft.Testing.Extensions.Telemetry": {
         "type": "Transitive",
@@ -65,6 +78,11 @@
         "resolved": "5.0.0",
         "contentHash": "dDoKi0PnDz31yAyETfRntsLArTlVAVzUzCIvvEDsDsucrl33Dl8pIJG06ePTJTI3tGpeyHS9Cq7Foc/s4EeKcg=="
       },
+      "Newtonsoft.Json": {
+        "type": "Transitive",
+        "resolved": "13.0.3",
+        "contentHash": "HrC5BXdl00IP9zeV+0Z848QWPAoCr9P3bDEZguI+gkLcBKAOxix/tLEAAHC+UvDNPv4a2d18lOReHMOagPa+zQ=="
+      },
       "SkiaSharp.NativeAssets.macOS": {
         "type": "Transitive",
         "resolved": "4.153.1",
@@ -75,10 +93,15 @@
         "resolved": "4.153.1",
         "contentHash": "Yqg6rChTVh0BUE8QQxtOA3uUBnihfgID4yex/AvDa0+os2bVcBjmI3Qj9tnOB+R1hd/Jry1Gwl8qw5JI9HZG8Q=="
       },
+      "System.CodeDom": {
+        "type": "Transitive",
+        "resolved": "9.0.4",
+        "contentHash": "aJdv7Z87PoPW8ijvGIincocooYRbH3Umtlz7OrJKf6GDInbdu1bvk5X1fFlmbl7WP+9ntoIBd7NjKz+siVFdHA=="
+      },
       "System.Numerics.Tensors": {
         "type": "Transitive",
-        "resolved": "9.0.0",
-        "contentHash": "hyJB4UlpAi19Xr9AXzu2NuagKC4lPfHObNMEAA0HmqFz2rX7wKgzeYzO/jM/eBHDhnUGFFEjk5cOoJaxqg5J4A=="
+        "resolved": "9.0.4",
+        "contentHash": "ynVvqELpMWGQJ1Y90rlAmuTiSQIkXD0W5AMj7pVpEjECmrcIJLexIBblgccerHFijayfcsl1KCbkk+Sg5cS9vQ=="
       },
       "System.Security.AccessControl": {
         "type": "Transitive",
@@ -164,11 +187,26 @@
           "Starlings.Tokenizers": "[0.3.0-preview.1, 0.3.0-preview.1]"
         }
       },
+      "starlings.models.embeddinggemma2.extensions.ai": {
+        "type": "Project",
+        "dependencies": {
+          "Microsoft.Extensions.AI.Abstractions": "[10.10.1, )",
+          "Microsoft.Extensions.DependencyInjection.Abstractions": "[10.0.12, )",
+          "Starlings.Models.EmbeddingGemma2": "[0.1.0-preview.6, )"
+        }
+      },
       "starlings.models.embeddinggemma2.imaging.skiasharp": {
         "type": "Project",
         "dependencies": {
           "SkiaSharp": "[4.153.1, 4.153.1]",
           "SkiaSharp.NativeAssets.Linux.NoDependencies": "[4.153.1, 4.153.1]",
+          "Starlings.Models.EmbeddingGemma2": "[0.1.0-preview.6, )"
+        }
+      },
+      "starlings.models.embeddinggemma2.mlnet": {
+        "type": "Project",
+        "dependencies": {
+          "Microsoft.ML": "[5.0.0, )",
           "Starlings.Models.EmbeddingGemma2": "[0.1.0-preview.6, )"
         }
       },
@@ -182,6 +220,32 @@
         "type": "Project",
         "dependencies": {
           "Microsoft.ML.OnnxRuntime.Managed": "[1.30.0, 1.30.0]"
+        }
+      },
+      "Microsoft.Extensions.AI.Abstractions": {
+        "type": "CentralTransitive",
+        "requested": "[10.10.1, )",
+        "resolved": "10.10.1",
+        "contentHash": "Kz6ezQfRb9x2TkIWyaXkVAfpvyoAlEDfC59klPrdr2XD5WM4HNw+PREAZ+Fo43GPldtX+E0i1aYzMFQ/zXYMLg=="
+      },
+      "Microsoft.Extensions.DependencyInjection.Abstractions": {
+        "type": "CentralTransitive",
+        "requested": "[10.0.12, )",
+        "resolved": "10.0.12",
+        "contentHash": "9/qymSh7hVDMGTGwrLz8MRp5zRyXy9adGDOs4HwRdnLil3oZGYuWeZjbmHgCQ9BL1qBroVfgUK3U/nb61617Cw=="
+      },
+      "Microsoft.ML": {
+        "type": "CentralTransitive",
+        "requested": "[5.0.0, )",
+        "resolved": "5.0.0",
+        "contentHash": "clHLX6bjcRpuHDRkXwkm/gSILifT0DOXXzgor4kBhjTkz5G419BCXhZ1xVk/GsMH6koqWwMONjQKzSSCSVZrIQ==",
+        "dependencies": {
+          "Microsoft.Bcl.AsyncInterfaces": "9.0.4",
+          "Microsoft.ML.CpuMath": "5.0.0",
+          "Microsoft.ML.DataView": "5.0.0",
+          "Newtonsoft.Json": "13.0.3",
+          "System.CodeDom": "9.0.4",
+          "System.Numerics.Tensors": "9.0.4"
         }
       },
       "Microsoft.ML.OnnxRuntime.Managed": {

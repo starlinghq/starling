@@ -1,0 +1,314 @@
+{
+ "reference": "long-embeddings.jsonl",
+ "reference_sha256": "9fd391c917a8564839014d02f83b39999c8fc26ee353b2a777f191f7f07d4891",
+ "candidate": "C# EmbeddingGemma2MultimodalEmbedder (text-only rows on the released text graph), ONNX Runtime 1.30.0 CUDA, FFmpeg adapter n8.1.3-17-gc389840894-20261011, SkiaSharp image decoder",
+ "candidate_commit": "dcdc3f2fc71bee742204edff2cf34e2105e41789-dirty",
+ "environment": {
+  "machine": "omarchy",
+  "provider": "cuda",
+  "provider_options": {
+   "sdpa_kernel": "0",
+   "use_tf32": "0",
+   "fuse_conv_bias": "0",
+   "prefer_nhwc": "0",
+   "use_ep_level_unified_stream": "0",
+   "device_id": "0",
+   "tunable_op_max_tuning_duration_ms": "0",
+   "has_user_compute_stream": "0",
+   "cudnn_conv_algo_search": "EXHAUSTIVE",
+   "cudnn_conv1d_pad_to_nc1d": "0",
+   "gpu_mem_limit": "18446744073709551615",
+   "arena_extend_strategy": "kNextPowerOfTwo",
+   "do_copy_in_default_stream": "1",
+   "user_compute_stream": "0",
+   "cudnn_conv_use_max_workspace": "1",
+   "tunable_op_enable": "0",
+   "enable_cudnn": "1",
+   "tunable_op_tuning_enable": "0"
+  },
+  "dotnet": ".NET 10.0.12",
+  "os": "Omarchy",
+  "cpu": "Intel(R) Core(TM) i7-5820K CPU @ 3.30GHz",
+  "onnxruntime": "1.30.0",
+  "intra_op_threads": null,
+  "vision_graph_sha256": "6c97f477a82f6863d22d800476de6d0a618b23e514aa9b65a46b220c4b106b92",
+  "multimodal_graph_sha256": "a2c22e072ec230b105b35c2787dcfccba186254e6a921e729c45b40e50dbbb74",
+  "ffmpeg_version": "n8.1.3-17-gc389840894-20261011",
+  "max_video_frames_per_vision_call": 2,
+  "cuda_device_id": 0,
+  "cuda_visible_devices": "0",
+  "cuda_device_order": "PCI_BUS_ID"
+ },
+ "rows": 17,
+ "all_ids_equal": true,
+ "all_rejected_token_counts_equal": true,
+ "all_outcomes_as_expected": true,
+ "all_finite": true,
+ "worst": {
+  "text": {
+   "embedding_max_abs": 1.9799999999986495e-07,
+   "worst_row": "txt-corpus-cycle-8192-none",
+   "min_cosine": 0.9999999999988445,
+   "rows": 8
+  },
+  "media": {
+   "embedding_max_abs": 6.510000000008176e-07,
+   "worst_row": "mm-alice-6-images-6000-none",
+   "min_cosine": 0.9999999999899774,
+   "rows": 5
+  },
+  "all": {
+   "embedding_max_abs": 6.510000000008176e-07,
+   "worst_row": "mm-alice-6-images-6000-none",
+   "min_cosine": 0.9999999999899774,
+   "rows": 13
+  }
+ },
+ "batches": {
+  "text-2600-and-8192": {
+   "rows": [
+    "txt-alice-2600-none",
+    "txt-alice-8192-none"
+   ],
+   "not_run": "[ErrorCode:Fail] Non-zero status code returned while running MatMul node. Name:'node_MatMul_203' Status Message: /onnxruntime_src/onnxruntime/core/framework/bfc_arena.cc:360 void* onnxruntime::BFCArena::AllocateRawInternal(size_t, bool, onnxruntime::Stream*) Failed to allocate memory for requested buffer of size 2147483648"
+  },
+  "six-images-and-32-frame-video": {
+   "rows": [
+    "mm-alice-6-images-6000-none",
+    "mm-alice-video32-7000-none"
+   ],
+   "not_run": "[ErrorCode:Fail] Non-zero status code returned while running FusedMatMul node. Name:'mm_ple_linear/MatMulScaleFusion/' Status Message: /onnxruntime_src/onnxruntime/core/framework/bfc_arena.cc:360 void* onnxruntime::BFCArena::AllocateRawInternal(size_t, bool, onnxruntime::Stream*) Failed to allocate memory for requested buffer of size 688128000"
+  }
+ },
+ "orientation_only_existing_bounds": {
+  "text": {
+   "embedding_max_abs": 1e-05
+  },
+  "media": {
+   "embedding_max_abs": 1e-05,
+   "min_cosine": 0.9999995
+  }
+ },
+ "per_row": {
+  "txt-alice-2600-none": {
+   "kind": "text",
+   "tokens": 2600,
+   "expect": "embed",
+   "outcome": "embedded",
+   "matches_expectation": true,
+   "ids_equal": true,
+   "seconds": 5.38,
+   "embedding_max_abs": 9.700000000011783e-08,
+   "cosine": 0.9999999999997946,
+   "finite": true
+  },
+  "txt-alice-4096-query": {
+   "kind": "text",
+   "tokens": 4096,
+   "expect": "embed",
+   "outcome": "embedded",
+   "matches_expectation": true,
+   "ids_equal": true,
+   "seconds": 0.3,
+   "embedding_max_abs": 8.499999999689312e-08,
+   "cosine": 0.9999999999998119,
+   "finite": true
+  },
+  "txt-alice-6144-document": {
+   "kind": "text",
+   "tokens": 6144,
+   "expect": "embed",
+   "outcome": "embedded",
+   "matches_expectation": true,
+   "ids_equal": true,
+   "seconds": 0.54,
+   "embedding_max_abs": 8.900000000172659e-08,
+   "cosine": 0.9999999999997415,
+   "finite": true
+  },
+  "txt-alice-8191-document": {
+   "kind": "text",
+   "tokens": 8191,
+   "expect": "embed",
+   "outcome": "embedded",
+   "matches_expectation": true,
+   "ids_equal": true,
+   "seconds": 0.8,
+   "embedding_max_abs": 9.499999999856845e-08,
+   "cosine": 0.9999999999996821,
+   "finite": true
+  },
+  "txt-alice-8192-none": {
+   "kind": "text",
+   "tokens": 8192,
+   "expect": "embed",
+   "outcome": "embedded",
+   "matches_expectation": true,
+   "ids_equal": true,
+   "seconds": 0.81,
+   "embedding_max_abs": 6.999999996315509e-08,
+   "cosine": 0.9999999999998648,
+   "finite": true
+  },
+  "txt-alice-8192-query": {
+   "kind": "text",
+   "tokens": 8192,
+   "expect": "embed",
+   "outcome": "embedded",
+   "matches_expectation": true,
+   "ids_equal": true,
+   "seconds": 0.81,
+   "embedding_max_abs": 8.460000000022616e-08,
+   "cosine": 0.9999999999998297,
+   "finite": true
+  },
+  "txt-constitution-document": {
+   "kind": "text",
+   "tokens": 5950,
+   "expect": "embed",
+   "outcome": "embedded",
+   "matches_expectation": true,
+   "ids_equal": true,
+   "seconds": 0.46,
+   "embedding_max_abs": 1.2900000000148903e-07,
+   "cosine": 0.9999999999995691,
+   "finite": true
+  },
+  "txt-corpus-cycle-8192-none": {
+   "kind": "text",
+   "tokens": 8192,
+   "expect": "embed",
+   "outcome": "embedded",
+   "matches_expectation": true,
+   "ids_equal": true,
+   "seconds": 0.81,
+   "embedding_max_abs": 1.9799999999986495e-07,
+   "cosine": 0.9999999999988445,
+   "finite": true
+  },
+  "txt-alice-8193-none": {
+   "kind": "text",
+   "tokens": 8193,
+   "expect": "reject",
+   "outcome": "rejected",
+   "matches_expectation": true,
+   "ids_equal": null,
+   "seconds": 0.02,
+   "exception": {
+    "type": "EmbeddingGemma2InputTooLongException",
+    "token_count": 8193,
+    "maximum_tokens": 8192,
+    "message": "Input 0 has 8193 tokens; the maximum is 8192 (special tokens and prompt included). EmbeddingGemma 2 rejects longer input instead of truncating it; split or shorten the text. (Parameter 'inputs')"
+   },
+   "rejected_token_count_equal": true
+  },
+  "txt-alice-8192-text-document-prompt": {
+   "kind": "text",
+   "tokens": 8198,
+   "expect": "reject",
+   "outcome": "rejected",
+   "matches_expectation": true,
+   "ids_equal": null,
+   "seconds": 0.02,
+   "exception": {
+    "type": "EmbeddingGemma2InputTooLongException",
+    "token_count": 8198,
+    "maximum_tokens": 8192,
+    "message": "Input 0 has 8198 tokens; the maximum is 8192 (special tokens and prompt included). EmbeddingGemma 2 rejects longer input instead of truncating it; split or shorten the text. (Parameter 'inputs')"
+   },
+   "rejected_token_count_equal": true
+  },
+  "mm-alice-6-images-6000-none": {
+   "kind": "media",
+   "tokens": 6000,
+   "expect": "embed",
+   "outcome": "embedded",
+   "matches_expectation": true,
+   "ids_equal": true,
+   "seconds": 1.39,
+   "embedding_max_abs": 6.510000000008176e-07,
+   "cosine": 0.9999999999899774,
+   "finite": true
+  },
+  "mm-alice-8-images-8192-document": {
+   "kind": "media",
+   "tokens": 8192,
+   "expect": "embed",
+   "outcome": "embedded",
+   "matches_expectation": true,
+   "ids_equal": true,
+   "seconds": 2.03,
+   "embedding_max_abs": 2.3599999999721066e-07,
+   "cosine": 0.9999999999982989,
+   "finite": true
+  },
+  "mm-alice-6-images-8193-none": {
+   "kind": "media",
+   "tokens": 8193,
+   "expect": "reject",
+   "outcome": "rejected",
+   "matches_expectation": true,
+   "ids_equal": null,
+   "seconds": 0.02,
+   "exception": {
+    "type": "EmbeddingGemma2InputTooLongException",
+    "token_count": 8193,
+    "maximum_tokens": 8192,
+    "message": "Input 0 has 8193 tokens; the maximum is 8192 (special tokens and prompt included). EmbeddingGemma 2 rejects longer input instead of truncating it; split or shorten the text. (Parameter 'inputs')"
+   },
+   "rejected_token_count_equal": true
+  },
+  "mm-alice-video32-7000-none": {
+   "kind": "media",
+   "tokens": 7000,
+   "expect": "embed",
+   "outcome": "embedded",
+   "matches_expectation": true,
+   "ids_equal": true,
+   "seconds": 2.33,
+   "embedding_max_abs": 2.270000000054173e-07,
+   "cosine": 0.999999999998929,
+   "finite": true
+  },
+  "mm-alice-video32-8192-query": {
+   "kind": "media",
+   "tokens": 8192,
+   "expect": "embed",
+   "outcome": "embedded",
+   "matches_expectation": true,
+   "ids_equal": true,
+   "seconds": 2.5,
+   "embedding_max_abs": 3.5400000000102017e-07,
+   "cosine": 0.9999999999967499,
+   "finite": true
+  },
+  "mm-alice-two-videos-image-8192-document": {
+   "kind": "media",
+   "tokens": 8192,
+   "expect": "embed",
+   "outcome": "embedded",
+   "matches_expectation": true,
+   "ids_equal": true,
+   "seconds": 3.17,
+   "embedding_max_abs": 3.9460000000011985e-07,
+   "cosine": 0.9999999999957775,
+   "finite": true
+  },
+  "mm-alice-video32-8193-none": {
+   "kind": "media",
+   "tokens": 8193,
+   "expect": "reject",
+   "outcome": "rejected",
+   "matches_expectation": true,
+   "ids_equal": null,
+   "seconds": 0.02,
+   "exception": {
+    "type": "EmbeddingGemma2InputTooLongException",
+    "token_count": 8193,
+    "maximum_tokens": 8192,
+    "message": "Input 0 has 8193 tokens; the maximum is 8192 (special tokens and prompt included). EmbeddingGemma 2 rejects longer input instead of truncating it; split or shorten the text. (Parameter 'inputs')"
+   },
+   "rejected_token_count_equal": true
+  }
+ }
+}

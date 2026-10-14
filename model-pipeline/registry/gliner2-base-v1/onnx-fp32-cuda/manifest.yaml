@@ -94,7 +94,6 @@ behavior:
     - relation extraction
     - structured (JSON) extraction
     - text classification (named candidate; kickoff decision)
-    - label descriptions as a contract feature (implemented; one development case only, untested)
     - inputs above 512 tokens (rejected, not truncated)
     - GLiNER2's plain output format (strings de-duplicated on lower-cased text)
     - per-label thresholds, dtype "str", regex validators, entity attributes
@@ -171,20 +170,30 @@ capabilities:
   # (local only, opt-in) checks the session (CUDA first, use_tf32 0, graph digest), the 54 in-contract development
   # cases single and in padded batches against the PyTorch fp32 CPU reference with this profile's protected
   # tolerances, rejection of the cases over 512 tokens, and placement. No result of it is committed as evidence yet.
-  # Capabilities those tests do not exercise over CUDA are untested.
+  # Capability closure 2026-10-14 (docs/evidence/capability-closure-2026-10-14/README.md): cancellation, concurrency, the capability cases and AOT over CUDA.
   batch: experimental
   streaming: unsupported
-  cancellation: untested  # tested over a CPU session
+  cancellation: experimental  # CudaParityTests: a 4,096-text batch cancelled after 50 ms threw at 53 ms; reuse gives the reference
   persistence: unsupported
   training: unsupported
-  aot: untested
+  # aot: Native AOT publish on Linux x64 against Microsoft.ML.OnnxRuntime.Gpu.Linux 1.30.0, no trim/AOT warnings,
+  # extraction on CUDA equal to JIT on CUDA (tools/aot-check-ai.sh --cuda).
+  aot: experimental
   extensions_ai: unsupported
   mlnet: unsupported  # no ML.NET adapter package exists for GLiNER2
   entity_extraction: experimental
   offsets_original_text: experimental
-  concurrent_calls: untested  # tested over a CPU session
-  label_descriptions: untested
-  count_gate_closed: untested
+  # concurrent_calls: serialized on CUDA (Gliner2ExtractorOptions.SerializeNativeCalls, the CUDA default). Unserialized
+  # concurrent runs on one CUDA session returned wrong entities in 6 of 8 runs (four threads); that mode is unsupported.
+  # Serialized: 8 of 8 runs equal to the sequential results.
+  concurrent_calls: experimental
+  concurrent_calls_unserialized: unsupported
+  # label_descriptions and count_gate_closed (capability closure 2026-10-14, docs/evidence/capability-closure-2026-10-14/README.md): 22 proposed
+  # cases on public-domain text run by the pinned GLiNER2 (model-pipeline/proposed/gliner2-base-v1/capability-cases;
+  # 11 with label descriptions, 12 where the count gate closes): inputs, gate and entities exact, logits within this
+  # profile's protected tolerances. Proposed cases, protected bounds.
+  label_descriptions: experimental
+  count_gate_closed: experimental
   input_over_512_tokens: unsupported
   plain_deduplicated_output: unsupported
   mixed_label_sets_in_batch: unsupported
@@ -241,8 +250,9 @@ maintenance:
       The hosted graph is public since 2026-10-14. The 0.1.0-preview.6 release drill downloaded it with no token into an
       empty cache, verified it and ran the sample offline (Linux x64, one machine); other platforms are untested.
     - >-
-      The count gate (count_pred argmax 0 gives an empty result) never closed on the development corpus, so that
-      path has no fixture.
+      The count gate (count_pred argmax 0 gives an empty result) never closed on the development corpus. The proposed
+      capability cases (model-pipeline/proposed/gliner2-base-v1/capability-cases) add 12 public-text cases where it
+      closes; they are not yet accepted fixtures.
     - >-
       CUDA parity evidence (PROPOSED.md) left out the two cases over 600 tokens from the padded-batch check because
       the GPU was shared; single-row parity covers all 58 cases (span logits max abs 4.0e-3, scores 2.5e-6).

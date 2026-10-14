@@ -39,7 +39,7 @@ e5 expects `"query: "` or `"passage: "` at the start of every text; nothing is a
 
 ## Status
 
-Profile `multilingual-e5-small/onnx-fp32-cpu`: maturity **Preview**. Linux x64 CPU: experimental (46 fixture texts within 2.4e-7 of the PyTorch reference, bound 1e-5). Windows, macOS, ARM64, Native AOT: untested. Profile `multilingual-e5-small/onnx-fp32-cuda` (Linux x64 CUDA): Experimental. Evidence, known issues and reproduction commands: [release notes](https://github.com/starlinghq/starling/blob/main/docs/releases/ai-0.1.0-preview.6.md). Model license: MIT, stated only in the model card.
+Profile `multilingual-e5-small/onnx-fp32-cpu`: maturity **Preview**. Linux x64 CPU: experimental (46 fixture texts within 2.4e-7 of the PyTorch reference, bound 1e-5). Native AOT (Linux x64): experimental. Windows, macOS, ARM64: untested. Profile `multilingual-e5-small/onnx-fp32-cuda` (Linux x64 CUDA): Experimental. Evidence, known issues and reproduction commands: [release notes](https://github.com/starlinghq/starling/blob/main/docs/releases/ai-0.1.0-preview.6.md). Model license: MIT, stated only in the model card.
 
 ## Stable contract
 
@@ -55,8 +55,8 @@ This is the contract a Stable `onnx-fp32-cpu` profile would commit to. Today it 
 | Output | 384-dimensional float32 vectors: mean pooling over the attention mask, then L2 normalization. Batches are right-padded; batch rows equal single calls within the protected tolerances. |
 | Numerical bound | The protected tolerances of the profile (embedding max abs 1e-5 against the PyTorch reference). |
 | Supported | None yet. Every capability below is at most `experimental`. |
-| Experimental | text and pre-tokenized embedding, batch, cancellation (at ONNX Runtime node boundaries), concurrent calls, asset acquisition, `Starlings.Models.E5.Extensions.AI` (`IEmbeddingGenerator`), `Starlings.Models.E5.MLNet` (pipeline composition). Linux x64 CPU. |
-| Untested | Native AOT, Windows x64, macOS, ARM64; the Extensions.AI and ML.NET adapters on CUDA. |
+| Experimental | text and pre-tokenized embedding, batch, cancellation (at ONNX Runtime node boundaries), concurrent calls, asset acquisition, `Starlings.Models.E5.Extensions.AI` (`IEmbeddingGenerator`), `Starlings.Models.E5.MLNet` (pipeline composition). Linux x64 CPU; the adapters over a CUDA session; Native AOT on Linux x64 with the CPU and CUDA natives (not the ML.NET adapter). |
+| Untested | Windows x64, macOS, ARM64. |
 | Unsupported | streaming, pair input, non-zero `token_type_ids`, encoder-side truncation, prefix insertion, TF32, fp16, quantized graphs, TensorRT, persistence (ML.NET save), training, ML.NET cancellation, Extensions.AI `Dimensions` truncation. |
 
 ## Path to Stable
@@ -72,7 +72,7 @@ Profile `onnx-fp32-cpu` is the first Stable candidate (`docs/plan/production-rea
 - [x] G6 distribution, Linux x64 CPU: passed ([rc drill](https://github.com/starlinghq/starling/blob/main/docs/releases/e5-0.1.0-preview.2/rc-drill.log)).
 - [ ] G6 on Windows x64, and the ML.NET package in the release drill (R9).
 - [ ] G7 integration: a representative downstream use by the first named consumer (M7, P-028). Today: checklist.
-- [ ] `aot`: tested to `supported` or recorded `unsupported` (R9). The validator refuses Stable with any `untested` capability.
+- [x] `aot`: experimental on CPU and CUDA ([capability closure](https://github.com/starlinghq/starling/blob/main/docs/evidence/capability-closure-2026-10-14/README.md)). The validator refuses Stable with any `untested` capability.
 - [ ] Qualification CI (P-018, R6): a Windows x64 job and a scheduled qualification run. These give the compatibility matrix rows and regression support.
 - [ ] A Linux x64 CPU compatibility row at `supported`, from qualification CI.
 - [ ] Support policy accepted, and a second release owner named (M7; [support policy](https://github.com/starlinghq/starling/blob/main/docs/support-policy.md)).

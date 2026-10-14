@@ -43,6 +43,8 @@ public static class Qwen35Capabilities
         ["sampling.seeded"] = Qwen35CapabilityStatus.Experimental,
         ["step0_logits"] = Qwen35CapabilityStatus.Experimental,
         ["asset_acquisition.offline"] = Qwen35CapabilityStatus.Experimental,
+        // Native AOT on Linux x64 with the CPU and CUDA GenAI natives (fp32x, fp16x): no warnings, equal to JIT.
+        ["aot"] = Qwen35CapabilityStatus.Experimental,
 
         // From the hosting repository: fp16x lock downloaded and verified with a read token while it was private (opt-in test,
         // one machine); the repository is public since 2026-10-14.
@@ -58,7 +60,7 @@ public static class Qwen35Capabilities
         ["extensions_ai.concurrent_requests"] = Qwen35CapabilityStatus.Experimental,
         ["extensions_ai.middleware"] = Qwen35CapabilityStatus.Experimental,
         ["extensions_ai.dependency_injection"] = Qwen35CapabilityStatus.Experimental,
-        ["extensions_ai.fp16x.cuda"] = Qwen35CapabilityStatus.Untested,
+        ["extensions_ai.fp16x.cuda"] = Qwen35CapabilityStatus.Experimental, // equal to the typed fp16x model on 21 prompts
 
         // Tool calling: the template's tools block, assistant tool calls and tool messages equal the upstream rendering
         // (transformers 5.18.0) on the proposed P-029 corpus; the output parser and the IChatClient mapping
@@ -74,12 +76,17 @@ public static class Qwen35Capabilities
         ["extensions_ai.tools"] = Qwen35CapabilityStatus.Experimental,
         ["extensions_ai.function_invocation"] = Qwen35CapabilityStatus.Experimental,
 
+        // Long context: prompts of 4,112 and 8,213 tokens against the reference (proposed fixture) on fp32x CPU and
+        // CUDA and fp16x CUDA. Prompt plus new tokens above Qwen35ChatModel.MaxContextTokens (8,192) is rejected with
+        // GenerationContextLengthException: at 16,391 tokens cached vs uncached decoding exceeded the protected bound.
+        ["long_context.1667_to_8192_tokens"] = Qwen35CapabilityStatus.Experimental,
+        ["long_context.over_8192_tokens"] = Qwen35CapabilityStatus.Unsupported,
+
         // Implemented, without enough evidence.
-        ["long_context.over_1666_tokens"] = Qwen35CapabilityStatus.Untested,
         ["windows"] = Qwen35CapabilityStatus.Untested,
         ["linux_arm64"] = Qwen35CapabilityStatus.Untested,
         ["macos"] = Qwen35CapabilityStatus.Untested,
-        ["aot"] = Qwen35CapabilityStatus.Untested,
+
 
         // Not offered.
         ["cancellation.inside_a_step"] = Qwen35CapabilityStatus.Unsupported,

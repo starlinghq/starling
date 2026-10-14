@@ -56,7 +56,8 @@ public class AssetAndCapabilityTests
     {
         var all = Gliner2Capabilities.All;
         Assert.Equal(Gliner2CapabilityStatus.Experimental, all["entity_extraction.cpu"]);
-        Assert.Equal(Gliner2CapabilityStatus.Untested, all["label_descriptions"]);
+        Assert.Equal(Gliner2CapabilityStatus.Experimental, all["label_descriptions"]);
+        Assert.Equal(Gliner2CapabilityStatus.Unsupported, all["concurrent_calls.cuda.unserialized"]);
         foreach (var key in new[] { "classification", "relation_extraction", "structured_extraction", "plain_deduplicated_output", "input_over_512_tokens", "truncation", "tf32", "extensions_ai", "mlnet" })
         {
             Assert.Equal(Gliner2CapabilityStatus.Unsupported, all[key]);
@@ -65,7 +66,8 @@ public class AssetAndCapabilityTests
         // The manifest states the same statuses for the keys it shares with the package.
         string manifest = Manifest;
         Assert.Contains("  entity_extraction: experimental", manifest, StringComparison.Ordinal);
-        Assert.Contains("  label_descriptions: untested", manifest, StringComparison.Ordinal);
+        Assert.Contains("  label_descriptions: experimental", manifest, StringComparison.Ordinal);
+        Assert.Contains("  count_gate_closed: experimental", manifest, StringComparison.Ordinal);
         Assert.Contains("  classification: unsupported", manifest, StringComparison.Ordinal);
         Assert.Contains("  relation_extraction: unsupported", manifest, StringComparison.Ordinal);
         Assert.Contains("  structured_extraction: unsupported", manifest, StringComparison.Ordinal);

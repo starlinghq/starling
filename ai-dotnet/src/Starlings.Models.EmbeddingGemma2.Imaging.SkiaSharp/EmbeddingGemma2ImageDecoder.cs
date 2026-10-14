@@ -5,7 +5,7 @@ using SkiaSharp;
 namespace Starlings.Models.EmbeddingGemma2.Imaging.SkiaSharp;
 
 /// <summary>
-/// Decodes encoded images (PNG, JPEG; GIF, BMP and WebP untested) with SkiaSharp into
+/// Decodes encoded images (PNG, JPEG, GIF, BMP, WebP) with SkiaSharp into
 /// <see cref="EmbeddingGemma2Image"/>, reproducing what upstream's processor receives from PIL's
 /// <c>Image.open(...).convert("RGB")</c>.
 /// </summary>
@@ -22,21 +22,25 @@ namespace Starlings.Models.EmbeddingGemma2.Imaging.SkiaSharp;
 /// (upstream's <c>convert("RGB")</c> saturates 16-bit values to white; every C# decoder would scale them instead, so the
 /// embedding would not be upstream's), truncated or undecodable data, and formats other than PNG, JPEG, GIF, BMP and
 /// WebP. Images above <see cref="EmbeddingGemma2ImageDecoderOptions.MaxPixels"/> are rejected from the header, before
-/// any pixel is decoded, with <see cref="EmbeddingGemma2ImageTooLargeException"/>.
+/// any pixel is decoded, with <see cref="EmbeddingGemma2ImageTooLargeException"/>. GIF images whose first frame has a
+/// transparent colour are rejected too (<see cref="EmbeddingGemma2ImageRejection.GifTransparency"/>): PIL keeps the
+/// palette colour of transparent pixels, SkiaSharp zeroes them, so the embedding would not be upstream's.
 /// </para>
 /// <para>
 /// Fidelity (profile <c>embeddinggemma-2/image-fp32-cpu</c>, decoder <c>skiasharp</c>): on the 28 supported fixture
 /// images (PNG RGB, grayscale, RGBA, LA, palette with and without transparency, 1-bit; JPEG baseline, progressive 4:2:0,
-/// 4:4:4, CMYK, EXIF-rotated) the decoded RGB equals PIL's byte for byte. Linux x64 is tested.
+/// 4:4:4, CMYK, EXIF-rotated) and on 12 GIF, BMP and WebP files written by Pillow from them (GIF palette, grayscale and
+/// two-frame animated, frame 0; BMP 24-bit, 32-bit with alpha, 8-bit palette and grayscale, 1-bit; WebP lossless and
+/// lossy, with and without alpha) the decoded RGB equals PIL's byte for byte. Linux x64 is tested.
 /// </para>
 /// </remarks>
 public static class EmbeddingGemma2ImageDecoder
 {
     /// <summary>Formats with fixture evidence (decoded RGB equal to PIL's).</summary>
-    public static IReadOnlyList<string> ExperimentalFormats { get; } = ["png", "jpeg"];
+    public static IReadOnlyList<string> ExperimentalFormats { get; } = ["png", "jpeg", "gif", "bmp", "webp"];
 
-    /// <summary>Formats that are decoded but have no fixture evidence.</summary>
-    public static IReadOnlyList<string> UntestedFormats { get; } = ["gif", "bmp", "webp"];
+    /// <summary>Formats that are decoded but have no fixture evidence (none in this version).</summary>
+    public static IReadOnlyList<string> UntestedFormats { get; } = [];
 
     /// <summary>Decodes encoded image bytes.</summary>
     /// <exception cref="EmbeddingGemma2UnsupportedImageException">The data is not a supported, decodable 8-bit image.</exception>
@@ -127,7 +131,7 @@ public static class EmbeddingGemma2ImageDecoder
             SKEncodedImageFormat.Gif => "gif",
             SKEncodedImageFormat.Bmp => "bmp",
             SKEncodedImageFormat.Webp => "webp",
-            var other => throw new EmbeddingGemma2UnsupportedImageException(EmbeddingGemma2ImageRejection.UnsupportedFormat, other.ToString().ToLowerInvariant(), $"{other} images are not supported; PNG and JPEG are tested, GIF, BMP and WebP untested."),
+            var other => throw new EmbeddingGemma2UnsupportedImageException(EmbeddingGemma2ImageRejection.UnsupportedFormat, other.ToString().ToLowerInvariant(), $"{other} images are not supported; PNG, JPEG, GIF, BMP and WebP are."),
         };
 
         var info = codec.Info;
@@ -162,6 +166,14 @@ public static class EmbeddingGemma2ImageDecoder
             throw new EmbeddingGemma2UnsupportedImageException(EmbeddingGemma2ImageRejection.Undecodable, format, $"SkiaSharp could not decode the {format} image ({result}); truncated or corrupt data is rejected, as PIL rejects it.");
         }
 
+        if (format == "gif" && HasTransparentPixel(rgba))
+        {
+            throw new EmbeddingGemma2UnsupportedImageException(
+                EmbeddingGemma2ImageRejection.GifTransparency,
+                format,
+                "The GIF image has transparent pixels. Upstream (PIL) keeps their palette colour and SkiaSharp does not, so this package rejects it. Convert it to PNG first.");
+        }
+
         var image = EmbeddingGemma2Image.FromRgba32(info.Width, info.Height, rgba, target.RowBytes);
         if (options.ApplyExifOrientation)
         {
@@ -169,6 +181,19 @@ public static class EmbeddingGemma2ImageDecoder
         }
 
         return image;
+    }
+
+    private static bool HasTransparentPixel(byte[] rgba)
+    {
+        for (int i = 3; i < rgba.Length; i += 4)
+        {
+            if (rgba[i] != 255)
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /// <summary>True for the 8-bit colour types Skia reports for 8-bit sources.</summary>
@@ -214,6 +239,9 @@ public enum EmbeddingGemma2ImageRejection
 
     /// <summary>More than 8 bits per channel (for example a 16-bit PNG).</summary>
     HighBitDepth,
+
+    /// <summary>A GIF whose first frame has transparent pixels (PIL keeps their palette colour; SkiaSharp cannot).</summary>
+    GifTransparency,
 }
 
 /// <summary>The image cannot be turned into an <see cref="EmbeddingGemma2Image"/> under the upstream rules.</summary>

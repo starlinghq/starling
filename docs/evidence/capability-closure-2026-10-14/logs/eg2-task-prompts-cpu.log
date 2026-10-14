@@ -1,0 +1,10 @@
+xUnit.net v3 In-Process Runner v4.0.1+8ed8aa354c (64-bit .NET 10.0.12)
+  Discovering: Starlings.Models.EmbeddingGemma2.Tests
+  Discovered:  Starlings.Models.EmbeddingGemma2.Tests
+  Starting:    Starlings.Models.EmbeddingGemma2.Tests
+    Starlings.Models.EmbeddingGemma2.Tests.CpuParityTests.TaskPromptParityWithTheOwnedTokenizer [OUTPUT] from text, 80 rows (prompts BitextMining/Classification/Clustering/CodeRetrieval/Document/FactChecking/InstructionRetrieval/MultilabelClassification/PairClassification/QuestionAnswering/Reranking/Retrieval/Retrieval-document/Retrieval-query/STS/SearchQuery/SentenceSimilarity/Summarization/document/query), ids exact; single vs reference: max abs 3.61E-007, mean 2.25E-008, p99 9.55E-008, min cosine 0.999999999996884 (worst constitution-preamble@FactChecking)
+    Starlings.Models.EmbeddingGemma2.Tests.CpuParityTests.TaskPromptParityWithTheOwnedTokenizer [OUTPUT] from text, padded batches vs reference: max abs 3.61E-007, mean 2.18E-008, p99 9.31E-008, min cosine 0.999999999996884 (worst constitution-preamble@FactChecking)
+    Starlings.Models.EmbeddingGemma2.Tests.CpuParityTests.TaskPromptParityWithTheOwnedTokenizer [OUTPUT] from text, padded batches vs single: max abs 2.76E-007, mean 9.44E-009, p99 6.33E-008, min cosine 0.999999999998845 (worst alice-opening-clause@FactChecking)
+  Finished:    Starlings.Models.EmbeddingGemma2.Tests (ID = '0a4ffd112ce0665a232fe2e2dbfddb55468ae8687c7aac28bdd6a1c4478ad73d')
+=== TEST EXECUTION SUMMARY ===
+   Starlings.Models.EmbeddingGemma2.Tests  Total: 1, Errors: 0, Failed: 0, Skipped: 0, Not Run: 0, Time: 39.397s

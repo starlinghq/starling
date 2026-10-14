@@ -66,10 +66,11 @@ rights:
 
 behavior:
   tasks: [generation]
-  # The model's context_length (genai_config.json). Tested only up to 1,666 prompt tokens (prompts-v1 long-license);
-  # longer prompts are untested, not rejected. Prompt plus max_new_tokens above this fails with
-  # GenerationContextLengthException; nothing is truncated.
-  max_input_tokens: 262144
+  # The accepted sequence: prompt plus max_new_tokens up to 8,192 tokens (Qwen35ChatModel.MaxContextTokens; the model's
+  # own context_length is 262,144). The reference evidence ends at an 8,213-token prompt with 32 greedy tokens; at
+  # 16,391 tokens cached versus uncached decoding reached 4.1e-4, above the protected 2e-4. Longer requests fail with
+  # GenerationContextLengthException before any native call; nothing is truncated (capability closure 2026-10-14).
+  max_input_tokens: 8192
   offsets_unit: none
   truncation: error
   defaults:
@@ -180,7 +181,10 @@ capabilities:
   cancellation: experimental
   persistence: unsupported
   training: unsupported
-  aot: untested
+  # aot: Native AOT publish on Linux x64 against Microsoft.ML.OnnxRuntimeGenAI.Cuda 0.17.1, no trim/AOT warnings, typed
+  # API and IChatClient on CUDA equal to JIT on CUDA (tools/aot-check-ai.sh --cuda; docs/evidence/capability-closure-2026-10-14/README.md).
+  # GenAI version diagnostics read the .deps.json, which a Native AOT binary lacks: reported unknown.
+  aot: experimental
   extensions_ai: experimental  # IChatClient (P-017): 21 text prompts at 128 tokens, streaming = non-streamed = reference, cancellation, serialized concurrency; local GPU only
   mlnet: unsupported
   greedy_generation: experimental
@@ -203,7 +207,12 @@ capabilities:
   reasoning_split: unsupported
   structured_output: unsupported
   vision: unsupported
-  long_context_over_1666_tokens: untested
+  # Long context (capability closure 2026-10-14, docs/evidence/capability-closure-2026-10-14/README.md): Fp32xCudaTests on prompts of 4,112 and
+  # 8,213 tokens (proposed fixture model-pipeline/proposed/qwen3.5-0.8b/long-context): greedy ids exact, step-0 and
+  # cached vs uncached within this profile's protected bounds. Proposed fixture, protected bounds.
+  long_context_1667_to_8192_tokens: experimental
+  # Above 8,192 tokens: rejected with GenerationContextLengthException (cached vs uncached exceeded the bound at 16,391 on CPU).
+  long_context_over_8192_tokens: unsupported
 
 compatibility:
   - os: linux

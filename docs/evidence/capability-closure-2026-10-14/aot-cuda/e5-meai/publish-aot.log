@@ -1,0 +1,6 @@
+  Determining projects to restore...
+  Restored /tmp/starlings-aot.svOSaK/apps/e5-meai/AotConsumer.csproj (in 888 ms).
+/tmp/starlings-aot.svOSaK/apps/e5-meai/Program.cs(347,6): warning CS8321: The local function 'Info' is declared but never used [/tmp/starlings-aot.svOSaK/apps/e5-meai/AotConsumer.csproj]
+  AotConsumer -> /tmp/starlings-aot.svOSaK/apps/e5-meai/bin/Release/net10.0/linux-x64/AotConsumer.dll
+  Generating native code
+  AotConsumer -> /tmp/starlings-aot.svOSaK/apps/e5-meai/publish/

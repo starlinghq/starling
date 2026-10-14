@@ -32,7 +32,7 @@ var embeddings = await generator.GenerateAsync(["how much protein should a femal
 - `GenerateAsync` runs synchronously on the calling thread and returns a completed task.
 - Unsupported options (another `ModelId`, `RawRepresentationFactory`, unknown additional properties) fail with `NotSupportedException` instead of being ignored.
 
-Status: Linux x64 CPU experimental (fixture texts with and without prompts within the binding bound); over a CUDA session untested.
+Status: Linux x64 CPU experimental (fixture texts with and without prompts within the binding bound); over CUDA sessions experimental (text, image and video generators within each CUDA profile's bound).
 
 ## Images and videos
 

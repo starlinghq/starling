@@ -1,0 +1,10 @@
+/tmp/starlings-aot.svOSaK/apps/e5-meai/Program.cs(347,6): warning CS8321: The local function 'Info' is declared but never used [/tmp/starlings-aot.svOSaK/apps/e5-meai/AotConsumer.csproj]
+  AotConsumer -> /tmp/starlings-aot.svOSaK/apps/e5-meai/bin/Release/net10.0/AotConsumer.dll
+
+Build succeeded.
+
+/tmp/starlings-aot.svOSaK/apps/e5-meai/Program.cs(347,6): warning CS8321: The local function 'Info' is declared but never used [/tmp/starlings-aot.svOSaK/apps/e5-meai/AotConsumer.csproj]
+    1 Warning(s)
+    0 Error(s)
+
+Time Elapsed 00:00:02.50

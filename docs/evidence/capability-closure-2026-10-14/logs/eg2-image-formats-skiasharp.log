@@ -1,0 +1,21 @@
+xUnit.net v3 In-Process Runner v4.0.1+8ed8aa354c (64-bit .NET 10.0.12)
+  Discovering: Starlings.Models.EmbeddingGemma2.Imaging.SkiaSharp.Tests
+  Discovered:  Starlings.Models.EmbeddingGemma2.Imaging.SkiaSharp.Tests
+  Starting:    Starlings.Models.EmbeddingGemma2.Imaging.SkiaSharp.Tests
+    Starlings.Models.EmbeddingGemma2.Imaging.SkiaSharp.Tests.DecoderTests.GifBmpAndWebpDecodeLikePil [OUTPUT] gif-palette (GIF, 451x300, 1 frame(s)): equal to PIL
+    Starlings.Models.EmbeddingGemma2.Imaging.SkiaSharp.Tests.DecoderTests.GifBmpAndWebpDecodeLikePil [OUTPUT] gif-transparent (GIF, 400x300): rejected (GifTransparency)
+    Starlings.Models.EmbeddingGemma2.Imaging.SkiaSharp.Tests.DecoderTests.GifBmpAndWebpDecodeLikePil [OUTPUT] gif-grayscale (GIF, 512x512, 1 frame(s)): equal to PIL
+    Starlings.Models.EmbeddingGemma2.Imaging.SkiaSharp.Tests.DecoderTests.GifBmpAndWebpDecodeLikePil [OUTPUT] gif-animated-2frames (GIF, 600x400, 2 frame(s)): equal to PIL
+    Starlings.Models.EmbeddingGemma2.Imaging.SkiaSharp.Tests.DecoderTests.GifBmpAndWebpDecodeLikePil [OUTPUT] bmp-rgb24 (BMP, 512x512, 1 frame(s)): equal to PIL
+    Starlings.Models.EmbeddingGemma2.Imaging.SkiaSharp.Tests.DecoderTests.GifBmpAndWebpDecodeLikePil [OUTPUT] bmp-rgba32 (BMP, 600x400, 1 frame(s)): equal to PIL
+    Starlings.Models.EmbeddingGemma2.Imaging.SkiaSharp.Tests.DecoderTests.GifBmpAndWebpDecodeLikePil [OUTPUT] bmp-palette8 (BMP, 451x300, 1 frame(s)): equal to PIL
+    Starlings.Models.EmbeddingGemma2.Imaging.SkiaSharp.Tests.DecoderTests.GifBmpAndWebpDecodeLikePil [OUTPUT] bmp-gray8 (BMP, 451x300, 1 frame(s)): equal to PIL
+    Starlings.Models.EmbeddingGemma2.Imaging.SkiaSharp.Tests.DecoderTests.GifBmpAndWebpDecodeLikePil [OUTPUT] bmp-1bit (BMP, 451x300, 1 frame(s)): equal to PIL
+    Starlings.Models.EmbeddingGemma2.Imaging.SkiaSharp.Tests.DecoderTests.GifBmpAndWebpDecodeLikePil [OUTPUT] webp-lossless (WEBP, 451x300, 1 frame(s)): equal to PIL
+    Starlings.Models.EmbeddingGemma2.Imaging.SkiaSharp.Tests.DecoderTests.GifBmpAndWebpDecodeLikePil [OUTPUT] webp-lossy (WEBP, 640x427, 1 frame(s)): equal to PIL
+    Starlings.Models.EmbeddingGemma2.Imaging.SkiaSharp.Tests.DecoderTests.GifBmpAndWebpDecodeLikePil [OUTPUT] webp-lossy-alpha (WEBP, 600x400, 1 frame(s)): equal to PIL
+    Starlings.Models.EmbeddingGemma2.Imaging.SkiaSharp.Tests.DecoderTests.GifBmpAndWebpDecodeLikePil [OUTPUT] webp-lossless-alpha (WEBP, 451x300, 1 frame(s)): equal to PIL
+    Starlings.Models.EmbeddingGemma2.Imaging.SkiaSharp.Tests.DecoderTests.DecodedRgbEqualsPilOnEverySupportedFixtureImage [OUTPUT] 28 images (PNG RGB/L/RGBA/LA/P/P+transparency/1-bit, JPEG baseline/progressive 4:2:0/4:4:4/CMYK/EXIF): decoded RGB equals PIL's
+  Finished:    Starlings.Models.EmbeddingGemma2.Imaging.SkiaSharp.Tests (ID = '4be8ac68974f5946f3d49ad3bbe08b8b0044f20c7a5a8b0f48fb92625dff1515')
+=== TEST EXECUTION SUMMARY ===
+   Starlings.Models.EmbeddingGemma2.Imaging.SkiaSharp.Tests  Total: 19, Errors: 0, Failed: 0, Skipped: 0, Not Run: 0, Time: 0.949s

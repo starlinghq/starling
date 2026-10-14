@@ -196,8 +196,51 @@ internal static class EmbeddingGemma2ImageTestAssets
             i.TryGetProperty("exif_orientation", out var o) && o.ValueKind == JsonValueKind.Number ? o.GetInt32() : null)).ToList();
     }
 
-    private static List<ImageRow> LoadRows() =>
-        EmbeddingGemma2TestAssets.ReadJsonLines(Path.Combine(FixtureDirectory, "image-embeddings.jsonl"))
+    /// <summary>
+    /// Proposed rows for capability <c>image_budget_other</c>: six fixture images alone at 70, 140, 560 and 1,120 soft
+    /// tokens (<c>run_embeddinggemma2_image_extra.py</c>). The protected copy when it exists, else the proposal.
+    /// </summary>
+    public static IReadOnlyList<(int Budget, ImageRow Row)> LoadBudgetRows()
+    {
+        string path = ExtraFile("image-budget-embeddings.jsonl");
+        var budgets = EmbeddingGemma2TestAssets.ReadJsonLines(path).Select(r => r.GetProperty("max_soft_tokens").GetInt32()).ToList();
+        return LoadRows(path).Select((r, i) => (budgets[i], r)).ToList();
+    }
+
+    /// <summary>Directory of the GIF, BMP and WebP files of <c>run_embeddinggemma2_image_extra.py --formats-out</c> (not in Git).</summary>
+    public const string FormatsEnvironmentVariable = "STARLING_EMBEDDINGGEMMA2_IMAGE_FORMATS";
+
+    /// <summary>The format files: <c>$STARLING_EMBEDDINGGEMMA2_IMAGE_FORMATS</c>, else <c>&lt;models&gt;/embeddinggemma-2-image-formats</c>.</summary>
+    public static string FormatsDirectory =>
+        Environment.GetEnvironmentVariable(FormatsEnvironmentVariable) is { Length: > 0 } env
+            ? env
+            : Path.Combine(EmbeddingGemma2TestAssets.ModelsRoot, "embeddinggemma-2-image-formats");
+
+    /// <summary>The proposed format manifest (<c>image-formats.json</c>): id, file, format, size, frames, file and PIL RGB digests.</summary>
+    public static IReadOnlyList<(string Id, string File, string Format, int Width, int Height, int Frames, string Sha256, string RgbSha256)> LoadFormats()
+    {
+        using var doc = JsonDocument.Parse(File.ReadAllText(ExtraFile("image-formats.json")));
+        return doc.RootElement.GetProperty("images").EnumerateArray().Select(i => (
+            i.GetProperty("id").GetString()!,
+            i.GetProperty("file").GetString()!,
+            i.GetProperty("format").GetString()!,
+            i.GetProperty("width").GetInt32(),
+            i.GetProperty("height").GetInt32(),
+            i.GetProperty("frames").GetInt32(),
+            i.GetProperty("sha256").GetString()!,
+            i.GetProperty("rgb_sha256").GetString()!)).ToList();
+    }
+
+    private static string ExtraFile(string name)
+    {
+        string accepted = Path.Combine(EmbeddingGemma2TestAssets.ProtectedRoot, "image-extra", name);
+        return File.Exists(accepted) ? accepted : Path.Combine(EmbeddingGemma2TestAssets.RepositoryRoot, "model-pipeline", "proposed", "embeddinggemma-2", "image-extra", name);
+    }
+
+    private static List<ImageRow> LoadRows() => LoadRows(Path.Combine(FixtureDirectory, "image-embeddings.jsonl"));
+
+    private static List<ImageRow> LoadRows(string path) =>
+        EmbeddingGemma2TestAssets.ReadJsonLines(path)
             .Select(r => new ImageRow(
                 r.GetProperty("id").GetString()!,
                 r.GetProperty("kind").GetString()!,

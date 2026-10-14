@@ -44,6 +44,47 @@ public sealed class DecoderTests(ITestOutputHelper output)
         Assert.Equal(28, n);
     }
 
+    /// <summary>
+    /// Capability <c>image_decode_gif_bmp_webp</c>: GIF (palette, transparent, grayscale, two-frame animated: frame 0),
+    /// BMP (24-bit, 32-bit with alpha, 8-bit palette, 8-bit grayscale, 1-bit) and WebP (lossless, lossy, lossy and
+    /// lossless with alpha) written by Pillow from fixture images; decoded RGB equal to PIL's <c>convert("RGB")</c>
+    /// (proposed <c>image-formats.json</c>). Needs the format files; skips otherwise.
+    /// </summary>
+    [Fact]
+    public void GifBmpAndWebpDecodeLikePil()
+    {
+        Assert.True(Tolerances.DecoderSkiaSharpExact);
+        var formats = EmbeddingGemma2ImageTestAssets.LoadFormats();
+        string dir = EmbeddingGemma2ImageTestAssets.FormatsDirectory;
+        string first = Path.Combine(dir, formats[0].File);
+        Assert.SkipWhen(!File.Exists(first), $"format files not found ({first}); write them with run_embeddinggemma2_image_extra.py --formats-out <dir> and set {EmbeddingGemma2ImageTestAssets.FormatsEnvironmentVariable}.");
+        var failures = new List<string>();
+        foreach (var f in formats)
+        {
+            byte[] bytes = File.ReadAllBytes(Path.Combine(dir, f.File));
+            Assert.True(f.Sha256 == Convert.ToHexStringLower(SHA256.HashData(bytes)), $"{f.File}: not the proposed file");
+            if (f.Id == "gif-transparent")
+            {
+                // PIL keeps the palette colour of transparent pixels; SkiaSharp zeroes them: rejected by contract.
+                var ex = Assert.Throws<EmbeddingGemma2UnsupportedImageException>(() => EmbeddingGemma2ImageDecoder.Decode(bytes));
+                Assert.Equal(EmbeddingGemma2ImageRejection.GifTransparency, ex.Reason);
+                output.WriteLine($"{f.Id} ({f.Format}, {f.Width}x{f.Height}): rejected ({ex.Reason})");
+                continue;
+            }
+
+            var image = EmbeddingGemma2ImageDecoder.Decode(bytes);
+            bool ok = (image.Width, image.Height) == (f.Width, f.Height) && Sha(image.Pixels.Span) == f.RgbSha256;
+            output.WriteLine($"{f.Id} ({f.Format}, {f.Width}x{f.Height}, {f.Frames} frame(s)): {(ok ? "equal to PIL" : "DIFFERS from PIL")}");
+            if (!ok)
+            {
+                failures.Add(f.Id);
+            }
+        }
+
+        Assert.Empty(failures);
+        Assert.Equal(13, formats.Count);
+    }
+
     [Fact]
     public void TheSixteenBitFixtureImageIsRejected()
     {
@@ -74,6 +115,18 @@ public sealed class DecoderTests(ITestOutputHelper output)
         Assert.Equal(
             Sha(EmbeddingGemma2ImageDecoder.Decode(plain).Pixels.Span),
             Sha(EmbeddingGemma2ImageDecoder.Decode(plain, new EmbeddingGemma2ImageDecoderOptions { ApplyExifOrientation = true }).Pixels.Span));
+    }
+
+    /// <summary>A GIF with a transparent pixel (the 43-byte one-pixel GIF89a) is rejected with a typed reason (CI).</summary>
+    [Fact]
+    public void GifWithTransparencyIsRejectedWithATypedException()
+    {
+        byte[] gif = Convert.FromHexString("47494638396101000100800000000000FFFFFF21F90401000000002C00000000010001000002024401003B");
+        var ex = Assert.Throws<EmbeddingGemma2UnsupportedImageException>(() => EmbeddingGemma2ImageDecoder.Decode(gif));
+        Assert.Equal(EmbeddingGemma2ImageRejection.GifTransparency, ex.Reason);
+        Assert.Equal("gif", ex.Format);
+        Assert.Equal(["png", "jpeg", "gif", "bmp", "webp"], EmbeddingGemma2ImageDecoder.ExperimentalFormats);
+        Assert.Empty(EmbeddingGemma2ImageDecoder.UntestedFormats);
     }
 
     [Fact]

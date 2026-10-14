@@ -103,6 +103,9 @@ public sealed class AssetAndCapabilityTests
         Assert.Equal(Qwen35CapabilityStatus.Unsupported, all["structured_output"]);
         Assert.Equal(Qwen35CapabilityStatus.Unsupported, all["batch"]);
         Assert.Equal(Qwen35CapabilityStatus.Unsupported, all["cancellation.inside_a_step"]);
+        Assert.Equal(Qwen35CapabilityStatus.Experimental, all["long_context.1667_to_8192_tokens"]);
+        Assert.Equal(Qwen35CapabilityStatus.Unsupported, all["long_context.over_8192_tokens"]);
+        Assert.False(all.ContainsKey("long_context.over_1666_tokens"));
     }
 
     /// <summary>

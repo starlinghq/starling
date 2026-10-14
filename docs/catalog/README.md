@@ -12,19 +12,19 @@ Gate cells link to the evidence the manifest records. The Stable readiness colum
 
 | Profile | Task | Maturity | Owner | Review date | G0 | G1 | G2 | G3 | G4 | G5 | G6 | G7 | Stable readiness |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| [embeddinggemma-2/image-fp32-cpu](../../model-pipeline/registry/embeddinggemma-2/image-fp32-cpu/manifest.yaml) | image-embedding | experimental | Mark | 2027-01-05 | [checklist](../m0/embeddinggemma2-image-spike.md) | not-run | not-run | not-run | not-run | not-run | [checklist](../releases/ai-0.1.0-preview.5/rc-drill.log) | not-run | gates not passed: G0, G1, G2, G3, G4, G5, G6, G7; untested: image_budget_other, image_decode_gif_bmp_webp |
-| [embeddinggemma-2/image-fp32-cuda](../../model-pipeline/registry/embeddinggemma-2/image-fp32-cuda/manifest.yaml) | image-embedding | experimental | Mark | 2027-01-05 | [checklist](../m0/embeddinggemma2-image-spike.md) | [checklist](../evidence/cuda-qualification-2026-10-14/embeddinggemma2-image-fp32-cuda/README.md) | [checklist](../evidence/cuda-qualification-2026-10-14/embeddinggemma2-image-fp32-cuda/README.md) | not-run | not-run | not-run | not-run | not-run | gates not passed: G0, G1, G2, G3, G4, G5, G6, G7; untested: aot, extensions_ai, image_budget_other, image_decode_gif_bmp_webp |
-| [embeddinggemma-2/onnx-fp32-cpu](../../model-pipeline/registry/embeddinggemma-2/onnx-fp32-cpu/manifest.yaml) | embedding | experimental | Mark | 2027-01-05 | [checklist](../m0/hub-pins.md) | not-run | not-run | not-run | not-run | not-run | [checklist](../releases/ai-0.1.0-preview.5/rc-drill.log) | not-run | gates not passed: G0, G1, G2, G3, G4, G5, G6, G7; untested: input_2050_to_8192_tokens, prompts_task |
-| [embeddinggemma-2/onnx-fp32-cuda](../../model-pipeline/registry/embeddinggemma-2/onnx-fp32-cuda/manifest.yaml) | embedding | experimental | Mark | 2027-01-05 | [checklist](../m0/hub-pins.md) | [checklist](../evidence/cuda-qualification-2026-10-14/embeddinggemma2-onnx-fp32-cuda/README.md) | [checklist](../evidence/cuda-qualification-2026-10-14/embeddinggemma2-onnx-fp32-cuda/README.md) | not-run | not-run | not-run | not-run | not-run | gates not passed: G0, G1, G2, G3, G4, G5, G6, G7; untested: aot, extensions_ai, input_2050_to_8192_tokens, mlnet, prompts_task |
-| [embeddinggemma-2/video-fp32-cpu](../../model-pipeline/registry/embeddinggemma-2/video-fp32-cpu/manifest.yaml) | video-embedding | experimental | Mark | 2027-01-05 | [checklist](../m0/embeddinggemma2-video-spike.md) | not-run | not-run | not-run | not-run | not-run | [checklist](../releases/ai-0.1.0-preview.5/rc-drill.log) | not-run | gates not passed: G0, G1, G2, G3, G4, G5, G6, G7; untested: video_decode_rotation_other, video_hdr, video_interlaced, video_variable_frame_rate |
-| [embeddinggemma-2/video-fp32-cuda](../../model-pipeline/registry/embeddinggemma-2/video-fp32-cuda/manifest.yaml) | video-embedding | experimental | Mark | 2027-01-05 | [checklist](../m0/embeddinggemma2-video-spike.md) | [checklist](../evidence/cuda-qualification-2026-10-14/embeddinggemma2-video-fp32-cuda/README.md) | [checklist](../evidence/cuda-qualification-2026-10-14/embeddinggemma2-video-fp32-cuda/README.md) | not-run | not-run | not-run | not-run | not-run | gates not passed: G0, G1, G2, G3, G4, G5, G6, G7; untested: aot, extensions_ai, video_decode_rotation_other, video_hdr, video_interlaced, video_variable_frame_rate |
-| [gliner2-base-v1/onnx-fp32-cpu](../../model-pipeline/registry/gliner2-base-v1/onnx-fp32-cpu/manifest.yaml) | extraction | experimental | Mark | 2027-01-05 | [checklist](../m0/gliner2-p014.md) | [checklist](../m0/gliner2-p014.md) | [checklist](../m0/gliner2-p014.md) | not-run | not-run | not-run | [checklist](../releases/ai-0.1.0-preview.5/rc-drill.log) | not-run | gates not passed: G0, G1, G2, G3, G4, G5, G6, G7; untested: count_gate_closed, label_descriptions |
-| [gliner2-base-v1/onnx-fp32-cuda](../../model-pipeline/registry/gliner2-base-v1/onnx-fp32-cuda/manifest.yaml) | extraction | experimental | Mark | 2027-01-05 | [checklist](../m0/gliner2-p014.md) | [checklist](../evidence/cuda-qualification-2026-10-14/gliner2-onnx-fp32-cuda/README.md) | [checklist](../evidence/cuda-qualification-2026-10-14/gliner2-onnx-fp32-cuda/README.md) | not-run | not-run | not-run | not-run | not-run | gates not passed: G0, G1, G2, G3, G4, G5, G6, G7; untested: aot, cancellation, concurrent_calls, count_gate_closed, label_descriptions |
+| [embeddinggemma-2/image-fp32-cpu](../../model-pipeline/registry/embeddinggemma-2/image-fp32-cpu/manifest.yaml) | image-embedding | experimental | Mark | 2027-01-05 | [checklist](../m0/embeddinggemma2-image-spike.md) | not-run | not-run | not-run | not-run | not-run | [checklist](../releases/ai-0.1.0-preview.5/rc-drill.log) | not-run | gates not passed: G0, G1, G2, G3, G4, G5, G6, G7 |
+| [embeddinggemma-2/image-fp32-cuda](../../model-pipeline/registry/embeddinggemma-2/image-fp32-cuda/manifest.yaml) | image-embedding | experimental | Mark | 2027-01-05 | [checklist](../m0/embeddinggemma2-image-spike.md) | [checklist](../evidence/cuda-qualification-2026-10-14/embeddinggemma2-image-fp32-cuda/README.md) | [checklist](../evidence/cuda-qualification-2026-10-14/embeddinggemma2-image-fp32-cuda/README.md) | not-run | not-run | not-run | not-run | not-run | gates not passed: G0, G1, G2, G3, G4, G5, G6, G7 |
+| [embeddinggemma-2/onnx-fp32-cpu](../../model-pipeline/registry/embeddinggemma-2/onnx-fp32-cpu/manifest.yaml) | embedding | experimental | Mark | 2027-01-05 | [checklist](../m0/hub-pins.md) | not-run | not-run | not-run | not-run | not-run | [checklist](../releases/ai-0.1.0-preview.5/rc-drill.log) | not-run | gates not passed: G0, G1, G2, G3, G4, G5, G6, G7 |
+| [embeddinggemma-2/onnx-fp32-cuda](../../model-pipeline/registry/embeddinggemma-2/onnx-fp32-cuda/manifest.yaml) | embedding | experimental | Mark | 2027-01-05 | [checklist](../m0/hub-pins.md) | [checklist](../evidence/cuda-qualification-2026-10-14/embeddinggemma2-onnx-fp32-cuda/README.md) | [checklist](../evidence/cuda-qualification-2026-10-14/embeddinggemma2-onnx-fp32-cuda/README.md) | not-run | not-run | not-run | not-run | not-run | gates not passed: G0, G1, G2, G3, G4, G5, G6, G7 |
+| [embeddinggemma-2/video-fp32-cpu](../../model-pipeline/registry/embeddinggemma-2/video-fp32-cpu/manifest.yaml) | video-embedding | experimental | Mark | 2027-01-05 | [checklist](../m0/embeddinggemma2-video-spike.md) | not-run | not-run | not-run | not-run | not-run | [checklist](../releases/ai-0.1.0-preview.5/rc-drill.log) | not-run | gates not passed: G0, G1, G2, G3, G4, G5, G6, G7 |
+| [embeddinggemma-2/video-fp32-cuda](../../model-pipeline/registry/embeddinggemma-2/video-fp32-cuda/manifest.yaml) | video-embedding | experimental | Mark | 2027-01-05 | [checklist](../m0/embeddinggemma2-video-spike.md) | [checklist](../evidence/cuda-qualification-2026-10-14/embeddinggemma2-video-fp32-cuda/README.md) | [checklist](../evidence/cuda-qualification-2026-10-14/embeddinggemma2-video-fp32-cuda/README.md) | not-run | not-run | not-run | not-run | not-run | gates not passed: G0, G1, G2, G3, G4, G5, G6, G7 |
+| [gliner2-base-v1/onnx-fp32-cpu](../../model-pipeline/registry/gliner2-base-v1/onnx-fp32-cpu/manifest.yaml) | extraction | experimental | Mark | 2027-01-05 | [checklist](../m0/gliner2-p014.md) | [checklist](../m0/gliner2-p014.md) | [checklist](../m0/gliner2-p014.md) | not-run | not-run | not-run | [checklist](../releases/ai-0.1.0-preview.5/rc-drill.log) | not-run | gates not passed: G0, G1, G2, G3, G4, G5, G6, G7 |
+| [gliner2-base-v1/onnx-fp32-cuda](../../model-pipeline/registry/gliner2-base-v1/onnx-fp32-cuda/manifest.yaml) | extraction | experimental | Mark | 2027-01-05 | [checklist](../m0/gliner2-p014.md) | [checklist](../evidence/cuda-qualification-2026-10-14/gliner2-onnx-fp32-cuda/README.md) | [checklist](../evidence/cuda-qualification-2026-10-14/gliner2-onnx-fp32-cuda/README.md) | not-run | not-run | not-run | not-run | not-run | gates not passed: G0, G1, G2, G3, G4, G5, G6, G7 |
 | [multilingual-e5-small/onnx-fp32-cpu](../../model-pipeline/registry/multilingual-e5-small/onnx-fp32-cpu/manifest.yaml) | embedding | preview | Mark | 2027-01-05 | [passed](../releases/e5-0.1.0-preview.1.md) | [passed](../releases/e5-0.1.0-preview.2/fidelity-report.md) | [passed](../releases/e5-0.1.0-preview.2/fidelity-report.md) | [checklist](../releases/e5-0.1.0-preview.1.md) | [checklist](../releases/e5-0.1.0-preview.1.md) | [checklist](../benchmarks/e5-2026-10-09.md) | [passed](../releases/e5-0.1.0-preview.2/rc-drill.log) | [checklist](../releases/e5-0.1.0-preview.1.md) | gates not passed: G3, G4, G5, G7 |
-| [multilingual-e5-small/onnx-fp32-cuda](../../model-pipeline/registry/multilingual-e5-small/onnx-fp32-cuda/manifest.yaml) | embedding | experimental | Mark | 2027-01-05 | [checklist](../m0/hub-pins.md) | [checklist](../evidence/cuda-qualification-2026-10-14/e5-onnx-fp32-cuda/README.md) | [checklist](../evidence/cuda-qualification-2026-10-14/e5-onnx-fp32-cuda/README.md) | not-run | not-run | not-run | not-run | not-run | gates not passed: G0, G1, G2, G3, G4, G5, G6, G7; untested: aot, extensions_ai, mlnet |
-| [qwen3.5-0.8b/ortgenai-fp16x-cuda](../../model-pipeline/registry/qwen3.5-0.8b/ortgenai-fp16x-cuda/manifest.yaml) | generation | experimental | Mark | 2027-01-05 | [checklist](../evidence/p016-qwen35/README.md) | [checklist](../evidence/cuda-qualification-2026-10-14/qwen35-ortgenai-fp16x-cuda/README.md) | [checklist](../evidence/cuda-qualification-2026-10-14/qwen35-ortgenai-fp16x-cuda/README.md) | not-run | [checklist](../evidence/p016-qwen35/README.md) | not-run | not-run | not-run | gates not passed: G0, G1, G2, G3, G4, G5, G6, G7; untested: aot, extensions_ai, long_context_over_1666_tokens |
-| [qwen3.5-0.8b/ortgenai-fp32x-cpu](../../model-pipeline/registry/qwen3.5-0.8b/ortgenai-fp32x-cpu/manifest.yaml) | generation | experimental | Mark | 2027-01-05 | [checklist](../evidence/p016-qwen35/README.md) | [checklist](../evidence/p016-qwen35/README.md) | [checklist](../evidence/p016-qwen35/README.md) | not-run | [checklist](../evidence/p016-qwen35/README.md) | not-run | [checklist](../releases/ai-0.1.0-preview.5/rc-drill.log) | not-run | gates not passed: G0, G1, G2, G3, G4, G5, G6, G7; untested: long_context_over_1666_tokens |
-| [qwen3.5-0.8b/ortgenai-fp32x-cuda](../../model-pipeline/registry/qwen3.5-0.8b/ortgenai-fp32x-cuda/manifest.yaml) | generation | experimental | Mark | 2027-01-05 | [checklist](../evidence/p016-qwen35/README.md) | [checklist](../evidence/cuda-qualification-2026-10-14/qwen35-ortgenai-fp32x-cuda/README.md) | [checklist](../evidence/cuda-qualification-2026-10-14/qwen35-ortgenai-fp32x-cuda/README.md) | not-run | [checklist](../evidence/p016-qwen35/README.md) | not-run | not-run | not-run | gates not passed: G0, G1, G2, G3, G4, G5, G6, G7; untested: aot, long_context_over_1666_tokens |
+| [multilingual-e5-small/onnx-fp32-cuda](../../model-pipeline/registry/multilingual-e5-small/onnx-fp32-cuda/manifest.yaml) | embedding | experimental | Mark | 2027-01-05 | [checklist](../m0/hub-pins.md) | [checklist](../evidence/cuda-qualification-2026-10-14/e5-onnx-fp32-cuda/README.md) | [checklist](../evidence/cuda-qualification-2026-10-14/e5-onnx-fp32-cuda/README.md) | not-run | not-run | not-run | not-run | not-run | gates not passed: G0, G1, G2, G3, G4, G5, G6, G7 |
+| [qwen3.5-0.8b/ortgenai-fp16x-cuda](../../model-pipeline/registry/qwen3.5-0.8b/ortgenai-fp16x-cuda/manifest.yaml) | generation | experimental | Mark | 2027-01-05 | [checklist](../evidence/p016-qwen35/README.md) | [checklist](../evidence/cuda-qualification-2026-10-14/qwen35-ortgenai-fp16x-cuda/README.md) | [checklist](../evidence/cuda-qualification-2026-10-14/qwen35-ortgenai-fp16x-cuda/README.md) | not-run | [checklist](../evidence/p016-qwen35/README.md) | not-run | not-run | not-run | gates not passed: G0, G1, G2, G3, G4, G5, G6, G7 |
+| [qwen3.5-0.8b/ortgenai-fp32x-cpu](../../model-pipeline/registry/qwen3.5-0.8b/ortgenai-fp32x-cpu/manifest.yaml) | generation | experimental | Mark | 2027-01-05 | [checklist](../evidence/p016-qwen35/README.md) | [checklist](../evidence/p016-qwen35/README.md) | [checklist](../evidence/p016-qwen35/README.md) | not-run | [checklist](../evidence/p016-qwen35/README.md) | not-run | [checklist](../releases/ai-0.1.0-preview.5/rc-drill.log) | not-run | gates not passed: G0, G1, G2, G3, G4, G5, G6, G7 |
+| [qwen3.5-0.8b/ortgenai-fp32x-cuda](../../model-pipeline/registry/qwen3.5-0.8b/ortgenai-fp32x-cuda/manifest.yaml) | generation | experimental | Mark | 2027-01-05 | [checklist](../evidence/p016-qwen35/README.md) | [checklist](../evidence/cuda-qualification-2026-10-14/qwen35-ortgenai-fp32x-cuda/README.md) | [checklist](../evidence/cuda-qualification-2026-10-14/qwen35-ortgenai-fp32x-cuda/README.md) | not-run | [checklist](../evidence/p016-qwen35/README.md) | not-run | not-run | not-run | gates not passed: G0, G1, G2, G3, G4, G5, G6, G7 |
 
 ## Execution
 
@@ -57,9 +57,9 @@ One table per family, one column per profile. Rows are every capability any prof
 | cancellation | experimental | experimental | experimental | experimental | experimental | experimental |
 | persistence | unsupported | unsupported | unsupported | unsupported | unsupported | unsupported |
 | training | unsupported | unsupported | unsupported | unsupported | unsupported | unsupported |
-| aot | experimental | untested | experimental | untested | experimental | untested |
-| extensions_ai | experimental | untested | experimental | untested | experimental | untested |
-| mlnet | unsupported | unsupported | experimental | untested | unsupported | unsupported |
+| aot | experimental | experimental | experimental | experimental | experimental | experimental |
+| extensions_ai | experimental | experimental | experimental | experimental | experimental | experimental |
+| mlnet | unsupported | unsupported | experimental | experimental | unsupported | unsupported |
 | audio | unsupported | unsupported | unsupported | unsupported | unsupported | unsupported |
 | concurrent_calls | experimental | experimental | experimental | experimental | experimental | experimental |
 | embedding_pretokenized | unrecorded | unrecorded | experimental | experimental | unrecorded | unrecorded |
@@ -69,20 +69,21 @@ One table per family, one column per profile. Rows are every capability any prof
 | image_alpha_compositing | unsupported | unsupported | unrecorded | unrecorded | unrecorded | unrecorded |
 | image_batch | experimental | experimental | unrecorded | unrecorded | unrecorded | unrecorded |
 | image_budget_280 | experimental | experimental | unrecorded | unrecorded | unrecorded | unrecorded |
-| image_budget_other | untested | untested | unrecorded | unrecorded | unrecorded | unrecorded |
-| image_decode_gif_bmp_webp | untested | untested | unrecorded | unrecorded | unrecorded | unrecorded |
+| image_budget_other | experimental | experimental | unrecorded | unrecorded | unrecorded | unrecorded |
+| image_decode_gif_bmp_webp | experimental | experimental | unrecorded | unrecorded | unrecorded | unrecorded |
+| image_decode_gif_transparency | unsupported | unsupported | unrecorded | unrecorded | unrecorded | unrecorded |
 | image_decode_png_jpeg | experimental | experimental | unrecorded | unrecorded | unrecorded | unrecorded |
 | image_exif_orientation_opt_in | experimental | experimental | unrecorded | unrecorded | unrecorded | unrecorded |
 | image_interleaved_text | experimental | experimental | unrecorded | unrecorded | unrecorded | unrecorded |
 | image_matryoshka | experimental | experimental | unrecorded | unrecorded | unrecorded | unrecorded |
 | image_multiple_per_input | experimental | experimental | unrecorded | unrecorded | unrecorded | unrecorded |
 | image_prompts | experimental | experimental | unrecorded | unrecorded | unrecorded | unrecorded |
-| input_2050_to_8192_tokens | unrecorded | unrecorded | untested | untested | unrecorded | unrecorded |
+| input_2050_to_8192_tokens | unrecorded | unrecorded | experimental | experimental | unrecorded | unrecorded |
 | input_over_8192_tokens | unsupported | unsupported | unsupported | unsupported | unsupported | unsupported |
 | input_up_to_2049_tokens | unrecorded | unrecorded | experimental | experimental | unrecorded | unrecorded |
 | matryoshka | unrecorded | unrecorded | experimental | experimental | unrecorded | unrecorded |
 | prompts_query_document | unrecorded | unrecorded | experimental | experimental | unrecorded | unrecorded |
-| prompts_task | unrecorded | unrecorded | untested | untested | unrecorded | unrecorded |
+| prompts_task | unrecorded | unrecorded | experimental | experimental | unrecorded | unrecorded |
 | text_only_inputs | experimental | experimental | unrecorded | unrecorded | experimental | experimental |
 | tokenizer_owned | unrecorded | unrecorded | experimental | experimental | unrecorded | unrecorded |
 | video | unsupported | unsupported | unsupported | unsupported | experimental | experimental |
@@ -91,13 +92,13 @@ One table per family, one column per profile. Rows are every capability any prof
 | video_decode_ffmpeg8 | unrecorded | unrecorded | unrecorded | unrecorded | experimental | experimental |
 | video_decode_ffmpeg9 | unrecorded | unrecorded | unrecorded | unrecorded | experimental | experimental |
 | video_decode_rotation_90 | unrecorded | unrecorded | unrecorded | unrecorded | experimental | experimental |
-| video_decode_rotation_other | unrecorded | unrecorded | unrecorded | unrecorded | untested | untested |
+| video_decode_rotation_other | unrecorded | unrecorded | unrecorded | unrecorded | experimental | experimental |
 | video_decode_streams | unrecorded | unrecorded | unrecorded | unrecorded | experimental | experimental |
 | video_decoded_frames_with_timing | unrecorded | unrecorded | unrecorded | unrecorded | experimental | experimental |
 | video_frames_without_timing | unrecorded | unrecorded | unrecorded | unrecorded | unsupported | unsupported |
 | video_frames_without_timing_opt_in | unrecorded | unrecorded | unrecorded | unrecorded | experimental | experimental |
-| video_hdr | unrecorded | unrecorded | unrecorded | unrecorded | untested | untested |
-| video_interlaced | unrecorded | unrecorded | unrecorded | unrecorded | untested | untested |
+| video_hdr | unrecorded | unrecorded | unrecorded | unrecorded | experimental | experimental |
+| video_interlaced | unrecorded | unrecorded | unrecorded | unrecorded | experimental | experimental |
 | video_interleaved_image | unrecorded | unrecorded | unrecorded | unrecorded | experimental | experimental |
 | video_interleaved_text | unrecorded | unrecorded | unrecorded | unrecorded | experimental | experimental |
 | video_matryoshka | unrecorded | unrecorded | unrecorded | unrecorded | experimental | experimental |
@@ -105,7 +106,7 @@ One table per family, one column per profile. Rows are every capability any prof
 | video_pre_sampled_frames | unrecorded | unrecorded | unrecorded | unrecorded | experimental | experimental |
 | video_prompts | unrecorded | unrecorded | unrecorded | unrecorded | experimental | experimental |
 | video_timestamps | unrecorded | unrecorded | unrecorded | unrecorded | unsupported | unsupported |
-| video_variable_frame_rate | unrecorded | unrecorded | unrecorded | unrecorded | untested | untested |
+| video_variable_frame_rate | unrecorded | unrecorded | unrecorded | unrecorded | experimental | experimental |
 
 ### gliner2-base-v1
 
@@ -113,18 +114,19 @@ One table per family, one column per profile. Rows are every capability any prof
 | --- | --- | --- |
 | batch | experimental | experimental |
 | streaming | unsupported | unsupported |
-| cancellation | experimental | untested |
+| cancellation | experimental | experimental |
 | persistence | unsupported | unsupported |
 | training | unsupported | unsupported |
-| aot | experimental | untested |
+| aot | experimental | experimental |
 | extensions_ai | unsupported | unsupported |
 | mlnet | unsupported | unsupported |
 | classification | unsupported | unsupported |
-| concurrent_calls | experimental | untested |
-| count_gate_closed | untested | untested |
+| concurrent_calls | experimental | experimental |
+| concurrent_calls_unserialized | unrecorded | unsupported |
+| count_gate_closed | experimental | experimental |
 | entity_extraction | experimental | experimental |
 | input_over_512_tokens | unsupported | unsupported |
-| label_descriptions | untested | untested |
+| label_descriptions | experimental | experimental |
 | mixed_label_sets_in_batch | unsupported | unsupported |
 | offsets_original_text | experimental | experimental |
 | plain_deduplicated_output | unsupported | unsupported |
@@ -140,9 +142,9 @@ One table per family, one column per profile. Rows are every capability any prof
 | cancellation | experimental | experimental |
 | persistence | unsupported | unsupported |
 | training | unsupported | unsupported |
-| aot | experimental | untested |
-| extensions_ai | experimental | untested |
-| mlnet | experimental | untested |
+| aot | experimental | experimental |
+| extensions_ai | experimental | experimental |
+| mlnet | experimental | experimental |
 
 ### qwen3.5-0.8b
 
@@ -153,8 +155,8 @@ One table per family, one column per profile. Rows are every capability any prof
 | cancellation | experimental | experimental | experimental |
 | persistence | unsupported | unsupported | unsupported |
 | training | unsupported | unsupported | unsupported |
-| aot | untested | experimental | untested |
-| extensions_ai | untested | experimental | experimental |
+| aot | experimental | experimental | experimental |
+| extensions_ai | experimental | experimental | experimental |
 | mlnet | unsupported | unsupported | unsupported |
 | cancellation_inside_a_step | unsupported | unsupported | unsupported |
 | chat_template_owned_text | experimental | experimental | experimental |
@@ -163,7 +165,8 @@ One table per family, one column per profile. Rows are every capability any prof
 | conversation_state_reuse | unsupported | unsupported | unsupported |
 | enable_thinking | experimental | experimental | experimental |
 | greedy_generation | experimental | experimental | experimental |
-| long_context_over_1666_tokens | untested | untested | untested |
+| long_context_1667_to_8192_tokens | experimental | experimental | experimental |
+| long_context_over_8192_tokens | unsupported | unsupported | unsupported |
 | max_new_tokens | experimental | experimental | experimental |
 | reasoning_split | unsupported | unsupported | unsupported |
 | sampling_seeded | experimental | experimental | experimental |
@@ -190,13 +193,13 @@ One table per family, one column per profile. Rows are every capability any prof
 - `embeddinggemma-2/image-fp32-cuda`: Native runtime: Microsoft.ML.OnnxRuntime.Gpu.Linux 1.30.0 needs the CUDA 13 runtime and cuDNN 9 on the loader path; the package does not ship them.
 - `embeddinggemma-2/onnx-fp32-cpu`: Evaluator run 2026-10-11 (docs/evidence/embeddinggemma2-dotnet/, CPU): G1 passed; G2 failed only on export.token_embeddings (Python ORT vs PyTorch): the tolerance file's \|d\| <= 1e-4 * max(1, \|ref\|) judged per value gives 1.7e-2, while the per-case max \|d\| / max(1, max \|ref\|) the bound was set from is 6.2e-6. Which reading binds is a maintainer decision; every .NET check passed.
 - `embeddinggemma-2/onnx-fp32-cpu`: The hosted graph is public since 2026-10-14. The 0.1.0-preview.6 release drill downloaded it with no token into an empty cache, verified it and ran the sample offline (Linux x64, one machine); other platforms are untested.
-- `embeddinggemma-2/onnx-fp32-cpu`: Fixtures reach 1,750 tokens and batch-independence checks 2,049; 2,050 to 8,192 tokens has no reference evidence. One 8,192-token row took 80 s on the 12-thread workstation CPU (process peak working set 5.9 GB during the test run); temporary memory grows with the square of the length in the full-attention layers.
-- `embeddinggemma-2/onnx-fp32-cpu`: The fixtures cover the none, query and document prompts only; the other 18 names map to prompt texts without fixture rows. Matryoshka sizes are checked against the reference sliced and renormalized (the fixtures hold no truncated rows; the spike probe showed sentence-transformers truncate_dim equals that within 6e-8).
+- `embeddinggemma-2/onnx-fp32-cpu`: Accepted fixtures reach 1,750 tokens and batch-independence checks 2,049; 2,050 to 8,192 tokens is covered by the proposed long-input rows (not yet accepted). One 8,192-token row took 80 s on the 12-thread workstation CPU (process peak working set 5.9 GB during the test run); temporary memory grows with the square of the length in the full-attention layers.
+- `embeddinggemma-2/onnx-fp32-cpu`: The accepted fixtures cover the none, query and document prompts only; the other 18 names are covered by the proposed task-prompt rows (model-pipeline/proposed/embeddinggemma-2/task-prompts, not yet accepted). Matryoshka sizes are checked against the reference sliced and renormalized (the fixtures hold no truncated rows; the spike probe showed sentence-transformers truncate_dim equals that within 6e-8).
 - `embeddinggemma-2/onnx-fp32-cuda`: Evaluator run 2026-10-11 (docs/evidence/embeddinggemma2-dotnet/, CPU): G1 passed; G2 failed only on export.token_embeddings (Python ORT vs PyTorch): the tolerance file's \|d\| <= 1e-4 * max(1, \|ref\|) judged per value gives 1.7e-2, while the per-case max \|d\| / max(1, max \|ref\|) the bound was set from is 6.2e-6. Which reading binds is a maintainer decision; every .NET check passed.
 - `embeddinggemma-2/onnx-fp32-cuda`: The hosted graph is public since 2026-10-14. The 0.1.0-preview.6 release drill downloaded it with no token into an empty cache, verified it and ran the sample offline (Linux x64, one machine); other platforms are untested.
-- `embeddinggemma-2/onnx-fp32-cuda`: Fixtures reach 1,750 tokens and batch-independence checks 2,049; 2,050 to 8,192 tokens has no reference evidence. Long rows need GPU memory that grows with the square of the length in the full-attention layers.
+- `embeddinggemma-2/onnx-fp32-cuda`: Accepted fixtures reach 1,750 tokens and batch-independence checks 2,049; 2,050 to 8,192 tokens is covered by the proposed long-input rows (not yet accepted). Long rows need GPU memory that grows with the square of the length in the full-attention layers.
 - `embeddinggemma-2/onnx-fp32-cuda`: Native runtime: Microsoft.ML.OnnxRuntime.Gpu.Linux 1.30.0 needs the CUDA 13 runtime and cuDNN 9 on the loader path; the package does not ship them.
-- `embeddinggemma-2/onnx-fp32-cuda`: The fixtures cover the none, query and document prompts only; the other 18 names map to prompt texts without fixture rows. Matryoshka sizes are checked against the reference sliced and renormalized (the fixtures hold no truncated rows; the spike probe showed sentence-transformers truncate_dim equals that within 6e-8).
+- `embeddinggemma-2/onnx-fp32-cuda`: The accepted fixtures cover the none, query and document prompts only; the other 18 names are covered by the proposed task-prompt rows (model-pipeline/proposed/embeddinggemma-2/task-prompts, not yet accepted). Matryoshka sizes are checked against the reference sliced and renormalized (the fixtures hold no truncated rows; the spike probe showed sentence-transformers truncate_dim equals that within 6e-8).
 - `embeddinggemma-2/video-fp32-cpu`: Gate entries are left to the maintainer: model-pipeline evaluate (task video-embedding) passed G1 and G2 on the C# stage results at dd1ed7f (docs/evidence/embeddinggemma2-video/report.md).
 - `embeddinggemma-2/video-fp32-cpu`: The hosted graphs' download addresses are placeholders until the maintainer creates the GitHub release embeddinggemma-2-vision-onnx-r1; acquisition of the graphs is untested until then.
 - `embeddinggemma-2/video-fp32-cpu`: Synthetic fixture videos only (no camera footage); default settings only; no variable frame rate, interlaced or HDR video. One CPU architecture (AVX2) produced the reference and the decoder comparison: swscale's SIMD paths on other CPUs (ARM in particular) may differ by a level, for upstream as well.
@@ -210,11 +213,11 @@ One table per family, one column per profile. Rows are every capability any prof
 - `gliner2-base-v1/onnx-fp32-cpu`: Results are ordered by confidence; most entity scores saturate to exactly 1.0 in fp32, so near-ties make the order sensitive to backend noise (ORT CUDA with TF32 reorders one 1,329-token case with the same entity set).
 - `gliner2-base-v1/onnx-fp32-cpu`: Upstream span offsets index the normalized text: a span that includes the appended '.' ends one past the original text (seen at threshold 0.0). The C# package maps such spans onto the input (behavior.defaults).
 - `gliner2-base-v1/onnx-fp32-cpu`: The hosted graph is public since 2026-10-14. The 0.1.0-preview.6 release drill downloaded it with no token into an empty cache, verified it and ran the sample offline (Linux x64, one machine); other platforms are untested.
-- `gliner2-base-v1/onnx-fp32-cpu`: The count gate (count_pred argmax 0 gives an empty result) never closed on the development corpus, so that path has no fixture.
+- `gliner2-base-v1/onnx-fp32-cpu`: The count gate (count_pred argmax 0 gives an empty result) never closed on the development corpus. The proposed capability cases (model-pipeline/proposed/gliner2-base-v1/capability-cases) add 12 public-text cases where it closes; they are not yet accepted fixtures.
 - `gliner2-base-v1/onnx-fp32-cuda`: Results are ordered by confidence; most entity scores saturate to exactly 1.0 in fp32, so near-ties make the order sensitive to backend noise (ORT CUDA with TF32 reorders one 1,329-token case with the same entity set).
 - `gliner2-base-v1/onnx-fp32-cuda`: Upstream span offsets index the normalized text: a span that includes the appended '.' ends one past the original text (seen at threshold 0.0). The C# package maps such spans onto the input (behavior.defaults).
 - `gliner2-base-v1/onnx-fp32-cuda`: The hosted graph is public since 2026-10-14. The 0.1.0-preview.6 release drill downloaded it with no token into an empty cache, verified it and ran the sample offline (Linux x64, one machine); other platforms are untested.
-- `gliner2-base-v1/onnx-fp32-cuda`: The count gate (count_pred argmax 0 gives an empty result) never closed on the development corpus, so that path has no fixture.
+- `gliner2-base-v1/onnx-fp32-cuda`: The count gate (count_pred argmax 0 gives an empty result) never closed on the development corpus. The proposed capability cases (model-pipeline/proposed/gliner2-base-v1/capability-cases) add 12 public-text cases where it closes; they are not yet accepted fixtures.
 - `gliner2-base-v1/onnx-fp32-cuda`: CUDA parity evidence (PROPOSED.md) left out the two cases over 600 tokens from the padded-batch check because the GPU was shared; single-row parity covers all 58 cases (span logits max abs 4.0e-3, scores 2.5e-6).
 - `gliner2-base-v1/onnx-fp32-cuda`: Native runtime: Microsoft.ML.OnnxRuntime.Gpu.Linux 1.30.0 needs the CUDA 13 runtime and cuDNN 9 on the loader path; the package does not ship them.
 - `multilingual-e5-small/onnx-fp32-cpu`: The pinned tokenizer.json emits a lone "▁" token before special-token literals and for trailing whitespace, where SentencePiece and transformers 5.18 emit none. The owned profile follows tokenizer.json; the difference is recorded, not fixed.

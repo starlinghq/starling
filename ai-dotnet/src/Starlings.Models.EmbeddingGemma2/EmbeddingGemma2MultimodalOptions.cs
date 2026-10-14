@@ -40,8 +40,8 @@ public sealed record EmbeddingGemma2MultimodalOptions
     public int MaxBatchTokens { get; init; } = 8_192;
 
     /// <summary>
-    /// Soft tokens per image at most (upstream <c>max_soft_tokens</c>): 280 is the checkpoint's default and the only
-    /// tested budget; 70, 140, 560 and 1,120 are accepted by upstream and untested here. Default 280.
+    /// Soft tokens per image at most (upstream <c>max_soft_tokens</c>): 280 is the checkpoint's default; 70, 140, 560 and
+    /// 1,120 are accepted by upstream and experimental here (proposed rows, within the protected bounds). Default 280.
     /// </summary>
     public int MaxImageSoftTokens { get; init; } = EmbeddingGemma2ImageProcessor.DefaultMaxSoftTokens;
 

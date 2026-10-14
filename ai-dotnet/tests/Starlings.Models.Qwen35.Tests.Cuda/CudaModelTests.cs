@@ -109,6 +109,33 @@ public sealed class Fp32xCudaTests(Fp32xCudaFixture fixture) : IClassFixture<Fp3
     [Fact]
     public void CancellationBetweenStepsThenReuse() => Qwen35ModelChecks.CancellationThenReuse(Model, Case("en-list"), Case("en-short"));
 
+    /// <summary>
+    /// Capability <c>long_context_1667_to_8192_tokens</c> on fp32x CUDA: greedy ids, step-0 logits and cached versus
+    /// uncached decoding against the transformers fp32 reference on prompts-long-v1 (proposed fixture), with this
+    /// profile's protected tolerances. The 8,213-token prompt plus 32 tokens is beyond the accepted 8,192, so it runs with
+    /// the limit lifted (test seam); it covers every length the package accepts.
+    /// </summary>
+    [Theory]
+    [InlineData("long-4096")]
+    [InlineData("long-8192")]
+    public void LongContextGreedyAndLogitsEqualTheReference(string id)
+    {
+        var c = Qwen35TestAssets.LoadLongContextCases().Single(x => x.Id == id);
+        var tolerances = Qwen35TestAssets.Tolerances("ortgenai-fp32x-cuda");
+        var model = Model;
+        model.EnforcedContextTokens = int.MaxValue;
+        try
+        {
+            Qwen35ModelChecks.GreedyFromReferenceIds(model, c, prefillChunkTokens: 128);
+            Qwen35LogitChecks.Step0LogitsMatchTheReference(model, c, tolerances, prefillChunkTokens: 128);
+            Qwen35LogitChecks.CachedDecodingEqualsAFreshPrefill(model, c, 16, tolerances, prefillChunkTokens: 128);
+        }
+        finally
+        {
+            model.EnforcedContextTokens = Qwen35ChatModel.MaxContextTokens;
+        }
+    }
+
     [Fact]
     public void TextPathWithThinking() => Qwen35ModelChecks.TextPathMatches(Model, Case("thinking-on"), 32);
 }
@@ -148,6 +175,31 @@ public sealed class Fp16xCudaTests(Fp16xCudaFixture fixture) : IClassFixture<Fp1
         var result = updates[^1].Result!;
         Assert.Equal(result.Text, string.Concat(updates.Select(u => u.Text)));
         Assert.Equal(Model.Tokenizer.Decode(result.TokenIds.AsSpan(), false), result.Text);
+    }
+
+    /// <summary>
+    /// Capability <c>long_context_1667_to_8192_tokens</c> on fp16x CUDA: greedy ids equal the reference up to a divergence
+    /// at a near tie (the profile's binding rule), step-0 logits within this profile's protected tolerances. The
+    /// 8,213-token prompt runs with the limit lifted (test seam).
+    /// </summary>
+    [Theory]
+    [InlineData("long-4096")]
+    [InlineData("long-8192")]
+    public void LongContextGreedyAndLogitsMatchTheReference(string id)
+    {
+        var c = Qwen35TestAssets.LoadLongContextCases().Single(x => x.Id == id);
+        var tolerances = Qwen35TestAssets.Tolerances("ortgenai-fp16x-cuda");
+        var model = Model;
+        model.EnforcedContextTokens = int.MaxValue;
+        try
+        {
+            Qwen35ModelChecks.GreedyFromReferenceIds(model, c, nearTieMargin: ProposedNearTieMargin, prefillChunkTokens: 128);
+            Qwen35LogitChecks.Step0LogitsMatchTheReference(model, c, tolerances, prefillChunkTokens: 128);
+        }
+        finally
+        {
+            model.EnforcedContextTokens = Qwen35ChatModel.MaxContextTokens;
+        }
     }
 
     [Fact]

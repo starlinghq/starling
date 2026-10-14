@@ -1,0 +1,45 @@
+xUnit.net v3 In-Process Runner v4.0.1+8ed8aa354c (64-bit .NET 10.0.12)
+  Discovering: Starlings.Models.Gliner2.Tests
+  Discovered:  Starlings.Models.Gliner2.Tests
+  Starting:    Starlings.Models.Gliner2.Tests
+    Starlings.Models.Gliner2.Tests.SplitterParityTests.AcceptedTokenizerFixturesMatch [OUTPUT] accepted tokenizer fixtures: 46 cases, 2350 words exact
+    Starlings.Models.Gliner2.Tests.SplitterParityTests.AdversarialStringsMatchGliner2sSplitter [OUTPUT] adversarial splitter cases 15, words 155: exact
+    Starlings.Models.Gliner2.Tests.SplitterParityTests.ProtectedExtractionFixturesMatch [OUTPUT] protected extraction fixtures: 58 cases, 2460 words exact
+    Starlings.Models.Gliner2.Tests.DecoderTests.ReferenceLogitsDecodeToTheReferenceOutput [OUTPUT] 58 cases: reference logits decode to the reference entities, offsets, order and confidences exactly
+    Starlings.Models.Gliner2.Tests.InputExactnessTests.AcceptedTokenizerFixturesGiveTheReferenceIdsAndPositions [OUTPUT] accepted tokenizer fixtures: 46 cases, input ids and positions exact
+    Starlings.Models.Gliner2.Tests.TextSemanticsTests.LowerIsPythonsStrLower [OUTPUT] lower() differs from Python 3.11 only on 55 scalar values unassigned in Unicode 14
+    Starlings.Models.Gliner2.Tests.InputExactnessTests.ProtectedExtractionFixturesGiveTheReferenceInputs [OUTPUT] protected extraction fixtures: 56 cases (word-cap cases excluded), inputs exact, including the two over 512 tokens
+    Starlings.Models.Gliner2.Tests.TextSemanticsTests.FinalSigmaContextMatchesPython [OUTPUT] Final_Sigma context differs only on 206 scalar values unassigned in Unicode 14
+    Starlings.Models.Gliner2.Tests.TextSemanticsTests.WordCharactersArePythonsBackslashW [OUTPUT] \w differs from Python 3.11 only on 9392 scalar values unassigned in Unicode 14 (newer .NET Unicode data)
+    Starlings.Models.Gliner2.Tests.OperationalTests.DisposalDuringInFlightWorkFinishesOrThrowsObjectDisposed [OUTPUT] dispose returned in 2.3 ms; worker finished 661 ms after dispose; 0 calls completed; ended with ObjectDisposedException: True
+    Starlings.Models.Gliner2.Tests.OperationalTests.MalformedLocksAndSnapshotsAreRejected [OUTPUT] truncated: Invalid model asset lock: Expected end of string, but instead reached end of data. LineNumber: 9 | BytePositionInLine: 72.
+    Starlings.Models.Gliner2.Tests.OperationalTests.MalformedLocksAndSnapshotsAreRejected [OUTPUT] branch revision: Invalid model asset lock: revision must be a full 40-character lowercase commit SHA, not a branch or tag name: 'main'. (Parameter 'revision')
+    Starlings.Models.Gliner2.Tests.OperationalTests.MalformedLocksAndSnapshotsAreRejected [OUTPUT] short digest: Invalid model asset lock: sha256 of onnx/gliner2-entities-fp32.onnx must be 64 lowercase hexadecimal characters. (Parameter 'sha256')
+    Starlings.Models.Gliner2.Tests.OperationalTests.MalformedLocksAndSnapshotsAreRejected [OUTPUT] upper-case digest: Invalid model asset lock: sha256 of onnx/gliner2-entities-fp32.onnx must be 64 lowercase hexadecimal characters. (Parameter 'sha256')
+    Starlings.Models.Gliner2.Tests.OperationalTests.MalformedLocksAndSnapshotsAreRejected [OUTPUT] negative size: Invalid model asset lock: size ('-1') must be a non-negative value. (Parameter 'size')
+    Starlings.Models.Gliner2.Tests.OperationalTests.MalformedLocksAndSnapshotsAreRejected [OUTPUT] Actual value was -1.
+    Starlings.Models.Gliner2.Tests.OperationalTests.MalformedLocksAndSnapshotsAreRejected [OUTPUT] escaping path: Invalid model asset lock: File path has an empty, '.', '..' or control-character segment: '../onnx/gliner2-entities-fp32.onnx'. (Parameter 'path')
+    Starlings.Models.Gliner2.Tests.OperationalTests.MalformedLocksAndSnapshotsAreRejected [OUTPUT] unknown schema: Unsupported lock schema_version 99; expected 1 or 2.
+    Starlings.Models.Gliner2.Tests.OperationalTests.MalformedLocksAndSnapshotsAreRejected [OUTPUT] no files: Invalid model asset lock: A lock needs at least one file. (Parameter 'files')
+    Starlings.Models.Gliner2.Tests.OperationalTests.MalformedLocksAndSnapshotsAreRejected [OUTPUT] duplicate file: Invalid model asset lock: Duplicate file path in lock: onnx/gliner2-entities-fp32.onnx. (Parameter 'files')
+    Starlings.Models.Gliner2.Tests.OperationalTests.SaturatedCallersOnOneExtractorAllComplete [OUTPUT] 48 callers x 20 calls on 12 logical CPUs: wall 349 ms; call latency p50 1.9 ms, p95 24.4 ms, max 51.6 ms; every call completed with its single-call result (no queue, no admission limit)
+    Starlings.Models.Gliner2.Tests.OperationalTests.UnsupportedProvidersAndSettingsAreRejectedNotIgnored [OUTPUT] The loaded ONNX Runtime 1.30.0 native library has no CUDA execution provider (available: CPUExecutionProvider). Reference Microsoft.ML.OnnxRuntime.Gpu.Linux 1.30.0 instead of Microsoft.ML.OnnxRuntime.
+    Starlings.Models.Gliner2.Tests.CpuParityTests.InputsOver512TokensAreRejected [OUTPUT] long-over-512-tokens: rejected, 566 tokens > 512
+    Starlings.Models.Gliner2.Tests.CpuParityTests.InputsOver512TokensAreRejected [OUTPUT] long-over-1024-tokens: rejected, 1329 tokens > 512
+    Starlings.Models.Gliner2.Tests.OperationalTests.RealModelDisposalDuringALargeBatch [OUTPUT] dispose returned in 0.0 ms; worker finished 230 ms after dispose; 0 calls completed; ended with ObjectDisposedException: True
+    Starlings.Models.Gliner2.Tests.CpuParityTests.CountGateAndDescriptionCasesMatchTheReference [OUTPUT] in-contract cases 22; inputs exact 22; entities exact 22, within rules 22 (allowed swaps 0, allowed flips 0)
+    Starlings.Models.Gliner2.Tests.CpuParityTests.CountGateAndDescriptionCasesMatchTheReference [OUTPUT] count_logits max abs 4.20E-005, max rel 3.28E-006 (worst descriptions-new-states); span_logits(valid) max abs 4.03E-003, max rel 1.67E-005 (worst descriptions-president); scores max abs 2.55E-006, max rel 0.00E+000 (worst descriptions-president); confidence max abs 2.26E-006, max rel 0.00E+000 (worst descriptions-falling)
+    Starlings.Models.Gliner2.Tests.CpuParityTests.CountGateAndDescriptionCasesMatchTheReference [OUTPUT] bounds: model-pipeline/protected/gliner2-base-v1/onnx-fp32-cpu/tolerances.yaml
+    Starlings.Models.Gliner2.Tests.OperationalTests.RealModelTimedOutRequestsReportCancellationLatencyThenReuse [OUTPUT] deadline 100 ms: threw after 124 ms, cancellation latency 16.82 ms
+    Starlings.Models.Gliner2.Tests.OperationalTests.RealModelTimedOutRequestsReportCancellationLatencyThenReuse [OUTPUT] deadline 100 ms: threw after 117 ms, cancellation latency 16.18 ms
+    Starlings.Models.Gliner2.Tests.OperationalTests.RealModelTimedOutRequestsReportCancellationLatencyThenReuse [OUTPUT] deadline 100 ms: threw after 105 ms, cancellation latency 4.35 ms
+    Starlings.Models.Gliner2.Tests.CpuParityTests.CountGateAndDescriptionCasesMatchTheReference [OUTPUT] padded batches (max 8 rows, grouped by label count), 22 rows vs single runs: span logits max abs 3.81E-006, max rel 1.07E-007 (worst gate-closed-description-protein); entities identical
+    Starlings.Models.Gliner2.Tests.CpuParityTests.PublicOffsetsStayInsideTheInputAtEveryThreshold [OUTPUT] 1824 entities at the case thresholds and at 0.0: every offset inside the input, Text == input[Start..End]
+    Starlings.Models.Gliner2.Tests.CpuParityTests.SessionIsTheLockedGraphOnCpu [OUTPUT] ORT 1.30.0; session CPUExecutionProvider; model sha256 0ba2db95b18116906ae4ec21aa62ef493e69e0780dcfdfa98c4456ecf4123265
+    Starlings.Models.Gliner2.Tests.CpuParityTests.ParityWithTheProtectedReference [OUTPUT] in-contract cases 54; inputs exact 54; entities exact 54, within rules 54 (allowed swaps 0, allowed flips 0)
+    Starlings.Models.Gliner2.Tests.CpuParityTests.ParityWithTheProtectedReference [OUTPUT] count_logits max abs 4.58E-005, max rel 1.52E-005 (worst repeated-case-variants); span_logits(valid) max abs 7.75E-003, max rel 1.94E-005 (worst label-duplicate); scores max abs 3.67E-006, max rel 0.00E+000 (worst nested-org-location); confidence max abs 1.82E-006, max rel 0.00E+000 (worst threshold-0.1)
+    Starlings.Models.Gliner2.Tests.CpuParityTests.ParityWithTheProtectedReference [OUTPUT] bounds: model-pipeline/protected/gliner2-base-v1/onnx-fp32-cpu/tolerances.yaml
+    Starlings.Models.Gliner2.Tests.CpuParityTests.ParityWithTheProtectedReference [OUTPUT] padded batches (max 8 rows, grouped by label count), 54 rows vs single runs: span logits max abs 0.00E+000, max rel 0.00E+000; entities identical
+  Finished:    Starlings.Models.Gliner2.Tests (ID = 'f527a8597c951332fe26cd456820c1b80f14de0e47ec9d1392a8eafa45d38852')
+=== TEST EXECUTION SUMMARY ===
+   Starlings.Models.Gliner2.Tests  Total: 75, Errors: 0, Failed: 0, Skipped: 0, Not Run: 0, Time: 36.125s

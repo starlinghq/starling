@@ -57,9 +57,79 @@ public class CudaParityTests(Gliner2CudaFixture fixture, ITestOutputHelper outpu
         Gliner2ModelParity.PaddedBatches(fixture.Extractor, fixture.Cases, summary.Outputs, Tolerances, output);
     }
 
+    /// <summary>
+    /// Capabilities <c>count_gate_closed</c> and <c>label_descriptions</c> (proposed cases, protected bounds of this
+    /// profile): 12 cases where the reference's count gate closes (no entities) and 10 with label descriptions.
+    /// </summary>
+    [Fact]
+    public void CountGateAndDescriptionCasesMatchTheReference()
+    {
+        _ = fixture.Extractor;
+        var cases = Gliner2Fixtures.LoadCapabilityCases();
+        Assert.Equal(12, cases.Count(c => !c.GateOpen));
+        Assert.Equal(11, cases.Count(c => c.Descriptions is { Count: > 0 }));
+        var summary = Gliner2ModelParity.SingleCases(fixture.Extractor, cases, Tolerances, output);
+        Assert.Equal(22, summary.Cases);
+        Assert.Equal(summary.Cases, summary.InputsExact);
+        Assert.Equal(summary.Cases, summary.EntitiesExact);
+        foreach (var c in cases.Where(c => !c.GateOpen))
+        {
+            var result = fixture.Extractor.ExtractBatch([c.Text], c.LabelsRequested, c.Descriptions, c.Threshold, TestContext.Current.CancellationToken)[0];
+            Assert.Empty(result.Entities);
+            Assert.False(result.GateOpen);
+        }
+
+        Gliner2ModelParity.PaddedBatches(fixture.Extractor, cases, summary.Outputs, Tolerances, output);
+    }
+
     [Fact]
     public void InputsOver512TokensAreRejected() =>
         Gliner2ModelParity.LongInputsAreRejected(fixture.Extractor, fixture.Cases, output);
+
+    /// <summary>
+    /// Capability <c>concurrent_calls</c> over CUDA, serialized (the CUDA default): four threads give the sequential
+    /// results. Unserialized, the same test returned wrong entities in 6 of 8 runs.
+    /// </summary>
+    [Fact]
+    public void ConcurrentExtractionGivesTheSequentialResults()
+    {
+        var extractor = fixture.Extractor;
+        Assert.True(extractor.SerializesNativeCalls);
+        var cases = fixture.Cases.Where(c => c.OutOfContract is null).Take(16).ToList();
+        var ct = TestContext.Current.CancellationToken;
+        var sequential = cases.Select(c => extractor.Extract(c.Text, c.LabelsRequested, c.Threshold, ct).Entities).ToList();
+        for (int round = 0; round < 3; round++)
+        {
+            var parallel = new IReadOnlyList<Gliner2Entity>[cases.Count];
+            Parallel.For(0, cases.Count, new ParallelOptions { MaxDegreeOfParallelism = 4, CancellationToken = ct }, i =>
+                parallel[i] = extractor.Extract(cases[i].Text, cases[i].LabelsRequested, cases[i].Threshold, ct).Entities);
+            for (int i = 0; i < cases.Count; i++)
+            {
+                Assert.Equal(sequential[i], parallel[i]);
+            }
+        }
+
+        output.WriteLine($"{cases.Count} cases x 3 rounds on 4 threads over CUDA: entities equal to the sequential run");
+    }
+
+    /// <summary>
+    /// Capability <c>cancellation</c> over CUDA: a long batch cancelled after 50 ms throws, returns promptly, and the
+    /// extractor gives the reference entities afterwards.
+    /// </summary>
+    [Fact]
+    public void CancellationDuringARunThrowsAndTheExtractorStaysUsable()
+    {
+        var extractor = fixture.Extractor;
+        var c = fixture.Cases.First(c => c.Id == "basic-multi-label");
+        var texts = Enumerable.Repeat(c.Text, 4096).ToList();
+        using var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(50));
+        var sw = System.Diagnostics.Stopwatch.StartNew();
+        Assert.ThrowsAny<OperationCanceledException>(() => extractor.ExtractBatch(texts, c.LabelsRequested, c.Threshold, cts.Token));
+        output.WriteLine($"4,096 texts cancelled after 50 ms: threw after {sw.Elapsed.TotalMilliseconds:F0} ms");
+        Assert.True(sw.Elapsed < TimeSpan.FromSeconds(5), $"cancellation took {sw.Elapsed.TotalMilliseconds:F0} ms");
+        var after = extractor.Extract(c.Text, c.LabelsRequested, c.Threshold, TestContext.Current.CancellationToken);
+        Assert.Equal(c.Entities.Count, after.Entities.Count);
+    }
 
     [Fact]
     public void PlacementPutsMostNodesOnCuda()

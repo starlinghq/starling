@@ -1,0 +1,17 @@
+xUnit.net v3 In-Process Runner v4.0.1+8ed8aa354c (64-bit .NET 10.0.12)
+  Discovering: Starlings.Models.EmbeddingGemma2.Video.FFmpeg.Tests
+  Discovered:  Starlings.Models.EmbeddingGemma2.Video.FFmpeg.Tests
+  Starting:    Starlings.Models.EmbeddingGemma2.Video.FFmpeg.Tests
+    Starlings.Models.EmbeddingGemma2.Video.FFmpeg.Tests.DecoderTests.EdgeCaseVideosEqualTorchcodec [OUTPUT] h264-rot180-640x360-30fps-3s: metadata, 3 sampled indices and all 90 frames equal torchcodec
+    Starlings.Models.EmbeddingGemma2.Video.FFmpeg.Tests.DecoderTests.EdgeCaseVideosEqualTorchcodec [OUTPUT] h264-rot-90-640x360-30fps-3s: metadata, 3 sampled indices and all 90 frames equal torchcodec
+    Starlings.Models.EmbeddingGemma2.Video.FFmpeg.Tests.DecoderTests.EdgeCaseVideosEqualTorchcodec [OUTPUT] h264-rot180-portrait-360x640-30fps-2s: metadata, 2 sampled indices and all 60 frames equal torchcodec
+    Starlings.Models.EmbeddingGemma2.Video.FFmpeg.Tests.DecoderTests.EdgeCaseVideosEqualTorchcodec [OUTPUT] hevc-hdr-pq-640x360-30fps-3s: metadata, 3 sampled indices and all 90 frames equal torchcodec
+    Starlings.Models.EmbeddingGemma2.Video.FFmpeg.Tests.DecoderTests.EdgeCaseVideosEqualTorchcodec [OUTPUT] hevc-hdr-hlg-640x360-30fps-3s: metadata, 3 sampled indices and all 90 frames equal torchcodec
+    Starlings.Models.EmbeddingGemma2.Video.FFmpeg.Tests.DecoderTests.EdgeCaseVideosEqualTorchcodec [OUTPUT] h264-interlaced-tff-720x480-29.97fps-3s: metadata, 3 sampled indices and all 90 frames equal torchcodec
+    Starlings.Models.EmbeddingGemma2.Video.FFmpeg.Tests.DecoderTests.EdgeCaseVideosEqualTorchcodec [OUTPUT] h264-interlaced-bff-720x576-25fps-3s: metadata, 3 sampled indices and all 75 frames equal torchcodec
+    Starlings.Models.EmbeddingGemma2.Video.FFmpeg.Tests.DecoderTests.EdgeCaseVideosEqualTorchcodec [OUTPUT] h264-vfr-30-then-15fps-640x360: metadata, 4 sampled indices and all 90 frames equal torchcodec
+    Starlings.Models.EmbeddingGemma2.Video.FFmpeg.Tests.DecoderTests.EdgeCaseVideosEqualTorchcodec [OUTPUT] h264-vfr-alternating-320x240: metadata, 4 sampled indices and all 120 frames equal torchcodec
+    Starlings.Models.EmbeddingGemma2.Video.FFmpeg.Tests.DecoderTests.EdgeCaseVideosEqualTorchcodec [OUTPUT] 9 edge-case videos, 795 frames, FFmpeg 8; differing: none
+  Finished:    Starlings.Models.EmbeddingGemma2.Video.FFmpeg.Tests (ID = '7d42fd08e0f15602036fafc8119e85552e1d9c1e30a15aa8229d17a56e890121')
+=== TEST EXECUTION SUMMARY ===
+   Starlings.Models.EmbeddingGemma2.Video.FFmpeg.Tests  Total: 1, Errors: 0, Failed: 0, Skipped: 0, Not Run: 0, Time: 3.447s

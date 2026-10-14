@@ -129,7 +129,8 @@ public sealed class RealModelTests(Qwen35ChatClientFixture fixture) : IClassFixt
             },
             "get_weather",
             "Get the current weather for a city.");
-        using IChatClient pipeline = new ChatClientBuilder(Client).UseFunctionInvocation().Build();
+        // Not disposed: disposing the pipeline disposes the inner client, which the class fixture shares with the other tests.
+        IChatClient pipeline = new ChatClientBuilder(Client).UseFunctionInvocation().Build();
         var response = await pipeline.GetResponseAsync(
             [new ChatMessage(ChatRole.User, "What is the weather in Paris today?")],
             new ChatOptions { Tools = [getWeather], MaxOutputTokens = 128 },

@@ -33,6 +33,31 @@ public class CpuParityTests(Gliner2CpuFixture fixture, ITestOutputHelper output)
         Gliner2ModelParity.PaddedBatches(fixture.Extractor, fixture.Cases, summary.Outputs, Tolerances, output);
     }
 
+    /// <summary>
+    /// Capabilities <c>count_gate_closed</c> and <c>label_descriptions</c> (proposed cases, protected bounds of this
+    /// profile): 12 cases where the reference's count gate closes (no entities) and 10 with label descriptions.
+    /// </summary>
+    [Fact]
+    public void CountGateAndDescriptionCasesMatchTheReference()
+    {
+        _ = fixture.Extractor;
+        var cases = Gliner2Fixtures.LoadCapabilityCases();
+        Assert.Equal(12, cases.Count(c => !c.GateOpen));
+        Assert.Equal(11, cases.Count(c => c.Descriptions is { Count: > 0 }));
+        var summary = Gliner2ModelParity.SingleCases(fixture.Extractor, cases, Tolerances, output);
+        Assert.Equal(22, summary.Cases);
+        Assert.Equal(summary.Cases, summary.InputsExact);
+        Assert.Equal(summary.Cases, summary.EntitiesExact);
+        foreach (var c in cases.Where(c => !c.GateOpen))
+        {
+            var result = fixture.Extractor.ExtractBatch([c.Text], c.LabelsRequested, c.Descriptions, c.Threshold, TestContext.Current.CancellationToken)[0];
+            Assert.Empty(result.Entities);
+            Assert.False(result.GateOpen);
+        }
+
+        Gliner2ModelParity.PaddedBatches(fixture.Extractor, cases, summary.Outputs, Tolerances, output);
+    }
+
     [Fact]
     public void InputsOver512TokensAreRejected() =>
         Gliner2ModelParity.LongInputsAreRejected(fixture.Extractor, fixture.Cases, output);
@@ -64,6 +89,7 @@ public class CpuParityTests(Gliner2CpuFixture fixture, ITestOutputHelper output)
     public void ConcurrentExtractionGivesTheSequentialResults()
     {
         var extractor = fixture.Extractor;
+        Assert.False(extractor.SerializesNativeCalls); // CPU runs concurrently
         var cases = fixture.Cases.Where(c => c.OutOfContract is null).Take(16).ToList();
         var ct = TestContext.Current.CancellationToken;
         var sequential = cases.Select(c => extractor.Extract(c.Text, c.LabelsRequested, c.Threshold, ct).Entities).ToList();

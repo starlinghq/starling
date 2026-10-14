@@ -553,6 +553,6 @@ public sealed class TransformContractTests : IDisposable
         Assert.Equal(CapabilityStatus.Unsupported, E5Capabilities.All["mlnet.persistence"]);
         Assert.Equal(CapabilityStatus.Unsupported, E5Capabilities.All["mlnet.cancellation"]);
         Assert.Equal(CapabilityStatus.Unsupported, E5Capabilities.All["mlnet.training"]);
-        Assert.Equal(CapabilityStatus.Untested, E5Capabilities.All["mlnet.embedding_transform.cuda"]);
+        Assert.Equal(CapabilityStatus.Experimental, E5Capabilities.All["mlnet.embedding_transform.cuda"]);
     }
 }

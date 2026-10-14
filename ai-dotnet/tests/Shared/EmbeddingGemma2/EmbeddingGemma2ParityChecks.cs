@@ -322,8 +322,8 @@ internal static class EmbeddingGemma2ParityChecks
             }
         }
 
-        output.WriteLine($"from text, {rows.Count} rows (prompts none/query/document), ids exact; single vs protected: {single}");
-        output.WriteLine($"from text, padded batches vs protected: {batched}");
+        output.WriteLine($"from text, {rows.Count} rows (prompts {string.Join("/", rows.Select(r => r.Prompt).Distinct())}), ids exact; single vs reference: {single}");
+        output.WriteLine($"from text, padded batches vs reference: {batched}");
         output.WriteLine($"from text, padded batches vs single: {vsSingle}");
         Assert.True(single.Max <= tolerances.EmbeddingMaxAbs, $"text single {single.Max:E3}");
         Assert.True(single.MinCosine >= tolerances.MinCosine, $"text min cosine {single.MinCosine:F12}");

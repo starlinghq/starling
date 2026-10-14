@@ -44,9 +44,9 @@ public static class E5Capabilities
         ["asset_acquisition"] = CapabilityStatus.Experimental,
 
         // Microsoft.Extensions.AI IEmbeddingGenerator, in Starlings.Models.E5.Extensions.AI (P-011). Tested
-        // over the CPU profile only; the explicit input-type prefix option lives there, prefix_insertion stays unsupported here.
+        // over the CPU and CUDA profiles; the explicit input-type prefix option lives there, prefix_insertion stays unsupported here.
         ["extensions_ai.embedding_generator"] = CapabilityStatus.Experimental,
-        ["extensions_ai.embedding_generator.cuda"] = CapabilityStatus.Untested,
+        ["extensions_ai.embedding_generator.cuda"] = CapabilityStatus.Experimental,
         ["extensions_ai.dimensions_truncation"] = CapabilityStatus.Unsupported,
 
         // ML.NET estimator/transformer, in Starlings.Models.E5.MLNet (P-012). Plan 15.2 badges: pipeline
@@ -54,12 +54,14 @@ public static class E5Capabilities
         // Save throws; the model is resolved from the asset lock at run time), training (none). Cursors have no
         // cancellation token.
         ["mlnet.embedding_transform"] = CapabilityStatus.Experimental,
-        ["mlnet.embedding_transform.cuda"] = CapabilityStatus.Untested,
+        ["mlnet.embedding_transform.cuda"] = CapabilityStatus.Experimental,
         ["mlnet.batching"] = CapabilityStatus.Experimental,
         ["mlnet.persistence"] = CapabilityStatus.Unsupported,
         ["mlnet.cancellation"] = CapabilityStatus.Unsupported,
         ["mlnet.training"] = CapabilityStatus.Unsupported,
-        ["aot"] = CapabilityStatus.Untested,
+        // Native AOT on Linux x64, CPU and CUDA natives (docs/evidence/aot/, docs/evidence/capability-closure-2026-10-14/); not the ML.NET adapter.
+        ["aot"] = CapabilityStatus.Experimental,
+        ["mlnet.aot"] = CapabilityStatus.Unsupported,
         ["windows"] = CapabilityStatus.Untested,
     };
 }
