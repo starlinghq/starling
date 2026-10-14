@@ -258,10 +258,20 @@ qualification:
   # Accepted development fixtures (PR #42) and binding tolerances (set 2026-10-11).
   fixtures: model-pipeline/protected/embeddinggemma-2/image-fp32-cpu
   tolerances: model-pipeline/protected/embeddinggemma-2/image-fp32-cpu/tolerances.yaml
+  # Rerun at Starlings.Tokenizers 0.3.0-preview.1 (2026-10-13, R4): model-pipeline evaluate --require-gates G1,G2
+  # gave G1 passed, G2 passed on the development fixtures, which are not P-030 release sets
+  # (docs/evidence/rerun-tokenizer-0.3.0-preview.1/). The gate entries below are unchanged; recording a result is the maintainer's act.
   gates:
     G0: { status: checklist, evidence: docs/m0/embeddinggemma2-image-spike.md, date: 2026-10-11 }
     G1: { status: not-run }
     G2: { status: not-run }
+    G3: { status: not-run }
+    G4: { status: not-run }
+    G5: { status: not-run }
+    # G6 checklist: the ai-0.1.0-preview.5 release drill (packed packages, clean consumer, offline sample run on a
+    # seeded graph). Acquisition of the hosted graph is not covered while its source is a placeholder or private.
+    G6: { status: checklist, evidence: docs/releases/ai-0.1.0-preview.5/rc-drill.log, date: 2026-10-12 }
+    G7: { status: not-run }
 
 maintenance:
   owner: Mark
