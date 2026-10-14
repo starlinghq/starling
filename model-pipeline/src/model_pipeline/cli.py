@@ -8,7 +8,7 @@ import os
 import sys
 from pathlib import Path
 
-from model_pipeline import benchmarks
+from model_pipeline import benchmarks, g5
 from model_pipeline.manifest import find_manifests, validate_file
 
 # Options a caller might use to supply thresholds. They exist only to be refused with a clear reason.
@@ -212,6 +212,22 @@ def _bench_summarize(args: argparse.Namespace) -> int:
     return 0
 
 
+def _bench_g5(args: argparse.Namespace) -> int:
+    results, problems = benchmarks.load([Path(p) for p in args.paths])
+    if problems:
+        for problem in problems:
+            print(problem, file=sys.stderr)
+        return 1
+    budgets, comments = g5.load_budgets(Path(args.budgets))
+    only = set(args.profile) if args.profile else None
+    verdicts = g5.evaluate(results, budgets, comments, only=only, resamples=args.resamples, seed=args.seed)
+    if args.json:
+        Path(args.json).write_text(json.dumps(verdicts, indent=1) + "\n", encoding="utf-8")
+    sys.stdout.write(g5.report(verdicts))
+    ok = bool(verdicts) and all(v["verdict"] == "pass" and not v["qualifying"] for v in verdicts)
+    return 0 if ok else 1
+
+
 def _upstream(args: argparse.Namespace) -> int:
     from model_pipeline import upstream
 
@@ -339,6 +355,16 @@ def main(argv: list[str] | None = None) -> int:
     bench_summarize.add_argument("--seed", type=int, default=1)
     bench_summarize.add_argument("--json", help="also write the summary as JSON to this path")
     bench_summarize.set_defaults(func=_bench_summarize)
+    bench_g5 = bench_sub.add_parser(
+        "g5", help="check C# and Python same-backend raw results against the G5 budgets (performance-budgets.yaml)"
+    )
+    bench_g5.add_argument("paths", nargs="+", help="raw files of both sides (C# harness and Python matched runner)")
+    bench_g5.add_argument("--budgets", default=str(g5.BUDGETS), help="budget file (default: the protected one)")
+    bench_g5.add_argument("--profile", action="append", help="only this profile (repeatable), e.g. gliner2-base-v1/onnx-fp32-cpu")
+    bench_g5.add_argument("--resamples", type=int, default=1000, help="bootstrap resamples (default 1000)")
+    bench_g5.add_argument("--seed", type=int, default=1)
+    bench_g5.add_argument("--json", help="also write the verdicts as JSON to this path")
+    bench_g5.set_defaults(func=_bench_g5)
 
     up = sub.add_parser(
         "upstream",
