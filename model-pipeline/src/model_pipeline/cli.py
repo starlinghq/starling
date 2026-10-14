@@ -169,6 +169,24 @@ def _bench_summarize(args: argparse.Namespace) -> int:
     return 0
 
 
+def _upstream(args: argparse.Namespace) -> int:
+    from model_pipeline import upstream
+
+    try:
+        fetch = upstream.default_fetcher(Path(args.responses) if args.responses else None)
+        report = upstream.check_registry(Path(args.registry), fetch, today=args.date)
+    except (OSError, ValueError) as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 2
+    if args.json:
+        Path(args.json).write_text(json.dumps(report, indent=1) + "\n", encoding="utf-8")
+    sys.stdout.write(upstream.markdown(report))
+    summary = report["summary"]
+    if summary["error"]:
+        return 2
+    return 1 if summary["new_since_known"] else 0
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="model-pipeline")
     sub = parser.add_subparsers(dest="command", required=True)
@@ -260,6 +278,18 @@ def main(argv: list[str] | None = None) -> int:
     bench_summarize.add_argument("--seed", type=int, default=1)
     bench_summarize.add_argument("--json", help="also write the summary as JSON to this path")
     bench_summarize.set_defaults(func=_bench_summarize)
+
+    up = sub.add_parser(
+        "upstream",
+        help="P-020: compare pinned Hugging Face revisions with the Hub's current ones (read-only)",
+        description="Exit codes: 0 nothing new; 1 an upstream revision newer than latest_known_upstream_revision; "
+        "2 bad input or a fetch failed. Never edits a manifest.",
+    )
+    up.add_argument("registry", nargs="?", default="registry", help="registry directory or one manifest")
+    up.add_argument("--responses", help="recorded Hub API responses (JSON); no network access")
+    up.add_argument("--json", help="also write the report (starlings-upstream-check/1) to this path")
+    up.add_argument("--date", help="check date to record (default: today)")
+    up.set_defaults(func=_upstream)
 
     args = parser.parse_args(argv)
     return args.func(args)
