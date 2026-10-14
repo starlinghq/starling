@@ -1049,7 +1049,14 @@ def evaluate(
     require_gates: tuple[str, ...] = (),
     now: dt.datetime | None = None,
     reference_tensors: Path | None = None,
+    fixtures_dir_override: str | None = None,
 ) -> Evaluation:
+    """Evaluate one profile's stage results.
+
+    `fixtures_dir_override` names another protected fixtures directory (repository-relative, inside
+    `model-pipeline/protected/`), for example a P-030 release set; by default the manifest's
+    `qualification.fixtures` is read. Tolerances always come from the manifest.
+    """
     problems = manifest.validate_file(manifest_path)
     if problems:
         raise EvaluationError("manifest is invalid: " + "; ".join(str(p) for p in problems))
@@ -1057,7 +1064,10 @@ def evaluate(
     task = task_of(man)
     root = repo_root or protection.find_repository_root(manifest_path.parent)
     qual = man["qualification"]
-    fixtures_dir = protection.resolve_protected(root, qual["fixtures"], kind="fixtures")
+    fixtures_rel = qual["fixtures"] if fixtures_dir_override is None else fixtures_dir_override
+    fixtures_dir = protection.resolve_protected(root, fixtures_rel, kind="fixtures")
+    if not fixtures_dir.is_dir():
+        raise EvaluationError(f"fixtures directory {fixtures_rel!r} does not exist")
     tol_path = protection.resolve_protected(root, qual["tolerances"], kind="tolerances", must_exist=False)
     if not tol_path.name.startswith("tolerances.") or (tol_path.exists() and not tol_path.is_file()):
         raise protection.ProtectedEvidenceError(f"{qual['tolerances']} is not a protected tolerances.* file")
@@ -1147,6 +1157,10 @@ def evaluate(
         "inputs": {
             "manifest": {"path": rel(manifest_path), "sha256": fixtures.sha256_file(manifest_path)},
             "tolerances": tolerances_input,
+            "fixtures_directory": {
+                "path": rel(fixtures_dir),
+                "source": "manifest" if fixtures_dir_override is None else "--fixtures",
+            },
             "fixtures": [{"path": rel(p), "sha256": fixtures.sha256_file(p)} for p in fx.files],
             "results": run.describe(rel)
             if run is not None
@@ -1226,6 +1240,19 @@ def _cos(value: Any) -> str:
 
 
 def markdown(report: dict[str, Any]) -> str:
+    text = _task_markdown(report)
+    fx = report.get("inputs", {}).get("fixtures_directory")
+    if fx:
+        # Name the fixture set under the header line, so a release-set report says so on its face.
+        head, sep, rest = text.partition("\n\n")
+        head2, sep2, rest2 = rest.partition("\n\n")
+        origin = "manifest" if fx["source"] == "manifest" else "--fixtures option"
+        line = f"Fixtures: `{fx['path']}` (from the {origin})."
+        text = f"{head}{sep}{head2}\n\n{line}{sep2}{rest2}"
+    return text
+
+
+def _task_markdown(report: dict[str, Any]) -> str:
     if report.get("task") == "image-embedding":
         from model_pipeline import evaluate_image
 

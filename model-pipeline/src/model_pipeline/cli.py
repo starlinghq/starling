@@ -71,10 +71,52 @@ def _evaluate_g3(args: argparse.Namespace) -> int:
     return evaluation.exit_code
 
 
+def _evaluate_tokenizer_fixtures(args: argparse.Namespace) -> int:
+    from model_pipeline import evaluate, evaluate_tokenizer_fixtures, protection, results
+
+    try:
+        evaluation = evaluate_tokenizer_fixtures.evaluate(
+            Path(args.manifest),
+            args.tokenizer_fixtures,
+            Path(args.results),
+            repo_root=Path(args.repo_root) if args.repo_root else None,
+            protected_base=args.protected_base,
+        )
+    except (protection.ProtectedEvidenceError, results.ToleranceOverrideError) as exc:
+        print(f"refused: {exc}", file=sys.stderr)
+        return evaluate.EXIT_PROTECTED
+    except (evaluate.EvaluationError, OSError, ValueError) as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return evaluate.EXIT_INPUT
+    json_path, md_path = evaluate_tokenizer_fixtures.write_report(evaluation, Path(args.out))
+    r = evaluation.report
+    print(
+        f"{r['profile']} tokenizer fixtures {r['inputs']['fixtures']['path']} ({r['inputs']['fixtures']['rows']} rows)"
+    )
+    for c in r["checks"]:
+        print(
+            f"  {c['id']}: {c['status']} ({c['mismatches']} of {c['cases']} differ){' binding' if c['binding'] else ''}"
+        )
+    print(f"G1 {r['gates']['G1']['status']}: {r['gates']['G1']['reason']}")
+    print(f"report: {json_path} {md_path}")
+    return evaluation.exit_code
+
+
 def _evaluate(args: argparse.Namespace) -> int:
     from model_pipeline import evaluate, protection, results
 
+    if args.tokenizer_fixtures:
+        if args.g3 or args.fixtures or args.dataset or args.baseline or args.reference_tensors or args.require_gates:
+            print(
+                "error: --tokenizer-fixtures takes only --results, --out, --protected-base and --repo-root",
+                file=sys.stderr,
+            )
+            return evaluate.EXIT_INPUT
+        return _evaluate_tokenizer_fixtures(args)
     if args.g3:
+        if args.fixtures:
+            print("error: --fixtures applies to staged fidelity (G1/G2) only; --g3 takes --dataset", file=sys.stderr)
+            return evaluate.EXIT_INPUT
         return _evaluate_g3(args)
     if args.dataset or args.baseline:
         print("error: --dataset and --baseline apply to --g3 only", file=sys.stderr)
@@ -87,6 +129,7 @@ def _evaluate(args: argparse.Namespace) -> int:
             protected_base=args.protected_base,
             require_gates=tuple(g for g in args.require_gates.split(",") if g),
             reference_tensors=Path(args.reference_tensors) if args.reference_tensors else None,
+            fixtures_dir_override=args.fixtures,
         )
     except (protection.ProtectedEvidenceError, results.ToleranceOverrideError) as exc:
         print(f"refused: {exc}", file=sys.stderr)
@@ -228,6 +271,18 @@ def main(argv: list[str] | None = None) -> int:
         "each array is checked against the protected tensors.json) for the soft-token and token-embedding checks; "
         "task generation: directory with the reference step0/<id>.f32 vectors (checked against the fixture digests) "
         "for the full-vocabulary step-0 bound",
+    )
+    ev.add_argument(
+        "--fixtures",
+        help="protected fixtures directory to evaluate against instead of the manifest's qualification.fixtures, "
+        "for example a P-030 release set (model-pipeline/protected/<family>/release/<set>); repository-relative, "
+        "inside model-pipeline/protected/ (anything else is refused, exit 3). Tolerances still come from the manifest",
+    )
+    ev.add_argument(
+        "--tokenizer-fixtures",
+        help="G1 on one protected tokenizer fixture file (a tokenizer holdout or release set, .jsonl, "
+        "repository-relative inside model-pipeline/protected/) instead of staged fidelity; --results is the output "
+        "directory of Starlings.Fidelity.Tool -- tokenizer",
     )
     ev.add_argument(
         "--g3",
