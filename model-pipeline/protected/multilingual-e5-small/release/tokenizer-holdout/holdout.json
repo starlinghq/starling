@@ -1,0 +1,64 @@
+{
+  "profile": "xlmr-unigram-e5",
+  "tokenizer": "XLM-R SentencePiece unigram, intfloat/multilingual-e5-small@614241f6",
+  "status": "PROPOSED: candidate P-030 holdout, not accepted",
+  "selection": {
+    "script": "model-pipeline/reference/stable/select_tokenizer_holdouts.py",
+    "seed": 20261014,
+    "per_locale": 4,
+    "code": 8,
+    "chat": 16,
+    "counts": {
+      "massive": 208,
+      "humaneval": 8,
+      "oasst1": 16
+    },
+    "rows": 232
+  },
+  "batch_ids": [
+    "massive-am-ET-6600",
+    "massive-ja-JP-5590",
+    "massive-ar-SA-4081",
+    "massive-th-TH-10816",
+    "humaneval-85",
+    "oasst1-f974fa98-8707-49c4-8ac1-fb23e84f5919"
+  ],
+  "sources": [
+    {
+      "source": "AmazonScience/massive (refs/convert/parquet)",
+      "revision": "ed58ac423a2f4121720918bf5301577edce4ffd3",
+      "license": "CC-BY-4.0",
+      "license_evidence": "card front matter `license: cc-by-4.0` and the repository LICENSE file (CC BY 4.0 text)",
+      "files": {
+        "all_1.1/test/0000.parquet": {
+          "url": "https://huggingface.co/datasets/AmazonScience/massive/resolve/ed58ac423a2f4121720918bf5301577edce4ffd3/all_1.1/test/0000.parquet",
+          "sha256": "4b0d0b70ba4103007aeb3c6b2218f691cbc9be38280ed0872d29facc189137d6"
+        }
+      }
+    },
+    {
+      "source": "openai/openai_humaneval",
+      "revision": "7dce6050a7d6d172f3cc5c32aa97f52fa1a2e544",
+      "license": "MIT",
+      "license_evidence": "card front matter `license: mit`",
+      "files": {
+        "openai_humaneval/test-00000-of-00001.parquet": {
+          "url": "https://huggingface.co/datasets/openai/openai_humaneval/resolve/7dce6050a7d6d172f3cc5c32aa97f52fa1a2e544/openai_humaneval/test-00000-of-00001.parquet",
+          "sha256": "2f2871a15fbc95b6c683043359f4ed8e144c5a1c4f24f25f66bc51f598dfcfb6"
+        }
+      }
+    },
+    {
+      "source": "OpenAssistant/oasst1",
+      "revision": "fdf72ae0827c1cda404aff25b6603abec9e3399b",
+      "license": "Apache-2.0",
+      "license_evidence": "card front matter `license: apache-2.0` and the repository LICENSE file",
+      "files": {
+        "data/validation-00000-of-00001-134b8fd0c89408b6.parquet": {
+          "url": "https://huggingface.co/datasets/OpenAssistant/oasst1/resolve/fdf72ae0827c1cda404aff25b6603abec9e3399b/data/validation-00000-of-00001-134b8fd0c89408b6.parquet",
+          "sha256": "24002597bb13a7edd42d92f773762f25e285f72c31a70449393d0ded1dc7b416"
+        }
+      }
+    }
+  ]
+}

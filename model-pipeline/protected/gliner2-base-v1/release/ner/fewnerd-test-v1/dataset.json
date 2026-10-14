@@ -1,0 +1,24 @@
+{
+  "name": "fewnerd-test-v1",
+  "status": "PROPOSED: candidate G3 NER set, not accepted; not gate evidence",
+  "provenance": {
+    "source": "DFKI-SLT/few-nerd",
+    "revision": "205f3e9c9f3577ea2561d43f2f62dc249ab92d5b",
+    "license": "CC-BY-SA-4.0",
+    "license_evidence": "card front matter `license: cc-by-sa-4.0` and card section 'Licensing Information'",
+    "files": {
+      "supervised/test-00000-of-00001.parquet": {
+        "url": "https://huggingface.co/datasets/DFKI-SLT/few-nerd/resolve/205f3e9c9f3577ea2561d43f2f62dc249ab92d5b/supervised/test-00000-of-00001.parquet",
+        "sha256": "b7ad746fcbeb68fcc235ba7142d7c3723ea2dc39930089e947284defecf300c6"
+      }
+    }
+  },
+  "license": "CC-BY-SA-4.0",
+  "selection": {
+    "script": "model-pipeline/reference/stable/select_ner.py",
+    "seed": 20261014,
+    "sentences": 300,
+    "entities": 694,
+    "filters": "5 to 60 tokens; tokens joined by single spaces; coarse type 'other' dropped"
+  }
+}

@@ -1,0 +1,196 @@
+{
+  "dataset_sha256": "ff30dce2656460433d0b4a1d9e5ab1a6bebe813ca1036e2c2f27f55b5441fd9e",
+  "predictions_sha256": "8f9032db9785b32cea081baa05278218ee14b5e442db8f5907bd7b15db9c3ef5",
+  "offset_text_mismatches": 0,
+  "metrics": {
+    "metrics": {
+      "exact.micro.precision": 0.43094405594405594,
+      "exact.macro.precision": 0.3349969928738869,
+      "exact.label.art.precision": 0.16666666666666666,
+      "exact.label.building.precision": 0.25806451612903225,
+      "exact.label.event.precision": 0.11538461538461539,
+      "exact.label.location.precision": 0.5787781350482315,
+      "exact.label.organization.precision": 0.4660633484162896,
+      "exact.label.person.precision": 0.5769230769230769,
+      "exact.label.product.precision": 0.18309859154929578,
+      "exact.micro.recall": 0.7103746397694525,
+      "exact.macro.recall": 0.5891392226743181,
+      "exact.label.art.recall": 0.1,
+      "exact.label.building.recall": 0.5333333333333333,
+      "exact.label.event.recall": 0.625,
+      "exact.label.location.recall": 0.7627118644067796,
+      "exact.label.organization.recall": 0.7054794520547946,
+      "exact.label.person.recall": 0.819672131147541,
+      "exact.label.product.recall": 0.5777777777777777,
+      "exact.micro.f1": 0.5364526659412405,
+      "exact.macro.f1": 0.40605003375393917,
+      "exact.label.art.f1": 0.125,
+      "exact.label.building.f1": 0.34782608695652173,
+      "exact.label.event.f1": 0.19480519480519481,
+      "exact.label.location.f1": 0.6581352833638026,
+      "exact.label.organization.f1": 0.5613079019073569,
+      "exact.label.person.f1": 0.6772009029345372,
+      "exact.label.product.f1": 0.27807486631016043,
+      "partial.micro.precision": 0.493006993006993,
+      "partial.macro.precision": 0.3919735894145191,
+      "partial.label.art.precision": 0.2222222222222222,
+      "partial.label.building.precision": 0.3064516129032258,
+      "partial.label.event.precision": 0.16153846153846155,
+      "partial.label.location.precision": 0.6495176848874598,
+      "partial.label.organization.precision": 0.5248868778280543,
+      "partial.label.person.precision": 0.6538461538461539,
+      "partial.label.product.precision": 0.22535211267605634,
+      "partial.micro.recall": 0.8126801152737753,
+      "partial.macro.recall": 0.7045988968209562,
+      "partial.label.art.recall": 0.13333333333333333,
+      "partial.label.building.recall": 0.6333333333333333,
+      "partial.label.event.recall": 0.875,
+      "partial.label.location.recall": 0.8559322033898306,
+      "partial.label.organization.recall": 0.7945205479452054,
+      "partial.label.person.recall": 0.9289617486338798,
+      "partial.label.product.recall": 0.7111111111111111,
+      "partial.micro.f1": 0.6137105549510338,
+      "partial.macro.f1": 0.4761291989134287,
+      "partial.label.art.f1": 0.16666666666666669,
+      "partial.label.building.f1": 0.4130434782608696,
+      "partial.label.event.f1": 0.2727272727272727,
+      "partial.label.location.f1": 0.7385740402193783,
+      "partial.label.organization.f1": 0.6321525885558583,
+      "partial.label.person.f1": 0.7674943566591422,
+      "partial.label.product.f1": 0.34224598930481287
+    },
+    "per_label": {
+      "exact": {
+        "art": {
+          "tp": 3,
+          "predicted": 18,
+          "gold": 30,
+          "precision": 0.16666666666666666,
+          "recall": 0.1,
+          "f1": 0.125
+        },
+        "building": {
+          "tp": 16,
+          "predicted": 62,
+          "gold": 30,
+          "precision": 0.25806451612903225,
+          "recall": 0.5333333333333333,
+          "f1": 0.34782608695652173
+        },
+        "event": {
+          "tp": 15,
+          "predicted": 130,
+          "gold": 24,
+          "precision": 0.11538461538461539,
+          "recall": 0.625,
+          "f1": 0.19480519480519481
+        },
+        "location": {
+          "tp": 180,
+          "predicted": 311,
+          "gold": 236,
+          "precision": 0.5787781350482315,
+          "recall": 0.7627118644067796,
+          "f1": 0.6581352833638026
+        },
+        "organization": {
+          "tp": 103,
+          "predicted": 221,
+          "gold": 146,
+          "precision": 0.4660633484162896,
+          "recall": 0.7054794520547946,
+          "f1": 0.5613079019073569
+        },
+        "person": {
+          "tp": 150,
+          "predicted": 260,
+          "gold": 183,
+          "precision": 0.5769230769230769,
+          "recall": 0.819672131147541,
+          "f1": 0.6772009029345372
+        },
+        "product": {
+          "tp": 26,
+          "predicted": 142,
+          "gold": 45,
+          "precision": 0.18309859154929578,
+          "recall": 0.5777777777777777,
+          "f1": 0.27807486631016043
+        }
+      },
+      "partial": {
+        "art": {
+          "tp": 4,
+          "predicted": 18,
+          "gold": 30,
+          "precision": 0.2222222222222222,
+          "recall": 0.13333333333333333,
+          "f1": 0.16666666666666669
+        },
+        "building": {
+          "tp": 19,
+          "predicted": 62,
+          "gold": 30,
+          "precision": 0.3064516129032258,
+          "recall": 0.6333333333333333,
+          "f1": 0.4130434782608696
+        },
+        "event": {
+          "tp": 21,
+          "predicted": 130,
+          "gold": 24,
+          "precision": 0.16153846153846155,
+          "recall": 0.875,
+          "f1": 0.2727272727272727
+        },
+        "location": {
+          "tp": 202,
+          "predicted": 311,
+          "gold": 236,
+          "precision": 0.6495176848874598,
+          "recall": 0.8559322033898306,
+          "f1": 0.7385740402193783
+        },
+        "organization": {
+          "tp": 116,
+          "predicted": 221,
+          "gold": 146,
+          "precision": 0.5248868778280543,
+          "recall": 0.7945205479452054,
+          "f1": 0.6321525885558583
+        },
+        "person": {
+          "tp": 170,
+          "predicted": 260,
+          "gold": 183,
+          "precision": 0.6538461538461539,
+          "recall": 0.9289617486338798,
+          "f1": 0.7674943566591422
+        },
+        "product": {
+          "tp": 32,
+          "predicted": 142,
+          "gold": 45,
+          "precision": 0.22535211267605634,
+          "recall": 0.7111111111111111,
+          "f1": 0.34224598930481287
+        }
+      }
+    },
+    "labels_without_gold": []
+  },
+  "extract_seconds": 43.5,
+  "environment": {
+    "python": "3.11.16",
+    "platform": "Linux-7.2.5-3-omarchy-x86_64-with-glibc2.44",
+    "machine": "x86_64",
+    "cpu": "Intel(R) Core(TM) i7-5820K CPU @ 3.30GHz",
+    "cpu_count": 12,
+    "packages": {
+      "torch": "2.14.1+cpu",
+      "transformers": "4.57.6",
+      "tokenizers": "0.22.2",
+      "gliner2": "2.0.0"
+    }
+  }
+}

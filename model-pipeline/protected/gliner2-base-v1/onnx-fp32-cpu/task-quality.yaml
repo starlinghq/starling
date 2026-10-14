@@ -1,0 +1,11 @@
+# G3 quality budget, maintainer-owned (plan 10, M2). Accepted 2026-10-14 from the Stable proposal
+# (docs/plan/stable-proposal.md section 3, PR #20) under the maintainer's in-session delegation
+# (docs/kickoff.md). Set from upstream reference scores before any .NET run on the set.
+profile: gliner2-base-v1/onnx-fp32-cpu
+ner:
+  # primary: wnut17-test-v1; reference (GLiNER2 PyTorch) exact.micro.f1 0.3626, partial 0.4134; margin 0.01
+  dataset_sha256: c4322bab27638a6c2b65a3bb306802d4c5f67851d4aa6a90471b32e90d949a55
+  minimum: {exact.micro.f1: 0.352, partial.micro.f1: 0.403}
+  # alternative (CC-BY-SA): fewnerd-test-v1, reference exact 0.5365, partial 0.6137
+  # dataset_sha256: ff30dce2656460433d0b4a1d9e5ab1a6bebe813ca1036e2c2f27f55b5441fd9e
+  # minimum: {exact.micro.f1: 0.526, partial.micro.f1: 0.603}

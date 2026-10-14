@@ -1,0 +1,19 @@
+{
+  "status": "PROPOSED: candidate P-030 generation release prompts, not accepted",
+  "script": "model-pipeline/reference/stable/select_generation.py",
+  "seed": 20261014,
+  "count": 32,
+  "max_new_tokens": 64,
+  "provenance": {
+    "source": "OpenAssistant/oasst1",
+    "revision": "fdf72ae0827c1cda404aff25b6603abec9e3399b",
+    "license": "Apache-2.0",
+    "license_evidence": "card front matter `license: apache-2.0` and the repository LICENSE file",
+    "files": {
+      "data/validation-00000-of-00001-134b8fd0c89408b6.parquet": {
+        "url": "https://huggingface.co/datasets/OpenAssistant/oasst1/resolve/fdf72ae0827c1cda404aff25b6603abec9e3399b/data/validation-00000-of-00001-134b8fd0c89408b6.parquet",
+        "sha256": "24002597bb13a7edd42d92f773762f25e285f72c31a70449393d0ded1dc7b416"
+      }
+    }
+  }
+}
