@@ -242,8 +242,9 @@ public sealed class ChatClientContractTests
 
     public static TheoryData<string> UnsupportedRequests() =>
     [
-        "tool role", "function call", "function result", "image data", "image uri", "author name", "reasoning in user message",
-        "tools", "tool mode required", "json format", "json schema format", "conversation id", "frequency penalty",
+        "empty tool message", "text in tool message", "function call in user message", "function result in user message",
+        "image data", "image uri", "author name", "reasoning in user message", "hosted tool", "duplicate tool names",
+        "tool mode required", "tool mode require specific", "single tool call only", "json format", "json schema format", "conversation id", "frequency penalty",
         "presence penalty", "reasoning options", "background responses", "continuation token", "raw representation factory",
         "other model id", "unknown additional property", "sampling without seed", "top-k without seed",
         "greedy temperature with top-p", "instructions and a system message",
@@ -575,10 +576,11 @@ public sealed class ChatClientContractTests
         Assert.Equal(client.ModelId, pipeline.GetService<ChatClientMetadata>()!.DefaultModelId);
         Assert.Same(client, pipeline.GetService<Qwen35ChatClient>());
 
-        // Function invocation middleware forwards tools; the model rejects them instead of answering without them.
+        // Function invocation middleware forwards tools; RequireAny is rejected instead of being ignored (the tool loop
+        // itself is in ToolCallingTests).
         var tool = AIFunctionFactory.Create(() => "sunny", "get_weather");
-        await Assert.ThrowsAsync<NotSupportedException>(() => pipeline.GetResponseAsync("Weather?", new ChatOptions { Tools = [tool] }, Ct));
-        await Assert.ThrowsAsync<NotSupportedException>(() => ToListAsync(pipeline.GetStreamingResponseAsync("Weather?", new ChatOptions { Tools = [tool] }, Ct)));
+        await Assert.ThrowsAsync<NotSupportedException>(() => pipeline.GetResponseAsync("Weather?", new ChatOptions { Tools = [tool], ToolMode = ChatToolMode.RequireAny }, Ct));
+        await Assert.ThrowsAsync<NotSupportedException>(() => ToListAsync(pipeline.GetStreamingResponseAsync("Weather?", new ChatOptions { Tools = [tool], ToolMode = ChatToolMode.RequireAny }, Ct)));
 
         // Cancellation surfaces through the pipeline.
         using var cts = new CancellationTokenSource();
@@ -626,7 +628,9 @@ public sealed class ChatClientContractTests
         Assert.Equal(Qwen35CapabilityStatus.Experimental, all["extensions_ai.chat_client"]);
         Assert.Equal(Qwen35CapabilityStatus.Experimental, all["extensions_ai.streaming"]);
         Assert.Equal(Qwen35CapabilityStatus.Experimental, all["extensions_ai.cancellation"]);
-        Assert.Equal(Qwen35CapabilityStatus.Unsupported, all["extensions_ai.tools"]);
+        Assert.Equal(Qwen35CapabilityStatus.Experimental, all["extensions_ai.tools"]);
+        Assert.Equal(Qwen35CapabilityStatus.Experimental, all["extensions_ai.function_invocation"]);
+        Assert.Equal(Qwen35CapabilityStatus.Unsupported, all["extensions_ai.tool_mode.required"]);
         Assert.Equal(Qwen35CapabilityStatus.Unsupported, all["extensions_ai.structured_output"]);
         Assert.Equal(Qwen35CapabilityStatus.Unsupported, all["extensions_ai.multimodal"]);
         Assert.Equal(Qwen35CapabilityStatus.Unsupported, all["extensions_ai.unseeded_sampling"]);
@@ -638,14 +642,18 @@ public sealed class ChatClientContractTests
         ChatMessage[] user = [new(ChatRole.User, "Hi")];
         return name switch
         {
-            "tool role" => ([.. user, new ChatMessage(ChatRole.Tool, "42")], null),
-            "function call" => ([.. user, new ChatMessage(ChatRole.Assistant, [new FunctionCallContent("c1", "f")])], null),
-            "function result" => ([.. user, new ChatMessage(ChatRole.User, [new FunctionResultContent("c1", "r")])], null),
+            "empty tool message" => ([.. user, new ChatMessage(ChatRole.Tool, [])], null),
+            "text in tool message" => ([.. user, new ChatMessage(ChatRole.Tool, "42")], null),
+            "function call in user message" => ([.. user, new ChatMessage(ChatRole.User, [new FunctionCallContent("c1", "f")])], null),
+            "function result in user message" => ([.. user, new ChatMessage(ChatRole.User, [new FunctionResultContent("c1", "r")])], null),
+            "hosted tool" => (user, new ChatOptions { Tools = [new HostedWebSearchTool()] }),
+            "duplicate tool names" => (user, new ChatOptions { Tools = [AIFunctionFactory.Create(() => 1, "f"), AIFunctionFactory.Create(() => 2, "f")] }),
+            "tool mode require specific" => (user, new ChatOptions { Tools = [AIFunctionFactory.Create(() => 1, "f")], ToolMode = ChatToolMode.RequireSpecific("f") }),
+            "single tool call only" => (user, new ChatOptions { Tools = [AIFunctionFactory.Create(() => 1, "f")], AllowMultipleToolCalls = false }),
             "image data" => ([new ChatMessage(ChatRole.User, [new TextContent("What is this?"), new DataContent(new byte[] { 1, 2, 3 }, "image/png")])], null),
             "image uri" => ([new ChatMessage(ChatRole.User, [new UriContent(new Uri("https://example.com/a.png"), "image/png")])], null),
             "author name" => ([new ChatMessage(ChatRole.User, "Hi") { AuthorName = "mark" }], null),
             "reasoning in user message" => ([new ChatMessage(ChatRole.User, [new TextReasoningContent("hmm")])], null),
-            "tools" => (user, new ChatOptions { Tools = [AIFunctionFactory.Create(() => 1, "f")] }),
             "tool mode required" => (user, new ChatOptions { ToolMode = ChatToolMode.RequireAny }),
             "json format" => (user, new ChatOptions { ResponseFormat = ChatResponseFormat.Json }),
             "json schema format" => (user, new ChatOptions { ResponseFormat = ChatResponseFormat.ForJsonSchema(JsonDocument.Parse("""{"type":"object"}""").RootElement) }),

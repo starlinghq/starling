@@ -51,6 +51,10 @@ POSSIBILITY OF SUCH DAMAGE.
 
 The full PyTorch notice (including the Caffe2 contributors) is the `LICENSE` file at that commit.
 
+## Qwen3.5-0.8B chat template and transformers (ported source)
+
+`Starlings.Models.Qwen35` (`Qwen35ChatTemplate.cs`) is a C# port of the `chat_template.jinja` of `Qwen/Qwen3.5-0.8B` at commit `2fc06364715b967f1860aea9cf38778875588b17`, Copyright 2026 Alibaba Cloud, licensed under the Apache License, Version 2.0. The tool-calling instructions are reproduced verbatim. `Qwen35ToolCallParser.cs` ports the tool-call argument casting of transformers (`src/transformers/utils/chat_parsing/response_parser.py`, `_coerce` and `_schema_types`, commit `a906d3c4b65095f2308b6a6a193e934d03b8eb5d`, tag v5.18.0), Copyright 2026 The HuggingFace Team, licensed under the Apache License, Version 2.0. Both files carry a modification notice. The Apache License 2.0 text is at https://www.apache.org/licenses/LICENSE-2.0.
+
 ## transformers and Pillow (restated arithmetic)
 
 `EmbeddingGemma2ImageProcessor.GetTargetSize` and the patch order restate `get_aspect_ratio_preserving_size` and `convert_image_to_patches` of transformers (Apache-2.0, commit `c4c4605f961877852b89b97478536bb3a26b6fd1`, tag v5.19.0). `EmbeddingGemma2ImageDecoder.ApplyOrientation` follows the orientation table of Pillow's `ImageOps.exif_transpose` (MIT-CMU, commit `bb1d8e8ab8d29048624d96e3ee53cecf7c13d13d`, tag 12.3.0). No source text was copied.

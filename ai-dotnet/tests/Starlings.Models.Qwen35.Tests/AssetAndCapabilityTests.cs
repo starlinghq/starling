@@ -96,7 +96,11 @@ public sealed class AssetAndCapabilityTests
         }
 
         Assert.All(all.Values, v => Assert.True(Enum.IsDefined(v)));
-        Assert.Equal(Qwen35CapabilityStatus.Unsupported, all["tool_calling"]);
+        Assert.Equal(Qwen35CapabilityStatus.Experimental, all["tool_calling"]);
+        Assert.Equal(Qwen35CapabilityStatus.Experimental, all["template.tools"]);
+        Assert.Equal(Qwen35CapabilityStatus.Experimental, all["template.tool_messages"]);
+        Assert.Equal(Qwen35CapabilityStatus.Unsupported, all["extensions_ai.tool_mode.required"]);
+        Assert.Equal(Qwen35CapabilityStatus.Unsupported, all["structured_output"]);
         Assert.Equal(Qwen35CapabilityStatus.Unsupported, all["batch"]);
         Assert.Equal(Qwen35CapabilityStatus.Unsupported, all["cancellation.inside_a_step"]);
     }

@@ -125,7 +125,7 @@ public sealed class Qwen35ChatModel : IDisposable
                 GenAIVersion = GenAIRuntimeInfo.ManagedVersion ?? $"unknown (qualified with {GenAIRuntimeInfo.PinnedVersion})",
                 GenAINativePackage = GenAIRuntimeInfo.NativePackage,
                 Tokenizer = $"Starlings.Tokenizers profile {Qwen35ModelAssets.TokenizerProfile}, tokenizer.json {Qwen35ModelAssets.TokenizerSha256}",
-                ChatTemplate = $"owned C# renderer of chat_template.jinja {Qwen35ChatTemplate.TemplateSha256} (text subset)",
+                ChatTemplate = $"owned C# renderer of chat_template.jinja {Qwen35ChatTemplate.TemplateSha256} (text and tool-calling subset)",
                 ModelDirectory = backend.ModelDirectory,
                 ConfigOverlays = backend.AppliedOverlays,
                 ProviderOptions = backend.ProviderOptions,
@@ -144,18 +144,29 @@ public sealed class Qwen35ChatModel : IDisposable
 
     /// <summary>Renders <paramref name="messages"/> with the chat template and tokenizes the result with the owned tokenizer.</summary>
     /// <exception cref="Qwen35TemplateException">The conversation is invalid for the template.</exception>
-    public Qwen35Prompt CreatePrompt(IReadOnlyList<Qwen35Message> messages, bool enableThinking = false)
+    public Qwen35Prompt CreatePrompt(IReadOnlyList<Qwen35Message> messages, bool enableThinking = false) => CreatePrompt(messages, tools: null, enableThinking);
+
+    /// <summary>
+    /// Renders <paramref name="messages"/> and the tool definitions <paramref name="tools"/> with the chat template and
+    /// tokenizes the result with the owned tokenizer.
+    /// </summary>
+    /// <exception cref="Qwen35TemplateException">The conversation or tool data is invalid for the template.</exception>
+    public Qwen35Prompt CreatePrompt(IReadOnlyList<Qwen35Message> messages, IReadOnlyList<Qwen35Tool>? tools, bool enableThinking = false)
     {
-        string text = Qwen35ChatTemplate.Render(messages, enableThinking);
+        string text = Qwen35ChatTemplate.Render(messages, tools, enableThinking);
         return new Qwen35Prompt(text, Tokenizer.Encode(text, addSpecialTokens: false).Ids);
     }
 
-    /// <summary>Generates the assistant reply to <paramref name="messages"/>.</summary>
+    /// <summary>
+    /// Generates the assistant reply to <paramref name="messages"/> (with <see cref="Qwen35ChatOptions.Tools"/> rendered
+    /// into the prompt). The result's text is the raw completion; <see cref="Qwen35ToolCallParser.Parse(string, Qwen35ChatOptions)"/>
+    /// splits it into text and tool calls.
+    /// </summary>
     /// <exception cref="OperationCanceledException">Cancelled before the prefill or between decode steps.</exception>
     public GenerationResult Generate(IReadOnlyList<Qwen35Message> messages, Qwen35ChatOptions? options = null, CancellationToken cancellationToken = default)
     {
         options ??= new Qwen35ChatOptions();
-        return Generate(CreatePrompt(messages, options.EnableThinking), options, cancellationToken);
+        return Generate(CreatePrompt(messages, options.Tools, options.EnableThinking), options, cancellationToken);
     }
 
     /// <summary>Generates from a prepared prompt (<see cref="Qwen35ChatOptions.EnableThinking"/> is a property of the prompt and is ignored here).</summary>
@@ -172,7 +183,7 @@ public sealed class Qwen35ChatModel : IDisposable
     public IEnumerable<GenerationUpdate> GenerateStreaming(IReadOnlyList<Qwen35Message> messages, Qwen35ChatOptions? options = null, CancellationToken cancellationToken = default)
     {
         options ??= new Qwen35ChatOptions();
-        return GenerateStreaming(CreatePrompt(messages, options.EnableThinking), options, cancellationToken);
+        return GenerateStreaming(CreatePrompt(messages, options.Tools, options.EnableThinking), options, cancellationToken);
     }
 
     /// <summary>Streams from a prepared prompt.</summary>

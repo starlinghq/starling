@@ -197,7 +197,9 @@ capabilities:
   cancellation_inside_a_step: unsupported
   chunked_prefill: experimental
   conversation_state_reuse: unsupported
-  tool_calling: unsupported
+  # tool_calling: template, parser and IChatClient mapping are provider-independent and tested (corpus and scripted
+  # sequences; real-model run on fp32x CPU only, not on CUDA). docs/evidence/qwen35-tool-calling/README.md
+  tool_calling: experimental
   reasoning_split: unsupported
   structured_output: unsupported
   vision: unsupported

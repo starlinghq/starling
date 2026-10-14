@@ -172,7 +172,7 @@ One table per family, one column per profile. Rows are every capability any prof
 | stop_tokens | experimental | experimental | experimental |
 | structured_output | unsupported | unsupported | unsupported |
 | tokenizer_owned | experimental | experimental | experimental |
-| tool_calling | unsupported | unsupported | unsupported |
+| tool_calling | experimental | experimental | experimental |
 | usage | experimental | experimental | experimental |
 | vision | unsupported | unsupported | unsupported |
 

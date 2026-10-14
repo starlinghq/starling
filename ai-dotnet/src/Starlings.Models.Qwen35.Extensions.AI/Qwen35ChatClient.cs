@@ -1,4 +1,5 @@
 using System.Runtime.CompilerServices;
+using System.Text.Json;
 using System.Threading.Channels;
 using Starlings.Generation.OnnxGenAI;
 using Microsoft.Extensions.AI;
@@ -13,9 +14,12 @@ namespace Starlings.Models.Qwen35.Extensions.AI;
 /// <para>
 /// <b>Messages.</b> <see cref="ChatRole.System"/> (first message only, as the template requires), <see cref="ChatRole.User"/>
 /// and <see cref="ChatRole.Assistant"/> messages of <see cref="TextContent"/> (several are concatenated); an assistant
-/// message may also carry <see cref="TextReasoningContent"/>, rendered as that turn's reasoning. Tool messages, function
-/// calls and results, images and other content, and author names fail with <see cref="NotSupportedException"/>.
-/// <see cref="ChatOptions.Instructions"/> becomes the system message when the conversation has none.
+/// message may also carry <see cref="TextReasoningContent"/>, rendered as that turn's reasoning, and
+/// <see cref="FunctionCallContent"/>, rendered as the template's tool calls after the text. <see cref="ChatRole.Tool"/>
+/// messages carry <see cref="FunctionResultContent"/> only, each rendered as one template tool message (a string result
+/// as is, any other as compact JSON). Images and other content, and author names fail with
+/// <see cref="NotSupportedException"/>. <see cref="ChatOptions.Instructions"/> becomes the system message when the
+/// conversation has none.
 /// </para>
 /// <para>
 /// <b>Options.</b> <see cref="ChatOptions.MaxOutputTokens"/> maps to <see cref="Qwen35ChatOptions.MaxNewTokens"/> and
@@ -24,15 +28,24 @@ namespace Starlings.Models.Qwen35.Extensions.AI;
 /// <see cref="ChatOptions.TopP"/> or <see cref="ChatOptions.TopK"/> is set; sampling then requires
 /// <see cref="ChatOptions.Seed"/> (or a seeded default) and fails with <see cref="NotSupportedException"/> without one.
 /// <c>Temperature = 0</c> selects greedy decoding. <see cref="ChatOptions.AdditionalProperties"/> may contain only
-/// <see cref="EnableThinkingPropertyName"/>. Tools, a non-text <see cref="ChatOptions.ResponseFormat"/>,
+/// <see cref="EnableThinkingPropertyName"/>. <see cref="ChatOptions.Tools"/> (each <see cref="AIFunctionDeclaration"/>, with
+/// its JSON schema) are rendered into the template's tools block when <see cref="ChatOptions.ToolMode"/> is
+/// <see cref="ChatToolMode.Auto"/> or unset; <see cref="ChatToolMode.None"/> renders no tools. Other tool types,
+/// <see cref="ChatToolMode.RequireAny"/>, a required function, <c>AllowMultipleToolCalls = false</c>, a non-text
+/// <see cref="ChatOptions.ResponseFormat"/>,
 /// <see cref="ChatOptions.ConversationId"/>, <see cref="ChatOptions.Reasoning"/>, frequency and presence penalties, background
 /// responses, another <see cref="ChatOptions.ModelId"/> and a <see cref="ChatOptions.RawRepresentationFactory"/> fail with
 /// <see cref="NotSupportedException"/> rather than being ignored.
 /// </para>
 /// <para>
 /// <b>Responses.</b> One assistant message with the completion text (when thinking is enabled, the reasoning,
-/// <c>&lt;/think&gt;</c> and the answer, unsplit). <see cref="ChatResponse.FinishReason"/>: <see cref="ChatFinishReason.Stop"/>
-/// for a stop token or a stop sequence, <see cref="ChatFinishReason.Length"/> at the token limit.
+/// <c>&lt;/think&gt;</c> and the answer, unsplit). When tools were rendered, <see cref="Qwen35ToolCallParser"/> splits the
+/// completion: each well-formed tool-call block becomes a <see cref="FunctionCallContent"/> (a new call id, the name,
+/// <see cref="System.Text.Json.JsonElement"/> arguments cast with the tool's schema, the <see cref="Qwen35ToolCall"/> as
+/// raw representation); a malformed or unfinished block stays text, verbatim, and never throws.
+/// <see cref="ChatResponse.FinishReason"/>: <see cref="ChatFinishReason.ToolCalls"/> when a call was parsed and generation
+/// stopped, else <see cref="ChatFinishReason.Stop"/> for a stop token or a stop sequence, <see cref="ChatFinishReason.Length"/>
+/// at the token limit.
 /// <see cref="ChatResponse.Usage"/>: input tokens are the prompt ids fed to the model, output tokens the completion ids
 /// returned (the stop token excluded; tokens of a matched stop sequence included). <see cref="ChatResponse.RawRepresentation"/>
 /// is the <see cref="GenerationResult"/>.
@@ -43,6 +56,8 @@ namespace Starlings.Models.Qwen35.Extensions.AI;
 /// carries any remaining text, the finish reason and a <see cref="UsageContent"/> equal to the non-streamed usage. All
 /// updates of a response share its <see cref="ChatResponseUpdate.ResponseId"/>, <see cref="ChatResponseUpdate.MessageId"/>
 /// and <see cref="ChatResponseUpdate.CreatedAt"/>; their text concatenates to the non-streamed text for the same request.
+/// With tools, text that could start a tool call is held back, each <see cref="FunctionCallContent"/> is emitted once its
+/// block is complete, updates with nothing to report are skipped, and the updates reassemble to the non-streamed contents.
 /// </para>
 /// <para>
 /// <b>Execution and threads.</b> Each request runs on its own dedicated background thread (not a thread-pool thread):
@@ -143,7 +158,21 @@ public sealed class Qwen35ChatClient : IChatClient
         cancellationToken.ThrowIfCancellationRequested();
         GenerationResult result = await RunOnDedicatedThread(() => _model.Generate(conversation, chatOptions, cancellationToken)).ConfigureAwait(false);
         string id = NewId();
-        var message = new ChatMessage(ChatRole.Assistant, result.Text.Length > 0 ? [new TextContent(result.Text)] : [])
+        var contents = new List<AIContent>(1);
+        bool toolCalls = false;
+        if (chatOptions.Tools.Count > 0)
+        {
+            foreach (Qwen35OutputPart part in Qwen35ToolCallParser.Parse(result.Text, chatOptions).Parts)
+            {
+                toolCalls |= AddPart(contents, part);
+            }
+        }
+        else if (result.Text.Length > 0)
+        {
+            contents.Add(new TextContent(result.Text));
+        }
+
+        var message = new ChatMessage(ChatRole.Assistant, contents)
         {
             MessageId = id,
         };
@@ -152,7 +181,7 @@ public sealed class Qwen35ChatClient : IChatClient
             ResponseId = id,
             ModelId = ModelId,
             CreatedAt = DateTimeOffset.UtcNow,
-            FinishReason = MapFinishReason(result.FinishReason),
+            FinishReason = MapFinishReason(result.FinishReason, toolCalls),
             Usage = MapUsage(result.Usage),
             RawRepresentation = result,
         };
@@ -205,6 +234,8 @@ public sealed class Qwen35ChatClient : IChatClient
         string id = NewId();
         var createdAt = DateTimeOffset.UtcNow;
         bool finished = false;
+        var parser = chatOptions.Tools.Count > 0 ? new Qwen35ToolCallParser(chatOptions.Tools, chatOptions.EnableThinking) : null;
+        bool toolCalls = false;
         try
         {
             while (await channel.Reader.WaitToReadAsync(CancellationToken.None).ConfigureAwait(false))
@@ -212,9 +243,32 @@ public sealed class Qwen35ChatClient : IChatClient
                 while (channel.Reader.TryRead(out GenerationUpdate? update))
                 {
                     var contents = new List<AIContent>(2);
-                    if (update.Text.Length > 0)
+                    if (parser is null)
                     {
-                        contents.Add(new TextContent(update.Text));
+                        if (update.Text.Length > 0)
+                        {
+                            contents.Add(new TextContent(update.Text));
+                        }
+                    }
+                    else
+                    {
+                        foreach (Qwen35OutputPart part in parser.Append(update.Text))
+                        {
+                            toolCalls |= AddPart(contents, part);
+                        }
+
+                        if (update.Result is not null)
+                        {
+                            foreach (Qwen35OutputPart part in parser.Complete())
+                            {
+                                toolCalls |= AddPart(contents, part);
+                            }
+                        }
+                        else if (contents.Count == 0)
+                        {
+                            // Text held back as a possible tool-call start, or an unfinished tool-call block.
+                            continue;
+                        }
                     }
 
                     var chatUpdate = new ChatResponseUpdate(ChatRole.Assistant, contents)
@@ -227,7 +281,7 @@ public sealed class Qwen35ChatClient : IChatClient
                     };
                     if (update.Result is { } result)
                     {
-                        chatUpdate.FinishReason = MapFinishReason(result.FinishReason);
+                        chatUpdate.FinishReason = MapFinishReason(result.FinishReason, toolCalls);
                         contents.Add(new UsageContent(MapUsage(result.Usage)));
                     }
 
@@ -295,9 +349,9 @@ public sealed class Qwen35ChatClient : IChatClient
         }
     }
 
-    internal static ChatFinishReason MapFinishReason(GenerationFinishReason reason) => reason switch
+    internal static ChatFinishReason MapFinishReason(GenerationFinishReason reason, bool toolCalls = false) => reason switch
     {
-        GenerationFinishReason.Stop or GenerationFinishReason.StopSequence => ChatFinishReason.Stop,
+        GenerationFinishReason.Stop or GenerationFinishReason.StopSequence => toolCalls ? ChatFinishReason.ToolCalls : ChatFinishReason.Stop,
         GenerationFinishReason.Length => ChatFinishReason.Length,
         _ => throw new ArgumentOutOfRangeException(nameof(reason), reason, "Unknown finish reason."),
     };
@@ -310,6 +364,28 @@ public sealed class Qwen35ChatClient : IChatClient
     };
 
     private static string NewId() => "qwen35-" + Guid.NewGuid().ToString("N");
+
+    // Adds a parsed part as TextContent or FunctionCallContent; true for a tool call.
+    private static bool AddPart(List<AIContent> contents, Qwen35OutputPart part)
+    {
+        if (part.ToolCall is not { } call)
+        {
+            contents.Add(new TextContent(part.Text));
+            return false;
+        }
+
+        var arguments = new Dictionary<string, object?>(StringComparer.Ordinal);
+        if (call.Arguments.ValueKind == JsonValueKind.Object)
+        {
+            foreach (var property in call.Arguments.EnumerateObject())
+            {
+                arguments[property.Name] = property.Value.Clone();
+            }
+        }
+
+        contents.Add(new FunctionCallContent("call_" + Guid.NewGuid().ToString("N"), call.Name, arguments) { RawRepresentation = call });
+        return true;
+    }
 
     // Runs blocking native work on a new background thread and completes the task with its result, its failure, or as
     // cancelled for an OperationCanceledException.

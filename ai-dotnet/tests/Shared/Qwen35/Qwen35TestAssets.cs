@@ -167,8 +167,14 @@ internal sealed record GenerationCase(
             r.GetProperty("finish_reason").GetString()!,
             r.GetProperty("step_margin").EnumerateArray().Select(x => (float)x.GetDouble()).ToArray(),
             r.GetProperty("step_logprob").EnumerateArray().Select(x => (float)x.GetDouble()).ToArray(),
-            r.GetProperty("step0_top").EnumerateArray().Select(p => (p[0].GetInt32(), p[1].GetDouble())).ToArray());
+            r.GetProperty("step0_top").EnumerateArray().Select(p => (p[0].GetInt32(), p[1].GetDouble())).ToArray())
+        {
+            Tools = tools ? [.. t.EnumerateArray().Select(Qwen35Tool.FromJson)] : [],
+        };
     }
+
+    /// <summary>The tool definitions of the case (JSON as given), or none.</summary>
+    public IReadOnlyList<Qwen35Tool> Tools { get; init; } = [];
 
     /// <summary>Reference completion ids without the stop token.</summary>
     public int[] ContentIds => FinishReason == "eos" ? OutputIds[..^1] : OutputIds;

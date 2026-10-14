@@ -18,14 +18,7 @@ public sealed class TemplateTests
     public void RenderingEqualsTheReferenceOrIsRejected(string id)
     {
         var c = Case(id);
-        if (c.HasTools)
-        {
-            // Tool definitions are not part of the supported subset (the API cannot express them).
-            Assert.Equal("tools", c.Id);
-            return;
-        }
-
-        Assert.Equal(c.Rendered, Qwen35ChatTemplate.Render(c.Messages!, c.EnableThinking));
+        Assert.Equal(c.Rendered, Qwen35ChatTemplate.Render(c.Messages!, c.Tools, c.EnableThinking));
     }
 
     [Theory]
@@ -40,11 +33,12 @@ public sealed class TemplateTests
     }
 
     [Fact]
-    public void SupportedSubsetCoversAllButTheToolsPrompt()
+    public void SupportedSubsetCoversEveryPromptIncludingTheToolsPrompt()
     {
         var cases = Qwen35TestAssets.LoadCases();
         Assert.Equal(22, cases.Count);
         Assert.Equal(["tools"], cases.Where(c => c.HasTools).Select(c => c.Id));
+        Assert.Single(Case("tools").Tools);
         Assert.Contains(cases, c => c.EnableThinking);
     }
 

@@ -21,7 +21,7 @@ internal static class ChatClientModelChecks
             m.Content)),
     ];
 
-    /// <summary>The text prompts of the fixture (the tools prompt cannot be expressed: tools are unsupported).</summary>
+    /// <summary>The text prompts of the fixture (the tools prompt has its own test: its completion is a tool call).</summary>
     public static IReadOnlyList<GenerationCase> TextCases() => [.. Qwen35TestAssets.LoadCases().Where(c => !c.HasTools)];
 
     /// <summary>

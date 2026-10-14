@@ -195,7 +195,11 @@ capabilities:
   cancellation_inside_a_step: unsupported
   chunked_prefill: experimental
   conversation_state_reuse: unsupported
-  tool_calling: unsupported
+  # tool_calling: the template's tools block, tool calls and tool messages equal the upstream rendering on the 41
+  # tool cases of the proposed P-029 corpus (40 renderings with prompt ids, 1 error); parser and IChatClient mapping tested with
+  # scripted sequences; on this profile the prompts-v1 tools prompt gives the reference get_weather call and the
+  # UseFunctionInvocation loop completed on one prompt (greedy). docs/evidence/qwen35-tool-calling/README.md
+  tool_calling: experimental
   reasoning_split: unsupported
   structured_output: unsupported
   vision: unsupported

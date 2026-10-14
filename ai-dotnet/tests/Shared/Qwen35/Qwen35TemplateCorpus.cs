@@ -64,18 +64,16 @@ internal sealed record TemplateCorpusCase(
     /// <summary>The template's enable_thinking: only a JSON true counts (the template tests <c>is true</c>).</summary>
     public bool EnableThinking => Kwargs.TryGetProperty("enable_thinking", out var e) && e.ValueKind == JsonValueKind.True;
 
+    /// <summary>The case's tool definitions for the typed API (JSON as given), or an empty list.</summary>
+    public Qwen35Tool[] TypedTools => HasTools ? [.. Tools.EnumerateArray().Select(Qwen35Tool.FromJson)] : [];
+
     /// <summary>
     /// The case as the typed API's input, or null with the reason when <see cref="Qwen35Message"/> and
-    /// <see cref="Qwen35ChatTemplate.Render"/> have no way to express it (the explicit rejection of tools, tool messages,
-    /// tool calls, non-string content and template arguments other than enable_thinking).
+    /// <see cref="Qwen35ChatTemplate.Render(IReadOnlyList{Qwen35Message}, IReadOnlyList{Qwen35Tool}, bool)"/> have no way
+    /// to express it (the explicit rejection of non-string content and template arguments other than enable_thinking).
     /// </summary>
     public (Qwen35Message[]? Messages, string Reason) ToTypedMessages()
     {
-        if (HasTools)
-        {
-            return (null, "tool definitions: no tools parameter");
-        }
-
         if (!AddGenerationPrompt)
         {
             return (null, "add_generation_prompt=False: Render always appends the generation prompt");
@@ -92,31 +90,39 @@ internal sealed record TemplateCorpusCase(
         var list = new List<Qwen35Message>();
         foreach (var m in Messages.EnumerateArray())
         {
-            if (m.TryGetProperty("tool_calls", out _))
-            {
-                return (null, "assistant tool calls: Qwen35Message has no tool calls");
-            }
-
             Qwen35Role? role = m.GetProperty("role").GetString() switch
             {
                 "system" => Qwen35Role.System,
                 "user" => Qwen35Role.User,
                 "assistant" => Qwen35Role.Assistant,
+                "tool" => Qwen35Role.Tool,
                 _ => null,
             };
             if (role is null)
             {
-                return (null, $"role {m.GetProperty("role").GetString()}: Qwen35Role has system, user and assistant only");
+                return (null, $"role {m.GetProperty("role").GetString()}: Qwen35Role has system, user, assistant and tool only");
             }
 
+            // A null content renders as the empty string in the template.
             var content = m.GetProperty("content");
-            if (content.ValueKind != JsonValueKind.String)
+            if (content.ValueKind is not (JsonValueKind.String or JsonValueKind.Null))
             {
                 return (null, "non-string content (parts, images, video): Qwen35Message content is a string");
             }
 
+            List<Qwen35ToolCall>? calls = null;
+            if (m.TryGetProperty("tool_calls", out var toolCalls))
+            {
+                calls = [];
+                foreach (var call in toolCalls.EnumerateArray())
+                {
+                    var f = call.TryGetProperty("function", out var inner) ? inner : call;
+                    calls.Add(new Qwen35ToolCall(f.GetProperty("name").GetString()!, f.TryGetProperty("arguments", out var args) ? args.Clone() : default));
+                }
+            }
+
             string? reasoning = m.TryGetProperty("reasoning_content", out var rc) && rc.ValueKind == JsonValueKind.String ? rc.GetString() : null;
-            list.Add(new Qwen35Message(role.Value, content.GetString()!, reasoning));
+            list.Add(new Qwen35Message(role.Value, content.GetString() ?? string.Empty, reasoning) { ToolCalls = calls });
         }
 
         return ([.. list], string.Empty);
