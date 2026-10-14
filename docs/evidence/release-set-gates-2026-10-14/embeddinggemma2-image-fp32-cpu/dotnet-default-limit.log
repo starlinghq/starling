@@ -1,0 +1,5 @@
+   at EmbeddingGemma2ImageDump.BuildInput(Row r, Func`2 decode) in /home/mark/Projects/starling/.claude/worktrees/agent-a9fab4375c7a1f4b1/ai-dotnet/tools/Starlings.Fidelity.Tool/EmbeddingGemma2ImageDump.cs:line 214
+   at EmbeddingGemma2ImageDump.Run(String[] args) in /home/mark/Projects/starling/.claude/worktrees/agent-a9fab4375c7a1f4b1/ai-dotnet/tools/Starlings.Fidelity.Tool/EmbeddingGemma2ImageDump.cs:line 144
+   at Program.<Main>$(String[] args) in /home/mark/Projects/starling/.claude/worktrees/agent-a9fab4375c7a1f4b1/ai-dotnet/tools/Starlings.Fidelity.Tool/Program.cs:line 70
+/home/mark/.cache/starling-release-gates/scripts/env.sh: line 19: 1656007 Aborted                    (core dumped) "$@"
+wall_seconds=105190e-3 exit=134
