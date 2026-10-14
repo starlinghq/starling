@@ -8,10 +8,12 @@
 
 Metrics are computed from a dataset and the candidate's outputs; the comparison with a quality budget uses only the
 maintainer-owned budget file `task-quality.yaml` in the profile's protected directory (the directory of the manifest's
-`qualification.tolerances`). That file binds a budget to one dataset by digest. Without the file, or without an entry
-for the task, or when the dataset is not the one it names, the report says "no budget: not a gate result" and G3
-is `not-run` (exit 4). Choosing the G3 datasets and budgets is a maintainer decision (production-readiness M1/M2);
-this module only defines formats and metrics. Dataset formats: `model-pipeline/README.md`, "Task quality (G3)".
+`qualification.tolerances`). That file binds a budget to one dataset by digest: of the data files alone, or of the
+data files followed by `dataset.json` when the dataset has one (both forms pin the same data bytes). Without the
+file, or without an entry for the task, or when the dataset is not the one it names, the report says "no budget: not
+a gate result" and G3 is `not-run` (exit 4). Choosing the G3 datasets and budgets is a maintainer decision
+(production-readiness M1/M2); this module only defines formats and metrics. Dataset formats:
+`model-pipeline/README.md`, "Task quality (G3)".
 
 Budget file (protected; every value is a minimum, metric names as in the report):
 
@@ -564,6 +566,7 @@ def evaluate(
     if task == "retrieval":
         data = load_retrieval_set(dataset)
         digest = dataset_digest(data.files[:3])
+        data_files = 3
         emb = load_embeddings(results_path, data)
         ranking = rank(emb)
         computed = retrieval_metrics(ranking, data.qrels)
@@ -587,6 +590,7 @@ def evaluate(
             raise EvaluationError("--baseline applies to the retrieval and generation tasks only")
         data = load_ner_set(dataset)
         digest = dataset_digest(data.files[:1])
+        data_files = 1
         computed = ner_metrics(data, load_predictions(results_path, data))
         metrics = computed["metrics"]
         extra["per_label"] = computed["per_label"]
@@ -602,6 +606,7 @@ def evaluate(
     elif task == "generation":
         data = load_generation_set(dataset)
         digest = dataset_digest(data.files[:1])
+        data_files = 1
         results_path = generation_results_file(results_path)
         computed = generation_metrics(data, load_generations(results_path, data))
         metrics = dict(computed["metrics"])
@@ -623,8 +628,13 @@ def evaluate(
     else:  # pragma: no cover - argparse restricts choices
         raise EvaluationError(f"unknown G3 task {task!r}")
 
+    # The budget may name the digest of the data files alone (the documented form) or of the data files followed by
+    # dataset.json (the form the accepted P-030 budgets were computed in). Both pin the same data bytes; the second
+    # also pins the metadata.
+    digest_with_metadata = dataset_digest(data.files) if len(data.files) > data_files else None
     budget_rel, entry, verification, no_budget = _budget(root, man, task, protected_base)
     checks = []
+    matched_form = None
     gate_status, reason = "not-run", no_budget
     if entry is not None:
         for name, minimum in sorted(entry["minimum"].items()):
@@ -659,7 +669,14 @@ def evaluate(
                         "detail": "",
                     }
                 )
-        if entry["dataset_sha256"] != digest:
+        matched_form = (
+            "data"
+            if entry["dataset_sha256"] == digest
+            else "data+metadata"
+            if digest_with_metadata is not None and entry["dataset_sha256"] == digest_with_metadata
+            else None
+        )
+        if matched_form is None:
             gate_status = "not-run"
             reason = (
                 f"{NO_BUDGET} (the dataset digest {digest[:16]} is not the budgeted set {entry['dataset_sha256'][:16]})"
@@ -698,13 +715,19 @@ def evaluate(
         },
         "dataset": {
             "sha256": digest,
+            "sha256_with_metadata": digest_with_metadata,
             "files": [{"path": rel(f), "sha256": fixtures.sha256_file(f)} for f in files],
             "metadata": meta,
             "size": sizes,
         },
         "results": {"path": rel(results_path), "sha256": fixtures.sha256_file(results_path)},
         "baseline": None if baseline is None else {"path": rel(baseline), "sha256": fixtures.sha256_file(baseline)},
-        "budget": {"path": budget_rel, "entry": entry, "status": "absent" if entry is None else "present"},
+        "budget": {
+            "path": budget_rel,
+            "entry": entry,
+            "status": "absent" if entry is None else "present",
+            "matched_form": matched_form,
+        },
         "protected_evidence": verification.as_dict(),
         "metrics": metrics,
         "budget_checks": checks,
@@ -742,7 +765,17 @@ def markdown(report: dict[str, Any]) -> str:
         + (f" ({meta.get('name')}, status {meta.get('status')})" if meta else "")
         + ": "
         + ", ".join(f"{k} {v}" for k, v in report["dataset"]["size"].items())
-        + ".",
+        + "."
+        + (
+            f" With `dataset.json`: `{report['dataset']['sha256_with_metadata']}`."
+            if report["dataset"].get("sha256_with_metadata")
+            else ""
+        )
+        + (
+            f" The budget names the {report['budget']['matched_form']} digest."
+            if report["budget"].get("matched_form")
+            else ""
+        ),
         "",
         "| Metric | Value |",
         "| --- | ---: |",
