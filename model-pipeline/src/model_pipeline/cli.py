@@ -40,9 +40,45 @@ class _RefuseOverride(argparse.Action):
         parser.exit(EXIT_PROTECTED)
 
 
+def _evaluate_g3(args: argparse.Namespace) -> int:
+    from model_pipeline import evaluate, evaluate_task_quality, protection, results
+
+    if not args.dataset:
+        print("error: --g3 needs --dataset", file=sys.stderr)
+        return evaluate.EXIT_INPUT
+    try:
+        evaluation = evaluate_task_quality.evaluate(
+            Path(args.manifest),
+            args.g3,
+            Path(args.dataset),
+            Path(args.results),
+            baseline=Path(args.baseline) if args.baseline else None,
+            repo_root=Path(args.repo_root) if args.repo_root else None,
+            protected_base=args.protected_base,
+        )
+    except (protection.ProtectedEvidenceError, results.ToleranceOverrideError) as exc:
+        print(f"refused: {exc}", file=sys.stderr)
+        return evaluate.EXIT_PROTECTED
+    except (evaluate.EvaluationError, OSError, ValueError) as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return evaluate.EXIT_INPUT
+    json_path, md_path = evaluate_task_quality.write_report(evaluation, Path(args.out))
+    r = evaluation.report
+    shown = {k: v for k, v in r["metrics"].items() if ".label." not in k}
+    print(f"{r['profile']} {r['task']}: " + ", ".join(f"{k} {v:.4f}" for k, v in shown.items()))
+    print(f"G3 {r['gates']['G3']['status']}: {r['gates']['G3']['reason']}")
+    print(f"report: {json_path} {md_path}")
+    return evaluation.exit_code
+
+
 def _evaluate(args: argparse.Namespace) -> int:
     from model_pipeline import evaluate, protection, results
 
+    if args.g3:
+        return _evaluate_g3(args)
+    if args.dataset or args.baseline:
+        print("error: --dataset and --baseline apply to --g3 only", file=sys.stderr)
+        return evaluate.EXIT_INPUT
     try:
         evaluation = evaluate.evaluate(
             Path(args.manifest),
@@ -152,7 +188,12 @@ def main(argv: list[str] | None = None) -> int:
         "did not pass, or the profile has no protected tolerances file yet (measured, never qualified).",
     )
     ev.add_argument("manifest", help="registry manifest.yaml of the profile")
-    ev.add_argument("--results", required=True, help="directory with *.results.json files, one per stage")
+    ev.add_argument(
+        "--results",
+        required=True,
+        help="directory with *.results.json files, one per stage (task generation: the output directory of "
+        "Starlings.Qwen35.Fidelity; --g3: the candidate's embeddings or predictions JSONL file)",
+    )
     ev.add_argument("--out", required=True, help="directory for report.json and report.md")
     ev.add_argument(
         "--protected-base",
@@ -165,7 +206,20 @@ def main(argv: list[str] | None = None) -> int:
     ev.add_argument(
         "--reference-tensors",
         help="tasks image-embedding and video-embedding: directory of the reference .npz tensors (outside Git; "
-        "each array is checked against the protected tensors.json) for the soft-token and token-embedding checks",
+        "each array is checked against the protected tensors.json) for the soft-token and token-embedding checks; "
+        "task generation: directory with the reference step0/<id>.f32 vectors (checked against the fixture digests) "
+        "for the full-vocabulary step-0 bound",
+    )
+    ev.add_argument(
+        "--g3",
+        choices=("retrieval", "ner"),
+        help="task-quality evaluation (G3) instead of staged fidelity: metrics on --dataset, compared with the "
+        "budget in the profile's protected task-quality.yaml only (absent: no budget, not a gate result)",
+    )
+    ev.add_argument("--dataset", help="--g3 retrieval: dataset directory; --g3 ner: gold JSONL file")
+    ev.add_argument(
+        "--baseline",
+        help="--g3 retrieval: embeddings JSONL of the fp32 reference profile, for the top-10 overlap metric",
     )
     for option in REFUSED_OPTIONS:
         ev.add_argument(option, nargs="?", action=_RefuseOverride, help=argparse.SUPPRESS)

@@ -130,7 +130,9 @@ The CI job runs the drill with `--no-model` (packing, inspection, QwenChat resto
 
 ## 10. Evaluator
 
-`model-pipeline evaluate` has no generation task. Needed extension (not built here): stage results format version 3 with `"task": "generation"`; stages `template` (per case `rendered`, `prompt_ids` against the fixture, exact; G1) and `dotnet` (per case `output_ids`, `finish_reason`, `step0_top` and optionally a step-0 vector sidecar, `stream_text_equals_result`, `usage`; plus `cached_vs_uncached` and `concurrency` sections; G2/G4), checked against `generation.jsonl` with the keys of section 9 (the near-tie rule reads `step_margin` from the fixture). The fidelity runner already writes everything except the envelope; a converter from its `results.jsonl` and `semantics.json` is about a day.
+Update (workstream R5, 2026-10-13): `model-pipeline evaluate` now has the `generation` task (`model-pipeline/src/model_pipeline/evaluate_generation.py`; `model-pipeline/README.md`, "Generation"). It reads the fidelity runner's output directory directly instead of a stage results envelope, and binds every key of the protected `tolerances.yaml`. The text below is the original gap description.
+
+At the time of this evidence `model-pipeline evaluate` had no generation task. Needed extension (not built here): stage results format version 3 with `"task": "generation"`; stages `template` (per case `rendered`, `prompt_ids` against the fixture, exact; G1) and `dotnet` (per case `output_ids`, `finish_reason`, `step0_top` and optionally a step-0 vector sidecar, `stream_text_equals_result`, `usage`; plus `cached_vs_uncached` and `concurrency` sections; G2/G4), checked against `generation.jsonl` with the keys of section 9 (the near-tie rule reads `step_margin` from the fixture). The fidelity runner already writes everything except the envelope; a converter from its `results.jsonl` and `semantics.json` is about a day.
 
 ## 11. P-017 (Microsoft.Extensions.AI) mapping
 
