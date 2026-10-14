@@ -1,0 +1,466 @@
+{
+  "media_list": "media.json",
+  "media_list_sha256": "7501f65cfb6d2586305f9efe76f512babbaf999d8fb9301405d87db80b3b7198",
+  "checked": "2026-10-14T16:31:42Z",
+  "script": "fetch_eg2_release_media.py",
+  "rejected": [],
+  "files": [
+    {
+      "id": "commons-image-00",
+      "title": "File:A New View of the Tarantula Nebula.jpg",
+      "description_url": "https://commons.wikimedia.org/wiki/File:A_New_View_of_the_Tarantula_Nebula.jpg",
+      "kept": true,
+      "reason": null,
+      "sha1": "98baa70ecb825201950e8fd62ba7a6991aa3ea27",
+      "bytes": 9279797,
+      "revision_timestamp": "2026-06-29T23:07:11Z",
+      "LicenseShortName": "Public domain",
+      "License": "pd",
+      "Artist": "NASA",
+      "Credit": "http://www.nasa.gov/multimedia/imagegallery/image_feature_2231.html",
+      "UsageTerms": "Public domain",
+      "AttributionRequired": "false",
+      "templates": [
+        "PD-Layout",
+        "PD-USGov-NASA"
+      ]
+    },
+    {
+      "id": "commons-image-01",
+      "title": "File:A Wilde time 3.jpg",
+      "description_url": "https://commons.wikimedia.org/wiki/File:A_Wilde_time_3.jpg",
+      "kept": true,
+      "reason": null,
+      "sha1": "e5c97c4a6cb3c56c28075ae1f84cdbdabc4df72b",
+      "bytes": 9633730,
+      "revision_timestamp": "2009-12-13T05:45:47Z",
+      "LicenseShortName": "Public domain",
+      "License": "pd",
+      "Artist": "Napoleon Sarony",
+      "Credit": "http://hdl.loc.gov/loc.pnp/ppmsca.07756",
+      "UsageTerms": "Public domain",
+      "AttributionRequired": "false",
+      "templates": [
+        "Cc-pd-mark-footer",
+        "PD-Layout",
+        "PD-US-expired-text",
+        "PD-old-X-expired",
+        "PD-old-auto-expired",
+        "PD-old-text"
+      ]
+    },
+    {
+      "id": "commons-image-02",
+      "title": "File:A member of the ATS (Auxiliary Territorial Service) serving with a 3.7-inch anti-aircraft gun battery, December 1942. TR452.jpg",
+      "description_url": "https://commons.wikimedia.org/wiki/File:A_member_of_the_ATS_(Auxiliary_Territorial_Service)_serving_with_a_3.7-inch_anti-aircraft_gun_battery,_December_1942._TR452.jpg",
+      "kept": true,
+      "reason": null,
+      "sha1": "912e923f984e50ba9745258e90a4f4648226c84e",
+      "bytes": 1693820,
+      "revision_timestamp": "2017-10-08T21:51:01Z",
+      "LicenseShortName": "Public domain",
+      "License": "pd",
+      "Artist": "Malindine E G (Lt), Tanner (Lt), War Office official photographer",
+      "Credit": "http://media.iwm.org.uk/iwm/mediaLib//20/media-20341/large.jpg This photograph TR 452 comes from the collections of the Imperial War Museums.",
+      "UsageTerms": "Public domain",
+      "AttributionRequired": "false",
+      "templates": [
+        "PD-Layout",
+        "PD-Scan",
+        "PD-UKGov",
+        "PD-art-category",
+        "PD-scan"
+      ]
+    },
+    {
+      "id": "commons-image-03",
+      "title": "File:A package for Hitler 196462 edit.jpg",
+      "description_url": "https://commons.wikimedia.org/wiki/File:A_package_for_Hitler_196462_edit.jpg",
+      "kept": true,
+      "reason": null,
+      "sha1": "33aff59f3cd1fa3e97862c3b54b8d89163217a94",
+      "bytes": 3233346,
+      "revision_timestamp": "2012-04-06T10:38:25Z",
+      "LicenseShortName": "Public domain",
+      "License": "pd",
+      "Artist": "Alfred T. Palmer",
+      "Credit": "This tag does not indicate the copyright status of the attached work. A normal copyright tag is still required. See Commons:Licensing.",
+      "UsageTerms": "Public domain",
+      "AttributionRequired": "false",
+      "templates": [
+        "PD-Layout",
+        "PD-USGov-FSA"
+      ]
+    },
+    {
+      "id": "commons-image-04",
+      "title": "File:A pair of little Harvest Mice (50331384776).jpg",
+      "description_url": "https://commons.wikimedia.org/wiki/File:A_pair_of_little_Harvest_Mice_(50331384776).jpg",
+      "kept": true,
+      "reason": null,
+      "sha1": "5e512447239fd02b3fd1f91c33d04aa4222cf2ab",
+      "bytes": 2664407,
+      "revision_timestamp": "2023-10-24T13:33:49Z",
+      "LicenseShortName": "CC BY 2.0",
+      "License": "cc-by-2.0",
+      "Artist": "caroline legg",
+      "Credit": "'A pair of little Harvest Mice'",
+      "UsageTerms": "Creative Commons Attribution 2.0",
+      "AttributionRequired": "true",
+      "templates": [
+        "Cc-by-2.0",
+        "Cc-by-layout"
+      ]
+    },
+    {
+      "id": "commons-image-05",
+      "title": "File:E 003261 E Maoris in North Africa July 1941.jpg",
+      "description_url": "https://commons.wikimedia.org/wiki/File:E_003261_E_Maoris_in_North_Africa_July_1941.jpg",
+      "kept": true,
+      "reason": null,
+      "sha1": "6da61fcb006c9e7b32a53dd679e8a064baa122b1",
+      "bytes": 2907723,
+      "revision_timestamp": "2016-02-24T09:53:42Z",
+      "LicenseShortName": "Public domain",
+      "License": "pd",
+      "Artist": "Unidentified New Zealand official photographer; Restoration by Adam Cuerden",
+      "Credit": "Imperial War Museum # E 003261, National Library of NZ id: DA-01229-F",
+      "UsageTerms": "Public domain",
+      "AttributionRequired": "false",
+      "templates": [
+        "PD-Layout",
+        "PD-NZ",
+        "PD-New Zealand",
+        "PD-old-warning-text"
+      ]
+    },
+    {
+      "id": "commons-image-06",
+      "title": "File:Earthset (art002e009288).jpg",
+      "description_url": "https://commons.wikimedia.org/wiki/File:Earthset_(art002e009288).jpg",
+      "kept": true,
+      "reason": null,
+      "sha1": "2d040f2a52792c2af386780b82d6d9abafee58c0",
+      "bytes": 884095,
+      "revision_timestamp": "2026-04-07T13:07:40Z",
+      "LicenseShortName": "Public domain",
+      "License": "pd",
+      "Artist": "NASA",
+      "Credit": "https://images.nasa.gov/details/art002e009288",
+      "UsageTerms": "Public domain",
+      "AttributionRequired": "false",
+      "templates": [
+        "PD-Layout",
+        "PD-USGov-NASA"
+      ]
+    },
+    {
+      "id": "commons-image-07",
+      "title": "File:M.Nonius Balbus Nuceria equestrian Statue MANN.png",
+      "description_url": "https://commons.wikimedia.org/wiki/File:M.Nonius_Balbus_Nuceria_equestrian_Statue_MANN.png",
+      "kept": true,
+      "reason": null,
+      "sha1": "a16958e7ffaa563bf488b975151af14d9ed4b427",
+      "bytes": 6972938,
+      "revision_timestamp": "2016-10-17T09:46:32Z",
+      "LicenseShortName": "CC0",
+      "License": "cc0",
+      "Artist": "Jebulon",
+      "Credit": "Own work",
+      "UsageTerms": "Creative Commons Zero, Public Domain Dedication",
+      "AttributionRequired": "false",
+      "templates": [
+        "CC-Layout",
+        "Cc-zero"
+      ]
+    },
+    {
+      "id": "commons-image-08",
+      "title": "File:Maersk headquarters Copenhagen 2014 01.jpg",
+      "description_url": "https://commons.wikimedia.org/wiki/File:Maersk_headquarters_Copenhagen_2014_01.jpg",
+      "kept": true,
+      "reason": null,
+      "sha1": "007c43897f2fd62fad38359c9ed50715cc062b83",
+      "bytes": 5753572,
+      "revision_timestamp": "2014-11-09T19:13:06Z",
+      "LicenseShortName": "CC BY 4.0",
+      "License": "cc-by-4.0",
+      "Artist": "Julian Herzog (Website)",
+      "Credit": "Own work",
+      "UsageTerms": "Creative Commons Attribution 4.0",
+      "AttributionRequired": "true",
+      "templates": [
+        "Cc-by-4.0",
+        "Cc-by-layout"
+      ]
+    },
+    {
+      "id": "commons-image-09",
+      "title": "File:Magellanic penguin, Valdes Peninsula, e.jpg",
+      "description_url": "https://commons.wikimedia.org/wiki/File:Magellanic_penguin,_Valdes_Peninsula,_e.jpg",
+      "kept": true,
+      "reason": null,
+      "sha1": "a4c657ad511db95b53516bba580ca83546fbdb04",
+      "bytes": 2220239,
+      "revision_timestamp": "2011-03-01T15:55:55Z",
+      "LicenseShortName": "CC BY 2.0",
+      "License": "cc-by-2.0",
+      "Artist": "David",
+      "Credit": "Penguin Waddle",
+      "UsageTerms": "Creative Commons Attribution 2.0",
+      "AttributionRequired": "true",
+      "templates": [
+        "Cc-by-2.0",
+        "Cc-by-layout"
+      ]
+    },
+    {
+      "id": "commons-image-10",
+      "title": "File:Queen Victoria surrounded by her family - Coburg, 1894 (1 of 2).jpg",
+      "description_url": "https://commons.wikimedia.org/wiki/File:Queen_Victoria_surrounded_by_her_family_-_Coburg,_1894_(1_of_2).jpg",
+      "kept": true,
+      "reason": null,
+      "sha1": "f1904b52ceb8af068949caa9259ff62e799cbf03",
+      "bytes": 5497839,
+      "revision_timestamp": "2024-10-02T23:43:10Z",
+      "LicenseShortName": "Public domain",
+      "License": "pd",
+      "Artist": "Eduard Uhlenhuth",
+      "Credit": "https://www.flickr.com/photos/99377981@N03/26233235971/in/faves-196177812@N04/",
+      "UsageTerms": "Public domain",
+      "AttributionRequired": "false",
+      "templates": [
+        "Cc-pd-mark-footer",
+        "PD-Layout",
+        "PD-US-expired-text",
+        "PD-old-X-expired",
+        "PD-old-auto-1923",
+        "PD-old-auto-expired",
+        "PD-old-text"
+      ]
+    },
+    {
+      "id": "commons-image-11",
+      "title": "File:Raising a flag over the Reichstag - Restoration.jpg",
+      "description_url": "https://commons.wikimedia.org/wiki/File:Raising_a_flag_over_the_Reichstag_-_Restoration.jpg",
+      "kept": true,
+      "reason": null,
+      "sha1": "cf5854f2d754a6943b582fe08a0d1d96c53331df",
+      "bytes": 5926198,
+      "revision_timestamp": "2024-03-16T08:43:11Z",
+      "LicenseShortName": "Public domain",
+      "License": "pd",
+      "Artist": "Yevgeny Khaldei / Adam Cuerden",
+      "Credit": "Internet portal of the Ministry of Defense of Russia mil.ru archive",
+      "UsageTerms": "Public domain",
+      "AttributionRequired": "false",
+      "templates": [
+        "Cc-by-4.0",
+        "Cc-by-layout",
+        "PD-Layout",
+        "PD-Russia-1996"
+      ]
+    },
+    {
+      "id": "commons-image-12",
+      "title": "File:U.S. Navy T-6B Texans in a 4-ship formation over a military operations area in Southern Texas.jpg",
+      "description_url": "https://commons.wikimedia.org/wiki/File:U.S._Navy_T-6B_Texans_in_a_4-ship_formation_over_a_military_operations_area_in_Southern_Texas.jpg",
+      "kept": true,
+      "reason": null,
+      "sha1": "25395957677fff5ba8efdadabc1d97f110708ecd",
+      "bytes": 1852064,
+      "revision_timestamp": "2021-03-12T20:25:15Z",
+      "LicenseShortName": "Public domain",
+      "License": "pd",
+      "Artist": "Master Sgt. Christopher Boitz",
+      "Credit": "https://www.af.mil/News/Photos/igphoto/2002599543/",
+      "UsageTerms": "Public domain",
+      "AttributionRequired": "false",
+      "templates": [
+        "PD-Layout",
+        "PD-USAF",
+        "PD-USGov-Military-Air Force"
+      ]
+    },
+    {
+      "id": "commons-image-13",
+      "title": "File:ULPower UL260i.jpg",
+      "description_url": "https://commons.wikimedia.org/wiki/File:ULPower_UL260i.jpg",
+      "kept": true,
+      "reason": null,
+      "sha1": "59d1e051cb309afec2cc850ee4d812623d242c81",
+      "bytes": 624553,
+      "revision_timestamp": "2008-02-16T15:54:35Z",
+      "LicenseShortName": "Public domain",
+      "License": "pd",
+      "Artist": "ULPower",
+      "Credit": "http://www.ulpower.com/ul260i-download.htm",
+      "UsageTerms": "Public domain",
+      "AttributionRequired": "false",
+      "templates": [
+        "PD-Layout",
+        "PD-author"
+      ]
+    },
+    {
+      "id": "commons-image-14",
+      "title": "File:Umnak oli 2014123 lrg.jpg",
+      "description_url": "https://commons.wikimedia.org/wiki/File:Umnak_oli_2014123_lrg.jpg",
+      "kept": true,
+      "reason": null,
+      "sha1": "60b817916282b2ff26cd3f2cc6477edb84f60a4c",
+      "bytes": 10302692,
+      "revision_timestamp": "2017-11-04T03:33:26Z",
+      "LicenseShortName": "Public domain",
+      "License": "pd",
+      "Artist": "NASA Earth Observatory images by Joshua Stevens, using Landsat data from the U.S. Geological Survey. Story by Mike Carlowicz.",
+      "Credit": "https://earthobservatory.nasa.gov/IOTD/view.php?id=91099&amp;src=iotdrss",
+      "UsageTerms": "Public domain",
+      "AttributionRequired": "false",
+      "templates": [
+        "PD-Layout",
+        "PD-USGov-NASA"
+      ]
+    },
+    {
+      "id": "commons-image-15",
+      "title": "File:Underwater mcmurdo sound.jpg",
+      "description_url": "https://commons.wikimedia.org/wiki/File:Underwater_mcmurdo_sound.jpg",
+      "kept": true,
+      "reason": null,
+      "sha1": "c410298a7bce54d43d1cffbb05fb1fcacc95bc46",
+      "bytes": 1329223,
+      "revision_timestamp": "2008-01-19T17:17:41Z",
+      "LicenseShortName": "Public domain",
+      "License": "pd",
+      "Artist": "NSF/USAP photo by Steve Clabuesch; uploaded by en:User:Fishdecoy",
+      "Credit": "English-language Wikipedia (original image log here) Source versions available here and (direct URL to large image) here.",
+      "UsageTerms": "Public domain",
+      "AttributionRequired": "false",
+      "templates": [
+        "PD-Layout",
+        "PD-USGov-NSF"
+      ]
+    },
+    {
+      "id": "commons-video-00",
+      "title": "File:Aquarius flat 2048x1024.ogv",
+      "description_url": "https://commons.wikimedia.org/wiki/File:Aquarius_flat_2048x1024.ogv",
+      "kept": true,
+      "reason": null,
+      "sha1": "1a3a05e131977d1dc8acf3697a1f8be08f898aec",
+      "bytes": 10573931,
+      "revision_timestamp": "2014-01-28T06:24:44Z",
+      "LicenseShortName": "Public domain",
+      "License": "pd",
+      "Artist": "The mission is a collaboration between NASA and the Space Agency of Argentina",
+      "Credit": "NASA's Aquarius instrument aboard the Aquarius/SAC-D spacecraft [1] [2]",
+      "UsageTerms": "Public domain",
+      "AttributionRequired": "false",
+      "templates": [
+        "PD-Layout",
+        "PD-USGov-NASA"
+      ]
+    },
+    {
+      "id": "commons-video-01",
+      "title": "File:Columbia Glacier Retreat.ogv",
+      "description_url": "https://commons.wikimedia.org/wiki/File:Columbia_Glacier_Retreat.ogv",
+      "kept": true,
+      "reason": null,
+      "sha1": "a62f57090ac4779da84e1521cc09199073001b1c",
+      "bytes": 3741798,
+      "revision_timestamp": "2012-06-15T09:30:47Z",
+      "LicenseShortName": "Public domain",
+      "License": "pd",
+      "Artist": "NASA/Goddard Space Flight Center",
+      "Credit": "Goddard Multimedia",
+      "UsageTerms": "Public domain",
+      "AttributionRequired": "false",
+      "templates": [
+        "PD-Layout",
+        "PD-USGov-NASA"
+      ]
+    },
+    {
+      "id": "commons-video-02",
+      "title": "File:Cyclone Fay rainfall.ogv",
+      "description_url": "https://commons.wikimedia.org/wiki/File:Cyclone_Fay_rainfall.ogv",
+      "kept": true,
+      "reason": null,
+      "sha1": "ce50650deb358230b46354bb6966a4bf97f29548",
+      "bytes": 2125307,
+      "revision_timestamp": "2012-09-08T07:45:19Z",
+      "LicenseShortName": "Public domain",
+      "License": "pd",
+      "Artist": "Hal Pierce",
+      "Credit": "Tropical Rainfall Measuring Mission (TRMM) satellite",
+      "UsageTerms": "Public domain",
+      "AttributionRequired": "false",
+      "templates": [
+        "PD-Layout",
+        "PD-USGov-NASA"
+      ]
+    },
+    {
+      "id": "commons-video-03",
+      "title": "File:Evolution of globular clusters.ogv",
+      "description_url": "https://commons.wikimedia.org/wiki/File:Evolution_of_globular_clusters.ogv",
+      "kept": true,
+      "reason": null,
+      "sha1": "b18a4a30ad7abe79ff61e0356a62f22288eb136c",
+      "bytes": 2663269,
+      "revision_timestamp": "2012-12-20T12:31:54Z",
+      "LicenseShortName": "CC BY 4.0",
+      "License": "cc-by-4.0",
+      "Artist": "ESO/NASA/ESA, L. Calçada, F. Ferraro (University of Bologna)",
+      "Credit": "ESO",
+      "UsageTerms": "Creative Commons Attribution 4.0",
+      "AttributionRequired": "true",
+      "templates": [
+        "Cc-by-4.0",
+        "Cc-by-layout"
+      ]
+    },
+    {
+      "id": "commons-video-04",
+      "title": "File:GPM scans hurricane Hermine.webm",
+      "description_url": "https://commons.wikimedia.org/wiki/File:GPM_scans_hurricane_Hermine.webm",
+      "kept": true,
+      "reason": null,
+      "sha1": "a4a27cc2ec8c7d243de231f4656138a660bfb098",
+      "bytes": 6595291,
+      "revision_timestamp": "2016-09-21T08:20:43Z",
+      "LicenseShortName": "Public domain",
+      "License": "pd",
+      "Artist": "NASA's Scientific Visualization Studio",
+      "Credit": "NASA's Scientific Visualization Studio",
+      "UsageTerms": "Public domain",
+      "AttributionRequired": "false",
+      "templates": [
+        "PD-Layout",
+        "PD-USGov-NASA"
+      ]
+    },
+    {
+      "id": "commons-video-05",
+      "title": "File:LDCM spacecraft rotating.webm",
+      "description_url": "https://commons.wikimedia.org/wiki/File:LDCM_spacecraft_rotating.webm",
+      "kept": true,
+      "reason": null,
+      "sha1": "b77d9989640bb035246d2956a57f9295d39b6563",
+      "bytes": 17279454,
+      "revision_timestamp": "2014-06-21T01:16:36Z",
+      "LicenseShortName": "Public domain",
+      "License": "pd",
+      "Artist": "NASA/Goddard Space Flight Center Conceptual Image Lab",
+      "Credit": "http://svs.gsfc.nasa.gov/goto?10812 (direct link)",
+      "UsageTerms": "Public domain",
+      "AttributionRequired": "false",
+      "templates": [
+        "PD-Layout",
+        "PD-USGov-NASA"
+      ]
+    }
+  ]
+}

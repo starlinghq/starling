@@ -1,0 +1,26 @@
+{
+  "reference": "sentence-transformers 6.1.0 modules on PIL images opened from the files (Image.open), PyTorch fp32 CPU, sdpa attention, one input per call, full checkpoint",
+  "rows": 19,
+  "batched8_vs_single": {
+    "max_abs": 7.450580596923828e-08,
+    "mean_abs": 8.092416015070825e-09
+  },
+  "encode_end_to_end_vs_forward": {
+    "max_abs": 0.0,
+    "mean_abs": 0.0
+  },
+  "restated_vision_padded_vs_upstream_soft_tokens_max_abs": 9.5367431640625e-07,
+  "restated_vision_padded_vs_upstream_pooled_max_abs": 0.0,
+  "restated_vision_unpadded_vs_upstream_soft_tokens_max_abs": 0.00010091066360473633,
+  "query_image_cosine": {},
+  "query_top1": {},
+  "eager_vs_sdpa_every_third_image": {
+    "max_abs": 1.3533281162381172e-07,
+    "mean_abs": 2.176808420290264e-08
+  },
+  "text_and_vision_load_vs_full_every_third_image": {
+    "max_abs": 0.0,
+    "mean_abs": 0.0
+  },
+  "nan_or_inf_rows": []
+}

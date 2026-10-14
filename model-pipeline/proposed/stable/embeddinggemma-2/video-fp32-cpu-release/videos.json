@@ -1,0 +1,117 @@
+{
+  "media_list": "media.json",
+  "media_list_sha256": "7501f65cfb6d2586305f9efe76f512babbaf999d8fb9301405d87db80b3b7198",
+  "generator": "fetch_eg2_release_media.py",
+  "videos": [
+    {
+      "id": "commons-video-00",
+      "file": "commons-video-00.ogv",
+      "made": "fetched unchanged from Wikimedia Commons",
+      "title": "File:Aquarius flat 2048x1024.ogv",
+      "source": "https://commons.wikimedia.org/wiki/File:Aquarius_flat_2048x1024.ogv",
+      "url": "https://upload.wikimedia.org/wikipedia/commons/d/d6/Aquarius_flat_2048x1024.ogv",
+      "revision_timestamp": "2014-01-28T06:24:44Z",
+      "sha1": "1a3a05e131977d1dc8acf3697a1f8be08f898aec",
+      "license": "Public domain",
+      "license_template": "pd",
+      "license_page_templates": [
+        "PD-Layout",
+        "PD-USGov-NASA"
+      ],
+      "artist": "The mission is a collaboration between NASA and the Space Agency of Argentina",
+      "credit": "NASA's Aquarius instrument aboard the Aquarius/SAC-D spacecraft [1] [2]",
+      "usage_terms": "Public domain",
+      "mime": "application/ogg",
+      "bytes": 10573931,
+      "sha256": "87d36a705ffb2f1957f103fbe4a4982fe0dc14bcc5564e5f7c427e3d90af7e34",
+      "width": 2048,
+      "height": 1024,
+      "duration_s": 12.0
+    },
+    {
+      "id": "commons-video-02",
+      "file": "commons-video-02.ogv",
+      "made": "fetched unchanged from Wikimedia Commons",
+      "title": "File:Cyclone Fay rainfall.ogv",
+      "source": "https://commons.wikimedia.org/wiki/File:Cyclone_Fay_rainfall.ogv",
+      "url": "https://upload.wikimedia.org/wikipedia/commons/d/d2/Cyclone_Fay_rainfall.ogv",
+      "revision_timestamp": "2012-09-08T07:45:19Z",
+      "sha1": "ce50650deb358230b46354bb6966a4bf97f29548",
+      "license": "Public domain",
+      "license_template": "pd",
+      "license_page_templates": [
+        "PD-Layout",
+        "PD-USGov-NASA"
+      ],
+      "artist": "Hal Pierce",
+      "credit": "Tropical Rainfall Measuring Mission (TRMM) satellite",
+      "usage_terms": "Public domain",
+      "mime": "application/ogg",
+      "bytes": 2125307,
+      "sha256": "0b1ce456249d9a355f5ec2915e3f53f174cc45cf6a897321dc2780c7e9470e5b",
+      "width": 680,
+      "height": 488,
+      "duration_s": 11.083333333333334
+    },
+    {
+      "id": "commons-video-04",
+      "file": "commons-video-04.webm",
+      "made": "fetched unchanged from Wikimedia Commons",
+      "title": "File:GPM scans hurricane Hermine.webm",
+      "source": "https://commons.wikimedia.org/wiki/File:GPM_scans_hurricane_Hermine.webm",
+      "url": "https://upload.wikimedia.org/wikipedia/commons/3/3e/GPM_scans_hurricane_Hermine.webm",
+      "revision_timestamp": "2016-09-21T08:20:43Z",
+      "sha1": "a4a27cc2ec8c7d243de231f4656138a660bfb098",
+      "license": "Public domain",
+      "license_template": "pd",
+      "license_page_templates": [
+        "PD-Layout",
+        "PD-USGov-NASA"
+      ],
+      "artist": "NASA's Scientific Visualization Studio",
+      "credit": "NASA's Scientific Visualization Studio",
+      "usage_terms": "Public domain",
+      "mime": "video/webm",
+      "bytes": 6595291,
+      "sha256": "dc4c6dc8c56f291b6ad16fff9abc6a0ef4ddd81fe63ef12f36d5437427959202",
+      "width": 1920,
+      "height": 1080,
+      "duration_s": 45.366
+    },
+    {
+      "id": "commons-video-05",
+      "file": "commons-video-05.webm",
+      "made": "fetched unchanged from Wikimedia Commons",
+      "title": "File:LDCM spacecraft rotating.webm",
+      "source": "https://commons.wikimedia.org/wiki/File:LDCM_spacecraft_rotating.webm",
+      "url": "https://upload.wikimedia.org/wikipedia/commons/2/23/LDCM_spacecraft_rotating.webm",
+      "revision_timestamp": "2014-06-21T01:16:36Z",
+      "sha1": "b77d9989640bb035246d2956a57f9295d39b6563",
+      "license": "Public domain",
+      "license_template": "pd",
+      "license_page_templates": [
+        "PD-Layout",
+        "PD-USGov-NASA"
+      ],
+      "artist": "NASA/Goddard Space Flight Center Conceptual Image Lab",
+      "credit": "http://svs.gsfc.nasa.gov/goto?10812 (direct link)",
+      "usage_terms": "Public domain",
+      "mime": "video/webm",
+      "bytes": 17279454,
+      "sha256": "52278014faee688d8234fdf70f7c716a51fe827ad4f0de8e454f4b955db4ee0a",
+      "width": 1280,
+      "height": 720,
+      "duration_s": 16.65
+    }
+  ],
+  "excluded": [
+    {
+      "id": "commons-video-01",
+      "reason": "torchcodec 0.17.0 VideoDecoder(seek_mode=\"exact\") on FFmpeg 8.1.3 (the decoding of transformers 5.19.0 fetch_videos) fails: Could not seek file to pts=0 (Ogg)"
+    },
+    {
+      "id": "commons-video-03",
+      "reason": "torchcodec 0.17.0 VideoDecoder(seek_mode=\"exact\") on FFmpeg 8.1.3 (the decoding of transformers 5.19.0 fetch_videos) fails: Could not seek file to pts=0 (Ogg)"
+    }
+  ]
+}
