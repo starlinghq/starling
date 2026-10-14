@@ -265,7 +265,10 @@ capabilities:
   cancellation: experimental
   persistence: unsupported
   training: unsupported
-  aot: untested
+  # aot: Native AOT publish on Linux x64 CPU, no trim/AOT warnings, results equal to JIT bit for bit
+  # (video from decoded frames; docs/evidence/aot/README.md).
+  # The FFmpeg decoder adapter under Native AOT is untested.
+  aot: experimental
   extensions_ai: experimental
   mlnet: unsupported  # no video column in the ML.NET transform (text only)
   concurrent_calls: experimental
@@ -293,6 +296,13 @@ qualification:
     G0: { status: checklist, evidence: docs/m0/embeddinggemma2-video-spike.md, date: 2026-10-11 }
     G1: { status: not-run }
     G2: { status: not-run }
+    G3: { status: not-run }
+    G4: { status: not-run }
+    G5: { status: not-run }
+    # G6 checklist: the ai-0.1.0-preview.5 release drill (packed packages, clean consumer, offline sample run on a
+    # seeded graph). Acquisition of the hosted graph is not covered while its source is a placeholder or private.
+    G6: { status: checklist, evidence: docs/releases/ai-0.1.0-preview.5/rc-drill.log, date: 2026-10-12 }
+    G7: { status: not-run }
 
 maintenance:
   owner: Mark
