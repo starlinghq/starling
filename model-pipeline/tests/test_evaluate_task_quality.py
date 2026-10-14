@@ -261,3 +261,114 @@ def test_ner_cli_and_task_mismatch(tmp_path):
         ]
     )
     assert code == 2
+
+
+# Generation (exact match) -------------------------------------------------------------------------
+
+
+def generation_set(tmp_path: Path) -> Path:
+    """A synthetic two-row prompts file (test input only, not a G3 dataset)."""
+    rows = [
+        {"id": "g-a", "messages": [{"role": "user", "content": "synthetic a"}], "max_new_tokens": 8, "answer": "18"},
+        {"id": "g-b", "messages": [{"role": "user", "content": "synthetic b"}], "max_new_tokens": 8, "answer": "1200"},
+    ]
+    path = tmp_path / "prompts.jsonl"
+    path.write_text("".join(json.dumps(r) + "\n" for r in rows), encoding="utf-8")
+    return path
+
+
+def generations(path: Path, texts: dict[str, str], **extra) -> Path:
+    path.write_text(
+        "".join(json.dumps({"id": k, "output_text": v, **extra}) + "\n" for k, v in texts.items()), encoding="utf-8"
+    )
+    return path
+
+
+@pytest.mark.parametrize(
+    ("text", "answer", "expected"),
+    [
+        ("so \\boxed{18}.", "18", True),
+        ("first \\boxed{3} then \\boxed{18}", "18", True),
+        ("\\boxed{\\frac{1}{2}} no", "0.5", False),
+        ("\\boxed{\\text{1,200}}", "1200", True),
+        ("\\boxed{$1,200.00}", "1200", True),
+        ("\\boxed{50\\%}", "50", True),
+        ("no box: 7 apples then 18.", "18", True),
+        ("no box: 18 then 7", "18", False),
+        ("\\boxed{18", "18", True),
+        ("nothing numeric", "18", False),
+        ("\\boxed{-4}", "-4", True),
+    ],
+)
+def test_generation_answer_extraction(text, answer, expected):
+    assert tq.answer_matches(tq.extract_answer(text), answer) is expected
+
+
+def test_last_boxed_balances_braces():
+    assert tq.last_boxed("\\boxed{a{b}c} and \\boxed{d}") == "d"
+    assert tq.last_boxed("x \\boxed{\\dfrac{3}{4}}") == "\\dfrac{3}{4}"
+    assert tq.last_boxed("\\boxed{open") is None
+
+
+def test_generation_budget_baseline_and_directory(tmp_path):
+    prompts = generation_set(tmp_path)
+    digest = tq.dataset_digest([prompts])
+    budget = {
+        "profile": "synthetic-encoder/fp32-cpu",
+        "generation": {"dataset_sha256": digest, "minimum": {"exact_match": 0.5}},
+    }
+    repo = Repo(tmp_path / "repo", tasks=("generation",), budget=budget)
+    run = tmp_path / "run"
+    run.mkdir()
+    good = generations(run / "generations.jsonl", {"g-a": "\\boxed{18}", "g-b": "so 1,200"}, output_ids=[1, 2])
+    ev = repo.run("generation", prompts, run)
+    assert ev.report["metrics"]["exact_match"] == 1.0
+    assert ev.report["results"]["path"].endswith("generations.jsonl")
+    assert ev.report["gates"]["G3"]["status"] == "passed", ev.report["gates"]
+    bad = generations(tmp_path / "bad.jsonl", {"g-a": "\\boxed{17}", "g-b": "\\boxed{1}"})
+    ev = repo.run("generation", prompts, bad, baseline=good)
+    assert ev.report["metrics"]["exact_match"] == 0.0
+    assert ev.report["vs_baseline"]["flipped_rows"] == ["g-a", "g-b"]
+    assert ev.report["gates"]["G3"]["status"] == "failed"
+    assert ev.exit_code == tq.EXIT_FAILED
+    assert "g-a, g-b" in tq.markdown(ev.report)
+
+
+def test_generation_inputs_are_checked(tmp_path):
+    prompts = generation_set(tmp_path)
+    data = tq.load_generation_set(prompts)
+    with pytest.raises(tq.EvaluationError, match="missing"):
+        tq.load_generations(generations(tmp_path / "short.jsonl", {"g-a": "1"}), data)
+    ids_only = tmp_path / "ids.jsonl"
+    ids_only.write_text('{"id": "g-a", "output_ids": [1]}\n{"id": "g-b", "output_ids": [1]}\n', encoding="utf-8")
+    with pytest.raises(tq.EvaluationError, match="output_text"):
+        tq.load_generations(ids_only, data)
+    with pytest.raises(tq.results.ToleranceOverrideError):
+        tq.load_generations(generations(tmp_path / "t.jsonl", {"g-a": "1", "g-b": "2"}, threshold=0.5), data)
+    no_answer = tmp_path / "no-answer.jsonl"
+    no_answer.write_text('{"id": "x", "messages": [{"role": "user", "content": "q"}]}\n', encoding="utf-8")
+    with pytest.raises(tq.EvaluationError, match="answer"):
+        tq.load_generation_set(no_answer)
+    empty = tmp_path / "empty"
+    empty.mkdir()
+    with pytest.raises(tq.EvaluationError, match="results.jsonl"):
+        tq.generation_results_file(empty)
+
+
+def test_generation_cli_without_budget(tmp_path):
+    prompts = generation_set(tmp_path)
+    repo = Repo(tmp_path / "repo", tasks=("generation",))
+    results_file = generations(tmp_path / "r.jsonl", {"g-a": "\\boxed{18}", "g-b": "\\boxed{12}"})
+    out = tmp_path / "out"
+    args = ["evaluate", str(repo.manifest), "--g3", "generation", "--dataset", str(prompts)]
+    args += ["--results", str(results_file), "--out", str(out), "--repo-root", str(repo.root)]
+    args += ["--protected-base", "HEAD"]
+    assert main(args) == tq.EXIT_GATE_NOT_PASSED
+    report = json.loads((out / "report.json").read_text(encoding="utf-8"))
+    assert report["metrics"]["exact_match"] == 0.5
+    assert report["per_row"]["g-b"] == {"answer": "1200", "extracted": "12", "correct": False}
+    # A profile without the generation task is refused.
+    other = Repo(tmp_path / "other")
+    args[1] = str(other.manifest)
+    args[args.index("--repo-root") + 1] = str(other.root)
+    assert main(args) == 2

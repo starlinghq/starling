@@ -210,7 +210,8 @@ def main(argv: list[str] | None = None) -> int:
         "--results",
         required=True,
         help="directory with *.results.json files, one per stage (task generation: the output directory of "
-        "Starlings.Qwen35.Fidelity; --g3: the candidate's embeddings or predictions JSONL file)",
+        "Starlings.Qwen35.Fidelity; --g3: the candidate's embeddings, predictions or generations JSONL file; "
+        "--g3 generation also takes the output directory of Starlings.Qwen35.Fidelity)",
     )
     ev.add_argument("--out", required=True, help="directory for report.json and report.md")
     ev.add_argument(
@@ -230,14 +231,19 @@ def main(argv: list[str] | None = None) -> int:
     )
     ev.add_argument(
         "--g3",
-        choices=("retrieval", "ner"),
+        choices=("retrieval", "ner", "generation"),
         help="task-quality evaluation (G3) instead of staged fidelity: metrics on --dataset, compared with the "
         "budget in the profile's protected task-quality.yaml only (absent: no budget, not a gate result)",
     )
-    ev.add_argument("--dataset", help="--g3 retrieval: dataset directory; --g3 ner: gold JSONL file")
+    ev.add_argument(
+        "--dataset",
+        help="--g3 retrieval: dataset directory; --g3 ner: gold JSONL file; --g3 generation: prompts JSONL file "
+        "with an answer per row",
+    )
     ev.add_argument(
         "--baseline",
-        help="--g3 retrieval: embeddings JSONL of the fp32 reference profile, for the top-10 overlap metric",
+        help="--g3 retrieval: embeddings JSONL of the fp32 reference profile, for the top-10 overlap metric; "
+        "--g3 generation: the reference generations, for the rows whose correctness flips",
     )
     for option in REFUSED_OPTIONS:
         ev.add_argument(option, nargs="?", action=_RefuseOverride, help=argparse.SUPPRESS)

@@ -16,6 +16,10 @@
 //            the chosen-token log-probability at every step against the reference's (transformers' cached decoding),
 //            and cached vs uncached logits at a few steps (a fresh chunked prefill of the same prefix): longcontext.json.
 // Score with: python model-pipeline/reference/generation/compare.py --reference <ref> --candidate <out>.
+//
+// Task quality (G3): `-- generation --bundle <dir> --prompts <jsonl> --out <dir>` runs the chat path (owned template,
+// greedy) over a prompts file with no reference; see GenerationDump.cs (input of `model-pipeline evaluate --g3
+// generation`).
 using System.Collections.Concurrent;
 using System.Collections.Immutable;
 using System.Diagnostics;
@@ -27,6 +31,11 @@ using System.Text.Json.Nodes;
 using Starlings.Acquisition;
 using Starlings.Generation.OnnxGenAI;
 using Starlings.Models.Qwen35;
+
+if (args.Length >= 1 && args[0] == "generation")
+{
+    return GenerationDump.Run(args[1..]);
+}
 
 var opt = Options.Parse(args);
 if (opt is null)
