@@ -21,6 +21,7 @@
     <Project Path="tests/Starlings.Models.Bert.Tests/Starlings.Models.Bert.Tests.csproj" />
     <Project Path="tests/Starlings.Models.QwenChat.Tests/Starlings.Models.QwenChat.Tests.csproj" />
     <Project Path="tests/Starlings.Runtime.Onnx.Tests/Starlings.Runtime.Onnx.Tests.csproj" />
+    <Project Path="tests/Starlings.Soak.Tool.Tests/Starlings.Soak.Tool.Tests.csproj" />
     <Project Path="tests/Starlings.Models.E5.Extensions.AI.Tests/Starlings.Models.E5.Extensions.AI.Tests.csproj" />
     <Project Path="tests/Starlings.Models.E5.MLNet.Tests/Starlings.Models.E5.MLNet.Tests.csproj" />
     <Project Path="tests/Starlings.Models.E5.Tests/Starlings.Models.E5.Tests.csproj" />
@@ -49,5 +50,6 @@
     <Project Path="tools/Starlings.Acquisition.Tool/Starlings.Acquisition.Tool.csproj" />
     <Project Path="tools/Starlings.Fidelity.Tool/Starlings.Fidelity.Tool.csproj" />
     <Project Path="tools/Starlings.Qwen35.Fidelity/Starlings.Qwen35.Fidelity.csproj" />
+    <Project Path="tools/Starlings.Soak.Tool/Starlings.Soak.Tool.csproj" />
   </Folder>
 </Solution>

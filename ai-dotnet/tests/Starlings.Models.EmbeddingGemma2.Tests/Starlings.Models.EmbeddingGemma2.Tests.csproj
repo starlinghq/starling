@@ -18,6 +18,7 @@
     <Compile Include="../Shared/EmbeddingGemma2Videos/*.cs" Link="Shared/EmbeddingGemma2Videos/%(Filename)%(Extension)" />
     <Compile Include="../Shared/EmbeddingGemma2Fakes/*.cs" Link="Shared/EmbeddingGemma2Fakes/%(Filename)%(Extension)" />
     <Compile Include="../Shared/TestModels/*.cs" Link="Shared/TestModels/%(Filename)%(Extension)" />
+    <Compile Include="../Shared/Operational/*.cs" Link="Shared/Operational/%(Filename)%(Extension)" />
   </ItemGroup>
 
   <ItemGroup>
