@@ -5,7 +5,9 @@ them against `model-pipeline/protected/performance-budgets.yaml`, profile by pro
 rule; a key this module does not implement is an error, so a budget can never be skipped silently. The rules:
 
 - `warm_median_ratio_max`: per warm workload (path, workload, concurrency), median C# library total over median
-  Python total at most the budget.
+  Python total at most the budget. Workloads that run no graph (EmbeddingGemma 2 `preprocess-only`: SkiaSharp and
+  the C# resampler against Pillow and torchvision) are not same-backend comparisons and are left out; the C#
+  preprocessing is bounded by `preprocess_share_of_embed_max` instead.
 - `cold_start_ratio_max`: the same on the cold-start series (spawn to result).
 - `adapter_overhead_max` (``"max(1 ms, 10%) of direct C#, on medians"``): per warm workload with a direct C# series,
   median library minus median direct at most max(1 ms, 10% of the direct median).
@@ -159,6 +161,12 @@ def pairs(groups: dict, a_side: str, b_side: str, mode: str, extract, required=N
         yield _label((None, *rest)), [extract(s) for s in a] if a else None, [extract(s) for s in b] if b else None
 
 
+def runs_a_graph(s: dict) -> bool:
+    """False for preprocessing-only series (stage ``preprocess`` without ``embed``: EmbeddingGemma 2
+    ``preprocess-only``), which run no graph on either side; ``preprocess_share_of_embed_max`` bounds them."""
+    return not ("preprocess" in s["stages_ms"] and "embed" not in s["stages_ms"])
+
+
 def has_stage(name: str):
     return lambda s: name in s["stages_ms"]
 
@@ -280,7 +288,7 @@ def rule_preprocess_share(groups, runs: dict, budget: float, resamples: int, see
 def evaluate_rule(name: str, budget, profile: dict, resamples: int, seed: int) -> list[dict]:
     groups = profile["groups"]
     if name == "warm_median_ratio_max":
-        return rule_ratio(groups, budget, True, "warm", total, None, resamples, seed)
+        return rule_ratio(groups, budget, True, "warm", total, runs_a_graph, resamples, seed)
     if name == "cold_start_ratio_max":
         return rule_ratio(groups, budget, True, "cold", total, None, resamples, seed)
     if name == "inference_ratio_max":

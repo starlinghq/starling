@@ -245,3 +245,20 @@ def test_cli_exit_code_and_json(tmp_path, capsys):
     out = tmp_path / "g5.json"
     assert cli.main(["bench", "g5", str(raw), "--json", str(out)]) == 1  # no data is never a pass
     assert json.loads(out.read_text()) == []
+
+
+def test_preprocessing_only_workloads_are_not_in_the_warm_ratio():
+    name = "embeddinggemma-2/image-fp32-cpu"
+    budgets = {name: {"warm_median_ratio_max": 1.10}}
+    runs = [run("c", "embeddinggemma-2"), run("p", "embeddinggemma-2", "python", "python-ort")]
+    pre = {"decode": [1.0] * 3, "preprocess": [1.0] * 3}
+    emb = {"decode": [1.0] * 3, "embed": [9.0] * 3}
+    all_series = [
+        series("c", "preprocess-only", [9.0] * 3, path="image", stages=pre),
+        series("p", "preprocess-only", [1.0] * 3, path="image", stages=pre),  # 9x slower: not gated here
+        series("c", "photo-b1", [10.0] * 3, path="image", stages=emb),
+        series("p", "photo-b1", [10.0] * 3, path="image", stages=emb),
+    ]
+    v = verdict(results(runs, all_series), budgets, name)
+    assert [c["workload"] for c in v["rules"]["warm_median_ratio_max"]["checks"]] == ["warm/image/photo-b1/c1"]
+    assert v["verdict"] == "pass"
