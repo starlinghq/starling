@@ -2,8 +2,11 @@
 //
 //   dotnet run --project ai-dotnet/tools/Starlings.Fidelity.Tool -c Release -- retrieval --model e5|embeddinggemma2
 //       --dataset <dir with queries.jsonl, corpus.jsonl> --out <embeddings.jsonl> [--snapshot <dir>] [--threads <n>]
+//       [--device cpu|cuda[:N]]
 //   dotnet run --project ai-dotnet/tools/Starlings.Fidelity.Tool -c Release -- ner
-//       --dataset <gold.jsonl> --out <predictions.jsonl> [--snapshot <dir>] [--threads <n>]
+//       --dataset <gold.jsonl> --out <predictions.jsonl> [--snapshot <dir>] [--threads <n>] [--device cpu|cuda[:N]]
+//
+// --device cuda needs the CUDA build (ai-dotnet/tools/Starlings.Fidelity.Tool.Cuda; use_tf32=0, see ToolDevice.cs).
 //
 // retrieval: one JSON line per query and document, {"kind": "query"|"document", "id", "prompt", "embedding"}, through
 // the public text embedders: e5 with the "query: " and "passage: " prefixes (E5TextEmbedder), EmbeddingGemma 2 with
@@ -30,6 +33,7 @@ internal static class TaskQualityDump
     {
         string? model = null, dataset = null, outPath = null, snapshot = null;
         int? threads = null;
+        var device = ToolDevice.Cpu;
         for (int i = 0; i < args.Length; i++)
         {
             switch (args[i])
@@ -50,6 +54,10 @@ internal static class TaskQualityDump
                     threads = n;
                     i++;
                     break;
+                case "--device" when i + 1 < args.Length && ToolDevice.TryParse(args[i + 1], out var parsed):
+                    device = parsed;
+                    i++;
+                    break;
                 default:
                     return Usage($"unknown option {args[i]}");
             }
@@ -60,14 +68,21 @@ internal static class TaskQualityDump
             return Usage("--dataset and --out are required");
         }
 
+        if (device.Unavailable() is { } unavailable)
+        {
+            return Usage(unavailable);
+        }
+
+        Console.WriteLine($"device: {device.Label}{(device.IsCuda ? $" (cuda device {device.CudaDeviceId}, CUDA_VISIBLE_DEVICES={Environment.GetEnvironmentVariable("CUDA_VISIBLE_DEVICES")})" : string.Empty)}");
+
         try
         {
             return command switch
             {
-                "retrieval" when model == "e5" => RetrievalE5(dataset, outPath, snapshot, threads),
-                "retrieval" when model == "embeddinggemma2" => RetrievalGemma(dataset, outPath, snapshot, threads),
+                "retrieval" when model == "e5" => RetrievalE5(dataset, outPath, snapshot, threads, device),
+                "retrieval" when model == "embeddinggemma2" => RetrievalGemma(dataset, outPath, snapshot, threads, device),
                 "retrieval" => Usage("--model must be e5 or embeddinggemma2"),
-                _ => Ner(dataset, outPath, snapshot, threads),
+                _ => Ner(dataset, outPath, snapshot, threads, device),
             };
         }
         catch (ModelAcquisitionException ex)
@@ -125,14 +140,14 @@ internal static class TaskQualityDump
         return 0;
     }
 
-    private static int RetrievalE5(string dataset, string outPath, string? snapshot, int? threads)
+    private static int RetrievalE5(string dataset, string outPath, string? snapshot, int? threads, ToolDevice device)
     {
         snapshot ??= Environment.GetEnvironmentVariable("STARLING_E5_SNAPSHOT");
         var files = string.IsNullOrEmpty(snapshot) ? E5ModelAssets.OpenLocal() : E5ModelAssets.OpenDirectory(snapshot, CacheVerification.Sha256);
         var tokenizer = E5Tokenizer.FromFile(files.TokenizerPath, E5ModelAssets.TokenizerSha256);
         using var encoder = E5Encoder.Create(files.ModelPath, new E5EncoderOptions
         {
-            Session = new OnnxSessionOptions { ExpectedModelSha256 = E5ModelAssets.ModelSha256, IntraOpNumThreads = threads },
+            Session = device.Apply(new OnnxSessionOptions { ExpectedModelSha256 = E5ModelAssets.ModelSha256, IntraOpNumThreads = threads }),
         });
         var embedder = new E5TextEmbedder(tokenizer, encoder);
         return WriteEmbeddings(outPath, dataset, (texts, isQuery) =>
@@ -140,14 +155,14 @@ internal static class TaskQualityDump
             E5TextEmbedder.QueryPrefix, E5TextEmbedder.PassagePrefix);
     }
 
-    private static int RetrievalGemma(string dataset, string outPath, string? snapshot, int? threads)
+    private static int RetrievalGemma(string dataset, string outPath, string? snapshot, int? threads, ToolDevice device)
     {
         snapshot ??= Environment.GetEnvironmentVariable("STARLING_EMBEDDINGGEMMA2_SNAPSHOT");
         var files = string.IsNullOrEmpty(snapshot) ? EmbeddingGemma2ModelAssets.OpenLocal() : EmbeddingGemma2ModelAssets.OpenDirectory(snapshot, CacheVerification.Sha256);
         var tokenizer = EmbeddingGemma2Tokenizer.FromFile(files.TokenizerPath);
         using var encoder = EmbeddingGemma2Encoder.Create(files.ModelPath, new EmbeddingGemma2EncoderOptions
         {
-            Session = new OnnxSessionOptions { ExpectedModelSha256 = EmbeddingGemma2ModelAssets.ModelSha256, IntraOpNumThreads = threads },
+            Session = device.Apply(new OnnxSessionOptions { ExpectedModelSha256 = EmbeddingGemma2ModelAssets.ModelSha256, IntraOpNumThreads = threads }),
         });
         var embedder = new EmbeddingGemma2TextEmbedder(tokenizer, encoder);
         return WriteEmbeddings(outPath, dataset, (texts, isQuery) =>
@@ -155,13 +170,13 @@ internal static class TaskQualityDump
             EmbeddingGemma2Prompt.Query.Name, EmbeddingGemma2Prompt.Document.Name);
     }
 
-    private static int Ner(string dataset, string outPath, string? snapshot, int? threads)
+    private static int Ner(string dataset, string outPath, string? snapshot, int? threads, ToolDevice device)
     {
         snapshot ??= Environment.GetEnvironmentVariable("STARLING_GLINER2_SNAPSHOT");
         var files = string.IsNullOrEmpty(snapshot) ? Gliner2ModelAssets.OpenLocal() : Gliner2ModelAssets.OpenDirectory(snapshot, CacheVerification.Sha256);
         using var extractor = Gliner2EntityExtractor.Create(files, new Gliner2ExtractorOptions
         {
-            Session = new OnnxSessionOptions { IntraOpNumThreads = threads },
+            Session = device.Apply(new OnnxSessionOptions { IntraOpNumThreads = threads }),
         });
         var sb = new StringBuilder();
         int rows = 0;
@@ -197,8 +212,8 @@ internal static class TaskQualityDump
     private static int Usage(string error)
     {
         Console.Error.WriteLine($"error: {error}");
-        Console.Error.WriteLine("usage: Starlings.Fidelity.Tool retrieval --model e5|embeddinggemma2 --dataset <dir> --out <embeddings.jsonl> [--snapshot <dir>] [--threads <n>]");
-        Console.Error.WriteLine("       Starlings.Fidelity.Tool ner --dataset <gold.jsonl> --out <predictions.jsonl> [--snapshot <dir>] [--threads <n>]");
+        Console.Error.WriteLine("usage: Starlings.Fidelity.Tool retrieval --model e5|embeddinggemma2 --dataset <dir> --out <embeddings.jsonl> [--snapshot <dir>] [--threads <n>] [--device cpu|cuda[:N]]");
+        Console.Error.WriteLine("       Starlings.Fidelity.Tool ner --dataset <gold.jsonl> --out <predictions.jsonl> [--snapshot <dir>] [--threads <n>] [--device cpu|cuda[:N]]");
         return 2;
     }
 }
