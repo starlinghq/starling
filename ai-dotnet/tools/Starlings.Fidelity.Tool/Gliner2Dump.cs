@@ -11,7 +11,10 @@
 //                            of span_logits (fixture inputs) and text_entities (text path), grouped by label count.
 //
 //   dotnet run --project ai-dotnet/tools/Starlings.Fidelity.Tool -c Release -- gliner2 --out <dir>
-//       [--snapshot <dir>] [--fixtures <dir>] [--profile <id>] [--threads <n>]
+//       [--snapshot <dir>] [--fixtures <dir>] [--profile <id>] [--threads <n>] [--device cpu|cuda[:N]]
+//
+// --device cuda needs the CUDA build (ai-dotnet/tools/Starlings.Fidelity.Tool.Cuda) and defaults the profile to
+// gliner2-base-v1/onnx-fp32-cuda (ToolDevice.cs); the fixtures stay the shared onnx-fp32-cpu ones.
 //
 // Entity offsets are Unicode scalar values of the normalized text, exclusive end (the fixtures' unit). From the
 // fixture inputs the entities are GLiNER2's spans as decoded (normalized-text offsets); text_entities are the
@@ -39,8 +42,9 @@ internal static class Gliner2Dump
         string? outDir = null;
         string? snapshot = Environment.GetEnvironmentVariable("STARLING_GLINER2_SNAPSHOT");
         string? fixturesDir = null;
-        string profile = "gliner2-base-v1/onnx-fp32-cpu";
+        string? profile = null;
         int? threads = null;
+        var device = ToolDevice.Cpu;
         for (int i = 0; i < args.Length; i++)
         {
             switch (args[i])
@@ -61,6 +65,10 @@ internal static class Gliner2Dump
                     threads = n;
                     i++;
                     break;
+                case "--device" when i + 1 < args.Length && ToolDevice.TryParse(args[i + 1], out var parsed):
+                    device = parsed;
+                    i++;
+                    break;
                 default:
                     return Usage($"unknown option {args[i]}");
             }
@@ -70,6 +78,13 @@ internal static class Gliner2Dump
         {
             return Usage("--out is required");
         }
+
+        if (device.Unavailable() is { } unavailable)
+        {
+            return Usage(unavailable);
+        }
+
+        profile ??= device.Profile("gliner2-base-v1/onnx-fp32-cpu");
 
         string? repoRoot = ToolSupport.FindRepositoryRoot();
         fixturesDir ??= repoRoot is null ? null : Path.Combine(repoRoot, "model-pipeline", "protected", "gliner2-base-v1", "onnx-fp32-cpu");
@@ -94,7 +109,7 @@ internal static class Gliner2Dump
         string? commit = ToolSupport.GitHead(repoRoot);
         using var extractor = Gliner2EntityExtractor.Create(files, new Gliner2ExtractorOptions
         {
-            Session = new OnnxSessionOptions { IntraOpNumThreads = threads },
+            Session = device.Apply(new OnnxSessionOptions { IntraOpNumThreads = threads }),
         });
         var d = extractor.Session.Diagnostics;
         var tokenizerAsset = new Asset(Gliner2ModelAssets.TokenizerFile, Gliner2ModelAssets.TokenizerSha256);
@@ -118,6 +133,7 @@ internal static class Gliner2Dump
         }
 
         var environment = StageEnvironment(d, outside);
+        device.Describe(environment);
 
         // Stage 1: the owned processor.
         var tokenizerStage = new StageWriter(profile, "tokenizer", "Starlings.Models.Gliner2 processor (Python-compatible normalization, splitter and lower-casing; schema prefix through the owned tokenizer, profile gliner2-base-v1-unigram)", commit, environment, [tokenizerAsset], Task);
@@ -136,7 +152,7 @@ internal static class Gliner2Dump
         }
 
         // Stage 3: the C# runtime and decoder on the fixture inputs.
-        var dotnetStage = new StageWriter(profile, "dotnet", $"C# Gliner2EntityExtractor: RunModel + decoder on the fixture inputs, and Prepare/RunModel/Decode from text; ONNX Runtime {d.OrtVersion} CPU (managed binding {d.ManagedBindingVersion})", commit, environment, [modelAsset, tokenizerAsset], Task);
+        var dotnetStage = new StageWriter(profile, "dotnet", $"C# Gliner2EntityExtractor: RunModel + decoder on the fixture inputs, and Prepare/RunModel/Decode from text; ONNX Runtime {d.OrtVersion} {device.Label} (managed binding {d.ManagedBindingVersion})", commit, environment, [modelAsset, tokenizerAsset], Task);
         var fixtureInputs = cases.ToDictionary(c => c.Id, c => c.FixtureInput(), StringComparer.Ordinal);
         foreach (var c in cases)
         {
@@ -223,7 +239,7 @@ internal static class Gliner2Dump
     private static Dictionary<string, object?> StageEnvironment(OnnxSessionDiagnostics d, Dictionary<string, string> outside) => new()
     {
         ["machine"] = System.Environment.MachineName,
-        ["provider"] = "cpu",
+        ["provider"] = d.SessionProviders.Contains(OnnxRuntimeInfo.CudaProviderName) ? "cuda" : "cpu",
         ["provider_options"] = d.ProviderOptions.ToDictionary(kv => kv.Key, kv => (object?)kv.Value),
         ["dotnet"] = RuntimeInformation.FrameworkDescription,
         ["os"] = RuntimeInformation.OSDescription,
@@ -252,7 +268,7 @@ internal static class Gliner2Dump
     private static int Usage(string error)
     {
         Console.Error.WriteLine($"error: {error}");
-        Console.Error.WriteLine("usage: Starlings.Fidelity.Tool gliner2 --out <dir> [--snapshot <dir>] [--fixtures <dir>] [--profile <id>] [--threads <n>]");
+        Console.Error.WriteLine("usage: Starlings.Fidelity.Tool gliner2 --out <dir> [--snapshot <dir>] [--fixtures <dir>] [--profile <id>] [--threads <n>] [--device cpu|cuda[:N]]");
         return 2;
     }
 }

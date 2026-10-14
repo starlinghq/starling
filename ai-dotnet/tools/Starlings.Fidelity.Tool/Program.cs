@@ -24,6 +24,8 @@
 //   --profile <id>     Profile id written into the results (default: multilingual-e5-small/onnx-fp32-cpu).
 //   --hidden           Also dump last hidden states (report-only comparison with Python ONNX Runtime).
 //   --threads <n>      Bound ONNX Runtime intra-op threads (default: runtime choice).
+//   --device <d>       cpu (default), cuda or cuda:N. cuda needs the CUDA build (ai-dotnet/tools/Starlings.Fidelity.Tool.Cuda)
+//                      and defaults the profile to multilingual-e5-small/onnx-fp32-cuda; see ToolDevice.cs.
 using System.Diagnostics;
 using System.Globalization;
 using System.Runtime.InteropServices;
@@ -73,9 +75,10 @@ if (args.Length < 1 || args[0] is "-h" or "--help" || args[0] != "e5")
 string? outDir = null;
 string? snapshot = Environment.GetEnvironmentVariable("STARLING_E5_SNAPSHOT");
 string? fixturesDir = null;
-string profile = "multilingual-e5-small/onnx-fp32-cpu";
+string? profile = null;
 bool hidden = false;
 int? threads = null;
+var device = ToolDevice.Cpu;
 for (int i = 1; i < args.Length; i++)
 {
     switch (args[i])
@@ -103,6 +106,13 @@ for (int i = 1; i < args.Length; i++)
 
             threads = count;
             break;
+        case "--device" when i + 1 < args.Length:
+            if (!ToolDevice.TryParse(args[++i], out device))
+            {
+                return Usage("--device must be cpu, cuda or cuda:N");
+            }
+
+            break;
         default:
             return Usage($"unknown option {args[i]}");
     }
@@ -112,6 +122,13 @@ if (outDir is null)
 {
     return Usage("--out is required");
 }
+
+if (device.Unavailable() is { } unavailable)
+{
+    return Usage(unavailable);
+}
+
+profile ??= device.Profile("multilingual-e5-small/onnx-fp32-cpu");
 
 string? repoRoot = ToolSupport.FindRepositoryRoot();
 fixturesDir ??= repoRoot is null
@@ -144,12 +161,12 @@ string? commit = ToolSupport.GitHead(repoRoot);
 var tokenizer = E5Tokenizer.FromFile(files.TokenizerPath, E5ModelAssets.TokenizerSha256);
 using var encoder = E5Encoder.Create(files.ModelPath, new E5EncoderOptions
 {
-    Session = new OnnxSessionOptions
+    Session = device.Apply(new OnnxSessionOptions
     {
         ExpectedModelSha256 = E5ModelAssets.ModelSha256,
         IntraOpNumThreads = threads,
         InterOpNumThreads = threads is null ? null : 1,
-    },
+    }),
 });
 var embedder = new E5TextEmbedder(tokenizer, encoder);
 var diagnostics = encoder.Session.Diagnostics;
@@ -157,7 +174,7 @@ var tokenizerAsset = new Asset(E5ModelAssets.TokenizerFile, E5ModelAssets.Tokeni
 var modelAsset = new Asset(E5ModelAssets.ModelFile, diagnostics.ModelSha256 ?? ToolSupport.Sha256(files.ModelPath));
 
 // Stage 1: tokenizer.
-var tokenizerResults = new StageWriter(profile, "tokenizer", "Starlings.Tokenizers via E5Tokenizer (profile xlmr-unigram-e5, right truncation to 512)", commit, StageEnvironment(diagnostics), [tokenizerAsset]);
+var tokenizerResults = new StageWriter(profile, "tokenizer", "Starlings.Tokenizers via E5Tokenizer (profile xlmr-unigram-e5, right truncation to 512)", commit, StageEnvironment(diagnostics, device), [tokenizerAsset]);
 foreach (var c in cases)
 {
     var input = tokenizer.Tokenize(texts[c.Id]);
@@ -167,7 +184,7 @@ foreach (var c in cases)
 tokenizerResults.Write(Path.Combine(outDir, "tokenizer.results.json"));
 
 // Stage 3: .NET, from ids and from text.
-var dotnet = new StageWriter(profile, "dotnet", $"C# E5Encoder + E5TextEmbedder, ONNX Runtime {diagnostics.OrtVersion} CPU (managed binding {diagnostics.ManagedBindingVersion})", commit, StageEnvironment(diagnostics), [modelAsset, tokenizerAsset]);
+var dotnet = new StageWriter(profile, "dotnet", $"C# E5Encoder + E5TextEmbedder, ONNX Runtime {diagnostics.OrtVersion} {device.Label} (managed binding {diagnostics.ManagedBindingVersion})", commit, StageEnvironment(diagnostics, device), [modelAsset, tokenizerAsset]);
 foreach (var c in cases)
 {
     dotnet.Case(c.Id)
@@ -211,10 +228,17 @@ static (int[] Shape, float[] Values) HiddenState(OnnxModelSession session, long[
     return ([ids.Length, values.Length / ids.Length], values);
 }
 
-static Dictionary<string, object?> StageEnvironment(OnnxSessionDiagnostics d) => new()
+static Dictionary<string, object?> StageEnvironment(OnnxSessionDiagnostics d, ToolDevice device)
+{
+    var environment = BaseEnvironment(d, device.Name);
+    device.Describe(environment);
+    return environment;
+}
+
+static Dictionary<string, object?> BaseEnvironment(OnnxSessionDiagnostics d, string provider) => new()
 {
     ["machine"] = System.Environment.MachineName,
-    ["provider"] = "cpu",
+    ["provider"] = provider,
     ["provider_options"] = d.ProviderOptions.ToDictionary(kv => kv.Key, kv => (object?)kv.Value),
     ["dotnet"] = RuntimeInformation.FrameworkDescription,
     ["os"] = RuntimeInformation.OSDescription,
@@ -235,8 +259,8 @@ static int Usage(string? error = null)
         Console.Error.WriteLine($"error: {error}");
     }
 
-    Console.Error.WriteLine("usage: Starlings.Fidelity.Tool e5 --out <dir> [--snapshot <dir>] [--fixtures <dir>] [--profile <id>] [--hidden] [--threads <n>]");
-    Console.Error.WriteLine("       Starlings.Fidelity.Tool gliner2 --out <dir> [--snapshot <dir>] [--fixtures <dir>] [--profile <id>] [--threads <n>]");
+    Console.Error.WriteLine("usage: Starlings.Fidelity.Tool e5 --out <dir> [--snapshot <dir>] [--fixtures <dir>] [--profile <id>] [--hidden] [--threads <n>] [--device cpu|cuda[:N]]");
+    Console.Error.WriteLine("       Starlings.Fidelity.Tool gliner2 --out <dir> [--snapshot <dir>] [--fixtures <dir>] [--profile <id>] [--threads <n>] [--device cpu|cuda[:N]]");
     Console.Error.WriteLine("       Starlings.Fidelity.Tool embeddinggemma2 --out <dir> [--snapshot <dir>] [--fixtures <dir>] [--profile <id>] [--threads <n>] [--device cpu|cuda[:N]]");
     Console.Error.WriteLine("       Starlings.Fidelity.Tool embeddinggemma2-images --out <dir> --images <dir> [options as embeddinggemma2]");
     Console.Error.WriteLine("       Starlings.Fidelity.Tool embeddinggemma2-videos --out <dir> --videos <dir> [--ffmpeg <dir>] [options as embeddinggemma2]");
