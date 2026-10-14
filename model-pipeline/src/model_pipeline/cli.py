@@ -89,6 +89,29 @@ def _check_protected(args: argparse.Namespace) -> int:
     return 0 if result.ok else 1
 
 
+def _catalog(args: argparse.Namespace) -> int:
+    from model_pipeline import catalog
+
+    registry, out, repo_root = Path(args.registry), Path(args.out), Path(args.repo_root)
+    try:
+        files = catalog.generate(registry, out, repo_root)
+    except catalog.CatalogError as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 2
+    if args.check:
+        stale = catalog.stale(files, out)
+        for name in stale:
+            print(f"STALE: {out / name}", file=sys.stderr)
+        if stale:
+            print("The catalog is stale. Regenerate it with: model-pipeline catalog", file=sys.stderr)
+            return 1
+        print(f"catalog up to date: {len(files)} file(s) in {out}")
+        return 0
+    catalog.write(files, out)
+    print(f"catalog written: {', '.join(str(out / name) for name in files)}")
+    return 0
+
+
 def _bench_validate(args: argparse.Namespace) -> int:
     results, problems = benchmarks.load([Path(p) for p in args.paths])
     for problem in problems:
@@ -157,6 +180,20 @@ def main(argv: list[str] | None = None) -> int:
     cp.add_argument("--labels-json", default=os.environ.get("PR_LABELS", ""), help="JSON list of label names")
     cp.add_argument("--files", help="newline-separated changed paths (default: git diff base...head)")
     cp.set_defaults(func=_check_protected)
+
+    from model_pipeline.catalog import DEFAULT_OUT, DEFAULT_REGISTRY, REPO_ROOT
+
+    cat = sub.add_parser(
+        "catalog",
+        help="generate the public catalog and compatibility matrix from the registry manifests (P-021)",
+        description="Writes README.md, compatibility-matrix.md and catalog.json. Exit codes: 0 written or up to "
+        "date; 1 --check found stale or missing output; 2 an invalid manifest or an empty registry.",
+    )
+    cat.add_argument("registry", nargs="?", default=str(DEFAULT_REGISTRY), help="registry directory")
+    cat.add_argument("--out", default=str(DEFAULT_OUT), help="output directory (default: docs/catalog)")
+    cat.add_argument("--repo-root", default=str(REPO_ROOT), help="repository root that evidence paths are relative to")
+    cat.add_argument("--check", action="store_true", help="write nothing; exit 1 when the committed output is stale")
+    cat.set_defaults(func=_catalog)
 
     bench = sub.add_parser("bench", help="raw benchmark results (starlings-bench-raw/1, P-008)")
     bench_sub = bench.add_subparsers(dest="bench_command", required=True)
