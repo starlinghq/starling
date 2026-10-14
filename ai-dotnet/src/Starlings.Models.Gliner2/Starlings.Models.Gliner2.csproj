@@ -24,6 +24,8 @@
     <InternalsVisibleTo Include="Starlings.Models.Gliner2.Tests.Cuda" />
     <!-- Upstream-format spans (normalized-text offsets) for the stage results dump. -->
     <InternalsVisibleTo Include="Starlings.Fidelity.Tool" />
+    <!-- The same upstream-format spans for the benchmark harness's per-series quality check (rules of the parity tests). -->
+    <InternalsVisibleTo Include="Starlings.Benchmarks.Gliner2Harness" />
   </ItemGroup>
 
 </Project>

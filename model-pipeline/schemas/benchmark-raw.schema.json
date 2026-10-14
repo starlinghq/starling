@@ -2,19 +2,22 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/starlinghq/starling/model-pipeline/schemas/benchmark-raw.schema.json",
   "title": "Raw benchmark record (starlings-bench-raw/1)",
-  "description": "One line of a raw benchmark result file (JSON lines), written by every harness of the matched-backend comparison (P-008, plan section 11). A 'run' record identifies one process: artifacts, environment, settings and the quality measured in that same process. 'series' records hold raw per-sample timings for one workload, path, concurrency level and mode, and point at their run by run_id. Summaries are computed from these records, never stored instead of them.",
+  "description": "One line of a raw benchmark result file (JSON lines), written by every harness of the matched-backend comparison (P-008, plan section 11) and by the G5 model harnesses (GLiNER2, EmbeddingGemma 2, Qwen3.5; docs/benchmarks/PROTOCOL.md). A 'run' record identifies one process: artifacts, environment, settings and the quality measured in that same process. 'series' records hold raw per-sample timings for one workload, path, concurrency level and mode, and point at their run by run_id. Summaries are computed from these records, never stored instead of them.",
   "oneOf": [{ "$ref": "#/$defs/run" }, { "$ref": "#/$defs/series" }],
   "$defs": {
     "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
     "quality": {
       "type": "object",
-      "required": ["max_abs", "min_cosine", "finite"],
+      "description": "Embedding harnesses record max_abs, min_cosine and finite against the reference; other harnesses (entities, generation) record their own check and its verdict in pass.",
+      "anyOf": [{ "required": ["max_abs", "min_cosine", "finite"] }, { "required": ["pass"] }],
       "properties": {
         "max_abs": { "type": "number", "minimum": 0 },
         "min_cosine": { "type": "number" },
-        "finite": { "type": "boolean" }
+        "finite": { "type": "boolean" },
+        "pass": { "type": "boolean" }
       }
     },
+    "numberArray": { "type": "array", "items": { "type": "number" }, "minItems": 1 },
     "msArray": { "type": "array", "items": { "type": "number", "minimum": 0 }, "minItems": 1 },
     "load": {
       "type": "object",
@@ -34,6 +37,8 @@
         "started_utc": { "type": "string" },
         "mode": { "enum": ["warm", "cold"] },
         "model": { "type": "string" },
+        "profile": { "type": "string", "description": "Registry profile(s) measured (model harnesses)." },
+        "load_ms": { "type": "object", "additionalProperties": { "type": "number" }, "description": "Load stage times of a warm process (model harnesses)." },
         "harness": {
           "type": "object",
           "required": ["name", "language", "impl", "version"],
@@ -81,7 +86,7 @@
         },
         "quality": {
           "type": "object",
-          "required": ["reference", "embedding_max_abs_tolerance", "cases", "pass"],
+          "required": ["reference", "cases", "pass"],
           "properties": {
             "embedding_max_abs_tolerance": { "type": "number" },
             "cases": { "type": "integer", "minimum": 1 },
@@ -98,7 +103,7 @@
         "kind": { "const": "series" },
         "run_id": { "type": "string", "minLength": 1 },
         "mode": { "enum": ["warm", "cold"] },
-        "path": { "enum": ["ids", "text"] },
+        "path": { "enum": ["ids", "text", "image"] },
         "workload": { "type": "string" },
         "input": { "type": "string" },
         "batch": { "type": "integer", "minimum": 1 },
@@ -108,6 +113,11 @@
         "wall_ms": { "type": "number", "minimum": 0 },
         "ms": { "$ref": "#/$defs/msArray" },
         "stages_ms": { "type": "object", "additionalProperties": { "$ref": "#/$defs/msArray" } },
+        "metrics": {
+          "type": "object",
+          "description": "Per-sample values other than stage times (generation: ttft_ms, token counts, tokens per second), one per sample.",
+          "additionalProperties": { "$ref": "#/$defs/numberArray" }
+        },
         "quality": { "$ref": "#/$defs/quality" }
       }
     }

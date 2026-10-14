@@ -9,7 +9,11 @@ statistics from the raw samples:
   within each run, so run-to-run variation widens the interval instead of being hidden by pooling;
 - p99 only when a group has at least ``P99_MIN_SAMPLES`` samples, p5/p95 only with at least ``TAIL_MIN_SAMPLES``;
 - C#-versus-Python ratios of medians with bootstrap intervals (the plan's headline comparison), and the adapter
-  overhead budget (library versus direct C# at p95: no more than the larger of 1 ms or 10%).
+  overhead budget (library versus direct C# at p95: no more than the larger of 1 ms or 10%);
+- medians of per-sample metrics other than time (generation harnesses: time to first token, tokens per second).
+
+Embedding harnesses rate each series by ``max_abs`` against the run's ``embedding_max_abs_tolerance``; the G5 model
+harnesses (entities, generation) record their own verdict in ``quality.pass``.
 
 Standard library only, so the summarizer runs without NumPy.
 """
@@ -88,6 +92,9 @@ def _series_problems(s: dict) -> list[str]:
     for name, values in s["stages_ms"].items():
         if len(values) != len(s["ms"]):
             problems.append(f"stage {name} has {len(values)} values for {len(s['ms'])} samples")
+    for name, values in s.get("metrics", {}).items():
+        if len(values) != len(s["ms"]):
+            problems.append(f"metric {name} has {len(values)} values for {len(s['ms'])} samples")
     return problems
 
 
@@ -159,6 +166,7 @@ def _key(run: dict, s: dict) -> tuple:
         s["concurrency"],
         run["harness"]["language"],
         run["harness"]["impl"],
+        run["model"],
     )
 
 
@@ -175,10 +183,14 @@ def summarize_group(series: list[dict], resamples: int, seed: int) -> dict:
     lo, hi = bootstrap(runs, median, resamples, seed)
     throughput = [s["n"] * s["batch"] / (s["wall_ms"] / 1000) for s in series]
     stages = defaultdict(list)
+    metrics = defaultdict(list)
     for s in series:
         for name, values in s["stages_ms"].items():
             stages[name].extend(values)
-    return {
+        for name, values in s.get("metrics", {}).items():
+            metrics[name].extend(values)
+    max_abs = [s["quality"]["max_abs"] for s in series if "max_abs" in s["quality"]]
+    summary = {
         "runs": len(runs),
         "n": len(pooled),
         "batch": series[0]["batch"],
@@ -191,9 +203,12 @@ def summarize_group(series: list[dict], resamples: int, seed: int) -> dict:
         "items_per_s": median(throughput),
         "items_per_s_range": [min(throughput), max(throughput)],
         "stage_median_ms": {name: median(values) for name, values in stages.items()},
-        "quality_max_abs": max(s["quality"]["max_abs"] for s in series),
-        "quality_finite": all(s["quality"]["finite"] for s in series),
+        "quality_max_abs": max(max_abs) if max_abs else None,
+        "quality_finite": all(s["quality"].get("finite", True) for s in series),
     }
+    if metrics:
+        summary["metric_median"] = {name: median(values) for name, values in metrics.items()}
+    return summary
 
 
 def compare(
@@ -248,14 +263,18 @@ def overhead_budget(row: dict) -> dict:
 def split_by_quality(results: RawResults) -> tuple[list[dict], list[dict]]:
     """Separates series whose timings may be presented from those that failed quality.
 
-    A series is excluded when its own outputs exceed its run's ``embedding_max_abs_tolerance`` or are not finite, or
-    when its run's quality did not pass (the preliminary sweep or any other series of the same process failed).
+    A series is excluded when its own outputs exceed its run's ``embedding_max_abs_tolerance`` or are not finite
+    (embedding harnesses) or its own ``quality.pass`` is false (the other harnesses), or when its run's quality did
+    not pass (the preliminary sweep or any other series of the same process failed).
     """
     valid, failed = [], []
     for s in results.series:
         run = results.runs[s["run_id"]]
-        tolerance = run["quality"]["embedding_max_abs_tolerance"]
-        own = s["quality"]["max_abs"] <= tolerance and s["quality"]["finite"]
+        tolerance = run["quality"].get("embedding_max_abs_tolerance")
+        if tolerance is not None:
+            own = s["quality"]["max_abs"] <= tolerance and s["quality"]["finite"]
+        else:
+            own = bool(s["quality"].get("pass", False))
         if own and run["quality"]["pass"]:
             valid.append(s)
             continue
@@ -269,10 +288,12 @@ def split_by_quality(results: RawResults) -> tuple[list[dict], list[dict]]:
                 "path": s["path"],
                 "workload": s["workload"],
                 "concurrency": s["concurrency"],
-                "max_abs": s["quality"]["max_abs"],
-                "finite": s["quality"]["finite"],
+                "max_abs": s["quality"].get("max_abs"),
+                "finite": s["quality"].get("finite"),
                 "tolerance": tolerance,
-                "reason": "series outside tolerance" if not own else "run quality failed",
+                "reason": "run quality failed"
+                if own
+                else ("series outside tolerance" if tolerance is not None else "series failed its own check"),
             }
         )
     return valid, failed
@@ -331,6 +352,10 @@ def summarize(results: RawResults, resamples: int = 2000, seed: int = 1) -> dict
 # ---------------------------------------------------------------------------------------------- Markdown
 
 
+def _num(v: float | None, fmt: str) -> str:
+    return "n/a" if v is None else format(v, fmt)
+
+
 def _ms(v: float | None) -> str:
     if v is None:
         return "n/a"
@@ -358,7 +383,8 @@ def markdown(summary: dict) -> str:
         for f in summary["quality_failures"]:
             lines.append(
                 f"| {f['language']}/{f['impl']} | {f['provider']} | {f['mode']} | {f['path']} | {f['workload']} "
-                f"| {f['concurrency']} | {f['max_abs']:.2e} | {f['finite']} | {f['tolerance']:.1e} | {f['reason']} |"
+                f"| {f['concurrency']} | {_num(f['max_abs'], '.2e')} | {f['finite']} | {_num(f['tolerance'], '.1e')} "
+                f"| {f['reason']} |"
             )
         lines.append("")
     lines += [
@@ -405,8 +431,24 @@ def markdown(summary: dict) -> str:
             f"| {g['provider']} | {g['mode']} | {g['path']} | {g['workload']} | {g['concurrency']} | {harness} "
             f"| {g['runs']} | {g['n']} | {_ms(g['median_ms'])} ({_ms(g['median_ci95_ms'][0])}–"
             f"{_ms(g['median_ci95_ms'][1])}) | {tails} | {_ms(g['p99_ms'])} | {g['items_per_s']:,.1f} | {stages} "
-            f"| {g['quality_max_abs']:.2e} |"
+            f"| {_num(g['quality_max_abs'], '.2e') if g['quality_max_abs'] is not None else 'pass'} |"
         )
+    with_metrics = [g for g in summary["groups"] if "metric_median" in g]
+    if with_metrics:
+        names = list(dict.fromkeys(name for g in with_metrics for name in g["metric_median"]))
+        lines += [
+            "",
+            "### Per-sample metrics (medians)",
+            "",
+            "| Provider | Mode | Path | Workload | Conc. | Harness | n | " + " | ".join(names) + " |",
+            "| --- | --- | --- | --- | ---: | --- | ---: | " + " | ".join("---:" for _ in names) + " |",
+        ]
+        for g in with_metrics:
+            values = " | ".join(_num(g["metric_median"].get(name), ",.2f") for name in names)
+            lines.append(
+                f"| {g['provider']} | {g['mode']} | {g['path']} | {g['workload']} | {g['concurrency']} "
+                f"| {g['language']}/{g['impl']} | {g['n']} | {values} |"
+            )
     lines += [
         "",
         "### Runs",
@@ -419,8 +461,10 @@ def markdown(summary: dict) -> str:
         q = r["quality"]
         if "ids_single" in q:
             qtext = f"{q['ids_single']['max_abs']:.2e} / {q['text_single']['max_abs']:.2e}, {q['pass']}"
-        else:
+        elif "max_abs" in q.get("cold_first_request", {}):
             qtext = f"{q['cold_first_request']['max_abs']:.2e} (first request), {q['pass']}"
+        else:
+            qtext = f"{q['cases']} cases, {q['pass']}"
         loadavg = r["load_before"]["loadavg"]
         lines.append(
             f"| {r['started_utc'][:19]} | {r['language']}/{r['impl']} | {r['provider']} | {r['mode']} "

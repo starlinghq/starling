@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Generation harness for Qwen3.5-0.8B (G5): prefill throughput, decode tokens/s, time to first token and greedy
+    output checked against the reference for fixed prompts; warm series and cold starts in fresh processes. Shared
+    harness core in ../Core. CPU GenAI natives. Not packed; never run in CI.
+  -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <RootNamespace>Starlings.Benchmarks</RootNamespace>
+    <ServerGarbageCollection>false</ServerGarbageCollection>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.ML.OnnxRuntimeGenAI" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="../Core/*.cs" Link="Core/%(Filename)%(Extension)" />
+    <Compile Include="../../tests/Shared/Qwen35/Qwen35TestAssets.cs" Link="Shared/Qwen35TestAssets.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../src/Starlings.Models.Qwen35/Starlings.Models.Qwen35.csproj" />
+    <!-- The shared core records ONNX Runtime session settings types; no ONNX Runtime session is created here. -->
+    <ProjectReference Include="../../src/Starlings.Runtime.Onnx/Starlings.Runtime.Onnx.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Realistic-workload harness for GLiNER2 entity extraction (G5): warm series with stage timings, cold starts in fresh
+    processes, quality attached to every series. Shared harness core in ../Core. CPU native runtime. Not packed; never
+    run in CI.
+  -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <RootNamespace>Starlings.Benchmarks</RootNamespace>
+    <ServerGarbageCollection>false</ServerGarbageCollection>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.ML.OnnxRuntime" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="../Core/*.cs" Link="Core/%(Filename)%(Extension)" />
+    <Compile Include="../../tests/Shared/Gliner2/Gliner2TestAssets.cs" Link="Shared/Gliner2TestAssets.cs" />
+    <Compile Include="../../tests/Shared/Gliner2/Gliner2ParityChecks.cs" Link="Shared/Gliner2ParityChecks.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../src/Starlings.Models.Gliner2/Starlings.Models.Gliner2.csproj" />
+  </ItemGroup>
+
+</Project>
