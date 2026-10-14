@@ -43,6 +43,11 @@ if (args.Length >= 1 && args[0] == "embeddinggemma2-videos")
     return EmbeddingGemma2VideoDump.Run(args[1..]);
 }
 
+if (args.Length >= 1 && args[0] == "embeddinggemma2-long")
+{
+    return EmbeddingGemma2LongDump.Run(args[1..]);
+}
+
 if (args.Length >= 1 && args[0] == "embeddinggemma2-images")
 {
     return EmbeddingGemma2ImageDump.Run(args[1..]);
@@ -228,6 +233,7 @@ static int Usage(string? error = null)
     Console.Error.WriteLine("       Starlings.Fidelity.Tool embeddinggemma2 --out <dir> [--snapshot <dir>] [--fixtures <dir>] [--profile <id>] [--threads <n>] [--device cpu|cuda[:N]]");
     Console.Error.WriteLine("       Starlings.Fidelity.Tool embeddinggemma2-images --out <dir> --images <dir> [options as embeddinggemma2]");
     Console.Error.WriteLine("       Starlings.Fidelity.Tool embeddinggemma2-videos --out <dir> --videos <dir> [--ffmpeg <dir>] [options as embeddinggemma2]");
+    Console.Error.WriteLine("       Starlings.Fidelity.Tool embeddinggemma2-long --out <dir> --rows <long-embeddings.jsonl> --images <dir> --videos <dir> [--ffmpeg <dir>] [options as embeddinggemma2]");
     Console.Error.WriteLine("  --device cuda needs the CUDA build: ai-dotnet/tools/Starlings.Fidelity.Tool.Cuda");
     return error is null ? 0 : 2;
 }

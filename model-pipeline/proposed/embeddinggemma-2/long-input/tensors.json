@@ -1,0 +1,618 @@
+{
+  "txt-alice-2600-none": {
+    "input_ids": {
+      "shape": [
+        2600
+      ],
+      "dtype": "int64",
+      "sha256": "2e00f20e424f68816d858306ef1ec48a911c02f18e1f13303ec8c778ec534598"
+    },
+    "token_embeddings": {
+      "shape": [
+        2600,
+        768
+      ],
+      "dtype": "float32",
+      "sha256": "4f95938cb5dc532354e9d9284a4b38eb31463f0143f5725ea085cfa4caa906b7"
+    },
+    "embedding": {
+      "shape": [
+        768
+      ],
+      "dtype": "float32",
+      "sha256": "9a4f53bd1f169a9fb8e1905604e2c1400a4ef27aef4e39d4c8439749fd667446"
+    }
+  },
+  "txt-alice-4096-query": {
+    "input_ids": {
+      "shape": [
+        4096
+      ],
+      "dtype": "int64",
+      "sha256": "dd206a3b9800a0d473019bd82c0bed339fb4ae472c79ddea3924375f171df39a"
+    },
+    "token_embeddings": {
+      "shape": [
+        4096,
+        768
+      ],
+      "dtype": "float32",
+      "sha256": "f045bca6de31b01631478978a05c2bf9b69dd30592b5748ba269c2324b5a248f"
+    },
+    "embedding": {
+      "shape": [
+        768
+      ],
+      "dtype": "float32",
+      "sha256": "c6ea4f55a314e8a152f974e96e96fcf5da665c4e3b11679e91c5487e10b9490f"
+    }
+  },
+  "txt-alice-6144-document": {
+    "input_ids": {
+      "shape": [
+        6144
+      ],
+      "dtype": "int64",
+      "sha256": "0bb5f18479dde81aff0a8aca439c0adf350cde809a67fe98c4a745f17007f8bd"
+    },
+    "token_embeddings": {
+      "shape": [
+        6144,
+        768
+      ],
+      "dtype": "float32",
+      "sha256": "8c5ba389985ac28d4323c7c024c0cb7ad87173946090cce0e614ea7c6928adc8"
+    },
+    "embedding": {
+      "shape": [
+        768
+      ],
+      "dtype": "float32",
+      "sha256": "bc4ff4f03350df55110090a8b0eda52fc5a39d0d7d5b39758197362dd90e5da7"
+    }
+  },
+  "txt-alice-8191-document": {
+    "input_ids": {
+      "shape": [
+        8191
+      ],
+      "dtype": "int64",
+      "sha256": "55910f89a0ff19ea2fa15e0db58280dfdba8ca7db13e123a5efc7fbdb4ac85a1"
+    },
+    "token_embeddings": {
+      "shape": [
+        8191,
+        768
+      ],
+      "dtype": "float32",
+      "sha256": "0e69858b4c76b0154cb7763af00214d1711aefba552dac0b9e9644c507d16069"
+    },
+    "embedding": {
+      "shape": [
+        768
+      ],
+      "dtype": "float32",
+      "sha256": "eec69ca05d7e5fe56b172ececb2c3ff35ee82dc1b59939b79d61604b4ee89c71"
+    }
+  },
+  "txt-alice-8192-none": {
+    "input_ids": {
+      "shape": [
+        8192
+      ],
+      "dtype": "int64",
+      "sha256": "67a95c3707909a0ddbadfc9cee7f192dc60dfbc928854b5c874eeaf9a967e63e"
+    },
+    "token_embeddings": {
+      "shape": [
+        8192,
+        768
+      ],
+      "dtype": "float32",
+      "sha256": "d5c6ca98e50d8a1519b9516407c146cca8abdc19bd0fe26c729e9ed9ebdb269b"
+    },
+    "embedding": {
+      "shape": [
+        768
+      ],
+      "dtype": "float32",
+      "sha256": "91a9db1558de8cfc64f31250e7c1e539a404bb974296c5d8346da28e0454dacf"
+    }
+  },
+  "txt-alice-8192-query": {
+    "input_ids": {
+      "shape": [
+        8192
+      ],
+      "dtype": "int64",
+      "sha256": "8ddca89b3f82acf3a74f78baf4767fad9d2a24dba3791fd1ba944fafb40cac0b"
+    },
+    "token_embeddings": {
+      "shape": [
+        8192,
+        768
+      ],
+      "dtype": "float32",
+      "sha256": "a22ee7bdcdc3bec87d598d360eeffdc64ca88341992cdbc29e1dc5d67f504c13"
+    },
+    "embedding": {
+      "shape": [
+        768
+      ],
+      "dtype": "float32",
+      "sha256": "81279b857bfc610b0e8f869729f0ad0bcfbfca42ce04ccd20cbd82e3f16a4dec"
+    }
+  },
+  "txt-constitution-document": {
+    "input_ids": {
+      "shape": [
+        5950
+      ],
+      "dtype": "int64",
+      "sha256": "de1f18445c88360dbcdc2953a60b081a658d2307c15695267168b9413ad62139"
+    },
+    "token_embeddings": {
+      "shape": [
+        5950,
+        768
+      ],
+      "dtype": "float32",
+      "sha256": "6e29af71f2c6af6a78bdacbf7a7c8fd67b20cde52cb8cfaa7ef9425129de9f8e"
+    },
+    "embedding": {
+      "shape": [
+        768
+      ],
+      "dtype": "float32",
+      "sha256": "4b029894905caa26717f9b80fb4db39026eec2ccf2350c588e30c727d6a6afb4"
+    }
+  },
+  "txt-corpus-cycle-8192-none": {
+    "input_ids": {
+      "shape": [
+        8192
+      ],
+      "dtype": "int64",
+      "sha256": "45b6e0e14b4b30ca65eed9c52040099021cd3258e8a80f5c66e59522412d0de5"
+    },
+    "token_embeddings": {
+      "shape": [
+        8192,
+        768
+      ],
+      "dtype": "float32",
+      "sha256": "132111d1bf26aaa11d46f7465a30bb9dcb4c6174aa718dff1ee26fbd22e06d48"
+    },
+    "embedding": {
+      "shape": [
+        768
+      ],
+      "dtype": "float32",
+      "sha256": "e2de748c0c3e2352e090b25a17b2373e8514ebe6649423711699b636b15f0518"
+    }
+  },
+  "txt-alice-8193-none": {
+    "input_ids": {
+      "shape": [
+        8193
+      ],
+      "dtype": "int64",
+      "sha256": "dd52d6627da160ebfc4b5c58ecf24ab0299dc847265cf08831d86c6ab2fe2d4b"
+    },
+    "token_embeddings": {
+      "shape": [
+        8193,
+        768
+      ],
+      "dtype": "float32",
+      "sha256": "2907598317e6785df98845b69f070061112332e696de4f3a427397421b5c8fff"
+    },
+    "embedding": {
+      "shape": [
+        768
+      ],
+      "dtype": "float32",
+      "sha256": "55adad100087a280cf92d218d94cd2ab96ad7b0872f4e0eb28c22475ac6275cd"
+    }
+  },
+  "txt-alice-8192-text-document-prompt": {
+    "input_ids": {
+      "shape": [
+        8198
+      ],
+      "dtype": "int64",
+      "sha256": "3fa53860f1b0de68a9b933066336960197e67c9ee5fe0ed72c414bcc1baa8f5e"
+    },
+    "token_embeddings": {
+      "shape": [
+        8198,
+        768
+      ],
+      "dtype": "float32",
+      "sha256": "cf869a92f5dc21b95e759efbed990d2f708346e9bda6180b02534e162b297568"
+    },
+    "embedding": {
+      "shape": [
+        768
+      ],
+      "dtype": "float32",
+      "sha256": "51acef16defec929a564a3f86fc14900242aa4b4cca2815ca966f70cec47dd56"
+    }
+  },
+  "mm-alice-6-images-6000-none": {
+    "input_ids": {
+      "shape": [
+        6000
+      ],
+      "dtype": "int64",
+      "sha256": "c3641b05b16734a2f7fb63cf222676d3276e9d81a33d3a977a4ab6bb39182604"
+    },
+    "token_embeddings": {
+      "shape": [
+        6000,
+        768
+      ],
+      "dtype": "float32",
+      "sha256": "8d208b9be1ac1e0aecf34a3a28181b2914969f17dcca0fed4b5b2df700264a1a"
+    },
+    "embedding": {
+      "shape": [
+        768
+      ],
+      "dtype": "float32",
+      "sha256": "b0a564c2a13da9239e523a501c19b03b0abc7304896b0f67aed5db45af9bbb49"
+    },
+    "image0_soft_tokens": {
+      "shape": [
+        260,
+        512
+      ],
+      "dtype": "float32",
+      "sha256": "c1f759ac228ab430d616832b6f477ccf5a2f8071b071349971fc847abc011b47"
+    },
+    "image1_soft_tokens": {
+      "shape": [
+        260,
+        512
+      ],
+      "dtype": "float32",
+      "sha256": "0772ea7c986b274c6dddd049f745cecbf012392e1f8a644dba452113b75552b6"
+    },
+    "image2_soft_tokens": {
+      "shape": [
+        256,
+        512
+      ],
+      "dtype": "float32",
+      "sha256": "869a4e81cccc634f4caac88dad1e2988ecd80333225c35d7db1dcad847ff3b7e"
+    },
+    "image3_soft_tokens": {
+      "shape": [
+        256,
+        512
+      ],
+      "dtype": "float32",
+      "sha256": "5784bdf9b8e45ed205d5f07a62888ace38ada00697e8802d6bf3e392372328d0"
+    },
+    "image4_soft_tokens": {
+      "shape": [
+        260,
+        512
+      ],
+      "dtype": "float32",
+      "sha256": "d122d77d032f416865416004deac370db2170a3beb07a0c158940da87a0a4dab"
+    },
+    "image5_soft_tokens": {
+      "shape": [
+        255,
+        512
+      ],
+      "dtype": "float32",
+      "sha256": "93dbf9f7f0c18dbeb1b83350366253f26d28849debaf1d477d267840dc06cff3"
+    }
+  },
+  "mm-alice-8-images-8192-document": {
+    "input_ids": {
+      "shape": [
+        8192
+      ],
+      "dtype": "int64",
+      "sha256": "07f31cfa193c70dc3a3e8b8c2975b4c6e2257f11b51b91b634ea02385125830c"
+    },
+    "token_embeddings": {
+      "shape": [
+        8192,
+        768
+      ],
+      "dtype": "float32",
+      "sha256": "5338eceba3364e71f4cefe240837dc205310c5d01102cc9f4e2ce827ae7903b2"
+    },
+    "embedding": {
+      "shape": [
+        768
+      ],
+      "dtype": "float32",
+      "sha256": "225d99debbee93ae3247f14edf3d31314085440da37844d7c722bcf6b787f78a"
+    },
+    "image0_soft_tokens": {
+      "shape": [
+        260,
+        512
+      ],
+      "dtype": "float32",
+      "sha256": "b36cda65b273ebda5b364bfe182ac6a7f34da4bc58851771a5da31696f263b55"
+    },
+    "image1_soft_tokens": {
+      "shape": [
+        260,
+        512
+      ],
+      "dtype": "float32",
+      "sha256": "eaed5dec2ca1c26d10684e4de0946872ee6f4e973c496ad9999d151f14b532c0"
+    },
+    "image2_soft_tokens": {
+      "shape": [
+        256,
+        512
+      ],
+      "dtype": "float32",
+      "sha256": "e881b34a10a1f16c123b95d3a01bcb905604dc428e14a4a82e83a3f0338b8d41"
+    },
+    "image3_soft_tokens": {
+      "shape": [
+        256,
+        512
+      ],
+      "dtype": "float32",
+      "sha256": "ff99e93980d7688f7b43cd1d389b840a7826aa2bd67eeba2d0d31fd4a0c5ac53"
+    },
+    "image4_soft_tokens": {
+      "shape": [
+        260,
+        512
+      ],
+      "dtype": "float32",
+      "sha256": "ab791d0c326b8903eda4e0338fe33937daab84a068d4bacc71c91488c7d0782d"
+    },
+    "image5_soft_tokens": {
+      "shape": [
+        255,
+        512
+      ],
+      "dtype": "float32",
+      "sha256": "302845555cda75de4d564ec2f1c2a40c5fdc059c0849aee1d3575c47b18e2177"
+    },
+    "image6_soft_tokens": {
+      "shape": [
+        266,
+        512
+      ],
+      "dtype": "float32",
+      "sha256": "66f7df89317d69706d842bbc95407f5c174f3df64aebb8f6f0c473ceffd19494"
+    },
+    "image7_soft_tokens": {
+      "shape": [
+        264,
+        512
+      ],
+      "dtype": "float32",
+      "sha256": "68385447dc63dac807d90cd05c95067777ee7960ceadf861c7a6c32b32a8bd49"
+    }
+  },
+  "mm-alice-6-images-8193-none": {
+    "input_ids": {
+      "shape": [
+        8193
+      ],
+      "dtype": "int64",
+      "sha256": "e93a31b512697c488fa3a0f3a25a4b6a15c196de43ca0a1c9bd3fdad45070d2c"
+    },
+    "token_embeddings": {
+      "shape": [
+        8193,
+        768
+      ],
+      "dtype": "float32",
+      "sha256": "5a6698510eeba7f6475f211fea167003f9e504deb3e01f9a08418daeab37c7b9"
+    },
+    "embedding": {
+      "shape": [
+        768
+      ],
+      "dtype": "float32",
+      "sha256": "107d56d77e79abaffcb24367cc336111af327234c5c7d519af80bd1fce6ab592"
+    },
+    "image0_soft_tokens": {
+      "shape": [
+        260,
+        512
+      ],
+      "dtype": "float32",
+      "sha256": "c1f759ac228ab430d616832b6f477ccf5a2f8071b071349971fc847abc011b47"
+    },
+    "image1_soft_tokens": {
+      "shape": [
+        260,
+        512
+      ],
+      "dtype": "float32",
+      "sha256": "0772ea7c986b274c6dddd049f745cecbf012392e1f8a644dba452113b75552b6"
+    },
+    "image2_soft_tokens": {
+      "shape": [
+        256,
+        512
+      ],
+      "dtype": "float32",
+      "sha256": "869a4e81cccc634f4caac88dad1e2988ecd80333225c35d7db1dcad847ff3b7e"
+    },
+    "image3_soft_tokens": {
+      "shape": [
+        256,
+        512
+      ],
+      "dtype": "float32",
+      "sha256": "5784bdf9b8e45ed205d5f07a62888ace38ada00697e8802d6bf3e392372328d0"
+    },
+    "image4_soft_tokens": {
+      "shape": [
+        260,
+        512
+      ],
+      "dtype": "float32",
+      "sha256": "d122d77d032f416865416004deac370db2170a3beb07a0c158940da87a0a4dab"
+    },
+    "image5_soft_tokens": {
+      "shape": [
+        255,
+        512
+      ],
+      "dtype": "float32",
+      "sha256": "93dbf9f7f0c18dbeb1b83350366253f26d28849debaf1d477d267840dc06cff3"
+    }
+  },
+  "mm-alice-video32-7000-none": {
+    "input_ids": {
+      "shape": [
+        7000
+      ],
+      "dtype": "int64",
+      "sha256": "58b610d5e90e707b2c23e07462441fd8ceff0c4193f12fa3a1d5745f5f981280"
+    },
+    "token_embeddings": {
+      "shape": [
+        7000,
+        768
+      ],
+      "dtype": "float32",
+      "sha256": "350a44fcfb0eb4ef1d1509a573284461cdb3f26b9dbb1c9be2451a6ed8448b00"
+    },
+    "embedding": {
+      "shape": [
+        768
+      ],
+      "dtype": "float32",
+      "sha256": "bd783dd504b0091831196043305401fa1835d76566d84808de27c9b91455f232"
+    },
+    "video0_soft_tokens": {
+      "shape": [
+        4160,
+        512
+      ],
+      "dtype": "float32",
+      "sha256": "4b736dbe1c57c89bca222d134ce0c681b00385abb5572573d5489d96100e0734"
+    }
+  },
+  "mm-alice-video32-8192-query": {
+    "input_ids": {
+      "shape": [
+        8192
+      ],
+      "dtype": "int64",
+      "sha256": "8432c9609ad8c7b0bed67d07f7a7915f1c5ec7c63855c137f817660e9e5cfb39"
+    },
+    "token_embeddings": {
+      "shape": [
+        8192,
+        768
+      ],
+      "dtype": "float32",
+      "sha256": "0fc6bd49c5adb14fe24cbb332d6247afcdb271ed0199d24df2ed7880ac1362f9"
+    },
+    "embedding": {
+      "shape": [
+        768
+      ],
+      "dtype": "float32",
+      "sha256": "1ef0ac937cc7bc6e4efab3578563d788c7b50b51e69a16d9ac04fb11e84a3635"
+    },
+    "video0_soft_tokens": {
+      "shape": [
+        4160,
+        512
+      ],
+      "dtype": "float32",
+      "sha256": "eb6dbd342269bda65bcb0f69811bd9993c809032676856e225fa67ee28e68bee"
+    }
+  },
+  "mm-alice-two-videos-image-8192-document": {
+    "input_ids": {
+      "shape": [
+        8192
+      ],
+      "dtype": "int64",
+      "sha256": "d89bfada8f6c31701990c9c1597132dad5500c5465fd6b83a709641437d6dbb5"
+    },
+    "token_embeddings": {
+      "shape": [
+        8192,
+        768
+      ],
+      "dtype": "float32",
+      "sha256": "b2c4610962455b9649f05e1b7f51257adb0c0d327a5345b02cc74efe25ae6e55"
+    },
+    "embedding": {
+      "shape": [
+        768
+      ],
+      "dtype": "float32",
+      "sha256": "d97c097ecfdf32a33b86c25cb7e971ef3e0034f75617d85a59406997dd197113"
+    },
+    "video0_soft_tokens": {
+      "shape": [
+        4160,
+        512
+      ],
+      "dtype": "float32",
+      "sha256": "10f6ec1de25f56bdcdbb877a4380f6efdd1d9b8b21ebe42c269012bc161d5a28"
+    },
+    "image0_soft_tokens": {
+      "shape": [
+        256,
+        512
+      ],
+      "dtype": "float32",
+      "sha256": "98beaf629361af0bbe6211e606783a6847d9d80f7159cc6d10f4e217e6dde005"
+    },
+    "video1_soft_tokens": {
+      "shape": [
+        1560,
+        512
+      ],
+      "dtype": "float32",
+      "sha256": "ebd68cc47f704aef8ff53f7fcf97693f10eead795c1eafdfe7892ee6a14d5d14"
+    }
+  },
+  "mm-alice-video32-8193-none": {
+    "input_ids": {
+      "shape": [
+        8193
+      ],
+      "dtype": "int64",
+      "sha256": "b2ae15ddb3f7d1af7bb277fc36186ea6c14d83f6e825947d97fb0541f227542c"
+    },
+    "token_embeddings": {
+      "shape": [
+        8193,
+        768
+      ],
+      "dtype": "float32",
+      "sha256": "cef7efc24f0c25723723827d5975634c7def55d62246fb8bf499ea95a8e6bba9"
+    },
+    "embedding": {
+      "shape": [
+        768
+      ],
+      "dtype": "float32",
+      "sha256": "f09f4a041e6ad51fd906e78df1ffebfd384a7c61788ff672a33ebe58d445f777"
+    },
+    "video0_soft_tokens": {
+      "shape": [
+        4160,
+        512
+      ],
+      "dtype": "float32",
+      "sha256": "4b736dbe1c57c89bca222d134ce0c681b00385abb5572573d5489d96100e0734"
+    }
+  }
+}
