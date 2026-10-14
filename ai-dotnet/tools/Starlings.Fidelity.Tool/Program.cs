@@ -14,6 +14,9 @@
 // [--ffmpeg <dir>]`; see EmbeddingGemma2VideoDump.cs.
 // Task quality (G3): `-- retrieval --model e5|embeddinggemma2 --dataset <dir> --out <file>` and `-- ner --dataset
 // <gold.jsonl> --out <file>`; see TaskQualityDump.cs (inputs of `model-pipeline evaluate --g3`).
+// Tokenizer fixture files (G1 on a tokenizer holdout or release set): `-- tokenizer --model e5|embeddinggemma2|qwen35|gliner2
+// --tokenizer <tokenizer.json> --fixtures <fixture.jsonl> --out <dir>`; see TokenizerDump.cs (input of
+// `model-pipeline evaluate --tokenizer-fixtures`).
 // Then `model-pipeline evaluate` compares them with the protected fixtures and tolerances. This tool applies
 // no thresholds and writes nothing under model-pipeline/protected/.
 //
@@ -40,6 +43,11 @@ using Microsoft.ML.OnnxRuntime;
 if (args.Length >= 1 && args[0] is "retrieval" or "ner")
 {
     return TaskQualityDump.Run(args[0], args[1..]);
+}
+
+if (args.Length >= 1 && args[0] == "tokenizer")
+{
+    return TokenizerDump.Run(args[1..]);
 }
 
 if (args.Length >= 1 && args[0] == "gliner2")

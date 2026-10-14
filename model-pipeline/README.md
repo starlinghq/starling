@@ -13,7 +13,7 @@ The delivery system: model registry, manifest schema, admission records, referen
 | `admissions/` | Admission records; start from `TEMPLATE.md`. | P-027, stage 1 |
 | `protected/` | Reference fixtures and tolerances. Maintainer review only. | P-003, P-007 |
 | `reference/` | Reference runners with pinned requirements, and the tokenizer conformance corpus. See `reference/README.md`. | P-003, P-004, P-027 |
-| `src/model_pipeline/` | CLI and stage implementations: `manifest.py` (validation), `fixtures.py` (fixture format), `results.py` (stage results format), `evaluate.py` (staged fidelity evaluator; per task `evaluate_*.py`), `evaluate_task_quality.py` (G3 task metrics), `protection.py` (protected evidence rules). | P-002 onward |
+| `src/model_pipeline/` | CLI and stage implementations: `manifest.py` (validation), `fixtures.py` (fixture format), `results.py` (stage results format), `evaluate.py` (staged fidelity evaluator; per task `evaluate_*.py`), `evaluate_task_quality.py` (G3 task metrics), `evaluate_tokenizer_fixtures.py` (G1 on a tokenizer fixture file), `protection.py` (protected evidence rules). | P-002 onward |
 | `tests/` | Pipeline tests with synthetic fixtures. | |
 | `src/model_pipeline/catalog.py` | Generates `docs/catalog/` (README, compatibility matrix, `catalog.json`) from the registry; `model-pipeline catalog --check` runs in CI. | P-021 |
 
@@ -41,8 +41,11 @@ Acquisition and verified loading (P-009) is the C# `Starlings.Acquisition` libra
 ## Staged fidelity evaluator (P-007)
 
 ```sh
-model-pipeline evaluate registry/<family>/<profile>/manifest.yaml --results <dir> --out <dir> [--require-gates G1,G2]
+model-pipeline evaluate registry/<family>/<profile>/manifest.yaml --results <dir> --out <dir> [--require-gates G1,G2] \
+  [--fixtures model-pipeline/protected/<family>/release/<set>]
 ```
+
+`--fixtures` evaluates against another protected fixtures directory instead of the manifest's `qualification.fixtures`, for example a P-030 release set (`model-pipeline/protected/README.md`). It is repository-relative and must lie inside `model-pipeline/protected/` like the manifest path (absolute paths, `..`, symbolic links and anything else are refused, exit 3); the directory must hold the task's fixture files, and it is verified against Git like any protected file. Tolerances still come only from the manifest. Without the option nothing changes. The report records the directory and where it came from (`inputs.fixtures_directory`, and a `Fixtures:` line in `report.md`). The C# producers take the same directory with their own `--fixtures` option (`Starlings.Fidelity.Tool`), the Qwen3.5 runner with `--prompts` and `--reference`.
 
 Runners write candidate outputs in the stage results format (`src/model_pipeline/results.py`, `schemas/stage-results.schema.json`), one `<stage>.results.json` per stage, with float32 sidecar files for large tensors such as hidden states. The evaluator compares them with the profile's protected fixtures, using only the profile's protected tolerances, in this order:
 
@@ -184,6 +187,17 @@ model-pipeline evaluate registry/qwen3.5-0.8b/ortgenai-fp32x-cpu/manifest.yaml -
 ```
 
 These are the accepted development fixtures (agent-written prompts), not the P-030 release set; a pass here is G1/G2 evidence on development fixtures only.
+
+## Tokenizer fixture files (G1 on a tokenizer holdout or release set)
+
+```sh
+dotnet run --project ai-dotnet/tools/Starlings.Fidelity.Tool -c Release -- tokenizer --model e5|embeddinggemma2|qwen35|gliner2 \
+  --tokenizer <pinned tokenizer.json> --fixtures model-pipeline/protected/<family>/release/<set>/<tokenizer fixture>.jsonl --out <dir>
+model-pipeline evaluate registry/<family>/<profile>/manifest.yaml \
+  --tokenizer-fixtures model-pipeline/protected/<family>/release/<set>/<tokenizer fixture>.jsonl --results <dir> --out <report>
+```
+
+`src/model_pipeline/evaluate_tokenizer_fixtures.py`. The producer runs the owned tokenizer on every row of one tokenizer fixture file (`tokenizer.jsonl` in the reference `encoding` format of `reference/corpus/`, or GLiNER2's `gliner2-tokenizer.jsonl` in the `whitespace_splitter` format, through `Gliner2Preprocessor`) and writes `tokenizer.candidate.jsonl` and `environment.json` (tokenizer and fixture digests). The evaluator compares every row exactly. Only the fields named by the profile's protected tolerances (`discrete.token_ids` or `prompt_ids`, `attention_mask`, `offsets` in the manifest's `behavior.offsets_unit`; GLiNER2 also `normalized_text`, `words`, `character_maps`, `word_positions`, `schema_positions`) bind G1. The others (tokens, type ids, special-tokens mask, decode, offsets in other units, schema tokens) are measured and listed, and never gate. Every fixture row is required; the candidate's tokenizer must be a `processing.tokenizer` asset of the manifest and its fixture digest must match; the fixture file and tolerances are verified against Git. Exit codes as above.
 
 ## Task quality (G3, workstream R5)
 
