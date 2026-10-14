@@ -51,8 +51,30 @@ public sealed class SoakRunTests : IDisposable
         Assert.Equal(0, Reanalysis.Run([json]));
     }
 
+    [Fact]
+    public void KeepLoadedLoadsOnceServesEveryCycleAndDisposesAtTheEnd()
+    {
+        var options = SoakOptions.Parse(["--out", _dir, "--duration", "2s", "--keep-loaded", "--requests-per-cycle", "10", "--deadline-every", "0", "--sample-interval", "200ms"]);
+        Assert.True(options.KeepLoaded);
+        var workload = new FakeWorkload();
+
+        int exit = new SoakRunner(workload, options).Run();
+
+        Assert.Equal(0, exit);
+        Assert.Equal(1, workload.Loads);
+        Assert.Equal(1, workload.Disposals);
+        string json = Assert.Single(Directory.GetFiles(_dir, "fake-*.json"));
+        var raw = JsonNode.Parse(File.ReadAllText(json))!;
+        Assert.True((bool)raw["options"]!["keep_loaded"]!);
+        Assert.True(raw["cycles"]!.AsArray().Count >= 2);
+        Assert.Contains("Keep loaded (diagnostic)", File.ReadAllText(Path.ChangeExtension(json, ".md")), StringComparison.Ordinal);
+    }
+
     private sealed class FakeWorkload : SoakWorkload
     {
+        public int Loads;
+        public int Disposals;
+
         public override string Name => "fake";
 
         public override int DefaultRequestsPerCycle => 20;
@@ -63,9 +85,13 @@ public sealed class SoakRunTests : IDisposable
 
         public override JsonObject Artifacts() => new() { ["repository"] = "fake/fake", ["revision"] = new string('0', 40) };
 
-        public override ISoakInstance Load(SoakOptions options) => new Instance();
+        public override ISoakInstance Load(SoakOptions options)
+        {
+            Interlocked.Increment(ref Loads);
+            return new Instance(this);
+        }
 
-        private sealed class Instance : ISoakInstance
+        private sealed class Instance(FakeWorkload owner) : ISoakInstance
         {
             private int _disposed;
 
@@ -83,7 +109,11 @@ public sealed class SoakRunTests : IDisposable
                 cancellationToken.ThrowIfCancellationRequested();
             }
 
-            public void Dispose() => _disposed = 1;
+            public void Dispose()
+            {
+                _disposed = 1;
+                Interlocked.Increment(ref owner.Disposals);
+            }
         }
     }
 }
