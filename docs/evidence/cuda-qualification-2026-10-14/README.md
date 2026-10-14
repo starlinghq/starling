@@ -51,7 +51,7 @@ The one skip is `CudaUnavailableTests.MissingCudaProviderLibraryFailsClearly`. I
 | Python reference environments | Python 3.11.16, torch 2.14.1; built with `uv` from `encoder/`, `gliner2/` and `embeddinggemma2/requirements-cuda.txt` (`--require-hashes`, except GLiNER2, whose Git requirement cannot be hashed). PyTorch reference hidden states stay fp32 CPU. |
 | .NET | SDK 10.0.100, runtime 10.0.12 |
 | CPU, OS | Intel i7-5820K (12 threads), 94 GB RAM, Linux 7.2.5 x86-64. Shared with another agent's CPU test runs (load average 3 to 10). |
-| Code | Stage producers at `2db3dce` (e5, GLiNER2, EmbeddingGemma 2) and `c33d63c` (Qwen); both are commits of this change. |
+| Code | Stage producers at `2db3dce` (e5, GLiNER2, EmbeddingGemma 2) and `c33d63c` (Qwen): pre-squash commits of branch `cuda-qualification` (PR #18), kept so they stay resolvable. The squashed code equals them except for line-wrapping the `candidate` strings in `stage_e5_export.py` and `stage_gliner2.py` (no behavior change). |
 
 Wall clock of the recorded runs (UTC, 2026-10-14): evaluator runs 07:26 to 07:37 (e5 26 s, GLiNER2 47 s, EmbeddingGemma 2 text 1 min 35 s, image 48 s, video 1 min 16 s, Qwen fp32x 58 s, fp16x 24 s), CUDA tests 07:37 to 07:45. Including setup runs and the first attempts listed below, the GPU was in use for about 25 minutes, under 0.5 GPU-hours.
 
