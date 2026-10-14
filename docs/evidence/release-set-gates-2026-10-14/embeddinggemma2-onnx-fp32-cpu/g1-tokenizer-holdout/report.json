@@ -1,0 +1,210 @@
+{
+  "format": "starlings.tokenizer-fixtures-report",
+  "format_version": 1,
+  "task": "tokenizer-fixtures",
+  "profile": "embeddinggemma-2/onnx-fp32-cpu",
+  "date": "2026-10-14",
+  "evaluator": {
+    "name": "model-pipeline evaluate --tokenizer-fixtures",
+    "repository_commit": "10c016c1e8724983306d79a5db02b84326109c32"
+  },
+  "inputs": {
+    "manifest": {
+      "path": "model-pipeline/registry/embeddinggemma-2/onnx-fp32-cpu/manifest.yaml",
+      "sha256": "0e2c6ac5c2554918bb20791c88bb3ea630fdfcea904d2ae62864c627549a50c3"
+    },
+    "tolerances": {
+      "path": "model-pipeline/protected/embeddinggemma-2/onnx-fp32-cpu/tolerances.yaml",
+      "sha256": "cadfb7a767968f9bdbee8501a6386a872e7dd72919b688edc486105472d69bb3"
+    },
+    "fixtures": {
+      "path": "model-pipeline/protected/embeddinggemma-2/release/onnx-fp32-release/tokenizer.jsonl",
+      "sha256": "25a991f55885ce1fc686e7daf23bb62e727f6cad0a0f3b2a7546de0b4abe2954",
+      "format": "encoding",
+      "rows": 232
+    },
+    "results": {
+      "path": "/home/mark/.cache/starling-release-gates/runs/eg2-cpu/g1-holdout/tokenizer.candidate.jsonl",
+      "sha256": "e47f7a52d094f1aff9ba38d565be104125aa962ecaf85ce6ba5194f388a157a4",
+      "environment": {
+        "format": "starlings.tokenizer-candidate",
+        "format_version": 1,
+        "model": "embeddinggemma2",
+        "producer": {
+          "name": "Starlings.Fidelity.Tool tokenizer",
+          "repository_commit": "0eaaf9f943412c96f738c9e9c7e59192f2910845",
+          "tokenizer_library": "0.3.0.0",
+          "tokenizer_library_informational_version": "0.3.0-preview.1+79a5863e861edcfed79142293dafabb688c199b9",
+          "dotnet": "10.0.12"
+        },
+        "tokenizer": {
+          "path": "tokenizer.json",
+          "sha256": "4d777ef5bdc1aa36227abdfb77c3e49e7b9c892d16e1b6bda41c393504828be4"
+        },
+        "fixtures": {
+          "path": "model-pipeline/protected/embeddinggemma-2/release/onnx-fp32-release/tokenizer.jsonl",
+          "sha256": "25a991f55885ce1fc686e7daf23bb62e727f6cad0a0f3b2a7546de0b4abe2954"
+        },
+        "rows": 232
+      }
+    }
+  },
+  "offsets_unit": "none",
+  "protected_evidence": {
+    "status": "verified",
+    "base": "10c016c1e8724983306d79a5db02b84326109c32",
+    "detail": "merge base of HEAD and origin/main",
+    "changed": [],
+    "sha256": {
+      "model-pipeline/protected/embeddinggemma-2/onnx-fp32-cpu/tolerances.yaml": "cadfb7a767968f9bdbee8501a6386a872e7dd72919b688edc486105472d69bb3",
+      "model-pipeline/protected/embeddinggemma-2/release/onnx-fp32-release/tokenizer.jsonl": "25a991f55885ce1fc686e7daf23bb62e727f6cad0a0f3b2a7546de0b4abe2954"
+    }
+  },
+  "gates": {
+    "G1": {
+      "status": "passed",
+      "reason": "every bound field is exact on every fixture row"
+    }
+  },
+  "manifest_gates": {
+    "G1": {
+      "status": "passed",
+      "date": "2026-10-14"
+    }
+  },
+  "checks": [
+    {
+      "id": "identity",
+      "gate": "G1",
+      "tolerance_key": null,
+      "binding": true,
+      "status": "passed",
+      "cases": 0,
+      "mismatches": 0,
+      "mismatched_ids": [],
+      "detail": ""
+    },
+    {
+      "id": "cases",
+      "gate": "G1",
+      "tolerance_key": null,
+      "binding": true,
+      "status": "passed",
+      "cases": 232,
+      "mismatches": 0,
+      "mismatched_ids": [],
+      "detail": ""
+    },
+    {
+      "id": "ids",
+      "gate": "G1",
+      "tolerance_key": "discrete.token_ids",
+      "binding": true,
+      "status": "passed",
+      "cases": 232,
+      "mismatches": 0,
+      "mismatched_ids": [],
+      "detail": ""
+    },
+    {
+      "id": "attention_mask",
+      "gate": "G1",
+      "tolerance_key": "discrete.attention_mask",
+      "binding": true,
+      "status": "passed",
+      "cases": 232,
+      "mismatches": 0,
+      "mismatched_ids": [],
+      "detail": ""
+    },
+    {
+      "id": "tokens",
+      "gate": null,
+      "tolerance_key": null,
+      "binding": false,
+      "status": "passed",
+      "cases": 232,
+      "mismatches": 0,
+      "mismatched_ids": [],
+      "detail": ""
+    },
+    {
+      "id": "type_ids",
+      "gate": null,
+      "tolerance_key": null,
+      "binding": false,
+      "status": "passed",
+      "cases": 232,
+      "mismatches": 0,
+      "mismatched_ids": [],
+      "detail": ""
+    },
+    {
+      "id": "special_tokens_mask",
+      "gate": null,
+      "tolerance_key": null,
+      "binding": false,
+      "status": "passed",
+      "cases": 232,
+      "mismatches": 0,
+      "mismatched_ids": [],
+      "detail": ""
+    },
+    {
+      "id": "decode.skip_special_tokens",
+      "gate": null,
+      "tolerance_key": null,
+      "binding": false,
+      "status": "passed",
+      "cases": 232,
+      "mismatches": 0,
+      "mismatched_ids": [],
+      "detail": ""
+    },
+    {
+      "id": "decode.keep_special_tokens",
+      "gate": null,
+      "tolerance_key": null,
+      "binding": false,
+      "status": "passed",
+      "cases": 232,
+      "mismatches": 0,
+      "mismatched_ids": [],
+      "detail": ""
+    },
+    {
+      "id": "offsets.unicode-scalars",
+      "gate": null,
+      "tolerance_key": null,
+      "binding": false,
+      "status": "passed",
+      "cases": 232,
+      "mismatches": 0,
+      "mismatched_ids": [],
+      "detail": "behavior.offsets_unit is none: the profile exposes no offsets; discrete.offsets does not apply"
+    },
+    {
+      "id": "offsets.utf16-code-units",
+      "gate": null,
+      "tolerance_key": null,
+      "binding": false,
+      "status": "passed",
+      "cases": 232,
+      "mismatches": 0,
+      "mismatched_ids": [],
+      "detail": "behavior.offsets_unit is none: the profile exposes no offsets; discrete.offsets does not apply"
+    },
+    {
+      "id": "offsets.utf8-bytes",
+      "gate": null,
+      "tolerance_key": null,
+      "binding": false,
+      "status": "passed",
+      "cases": 232,
+      "mismatches": 0,
+      "mismatched_ids": [],
+      "detail": "behavior.offsets_unit is none: the profile exposes no offsets; discrete.offsets does not apply"
+    }
+  ],
+  "exit_code": 0
+}

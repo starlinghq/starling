@@ -7,10 +7,11 @@
   "evaluator": {
     "name": "model-pipeline evaluate --g3",
     "version": "0.1.0",
-    "repository_commit": "b469654b17262920457e810af410063b13cce8ea"
+    "repository_commit": "10c016c1e8724983306d79a5db02b84326109c32"
   },
   "dataset": {
     "sha256": "4791590718868341a87ef94f11c3829023386741835947b8305855864c83471e",
+    "sha256_with_metadata": "614a8d0d4d43a3930cc7ea4fea56a9835c7db108b68b9c071de8e116995d2405",
     "files": [
       {
         "path": "model-pipeline/protected/release-shared/retrieval/miracl-dev-hn-8lang-v1/queries.jsonl",
@@ -217,11 +218,12 @@
         "mrr@10": 0.765
       }
     },
-    "status": "present"
+    "status": "present",
+    "matched_form": "data+metadata"
   },
   "protected_evidence": {
     "status": "verified",
-    "base": "b469654b17262920457e810af410063b13cce8ea",
+    "base": "10c016c1e8724983306d79a5db02b84326109c32",
     "detail": "merge base of HEAD and origin/main",
     "changed": [],
     "sha256": {
@@ -254,8 +256,8 @@
   ],
   "gates": {
     "G3": {
-      "status": "not-run",
-      "reason": "no budget: not a gate result (the dataset digest 4791590718868341 is not the budgeted set 614a8d0d4d43a393)"
+      "status": "passed",
+      "reason": "every budgeted metric meets its minimum"
     }
   },
   "per_query": {
@@ -1860,5 +1862,5 @@
       "mrr@10": 1.0
     }
   },
-  "exit_code": 4
+  "exit_code": 0
 }
