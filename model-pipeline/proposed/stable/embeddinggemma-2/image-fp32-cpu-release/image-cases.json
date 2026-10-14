@@ -1,0 +1,8 @@
+{
+  "interleaved": [
+    {"id": "img-query-prompt", "text": null, "images": ["commons-image-00"], "prompt": "query"},
+    {"id": "img-document-prompt", "text": null, "images": ["commons-image-01"], "prompt": "document"},
+    {"id": "mm-two-images", "text": "<|image|> <|image|>", "images": ["commons-image-02", "commons-image-03"], "prompt": "none"}
+  ],
+  "queries": []
+}

@@ -1,0 +1,16 @@
+{
+  "multimodal": [
+    {"id": "vid-query-prompt", "text": null, "videos": ["commons-video-00"], "image": null, "prompt": "query"},
+    {"id": "vid-document-prompt", "text": null, "videos": ["commons-video-05"], "image": null, "prompt": "document"},
+    {"id": "mm-two-videos", "text": "<|video|> <|video|>", "videos": ["commons-video-02", "commons-video-05"], "image": null, "prompt": "none"},
+    {"id": "mm-image-and-video", "text": "<|image|> <|video|>", "videos": ["commons-video-02"], "image": ["commons-video-02", 100], "prompt": "none"}
+  ],
+  "forms": [
+    {"id": "vid-array-with-metadata", "video": "commons-video-05", "form": "array+metadata"},
+    {"id": "vid-array-no-metadata", "video": "commons-video-05", "form": "array"},
+    {"id": "vid-decoder-object", "video": "commons-video-05", "form": "decoder"}
+  ],
+  "queries": [],
+  "batch": ["commons-video-00", "commons-video-02", "commons-video-04", "commons-video-05"],
+  "eager": ["commons-video-00", "commons-video-02", "commons-video-04"]
+}

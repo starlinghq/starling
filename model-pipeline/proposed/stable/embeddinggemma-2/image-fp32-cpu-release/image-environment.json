@@ -1,0 +1,162 @@
+{
+  "fixture_format_version": 1,
+  "runner": "model-pipeline/reference/embeddinggemma2/run_embeddinggemma2_image.py",
+  "runner_repository_commit": "b98c9cef8661567240b8f29f1f7080e600804ef6",
+  "model": {
+    "repo": "google/embeddinggemma-2",
+    "revision": "914f7f89142e33e77833254d9c9b90c3cef7303b"
+  },
+  "assets": [
+    {
+      "path": "config.json",
+      "sha256": "b8f1e9931b57fbc054acdb445c41765d55b0074c58d145fa82839941ad1b5bb3",
+      "size": 4455
+    },
+    {
+      "path": "processor_config.json",
+      "sha256": "168f6a08522f3ce5dea596d94d003af2fd691742d4f41fe1f9d8cce76bfbf69c",
+      "size": 1788
+    },
+    {
+      "path": "chat_template.jinja",
+      "sha256": "4b852efc0b9960283e735363331e6f325b33bc74bdbaa076f595bc4e9b94d85e",
+      "size": 1016
+    },
+    {
+      "path": "tokenizer.json",
+      "sha256": "4d777ef5bdc1aa36227abdfb77c3e49e7b9c892d16e1b6bda41c393504828be4",
+      "size": 32170510
+    },
+    {
+      "path": "model.safetensors",
+      "sha256": "197a32965d4b1105faf060417baa899e193fb73cd401f42ec9295234d5553d79",
+      "size": 1488915288
+    }
+  ],
+  "images": {
+    "media_list": "media.json",
+    "media_list_sha256": "7501f65cfb6d2586305f9efe76f512babbaf999d8fb9301405d87db80b3b7198",
+    "generator": "fetch_eg2_release_media.py",
+    "files": [
+      {
+        "id": "commons-image-00",
+        "file": "commons-image-00.jpg",
+        "sha256": "6f332c508cb0e22da3b39fb46a8e8d965553a8437f69c6e58f7e22dd4a13a42a",
+        "decoded_sha256": "3f95a0ed7b168143bd9773417dadd77c315288f30f1640a7279299518ddea474"
+      },
+      {
+        "id": "commons-image-01",
+        "file": "commons-image-01.jpg",
+        "sha256": "dbb51633b1eb5ba7a09134a57426d3925f5bbbfba7f666043b2e9a8d7b82a123",
+        "decoded_sha256": "e159d0216209aa9ae7defe0c70af6e25a47da54f4e98b36968967ed96754c511"
+      },
+      {
+        "id": "commons-image-02",
+        "file": "commons-image-02.jpg",
+        "sha256": "b71d76c9bdcb5dc69258842e443e5a29b59e0a1d3c9d7e50e0a758eb35f422ab",
+        "decoded_sha256": "67611b2fae35fde4a0a6add29b208155df2713fe42dfd4daaea046abd7423731"
+      },
+      {
+        "id": "commons-image-03",
+        "file": "commons-image-03.jpg",
+        "sha256": "89c0638f94ef6bb4513b765126ef092bdb40b31883a9c580b4354f6816f0571f",
+        "decoded_sha256": "a7806b7548ed3e1f0fe5c4761c789ee156e1b54a5a24fe3fae1d4dec995ecea1"
+      },
+      {
+        "id": "commons-image-04",
+        "file": "commons-image-04.jpg",
+        "sha256": "943a6dd5ea7851754afcfeb191b432b8ecc343658b921450302c8ea07e2afb0b",
+        "decoded_sha256": "062f11d4106a37d98af58e013a26ea66da34942b875091bce63d8c9c1d5de06a"
+      },
+      {
+        "id": "commons-image-05",
+        "file": "commons-image-05.jpg",
+        "sha256": "f6255776bc5a6b9cd4248418670aedaa0cade6dc1aca431c096c4d064476f44c",
+        "decoded_sha256": "a407a54f237d65278b9627195d60797af34abab6408cc4c34724981ca1500e1d"
+      },
+      {
+        "id": "commons-image-06",
+        "file": "commons-image-06.jpg",
+        "sha256": "1a172c85a5b7172cfffb7e3811056f22086b7dcfef56c369d5e6a66fb8a363ba",
+        "decoded_sha256": "6d4d0cd24878843219faee3bf2da2ff1ff51f8ab4db92ee0ee85dfb31194e5cd"
+      },
+      {
+        "id": "commons-image-07",
+        "file": "commons-image-07.png",
+        "sha256": "5311a11fba535763f098e9aa084e5dfebf7933a5699ca5638ea2cdd83025d4e6",
+        "decoded_sha256": "228814442c57abb671bb6d52b2fc430da3b1e0ef72293f2a0379001aee06424a"
+      },
+      {
+        "id": "commons-image-08",
+        "file": "commons-image-08.jpg",
+        "sha256": "996700d3155dbaecada63987d0474dc6251fdd16c0d2b2bbe3f8f0d65c729ad2",
+        "decoded_sha256": "63e96cf65180b5eb9022049e9dd9d2393016854b3856a351683681c17038098a"
+      },
+      {
+        "id": "commons-image-09",
+        "file": "commons-image-09.jpg",
+        "sha256": "ceaf08822b1eee5ec3eab78b0d152ce360e27938dfcba520cc29cbea0c09458a",
+        "decoded_sha256": "7bf9c980637ff8180b944f4bafc446365e6a7dbe4cb953c0d463fead796f5b88"
+      },
+      {
+        "id": "commons-image-10",
+        "file": "commons-image-10.jpg",
+        "sha256": "6627fe99fe461b9769683d754ff26881ae52370d81253b5b288830806c794e7b",
+        "decoded_sha256": "91e15b3c6ea5f84fd099b720d27a978c1f6f862ff106cf03ce0f8f17dd15c299"
+      },
+      {
+        "id": "commons-image-11",
+        "file": "commons-image-11.jpg",
+        "sha256": "3790d08cc52c373d77868e65e74fd4ce6e507671db39faefb3f1d9b5f7cc7a6a",
+        "decoded_sha256": "980988f6b01d1521d9c53559eb07424849d00f28c54363bb7120a6da99db2a2e"
+      },
+      {
+        "id": "commons-image-12",
+        "file": "commons-image-12.jpg",
+        "sha256": "db8d8e050100e9d787a9df89441e558ba34715831cef63820bcfba7a38555986",
+        "decoded_sha256": "c9dd7c63f9b96aaf08266308b16fd8ef02eeacb9cd7b2f9bd1001c139080af5a"
+      },
+      {
+        "id": "commons-image-13",
+        "file": "commons-image-13.jpg",
+        "sha256": "42832fd277f8b89574dee28d5765b52560ae89797f834ba7d6c1d443fc39a8d8",
+        "decoded_sha256": "20f5331acd6f3d7263966f916955db8ae7fc78f354465ed8622aa7c9f23a7ce9"
+      },
+      {
+        "id": "commons-image-14",
+        "file": "commons-image-14.jpg",
+        "sha256": "4f93b2279e0a7c6f478c599465c391ea50cc1e809cd2d809b755793757175ed9",
+        "decoded_sha256": "89f1ef483a40a7237ee4dbf1ad293a372b1033eacb3ca726075a020ca75ba759"
+      },
+      {
+        "id": "commons-image-15",
+        "file": "commons-image-15.jpg",
+        "sha256": "d978080c729f07abba908fa302533f5c125e89dbdc5a4377c18a5b0b6b8ac561",
+        "decoded_sha256": "3aa5acaf1c1da632679246e4b42f84650645ad93240b96cfcace3ee95596666d"
+      }
+    ],
+    "cases": {
+      "path": "image-cases.json",
+      "sha256": "8212515810f1e8ad1e707adde4edb8b40c17fdd3352652f7ab2ea9b1326923f1",
+      "size": 373
+    }
+  },
+  "environment": {
+    "python": "3.11.16",
+    "platform": "Linux-7.2.5-3-omarchy-x86_64-with-glibc2.44",
+    "machine": "x86_64",
+    "cpu": "Intel(R) Core(TM) i7-5820K CPU @ 3.30GHz",
+    "cpu_count": 12,
+    "packages": {
+      "torch": "2.14.1+cpu",
+      "torchvision": "0.29.1+cpu",
+      "transformers": "5.19.0",
+      "sentence-transformers": "6.1.0",
+      "tokenizers": "0.23.3",
+      "numpy": "2.4.6",
+      "pillow": "12.3.0"
+    },
+    "torch_threads": 6,
+    "torch_cpu_capability": "AVX2"
+  }
+}

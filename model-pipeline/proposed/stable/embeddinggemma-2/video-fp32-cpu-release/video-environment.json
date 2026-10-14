@@ -1,0 +1,119 @@
+{
+  "fixture_format_version": 1,
+  "runner": "model-pipeline/reference/embeddinggemma2/run_embeddinggemma2_video.py",
+  "runner_repository_commit": "b98c9cef8661567240b8f29f1f7080e600804ef6",
+  "model": {
+    "repo": "google/embeddinggemma-2",
+    "revision": "914f7f89142e33e77833254d9c9b90c3cef7303b"
+  },
+  "assets": [
+    {
+      "path": "config.json",
+      "sha256": "b8f1e9931b57fbc054acdb445c41765d55b0074c58d145fa82839941ad1b5bb3",
+      "size": 4455
+    },
+    {
+      "path": "processor_config.json",
+      "sha256": "168f6a08522f3ce5dea596d94d003af2fd691742d4f41fe1f9d8cce76bfbf69c",
+      "size": 1788
+    },
+    {
+      "path": "chat_template.jinja",
+      "sha256": "4b852efc0b9960283e735363331e6f325b33bc74bdbaa076f595bc4e9b94d85e",
+      "size": 1016
+    },
+    {
+      "path": "tokenizer.json",
+      "sha256": "4d777ef5bdc1aa36227abdfb77c3e49e7b9c892d16e1b6bda41c393504828be4",
+      "size": 32170510
+    },
+    {
+      "path": "model.safetensors",
+      "sha256": "197a32965d4b1105faf060417baa899e193fb73cd401f42ec9295234d5553d79",
+      "size": 1488915288
+    }
+  ],
+  "videos": {
+    "media_list": "media.json",
+    "media_list_sha256": "7501f65cfb6d2586305f9efe76f512babbaf999d8fb9301405d87db80b3b7198",
+    "generator": "fetch_eg2_release_media.py",
+    "excluded": [
+      {
+        "id": "commons-video-01",
+        "reason": "torchcodec 0.17.0 VideoDecoder(seek_mode=\"exact\") on FFmpeg 8.1.3 (the decoding of transformers 5.19.0 fetch_videos) fails: Could not seek file to pts=0 (Ogg)"
+      },
+      {
+        "id": "commons-video-03",
+        "reason": "torchcodec 0.17.0 VideoDecoder(seek_mode=\"exact\") on FFmpeg 8.1.3 (the decoding of transformers 5.19.0 fetch_videos) fails: Could not seek file to pts=0 (Ogg)"
+      }
+    ],
+    "files": [
+      {
+        "id": "commons-video-00",
+        "file": "commons-video-00.ogv",
+        "sha256": "87d36a705ffb2f1957f103fbe4a4982fe0dc14bcc5564e5f7c427e3d90af7e34"
+      },
+      {
+        "id": "commons-video-02",
+        "file": "commons-video-02.ogv",
+        "sha256": "0b1ce456249d9a355f5ec2915e3f53f174cc45cf6a897321dc2780c7e9470e5b"
+      },
+      {
+        "id": "commons-video-04",
+        "file": "commons-video-04.webm",
+        "sha256": "dc4c6dc8c56f291b6ad16fff9abc6a0ef4ddd81fe63ef12f36d5437427959202"
+      },
+      {
+        "id": "commons-video-05",
+        "file": "commons-video-05.webm",
+        "sha256": "52278014faee688d8234fdf70f7c716a51fe827ad4f0de8e454f4b955db4ee0a"
+      }
+    ],
+    "cases": {
+      "path": "video-cases.json",
+      "sha256": "584a98b67258d1ed6bc0e634b8a50c70c382f65ca955992f08627f8858d5b0ae",
+      "size": 1010
+    }
+  },
+  "environment": {
+    "python": "3.11.16",
+    "platform": "Linux-7.2.5-3-omarchy-x86_64-with-glibc2.44",
+    "machine": "x86_64",
+    "cpu": "Intel(R) Core(TM) i7-5820K CPU @ 3.30GHz",
+    "cpu_count": 12,
+    "packages": {
+      "torch": "2.14.1+cpu",
+      "torchvision": "0.29.1+cpu",
+      "torchcodec": "0.17.0+cpu",
+      "transformers": "5.19.0",
+      "sentence-transformers": "6.1.0",
+      "tokenizers": "0.23.3",
+      "numpy": "2.4.6"
+    },
+    "torch_threads": 6,
+    "torch_cpu_capability": "AVX2",
+    "torchcodec_ffmpeg": {
+      "libavfilter": [
+        11,
+        14,
+        103
+      ],
+      "libavutil": [
+        60,
+        26,
+        103
+      ],
+      "libavcodec": [
+        62,
+        28,
+        103
+      ],
+      "libavformat": [
+        62,
+        12,
+        103
+      ],
+      "ffmpeg_version": "n8.1.3-17-gc389840894-20261011"
+    }
+  }
+}
