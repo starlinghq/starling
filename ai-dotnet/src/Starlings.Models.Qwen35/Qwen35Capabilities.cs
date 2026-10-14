@@ -44,7 +44,8 @@ public static class Qwen35Capabilities
         ["step0_logits"] = Qwen35CapabilityStatus.Experimental,
         ["asset_acquisition.offline"] = Qwen35CapabilityStatus.Experimental,
 
-        // From the private hosting repository with a read token: fp16x lock downloaded and verified (opt-in test, one machine).
+        // From the hosting repository: fp16x lock downloaded and verified with a read token while it was private (opt-in test,
+        // one machine); the repository is public since 2026-10-14.
         ["asset_acquisition.download"] = Qwen35CapabilityStatus.Experimental,
 
         // Microsoft.Extensions.AI IChatClient, in Starlings.Models.Qwen35.Extensions.AI (P-017): tested with

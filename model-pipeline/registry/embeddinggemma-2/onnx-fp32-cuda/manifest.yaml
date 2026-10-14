@@ -150,9 +150,9 @@ execution:
       path: onnx/embeddinggemma2-text-fp32.onnx
       sha256: "02cc7ecccbfcb29d812eb104e4c6ea6c599bc87e94f01082606f6a11f0252d11"
       size: 1084327317
-      # TODO(maintainer): placeholder until the GitHub release exists (EmbeddingGemma2ModelAssets.ModelSourceIsPlaceholder).
+      # Public Hugging Face repository since 2026-10-14 (EmbeddingGemma2ModelAssets.ModelSourceIsPlaceholder = false).
       source: https://huggingface.co/Starlinghq/embeddinggemma-2-onnx/resolve/92a02ae2887a91180e611776dd9c286dc5fa35da/embeddinggemma2-text-fp32.onnx
-      source_status: placeholder
+      source_status: public
       notice: model-pipeline/reference/embeddinggemma2/NOTICE-embeddinggemma2-onnx.txt
       produced_by:
         - model-pipeline/reference/embeddinggemma2/export_embeddinggemma2_onnx.py --exporters dynamo
@@ -237,8 +237,8 @@ maintenance:
       gives 1.7e-2, while the per-case max |d| / max(1, max |ref|) the bound was set from is 6.2e-6. Which reading binds
       is a maintainer decision; every .NET check passed.
     - >-
-      The hosted graph's download address is a placeholder until the maintainer creates the GitHub release; acquisition
-      of the graph is untested until then (offline verification of a local copy works).
+      The hosted graph is downloadable anonymously since 2026-10-14 (public repository). Acquisition of the graph from it
+      stays untested until a clean-install drill downloads it; offline verification of a local copy works.
     - >-
       Fixtures reach 1,750 tokens and batch-independence checks 2,049; 2,050 to 8,192 tokens has no reference evidence.
       Long rows need GPU memory that grows with the square of the length in the full-attention layers.

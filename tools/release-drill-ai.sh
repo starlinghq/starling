@@ -39,19 +39,19 @@
 #      make_eg2_videos.py) and --ffmpeg-dir names the user's own FFmpeg 8.x shared libraries, runs its text-to-video
 #      search offline through the FFmpeg adapter (expected top clips, the Extensions.AI video path equal to the typed
 #      API, frames without timing rejected). No FFmpeg binary is packed, restored or built into any output,
-#   8. with --seed-gliner2-from: seeds the GLiNER2 ONNX graph (not hosted yet) into the isolated cache, acquires
+#   8. with --seed-gliner2-from: seeds the GLiNER2 ONNX graph into the isolated cache, acquires
 #      tokenizer.json from the Hub through the Gliner2Ner sample's explicit download step, and runs its extraction with
 #      no network (expected entities, offsets inside the text, the 512-token rejection),
 #   9. with --seed-qwen35-from: seeds the pilot LLM's files (the fp32x graph, the runtime tokenizer.json and
-#      chat_template.jinja; their hosting repository is private for now and the drill runs without a token) into the
+#      chat_template.jinja; the drill runs without a token) into the
 #      isolated cache, verifies them through the QwenChat sample's explicit download step, and asks one question with no
 #      network (streamed answer, stop at <|im_end|>, usage), through the typed API and through the IChatClient
 #      adapter (the same answer),
 #  11. with --public-hosting: downloads the GLiNER2, EmbeddingGemma 2 and Qwen 3.5 files from their public hosting into
-#      a new empty cache with no token and no seed, then runs each sample offline from that cache. Disabled by default
-#      until maintainer action M3 makes the hosting public; it then prints "skipped: hosting private". Even when
-#      enabled, a model whose packaged library still records its hosting as private or a placeholder is skipped with
-#      the same message,
+#      a new empty cache with no token and no seed, then runs each sample offline from that cache (the hosting is
+#      public since 2026-10-14). Off by default because it downloads about 4 GB; without the flag it prints
+#      "skipped: not requested". A model whose packaged library still records its hosting as private or a placeholder
+#      is skipped with "skipped: hosting private",
 #  12. with --aot: tools/aot-check-ai.sh on the drill's feed and model cache (Native AOT publish of a consumer per
 #      package, trim/AOT warnings recorded, AOT results compared with JIT results).
 #
@@ -681,7 +681,7 @@ hosting=(
 )
 public_ran=""
 if [[ "$public_hosting" != 1 ]]; then
-    echo "skipped: hosting private (maintainer action M3 pending: the GLiNER2, EmbeddingGemma 2 and Qwen 3.5 files are in private repositories; pass --public-hosting once they are public)"
+    echo "skipped: not requested (pass --public-hosting to download the GLiNER2, EmbeddingGemma 2 and Qwen 3.5 files, about 4 GB, from their public hosting)"
 else
     public_models="$work/models-public"
     mkdir -p "$public_models"

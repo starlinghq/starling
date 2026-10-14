@@ -4,9 +4,9 @@ name: qualification
 # workstream R6 of docs/plan/production-readiness.md). Weekly and on manual dispatch only: never on pull_request, so no
 # fork code runs here, and no job can reach release credentials (the `release` environment is used only by
 # release.yml). Every job uses the read-only workflow token and no secret: only publicly hosted, pinned model assets
-# are acquired. Profiles whose graphs are still in private repositories (GLiNER2, EmbeddingGemma 2, Qwen) are skipped
-# with a "hosting private (M3)" notice until maintainer action M3 makes them public; tools/qualification.py reads that
-# from each manifest's `source_status`.
+# are acquired. Every registered graph is public since 2026-10-14 (maintainer action M3). A profile whose manifest
+# records a `source_status` of `placeholder` or `private` is skipped with a "hosting private" notice;
+# tools/qualification.py reads that from each manifest.
 #
 # Jobs:
 #   assets       restore the pinned public model files (acquisition tool, SHA-256 verified) into an actions/cache

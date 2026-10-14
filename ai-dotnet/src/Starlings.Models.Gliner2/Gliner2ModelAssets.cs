@@ -35,11 +35,9 @@ public sealed record Gliner2ModelFiles(string ModelPath, string TokenizerPath, M
 /// attribution in the package README).
 /// </para>
 /// <para>
-/// TODO(maintainer): <see cref="ModelSource"/> is in a private Hugging Face repository (<see cref="HostingRepository"/>)
-/// until the packages leave preview (<see cref="ModelSourceIsPlaceholder"/>). Until then, without a token that can read
-/// it, <see cref="DownloadAsync"/> downloads <c>tokenizer.json</c> and fails on the graph; produce the graph with the
-/// pinned scripts (the digest must match <see cref="ModelSha256"/>) and place it in the snapshot directory, or use
-/// <see cref="OpenDirectory"/>.
+/// <see cref="ModelSource"/> is in the public Hugging Face repository <see cref="HostingRepository"/>, so
+/// <see cref="DownloadAsync"/> needs no token. The graph can also be produced with the pinned scripts (the digest must
+/// match <see cref="ModelSha256"/>) and placed in the snapshot directory, or opened with <see cref="OpenDirectory"/>.
 /// </para>
 /// </remarks>
 public static class Gliner2ModelAssets
@@ -71,7 +69,7 @@ public static class Gliner2ModelAssets
     /// <summary>Size of <see cref="TokenizerFile"/> in bytes.</summary>
     public const long TokenizerSize = 8_650_701;
 
-    /// <summary>Hugging Face repository that hosts the graph (release <c>gliner2-base-v1-onnx-r1</c>, tag <c>r1</c>; private for now).</summary>
+    /// <summary>Hugging Face repository that hosts the graph (release <c>gliner2-base-v1-onnx-r1</c>, tag <c>r1</c>; public).</summary>
     public const string HostingRepository = "Starlinghq/gliner2-base-v1-onnx";
 
     /// <summary>Pinned commit of <see cref="HostingRepository"/>.</summary>
@@ -83,8 +81,8 @@ public static class Gliner2ModelAssets
     /// </summary>
     public const string ModelSource = "https://huggingface.co/" + HostingRepository + "/resolve/" + HostingRevision + "/gliner2-entities-fp32.onnx";
 
-    /// <summary>True while <see cref="HostingRepository"/> is private (TODO(maintainer): make it public, then set false).</summary>
-    public const bool ModelSourceIsPlaceholder = true;
+    /// <summary>True while <see cref="HostingRepository"/> is private. False: the repository is public (2026-10-14).</summary>
+    public const bool ModelSourceIsPlaceholder = false;
 
     /// <summary>The lock: the two runtime files (about 838 MB).</summary>
     public static ModelAssetLock Lock { get; } = new(

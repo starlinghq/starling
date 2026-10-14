@@ -58,8 +58,8 @@ public static class EmbeddingGemma2Capabilities
         ["cancellation"] = EmbeddingGemma2CapabilityStatus.Experimental,
         ["concurrent_calls"] = EmbeddingGemma2CapabilityStatus.Experimental,
         ["asset_acquisition"] = EmbeddingGemma2CapabilityStatus.Experimental,
-        // The graph is hosted as a GitHub release asset of starlinghq/starling; until the release exists the address is a
-        // placeholder (EmbeddingGemma2ModelAssets.ModelSourceIsPlaceholder) and the graph must be produced locally.
+        // The graph is hosted in the public Hugging Face repository EmbeddingGemma2ModelAssets.HostingRepository. Untested
+        // until a clean-install drill downloads it anonymously.
         ["asset_acquisition.graph_download"] = EmbeddingGemma2CapabilityStatus.Untested,
 
         // Images (contract of 2026-10-11, EmbeddingGemma2MultimodalEmbedder; profiles image-fp32-cpu and image-fp32-cuda).

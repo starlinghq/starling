@@ -28,8 +28,8 @@ public class AssetAndCapabilityTests
             Assert.Contains($"- path: {file.Path}\n      sha256: \"{file.Sha256}\"\n      size: {file.Size}", manifest, StringComparison.Ordinal);
         }
 
-        Assert.Contains($"path: {EmbeddingGemma2ModelAssets.ModelFile}\n      sha256: \"{EmbeddingGemma2ModelAssets.ModelSha256}\"\n      size: {EmbeddingGemma2ModelAssets.ModelSize}\n      # TODO(maintainer)", manifest, StringComparison.Ordinal);
-        Assert.Contains($"source: {EmbeddingGemma2ModelAssets.ModelSource}\n      source_status: placeholder", manifest, StringComparison.Ordinal);
+        Assert.Contains($"path: {EmbeddingGemma2ModelAssets.ModelFile}\n      sha256: \"{EmbeddingGemma2ModelAssets.ModelSha256}\"\n      size: {EmbeddingGemma2ModelAssets.ModelSize}\n      # Public Hugging Face repository", manifest, StringComparison.Ordinal);
+        Assert.Contains($"source: {EmbeddingGemma2ModelAssets.ModelSource}\n      source_status: public", manifest, StringComparison.Ordinal);
     }
 
     [Theory]
@@ -51,10 +51,10 @@ public class AssetAndCapabilityTests
             var file = assetLock.GetFile(path);
             Assert.Equal(Uri.UriSchemeHttps, file.Source!.Scheme);
             Assert.Contains($"/{EmbeddingGemma2ModelAssets.ImageHostingRepository}/resolve/{EmbeddingGemma2ModelAssets.ImageHostingRevision}/", file.Source.AbsoluteUri, StringComparison.Ordinal);
-            Assert.Contains($"source: {file.Source.AbsoluteUri}\n        source_status: placeholder", manifest, StringComparison.Ordinal);
+            Assert.Contains($"source: {file.Source.AbsoluteUri}\n        source_status: public", manifest, StringComparison.Ordinal);
         }
 
-        Assert.True(EmbeddingGemma2ModelAssets.ImageModelSourceIsPlaceholder);
+        Assert.False(EmbeddingGemma2ModelAssets.ImageModelSourceIsPlaceholder);
         Assert.Equal("embeddinggemma-2-vision-onnx-r1", EmbeddingGemma2ModelAssets.ImageReleaseTag);
         Assert.Equal(assetLock.Files, ModelAssetLock.Parse(assetLock.ToJson()).Files);
     }
@@ -86,7 +86,7 @@ public class AssetAndCapabilityTests
         Assert.Equal("huggingface.co", graph.Source.Host);
         Assert.Equal(EmbeddingGemma2ModelAssets.ModelSource, graph.Source.AbsoluteUri);
         Assert.Contains($"/{EmbeddingGemma2ModelAssets.HostingRepository}/resolve/{EmbeddingGemma2ModelAssets.HostingRevision}/", EmbeddingGemma2ModelAssets.ModelSource, StringComparison.Ordinal);
-        Assert.True(EmbeddingGemma2ModelAssets.ModelSourceIsPlaceholder);
+        Assert.False(EmbeddingGemma2ModelAssets.ModelSourceIsPlaceholder);
         Assert.Null(EmbeddingGemma2ModelAssets.Lock.GetFile(EmbeddingGemma2ModelAssets.TokenizerFile).Source);
         Assert.Null(EmbeddingGemma2ModelAssets.Lock.GetFile(EmbeddingGemma2ModelAssets.PromptConfigFile).Source);
         string json = EmbeddingGemma2ModelAssets.Lock.ToJson();

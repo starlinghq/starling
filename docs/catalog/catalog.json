@@ -484,7 +484,7 @@
       "last_checked": "2026-10-10",
       "known_issues": [
         "Evaluator run 2026-10-11 (docs/evidence/embeddinggemma2-dotnet/, CPU): G1 passed; G2 failed only on export.token_embeddings (Python ORT vs PyTorch): the tolerance file's |d| <= 1e-4 * max(1, |ref|) judged per value gives 1.7e-2, while the per-case max |d| / max(1, max |ref|) the bound was set from is 6.2e-6. Which reading binds is a maintainer decision; every .NET check passed.",
-        "The hosted graph's download address is a placeholder until the maintainer creates the GitHub release; acquisition of the graph is untested until then (offline verification of a local copy works).",
+        "The hosted graph is downloadable anonymously since 2026-10-14 (public repository). Acquisition of the graph from it stays untested until a clean-install drill downloads it; offline verification of a local copy works.",
         "Fixtures reach 1,750 tokens and batch-independence checks 2,049; 2,050 to 8,192 tokens has no reference evidence. One 8,192-token row took 80 s on the 12-thread workstation CPU (process peak working set 5.9 GB during the test run); temporary memory grows with the square of the length in the full-attention layers.",
         "The fixtures cover the none, query and document prompts only; the other 18 names map to prompt texts without fixture rows. Matryoshka sizes are checked against the reference sliced and renormalized (the fixtures hold no truncated rows; the spike probe showed sentence-transformers truncate_dim equals that within 6e-8)."
       ],
@@ -659,7 +659,7 @@
       "last_checked": "2026-10-10",
       "known_issues": [
         "Evaluator run 2026-10-11 (docs/evidence/embeddinggemma2-dotnet/, CPU): G1 passed; G2 failed only on export.token_embeddings (Python ORT vs PyTorch): the tolerance file's |d| <= 1e-4 * max(1, |ref|) judged per value gives 1.7e-2, while the per-case max |d| / max(1, max |ref|) the bound was set from is 6.2e-6. Which reading binds is a maintainer decision; every .NET check passed.",
-        "The hosted graph's download address is a placeholder until the maintainer creates the GitHub release; acquisition of the graph is untested until then (offline verification of a local copy works).",
+        "The hosted graph is downloadable anonymously since 2026-10-14 (public repository). Acquisition of the graph from it stays untested until a clean-install drill downloads it; offline verification of a local copy works.",
         "Fixtures reach 1,750 tokens and batch-independence checks 2,049; 2,050 to 8,192 tokens has no reference evidence. Long rows need GPU memory that grows with the square of the length in the full-attention layers.",
         "Native runtime: Microsoft.ML.OnnxRuntime.Gpu.Linux 1.30.0 needs the CUDA 13 runtime and cuDNN 9 on the loader path; the package does not ship them.",
         "The fixtures cover the none, query and document prompts only; the other 18 names map to prompt texts without fixture rows. Matryoshka sizes are checked against the reference sliced and renormalized (the fixtures hold no truncated rows; the spike probe showed sentence-transformers truncate_dim equals that within 6e-8)."
@@ -1191,7 +1191,7 @@
       "known_issues": [
         "Results are ordered by confidence; most entity scores saturate to exactly 1.0 in fp32, so near-ties make the order sensitive to backend noise (ORT CUDA with TF32 reorders one 1,329-token case with the same entity set).",
         "Upstream span offsets index the normalized text: a span that includes the appended '.' ends one past the original text (seen at threshold 0.0). The C# package maps such spans onto the input (behavior.defaults).",
-        "The hosted graph's download address is a placeholder until the maintainer creates the GitHub release; acquisition of the graph is untested until then (offline verification of a local copy works).",
+        "The hosted graph is downloadable anonymously since 2026-10-14 (public repository). Acquisition of the graph from it stays untested until a clean-install drill downloads it; offline verification of a local copy works.",
         "The count gate (count_pred argmax 0 gives an empty result) never closed on the development corpus, so that path has no fixture."
       ],
       "execution": {
@@ -1373,7 +1373,7 @@
       "known_issues": [
         "Results are ordered by confidence; most entity scores saturate to exactly 1.0 in fp32, so near-ties make the order sensitive to backend noise (ORT CUDA with TF32 reorders one 1,329-token case with the same entity set).",
         "Upstream span offsets index the normalized text: a span that includes the appended '.' ends one past the original text (seen at threshold 0.0). The C# package maps such spans onto the input (behavior.defaults).",
-        "The hosted graph's download address is a placeholder until the maintainer creates the GitHub release; acquisition of the graph is untested until then (offline verification of a local copy works).",
+        "The hosted graph is downloadable anonymously since 2026-10-14 (public repository). Acquisition of the graph from it stays untested until a clean-install drill downloads it; offline verification of a local copy works.",
         "The count gate (count_pred argmax 0 gives an empty result) never closed on the development corpus, so that path has no fixture.",
         "CUDA parity evidence (PROPOSED.md) left out the two cases over 600 tokens from the padded-batch check because the GPU was shared; single-row parity covers all 58 cases (span logits max abs 4.0e-3, scores 2.5e-6).",
         "Native runtime: Microsoft.ML.OnnxRuntime.Gpu.Linux 1.30.0 needs the CUDA 13 runtime and cuDNN 9 on the loader path; the package does not ship them."
@@ -1907,7 +1907,6 @@
       "last_checked": "2026-10-10",
       "known_issues": [
         "The ONNX Runtime GenAI C# API is labeled preview upstream; Starlings.Generation.OnnxGenAI isolates it. The runtime version must equal the builder version that wrote the graph (0.17.1).",
-        "The hosting repository (execution.graph.hosting) is private for now: Qwen35ModelAssets.DownloadAsync needs a Hugging Face read token with access to it (HF_TOKEN), else ModelAssetAccessDeniedException. It moves to an organization later (new sources, same digests).",
         "fp16 differs from the fp32 reference at near ties (M0: 18 of 22 prompts identical, every divergence where the reference top-1 minus top-2 logit margin was below 0.015). P-016 run: docs/evidence/p016-qwen35/README.md.",
         "Native runtime: Microsoft.ML.OnnxRuntimeGenAI.Cuda 0.17.1 brings Microsoft.ML.OnnxRuntime.Gpu 1.30.0 and needs the CUDA 13 runtime and cuBLAS on the loader path (not shipped). The schema has no field for native runtime, driver or GPU requirements; they are recorded here and in docs/evidence/p016-qwen35/README.md."
       ],
@@ -2088,8 +2087,7 @@
       "review_date": "2027-01-05",
       "last_checked": "2026-10-10",
       "known_issues": [
-        "The ONNX Runtime GenAI C# API is labeled preview upstream; Starlings.Generation.OnnxGenAI isolates it. The runtime version must equal the builder version that wrote the graph (0.17.1).",
-        "The hosting repository (execution.graph.hosting) is private for now: Qwen35ModelAssets.DownloadAsync needs a Hugging Face read token with access to it (HF_TOKEN), else ModelAssetAccessDeniedException. It moves to an organization later (new sources, same digests)."
+        "The ONNX Runtime GenAI C# API is labeled preview upstream; Starlings.Generation.OnnxGenAI isolates it. The runtime version must equal the builder version that wrote the graph (0.17.1)."
       ],
       "execution": {
         "runtime": "onnxruntime-genai",
@@ -2270,7 +2268,6 @@
       "last_checked": "2026-10-10",
       "known_issues": [
         "The ONNX Runtime GenAI C# API is labeled preview upstream; Starlings.Generation.OnnxGenAI isolates it. The runtime version must equal the builder version that wrote the graph (0.17.1).",
-        "The hosting repository (execution.graph.hosting) is private for now: Qwen35ModelAssets.DownloadAsync needs a Hugging Face read token with access to it (HF_TOKEN), else ModelAssetAccessDeniedException. It moves to an organization later (new sources, same digests).",
         "The fp32x graph was built for the CPU provider; on the CUDA provider it decodes far slower than fp16x (M0: about 22 tokens/s; node placement not inspected, so CPU fallback of the DeltaNet operators is possible). fp32 built for the CUDA provider fails (M0 failure 2).",
         "Native runtime: Microsoft.ML.OnnxRuntimeGenAI.Cuda 0.17.1 brings Microsoft.ML.OnnxRuntime.Gpu 1.30.0 and needs the CUDA 13 runtime and cuBLAS on the loader path (not shipped). The schema has no field for native runtime, driver or GPU requirements; they are recorded here and in docs/evidence/p016-qwen35/README.md."
       ],

@@ -26,7 +26,7 @@ public sealed class AssetAndCapabilityTests
         Assert.All(l.Files, f => Assert.Equal(
             $"https://huggingface.co/Starlinghq/qwen3.5-0.8b-ortgenai/resolve/95a690c1774f144957cb7b76986a9126e8b1bb5f/{f.Path}",
             f.Source!.AbsoluteUri));
-        Assert.True(Qwen35ModelAssets.HostingIsPrivate);
+        Assert.False(Qwen35ModelAssets.HostingIsPrivate);
         // Round trip through the JSON lock format.
         var parsed = ModelAssetLock.Parse(l.ToJson());
         Assert.Equal(l.Files.Select(f => (f.Path, f.Size, f.Sha256, f.Source)), parsed.Files.Select(f => (f.Path, f.Size, f.Sha256, f.Source)));

@@ -137,9 +137,9 @@ execution:
       path: onnx/gliner2-entities-fp32.onnx
       sha256: "0ba2db95b18116906ae4ec21aa62ef493e69e0780dcfdfa98c4456ecf4123265"
       size: 829284599
-      # TODO(maintainer): placeholder until the GitHub release exists (Gliner2ModelAssets.ModelSourceIsPlaceholder).
+      # Public Hugging Face repository since 2026-10-14 (Gliner2ModelAssets.ModelSourceIsPlaceholder = false).
       source: https://huggingface.co/Starlinghq/gliner2-base-v1-onnx/resolve/c02c3350a0dcaf0bd6d2878043cc6a4ba950dccb/gliner2-entities-fp32.onnx
-      source_status: placeholder
+      source_status: public
       produced_by:
         - model-pipeline/reference/gliner2/export_gliner2_onnx.py --routes A --exporters dynamo
         - model-pipeline/reference/gliner2/release_gliner2_onnx.py
@@ -230,8 +230,8 @@ maintenance:
       Upstream span offsets index the normalized text: a span that includes the appended '.' ends one past the
       original text (seen at threshold 0.0). The C# package maps such spans onto the input (behavior.defaults).
     - >-
-      The hosted graph's download address is a placeholder until the maintainer creates the GitHub release; acquisition
-      of the graph is untested until then (offline verification of a local copy works).
+      The hosted graph is downloadable anonymously since 2026-10-14 (public repository). Acquisition of the graph from it
+      stays untested until a clean-install drill downloads it; offline verification of a local copy works.
     - >-
       The count gate (count_pred argmax 0 gives an empty result) never closed on the development corpus, so that
       path has no fixture.

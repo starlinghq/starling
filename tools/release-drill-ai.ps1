@@ -25,7 +25,7 @@
       9. with -SeedGliner2From / -SeedEmbeddingGemma2From / -SeedQwen35From: seeds the graph files that are not
          hosted publicly yet and runs those samples (and the EmbeddingGemma 2 ML.NET checker) with no network,
      11. with -PublicHosting: downloads GLiNER2, EmbeddingGemma 2 and Qwen 3.5 from public hosting with no token and no
-         seed; until maintainer action M3 it prints "skipped: hosting private".
+         seed (public since 2026-10-14; without the switch it prints "skipped: not requested").
 
     Differences from the Linux drill, all recorded as untested on Windows rather than skipped silently:
       - No network namespace: "offline" means HTTP_PROXY, HTTPS_PROXY and ALL_PROXY point at a closed local port, which
@@ -54,7 +54,7 @@ param(
     [string]$SeedEmbeddingGemma2From,
     # A bundle built by build_ortgenai_bundle.py --variant fp32x.
     [string]$SeedQwen35From,
-    # Download GLiNER2, EmbeddingGemma 2 and Qwen 3.5 from public hosting (only once maintainer action M3 is done).
+    # Download GLiNER2, EmbeddingGemma 2 and Qwen 3.5 from public hosting.
     [switch]$PublicHosting,
     # Keep the temporary directory for inspection.
     [switch]$Keep
@@ -474,7 +474,7 @@ try {
         @('Qwen 3.5', 'ai-dotnet/src/Starlings.Models.Qwen35/Qwen35ModelAssets.cs', 'HostingIsPrivate = true'))
     $publicRan = @()
     if (-not $PublicHosting) {
-        Write-Host 'skipped: hosting private (maintainer action M3 pending: the GLiNER2, EmbeddingGemma 2 and Qwen 3.5 files are in private repositories; pass -PublicHosting once they are public)'
+        Write-Host 'skipped: not requested (pass -PublicHosting to download the GLiNER2, EmbeddingGemma 2 and Qwen 3.5 files, about 4 GB, from their public hosting)'
     }
     else {
         $publicModels = Join-Path $work 'models-public'

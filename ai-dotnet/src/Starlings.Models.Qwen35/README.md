@@ -33,7 +33,7 @@ foreach (var update in model.GenerateStreaming(messages, new Qwen35ChatOptions {
 }
 ```
 
-The built graphs are not on the Hub: Starling builds them reproducibly from the pinned checkpoint (`model-pipeline/reference/generation/build_ortgenai_bundle.py`, digests in `Qwen35ModelAssets`) and hosts every file of the locks (with `chat_template.jinja`) in the Hugging Face repository `Starlinghq/qwen3.5-0.8b-ortgenai`, pinned by commit. That repository is private for now (it moves to an organization later): `Qwen35ModelAssets.DownloadAsync(variant)` needs a Hugging Face read token with access to it (`ModelAcquisitionOptions.HuggingFaceToken` or `$HF_TOKEN`) and otherwise fails with `ModelAssetAccessDeniedException`. Alternatively build the files into the snapshot directory or call `Qwen35ModelAssets.OpenDirectory(dir, variant)`.
+The built graphs are not on the Hub: Starling builds them reproducibly from the pinned checkpoint (`model-pipeline/reference/generation/build_ortgenai_bundle.py`, digests in `Qwen35ModelAssets`) and hosts every file of the locks (with `chat_template.jinja`) in the Hugging Face repository `Starlinghq/qwen3.5-0.8b-ortgenai`, pinned by commit. That repository is public: `Qwen35ModelAssets.DownloadAsync(variant)` needs no token. Alternatively build the files into the snapshot directory or call `Qwen35ModelAssets.OpenDirectory(dir, variant)`.
 
 For Microsoft.Extensions.AI's `IChatClient` (middleware, DI, asynchronous streaming), add `Starlings.Models.Qwen35.Extensions.AI` and wrap the model in `Qwen35ChatClient`.
 
@@ -73,7 +73,7 @@ This is the contract a Stable profile would commit to. Today every profile is **
 
 The order of promotion (`docs/plan/production-readiness.md`) takes `ortgenai-fp32x-cpu` to Preview first. `ortgenai-fp16x-cuda` likely stays Preview, because of near-tie divergences (18 of 22 greedy cases exact). Gate evidence is in the [catalog](https://github.com/starlinghq/starling/blob/main/docs/catalog/README.md) once draft PR #4 lands. Agents produce evidence; only the maintainer records a gate or changes maturity.
 
-- [ ] G0 provenance: today a checklist ([P-016 evidence](https://github.com/starlinghq/starling/blob/main/docs/evidence/p016-qwen35/README.md)). Needs public hosting of the built files: the Hugging Face repository is private (M3).
+- [ ] G0 provenance: today a checklist ([P-016 evidence](https://github.com/starlinghq/starling/blob/main/docs/evidence/p016-qwen35/README.md)). The built files are publicly hosted since 2026-10-14 (M3 done); recording the gate result stays with the maintainer.
 - [ ] G1 and G2: today checklists. On development fixtures: renderings and prompt ids 21/21, greedy 22/22, and step-0 1.38e-3 against a 5e-3 bound, rerun at tokenizer `0.3.0-preview.1` (draft PR #6). The generation evaluator task that machine-checks these against the protected tolerances is in draft PR #5. Still needed: the protected P-030 generation set (M1), and the GPU runs for the CUDA profiles (M6).
 - [ ] P-029 template corpus beyond the 21 prompts, so the owned renderer can leave experimental (R8).
 - [ ] G3 task quality: needs a fixed generation evaluation, a dataset and a budget (M1, M2).
