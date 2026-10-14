@@ -187,6 +187,61 @@ internal sealed class Gliner2Run : IBenchRun
         return c.OutOfContract is null ? c : throw new ArgumentException($"Fixture case '{id}' is outside the C# contract ({c.OutOfContract}).");
     }
 
+    /// <summary>
+    /// Writes the prepared model input of every item of every workload request and of the cold-start request, one JSON
+    /// line per request after a header line with the artifacts: the exact tensors <see cref="Gliner2EntityExtractor.RunModel"/>
+    /// pads and runs. Returns the number of requests written.
+    /// </summary>
+    public int DumpInputs(string path, JsonObject artifacts)
+    {
+        Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(path))!);
+        using var writer = new StreamWriter(path, append: false);
+        writer.WriteLine(new JsonObject
+        {
+            ["kind"] = "header",
+            ["schema"] = "starlings-gliner2-inputs/1",
+            ["harness"] = "Starlings.Benchmarks.Gliner2Harness",
+            ["max_batch_size"] = _extractor.Options.MaxBatchSize,
+            ["max_sequence_length"] = _extractor.Options.MaxSequenceLength,
+            ["artifacts"] = artifacts,
+        }.ToJsonString());
+        int count = 0;
+        void Emit(string workload, int request, Gliner2Item[] items)
+        {
+            var array = new JsonArray();
+            foreach (var item in items)
+            {
+                var input = _extractor.Prepare(item.Text, item.Labels, item.Descriptions);
+                array.Add(new JsonObject
+                {
+                    ["id"] = item.Id,
+                    ["fixture"] = item.Case is not null,
+                    ["threshold"] = item.Threshold,
+                    ["labels"] = new JsonArray(input.Labels.Select(l => (JsonNode)l).ToArray()),
+                    ["word_count"] = input.WordCount,
+                    ["input_ids"] = new JsonArray(input.InputIds.ToArray().Select(x => (JsonNode)x).ToArray()),
+                    ["word_index"] = new JsonArray(input.WordIndex.ToArray().Select(x => (JsonNode)x).ToArray()),
+                    ["schema_index"] = new JsonArray(input.SchemaIndex.ToArray().Select(x => (JsonNode)x).ToArray()),
+                });
+            }
+
+            writer.WriteLine(new JsonObject { ["kind"] = "request", ["workload"] = workload, ["request"] = request, ["items"] = array }.ToJsonString());
+            count++;
+        }
+
+        foreach (var w in _spec.Workloads)
+        {
+            var requests = Requests(w);
+            for (int r = 0; r < requests.Length; r++)
+            {
+                Emit(w.Name, r, requests[r]);
+            }
+        }
+
+        Emit("cold-start", 0, WorkloadSpec.Strings(_spec.Cold.GetProperty("request")).Select(id => FromCase(Case(id))).ToArray());
+        return count;
+    }
+
     private static Gliner2Item FromCase(Gliner2Case c) => new(c.Id, c.Text, c.LabelsRequested, c.Descriptions, c.Threshold, c);
 
     private Gliner2Output[] Extract(Gliner2Item[] request, double[] stages)
@@ -285,5 +340,40 @@ internal sealed class Gliner2Run : IBenchRun
         }
 
         return true;
+    }
+}
+
+/// <summary>The <c>dump-inputs</c> command: <c>--out &lt;file&gt;</c> [<c>--workloads &lt;file&gt;</c>] [<c>--threads N</c>].</summary>
+internal static class Gliner2InputDump
+{
+    public static int Run(string[] args)
+    {
+        const string usage = "usage: Starlings.Benchmarks.Gliner2Harness dump-inputs --out <inputs.jsonl> [--workloads <file>] [--threads N]";
+        try
+        {
+            var map = ArgMap.Parse(args, usage);
+            string output = map.Get("out") ?? throw new ArgumentException(usage);
+            var driver = new Gliner2Driver();
+            var context = new HarnessContext(
+                map,
+                Path.GetFullPath(map.Get("workloads") ?? BenchPaths.Workload(driver.WorkloadFile)),
+                map.GetInt("threads"),
+                map.GetInt("inter-threads", 1),
+                HashModelAtLoad: false);
+            using var run = new Gliner2Run(context, Gliner2Driver.Files());
+            int count = run.DumpInputs(output, driver.Artifacts(context));
+            Console.Error.WriteLine($"wrote {count} requests to {output}");
+            return 0;
+        }
+        catch (ArgumentException ex)
+        {
+            Console.Error.WriteLine(ex.Message);
+            return 2;
+        }
+        catch (BenchAssetsMissingException ex)
+        {
+            Console.Error.WriteLine($"ASSETS MISSING (gliner2-base-v1): {ex.Message}");
+            return 3;
+        }
     }
 }
