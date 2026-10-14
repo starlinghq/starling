@@ -1,0 +1,8 @@
+# Benchmark environment for bench_qwen35_matched.py on CPU (G5). Same ONNX Runtime GenAI version as the C# harness
+# (Microsoft.ML.OnnxRuntimeGenAI 0.17.1) and the ONNX Runtime it brings (1.30.0). onnxruntime-genai 0.17.1 alone
+# resolves onnxruntime 1.31.0, so onnxruntime is pinned explicitly.
+onnxruntime-genai==0.17.1
+onnxruntime==1.30.0
+numpy==2.4.6
+tokenizers==0.23.3
+jinja2==3.1.6

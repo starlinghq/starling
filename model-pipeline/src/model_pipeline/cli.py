@@ -360,7 +360,9 @@ def main(argv: list[str] | None = None) -> int:
     )
     bench_g5.add_argument("paths", nargs="+", help="raw files of both sides (C# harness and Python matched runner)")
     bench_g5.add_argument("--budgets", default=str(g5.BUDGETS), help="budget file (default: the protected one)")
-    bench_g5.add_argument("--profile", action="append", help="only this profile (repeatable), e.g. gliner2-base-v1/onnx-fp32-cpu")
+    bench_g5.add_argument(
+        "--profile", action="append", help="only this profile (repeatable), e.g. gliner2-base-v1/onnx-fp32-cpu"
+    )
     bench_g5.add_argument("--resamples", type=int, default=1000, help="bootstrap resamples (default 1000)")
     bench_g5.add_argument("--seed", type=int, default=1)
     bench_g5.add_argument("--json", help="also write the verdicts as JSON to this path")

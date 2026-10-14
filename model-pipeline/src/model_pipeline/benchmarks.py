@@ -214,14 +214,19 @@ def summarize_group(series: list[dict], resamples: int, seed: int) -> dict:
 def compare(
     groups: dict[tuple, list[dict]], resamples: int, seed: int, a_impl: str, b_impl: str, stat=median
 ) -> list[dict]:
-    """Pairs every group of implementation ``a_impl`` with the same workload of ``b_impl``."""
+    """Pairs every group of implementation ``a_impl`` with the same model and workload of ``b_impl`` (an impl, or the
+    language ``python`` for every Python runner)."""
     out = []
     for key, series in sorted(groups.items()):
         if key[6] != a_impl:
             continue
-        other = next((v for k, v in groups.items() if k[:5] == key[:5] and k[6] == b_impl), None)
-        if other is None:
+        match = next(
+            ((k, v) for k, v in groups.items() if k[:5] == key[:5] and k[7] == key[7] and b_impl in (k[5], k[6])),
+            None,
+        )
+        if match is None:
             continue
+        b_key, other = match
         a = [s["ms"] for s in series]
         b = [s["ms"] for s in other]
         pa = [x for r in a for x in r]
@@ -236,7 +241,7 @@ def compare(
                 "workload": key[3],
                 "concurrency": key[4],
                 "a": a_impl,
-                "b": b_impl,
+                "b": b_key[6],
                 "n_a": len(pa),
                 "n_b": len(pb),
                 "runs_a": len(a),
@@ -323,8 +328,8 @@ def summarize(results: RawResults, resamples: int = 2000, seed: int = 1) -> dict
             }
             for k, v in sorted(groups.items())
         ],
-        "csharp_vs_python": compare(groups, resamples, seed, "library", "python-ort"),
-        "direct_vs_python": compare(groups, resamples, seed, "direct", "python-ort"),
+        "csharp_vs_python": compare(groups, resamples, seed, "library", "python"),
+        "direct_vs_python": compare(groups, resamples, seed, "direct", "python"),
         "adapter_overhead_p95": overhead,
         "runs": [
             {

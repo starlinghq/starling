@@ -8,16 +8,18 @@ The matched-backend benchmark program of plan section 11 for `multilingual-e5-sm
 | `Starlings.Benchmarks.Micro.Cuda` | Same sources with `Microsoft.ML.OnnxRuntime.Gpu.Linux`; CUDA cases only with `STARLING_BENCH_CUDA=1` and an explicit `CUDA_VISIBLE_DEVICES`. | no (local) |
 | `Starlings.Benchmarks.E5Harness` | Realistic-workload harness: warm series with stage timings and concurrency, cold starts in fresh processes, quality per run. Writes `starlings-bench-raw/1`. CPU. | yes |
 | `Starlings.Benchmarks.E5Harness.Cuda` | Same sources, CUDA native package. | no (local) |
-| `../../model-pipeline/reference/encoder/bench_e5_matched.py` | The Python side: ONNX Runtime 1.30.0, same model file, thread settings, workload file and fixtures; same raw format. Pinned environments: `requirements-bench.txt` (CPU), `requirements-bench-cuda.txt` (CUDA, same CUDA/cuDNN wheels as the qualified CUDA profile). | n/a |
+| `../../model-pipeline/reference/encoder/bench_e5_matched.py` | The Python side (on the shared Python core `model-pipeline/reference/bench/matched_core.py`): ONNX Runtime 1.30.0, same model file, thread settings, workload file and fixtures; same raw format. Pinned environments: `requirements-bench.txt` (CPU), `requirements-bench-cuda.txt` (CUDA, same CUDA/cuDNN wheels as the qualified CUDA profile). | n/a |
 | `workloads/e5-v1.json` | The shared workload file: requests as protected fixture case ids, sample counts per provider, warmup, the cold-start request. | n/a |
 | `run-e5-matched.sh` | Runs the whole comparison, interleaving C# library, C# direct and Python over several rounds of fresh processes, then cold starts. | n/a |
-| `Starlings.Benchmarks.Gliner2Harness` | G5 harness for GLiNER2 entity extraction: stages `prepare`, `inference`, `decode`; entities checked against the protected reference on every series. CPU. | yes |
+| `Starlings.Benchmarks.Gliner2Harness` | G5 harness for GLiNER2 entity extraction: stages `prepare`, `inference`, `decode`; entities checked against the protected reference on every series. `dump-inputs --out <file>` writes the prepared model inputs of every workload request for the Python inference-stage runner. CPU. | yes |
 | `Starlings.Benchmarks.EmbeddingGemma2Harness` | G5 harness for EmbeddingGemma 2 text and image (no video: its fixtures need FFmpeg). CPU. | yes |
 | `Starlings.Benchmarks.Qwen35Harness` | G5 harness for Qwen3.5 greedy generation: prefill, decode tokens/s, time to first token, greedy ids checked against the reference. CPU. | yes |
 | `Core/` | Shared harness core: timing loop, cold-start spawning, environment manifest, raw writer, quality gate, and the warm/cold/cold-child host the three G5 harnesses run on (`HarnessHost`, one `IBenchDriver` per model). The e5 harness uses the same timing, spawning, environment and writer code. | n/a |
 | `workloads/{gliner2,embeddinggemma2,qwen35}-v1.json` | The G5 workload files (requests as protected fixture ids). | n/a |
+| `../../model-pipeline/reference/bench/` | The Python same-backend runners of the G5 harnesses (`bench_eg2_matched.py`, `bench_gliner2_matched.py`, `bench_qwen35_matched.py`) and their shared core; same graphs, workload files, thread settings, warm/cold protocol and raw format. | n/a |
+| `run-g5-matched.sh` | Runs one model's comparison (`eg2-text`, `eg2-image`, `gliner2`, `qwen35`), interleaving the C# harness and the Python runner over rounds of fresh processes, then cold starts. | n/a |
 
-Summaries: `model-pipeline bench validate <raw.jsonl>` and `model-pipeline bench summarize <raw.jsonl> [--json summary.json]` (`model-pipeline/src/model_pipeline/benchmarks.py`, schema `model-pipeline/schemas/benchmark-raw.schema.json`).
+Summaries: `model-pipeline bench validate <raw.jsonl>`, `model-pipeline bench summarize <raw.jsonl> [--json summary.json]` and the G5 budget check `model-pipeline bench g5 <raw.jsonl>...` (`g5.py`) (`model-pipeline/src/model_pipeline/benchmarks.py`, schema `model-pipeline/schemas/benchmark-raw.schema.json`).
 
 ## What is timed
 

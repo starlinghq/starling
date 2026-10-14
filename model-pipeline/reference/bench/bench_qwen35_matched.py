@@ -184,7 +184,11 @@ class QwenRun(core.LoadedRun):
             "decode_tokens_per_s": steps / (decode / 1000) if steps else 0.0,
             "inter_token_ms": decode / steps if steps else 0.0,
         }
-        return {"case": case, "max_new": max_new, "prompt_ids": list(ids), "tokens": tokens, "stop": stop}, stages, metrics
+        return (
+            {"case": case, "max_new": max_new, "prompt_ids": list(ids), "tokens": tokens, "stop": stop},
+            stages,
+            metrics,
+        )
 
     @staticmethod
     def judge(outputs) -> dict:
@@ -245,7 +249,9 @@ class QwenRun(core.LoadedRun):
             requests = [self.case(i) for i in w["requests"]]
             for c in w.get("concurrency", [1]):
                 warmup = w.get("warmup_calls", self.spec["warmup_calls"])
-                yield self.series(w["name"], w["path"], w["input"], c, w["samples"], warmup, requests, w["max_new_tokens"])
+                yield self.series(
+                    w["name"], w["path"], w["input"], c, w["samples"], warmup, requests, w["max_new_tokens"]
+                )
 
     def cold_series(self) -> core.Series:
         cold = self.spec["cold"]

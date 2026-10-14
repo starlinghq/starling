@@ -116,7 +116,11 @@ def compare(np, actual, reference) -> dict:
     act = np.asarray(actual, dtype=np.float64)
     ref = np.asarray(reference, dtype=np.float64)
     cos = (act * ref).sum(axis=1) / (np.linalg.norm(act, axis=1) * np.linalg.norm(ref, axis=1))
-    return {"max_abs": float(np.abs(act - ref).max()), "min_cosine": float(cos.min()), "finite": bool(np.isfinite(act).all())}
+    return {
+        "max_abs": float(np.abs(act - ref).max()),
+        "min_cosine": float(cos.min()),
+        "finite": bool(np.isfinite(act).all()),
+    }
 
 
 def merge(parts: list[dict]) -> dict:
@@ -380,8 +384,10 @@ class Eg2Run(core.LoadedRun):
         t = time.perf_counter_ns()
         patches = [self.preprocess(i) for i in images]
         preprocess = core.ms_since(t)
-        digests = [hashlib.sha256(self.np.ascontiguousarray(p[0], dtype=self.np.float32).tobytes()).hexdigest()
-                   for p in patches]
+        digests = [
+            hashlib.sha256(self.np.ascontiguousarray(p[0], dtype=self.np.float32).tobytes()).hexdigest()
+            for p in patches
+        ]
         return digests, {"decode": decode, "preprocess": preprocess}, {}
 
     def judge_images(self, requests: list[list[dict]]):
@@ -564,7 +570,6 @@ class Eg2Driver(core.Driver):
             core.package_versions((*packages, "transformers")),
             extra,
         )
-
 
 
 def main() -> int:

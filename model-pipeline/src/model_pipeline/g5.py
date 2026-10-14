@@ -194,7 +194,13 @@ def rule_adapter_overhead(groups, budget: str, resamples: int, seed: int) -> lis
         limit = max(1.0, 0.10 * direct_m)
         ci = benchmarks.bootstrap_pair(lib, direct, benchmarks.median, lambda x, y: x - y, resamples, seed)
         checks.append(
-            {"workload": label, "value": lib_m - direct_m, "limit_ms": limit, "ci95": list(ci), "pass": lib_m - direct_m <= limit}
+            {
+                "workload": label,
+                "value": lib_m - direct_m,
+                "limit_ms": limit,
+                "ci95": list(ci),
+                "pass": lib_m - direct_m <= limit,
+            }
         )
     return checks
 
@@ -210,7 +216,9 @@ def rule_prepare_decode_share(groups, budget: float, resamples: int, seed: int) 
             continue
         if not all({"prepare", "decode", "inference"} <= set(s["stages_ms"]) for s in series):
             continue
-        num = [[p + d for p, d in zip(s["stages_ms"]["prepare"], s["stages_ms"]["decode"], strict=True)] for s in series]
+        num = [
+            [p + d for p, d in zip(s["stages_ms"]["prepare"], s["stages_ms"]["decode"], strict=True)] for s in series
+        ]
         c = share_check(num, [s["stages_ms"]["inference"] for s in series], resamples, seed)
         c.update({"workload": _label(key), "pass": c["value"] <= budget})
         checks.append(c)
@@ -337,7 +345,9 @@ def qualifying(profile: dict, rules: dict) -> list[str]:
     for side in profile["runs"].values():
         for run in side.values():
             if run["artifacts"]["git_dirty"] is not False:
-                problems.append(f"run {run['run_id']} ({run['harness']['name']}): git_dirty={run['artifacts']['git_dirty']}")
+                problems.append(
+                    f"run {run['run_id']} ({run['harness']['name']}): git_dirty={run['artifacts']['git_dirty']}"
+                )
     return sorted(set(problems))
 
 
@@ -379,10 +389,14 @@ def evaluate(
             checks = evaluate_rule(key, budget, profile, resamples, seed)
             decided = [c["pass"] for c in checks if c["pass"] is not None]
             missing = any(c["pass"] is None for c in checks)
-            status = "no data" if not decided else ("fail" if not all(decided) else ("incomplete" if missing else "pass"))
+            status = (
+                "no data" if not decided else ("fail" if not all(decided) else ("incomplete" if missing else "pass"))
+            )
             rules[key] = {"budget": budget, "status": status, "checks": checks, "note": comments.get((name, key))}
         problems = comparability(profile)
-        problems += [f"quality failed: {f['mode']}/{f['path']}/{f['workload']} ({f['reason']})" for f in failed_by_profile[name]]
+        problems += [
+            f"quality failed: {f['mode']}/{f['path']}/{f['workload']} ({f['reason']})" for f in failed_by_profile[name]
+        ]
         statuses = {r["status"] for r in rules.values()}
         if problems or "fail" in statuses:
             verdict = "fail"
