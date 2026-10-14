@@ -237,8 +237,8 @@ maintenance:
       gives 1.7e-2, while the per-case max |d| / max(1, max |ref|) the bound was set from is 6.2e-6. Which reading binds
       is a maintainer decision; every .NET check passed.
     - >-
-      The hosted graph is downloadable anonymously since 2026-10-14 (public repository). Acquisition of the graph from it
-      stays untested until a clean-install drill downloads it; offline verification of a local copy works.
+      The hosted graph is public since 2026-10-14. The 0.1.0-preview.6 release drill downloaded it with no token into an
+      empty cache, verified it and ran the sample offline (Linux x64, one machine); other platforms are untested.
     - >-
       Fixtures reach 1,750 tokens and batch-independence checks 2,049; 2,050 to 8,192 tokens has no reference evidence.
       Long rows need GPU memory that grows with the square of the length in the full-attention layers.

@@ -237,8 +237,8 @@ maintenance:
       Upstream span offsets index the normalized text: a span that includes the appended '.' ends one past the
       original text (seen at threshold 0.0). The C# package maps such spans onto the input (behavior.defaults).
     - >-
-      The hosted graph is downloadable anonymously since 2026-10-14 (public repository). Acquisition of the graph from it
-      stays untested until a clean-install drill downloads it; offline verification of a local copy works.
+      The hosted graph is public since 2026-10-14. The 0.1.0-preview.6 release drill downloaded it with no token into an
+      empty cache, verified it and ran the sample offline (Linux x64, one machine); other platforms are untested.
     - >-
       The count gate (count_pred argmax 0 gives an empty result) never closed on the development corpus, so that
       path has no fixture.

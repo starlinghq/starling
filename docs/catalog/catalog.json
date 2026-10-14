@@ -484,7 +484,7 @@
       "last_checked": "2026-10-10",
       "known_issues": [
         "Evaluator run 2026-10-11 (docs/evidence/embeddinggemma2-dotnet/, CPU): G1 passed; G2 failed only on export.token_embeddings (Python ORT vs PyTorch): the tolerance file's |d| <= 1e-4 * max(1, |ref|) judged per value gives 1.7e-2, while the per-case max |d| / max(1, max |ref|) the bound was set from is 6.2e-6. Which reading binds is a maintainer decision; every .NET check passed.",
-        "The hosted graph is downloadable anonymously since 2026-10-14 (public repository). Acquisition of the graph from it stays untested until a clean-install drill downloads it; offline verification of a local copy works.",
+        "The hosted graph is public since 2026-10-14. The 0.1.0-preview.6 release drill downloaded it with no token into an empty cache, verified it and ran the sample offline (Linux x64, one machine); other platforms are untested.",
         "Fixtures reach 1,750 tokens and batch-independence checks 2,049; 2,050 to 8,192 tokens has no reference evidence. One 8,192-token row took 80 s on the 12-thread workstation CPU (process peak working set 5.9 GB during the test run); temporary memory grows with the square of the length in the full-attention layers.",
         "The fixtures cover the none, query and document prompts only; the other 18 names map to prompt texts without fixture rows. Matryoshka sizes are checked against the reference sliced and renormalized (the fixtures hold no truncated rows; the spike probe showed sentence-transformers truncate_dim equals that within 6e-8)."
       ],
@@ -659,7 +659,7 @@
       "last_checked": "2026-10-10",
       "known_issues": [
         "Evaluator run 2026-10-11 (docs/evidence/embeddinggemma2-dotnet/, CPU): G1 passed; G2 failed only on export.token_embeddings (Python ORT vs PyTorch): the tolerance file's |d| <= 1e-4 * max(1, |ref|) judged per value gives 1.7e-2, while the per-case max |d| / max(1, max |ref|) the bound was set from is 6.2e-6. Which reading binds is a maintainer decision; every .NET check passed.",
-        "The hosted graph is downloadable anonymously since 2026-10-14 (public repository). Acquisition of the graph from it stays untested until a clean-install drill downloads it; offline verification of a local copy works.",
+        "The hosted graph is public since 2026-10-14. The 0.1.0-preview.6 release drill downloaded it with no token into an empty cache, verified it and ran the sample offline (Linux x64, one machine); other platforms are untested.",
         "Fixtures reach 1,750 tokens and batch-independence checks 2,049; 2,050 to 8,192 tokens has no reference evidence. Long rows need GPU memory that grows with the square of the length in the full-attention layers.",
         "Native runtime: Microsoft.ML.OnnxRuntime.Gpu.Linux 1.30.0 needs the CUDA 13 runtime and cuDNN 9 on the loader path; the package does not ship them.",
         "The fixtures cover the none, query and document prompts only; the other 18 names map to prompt texts without fixture rows. Matryoshka sizes are checked against the reference sliced and renormalized (the fixtures hold no truncated rows; the spike probe showed sentence-transformers truncate_dim equals that within 6e-8)."
@@ -1191,7 +1191,7 @@
       "known_issues": [
         "Results are ordered by confidence; most entity scores saturate to exactly 1.0 in fp32, so near-ties make the order sensitive to backend noise (ORT CUDA with TF32 reorders one 1,329-token case with the same entity set).",
         "Upstream span offsets index the normalized text: a span that includes the appended '.' ends one past the original text (seen at threshold 0.0). The C# package maps such spans onto the input (behavior.defaults).",
-        "The hosted graph is downloadable anonymously since 2026-10-14 (public repository). Acquisition of the graph from it stays untested until a clean-install drill downloads it; offline verification of a local copy works.",
+        "The hosted graph is public since 2026-10-14. The 0.1.0-preview.6 release drill downloaded it with no token into an empty cache, verified it and ran the sample offline (Linux x64, one machine); other platforms are untested.",
         "The count gate (count_pred argmax 0 gives an empty result) never closed on the development corpus, so that path has no fixture."
       ],
       "execution": {
@@ -1373,7 +1373,7 @@
       "known_issues": [
         "Results are ordered by confidence; most entity scores saturate to exactly 1.0 in fp32, so near-ties make the order sensitive to backend noise (ORT CUDA with TF32 reorders one 1,329-token case with the same entity set).",
         "Upstream span offsets index the normalized text: a span that includes the appended '.' ends one past the original text (seen at threshold 0.0). The C# package maps such spans onto the input (behavior.defaults).",
-        "The hosted graph is downloadable anonymously since 2026-10-14 (public repository). Acquisition of the graph from it stays untested until a clean-install drill downloads it; offline verification of a local copy works.",
+        "The hosted graph is public since 2026-10-14. The 0.1.0-preview.6 release drill downloaded it with no token into an empty cache, verified it and ran the sample offline (Linux x64, one machine); other platforms are untested.",
         "The count gate (count_pred argmax 0 gives an empty result) never closed on the development corpus, so that path has no fixture.",
         "CUDA parity evidence (PROPOSED.md) left out the two cases over 600 tokens from the padded-batch check because the GPU was shared; single-row parity covers all 58 cases (span logits max abs 4.0e-3, scores 2.5e-6).",
         "Native runtime: Microsoft.ML.OnnxRuntime.Gpu.Linux 1.30.0 needs the CUDA 13 runtime and cuDNN 9 on the loader path; the package does not ship them."

@@ -104,3 +104,10 @@ These cannot be done by an agent. Each row names what it unblocks.
 ## Tracking
 
 Each workstream PR updates this document's tables when it lands. The catalog (R3) becomes the source of truth for status once it exists.
+
+### Status 2026-10-14
+
+- **Workstreams R1 to R10** are integrated in the `0.1.0-preview.6` release candidate (`docs/releases/ai-0.1.0-preview.6.md`), which merges draft PRs #3 to #12 and #14.
+- **M3 done.** The four Starlinghq Hugging Face repositories are public at the pinned revisions; the code and manifests record `source_status: public`. They stay Hugging Face repositories rather than GitHub release assets, because acquisition already reads them.
+- **M5 partly done.** The `release` environment exists (Mark as required reviewer, tags `ai-v*`, `NUGET_USER=MarkWalls`). Still open: the nuget.org trusted-publishing policy for repository `starling`, branch protection, and the `Starlings` prefix reservation if it was not requested with the tokenizer.
+- **Interoperability.** Libraries integrate through `Microsoft.Extensions.AI.Abstractions` only; CI rejects cloud SDKs and AI provider packages in every library. Next agent workstream: tool calling and structured output in `Qwen35ChatClient`, the main gap for code ported from other `IChatClient` providers. Also next: chunked prefill as the CPU default for Qwen (R1 and R8 findings).
