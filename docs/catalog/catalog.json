@@ -520,7 +520,10 @@
           "status": "not-run"
         },
         "G4": {
-          "status": "not-run"
+          "status": "passed",
+          "evidence": "docs/evidence/g4-soak-1h-2026-10-14/README.md",
+          "evidence_found": true,
+          "date": "2026-10-14"
         },
         "G5": {
           "status": "not-run"
@@ -644,7 +647,6 @@
           "G1",
           "G2",
           "G3",
-          "G4",
           "G5",
           "G6",
           "G7"
@@ -1599,10 +1601,10 @@
           "date": "2026-10-09"
         },
         "G4": {
-          "status": "checklist",
-          "evidence": "docs/releases/e5-0.1.0-preview.1.md",
+          "status": "passed",
+          "evidence": "docs/evidence/g4-soak-1h-2026-10-14/README.md",
           "evidence_found": true,
-          "date": "2026-10-09"
+          "date": "2026-10-14"
         },
         "G5": {
           "status": "checklist",
@@ -1729,7 +1731,6 @@
         "ready": false,
         "gates_not_passed": [
           "G3",
-          "G4",
           "G5",
           "G7"
         ],
@@ -2140,10 +2141,10 @@
           "status": "not-run"
         },
         "G4": {
-          "status": "checklist",
-          "evidence": "docs/evidence/p016-qwen35/README.md",
+          "status": "passed",
+          "evidence": "docs/evidence/g4-soak-1h-2026-10-14/README.md",
           "evidence_found": true,
-          "date": "2026-10-10"
+          "date": "2026-10-14"
         },
         "G5": {
           "status": "not-run"
@@ -2267,7 +2268,6 @@
           "G1",
           "G2",
           "G3",
-          "G4",
           "G5",
           "G6",
           "G7"

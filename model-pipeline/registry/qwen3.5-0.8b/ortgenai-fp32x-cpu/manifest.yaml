@@ -241,7 +241,7 @@ qualification:
     G3: { status: not-run }
     # G4 checklist: plan 10.1 LLM semantics (max tokens, stop, EOS, cache, chunked prefill, cancellation, isolation,
     # seeded sampling) in section 4; CUDA concurrency defect and serialization in section 5. No soak (plan 10.2).
-    G4: { status: checklist, evidence: docs/evidence/p016-qwen35/README.md, date: 2026-10-10 }
+    G4: { status: passed, evidence: docs/evidence/g4-soak-1h-2026-10-14/README.md, date: 2026-10-14 }
     G5: { status: not-run }
     # G6 checklist: the ai-0.1.0-preview.5 release drill (packed packages, clean consumer, offline sample run on a
     # seeded graph). Acquisition of the hosted graph is not covered while its source is a placeholder or private.
