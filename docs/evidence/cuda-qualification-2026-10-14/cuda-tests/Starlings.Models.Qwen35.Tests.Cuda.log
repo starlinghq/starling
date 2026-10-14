@@ -1,0 +1,327 @@
+Running tests from /home/mark/Projects/starling/.claude/worktrees/agent-a12b5f66e4c7eef5e/ai-dotnet/tests/Starlings.Models.Qwen35.Tests.Cuda/bin/Release/net10.0/Starlings.Models.Qwen35.Tests.Cuda.dll (net10.0|x64)
+[+0/x0/?0] Starlings.Models.Qwen35.Tests.Cuda.dll (net10.0|x64)(2s)
+
+[+0/x0/?0] Starlings.Models.Qwen35.Tests.Cuda.dll (net10.0|x64)(5s)
+
+passed Starlings.Models.Qwen35.Tests.Cuda.Fp16xCudaTests.GreedyIdsDivergeOnlyAtNearTies(id: "ru-de-mix") (2s 813ms)
+  from /home/mark/Projects/starling/.claude/worktrees/agent-a12b5f66e4c7eef5e/ai-dotnet/tests/Starlings.Models.Qwen35.Tests.Cuda/bin/Release/net10.0/Starlings.Models.Qwen35.Tests.Cuda.dll (net10.0|x64)
+[+1/x0/?0] Starlings.Models.Qwen35.Tests.Cuda.dll (net10.0|x64)(8s)
+
+passed Starlings.Models.Qwen35.Tests.Cuda.Fp16xCudaTests.GreedyIdsDivergeOnlyAtNearTies(id: "tools") (566ms)
+  from /home/mark/Projects/starling/.claude/worktrees/agent-a12b5f66e4c7eef5e/ai-dotnet/tests/Starlings.Models.Qwen35.Tests.Cuda/bin/Release/net10.0/Starlings.Models.Qwen35.Tests.Cuda.dll (net10.0|x64)
+passed Starlings.Models.Qwen35.Tests.Cuda.Fp16xCudaTests.GreedyIdsDivergeOnlyAtNearTies(id: "code-sql") (1s 766ms)
+  from /home/mark/Projects/starling/.claude/worktrees/agent-a12b5f66e4c7eef5e/ai-dotnet/tests/Starlings.Models.Qwen35.Tests.Cuda/bin/Release/net10.0/Starlings.Models.Qwen35.Tests.Cuda.dll (net10.0|x64)
+[+3/x0/?0] Starlings.Models.Qwen35.Tests.Cuda.dll (net10.0|x64)(11s)
+
+passed Starlings.Models.Qwen35.Tests.Cuda.Fp16xCudaTests.GreedyIdsDivergeOnlyAtNearTies(id: "ja") (2s 520ms)
+  from /home/mark/Projects/starling/.claude/worktrees/agent-a12b5f66e4c7eef5e/ai-dotnet/tests/Starlings.Models.Qwen35.Tests.Cuda/bin/Release/net10.0/Starlings.Models.Qwen35.Tests.Cuda.dll (net10.0|x64)
+[+4/x0/?0] Starlings.Models.Qwen35.Tests.Cuda.dll (net10.0|x64)(14s)
+
+passed Starlings.Models.Qwen35.Tests.Cuda.Fp16xCudaTests.GreedyIdsDivergeOnlyAtNearTies(id: "code-py") (2s 114ms)
+  from /home/mark/Projects/starling/.claude/worktrees/agent-a12b5f66e4c7eef5e/ai-dotnet/tests/Starlings.Models.Qwen35.Tests.Cuda/bin/Release/net10.0/Starlings.Models.Qwen35.Tests.Cuda.dll (net10.0|x64)
+passed Starlings.Models.Qwen35.Tests.Cuda.Fp16xCudaTests.GreedyIdsDivergeOnlyAtNearTies(id: "special-broken") (221ms)
+  from /home/mark/Projects/starling/.claude/worktrees/agent-a12b5f66e4c7eef5e/ai-dotnet/tests/Starlings.Models.Qwen35.Tests.Cuda/bin/Release/net10.0/Starlings.Models.Qwen35.Tests.Cuda.dll (net10.0|x64)
+passed Starlings.Models.Qwen35.Tests.Cuda.Fp16xCudaTests.GreedyIdsDivergeOnlyAtNearTies(id: "special-endoftext") (1s 736ms)
+  from /home/mark/Projects/starling/.claude/worktrees/agent-a12b5f66e4c7eef5e/ai-dotnet/tests/Starlings.Models.Qwen35.Tests.Cuda/bin/Release/net10.0/Starlings.Models.Qwen35.Tests.Cuda.dll (net10.0|x64)
+passed Starlings.Models.Qwen35.Tests.Cuda.Fp16xCudaTests.GreedyIdsDivergeOnlyAtNearTies(id: "hi") (179ms)
+  from /home/mark/Projects/starling/.claude/worktrees/agent-a12b5f66e4c7eef5e/ai-dotnet/tests/Starlings.Models.Qwen35.Tests.Cuda/bin/Release/net10.0/Starlings.Models.Qwen35.Tests.Cuda.dll (net10.0|x64)
+[+8/x0/?0] Starlings.Models.Qwen35.Tests.Cuda.dll (net10.0|x64)(17s)
+
+passed Starlings.Models.Qwen35.Tests.Cuda.Fp16xCudaTests.GreedyIdsDivergeOnlyAtNearTies(id: "multi-turn") (1s 894ms)
+  from /home/mark/Projects/starling/.claude/worktrees/agent-a12b5f66e4c7eef5e/ai-dotnet/tests/Starlings.Models.Qwen35.Tests.Cuda/bin/Release/net10.0/Starlings.Models.Qwen35.Tests.Cuda.dll (net10.0|x64)
+passed Starlings.Models.Qwen35.Tests.Cuda.Fp16xCudaTests.GreedyIdsDivergeOnlyAtNearTies(id: "en-short") (93ms)
+  from /home/mark/Projects/starling/.claude/worktrees/agent-a12b5f66e4c7eef5e/ai-dotnet/tests/Starlings.Models.Qwen35.Tests.Cuda/bin/Release/net10.0/Starlings.Models.Qwen35.Tests.Cuda.dll (net10.0|x64)
+[+10/x0/?0] Starlings.Models.Qwen35.Tests.Cuda.dll (net10.0|x64)(20s)
+
+passed Starlings.Models.Qwen35.Tests.Cuda.Fp16xCudaTests.GreedyIdsDivergeOnlyAtNearTies(id: "long-license") (2s 404ms)
+  from /home/mark/Projects/starling/.claude/worktrees/agent-a12b5f66e4c7eef5e/ai-dotnet/tests/Starlings.Models.Qwen35.Tests.Cuda/bin/Release/net10.0/Starlings.Models.Qwen35.Tests.Cuda.dll (net10.0|x64)
+[+11/x0/?0] Starlings.Models.Qwen35.Tests.Cuda.dll (net10.0|x64)(23s)
+
+passed Starlings.Models.Qwen35.Tests.Cuda.Fp16xCudaTests.GreedyIdsDivergeOnlyAtNearTies(id: "en-math") (2s 021ms)
+  from /home/mark/Projects/starling/.claude/worktrees/agent-a12b5f66e4c7eef5e/ai-dotnet/tests/Starlings.Models.Qwen35.Tests.Cuda/bin/Release/net10.0/Starlings.Models.Qwen35.Tests.Cuda.dll (net10.0|x64)
+passed Starlings.Models.Qwen35.Tests.Cuda.Fp16xCudaTests.GreedyIdsDivergeOnlyAtNearTies(id: "en-list") (1s 756ms)
+  from /home/mark/Projects/starling/.claude/worktrees/agent-a12b5f66e4c7eef5e/ai-dotnet/tests/Starlings.Models.Qwen35.Tests.Cuda/bin/Release/net10.0/Starlings.Models.Qwen35.Tests.Cuda.dll (net10.0|x64)
+[+13/x0/?0] Starlings.Models.Qwen35.Tests.Cuda.dll (net10.0|x64)(26s)
+
+passed Starlings.Models.Qwen35.Tests.Cuda.Fp16xCudaTests.GreedyIdsDivergeOnlyAtNearTies(id: "emoji") (1s 804ms)
+  from /home/mark/Projects/starling/.claude/worktrees/agent-a12b5f66e4c7eef5e/ai-dotnet/tests/Starlings.Models.Qwen35.Tests.Cuda/bin/Release/net10.0/Starlings.Models.Qwen35.Tests.Cuda.dll (net10.0|x64)
+[+14/x0/?0] Starlings.Models.Qwen35.Tests.Cuda.dll (net10.0|x64)(29s)
+
+passed Starlings.Models.Qwen35.Tests.Cuda.Fp16xCudaTests.GreedyIdsDivergeOnlyAtNearTies(id: "ar") (2s 137ms)
+  from /home/mark/Projects/starling/.claude/worktrees/agent-a12b5f66e4c7eef5e/ai-dotnet/tests/Starlings.Models.Qwen35.Tests.Cuda/bin/Release/net10.0/Starlings.Models.Qwen35.Tests.Cuda.dll (net10.0|x64)
+passed Starlings.Models.Qwen35.Tests.Cuda.Fp16xCudaTests.GreedyIdsDivergeOnlyAtNearTies(id: "th") (2s 255ms)
+  from /home/mark/Projects/starling/.claude/worktrees/agent-a12b5f66e4c7eef5e/ai-dotnet/tests/Starlings.Models.Qwen35.Tests.Cuda/bin/Release/net10.0/Starlings.Models.Qwen35.Tests.Cuda.dll (net10.0|x64)
+passed Starlings.Models.Qwen35.Tests.Cuda.Fp16xCudaTests.GreedyIdsDivergeOnlyAtNearTies(id: "special-imend") (110ms)
+  from /home/mark/Projects/starling/.claude/worktrees/agent-a12b5f66e4c7eef5e/ai-dotnet/tests/Starlings.Models.Qwen35.Tests.Cuda/bin/Release/net10.0/Starlings.Models.Qwen35.Tests.Cuda.dll (net10.0|x64)
+[+17/x0/?0] Starlings.Models.Qwen35.Tests.Cuda.dll (net10.0|x64)(32s)
+
+passed Starlings.Models.Qwen35.Tests.Cuda.Fp16xCudaTests.GreedyIdsDivergeOnlyAtNearTies(id: "zh") (762ms)
+  from /home/mark/Projects/starling/.claude/worktrees/agent-a12b5f66e4c7eef5e/ai-dotnet/tests/Starlings.Models.Qwen35.Tests.Cuda/bin/Release/net10.0/Starlings.Models.Qwen35.Tests.Cuda.dll (net10.0|x64)
+passed Starlings.Models.Qwen35.Tests.Cuda.Fp16xCudaTests.GreedyIdsDivergeOnlyAtNearTies(id: "system-pirate") (584ms)
+  from /home/mark/Projects/starling/.claude/worktrees/agent-a12b5f66e4c7eef5e/ai-dotnet/tests/Starlings.Models.Qwen35.Tests.Cuda/bin/Release/net10.0/Starlings.Models.Qwen35.Tests.Cuda.dll (net10.0|x64)
+passed Starlings.Models.Qwen35.Tests.Cuda.Fp16xCudaTests.GreedyIdsDivergeOnlyAtNearTies(id: "special-think-tool") (1s 543ms)
+  from /home/mark/Projects/starling/.claude/worktrees/agent-a12b5f66e4c7eef5e/ai-dotnet/tests/Starlings.Models.Qwen35.Tests.Cuda/bin/Release/net10.0/Starlings.Models.Qwen35.Tests.Cuda.dll (net10.0|x64)
+[+20/x0/?0] Starlings.Models.Qwen35.Tests.Cuda.dll (net10.0|x64)(35s)
+
+passed Starlings.Models.Qwen35.Tests.Cuda.Fp16xCudaTests.GreedyIdsDivergeOnlyAtNearTies(id: "code-cs") (1s 847ms)
+  from /home/mark/Projects/starling/.claude/worktrees/agent-a12b5f66e4c7eef5e/ai-dotnet/tests/Starlings.Models.Qwen35.Tests.Cuda/bin/Release/net10.0/Starlings.Models.Qwen35.Tests.Cuda.dll (net10.0|x64)
+[+21/x0/?0] Starlings.Models.Qwen35.Tests.Cuda.dll (net10.0|x64)(38s)
+
+passed Starlings.Models.Qwen35.Tests.Cuda.Fp16xCudaTests.GreedyIdsDivergeOnlyAtNearTies(id: "thinking-on") (2s 037ms)
+  from /home/mark/Projects/starling/.claude/worktrees/agent-a12b5f66e4c7eef5e/ai-dotnet/tests/Starlings.Models.Qwen35.Tests.Cuda/bin/Release/net10.0/Starlings.Models.Qwen35.Tests.Cuda.dll (net10.0|x64)
+passed Starlings.Models.Qwen35.Tests.Cuda.Fp16xCudaTests.StreamingReassembles (1s 064ms)
+  from /home/mark/Projects/starling/.claude/worktrees/agent-a12b5f66e4c7eef5e/ai-dotnet/tests/Starlings.Models.Qwen35.Tests.Cuda/bin/Release/net10.0/Starlings.Models.Qwen35.Tests.Cuda.dll (net10.0|x64)
+passed Starlings.Models.Qwen35.Tests.Cuda.Fp16xCudaTests.Fp16xIsRejectedOnCpu (2ms)
+  from /home/mark/Projects/starling/.claude/worktrees/agent-a12b5f66e4c7eef5e/ai-dotnet/tests/Starlings.Models.Qwen35.Tests.Cuda/bin/Release/net10.0/Starlings.Models.Qwen35.Tests.Cuda.dll (net10.0|x64)
+[+24/x0/?0] Starlings.Models.Qwen35.Tests.Cuda.dll (net10.0|x64)(41s)
+
+[+24/x0/?0] Starlings.Models.Qwen35.Tests.Cuda.dll (net10.0|x64)(44s)
+
+[+24/x0/?0] Starlings.Models.Qwen35.Tests.Cuda.dll (net10.0|x64)(47s)
+
+[+24/x0/?0] Starlings.Models.Qwen35.Tests.Cuda.dll (net10.0|x64)(50s)
+
+[+24/x0/?0] Starlings.Models.Qwen35.Tests.Cuda.dll (net10.0|x64)(53s)
+
+[+24/x0/?0] Starlings.Models.Qwen35.Tests.Cuda.dll (net10.0|x64)(56s)
+
+passed Starlings.Models.Qwen35.Tests.Cuda.Fp32xCudaChatClientTests.ConcurrentResponsesEqualSequential (13s 067ms)
+  from /home/mark/Projects/starling/.claude/worktrees/agent-a12b5f66e4c7eef5e/ai-dotnet/tests/Starlings.Models.Qwen35.Tests.Cuda/bin/Release/net10.0/Starlings.Models.Qwen35.Tests.Cuda.dll (net10.0|x64)
+passed Starlings.Models.Qwen35.Tests.Cuda.Fp32xCudaChatClientTests.CancellationDuringChunkedPrefillThenReuse (813ms)
+  from /home/mark/Projects/starling/.claude/worktrees/agent-a12b5f66e4c7eef5e/ai-dotnet/tests/Starlings.Models.Qwen35.Tests.Cuda/bin/Release/net10.0/Starlings.Models.Qwen35.Tests.Cuda.dll (net10.0|x64)
+  Standard output
+    cuda cancel during prefill (16-token chunks, 1,666-token prompt, cancelled 300 ms in): 14.0 ms from Cancel() to OperationCanceledException, call 318 ms
+    
+  Error output
+passed Starlings.Models.Qwen35.Tests.Cuda.Fp32xCudaChatClientTests.CancellationBetweenStepsThenReuse (657ms)
+  from /home/mark/Projects/starling/.claude/worktrees/agent-a12b5f66e4c7eef5e/ai-dotnet/tests/Starlings.Models.Qwen35.Tests.Cuda/bin/Release/net10.0/Starlings.Models.Qwen35.Tests.Cuda.dll (net10.0|x64)
+  Standard output
+    cuda cancel between steps: 33.5 ms from Cancel() to OperationCanceledException
+    
+  Error output
+[+27/x0/?0] Starlings.Models.Qwen35.Tests.Cuda.dll (net10.0|x64)(59s)
+
+passed Starlings.Models.Qwen35.Tests.Cuda.Fp32xCudaChatClientTests.StreamingEqualsResponseAndTheReference(id: "zh") (2s 224ms)
+  from /home/mark/Projects/starling/.claude/worktrees/agent-a12b5f66e4c7eef5e/ai-dotnet/tests/Starlings.Models.Qwen35.Tests.Cuda/bin/Release/net10.0/Starlings.Models.Qwen35.Tests.Cuda.dll (net10.0|x64)
+[+28/x0/?0] Starlings.Models.Qwen35.Tests.Cuda.dll (net10.0|x64)(1m 02s)
+
+[+28/x0/?0] Starlings.Models.Qwen35.Tests.Cuda.dll (net10.0|x64)(1m 05s)
+
+passed Starlings.Models.Qwen35.Tests.Cuda.Fp32xCudaChatClientTests.StreamingEqualsResponseAndTheReference(id: "emoji") (5s 306ms)
+  from /home/mark/Projects/starling/.claude/worktrees/agent-a12b5f66e4c7eef5e/ai-dotnet/tests/Starlings.Models.Qwen35.Tests.Cuda/bin/Release/net10.0/Starlings.Models.Qwen35.Tests.Cuda.dll (net10.0|x64)
+[+29/x0/?0] Starlings.Models.Qwen35.Tests.Cuda.dll (net10.0|x64)(1m 08s)
+
+passed Starlings.Models.Qwen35.Tests.Cuda.Fp32xCudaChatClientTests.StreamingEqualsResponseAndTheReference(id: "thinking-on") (5s 238ms)
+  from /home/mark/Projects/starling/.claude/worktrees/agent-a12b5f66e4c7eef5e/ai-dotnet/tests/Starlings.Models.Qwen35.Tests.Cuda/bin/Release/net10.0/Starlings.Models.Qwen35.Tests.Cuda.dll (net10.0|x64)
+[+30/x0/?0] Starlings.Models.Qwen35.Tests.Cuda.dll (net10.0|x64)(1m 11s)
+
+passed Starlings.Models.Qwen35.Tests.Cuda.Fp32xCudaChatClientTests.StreamingEqualsResponseAndTheReference(id: "hi") (467ms)
+  from /home/mark/Projects/starling/.claude/worktrees/agent-a12b5f66e4c7eef5e/ai-dotnet/tests/Starlings.Models.Qwen35.Tests.Cuda/bin/Release/net10.0/Starlings.Models.Qwen35.Tests.Cuda.dll (net10.0|x64)
+passed Starlings.Models.Qwen35.Tests.Cuda.Fp32xCudaChatClientTests.StreamingEqualsResponseAndTheReference(id: "system-pirate") (1s 371ms)
+  from /home/mark/Projects/starling/.claude/worktrees/agent-a12b5f66e4c7eef5e/ai-dotnet/tests/Starlings.Models.Qwen35.Tests.Cuda/bin/Release/net10.0/Starlings.Models.Qwen35.Tests.Cuda.dll (net10.0|x64)
+[+32/x0/?0] Starlings.Models.Qwen35.Tests.Cuda.dll (net10.0|x64)(1m 14s)
+
+[+32/x0/?0] Starlings.Models.Qwen35.Tests.Cuda.dll (net10.0|x64)(1m 17s)
+
+[+32/x0/?0] Starlings.Models.Qwen35.Tests.Cuda.dll (net10.0|x64)(1m 20s)
+
+[+32/x0/?0] Starlings.Models.Qwen35.Tests.Cuda.dll (net10.0|x64)(1m 23s)
+
+[+32/x0/?0] Starlings.Models.Qwen35.Tests.Cuda.dll (net10.0|x64)(1m 26s)
+
+[+32/x0/?0] Starlings.Models.Qwen35.Tests.Cuda.dll (net10.0|x64)(1m 29s)
+
+[+32/x0/?0] Starlings.Models.Qwen35.Tests.Cuda.dll (net10.0|x64)(1m 32s)
+
+[+32/x0/?0] Starlings.Models.Qwen35.Tests.Cuda.dll (net10.0|x64)(1m 35s)
+
+passed Starlings.Models.Qwen35.Tests.Cuda.Fp32xCudaChatClientTests.StreamingEqualsResponseAndTheReference(id: "long-license") (23s 152ms)
+  from /home/mark/Projects/starling/.claude/worktrees/agent-a12b5f66e4c7eef5e/ai-dotnet/tests/Starlings.Models.Qwen35.Tests.Cuda/bin/Release/net10.0/Starlings.Models.Qwen35.Tests.Cuda.dll (net10.0|x64)
+[+33/x0/?0] Starlings.Models.Qwen35.Tests.Cuda.dll (net10.0|x64)(1m 38s)
+
+[+33/x0/?0] Starlings.Models.Qwen35.Tests.Cuda.dll (net10.0|x64)(1m 41s)
+
+passed Starlings.Models.Qwen35.Tests.Cuda.Fp32xCudaChatClientTests.StreamingEqualsResponseAndTheReference(id: "ar") (6s 797ms)
+  from /home/mark/Projects/starling/.claude/worktrees/agent-a12b5f66e4c7eef5e/ai-dotnet/tests/Starlings.Models.Qwen35.Tests.Cuda/bin/Release/net10.0/Starlings.Models.Qwen35.Tests.Cuda.dll (net10.0|x64)
+[+34/x0/?0] Starlings.Models.Qwen35.Tests.Cuda.dll (net10.0|x64)(1m 44s)
+
+[+34/x0/?0] Starlings.Models.Qwen35.Tests.Cuda.dll (net10.0|x64)(1m 47s)
+
+passed Starlings.Models.Qwen35.Tests.Cuda.Fp32xCudaChatClientTests.StreamingEqualsResponseAndTheReference(id: "code-cs") (6s 478ms)
+  from /home/mark/Projects/starling/.claude/worktrees/agent-a12b5f66e4c7eef5e/ai-dotnet/tests/Starlings.Models.Qwen35.Tests.Cuda/bin/Release/net10.0/Starlings.Models.Qwen35.Tests.Cuda.dll (net10.0|x64)
+[+35/x0/?0] Starlings.Models.Qwen35.Tests.Cuda.dll (net10.0|x64)(1m 50s)
+
+[+35/x0/?0] Starlings.Models.Qwen35.Tests.Cuda.dll (net10.0|x64)(1m 53s)
+
+passed Starlings.Models.Qwen35.Tests.Cuda.Fp32xCudaChatClientTests.StreamingEqualsResponseAndTheReference(id: "en-math") (5s 228ms)
+  from /home/mark/Projects/starling/.claude/worktrees/agent-a12b5f66e4c7eef5e/ai-dotnet/tests/Starlings.Models.Qwen35.Tests.Cuda/bin/Release/net10.0/Starlings.Models.Qwen35.Tests.Cuda.dll (net10.0|x64)
+[+36/x0/?0] Starlings.Models.Qwen35.Tests.Cuda.dll (net10.0|x64)(1m 56s)
+
+[+36/x0/?0] Starlings.Models.Qwen35.Tests.Cuda.dll (net10.0|x64)(1m 59s)
+
+passed Starlings.Models.Qwen35.Tests.Cuda.Fp32xCudaChatClientTests.StreamingEqualsResponseAndTheReference(id: "special-think-tool") (5s 974ms)
+  from /home/mark/Projects/starling/.claude/worktrees/agent-a12b5f66e4c7eef5e/ai-dotnet/tests/Starlings.Models.Qwen35.Tests.Cuda/bin/Release/net10.0/Starlings.Models.Qwen35.Tests.Cuda.dll (net10.0|x64)
+[+37/x0/?0] Starlings.Models.Qwen35.Tests.Cuda.dll (net10.0|x64)(2m 02s)
+
+[+37/x0/?0] Starlings.Models.Qwen35.Tests.Cuda.dll (net10.0|x64)(2m 05s)
+
+passed Starlings.Models.Qwen35.Tests.Cuda.Fp32xCudaChatClientTests.StreamingEqualsResponseAndTheReference(id: "special-endoftext") (4s 982ms)
+  from /home/mark/Projects/starling/.claude/worktrees/agent-a12b5f66e4c7eef5e/ai-dotnet/tests/Starlings.Models.Qwen35.Tests.Cuda/bin/Release/net10.0/Starlings.Models.Qwen35.Tests.Cuda.dll (net10.0|x64)
+[+38/x0/?0] Starlings.Models.Qwen35.Tests.Cuda.dll (net10.0|x64)(2m 08s)
+
+passed Starlings.Models.Qwen35.Tests.Cuda.Fp32xCudaChatClientTests.StreamingEqualsResponseAndTheReference(id: "ru-de-mix") (3s 595ms)
+  from /home/mark/Projects/starling/.claude/worktrees/agent-a12b5f66e4c7eef5e/ai-dotnet/tests/Starlings.Models.Qwen35.Tests.Cuda/bin/Release/net10.0/Starlings.Models.Qwen35.Tests.Cuda.dll (net10.0|x64)
+passed Starlings.Models.Qwen35.Tests.Cuda.Fp32xCudaChatClientTests.StreamingEqualsResponseAndTheReference(id: "en-short") (584ms)
+  from /home/mark/Projects/starling/.claude/worktrees/agent-a12b5f66e4c7eef5e/ai-dotnet/tests/Starlings.Models.Qwen35.Tests.Cuda/bin/Release/net10.0/Starlings.Models.Qwen35.Tests.Cuda.dll (net10.0|x64)
+passed Starlings.Models.Qwen35.Tests.Cuda.Fp32xCudaChatClientTests.StreamingEqualsResponseAndTheReference(id: "special-imend") (339ms)
+  from /home/mark/Projects/starling/.claude/worktrees/agent-a12b5f66e4c7eef5e/ai-dotnet/tests/Starlings.Models.Qwen35.Tests.Cuda/bin/Release/net10.0/Starlings.Models.Qwen35.Tests.Cuda.dll (net10.0|x64)
+[+41/x0/?0] Starlings.Models.Qwen35.Tests.Cuda.dll (net10.0|x64)(2m 11s)
+
+[+41/x0/?0] Starlings.Models.Qwen35.Tests.Cuda.dll (net10.0|x64)(2m 14s)
+
+passed Starlings.Models.Qwen35.Tests.Cuda.Fp32xCudaChatClientTests.StreamingEqualsResponseAndTheReference(id: "code-sql") (6s 075ms)
+  from /home/mark/Projects/starling/.claude/worktrees/agent-a12b5f66e4c7eef5e/ai-dotnet/tests/Starlings.Models.Qwen35.Tests.Cuda/bin/Release/net10.0/Starlings.Models.Qwen35.Tests.Cuda.dll (net10.0|x64)
+[+42/x0/?0] Starlings.Models.Qwen35.Tests.Cuda.dll (net10.0|x64)(2m 17s)
+
+[+42/x0/?0] Starlings.Models.Qwen35.Tests.Cuda.dll (net10.0|x64)(2m 20s)
+
+passed Starlings.Models.Qwen35.Tests.Cuda.Fp32xCudaChatClientTests.StreamingEqualsResponseAndTheReference(id: "multi-turn") (6s 168ms)
+  from /home/mark/Projects/starling/.claude/worktrees/agent-a12b5f66e4c7eef5e/ai-dotnet/tests/Starlings.Models.Qwen35.Tests.Cuda/bin/Release/net10.0/Starlings.Models.Qwen35.Tests.Cuda.dll (net10.0|x64)
+[+43/x0/?0] Starlings.Models.Qwen35.Tests.Cuda.dll (net10.0|x64)(2m 23s)
+
+[+43/x0/?0] Starlings.Models.Qwen35.Tests.Cuda.dll (net10.0|x64)(2m 26s)
+
+passed Starlings.Models.Qwen35.Tests.Cuda.Fp32xCudaChatClientTests.StreamingEqualsResponseAndTheReference(id: "code-py") (5s 410ms)
+  from /home/mark/Projects/starling/.claude/worktrees/agent-a12b5f66e4c7eef5e/ai-dotnet/tests/Starlings.Models.Qwen35.Tests.Cuda/bin/Release/net10.0/Starlings.Models.Qwen35.Tests.Cuda.dll (net10.0|x64)
+[+44/x0/?0] Starlings.Models.Qwen35.Tests.Cuda.dll (net10.0|x64)(2m 29s)
+
+[+44/x0/?0] Starlings.Models.Qwen35.Tests.Cuda.dll (net10.0|x64)(2m 32s)
+
+passed Starlings.Models.Qwen35.Tests.Cuda.Fp32xCudaChatClientTests.StreamingEqualsResponseAndTheReference(id: "th") (5s 934ms)
+  from /home/mark/Projects/starling/.claude/worktrees/agent-a12b5f66e4c7eef5e/ai-dotnet/tests/Starlings.Models.Qwen35.Tests.Cuda/bin/Release/net10.0/Starlings.Models.Qwen35.Tests.Cuda.dll (net10.0|x64)
+[+45/x0/?0] Starlings.Models.Qwen35.Tests.Cuda.dll (net10.0|x64)(2m 35s)
+
+passed Starlings.Models.Qwen35.Tests.Cuda.Fp32xCudaChatClientTests.StreamingEqualsResponseAndTheReference(id: "ja") (4s 583ms)
+  from /home/mark/Projects/starling/.claude/worktrees/agent-a12b5f66e4c7eef5e/ai-dotnet/tests/Starlings.Models.Qwen35.Tests.Cuda/bin/Release/net10.0/Starlings.Models.Qwen35.Tests.Cuda.dll (net10.0|x64)
+[+46/x0/?0] Starlings.Models.Qwen35.Tests.Cuda.dll (net10.0|x64)(2m 38s)
+
+[+46/x0/?0] Starlings.Models.Qwen35.Tests.Cuda.dll (net10.0|x64)(2m 41s)
+
+passed Starlings.Models.Qwen35.Tests.Cuda.Fp32xCudaChatClientTests.StreamingEqualsResponseAndTheReference(id: "en-list") (5s 144ms)
+  from /home/mark/Projects/starling/.claude/worktrees/agent-a12b5f66e4c7eef5e/ai-dotnet/tests/Starlings.Models.Qwen35.Tests.Cuda/bin/Release/net10.0/Starlings.Models.Qwen35.Tests.Cuda.dll (net10.0|x64)
+passed Starlings.Models.Qwen35.Tests.Cuda.Fp32xCudaChatClientTests.StreamingEqualsResponseAndTheReference(id: "special-broken") (1s 053ms)
+  from /home/mark/Projects/starling/.claude/worktrees/agent-a12b5f66e4c7eef5e/ai-dotnet/tests/Starlings.Models.Qwen35.Tests.Cuda/bin/Release/net10.0/Starlings.Models.Qwen35.Tests.Cuda.dll (net10.0|x64)
+[+48/x0/?0] Starlings.Models.Qwen35.Tests.Cuda.dll (net10.0|x64)(2m 44s)
+
+[+48/x0/?0] Starlings.Models.Qwen35.Tests.Cuda.dll (net10.0|x64)(2m 47s)
+
+passed Starlings.Models.Qwen35.Tests.Cuda.Fp32xCudaTests.TextPathWithThinking (1s 139ms)
+  from /home/mark/Projects/starling/.claude/worktrees/agent-a12b5f66e4c7eef5e/ai-dotnet/tests/Starlings.Models.Qwen35.Tests.Cuda/bin/Release/net10.0/Starlings.Models.Qwen35.Tests.Cuda.dll (net10.0|x64)
+passed Starlings.Models.Qwen35.Tests.Cuda.Fp32xCudaTests.RunsOnCudaWithTf32Off (14ms)
+  from /home/mark/Projects/starling/.claude/worktrees/agent-a12b5f66e4c7eef5e/ai-dotnet/tests/Starlings.Models.Qwen35.Tests.Cuda/bin/Release/net10.0/Starlings.Models.Qwen35.Tests.Cuda.dll (net10.0|x64)
+[+50/x0/?0] Starlings.Models.Qwen35.Tests.Cuda.dll (net10.0|x64)(2m 50s)
+
+passed Starlings.Models.Qwen35.Tests.Cuda.Fp32xCudaTests.GreedyIdsEqualTheReference(id: "code-py") (3s 142ms)
+  from /home/mark/Projects/starling/.claude/worktrees/agent-a12b5f66e4c7eef5e/ai-dotnet/tests/Starlings.Models.Qwen35.Tests.Cuda/bin/Release/net10.0/Starlings.Models.Qwen35.Tests.Cuda.dll (net10.0|x64)
+[+51/x0/?0] Starlings.Models.Qwen35.Tests.Cuda.dll (net10.0|x64)(2m 53s)
+
+passed Starlings.Models.Qwen35.Tests.Cuda.Fp32xCudaTests.GreedyIdsEqualTheReference(id: "ar") (2s 527ms)
+  from /home/mark/Projects/starling/.claude/worktrees/agent-a12b5f66e4c7eef5e/ai-dotnet/tests/Starlings.Models.Qwen35.Tests.Cuda/bin/Release/net10.0/Starlings.Models.Qwen35.Tests.Cuda.dll (net10.0|x64)
+[+52/x0/?0] Starlings.Models.Qwen35.Tests.Cuda.dll (net10.0|x64)(2m 56s)
+
+passed Starlings.Models.Qwen35.Tests.Cuda.Fp32xCudaTests.GreedyIdsEqualTheReference(id: "multi-turn") (2s 399ms)
+  from /home/mark/Projects/starling/.claude/worktrees/agent-a12b5f66e4c7eef5e/ai-dotnet/tests/Starlings.Models.Qwen35.Tests.Cuda/bin/Release/net10.0/Starlings.Models.Qwen35.Tests.Cuda.dll (net10.0|x64)
+[+53/x0/?0] Starlings.Models.Qwen35.Tests.Cuda.dll (net10.0|x64)(2m 59s)
+
+passed Starlings.Models.Qwen35.Tests.Cuda.Fp32xCudaTests.GreedyIdsEqualTheReference(id: "code-cs") (2s 689ms)
+  from /home/mark/Projects/starling/.claude/worktrees/agent-a12b5f66e4c7eef5e/ai-dotnet/tests/Starlings.Models.Qwen35.Tests.Cuda/bin/Release/net10.0/Starlings.Models.Qwen35.Tests.Cuda.dll (net10.0|x64)
+[+54/x0/?0] Starlings.Models.Qwen35.Tests.Cuda.dll (net10.0|x64)(3m 02s)
+
+passed Starlings.Models.Qwen35.Tests.Cuda.Fp32xCudaTests.GreedyIdsEqualTheReference(id: "ja") (2s 880ms)
+  from /home/mark/Projects/starling/.claude/worktrees/agent-a12b5f66e4c7eef5e/ai-dotnet/tests/Starlings.Models.Qwen35.Tests.Cuda/bin/Release/net10.0/Starlings.Models.Qwen35.Tests.Cuda.dll (net10.0|x64)
+passed Starlings.Models.Qwen35.Tests.Cuda.Fp32xCudaTests.GreedyIdsEqualTheReference(id: "special-imend") (127ms)
+  from /home/mark/Projects/starling/.claude/worktrees/agent-a12b5f66e4c7eef5e/ai-dotnet/tests/Starlings.Models.Qwen35.Tests.Cuda/bin/Release/net10.0/Starlings.Models.Qwen35.Tests.Cuda.dll (net10.0|x64)
+passed Starlings.Models.Qwen35.Tests.Cuda.Fp32xCudaTests.GreedyIdsEqualTheReference(id: "tools") (1s 228ms)
+  from /home/mark/Projects/starling/.claude/worktrees/agent-a12b5f66e4c7eef5e/ai-dotnet/tests/Starlings.Models.Qwen35.Tests.Cuda/bin/Release/net10.0/Starlings.Models.Qwen35.Tests.Cuda.dll (net10.0|x64)
+[+57/x0/?0] Starlings.Models.Qwen35.Tests.Cuda.dll (net10.0|x64)(3m 05s)
+
+passed Starlings.Models.Qwen35.Tests.Cuda.Fp32xCudaTests.GreedyIdsEqualTheReference(id: "en-math") (2s 354ms)
+  from /home/mark/Projects/starling/.claude/worktrees/agent-a12b5f66e4c7eef5e/ai-dotnet/tests/Starlings.Models.Qwen35.Tests.Cuda/bin/Release/net10.0/Starlings.Models.Qwen35.Tests.Cuda.dll (net10.0|x64)
+passed Starlings.Models.Qwen35.Tests.Cuda.Fp32xCudaTests.GreedyIdsEqualTheReference(id: "en-short") (234ms)
+  from /home/mark/Projects/starling/.claude/worktrees/agent-a12b5f66e4c7eef5e/ai-dotnet/tests/Starlings.Models.Qwen35.Tests.Cuda/bin/Release/net10.0/Starlings.Models.Qwen35.Tests.Cuda.dll (net10.0|x64)
+[+59/x0/?0] Starlings.Models.Qwen35.Tests.Cuda.dll (net10.0|x64)(3m 08s)
+
+passed Starlings.Models.Qwen35.Tests.Cuda.Fp32xCudaTests.GreedyIdsEqualTheReference(id: "th") (2s 193ms)
+  from /home/mark/Projects/starling/.claude/worktrees/agent-a12b5f66e4c7eef5e/ai-dotnet/tests/Starlings.Models.Qwen35.Tests.Cuda/bin/Release/net10.0/Starlings.Models.Qwen35.Tests.Cuda.dll (net10.0|x64)
+passed Starlings.Models.Qwen35.Tests.Cuda.Fp32xCudaTests.GreedyIdsEqualTheReference(id: "system-pirate") (597ms)
+  from /home/mark/Projects/starling/.claude/worktrees/agent-a12b5f66e4c7eef5e/ai-dotnet/tests/Starlings.Models.Qwen35.Tests.Cuda/bin/Release/net10.0/Starlings.Models.Qwen35.Tests.Cuda.dll (net10.0|x64)
+passed Starlings.Models.Qwen35.Tests.Cuda.Fp32xCudaTests.GreedyIdsEqualTheReference(id: "zh") (1s 143ms)
+  from /home/mark/Projects/starling/.claude/worktrees/agent-a12b5f66e4c7eef5e/ai-dotnet/tests/Starlings.Models.Qwen35.Tests.Cuda/bin/Release/net10.0/Starlings.Models.Qwen35.Tests.Cuda.dll (net10.0|x64)
+[+62/x0/?0] Starlings.Models.Qwen35.Tests.Cuda.dll (net10.0|x64)(3m 11s)
+
+passed Starlings.Models.Qwen35.Tests.Cuda.Fp32xCudaTests.GreedyIdsEqualTheReference(id: "thinking-on") (2s 546ms)
+  from /home/mark/Projects/starling/.claude/worktrees/agent-a12b5f66e4c7eef5e/ai-dotnet/tests/Starlings.Models.Qwen35.Tests.Cuda/bin/Release/net10.0/Starlings.Models.Qwen35.Tests.Cuda.dll (net10.0|x64)
+[+63/x0/?0] Starlings.Models.Qwen35.Tests.Cuda.dll (net10.0|x64)(3m 14s)
+
+passed Starlings.Models.Qwen35.Tests.Cuda.Fp32xCudaTests.GreedyIdsEqualTheReference(id: "special-endoftext") (2s 668ms)
+  from /home/mark/Projects/starling/.claude/worktrees/agent-a12b5f66e4c7eef5e/ai-dotnet/tests/Starlings.Models.Qwen35.Tests.Cuda/bin/Release/net10.0/Starlings.Models.Qwen35.Tests.Cuda.dll (net10.0|x64)
+[+64/x0/?0] Starlings.Models.Qwen35.Tests.Cuda.dll (net10.0|x64)(3m 17s)
+
+passed Starlings.Models.Qwen35.Tests.Cuda.Fp32xCudaTests.GreedyIdsEqualTheReference(id: "emoji") (2s 391ms)
+  from /home/mark/Projects/starling/.claude/worktrees/agent-a12b5f66e4c7eef5e/ai-dotnet/tests/Starlings.Models.Qwen35.Tests.Cuda/bin/Release/net10.0/Starlings.Models.Qwen35.Tests.Cuda.dll (net10.0|x64)
+passed Starlings.Models.Qwen35.Tests.Cuda.Fp32xCudaTests.GreedyIdsEqualTheReference(id: "ru-de-mix") (1s 687ms)
+  from /home/mark/Projects/starling/.claude/worktrees/agent-a12b5f66e4c7eef5e/ai-dotnet/tests/Starlings.Models.Qwen35.Tests.Cuda/bin/Release/net10.0/Starlings.Models.Qwen35.Tests.Cuda.dll (net10.0|x64)
+passed Starlings.Models.Qwen35.Tests.Cuda.Fp32xCudaTests.GreedyIdsEqualTheReference(id: "hi") (241ms)
+  from /home/mark/Projects/starling/.claude/worktrees/agent-a12b5f66e4c7eef5e/ai-dotnet/tests/Starlings.Models.Qwen35.Tests.Cuda/bin/Release/net10.0/Starlings.Models.Qwen35.Tests.Cuda.dll (net10.0|x64)
+[+67/x0/?0] Starlings.Models.Qwen35.Tests.Cuda.dll (net10.0|x64)(3m 20s)
+
+[+67/x0/?0] Starlings.Models.Qwen35.Tests.Cuda.dll (net10.0|x64)(3m 23s)
+
+[+67/x0/?0] Starlings.Models.Qwen35.Tests.Cuda.dll (net10.0|x64)(3m 26s)
+
+[+67/x0/?0] Starlings.Models.Qwen35.Tests.Cuda.dll (net10.0|x64)(3m 29s)
+
+[+67/x0/?0] Starlings.Models.Qwen35.Tests.Cuda.dll (net10.0|x64)(3m 32s)
+
+passed Starlings.Models.Qwen35.Tests.Cuda.Fp32xCudaTests.GreedyIdsEqualTheReference(id: "long-license") (13s 033ms)
+  from /home/mark/Projects/starling/.claude/worktrees/agent-a12b5f66e4c7eef5e/ai-dotnet/tests/Starlings.Models.Qwen35.Tests.Cuda/bin/Release/net10.0/Starlings.Models.Qwen35.Tests.Cuda.dll (net10.0|x64)
+passed Starlings.Models.Qwen35.Tests.Cuda.Fp32xCudaTests.GreedyIdsEqualTheReference(id: "special-think-tool") (2s 277ms)
+  from /home/mark/Projects/starling/.claude/worktrees/agent-a12b5f66e4c7eef5e/ai-dotnet/tests/Starlings.Models.Qwen35.Tests.Cuda/bin/Release/net10.0/Starlings.Models.Qwen35.Tests.Cuda.dll (net10.0|x64)
+[+69/x0/?0] Starlings.Models.Qwen35.Tests.Cuda.dll (net10.0|x64)(3m 35s)
+
+passed Starlings.Models.Qwen35.Tests.Cuda.Fp32xCudaTests.GreedyIdsEqualTheReference(id: "code-sql") (2s 412ms)
+  from /home/mark/Projects/starling/.claude/worktrees/agent-a12b5f66e4c7eef5e/ai-dotnet/tests/Starlings.Models.Qwen35.Tests.Cuda/bin/Release/net10.0/Starlings.Models.Qwen35.Tests.Cuda.dll (net10.0|x64)
+[+70/x0/?0] Starlings.Models.Qwen35.Tests.Cuda.dll (net10.0|x64)(3m 38s)
+
+passed Starlings.Models.Qwen35.Tests.Cuda.Fp32xCudaTests.GreedyIdsEqualTheReference(id: "en-list") (2s 592ms)
+  from /home/mark/Projects/starling/.claude/worktrees/agent-a12b5f66e4c7eef5e/ai-dotnet/tests/Starlings.Models.Qwen35.Tests.Cuda/bin/Release/net10.0/Starlings.Models.Qwen35.Tests.Cuda.dll (net10.0|x64)
+passed Starlings.Models.Qwen35.Tests.Cuda.Fp32xCudaTests.GreedyIdsEqualTheReference(id: "special-broken") (520ms)
+  from /home/mark/Projects/starling/.claude/worktrees/agent-a12b5f66e4c7eef5e/ai-dotnet/tests/Starlings.Models.Qwen35.Tests.Cuda/bin/Release/net10.0/Starlings.Models.Qwen35.Tests.Cuda.dll (net10.0|x64)
+[+72/x0/?0] Starlings.Models.Qwen35.Tests.Cuda.dll (net10.0|x64)(3m 41s)
+
+passed Starlings.Models.Qwen35.Tests.Cuda.Fp32xCudaTests.StreamingReassembles (1s 202ms)
+  from /home/mark/Projects/starling/.claude/worktrees/agent-a12b5f66e4c7eef5e/ai-dotnet/tests/Starlings.Models.Qwen35.Tests.Cuda/bin/Release/net10.0/Starlings.Models.Qwen35.Tests.Cuda.dll (net10.0|x64)
+[+73/x0/?0] Starlings.Models.Qwen35.Tests.Cuda.dll (net10.0|x64)(3m 44s)
+
+[+73/x0/?0] Starlings.Models.Qwen35.Tests.Cuda.dll (net10.0|x64)(3m 47s)
+
+[+73/x0/?0] Starlings.Models.Qwen35.Tests.Cuda.dll (net10.0|x64)(3m 50s)
+
+[+73/x0/?0] Starlings.Models.Qwen35.Tests.Cuda.dll (net10.0|x64)(3m 53s)
+
+passed Starlings.Models.Qwen35.Tests.Cuda.Fp32xCudaTests.ConcurrentRequestsAreIndependent (13s 800ms)
+  from /home/mark/Projects/starling/.claude/worktrees/agent-a12b5f66e4c7eef5e/ai-dotnet/tests/Starlings.Models.Qwen35.Tests.Cuda/bin/Release/net10.0/Starlings.Models.Qwen35.Tests.Cuda.dll (net10.0|x64)
+passed Starlings.Models.Qwen35.Tests.Cuda.Fp32xCudaTests.CancellationBetweenStepsThenReuse (184ms)
+  from /home/mark/Projects/starling/.claude/worktrees/agent-a12b5f66e4c7eef5e/ai-dotnet/tests/Starlings.Models.Qwen35.Tests.Cuda/bin/Release/net10.0/Starlings.Models.Qwen35.Tests.Cuda.dll (net10.0|x64)
+[+75/x0/?0] Starlings.Models.Qwen35.Tests.Cuda.dll (net10.0|x64)(3m 56s)
+
+/home/mark/Projects/starling/.claude/worktrees/agent-a12b5f66e4c7eef5e/ai-dotnet/tests/Starlings.Models.Qwen35.Tests.Cuda/bin/Release/net10.0/Starlings.Models.Qwen35.Tests.Cuda.dll (net10.0|x64) passed (3m 56s 439ms)
+
+Test run summary: Passed!
+  total: 75
+  failed: 0
+  succeeded: 75
+  skipped: 0
+  duration: 3m 57s 431ms
+wall 254 s: dotnet test --project ai-dotnet/tests/Starlings.Models.Qwen35.Tests.Cuda -c Release --output Detailed
+exit 0

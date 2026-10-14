@@ -296,10 +296,12 @@ qualification:
   # model-pipeline/reference/embeddinggemma2/requirements-video.txt (torchcodec 0.17.0 on the pinned FFmpeg 8.1).
   fixtures: model-pipeline/protected/embeddinggemma-2/video-fp32-cpu
   tolerances: model-pipeline/protected/embeddinggemma-2/video-fp32-cuda/tolerances.yaml
+  # CUDA G1/G2, 2026-10-14 (RTX 3090, use_tf32 0): the protected staged evaluator gave G1 passed, G2 passed on the accepted
+  # development fixtures, which are not P-030 release sets, so the entries are checklist, not passed (docs/evidence/cuda-qualification-2026-10-14/).
   gates:
     G0: { status: checklist, evidence: docs/m0/embeddinggemma2-video-spike.md, date: 2026-10-11 }
-    G1: { status: not-run }
-    G2: { status: not-run }
+    G1: { status: checklist, evidence: docs/evidence/cuda-qualification-2026-10-14/embeddinggemma2-video-fp32-cuda/README.md, date: 2026-10-14 }
+    G2: { status: checklist, evidence: docs/evidence/cuda-qualification-2026-10-14/embeddinggemma2-video-fp32-cuda/README.md, date: 2026-10-14 }
     G3: { status: not-run }
     G4: { status: not-run }
     G5: { status: not-run }

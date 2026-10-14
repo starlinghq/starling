@@ -166,9 +166,9 @@ def stage_export(args) -> int:
     out = results.new_results(
         profile=args.profile,
         stage="export",
-        candidate=f"Python onnxruntime {ort.__version__} {session.get_providers()[0]} on {args.graph.name} (route A, fixture "
-        f"inputs); entities decoded with gliner2_entity.decode_entities; reference hidden states from the GLiNER2 "
-        f"encoder on torch {torch.__version__} fp32 CPU, same ids",
+        candidate=f"Python onnxruntime {ort.__version__} {session.get_providers()[0]} on {args.graph.name} "
+        f"(route A, fixture inputs); entities decoded with gliner2_entity.decode_entities; reference hidden states "
+        f"from the GLiNER2 encoder on torch {torch.__version__} fp32 CPU, same ids",
         producer=producer(),
         environment=env,
         assets=assets,

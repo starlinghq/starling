@@ -210,13 +210,14 @@ qualification:
   # The reference is shared with onnx-fp32-cpu (same graph, PyTorch fp32 CPU; development fixtures accepted
   # 2026-10-10, PR #19; agent-written corpus, not the P-030 release set). CUDA parity, placement and environment:
   # protected/gliner2-base-v1/onnx-fp32-cuda/. Binding tolerances set 2026-10-10 (PR #21), valid only with use_tf32 0.
-  # The staged evaluator (model-pipeline evaluate) has not been run on CUDA stage results for this profile.
   fixtures: model-pipeline/protected/gliner2-base-v1/onnx-fp32-cpu
   tolerances: model-pipeline/protected/gliner2-base-v1/onnx-fp32-cuda/tolerances.yaml
+  # CUDA G1/G2, 2026-10-14 (RTX 3090, use_tf32 0): the protected staged evaluator gave G1 passed, G2 passed on the accepted
+  # development fixtures, which are not P-030 release sets, so the entries are checklist, not passed (docs/evidence/cuda-qualification-2026-10-14/).
   gates:
     G0: { status: checklist, evidence: docs/m0/gliner2-p014.md, date: 2026-10-10 }
-    G1: { status: not-run }
-    G2: { status: not-run }
+    G1: { status: checklist, evidence: docs/evidence/cuda-qualification-2026-10-14/gliner2-onnx-fp32-cuda/README.md, date: 2026-10-14 }
+    G2: { status: checklist, evidence: docs/evidence/cuda-qualification-2026-10-14/gliner2-onnx-fp32-cuda/README.md, date: 2026-10-14 }
     G3: { status: not-run }
     G4: { status: not-run }
     G5: { status: not-run }

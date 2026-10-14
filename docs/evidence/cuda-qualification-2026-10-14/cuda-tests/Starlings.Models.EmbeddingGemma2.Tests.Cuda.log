@@ -1,0 +1,230 @@
+Running tests from /home/mark/Projects/starling/.claude/worktrees/agent-a12b5f66e4c7eef5e/ai-dotnet/tests/Starlings.Models.EmbeddingGemma2.Tests.Cuda/bin/Release/net10.0/Starlings.Models.EmbeddingGemma2.Tests.Cuda.dll (net10.0|x64)
+[+0/x0/?0] Starlings.Models.EmbeddingGemma2.Tests.Cuda.dll (net10.0|x64)(2s)
+
+[+0/x0/?0] Starlings.Models.EmbeddingGemma2.Tests.Cuda.dll (net10.0|x64)(5s)
+
+passed Starlings.Models.EmbeddingGemma2.Tests.Cuda.CudaParityTests.SessionUsesCudaWithTf32Disabled (32ms)
+  from /home/mark/Projects/starling/.claude/worktrees/agent-a12b5f66e4c7eef5e/ai-dotnet/tests/Starlings.Models.EmbeddingGemma2.Tests.Cuda/bin/Release/net10.0/Starlings.Models.EmbeddingGemma2.Tests.Cuda.dll (net10.0|x64)
+  Standard output
+    ORT 1.30.0; session CUDAExecutionProvider, CPUExecutionProvider; CUDA_VISIBLE_DEVICES=0
+    provider options: arena_extend_strategy=kNextPowerOfTwo, cudnn_conv1d_pad_to_nc1d=0, cudnn_conv_algo_search=EXHAUSTIVE, cudnn_conv_use_max_workspace=1, device_id=0, do_copy_in_default_stream=1, enable_cudnn=1, fuse_conv_bias=0, gpu_mem_limit=18446744073709551615, has_user_compute_stream=0, prefer_nhwc=0, sdpa_kernel=0, tunable_op_enable=0, tunable_op_max_tuning_duration_ms=0, tunable_op_tuning_enable=0, use_ep_level_unified_stream=0, use_tf32=0, user_compute_stream=0
+    
+  Error output
+[+1/x0/?0] Starlings.Models.EmbeddingGemma2.Tests.Cuda.dll (net10.0|x64)(8s)
+
+[+1/x0/?0] Starlings.Models.EmbeddingGemma2.Tests.Cuda.dll (net10.0|x64)(11s)
+
+passed Starlings.Models.EmbeddingGemma2.Tests.Cuda.CudaImageParityTests.SessionsUseCudaWithTf32Disabled (1ms)
+  from /home/mark/Projects/starling/.claude/worktrees/agent-a12b5f66e4c7eef5e/ai-dotnet/tests/Starlings.Models.EmbeddingGemma2.Tests.Cuda/bin/Release/net10.0/Starlings.Models.EmbeddingGemma2.Tests.Cuda.dll (net10.0|x64)
+  Standard output
+    6c97f477a82f: CUDAExecutionProvider, CPUExecutionProvider; use_tf32=0; CUDA_VISIBLE_DEVICES=0
+    a2c22e072ec2: CUDAExecutionProvider, CPUExecutionProvider; use_tf32=0; CUDA_VISIBLE_DEVICES=0
+    
+  Error output
+[+2/x0/?0] Starlings.Models.EmbeddingGemma2.Tests.Cuda.dll (net10.0|x64)(14s)
+
+passed Starlings.Models.EmbeddingGemma2.Tests.Cuda.CudaVideoParityTests.SessionsUseCudaWithTf32Disabled (1ms)
+  from /home/mark/Projects/starling/.claude/worktrees/agent-a12b5f66e4c7eef5e/ai-dotnet/tests/Starlings.Models.EmbeddingGemma2.Tests.Cuda/bin/Release/net10.0/Starlings.Models.EmbeddingGemma2.Tests.Cuda.dll (net10.0|x64)
+  Standard output
+    frames per vision call: 2 (max vision batch patches 2520)
+    6c97f477a82f: CUDAExecutionProvider, CPUExecutionProvider; use_tf32=0; CUDA_VISIBLE_DEVICES=0
+    a2c22e072ec2: CUDAExecutionProvider, CPUExecutionProvider; use_tf32=0; CUDA_VISIBLE_DEVICES=0
+    
+  Error output
+passed Starlings.Models.EmbeddingGemma2.Tests.Cuda.CudaParityTests.TextParityWithTheOwnedTokenizer (8s 410ms)
+  from /home/mark/Projects/starling/.claude/worktrees/agent-a12b5f66e4c7eef5e/ai-dotnet/tests/Starlings.Models.EmbeddingGemma2.Tests.Cuda/bin/Release/net10.0/Starlings.Models.EmbeddingGemma2.Tests.Cuda.dll (net10.0|x64)
+  Standard output
+    from text, 138 rows (prompts none/query/document), ids exact; single vs protected: max abs 4.71E-007, mean 2.11E-008, p99 8.99E-008, min cosine 0.999999999992740 (worst ascii-sentence@document)
+    from text, padded batches vs protected: max abs 4.32E-007, mean 2.42E-008, p99 1.02E-007, min cosine 0.999999999993839 (worst ascii-sentence@document)
+    from text, padded batches vs single: max abs 2.68E-007, mean 2.26E-008, p99 9.50E-008, min cosine 0.999999999997192 (worst long-mixed)
+    
+  Error output
+[+4/x0/?0] Starlings.Models.EmbeddingGemma2.Tests.Cuda.dll (net10.0|x64)(17s)
+
+[+4/x0/?0] Starlings.Models.EmbeddingGemma2.Tests.Cuda.dll (net10.0|x64)(20s)
+
+[+4/x0/?0] Starlings.Models.EmbeddingGemma2.Tests.Cuda.dll (net10.0|x64)(23s)
+
+[+4/x0/?0] Starlings.Models.EmbeddingGemma2.Tests.Cuda.dll (net10.0|x64)(26s)
+
+[+4/x0/?0] Starlings.Models.EmbeddingGemma2.Tests.Cuda.dll (net10.0|x64)(29s)
+
+passed Starlings.Models.EmbeddingGemma2.Tests.Cuda.CudaParityTests.ParityWithTheReference (14s 826ms)
+  from /home/mark/Projects/starling/.claude/worktrees/agent-a12b5f66e4c7eef5e/ai-dotnet/tests/Starlings.Models.EmbeddingGemma2.Tests.Cuda/bin/Release/net10.0/Starlings.Models.EmbeddingGemma2.Tests.Cuda.dll (net10.0|x64)
+  Standard output
+    single rows from fixture ids vs protected (138 rows, prompts none/query/document): max abs 4.71E-007, mean 2.11E-008, p99 8.99E-008, min cosine 0.999999999992740 (worst ascii-sentence@document)
+    bounds: embedding_max_abs 5.0E-006, min_cosine 0.9999999 from model-pipeline/protected/embeddinggemma-2/onnx-fp32-cuda/tolerances.yaml
+    6-row protected padded batch vs protected: max abs 2.05E-007, mean 2.89E-008, p99 1.37E-007, min cosine 0.999999999998434 (worst ascii-sentence)
+    6-row protected padded batch vs own single rows: max abs 2.68E-007, mean 3.11E-008, p99 1.53E-007, min cosine 0.999999999997927 (worst long-mixed)
+    6 rows padded by the encoder vs own single rows: max abs 1.94E-007, mean 1.45E-008, p99 1.08E-007, min cosine 0.999999999998769 (worst ascii-sentence)
+    138 rows in padded batches of 4 vs protected: max abs 3.28E-007, mean 2.16E-008, p99 8.94E-008, min cosine 0.999999999996727 (worst ascii-sentence@document)
+    138 rows in padded batches of 4 vs own single rows: max abs 4.15E-007, mean 1.81E-008, p99 8.38E-008, min cosine 0.999999999994188 (worst ascii-sentence@document)
+    Matryoshka 512 (50 rows) vs sliced+renormalized reference: max abs 2.64E-007, mean 2.92E-008, p99 1.19E-007, min cosine 0.999999999998441 (worst long-mixed)
+    Matryoshka 512 vs Truncate(own 768 output): max abs 2.79E-007, mean 2.83E-008, p99 1.25E-007, min cosine 0.999999999997937 (worst long-mixed)
+    Matryoshka 256 (50 rows) vs sliced+renormalized reference: max abs 3.28E-007, mean 3.93E-008, p99 1.60E-007, min cosine 0.999999999998701 (worst long-mixed)
+    Matryoshka 256 vs Truncate(own 768 output): max abs 3.58E-007, mean 3.79E-008, p99 1.65E-007, min cosine 0.999999999998141 (worst rtl-mixed)
+    Matryoshka 128 (50 rows) vs sliced+renormalized reference: max abs 3.58E-007, mean 4.57E-008, p99 1.83E-007, min cosine 0.999999999999111 (worst ascii-sentence)
+    Matryoshka 128 vs Truncate(own 768 output): max abs 4.02E-007, mean 4.43E-008, p99 1.90E-007, min cosine 0.999999999998898 (worst rtl-mixed)
+    
+  Error output
+passed Starlings.Models.EmbeddingGemma2.Tests.Cuda.CudaParityTests.InputsOver8192TokensAreRejected (8ms)
+  from /home/mark/Projects/starling/.claude/worktrees/agent-a12b5f66e4c7eef5e/ai-dotnet/tests/Starlings.Models.EmbeddingGemma2.Tests.Cuda/bin/Release/net10.0/Starlings.Models.EmbeddingGemma2.Tests.Cuda.dll (net10.0|x64)
+  Standard output
+    8,193 tokens rejected before inference: Input 1 has 8193 tokens; the maximum is 8192 (special tokens and prompt included). EmbeddingGemma 2 rejects longer input instead of truncating it; split or shorten the text. (Parameter 'inputs')
+    
+  Error output
+passed Starlings.Models.EmbeddingGemma2.Tests.Cuda.CudaParityTests.CancellationDuringARunThrowsAndTheEncoderStaysUsable (311ms)
+  from /home/mark/Projects/starling/.claude/worktrees/agent-a12b5f66e4c7eef5e/ai-dotnet/tests/Starlings.Models.EmbeddingGemma2.Tests.Cuda/bin/Release/net10.0/Starlings.Models.EmbeddingGemma2.Tests.Cuda.dll (net10.0|x64)
+passed Starlings.Models.EmbeddingGemma2.Tests.Cuda.CudaParityTests.PlacementPutsMostNodesOnCuda (55ms)
+  from /home/mark/Projects/starling/.claude/worktrees/agent-a12b5f66e4c7eef5e/ai-dotnet/tests/Starlings.Models.EmbeddingGemma2.Tests.Cuda/bin/Release/net10.0/Starlings.Models.EmbeddingGemma2.Tests.Cuda.dll (net10.0|x64)
+  Standard output
+    CUDAExecutionProvider: 2423 nodes
+    CPUExecutionProvider: 130 nodes
+    
+  Error output
+[+8/x0/?0] Starlings.Models.EmbeddingGemma2.Tests.Cuda.dll (net10.0|x64)(32s)
+
+passed Starlings.Models.EmbeddingGemma2.Tests.Cuda.CudaParityTests.BatchIndependenceAcrossTheSlidingWindow (3s 413ms)
+  from /home/mark/Projects/starling/.claude/worktrees/agent-a12b5f66e4c7eef5e/ai-dotnet/tests/Starlings.Models.EmbeddingGemma2.Tests.Cuda/bin/Release/net10.0/Starlings.Models.EmbeddingGemma2.Tests.Cuda.dll (net10.0|x64)
+  Standard output
+      511 tokens: batch vs single 9.50E-008; norm 1.0000000
+      512 tokens: batch vs single 1.30E-007; norm 1.0000000
+      513 tokens: batch vs single 9.69E-008; norm 1.0000000
+      514 tokens: batch vs single 1.25E-007; norm 1.0000000
+      515 tokens: batch vs single 9.69E-008; norm 1.0000000
+      600 tokens: batch vs single 1.49E-007; norm 1.0000000
+     1024 tokens: batch vs single 1.37E-007; norm 1.0000000
+     1025 tokens: batch vs single 1.55E-007; norm 1.0000000
+     1026 tokens: batch vs single 1.10E-007; norm 1.0000000
+     1027 tokens: batch vs single 1.49E-007; norm 1.0000000
+     1100 tokens: batch vs single 1.42E-007; norm 1.0000000
+     1537 tokens: batch vs single 9.69E-008; norm 1.0000000
+     2049 tokens: batch vs single 1.48E-007; norm 1.0000000
+    long rows, batch vs single: max abs 1.55E-007, mean 2.75E-008, p99 9.22E-008, min cosine 0.999999999999326 (worst 1025)
+    12-token row padded next to them vs single: max abs 3.58E-007, mean 5.94E-008, p99 1.98E-007, min cosine 0.999999999996580 (worst short-with-1026)
+    
+  Error output
+[+9/x0/?0] Starlings.Models.EmbeddingGemma2.Tests.Cuda.dll (net10.0|x64)(35s)
+
+[+9/x0/?0] Starlings.Models.EmbeddingGemma2.Tests.Cuda.dll (net10.0|x64)(38s)
+
+[+9/x0/?0] Starlings.Models.EmbeddingGemma2.Tests.Cuda.dll (net10.0|x64)(41s)
+
+passed Starlings.Models.EmbeddingGemma2.Tests.Cuda.CudaImageParityTests.TextOnlyInputsUseTheReleasedTextGraph (28s 823ms)
+  from /home/mark/Projects/starling/.claude/worktrees/agent-a12b5f66e4c7eef5e/ai-dotnet/tests/Starlings.Models.EmbeddingGemma2.Tests.Cuda/bin/Release/net10.0/Starlings.Models.EmbeddingGemma2.Tests.Cuda.dll (net10.0|x64)
+[+10/x0/?0] Starlings.Models.EmbeddingGemma2.Tests.Cuda.dll (net10.0|x64)(44s)
+
+[+10/x0/?0] Starlings.Models.EmbeddingGemma2.Tests.Cuda.dll (net10.0|x64)(47s)
+
+[+10/x0/?0] Starlings.Models.EmbeddingGemma2.Tests.Cuda.dll (net10.0|x64)(50s)
+
+[+10/x0/?0] Starlings.Models.EmbeddingGemma2.Tests.Cuda.dll (net10.0|x64)(53s)
+
+[+10/x0/?0] Starlings.Models.EmbeddingGemma2.Tests.Cuda.dll (net10.0|x64)(56s)
+
+[+10/x0/?0] Starlings.Models.EmbeddingGemma2.Tests.Cuda.dll (net10.0|x64)(59s)
+
+[+10/x0/?0] Starlings.Models.EmbeddingGemma2.Tests.Cuda.dll (net10.0|x64)(1m 02s)
+
+passed Starlings.Models.EmbeddingGemma2.Tests.Cuda.CudaVideoParityTests.FramesWithoutTimingNeedTheOptIn (50s 343ms)
+  from /home/mark/Projects/starling/.claude/worktrees/agent-a12b5f66e4c7eef5e/ai-dotnet/tests/Starlings.Models.EmbeddingGemma2.Tests.Cuda/bin/Release/net10.0/Starlings.Models.EmbeddingGemma2.Tests.Cuda.dll (net10.0|x64)
+  Standard output
+    vid-array-no-metadata with AllowVideosWithoutTiming vs reference: max abs 2.38E-007, mean 4.27E-008, p99 1.48E-007, min cosine 0.999999999998873 (worst vid-array-no-metadata); vs the same file sampled at 1 fps: cosine 0.9653 (upstream quirk, documented)
+    
+  Error output
+passed Starlings.Models.EmbeddingGemma2.Tests.Cuda.CudaVideoParityTests.QueriesRetrieveVideosOfTheirScene (24ms)
+  from /home/mark/Projects/starling/.claude/worktrees/agent-a12b5f66e4c7eef5e/ai-dotnet/tests/Starlings.Models.EmbeddingGemma2.Tests.Cuda/bin/Release/net10.0/Starlings.Models.EmbeddingGemma2.Tests.Cuda.dll (net10.0|x64)
+  Standard output
+    q-bars: top h264-1fps-64x48-8s (bars) 0.7780, runner-up h264-bars-640x360-30fps-5s 0.7675
+    q-shapes: top h264-1.9s-320x240-30fps (shapes) 0.7831, runner-up h264-1s-320x240-30fps 0.7769
+    q-text: top h264-portrait-360x640-30fps-4s (text) 0.7420, runner-up h264-rot90-640x360-30fps-3s 0.7246
+    
+  Error output
+[+12/x0/?0] Starlings.Models.EmbeddingGemma2.Tests.Cuda.dll (net10.0|x64)(1m 05s)
+
+passed Starlings.Models.EmbeddingGemma2.Tests.Cuda.CudaImageParityTests.BatchesMatchSingleRows (24s 367ms)
+  from /home/mark/Projects/starling/.claude/worktrees/agent-a12b5f66e4c7eef5e/ai-dotnet/tests/Starlings.Models.EmbeddingGemma2.Tests.Cuda/bin/Release/net10.0/Starlings.Models.EmbeddingGemma2.Tests.Cuda.dll (net10.0|x64)
+  Standard output
+    vision batch 1 (GPU default), text batch 4: 9 rows in batches vs single rows: max abs 1.24E-007, mean 1.30E-008, p99 7.45E-008, min cosine 0.999999999999289 (worst size-tiny-8x6); bound 1.0E-005
+    
+  Error output
+passed Starlings.Models.EmbeddingGemma2.Tests.Cuda.CudaImageParityTests.QueriesRetrieveTheirImages (17ms)
+  from /home/mark/Projects/starling/.claude/worktrees/agent-a12b5f66e4c7eef5e/ai-dotnet/tests/Starlings.Models.EmbeddingGemma2.Tests.Cuda/bin/Release/net10.0/Starlings.Models.EmbeddingGemma2.Tests.Cuda.dll (net10.0|x64)
+  Standard output
+    q-cat: top photo-chelsea 0.7051, runner-up synth-text 0.6078
+    q-coffee: top photo-coffee 0.7384, runner-up photo-chelsea 0.6036
+    q-rocket: top photo-rocket 0.7069, runner-up photo-astronaut 0.6348
+    q-astronaut: top photo-astronaut 0.7590, runner-up photo-rocket 0.6408
+    q-galaxies: top photo-hubble-deep-field 0.7463, runner-up photo-rocket 0.5883
+    q-cameraman: top photo-camera 0.7335, runner-up synth-text 0.5830
+    q-shapes: top synth-shapes 0.7329, runner-up photo-hubble-deep-field 0.6148
+    q-text: top synth-text 0.6839, runner-up photo-hubble-deep-field 0.6565
+    
+  Error output
+passed Starlings.Models.EmbeddingGemma2.Tests.Cuda.CudaImageParityTests.RowsMatchTheReference (546ms)
+  from /home/mark/Projects/starling/.claude/worktrees/agent-a12b5f66e4c7eef5e/ai-dotnet/tests/Starlings.Models.EmbeddingGemma2.Tests.Cuda/bin/Release/net10.0/Starlings.Models.EmbeddingGemma2.Tests.Cuda.dll (net10.0|x64)
+  Standard output
+    42 rows (in contract; mode-gray16 is rejected by contract) vs reference: max abs 3.64E-006, mean 7.96E-008, p99 8.52E-007, min cosine 0.999999999654997 (worst photo-rocket)
+      image and interleaved rows: max abs 3.64E-006, mean 9.55E-008, p99 9.46E-007, min cosine 0.999999999654997 (worst photo-rocket)
+      text-only rows (released text graph): max abs 1.49E-007, mean 1.21E-008, p99 4.10E-008, min cosine 0.999999999999881 (worst q-coffee)
+    bounds: embedding_max_abs 1.0E-005, min_cosine 0.9999995 (model-pipeline/protected/embeddinggemma-2/image-fp32-cuda/tolerances.yaml)
+    soft tokens row-relative worst 1.44E-004 (photo-camera/image0); bound 1.0E-003
+    token embeddings row-relative worst 7.74E-005 (photo-rocket); bound 1.0E-003
+    
+  Error output
+[+15/x0/?0] Starlings.Models.EmbeddingGemma2.Tests.Cuda.dll (net10.0|x64)(1m 08s)
+
+[+15/x0/?0] Starlings.Models.EmbeddingGemma2.Tests.Cuda.dll (net10.0|x64)(1m 11s)
+
+[+15/x0/?0] Starlings.Models.EmbeddingGemma2.Tests.Cuda.dll (net10.0|x64)(1m 14s)
+
+[+15/x0/?0] Starlings.Models.EmbeddingGemma2.Tests.Cuda.dll (net10.0|x64)(1m 17s)
+
+[+15/x0/?0] Starlings.Models.EmbeddingGemma2.Tests.Cuda.dll (net10.0|x64)(1m 20s)
+
+[+15/x0/?0] Starlings.Models.EmbeddingGemma2.Tests.Cuda.dll (net10.0|x64)(1m 23s)
+
+[+15/x0/?0] Starlings.Models.EmbeddingGemma2.Tests.Cuda.dll (net10.0|x64)(1m 26s)
+
+[+15/x0/?0] Starlings.Models.EmbeddingGemma2.Tests.Cuda.dll (net10.0|x64)(1m 29s)
+
+[+15/x0/?0] Starlings.Models.EmbeddingGemma2.Tests.Cuda.dll (net10.0|x64)(1m 32s)
+
+passed Starlings.Models.EmbeddingGemma2.Tests.Cuda.CudaVideoParityTests.BatchesMatchSingleRows (29s 708ms)
+  from /home/mark/Projects/starling/.claude/worktrees/agent-a12b5f66e4c7eef5e/ai-dotnet/tests/Starlings.Models.EmbeddingGemma2.Tests.Cuda/bin/Release/net10.0/Starlings.Models.EmbeddingGemma2.Tests.Cuda.dll (net10.0|x64)
+  Standard output
+    frame calls of 4, text batch 4: 10 rows in batches vs single rows: max abs 1.40E-006, mean 6.93E-008, p99 7.27E-007, min cosine 0.999999999929434 (worst mm-caption-then-video); bound 1.0E-005
+    
+  Error output
+[+16/x0/?0] Starlings.Models.EmbeddingGemma2.Tests.Cuda.dll (net10.0|x64)(1m 35s)
+
+[+16/x0/?0] Starlings.Models.EmbeddingGemma2.Tests.Cuda.dll (net10.0|x64)(1m 38s)
+
+[+16/x0/?0] Starlings.Models.EmbeddingGemma2.Tests.Cuda.dll (net10.0|x64)(1m 41s)
+
+passed Starlings.Models.EmbeddingGemma2.Tests.Cuda.CudaVideoParityTests.TextOnlyInputsUseTheReleasedTextGraph (8s 795ms)
+  from /home/mark/Projects/starling/.claude/worktrees/agent-a12b5f66e4c7eef5e/ai-dotnet/tests/Starlings.Models.EmbeddingGemma2.Tests.Cuda/bin/Release/net10.0/Starlings.Models.EmbeddingGemma2.Tests.Cuda.dll (net10.0|x64)
+[+17/x0/?0] Starlings.Models.EmbeddingGemma2.Tests.Cuda.dll (net10.0|x64)(1m 44s)
+
+passed Starlings.Models.EmbeddingGemma2.Tests.Cuda.CudaVideoParityTests.RowsMatchTheReference (2s 603ms)
+  from /home/mark/Projects/starling/.claude/worktrees/agent-a12b5f66e4c7eef5e/ai-dotnet/tests/Starlings.Models.EmbeddingGemma2.Tests.Cuda/bin/Release/net10.0/Starlings.Models.EmbeddingGemma2.Tests.Cuda.dll (net10.0|x64)
+  Standard output
+    35 rows (default contract; vid-array-no-metadata needs the opt-in) vs reference: max abs 1.14E-006, mean 5.78E-008, p99 3.84E-007, min cosine 0.999999999955522 (worst mm-caption-then-video)
+      video and interleaved rows: max abs 1.14E-006, mean 6.52E-008, p99 4.02E-007, min cosine 0.999999999955522 (worst mm-caption-then-video)
+      text-only rows (released text graph): max abs 7.17E-008, mean 1.29E-008, p99 4.66E-008, min cosine 0.999999999999851 (worst q-bars)
+      time per row: q-bars 7.3 s, h264-33s-160x120-30fps 3.3 s, h264-long-320x240-30fps-40s 2.4 s, h264-32s-160x120-30fps 2.1 s, h264-1fps-64x48-8s 1.2 s; total 30 s
+    bounds: embedding_max_abs 1.0E-005, min_cosine 0.9999995 (model-pipeline/protected/embeddinggemma-2/video-fp32-cuda/tolerances.yaml)
+    soft tokens row-relative worst 6.11E-005 (h264-rot90-640x360-30fps-3s/video0) over 31 videos; bound 1.0E-003
+    token embeddings row-relative worst 1.09E-004 (mm-caption-then-video) over 30 rows; bound 1.0E-003
+    
+  Error output
+/home/mark/Projects/starling/.claude/worktrees/agent-a12b5f66e4c7eef5e/ai-dotnet/tests/Starlings.Models.EmbeddingGemma2.Tests.Cuda/bin/Release/net10.0/Starlings.Models.EmbeddingGemma2.Tests.Cuda.dll (net10.0|x64) passed (1m 47s 548ms)
+
+Test run summary: Passed!
+  total: 18
+  failed: 0
+  succeeded: 18
+  skipped: 0
+  duration: 1m 48s 033ms
+wall 119 s: dotnet test --project ai-dotnet/tests/Starlings.Models.EmbeddingGemma2.Tests.Cuda -c Release --output Detailed
+exit 0

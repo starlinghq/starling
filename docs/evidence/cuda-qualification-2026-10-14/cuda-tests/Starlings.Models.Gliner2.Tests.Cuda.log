@@ -1,0 +1,47 @@
+Running tests from /home/mark/Projects/starling/.claude/worktrees/agent-a12b5f66e4c7eef5e/ai-dotnet/tests/Starlings.Models.Gliner2.Tests.Cuda/bin/Release/net10.0/Starlings.Models.Gliner2.Tests.Cuda.dll (net10.0|x64)
+[+0/x0/?0] Starlings.Models.Gliner2.Tests.Cuda.dll (net10.0|x64)(2s)
+
+[+0/x0/?0] Starlings.Models.Gliner2.Tests.Cuda.dll (net10.0|x64)(5s)
+
+passed Starlings.Models.Gliner2.Tests.Cuda.CudaParityTests.SessionUsesCudaWithTf32Disabled (52ms)
+  from /home/mark/Projects/starling/.claude/worktrees/agent-a12b5f66e4c7eef5e/ai-dotnet/tests/Starlings.Models.Gliner2.Tests.Cuda/bin/Release/net10.0/Starlings.Models.Gliner2.Tests.Cuda.dll (net10.0|x64)
+  Standard output
+    ORT 1.30.0; session CUDAExecutionProvider, CPUExecutionProvider; CUDA_VISIBLE_DEVICES=0
+    provider options: arena_extend_strategy=kNextPowerOfTwo, cudnn_conv1d_pad_to_nc1d=0, cudnn_conv_algo_search=EXHAUSTIVE, cudnn_conv_use_max_workspace=1, device_id=0, do_copy_in_default_stream=1, enable_cudnn=1, fuse_conv_bias=0, gpu_mem_limit=18446744073709551615, has_user_compute_stream=0, prefer_nhwc=0, sdpa_kernel=0, tunable_op_enable=0, tunable_op_max_tuning_duration_ms=0, tunable_op_tuning_enable=0, use_ep_level_unified_stream=0, use_tf32=0, user_compute_stream=0
+    
+  Error output
+[+1/x0/?0] Starlings.Models.Gliner2.Tests.Cuda.dll (net10.0|x64)(8s)
+
+passed Starlings.Models.Gliner2.Tests.Cuda.CudaParityTests.ParityWithTheReference (1s 639ms)
+  from /home/mark/Projects/starling/.claude/worktrees/agent-a12b5f66e4c7eef5e/ai-dotnet/tests/Starlings.Models.Gliner2.Tests.Cuda/bin/Release/net10.0/Starlings.Models.Gliner2.Tests.Cuda.dll (net10.0|x64)
+  Standard output
+    in-contract cases 54; inputs exact 54; entities exact 54, within rules 54 (allowed swaps 0, allowed flips 0)
+    count_logits max abs 4.96E-005, max rel 8.46E-006 (worst repeated-case-variants); span_logits(valid) max abs 2.75E-003, max rel 1.42E-005 (worst combining-accent); scores max abs 2.29E-006, max rel 0.00E+000 (worst nested-org-location); confidence max abs 1.13E-006, max rel 0.00E+000 (worst no-entities)
+    bounds: model-pipeline/protected/gliner2-base-v1/onnx-fp32-cuda/tolerances.yaml
+    padded batches (max 8 rows, grouped by label count), 54 rows vs single runs: span logits max abs 3.05E-003, max rel 1.59E-005 (worst threshold-near-below-patient); entities identical
+    
+  Error output
+passed Starlings.Models.Gliner2.Tests.Cuda.CudaParityTests.InputsOver512TokensAreRejected (80ms)
+  from /home/mark/Projects/starling/.claude/worktrees/agent-a12b5f66e4c7eef5e/ai-dotnet/tests/Starlings.Models.Gliner2.Tests.Cuda/bin/Release/net10.0/Starlings.Models.Gliner2.Tests.Cuda.dll (net10.0|x64)
+  Standard output
+    long-over-512-tokens: rejected, 566 tokens > 512
+    long-over-1024-tokens: rejected, 1329 tokens > 512
+    
+  Error output
+passed Starlings.Models.Gliner2.Tests.Cuda.CudaParityTests.PlacementPutsMostNodesOnCuda (26ms)
+  from /home/mark/Projects/starling/.claude/worktrees/agent-a12b5f66e4c7eef5e/ai-dotnet/tests/Starlings.Models.Gliner2.Tests.Cuda/bin/Release/net10.0/Starlings.Models.Gliner2.Tests.Cuda.dll (net10.0|x64)
+  Standard output
+    CUDAExecutionProvider: 759 nodes
+    CPUExecutionProvider: 33 nodes
+    
+  Error output
+/home/mark/Projects/starling/.claude/worktrees/agent-a12b5f66e4c7eef5e/ai-dotnet/tests/Starlings.Models.Gliner2.Tests.Cuda/bin/Release/net10.0/Starlings.Models.Gliner2.Tests.Cuda.dll (net10.0|x64) passed (10s 535ms)
+
+Test run summary: Passed!
+  total: 4
+  failed: 0
+  succeeded: 4
+  skipped: 0
+  duration: 10s 969ms
+wall 20 s: dotnet test --project ai-dotnet/tests/Starlings.Models.Gliner2.Tests.Cuda -c Release --output Detailed
+exit 0

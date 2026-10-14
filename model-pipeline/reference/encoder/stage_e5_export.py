@@ -96,8 +96,8 @@ def main() -> int:
     out = results.new_results(
         profile=args.profile,
         stage="export",
-        candidate=f"Python onnxruntime {ort.__version__} {session.get_providers()[0]} on onnx/model.onnx; reference hidden "
-        f"states from sentence-transformers modules on torch {torch.__version__} fp32 CPU, same ids",
+        candidate=f"Python onnxruntime {ort.__version__} {session.get_providers()[0]} on onnx/model.onnx; "
+        f"reference hidden states from sentence-transformers modules on torch {torch.__version__} fp32 CPU, same ids",
         producer={
             "name": "model-pipeline/reference/encoder/stage_e5_export.py",
             "repository_commit": fixtures.git_head(Path(__file__).parent),

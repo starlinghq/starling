@@ -1,0 +1,2 @@
+wrote /home/mark/Projects/starling/.claude/worktrees/agent-a12b5f66e4c7eef5e/.models/runs/e5/tokenizer.results.json and dotnet.results.json: 46 cases
+wall 5 s: dotnet /home/mark/Projects/starling/.claude/worktrees/agent-a12b5f66e4c7eef5e/ai-dotnet/tools/Starlings.Fidelity.Tool.Cuda/bin/Release/net10.0/Starlings.Fidelity.Tool.dll e5 --out /home/mark/Projects/starling/.claude/worktrees/agent-a12b5f66e4c7eef5e/.models/runs/e5 --hidden --device cuda

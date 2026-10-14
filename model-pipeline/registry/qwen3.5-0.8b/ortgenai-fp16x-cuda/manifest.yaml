@@ -220,10 +220,12 @@ qualification:
   # model. Tolerances are proposed as values in docs/evidence/p016-qwen35/README.md; the maintainer sets the binding file.
   fixtures: model-pipeline/protected/qwen3.5-0.8b/reference
   tolerances: model-pipeline/protected/qwen3.5-0.8b/ortgenai-fp16x-cuda/tolerances.yaml
+  # CUDA G1/G2, 2026-10-14 (RTX 3090, use_tf32 0): the protected staged evaluator gave G1 passed, G2 passed on the accepted
+  # development fixtures, which are not P-030 release sets, so the entries are checklist, not passed (docs/evidence/cuda-qualification-2026-10-14/).
   gates:
     G0: { status: checklist, evidence: docs/evidence/p016-qwen35/README.md, date: 2026-10-10 }
-    G1: { status: checklist, evidence: docs/evidence/p016-qwen35/README.md, date: 2026-10-10 }
-    G2: { status: checklist, evidence: docs/evidence/p016-qwen35/README.md, date: 2026-10-10 }
+    G1: { status: checklist, evidence: docs/evidence/cuda-qualification-2026-10-14/qwen35-ortgenai-fp16x-cuda/README.md, date: 2026-10-14 }
+    G2: { status: checklist, evidence: docs/evidence/cuda-qualification-2026-10-14/qwen35-ortgenai-fp16x-cuda/README.md, date: 2026-10-14 }
     G3: { status: not-run }
     # G4 checklist: plan 10.1 LLM semantics (max tokens, stop, EOS, cache, chunked prefill, cancellation, isolation,
     # seeded sampling) in section 4; CUDA concurrency defect and serialization in section 5. No soak (plan 10.2).
