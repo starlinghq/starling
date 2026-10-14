@@ -47,19 +47,39 @@ def _validator() -> Draft202012Validator:
     return Draft202012Validator(schema)
 
 
+@dataclass(frozen=True)
+class StableBlockers:
+    """What keeps a profile from the Stable label under the validator's rules (plan section 10: every gate applies in
+    full before any Stable label; section 9: no untested capability in a Stable profile)."""
+
+    untested_capabilities: tuple[str, ...]
+    gates_not_passed: tuple[str, ...]
+
+    def __bool__(self) -> bool:
+        return bool(self.untested_capabilities or self.gates_not_passed)
+
+
+def stable_blockers(manifest: dict[str, Any]) -> StableBlockers:
+    """The Stable rules, independent of the manifest's current maturity. The validator and the catalog share them."""
+    capabilities = manifest.get("capabilities", {})
+    gates = manifest.get("qualification", {}).get("gates", {})
+    return StableBlockers(
+        untested_capabilities=tuple(sorted(k for k, v in capabilities.items() if v == "untested")),
+        gates_not_passed=tuple(sorted(g for g in GATES if gates.get(g, {}).get("status") != "passed")),
+    )
+
+
 def _semantic_problems(manifest: dict[str, Any]) -> list[tuple[str, str]]:
     """Rules the schema cannot express."""
     problems = []
-    maturity = manifest.get("maturity")
-    capabilities = manifest.get("capabilities", {})
-    if maturity == "stable":
-        untested = sorted(k for k, v in capabilities.items() if v == "untested")
-        if untested:
-            problems.append(("capabilities", f"stable profile has untested capabilities: {', '.join(untested)}"))
-        gates = manifest.get("qualification", {}).get("gates", {})
-        unpassed = sorted(g for g in GATES if gates.get(g, {}).get("status") != "passed")
-        if unpassed:
-            problems.append(("qualification/gates", f"stable profile has gates not passed: {', '.join(unpassed)}"))
+    if manifest.get("maturity") == "stable":
+        blockers = stable_blockers(manifest)
+        if blockers.untested_capabilities:
+            untested = ", ".join(blockers.untested_capabilities)
+            problems.append(("capabilities", f"stable profile has untested capabilities: {untested}"))
+        if blockers.gates_not_passed:
+            unpassed = ", ".join(blockers.gates_not_passed)
+            problems.append(("qualification/gates", f"stable profile has gates not passed: {unpassed}"))
     return problems
 
 

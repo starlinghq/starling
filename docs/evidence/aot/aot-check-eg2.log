@@ -1,0 +1,21 @@
+
+== 0. Inputs
+commit:  756ba5a8ed42f137cdc72a2fa91f7474bd7c6718
+dotnet:  10.0.401, RID linux-x64
+models:  /home/mark/.cache/starling-models
+offline: network namespace without interfaces (unshare -rn)
+linker:  /usr/bin/clang
+
+== 1. Pack the committed HEAD from a clean clone
+version: 0.1.0-preview.5
+
+== AOT target eg2
+packages: Starlings.Acquisition Starlings.Models.EmbeddingGemma2 Starlings.Runtime.Onnx Starlings.Tokenizers 
+publish: yes; warnings: 0 in Starlings.* code, 0 elsewhere (details: /tmp/r9/aot-eg2/eg2/warnings.txt)
+ok:   AOT results equal JIT: 2 strings exact, 9 vectors max abs 0
+
+== Summary (/tmp/r9/aot-eg2/summary.md)
+| Target | Packages | Starlings.* warnings | Other warnings | AOT publish | AOT run | JIT vs AOT |
+| --- | --- | --- | --- | --- | --- | --- |
+| eg2 | Starlings.Acquisition Starlings.Models.EmbeddingGemma2 Starlings.Runtime.Onnx Starlings.Tokenizers  | 0 | 0 | ok (3.9M) | ok | 2 strings exact, 9 vectors max abs 0 |
+AOT CHECK PASS

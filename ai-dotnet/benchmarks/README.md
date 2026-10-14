@@ -1,6 +1,6 @@
 # Benchmarks (P-008)
 
-The matched-backend benchmark program of plan section 11 for `multilingual-e5-small`. It answers the second question of that section: is the .NET integration efficient, measured as C# against Python on the same backend, artifact, provider, settings, hardware and workload. Results are evidence only together with their raw files, environment and quality.
+The matched-backend benchmark program of plan section 11 for `multilingual-e5-small`, and the G5 harnesses for GLiNER2, EmbeddingGemma 2 and Qwen3.5 (protocol, recorded fields and gaps: [`docs/benchmarks/PROTOCOL.md`](../../docs/benchmarks/PROTOCOL.md); the sections below describe the e5 comparison). It answers the second question of that section: is the .NET integration efficient, measured as C# against Python on the same backend, artifact, provider, settings, hardware and workload. Results are evidence only together with their raw files, environment and quality.
 
 | Project | What | In `AI.slnx` (CI builds, never runs) |
 | --- | --- | --- |
@@ -11,6 +11,11 @@ The matched-backend benchmark program of plan section 11 for `multilingual-e5-sm
 | `../../model-pipeline/reference/encoder/bench_e5_matched.py` | The Python side: ONNX Runtime 1.30.0, same model file, thread settings, workload file and fixtures; same raw format. Pinned environments: `requirements-bench.txt` (CPU), `requirements-bench-cuda.txt` (CUDA, same CUDA/cuDNN wheels as the qualified CUDA profile). | n/a |
 | `workloads/e5-v1.json` | The shared workload file: requests as protected fixture case ids, sample counts per provider, warmup, the cold-start request. | n/a |
 | `run-e5-matched.sh` | Runs the whole comparison, interleaving C# library, C# direct and Python over several rounds of fresh processes, then cold starts. | n/a |
+| `Starlings.Benchmarks.Gliner2Harness` | G5 harness for GLiNER2 entity extraction: stages `prepare`, `inference`, `decode`; entities checked against the protected reference on every series. CPU. | yes |
+| `Starlings.Benchmarks.EmbeddingGemma2Harness` | G5 harness for EmbeddingGemma 2 text and image (no video: its fixtures need FFmpeg). CPU. | yes |
+| `Starlings.Benchmarks.Qwen35Harness` | G5 harness for Qwen3.5 greedy generation: prefill, decode tokens/s, time to first token, greedy ids checked against the reference. CPU. | yes |
+| `Core/` | Shared harness core: timing loop, cold-start spawning, environment manifest, raw writer, quality gate, and the warm/cold/cold-child host the three G5 harnesses run on (`HarnessHost`, one `IBenchDriver` per model). The e5 harness uses the same timing, spawning, environment and writer code. | n/a |
+| `workloads/{gliner2,embeddinggemma2,qwen35}-v1.json` | The G5 workload files (requests as protected fixture ids). | n/a |
 
 Summaries: `model-pipeline bench validate <raw.jsonl>` and `model-pipeline bench summarize <raw.jsonl> [--json summary.json]` (`model-pipeline/src/model_pipeline/benchmarks.py`, schema `model-pipeline/schemas/benchmark-raw.schema.json`).
 

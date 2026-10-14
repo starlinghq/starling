@@ -147,9 +147,9 @@ execution:
       path: onnx/embeddinggemma2-text-fp32.onnx
       sha256: "02cc7ecccbfcb29d812eb104e4c6ea6c599bc87e94f01082606f6a11f0252d11"
       size: 1084327317
-      # TODO(maintainer): placeholder until the GitHub release exists (EmbeddingGemma2ModelAssets.ModelSourceIsPlaceholder).
+      # Public Hugging Face repository since 2026-10-14 (EmbeddingGemma2ModelAssets.ModelSourceIsPlaceholder = false).
       source: https://huggingface.co/Starlinghq/embeddinggemma-2-onnx/resolve/92a02ae2887a91180e611776dd9c286dc5fa35da/embeddinggemma2-text-fp32.onnx
-      source_status: placeholder
+      source_status: public
       notice: model-pipeline/reference/embeddinggemma2/NOTICE-embeddinggemma2-onnx.txt
       produced_by:
         - model-pipeline/reference/embeddinggemma2/export_embeddinggemma2_onnx.py --exporters dynamo
@@ -170,7 +170,10 @@ capabilities:
   cancellation: experimental
   persistence: unsupported
   training: unsupported
-  aot: untested
+  # aot: Native AOT publish on Linux x64 CPU, no trim/AOT warnings, results equal to JIT bit for bit
+  # (typed text API and Extensions.AI generator; docs/evidence/aot/README.md).
+  # The ML.NET adapter does not run under Native AOT (Microsoft.ML uses Reflection.Emit).
+  aot: experimental
   extensions_ai: experimental
   mlnet: experimental
   embedding_pretokenized: experimental
@@ -180,7 +183,7 @@ capabilities:
   prompts_task: untested
   matryoshka: experimental
   input_up_to_2049_tokens: experimental
-  input_2050_to_8192_tokens: untested
+  input_2050_to_8192_tokens: untested  # fixtures proposed, not accepted: model-pipeline/proposed/embeddinggemma-2/long-input
   input_over_8192_tokens: unsupported
   concurrent_calls: experimental
   image: unsupported
@@ -203,10 +206,20 @@ qualification:
   # Development fixtures (accepted 2026-10-10, PR #29) and binding tolerances (set 2026-10-10).
   fixtures: model-pipeline/protected/embeddinggemma-2/onnx-fp32-cpu
   tolerances: model-pipeline/protected/embeddinggemma-2/onnx-fp32-cpu/tolerances.yaml
+  # Rerun at Starlings.Tokenizers 0.3.0-preview.1 (2026-10-13, R4): model-pipeline evaluate --require-gates G1,G2
+  # gave G1 passed, G2 passed on the development fixtures, which are not P-030 release sets
+  # (docs/evidence/rerun-tokenizer-0.3.0-preview.1/). The gate entries below are unchanged; recording a result is the maintainer's act.
   gates:
     G0: { status: checklist, evidence: docs/m0/hub-pins.md, date: 2026-10-10 }
     G1: { status: not-run }
     G2: { status: not-run }
+    G3: { status: not-run }
+    G4: { status: not-run }
+    G5: { status: not-run }
+    # G6 checklist: the ai-0.1.0-preview.5 release drill (packed packages, clean consumer, offline sample run on a
+    # seeded graph). Acquisition of the hosted graph is not covered while its source is a placeholder or private.
+    G6: { status: checklist, evidence: docs/releases/ai-0.1.0-preview.5/rc-drill.log, date: 2026-10-12 }
+    G7: { status: not-run }
 
 maintenance:
   owner: Mark
@@ -221,8 +234,8 @@ maintenance:
       gives 1.7e-2, while the per-case max |d| / max(1, max |ref|) the bound was set from is 6.2e-6. Which reading binds
       is a maintainer decision; every .NET check passed.
     - >-
-      The hosted graph's download address is a placeholder until the maintainer creates the GitHub release; acquisition
-      of the graph is untested until then (offline verification of a local copy works).
+      The hosted graph is public since 2026-10-14. The 0.1.0-preview.6 release drill downloaded it with no token into an
+      empty cache, verified it and ran the sample offline (Linux x64, one machine); other platforms are untested.
     - >-
       Fixtures reach 1,750 tokens and batch-independence checks 2,049; 2,050 to 8,192 tokens has no reference evidence.
       One 8,192-token row took 80 s on the 12-thread workstation CPU (process peak working set 5.9 GB during the test

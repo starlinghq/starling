@@ -7,3 +7,5 @@
 model-pipeline/protected/** -text
 # Staged (unprotected) pilot LLM generation fixture: byte-exact as make_generation_fixture.py wrote it.
 ai-dotnet/tests/*/TestData/** -text
+# Proposed fixtures (byte-exact as their generators wrote them).
+model-pipeline/proposed/** -text

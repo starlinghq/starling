@@ -7,6 +7,7 @@
     <Project Path="src/Starlings.Models.EmbeddingGemma2/Starlings.Models.EmbeddingGemma2.csproj" />
     <Project Path="src/Starlings.Models.EmbeddingGemma2.Imaging.SkiaSharp/Starlings.Models.EmbeddingGemma2.Imaging.SkiaSharp.csproj" />
     <Project Path="src/Starlings.Models.EmbeddingGemma2.Video.FFmpeg/Starlings.Models.EmbeddingGemma2.Video.FFmpeg.csproj" />
+    <Project Path="src/Starlings.Models.EmbeddingGemma2.Video.FFmpeg9/Starlings.Models.EmbeddingGemma2.Video.FFmpeg9.csproj" />
     <Project Path="src/Starlings.Models.Gliner2/Starlings.Models.Gliner2.csproj" />
     <Project Path="src/Starlings.Runtime.Onnx/Starlings.Runtime.Onnx.csproj" />
     <Project Path="src/Starlings.Models.E5.Extensions.AI/Starlings.Models.E5.Extensions.AI.csproj" />
@@ -21,6 +22,7 @@
     <Project Path="tests/Starlings.Models.Bert.Tests/Starlings.Models.Bert.Tests.csproj" />
     <Project Path="tests/Starlings.Models.QwenChat.Tests/Starlings.Models.QwenChat.Tests.csproj" />
     <Project Path="tests/Starlings.Runtime.Onnx.Tests/Starlings.Runtime.Onnx.Tests.csproj" />
+    <Project Path="tests/Starlings.Soak.Tool.Tests/Starlings.Soak.Tool.Tests.csproj" />
     <Project Path="tests/Starlings.Models.E5.Extensions.AI.Tests/Starlings.Models.E5.Extensions.AI.Tests.csproj" />
     <Project Path="tests/Starlings.Models.E5.MLNet.Tests/Starlings.Models.E5.MLNet.Tests.csproj" />
     <Project Path="tests/Starlings.Models.E5.Tests/Starlings.Models.E5.Tests.csproj" />
@@ -30,6 +32,7 @@
     <Project Path="tests/Starlings.Models.EmbeddingGemma2.Tests/Starlings.Models.EmbeddingGemma2.Tests.csproj" />
     <Project Path="tests/Starlings.Models.EmbeddingGemma2.Imaging.SkiaSharp.Tests/Starlings.Models.EmbeddingGemma2.Imaging.SkiaSharp.Tests.csproj" />
     <Project Path="tests/Starlings.Models.EmbeddingGemma2.Video.FFmpeg.Tests/Starlings.Models.EmbeddingGemma2.Video.FFmpeg.Tests.csproj" />
+    <Project Path="tests/Starlings.Models.EmbeddingGemma2.Video.FFmpeg9.Tests/Starlings.Models.EmbeddingGemma2.Video.FFmpeg9.Tests.csproj" />
     <Project Path="tests/Starlings.Models.Gliner2.Tests/Starlings.Models.Gliner2.Tests.csproj" />
     <Project Path="tests/Starlings.Generation.OnnxGenAI.Tests/Starlings.Generation.OnnxGenAI.Tests.csproj" />
     <Project Path="tests/Starlings.Models.Qwen35.Tests/Starlings.Models.Qwen35.Tests.csproj" />
@@ -38,6 +41,9 @@
   <Folder Name="/benchmarks/">
     <Project Path="benchmarks/Starlings.Benchmarks.Micro/Starlings.Benchmarks.Micro.csproj" />
     <Project Path="benchmarks/Starlings.Benchmarks.E5Harness/Starlings.Benchmarks.E5Harness.csproj" />
+    <Project Path="benchmarks/Starlings.Benchmarks.Gliner2Harness/Starlings.Benchmarks.Gliner2Harness.csproj" />
+    <Project Path="benchmarks/Starlings.Benchmarks.EmbeddingGemma2Harness/Starlings.Benchmarks.EmbeddingGemma2Harness.csproj" />
+    <Project Path="benchmarks/Starlings.Benchmarks.Qwen35Harness/Starlings.Benchmarks.Qwen35Harness.csproj" />
     <Project Path="benchmarks/Starlings.Benchmarks.Tests/Starlings.Benchmarks.Tests.csproj" />
   </Folder>
   <Folder Name="/tools/">
@@ -46,5 +52,6 @@
     <Project Path="tools/Starlings.Acquisition.Tool/Starlings.Acquisition.Tool.csproj" />
     <Project Path="tools/Starlings.Fidelity.Tool/Starlings.Fidelity.Tool.csproj" />
     <Project Path="tools/Starlings.Qwen35.Fidelity/Starlings.Qwen35.Fidelity.csproj" />
+    <Project Path="tools/Starlings.Soak.Tool/Starlings.Soak.Tool.csproj" />
   </Folder>
 </Solution>

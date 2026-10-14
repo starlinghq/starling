@@ -90,16 +90,58 @@ jobs:
             elif [[ "$proj" != */Starlings.Models.EmbeddingGemma2.Imaging.SkiaSharp.csproj ]] && grep -Eqi '>[[:space:]]+SkiaSharp' <<<"$deps"; then
               echo "FAIL: $proj references SkiaSharp; only Starlings.Models.EmbeddingGemma2.Imaging.SkiaSharp may" >&2
               status=1
-            # FFmpeg bindings are generated into the EmbeddingGemma 2 video adapter (tools/generate-ffmpeg-bindings.py); no
-            # project may take a third-party FFmpeg bindings package (FFmpeg itself is user-supplied).
+            # Vendor neutral: libraries integrate with .NET AI through Microsoft.Extensions.AI.Abstractions only. No cloud
+            # SDK or provider binding (Azure SDKs, OpenAI, the Microsoft.Extensions.AI provider packages), directly or
+            # transitively, so consumers never inherit a cloud dependency from a Starlings package.
+            elif grep -Eqi '>[[:space:]]+(Azure\.|Microsoft\.Azure\.|OpenAI[[:space:]]|Microsoft\.Extensions\.AI\.(OpenAI|AzureAIInference|Ollama))' <<<"$deps"; then
+              echo "FAIL: $proj references a cloud SDK or AI provider package; libraries use Microsoft.Extensions.AI.Abstractions only" >&2
+              status=1
+            # FFmpeg bindings are generated into each EmbeddingGemma 2 video adapter, one package per FFmpeg major
+            # (tools/generate-ffmpeg-bindings.py --major 8|9); no project may take a third-party FFmpeg bindings package
+            # (FFmpeg itself is user-supplied).
             elif grep -Eqi '>[[:space:]]+(FFmpeg\.AutoGen|FFmpegCore|Sdcb\.FFmpeg)' <<<"$deps"; then
-              echo "FAIL: $proj references a third-party FFmpeg bindings package; the video adapter carries its own bindings" >&2
+              echo "FAIL: $proj references a third-party FFmpeg bindings package; the video adapters carry their own bindings" >&2
+              status=1
+            # Adapters are a voluntary addition (docs/kickoff.md, optional adapters): no library references an FFmpeg video
+            # adapter project. Libraries reference each other only through ProjectReference, so a direct check covers the
+            # transitive graph.
+            elif [[ "$proj" != */Starlings.Models.EmbeddingGemma2.Video.FFmpeg*.csproj ]] && grep -Eq 'Include="[^"]*Starlings\.Models\.EmbeddingGemma2\.Video\.FFmpeg[0-9]*[/\\]' "$proj"; then
+              echo "FAIL: $proj references an FFmpeg video adapter; adapters are referenced by applications only" >&2
               status=1
             else
               echo "ok:   $proj"
             fi
           done
           exit "$status"
+
+  # Windows x64 CPU (plan 13.1: CPU qualification on Linux x64 and Windows x64; P-018). The same build and weight-free
+  # tests as the Linux job: model tests skip without the graphs (the scheduled qualification workflow runs them on
+  # Linux). The pinned tokenizer.json assets are public and SHA-256 verified, as on Linux. Then the Windows clean-install
+  # drill (tools/release-drill-ai.ps1 from #10, R9; the counterpart of the Linux drill job), without the model.
+  ai-dotnet-windows:
+    name: ai-dotnet (windows x64)
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+      - uses: actions/setup-dotnet@26b0ec14cb23fa6904739307f278c14f94c95bf1 # v5
+        with:
+          global-json-file: global.json
+      # The SDK that global.json resolves to; restores run in locked mode, so a different SDK can change the lock files.
+      - run: dotnet --version
+      - uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        with:
+          path: .models
+          key: tokenizer-assets-windows-${{ hashFiles('tools/fetch-tokenizer-assets.sh') }}
+      - name: Fetch pinned tokenizer assets
+        shell: bash
+        run: tools/fetch-tokenizer-assets.sh
+      - run: dotnet build ai-dotnet/AI.slnx --configuration Release
+      - run: dotnet test --solution ai-dotnet/AI.slnx --configuration Release --no-build
+      # Packs from a clean clone, installs into consumers outside the checkout from a local feed, checks the restore
+      # graph and runs the checkers; -NoModel skips the 470 MB model download, as on Linux. First run on Windows.
+      - name: Windows clean-install drill (no model)
+        shell: pwsh
+        run: ./tools/release-drill-ai.ps1 -NoModel
 
   model-pipeline:
     runs-on: ubuntu-latest
@@ -116,6 +158,8 @@ jobs:
       - run: ruff format --check .
       - run: pytest
       - run: model-pipeline validate registry
+      # P-021: docs/catalog is generated from the registry; fail when the committed catalog is stale.
+      - run: model-pipeline catalog --check
 
   repo:
     name: repository checks
@@ -142,7 +186,7 @@ jobs:
             exit 1
           fi
       - name: No bundled FFmpeg anywhere
-        # FFmpeg is user-supplied (LGPL, loaded at run time by Starlings.Models.EmbeddingGemma2.Video.FFmpeg);
+        # FFmpeg is user-supplied (LGPL, loaded at run time by Starlings.Models.EmbeddingGemma2.Video.FFmpeg and .FFmpeg9);
         # no project may bring Sdcb.FFmpeg (LGPL bindings) or a package that ships FFmpeg binaries, and no FFmpeg library
         # file may be committed (model-pipeline/admissions/embeddinggemma-2.md, video decision).
         run: |

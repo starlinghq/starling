@@ -1,0 +1,5 @@
+str	target	acquisition
+str	lock.json	{\n  "schema_version": 1,\n  "name": "multilingual-e5-small-tokenizer",\n  "repository": "intfloat/multilingual-e5-small",\n  "revision": "614241f622f53c4eeff9890bdc4f31cfecc418b3",\n  "files": [\n    {\n      "path": "tokenizer.json",\n      "size": 17082730,\n      "sha256": "0b44a9d7b51c3c62626640cda0e2c2f70fdacdc25bbbd68038369d14ebdf4c39"\n    }\n  ]\n}\n
+str	lock.parsed	multilingual-e5-small-tokenizer intfloat/multilingual-e5-small@614241f622f53c4eeff9890bdc4f31cfecc418b3 tokenizer.json:17082730:0b44a9d7b51c3c62626640cda0e2c2f70fdacdc25bbbd68038369d14ebdf4c39
+str	offline.verified	tokenizer.json 17082730
+str	download.verified	tokenizer.json 17082730

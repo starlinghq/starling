@@ -12,6 +12,8 @@
 // EmbeddingGemma 2: `-- embeddinggemma2 --out <dir>`; see EmbeddingGemma2Dump.cs. Images: `-- embeddinggemma2-images
 // --out <dir> --images <dir>`; see EmbeddingGemma2ImageDump.cs. Videos: `-- embeddinggemma2-videos --out <dir> --videos <dir>
 // [--ffmpeg <dir>]`; see EmbeddingGemma2VideoDump.cs.
+// Task quality (G3): `-- retrieval --model e5|embeddinggemma2 --dataset <dir> --out <file>` and `-- ner --dataset
+// <gold.jsonl> --out <file>`; see TaskQualityDump.cs (inputs of `model-pipeline evaluate --g3`).
 // Then `model-pipeline evaluate` compares them with the protected fixtures and tolerances. This tool applies
 // no thresholds and writes nothing under model-pipeline/protected/.
 //
@@ -33,6 +35,11 @@ using Starlings.Models.E5;
 using Starlings.Runtime.Onnx;
 using Microsoft.ML.OnnxRuntime;
 
+if (args.Length >= 1 && args[0] is "retrieval" or "ner")
+{
+    return TaskQualityDump.Run(args[0], args[1..]);
+}
+
 if (args.Length >= 1 && args[0] == "gliner2")
 {
     return Gliner2Dump.Run(args[1..]);
@@ -41,6 +48,11 @@ if (args.Length >= 1 && args[0] == "gliner2")
 if (args.Length >= 1 && args[0] == "embeddinggemma2-videos")
 {
     return EmbeddingGemma2VideoDump.Run(args[1..]);
+}
+
+if (args.Length >= 1 && args[0] == "embeddinggemma2-long")
+{
+    return EmbeddingGemma2LongDump.Run(args[1..]);
 }
 
 if (args.Length >= 1 && args[0] == "embeddinggemma2-images")
@@ -225,7 +237,11 @@ static int Usage(string? error = null)
 
     Console.Error.WriteLine("usage: Starlings.Fidelity.Tool e5 --out <dir> [--snapshot <dir>] [--fixtures <dir>] [--profile <id>] [--hidden] [--threads <n>]");
     Console.Error.WriteLine("       Starlings.Fidelity.Tool gliner2 --out <dir> [--snapshot <dir>] [--fixtures <dir>] [--profile <id>] [--threads <n>]");
-    Console.Error.WriteLine("       Starlings.Fidelity.Tool embeddinggemma2 --out <dir> [--snapshot <dir>] [--fixtures <dir>] [--profile <id>] [--threads <n>]");
+    Console.Error.WriteLine("       Starlings.Fidelity.Tool embeddinggemma2 --out <dir> [--snapshot <dir>] [--fixtures <dir>] [--profile <id>] [--threads <n>] [--device cpu|cuda[:N]]");
+    Console.Error.WriteLine("       Starlings.Fidelity.Tool embeddinggemma2-images --out <dir> --images <dir> [options as embeddinggemma2]");
+    Console.Error.WriteLine("       Starlings.Fidelity.Tool embeddinggemma2-videos --out <dir> --videos <dir> [--ffmpeg <dir>] [options as embeddinggemma2]");
+    Console.Error.WriteLine("       Starlings.Fidelity.Tool embeddinggemma2-long --out <dir> --rows <long-embeddings.jsonl> --images <dir> --videos <dir> [--ffmpeg <dir>] [options as embeddinggemma2]");
+    Console.Error.WriteLine("  --device cuda needs the CUDA build: ai-dotnet/tools/Starlings.Fidelity.Tool.Cuda");
     return error is null ? 0 : 2;
 }
 

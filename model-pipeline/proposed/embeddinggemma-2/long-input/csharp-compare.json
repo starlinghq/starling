@@ -1,0 +1,292 @@
+{
+ "reference": "long-embeddings.jsonl",
+ "reference_sha256": "9fd391c917a8564839014d02f83b39999c8fc26ee353b2a777f191f7f07d4891",
+ "candidate": "C# EmbeddingGemma2MultimodalEmbedder (text-only rows on the released text graph), ONNX Runtime 1.30.0 CPU, FFmpeg adapter n8.1.3-17-gc389840894-20261011, SkiaSharp image decoder",
+ "candidate_commit": "b149b7a2c5d1e4a6b15bccf569c7afd8f7e2be26-dirty",
+ "environment": {
+  "machine": "omarchy",
+  "provider": "cpu",
+  "provider_options": {},
+  "dotnet": ".NET 10.0.12",
+  "os": "Omarchy",
+  "cpu": "Intel(R) Core(TM) i7-5820K CPU @ 3.30GHz",
+  "onnxruntime": "1.30.0",
+  "intra_op_threads": 6,
+  "vision_graph_sha256": "6c97f477a82f6863d22d800476de6d0a618b23e514aa9b65a46b220c4b106b92",
+  "multimodal_graph_sha256": "a2c22e072ec230b105b35c2787dcfccba186254e6a921e729c45b40e50dbbb74",
+  "ffmpeg_version": "n8.1.3-17-gc389840894-20261011",
+  "max_video_frames_per_vision_call": 8
+ },
+ "rows": 17,
+ "all_ids_equal": true,
+ "all_rejected_token_counts_equal": true,
+ "all_outcomes_as_expected": true,
+ "all_finite": true,
+ "worst": {
+  "text": {
+   "embedding_max_abs": 1.000999999998739e-07,
+   "worst_row": "txt-corpus-cycle-8192-none",
+   "min_cosine": 0.9999999999996412,
+   "rows": 8
+  },
+  "media": {
+   "embedding_max_abs": 6.780000000004838e-07,
+   "worst_row": "mm-alice-video32-8192-query",
+   "min_cosine": 0.9999999999867313,
+   "rows": 5
+  },
+  "all": {
+   "embedding_max_abs": 6.780000000004838e-07,
+   "worst_row": "mm-alice-video32-8192-query",
+   "min_cosine": 0.9999999999867313,
+   "rows": 13
+  }
+ },
+ "batches": {
+  "text-2600-and-8192": {
+   "rows": [
+    "txt-alice-2600-none",
+    "txt-alice-8192-none"
+   ],
+   "max_abs_vs_single": 0.0
+  },
+  "six-images-and-32-frame-video": {
+   "rows": [
+    "mm-alice-6-images-6000-none",
+    "mm-alice-video32-7000-none"
+   ],
+   "max_abs_vs_single": 0.0
+  }
+ },
+ "orientation_only_existing_bounds": {
+  "text": {
+   "embedding_max_abs": 1e-05
+  },
+  "media": {
+   "embedding_max_abs": 1e-05,
+   "min_cosine": 0.9999995
+  }
+ },
+ "per_row": {
+  "txt-alice-2600-none": {
+   "kind": "text",
+   "tokens": 2600,
+   "expect": "embed",
+   "outcome": "embedded",
+   "matches_expectation": true,
+   "ids_equal": true,
+   "seconds": 9.42,
+   "embedding_max_abs": 5.999999999617422e-08,
+   "cosine": 0.9999999999998745,
+   "finite": true
+  },
+  "txt-alice-4096-query": {
+   "kind": "text",
+   "tokens": 4096,
+   "expect": "embed",
+   "outcome": "embedded",
+   "matches_expectation": true,
+   "ids_equal": true,
+   "seconds": 12.12,
+   "embedding_max_abs": 6.459999999991126e-08,
+   "cosine": 0.9999999999998812,
+   "finite": true
+  },
+  "txt-alice-6144-document": {
+   "kind": "text",
+   "tokens": 6144,
+   "expect": "embed",
+   "outcome": "embedded",
+   "matches_expectation": true,
+   "ids_equal": true,
+   "seconds": 25.86,
+   "embedding_max_abs": 7.499999999521778e-08,
+   "cosine": 0.9999999999997966,
+   "finite": true
+  },
+  "txt-alice-8191-document": {
+   "kind": "text",
+   "tokens": 8191,
+   "expect": "embed",
+   "outcome": "embedded",
+   "matches_expectation": true,
+   "ids_equal": true,
+   "seconds": 47.74,
+   "embedding_max_abs": 6.000000000311312e-08,
+   "cosine": 0.999999999999832,
+   "finite": true
+  },
+  "txt-alice-8192-none": {
+   "kind": "text",
+   "tokens": 8192,
+   "expect": "embed",
+   "outcome": "embedded",
+   "matches_expectation": true,
+   "ids_equal": true,
+   "seconds": 43.52,
+   "embedding_max_abs": 6.999999996315509e-08,
+   "cosine": 0.999999999999919,
+   "finite": true
+  },
+  "txt-alice-8192-query": {
+   "kind": "text",
+   "tokens": 8192,
+   "expect": "embed",
+   "outcome": "embedded",
+   "matches_expectation": true,
+   "ids_equal": true,
+   "seconds": 43.61,
+   "embedding_max_abs": 4.6999999999547404e-08,
+   "cosine": 0.9999999999999165,
+   "finite": true
+  },
+  "txt-constitution-document": {
+   "kind": "text",
+   "tokens": 5950,
+   "expect": "embed",
+   "outcome": "embedded",
+   "matches_expectation": true,
+   "ids_equal": true,
+   "seconds": 23.94,
+   "embedding_max_abs": 8.300000000141528e-08,
+   "cosine": 0.999999999999819,
+   "finite": true
+  },
+  "txt-corpus-cycle-8192-none": {
+   "kind": "text",
+   "tokens": 8192,
+   "expect": "embed",
+   "outcome": "embedded",
+   "matches_expectation": true,
+   "ids_equal": true,
+   "seconds": 43.8,
+   "embedding_max_abs": 1.000999999998739e-07,
+   "cosine": 0.9999999999996412,
+   "finite": true
+  },
+  "txt-alice-8193-none": {
+   "kind": "text",
+   "tokens": 8193,
+   "expect": "reject",
+   "outcome": "rejected",
+   "matches_expectation": true,
+   "ids_equal": null,
+   "seconds": 0.01,
+   "exception": {
+    "type": "EmbeddingGemma2InputTooLongException",
+    "token_count": 8193,
+    "maximum_tokens": 8192,
+    "message": "Input 0 has 8193 tokens; the maximum is 8192 (special tokens and prompt included). EmbeddingGemma 2 rejects longer input instead of truncating it; split or shorten the text. (Parameter 'inputs')"
+   },
+   "rejected_token_count_equal": true
+  },
+  "txt-alice-8192-text-document-prompt": {
+   "kind": "text",
+   "tokens": 8198,
+   "expect": "reject",
+   "outcome": "rejected",
+   "matches_expectation": true,
+   "ids_equal": null,
+   "seconds": 0.01,
+   "exception": {
+    "type": "EmbeddingGemma2InputTooLongException",
+    "token_count": 8198,
+    "maximum_tokens": 8192,
+    "message": "Input 0 has 8198 tokens; the maximum is 8192 (special tokens and prompt included). EmbeddingGemma 2 rejects longer input instead of truncating it; split or shorten the text. (Parameter 'inputs')"
+   },
+   "rejected_token_count_equal": true
+  },
+  "mm-alice-6-images-6000-none": {
+   "kind": "media",
+   "tokens": 6000,
+   "expect": "embed",
+   "outcome": "embedded",
+   "matches_expectation": true,
+   "ids_equal": true,
+   "seconds": 49.61,
+   "embedding_max_abs": 2.8200000000075387e-07,
+   "cosine": 0.999999999997372,
+   "finite": true
+  },
+  "mm-alice-8-images-8192-document": {
+   "kind": "media",
+   "tokens": 8192,
+   "expect": "embed",
+   "outcome": "embedded",
+   "matches_expectation": true,
+   "ids_equal": true,
+   "seconds": 80.19,
+   "embedding_max_abs": 2.659999999987672e-07,
+   "cosine": 0.9999999999979858,
+   "finite": true
+  },
+  "mm-alice-6-images-8193-none": {
+   "kind": "media",
+   "tokens": 8193,
+   "expect": "reject",
+   "outcome": "rejected",
+   "matches_expectation": true,
+   "ids_equal": null,
+   "seconds": 0.01,
+   "exception": {
+    "type": "EmbeddingGemma2InputTooLongException",
+    "token_count": 8193,
+    "maximum_tokens": 8192,
+    "message": "Input 0 has 8193 tokens; the maximum is 8192 (special tokens and prompt included). EmbeddingGemma 2 rejects longer input instead of truncating it; split or shorten the text. (Parameter 'inputs')"
+   },
+   "rejected_token_count_equal": true
+  },
+  "mm-alice-video32-7000-none": {
+   "kind": "media",
+   "tokens": 7000,
+   "expect": "embed",
+   "outcome": "embedded",
+   "matches_expectation": true,
+   "ids_equal": true,
+   "seconds": 91.46,
+   "embedding_max_abs": 1.500000000008439e-07,
+   "cosine": 0.9999999999992447,
+   "finite": true
+  },
+  "mm-alice-video32-8192-query": {
+   "kind": "media",
+   "tokens": 8192,
+   "expect": "embed",
+   "outcome": "embedded",
+   "matches_expectation": true,
+   "ids_equal": true,
+   "seconds": 104.09,
+   "embedding_max_abs": 6.780000000004838e-07,
+   "cosine": 0.9999999999867313,
+   "finite": true
+  },
+  "mm-alice-two-videos-image-8192-document": {
+   "kind": "media",
+   "tokens": 8192,
+   "expect": "embed",
+   "outcome": "embedded",
+   "matches_expectation": true,
+   "ids_equal": true,
+   "seconds": 129.6,
+   "embedding_max_abs": 2.860000000021179e-07,
+   "cosine": 0.9999999999970888,
+   "finite": true
+  },
+  "mm-alice-video32-8193-none": {
+   "kind": "media",
+   "tokens": 8193,
+   "expect": "reject",
+   "outcome": "rejected",
+   "matches_expectation": true,
+   "ids_equal": null,
+   "seconds": 0.01,
+   "exception": {
+    "type": "EmbeddingGemma2InputTooLongException",
+    "token_count": 8193,
+    "maximum_tokens": 8192,
+    "message": "Input 0 has 8193 tokens; the maximum is 8192 (special tokens and prompt included). EmbeddingGemma 2 rejects longer input instead of truncating it; split or shorten the text. (Parameter 'inputs')"
+   },
+   "rejected_token_count_equal": true
+  }
+ }
+}

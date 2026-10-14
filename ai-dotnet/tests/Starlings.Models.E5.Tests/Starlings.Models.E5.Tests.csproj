@@ -13,7 +13,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Include="../Shared/E5/*.cs;../Shared/TestModels/*.cs" Link="Shared/%(RecursiveDir)%(Filename)%(Extension)" />
+    <Compile Include="../Shared/E5/*.cs;../Shared/TestModels/*.cs;../Shared/Operational/*.cs" Link="Shared/%(RecursiveDir)%(Filename)%(Extension)" />
   </ItemGroup>
 
   <ItemGroup>

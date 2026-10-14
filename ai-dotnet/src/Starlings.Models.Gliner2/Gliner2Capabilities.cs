@@ -34,10 +34,12 @@ public static class Gliner2Capabilities
         ["asset_acquisition.offline"] = Gliner2CapabilityStatus.Experimental,
 
         // Implemented, without enough evidence: one development case for descriptions; the count gate never closed on
-        // the corpus; the hosted ONNX graph is not published yet (placeholder source in Gliner2ModelAssets).
+        // the corpus.
         ["label_descriptions"] = Gliner2CapabilityStatus.Untested,
         ["count_gate.closed"] = Gliner2CapabilityStatus.Untested,
-        ["asset_acquisition.download"] = Gliner2CapabilityStatus.Untested,
+        // The 0.1.0-preview.6 release drill downloaded the graph from the public hosting repository with no token into an
+        // empty cache, verified it and ran the sample offline (Linux x64, one machine).
+        ["asset_acquisition.download"] = Gliner2CapabilityStatus.Experimental,
         ["aot"] = Gliner2CapabilityStatus.Untested,
         ["windows"] = Gliner2CapabilityStatus.Untested,
 
@@ -62,5 +64,6 @@ public static class Gliner2Capabilities
         ["persistence"] = Gliner2CapabilityStatus.Unsupported,
         ["training"] = Gliner2CapabilityStatus.Unsupported,
         ["extensions_ai"] = Gliner2CapabilityStatus.Unsupported,
+        ["mlnet"] = Gliner2CapabilityStatus.Unsupported,
     };
 }

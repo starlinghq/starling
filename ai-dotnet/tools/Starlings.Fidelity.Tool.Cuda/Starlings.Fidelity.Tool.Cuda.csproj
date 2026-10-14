@@ -1,0 +1,39 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    CUDA build of the fidelity tool (Linux x64, local only): the same sources as ../Starlings.Fidelity.Tool with the CUDA
+    native runtime instead of the CPU one, so `model-pipeline evaluate` can run on the CUDA profiles
+    (embeddinggemma-2/onnx-fp32-cuda, image-fp32-cuda, video-fp32-cuda) with the option `device cuda`. As for the CUDA test
+    projects: not part of AI.slnx, so CI never restores the GPU package, and its own packages.lock.json. The CPU and CUDA
+    native packages both ship libonnxruntime under the same file name, so one project cannot reference both; the CPU
+    build stays the default and is unchanged. Microsoft.ML.OnnxRuntime.Gpu.Linux carries the CPU provider too, so
+    the CPU device (the default) also runs here. Needs the CUDA 13 runtime and cuDNN 9 on the loader path for CUDA
+    (ai-dotnet/README.md); opt in to a GPU with CUDA_DEVICE_ORDER=PCI_BUS_ID and an explicit CUDA_VISIBLE_DEVICES.
+  -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <!-- The libraries grant the tool internal access by assembly name (InternalsVisibleTo Starlings.Fidelity.Tool). -->
+    <AssemblyName>Starlings.Fidelity.Tool</AssemblyName>
+    <RootNamespace>Starlings.Fidelity.Tool</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- CUDA native runtime (includes the CPU provider). The CUDA 13 runtime and cuDNN 9 are not in the package. -->
+    <PackageReference Include="Microsoft.ML.OnnxRuntime.Gpu.Linux" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="../Starlings.Fidelity.Tool/*.cs" Link="%(Filename)%(Extension)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../src/Starlings.Models.E5/Starlings.Models.E5.csproj" />
+    <ProjectReference Include="../../src/Starlings.Models.Gliner2/Starlings.Models.Gliner2.csproj" />
+    <ProjectReference Include="../../src/Starlings.Models.EmbeddingGemma2/Starlings.Models.EmbeddingGemma2.csproj" />
+    <ProjectReference Include="../../src/Starlings.Models.EmbeddingGemma2.Imaging.SkiaSharp/Starlings.Models.EmbeddingGemma2.Imaging.SkiaSharp.csproj" />
+    <ProjectReference Include="../../src/Starlings.Models.EmbeddingGemma2.Video.FFmpeg/Starlings.Models.EmbeddingGemma2.Video.FFmpeg.csproj" />
+    <ProjectReference Include="../../src/Starlings.Models.EmbeddingGemma2.Video.FFmpeg9/Starlings.Models.EmbeddingGemma2.Video.FFmpeg9.csproj" />
+  </ItemGroup>
+
+</Project>

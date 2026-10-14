@@ -2,7 +2,7 @@ name: release
 
 # Release the ai-dotnet packages (Starlings.*) to nuget.org.
 #
-#   git tag ai-v0.1.0-preview.5 && git push origin ai-v0.1.0-preview.5
+#   git tag ai-v0.1.0-preview.6 && git push origin ai-v0.1.0-preview.6
 #
 # 1. candidate: boundary check; the tag must equal the ai-dotnet version, point at a commit on main and have a release
 #    record docs/releases/ai-<version>.md. The release drill (tools/release-drill-ai.sh --no-model) then packs every
@@ -29,8 +29,9 @@ concurrency:
 env:
   DOTNET_NOLOGO: true
   DOTNET_CLI_TELEMETRY_OPTOUT: true
-  # Built and drilled but never published until its legal review is done (docs/kickoff.md, EmbeddingGemma 2 admission).
-  HELD: "Starlings.Models.EmbeddingGemma2.Video.FFmpeg"
+  # Built and drilled but never published until their legal review is done (docs/kickoff.md, EmbeddingGemma 2 admission;
+  # decision D2): the FFmpeg video adapters, one per FFmpeg major.
+  HELD: "Starlings.Models.EmbeddingGemma2.Video.FFmpeg Starlings.Models.EmbeddingGemma2.Video.FFmpeg9"
 
 jobs:
   candidate:

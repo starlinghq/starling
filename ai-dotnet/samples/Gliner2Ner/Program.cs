@@ -54,10 +54,6 @@ if (args[0] == "download")
     //    ones downloaded and verified. This is the only step that uses the network.
     Console.WriteLine($"lock:  {Gliner2ModelAssets.Lock}");
     Console.WriteLine($"cache: {acquisition.ResolveCacheDirectory()}");
-    if (Gliner2ModelAssets.ModelSourceIsPlaceholder)
-    {
-        Console.WriteLine($"note:  the graph's source is not published yet ({Gliner2ModelAssets.ModelSource}); place it in the snapshot directory first.");
-    }
 
     var progress = new FileProgress();
     Gliner2ModelFiles downloaded = await Gliner2ModelAssets.DownloadAsync(acquisition, progress);

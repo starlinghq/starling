@@ -27,7 +27,7 @@
       "starlings.models.qwenchat": {
         "type": "Project",
         "dependencies": {
-          "Starlings.Generation.OnnxGenAI": "[0.1.0-preview.5, )",
+          "Starlings.Generation.OnnxGenAI": "[0.1.0-preview.6, )",
           "Starlings.Tokenizers": "[0.3.0-preview.1, 0.3.0-preview.1]"
         }
       },

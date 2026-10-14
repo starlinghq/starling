@@ -87,6 +87,38 @@ public sealed class CpuModelTests(Qwen35CpuFixture fixture) : IClassFixture<Qwen
         Assert.Equal(full[..full.IndexOf(stop, StringComparison.Ordinal)], r.Text);
     }
 
+    private static Qwen35Tolerances Tolerances => Qwen35TestAssets.Tolerances("ortgenai-fp32x-cpu");
+
+    [Theory]
+    [InlineData("en-short")]
+    [InlineData("special-endoftext")]
+    [InlineData("ru-de-mix")]
+    [InlineData("thinking-on")]
+    [InlineData("long-license")]
+    public void Step0LogitsMatchTheReference(string id) => Qwen35LogitChecks.Step0LogitsMatchTheReference(Model, Case(id), Tolerances);
+
+    [Fact]
+    public void CachedDecodingEqualsAFreshPrefill() => Qwen35LogitChecks.CachedDecodingEqualsAFreshPrefill(Model, Case("en-list"), 12, Tolerances);
+
+    [Fact]
+    public void AdditionalStopTokenIdEndsAtItsFirstOccurrence() => Qwen35LogitChecks.AdditionalStopTokenIdEndsAtItsFirstOccurrence(Model, Case("en-list"), 3);
+
+    /// <summary>
+    /// Long context above the 1,666-token prompt of prompts-v1: greedy ids, step-0 logits and cached vs uncached
+    /// decoding against the transformers reference on prompts-long-v1 (proposed fixture). The CPU default prefill is one
+    /// call, which allocates about 1 MB of logits per prompt token, so these use 512-token chunks (bit-identical on CPU).
+    /// Longer prompts (up to 32,844 tokens) are in docs/evidence/r8-qwen35-long-context/.
+    /// </summary>
+    [Theory]
+    [InlineData("long-4096")]
+    public void LongContextGreedyAndLogitsEqualTheReference(string id)
+    {
+        var c = Qwen35TestAssets.LoadLongContextCases().Single(x => x.Id == id);
+        Qwen35ModelChecks.GreedyFromReferenceIds(Model, c, prefillChunkTokens: 512);
+        Qwen35LogitChecks.Step0LogitsMatchTheReference(Model, c, Tolerances, prefillChunkTokens: 512);
+        Qwen35LogitChecks.CachedDecodingEqualsAFreshPrefill(Model, c, 16, Tolerances, prefillChunkTokens: 512);
+    }
+
     [Fact]
     public void ConcurrentRequestsAreIndependent()
     {

@@ -1,0 +1,15 @@
+{
+  "description": "Qwen3.5-0.8B greedy generation workloads (G5, plan section 11), fp32x ONNX Runtime GenAI bundle on CPU. Requests name prompts of model-pipeline/protected/qwen3.5-0.8b/reference/generation.jsonl. Path 'ids' starts from the reference prompt ids; path 'text' renders the messages with the owned chat template and tokenizer (timed as 'template'). Every generation is greedy with a fixed max_new_tokens and is compared with the reference output ids (exact, up to max_new_tokens), so a fast but different generation fails the series. Prompts with tools run only on the ids path (the chat API takes messages only).",
+  "warmup_calls": 1,
+  "cold": { "request": ["en-short"], "max_new_tokens": 16 },
+  "workloads": [
+    { "name": "short-decode64", "path": "ids", "input": "short prompt, 64 new tokens", "samples": 10, "max_new_tokens": 64,
+      "requests": ["en-list", "en-math", "code-py", "ja", "multi-turn"] },
+    { "name": "short-decode64-text", "path": "text", "input": "short prompt, 64 new tokens", "samples": 5, "max_new_tokens": 64,
+      "requests": ["en-list", "en-math", "code-py", "ja", "multi-turn"] },
+    { "name": "tools-decode32", "path": "ids", "input": "286-token prompt, 32 new tokens", "samples": 4, "max_new_tokens": 32,
+      "requests": ["tools"] },
+    { "name": "long-prefill", "path": "ids", "input": "1,666-token prompt, 8 new tokens", "samples": 4, "max_new_tokens": 8,
+      "requests": ["long-license"] }
+  ]
+}

@@ -14,6 +14,11 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- The adapter code shared with the FFmpeg 9 package (one package per FFmpeg major); FFmpegNative.g.cs here is FFmpeg 8's. -->
+    <Compile Include="../Shared/EmbeddingGemma2.Video.FFmpeg/*.cs" Link="Shared/%(Filename)%(Extension)" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="../Starlings.Models.EmbeddingGemma2/Starlings.Models.EmbeddingGemma2.csproj" />
   </ItemGroup>
 

@@ -1,0 +1,23 @@
+{
+  "description": "GLiNER2 entity extraction workloads (G5, plan section 11). Requests name cases of model-pipeline/protected/gliner2-base-v1/onnx-fp32-cpu/extraction.jsonl (text, labels, descriptions and threshold come from the case); every output is rated against that case's reference entities. A batch is one call, so its items share one label set. 'synthetic' workloads truncate a fixture text to its first N words to reach longer inputs inside the 512-token contract; they have no upstream reference and are checked against the same text extracted once, alone, at load (stability, not fidelity).",
+  "warmup_calls": 5,
+  "cold": { "request": ["basic-plo"] },
+  "workloads": [
+    { "name": "short-l1", "path": "text", "input": "short", "samples": 100,
+      "requests": [["repeated-person"], ["label-subset"], ["adjacent-entities"], ["wide-entity-8-words"], ["entity-last-word"]] },
+    { "name": "short-l3", "path": "text", "input": "short", "samples": 100,
+      "requests": [["basic-plo"], ["label-order-a"], ["nested-university"], ["curly-quotes"], ["apostrophes"]] },
+    { "name": "short-l5", "path": "text", "input": "short", "samples": 100,
+      "requests": [["basic-multi-label"], ["threshold-0.5"], ["threshold-0.9"]] },
+    { "name": "short-l12", "path": "text", "input": "short", "samples": 100,
+      "requests": [["many-labels"]] },
+    { "name": "short-l2-b8", "path": "text", "input": "short", "batch": 8, "samples": 30,
+      "requests": [["hyphenated-names", "latin-accents", "latin-nordic", "turkish-dotted-i", "emoji-before-entity", "nbsp-and-dashes", "combining-accent", "hyphenated-names"]] },
+    { "name": "words100-l3", "path": "text", "input": "medium", "samples": 30,
+      "synthetic": { "case": "long-over-512-tokens", "words": 100 } },
+    { "name": "words250-l3", "path": "text", "input": "long", "samples": 20,
+      "synthetic": { "case": "long-over-512-tokens", "words": 250 } },
+    { "name": "words400-l3", "path": "text", "input": "long", "samples": 20,
+      "synthetic": { "case": "long-over-512-tokens", "words": 400 } }
+  ]
+}

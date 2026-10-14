@@ -1,0 +1,428 @@
+{
+ "quality_failures": [],
+ "groups": [
+  {
+   "provider": "cpu",
+   "mode": "cold",
+   "path": "ids",
+   "workload": "cold-start",
+   "concurrency": 1,
+   "language": "csharp",
+   "impl": "library",
+   "runs": 1,
+   "n": 3,
+   "batch": 1,
+   "median_ms": 7004.074141,
+   "median_ci95_ms": [
+    6384.495979,
+    7090.912463
+   ],
+   "run_medians_ms": [
+    7004.074141
+   ],
+   "p5_ms": null,
+   "p95_ms": null,
+   "p99_ms": null,
+   "items_per_s": 0.14426673603780757,
+   "items_per_s_range": [
+    0.14426673603780757,
+    0.14426673603780757
+   ],
+   "stage_median_ms": {
+    "spawn_to_main": 39.718963,
+    "fixture_read": 48.0776,
+    "model_load": 4484.9188,
+    "template": 0.0,
+    "prefill": 688.3995,
+    "decode": 1674.2776,
+    "main_to_result": 6965.0952,
+    "process_wall": 7140.9383
+   },
+   "quality_max_abs": null,
+   "quality_finite": true
+  },
+  {
+   "provider": "cpu",
+   "mode": "warm",
+   "path": "ids",
+   "workload": "long-prefill",
+   "concurrency": 1,
+   "language": "csharp",
+   "impl": "library",
+   "runs": 1,
+   "n": 1,
+   "batch": 1,
+   "median_ms": 21905.5394,
+   "median_ci95_ms": [
+    21905.5394,
+    21905.5394
+   ],
+   "run_medians_ms": [
+    21905.5394
+   ],
+   "p5_ms": null,
+   "p95_ms": null,
+   "p99_ms": null,
+   "items_per_s": 0.04565054836648438,
+   "items_per_s_range": [
+    0.04565054836648438,
+    0.04565054836648438
+   ],
+   "stage_median_ms": {
+    "template": 0.0,
+    "prefill": 19715.3771,
+    "decode": 2186.1269
+   },
+   "quality_max_abs": null,
+   "quality_finite": true,
+   "metric_median": {
+    "ttft_ms": 19719.7207,
+    "prompt_tokens": 1666.0,
+    "completion_tokens": 8.0,
+    "prefill_tokens_per_s": 84.50256830238362,
+    "decode_tokens_per_s": 3.6594398980223883,
+    "inter_token_ms": 273.2658625
+   }
+  },
+  {
+   "provider": "cpu",
+   "mode": "warm",
+   "path": "ids",
+   "workload": "short-decode64",
+   "concurrency": 1,
+   "language": "csharp",
+   "impl": "library",
+   "runs": 1,
+   "n": 3,
+   "batch": 1,
+   "median_ms": 12664.6159,
+   "median_ci95_ms": [
+    11795.882,
+    13062.7173
+   ],
+   "run_medians_ms": [
+    12664.6159
+   ],
+   "p5_ms": null,
+   "p95_ms": null,
+   "p99_ms": null,
+   "items_per_s": 0.07994498356780161,
+   "items_per_s_range": [
+    0.07994498356780161,
+    0.07994498356780161
+   ],
+   "stage_median_ms": {
+    "template": 0.0,
+    "prefill": 237.2561,
+    "decode": 11861.2469
+   },
+   "quality_max_abs": null,
+   "quality_finite": true,
+   "metric_median": {
+    "ttft_ms": 239.389,
+    "prompt_tokens": 29.0,
+    "completion_tokens": 64.0,
+    "prefill_tokens_per_s": 101.86703758615867,
+    "decode_tokens_per_s": 5.395722771777055,
+    "inter_token_ms": 185.3319828125
+   }
+  },
+  {
+   "provider": "cpu",
+   "mode": "warm",
+   "path": "ids",
+   "workload": "tools-decode32",
+   "concurrency": 1,
+   "language": "csharp",
+   "impl": "library",
+   "runs": 1,
+   "n": 1,
+   "batch": 1,
+   "median_ms": 10114.831,
+   "median_ci95_ms": [
+    10114.831,
+    10114.831
+   ],
+   "run_medians_ms": [
+    10114.831
+   ],
+   "p5_ms": null,
+   "p95_ms": null,
+   "p99_ms": null,
+   "items_per_s": 0.09886470397885845,
+   "items_per_s_range": [
+    0.09886470397885845,
+    0.09886470397885845
+   ],
+   "stage_median_ms": {
+    "template": 0.0,
+    "prefill": 3709.4149,
+    "decode": 6403.0678
+   },
+   "quality_max_abs": null,
+   "quality_finite": true,
+   "metric_median": {
+    "ttft_ms": 3712.0294,
+    "prompt_tokens": 286.0,
+    "completion_tokens": 25.0,
+    "prefill_tokens_per_s": 77.1011083176487,
+    "decode_tokens_per_s": 4.060553599010775,
+    "inter_token_ms": 246.27183846153847
+   }
+  },
+  {
+   "provider": "cpu",
+   "mode": "warm",
+   "path": "text",
+   "workload": "short-decode64-text",
+   "concurrency": 1,
+   "language": "csharp",
+   "impl": "library",
+   "runs": 1,
+   "n": 2,
+   "batch": 1,
+   "median_ms": 14209.95695,
+   "median_ci95_ms": [
+    14031.0702,
+    14388.8437
+   ],
+   "run_medians_ms": [
+    14209.95695
+   ],
+   "p5_ms": null,
+   "p95_ms": null,
+   "p99_ms": null,
+   "items_per_s": 0.07037318056695147,
+   "items_per_s_range": [
+    0.07037318056695147,
+    0.07037318056695147
+   ],
+   "stage_median_ms": {
+    "template": 1.3965,
+    "prefill": 519.88135,
+    "decode": 13685.3114
+   },
+   "quality_max_abs": null,
+   "quality_finite": true,
+   "metric_median": {
+    "ttft_ms": 524.93785,
+    "prompt_tokens": 31.0,
+    "completion_tokens": 64.0,
+    "prefill_tokens_per_s": 63.347696538457065,
+    "decode_tokens_per_s": 4.680479138279573,
+    "inter_token_ms": 213.832990625
+   }
+  }
+ ],
+ "csharp_vs_python": [],
+ "direct_vs_python": [],
+ "adapter_overhead_p95": [],
+ "runs": [
+  {
+   "run_id": "f7dacb32-a718-48ea-96f3-18827c6362fa",
+   "language": "csharp",
+   "impl": "library",
+   "provider": "cpu",
+   "mode": "warm",
+   "threads": 6,
+   "started_utc": "2026-10-13T18:02:43.8644745Z",
+   "git_commit": "92d5fd75a3e6bf0e57ccbaa2a5a3b26e46bc601f",
+   "git_dirty": false,
+   "model_sha256": "4a052c4a1444c9437e00ffd48baecb0838d3d9ca1703c3153dbd46e945e84703",
+   "tokenizer_sha256": "a5cd9732badce41de57e6efce8302930ded1c1188c5f81feb2bd6c24c4a1941f",
+   "packages": {
+    "Microsoft.ML.OnnxRuntimeGenAI.Managed": "0.17.1",
+    "GenAI native": "Microsoft.ML.OnnxRuntimeGenAI/0.17.1",
+    "Microsoft.ML.OnnxRuntime": "1.30.0",
+    "Starlings.Generation.OnnxGenAI": "0.1.0-preview.5+42d93dd3573b43939329120fd1e4e55786ef8509",
+    "Starlings.Models.Qwen35": "0.1.0-preview.5+42d93dd3573b43939329120fd1e4e55786ef8509",
+    "Starlings.Tokenizers": "0.3.0-preview.1+79a5863e861edcfed79142293dafabb688c199b9"
+   },
+   "load_before": {
+    "loadavg": [
+     13.71,
+     18.68,
+     20.28
+    ],
+    "gpus": [
+     {
+      "index": "0",
+      "name": "NVIDIA GeForce RTX 3090",
+      "pci_bus_id": "00000000:03:00.0",
+      "util_pct": "95",
+      "mem_used_mib": "10997",
+      "mem_total_mib": "24576",
+      "sm_clock_mhz": "1815",
+      "pstate": "P2",
+      "power_w": "292.89",
+      "temp_c": "67"
+     },
+     {
+      "index": "1",
+      "name": "NVIDIA GeForce RTX 4060 Ti",
+      "pci_bus_id": "00000000:04:00.0",
+      "util_pct": "0",
+      "mem_used_mib": "739",
+      "mem_total_mib": "16380",
+      "sm_clock_mhz": "210",
+      "pstate": "P8",
+      "power_w": "10.97",
+      "temp_c": "51"
+     }
+    ]
+   },
+   "load_after": {
+    "loadavg": [
+     16.61,
+     20,
+     20.9
+    ],
+    "gpus": [
+     {
+      "index": "0",
+      "name": "NVIDIA GeForce RTX 3090",
+      "pci_bus_id": "00000000:03:00.0",
+      "util_pct": "89",
+      "mem_used_mib": "10997",
+      "mem_total_mib": "24576",
+      "sm_clock_mhz": "1920",
+      "pstate": "P2",
+      "power_w": "293.40",
+      "temp_c": "67"
+     },
+     {
+      "index": "1",
+      "name": "NVIDIA GeForce RTX 4060 Ti",
+      "pci_bus_id": "00000000:04:00.0",
+      "util_pct": "0",
+      "mem_used_mib": "739",
+      "mem_total_mib": "16380",
+      "sm_clock_mhz": "210",
+      "pstate": "P8",
+      "power_w": "11.30",
+      "temp_c": "51"
+     }
+    ]
+   },
+   "quality": {
+    "reference": "model-pipeline/protected/qwen3.5-0.8b/reference/generation.jsonl",
+    "cases": 22,
+    "greedy_ids_16_tokens": {
+     "check": "greedy ids equal to the reference up to max_new_tokens (exact)",
+     "generations": 22,
+     "equal": 22,
+     "failures": [],
+     "pass": true
+    },
+    "template_cases": 21,
+    "template_exact": 21,
+    "pass": true,
+    "preliminary_pass": true,
+    "series_pass": true,
+    "failed_series": []
+   }
+  },
+  {
+   "run_id": "33fb06e9-1ee3-469c-8598-8bff38f75b8c",
+   "language": "csharp",
+   "impl": "library",
+   "provider": "cpu",
+   "mode": "cold",
+   "threads": 6,
+   "started_utc": "2026-10-13T18:10:28.0503230Z",
+   "git_commit": "92d5fd75a3e6bf0e57ccbaa2a5a3b26e46bc601f",
+   "git_dirty": false,
+   "model_sha256": "4a052c4a1444c9437e00ffd48baecb0838d3d9ca1703c3153dbd46e945e84703",
+   "tokenizer_sha256": "a5cd9732badce41de57e6efce8302930ded1c1188c5f81feb2bd6c24c4a1941f",
+   "packages": {
+    "Microsoft.ML.OnnxRuntimeGenAI.Managed": "0.17.1",
+    "GenAI native": "Microsoft.ML.OnnxRuntimeGenAI/0.17.1",
+    "Microsoft.ML.OnnxRuntime": "1.30.0",
+    "Starlings.Generation.OnnxGenAI": "0.1.0-preview.5+42d93dd3573b43939329120fd1e4e55786ef8509",
+    "Starlings.Models.Qwen35": "0.1.0-preview.5+42d93dd3573b43939329120fd1e4e55786ef8509",
+    "Starlings.Tokenizers": "0.3.0-preview.1+79a5863e861edcfed79142293dafabb688c199b9"
+   },
+   "load_before": {
+    "loadavg": [
+     16.61,
+     20,
+     20.9
+    ],
+    "gpus": [
+     {
+      "index": "0",
+      "name": "NVIDIA GeForce RTX 3090",
+      "pci_bus_id": "00000000:03:00.0",
+      "util_pct": "89",
+      "mem_used_mib": "10997",
+      "mem_total_mib": "24576",
+      "sm_clock_mhz": "1920",
+      "pstate": "P2",
+      "power_w": "291.36",
+      "temp_c": "67"
+     },
+     {
+      "index": "1",
+      "name": "NVIDIA GeForce RTX 4060 Ti",
+      "pci_bus_id": "00000000:04:00.0",
+      "util_pct": "0",
+      "mem_used_mib": "739",
+      "mem_total_mib": "16380",
+      "sm_clock_mhz": "210",
+      "pstate": "P8",
+      "power_w": "11.31",
+      "temp_c": "51"
+     }
+    ]
+   },
+   "load_after": {
+    "loadavg": [
+     14.31,
+     19.11,
+     20.57
+    ],
+    "gpus": [
+     {
+      "index": "0",
+      "name": "NVIDIA GeForce RTX 3090",
+      "pci_bus_id": "00000000:03:00.0",
+      "util_pct": "97",
+      "mem_used_mib": "10997",
+      "mem_total_mib": "24576",
+      "sm_clock_mhz": "1650",
+      "pstate": "P2",
+      "power_w": "328.11",
+      "temp_c": "67"
+     },
+     {
+      "index": "1",
+      "name": "NVIDIA GeForce RTX 4060 Ti",
+      "pci_bus_id": "00000000:04:00.0",
+      "util_pct": "0",
+      "mem_used_mib": "727",
+      "mem_total_mib": "16380",
+      "sm_clock_mhz": "210",
+      "pstate": "P8",
+      "power_w": "10.75",
+      "temp_c": "51"
+     }
+    ]
+   },
+   "quality": {
+    "reference": "model-pipeline/protected/qwen3.5-0.8b/reference/generation.jsonl",
+    "cases": 1,
+    "cold_first_request": {
+     "check": "greedy ids equal to the reference up to max_new_tokens (exact)",
+     "generations": 1,
+     "equal": 1,
+     "failures": [],
+     "pass": true
+    },
+    "pass": true,
+    "preliminary_pass": true,
+    "series_pass": true,
+    "failed_series": []
+   }
+  }
+ ]
+}

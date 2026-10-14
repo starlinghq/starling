@@ -61,8 +61,8 @@ rights:
     files are a conversion of those weights; Apache-2.0 permits redistributing them with the license and attribution.
     code_license names the builder (onnxruntime-genai, MIT) and this repository's code (MIT). Hosting: every file in
     the snapshot layout, with README, NOTICE, LICENSE and SHA256SUMS, in the Hugging Face repository
-    Starlinghq/qwen3.5-0.8b-ortgenai (execution.graph.hosting), private while the packages are in preview; downloading
-    needs a Hugging Face read token with access to it.
+    Starlinghq/qwen3.5-0.8b-ortgenai (execution.graph.hosting), public since 2026-10-14; downloading needs no
+    token.
 
 behavior:
   tasks: [generation]
@@ -152,12 +152,12 @@ execution:
     # --extra_options exclude_mtp=true. Two builds give the same digests.
     hosting:
       # Download location of every file in the origin.files lock that Qwen35ModelAssets uses (chat_template.jinja,
-      # transformers-5.18.0/tokenizer.json, ortgenai-*/): <source_base><path>. Private repository (maintainer decision
-      # 2026-10-10); the token is sent only to https://huggingface.co. The digests, not the address, pin the bytes.
+      # transformers-5.18.0/tokenizer.json, ortgenai-*/): <source_base><path>. Public repository since
+      # 2026-10-14 (private from 2026-10-10); a token, if set, is sent only to https://huggingface.co. The digests, not the address, pin the bytes.
       repository: https://huggingface.co/Starlinghq/qwen3.5-0.8b-ortgenai
       revision: "95a690c1774f144957cb7b76986a9126e8b1bb5f"
       source_base: https://huggingface.co/Starlinghq/qwen3.5-0.8b-ortgenai/resolve/95a690c1774f144957cb7b76986a9126e8b1bb5f/
-      source_status: private
+      source_status: public
     inputs:
       - { name: input_ids, type: int64, shape: [batch, sequence] }
       - { name: attention_mask, type: int64, shape: [batch, total_sequence] }
@@ -224,6 +224,13 @@ qualification:
     G0: { status: checklist, evidence: docs/evidence/p016-qwen35/README.md, date: 2026-10-10 }
     G1: { status: checklist, evidence: docs/evidence/p016-qwen35/README.md, date: 2026-10-10 }
     G2: { status: checklist, evidence: docs/evidence/p016-qwen35/README.md, date: 2026-10-10 }
+    G3: { status: not-run }
+    # G4 checklist: plan 10.1 LLM semantics (max tokens, stop, EOS, cache, chunked prefill, cancellation, isolation,
+    # seeded sampling) in section 4; CUDA concurrency defect and serialization in section 5. No soak (plan 10.2).
+    G4: { status: checklist, evidence: docs/evidence/p016-qwen35/README.md, date: 2026-10-10 }
+    G5: { status: not-run }
+    G6: { status: not-run }
+    G7: { status: not-run }
 
 maintenance:
   owner: Mark
@@ -235,10 +242,6 @@ maintenance:
     - >-
       The ONNX Runtime GenAI C# API is labeled preview upstream; Starlings.Generation.OnnxGenAI isolates it.
       The runtime version must equal the builder version that wrote the graph (0.17.1).
-    - >-
-      The hosting repository (execution.graph.hosting) is private for now: Qwen35ModelAssets.DownloadAsync needs a Hugging
-      Face read token with access to it (HF_TOKEN), else ModelAssetAccessDeniedException. It moves to an organization
-      later (new sources, same digests).
     - >-
       The fp32x graph was built for the CPU provider; on the CUDA provider it decodes far slower than fp16x (M0: about
       22 tokens/s; node placement not inspected, so CPU fallback of the DeltaNet operators is possible). fp32 built for

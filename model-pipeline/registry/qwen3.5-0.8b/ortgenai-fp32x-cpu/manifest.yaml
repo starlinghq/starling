@@ -61,8 +61,8 @@ rights:
     files are a conversion of those weights; Apache-2.0 permits redistributing them with the license and attribution.
     code_license names the builder (onnxruntime-genai, MIT) and this repository's code (MIT). Hosting: every file in
     the snapshot layout, with README, NOTICE, LICENSE and SHA256SUMS, in the Hugging Face repository
-    Starlinghq/qwen3.5-0.8b-ortgenai (execution.graph.hosting), private while the packages are in preview; downloading
-    needs a Hugging Face read token with access to it.
+    Starlinghq/qwen3.5-0.8b-ortgenai (execution.graph.hosting), public since 2026-10-14; downloading needs no
+    token.
 
 behavior:
   tasks: [generation]
@@ -111,7 +111,7 @@ behavior:
 processing:
   # Tokenizer 0.1.0-preview.4 (2026-10-10) adds the Gemma BPE components; the byte-level BPE path is unchanged in
   # behavior and passes every qwen35-bpe-chat fixture and differential dump again (tokenizer test suite). Model gates
-  # were not rerun.
+  # were rerun at 0.3.0-preview.1 for this profile on the development fixtures (qualification, below).
   tokenizer:
     # 0.3.0-preview.1 is the published tokenizer (starlinghq/tokenizers): the qualified 0.1.0-preview.4 behavior plus BERT WordPiece components this profile does not use; every conformance fixture passes unchanged.
     package: Starlings.Tokenizers
@@ -152,12 +152,12 @@ execution:
     # --extra_options exclude_mtp=true. Two builds give the same digests.
     hosting:
       # Download location of every file in the origin.files lock that Qwen35ModelAssets uses (chat_template.jinja,
-      # transformers-5.18.0/tokenizer.json, ortgenai-*/): <source_base><path>. Private repository (maintainer decision
-      # 2026-10-10); the token is sent only to https://huggingface.co. The digests, not the address, pin the bytes.
+      # transformers-5.18.0/tokenizer.json, ortgenai-*/): <source_base><path>. Public repository since
+      # 2026-10-14 (private from 2026-10-10); a token, if set, is sent only to https://huggingface.co. The digests, not the address, pin the bytes.
       repository: https://huggingface.co/Starlinghq/qwen3.5-0.8b-ortgenai
       revision: "95a690c1774f144957cb7b76986a9126e8b1bb5f"
       source_base: https://huggingface.co/Starlinghq/qwen3.5-0.8b-ortgenai/resolve/95a690c1774f144957cb7b76986a9126e8b1bb5f/
-      source_status: private
+      source_status: public
     inputs:
       - { name: input_ids, type: int64, shape: [batch, sequence] }
       - { name: attention_mask, type: int64, shape: [batch, total_sequence] }
@@ -175,7 +175,10 @@ capabilities:
   cancellation: experimental
   persistence: unsupported
   training: unsupported
-  aot: untested
+  # aot: Native AOT publish on Linux x64 CPU, no trim/AOT warnings, results equal to JIT bit for bit
+  # (typed API and IChatClient; docs/evidence/aot/README.md).
+  # GenAI version diagnostics read the .deps.json, which a Native AOT binary lacks: reported unknown.
+  aot: experimental
   extensions_ai: experimental  # IChatClient (Starlings.Models.Qwen35.Extensions.AI, P-017): 21 text prompts, streaming = non-streamed = reference, cancellation, concurrency
   mlnet: unsupported
   greedy_generation: experimental
@@ -215,10 +218,23 @@ qualification:
   # model. Tolerances are proposed as values in docs/evidence/p016-qwen35/README.md; the maintainer sets the binding file.
   fixtures: model-pipeline/protected/qwen3.5-0.8b/reference
   tolerances: model-pipeline/protected/qwen3.5-0.8b/ortgenai-fp32x-cpu/tolerances.yaml
+  # Rerun at Starlings.Tokenizers 0.3.0-preview.1 (2026-10-13, R4): Starlings.Qwen35.Fidelity parity mode and
+  # compare.py against the protected generation.jsonl: renderings and prompt ids 21/21, greedy ids 22/22, step-0
+  # 1.38e-3 / top-5 6.2e-4, within the protected tolerances, on the development fixtures, which are not P-030 release
+  # sets (docs/evidence/rerun-tokenizer-0.3.0-preview.1/). The gate entries below are unchanged.
   gates:
     G0: { status: checklist, evidence: docs/evidence/p016-qwen35/README.md, date: 2026-10-10 }
     G1: { status: checklist, evidence: docs/evidence/p016-qwen35/README.md, date: 2026-10-10 }
     G2: { status: checklist, evidence: docs/evidence/p016-qwen35/README.md, date: 2026-10-10 }
+    G3: { status: not-run }
+    # G4 checklist: plan 10.1 LLM semantics (max tokens, stop, EOS, cache, chunked prefill, cancellation, isolation,
+    # seeded sampling) in section 4; CUDA concurrency defect and serialization in section 5. No soak (plan 10.2).
+    G4: { status: checklist, evidence: docs/evidence/p016-qwen35/README.md, date: 2026-10-10 }
+    G5: { status: not-run }
+    # G6 checklist: the ai-0.1.0-preview.5 release drill (packed packages, clean consumer, offline sample run on a
+    # seeded graph). Acquisition of the hosted graph is not covered while its source is a placeholder or private.
+    G6: { status: checklist, evidence: docs/releases/ai-0.1.0-preview.5/rc-drill.log, date: 2026-10-12 }
+    G7: { status: not-run }
 
 maintenance:
   owner: Mark
@@ -230,7 +246,3 @@ maintenance:
     - >-
       The ONNX Runtime GenAI C# API is labeled preview upstream; Starlings.Generation.OnnxGenAI isolates it.
       The runtime version must equal the builder version that wrote the graph (0.17.1).
-    - >-
-      The hosting repository (execution.graph.hosting) is private for now: Qwen35ModelAssets.DownloadAsync needs a Hugging
-      Face read token with access to it (HF_TOKEN), else ModelAssetAccessDeniedException. It moves to an organization
-      later (new sources, same digests).

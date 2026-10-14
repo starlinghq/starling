@@ -1,0 +1,56 @@
+{
+  "reference": "sentence-transformers 6.1.0 modules, torchcodec 0.17.0 decoding (FFmpeg n8.1.3-17-gc389840894-20261011), PyTorch fp32 CPU (6 threads), sdpa attention, one input per call, full checkpoint",
+  "rows": 17,
+  "tokens": {
+    "txt-alice-2600-none": 2600,
+    "txt-alice-4096-query": 4096,
+    "txt-alice-6144-document": 6144,
+    "txt-alice-8191-document": 8191,
+    "txt-alice-8192-none": 8192,
+    "txt-alice-8192-query": 8192,
+    "txt-constitution-document": 5950,
+    "txt-corpus-cycle-8192-none": 8192,
+    "txt-alice-8193-none": 8193,
+    "txt-alice-8192-text-document-prompt": 8198,
+    "mm-alice-6-images-6000-none": 6000,
+    "mm-alice-8-images-8192-document": 8192,
+    "mm-alice-6-images-8193-none": 8193,
+    "mm-alice-video32-7000-none": 7000,
+    "mm-alice-video32-8192-query": 8192,
+    "mm-alice-two-videos-image-8192-document": 8192,
+    "mm-alice-video32-8193-none": 8193
+  },
+  "text_rows_tokenizer_json_ids_equal": true,
+  "upstream_truncates_or_rejects_over_8192": false,
+  "nan_or_inf_rows": [],
+  "text_padded_batch2_vs_single": {
+    "rows": [
+      "txt-alice-2600-none",
+      "txt-alice-8192-none"
+    ],
+    "max_abs": 5.960464477539063e-08,
+    "mean_abs": 1.004734665836319e-08
+  },
+  "multimodal_padded_batch2_vs_single": {
+    "rows": [
+      "mm-alice-6-images-6000-none",
+      "mm-alice-video32-7000-none"
+    ],
+    "max_abs": 4.470348358154297e-08,
+    "mean_abs": 7.050813858692588e-09
+  },
+  "repeat_txt-alice-8192-query": {
+    "max_abs": 0.0,
+    "mean_abs": 0.0
+  },
+  "eager_vs_sdpa_txt-alice-8192-none": {
+    "max_abs": 4.470348358154297e-08,
+    "mean_abs": 8.840099023169993e-09,
+    "cosine": 0.9999999999999549
+  },
+  "eager_vs_sdpa_mm-alice-video32-7000-none": {
+    "max_abs": 8.195638656616211e-08,
+    "mean_abs": 1.9987218990991096e-08,
+    "cosine": 0.9999999999997643
+  }
+}

@@ -4,9 +4,8 @@ using Starlings.Models.Qwen35;
 namespace Starlings.Models.Qwen35.Tests;
 
 /// <summary>
-/// Real downloads from the hosting repository (<see cref="Qwen35ModelAssets.HostingRepository"/>, private for now).
-/// Skipped unless <c>STARLING_NETWORK_TESTS=1</c>; the authorized test also needs <c>HF_TOKEN</c> with read
-/// access to the repository. The fp16x download is 1.57 GB.
+/// Real downloads from the public hosting repository (<see cref="Qwen35ModelAssets.HostingRepository"/>), with no token.
+/// Skipped unless <c>STARLING_NETWORK_TESTS=1</c>. The fp16x download is 1.57 GB.
 /// </summary>
 public sealed class HostingDownloadTests
 {
@@ -21,13 +20,11 @@ public sealed class HostingDownloadTests
     public async Task Fp16xDownloadsFromTheHostingRepositoryAndVerifies()
     {
         RequireNetwork();
-        Assert.SkipWhen(
-            string.IsNullOrEmpty(Environment.GetEnvironmentVariable(ModelAcquisitionOptions.TokenEnvironmentVariable)),
-            $"Set {ModelAcquisitionOptions.TokenEnvironmentVariable} to a token with read access to {Qwen35ModelAssets.HostingRepository}.");
         string cache = Directory.CreateTempSubdirectory("df-qwen35-hosting-").FullName;
         try
         {
-            var options = new ModelAcquisitionOptions { CacheDirectory = cache };
+            // Anonymous: the repository is public, so no token is sent even if $HF_TOKEN is set.
+            var options = new ModelAcquisitionOptions { CacheDirectory = cache, UseEnvironmentToken = false };
             var started = DateTime.UtcNow;
             var files = await Qwen35ModelAssets.DownloadAsync(Qwen35Variant.Fp16x, options, cancellationToken: Ct);
             TestContext.Current.SendDiagnosticMessage(
@@ -44,24 +41,4 @@ public sealed class HostingDownloadTests
         }
     }
 
-    [Fact]
-    public async Task WithoutATokenThePrivateRepositoryIsAccessDenied()
-    {
-        RequireNetwork();
-        string cache = Directory.CreateTempSubdirectory("df-qwen35-hosting-").FullName;
-        try
-        {
-            var options = new ModelAcquisitionOptions { CacheDirectory = cache, UseEnvironmentToken = false, RetryDelay = TimeSpan.Zero };
-            var ex = await Assert.ThrowsAsync<ModelAssetAccessDeniedException>(() => Qwen35ModelAssets.DownloadAsync(Qwen35Variant.Fp16x, options, cancellationToken: Ct));
-            Assert.False(ex.TokenProvided);
-            Assert.Equal(Qwen35ModelAssets.ChatTemplateFile, ex.AssetPath);
-            Assert.Contains("private", ex.Message, StringComparison.Ordinal);
-            Assert.Contains(ModelAcquisitionOptions.TokenEnvironmentVariable, ex.Message, StringComparison.Ordinal);
-            TestContext.Current.SendDiagnosticMessage($"{(int)ex.StatusCode}: {ex.Message}");
-        }
-        finally
-        {
-            Directory.Delete(cache, recursive: true);
-        }
-    }
 }

@@ -1,0 +1,37 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Gate G4 soak (plan 10.2): repeated requests and load/unload cycles per model profile, with managed heap, working
+    set, private/anonymous memory and GPU memory sampling, a post-warmup plateau and growth-slope analysis, and a raw
+    JSON plus markdown report with an environment manifest. Applies no fidelity thresholds. Not packed; never run in CI.
+
+    Microsoft.ML.OnnxRuntimeGenAI brings Microsoft.ML.OnnxRuntime 1.30.0 (CPU), so one process runs every model.
+    -p:UseCuda=true swaps in Microsoft.ML.OnnxRuntimeGenAI.Cuda (brings Microsoft.ML.OnnxRuntime.Gpu 1.30.0); that
+    variant has its own lock file and is built locally only. CI builds the CPU variant (AI.slnx).
+  -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <ServerGarbageCollection>false</ServerGarbageCollection>
+    <NuGetLockFilePath Condition="'$(UseCuda)' == 'true'">packages.cuda.lock.json</NuGetLockFilePath>
+  </PropertyGroup>
+
+  <ItemGroup Condition="'$(UseCuda)' != 'true'">
+    <PackageReference Include="Microsoft.ML.OnnxRuntimeGenAI" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(UseCuda)' == 'true'">
+    <PackageReference Include="Microsoft.ML.OnnxRuntimeGenAI.Cuda" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Starlings.Soak.Tool.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../src/Starlings.Models.E5/Starlings.Models.E5.csproj" />
+    <ProjectReference Include="../../src/Starlings.Models.Gliner2/Starlings.Models.Gliner2.csproj" />
+    <ProjectReference Include="../../src/Starlings.Models.EmbeddingGemma2/Starlings.Models.EmbeddingGemma2.csproj" />
+    <ProjectReference Include="../../src/Starlings.Models.Qwen35/Starlings.Models.Qwen35.csproj" />
+  </ItemGroup>
+
+</Project>

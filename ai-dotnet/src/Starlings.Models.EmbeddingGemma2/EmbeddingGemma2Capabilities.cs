@@ -58,9 +58,10 @@ public static class EmbeddingGemma2Capabilities
         ["cancellation"] = EmbeddingGemma2CapabilityStatus.Experimental,
         ["concurrent_calls"] = EmbeddingGemma2CapabilityStatus.Experimental,
         ["asset_acquisition"] = EmbeddingGemma2CapabilityStatus.Experimental,
-        // The graph is hosted as a GitHub release asset of starlinghq/starling; until the release exists the address is a
-        // placeholder (EmbeddingGemma2ModelAssets.ModelSourceIsPlaceholder) and the graph must be produced locally.
-        ["asset_acquisition.graph_download"] = EmbeddingGemma2CapabilityStatus.Untested,
+        // The text graph is hosted in the public Hugging Face repository EmbeddingGemma2ModelAssets.HostingRepository. The
+        // 0.1.0-preview.6 release drill downloaded it with no token into an empty cache, verified it and ran the search
+        // sample offline (Linux x64, one machine). The vision graphs were not downloaded by the drill.
+        ["asset_acquisition.graph_download"] = EmbeddingGemma2CapabilityStatus.Experimental,
 
         // Images (contract of 2026-10-11, EmbeddingGemma2MultimodalEmbedder; profiles image-fp32-cpu and image-fp32-cuda).
         // From decoded RGB: 42 protected rows (28 images alone, 6 interleaved or prompted, 8 text queries) within the

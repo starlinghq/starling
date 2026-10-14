@@ -73,11 +73,6 @@ if (args[0] == "download")
     Console.WriteLine($"lock:  {assetLock}");
     Console.WriteLine($"cache: {acquisition.ResolveCacheDirectory()}");
     Console.WriteLine($"from:  {Qwen35ModelAssets.HostingBaseUrl}");
-    if (Qwen35ModelAssets.HostingIsPrivate)
-    {
-        Console.WriteLine($"note:  {Qwen35ModelAssets.HostingRepository} is private for now: set {ModelAcquisitionOptions.TokenEnvironmentVariable} " +
-                          "to a Hugging Face read token with access to it (files already in the cache need no token).");
-    }
 
     var progress = new FileProgress();
     Qwen35ModelFiles downloaded = await Qwen35ModelAssets.DownloadAsync(variant, acquisition, progress);

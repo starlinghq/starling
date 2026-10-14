@@ -3,11 +3,24 @@ using Starlings.TestSupport;
 
 namespace Starlings.Models.EmbeddingGemma2.Tests.Cuda;
 
-/// <summary>CUDA fixture with the GPU-safe default of 2 frames per vision call (the GPU is shared).</summary>
+/// <summary>
+/// CUDA fixture with the GPU-safe default of 2 frames per vision call (the GPU is shared). The frame-call measurement (W1,
+/// <c>tools/measure-eg2-cuda-frame-calls.py</c>) sets <see cref="FramesPerCallVariable"/> to 2, 3 or 4; the package
+/// default stays 2 until the maintainer decides (D7).
+/// </summary>
 public sealed class EmbeddingGemma2VideoCudaFixture() : EmbeddingGemma2VideoModelFixture(
     new OnnxSessionOptions { Provider = OnnxExecutionProvider.Cuda, CudaDeviceId = 0 },
-    new EmbeddingGemma2MultimodalOptions(),
-    CudaGate.Check);
+    CreateOptions(),
+    CudaGate.Check)
+{
+    /// <summary>Frames per vision call for this run (unset: the package default).</summary>
+    public const string FramesPerCallVariable = "STARLING_EG2_CUDA_FRAMES_PER_CALL";
+
+    private static EmbeddingGemma2MultimodalOptions CreateOptions() =>
+        int.TryParse(Environment.GetEnvironmentVariable(FramesPerCallVariable), System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture, out int frames) && frames is >= 1 and <= 8
+            ? new EmbeddingGemma2MultimodalOptions { MaxVideoFramesPerVisionCall = frames, MaxVisionBatchPatches = Math.Max(2_520, frames * 1_260) }
+            : new EmbeddingGemma2MultimodalOptions();
+}
 
 /// <summary>
 /// Profile <c>embeddinggemma-2/video-fp32-cuda</c>: the vision and multimodal text graphs on the CUDA execution provider
@@ -21,6 +34,7 @@ public sealed class CudaVideoParityTests(EmbeddingGemma2VideoCudaFixture fixture
     [Fact]
     public void SessionsUseCudaWithTf32Disabled()
     {
+        output.WriteLine($"frames per vision call: {fixture.Options.MaxVideoFramesPerVisionCall} (max vision batch patches {fixture.Options.MaxVisionBatchPatches})");
         Assert.Equal("{ use_tf32: 0 }", Tolerances["provider_options"]);
         foreach (var session in new[] { fixture.Embedder.VisionSession, fixture.Embedder.MultimodalSession })
         {

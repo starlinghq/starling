@@ -65,19 +65,9 @@ internal sealed record HarnessOptions
 
     public static HarnessOptions Parse(string[] args)
     {
-        var map = new Dictionary<string, string>(StringComparer.Ordinal);
-        for (int i = 0; i < args.Length; i++)
-        {
-            if (!args[i].StartsWith("--", StringComparison.Ordinal) || i + 1 >= args.Length)
-            {
-                throw new ArgumentException($"Expected '--name value', got '{args[i]}'.\n{Harness.Usage}");
-            }
-
-            map[args[i][2..]] = args[++i];
-        }
-
-        string Get(string key, string fallback) => map.TryGetValue(key, out var v) ? v : fallback;
-        int? GetInt(string key, int? fallback) => map.TryGetValue(key, out var v) ? int.Parse(v, CultureInfo.InvariantCulture) : fallback;
+        var map = ArgMap.Parse(args, Harness.Usage);
+        string Get(string key, string fallback) => map.Get(key, fallback);
+        int? GetInt(string key, int? fallback) => map.GetInt(key, fallback);
         var provider = Get("provider", string.Empty) switch
         {
             "cpu" => OnnxExecutionProvider.Cpu,
@@ -99,13 +89,13 @@ internal sealed record HarnessOptions
         {
             Settings = new PipelineSettings(provider, GetInt("threads", null), GetInt("inter-threads", 1), GetInt("cuda-device", 0)!.Value, Get("hash-model", "false") == "true"),
             Impl = impl,
-            Snapshot = map.GetValueOrDefault("snapshot") ?? Environment.GetEnvironmentVariable("STARLING_E5_SNAPSHOT"),
-            Workloads = map.GetValueOrDefault("workloads"),
-            Out = map.GetValueOrDefault("out"),
-            Note = map.GetValueOrDefault("note"),
+            Snapshot = map.Get("snapshot") ?? Environment.GetEnvironmentVariable("STARLING_E5_SNAPSHOT"),
+            Workloads = map.Get("workloads"),
+            Out = map.Get("out"),
+            Note = map.Get("note"),
             Paths = Get("paths", "ids,text").Split(','),
             Concurrency = Get("concurrency", "1,4").Split(',').Select(s => int.Parse(s, CultureInfo.InvariantCulture)).ToArray(),
-            Only = map.TryGetValue("only", out var only) ? only.Split(',').ToHashSet(StringComparer.Ordinal) : null,
+            Only = map.GetList("only")?.ToHashSet(StringComparer.Ordinal),
             SamplesScale = double.Parse(Get("samples-scale", "1"), CultureInfo.InvariantCulture),
             Processes = GetInt("processes", 20)!.Value,
         };
@@ -115,8 +105,6 @@ internal sealed record HarnessOptions
 /// <summary>The warm, cold and cold-child commands.</summary>
 internal static class Harness
 {
-    public const string SpawnEnvironmentVariable = "STARLING_BENCH_SPAWN_MONOTONIC_NS";
-
     public const string Usage = """
         usage: E5Harness warm|cold --provider cpu|cuda --out <raw.jsonl> [options]
           --impl library|direct     library: E5Tokenizer + E5Encoder public API (default); direct: raw InferenceSession
@@ -167,12 +155,12 @@ internal static class Harness
         }
 
         var run = Header(o, "warm", runId, started);
-        run["artifacts"] = BenchEnvironment.Artifacts(files, pipeline.ModelSha256, spec.Path, NativePackage);
+        run["artifacts"] = BenchFixtures.Artifacts(files, pipeline.ModelSha256, spec.Path, NativePackage);
         run["environment"] = BenchEnvironment.Environment(o.Settings.IsCuda, pipeline.SessionProviders, loadBefore, o.Note);
         run["settings"] = pipeline.Settings;
         run["quality"] = quality;
         bool pass = QualityGate.Apply(quality, series, E5Tolerance(o.Settings.Provider));
-        Write(o.Out, [run, .. series]);
+        RawWriter.Write(o.Out, [run, .. series]);
         ReportFailures(quality);
         return pass ? 0 : 1;
     }
@@ -183,48 +171,8 @@ internal static class Harness
         string started = DateTime.UtcNow.ToString("O", CultureInfo.InvariantCulture);
         var spec = BenchWorkloadSpec.Load(o.Workloads);
         var files = BenchFixtures.Files(o.Snapshot);
-        var children = new List<JsonObject>();
-        var walls = new List<double>();
-        string self = Environment.ProcessPath ?? throw new InvalidOperationException("No process path.");
-        for (int i = 0; i < o.Processes; i++)
-        {
-            var psi = new ProcessStartInfo(self)
-            {
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-                UseShellExecute = false,
-            };
-            psi.ArgumentList.Add("cold-child");
-            foreach (var (key, value) in ChildArguments(o, files, spec))
-            {
-                psi.ArgumentList.Add("--" + key);
-                psi.ArgumentList.Add(value);
-            }
-
-            long t0 = Stopwatch.GetTimestamp();
-            psi.Environment[SpawnEnvironmentVariable] = MonotonicClock.NowNs().ToString(CultureInfo.InvariantCulture);
-            using var process = Process.Start(psi)!;
-            var stderr = process.StandardError.ReadToEndAsync();
-            string stdout = process.StandardOutput.ReadToEnd();
-            process.WaitForExit();
-            walls.Add(MonotonicClock.ElapsedMs(t0));
-            if (process.ExitCode != 0)
-            {
-                throw new InvalidOperationException($"cold child failed ({process.ExitCode}): {stderr.Result}");
-            }
-
-            children.Add(JsonNode.Parse(stdout.Trim().Split('\n')[^1])!.AsObject());
-        }
-
-        string[] skip = ["quality", "settings", "spawn_to_result"];
-        var stageNames = children[0].Select(kv => kv.Key).Where(k => !skip.Contains(k)).ToList();
-        var stages = new JsonObject();
-        foreach (string name in stageNames)
-        {
-            stages[name] = new JsonArray(children.Select(c => (JsonNode)c[name]!.GetValue<double>()).ToArray());
-        }
-
-        stages["process_wall"] = new JsonArray(walls.Select(w => (JsonNode)w).ToArray());
+        var (children, walls) = ColdRunner.Spawn(o.Processes, ChildArguments(o, files, spec));
+        var stages = ColdRunner.StageArrays(children, walls, ["quality", "settings", "spawn_to_result"]);
         var q = children.Select(c => new Quality(c["quality"]!["max_abs"]!.GetValue<double>(), c["quality"]!["min_cosine"]!.GetValue<double>(), c["quality"]!["finite"]!.GetValue<bool>()))
             .Aggregate((a, b) => a.Merge(b));
         string runId = Guid.NewGuid().ToString();
@@ -248,7 +196,7 @@ internal static class Harness
         };
         double tolerance = E5Tolerance(o.Settings.Provider);
         var run = Header(o, "cold", runId, started);
-        run["artifacts"] = BenchEnvironment.Artifacts(files, null, spec.Path, NativePackage);
+        run["artifacts"] = BenchFixtures.Artifacts(files, null, spec.Path, NativePackage);
         run["environment"] = BenchEnvironment.Environment(o.Settings.IsCuda, null, loadBefore, o.Note);
         run["settings"] = children[0]["settings"]!.DeepClone();
         run["quality"] = new JsonObject
@@ -261,7 +209,7 @@ internal static class Harness
             ["pass"] = true,
         };
         bool pass = QualityGate.Apply(run["quality"]!.AsObject(), [series], tolerance);
-        Write(o.Out, [run, series]);
+        RawWriter.Write(o.Out, [run, series]);
         ReportFailures(run["quality"]!.AsObject());
         var sorted = series["ms"]!.AsArray().Select(x => x!.GetValue<double>()).Order().ToArray();
         Console.Error.WriteLine(string.Create(CultureInfo.InvariantCulture, $"cold-start: median spawn-to-result {sorted[sorted.Length / 2]:F1} ms (n={sorted.Length})"));
@@ -280,7 +228,7 @@ internal static class Harness
 
     public static int ColdChild(HarnessOptions o, long mainNs, long mainTimestamp)
     {
-        long spawnNs = long.Parse(Environment.GetEnvironmentVariable(SpawnEnvironmentVariable) ?? throw new InvalidOperationException("Not started by 'cold'."), CultureInfo.InvariantCulture);
+        long spawnNs = ColdRunner.SpawnNs();
         long tFixtures = Stopwatch.GetTimestamp();
         var spec = BenchWorkloadSpec.Load(o.Workloads);
         var files = BenchFixtures.Files(o.Snapshot);
@@ -304,7 +252,7 @@ internal static class Harness
         result["spawn_to_result"] = spawnToResult;
         result["fixture_read"] = fixtureMs;
         result["main_to_result"] = MonotonicClock.ElapsedMs(mainTimestamp);
-        result["quality"] = Quality.Of(output, spec.ColdRequest).ToJson();
+        result["quality"] = Quality.Of(output, BenchFixtures.Embeddings(spec.ColdRequest)).ToJson();
         result["settings"] = pipeline.Settings;
         Console.WriteLine(result.ToJsonString());
         return 0;
@@ -381,7 +329,7 @@ internal static class Harness
             var q = Quality.Empty;
             foreach (var c in cases)
             {
-                q = q.Merge(Quality.Of(pipeline.Embed([c], text, stages), [c]));
+                q = q.Merge(Quality.Of(pipeline.Embed([c], text, stages), [c.Embedding]));
             }
 
             result[text ? "text_single" : "ids_single"] = q.ToJson();
@@ -392,7 +340,7 @@ internal static class Harness
         for (int start = 0; start < cases.Count; start += 16)
         {
             var chunk = cases.Skip(start).Take(16).ToArray();
-            b = b.Merge(Quality.Of(pipeline.Embed(chunk, false, stages), chunk));
+            b = b.Merge(Quality.Of(pipeline.Embed(chunk, false, stages), BenchFixtures.Embeddings(chunk)));
         }
 
         result["ids_batch16"] = b.ToJson();
@@ -410,56 +358,13 @@ internal static class Harness
             pipeline.Embed(requests[i % requests.Length], text, scratch);
         }
 
-        int stageCount = pipeline.StageNames(text).Length;
-        var totals = new double[n];
-        var stages = new double[n, stageCount];
-        int next = -1;
-        void Worker(int offset)
-        {
-            var local = new double[4];
-            while (true)
-            {
-                int i = Interlocked.Increment(ref next);
-                if (i >= n)
-                {
-                    return;
-                }
-
-                var request = requests[(i + offset) % requests.Length];
-                long t = Stopwatch.GetTimestamp();
-                pipeline.Embed(request, text, local);
-                totals[i] = MonotonicClock.ElapsedMs(t);
-                for (int s = 0; s < stageCount; s++)
-                {
-                    stages[i, s] = local[s];
-                }
-            }
-        }
-
-        long start = Stopwatch.GetTimestamp();
-        if (concurrency == 1)
-        {
-            Worker(0);
-        }
-        else
-        {
-            var threads = Enumerable.Range(0, concurrency).Select(k => new Thread(() => Worker(k))).ToList();
-            threads.ForEach(t => t.Start());
-            threads.ForEach(t => t.Join());
-        }
-
-        double wallMs = MonotonicClock.ElapsedMs(start);
+        var names = pipeline.StageNames(text);
+        var timed = SeriesTimer.Time(n, concurrency, names.Length, 0, (i, worker, stages, _) =>
+            pipeline.Embed(requests[(i + worker) % requests.Length], text, stages));
         var q = Quality.Empty;
         foreach (var request in requests)
         {
-            q = q.Merge(Quality.Of(pipeline.Embed(request, text, scratch), request));
-        }
-
-        var stageJson = new JsonObject();
-        var names = pipeline.StageNames(text);
-        for (int s = 0; s < stageCount; s++)
-        {
-            stageJson[names[s]] = new JsonArray(Enumerable.Range(0, n).Select(i => (JsonNode)stages[i, s]).ToArray());
+            q = q.Merge(Quality.Of(pipeline.Embed(request, text, scratch), BenchFixtures.Embeddings(request)));
         }
 
         return new JsonObject
@@ -471,25 +376,10 @@ internal static class Harness
             ["concurrency"] = concurrency,
             ["warmup_calls"] = warmupCalls,
             ["n"] = n,
-            ["wall_ms"] = wallMs,
-            ["ms"] = new JsonArray(totals.Select(x => (JsonNode)x).ToArray()),
-            ["stages_ms"] = stageJson,
+            ["wall_ms"] = timed.WallMs,
+            ["ms"] = timed.TotalsJson(),
+            ["stages_ms"] = timed.StagesJson(names),
             ["quality"] = q.ToJson(),
         };
-    }
-
-    private static void Write(string? path, IEnumerable<JsonObject> records)
-    {
-        if (string.IsNullOrEmpty(path))
-        {
-            throw new ArgumentException("--out <raw.jsonl> is required.");
-        }
-
-        Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(path))!);
-        using var writer = new StreamWriter(path, append: true);
-        foreach (var record in records)
-        {
-            writer.WriteLine(record.ToJsonString(new JsonSerializerOptions { WriteIndented = false }));
-        }
     }
 }

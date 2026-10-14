@@ -40,9 +40,45 @@ class _RefuseOverride(argparse.Action):
         parser.exit(EXIT_PROTECTED)
 
 
+def _evaluate_g3(args: argparse.Namespace) -> int:
+    from model_pipeline import evaluate, evaluate_task_quality, protection, results
+
+    if not args.dataset:
+        print("error: --g3 needs --dataset", file=sys.stderr)
+        return evaluate.EXIT_INPUT
+    try:
+        evaluation = evaluate_task_quality.evaluate(
+            Path(args.manifest),
+            args.g3,
+            Path(args.dataset),
+            Path(args.results),
+            baseline=Path(args.baseline) if args.baseline else None,
+            repo_root=Path(args.repo_root) if args.repo_root else None,
+            protected_base=args.protected_base,
+        )
+    except (protection.ProtectedEvidenceError, results.ToleranceOverrideError) as exc:
+        print(f"refused: {exc}", file=sys.stderr)
+        return evaluate.EXIT_PROTECTED
+    except (evaluate.EvaluationError, OSError, ValueError) as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return evaluate.EXIT_INPUT
+    json_path, md_path = evaluate_task_quality.write_report(evaluation, Path(args.out))
+    r = evaluation.report
+    shown = {k: v for k, v in r["metrics"].items() if ".label." not in k}
+    print(f"{r['profile']} {r['task']}: " + ", ".join(f"{k} {v:.4f}" for k, v in shown.items()))
+    print(f"G3 {r['gates']['G3']['status']}: {r['gates']['G3']['reason']}")
+    print(f"report: {json_path} {md_path}")
+    return evaluation.exit_code
+
+
 def _evaluate(args: argparse.Namespace) -> int:
     from model_pipeline import evaluate, protection, results
 
+    if args.g3:
+        return _evaluate_g3(args)
+    if args.dataset or args.baseline:
+        print("error: --dataset and --baseline apply to --g3 only", file=sys.stderr)
+        return evaluate.EXIT_INPUT
     try:
         evaluation = evaluate.evaluate(
             Path(args.manifest),
@@ -89,6 +125,29 @@ def _check_protected(args: argparse.Namespace) -> int:
     return 0 if result.ok else 1
 
 
+def _catalog(args: argparse.Namespace) -> int:
+    from model_pipeline import catalog
+
+    registry, out, repo_root = Path(args.registry), Path(args.out), Path(args.repo_root)
+    try:
+        files = catalog.generate(registry, out, repo_root)
+    except catalog.CatalogError as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 2
+    if args.check:
+        stale = catalog.stale(files, out)
+        for name in stale:
+            print(f"STALE: {out / name}", file=sys.stderr)
+        if stale:
+            print("The catalog is stale. Regenerate it with: model-pipeline catalog", file=sys.stderr)
+            return 1
+        print(f"catalog up to date: {len(files)} file(s) in {out}")
+        return 0
+    catalog.write(files, out)
+    print(f"catalog written: {', '.join(str(out / name) for name in files)}")
+    return 0
+
+
 def _bench_validate(args: argparse.Namespace) -> int:
     results, problems = benchmarks.load([Path(p) for p in args.paths])
     for problem in problems:
@@ -110,6 +169,24 @@ def _bench_summarize(args: argparse.Namespace) -> int:
     return 0
 
 
+def _upstream(args: argparse.Namespace) -> int:
+    from model_pipeline import upstream
+
+    try:
+        fetch = upstream.default_fetcher(Path(args.responses) if args.responses else None)
+        report = upstream.check_registry(Path(args.registry), fetch, today=args.date)
+    except (OSError, ValueError) as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 2
+    if args.json:
+        Path(args.json).write_text(json.dumps(report, indent=1) + "\n", encoding="utf-8")
+    sys.stdout.write(upstream.markdown(report))
+    summary = report["summary"]
+    if summary["error"]:
+        return 2
+    return 1 if summary["new_since_known"] else 0
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="model-pipeline")
     sub = parser.add_subparsers(dest="command", required=True)
@@ -129,7 +206,12 @@ def main(argv: list[str] | None = None) -> int:
         "did not pass, or the profile has no protected tolerances file yet (measured, never qualified).",
     )
     ev.add_argument("manifest", help="registry manifest.yaml of the profile")
-    ev.add_argument("--results", required=True, help="directory with *.results.json files, one per stage")
+    ev.add_argument(
+        "--results",
+        required=True,
+        help="directory with *.results.json files, one per stage (task generation: the output directory of "
+        "Starlings.Qwen35.Fidelity; --g3: the candidate's embeddings or predictions JSONL file)",
+    )
     ev.add_argument("--out", required=True, help="directory for report.json and report.md")
     ev.add_argument(
         "--protected-base",
@@ -142,7 +224,20 @@ def main(argv: list[str] | None = None) -> int:
     ev.add_argument(
         "--reference-tensors",
         help="tasks image-embedding and video-embedding: directory of the reference .npz tensors (outside Git; "
-        "each array is checked against the protected tensors.json) for the soft-token and token-embedding checks",
+        "each array is checked against the protected tensors.json) for the soft-token and token-embedding checks; "
+        "task generation: directory with the reference step0/<id>.f32 vectors (checked against the fixture digests) "
+        "for the full-vocabulary step-0 bound",
+    )
+    ev.add_argument(
+        "--g3",
+        choices=("retrieval", "ner"),
+        help="task-quality evaluation (G3) instead of staged fidelity: metrics on --dataset, compared with the "
+        "budget in the profile's protected task-quality.yaml only (absent: no budget, not a gate result)",
+    )
+    ev.add_argument("--dataset", help="--g3 retrieval: dataset directory; --g3 ner: gold JSONL file")
+    ev.add_argument(
+        "--baseline",
+        help="--g3 retrieval: embeddings JSONL of the fp32 reference profile, for the top-10 overlap metric",
     )
     for option in REFUSED_OPTIONS:
         ev.add_argument(option, nargs="?", action=_RefuseOverride, help=argparse.SUPPRESS)
@@ -158,6 +253,20 @@ def main(argv: list[str] | None = None) -> int:
     cp.add_argument("--files", help="newline-separated changed paths (default: git diff base...head)")
     cp.set_defaults(func=_check_protected)
 
+    from model_pipeline.catalog import DEFAULT_OUT, DEFAULT_REGISTRY, REPO_ROOT
+
+    cat = sub.add_parser(
+        "catalog",
+        help="generate the public catalog and compatibility matrix from the registry manifests (P-021)",
+        description="Writes README.md, compatibility-matrix.md and catalog.json. Exit codes: 0 written or up to "
+        "date; 1 --check found stale or missing output; 2 an invalid manifest or an empty registry.",
+    )
+    cat.add_argument("registry", nargs="?", default=str(DEFAULT_REGISTRY), help="registry directory")
+    cat.add_argument("--out", default=str(DEFAULT_OUT), help="output directory (default: docs/catalog)")
+    cat.add_argument("--repo-root", default=str(REPO_ROOT), help="repository root that evidence paths are relative to")
+    cat.add_argument("--check", action="store_true", help="write nothing; exit 1 when the committed output is stale")
+    cat.set_defaults(func=_catalog)
+
     bench = sub.add_parser("bench", help="raw benchmark results (starlings-bench-raw/1, P-008)")
     bench_sub = bench.add_subparsers(dest="bench_command", required=True)
     bench_validate = bench_sub.add_parser("validate", help="validate raw JSON lines files against the schema")
@@ -169,6 +278,18 @@ def main(argv: list[str] | None = None) -> int:
     bench_summarize.add_argument("--seed", type=int, default=1)
     bench_summarize.add_argument("--json", help="also write the summary as JSON to this path")
     bench_summarize.set_defaults(func=_bench_summarize)
+
+    up = sub.add_parser(
+        "upstream",
+        help="P-020: compare pinned Hugging Face revisions with the Hub's current ones (read-only)",
+        description="Exit codes: 0 nothing new; 1 an upstream revision newer than latest_known_upstream_revision; "
+        "2 bad input or a fetch failed. Never edits a manifest.",
+    )
+    up.add_argument("registry", nargs="?", default="registry", help="registry directory or one manifest")
+    up.add_argument("--responses", help="recorded Hub API responses (JSON); no network access")
+    up.add_argument("--json", help="also write the report (starlings-upstream-check/1) to this path")
+    up.add_argument("--date", help="check date to record (default: today)")
+    up.set_defaults(func=_upstream)
 
     args = parser.parse_args(argv)
     return args.func(args)

@@ -2,6 +2,8 @@
 
   <PropertyGroup>
     <IsPackable>true</IsPackable>
+    <!-- Trim, AOT and single-file analyzers on (warnings are errors); Native AOT evidence: docs/evidence/aot/. -->
+    <IsAotCompatible>true</IsAotCompatible>
     <Description>Preview. Microsoft.Extensions.AI IChatClient over the Qwen/Qwen3.5-0.8B chat model (Starlings.Models.Qwen35): system, user and assistant text messages; streaming with UTF-8-safe text deltas that reassemble the completed response; finish reasons and usage (stop token excluded); max output tokens, stop sequences, seeded sampling and the thinking switch; unsupported options, tools and non-text content rejected; cancellation between prefill chunks and decode steps on a dedicated worker thread; model metadata and DI registration.</Description>
     <PackageTags>llm;chat;qwen;qwen3.5;microsoft.extensions.ai;ichatclient;streaming;onnxruntime-genai</PackageTags>
     <PackageReadmeFile>README.md</PackageReadmeFile>

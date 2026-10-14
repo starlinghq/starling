@@ -1,0 +1,9 @@
+{"query_id": "q-boil", "doc_id": "d-boil", "relevance": 2}
+{"query_id": "q-boil", "doc_id": "d-boil-altitude", "relevance": 1}
+{"query_id": "q-paris", "doc_id": "d-paris", "relevance": 2}
+{"query_id": "q-photosynthesis", "doc_id": "d-photosynthesis", "relevance": 2}
+{"query_id": "q-photosynthesis", "doc_id": "d-chlorophyll", "relevance": 1}
+{"query_id": "q-bread", "doc_id": "d-bread", "relevance": 2}
+{"query_id": "q-bread", "doc_id": "d-cake", "relevance": 0}
+{"query_id": "q-de-zug", "doc_id": "d-de-zug", "relevance": 2}
+{"query_id": "q-es-gato", "doc_id": "d-es-gato", "relevance": 2}

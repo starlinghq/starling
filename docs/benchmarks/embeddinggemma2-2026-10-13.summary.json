@@ -1,0 +1,817 @@
+{
+ "quality_failures": [],
+ "groups": [
+  {
+   "provider": "cpu",
+   "mode": "cold",
+   "path": "text",
+   "workload": "cold-start",
+   "concurrency": 1,
+   "language": "csharp",
+   "impl": "library",
+   "runs": 1,
+   "n": 3,
+   "batch": 1,
+   "median_ms": 5685.527635,
+   "median_ci95_ms": [
+    5229.511544,
+    5723.417187
+   ],
+   "run_medians_ms": [
+    5685.527635
+   ],
+   "p5_ms": null,
+   "p95_ms": null,
+   "p99_ms": null,
+   "items_per_s": 0.16907629124662618,
+   "items_per_s_range": [
+    0.16907629124662618,
+    0.16907629124662618
+   ],
+   "stage_median_ms": {
+    "spawn_to_main": 90.044089,
+    "fixture_read": 257.1172,
+    "tokenizer_load": 1228.969,
+    "session_create": 3617.3258,
+    "tokenize": 89.2076,
+    "encode": 321.5987,
+    "main_to_result": 5605.6414,
+    "process_wall": 6049.2265
+   },
+   "quality_max_abs": null,
+   "quality_finite": true
+  },
+  {
+   "provider": "cpu",
+   "mode": "warm",
+   "path": "image",
+   "workload": "huge-b1",
+   "concurrency": 1,
+   "language": "csharp",
+   "impl": "library",
+   "runs": 1,
+   "n": 2,
+   "batch": 1,
+   "median_ms": 16518.30745,
+   "median_ci95_ms": [
+    16192.3221,
+    16844.2928
+   ],
+   "run_medians_ms": [
+    16518.30745
+   ],
+   "p5_ms": null,
+   "p95_ms": null,
+   "p99_ms": null,
+   "items_per_s": 0.06053887951076061,
+   "items_per_s_range": [
+    0.06053887951076061,
+    0.06053887951076061
+   ],
+   "stage_median_ms": {
+    "decode": 219.9518,
+    "embed": 16298.3492
+   },
+   "quality_max_abs": 3.427267074584961e-07,
+   "quality_finite": true
+  },
+  {
+   "provider": "cpu",
+   "mode": "warm",
+   "path": "image",
+   "workload": "photo-b1",
+   "concurrency": 1,
+   "language": "csharp",
+   "impl": "library",
+   "runs": 1,
+   "n": 4,
+   "batch": 1,
+   "median_ms": 16059.0082,
+   "median_ci95_ms": [
+    13136.0295,
+    16626.0469
+   ],
+   "run_medians_ms": [
+    16059.0082
+   ],
+   "p5_ms": null,
+   "p95_ms": null,
+   "p99_ms": null,
+   "items_per_s": 0.06463512281461076,
+   "items_per_s_range": [
+    0.06463512281461076,
+    0.06463512281461076
+   ],
+   "stage_median_ms": {
+    "decode": 9.0142,
+    "embed": 16050.384300000002
+   },
+   "quality_max_abs": 6.596092134714127e-07,
+   "quality_finite": true
+  },
+  {
+   "provider": "cpu",
+   "mode": "warm",
+   "path": "image",
+   "workload": "photo-b4",
+   "concurrency": 1,
+   "language": "csharp",
+   "impl": "library",
+   "runs": 1,
+   "n": 1,
+   "batch": 4,
+   "median_ms": 59460.4253,
+   "median_ci95_ms": [
+    59460.4253,
+    59460.4253
+   ],
+   "run_medians_ms": [
+    59460.4253
+   ],
+   "p5_ms": null,
+   "p95_ms": null,
+   "p99_ms": null,
+   "items_per_s": 0.06727163080018565,
+   "items_per_s_range": [
+    0.06727163080018565,
+    0.06727163080018565
+   ],
+   "stage_median_ms": {
+    "decode": 67.1093,
+    "embed": 59393.3115
+   },
+   "quality_max_abs": 1.3187527656555176e-06,
+   "quality_finite": true
+  },
+  {
+   "provider": "cpu",
+   "mode": "warm",
+   "path": "image",
+   "workload": "preprocess-only",
+   "concurrency": 1,
+   "language": "csharp",
+   "impl": "library",
+   "runs": 1,
+   "n": 10,
+   "batch": 1,
+   "median_ms": 58.05425,
+   "median_ci95_ms": [
+    34.05815,
+    235.2281
+   ],
+   "run_medians_ms": [
+    58.05425
+   ],
+   "p5_ms": null,
+   "p95_ms": null,
+   "p99_ms": null,
+   "items_per_s": 7.895344991441841,
+   "items_per_s_range": [
+    7.895344991441841,
+    7.895344991441841
+   ],
+   "stage_median_ms": {
+    "decode": 5.35135,
+    "preprocess": 21.4306
+   },
+   "quality_max_abs": null,
+   "quality_finite": true
+  },
+  {
+   "provider": "cpu",
+   "mode": "warm",
+   "path": "image",
+   "workload": "tiny-b1",
+   "concurrency": 1,
+   "language": "csharp",
+   "impl": "library",
+   "runs": 1,
+   "n": 4,
+   "batch": 1,
+   "median_ms": 15980.34175,
+   "median_ci95_ms": [
+    15499.1351,
+    16269.1582
+   ],
+   "run_medians_ms": [
+    15980.34175
+   ],
+   "p5_ms": null,
+   "p95_ms": null,
+   "p99_ms": null,
+   "items_per_s": 0.06276578790740114,
+   "items_per_s_range": [
+    0.06276578790740114,
+    0.06276578790740114
+   ],
+   "stage_median_ms": {
+    "decode": 0.33804999999999996,
+    "embed": 15980.10925
+   },
+   "quality_max_abs": 2.3096799850463867e-07,
+   "quality_finite": true
+  },
+  {
+   "provider": "cpu",
+   "mode": "warm",
+   "path": "image",
+   "workload": "two-images-interleaved",
+   "concurrency": 1,
+   "language": "csharp",
+   "impl": "library",
+   "runs": 1,
+   "n": 2,
+   "batch": 1,
+   "median_ms": 12524.216250000001,
+   "median_ci95_ms": [
+    11586.2934,
+    13462.1391
+   ],
+   "run_medians_ms": [
+    12524.216250000001
+   ],
+   "p5_ms": null,
+   "p95_ms": null,
+   "p99_ms": null,
+   "items_per_s": 0.0798453032381694,
+   "items_per_s_range": [
+    0.0798453032381694,
+    0.0798453032381694
+   ],
+   "stage_median_ms": {
+    "decode": 12.8146,
+    "embed": 12511.3123
+   },
+   "quality_max_abs": 6.789341568946838e-07,
+   "quality_finite": true
+  },
+  {
+   "provider": "cpu",
+   "mode": "warm",
+   "path": "text",
+   "workload": "long-b1",
+   "concurrency": 1,
+   "language": "csharp",
+   "impl": "library",
+   "runs": 1,
+   "n": 2,
+   "batch": 1,
+   "median_ms": 8985.08645,
+   "median_ci95_ms": [
+    8186.4369,
+    9783.736
+   ],
+   "run_medians_ms": [
+    8985.08645
+   ],
+   "p5_ms": null,
+   "p95_ms": null,
+   "p99_ms": null,
+   "items_per_s": 0.11129550674330015,
+   "items_per_s_range": [
+    0.11129550674330015,
+    0.11129550674330015
+   ],
+   "stage_median_ms": {
+    "tokenize": 3.4569,
+    "encode": 8981.62495
+   },
+   "quality_max_abs": 1.564621925354004e-07,
+   "quality_finite": true
+  },
+  {
+   "provider": "cpu",
+   "mode": "warm",
+   "path": "text",
+   "workload": "long-b4",
+   "concurrency": 1,
+   "language": "csharp",
+   "impl": "library",
+   "runs": 1,
+   "n": 1,
+   "batch": 4,
+   "median_ms": 27435.5902,
+   "median_ci95_ms": [
+    27435.5902,
+    27435.5902
+   ],
+   "run_medians_ms": [
+    27435.5902
+   ],
+   "p5_ms": null,
+   "p95_ms": null,
+   "p99_ms": null,
+   "items_per_s": 0.14578757038719573,
+   "items_per_s_range": [
+    0.14578757038719573,
+    0.14578757038719573
+   ],
+   "stage_median_ms": {
+    "tokenize": 9.2677,
+    "encode": 27426.3149
+   },
+   "quality_max_abs": 1.9371509552001953e-07,
+   "quality_finite": true
+  },
+  {
+   "provider": "cpu",
+   "mode": "warm",
+   "path": "text",
+   "workload": "short-b1",
+   "concurrency": 1,
+   "language": "csharp",
+   "impl": "library",
+   "runs": 1,
+   "n": 25,
+   "batch": 1,
+   "median_ms": 299.2935,
+   "median_ci95_ms": [
+    226.4564,
+    379.3091
+   ],
+   "run_medians_ms": [
+    299.2935
+   ],
+   "p5_ms": 169.98802,
+   "p95_ms": 519.12268,
+   "p99_ms": null,
+   "items_per_s": 3.1272053051812136,
+   "items_per_s_range": [
+    3.1272053051812136,
+    3.1272053051812136
+   ],
+   "stage_median_ms": {
+    "tokenize": 0.0768,
+    "encode": 298.0912
+   },
+   "quality_max_abs": 1.9744038581848145e-07,
+   "quality_finite": true
+  },
+  {
+   "provider": "cpu",
+   "mode": "warm",
+   "path": "text",
+   "workload": "short-b16",
+   "concurrency": 1,
+   "language": "csharp",
+   "impl": "library",
+   "runs": 1,
+   "n": 5,
+   "batch": 16,
+   "median_ms": 4010.566,
+   "median_ci95_ms": [
+    3425.1575,
+    4431.15
+   ],
+   "run_medians_ms": [
+    4010.566
+   ],
+   "p5_ms": null,
+   "p95_ms": null,
+   "p99_ms": null,
+   "items_per_s": 4.134736273470216,
+   "items_per_s_range": [
+    4.134736273470216,
+    4.134736273470216
+   ],
+   "stage_median_ms": {
+    "tokenize": 3.9088,
+    "encode": 4005.5013
+   },
+   "quality_max_abs": 1.9371509552001953e-07,
+   "quality_finite": true
+  },
+  {
+   "provider": "cpu",
+   "mode": "warm",
+   "path": "text",
+   "workload": "short-b8",
+   "concurrency": 1,
+   "language": "csharp",
+   "impl": "library",
+   "runs": 1,
+   "n": 10,
+   "batch": 8,
+   "median_ms": 2036.10825,
+   "median_ci95_ms": [
+    1242.2573,
+    2088.7393
+   ],
+   "run_medians_ms": [
+    2036.10825
+   ],
+   "p5_ms": null,
+   "p95_ms": null,
+   "p99_ms": null,
+   "items_per_s": 4.441120759014184,
+   "items_per_s_range": [
+    4.441120759014184,
+    4.441120759014184
+   ],
+   "stage_median_ms": {
+    "tokenize": 0.28059999999999996,
+    "encode": 2034.8640999999998
+   },
+   "quality_max_abs": 1.9371509552001953e-07,
+   "quality_finite": true
+  },
+  {
+   "provider": "cpu",
+   "mode": "warm",
+   "path": "text",
+   "workload": "words100-b1",
+   "concurrency": 1,
+   "language": "csharp",
+   "impl": "library",
+   "runs": 1,
+   "n": 8,
+   "batch": 1,
+   "median_ms": 602.6149,
+   "median_ci95_ms": [
+    577.4487,
+    750.0343
+   ],
+   "run_medians_ms": [
+    602.6149
+   ],
+   "p5_ms": null,
+   "p95_ms": null,
+   "p99_ms": null,
+   "items_per_s": 1.5423922955653966,
+   "items_per_s_range": [
+    1.5423922955653966,
+    1.5423922955653966
+   ],
+   "stage_median_ms": {
+    "tokenize": 0.3177,
+    "encode": 602.3075
+   },
+   "quality_max_abs": 0,
+   "quality_finite": true
+  },
+  {
+   "provider": "cpu",
+   "mode": "warm",
+   "path": "text",
+   "workload": "words400-b1",
+   "concurrency": 1,
+   "language": "csharp",
+   "impl": "library",
+   "runs": 1,
+   "n": 4,
+   "batch": 1,
+   "median_ms": 2664.42105,
+   "median_ci95_ms": [
+    2446.1158,
+    3206.3584
+   ],
+   "run_medians_ms": [
+    2664.42105
+   ],
+   "p5_ms": null,
+   "p95_ms": null,
+   "p99_ms": null,
+   "items_per_s": 0.3642547390383888,
+   "items_per_s_range": [
+    0.3642547390383888,
+    0.3642547390383888
+   ],
+   "stage_median_ms": {
+    "tokenize": 1.29295,
+    "encode": 2663.04185
+   },
+   "quality_max_abs": 0,
+   "quality_finite": true
+  }
+ ],
+ "csharp_vs_python": [],
+ "direct_vs_python": [],
+ "adapter_overhead_p95": [],
+ "runs": [
+  {
+   "run_id": "05596c47-37c3-4922-a7cb-4b34b3402a0b",
+   "language": "csharp",
+   "impl": "library",
+   "provider": "cpu",
+   "mode": "warm",
+   "threads": 6,
+   "started_utc": "2026-10-13T17:39:37.5120259Z",
+   "git_commit": "92d5fd75a3e6bf0e57ccbaa2a5a3b26e46bc601f",
+   "git_dirty": false,
+   "model_sha256": "02cc7ecccbfcb29d812eb104e4c6ea6c599bc87e94f01082606f6a11f0252d11",
+   "tokenizer_sha256": "4d777ef5bdc1aa36227abdfb77c3e49e7b9c892d16e1b6bda41c393504828be4",
+   "packages": {
+    "Microsoft.ML.OnnxRuntime.Managed": "1.30.0",
+    "Microsoft.ML.OnnxRuntime": "1.30.0",
+    "Starlings.Runtime.Onnx": "0.1.0-preview.5+42d93dd3573b43939329120fd1e4e55786ef8509",
+    "Starlings.Tokenizers": "0.3.0-preview.1+79a5863e861edcfed79142293dafabb688c199b9",
+    "Starlings.Models.EmbeddingGemma2": "0.1.0-preview.5+42d93dd3573b43939329120fd1e4e55786ef8509",
+    "Starlings.Models.EmbeddingGemma2.Imaging.SkiaSharp": "0.1.0-preview.5+42d93dd3573b43939329120fd1e4e55786ef8509",
+    "SkiaSharp": "4.153.1+release-4.153.1.4783f51448f9b070dda4f87b83e941c9599e466e.4783f51448f9b070dda4f87b83e941c9599e466e"
+   },
+   "load_before": {
+    "loadavg": [
+     15.7,
+     18.8,
+     21.19
+    ],
+    "gpus": [
+     {
+      "index": "0",
+      "name": "NVIDIA GeForce RTX 3090",
+      "pci_bus_id": "00000000:03:00.0",
+      "util_pct": "93",
+      "mem_used_mib": "10995",
+      "mem_total_mib": "24576",
+      "sm_clock_mhz": "1785",
+      "pstate": "P2",
+      "power_w": "330.74",
+      "temp_c": "68"
+     },
+     {
+      "index": "1",
+      "name": "NVIDIA GeForce RTX 4060 Ti",
+      "pci_bus_id": "00000000:04:00.0",
+      "util_pct": "0",
+      "mem_used_mib": "729",
+      "mem_total_mib": "16380",
+      "sm_clock_mhz": "210",
+      "pstate": "P8",
+      "power_w": "10.73",
+      "temp_c": "51"
+     }
+    ]
+   },
+   "load_after": {
+    "loadavg": [
+     20.49,
+     19.97,
+     21
+    ],
+    "gpus": [
+     {
+      "index": "0",
+      "name": "NVIDIA GeForce RTX 3090",
+      "pci_bus_id": "00000000:03:00.0",
+      "util_pct": "96",
+      "mem_used_mib": "10997",
+      "mem_total_mib": "24576",
+      "sm_clock_mhz": "1830",
+      "pstate": "P2",
+      "power_w": "320.75",
+      "temp_c": "66"
+     },
+     {
+      "index": "1",
+      "name": "NVIDIA GeForce RTX 4060 Ti",
+      "pci_bus_id": "00000000:04:00.0",
+      "util_pct": "17",
+      "mem_used_mib": "748",
+      "mem_total_mib": "16380",
+      "sm_clock_mhz": "210",
+      "pstate": "P8",
+      "power_w": "11.17",
+      "temp_c": "51"
+     }
+    ]
+   },
+   "quality": {
+    "reference": "model-pipeline/protected/embeddinggemma-2/onnx-fp32-cpu/embeddings.jsonl",
+    "scope": "every fixture row",
+    "text_single": {
+     "max_abs": 3.6973506212234497e-07,
+     "min_cosine": 0.999999999994734,
+     "finite": true,
+     "rows": 138,
+     "tolerance": 5e-06,
+     "pass": true
+    },
+    "text_batch8": {
+     "max_abs": 3.688037395477295e-07,
+     "min_cosine": 0.9999999999958149,
+     "finite": true,
+     "rows": 132,
+     "tolerance": 5e-06,
+     "pass": true
+    },
+    "text_tolerance_file": "model-pipeline/protected/embeddinggemma-2/onnx-fp32-cpu/tolerances.yaml",
+    "cases": 138,
+    "pass": true,
+    "preliminary_pass": true,
+    "series_pass": true,
+    "failed_series": []
+   }
+  },
+  {
+   "run_id": "1353ce2b-a716-47cb-a6a8-55d34d143aa0",
+   "language": "csharp",
+   "impl": "library",
+   "provider": "cpu",
+   "mode": "cold",
+   "threads": 6,
+   "started_utc": "2026-10-13T17:47:19.5741147Z",
+   "git_commit": "92d5fd75a3e6bf0e57ccbaa2a5a3b26e46bc601f",
+   "git_dirty": false,
+   "model_sha256": "02cc7ecccbfcb29d812eb104e4c6ea6c599bc87e94f01082606f6a11f0252d11",
+   "tokenizer_sha256": "4d777ef5bdc1aa36227abdfb77c3e49e7b9c892d16e1b6bda41c393504828be4",
+   "packages": {
+    "Microsoft.ML.OnnxRuntime.Managed": "1.30.0",
+    "Microsoft.ML.OnnxRuntime": "1.30.0",
+    "Starlings.Runtime.Onnx": "0.1.0-preview.5+42d93dd3573b43939329120fd1e4e55786ef8509",
+    "Starlings.Tokenizers": "0.3.0-preview.1+79a5863e861edcfed79142293dafabb688c199b9",
+    "Starlings.Models.EmbeddingGemma2": "0.1.0-preview.5+42d93dd3573b43939329120fd1e4e55786ef8509",
+    "Starlings.Models.EmbeddingGemma2.Imaging.SkiaSharp": "0.1.0-preview.5+42d93dd3573b43939329120fd1e4e55786ef8509",
+    "SkiaSharp": "4.153.1+release-4.153.1.4783f51448f9b070dda4f87b83e941c9599e466e.4783f51448f9b070dda4f87b83e941c9599e466e"
+   },
+   "load_before": {
+    "loadavg": [
+     20.49,
+     19.97,
+     21
+    ],
+    "gpus": [
+     {
+      "index": "0",
+      "name": "NVIDIA GeForce RTX 3090",
+      "pci_bus_id": "00000000:03:00.0",
+      "util_pct": "96",
+      "mem_used_mib": "10997",
+      "mem_total_mib": "24576",
+      "sm_clock_mhz": "1935",
+      "pstate": "P2",
+      "power_w": "279.50",
+      "temp_c": "64"
+     },
+     {
+      "index": "1",
+      "name": "NVIDIA GeForce RTX 4060 Ti",
+      "pci_bus_id": "00000000:04:00.0",
+      "util_pct": "17",
+      "mem_used_mib": "725",
+      "mem_total_mib": "16380",
+      "sm_clock_mhz": "210",
+      "pstate": "P8",
+      "power_w": "10.86",
+      "temp_c": "51"
+     }
+    ]
+   },
+   "load_after": {
+    "loadavg": [
+     19.41,
+     19.75,
+     20.9
+    ],
+    "gpus": [
+     {
+      "index": "0",
+      "name": "NVIDIA GeForce RTX 3090",
+      "pci_bus_id": "00000000:03:00.0",
+      "util_pct": "100",
+      "mem_used_mib": "10997",
+      "mem_total_mib": "24576",
+      "sm_clock_mhz": "1725",
+      "pstate": "P2",
+      "power_w": "332.90",
+      "temp_c": "68"
+     },
+     {
+      "index": "1",
+      "name": "NVIDIA GeForce RTX 4060 Ti",
+      "pci_bus_id": "00000000:04:00.0",
+      "util_pct": "0",
+      "mem_used_mib": "737",
+      "mem_total_mib": "16380",
+      "sm_clock_mhz": "210",
+      "pstate": "P8",
+      "power_w": "10.44",
+      "temp_c": "51"
+     }
+    ]
+   },
+   "quality": {
+    "reference": "model-pipeline/protected/embeddinggemma-2/onnx-fp32-cpu/embeddings.jsonl; model-pipeline/protected/embeddinggemma-2/image-fp32-cpu/image-embeddings.jsonl",
+    "cases": 1,
+    "cold_first_request": {
+     "max_abs": 1.9744038581848145e-07,
+     "min_cosine": 0.999999999998828,
+     "finite": true,
+     "rows": 1,
+     "tolerance": 5e-06,
+     "pass": true
+    },
+    "pass": true,
+    "preliminary_pass": true,
+    "series_pass": true,
+    "failed_series": []
+   }
+  },
+  {
+   "run_id": "a54f63c6-3ee3-4a5a-aa8b-86c42039225f",
+   "language": "csharp",
+   "impl": "library",
+   "provider": "cpu",
+   "mode": "warm",
+   "threads": 6,
+   "started_utc": "2026-10-13T17:47:43.9466051Z",
+   "git_commit": "92d5fd75a3e6bf0e57ccbaa2a5a3b26e46bc601f",
+   "git_dirty": false,
+   "model_sha256": "02cc7ecccbfcb29d812eb104e4c6ea6c599bc87e94f01082606f6a11f0252d11",
+   "tokenizer_sha256": "4d777ef5bdc1aa36227abdfb77c3e49e7b9c892d16e1b6bda41c393504828be4",
+   "packages": {
+    "Microsoft.ML.OnnxRuntime.Managed": "1.30.0",
+    "Microsoft.ML.OnnxRuntime": "1.30.0",
+    "Starlings.Runtime.Onnx": "0.1.0-preview.5+42d93dd3573b43939329120fd1e4e55786ef8509",
+    "Starlings.Tokenizers": "0.3.0-preview.1+79a5863e861edcfed79142293dafabb688c199b9",
+    "Starlings.Models.EmbeddingGemma2": "0.1.0-preview.5+42d93dd3573b43939329120fd1e4e55786ef8509",
+    "Starlings.Models.EmbeddingGemma2.Imaging.SkiaSharp": "0.1.0-preview.5+42d93dd3573b43939329120fd1e4e55786ef8509",
+    "SkiaSharp": "4.153.1+release-4.153.1.4783f51448f9b070dda4f87b83e941c9599e466e.4783f51448f9b070dda4f87b83e941c9599e466e"
+   },
+   "load_before": {
+    "loadavg": [
+     19.41,
+     19.75,
+     20.9
+    ],
+    "gpus": [
+     {
+      "index": "0",
+      "name": "NVIDIA GeForce RTX 3090",
+      "pci_bus_id": "00000000:03:00.0",
+      "util_pct": "100",
+      "mem_used_mib": "10997",
+      "mem_total_mib": "24576",
+      "sm_clock_mhz": "1860",
+      "pstate": "P2",
+      "power_w": "336.19",
+      "temp_c": "68"
+     },
+     {
+      "index": "1",
+      "name": "NVIDIA GeForce RTX 4060 Ti",
+      "pci_bus_id": "00000000:04:00.0",
+      "util_pct": "0",
+      "mem_used_mib": "737",
+      "mem_total_mib": "16380",
+      "sm_clock_mhz": "210",
+      "pstate": "P8",
+      "power_w": "10.46",
+      "temp_c": "51"
+     }
+    ]
+   },
+   "load_after": {
+    "loadavg": [
+     13.71,
+     18.68,
+     20.28
+    ],
+    "gpus": [
+     {
+      "index": "0",
+      "name": "NVIDIA GeForce RTX 3090",
+      "pci_bus_id": "00000000:03:00.0",
+      "util_pct": "95",
+      "mem_used_mib": "10997",
+      "mem_total_mib": "24576",
+      "sm_clock_mhz": "1905",
+      "pstate": "P2",
+      "power_w": "287.92",
+      "temp_c": "66"
+     },
+     {
+      "index": "1",
+      "name": "NVIDIA GeForce RTX 4060 Ti",
+      "pci_bus_id": "00000000:04:00.0",
+      "util_pct": "0",
+      "mem_used_mib": "739",
+      "mem_total_mib": "16380",
+      "sm_clock_mhz": "210",
+      "pstate": "P8",
+      "power_w": "10.94",
+      "temp_c": "51"
+     }
+    ]
+   },
+   "quality": {
+    "reference": "model-pipeline/protected/embeddinggemma-2/image-fp32-cpu/image-embeddings.jsonl",
+    "scope": "the rows the workloads use",
+    "image_single": {
+     "max_abs": 1.3187527656555176e-06,
+     "min_cosine": 0.9999999999565046,
+     "finite": true,
+     "rows": 8,
+     "tolerance": 1e-05,
+     "pass": true,
+     "rows_without_image_files": 0
+    },
+    "image_tolerance_file": "model-pipeline/protected/embeddinggemma-2/image-fp32-cpu/tolerances.yaml",
+    "cases": 8,
+    "pass": true,
+    "preliminary_pass": true,
+    "series_pass": true,
+    "failed_series": []
+   }
+  }
+ ]
+}

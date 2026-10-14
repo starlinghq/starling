@@ -65,6 +65,25 @@ internal static class Qwen35TestAssets
 
     public static IReadOnlyList<GenerationCase> LoadCases() => ReadJsonLines(FixturePath).Select(GenerationCase.Parse).ToList();
 
+    /// <summary>
+    /// The long-context reference fixture (prompts-long-v1, same format): the protected copy once accepted, else the
+    /// proposal under model-pipeline/proposed/.
+    /// </summary>
+    public static string LongContextFixturePath
+    {
+        get
+        {
+            string accepted = Path.Combine(RepositoryRoot, "model-pipeline", "protected", "qwen3.5-0.8b", "long-context", "generation.jsonl");
+            return File.Exists(accepted) ? accepted : Path.Combine(RepositoryRoot, "model-pipeline", "proposed", "qwen3.5-0.8b", "long-context", "generation.jsonl");
+        }
+    }
+
+    public static IReadOnlyList<GenerationCase> LoadLongContextCases() => ReadJsonLines(LongContextFixturePath).Select(GenerationCase.Parse).ToList();
+
+    /// <summary>The binding tolerances of a profile (read only).</summary>
+    public static Qwen35Tolerances Tolerances(string profile) =>
+        Qwen35Tolerances.Load(Path.Combine(RepositoryRoot, "model-pipeline", "protected", "qwen3.5-0.8b", profile, "tolerances.yaml"));
+
     // Split on LF only: prompt text may contain U+2028 and similar.
     public static List<JsonElement> ReadJsonLines(string path) =>
         File.ReadAllText(path, Encoding.UTF8).Split('\n')
@@ -118,7 +137,9 @@ internal sealed record GenerationCase(
     int[] PromptIds,
     int[] OutputIds,
     string FinishReason,
-    float[] StepMargin)
+    float[] StepMargin,
+    float[] StepLogprob,
+    (int Id, double Logprob)[] Step0Top)
 {
     public static GenerationCase Parse(JsonElement r)
     {
@@ -144,9 +165,67 @@ internal sealed record GenerationCase(
             r.GetProperty("prompt_ids").EnumerateArray().Select(x => x.GetInt32()).ToArray(),
             r.GetProperty("output_ids").EnumerateArray().Select(x => x.GetInt32()).ToArray(),
             r.GetProperty("finish_reason").GetString()!,
-            r.GetProperty("step_margin").EnumerateArray().Select(x => (float)x.GetDouble()).ToArray());
+            r.GetProperty("step_margin").EnumerateArray().Select(x => (float)x.GetDouble()).ToArray(),
+            r.GetProperty("step_logprob").EnumerateArray().Select(x => (float)x.GetDouble()).ToArray(),
+            r.GetProperty("step0_top").EnumerateArray().Select(p => (p[0].GetInt32(), p[1].GetDouble())).ToArray());
     }
 
     /// <summary>Reference completion ids without the stop token.</summary>
     public int[] ContentIds => FinishReason == "eos" ? OutputIds[..^1] : OutputIds;
+}
+
+/// <summary>
+/// Binding tolerances of a Qwen3.5 profile, read from its protected <c>tolerances.yaml</c> (set by the maintainer on
+/// 2026-10-10). Read only; a missing key fails the test rather than defaulting.
+/// </summary>
+internal sealed class Qwen35Tolerances
+{
+    private readonly Dictionary<string, string> _values;
+
+    private Qwen35Tolerances(string source, Dictionary<string, string> values)
+    {
+        Source = source;
+        _values = values;
+    }
+
+    public string Source { get; }
+
+    public double Step0LogprobMaxAbs => Number("float.step0_logprob_max_abs");
+
+    public double Step0Top5LogprobMaxAbs => Number("float.step0_top5_logprob_max_abs");
+
+    public double CachedVsUncachedLogprobMaxAbs => Number("float.cached_vs_uncached_logprob_max_abs");
+
+    public string this[string key] => _values.TryGetValue(key, out var v) ? v : throw new KeyNotFoundException($"{key} is not in {Source}.");
+
+    public static Qwen35Tolerances Load(string path)
+    {
+        var values = new Dictionary<string, string>(StringComparer.Ordinal);
+        string section = string.Empty;
+        foreach (string raw in File.ReadAllLines(path))
+        {
+            string line = raw.Split('#')[0].TrimEnd();
+            if (line.Trim().Length == 0)
+            {
+                continue;
+            }
+
+            int colon = line.IndexOf(':', StringComparison.Ordinal);
+            string key = line[..colon].Trim();
+            string value = line[(colon + 1)..].Trim();
+            if (!char.IsWhiteSpace(line[0]))
+            {
+                section = value.Length == 0 ? key : string.Empty;
+                values[key] = value;
+            }
+            else
+            {
+                values[$"{section}.{key}"] = value;
+            }
+        }
+
+        return new Qwen35Tolerances(path, values);
+    }
+
+    private double Number(string key) => double.Parse(this[key], System.Globalization.CultureInfo.InvariantCulture);
 }

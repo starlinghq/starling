@@ -39,11 +39,9 @@ public sealed record EmbeddingGemma2ModelFiles(string ModelPath, string Tokenize
 /// model card's usage-policy sentence: deployments must adhere to the Gemma Prohibited Use Policy).
 /// </para>
 /// <para>
-/// TODO(maintainer): <see cref="ModelSource"/> is in a private Hugging Face repository (<see cref="HostingRepository"/>)
-/// until the packages leave preview (<see cref="ModelSourceIsPlaceholder"/>). Until then, without a token that can read
-/// it, <see cref="DownloadAsync"/> downloads the Hub files and fails on the graph; produce the graph with the pinned
-/// scripts (the digest must match <see cref="ModelSha256"/>) and place it in the snapshot directory, or use
-/// <see cref="OpenDirectory"/>.
+/// <see cref="ModelSource"/> is in the public Hugging Face repository <see cref="HostingRepository"/>, so
+/// <see cref="DownloadAsync"/> needs no token. The graph can also be produced with the pinned scripts (the digest must
+/// match <see cref="ModelSha256"/>) and placed in the snapshot directory, or opened with <see cref="OpenDirectory"/>.
 /// </para>
 /// </remarks>
 public static class EmbeddingGemma2ModelAssets
@@ -84,7 +82,7 @@ public static class EmbeddingGemma2ModelAssets
     /// <summary>Release name of the graph (tag <c>r1</c> of <see cref="HostingRepository"/>).</summary>
     public const string ReleaseTag = "embeddinggemma-2-onnx-r1";
 
-    /// <summary>Hugging Face repository that hosts the graph (private for now).</summary>
+    /// <summary>Hugging Face repository that hosts the graph (public).</summary>
     public const string HostingRepository = "Starlinghq/embeddinggemma-2-onnx";
 
     /// <summary>Pinned commit of <see cref="HostingRepository"/>.</summary>
@@ -96,8 +94,8 @@ public static class EmbeddingGemma2ModelAssets
     /// </summary>
     public const string ModelSource = "https://huggingface.co/" + HostingRepository + "/resolve/" + HostingRevision + "/embeddinggemma2-text-fp32.onnx";
 
-    /// <summary>True while <see cref="HostingRepository"/> is private (TODO(maintainer): make it public, then set false).</summary>
-    public const bool ModelSourceIsPlaceholder = true;
+    /// <summary>True while <see cref="HostingRepository"/> is private. False: the repository is public (2026-10-14).</summary>
+    public const bool ModelSourceIsPlaceholder = false;
 
     /// <summary>The lock: the graph, the tokenizer and the prompt configuration (about 1.12 GB).</summary>
     public static ModelAssetLock Lock { get; } = new(
@@ -159,7 +157,7 @@ public static class EmbeddingGemma2ModelAssets
     /// <summary>Release name of the vision graph and the multimodal text graph (tag <c>r1</c> of <see cref="ImageHostingRepository"/>).</summary>
     public const string ImageReleaseTag = "embeddinggemma-2-vision-onnx-r1";
 
-    /// <summary>Hugging Face repository that hosts the vision graph and the multimodal text graph (private for now).</summary>
+    /// <summary>Hugging Face repository that hosts the vision graph and the multimodal text graph (public).</summary>
     public const string ImageHostingRepository = "Starlinghq/embeddinggemma-2-vision-onnx";
 
     /// <summary>Pinned commit of <see cref="ImageHostingRepository"/>.</summary>
@@ -172,9 +170,9 @@ public static class EmbeddingGemma2ModelAssets
     public const string MultimodalModelSource = "https://huggingface.co/" + ImageHostingRepository + "/resolve/" + ImageHostingRevision + "/embeddinggemma2-text-mm-fp32.onnx";
 
     /// <summary>
-    /// True while <see cref="ImageHostingRepository"/> is private (TODO(maintainer): make it public, then set false).
+    /// True while <see cref="ImageHostingRepository"/> is private. False: the repository is public (2026-10-14).
     /// </summary>
-    public const bool ImageModelSourceIsPlaceholder = true;
+    public const bool ImageModelSourceIsPlaceholder = false;
 
     /// <summary>
     /// The image lock: every file of <see cref="Lock"/> plus the vision graph and the multimodal text graph (about

@@ -1,0 +1,30 @@
+{
+  "alice": {
+    "file": "pg11.txt",
+    "url": "https://www.gutenberg.org/cache/epub/11/pg11.txt",
+    "sha256": "01b38ea4c710a84bc18d0bd41271a5a1a92b94e97b2812f4dece97d4a694725e",
+    "title": "Alice's Adventures in Wonderland (Lewis Carroll, 1865), Project Gutenberg eBook #11",
+    "license": "Public domain (author died 1898; Project Gutenberg eBook in the US public domain). The Project Gutenberg header, footer and license text are removed, as the Gutenberg license allows for public-domain works.",
+    "cleaning": "UTF-8, BOM dropped, CRLF to LF; passage from \"\\nCHAPTER I.\\n\" up to \"*** END OF THE PROJECT GUTENBERG EBOOK\", stripped",
+    "passage_sha256": "f42aadbe869d3372cd203ad92eca8b5e68042b6352dee2a311b4fedb91717245",
+    "passage_characters": 144015
+  },
+  "constitution": {
+    "file": "pg5.txt",
+    "url": "https://www.gutenberg.org/cache/epub/5/pg5.txt",
+    "sha256": "d177168e3f4898213dced30fbbe60d74ad08e884ed5dd86bff94a1b8836b5982",
+    "title": "The United States Constitution (1787), Project Gutenberg eBook #5",
+    "license": "Public domain (a 1787 text; Project Gutenberg eBook in the US public domain). The Project Gutenberg header, notes, footer and license text are removed.",
+    "cleaning": "UTF-8, BOM dropped, CRLF to LF; passage from \"THE CONSTITUTION OF THE UNITED STATES OF AMERICA, 1787\" through \"William Jackson, Secretary\", stripped",
+    "passage_sha256": "b930b2e8d853343063d2b88291499beb38339d9009dc392cba2277827c96c6aa",
+    "passage_characters": 26844
+  },
+  "corpus": {
+    "file": "model-pipeline/reference/corpus/tokenizer-corpus-v1.jsonl",
+    "sha256": "8c291a87644c79012d00029c00480a81aa9e508138e4b7fe1485bb7cd1519199",
+    "title": "M0 tokenizer corpus (this repository): single-text cases, non-empty, one per line, cycled 12 times",
+    "license": "Original cases written for this repository (docs/m0/reference-runs.md); MIT (repository LICENSE)",
+    "passage_sha256": "2a00263dd50bd4cf198540a0e3271ffd5a360138371632bdb7817282b59bcaf8",
+    "passage_characters": 139595
+  }
+}

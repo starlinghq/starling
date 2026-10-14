@@ -1,0 +1,12 @@
+target:  eg2-mlnet
+mode:    Native AOT (.NET 10.0.12, linux-x64, dynamic code not supported)
+Unhandled exception. System.NotSupportedException: 'Microsoft.ML.ApiUtils.GeneratePeek[Microsoft.ML.Data.DataViewConstructionUtils+DataViewBase`1[TextRow],TextRow,System.String](System.Reflection.PropertyInfo,System.Reflection.Emit.OpCode)' is missing native code. MethodInfo.MakeGenericMethod() is not compatible with AOT compilation. Inspect and fix AOT related warnings that were generated when the app was published. For more information see https://aka.ms/nativeaot-compatibility
+   at System.Reflection.Runtime.MethodInfos.RuntimeNamedMethodInfo`1.GetUncachedMethodInvoker(RuntimeTypeInfo[], MemberInfo) + 0x2a
+   at System.Reflection.Runtime.MethodInfos.RuntimeMethodInfo.Invoke(Object, BindingFlags, Binder, Object[], CultureInfo) + 0x3f
+   at Microsoft.ML.Internal.Utilities.Utils.MarshalInvoke[TArg1,TArg2,TResult](FuncStaticMethodInfo3`3, Type, Type, Type, TArg1, TArg2) + 0x89
+   at Microsoft.ML.ApiUtils.GeneratePeek[TOwn,TRow](InternalSchemaDefinition.Column) + 0x15d
+   at Microsoft.ML.Data.DataViewConstructionUtils.DataViewBase`1..ctor(IHostEnvironment, String, InternalSchemaDefinition) + 0xbe
+   at Microsoft.ML.Data.DataViewConstructionUtils.StreamingDataView`1..ctor(IHostEnvironment, IEnumerable`1, InternalSchemaDefinition) + 0x1e
+   at Microsoft.ML.Data.DataViewConstructionUtils.CreateFromEnumerable[TRow](IHostEnvironment, IEnumerable`1, SchemaDefinition) + 0x84
+   at Program.<Main>$(String[] args) + 0x5c1
+/home/mark/.cache/r9-drill-tmp/starlings-drill.JafHAD/src/tools/aot-check-ai.sh: line 65: 2837832 Aborted                    (core dumped) unshare -rn "$@"

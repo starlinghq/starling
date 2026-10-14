@@ -1,0 +1,73 @@
+{
+  "reference": "<r8>/ref-long",
+  "candidate": "<r8>/cs-long",
+  "summary": {
+    "prompts": 3,
+    "missing": 0,
+    "exact": 3,
+    "token_match_fraction": 1.0,
+    "finish_equal": 3,
+    "step0_argmax_equal": 3,
+    "step0_max_abs_logprob": 0.000762939453125,
+    "step0_top5_max_abs_logprob": 0.0002231597900390625,
+    "divergences": [],
+    "rendered_equal": "3/3",
+    "backend_prompt_ids_equal": "3/3"
+  },
+  "rows": [
+    {
+      "id": "long-4096",
+      "prompt_ids_equal": true,
+      "prompt_len": 4112,
+      "ref_len": 32,
+      "cand_len": 32,
+      "exact": true,
+      "match_len": 32,
+      "first_divergence": null,
+      "ref_margin_at_divergence": null,
+      "finish_ref": "length",
+      "finish_cand": "length",
+      "rendered_equal": true,
+      "backend_prompt_ids_equal": true,
+      "step0_max_abs_logprob": 0.000614166259765625,
+      "step0_top5_max_abs_logprob": 0.0002231597900390625,
+      "step0_argmax_equal": true
+    },
+    {
+      "id": "long-8192",
+      "prompt_ids_equal": true,
+      "prompt_len": 8213,
+      "ref_len": 32,
+      "cand_len": 32,
+      "exact": true,
+      "match_len": 32,
+      "first_divergence": null,
+      "ref_margin_at_divergence": null,
+      "finish_ref": "length",
+      "finish_cand": "length",
+      "rendered_equal": true,
+      "backend_prompt_ids_equal": true,
+      "step0_max_abs_logprob": 0.0006561279296875,
+      "step0_top5_max_abs_logprob": 0.00016880035400390625,
+      "step0_argmax_equal": true
+    },
+    {
+      "id": "long-16384",
+      "prompt_ids_equal": true,
+      "prompt_len": 16391,
+      "ref_len": 32,
+      "cand_len": 32,
+      "exact": true,
+      "match_len": 32,
+      "first_divergence": null,
+      "ref_margin_at_divergence": null,
+      "finish_ref": "length",
+      "finish_cand": "length",
+      "rendered_equal": true,
+      "backend_prompt_ids_equal": true,
+      "step0_max_abs_logprob": 0.000762939453125,
+      "step0_top5_max_abs_logprob": 0.00018215179443359375,
+      "step0_argmax_equal": true
+    }
+  ]
+}

@@ -55,12 +55,8 @@ public sealed record Qwen35ModelFiles(Qwen35Variant Variant, string ModelDirecto
 /// Every file, including the upstream <c>chat_template.jinja</c>, is downloaded from one place: the Hugging Face
 /// repository <see cref="HostingRepository"/> at commit <see cref="HostingRevision"/>, whose layout equals the snapshot
 /// layout (<see cref="HostingBaseUrl"/> + path). The digests in the lock, not the address, pin the bytes. The hosting
-/// repository is private for now (<see cref="HostingIsPrivate"/>; it moves to an organization later): downloading needs a
-/// Hugging Face token with read access to it, through <see cref="ModelAcquisitionOptions.HuggingFaceToken"/> or
-/// <c>$HF_TOKEN</c>. The token is sent only to <c>https://huggingface.co</c>, never to the storage host the Hub redirects
-/// to. Without access <see cref="DownloadAsync"/> fails with <see cref="ModelAssetAccessDeniedException"/>; the files can
-/// also be built with the bundle script into the snapshot directory (the digests must match), or opened with
-/// <see cref="OpenDirectory"/>.
+/// repository is public, so downloading needs no token. The files can also be built with the bundle script into the
+/// snapshot directory (the digests must match), or opened with <see cref="OpenDirectory"/>.
 /// </para>
 /// </remarks>
 public static class Qwen35ModelAssets
@@ -89,7 +85,7 @@ public static class Qwen35ModelAssets
     /// <summary>Path of the chat template in the snapshot directory (a Hub file).</summary>
     public const string ChatTemplateFile = "chat_template.jinja";
 
-    /// <summary>Hugging Face repository that hosts every file of both locks, in the snapshot layout (private for now).</summary>
+    /// <summary>Hugging Face repository that hosts every file of both locks, in the snapshot layout (public).</summary>
     public const string HostingRepository = "Starlinghq/qwen3.5-0.8b-ortgenai";
 
     /// <summary>Pinned commit of <see cref="HostingRepository"/>.</summary>
@@ -100,9 +96,10 @@ public static class Qwen35ModelAssets
 
     /// <summary>
     /// True while <see cref="HostingRepository"/> is private: <see cref="DownloadAsync"/> then needs a Hugging Face token with
-    /// read access to it (<see cref="ModelAcquisitionOptions.HuggingFaceToken"/> or <c>$HF_TOKEN</c>).
+    /// read access to it (<see cref="ModelAcquisitionOptions.HuggingFaceToken"/> or <c>$HF_TOKEN</c>). False: the repository
+    /// is public (2026-10-14).
     /// </summary>
-    public const bool HostingIsPrivate = true;
+    public const bool HostingIsPrivate = false;
 
     private const long TokenizerSize = 19_989_339;
     private const long ChatTemplateSize = 7_755;

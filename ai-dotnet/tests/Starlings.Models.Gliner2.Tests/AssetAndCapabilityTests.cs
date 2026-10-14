@@ -57,7 +57,7 @@ public class AssetAndCapabilityTests
         var all = Gliner2Capabilities.All;
         Assert.Equal(Gliner2CapabilityStatus.Experimental, all["entity_extraction.cpu"]);
         Assert.Equal(Gliner2CapabilityStatus.Untested, all["label_descriptions"]);
-        foreach (var key in new[] { "classification", "relation_extraction", "structured_extraction", "plain_deduplicated_output", "input_over_512_tokens", "truncation", "tf32" })
+        foreach (var key in new[] { "classification", "relation_extraction", "structured_extraction", "plain_deduplicated_output", "input_over_512_tokens", "truncation", "tf32", "extensions_ai", "mlnet" })
         {
             Assert.Equal(Gliner2CapabilityStatus.Unsupported, all[key]);
         }
@@ -70,6 +70,8 @@ public class AssetAndCapabilityTests
         Assert.Contains("  relation_extraction: unsupported", manifest, StringComparison.Ordinal);
         Assert.Contains("  structured_extraction: unsupported", manifest, StringComparison.Ordinal);
         Assert.Contains("  cancellation: experimental", manifest, StringComparison.Ordinal);
+        Assert.Contains("  extensions_ai: unsupported", manifest, StringComparison.Ordinal);
+        Assert.Contains("  mlnet: unsupported", manifest, StringComparison.Ordinal);
     }
 
     [Fact]

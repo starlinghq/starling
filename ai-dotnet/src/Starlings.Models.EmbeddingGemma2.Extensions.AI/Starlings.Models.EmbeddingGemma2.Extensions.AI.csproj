@@ -2,6 +2,8 @@
 
   <PropertyGroup>
     <IsPackable>true</IsPackable>
+    <!-- Trim, AOT and single-file analyzers on (warnings are errors); Native AOT evidence: docs/evidence/aot/. -->
+    <IsAotCompatible>true</IsAotCompatible>
     <Description>Preview. Experimental. Microsoft.Extensions.AI IEmbeddingGenerator&lt;string, Embedding&lt;float&gt;&gt; over the EmbeddingGemma 2 text embedder (Starlings.Models.EmbeddingGemma2): explicit named prompts, Dimensions mapped to the Matryoshka sizes 768/512/256/128 (others rejected), batching, usage, node-boundary cancellation, model metadata and DI registration. Images and videos: IEmbeddingGenerator over DataContent and over content lists (text, image and video parts), with image and video decoder hooks (no decoder or native dependency of its own). Deployments must adhere to the Gemma Prohibited Use Policy.</Description>
     <PackageTags>embeddings;embeddinggemma;embeddinggemma-2;matryoshka;microsoft.extensions.ai;iembeddinggenerator;onnxruntime</PackageTags>
     <PackageReadmeFile>README.md</PackageReadmeFile>

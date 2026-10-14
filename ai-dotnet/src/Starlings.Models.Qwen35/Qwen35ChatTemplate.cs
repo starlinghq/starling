@@ -31,7 +31,8 @@ namespace Starlings.Models.Qwen35;
 /// This is the port that backlog P-029 qualifies on a template corpus. Until then it is experimental: it equals the
 /// upstream rendering (transformers 5.18.0 <c>apply_chat_template</c>) on the 21 text prompts of
 /// <c>prompts-v1.jsonl</c>, including <c>enable_thinking=true</c>, which ONNX Runtime GenAI's template engine cannot
-/// render.
+/// render. It also equals the upstream rendering on the 65 supported cases of the proposed P-029 corpus
+/// (<c>model-pipeline/proposed/qwen3.5-0.8b/template/</c>), and it rejects that corpus's unsupported and invalid cases.
 /// </para>
 /// </remarks>
 public static class Qwen35ChatTemplate

@@ -172,9 +172,9 @@ execution:
       - path: onnx/embeddinggemma2-vision-fp32.onnx
         sha256: "6c97f477a82f6863d22d800476de6d0a618b23e514aa9b65a46b220c4b106b92"
         size: 671256072
-        # TODO(maintainer): placeholder until the GitHub release exists (EmbeddingGemma2ModelAssets.ImageModelSourceIsPlaceholder).
+        # Public Hugging Face repository since 2026-10-14 (EmbeddingGemma2ModelAssets.ImageModelSourceIsPlaceholder = false).
         source: https://huggingface.co/Starlinghq/embeddinggemma-2-vision-onnx/resolve/1a22d40bf395c7f0a42388df72c883b661a7b3d6/embeddinggemma2-vision-fp32.onnx
-        source_status: placeholder
+        source_status: public
         notice: model-pipeline/reference/embeddinggemma2/NOTICE-embeddinggemma2-vision-onnx.txt
         produced_by:
           - model-pipeline/reference/embeddinggemma2/release_embeddinggemma2_vision_onnx.py
@@ -188,9 +188,9 @@ execution:
       - path: onnx/embeddinggemma2-text-mm-fp32.onnx
         sha256: "a2c22e072ec230b105b35c2787dcfccba186254e6a921e729c45b40e50dbbb74"
         size: 1084327898
-        # TODO(maintainer): placeholder until the GitHub release exists (EmbeddingGemma2ModelAssets.ImageModelSourceIsPlaceholder).
+        # Public Hugging Face repository since 2026-10-14 (EmbeddingGemma2ModelAssets.ImageModelSourceIsPlaceholder = false).
         source: https://huggingface.co/Starlinghq/embeddinggemma-2-vision-onnx/resolve/1a22d40bf395c7f0a42388df72c883b661a7b3d6/embeddinggemma2-text-mm-fp32.onnx
-        source_status: placeholder
+        source_status: public
         notice: model-pipeline/reference/embeddinggemma2/NOTICE-embeddinggemma2-vision-onnx.txt
         produced_by:
           - model-pipeline/reference/embeddinggemma2/release_embeddinggemma2_vision_onnx.py
@@ -207,7 +207,7 @@ execution:
         size: 1084327317
         # Text-only inputs; the asset of embeddinggemma-2/onnx-fp32-cpu (release embeddinggemma-2-onnx-r1, placeholder).
         source: https://huggingface.co/Starlinghq/embeddinggemma-2-onnx/resolve/92a02ae2887a91180e611776dd9c286dc5fa35da/embeddinggemma2-text-fp32.onnx
-        source_status: placeholder
+        source_status: public
         notice: model-pipeline/reference/embeddinggemma2/NOTICE-embeddinggemma2-onnx.txt
     opset: 20
 
@@ -234,7 +234,10 @@ capabilities:
   cancellation: experimental
   persistence: unsupported
   training: unsupported
-  aot: untested
+  # aot: Native AOT publish on Linux x64 CPU, no trim/AOT warnings, results equal to JIT bit for bit
+  # (image and interleaved inputs from decoded RGB; docs/evidence/aot/README.md).
+  # The SkiaSharp decoder adapter under Native AOT is untested.
+  aot: experimental
   extensions_ai: experimental
   mlnet: unsupported  # no image column in the ML.NET transform (text only)
   concurrent_calls: experimental
@@ -258,10 +261,20 @@ qualification:
   # Accepted development fixtures (PR #42) and binding tolerances (set 2026-10-11).
   fixtures: model-pipeline/protected/embeddinggemma-2/image-fp32-cpu
   tolerances: model-pipeline/protected/embeddinggemma-2/image-fp32-cpu/tolerances.yaml
+  # Rerun at Starlings.Tokenizers 0.3.0-preview.1 (2026-10-13, R4): model-pipeline evaluate --require-gates G1,G2
+  # gave G1 passed, G2 passed on the development fixtures, which are not P-030 release sets
+  # (docs/evidence/rerun-tokenizer-0.3.0-preview.1/). The gate entries below are unchanged; recording a result is the maintainer's act.
   gates:
     G0: { status: checklist, evidence: docs/m0/embeddinggemma2-image-spike.md, date: 2026-10-11 }
     G1: { status: not-run }
     G2: { status: not-run }
+    G3: { status: not-run }
+    G4: { status: not-run }
+    G5: { status: not-run }
+    # G6 checklist: the ai-0.1.0-preview.5 release drill (packed packages, clean consumer, offline sample run on a
+    # seeded graph). Acquisition of the hosted graph is not covered while its source is a placeholder or private.
+    G6: { status: checklist, evidence: docs/releases/ai-0.1.0-preview.5/rc-drill.log, date: 2026-10-12 }
+    G7: { status: not-run }
 
 maintenance:
   owner: Mark
