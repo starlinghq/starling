@@ -1,0 +1,33 @@
+{
+  "runner": "ai-dotnet/tools/Starlings.Qwen35.Fidelity",
+  "backend": "df-qwen35-cuda-ortgenai-fp32x",
+  "profile": "qwen3.5-0.8b/ortgenai-fp32x",
+  "checkpoint": "Qwen/Qwen3.5-0.8B@2fc06364715b967f1860aea9cf38778875588b17",
+  "genai_version": "0.17.1",
+  "tokenizer": "Starlings.Tokenizers profile qwen35-bpe-chat, tokenizer.json a5cd9732badce41de57e6efce8302930ded1c1188c5f81feb2bd6c24c4a1941f",
+  "chat_template": "owned C# renderer of chat_template.jinja 273d8e0e683b885071fb17e08d71e5f2a5ddfb5309756181681de4f5a1822d80 (text subset)",
+  "config_overlays": [
+    "{\"model\":{\"pad_token_id\":248319}}"
+  ],
+  "provider_options": {
+    "device_id": "0",
+    "use_tf32": "0"
+  },
+  "stop_token_ids": [
+    248044,
+    248046
+  ],
+  "threads": 0,
+  "prefill_chunk_tokens": null,
+  "serializes_native_calls": true,
+  "model_load_ms": 2378.7847,
+  "prompts_sha256": "7b236f0d013ce1057f075f7d2d941dde836618ba0f848d6a123e0f86c4b928d2",
+  "reference": "/home/mark/Projects/starling/.claude/worktrees/agent-a12b5f66e4c7eef5e/model-pipeline/protected/qwen3.5-0.8b/reference",
+  "dotnet": "10.0.12",
+  "os": "Omarchy",
+  "cpu_count": 12,
+  "loadavg_start": "7.23 4.83 3.01 8/2486 597727",
+  "cuda_visible_devices": "0",
+  "source_revision": null,
+  "loadavg_end": "10.34 6.14 3.56 16/2540 600368"
+}

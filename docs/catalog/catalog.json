@@ -330,10 +330,16 @@
           "date": "2026-10-11"
         },
         "G1": {
-          "status": "not-run"
+          "status": "checklist",
+          "evidence": "docs/evidence/cuda-qualification-2026-10-14/embeddinggemma2-image-fp32-cuda/README.md",
+          "evidence_found": true,
+          "date": "2026-10-14"
         },
         "G2": {
-          "status": "not-run"
+          "status": "checklist",
+          "evidence": "docs/evidence/cuda-qualification-2026-10-14/embeddinggemma2-image-fp32-cuda/README.md",
+          "evidence_found": true,
+          "date": "2026-10-14"
         },
         "G3": {
           "status": "not-run"
@@ -680,10 +686,16 @@
           "date": "2026-10-10"
         },
         "G1": {
-          "status": "not-run"
+          "status": "checklist",
+          "evidence": "docs/evidence/cuda-qualification-2026-10-14/embeddinggemma2-onnx-fp32-cuda/README.md",
+          "evidence_found": true,
+          "date": "2026-10-14"
         },
         "G2": {
-          "status": "not-run"
+          "status": "checklist",
+          "evidence": "docs/evidence/cuda-qualification-2026-10-14/embeddinggemma2-onnx-fp32-cuda/README.md",
+          "evidence_found": true,
+          "date": "2026-10-14"
         },
         "G3": {
           "status": "not-run"
@@ -1034,10 +1046,16 @@
           "date": "2026-10-11"
         },
         "G1": {
-          "status": "not-run"
+          "status": "checklist",
+          "evidence": "docs/evidence/cuda-qualification-2026-10-14/embeddinggemma2-video-fp32-cuda/README.md",
+          "evidence_found": true,
+          "date": "2026-10-14"
         },
         "G2": {
-          "status": "not-run"
+          "status": "checklist",
+          "evidence": "docs/evidence/cuda-qualification-2026-10-14/embeddinggemma2-video-fp32-cuda/README.md",
+          "evidence_found": true,
+          "date": "2026-10-14"
         },
         "G3": {
           "status": "not-run"
@@ -1394,10 +1412,16 @@
           "date": "2026-10-10"
         },
         "G1": {
-          "status": "not-run"
+          "status": "checklist",
+          "evidence": "docs/evidence/cuda-qualification-2026-10-14/gliner2-onnx-fp32-cuda/README.md",
+          "evidence_found": true,
+          "date": "2026-10-14"
         },
         "G2": {
-          "status": "not-run"
+          "status": "checklist",
+          "evidence": "docs/evidence/cuda-qualification-2026-10-14/gliner2-onnx-fp32-cuda/README.md",
+          "evidence_found": true,
+          "date": "2026-10-14"
         },
         "G3": {
           "status": "not-run"
@@ -1754,10 +1778,16 @@
           "date": "2026-10-05"
         },
         "G1": {
-          "status": "not-run"
+          "status": "checklist",
+          "evidence": "docs/evidence/cuda-qualification-2026-10-14/e5-onnx-fp32-cuda/README.md",
+          "evidence_found": true,
+          "date": "2026-10-14"
         },
         "G2": {
-          "status": "not-run"
+          "status": "checklist",
+          "evidence": "docs/evidence/cuda-qualification-2026-10-14/e5-onnx-fp32-cuda/README.md",
+          "evidence_found": true,
+          "date": "2026-10-14"
         },
         "G3": {
           "status": "not-run"
@@ -1927,15 +1957,15 @@
         },
         "G1": {
           "status": "checklist",
-          "evidence": "docs/evidence/p016-qwen35/README.md",
+          "evidence": "docs/evidence/cuda-qualification-2026-10-14/qwen35-ortgenai-fp16x-cuda/README.md",
           "evidence_found": true,
-          "date": "2026-10-10"
+          "date": "2026-10-14"
         },
         "G2": {
           "status": "checklist",
-          "evidence": "docs/evidence/p016-qwen35/README.md",
+          "evidence": "docs/evidence/cuda-qualification-2026-10-14/qwen35-ortgenai-fp16x-cuda/README.md",
           "evidence_found": true,
-          "date": "2026-10-10"
+          "date": "2026-10-14"
         },
         "G3": {
           "status": "not-run"
@@ -2288,15 +2318,15 @@
         },
         "G1": {
           "status": "checklist",
-          "evidence": "docs/evidence/p016-qwen35/README.md",
+          "evidence": "docs/evidence/cuda-qualification-2026-10-14/qwen35-ortgenai-fp32x-cuda/README.md",
           "evidence_found": true,
-          "date": "2026-10-10"
+          "date": "2026-10-14"
         },
         "G2": {
           "status": "checklist",
-          "evidence": "docs/evidence/p016-qwen35/README.md",
+          "evidence": "docs/evidence/cuda-qualification-2026-10-14/qwen35-ortgenai-fp32x-cuda/README.md",
           "evidence_found": true,
-          "date": "2026-10-10"
+          "date": "2026-10-14"
         },
         "G3": {
           "status": "not-run"

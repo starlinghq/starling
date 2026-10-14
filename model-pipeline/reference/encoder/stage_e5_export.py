@@ -9,6 +9,10 @@ does that against the profile's protected tolerances.
 Usage (environment from requirements.txt, see reference/README.md):
     python stage_e5_export.py --model-dir <snapshot> --fixtures <protected onnx-fp32-cpu dir> \
         --profile multilingual-e5-small/onnx-fp32-cpu --out <results dir>
+
+CUDA profile (environment from requirements-cuda.txt): add `--provider cuda` and pass
+`--profile multilingual-e5-small/onnx-fp32-cuda`. ONNX Runtime then runs on the CUDA execution provider with
+use_tf32=0; the PyTorch reference hidden states stay fp32 CPU.
 """
 
 from __future__ import annotations
@@ -56,6 +60,7 @@ def main() -> int:
     parser.add_argument("--profile", required=True)
     parser.add_argument("--out", type=Path, required=True)
     parser.add_argument("--intra-op-threads", type=int, default=0, help="0 keeps the ONNX Runtime default")
+    parser.add_argument("--provider", choices=["cpu", "cuda"], default="cpu")
     args = parser.parse_args()
 
     torch.manual_seed(0)
@@ -68,13 +73,22 @@ def main() -> int:
     options = ort.SessionOptions()
     options.intra_op_num_threads = args.intra_op_threads
     model_path = args.model_dir / "onnx" / "model.onnx"
-    session = ort.InferenceSession(str(model_path), options, providers=["CPUExecutionProvider"])
+    provider_options: dict = {}
+    if args.provider == "cuda":
+        # The CUDA profiles pin use_tf32=0 (protected tolerances); there is no silent CPU fallback.
+        provider_options = {"use_tf32": 0}
+        providers = [("CUDAExecutionProvider", {"use_tf32": "0"}), "CPUExecutionProvider"]
+    else:
+        providers = ["CPUExecutionProvider"]
+    session = ort.InferenceSession(str(model_path), options, providers=providers)
+    if args.provider == "cuda" and "CUDAExecutionProvider" not in session.get_providers():
+        raise SystemExit(f"--provider cuda: the session has no CUDA execution provider ({session.get_providers()})")
 
     env = fixtures.environment(PACKAGES)
     env |= {
         "machine": platform.node(),
-        "provider": "cpu",
-        "provider_options": {},
+        "provider": args.provider,
+        "provider_options": provider_options,
         "onnxruntime_providers": session.get_providers(),
         "intra_op_threads": args.intra_op_threads,
         "torch_threads": torch.get_num_threads(),
@@ -82,8 +96,8 @@ def main() -> int:
     out = results.new_results(
         profile=args.profile,
         stage="export",
-        candidate=f"Python onnxruntime {ort.__version__} CPUExecutionProvider on onnx/model.onnx; reference hidden "
-        f"states from sentence-transformers modules on torch {torch.__version__} fp32 CPU, same ids",
+        candidate=f"Python onnxruntime {ort.__version__} {session.get_providers()[0]} on onnx/model.onnx; "
+        f"reference hidden states from sentence-transformers modules on torch {torch.__version__} fp32 CPU, same ids",
         producer={
             "name": "model-pipeline/reference/encoder/stage_e5_export.py",
             "repository_commit": fixtures.git_head(Path(__file__).parent),

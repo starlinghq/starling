@@ -1,0 +1,2 @@
+wrote /home/mark/Projects/starling/.claude/worktrees/agent-a12b5f66e4c7eef5e/.models/runs/gliner2/tokenizer.results.json and dotnet.results.json: 58 cases (4 outside the contract, internal paths)
+wall 9 s: dotnet /home/mark/Projects/starling/.claude/worktrees/agent-a12b5f66e4c7eef5e/ai-dotnet/tools/Starlings.Fidelity.Tool.Cuda/bin/Release/net10.0/Starlings.Fidelity.Tool.dll gliner2 --out /home/mark/Projects/starling/.claude/worktrees/agent-a12b5f66e4c7eef5e/.models/runs/gliner2 --threads 1 --device cuda

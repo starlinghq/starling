@@ -21,6 +21,10 @@ Usage (the P-014 export environment, requirements-export.txt, plus `pip install 
         --profile gliner2-base-v1/onnx-fp32-cpu --out <results dir>
     python stage_gliner2.py export --model-dir <snapshot> --graph <gliner2-A-dynamo.onnx> \
         --fixtures <dir> --profile gliner2-base-v1/onnx-fp32-cpu --out <results dir> [--threads N]
+
+CUDA profile (export only; environment requirements-cuda.txt): add `--provider cuda` and pass
+`--profile gliner2-base-v1/onnx-fp32-cuda`. ONNX Runtime then runs on the CUDA execution provider with use_tf32=0;
+the PyTorch reference hidden states stay fp32 CPU.
 """
 
 from __future__ import annotations
@@ -136,7 +140,16 @@ def stage_export(args) -> int:
     options.intra_op_num_threads = args.threads
     options.inter_op_num_threads = 1
     options.graph_optimization_level = ort.GraphOptimizationLevel.ORT_ENABLE_ALL
-    session = ort.InferenceSession(str(args.graph), options, providers=["CPUExecutionProvider"])
+    provider_options: dict = {}
+    if args.provider == "cuda":
+        # The CUDA profiles pin use_tf32=0 (protected tolerances); there is no silent CPU fallback.
+        provider_options = {"use_tf32": 0}
+        providers = [("CUDAExecutionProvider", {"use_tf32": "0"}), "CPUExecutionProvider"]
+    else:
+        providers = ["CPUExecutionProvider"]
+    session = ort.InferenceSession(str(args.graph), options, providers=providers)
+    if args.provider == "cuda" and "CUDAExecutionProvider" not in session.get_providers():
+        raise SystemExit(f"--provider cuda: the session has no CUDA execution provider ({session.get_providers()})")
     data_file = args.graph.with_name(args.graph.name + ".data")
     assets = [{"path": f"{args.graph_asset_prefix}.onnx", "sha256": fixtures.sha256_file(args.graph)}]
     if data_file.exists():
@@ -144,8 +157,8 @@ def stage_export(args) -> int:
     assets.append({"path": "model.safetensors", "sha256": fixtures.sha256_file(args.model_dir / "model.safetensors")})
     env = fixtures.environment(PACKAGES) | {
         "machine": platform.node(),
-        "provider": "cpu",
-        "provider_options": {},
+        "provider": args.provider,
+        "provider_options": provider_options,
         "onnxruntime_providers": session.get_providers(),
         "intra_op_threads": args.threads,
         "torch_threads": torch.get_num_threads(),
@@ -153,9 +166,9 @@ def stage_export(args) -> int:
     out = results.new_results(
         profile=args.profile,
         stage="export",
-        candidate=f"Python onnxruntime {ort.__version__} CPUExecutionProvider on {args.graph.name} (route A, fixture "
-        f"inputs); entities decoded with gliner2_entity.decode_entities; reference hidden states from the GLiNER2 "
-        f"encoder on torch {torch.__version__} fp32 CPU, same ids",
+        candidate=f"Python onnxruntime {ort.__version__} {session.get_providers()[0]} on {args.graph.name} "
+        f"(route A, fixture inputs); entities decoded with gliner2_entity.decode_entities; reference hidden states "
+        f"from the GLiNER2 encoder on torch {torch.__version__} fp32 CPU, same ids",
         producer=producer(),
         environment=env,
         assets=assets,
@@ -249,6 +262,7 @@ def main() -> int:
     )
     exp.add_argument("--threads", type=int, default=0, help="ONNX Runtime intra-op threads (0: ORT default)")
     exp.add_argument("--batch-size", type=int, default=8)
+    exp.add_argument("--provider", choices=["cpu", "cuda"], default="cpu")
     exp.add_argument("--batch-max-tokens", type=int, default=100000, help="leave longer cases out of the batches")
     args = parser.parse_args()
     args.out.mkdir(parents=True, exist_ok=True)

@@ -1,0 +1,340 @@
+{
+  "format": "starlings.fidelity-report",
+  "format_version": 2,
+  "task": "generation",
+  "profile": "qwen3.5-0.8b/ortgenai-fp32x-cuda",
+  "date": "2026-10-14",
+  "evaluator": {
+    "name": "model-pipeline evaluate",
+    "version": "0.1.0",
+    "repository_commit": "c33d63c1d28c90273295600e641cc3e1fa61d583"
+  },
+  "inputs": {
+    "manifest": {
+      "path": "model-pipeline/registry/qwen3.5-0.8b/ortgenai-fp32x-cuda/manifest.yaml",
+      "sha256": "afb6a04955a510998511ec4dae41bc6302ef7d87cce3e6383db5509cabdb4857"
+    },
+    "tolerances": {
+      "path": "model-pipeline/protected/qwen3.5-0.8b/ortgenai-fp32x-cuda/tolerances.yaml",
+      "sha256": "b08b1c2863ff97e9ca00ba97f9ae151bd824258dc2139f3da7d9bb2b577e260b"
+    },
+    "fixtures": [
+      {
+        "path": "model-pipeline/protected/qwen3.5-0.8b/reference/generation.jsonl",
+        "sha256": "c6900a8198d52af0122fc12b59318921e9abd596d2373dce725ff12f8a664025"
+      },
+      {
+        "path": "model-pipeline/protected/qwen3.5-0.8b/reference/environment.json",
+        "sha256": "26a44d693a6b52eba3be170a3a775f52e7999e3e5de39b2b0132c8ec3a290e4b"
+      }
+    ],
+    "results": {
+      "results.jsonl": {
+        "path": ".models/runs/qwen-fp32x/run/results.jsonl",
+        "sha256": "b55f3761df233ba8a35687956e87d8e38a0e4dc233fc629f3643bc11e8d275cf"
+      },
+      "semantics.json": {
+        "path": ".models/runs/qwen-fp32x/run/semantics.json",
+        "sha256": "a1a6012e1587c7afa2a797787c8bd4ea4e55f647eb9c87de49bf960fbc5f84ab"
+      },
+      "environment.json": {
+        "path": ".models/runs/qwen-fp32x/run/environment.json",
+        "sha256": "f2172c32c75826ecfe080261b2f14c5f8f88b0257a3cb815e0e391978f28b827"
+      },
+      "runner": "ai-dotnet/tools/Starlings.Qwen35.Fidelity",
+      "backend": "df-qwen35-cuda-ortgenai-fp32x",
+      "source_revision": null
+    }
+  },
+  "protected_evidence": {
+    "status": "verified",
+    "base": "8feb5069ac6f830f161366d8d2b6fc61cd42a0b3",
+    "detail": "merge base of HEAD and origin/main",
+    "changed": [],
+    "sha256": {
+      "model-pipeline/protected/qwen3.5-0.8b/ortgenai-fp32x-cuda/tolerances.yaml": "b08b1c2863ff97e9ca00ba97f9ae151bd824258dc2139f3da7d9bb2b577e260b",
+      "model-pipeline/protected/qwen3.5-0.8b/reference/generation.jsonl": "c6900a8198d52af0122fc12b59318921e9abd596d2373dce725ff12f8a664025",
+      "model-pipeline/protected/qwen3.5-0.8b/reference/environment.json": "26a44d693a6b52eba3be170a3a775f52e7999e3e5de39b2b0132c8ec3a290e4b"
+    }
+  },
+  "report_only_metrics": [],
+  "stages": {
+    "tokenizer": "passed",
+    "export": "incomplete",
+    "dotnet-ids": "passed",
+    "dotnet-text": "incomplete"
+  },
+  "first_divergence": null,
+  "findings": [],
+  "gates": {
+    "G1": {
+      "status": "passed",
+      "reason": "every check passed or is not applicable by the manifest"
+    },
+    "G2": {
+      "status": "not-run",
+      "reason": "checks not run: dotnet-text.chunked_prefill"
+    }
+  },
+  "manifest_gates": {
+    "G1": {
+      "status": "passed",
+      "date": "2026-10-14"
+    }
+  },
+  "checks": [
+    {
+      "id": "dotnet-ids.identity",
+      "stage": "dotnet",
+      "substage": "dotnet-ids",
+      "gate": "G2",
+      "title": "Runner identity and fed prompt ids",
+      "tolerance_key": null,
+      "bound": null,
+      "status": "passed",
+      "metrics": {
+        "cases": 22,
+        "environment": true
+      },
+      "detail": ""
+    },
+    {
+      "id": "tokenizer.template_rendering",
+      "stage": "tokenizer",
+      "substage": "tokenizer",
+      "gate": "G1",
+      "title": "Owned template rendering exact",
+      "tolerance_key": "discrete.template_rendering",
+      "bound": "exact",
+      "status": "passed",
+      "metrics": {
+        "compared": 21,
+        "failed": 0,
+        "excluded_by_contract": [
+          "tools"
+        ]
+      },
+      "detail": ""
+    },
+    {
+      "id": "tokenizer.prompt_ids",
+      "stage": "tokenizer",
+      "substage": "tokenizer",
+      "gate": "G1",
+      "title": "Owned tokenizer ids exact",
+      "tolerance_key": "discrete.prompt_ids",
+      "bound": "exact",
+      "status": "passed",
+      "metrics": {
+        "compared": 21,
+        "failed": 0,
+        "excluded_by_contract": [
+          "tools"
+        ]
+      },
+      "detail": ""
+    },
+    {
+      "id": "dotnet-ids.greedy_ids",
+      "stage": "dotnet",
+      "substage": "dotnet-ids",
+      "gate": "G2",
+      "title": "Greedy ids against the reference",
+      "tolerance_key": "discrete.greedy_ids",
+      "bound": "exact_except_listed_margin_below_1e-3",
+      "status": "passed",
+      "metrics": {
+        "exact": 22,
+        "compared": 22,
+        "divergences": []
+      },
+      "detail": ""
+    },
+    {
+      "id": "dotnet-ids.finish_reason",
+      "stage": "dotnet",
+      "substage": "dotnet-ids",
+      "gate": "G2",
+      "title": "Finish reason",
+      "tolerance_key": "discrete.finish_reason",
+      "bound": "equal",
+      "status": "passed",
+      "metrics": {
+        "equal": 22,
+        "compared": 22
+      },
+      "detail": ""
+    },
+    {
+      "id": "dotnet-ids.nan_or_inf",
+      "stage": "dotnet",
+      "substage": "dotnet-ids",
+      "gate": "G2",
+      "title": "Step-0 log-probabilities finite",
+      "tolerance_key": "float.nan_or_inf",
+      "bound": "fail",
+      "status": "passed",
+      "metrics": {
+        "non_finite_cases": []
+      },
+      "detail": ""
+    },
+    {
+      "id": "dotnet-ids.step0_argmax",
+      "stage": "dotnet",
+      "substage": "dotnet-ids",
+      "gate": "G2",
+      "title": "Step-0 argmax",
+      "tolerance_key": "discrete.step0_argmax",
+      "bound": "equal",
+      "status": "passed",
+      "metrics": {
+        "equal": 22
+      },
+      "detail": ""
+    },
+    {
+      "id": "dotnet-ids.step0_top5_logprob",
+      "stage": "dotnet",
+      "substage": "dotnet-ids",
+      "gate": "G2",
+      "title": "Step-0 log-probability, reference top 5",
+      "tolerance_key": "float.step0_top5_logprob_max_abs",
+      "bound": 0.002,
+      "status": "passed",
+      "metrics": {
+        "max_abs": 0.0005936622619628906,
+        "worst_case": "tools"
+      },
+      "detail": ""
+    },
+    {
+      "id": "dotnet-ids.step0_logprob",
+      "stage": "dotnet",
+      "substage": "dotnet-ids",
+      "gate": "G2",
+      "title": "Step-0 log-probability, full vocabulary",
+      "tolerance_key": "float.step0_logprob_max_abs",
+      "bound": 0.005,
+      "status": "passed",
+      "metrics": {
+        "top64_max_abs": 0.00101470947265625,
+        "full_vocabulary_max_abs": 0.00135040283203125,
+        "worst_case": "tools"
+      },
+      "detail": ""
+    },
+    {
+      "id": "dotnet-ids.streaming_reassembly",
+      "stage": "dotnet",
+      "substage": "dotnet-ids",
+      "gate": "G2",
+      "title": "Streaming reassembly",
+      "tolerance_key": "discrete.streaming_reassembly",
+      "bound": "exact",
+      "status": "passed",
+      "metrics": {
+        "failed": []
+      },
+      "detail": ""
+    },
+    {
+      "id": "dotnet-ids.usage",
+      "stage": "dotnet",
+      "substage": "dotnet-ids",
+      "gate": "G2",
+      "title": "Usage counts",
+      "tolerance_key": "discrete.usage",
+      "bound": "exact",
+      "status": "passed",
+      "metrics": {
+        "failed": []
+      },
+      "detail": ""
+    },
+    {
+      "id": "dotnet-ids.provider_options",
+      "stage": "dotnet",
+      "substage": "dotnet-ids",
+      "gate": "G2",
+      "title": "Provider options equal the tolerances",
+      "tolerance_key": "provider_options",
+      "bound": {
+        "use_tf32": 0
+      },
+      "status": "passed",
+      "metrics": {
+        "runner": {
+          "device_id": "0",
+          "use_tf32": "0"
+        }
+      },
+      "detail": ""
+    },
+    {
+      "id": "dotnet-text.cached_vs_uncached",
+      "stage": "dotnet",
+      "substage": "dotnet-text",
+      "gate": "G2",
+      "title": "Cached vs uncached decoding logits",
+      "tolerance_key": "float.cached_vs_uncached_logprob_max_abs",
+      "bound": 0.0002,
+      "status": "passed",
+      "metrics": {
+        "max_abs": 4.673004150390625e-05,
+        "steps": 12,
+        "generated_equals_reference_prefix": true
+      },
+      "detail": ""
+    },
+    {
+      "id": "dotnet-text.chunked_prefill",
+      "stage": "dotnet",
+      "substage": "dotnet-text",
+      "gate": "G2",
+      "title": "Chunked vs one-call prefill, step 0",
+      "tolerance_key": "float.chunked_vs_one_call_prefill_logprob_max_abs",
+      "bound": null,
+      "status": "not-run",
+      "metrics": {
+        "max_abs": 5.91278076171875e-05,
+        "measured": [
+          "long-license/100",
+          "long-license/128",
+          "multi-turn/7"
+        ],
+        "not_measured": {}
+      },
+      "detail": "tolerance key float.chunked_vs_one_call_prefill_logprob_max_abs is not set in the protected tolerances file"
+    },
+    {
+      "id": "dotnet-text.concurrent_requests",
+      "stage": "dotnet",
+      "substage": "dotnet-text",
+      "gate": "G2",
+      "title": "Concurrent and interleaved requests equal the reference",
+      "tolerance_key": "discrete.concurrent_requests",
+      "bound": "equal_to_sequential",
+      "status": "passed",
+      "metrics": {
+        "results": {
+          "parallel_two_threads_prefix_equal/ja": true,
+          "parallel_two_threads_prefix_equal/en-math": true,
+          "parallel_two_threads_prefix_equal/zh": true,
+          "parallel_two_threads_prefix_equal/code-py": true,
+          "interleaved_streams_prefix_equal/zh": true,
+          "interleaved_streams_prefix_equal/code-cs": true
+        }
+      },
+      "detail": ""
+    }
+  ],
+  "greedy_divergences": [],
+  "excluded_by_contract": {
+    "tools": "tools prompt: unsupported by the owned renderer (manifest behavior.unsupported)"
+  },
+  "reference_tensors": {
+    "directory": "/home/mark/Projects/AI-models/gen/p016/ref-cpu"
+  },
+  "exit_code": 4
+}
