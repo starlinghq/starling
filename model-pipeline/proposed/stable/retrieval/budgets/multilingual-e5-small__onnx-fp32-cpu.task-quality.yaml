@@ -1,0 +1,7 @@
+# PROPOSED candidate, not binding: docs/plan/stable-proposal.md section 3. If accepted, the maintainer copies
+# it to model-pipeline/protected/multilingual-e5-small/onnx-fp32-cpu/task-quality.yaml in a protected-change pull request.
+profile: multilingual-e5-small/onnx-fp32-cpu
+retrieval:
+  # reference (PyTorch fp32) ndcg@10 0.7978, mrr@10 0.7717; margin 0.006
+  dataset_sha256: 614a8d0d4d43a3930cc7ea4fea56a9835c7db108b68b9c071de8e116995d2405
+  minimum: {ndcg@10: 0.792, mrr@10: 0.765}

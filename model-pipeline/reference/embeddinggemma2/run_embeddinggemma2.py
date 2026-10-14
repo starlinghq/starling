@@ -229,7 +229,13 @@ def main() -> int:
     parser.add_argument("--revision", required=True)
     parser.add_argument("--corpus", type=Path, required=True)
     parser.add_argument("--out", type=Path, required=True)
+    parser.add_argument(
+        "--batch-ids",
+        help="comma-separated corpus ids for the padded-batch check (default: the development corpus ids)",
+    )
     args = parser.parse_args()
+    if args.batch_ids:
+        BATCH_IDS[:] = args.batch_ids.split(",")
 
     torch.manual_seed(0)
     torch.use_deterministic_algorithms(True)

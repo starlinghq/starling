@@ -10,3 +10,4 @@ Nothing here is binding, and nothing here changes a tolerance, gate or capabilit
 | `qwen3.5-0.8b/long-context/` | Long-context evidence above 1,666 tokens (fp32x CPU) | R8 |
 | `embeddinggemma-2/decoder-ffmpeg9/` | The `decoder_ffmpeg9` tolerance section for the FFmpeg 9 video adapter | R7 W4 |
 | `embeddinggemma-2/long-input/` | Long-input fixtures, 2,049 to 8,192 tokens (text, interleaved text and images, video at the 32-frame limit, rejections just over 8,192) | R7 W3 |
+| `stable/` | Stable proposal: P-030 tokenizer holdouts and release sets, G3 task datasets with reference scores, candidate budgets (`docs/plan/stable-proposal.md`). Each subdirectory has its own `PROPOSED.md`; `stable/` mirrors the families, not the `protected/` paths, and each `PROPOSED.md` names its intended destination. | M1, M2 |

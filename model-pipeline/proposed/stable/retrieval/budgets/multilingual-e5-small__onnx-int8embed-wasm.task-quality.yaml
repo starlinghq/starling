@@ -1,0 +1,7 @@
+# PROPOSED candidate, not binding: docs/plan/stable-proposal.md section 3. If accepted, the maintainer copies
+# it to model-pipeline/protected/multilingual-e5-small/onnx-int8embed-wasm/task-quality.yaml in a protected-change pull request.
+profile: multilingual-e5-small/onnx-int8embed-wasm
+retrieval:
+  # kickoff decision 3 (overlap vs fp32 >= 0.95; measured natively 0.9995) and fp32 ndcg@10 minus 0.02; run with --baseline <fp32 embeddings>
+  dataset_sha256: 614a8d0d4d43a3930cc7ea4fea56a9835c7db108b68b9c071de8e116995d2405
+  minimum: {top10_overlap_vs_baseline.mean: 0.95, ndcg@10: 0.78}
