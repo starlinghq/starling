@@ -16,7 +16,8 @@ float[] embedding = embedder.Embed(image);
 | Input | Behaviour | Status |
 | --- | --- | --- |
 | PNG (RGB, grayscale, RGBA, gray+alpha, palette, palette with transparency, 1-bit), JPEG (baseline, progressive, 4:2:0, 4:4:4, CMYK) | Decoded RGB equal to PIL 12.3.0's on the 28 supported fixture images | experimental |
-| GIF (first frame), BMP, WebP | Decoded by Skia, no fixture evidence | untested |
+| GIF (palette, grayscale; first frame of an animation), BMP (24-bit, 32-bit with alpha, 8-bit palette and grayscale, 1-bit), WebP (lossless, lossy, with and without alpha) | Decoded RGB equal to PIL 12.3.0's on 12 files written by Pillow from fixture images (proposed `model-pipeline/proposed/embeddinggemma-2/image-extra/`) | experimental |
+| GIF with transparent pixels | Rejected: `EmbeddingGemma2UnsupportedImageException` with `Reason = GifTransparency`. PIL keeps the palette colour of transparent pixels; SkiaSharp zeroes them, so the embedding would differ | unsupported |
 | Alpha | Dropped, never composited (a transparent pixel keeps its stored colour), as upstream | as upstream |
 | Colour profiles | Ignored (no colour management), as PIL | as upstream |
 | EXIF orientation | Ignored by default, as upstream. `new EmbeddingGemma2ImageDecoderOptions { ApplyExifOrientation = true }` rotates or mirrors the image upright like Pillow's `exif_transpose`: **a deliberate deviation from upstream** (the embedding then differs from sentence-transformers') | experimental (opt-in) |

@@ -93,4 +93,18 @@ public class CpuParityTests(EmbeddingGemma2CpuFixture fixture, ITestOutputHelper
     [Fact]
     public void TextParityWithTheOwnedTokenizer() =>
         EmbeddingGemma2ParityChecks.TextRows(fixture.Encoder, EmbeddingGemma2TestAssets.Tokenizer, fixture.Rows, Tolerances, output);
+
+    /// <summary>
+    /// Capability <c>prompts_task</c>: every one of the 20 named prompts on four public texts (proposed fixture from
+    /// sentence-transformers, judged with this profile's protected text bounds).
+    /// </summary>
+    [Fact]
+    public void TaskPromptParityWithTheOwnedTokenizer()
+    {
+        var rows = EmbeddingGemma2Fixtures.LoadTaskPromptRows();
+        Assert.Equal(80, rows.Count);
+        Assert.Equal(EmbeddingGemma2Prompt.Named.Keys.Order(StringComparer.Ordinal), rows.Select(r => r.Prompt).Distinct().Order(StringComparer.Ordinal));
+        Assert.All(rows, r => Assert.Equal(EmbeddingGemma2Prompt.Named[r.Prompt], r.PromptText));
+        EmbeddingGemma2ParityChecks.TextRows(fixture.Encoder, EmbeddingGemma2TestAssets.Tokenizer, rows, Tolerances, output);
+    }
 }

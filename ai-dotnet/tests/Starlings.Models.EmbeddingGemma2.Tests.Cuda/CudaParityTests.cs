@@ -64,6 +64,20 @@ public class CudaParityTests(EmbeddingGemma2CudaFixture fixture, ITestOutputHelp
     public void TextParityWithTheOwnedTokenizer() =>
         EmbeddingGemma2ParityChecks.TextRows(fixture.Encoder, EmbeddingGemma2TestAssets.Tokenizer, fixture.Rows, Tolerances, output);
 
+    /// <summary>
+    /// Capability <c>prompts_task</c>: every one of the 20 named prompts on four public texts (proposed fixture from
+    /// sentence-transformers, judged with this profile's protected text bounds).
+    /// </summary>
+    [Fact]
+    public void TaskPromptParityWithTheOwnedTokenizer()
+    {
+        var rows = EmbeddingGemma2Fixtures.LoadTaskPromptRows();
+        Assert.Equal(80, rows.Count);
+        Assert.Equal(EmbeddingGemma2Prompt.Named.Keys.Order(StringComparer.Ordinal), rows.Select(r => r.Prompt).Distinct().Order(StringComparer.Ordinal));
+        Assert.All(rows, r => Assert.Equal(EmbeddingGemma2Prompt.Named[r.Prompt], r.PromptText));
+        EmbeddingGemma2ParityChecks.TextRows(fixture.Encoder, EmbeddingGemma2TestAssets.Tokenizer, rows, Tolerances, output);
+    }
+
     [Fact]
     public void BatchIndependenceAcrossTheSlidingWindow() =>
         EmbeddingGemma2ParityChecks.SlidingWindowBatchIndependence(fixture.Encoder, fixture.Rows, Tolerances, output);
@@ -87,6 +101,31 @@ public class CudaParityTests(EmbeddingGemma2CudaFixture fixture, ITestOutputHelp
         int cuda = placement.NodesByProvider.GetValueOrDefault(OnnxRuntimeInfo.CudaProviderName);
         int cpu = placement.NodesByProvider.GetValueOrDefault(OnnxRuntimeInfo.CpuProviderName);
         Assert.True(cuda > 10 * cpu, $"CUDA {cuda} nodes, CPU {cpu} nodes");
+    }
+
+    /// <summary>
+    /// Capability <c>concurrent_calls</c> over CUDA: 12 rows on four threads, three rounds, give the sequential results
+    /// bit for bit.
+    /// </summary>
+    [Fact]
+    public void ConcurrentCallsGiveTheSequentialResults()
+    {
+        var encoder = fixture.Encoder;
+        var rows = fixture.Rows.Where(r => r.InputIds.Length < 200).Take(12).ToList();
+        var ct = TestContext.Current.CancellationToken;
+        var sequential = rows.Select(r => encoder.Embed(new EmbeddingGemma2Input(r.InputIds), ct)).ToList();
+        for (int round = 0; round < 3; round++)
+        {
+            var parallel = new float[rows.Count][];
+            Parallel.For(0, rows.Count, new ParallelOptions { MaxDegreeOfParallelism = 4, CancellationToken = ct }, i =>
+                parallel[i] = encoder.Embed(new EmbeddingGemma2Input(rows[i].InputIds), ct));
+            for (int i = 0; i < rows.Count; i++)
+            {
+                Assert.Equal(sequential[i], parallel[i]);
+            }
+        }
+
+        output.WriteLine($"{rows.Count} rows x 3 rounds on 4 threads over CUDA: equal to the sequential run");
     }
 
     [Fact]

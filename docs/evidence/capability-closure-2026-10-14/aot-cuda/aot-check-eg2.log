@@ -1,0 +1,28 @@
+
+== 0. Inputs
+commit:  e9e33ca762a8f920814dee508f534ad863c4ba54
+dotnet:  10.0.401, RID linux-x64
+models:  <model-cache>
+offline: network namespace without interfaces (unshare -rn)
+linker:  /usr/bin/clang
+provider: cuda (CUDA_VISIBLE_DEVICES=0)
+
+== 1. Packages from <work>/aot-feed
+version: 0.1.0-preview.6
+
+== AOT target eg2
+packages: Starlings.Acquisition Starlings.Models.EmbeddingGemma2 Starlings.Runtime.Onnx Starlings.Tokenizers 
+publish: yes; warnings: 0 in Starlings.* code, 0 elsewhere (details: <work>/aot-cuda-out/eg2/warnings.txt)
+ok:   AOT results equal JIT: 6 strings exact, 9 vectors max abs 0
+
+== AOT target eg2-meai
+packages: Starlings.Acquisition Starlings.Models.EmbeddingGemma2 Starlings.Models.EmbeddingGemma2.Extensions.AI Starlings.Runtime.Onnx Starlings.Tokenizers 
+publish: yes; warnings: 0 in Starlings.* code, 0 elsewhere (details: <work>/aot-cuda-out/eg2-meai/warnings.txt)
+ok:   AOT results equal JIT: 4 strings exact, 4 vectors max abs 0
+
+== Summary (<work>/aot-cuda-out/summary.md)
+| Target | Packages | Starlings.* warnings | Other warnings | AOT publish | AOT run | JIT vs AOT |
+| --- | --- | --- | --- | --- | --- | --- |
+| eg2 | Starlings.Acquisition Starlings.Models.EmbeddingGemma2 Starlings.Runtime.Onnx Starlings.Tokenizers  | 0 | 0 | ok (3.9M) | ok | 6 strings exact, 9 vectors max abs 0 |
+| eg2-meai | Starlings.Acquisition Starlings.Models.EmbeddingGemma2 Starlings.Models.EmbeddingGemma2.Extensions.AI Starlings.Runtime.Onnx Starlings.Tokenizers  | 0 | 0 | ok (3.9M) | ok | 4 strings exact, 4 vectors max abs 0 |
+AOT CHECK PASS

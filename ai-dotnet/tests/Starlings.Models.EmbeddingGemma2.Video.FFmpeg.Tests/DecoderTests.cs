@@ -149,6 +149,77 @@ public sealed class DecoderTests(ITestOutputHelper output)
         output.WriteLine($"{EmbeddingGemma2VideoTestAssets.Manifest.Count} videos, all {total} frames: decoded RGB equal to torchcodec on FFmpeg {Major}");
     }
 
+    /// <summary>
+    /// Capabilities <c>video_decode_rotation_other</c>, <c>video_hdr</c>, <c>video_interlaced</c> and
+    /// <c>video_variable_frame_rate</c>: the nine edge-case videos of <c>make_eg2_edge_videos.py</c> (rotation -90 and
+    /// 180, HEVC Main 10 BT.2020 PQ and HLG, H.264 interlaced top and bottom field first, H.264 with varying frame
+    /// durations) against torchcodec 0.17.0 on FFmpeg 8 (proposed <c>video-edge/</c>): metadata, sampled indices and
+    /// the RGB of every frame. Needs the edge videos (<c>STARLING_EMBEDDINGGEMMA2_EDGE_VIDEOS</c>); skips otherwise.
+    /// </summary>
+    [Fact]
+    public void EdgeCaseVideosEqualTorchcodec()
+    {
+        var decoder = EmbeddingGemma2VideoTestAssets.Decoder;
+        var (videos, frames, dir) = EmbeddingGemma2VideoTestAssets.LoadEdge();
+        string first = Path.Combine(dir, videos[0].File);
+        Assert.SkipWhen(!File.Exists(first), $"edge videos not found ({first}); write them with make_eg2_edge_videos.py --out <dir> and set {EmbeddingGemma2VideoTestAssets.EdgeVideosEnvironmentVariable}.");
+        var failures = new List<string>();
+        int total = 0;
+        foreach (var v in videos)
+        {
+            string path = Path.Combine(dir, v.File);
+            Assert.True(v.Sha256 == Convert.ToHexStringLower(SHA256.HashData(File.ReadAllBytes(path))), $"{v.File}: not the proposed file");
+            var expected = frames[v.Id];
+            var meta = decoder.Probe(path);
+            var problems = new List<string>();
+            if (expected.Metadata.NumFrames != meta.FrameCount || expected.Metadata.DurationSeconds != meta.DurationSeconds ||
+                expected.Metadata.BeginSeconds != meta.BeginSeconds || expected.Metadata.EndSeconds != meta.EndSeconds ||
+                expected.Metadata.AverageFps != meta.AverageFramesPerSecond || (expected.Metadata.Width, expected.Metadata.Height) != (meta.Width, meta.Height) ||
+                expected.Metadata.Codec != meta.Codec || expected.Metadata.Rotation != meta.Rotation)
+            {
+                problems.Add($"metadata {meta} vs torchcodec {expected.Metadata}");
+            }
+
+            if (!expected.SampledIndices.SequenceEqual(EmbeddingGemma2VideoSampling.SampleIndices(meta.FrameCount, meta.AverageFramesPerSecond, meta.DurationSeconds)))
+            {
+                problems.Add("sampled indices differ");
+            }
+
+            int differing = 0;
+            for (int start = 0; start < expected.AllFrameSha256.Length; start += 64)
+            {
+                int[] indices = Enumerable.Range(start, Math.Min(64, expected.AllFrameSha256.Length - start)).ToArray();
+                var decoded = decoder.DecodeFramesAt(path, indices, TestContext.Current.CancellationToken);
+                for (int k = 0; k < indices.Length; k++)
+                {
+                    differing += expected.AllFrameSha256[indices[k]] == Sha(decoded[k].Pixels.Span) ? 0 : 1;
+                }
+            }
+
+            if (differing > 0)
+            {
+                problems.Add($"{differing} of {expected.AllFrameSha256.Length} frames differ");
+            }
+
+            var sampled = decoder.DecodeFile(path, TestContext.Current.CancellationToken);
+            if (!sampled.FrameIndices.SequenceEqual(expected.SampledIndices))
+            {
+                problems.Add("DecodeFile sampled other frames");
+            }
+
+            total += expected.AllFrameSha256.Length;
+            output.WriteLine($"{v.Id}: {(problems.Count == 0 ? $"metadata, {expected.SampledIndices.Length} sampled indices and all {expected.AllFrameSha256.Length} frames equal torchcodec" : string.Join("; ", problems))}");
+            if (problems.Count > 0)
+            {
+                failures.Add(v.Id);
+            }
+        }
+
+        output.WriteLine($"{videos.Count} edge-case videos, {total} frames, FFmpeg {Major}; differing: {(failures.Count == 0 ? "none" : string.Join(", ", failures))}");
+        Assert.Empty(failures);
+        Assert.Equal(9, videos.Count);
+    }
+
     [Fact]
     public void StreamsAndMemoryDecodeLikeFiles()
     {

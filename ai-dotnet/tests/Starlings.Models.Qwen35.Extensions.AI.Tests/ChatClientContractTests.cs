@@ -282,6 +282,34 @@ public sealed class ChatClientContractTests
         await Assert.ThrowsAsync<Qwen35TemplateException>(() => ToListAsync(client.GetStreamingResponseAsync([new ChatMessage(ChatRole.User, "a"), new ChatMessage(ChatRole.System, "late")], cancellationToken: Ct)));
     }
 
+    /// <summary>
+    /// Long context beyond the evidence is unsupported: prompt plus new tokens above
+    /// <see cref="Qwen35ChatModel.MaxContextTokens"/> (8,192) is rejected before any native call, never truncated,
+    /// although the model's own context length is 262,144. Exactly 8,192 is accepted.
+    /// </summary>
+    [Fact]
+    public async Task SequencesOverTheAcceptedContextAreRejectedBeforeInference()
+    {
+        var backend = Backend();
+        var model = backend.Model;
+        var prompt = Qwen35Prompt.FromTokenIds(Enumerable.Repeat(1_000, 8_000).ToArray());
+        var ex = Assert.Throws<GenerationContextLengthException>(() => model.Generate(prompt, new Qwen35ChatOptions { MaxNewTokens = 193 }, Ct));
+        Assert.Equal((8_000, 193, Qwen35ChatModel.MaxContextTokens), (ex.PromptTokens, ex.MaxNewTokens, ex.ContextLength));
+        Assert.Throws<GenerationContextLengthException>(() => model.GenerateStreaming(prompt, new Qwen35ChatOptions { MaxNewTokens = 193 }, Ct));
+        Assert.Throws<GenerationContextLengthException>(() => model.Generate(prompt, cancellationToken: Ct)); // default 512 new tokens
+        Assert.Empty(backend.Sequences);
+
+        // 8,000 + 192 = 8,192 is accepted.
+        var ok = model.Generate(prompt, new Qwen35ChatOptions { MaxNewTokens = 192 }, Ct);
+        Assert.Equal(8_000, Assert.Single(backend.Sequences).Prompt.Length);
+        Assert.NotEmpty(ok.TokenIds);
+
+        using var client = new Qwen35ChatClient(model);
+        string longText = string.Concat(Enumerable.Repeat("long context ", 9_000));
+        await Assert.ThrowsAsync<GenerationContextLengthException>(() => client.GetResponseAsync([new ChatMessage(ChatRole.User, longText)], cancellationToken: Ct));
+        Assert.Equal(8_192, Qwen35ChatModel.MaxContextTokens);
+    }
+
     [Fact]
     public async Task AcceptedNoOpOptionsChangeNothing()
     {

@@ -220,11 +220,18 @@ capabilities:
   image_multiple_per_input: experimental
   image_prompts: experimental
   image_budget_280: experimental
-  image_budget_other: untested
+  # image_budget_other (capability closure 2026-10-14, docs/evidence/capability-closure-2026-10-14/README.md): six fixture images at 70, 140, 560 and
+  # 1,120 soft tokens against sentence-transformers with the processor's max_soft_tokens set (proposed rows):
+  # preprocessing and ids exact, embedding max abs 9.2e-6 (bound 1e-5). Proposed rows, protected bounds.
+  image_budget_other: experimental
   image_batch: experimental
   image_matryoshka: experimental
   image_decode_png_jpeg: experimental
-  image_decode_gif_bmp_webp: untested
+  # image_decode_gif_bmp_webp (capability closure 2026-10-14): SkiaSharp decoded RGB equal to PIL's convert("RGB") on 12
+  # GIF, BMP and WebP files written by Pillow from fixture images (proposed image-formats.json). A GIF with transparent
+  # pixels is rejected (EmbeddingGemma2ImageRejection.GifTransparency): PIL keeps their palette colour, SkiaSharp does not.
+  image_decode_gif_bmp_webp: experimental
+  image_decode_gif_transparency: unsupported
   image_exif_orientation_opt_in: experimental
   image_16_bit: unsupported
   image_alpha_compositing: unsupported

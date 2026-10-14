@@ -38,6 +38,16 @@ public sealed class Qwen35ChatModel : IDisposable
     /// </summary>
     public const int PadTokenIdOverlay = 248319;
 
+    /// <summary>
+    /// The longest sequence this package accepts: prompt plus <see cref="Qwen35ChatOptions.MaxNewTokens"/> up to 8,192
+    /// tokens. The model's own context length is 262,144 (<see cref="Qwen35ModelInfo.ModelContextLength"/>), but the
+    /// reference evidence ends at an 8,213-token prompt with 32 greedy tokens (exact ids, cached versus uncached logits
+    /// within the protected 2e-4); at 16,391 tokens cached versus uncached reached 4.1e-4
+    /// (<c>docs/evidence/r8-qwen35-long-context/</c>). Longer requests are rejected with
+    /// <see cref="GenerationContextLengthException"/>, never truncated.
+    /// </summary>
+    public const int MaxContextTokens = 8192;
+
     private const string ExpectedModelType = "qwen3_5_text";
     private const int ExpectedVocabularySize = 248320;
 
@@ -130,7 +140,8 @@ public sealed class Qwen35ChatModel : IDisposable
                 ConfigOverlays = backend.AppliedOverlays,
                 ProviderOptions = backend.ProviderOptions,
                 SerializesNativeCalls = backend.SerializesNativeCalls,
-                ContextLength = backend.ContextLength,
+                ContextLength = Math.Min(backend.ContextLength, MaxContextTokens),
+                ModelContextLength = backend.ContextLength,
                 StopTokenIds = [],
             };
             return new Qwen35ChatModel(backend, tokenizer, info);
@@ -173,7 +184,9 @@ public sealed class Qwen35ChatModel : IDisposable
     public GenerationResult Generate(Qwen35Prompt prompt, Qwen35ChatOptions? options = null, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(prompt);
-        return _generator.Generate(prompt.TokenIds, (options ?? new Qwen35ChatOptions()).ToGenerationOptions(Info.Provider), cancellationToken);
+        options ??= new Qwen35ChatOptions();
+        CheckContextLength(prompt, options);
+        return _generator.Generate(prompt.TokenIds, options.ToGenerationOptions(Info.Provider), cancellationToken);
     }
 
     /// <summary>
@@ -190,7 +203,31 @@ public sealed class Qwen35ChatModel : IDisposable
     public IEnumerable<GenerationUpdate> GenerateStreaming(Qwen35Prompt prompt, Qwen35ChatOptions? options = null, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(prompt);
-        return _generator.GenerateStreaming(prompt.TokenIds, (options ?? new Qwen35ChatOptions()).ToGenerationOptions(Info.Provider), cancellationToken);
+        options ??= new Qwen35ChatOptions();
+        CheckContextLength(prompt, options);
+        return _generator.GenerateStreaming(prompt.TokenIds, options.ToGenerationOptions(Info.Provider), cancellationToken);
+    }
+
+    /// <summary>
+    /// Test seam for reference runs beyond <see cref="MaxContextTokens"/> (evidence only): the limit this instance
+    /// enforces. The model's own context length still applies in <see cref="TextGenerator"/>.
+    /// </summary>
+    internal int EnforcedContextTokens { get; set; } = MaxContextTokens;
+
+    private void CheckContextLength(Qwen35Prompt prompt, Qwen35ChatOptions options)
+    {
+        long total = (long)prompt.TokenIds.Length + options.MaxNewTokens;
+        if (total > EnforcedContextTokens)
+        {
+            throw new GenerationContextLengthException(
+                $"{prompt.TokenIds.Length} prompt tokens plus {options.MaxNewTokens} new tokens exceed {EnforcedContextTokens}, the longest " +
+                "sequence this package accepts for Qwen3.5-0.8B (reference evidence ends at about 8,200 tokens; longer contexts are unsupported, not truncated).")
+            {
+                PromptTokens = prompt.TokenIds.Length,
+                MaxNewTokens = options.MaxNewTokens,
+                ContextLength = EnforcedContextTokens,
+            };
+        }
     }
 
     /// <summary>

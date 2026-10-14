@@ -1,0 +1,15 @@
+target:  qwen35-meai
+mode:    JIT (.NET 10.0.12, linux-x64, dynamic code supported)
+str	target	qwen35-meai
+str	provider	cuda
+str	model	qwen3.5-0.8b/ortgenai-fp32x Cuda
+inf	genai.version	0.17.1
+str	text	The capital of France is Paris.
+str	finish	stop 24+7
+str	streamed	The capital of France is Paris.
+str	Fp16x.model	qwen3.5-0.8b/ortgenai-fp16x Cuda
+inf	Fp16x.genai.version	0.17.1
+str	Fp16x.text	The capital of France is Paris.
+str	Fp16x.finish	stop 24+7
+str	Fp16x.streamed	The capital of France is Paris.
+RESULT: RAN

@@ -43,6 +43,7 @@
     "chunked_prefill",
     "classification",
     "concurrent_calls",
+    "concurrent_calls_unserialized",
     "concurrent_requests",
     "conversation_state_reuse",
     "count_gate_closed",
@@ -58,6 +59,7 @@
     "image_budget_280",
     "image_budget_other",
     "image_decode_gif_bmp_webp",
+    "image_decode_gif_transparency",
     "image_decode_png_jpeg",
     "image_exif_orientation_opt_in",
     "image_interleaved_text",
@@ -69,7 +71,8 @@
     "input_over_8192_tokens",
     "input_up_to_2049_tokens",
     "label_descriptions",
-    "long_context_over_1666_tokens",
+    "long_context_1667_to_8192_tokens",
+    "long_context_over_8192_tokens",
     "matryoshka",
     "max_new_tokens",
     "mixed_label_sets_in_batch",
@@ -192,6 +195,7 @@
         "chunked_prefill": "unrecorded",
         "classification": "unrecorded",
         "concurrent_calls": "experimental",
+        "concurrent_calls_unserialized": "unrecorded",
         "concurrent_requests": "unrecorded",
         "conversation_state_reuse": "unrecorded",
         "count_gate_closed": "unrecorded",
@@ -205,8 +209,9 @@
         "image_alpha_compositing": "unsupported",
         "image_batch": "experimental",
         "image_budget_280": "experimental",
-        "image_budget_other": "untested",
-        "image_decode_gif_bmp_webp": "untested",
+        "image_budget_other": "experimental",
+        "image_decode_gif_bmp_webp": "experimental",
+        "image_decode_gif_transparency": "unsupported",
         "image_decode_png_jpeg": "experimental",
         "image_exif_orientation_opt_in": "experimental",
         "image_interleaved_text": "experimental",
@@ -218,7 +223,8 @@
         "input_over_8192_tokens": "unsupported",
         "input_up_to_2049_tokens": "unrecorded",
         "label_descriptions": "unrecorded",
-        "long_context_over_1666_tokens": "unrecorded",
+        "long_context_1667_to_8192_tokens": "unrecorded",
+        "long_context_over_8192_tokens": "unrecorded",
         "matryoshka": "unrecorded",
         "max_new_tokens": "unrecorded",
         "mixed_label_sets_in_batch": "unrecorded",
@@ -288,10 +294,7 @@
           "G6",
           "G7"
         ],
-        "untested_capabilities": [
-          "image_budget_other",
-          "image_decode_gif_bmp_webp"
-        ]
+        "untested_capabilities": []
       }
     },
     {
@@ -363,8 +366,8 @@
         "cancellation": "experimental",
         "persistence": "unsupported",
         "training": "unsupported",
-        "aot": "untested",
-        "extensions_ai": "untested",
+        "aot": "experimental",
+        "extensions_ai": "experimental",
         "mlnet": "unsupported",
         "audio": "unsupported",
         "cancellation_inside_a_step": "unrecorded",
@@ -372,6 +375,7 @@
         "chunked_prefill": "unrecorded",
         "classification": "unrecorded",
         "concurrent_calls": "experimental",
+        "concurrent_calls_unserialized": "unrecorded",
         "concurrent_requests": "unrecorded",
         "conversation_state_reuse": "unrecorded",
         "count_gate_closed": "unrecorded",
@@ -385,8 +389,9 @@
         "image_alpha_compositing": "unsupported",
         "image_batch": "experimental",
         "image_budget_280": "experimental",
-        "image_budget_other": "untested",
-        "image_decode_gif_bmp_webp": "untested",
+        "image_budget_other": "experimental",
+        "image_decode_gif_bmp_webp": "experimental",
+        "image_decode_gif_transparency": "unsupported",
         "image_decode_png_jpeg": "experimental",
         "image_exif_orientation_opt_in": "experimental",
         "image_interleaved_text": "experimental",
@@ -398,7 +403,8 @@
         "input_over_8192_tokens": "unsupported",
         "input_up_to_2049_tokens": "unrecorded",
         "label_descriptions": "unrecorded",
-        "long_context_over_1666_tokens": "unrecorded",
+        "long_context_1667_to_8192_tokens": "unrecorded",
+        "long_context_over_8192_tokens": "unrecorded",
         "matryoshka": "unrecorded",
         "max_new_tokens": "unrecorded",
         "mixed_label_sets_in_batch": "unrecorded",
@@ -468,12 +474,7 @@
           "G6",
           "G7"
         ],
-        "untested_capabilities": [
-          "aot",
-          "extensions_ai",
-          "image_budget_other",
-          "image_decode_gif_bmp_webp"
-        ]
+        "untested_capabilities": []
       }
     },
     {
@@ -491,8 +492,8 @@
       "known_issues": [
         "Evaluator run 2026-10-11 (docs/evidence/embeddinggemma2-dotnet/, CPU): G1 passed; G2 failed only on export.token_embeddings (Python ORT vs PyTorch): the tolerance file's |d| <= 1e-4 * max(1, |ref|) judged per value gives 1.7e-2, while the per-case max |d| / max(1, max |ref|) the bound was set from is 6.2e-6. Which reading binds is a maintainer decision; every .NET check passed.",
         "The hosted graph is public since 2026-10-14. The 0.1.0-preview.6 release drill downloaded it with no token into an empty cache, verified it and ran the sample offline (Linux x64, one machine); other platforms are untested.",
-        "Fixtures reach 1,750 tokens and batch-independence checks 2,049; 2,050 to 8,192 tokens has no reference evidence. One 8,192-token row took 80 s on the 12-thread workstation CPU (process peak working set 5.9 GB during the test run); temporary memory grows with the square of the length in the full-attention layers.",
-        "The fixtures cover the none, query and document prompts only; the other 18 names map to prompt texts without fixture rows. Matryoshka sizes are checked against the reference sliced and renormalized (the fixtures hold no truncated rows; the spike probe showed sentence-transformers truncate_dim equals that within 6e-8)."
+        "Accepted fixtures reach 1,750 tokens and batch-independence checks 2,049; 2,050 to 8,192 tokens is covered by the proposed long-input rows (not yet accepted). One 8,192-token row took 80 s on the 12-thread workstation CPU (process peak working set 5.9 GB during the test run); temporary memory grows with the square of the length in the full-attention layers.",
+        "The accepted fixtures cover the none, query and document prompts only; the other 18 names are covered by the proposed task-prompt rows (model-pipeline/proposed/embeddinggemma-2/task-prompts, not yet accepted). Matryoshka sizes are checked against the reference sliced and renormalized (the fixtures hold no truncated rows; the spike probe showed sentence-transformers truncate_dim equals that within 6e-8)."
       ],
       "execution": {
         "runtime": "onnxruntime",
@@ -549,6 +550,7 @@
         "chunked_prefill": "unrecorded",
         "classification": "unrecorded",
         "concurrent_calls": "experimental",
+        "concurrent_calls_unserialized": "unrecorded",
         "concurrent_requests": "unrecorded",
         "conversation_state_reuse": "unrecorded",
         "count_gate_closed": "unrecorded",
@@ -564,25 +566,27 @@
         "image_budget_280": "unrecorded",
         "image_budget_other": "unrecorded",
         "image_decode_gif_bmp_webp": "unrecorded",
+        "image_decode_gif_transparency": "unrecorded",
         "image_decode_png_jpeg": "unrecorded",
         "image_exif_orientation_opt_in": "unrecorded",
         "image_interleaved_text": "unrecorded",
         "image_matryoshka": "unrecorded",
         "image_multiple_per_input": "unrecorded",
         "image_prompts": "unrecorded",
-        "input_2050_to_8192_tokens": "untested",
+        "input_2050_to_8192_tokens": "experimental",
         "input_over_512_tokens": "unrecorded",
         "input_over_8192_tokens": "unsupported",
         "input_up_to_2049_tokens": "experimental",
         "label_descriptions": "unrecorded",
-        "long_context_over_1666_tokens": "unrecorded",
+        "long_context_1667_to_8192_tokens": "unrecorded",
+        "long_context_over_8192_tokens": "unrecorded",
         "matryoshka": "experimental",
         "max_new_tokens": "unrecorded",
         "mixed_label_sets_in_batch": "unrecorded",
         "offsets_original_text": "unrecorded",
         "plain_deduplicated_output": "unrecorded",
         "prompts_query_document": "experimental",
-        "prompts_task": "untested",
+        "prompts_task": "experimental",
         "reasoning_split": "unrecorded",
         "relation_extraction": "unrecorded",
         "sampling_seeded": "unrecorded",
@@ -645,10 +649,7 @@
           "G6",
           "G7"
         ],
-        "untested_capabilities": [
-          "input_2050_to_8192_tokens",
-          "prompts_task"
-        ]
+        "untested_capabilities": []
       }
     },
     {
@@ -666,9 +667,9 @@
       "known_issues": [
         "Evaluator run 2026-10-11 (docs/evidence/embeddinggemma2-dotnet/, CPU): G1 passed; G2 failed only on export.token_embeddings (Python ORT vs PyTorch): the tolerance file's |d| <= 1e-4 * max(1, |ref|) judged per value gives 1.7e-2, while the per-case max |d| / max(1, max |ref|) the bound was set from is 6.2e-6. Which reading binds is a maintainer decision; every .NET check passed.",
         "The hosted graph is public since 2026-10-14. The 0.1.0-preview.6 release drill downloaded it with no token into an empty cache, verified it and ran the sample offline (Linux x64, one machine); other platforms are untested.",
-        "Fixtures reach 1,750 tokens and batch-independence checks 2,049; 2,050 to 8,192 tokens has no reference evidence. Long rows need GPU memory that grows with the square of the length in the full-attention layers.",
+        "Accepted fixtures reach 1,750 tokens and batch-independence checks 2,049; 2,050 to 8,192 tokens is covered by the proposed long-input rows (not yet accepted). Long rows need GPU memory that grows with the square of the length in the full-attention layers.",
         "Native runtime: Microsoft.ML.OnnxRuntime.Gpu.Linux 1.30.0 needs the CUDA 13 runtime and cuDNN 9 on the loader path; the package does not ship them.",
-        "The fixtures cover the none, query and document prompts only; the other 18 names map to prompt texts without fixture rows. Matryoshka sizes are checked against the reference sliced and renormalized (the fixtures hold no truncated rows; the spike probe showed sentence-transformers truncate_dim equals that within 6e-8)."
+        "The accepted fixtures cover the none, query and document prompts only; the other 18 names are covered by the proposed task-prompt rows (model-pipeline/proposed/embeddinggemma-2/task-prompts, not yet accepted). Matryoshka sizes are checked against the reference sliced and renormalized (the fixtures hold no truncated rows; the spike probe showed sentence-transformers truncate_dim equals that within 6e-8)."
       ],
       "execution": {
         "runtime": "onnxruntime",
@@ -719,15 +720,16 @@
         "cancellation": "experimental",
         "persistence": "unsupported",
         "training": "unsupported",
-        "aot": "untested",
-        "extensions_ai": "untested",
-        "mlnet": "untested",
+        "aot": "experimental",
+        "extensions_ai": "experimental",
+        "mlnet": "experimental",
         "audio": "unsupported",
         "cancellation_inside_a_step": "unrecorded",
         "chat_template_owned_text": "unrecorded",
         "chunked_prefill": "unrecorded",
         "classification": "unrecorded",
         "concurrent_calls": "experimental",
+        "concurrent_calls_unserialized": "unrecorded",
         "concurrent_requests": "unrecorded",
         "conversation_state_reuse": "unrecorded",
         "count_gate_closed": "unrecorded",
@@ -743,25 +745,27 @@
         "image_budget_280": "unrecorded",
         "image_budget_other": "unrecorded",
         "image_decode_gif_bmp_webp": "unrecorded",
+        "image_decode_gif_transparency": "unrecorded",
         "image_decode_png_jpeg": "unrecorded",
         "image_exif_orientation_opt_in": "unrecorded",
         "image_interleaved_text": "unrecorded",
         "image_matryoshka": "unrecorded",
         "image_multiple_per_input": "unrecorded",
         "image_prompts": "unrecorded",
-        "input_2050_to_8192_tokens": "untested",
+        "input_2050_to_8192_tokens": "experimental",
         "input_over_512_tokens": "unrecorded",
         "input_over_8192_tokens": "unsupported",
         "input_up_to_2049_tokens": "experimental",
         "label_descriptions": "unrecorded",
-        "long_context_over_1666_tokens": "unrecorded",
+        "long_context_1667_to_8192_tokens": "unrecorded",
+        "long_context_over_8192_tokens": "unrecorded",
         "matryoshka": "experimental",
         "max_new_tokens": "unrecorded",
         "mixed_label_sets_in_batch": "unrecorded",
         "offsets_original_text": "unrecorded",
         "plain_deduplicated_output": "unrecorded",
         "prompts_query_document": "experimental",
-        "prompts_task": "untested",
+        "prompts_task": "experimental",
         "reasoning_split": "unrecorded",
         "relation_extraction": "unrecorded",
         "sampling_seeded": "unrecorded",
@@ -824,13 +828,7 @@
           "G6",
           "G7"
         ],
-        "untested_capabilities": [
-          "aot",
-          "extensions_ai",
-          "input_2050_to_8192_tokens",
-          "mlnet",
-          "prompts_task"
-        ]
+        "untested_capabilities": []
       }
     },
     {
@@ -907,6 +905,7 @@
         "chunked_prefill": "unrecorded",
         "classification": "unrecorded",
         "concurrent_calls": "experimental",
+        "concurrent_calls_unserialized": "unrecorded",
         "concurrent_requests": "unrecorded",
         "conversation_state_reuse": "unrecorded",
         "count_gate_closed": "unrecorded",
@@ -922,6 +921,7 @@
         "image_budget_280": "unrecorded",
         "image_budget_other": "unrecorded",
         "image_decode_gif_bmp_webp": "unrecorded",
+        "image_decode_gif_transparency": "unrecorded",
         "image_decode_png_jpeg": "unrecorded",
         "image_exif_orientation_opt_in": "unrecorded",
         "image_interleaved_text": "unrecorded",
@@ -933,7 +933,8 @@
         "input_over_8192_tokens": "unsupported",
         "input_up_to_2049_tokens": "unrecorded",
         "label_descriptions": "unrecorded",
-        "long_context_over_1666_tokens": "unrecorded",
+        "long_context_1667_to_8192_tokens": "unrecorded",
+        "long_context_over_8192_tokens": "unrecorded",
         "matryoshka": "unrecorded",
         "max_new_tokens": "unrecorded",
         "mixed_label_sets_in_batch": "unrecorded",
@@ -959,13 +960,13 @@
         "video_decode_ffmpeg8": "experimental",
         "video_decode_ffmpeg9": "experimental",
         "video_decode_rotation_90": "experimental",
-        "video_decode_rotation_other": "untested",
+        "video_decode_rotation_other": "experimental",
         "video_decode_streams": "experimental",
         "video_decoded_frames_with_timing": "experimental",
         "video_frames_without_timing": "unsupported",
         "video_frames_without_timing_opt_in": "experimental",
-        "video_hdr": "untested",
-        "video_interlaced": "untested",
+        "video_hdr": "experimental",
+        "video_interlaced": "experimental",
         "video_interleaved_image": "experimental",
         "video_interleaved_text": "experimental",
         "video_matryoshka": "experimental",
@@ -973,7 +974,7 @@
         "video_pre_sampled_frames": "experimental",
         "video_prompts": "experimental",
         "video_timestamps": "unsupported",
-        "video_variable_frame_rate": "untested",
+        "video_variable_frame_rate": "experimental",
         "vision": "unrecorded"
       },
       "compatibility": {
@@ -1003,12 +1004,7 @@
           "G6",
           "G7"
         ],
-        "untested_capabilities": [
-          "video_decode_rotation_other",
-          "video_hdr",
-          "video_interlaced",
-          "video_variable_frame_rate"
-        ]
+        "untested_capabilities": []
       }
     },
     {
@@ -1079,8 +1075,8 @@
         "cancellation": "experimental",
         "persistence": "unsupported",
         "training": "unsupported",
-        "aot": "untested",
-        "extensions_ai": "untested",
+        "aot": "experimental",
+        "extensions_ai": "experimental",
         "mlnet": "unsupported",
         "audio": "unsupported",
         "cancellation_inside_a_step": "unrecorded",
@@ -1088,6 +1084,7 @@
         "chunked_prefill": "unrecorded",
         "classification": "unrecorded",
         "concurrent_calls": "experimental",
+        "concurrent_calls_unserialized": "unrecorded",
         "concurrent_requests": "unrecorded",
         "conversation_state_reuse": "unrecorded",
         "count_gate_closed": "unrecorded",
@@ -1103,6 +1100,7 @@
         "image_budget_280": "unrecorded",
         "image_budget_other": "unrecorded",
         "image_decode_gif_bmp_webp": "unrecorded",
+        "image_decode_gif_transparency": "unrecorded",
         "image_decode_png_jpeg": "unrecorded",
         "image_exif_orientation_opt_in": "unrecorded",
         "image_interleaved_text": "unrecorded",
@@ -1114,7 +1112,8 @@
         "input_over_8192_tokens": "unsupported",
         "input_up_to_2049_tokens": "unrecorded",
         "label_descriptions": "unrecorded",
-        "long_context_over_1666_tokens": "unrecorded",
+        "long_context_1667_to_8192_tokens": "unrecorded",
+        "long_context_over_8192_tokens": "unrecorded",
         "matryoshka": "unrecorded",
         "max_new_tokens": "unrecorded",
         "mixed_label_sets_in_batch": "unrecorded",
@@ -1140,13 +1139,13 @@
         "video_decode_ffmpeg8": "experimental",
         "video_decode_ffmpeg9": "experimental",
         "video_decode_rotation_90": "experimental",
-        "video_decode_rotation_other": "untested",
+        "video_decode_rotation_other": "experimental",
         "video_decode_streams": "experimental",
         "video_decoded_frames_with_timing": "experimental",
         "video_frames_without_timing": "unsupported",
         "video_frames_without_timing_opt_in": "experimental",
-        "video_hdr": "untested",
-        "video_interlaced": "untested",
+        "video_hdr": "experimental",
+        "video_interlaced": "experimental",
         "video_interleaved_image": "experimental",
         "video_interleaved_text": "experimental",
         "video_matryoshka": "experimental",
@@ -1154,7 +1153,7 @@
         "video_pre_sampled_frames": "experimental",
         "video_prompts": "experimental",
         "video_timestamps": "unsupported",
-        "video_variable_frame_rate": "untested",
+        "video_variable_frame_rate": "experimental",
         "vision": "unrecorded"
       },
       "compatibility": {
@@ -1184,14 +1183,7 @@
           "G6",
           "G7"
         ],
-        "untested_capabilities": [
-          "aot",
-          "extensions_ai",
-          "video_decode_rotation_other",
-          "video_hdr",
-          "video_interlaced",
-          "video_variable_frame_rate"
-        ]
+        "untested_capabilities": []
       }
     },
     {
@@ -1210,7 +1202,7 @@
         "Results are ordered by confidence; most entity scores saturate to exactly 1.0 in fp32, so near-ties make the order sensitive to backend noise (ORT CUDA with TF32 reorders one 1,329-token case with the same entity set).",
         "Upstream span offsets index the normalized text: a span that includes the appended '.' ends one past the original text (seen at threshold 0.0). The C# package maps such spans onto the input (behavior.defaults).",
         "The hosted graph is public since 2026-10-14. The 0.1.0-preview.6 release drill downloaded it with no token into an empty cache, verified it and ran the sample offline (Linux x64, one machine); other platforms are untested.",
-        "The count gate (count_pred argmax 0 gives an empty result) never closed on the development corpus, so that path has no fixture."
+        "The count gate (count_pred argmax 0 gives an empty result) never closed on the development corpus. The proposed capability cases (model-pipeline/proposed/gliner2-base-v1/capability-cases) add 12 public-text cases where it closes; they are not yet accepted fixtures."
       ],
       "execution": {
         "runtime": "onnxruntime",
@@ -1273,9 +1265,10 @@
         "chunked_prefill": "unrecorded",
         "classification": "unsupported",
         "concurrent_calls": "experimental",
+        "concurrent_calls_unserialized": "unrecorded",
         "concurrent_requests": "unrecorded",
         "conversation_state_reuse": "unrecorded",
-        "count_gate_closed": "untested",
+        "count_gate_closed": "experimental",
         "embedding_pretokenized": "unrecorded",
         "embedding_text": "unrecorded",
         "enable_thinking": "unrecorded",
@@ -1288,6 +1281,7 @@
         "image_budget_280": "unrecorded",
         "image_budget_other": "unrecorded",
         "image_decode_gif_bmp_webp": "unrecorded",
+        "image_decode_gif_transparency": "unrecorded",
         "image_decode_png_jpeg": "unrecorded",
         "image_exif_orientation_opt_in": "unrecorded",
         "image_interleaved_text": "unrecorded",
@@ -1298,8 +1292,9 @@
         "input_over_512_tokens": "unsupported",
         "input_over_8192_tokens": "unrecorded",
         "input_up_to_2049_tokens": "unrecorded",
-        "label_descriptions": "untested",
-        "long_context_over_1666_tokens": "unrecorded",
+        "label_descriptions": "experimental",
+        "long_context_1667_to_8192_tokens": "unrecorded",
+        "long_context_over_8192_tokens": "unrecorded",
         "matryoshka": "unrecorded",
         "max_new_tokens": "unrecorded",
         "mixed_label_sets_in_batch": "unsupported",
@@ -1370,10 +1365,7 @@
           "G6",
           "G7"
         ],
-        "untested_capabilities": [
-          "count_gate_closed",
-          "label_descriptions"
-        ]
+        "untested_capabilities": []
       }
     },
     {
@@ -1392,7 +1384,7 @@
         "Results are ordered by confidence; most entity scores saturate to exactly 1.0 in fp32, so near-ties make the order sensitive to backend noise (ORT CUDA with TF32 reorders one 1,329-token case with the same entity set).",
         "Upstream span offsets index the normalized text: a span that includes the appended '.' ends one past the original text (seen at threshold 0.0). The C# package maps such spans onto the input (behavior.defaults).",
         "The hosted graph is public since 2026-10-14. The 0.1.0-preview.6 release drill downloaded it with no token into an empty cache, verified it and ran the sample offline (Linux x64, one machine); other platforms are untested.",
-        "The count gate (count_pred argmax 0 gives an empty result) never closed on the development corpus, so that path has no fixture.",
+        "The count gate (count_pred argmax 0 gives an empty result) never closed on the development corpus. The proposed capability cases (model-pipeline/proposed/gliner2-base-v1/capability-cases) add 12 public-text cases where it closes; they are not yet accepted fixtures.",
         "CUDA parity evidence (PROPOSED.md) left out the two cases over 600 tokens from the padded-batch check because the GPU was shared; single-row parity covers all 58 cases (span logits max abs 4.0e-3, scores 2.5e-6).",
         "Native runtime: Microsoft.ML.OnnxRuntime.Gpu.Linux 1.30.0 needs the CUDA 13 runtime and cuDNN 9 on the loader path; the package does not ship them."
       ],
@@ -1442,10 +1434,10 @@
       "capabilities": {
         "batch": "experimental",
         "streaming": "unsupported",
-        "cancellation": "untested",
+        "cancellation": "experimental",
         "persistence": "unsupported",
         "training": "unsupported",
-        "aot": "untested",
+        "aot": "experimental",
         "extensions_ai": "unsupported",
         "mlnet": "unsupported",
         "audio": "unrecorded",
@@ -1453,10 +1445,11 @@
         "chat_template_owned_text": "unrecorded",
         "chunked_prefill": "unrecorded",
         "classification": "unsupported",
-        "concurrent_calls": "untested",
+        "concurrent_calls": "experimental",
+        "concurrent_calls_unserialized": "unsupported",
         "concurrent_requests": "unrecorded",
         "conversation_state_reuse": "unrecorded",
-        "count_gate_closed": "untested",
+        "count_gate_closed": "experimental",
         "embedding_pretokenized": "unrecorded",
         "embedding_text": "unrecorded",
         "enable_thinking": "unrecorded",
@@ -1469,6 +1462,7 @@
         "image_budget_280": "unrecorded",
         "image_budget_other": "unrecorded",
         "image_decode_gif_bmp_webp": "unrecorded",
+        "image_decode_gif_transparency": "unrecorded",
         "image_decode_png_jpeg": "unrecorded",
         "image_exif_orientation_opt_in": "unrecorded",
         "image_interleaved_text": "unrecorded",
@@ -1479,8 +1473,9 @@
         "input_over_512_tokens": "unsupported",
         "input_over_8192_tokens": "unrecorded",
         "input_up_to_2049_tokens": "unrecorded",
-        "label_descriptions": "untested",
-        "long_context_over_1666_tokens": "unrecorded",
+        "label_descriptions": "experimental",
+        "long_context_1667_to_8192_tokens": "unrecorded",
+        "long_context_over_8192_tokens": "unrecorded",
         "matryoshka": "unrecorded",
         "max_new_tokens": "unrecorded",
         "mixed_label_sets_in_batch": "unsupported",
@@ -1550,13 +1545,7 @@
           "G6",
           "G7"
         ],
-        "untested_capabilities": [
-          "aot",
-          "cancellation",
-          "concurrent_calls",
-          "count_gate_closed",
-          "label_descriptions"
-        ]
+        "untested_capabilities": []
       }
     },
     {
@@ -1649,6 +1638,7 @@
         "chunked_prefill": "unrecorded",
         "classification": "unrecorded",
         "concurrent_calls": "unrecorded",
+        "concurrent_calls_unserialized": "unrecorded",
         "concurrent_requests": "unrecorded",
         "conversation_state_reuse": "unrecorded",
         "count_gate_closed": "unrecorded",
@@ -1664,6 +1654,7 @@
         "image_budget_280": "unrecorded",
         "image_budget_other": "unrecorded",
         "image_decode_gif_bmp_webp": "unrecorded",
+        "image_decode_gif_transparency": "unrecorded",
         "image_decode_png_jpeg": "unrecorded",
         "image_exif_orientation_opt_in": "unrecorded",
         "image_interleaved_text": "unrecorded",
@@ -1675,7 +1666,8 @@
         "input_over_8192_tokens": "unrecorded",
         "input_up_to_2049_tokens": "unrecorded",
         "label_descriptions": "unrecorded",
-        "long_context_over_1666_tokens": "unrecorded",
+        "long_context_1667_to_8192_tokens": "unrecorded",
+        "long_context_over_8192_tokens": "unrecorded",
         "matryoshka": "unrecorded",
         "max_new_tokens": "unrecorded",
         "mixed_label_sets_in_batch": "unrecorded",
@@ -1811,15 +1803,16 @@
         "cancellation": "experimental",
         "persistence": "unsupported",
         "training": "unsupported",
-        "aot": "untested",
-        "extensions_ai": "untested",
-        "mlnet": "untested",
+        "aot": "experimental",
+        "extensions_ai": "experimental",
+        "mlnet": "experimental",
         "audio": "unrecorded",
         "cancellation_inside_a_step": "unrecorded",
         "chat_template_owned_text": "unrecorded",
         "chunked_prefill": "unrecorded",
         "classification": "unrecorded",
         "concurrent_calls": "unrecorded",
+        "concurrent_calls_unserialized": "unrecorded",
         "concurrent_requests": "unrecorded",
         "conversation_state_reuse": "unrecorded",
         "count_gate_closed": "unrecorded",
@@ -1835,6 +1828,7 @@
         "image_budget_280": "unrecorded",
         "image_budget_other": "unrecorded",
         "image_decode_gif_bmp_webp": "unrecorded",
+        "image_decode_gif_transparency": "unrecorded",
         "image_decode_png_jpeg": "unrecorded",
         "image_exif_orientation_opt_in": "unrecorded",
         "image_interleaved_text": "unrecorded",
@@ -1846,7 +1840,8 @@
         "input_over_8192_tokens": "unrecorded",
         "input_up_to_2049_tokens": "unrecorded",
         "label_descriptions": "unrecorded",
-        "long_context_over_1666_tokens": "unrecorded",
+        "long_context_1667_to_8192_tokens": "unrecorded",
+        "long_context_over_8192_tokens": "unrecorded",
         "matryoshka": "unrecorded",
         "max_new_tokens": "unrecorded",
         "mixed_label_sets_in_batch": "unrecorded",
@@ -1916,11 +1911,7 @@
           "G6",
           "G7"
         ],
-        "untested_capabilities": [
-          "aot",
-          "extensions_ai",
-          "mlnet"
-        ]
+        "untested_capabilities": []
       }
     },
     {
@@ -1992,8 +1983,8 @@
         "cancellation": "experimental",
         "persistence": "unsupported",
         "training": "unsupported",
-        "aot": "untested",
-        "extensions_ai": "untested",
+        "aot": "experimental",
+        "extensions_ai": "experimental",
         "mlnet": "unsupported",
         "audio": "unrecorded",
         "cancellation_inside_a_step": "unsupported",
@@ -2001,6 +1992,7 @@
         "chunked_prefill": "experimental",
         "classification": "unrecorded",
         "concurrent_calls": "unrecorded",
+        "concurrent_calls_unserialized": "unrecorded",
         "concurrent_requests": "experimental",
         "conversation_state_reuse": "unsupported",
         "count_gate_closed": "unrecorded",
@@ -2016,6 +2008,7 @@
         "image_budget_280": "unrecorded",
         "image_budget_other": "unrecorded",
         "image_decode_gif_bmp_webp": "unrecorded",
+        "image_decode_gif_transparency": "unrecorded",
         "image_decode_png_jpeg": "unrecorded",
         "image_exif_orientation_opt_in": "unrecorded",
         "image_interleaved_text": "unrecorded",
@@ -2027,7 +2020,8 @@
         "input_over_8192_tokens": "unrecorded",
         "input_up_to_2049_tokens": "unrecorded",
         "label_descriptions": "unrecorded",
-        "long_context_over_1666_tokens": "untested",
+        "long_context_1667_to_8192_tokens": "experimental",
+        "long_context_over_8192_tokens": "unsupported",
         "matryoshka": "unrecorded",
         "max_new_tokens": "experimental",
         "mixed_label_sets_in_batch": "unrecorded",
@@ -2097,11 +2091,7 @@
           "G6",
           "G7"
         ],
-        "untested_capabilities": [
-          "aot",
-          "extensions_ai",
-          "long_context_over_1666_tokens"
-        ]
+        "untested_capabilities": []
       }
     },
     {
@@ -2183,6 +2173,7 @@
         "chunked_prefill": "experimental",
         "classification": "unrecorded",
         "concurrent_calls": "unrecorded",
+        "concurrent_calls_unserialized": "unrecorded",
         "concurrent_requests": "experimental",
         "conversation_state_reuse": "unsupported",
         "count_gate_closed": "unrecorded",
@@ -2198,6 +2189,7 @@
         "image_budget_280": "unrecorded",
         "image_budget_other": "unrecorded",
         "image_decode_gif_bmp_webp": "unrecorded",
+        "image_decode_gif_transparency": "unrecorded",
         "image_decode_png_jpeg": "unrecorded",
         "image_exif_orientation_opt_in": "unrecorded",
         "image_interleaved_text": "unrecorded",
@@ -2209,7 +2201,8 @@
         "input_over_8192_tokens": "unrecorded",
         "input_up_to_2049_tokens": "unrecorded",
         "label_descriptions": "unrecorded",
-        "long_context_over_1666_tokens": "untested",
+        "long_context_1667_to_8192_tokens": "experimental",
+        "long_context_over_8192_tokens": "unsupported",
         "matryoshka": "unrecorded",
         "max_new_tokens": "experimental",
         "mixed_label_sets_in_batch": "unrecorded",
@@ -2279,9 +2272,7 @@
           "G6",
           "G7"
         ],
-        "untested_capabilities": [
-          "long_context_over_1666_tokens"
-        ]
+        "untested_capabilities": []
       }
     },
     {
@@ -2353,7 +2344,7 @@
         "cancellation": "experimental",
         "persistence": "unsupported",
         "training": "unsupported",
-        "aot": "untested",
+        "aot": "experimental",
         "extensions_ai": "experimental",
         "mlnet": "unsupported",
         "audio": "unrecorded",
@@ -2362,6 +2353,7 @@
         "chunked_prefill": "experimental",
         "classification": "unrecorded",
         "concurrent_calls": "unrecorded",
+        "concurrent_calls_unserialized": "unrecorded",
         "concurrent_requests": "experimental",
         "conversation_state_reuse": "unsupported",
         "count_gate_closed": "unrecorded",
@@ -2377,6 +2369,7 @@
         "image_budget_280": "unrecorded",
         "image_budget_other": "unrecorded",
         "image_decode_gif_bmp_webp": "unrecorded",
+        "image_decode_gif_transparency": "unrecorded",
         "image_decode_png_jpeg": "unrecorded",
         "image_exif_orientation_opt_in": "unrecorded",
         "image_interleaved_text": "unrecorded",
@@ -2388,7 +2381,8 @@
         "input_over_8192_tokens": "unrecorded",
         "input_up_to_2049_tokens": "unrecorded",
         "label_descriptions": "unrecorded",
-        "long_context_over_1666_tokens": "untested",
+        "long_context_1667_to_8192_tokens": "experimental",
+        "long_context_over_8192_tokens": "unsupported",
         "matryoshka": "unrecorded",
         "max_new_tokens": "experimental",
         "mixed_label_sets_in_batch": "unrecorded",
@@ -2458,10 +2452,7 @@
           "G6",
           "G7"
         ],
-        "untested_capabilities": [
-          "aot",
-          "long_context_over_1666_tokens"
-        ]
+        "untested_capabilities": []
       }
     }
   ]

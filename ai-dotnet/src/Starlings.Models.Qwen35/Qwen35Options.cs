@@ -126,8 +126,14 @@ public sealed record Qwen35ModelInfo
     /// <summary>Provider options applied at load.</summary>
     public required IReadOnlyDictionary<string, string> ProviderOptions { get; init; }
 
-    /// <summary>Context length (prompt plus completion tokens).</summary>
+    /// <summary>
+    /// Longest accepted sequence (prompt plus completion tokens): the smaller of the model's context length and
+    /// <see cref="Qwen35ChatModel.MaxContextTokens"/>.
+    /// </summary>
     public required int ContextLength { get; init; }
+
+    /// <summary>The model's own context length (<c>genai_config.json</c>, 262,144); longer than the accepted <see cref="ContextLength"/>.</summary>
+    public int ModelContextLength { get; init; }
 
     /// <summary>Stop token ids applied to every request.</summary>
     public required ImmutableArray<int> StopTokenIds { get; init; }

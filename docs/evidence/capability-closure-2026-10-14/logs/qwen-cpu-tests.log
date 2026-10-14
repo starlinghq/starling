@@ -1,0 +1,38 @@
+xUnit.net v3 In-Process Runner v4.0.1+8ed8aa354c (64-bit .NET 10.0.12)
+  Discovering: Starlings.Models.Qwen35.Tests
+  Discovered:  Starlings.Models.Qwen35.Tests
+  Starting:    Starlings.Models.Qwen35.Tests
+    Starlings.Models.Qwen35.Tests.HostingDownloadTests.Fp16xDownloadsFromTheHostingRepositoryAndVerifies [SKIP]
+      Set STARLING_NETWORK_TESTS=1 to run real downloads.
+    Starlings.Models.Qwen35.Tests.OperationalTests.MalformedConfigurationOrMissingGraphFailsTyped [OUTPUT] truncated config: /tmp/starlings-qwen35-g4-naiWkk/not-json/genai_config.json is not a valid genai_config.json: Expected end of string, but instead reached end of data. LineNumber: 18 | BytePositionInLine: 21.
+    Starlings.Models.Qwen35.Tests.OperationalTests.MalformedConfigurationOrMissingGraphFailsTyped [OUTPUT] missing graph: ONNX Runtime GenAI could not load /tmp/starlings-qwen35-g4-naiWkk/no-graph: Load model from /tmp/starlings-qwen35-g4-naiWkk/no-graph/model.onnx failed:Load model /tmp/starlings-qwen35-g4-naiWkk/no-graph/model.onnx failed. File doesn't exist
+    Starlings.Models.Qwen35.Tests.OperationalTests.MalformedConfigurationOrMissingGraphFailsTyped [OUTPUT] bad tokenizer: Starlings.Tokenizers.TokenizerFormatException: tokenizer.json: missing field 'version'.
+    Starlings.Models.Qwen35.Tests.OperationalTests.TimedOutRequestsReportCancellationLatencyThenReuse [OUTPUT] deadline 400 ms: threw after 993 ms, cancellation latency 576.91 ms
+    Starlings.Models.Qwen35.Tests.OperationalTests.TimedOutRequestsReportCancellationLatencyThenReuse [OUTPUT] deadline 400 ms: threw after 771 ms, cancellation latency 367.33 ms
+    Starlings.Models.Qwen35.Tests.OperationalTests.TimedOutRequestsReportCancellationLatencyThenReuse [OUTPUT] deadline 400 ms: threw after 885 ms, cancellation latency 481.42 ms
+    Starlings.Models.Qwen35.Tests.OperationalTests.SaturatedRequestsAllCompleteWithTheirSingleRequestIds [OUTPUT] 12 callers x 1 calls on 12 logical CPUs: wall 8703 ms; call latency p50 8282.3 ms, p95 8673.9 ms, max 8673.9 ms; every call completed with its single-call result (no queue, no admission limit)
+    Starlings.Models.Qwen35.Tests.OperationalTests.MalformedLocksAndSnapshotsAreRejected [OUTPUT] truncated: Invalid model asset lock: Expected start of a property name or value, but instead reached end of data. LineNumber: 21 | BytePositionInLine: 3.
+    Starlings.Models.Qwen35.Tests.OperationalTests.MalformedLocksAndSnapshotsAreRejected [OUTPUT] branch revision: Invalid model asset lock: revision must be a full 40-character lowercase commit SHA, not a branch or tag name: 'main'. (Parameter 'revision')
+    Starlings.Models.Qwen35.Tests.OperationalTests.MalformedLocksAndSnapshotsAreRejected [OUTPUT] short digest: Invalid model asset lock: sha256 of chat_template.jinja must be 64 lowercase hexadecimal characters. (Parameter 'sha256')
+    Starlings.Models.Qwen35.Tests.OperationalTests.MalformedLocksAndSnapshotsAreRejected [OUTPUT] upper-case digest: Invalid model asset lock: sha256 of chat_template.jinja must be 64 lowercase hexadecimal characters. (Parameter 'sha256')
+    Starlings.Models.Qwen35.Tests.OperationalTests.MalformedLocksAndSnapshotsAreRejected [OUTPUT] negative size: Invalid model asset lock: size ('-1') must be a non-negative value. (Parameter 'size')
+    Starlings.Models.Qwen35.Tests.OperationalTests.MalformedLocksAndSnapshotsAreRejected [OUTPUT] Actual value was -1.
+    Starlings.Models.Qwen35.Tests.OperationalTests.MalformedLocksAndSnapshotsAreRejected [OUTPUT] escaping path: Invalid model asset lock: File path has an empty, '.', '..' or control-character segment: '../chat_template.jinja'. (Parameter 'path')
+    Starlings.Models.Qwen35.Tests.OperationalTests.MalformedLocksAndSnapshotsAreRejected [OUTPUT] unknown schema: Unsupported lock schema_version 99; expected 1 or 2.
+    Starlings.Models.Qwen35.Tests.OperationalTests.MalformedLocksAndSnapshotsAreRejected [OUTPUT] no files: Invalid model asset lock: A lock needs at least one file. (Parameter 'files')
+    Starlings.Models.Qwen35.Tests.OperationalTests.MalformedLocksAndSnapshotsAreRejected [OUTPUT] duplicate file: Invalid model asset lock: Duplicate file path in lock: chat_template.jinja. (Parameter 'files')
+    Starlings.Models.Qwen35.Tests.OperationalTests.MalformedLocksAndSnapshotsAreRejected [OUTPUT] truncated: Invalid model asset lock: Expected start of a property name or value, but instead reached end of data. LineNumber: 21 | BytePositionInLine: 3.
+    Starlings.Models.Qwen35.Tests.OperationalTests.MalformedLocksAndSnapshotsAreRejected [OUTPUT] branch revision: Invalid model asset lock: revision must be a full 40-character lowercase commit SHA, not a branch or tag name: 'main'. (Parameter 'revision')
+    Starlings.Models.Qwen35.Tests.OperationalTests.MalformedLocksAndSnapshotsAreRejected [OUTPUT] short digest: Invalid model asset lock: sha256 of chat_template.jinja must be 64 lowercase hexadecimal characters. (Parameter 'sha256')
+    Starlings.Models.Qwen35.Tests.OperationalTests.MalformedLocksAndSnapshotsAreRejected [OUTPUT] upper-case digest: Invalid model asset lock: sha256 of chat_template.jinja must be 64 lowercase hexadecimal characters. (Parameter 'sha256')
+    Starlings.Models.Qwen35.Tests.OperationalTests.MalformedLocksAndSnapshotsAreRejected [OUTPUT] negative size: Invalid model asset lock: size ('-1') must be a non-negative value. (Parameter 'size')
+    Starlings.Models.Qwen35.Tests.OperationalTests.MalformedLocksAndSnapshotsAreRejected [OUTPUT] Actual value was -1.
+    Starlings.Models.Qwen35.Tests.OperationalTests.MalformedLocksAndSnapshotsAreRejected [OUTPUT] escaping path: Invalid model asset lock: File path has an empty, '.', '..' or control-character segment: '../chat_template.jinja'. (Parameter 'path')
+    Starlings.Models.Qwen35.Tests.OperationalTests.MalformedLocksAndSnapshotsAreRejected [OUTPUT] unknown schema: Unsupported lock schema_version 99; expected 1 or 2.
+    Starlings.Models.Qwen35.Tests.OperationalTests.MalformedLocksAndSnapshotsAreRejected [OUTPUT] no files: Invalid model asset lock: A lock needs at least one file. (Parameter 'files')
+    Starlings.Models.Qwen35.Tests.OperationalTests.MalformedLocksAndSnapshotsAreRejected [OUTPUT] duplicate file: Invalid model asset lock: Duplicate file path in lock: chat_template.jinja. (Parameter 'files')
+    Starlings.Models.Qwen35.Tests.OperationalTests.UnsupportedProvidersAreRejectedNotIgnored [OUTPUT] GenAIProviderUnavailableException: The CUDA execution provider could not be used (Cuda interface not available: Failed to load library: <repo>/ai-dotnet/tests/Starlings.Models.Qwen35.Tests/bin/Release/net10.0/runtimes/linux-x64/native/libonnxruntime-genai-cuda.so: cannot open shared object file: No such file or directory). It needs Microsoft.ML.OnnxRuntimeGenAI.Cuda 0.17.1 (not the CPU package) and the CUDA 13 runtime and cuBLAS on the loader path. There is no fallback to the CPU provider.
+    Starlings.Models.Qwen35.Tests.DisposalTests.DisposalDuringAnInFlightRequestLetsItFinishThenRejectsNewOnes [OUTPUT] dispose returned in 0.0 ms; worker finished 1067 ms after dispose; 1 calls completed; ended with ObjectDisposedException: True
+  Finished:    Starlings.Models.Qwen35.Tests (ID = 'd72bbee597dbe45189dd2dfdab63dd0579696a6e5b32fda24257b186783c395f')
+=== TEST EXECUTION SUMMARY ===
+   Starlings.Models.Qwen35.Tests  Total: 376, Errors: 0, Failed: 0, Skipped: 1, Not Run: 0, Time: 360.640s

@@ -11,7 +11,7 @@
 # widths for the managed pooling and normalization).
 #
 #   tools/aot-check-ai.sh --models <cache> [--feed <dir>] [--targets a,b] [--download] [--out <dir>]
-#                         [--run-unsupported]
+#                         [--run-unsupported] [--cuda]
 #
 #   --models <cache>  model cache in the Starlings layout (<repo>/<commit>/<files>); read only. Targets whose files
 #                     are missing are skipped with a note.
@@ -21,6 +21,12 @@
 #   --download        the acquisition target also downloads e5's tokenizer.json from the public Hub (no token) into an
 #                     empty directory, under JIT and under AOT.
 #   --out <dir>       where the per-target logs, warnings and results go (default <repo>/artifacts/aot-check-ai).
+#   --cuda            build the consumers against the CUDA natives (Microsoft.ML.OnnxRuntime.Gpu.Linux 1.30.0;
+#                     Microsoft.ML.OnnxRuntimeGenAI.Cuda 0.17.1) and run every session on CUDA device 0 (TF32 off).
+#                     Both the JIT and the AOT run use the GPU, so JIT vs AOT compares like with like. Needs the CUDA 13
+#                     runtime and cuDNN 9 on LD_LIBRARY_PATH and an explicit CUDA_VISIBLE_DEVICES; the qwen35 targets
+#                     then also run the fp16x variant. Default targets: those with a CUDA profile (no acquisition,
+#                     runtime or ML.NET targets).
 #   --run-unsupported also run the native binaries of the targets recorded as AOT unsupported, to revisit their
 #                     status. Off by default: those binaries abort (SIGABRT) by design, which leaves a core dump and
 #                     a crash notification on every run. When on, the run has core dumps disabled (ulimit -c 0).
@@ -37,6 +43,8 @@ feed=""
 targets=("${all_targets[@]}")
 download=0
 run_unsupported=0
+provider=cpu
+targets_given=0
 out="$root/artifacts/aot-check-ai"
 float_bound="1e-5"
 # Targets whose AOT status is unsupported, with the reason recorded in docs/evidence/aot/README.md: a failure there is
@@ -46,7 +54,8 @@ while [[ $# -gt 0 ]]; do
     case "$1" in
         --models) models="$(cd "$2" && pwd)"; shift 2 ;;
         --feed) feed="$(cd "$2" && pwd)"; shift 2 ;;
-        --targets) IFS=, read -r -a targets <<<"$2"; shift 2 ;;
+        --targets) IFS=, read -r -a targets <<<"$2"; targets_given=1; shift 2 ;;
+        --cuda) provider=cuda; shift ;;
         --download) download=1; shift ;;
         --run-unsupported) run_unsupported=1; shift ;;
         --out) mkdir -p "$2"; out="$(cd "$2" && pwd)"; shift 2 ;;
@@ -55,6 +64,11 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 [[ -n "$models" ]] || { echo "--models <cache> is required" >&2; exit 2; }
+if [[ "$provider" == cuda ]]; then
+    [[ "$targets_given" == 1 ]] || targets=(e5 e5-meai gliner2 eg2 eg2-meai qwen35 qwen35-meai)
+    [[ -n "${CUDA_VISIBLE_DEVICES:-}" ]] || { echo "--cuda needs an explicit CUDA_VISIBLE_DEVICES" >&2; exit 2; }
+    [[ "$out" != "$root/artifacts/aot-check-ai" ]] || out="$root/artifacts/aot-check-ai-cuda"
+fi
 
 export DOTNET_NOLOGO=1 DOTNET_CLI_TELEMETRY_OPTOUT=1 DOTNET_SKIP_FIRST_TIME_EXPERIENCE=1
 unset STARLING_MODELS HF_TOKEN
@@ -82,6 +96,7 @@ echo "dotnet:  $(cd "$work" && dotnet --version), RID $rid"
 echo "models:  $models"
 echo "offline: $offline_how"
 echo "linker:  $(command -v clang || command -v gcc || echo none)"
+echo "provider: $provider${CUDA_VISIBLE_DEVICES:+ (CUDA_VISIBLE_DEVICES=$CUDA_VISIBLE_DEVICES)}"
 
 if [[ -z "$feed" ]]; then
     step "1. Pack the committed HEAD from a clean clone"
@@ -113,7 +128,9 @@ needs() {
         gliner2) echo "fastino/gliner2-base-v1/f9634218e53580c56edf0de97ca1a7d3f1c2354e/onnx/gliner2-entities-fp32.onnx" ;;
         eg2) echo "google/embeddinggemma-2/914f7f89142e33e77833254d9c9b90c3cef7303b/onnx/embeddinggemma2-text-fp32.onnx google/embeddinggemma-2/914f7f89142e33e77833254d9c9b90c3cef7303b/onnx/embeddinggemma2-vision-fp32.onnx google/embeddinggemma-2/914f7f89142e33e77833254d9c9b90c3cef7303b/onnx/embeddinggemma2-text-mm-fp32.onnx" ;;
         eg2-meai|eg2-mlnet) echo "google/embeddinggemma-2/914f7f89142e33e77833254d9c9b90c3cef7303b/onnx/embeddinggemma2-text-fp32.onnx" ;;
-        qwen35|qwen35-meai) echo "Qwen/Qwen3.5-0.8B/2fc06364715b967f1860aea9cf38778875588b17/ortgenai-fp32x/model.onnx.data" ;;
+        qwen35|qwen35-meai)
+            echo "Qwen/Qwen3.5-0.8B/2fc06364715b967f1860aea9cf38778875588b17/ortgenai-fp32x/model.onnx.data"
+            if [[ "$provider" == cuda ]]; then echo "Qwen/Qwen3.5-0.8B/2fc06364715b967f1860aea9cf38778875588b17/ortgenai-fp16x/model.onnx.data"; fi ;;
         *) return 1 ;;
     esac
 }
@@ -167,7 +184,7 @@ for t in "${targets[@]}"; do
     app="$apps/$t"
     mkdir -p "$app"
     cp "$consumer_src/Program.cs" "$app/"
-    sed -e "s/@VERSION@/$version/g" -e "s/@TARGET@/$t/g" "$consumer_src/AotConsumer.csproj.in" >"$app/AotConsumer.csproj"
+    sed -e "s/@VERSION@/$version/g" -e "s/@TARGET@/$t/g" -e "s/@PROVIDER@/$provider/g" "$consumer_src/AotConsumer.csproj.in" >"$app/AotConsumer.csproj"
     log="$out/$t"
     mkdir -p "$log"
     (cd "$app" && dotnet restore >"$log/restore.log" 2>&1) || { cat "$log/restore.log"; fail "$t: restore failed"; }

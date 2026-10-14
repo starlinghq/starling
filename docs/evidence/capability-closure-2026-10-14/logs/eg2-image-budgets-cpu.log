@@ -1,0 +1,12 @@
+xUnit.net v3 In-Process Runner v4.0.1+8ed8aa354c (64-bit .NET 10.0.12)
+  Discovering: Starlings.Models.EmbeddingGemma2.Tests
+  Discovered:  Starlings.Models.EmbeddingGemma2.Tests
+  Starting:    Starlings.Models.EmbeddingGemma2.Tests
+    Starlings.Models.EmbeddingGemma2.Tests.ImageParityTests.OtherBudgetsMatchTheReference [OUTPUT] budget 70: 6 images, preprocessing and ids exact; embeddings vs reference: max abs 1.42E-006, mean 1.04E-007, p99 5.91E-007, min cosine 0.999999999962052 (worst aspect-wide-2000x40@70)
+    Starlings.Models.EmbeddingGemma2.Tests.ImageParityTests.OtherBudgetsMatchTheReference [OUTPUT] budget 140: 6 images, preprocessing and ids exact; embeddings vs reference: max abs 5.07E-007, mean 6.70E-008, p99 2.57E-007, min cosine 0.999999999993614 (worst photo-camera@140)
+    Starlings.Models.EmbeddingGemma2.Tests.ImageParityTests.OtherBudgetsMatchTheReference [OUTPUT] budget 560: 6 images, preprocessing and ids exact; embeddings vs reference: max abs 9.20E-006, mean 3.88E-007, p99 4.97E-006, min cosine 0.999999997611406 (worst photo-camera@560)
+    Starlings.Models.EmbeddingGemma2.Tests.ImageParityTests.OtherBudgetsMatchTheReference [OUTPUT] budget 1120: 6 images, preprocessing and ids exact; embeddings vs reference: max abs 1.93E-006, mean 1.28E-007, p99 9.64E-007, min cosine 0.999999999899745 (worst photo-astronaut@1120)
+    Starlings.Models.EmbeddingGemma2.Tests.ImageParityTests.OtherBudgetsMatchTheReference [OUTPUT] all budgets: max abs 9.20E-006, mean 1.72E-007, p99 2.81E-006, min cosine 0.999999997611406 (worst photo-camera@560); bounds embedding_max_abs 1.0E-005, min_cosine 0.9999995 (model-pipeline/protected/embeddinggemma-2/image-fp32-cpu/tolerances.yaml)
+  Finished:    Starlings.Models.EmbeddingGemma2.Tests (ID = '0a4ffd112ce0665a232fe2e2dbfddb55468ae8687c7aac28bdd6a1c4478ad73d')
+=== TEST EXECUTION SUMMARY ===
+   Starlings.Models.EmbeddingGemma2.Tests  Total: 1, Errors: 0, Failed: 0, Skipped: 0, Not Run: 0, Time: 507.960s

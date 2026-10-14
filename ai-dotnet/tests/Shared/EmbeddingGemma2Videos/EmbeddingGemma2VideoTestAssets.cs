@@ -276,9 +276,28 @@ internal static class EmbeddingGemma2VideoTestAssets
         return Convert.ToHexStringLower(hash.GetHashAndReset());
     }
 
-    private static List<VideoManifestEntry> LoadManifest()
+    /// <summary>Directory of the edge-case videos of <c>make_eg2_edge_videos.py</c> (not in Git).</summary>
+    public const string EdgeVideosEnvironmentVariable = "STARLING_EMBEDDINGGEMMA2_EDGE_VIDEOS";
+
+    /// <summary>
+    /// The edge-case videos (rotation -90 and 180, HDR PQ and HLG, interlaced, variable frame rate) and torchcodec's
+    /// frames of them on FFmpeg 8 (proposed <c>video-edge/</c>; the protected copy when it exists).
+    /// </summary>
+    public static (IReadOnlyList<VideoManifestEntry> Videos, IReadOnlyDictionary<string, VideoFrames> Frames, string Directory) LoadEdge()
     {
-        using var doc = JsonDocument.Parse(File.ReadAllText(Path.Combine(FixtureDirectory, "videos.json")));
+        string accepted = Path.Combine(EmbeddingGemma2TestAssets.ProtectedRoot, "video-edge");
+        string dir = Directory.Exists(accepted) ? accepted : Path.Combine(EmbeddingGemma2TestAssets.RepositoryRoot, "model-pipeline", "proposed", "embeddinggemma-2", "video-edge");
+        string videos = Environment.GetEnvironmentVariable(EdgeVideosEnvironmentVariable) is { Length: > 0 } env
+            ? env
+            : Path.Combine(EmbeddingGemma2TestAssets.ModelsRoot, "embeddinggemma-2-edge-videos");
+        return (LoadManifest(Path.Combine(dir, "edge-videos.json")), LoadFrames(Path.Combine(dir, "edge-video-frames.json")), videos);
+    }
+
+    private static List<VideoManifestEntry> LoadManifest() => LoadManifest(Path.Combine(FixtureDirectory, "videos.json"));
+
+    private static List<VideoManifestEntry> LoadManifest(string path)
+    {
+        using var doc = JsonDocument.Parse(File.ReadAllText(path));
         return doc.RootElement.GetProperty("videos").EnumerateArray().Select(v => new VideoManifestEntry(
             v.GetProperty("id").GetString()!,
             v.GetProperty("file").GetString()!,
@@ -289,9 +308,11 @@ internal static class EmbeddingGemma2VideoTestAssets
             v.GetProperty("scene").GetString()!)).ToList();
     }
 
-    private static Dictionary<string, VideoFrames> LoadFrames()
+    private static Dictionary<string, VideoFrames> LoadFrames() => LoadFrames(Path.Combine(FixtureDirectory, "video-frames.json"));
+
+    private static Dictionary<string, VideoFrames> LoadFrames(string path)
     {
-        using var doc = JsonDocument.Parse(File.ReadAllText(Path.Combine(FixtureDirectory, "video-frames.json")));
+        using var doc = JsonDocument.Parse(File.ReadAllText(path));
         var result = new Dictionary<string, VideoFrames>(StringComparer.Ordinal);
         foreach (var p in doc.RootElement.EnumerateObject())
         {

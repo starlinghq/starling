@@ -139,9 +139,15 @@ capabilities:
   cancellation: experimental
   persistence: unsupported
   training: unsupported
-  aot: untested
-  extensions_ai: untested  # the P-011 adapter is provider-agnostic but has not been run over a CUDA session
-  mlnet: untested  # the P-012 transform is provider-agnostic but has not been run over a CUDA session
+  # Capability closure 2026-10-14 (docs/evidence/capability-closure-2026-10-14/README.md):
+  # aot: Native AOT publish on Linux x64 against Microsoft.ML.OnnxRuntime.Gpu.Linux 1.30.0, no trim/AOT warnings,
+  # typed API and Extensions.AI generator on CUDA equal to JIT on CUDA bit for bit (tools/aot-check-ai.sh --cuda).
+  # The ML.NET adapter does not run under Native AOT (Microsoft.ML uses Reflection.Emit).
+  aot: experimental
+  # extensions_ai and mlnet: E5.Tests.Cuda CudaAdapterTests, the generator and the transform over a CUDA session on the
+  # 46 protected texts, within this profile's protected tolerance (max abs 1.7e-7).
+  extensions_ai: experimental
+  mlnet: experimental
 
 compatibility:
   # Linux x64 CUDA: Python and C# ORT runs on one RTX 4060 Ti (sm_89), driver 610.57.04, CUDA 13.0 runtime,

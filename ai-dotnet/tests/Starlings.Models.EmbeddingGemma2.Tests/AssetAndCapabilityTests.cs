@@ -136,7 +136,9 @@ public class AssetAndCapabilityTests
         Assert.Equal(EmbeddingGemma2CapabilityStatus.Experimental, all["embedding.pretokenized.cuda"]);
         Assert.Equal(EmbeddingGemma2CapabilityStatus.Experimental, all["embedding.text"]);
         Assert.Equal(EmbeddingGemma2CapabilityStatus.Experimental, all["tokenizer.owned"]);
-        Assert.Equal(EmbeddingGemma2CapabilityStatus.Untested, all["input.2050_to_8192_tokens"]);
+        Assert.Equal(EmbeddingGemma2CapabilityStatus.Experimental, all["input.2050_to_8192_tokens"]);
+        Assert.Equal(EmbeddingGemma2CapabilityStatus.Experimental, all["prompts.task"]);
+        Assert.Equal(EmbeddingGemma2CapabilityStatus.Unsupported, all["image.decode.gif_transparency"]);
         foreach (var key in new[] { "audio", "video.frames_without_timing", "video.timestamps", "video.over_8192_tokens", "video.decode.ffmpeg9", "mlnet.video_column", "media_placeholder_tokens", "image.16_bit_per_channel", "image.over_8192_tokens", "mlnet.image_column", "input.over_8192_tokens", "truncation", "tf32", "fp16", "matryoshka.other_sizes", "prompt_insertion.implicit" })
         {
             Assert.Equal(EmbeddingGemma2CapabilityStatus.Unsupported, all[key]);
@@ -152,7 +154,7 @@ public class AssetAndCapabilityTests
         Assert.Contains("  input_over_8192_tokens: unsupported", cpu, StringComparison.Ordinal);
         Assert.Contains("  image: unsupported", cpu, StringComparison.Ordinal); // the text profile; images are the image-fp32-* profiles
         Assert.Equal(EmbeddingGemma2CapabilityStatus.Experimental, all["image"]);
-        Assert.Equal(EmbeddingGemma2CapabilityStatus.Untested, all["image.budget_other"]);
+        Assert.Equal(EmbeddingGemma2CapabilityStatus.Experimental, all["image.budget_other"]);
         string image = Manifest("image-fp32-cpu");
         Assert.Contains("maturity: experimental", image, StringComparison.Ordinal);
         Assert.Contains("  image: experimental", image, StringComparison.Ordinal);
@@ -162,7 +164,7 @@ public class AssetAndCapabilityTests
             Assert.Equal(EmbeddingGemma2CapabilityStatus.Experimental, all[key]);
         }
 
-        Assert.Equal(EmbeddingGemma2CapabilityStatus.Untested, all["video.variable_frame_rate"]);
+        Assert.Equal(EmbeddingGemma2CapabilityStatus.Experimental, all["video.variable_frame_rate"]);
         string video = Manifest("video-fp32-cpu");
         Assert.Contains("maturity: experimental", video, StringComparison.Ordinal);
         Assert.Contains("  video: experimental", video, StringComparison.Ordinal);

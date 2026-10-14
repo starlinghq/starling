@@ -204,8 +204,22 @@ public sealed record EmbeddingGemma2Row(string Id, string Prompt, string PromptT
 /// <summary>Read-only views of the EmbeddingGemma 2 fixtures.</summary>
 internal static class EmbeddingGemma2Fixtures
 {
-    public static IReadOnlyList<EmbeddingGemma2Row> LoadRows() =>
-        EmbeddingGemma2TestAssets.ReadJsonLines(Path.Combine(EmbeddingGemma2TestAssets.FixtureDirectory, "embeddings.jsonl"))
+    public static IReadOnlyList<EmbeddingGemma2Row> LoadRows() => LoadRows(Path.Combine(EmbeddingGemma2TestAssets.FixtureDirectory, "embeddings.jsonl"));
+
+    /// <summary>
+    /// The task-prompt rows (capability <c>prompts_task</c>): four public texts x the 20 prompt names of
+    /// <c>config_sentence_transformers.json</c>, from <c>run_embeddinggemma2_task_prompts.py</c>. Reads the protected copy
+    /// when it exists and the proposal under <c>model-pipeline/proposed/</c> otherwise.
+    /// </summary>
+    public static IReadOnlyList<EmbeddingGemma2Row> LoadTaskPromptRows()
+    {
+        string accepted = Path.Combine(EmbeddingGemma2TestAssets.ProtectedRoot, "task-prompts", "task-prompt-embeddings.jsonl");
+        string proposed = Path.Combine(EmbeddingGemma2TestAssets.RepositoryRoot, "model-pipeline", "proposed", "embeddinggemma-2", "task-prompts", "task-prompt-embeddings.jsonl");
+        return LoadRows(File.Exists(accepted) ? accepted : proposed);
+    }
+
+    private static List<EmbeddingGemma2Row> LoadRows(string path) =>
+        EmbeddingGemma2TestAssets.ReadJsonLines(path)
             .Select(r => new EmbeddingGemma2Row(
                 r.GetProperty("id").GetString()!,
                 r.GetProperty("prompt").GetString()!,

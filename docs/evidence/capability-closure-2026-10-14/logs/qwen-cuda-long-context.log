@@ -1,0 +1,7 @@
+xUnit.net v3 In-Process Runner v4.0.1+8ed8aa354c (64-bit .NET 10.0.12)
+  Discovering: Starlings.Models.Qwen35.Tests.Cuda
+  Discovered:  Starlings.Models.Qwen35.Tests.Cuda
+  Starting:    Starlings.Models.Qwen35.Tests.Cuda
+  Finished:    Starlings.Models.Qwen35.Tests.Cuda (ID = '7c0a031751f9926359387e13208beba742b57756149fdc06de11c6f9b5eb7f8f')
+=== TEST EXECUTION SUMMARY ===
+   Starlings.Models.Qwen35.Tests.Cuda  Total: 4, Errors: 0, Failed: 0, Skipped: 0, Not Run: 0, Time: 186.984s

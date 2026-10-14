@@ -1,0 +1,17 @@
+total 565132
+drwxr-xr-x 2 mark mark       320 Oct 14 08:39 .
+drwxr-xr-x 5 mark mark       140 Oct 14 08:39 ..
+-rwxr-xr-x 1 mark mark   3485128 Oct 14 08:39 AotConsumer
+-rwxr-xr-x 1 mark mark   6731664 Oct 14 08:39 AotConsumer.dbg
+-rwxr--r-- 1 mark mark   6991128 Sep 28 16:57 libonnxruntime-genai-cuda.so
+-rwxr--r-- 1 mark mark  37415960 Sep 28 16:57 libonnxruntime-genai.so
+-rwxr--r-- 1 mark mark 272054000 Sep 10 00:47 libonnxruntime_providers_cuda.so
+-rwxr--r-- 1 mark mark     14632 Sep  9 23:47 libonnxruntime_providers_shared.so
+-rwxr--r-- 1 mark mark   1084896 Sep  9 23:48 libonnxruntime_providers_tensorrt.so
+-rwxr--r-- 1 mark mark  32515904 Sep 10 00:52 libonnxruntime.so
+-rwxr--r-- 1 mark mark  16921400 Sep 10 02:46 onnxruntime.dll
+-rwxr--r-- 1 mark mark   4909880 Sep 28 16:59 onnxruntime-genai-cuda.dll
+-rwxr--r-- 1 mark mark   8645944 Sep 28 16:59 onnxruntime-genai.dll
+-rwxr--r-- 1 mark mark 186986848 Sep 10 01:03 onnxruntime_providers_cuda.dll
+-rwxr--r-- 1 mark mark     21856 Sep 10 02:47 onnxruntime_providers_shared.dll
+-rwxr--r-- 1 mark mark    891704 Sep 10 02:47 onnxruntime_providers_tensorrt.dll

@@ -255,6 +255,18 @@ internal static class Gliner2Fixtures
 {
     public static IReadOnlyList<Gliner2Case> LoadCases(string path) => Gliner2TestAssets.ReadJsonLines(path).Select(Parse).ToList();
 
+    /// <summary>
+    /// The capability cases (<c>count_gate_closed</c>, <c>label_descriptions</c>): 22 cases on public-domain text from
+    /// <c>make_gliner2_capability_cases.py</c>, run by the pinned GLiNER2 (<c>run_gliner2_extraction.py</c>). Reads the
+    /// protected copy when it exists and the proposal under <c>model-pipeline/proposed/</c> otherwise.
+    /// </summary>
+    public static IReadOnlyList<Gliner2Case> LoadCapabilityCases()
+    {
+        string accepted = Path.Combine(Gliner2TestAssets.ProtectedRoot, "capability-cases", "extraction.jsonl");
+        string proposed = Path.Combine(Gliner2TestAssets.RepositoryRoot, "model-pipeline", "proposed", "gliner2-base-v1", "capability-cases", "extraction.jsonl");
+        return LoadCases(File.Exists(accepted) ? accepted : proposed);
+    }
+
     private static Gliner2Case Parse(JsonElement r)
     {
         var entities = new List<Gliner2RefEntity>();

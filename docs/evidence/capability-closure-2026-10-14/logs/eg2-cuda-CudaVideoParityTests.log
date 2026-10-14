@@ -1,0 +1,21 @@
+xUnit.net v3 In-Process Runner v4.0.1+8ed8aa354c (64-bit .NET 10.0.12)
+  Discovering: Starlings.Models.EmbeddingGemma2.Tests.Cuda
+  Discovered:  Starlings.Models.EmbeddingGemma2.Tests.Cuda
+  Starting:    Starlings.Models.EmbeddingGemma2.Tests.Cuda
+    Starlings.Models.EmbeddingGemma2.Tests.Cuda.CudaVideoParityTests.SessionsUseCudaWithTf32Disabled [OUTPUT] frames per vision call: 2 (max vision batch patches 2520)
+    Starlings.Models.EmbeddingGemma2.Tests.Cuda.CudaVideoParityTests.SessionsUseCudaWithTf32Disabled [OUTPUT] 6c97f477a82f: CUDAExecutionProvider, CPUExecutionProvider; use_tf32=0; CUDA_VISIBLE_DEVICES=0
+    Starlings.Models.EmbeddingGemma2.Tests.Cuda.CudaVideoParityTests.SessionsUseCudaWithTf32Disabled [OUTPUT] a2c22e072ec2: CUDAExecutionProvider, CPUExecutionProvider; use_tf32=0; CUDA_VISIBLE_DEVICES=0
+    Starlings.Models.EmbeddingGemma2.Tests.Cuda.CudaVideoParityTests.FramesWithoutTimingNeedTheOptIn [OUTPUT] vid-array-no-metadata with AllowVideosWithoutTiming vs reference: max abs 2.38E-007, mean 4.27E-008, p99 1.48E-007, min cosine 0.999999999998873 (worst vid-array-no-metadata); vs the same file sampled at 1 fps: cosine 0.9653 (upstream quirk, documented)
+    Starlings.Models.EmbeddingGemma2.Tests.Cuda.CudaVideoParityTests.QueriesRetrieveVideosOfTheirScene [OUTPUT] q-bars: top h264-1fps-64x48-8s (bars) 0.7780, runner-up h264-bars-640x360-30fps-5s 0.7675
+    Starlings.Models.EmbeddingGemma2.Tests.Cuda.CudaVideoParityTests.QueriesRetrieveVideosOfTheirScene [OUTPUT] q-shapes: top h264-1.9s-320x240-30fps (shapes) 0.7831, runner-up h264-1s-320x240-30fps 0.7769
+    Starlings.Models.EmbeddingGemma2.Tests.Cuda.CudaVideoParityTests.QueriesRetrieveVideosOfTheirScene [OUTPUT] q-text: top h264-portrait-360x640-30fps-4s (text) 0.7420, runner-up h264-rot90-640x360-30fps-3s 0.7246
+    Starlings.Models.EmbeddingGemma2.Tests.Cuda.CudaVideoParityTests.RowsMatchTheReference [OUTPUT] 35 rows (default contract; vid-array-no-metadata needs the opt-in) vs reference: max abs 1.14E-006, mean 5.78E-008, p99 3.84E-007, min cosine 0.999999999955522 (worst mm-caption-then-video)
+    Starlings.Models.EmbeddingGemma2.Tests.Cuda.CudaVideoParityTests.RowsMatchTheReference [OUTPUT]   video and interleaved rows: max abs 1.14E-006, mean 6.52E-008, p99 4.02E-007, min cosine 0.999999999955522 (worst mm-caption-then-video)
+    Starlings.Models.EmbeddingGemma2.Tests.Cuda.CudaVideoParityTests.RowsMatchTheReference [OUTPUT]   text-only rows (released text graph): max abs 7.17E-008, mean 1.29E-008, p99 4.66E-008, min cosine 0.999999999999851 (worst q-bars)
+    Starlings.Models.EmbeddingGemma2.Tests.Cuda.CudaVideoParityTests.RowsMatchTheReference [OUTPUT]   time per row: q-bars 7.3 s, h264-long-320x240-30fps-40s 2.1 s, h264-33s-160x120-30fps 1.9 s, h264-32s-160x120-30fps 1.8 s, mm-image-and-video 0.8 s; total 23 s
+    Starlings.Models.EmbeddingGemma2.Tests.Cuda.CudaVideoParityTests.RowsMatchTheReference [OUTPUT] bounds: embedding_max_abs 1.0E-005, min_cosine 0.9999995 (model-pipeline/protected/embeddinggemma-2/video-fp32-cuda/tolerances.yaml)
+    Starlings.Models.EmbeddingGemma2.Tests.Cuda.CudaVideoParityTests.RowsMatchTheReference [OUTPUT] soft tokens / token embeddings: not compared: set STARLING_EMBEDDINGGEMMA2_VIDEO_TENSORS to the directory of run_embeddinggemma2_video.py --tensors output (<row id>.npz) for the soft-token and token-embedding checks.
+    Starlings.Models.EmbeddingGemma2.Tests.Cuda.CudaVideoParityTests.BatchesMatchSingleRows [OUTPUT] frame calls of 4, text batch 4: 10 rows in batches vs single rows: max abs 1.40E-006, mean 6.93E-008, p99 7.27E-007, min cosine 0.999999999929434 (worst mm-caption-then-video); bound 1.0E-005
+  Finished:    Starlings.Models.EmbeddingGemma2.Tests.Cuda (ID = '69647e303bb3d1016fdaac1e6de4fcd582717f604f5e7fac96813f0aa8ddff3e')
+=== TEST EXECUTION SUMMARY ===
+   Starlings.Models.EmbeddingGemma2.Tests.Cuda  Total: 6, Errors: 0, Failed: 0, Skipped: 0, Not Run: 0, Time: 71.350s

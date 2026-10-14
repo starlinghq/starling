@@ -50,6 +50,8 @@ public sealed class Gliner2EntityExtractor : IDisposable
     /// <summary>Graph output: span logits, float [batch, labels, words, max width].</summary>
     public const string SpanLogitsName = "span_logits";
 
+    private readonly SemaphoreSlim? _runGate;
+
     private static readonly string[] InputNames = [InputIdsName, AttentionMaskName, WordIndexName, SchemaIndexName];
     private static readonly string[] OutputNames = [CountLogitsName, SpanLogitsName];
 
@@ -66,7 +68,15 @@ public sealed class Gliner2EntityExtractor : IDisposable
         _ownsSession = ownsSession;
         _preprocessor = preprocessor;
         _options = options;
+        bool serialize = options.SerializeNativeCalls ?? session.Diagnostics.SessionProviders[0] == OnnxRuntimeInfo.CudaProviderName;
+        _runGate = serialize ? new SemaphoreSlim(1, 1) : null;
     }
+
+    /// <summary>
+    /// True when this extractor runs one graph call at a time (<see cref="Gliner2ExtractorOptions.SerializeNativeCalls"/>;
+    /// the default on CUDA, where concurrent runs on one session returned wrong entities).
+    /// </summary>
+    public bool SerializesNativeCalls => _runGate is not null;
 
     /// <summary>Options in effect.</summary>
     public Gliner2ExtractorOptions Options => _options;
@@ -156,8 +166,8 @@ public sealed class Gliner2EntityExtractor : IDisposable
 
     /// <summary>
     /// As <see cref="ExtractBatch(IReadOnlyList{string}, IReadOnlyList{string}, float?, CancellationToken)"/>, with label
-    /// descriptions (label to description), which GLiNER2 adds to the schema prompt. Untested: one development case
-    /// only (<see cref="Gliner2Capabilities"/>).
+    /// descriptions (label to description), which GLiNER2 adds to the schema prompt. Experimental: inputs, logits and
+    /// entities equal the pinned GLiNER2 on 11 description cases (<see cref="Gliner2Capabilities"/>).
     /// </summary>
     public IReadOnlyList<Gliner2ExtractionResult> ExtractBatch(
         IReadOnlyList<string> texts, IReadOnlyList<string> labels, IReadOnlyDictionary<string, string>? descriptions, float? threshold = null, CancellationToken cancellationToken = default)
@@ -352,6 +362,23 @@ public sealed class Gliner2EntityExtractor : IDisposable
         using var maskValue = OrtValue.CreateTensorValueFromMemory(mask, [count, sequence]);
         using var wordValue = OrtValue.CreateTensorValueFromMemory(wordIndex, [count, words]);
         using var schemaValue = OrtValue.CreateTensorValueFromMemory(schemaIndex, [count, slots]);
+        // Concurrent runs on one CUDA session returned wrong entities in 6 of 8 test runs (four threads, ORT 1.30.0 CUDA
+        // EP); on CUDA the run and the read of its outputs happen one call at a time. A waiting call stays cancellable.
+        _runGate?.Wait(cancellationToken);
+        try
+        {
+            ReadOutputs(inputs, start, count, outputs, words, slots, idsValue, maskValue, wordValue, schemaValue, cancellationToken);
+        }
+        finally
+        {
+            _runGate?.Release();
+        }
+    }
+
+    private void ReadOutputs(
+        IReadOnlyList<Gliner2ModelInput> inputs, int start, int count, Gliner2ModelOutput[] outputs, int words, int slots,
+        OrtValue idsValue, OrtValue maskValue, OrtValue wordValue, OrtValue schemaValue, CancellationToken cancellationToken)
+    {
         using var results = _session.Run(InputNames, [idsValue, maskValue, wordValue, schemaValue], OutputNames, cancellationToken);
 
         var countShape = results[0].GetTensorTypeAndShape().Shape;

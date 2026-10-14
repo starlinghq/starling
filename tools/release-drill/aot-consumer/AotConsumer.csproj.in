@@ -16,7 +16,9 @@
     <!-- Warnings are the evidence here: the script records them, so they must not stop the publish. -->
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
     <AotTarget>@TARGET@</AotTarget>
+    <AotProvider>@PROVIDER@</AotProvider>
     <DefineConstants>$(DefineConstants);AOT_$(AotTarget.ToUpperInvariant().Replace('-', '_'))</DefineConstants>
+    <DefineConstants Condition="'$(AotProvider)' == 'cuda'">$(DefineConstants);AOT_CUDA</DefineConstants>
   </PropertyGroup>
 
   <ItemGroup>
@@ -67,12 +69,18 @@
     <TrimmerRootAssembly Include="AotConsumer" />
   </ItemGroup>
 
-  <!-- The application's choice of natives (CPU), as in the samples. -->
-  <ItemGroup Condition="'$(AotTarget)' != 'acquisition' and !$(AotTarget.StartsWith('qwen35'))">
+  <!-- The application's choice of natives (CPU, as in the samples; or CUDA with -p AotProvider=cuda). -->
+  <ItemGroup Condition="'$(AotTarget)' != 'acquisition' and !$(AotTarget.StartsWith('qwen35')) and '$(AotProvider)' != 'cuda'">
     <PackageReference Include="Microsoft.ML.OnnxRuntime" Version="1.30.0" />
   </ItemGroup>
-  <ItemGroup Condition="$(AotTarget.StartsWith('qwen35'))">
+  <ItemGroup Condition="'$(AotTarget)' != 'acquisition' and !$(AotTarget.StartsWith('qwen35')) and '$(AotProvider)' == 'cuda'">
+    <PackageReference Include="Microsoft.ML.OnnxRuntime.Gpu.Linux" Version="1.30.0" />
+  </ItemGroup>
+  <ItemGroup Condition="$(AotTarget.StartsWith('qwen35')) and '$(AotProvider)' != 'cuda'">
     <PackageReference Include="Microsoft.ML.OnnxRuntimeGenAI" Version="0.17.1" />
+  </ItemGroup>
+  <ItemGroup Condition="$(AotTarget.StartsWith('qwen35')) and '$(AotProvider)' == 'cuda'">
+    <PackageReference Include="Microsoft.ML.OnnxRuntimeGenAI.Cuda" Version="0.17.1" />
   </ItemGroup>
 
 </Project>

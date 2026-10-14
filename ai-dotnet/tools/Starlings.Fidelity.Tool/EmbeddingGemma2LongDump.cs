@@ -232,7 +232,20 @@ internal static class EmbeddingGemma2LongDump
             }
 
             using var batchEmbedder = EmbeddingGemma2MultimodalEmbedder.Create(files, options with { MaxBatchSize = 2, MaxBatchTokens = 2 * 8_192, VerifyModelSha256 = false });
-            var embeddings = batchEmbedder.EmbedBatch(pair.Select(p => inputs[p]).ToList(), EmbeddingGemma2Prompt.None);
+            float[][] embeddings;
+            try
+            {
+                embeddings = batchEmbedder.EmbedBatch(pair.Select(p => inputs[p]).ToList(), EmbeddingGemma2Prompt.None);
+            }
+            catch (Microsoft.ML.OnnxRuntime.OnnxRuntimeException ex) when (device.IsCuda)
+            {
+                // A second embedder's sessions in the same process can exhaust GPU memory on a batch of two long rows;
+                // recorded, not hidden (the compare script reports the batch as not run).
+                batches[name] = new JsonObject { ["rows"] = new JsonArray(pair.Select(p => (JsonNode?)p).ToArray()), ["error"] = ex.Message.Split('\n')[0] };
+                Console.WriteLine($"batch {name}: not run ({ex.Message.Split('\n')[0]})");
+                continue;
+            }
+
             batches[name] = new JsonObject
             {
                 ["rows"] = new JsonArray(pair.Select(p => (JsonNode?)p).ToArray()),

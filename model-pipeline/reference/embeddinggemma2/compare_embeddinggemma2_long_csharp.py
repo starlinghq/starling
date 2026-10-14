@@ -78,6 +78,9 @@ def main() -> int:
         rows[rid] = rec
     batches = {}
     for name, b in run.get("batches", {}).items():
+        if "error" in b:  # the run recorded why the batch did not run (for example GPU memory)
+            batches[name] = {"rows": b["rows"], "not_run": b["error"]}
+            continue
         pairs = zip(b["rows"], b["embeddings"], strict=True)
         diffs = [float(np.abs(np.array(e, np.float64) - singles[rid]).max()) for rid, e in pairs]
         batches[name] = {"rows": b["rows"], "max_abs_vs_single": max(diffs)}
@@ -128,6 +131,9 @@ def markdown(report: dict) -> str:
             f"(`{w['worst_row']}`), min cosine {w['min_cosine']:.12f}"
         )
     for name, b in report["batches"].items():
+        if "not_run" in b:
+            lines.append(f"- Padded batch `{name}` ({', '.join(b['rows'])}): not run ({b['not_run']})")
+            continue
         lines.append(
             f"- Padded batch `{name}` ({', '.join(b['rows'])}) vs C# single rows: max abs {b['max_abs_vs_single']:.2e}"
         )

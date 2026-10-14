@@ -262,6 +262,53 @@ internal static class EmbeddingGemma2ImageParityChecks
         }
     }
 
+    /// <summary>
+    /// Capability <c>image_budget_other</c>: six fixture images alone at 70, 140, 560 and 1,120 soft tokens against the
+    /// proposed sentence-transformers rows (<c>image-budget-embeddings.jsonl</c>): decoded RGB, resized pixels, pixel
+    /// values and positions exact, rendered ids and soft-token counts exact, embeddings within this profile's protected
+    /// image bounds.
+    /// </summary>
+    public static void OtherBudgets(EmbeddingGemma2ImageModelFixture fixture, EmbeddingGemma2Tolerances tolerances, ITestOutputHelper output)
+    {
+        _ = fixture.Embedder; // skips when the model or the image set is absent
+        var files = fixture.Files!;
+        var tokenizer = EmbeddingGemma2TestAssets.Tokenizer;
+        var ct = TestContext.Current.CancellationToken;
+        var rows = EmbeddingGemma2ImageTestAssets.LoadBudgetRows();
+        Assert.Equal(24, rows.Count);
+        var all = new EmbeddingGemma2ErrorStats();
+        foreach (var group in rows.GroupBy(r => r.Budget))
+        {
+            var options = new EmbeddingGemma2MultimodalOptions { Session = fixture.SessionOptions, MaxImageSoftTokens = group.Key, VerifyModelSha256 = false };
+            using var embedder = EmbeddingGemma2MultimodalEmbedder.Create(files, options);
+            var stats = new EmbeddingGemma2ErrorStats();
+            foreach (var (budget, row) in group)
+            {
+                var expected = Assert.Single(row.Images);
+                var decoded = EmbeddingGemma2ImageTestAssets.Decode(expected.Image);
+                Assert.Equal(expected.RgbSha256, EmbeddingGemma2ImageTestAssets.Sha(decoded.Pixels.Span));
+                var p = EmbeddingGemma2ImageProcessor.Preprocess(decoded, budget);
+                Assert.Equal((expected.ResizedWidth, expected.ResizedHeight), (p.ResizedWidth, p.ResizedHeight));
+                Assert.True(expected.ResizedSha256 == EmbeddingGemma2ImageTestAssets.Sha(p.ResizedPixels.Span), $"{row.Id}: resized bytes differ");
+                Assert.True(expected.PixelValuesSha256 == EmbeddingGemma2ImageTestAssets.Sha(p.PixelValues.Span), $"{row.Id}: pixel values differ");
+                Assert.True(expected.PositionsSha256 == EmbeddingGemma2ImageTestAssets.Sha(p.Positions.Span), $"{row.Id}: positions differ");
+                Assert.Equal(expected.SoftTokens, p.SoftTokenCount);
+                var prepared = EmbeddingGemma2MultimodalEmbedder.PrepareCore(tokenizer, options, EmbeddingGemma2MultimodalInput.Create([decoded]), EmbeddingGemma2Prompt.None, 0);
+                Assert.True(row.InputIds.AsSpan().SequenceEqual(prepared.Tokens.InputIds.Span), $"{row.Id}: rendered ids differ");
+                var embedding = embedder.Embed(decoded, ct);
+                stats.Add(row.Id, embedding, row.Embedding);
+                all.Add(row.Id, embedding, row.Embedding);
+            }
+
+            output.WriteLine($"budget {group.Key}: {group.Count()} images, preprocessing and ids exact; embeddings vs reference: {stats}");
+        }
+
+        output.WriteLine($"all budgets: {all}; bounds embedding_max_abs {tolerances.EmbeddingMaxAbs:E1}, min_cosine {tolerances.MinCosine} ({tolerances.Source})");
+        Assert.False(all.NonFinite, "NaN or Inf in embeddings");
+        Assert.True(all.Max <= tolerances.EmbeddingMaxAbs, $"embedding max abs {all.Max:E3} ({all.WorstKey})");
+        Assert.True(all.MinCosine >= tolerances.MinCosine, $"min cosine {all.MinCosine:F12}");
+    }
+
     /// <summary>A Matryoshka size of an image embedding equals the truncated and renormalized 768-dimensional one.</summary>
     public static void Matryoshka(EmbeddingGemma2ImageModelFixture fixture, EmbeddingGemma2Tolerances tolerances)
     {

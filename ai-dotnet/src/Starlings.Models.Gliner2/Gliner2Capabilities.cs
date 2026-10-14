@@ -31,16 +31,20 @@ public static class Gliner2Capabilities
         ["batch"] = Gliner2CapabilityStatus.Experimental,
         ["cancellation"] = Gliner2CapabilityStatus.Experimental,
         ["concurrent_calls"] = Gliner2CapabilityStatus.Experimental,
+        // On CUDA, concurrent runs on one session returned wrong entities (6 of 8 test runs); calls are serialized
+        // there by default (Gliner2ExtractorOptions.SerializeNativeCalls).
+        ["concurrent_calls.cuda.serialized"] = Gliner2CapabilityStatus.Experimental,
+        ["concurrent_calls.cuda.unserialized"] = Gliner2CapabilityStatus.Unsupported,
         ["asset_acquisition.offline"] = Gliner2CapabilityStatus.Experimental,
 
-        // Implemented, without enough evidence: one development case for descriptions; the count gate never closed on
-        // the corpus.
-        ["label_descriptions"] = Gliner2CapabilityStatus.Untested,
-        ["count_gate.closed"] = Gliner2CapabilityStatus.Untested,
+        // Proposed capability cases on public text, run by the pinned GLiNER2: 11 with label descriptions, 12 where the
+        // count gate closes; inputs, gate and entities exact on CPU and CUDA (docs/evidence/capability-closure-2026-10-14/).
+        ["label_descriptions"] = Gliner2CapabilityStatus.Experimental,
+        ["count_gate.closed"] = Gliner2CapabilityStatus.Experimental,
         // The 0.1.0-preview.6 release drill downloaded the graph from the public hosting repository with no token into an
         // empty cache, verified it and ran the sample offline (Linux x64, one machine).
         ["asset_acquisition.download"] = Gliner2CapabilityStatus.Experimental,
-        ["aot"] = Gliner2CapabilityStatus.Untested,
+        ["aot"] = Gliner2CapabilityStatus.Experimental, // Linux x64, CPU and CUDA natives (docs/evidence/aot/, docs/evidence/capability-closure-2026-10-14/)
         ["windows"] = Gliner2CapabilityStatus.Untested,
 
         // Outside the contract.

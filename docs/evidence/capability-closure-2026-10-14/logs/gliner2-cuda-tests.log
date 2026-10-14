@@ -1,0 +1,23 @@
+xUnit.net v3 In-Process Runner v4.0.1+8ed8aa354c (64-bit .NET 10.0.12)
+  Discovering: Starlings.Models.Gliner2.Tests.Cuda
+  Discovered:  Starlings.Models.Gliner2.Tests.Cuda
+  Starting:    Starlings.Models.Gliner2.Tests.Cuda
+    Starlings.Models.Gliner2.Tests.Cuda.CudaParityTests.ParityWithTheReference [OUTPUT] in-contract cases 54; inputs exact 54; entities exact 54, within rules 54 (allowed swaps 0, allowed flips 0)
+    Starlings.Models.Gliner2.Tests.Cuda.CudaParityTests.ParityWithTheReference [OUTPUT] count_logits max abs 4.96E-005, max rel 8.46E-006 (worst repeated-case-variants); span_logits(valid) max abs 2.75E-003, max rel 1.42E-005 (worst combining-accent); scores max abs 2.29E-006, max rel 0.00E+000 (worst nested-org-location); confidence max abs 1.13E-006, max rel 0.00E+000 (worst no-entities)
+    Starlings.Models.Gliner2.Tests.Cuda.CudaParityTests.ParityWithTheReference [OUTPUT] bounds: model-pipeline/protected/gliner2-base-v1/onnx-fp32-cuda/tolerances.yaml
+    Starlings.Models.Gliner2.Tests.Cuda.CudaParityTests.ParityWithTheReference [OUTPUT] padded batches (max 8 rows, grouped by label count), 54 rows vs single runs: span logits max abs 3.05E-003, max rel 1.59E-005 (worst threshold-near-below-patient); entities identical
+    Starlings.Models.Gliner2.Tests.Cuda.CudaParityTests.PlacementPutsMostNodesOnCuda [OUTPUT] CUDAExecutionProvider: 759 nodes
+    Starlings.Models.Gliner2.Tests.Cuda.CudaParityTests.PlacementPutsMostNodesOnCuda [OUTPUT] CPUExecutionProvider: 33 nodes
+    Starlings.Models.Gliner2.Tests.Cuda.CudaParityTests.InputsOver512TokensAreRejected [OUTPUT] long-over-512-tokens: rejected, 566 tokens > 512
+    Starlings.Models.Gliner2.Tests.Cuda.CudaParityTests.InputsOver512TokensAreRejected [OUTPUT] long-over-1024-tokens: rejected, 1329 tokens > 512
+    Starlings.Models.Gliner2.Tests.Cuda.CudaParityTests.CancellationDuringARunThrowsAndTheExtractorStaysUsable [OUTPUT] 4,096 texts cancelled after 50 ms: threw after 53 ms
+    Starlings.Models.Gliner2.Tests.Cuda.CudaParityTests.SessionUsesCudaWithTf32Disabled [OUTPUT] ORT 1.30.0; session CUDAExecutionProvider, CPUExecutionProvider; CUDA_VISIBLE_DEVICES=0
+    Starlings.Models.Gliner2.Tests.Cuda.CudaParityTests.SessionUsesCudaWithTf32Disabled [OUTPUT] provider options: arena_extend_strategy=kNextPowerOfTwo, cudnn_conv1d_pad_to_nc1d=0, cudnn_conv_algo_search=EXHAUSTIVE, cudnn_conv_use_max_workspace=1, device_id=0, do_copy_in_default_stream=1, enable_cudnn=1, fuse_conv_bias=0, gpu_mem_limit=18446744073709551615, has_user_compute_stream=0, prefer_nhwc=0, sdpa_kernel=0, tunable_op_enable=0, tunable_op_max_tuning_duration_ms=0, tunable_op_tuning_enable=0, use_ep_level_unified_stream=0, use_tf32=0, user_compute_stream=0
+    Starlings.Models.Gliner2.Tests.Cuda.CudaParityTests.ConcurrentExtractionGivesTheSequentialResults [OUTPUT] 16 cases x 3 rounds on 4 threads over CUDA: entities equal to the sequential run
+    Starlings.Models.Gliner2.Tests.Cuda.CudaParityTests.CountGateAndDescriptionCasesMatchTheReference [OUTPUT] in-contract cases 22; inputs exact 22; entities exact 22, within rules 22 (allowed swaps 0, allowed flips 0)
+    Starlings.Models.Gliner2.Tests.Cuda.CudaParityTests.CountGateAndDescriptionCasesMatchTheReference [OUTPUT] count_logits max abs 4.20E-005, max rel 3.84E-006 (worst descriptions-citizens); span_logits(valid) max abs 2.93E-003, max rel 2.53E-005 (worst descriptions-falling); scores max abs 6.02E-006, max rel 0.00E+000 (worst descriptions-falling); confidence max abs 6.02E-006, max rel 0.00E+000 (worst descriptions-falling)
+    Starlings.Models.Gliner2.Tests.Cuda.CudaParityTests.CountGateAndDescriptionCasesMatchTheReference [OUTPUT] bounds: model-pipeline/protected/gliner2-base-v1/onnx-fp32-cuda/tolerances.yaml
+    Starlings.Models.Gliner2.Tests.Cuda.CudaParityTests.CountGateAndDescriptionCasesMatchTheReference [OUTPUT] padded batches (max 8 rows, grouped by label count), 22 rows vs single runs: span logits max abs 2.08E-003, max rel 1.71E-005 (worst descriptions-falling); entities identical
+  Finished:    Starlings.Models.Gliner2.Tests.Cuda (ID = '07802b0c16d30966bbca3a5d38edb2e785347b546785e8f30c0edd2bb9f3a947')
+=== TEST EXECUTION SUMMARY ===
+   Starlings.Models.Gliner2.Tests.Cuda  Total: 7, Errors: 0, Failed: 0, Skipped: 0, Not Run: 0, Time: 7.834s

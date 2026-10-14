@@ -38,12 +38,13 @@ Errors are typed (`EmbeddingGemma2FFmpegException` and subclasses), checked when
 | Metadata (`Probe`) | Packet scan of the best video stream: frame count = packets (discard-flagged skipped), duration = max(pts + duration) - min(pts) in seconds, average rate = frames / duration, rotation from the display matrix; width and height after rotation | experimental: equal on the 22 fixture videos |
 | Sampling (`DecodeFile`, `Decode(Stream)`, `Decode(ReadOnlyMemory<byte>)`) | `EmbeddingGemma2VideoSampling.SampleIndices` on that metadata (upstream's 1 fps, at most 32, one frame under 2 s); one sequential decode keeps only the sampled frames | experimental |
 | RGB conversion | Width a multiple of 32 and no rotation: one `sws_scale` to RGB24, flags 0, coefficients of the frame's colourspace (BT.601 when untagged), source range from the frame. Otherwise a filter graph `buffer` -> `copy` (or `format=rgb24,transpose=cclock`, `transpose=clock`, `hflip,vflip`) -> `buffersink` rgb24. FFmpeg's default 10-bit conversion is kept (upstream quirk, for parity) | experimental: every frame of the 22 fixture videos equal to torchcodec's (H.264 High and High 10, HEVC, VP9, AV1; BT.709, full range, untagged; odd 321x179; rotation 90) |
-| Rotation -90 and 180 | torchcodec's transforms, no fixture | untested |
+| Rotation -90 and 180 | torchcodec's transforms | experimental: every frame of the generated edge-case videos equal to torchcodec's (proposed `video-edge`) |
 | All frames (`DecodeAllFrames`), frames by index (`DecodeFramesAt`) | Every frame (with timing: the package then samples like the file), or `get_frames_at` indices | experimental |
 | Streams and memory | Seekable streams through a custom AVIO context; equal to the file on the fixtures | experimental |
 | FFmpeg 9 | Other ABI; not loadable by this package (typed error naming `libavcodec.so.63`). Use `Starlings.Models.EmbeddingGemma2.Video.FFmpeg9`: the same code with bindings generated from the FFmpeg 9.0.1 headers, exact against torchcodec on FFmpeg 9.0.1 (every frame of the 22 fixture videos) | unsupported here; experimental in the FFmpeg 9 package |
 | Other CPUs (ARM64, non-AVX2) | swscale's SIMD paths may differ by a level (for upstream as well) | untested |
-| Variable frame rate, interlaced, HDR, audio | Sampling is index-based as upstream; audio ignored | untested (audio unsupported) |
+| Variable frame rate, interlaced, HDR (PQ, HLG) | As upstream: index-based sampling from the average rate, no deinterlacing, no tone mapping | experimental: every frame, metadata and sampled indices of the generated edge-case videos equal to torchcodec's |
+| Audio | Ignored, as upstream | unsupported |
 
 The model package rejects decoded frames without timing by default (`EmbeddingGemma2VideoTimingRequiredException`); this adapter always provides the timing.
 

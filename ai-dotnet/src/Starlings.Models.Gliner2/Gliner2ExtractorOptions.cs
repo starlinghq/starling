@@ -33,6 +33,13 @@ public sealed record Gliner2ExtractorOptions
     /// </summary>
     public int MaxBatchSize { get; init; } = 8;
 
+    /// <summary>
+    /// Whether graph calls from concurrent requests run one at a time. Null (default) serializes them on CUDA, where
+    /// concurrent runs on one session returned wrong entities (capability <c>concurrent_calls.cuda.unserialized</c>:
+    /// unsupported), and lets them run concurrently on CPU (tested equal to sequential runs).
+    /// </summary>
+    public bool? SerializeNativeCalls { get; init; }
+
     internal void Validate()
     {
         ArgumentNullException.ThrowIfNull(Session);

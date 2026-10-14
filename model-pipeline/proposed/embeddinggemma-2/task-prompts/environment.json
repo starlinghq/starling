@@ -1,0 +1,266 @@
+{
+ "runner": "model-pipeline/reference/embeddinggemma2/run_embeddinggemma2_task_prompts.py",
+ "repository_commit": "9efb4d20931fb1c552b9cf3c474fdbd9ab83ba90",
+ "model": {
+  "repo": "google/embeddinggemma-2",
+  "revision": "914f7f89142e33e77833254d9c9b90c3cef7303b"
+ },
+ "assets": {
+  "tokenizer.json": "4d777ef5bdc1aa36227abdfb77c3e49e7b9c892d16e1b6bda41c393504828be4",
+  "config_sentence_transformers.json": "031e56a498d33c349ab489a21885bcfe25b4fcba841149dc99e1e90d4a7c28f5",
+  "config.json": "b8f1e9931b57fbc054acdb445c41765d55b0074c58d145fa82839941ad1b5bb3",
+  "model.safetensors": "197a32965d4b1105faf060417baa899e193fb73cd401f42ec9295234d5553d79",
+  "chat_template.jinja": "4b852efc0b9960283e735363331e6f325b33bc74bdbaa076f595bc4e9b94d85e"
+ },
+ "sources": {
+  "pg11.txt": "01b38ea4c710a84bc18d0bd41271a5a1a92b94e97b2812f4dece97d4a694725e",
+  "pg5.txt": "d177168e3f4898213dced30fbbe60d74ad08e884ed5dd86bff94a1b8836b5982"
+ },
+ "python": "3.11.16",
+ "packages": {
+  "torch": "2.14.1+cpu",
+  "transformers": "5.19.0",
+  "sentence-transformers": "6.1.0",
+  "tokenizers": "0.23.3",
+  "numpy": "2.4.6"
+ },
+ "cpu": "x86_64",
+ "threads": 6,
+ "dtype": "float32",
+ "device": "cpu",
+ "prompts": {
+  "BitextMining": "task: search result | query: ",
+  "Classification": "task: classification | query: ",
+  "Clustering": "task: clustering | query: ",
+  "CodeRetrieval": "task: code retrieval | query: ",
+  "Document": "title: none | text: ",
+  "FactChecking": "task: fact checking | query: ",
+  "InstructionRetrieval": "task: code retrieval | query: ",
+  "MultilabelClassification": "task: classification | query: ",
+  "PairClassification": "task: sentence similarity | query: ",
+  "QuestionAnswering": "task: question answering | query: ",
+  "Reranking": "task: search result | query: ",
+  "Retrieval": "task: search result | query: ",
+  "Retrieval-document": "title: none | text: ",
+  "Retrieval-query": "task: search result | query: ",
+  "STS": "task: sentence similarity | query: ",
+  "SearchQuery": "task: search result | query: ",
+  "SentenceSimilarity": "task: sentence similarity | query: ",
+  "Summarization": "task: sentence similarity | query: ",
+  "document": "title: none | text: ",
+  "query": "task: search result | query: "
+ },
+ "rows": 80,
+ "checks": [
+  {
+   "row": "alice-opening-clause@InstructionRetrieval",
+   "same_prompt_text_max_abs": 0.0
+  },
+  {
+   "row": "alice-opening-clause@MultilabelClassification",
+   "same_prompt_text_max_abs": 0.0
+  },
+  {
+   "row": "alice-opening-clause@Reranking",
+   "same_prompt_text_max_abs": 0.0
+  },
+  {
+   "row": "alice-opening-clause@Retrieval",
+   "same_prompt_text_max_abs": 0.0
+  },
+  {
+   "row": "alice-opening-clause@Retrieval-document",
+   "same_prompt_text_max_abs": 0.0
+  },
+  {
+   "row": "alice-opening-clause@Retrieval-query",
+   "same_prompt_text_max_abs": 0.0
+  },
+  {
+   "row": "alice-opening-clause@STS",
+   "same_prompt_text_max_abs": 0.0
+  },
+  {
+   "row": "alice-opening-clause@SearchQuery",
+   "same_prompt_text_max_abs": 0.0
+  },
+  {
+   "row": "alice-opening-clause@SentenceSimilarity",
+   "same_prompt_text_max_abs": 0.0
+  },
+  {
+   "row": "alice-opening-clause@Summarization",
+   "same_prompt_text_max_abs": 0.0
+  },
+  {
+   "row": "alice-opening-clause@document",
+   "same_prompt_text_max_abs": 0.0
+  },
+  {
+   "row": "alice-opening-clause@query",
+   "same_prompt_text_max_abs": 0.0
+  },
+  {
+   "case": "alice-opening-clause",
+   "padded_batch_vs_single_max_abs": 1.4901161193847656e-07
+  },
+  {
+   "row": "alice-rabbit-paragraph@InstructionRetrieval",
+   "same_prompt_text_max_abs": 0.0
+  },
+  {
+   "row": "alice-rabbit-paragraph@MultilabelClassification",
+   "same_prompt_text_max_abs": 0.0
+  },
+  {
+   "row": "alice-rabbit-paragraph@Reranking",
+   "same_prompt_text_max_abs": 0.0
+  },
+  {
+   "row": "alice-rabbit-paragraph@Retrieval",
+   "same_prompt_text_max_abs": 0.0
+  },
+  {
+   "row": "alice-rabbit-paragraph@Retrieval-document",
+   "same_prompt_text_max_abs": 0.0
+  },
+  {
+   "row": "alice-rabbit-paragraph@Retrieval-query",
+   "same_prompt_text_max_abs": 0.0
+  },
+  {
+   "row": "alice-rabbit-paragraph@STS",
+   "same_prompt_text_max_abs": 0.0
+  },
+  {
+   "row": "alice-rabbit-paragraph@SearchQuery",
+   "same_prompt_text_max_abs": 0.0
+  },
+  {
+   "row": "alice-rabbit-paragraph@SentenceSimilarity",
+   "same_prompt_text_max_abs": 0.0
+  },
+  {
+   "row": "alice-rabbit-paragraph@Summarization",
+   "same_prompt_text_max_abs": 0.0
+  },
+  {
+   "row": "alice-rabbit-paragraph@document",
+   "same_prompt_text_max_abs": 0.0
+  },
+  {
+   "row": "alice-rabbit-paragraph@query",
+   "same_prompt_text_max_abs": 0.0
+  },
+  {
+   "case": "alice-rabbit-paragraph",
+   "padded_batch_vs_single_max_abs": 1.2200325727462769e-07
+  },
+  {
+   "row": "constitution-preamble@InstructionRetrieval",
+   "same_prompt_text_max_abs": 0.0
+  },
+  {
+   "row": "constitution-preamble@MultilabelClassification",
+   "same_prompt_text_max_abs": 0.0
+  },
+  {
+   "row": "constitution-preamble@Reranking",
+   "same_prompt_text_max_abs": 0.0
+  },
+  {
+   "row": "constitution-preamble@Retrieval",
+   "same_prompt_text_max_abs": 0.0
+  },
+  {
+   "row": "constitution-preamble@Retrieval-document",
+   "same_prompt_text_max_abs": 0.0
+  },
+  {
+   "row": "constitution-preamble@Retrieval-query",
+   "same_prompt_text_max_abs": 0.0
+  },
+  {
+   "row": "constitution-preamble@STS",
+   "same_prompt_text_max_abs": 0.0
+  },
+  {
+   "row": "constitution-preamble@SearchQuery",
+   "same_prompt_text_max_abs": 0.0
+  },
+  {
+   "row": "constitution-preamble@SentenceSimilarity",
+   "same_prompt_text_max_abs": 0.0
+  },
+  {
+   "row": "constitution-preamble@Summarization",
+   "same_prompt_text_max_abs": 0.0
+  },
+  {
+   "row": "constitution-preamble@document",
+   "same_prompt_text_max_abs": 0.0
+  },
+  {
+   "row": "constitution-preamble@query",
+   "same_prompt_text_max_abs": 0.0
+  },
+  {
+   "case": "constitution-preamble",
+   "padded_batch_vs_single_max_abs": 2.0116567611694336e-07
+  },
+  {
+   "row": "fixture-chinese@InstructionRetrieval",
+   "same_prompt_text_max_abs": 0.0
+  },
+  {
+   "row": "fixture-chinese@MultilabelClassification",
+   "same_prompt_text_max_abs": 0.0
+  },
+  {
+   "row": "fixture-chinese@Reranking",
+   "same_prompt_text_max_abs": 0.0
+  },
+  {
+   "row": "fixture-chinese@Retrieval",
+   "same_prompt_text_max_abs": 0.0
+  },
+  {
+   "row": "fixture-chinese@Retrieval-document",
+   "same_prompt_text_max_abs": 0.0
+  },
+  {
+   "row": "fixture-chinese@Retrieval-query",
+   "same_prompt_text_max_abs": 0.0
+  },
+  {
+   "row": "fixture-chinese@STS",
+   "same_prompt_text_max_abs": 0.0
+  },
+  {
+   "row": "fixture-chinese@SearchQuery",
+   "same_prompt_text_max_abs": 0.0
+  },
+  {
+   "row": "fixture-chinese@SentenceSimilarity",
+   "same_prompt_text_max_abs": 0.0
+  },
+  {
+   "row": "fixture-chinese@Summarization",
+   "same_prompt_text_max_abs": 0.0
+  },
+  {
+   "row": "fixture-chinese@document",
+   "same_prompt_text_max_abs": 0.0
+  },
+  {
+   "row": "fixture-chinese@query",
+   "same_prompt_text_max_abs": 0.0
+  },
+  {
+   "case": "fixture-chinese",
+   "padded_batch_vs_single_max_abs": 1.1920928955078125e-07
+  }
+ ],
+ "max_same_prompt_text_max_abs": 0.0,
+ "max_padded_batch_vs_single_max_abs": 2.0116567611694336e-07
+}

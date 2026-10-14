@@ -22,6 +22,9 @@
 
   <ItemGroup>
     <ProjectReference Include="../../src/Starlings.Models.E5/Starlings.Models.E5.csproj" />
+    <!-- The adapters over a CUDA session (capabilities extensions_ai and mlnet of onnx-fp32-cuda). -->
+    <ProjectReference Include="../../src/Starlings.Models.E5.Extensions.AI/Starlings.Models.E5.Extensions.AI.csproj" />
+    <ProjectReference Include="../../src/Starlings.Models.E5.MLNet/Starlings.Models.E5.MLNet.csproj" />
   </ItemGroup>
 
 </Project>
