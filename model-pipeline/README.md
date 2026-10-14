@@ -187,7 +187,7 @@ These are the accepted development fixtures (agent-written prompts), not the P-0
 
 ## Task quality (G3, workstream R5)
 
-`src/model_pipeline/evaluate_task_quality.py`: held-out task metrics for plan section 10 G3, through `model-pipeline evaluate --g3 retrieval|ner`. It computes metrics on a dataset and compares them with a quality budget read only from the maintainer-owned file `task-quality.yaml` in the profile's protected directory (the directory of the manifest's `qualification.tolerances`, for example `protected/multilingual-e5-small/onnx-fp32-cpu/task-quality.yaml`). **No such file exists yet.** Without it, without an entry for the task, or when the dataset digest is not the one the entry names, the report says "no budget: not a gate result", G3 is `not-run`, and the exit code is 4. With a budget, every listed metric must meet its minimum (exit 0) or G3 fails (exit 1); a changed or untracked budget file is exit 3, as for tolerances.
+`src/model_pipeline/evaluate_task_quality.py`: held-out task metrics for plan section 10 G3, through `model-pipeline evaluate --g3 retrieval|ner|generation`. It computes metrics on a dataset and compares them with a quality budget read only from the maintainer-owned file `task-quality.yaml` in the profile's protected directory (the directory of the manifest's `qualification.tolerances`, for example `protected/multilingual-e5-small/onnx-fp32-cpu/task-quality.yaml`). **No such file exists yet.** Without it, without an entry for the task, or when the dataset digest is not the one the entry names, the report says "no budget: not a gate result", G3 is `not-run`, and the exit code is 4. With a budget, every listed metric must meet its minimum (exit 0) or G3 fails (exit 1); a changed or untracked budget file is exit 3, as for tolerances.
 
 **Choosing the real G3 datasets (licensed, held out) and the budgets is a maintainer decision: M1/M2 in `docs/plan/production-readiness.md`.** This repository supplies only the formats, the metrics, and a SMOKE example under `model-pipeline/tests/fixtures/g3-smoke/` (hand-written, labeled `SMOKE` in each `dataset.json`, never gate evidence). Agents do not author the sets or the budget file.
 
@@ -203,9 +203,12 @@ retrieval:
 ner:
   dataset_sha256: <digest>
   minimum: {exact.micro.f1: <m>, partial.micro.f1: <m>}
+generation:
+  dataset_sha256: <digest>
+  minimum: {exact_match: <m>}
 ```
 
-The dataset digest is the SHA-256 over `<file name>\0<file sha256>\n` of `queries.jsonl`, `corpus.jsonl`, `qrels.jsonl` (retrieval) or of the gold file (NER); every report prints it. Candidate files carry outputs only: a `threshold`-like key is refused (exit 3).
+The dataset digest is the SHA-256 over `<file name>\0<file sha256>\n` of `queries.jsonl`, `corpus.jsonl`, `qrels.jsonl` (retrieval), of the gold file (NER) or of the prompts file (generation); every report prints it. Candidate files carry outputs only: a `threshold`-like key is refused (exit 3).
 
 ### Retrieval (e5, EmbeddingGemma 2)
 
@@ -227,5 +230,11 @@ Metrics: exhaustive ranking by cosine similarity (ties by document id); per quer
 Gold: one JSON lines file, per row `{"id": str, "text": str, "labels": [str] (the label set queried), "entities": [{"start": int, "end": int, "label": str}]}`, offsets in Unicode code points of `text` (Python `str` indices), end exclusive; `entities` may be empty; a gold entity may carry `text` (ignored). Predictions (`--results`): per row `{"id": str, "entities": [{"start", "end", "label", ...}]}` with the same offset unit; labels must be in the row's labels. Producer: `dotnet run --project ai-dotnet/tools/Starlings.Fidelity.Tool -c Release -- ner --dataset <gold.jsonl> --out <file>` (`Gliner2EntityExtractor.Extract(text, labels)` at the extractor's default operating point).
 
 Metrics: span-level precision, recall and F1, `exact` (same start, end and label) and `partial` (same label, any overlap), with one-to-one matching (largest overlap first), so a duplicate prediction is a false positive. Per label (`exact.label.<label>.f1`), micro (pooled counts: `exact.micro.f1`) and macro (mean over labels with at least one gold entity; labels without gold entities are listed and not averaged).
+
+### Generation (Qwen3.5, exact match)
+
+Dataset: one prompts file in the format of `reference/generation/prompts-v1.jsonl` (`id`, `messages`, `max_new_tokens`, optional `chat_template_kwargs`) whose rows also carry the reference `answer` (a string); `dataset.json` beside it (optional) is copied into the report. Candidate (`--results`, and `--baseline`): JSON lines with `id` and `output_text` (the decoded completion), one per prompt, or a runner's output directory (its `generations.jsonl`, else `results.jsonl`). Producer: `dotnet run --project ai-dotnet/tools/Starlings.Qwen35.Fidelity -c Release -- generation --bundle <snapshot> --prompts <prompts.jsonl> --out <dir> [--variant fp32x|fp16x] [--device cpu|cuda] [--threads N]` (the public chat path: owned template and tokenizer, `enable_thinking` from `chat_template_kwargs`, greedy, the row's `max_new_tokens`). The `results.jsonl` of `--modes parity` and of the transformers reference (`reference/generation/run_reference.py`) have the same fields.
+
+Metric `exact_match`: the fraction of rows whose answer matches. The answer is the content of the last `\boxed{...}` of the output (balanced braces), else the last number in it; `$`, `,`, spaces, `%` and a trailing `.` are dropped and a `\text{...}` wrapper is removed; it matches when both sides parse as numbers equal within 1e-6, or the normalized strings are equal. With `--baseline <reference generations>` the report adds `baseline_exact_match` and the rows whose correctness flips, which trace a budget miss to near-tie divergences. The report lists every row's extracted answer.
 
 Python runs reference and export jobs only. Certified in-process C# inference never needs it.

@@ -27,7 +27,18 @@ position tensors (valid rows), vision encoder output (valid rows), pooled soft t
 
 Usage:
     python run_embeddinggemma2_image.py --model-dir <snapshot> --revision <sha> --images <dir> --out <dir>
-        --tensors <dir>
+        --tensors <dir> [--cases <cases.json>]
+
+`--cases` replaces the development rows that name development media (`INTERLEAVED`, `QUERIES`) with the rows of a
+JSON file, so the runner can run on another media set (for example the P-030 release media fetched by
+`fetch_eg2_release_media.py`). Every image of `images.json` still gets its image-only row. The file:
+
+    {"interleaved": [{"id": str, "text": str | null, "images": [image id], "prompt": "none" | "query" | "document"}],
+     "queries": [{"id": str, "text": str}]}
+
+Every image id must be in `images.json`; a row with several images needs a text with one `<|image|>` per image.
+With `--cases`, the query-by-image cosine table covers every image (without queries it is empty), and the eager and
+text-and-vision load checks run on every third image plus each row with several images.
 """
 
 from __future__ import annotations
@@ -180,6 +191,27 @@ def forward(st: SentenceTransformer, item, prompt: str, override_pixels: torch.T
     return features, out["sentence_embedding"][0].numpy()
 
 
+def load_cases(path: Path, image_ids: set[str]) -> tuple[list[tuple], list[tuple]]:
+    """Interleaved and query rows from a cases file, in the shape of `INTERLEAVED` and `QUERIES`."""
+    data = json.loads(path.read_text(encoding="utf-8"))
+    unknown = set(data) - {"interleaved", "queries"}
+    if unknown:
+        raise SystemExit(f"{path}: unknown keys {sorted(unknown)}")
+    interleaved = []
+    for row in data.get("interleaved", []):
+        missing = [i for i in row["images"] if i not in image_ids]
+        if missing or row["prompt"] not in PROMPTS or not row["images"]:
+            raise SystemExit(f"{path}: {row['id']}: unknown images {missing} or prompt {row['prompt']!r}")
+        if len(row["images"]) > 1 and (row.get("text") or "").count("<|image|>") != len(row["images"]):
+            raise SystemExit(f"{path}: {row['id']}: several images need one <|image|> placeholder each")
+        interleaved.append((row["id"], row.get("text"), list(row["images"]), row["prompt"]))
+    queries = [(q["id"], q["text"]) for q in data.get("queries", [])]
+    ids = [r[0] for r in interleaved] + [q[0] for q in queries]
+    if len(set(ids)) != len(ids) or set(ids) & image_ids:
+        raise SystemExit(f"{path}: row ids must be unique and differ from the image ids")
+    return interleaved, queries
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--model-dir", type=Path, required=True)
@@ -187,6 +219,12 @@ def main() -> int:
     parser.add_argument("--images", type=Path, required=True)
     parser.add_argument("--out", type=Path, required=True)
     parser.add_argument("--tensors", type=Path, required=True)
+    parser.add_argument(
+        "--cases",
+        type=Path,
+        help="JSON file with the interleaved and query rows (default: the development rows, which name "
+        "development media ids)",
+    )
     args = parser.parse_args()
     torch.manual_seed(0)
     args.out.mkdir(parents=True, exist_ok=True)
@@ -194,6 +232,9 @@ def main() -> int:
 
     manifest = json.loads((args.images / "images.json").read_text(encoding="utf-8"))
     by_id = {r["id"]: r for r in manifest["images"]}
+    interleaved, queries = INTERLEAVED, QUERIES
+    if args.cases:
+        interleaved, queries = load_cases(args.cases, set(by_id))
 
     def open_image(image_id: str) -> Image.Image:
         return Image.open(args.images / by_id[image_id]["file"])
@@ -212,8 +253,8 @@ def main() -> int:
 
     rows, tensors, preprocess = [], {}, {}
     cases = [(r["id"], None, [r["id"]], "none") for r in manifest["images"]]
-    cases += INTERLEAVED
-    cases += [(qid, text, [], "query") for qid, text in QUERIES]
+    cases += interleaved
+    cases += [(qid, text, [], "query") for qid, text in queries]
 
     for case_id, text, image_ids, prompt_name in cases:
         images = [open_image(i) for i in image_ids]
@@ -360,13 +401,16 @@ def main() -> int:
     reference["restated_vision_unpadded_vs_upstream_soft_tokens_max_abs"] = worst_unpadded
 
     # Query-by-image cosine table (retrieval sanity).
-    photo_ids = [i for i in image_ids if i.startswith(("photo-", "synth-shapes", "synth-text"))]
-    table = {qid: {pid: float(np.dot(emb_by_id[qid], emb_by_id[pid])) for pid in photo_ids} for qid, _ in QUERIES}
+    if args.cases:
+        photo_ids = image_ids
+    else:
+        photo_ids = [i for i in image_ids if i.startswith(("photo-", "synth-shapes", "synth-text"))]
+    table = {qid: {pid: float(np.dot(emb_by_id[qid], emb_by_id[pid])) for pid in photo_ids} for qid, _ in queries}
     reference["query_image_cosine"] = table
     reference["query_top1"] = {qid: max(v, key=v.get) for qid, v in table.items()}
     del st, model, vp
 
-    sub = image_ids[::3] + ["mm-two-images"]
+    sub = image_ids[::3] + [c[0] for c in interleaved if len(c[2]) > 1]
     eager = load(args.model_dir, attn="eager")
     eager_rows = []
     for case_id in sub:
@@ -398,7 +442,12 @@ def main() -> int:
             "model": {"repo": REPO, "revision": args.revision},
             "assets": [fixtures.file_record(args.model_dir / a, args.model_dir) for a in ASSETS],
             "images": {k: v for k, v in manifest.items() if k != "images"}
-            | {"files": [{k: r[k] for k in ("id", "file", "sha256", "decoded_sha256")} for r in manifest["images"]]},
+            | {
+                "files": [
+                    {k: r[k] for k in ("id", "file", "sha256", "decoded_sha256") if k in r} for r in manifest["images"]
+                ]
+            }
+            | ({"cases": fixtures.file_record(args.cases)} if args.cases else {}),
             "environment": env,
         },
     )

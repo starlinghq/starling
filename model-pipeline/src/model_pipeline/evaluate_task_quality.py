@@ -1,8 +1,10 @@
-"""Task-quality evaluation (G3, plan section 10; workstream R5): retrieval and named-entity recognition.
+"""Task-quality evaluation (G3, plan section 10; workstream R5): retrieval, named-entity recognition, generation.
 
     model-pipeline evaluate <manifest> --g3 retrieval --dataset <dir> --results <embeddings.jsonl> --out <dir>
         [--baseline <fp32 embeddings.jsonl>]
     model-pipeline evaluate <manifest> --g3 ner --dataset <gold.jsonl> --results <predictions.jsonl> --out <dir>
+    model-pipeline evaluate <manifest> --g3 generation --dataset <prompts.jsonl> --results <generations.jsonl | dir>
+        --out <dir> [--baseline <reference generations.jsonl | dir>]
 
 Metrics are computed from a dataset and the candidate's outputs; the comparison with a quality budget uses only the
 maintainer-owned budget file `task-quality.yaml` in the profile's protected directory (the directory of the manifest's
@@ -22,6 +24,19 @@ Budget file (protected; every value is a minimum, metric names as in the report)
     ner:
       dataset_sha256: <digest>
       minimum: {exact.micro.f1: 0.60, partial.micro.f1: 0.70}
+    generation:
+      dataset_sha256: <digest>
+      minimum: {exact_match: 0.60}
+
+Generation (exact match, for example GSM8K): the dataset is a prompts file in the format of
+`reference/generation/prompts-v1.jsonl` whose rows also carry the reference `answer`. The results are one JSON line
+per prompt with `id` and `output_text`: the output of `Starlings.Qwen35.Fidelity generation` (the .NET chat path:
+owned template, greedy decoding), its `results.jsonl` from `--modes parity`, or the `results.jsonl` of the
+transformers reference (`reference/generation/run_reference.py`). A directory is read as its `generations.jsonl`,
+else its `results.jsonl`. The answer is the content of the last `\\boxed{...}` of the output (balanced braces), else
+the last number in it. Normalization drops `$`, `,`, spaces, `%` and a trailing `.`, and unwraps `\\text{...}`. A
+prediction matches when both sides parse as numbers equal within 1e-6, or the normalized strings are equal. This
+is the metric of the Stable proposal (`reference/stable/score_generation.py`), fixed before any run.
 """
 
 from __future__ import annotations
@@ -30,6 +45,7 @@ import datetime as dt
 import hashlib
 import json
 import math
+import re
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -50,7 +66,11 @@ REPORT_FORMAT = "starlings.task-quality-report"
 REPORT_FORMAT_VERSION = 1
 BUDGET_FILE = "task-quality.yaml"
 RECALL_KS = (1, 5, 10, 100)
-TASK_MANIFEST = {"retrieval": ("embedding", "image-embedding", "video-embedding"), "ner": ("extraction",)}
+TASK_MANIFEST = {
+    "retrieval": ("embedding", "image-embedding", "video-embedding"),
+    "ner": ("extraction",),
+    "generation": ("generation",),
+}
 NO_BUDGET = "no budget: not a gate result"
 RETRIEVAL_FILES = ("queries.jsonl", "corpus.jsonl", "qrels.jsonl")
 
@@ -375,6 +395,122 @@ def ner_metrics(data: NerSet, preds: dict[str, list[tuple[int, int, str]]]) -> d
 
 
 # --------------------------------------------------------------------------------------------
+# Generation (exact match)
+
+NUMBER = re.compile(r"-?\d[\d,]*(?:\.\d+)?")
+GENERATION_RESULT_FILES = ("generations.jsonl", "results.jsonl")
+
+
+@dataclass
+class GenerationSet:
+    rows: dict[str, dict[str, Any]]
+    files: list[Path]
+
+
+def load_generation_set(path: Path) -> GenerationSet:
+    if not path.is_file():
+        raise EvaluationError(f"{path}: a generation dataset is one prompts JSONL file with an answer per row")
+    rows = _unique(_jsonl(path), path)
+    if not rows:
+        raise EvaluationError(f"{path}: empty")
+    for name, row in rows.items():
+        if not isinstance(row.get("messages"), list) or not row["messages"]:
+            raise EvaluationError(f"{path}: {name!r} needs a non-empty messages list")
+        answer = row.get("answer")
+        if not isinstance(answer, str) or not answer.strip():
+            raise EvaluationError(f"{path}: {name!r} needs a non-empty string answer")
+    files = [path]
+    meta = path.parent / "dataset.json"
+    if meta.is_file():
+        files.append(meta)
+    return GenerationSet(rows, files)
+
+
+def generation_results_file(path: Path) -> Path:
+    """A results file, or a runner's output directory (its generations.jsonl, else its results.jsonl)."""
+    if path.is_dir():
+        for name in GENERATION_RESULT_FILES:
+            if (path / name).is_file():
+                return path / name
+        raise EvaluationError(f"{path}: no {' or '.join(GENERATION_RESULT_FILES)} in the directory")
+    return path
+
+
+def load_generations(path: Path, data: GenerationSet) -> dict[str, str]:
+    rows = _jsonl(path)
+    _no_thresholds(path, rows)
+    outputs = _unique(rows, path)
+    missing = sorted(set(data.rows) - set(outputs))
+    extra = sorted(set(outputs) - set(data.rows))
+    if missing or extra:
+        raise EvaluationError(f"{path}: outputs missing rows {missing[:10]} or not in the dataset {extra[:10]}")
+    out = {}
+    for name, row in outputs.items():
+        text = row.get("output_text")
+        if not isinstance(text, str):
+            raise EvaluationError(f"{path}: {name!r} needs output_text (the decoded generation)")
+        out[name] = text
+    return out
+
+
+def last_boxed(text: str) -> str | None:
+    """Content of the last `\\boxed{...}` (balanced braces); None without one, or when it is not closed."""
+    start = text.rfind("\\boxed{")
+    if start < 0:
+        return None
+    i, depth, out = start + len("\\boxed{"), 1, []
+    while i < len(text):
+        ch = text[i]
+        if ch == "{":
+            depth += 1
+        elif ch == "}":
+            depth -= 1
+            if depth == 0:
+                return "".join(out)
+        out.append(ch)
+        i += 1
+    return None
+
+
+def extract_answer(text: str) -> str | None:
+    boxed = last_boxed(text)
+    if boxed is not None:
+        return boxed
+    numbers = NUMBER.findall(text)
+    return numbers[-1] if numbers else None
+
+
+def normalize_answer(value: str) -> str:
+    v = value.replace("$", "").replace(",", "").replace(" ", "").replace("\\%", "").replace("%", "")
+    v = re.sub(r"^\\text\{(.*)\}$", r"\1", v)
+    return v.rstrip(".")
+
+
+def answer_matches(prediction: str | None, gold: str) -> bool:
+    if prediction is None:
+        return False
+    p, g = normalize_answer(prediction), normalize_answer(gold)
+    try:
+        return abs(float(p) - float(g)) <= 1e-6
+    except ValueError:
+        return p == g
+
+
+def generation_metrics(data: GenerationSet, outputs: dict[str, str]) -> dict[str, Any]:
+    """exact_match: the fraction of rows whose extracted answer matches the reference answer."""
+    per_row = {}
+    for name, row in data.rows.items():
+        predicted = extract_answer(outputs[name])
+        per_row[name] = {
+            "answer": row["answer"],
+            "extracted": predicted,
+            "correct": answer_matches(predicted, row["answer"]),
+        }
+    correct = sum(r["correct"] for r in per_row.values())
+    return {"metrics": {"exact_match": correct / len(per_row)}, "correct": correct, "per_row": per_row}
+
+
+# --------------------------------------------------------------------------------------------
 # Budget and report
 
 
@@ -448,7 +584,7 @@ def evaluate(
         files = data.files
     elif task == "ner":
         if baseline is not None:
-            raise EvaluationError("--baseline applies to the retrieval task only")
+            raise EvaluationError("--baseline applies to the retrieval and generation tasks only")
         data = load_ner_set(dataset)
         digest = dataset_digest(data.files[:1])
         computed = ner_metrics(data, load_predictions(results_path, data))
@@ -460,6 +596,27 @@ def evaluate(
             "labels": len(data.labels),
             "gold_entities": sum(len(r["_gold"]) for r in data.rows.values()),
         }
+        meta_path = dataset.parent / "dataset.json"
+        meta = json.loads(meta_path.read_text(encoding="utf-8")) if meta_path.is_file() else None
+        files = data.files
+    elif task == "generation":
+        data = load_generation_set(dataset)
+        digest = dataset_digest(data.files[:1])
+        results_path = generation_results_file(results_path)
+        computed = generation_metrics(data, load_generations(results_path, data))
+        metrics = dict(computed["metrics"])
+        extra["per_row"] = computed["per_row"]
+        if baseline is not None:
+            baseline = generation_results_file(baseline)
+            base = generation_metrics(data, load_generations(baseline, data))
+            metrics["baseline_exact_match"] = base["metrics"]["exact_match"]
+            extra["vs_baseline"] = {
+                "baseline_exact_match": base["metrics"]["exact_match"],
+                "flipped_rows": sorted(
+                    k for k in data.rows if base["per_row"][k]["correct"] != computed["per_row"][k]["correct"]
+                ),
+            }
+        sizes = {"rows": len(data.rows), "correct": computed["correct"]}
         meta_path = dataset.parent / "dataset.json"
         meta = json.loads(meta_path.read_text(encoding="utf-8")) if meta_path.is_file() else None
         files = data.files
@@ -604,6 +761,9 @@ def markdown(report: dict[str, Any]) -> str:
                 f"{_fmt(p['f1'])} | {e['gold']} | {e['predicted']} |"
             )
         lines.append("")
+    if report["task"] == "generation" and report.get("vs_baseline"):
+        flips = report["vs_baseline"]["flipped_rows"]
+        lines += [f"Rows whose correctness differs from the baseline: {', '.join(flips) if flips else 'none'}.", ""]
     if report["budget_checks"]:
         lines += ["| Budgeted metric | Minimum | Value | Status |", "| --- | ---: | ---: | --- |"]
         lines += [

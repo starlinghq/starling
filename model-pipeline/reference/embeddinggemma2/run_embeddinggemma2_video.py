@@ -24,7 +24,21 @@ frames, positions, pooled and projected soft tokens, token embeddings and the em
 
 Usage (LD_LIBRARY_PATH=<LGPL FFmpeg lib dir>):
     python run_embeddinggemma2_video.py --model-dir <snapshot> --revision <sha> --videos <dir> --out <dir>
-        --tensors <dir>
+        --tensors <dir> [--cases <cases.json>] [--skip-stability]
+
+`--cases` replaces every development row and check that names development media (`MULTIMODAL`, the decoded-array
+and decoder-object rows, `QUERIES`, and the video lists of the batch and eager checks) with a JSON file, so the
+runner can run on another media set (for example the P-030 release media fetched by `fetch_eg2_release_media.py`).
+Every video of `videos.json` still gets its path row. The file:
+
+    {"multimodal": [{"id": str, "text": str | null, "videos": [video id], "image": [video id, frame index] | null,
+                     "prompt": "none" | "query" | "document"}],
+     "forms": [{"id": str, "video": video id, "form": "array+metadata" | "array" | "decoder"}],
+     "queries": [{"id": str, "text": str}],
+     "batch": [video id], "eager": [video id]}
+
+Each form appears at most once. The decoded-array forms hold every frame of the video in memory: name a short,
+small video. With `--cases`, the `infer_modality` quirk check uses the first video of `videos.json`.
 """
 
 from __future__ import annotations
@@ -205,6 +219,54 @@ def forward(st: SentenceTransformer, item, prompt: str):
     return features, out["sentence_embedding"][0].numpy()
 
 
+DEFAULT_FORMS = [
+    ("vid-array-with-metadata", BARS, "array+metadata"),
+    ("vid-array-no-metadata", BARS, "array"),
+    ("vid-decoder-object", SHAPES, "decoder"),
+]
+DEFAULT_BATCH = [BARS, "h264-1fps-64x48-8s", "vp9-odd-321x179-30fps-3s", "h264-portrait-360x640-30fps-4s"]
+DEFAULT_EAGER = [BARS, "h264-330x186-30fps-3s", "hevc-640x360-30fps-4s"]
+FORMS = ("array+metadata", "array", "decoder")
+
+
+def load_cases(path: Path, video_ids: list[str]) -> dict:
+    """Rows and check lists from a cases file, in the shapes of the development constants."""
+    data = json.loads(path.read_text(encoding="utf-8"))
+    unknown = set(data) - {"multimodal", "forms", "queries", "batch", "eager"}
+    if unknown:
+        raise SystemExit(f"{path}: unknown keys {sorted(unknown)}")
+    known = set(video_ids)
+
+    def check(where: str, ids: list[str]) -> list[str]:
+        missing = [v for v in ids if v not in known]
+        if missing:
+            raise SystemExit(f"{path}: {where}: unknown videos {missing}")
+        return list(ids)
+
+    multimodal = []
+    for row in data.get("multimodal", []):
+        image = row.get("image")
+        check(row["id"], row["videos"] + ([image[0]] if image else []))
+        if row["prompt"] not in PROMPTS or not row["videos"]:
+            raise SystemExit(f"{path}: {row['id']}: needs videos and a known prompt")
+        multimodal.append((row["id"], row.get("text"), row["videos"], tuple(image) if image else None, row["prompt"]))
+    forms = [(f["id"], check(f["id"], [f["video"]])[0], f["form"]) for f in data.get("forms", [])]
+    if any(f[2] not in FORMS for f in forms) or len({f[2] for f in forms}) != len(forms):
+        raise SystemExit(f"{path}: each form ({', '.join(FORMS)}) at most once")
+    queries = [(q["id"], q["text"]) for q in data.get("queries", [])]
+    ids = [r[0] for r in multimodal] + [f[0] for f in forms] + [q[0] for q in queries]
+    if len(set(ids)) != len(ids) or set(ids) & known:
+        raise SystemExit(f"{path}: row ids must be unique and differ from the video ids")
+    return {
+        "multimodal": multimodal,
+        "forms": forms,
+        "queries": queries,
+        "batch": check("batch", data.get("batch", [])),
+        "eager": check("eager", data.get("eager", [])),
+        "quirk_video": video_ids[0],
+    }
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--model-dir", type=Path, required=True)
@@ -213,6 +275,12 @@ def main() -> int:
     parser.add_argument("--out", type=Path, required=True)
     parser.add_argument("--tensors", type=Path, required=True)
     parser.add_argument("--skip-stability", action="store_true")
+    parser.add_argument(
+        "--cases",
+        type=Path,
+        help="JSON file with the multimodal, decoded-array, query rows and the batch and eager video lists "
+        "(default: the development rows, which name development media ids)",
+    )
     args = parser.parse_args()
     torch.manual_seed(0)
     args.out.mkdir(parents=True, exist_ok=True)
@@ -221,6 +289,17 @@ def main() -> int:
     manifest = json.loads((args.videos / "videos.json").read_text(encoding="utf-8"))
     by_id = {v["id"]: v for v in manifest["videos"]}
     vpath = {k: args.videos / v["file"] for k, v in by_id.items()}
+    if args.cases:
+        spec = load_cases(args.cases, [v["id"] for v in manifest["videos"]])
+    else:
+        spec = {
+            "multimodal": MULTIMODAL,
+            "forms": DEFAULT_FORMS,
+            "queries": QUERIES,
+            "batch": DEFAULT_BATCH,
+            "eager": DEFAULT_EAGER,
+            "quirk_video": BARS,
+        }
 
     st = load(args.model_dir)
     model = st[0].model
@@ -243,13 +322,9 @@ def main() -> int:
         return Image.fromarray(d.get_frame_at(index).data.permute(1, 2, 0).numpy())
 
     cases = [(v["id"], None, [v["id"]], None, "none", "path") for v in manifest["videos"]]
-    cases += [(c[0], c[1], c[2], c[3], c[4], "path") for c in MULTIMODAL]
-    cases += [
-        ("vid-array-with-metadata", None, [BARS], None, "none", "array+metadata"),
-        ("vid-array-no-metadata", None, [BARS], None, "none", "array"),
-        ("vid-decoder-object", None, [SHAPES], None, "none", "decoder"),
-    ]
-    cases += [(qid, text, [], None, "query", "text") for qid, text in QUERIES]
+    cases += [(c[0], c[1], c[2], c[3], c[4], "path") for c in spec["multimodal"]]
+    cases += [(row_id, None, [video_id], None, "none", form) for row_id, video_id, form in spec["forms"]]
+    cases += [(qid, text, [], None, "query", "text") for qid, text in spec["queries"]]
 
     def all_frames(video_id: str) -> np.ndarray:
         d = VideoDecoder(str(vpath[video_id]), seek_mode="exact", num_ffmpeg_threads=0)
@@ -398,16 +473,23 @@ def main() -> int:
         + tc_core.get_ffmpeg_library_versions()["ffmpeg_version"]
         + "), PyTorch fp32 CPU, sdpa attention, one input per call, full checkpoint",
         "rows": len(rows),
-        "path_vs_array_with_metadata_embedding": stats(emb_by_id["vid-array-with-metadata"] - emb_by_id[BARS]),
-        "path_vs_decoder_object_embedding": stats(emb_by_id["vid-decoder-object"] - emb_by_id[SHAPES]),
-        "path_vs_array_without_metadata": {
-            "embedding": stats(emb_by_id["vid-array-no-metadata"] - emb_by_id[BARS]),
-            "cosine": cosine(emb_by_id["vid-array-no-metadata"], emb_by_id[BARS]),
-        },
-        "quirks": {
-            # sentence-transformers decides by extension on an existing file (a missing file is text).
-            "infer_modality_existing_file": modality_by_extension(vpath[BARS]),
-        },
+    }
+    form_rows = {form: (row_id, video_id) for row_id, video_id, form in spec["forms"]}
+    if "array+metadata" in form_rows:
+        row_id, video_id = form_rows["array+metadata"]
+        reference["path_vs_array_with_metadata_embedding"] = stats(emb_by_id[row_id] - emb_by_id[video_id])
+    if "decoder" in form_rows:
+        row_id, video_id = form_rows["decoder"]
+        reference["path_vs_decoder_object_embedding"] = stats(emb_by_id[row_id] - emb_by_id[video_id])
+    if "array" in form_rows:
+        row_id, video_id = form_rows["array"]
+        reference["path_vs_array_without_metadata"] = {
+            "embedding": stats(emb_by_id[row_id] - emb_by_id[video_id]),
+            "cosine": cosine(emb_by_id[row_id], emb_by_id[video_id]),
+        }
+    reference["quirks"] = {
+        # sentence-transformers decides by extension on an existing file (a missing file is text).
+        "infer_modality_existing_file": modality_by_extension(vpath[spec["quirk_video"]]),
     }
     # Frame-count checks of the sampling (upstream processor on the torchcodec metadata).
     from transformers.video_utils import VideoMetadata
@@ -424,16 +506,17 @@ def main() -> int:
 
     video_rows = [r for r in rows if r["kind"] == "video" and r["input_form"] == "path" and r["prompt"] == "none"]
     vids = [r["id"] for r in video_rows]
-    table = {qid: {v: float(np.dot(emb_by_id[qid], emb_by_id[v])) for v in vids} for qid, _ in QUERIES}
+    table = {qid: {v: float(np.dot(emb_by_id[qid], emb_by_id[v])) for v in vids} for qid, _ in spec["queries"]}
     reference["query_video_cosine"] = table
     reference["query_top1"] = {q: max(t, key=t.get) for q, t in table.items()}
 
     if not args.skip_stability:
         # Batch of videos vs single calls.
-        sub = [BARS, "h264-1fps-64x48-8s", "vp9-odd-321x179-30fps-3s", "h264-portrait-360x640-30fps-4s"]
-        with torch.inference_mode():
-            batched = st.encode([video_arg(vpath[v]) for v in sub], batch_size=4, convert_to_numpy=True)
-        reference["batch4_vs_single"] = stats(batched - np.stack([emb_by_id[v] for v in sub]))
+        sub = spec["batch"]
+        if sub:
+            with torch.inference_mode():
+                batched = st.encode([video_arg(vpath[v]) for v in sub], batch_size=4, convert_to_numpy=True)
+            reference["batch4_vs_single"] = stats(batched - np.stack([emb_by_id[v] for v in sub]))
 
         # Restated vision path: padded (1,260 rows) and unpadded, per frame and all frames at once.
         vp = VisionPath(model).eval()
@@ -462,10 +545,11 @@ def main() -> int:
         del vp
         eager = load(args.model_dir, attn="eager")
         e_rows = []
-        for v in [BARS, "h264-330x186-30fps-3s", "hevc-640x360-30fps-4s"]:
+        for v in spec["eager"]:
             _, e = forward(eager, video_arg(vpath[v]), "")
             e_rows.append(e - emb_by_id[v])
-        reference["eager_vs_sdpa_3_videos"] = stats(np.stack(e_rows))
+        if e_rows:
+            reference[f"eager_vs_sdpa_{len(e_rows)}_videos"] = stats(np.stack(e_rows))
         del eager
     reference["nan_or_inf_rows"] = [r["id"] for r in rows if not np.isfinite(np.array(r["embedding"])).all()]
     fixtures.write_json(args.out / "video-reference.json", reference)
@@ -483,7 +567,8 @@ def main() -> int:
             "model": {"repo": REPO, "revision": args.revision},
             "assets": [fixtures.file_record(args.model_dir / a, args.model_dir) for a in ASSETS],
             "videos": {k: v for k, v in manifest.items() if k != "videos"}
-            | {"files": [{k: v[k] for k in ("id", "file", "sha256")} for v in manifest["videos"]]},
+            | {"files": [{k: v[k] for k in ("id", "file", "sha256")} for v in manifest["videos"]]}
+            | ({"cases": fixtures.file_record(args.cases)} if args.cases else {}),
             "environment": env,
         },
     )

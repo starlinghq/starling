@@ -20,7 +20,11 @@ of the public API with single-case calls.
 
 Usage:
     python run_gliner2_extraction.py --model-dir <snapshot> --revision <sha> \
-        --corpus <jsonl> --out <dir> [--tensors-out <dir>] [--threads N]
+        --corpus <jsonl> --out <dir> [--tensors-out <dir>] [--threads N] [--categories c1,c2]
+
+`--categories` keeps only the corpus rows of those categories, in corpus order. The P-030 release fixture uses the
+Stable proposal's extraction release corpus (`extraction-release-v1.jsonl`, the first 30 rows of each NER subset)
+with `--categories wnut17`: the WNUT-17 sentences only (CC BY 4.0), not the Few-NERD ones (CC BY-SA 4.0).
 """
 
 from __future__ import annotations
@@ -218,6 +222,7 @@ def main() -> int:
     parser.add_argument("--tensors-out", type=Path)
     parser.add_argument("--threads", type=int, default=0, help="torch intra-op threads (0: torch default)")
     parser.add_argument("--batch-size", type=int, default=8)
+    parser.add_argument("--categories", help="comma-separated corpus categories to run (default: every row)")
     args = parser.parse_args()
 
     if args.threads:
@@ -226,6 +231,12 @@ def main() -> int:
     model = GLiNER2.from_pretrained(str(args.model_dir))
     model.eval()
     cases = fixtures.load_corpus(args.corpus)
+    categories = args.categories.split(",") if args.categories else None
+    if categories:
+        unknown = set(categories) - {c["category"] for c in cases}
+        if unknown:
+            raise SystemExit(f"{args.corpus}: no rows of categories {sorted(unknown)}")
+        cases = [c for c in cases if c["category"] in categories]
 
     rows = []
     for case in cases:
@@ -264,6 +275,7 @@ def main() -> int:
                 fixtures.file_record(args.model_dir / a, args.model_dir) for a in [*ASSETS, "model.safetensors"]
             ],
             "corpus": fixtures.file_record(args.corpus),
+            **({"corpus_categories": categories, "cases": len(rows)} if categories else {}),
             "offset_units": {
                 "start_map, end_map, output start/end": "Unicode scalar indices into normalized_text, exclusive end",
                 "normalized_text": "text with '.' appended unless it ends in . ! or ? (empty text becomes '.')",
