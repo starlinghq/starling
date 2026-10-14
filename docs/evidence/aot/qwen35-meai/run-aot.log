@@ -1,0 +1,9 @@
+target:  qwen35-meai
+mode:    Native AOT (.NET 10.0.12, linux-x64, dynamic code not supported)
+str	target	qwen35-meai
+str	model	qwen3.5-0.8b/ortgenai-fp32x Cpu
+inf	genai.version	unknown (qualified with 0.17.1)
+str	text	The capital of France is Paris.
+str	finish	stop 24+7
+str	streamed	The capital of France is Paris.
+RESULT: RAN

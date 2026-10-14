@@ -1,0 +1,78 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Throwaway Native AOT consumer for tools/aot-check-ai.sh. The script copies this file outside the repository once per
+    target and replaces @VERSION@ and @TARGET@. The same project builds the JIT reference (dotnet build) and the Native
+    AOT binary (dotnet publish -r <rid> -p:PublishAot=true). PublishAot is not set here: in a project file it would also
+    switch dynamic code off in the JIT build's runtimeconfig, and the JIT reference must be an ordinary JIT run.
+  -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <!-- One warning per call site instead of one summary warning (IL2104/IL3053) per assembly. -->
+    <TrimmerSingleWarn>false</TrimmerSingleWarn>
+    <!-- Warnings are the evidence here: the script records them, so they must not stop the publish. -->
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <AotTarget>@TARGET@</AotTarget>
+    <DefineConstants>$(DefineConstants);AOT_$(AotTarget.ToUpperInvariant().Replace('-', '_'))</DefineConstants>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <AssemblyMetadata Include="AotTarget" Value="$(AotTarget)" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(AotTarget)' == 'acquisition'">
+    <PackageReference Include="Starlings.Acquisition" Version="[@VERSION@]" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(AotTarget)' == 'runtime'">
+    <PackageReference Include="Starlings.Acquisition" Version="[@VERSION@]" />
+    <PackageReference Include="Starlings.Runtime.Onnx" Version="[@VERSION@]" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(AotTarget)' == 'e5'">
+    <PackageReference Include="Starlings.Models.E5" Version="[@VERSION@]" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(AotTarget)' == 'e5-meai'">
+    <PackageReference Include="Starlings.Models.E5.Extensions.AI" Version="[@VERSION@]" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(AotTarget)' == 'e5-mlnet'">
+    <PackageReference Include="Starlings.Models.E5.MLNet" Version="[@VERSION@]" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(AotTarget)' == 'gliner2'">
+    <PackageReference Include="Starlings.Models.Gliner2" Version="[@VERSION@]" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(AotTarget)' == 'eg2'">
+    <PackageReference Include="Starlings.Models.EmbeddingGemma2" Version="[@VERSION@]" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(AotTarget)' == 'eg2-meai'">
+    <PackageReference Include="Starlings.Models.EmbeddingGemma2.Extensions.AI" Version="[@VERSION@]" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(AotTarget)' == 'eg2-mlnet'">
+    <PackageReference Include="Starlings.Models.EmbeddingGemma2.MLNet" Version="[@VERSION@]" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(AotTarget)' == 'qwen35'">
+    <PackageReference Include="Starlings.Models.Qwen35" Version="[@VERSION@]" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(AotTarget)' == 'qwen35-meai'">
+    <PackageReference Include="Starlings.Models.Qwen35.Extensions.AI" Version="[@VERSION@]" />
+  </ItemGroup>
+
+  <!--
+    ML.NET reads the row type's properties by reflection (LoadFromEnumerable, GetColumn). Rooting the consumer assembly
+    keeps TextRow's properties, so a failure under AOT is ML.NET's own (its getters are made with Reflection.Emit), not a
+    trimmed row type.
+  -->
+  <ItemGroup Condition="$(AotTarget.EndsWith('-mlnet'))">
+    <TrimmerRootAssembly Include="AotConsumer" />
+  </ItemGroup>
+
+  <!-- The application's choice of natives (CPU), as in the samples. -->
+  <ItemGroup Condition="'$(AotTarget)' != 'acquisition' and !$(AotTarget.StartsWith('qwen35'))">
+    <PackageReference Include="Microsoft.ML.OnnxRuntime" Version="1.30.0" />
+  </ItemGroup>
+  <ItemGroup Condition="$(AotTarget.StartsWith('qwen35'))">
+    <PackageReference Include="Microsoft.ML.OnnxRuntimeGenAI" Version="0.17.1" />
+  </ItemGroup>
+
+</Project>

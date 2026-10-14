@@ -2,6 +2,8 @@
 
   <PropertyGroup>
     <IsPackable>true</IsPackable>
+    <!-- Trim, AOT and single-file analyzers on (warnings are errors); Native AOT evidence: docs/evidence/aot/. -->
+    <IsAotCompatible>true</IsAotCompatible>
     <Description>Preview. Microsoft.Extensions.AI IEmbeddingGenerator&lt;string, Embedding&lt;float&gt;&gt; over the multilingual-e5-small text embedder (Starlings.Models.E5): explicit e5 input-type prefixes, batching, usage, node-boundary cancellation, model metadata and DI registration.</Description>
     <PackageTags>embeddings;e5;microsoft.extensions.ai;iembeddinggenerator;onnxruntime</PackageTags>
     <PackageReadmeFile>README.md</PackageReadmeFile>

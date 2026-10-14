@@ -1,0 +1,8 @@
+target:  gliner2
+mode:    Native AOT (.NET 10.0.12, linux-x64, dynamic code not supported)
+str	target	gliner2
+str	entities[0]	person:Tim Cook[10,18); organization:Apple[0,5); location:Cupertino[46,55); date:September 12, 2023[59,77); product:iPhone 15[33,42)
+vec	confidence[0]	1,0.9999989,1,1,1
+str	entities[1]	person:Marie Curie[0,11); person:Pierre Curie[65,77); organization:Nobel Prize[20,31); date:1903[46,50)
+vec	confidence[1]	0.99999905,0.9999989,0.99907696,0.99960417
+RESULT: RAN

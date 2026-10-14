@@ -1,0 +1,6 @@
+str	target	qwen35
+str	model	qwen3.5-0.8b/ortgenai-fp32x Cpu
+inf	genai.version	0.17.1
+str	text	The capital of France is Paris.
+str	token_ids	760,6511,314,9338,369,11751,13
+str	finish	Stop 24+7

@@ -175,7 +175,10 @@ capabilities:
   cancellation: experimental
   persistence: unsupported
   training: unsupported
-  aot: untested
+  # aot: Native AOT publish on Linux x64 CPU, no trim/AOT warnings, results equal to JIT bit for bit
+  # (typed API and IChatClient; docs/evidence/aot/README.md).
+  # GenAI version diagnostics read the .deps.json, which a Native AOT binary lacks: reported unknown.
+  aot: experimental
   extensions_ai: experimental  # IChatClient (Starlings.Models.Qwen35.Extensions.AI, P-017): 21 text prompts, streaming = non-streamed = reference, cancellation, concurrency
   mlnet: unsupported
   greedy_generation: experimental

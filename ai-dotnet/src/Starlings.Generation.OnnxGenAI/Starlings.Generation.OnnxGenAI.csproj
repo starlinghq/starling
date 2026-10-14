@@ -2,6 +2,8 @@
 
   <PropertyGroup>
     <IsPackable>true</IsPackable>
+    <!-- Trim, AOT and single-file analyzers on (warnings are errors); Native AOT evidence: docs/evidence/aot/. -->
+    <IsAotCompatible>true</IsAotCompatible>
     <Description>Preview. Text generation on ONNX Runtime GenAI 0.17.1 behind a Starling adapter: model loading with explicit provider selection (no silent fallback, TF32 off by default), runtime config overlays, reference-counted disposal, and an owned decode loop over pre-tokenized ids (greedy or seeded sampling, max new tokens, stop token ids and stop strings, streaming with UTF-8-safe incremental detokenization through the owned tokenizer Starlings.Tokenizers, cancellation between decode steps, usage accounting). References only Microsoft.ML.OnnxRuntimeGenAI.Managed: the application adds Microsoft.ML.OnnxRuntimeGenAI (CPU) or Microsoft.ML.OnnxRuntimeGenAI.Cuda.</Description>
     <PackageTags>llm;text-generation;onnxruntime-genai;onnxruntime;streaming</PackageTags>
     <PackageReadmeFile>README.md</PackageReadmeFile>

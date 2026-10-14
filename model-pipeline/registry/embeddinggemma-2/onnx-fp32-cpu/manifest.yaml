@@ -170,7 +170,10 @@ capabilities:
   cancellation: experimental
   persistence: unsupported
   training: unsupported
-  aot: untested
+  # aot: Native AOT publish on Linux x64 CPU, no trim/AOT warnings, results equal to JIT bit for bit
+  # (typed text API and Extensions.AI generator; docs/evidence/aot/README.md).
+  # The ML.NET adapter does not run under Native AOT (Microsoft.ML uses Reflection.Emit).
+  aot: experimental
   extensions_ai: experimental
   mlnet: experimental
   embedding_pretokenized: experimental

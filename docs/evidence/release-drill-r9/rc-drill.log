@@ -1,0 +1,499 @@
+
+== 0. Inputs
+commit:    756ba5a8ed42f137cdc72a2fa91f7474bd7c6718
+dotnet:    /home/mark/.dotnet/dotnet (SDK in the clone: pinned by global.json; outside: 10.0.401)
+mode:      seed (seed: /home/mark/.cache/starling-models/intfloat/multilingual-e5-small/614241f622f53c4eeff9890bdc4f31cfecc418b3); GLiNER2 graph seed: /home/mark/.cache/starling-models/fastino/gliner2-base-v1/f9634218e53580c56edf0de97ca1a7d3f1c2354e; EmbeddingGemma 2 graph seed: /home/mark/.cache/starling-models/google/embeddinggemma-2/914f7f89142e33e77833254d9c9b90c3cef7303b; Qwen3.5 bundle seed: /home/mark/.cache/starling-models/Qwen/Qwen3.5-0.8B/2fc06364715b967f1860aea9cf38778875588b17
+offline:   network namespace without interfaces (unshare -rn)
+work dir:  /home/mark/.cache/r9-drill-tmp/starlings-drill.JafHAD
+
+== 1. Clean checkout of 756ba5a8ed42f137cdc72a2fa91f7474bd7c6718
+ok:   no build outputs, caches or untracked files in the checkout
+
+== 2. Versions
+Starlings.Tokenizers: 0.3.0-preview.1
+ai-dotnet packages:            0.1.0-preview.5
+ok:   sample references 0.1.0-preview.5; manifest pins tokenizer 0.3.0-preview.1
+
+== 3. Pack (locked restore, empty package cache)
+Starlings.Acquisition.0.1.0-preview.5.nupkg
+Starlings.Acquisition.0.1.0-preview.5.snupkg
+Starlings.Generation.OnnxGenAI.0.1.0-preview.5.nupkg
+Starlings.Generation.OnnxGenAI.0.1.0-preview.5.snupkg
+Starlings.Models.E5.0.1.0-preview.5.nupkg
+Starlings.Models.E5.0.1.0-preview.5.snupkg
+Starlings.Models.E5.Extensions.AI.0.1.0-preview.5.nupkg
+Starlings.Models.E5.Extensions.AI.0.1.0-preview.5.snupkg
+Starlings.Models.E5.MLNet.0.1.0-preview.5.nupkg
+Starlings.Models.E5.MLNet.0.1.0-preview.5.snupkg
+Starlings.Models.EmbeddingGemma2.0.1.0-preview.5.nupkg
+Starlings.Models.EmbeddingGemma2.0.1.0-preview.5.snupkg
+Starlings.Models.EmbeddingGemma2.Extensions.AI.0.1.0-preview.5.nupkg
+Starlings.Models.EmbeddingGemma2.Extensions.AI.0.1.0-preview.5.snupkg
+Starlings.Models.EmbeddingGemma2.Imaging.SkiaSharp.0.1.0-preview.5.nupkg
+Starlings.Models.EmbeddingGemma2.Imaging.SkiaSharp.0.1.0-preview.5.snupkg
+Starlings.Models.EmbeddingGemma2.MLNet.0.1.0-preview.5.nupkg
+Starlings.Models.EmbeddingGemma2.MLNet.0.1.0-preview.5.snupkg
+Starlings.Models.EmbeddingGemma2.Video.FFmpeg.0.1.0-preview.5.nupkg
+Starlings.Models.EmbeddingGemma2.Video.FFmpeg.0.1.0-preview.5.snupkg
+Starlings.Models.Gliner2.0.1.0-preview.5.nupkg
+Starlings.Models.Gliner2.0.1.0-preview.5.snupkg
+Starlings.Models.Qwen35.0.1.0-preview.5.nupkg
+Starlings.Models.Qwen35.0.1.0-preview.5.snupkg
+Starlings.Models.Qwen35.Extensions.AI.0.1.0-preview.5.nupkg
+Starlings.Models.Qwen35.Extensions.AI.0.1.0-preview.5.snupkg
+Starlings.Runtime.Onnx.0.1.0-preview.5.nupkg
+Starlings.Runtime.Onnx.0.1.0-preview.5.snupkg
+
+== 4. Inspect packages
+ok:   Starlings.Acquisition 0.1.0-preview.5: MIT OR Apache-2.0, README and description labeled Preview, repository commit, SourceLink to the commit; dependencies: none 
+      sha256 e5efb56372443b351def07e0c669e1fb6f4210bb34681393792a1222163be30b
+ok:   Starlings.Runtime.Onnx 0.1.0-preview.5: MIT OR Apache-2.0, README and description labeled Preview, repository commit, SourceLink to the commit; dependencies: Microsoft.ML.OnnxRuntime.Managed [1.30.0] 
+      sha256 100f103d3a5ddad853cc54b35dbc472cb799b6d68f22fa812538a6e94b79ff75
+ok:   Starlings.Models.E5 0.1.0-preview.5: MIT OR Apache-2.0, README and description labeled Preview, repository commit, SourceLink to the commit; dependencies: Starlings.Acquisition [0.1.0-preview.5] Starlings.Runtime.Onnx [0.1.0-preview.5] Starlings.Tokenizers [0.3.0-preview.1] 
+      sha256 4b0b62964020e2c3fe71275b4550da30582a51d363bda64559453b3b7b4f025b
+ok:   Starlings.Models.E5.Extensions.AI 0.1.0-preview.5: MIT OR Apache-2.0, README and description labeled Preview, repository commit, SourceLink to the commit; dependencies: Microsoft.Extensions.AI.Abstractions 10.10.1 Microsoft.Extensions.DependencyInjection.Abstractions 10.0.12 Starlings.Models.E5 [0.1.0-preview.5] 
+      sha256 f0fd4ce764ddd12d786ff4612532055547b6216dc35b6956ff445ab77633bfe5
+ok:   Starlings.Models.E5.MLNet 0.1.0-preview.5: MIT OR Apache-2.0, README and description labeled Preview, repository commit, SourceLink to the commit; dependencies: Microsoft.ML 5.0.0 Starlings.Models.E5 [0.1.0-preview.5] 
+      sha256 bbf13f101f9fa88eabda80d258b758e52ad0c541ca41278ea11da43cffd86ba7
+ok:   Starlings.Models.Gliner2 0.1.0-preview.5: MIT OR Apache-2.0, README and description labeled Preview, repository commit, SourceLink to the commit; dependencies: Starlings.Acquisition [0.1.0-preview.5] Starlings.Runtime.Onnx [0.1.0-preview.5] Starlings.Tokenizers [0.3.0-preview.1] 
+      sha256 3410add39814018d43f1acdfae2226099b0f14e9de6356fa5347ed191a4ef9e0
+ok:   Starlings.Models.EmbeddingGemma2 0.1.0-preview.5: MIT OR Apache-2.0, README and description labeled Preview, repository commit, SourceLink to the commit; dependencies: Starlings.Acquisition [0.1.0-preview.5] Starlings.Runtime.Onnx [0.1.0-preview.5] Starlings.Tokenizers [0.3.0-preview.1] 
+      sha256 107c3a3e0e67f1c0cde0e438d8421206f66acbc2b6f6031381a61c7eca1344e9
+ok:   Starlings.Models.EmbeddingGemma2.Extensions.AI 0.1.0-preview.5: MIT OR Apache-2.0, README and description labeled Preview, repository commit, SourceLink to the commit; dependencies: Microsoft.Extensions.AI.Abstractions 10.10.1 Microsoft.Extensions.DependencyInjection.Abstractions 10.0.12 Starlings.Models.EmbeddingGemma2 [0.1.0-preview.5] 
+      sha256 7de40dc8e0bf67f314de0f044201613ea99358e0f2792ee769c3266f38eb16a4
+ok:   Starlings.Models.EmbeddingGemma2.MLNet 0.1.0-preview.5: MIT OR Apache-2.0, README and description labeled Preview, repository commit, SourceLink to the commit; dependencies: Microsoft.ML 5.0.0 Starlings.Models.EmbeddingGemma2 [0.1.0-preview.5] 
+      sha256 eb3cdd5846eafa9388b62d7e60fa076e44c7c30e00c2f9eacce968c2e1b2e6b1
+ok:   Starlings.Models.EmbeddingGemma2.Imaging.SkiaSharp 0.1.0-preview.5: MIT OR Apache-2.0, README and description labeled Preview, repository commit, SourceLink to the commit; dependencies: SkiaSharp [4.153.1] SkiaSharp.NativeAssets.Linux.NoDependencies [4.153.1] Starlings.Models.EmbeddingGemma2 [0.1.0-preview.5] 
+      sha256 849593d96b33e560294670274e09173536ffc459c8bdd751ab70ba5e695093ad
+ok:   Starlings.Models.EmbeddingGemma2.Video.FFmpeg 0.1.0-preview.5: MIT OR Apache-2.0, README and description labeled Preview, repository commit, SourceLink to the commit; dependencies: Starlings.Models.EmbeddingGemma2 [0.1.0-preview.5] 
+      sha256 a101aec236edc7764f9bfd65b985d5dcb6193153acc6d19371feafec98352eff
+ok:   Starlings.Generation.OnnxGenAI 0.1.0-preview.5: MIT OR Apache-2.0, README and description labeled Preview, repository commit, SourceLink to the commit; dependencies: Microsoft.ML.OnnxRuntimeGenAI.Managed [0.17.1] Starlings.Tokenizers [0.3.0-preview.1] 
+      sha256 c5b65cb8304ce2e2b2609f928780b2023f44a1bdf14107b58d064a0f18dab4e2
+ok:   Starlings.Models.Qwen35 0.1.0-preview.5: MIT OR Apache-2.0, README and description labeled Preview, repository commit, SourceLink to the commit; dependencies: Starlings.Acquisition [0.1.0-preview.5] Starlings.Generation.OnnxGenAI [0.1.0-preview.5] Starlings.Tokenizers [0.3.0-preview.1] 
+      sha256 867d69d7d2e223bd43e3215504b246406f885831347ea751c82f57d3bc930af6
+ok:   Starlings.Models.Qwen35.Extensions.AI 0.1.0-preview.5: MIT OR Apache-2.0, README and description labeled Preview, repository commit, SourceLink to the commit; dependencies: Microsoft.Extensions.AI.Abstractions 10.10.1 Microsoft.Extensions.DependencyInjection.Abstractions 10.0.12 Starlings.Models.Qwen35 [0.1.0-preview.5] 
+      sha256 05cf1a6f8d29bab263fbd4f0331dbcdd3ed79003f0ffb7fa01e66ffc5cd8bcb9
+
+== 5. Push to a local folder feed (never nuget.org)
+Starlings.Acquisition.0.1.0-preview.5.nupkg
+Starlings.Generation.OnnxGenAI.0.1.0-preview.5.nupkg
+Starlings.Models.E5.0.1.0-preview.5.nupkg
+Starlings.Models.E5.Extensions.AI.0.1.0-preview.5.nupkg
+Starlings.Models.E5.MLNet.0.1.0-preview.5.nupkg
+Starlings.Models.EmbeddingGemma2.0.1.0-preview.5.nupkg
+Starlings.Models.EmbeddingGemma2.Extensions.AI.0.1.0-preview.5.nupkg
+Starlings.Models.EmbeddingGemma2.Imaging.SkiaSharp.0.1.0-preview.5.nupkg
+Starlings.Models.EmbeddingGemma2.MLNet.0.1.0-preview.5.nupkg
+Starlings.Models.EmbeddingGemma2.Video.FFmpeg.0.1.0-preview.5.nupkg
+Starlings.Models.Gliner2.0.1.0-preview.5.nupkg
+Starlings.Models.Qwen35.0.1.0-preview.5.nupkg
+Starlings.Models.Qwen35.Extensions.AI.0.1.0-preview.5.nupkg
+Starlings.Runtime.Onnx.0.1.0-preview.5.nupkg
+
+== 6. Clean consumers outside the repository
+  Determining projects to restore...
+  All projects are up-to-date for restore.
+Project 'E5Search' has the following package references
+   [net10.0]: 
+   Top-level Package                        Requested         Resolved       
+   > Microsoft.ML.OnnxRuntime               1.30.0            1.30.0         
+   > Starlings.Models.E5.Extensions.AI      0.1.0-preview.5   0.1.0-preview.5
+
+   Transitive Package                                           Resolved       
+   > Microsoft.Extensions.AI.Abstractions                       10.10.1        
+   > Microsoft.Extensions.DependencyInjection.Abstractions      10.0.12        
+   > Microsoft.ML.OnnxRuntime.Managed                           1.30.0         
+   > Starlings.Acquisition                                      0.1.0-preview.5
+   > Starlings.Models.E5                                        0.1.0-preview.5
+   > Starlings.Runtime.Onnx                                     0.1.0-preview.5
+   > Starlings.Tokenizers                                       0.3.0-preview.1
+   > System.Numerics.Tensors                                    9.0.0          
+
+  Determining projects to restore...
+  All projects are up-to-date for restore.
+Project 'Gliner2Ner' has the following package references
+   [net10.0]: 
+   Top-level Package               Requested         Resolved       
+   > Microsoft.ML.OnnxRuntime      1.30.0            1.30.0         
+   > Starlings.Models.Gliner2      0.1.0-preview.5   0.1.0-preview.5
+
+   Transitive Package                      Resolved       
+   > Microsoft.ML.OnnxRuntime.Managed      1.30.0         
+   > Starlings.Acquisition                 0.1.0-preview.5
+   > Starlings.Runtime.Onnx                0.1.0-preview.5
+   > Starlings.Tokenizers                  0.3.0-preview.1
+   > System.Numerics.Tensors               9.0.0          
+
+  Determining projects to restore...
+  All projects are up-to-date for restore.
+Project 'QwenChat' has the following package references
+   [net10.0]: 
+   Top-level Package                            Requested         Resolved       
+   > Microsoft.ML.OnnxRuntimeGenAI              0.17.1            0.17.1         
+   > Starlings.Models.Qwen35                    0.1.0-preview.5   0.1.0-preview.5
+   > Starlings.Models.Qwen35.Extensions.AI      0.1.0-preview.5   0.1.0-preview.5
+
+   Transitive Package                                           Resolved       
+   > Microsoft.Extensions.AI.Abstractions                       10.10.1        
+   > Microsoft.Extensions.DependencyInjection.Abstractions      10.0.12        
+   > Microsoft.ML.OnnxRuntime                                   1.30.0         
+   > Microsoft.ML.OnnxRuntime.Managed                           1.30.0         
+   > Microsoft.ML.OnnxRuntimeGenAI.Managed                      0.17.1         
+   > Starlings.Acquisition                                      0.1.0-preview.5
+   > Starlings.Generation.OnnxGenAI                             0.1.0-preview.5
+   > Starlings.Tokenizers                                       0.3.0-preview.1
+   > System.Numerics.Tensors                                    9.0.0          
+
+  Determining projects to restore...
+  All projects are up-to-date for restore.
+Project 'EmbeddingGemma2Search' has the following package references
+   [net10.0]: 
+   Top-level Package                                         Requested         Resolved       
+   > Microsoft.ML.OnnxRuntime                                1.30.0            1.30.0         
+   > Starlings.Models.EmbeddingGemma2.Extensions.AI          0.1.0-preview.5   0.1.0-preview.5
+   > Starlings.Models.EmbeddingGemma2.Imaging.SkiaSharp      0.1.0-preview.5   0.1.0-preview.5
+   > Starlings.Models.EmbeddingGemma2.Video.FFmpeg           0.1.0-preview.5   0.1.0-preview.5
+
+   Transitive Package                                           Resolved       
+   > Microsoft.Extensions.AI.Abstractions                       10.10.1        
+   > Microsoft.Extensions.DependencyInjection.Abstractions      10.0.12        
+   > Microsoft.ML.OnnxRuntime.Managed                           1.30.0         
+   > SkiaSharp                                                  4.153.1        
+   > SkiaSharp.NativeAssets.Linux.NoDependencies                4.153.1        
+   > SkiaSharp.NativeAssets.macOS                               4.153.1        
+   > SkiaSharp.NativeAssets.Win32                               4.153.1        
+   > Starlings.Acquisition                                      0.1.0-preview.5
+   > Starlings.Models.EmbeddingGemma2                           0.1.0-preview.5
+   > Starlings.Runtime.Onnx                                     0.1.0-preview.5
+   > Starlings.Tokenizers                                       0.3.0-preview.1
+   > System.Numerics.Tensors                                    9.0.0          
+
+  Determining projects to restore...
+  All projects are up-to-date for restore.
+Project 'AiConsumer' has the following package references
+   [net10.0]: 
+   Top-level Package                        Requested           Resolved       
+   > Microsoft.ML.OnnxRuntime               1.30.0              1.30.0         
+   > Starlings.Models.E5.Extensions.AI      [0.1.0-preview.5]   0.1.0-preview.5
+   > Starlings.Models.E5.MLNet              [0.1.0-preview.5]   0.1.0-preview.5
+
+   Transitive Package                                           Resolved       
+   > Microsoft.Bcl.AsyncInterfaces                              9.0.4          
+   > Microsoft.Extensions.AI.Abstractions                       10.10.1        
+   > Microsoft.Extensions.DependencyInjection.Abstractions      10.0.12        
+   > Microsoft.ML                                               5.0.0          
+   > Microsoft.ML.CpuMath                                       5.0.0          
+   > Microsoft.ML.DataView                                      5.0.0          
+   > Microsoft.ML.OnnxRuntime.Managed                           1.30.0         
+   > Newtonsoft.Json                                            13.0.3         
+   > Starlings.Acquisition                                      0.1.0-preview.5
+   > Starlings.Models.E5                                        0.1.0-preview.5
+   > Starlings.Runtime.Onnx                                     0.1.0-preview.5
+   > Starlings.Tokenizers                                       0.3.0-preview.1
+   > System.CodeDom                                             9.0.4          
+   > System.Numerics.Tensors                                    9.0.4          
+
+  Determining projects to restore...
+  All projects are up-to-date for restore.
+Project 'MlNetConsumer' has the following package references
+   [net10.0]: 
+   Top-level Package                             Requested           Resolved       
+   > Microsoft.ML.OnnxRuntime                    1.30.0              1.30.0         
+   > Starlings.Models.E5.MLNet                   [0.1.0-preview.5]   0.1.0-preview.5
+   > Starlings.Models.EmbeddingGemma2.MLNet      [0.1.0-preview.5]   0.1.0-preview.5
+
+   Transitive Package                      Resolved       
+   > Microsoft.Bcl.AsyncInterfaces         9.0.4          
+   > Microsoft.ML                          5.0.0          
+   > Microsoft.ML.CpuMath                  5.0.0          
+   > Microsoft.ML.DataView                 5.0.0          
+   > Microsoft.ML.OnnxRuntime.Managed      1.30.0         
+   > Newtonsoft.Json                       13.0.3         
+   > Starlings.Acquisition                 0.1.0-preview.5
+   > Starlings.Models.E5                   0.1.0-preview.5
+   > Starlings.Models.EmbeddingGemma2      0.1.0-preview.5
+   > Starlings.Runtime.Onnx                0.1.0-preview.5
+   > Starlings.Tokenizers                  0.3.0-preview.1
+   > System.CodeDom                        9.0.4          
+   > System.Numerics.Tensors               9.0.4          
+
+E5Search: 10 packages: Microsoft.Extensions.AI.Abstractions/10.10.1, Microsoft.Extensions.DependencyInjection.Abstractions/10.0.12, Microsoft.ML.OnnxRuntime.Managed/1.30.0, Microsoft.ML.OnnxRuntime/1.30.0, Starlings.Acquisition/0.1.0-preview.5, Starlings.Models.E5.Extensions.AI/0.1.0-preview.5, Starlings.Models.E5/0.1.0-preview.5, Starlings.Runtime.Onnx/0.1.0-preview.5, Starlings.Tokenizers/0.3.0-preview.1, System.Numerics.Tensors/9.0.0
+ok:   only packages; Starlings.* sha512 equal the packed .nupkg files and the locked tokenizer; no foreign tokenizer, no GPU natives
+AiConsumer: 17 packages: Microsoft.Bcl.AsyncInterfaces/9.0.4, Microsoft.Extensions.AI.Abstractions/10.10.1, Microsoft.Extensions.DependencyInjection.Abstractions/10.0.12, Microsoft.ML.CpuMath/5.0.0, Microsoft.ML.DataView/5.0.0, Microsoft.ML.OnnxRuntime.Managed/1.30.0, Microsoft.ML.OnnxRuntime/1.30.0, Microsoft.ML/5.0.0, Newtonsoft.Json/13.0.3, Starlings.Acquisition/0.1.0-preview.5, Starlings.Models.E5.Extensions.AI/0.1.0-preview.5, Starlings.Models.E5.MLNet/0.1.0-preview.5, Starlings.Models.E5/0.1.0-preview.5, Starlings.Runtime.Onnx/0.1.0-preview.5, Starlings.Tokenizers/0.3.0-preview.1, System.CodeDom/9.0.4, System.Numerics.Tensors/9.0.4
+ok:   only packages; Starlings.* sha512 equal the packed .nupkg files and the locked tokenizer; no foreign tokenizer, no GPU natives
+Gliner2Ner: 7 packages: Microsoft.ML.OnnxRuntime.Managed/1.30.0, Microsoft.ML.OnnxRuntime/1.30.0, Starlings.Acquisition/0.1.0-preview.5, Starlings.Models.Gliner2/0.1.0-preview.5, Starlings.Runtime.Onnx/0.1.0-preview.5, Starlings.Tokenizers/0.3.0-preview.1, System.Numerics.Tensors/9.0.0
+ok:   only packages; Starlings.* sha512 equal the packed .nupkg files and the locked tokenizer; no foreign tokenizer, no GPU natives
+QwenChat: 12 packages: Microsoft.Extensions.AI.Abstractions/10.10.1, Microsoft.Extensions.DependencyInjection.Abstractions/10.0.12, Microsoft.ML.OnnxRuntime.Managed/1.30.0, Microsoft.ML.OnnxRuntime/1.30.0, Microsoft.ML.OnnxRuntimeGenAI.Managed/0.17.1, Microsoft.ML.OnnxRuntimeGenAI/0.17.1, Starlings.Acquisition/0.1.0-preview.5, Starlings.Generation.OnnxGenAI/0.1.0-preview.5, Starlings.Models.Qwen35.Extensions.AI/0.1.0-preview.5, Starlings.Models.Qwen35/0.1.0-preview.5, Starlings.Tokenizers/0.3.0-preview.1, System.Numerics.Tensors/9.0.0
+ok:   only packages; Starlings.* sha512 equal the packed .nupkg files and the locked tokenizer; no foreign tokenizer, no GPU natives
+EmbeddingGemma2Search: 16 packages: Microsoft.Extensions.AI.Abstractions/10.10.1, Microsoft.Extensions.DependencyInjection.Abstractions/10.0.12, Microsoft.ML.OnnxRuntime.Managed/1.30.0, Microsoft.ML.OnnxRuntime/1.30.0, SkiaSharp.NativeAssets.Linux.NoDependencies/4.153.1, SkiaSharp.NativeAssets.Win32/4.153.1, SkiaSharp.NativeAssets.macOS/4.153.1, SkiaSharp/4.153.1, Starlings.Acquisition/0.1.0-preview.5, Starlings.Models.EmbeddingGemma2.Extensions.AI/0.1.0-preview.5, Starlings.Models.EmbeddingGemma2.Imaging.SkiaSharp/0.1.0-preview.5, Starlings.Models.EmbeddingGemma2.Video.FFmpeg/0.1.0-preview.5, Starlings.Models.EmbeddingGemma2/0.1.0-preview.5, Starlings.Runtime.Onnx/0.1.0-preview.5, Starlings.Tokenizers/0.3.0-preview.1, System.Numerics.Tensors/9.0.0
+ok:   only packages; Starlings.* sha512 equal the packed .nupkg files and the locked tokenizer; no foreign tokenizer, no GPU natives
+MlNetConsumer: 16 packages: Microsoft.Bcl.AsyncInterfaces/9.0.4, Microsoft.ML.CpuMath/5.0.0, Microsoft.ML.DataView/5.0.0, Microsoft.ML.OnnxRuntime.Managed/1.30.0, Microsoft.ML.OnnxRuntime/1.30.0, Microsoft.ML/5.0.0, Newtonsoft.Json/13.0.3, Starlings.Acquisition/0.1.0-preview.5, Starlings.Models.E5.MLNet/0.1.0-preview.5, Starlings.Models.E5/0.1.0-preview.5, Starlings.Models.EmbeddingGemma2.MLNet/0.1.0-preview.5, Starlings.Models.EmbeddingGemma2/0.1.0-preview.5, Starlings.Runtime.Onnx/0.1.0-preview.5, Starlings.Tokenizers/0.3.0-preview.1, System.CodeDom/9.0.4, System.Numerics.Tensors/9.0.4
+ok:   only packages; Starlings.* sha512 equal the packed .nupkg files and the locked tokenizer; no foreign tokenizer, no GPU natives
+ok:   consumer package cache holds only: microsoft.bcl.asyncinterfaces microsoft.extensions.ai.abstractions microsoft.extensions.dependencyinjection.abstractions microsoft.ml microsoft.ml.cpumath microsoft.ml.dataview microsoft.ml.onnxruntime microsoft.ml.onnxruntimegenai microsoft.ml.onnxruntimegenai.managed microsoft.ml.onnxruntime.managed newtonsoft.json skiasharp skiasharp.nativeassets.linux.nodependencies skiasharp.nativeassets.macos skiasharp.nativeassets.win32 starlings.acquisition starlings.generation.onnxgenai starlings.models.e5 starlings.models.e5.extensions.ai starlings.models.e5.mlnet starlings.models.embeddinggemma2 starlings.models.embeddinggemma2.extensions.ai starlings.models.embeddinggemma2.imaging.skiasharp starlings.models.embeddinggemma2.mlnet starlings.models.embeddinggemma2.video.ffmpeg starlings.models.gliner2 starlings.models.qwen35 starlings.models.qwen35.extensions.ai starlings.runtime.onnx starlings.tokenizers system.codedom system.numerics.tensors 
+ok:   no file in the consumers (sources, NuGet.config, obj, bin) names the repository path
+ok:   build outputs hold no tokenizer library other than Starlings.Tokenizers.dll
+ok:   no FFmpeg library in the consumer package cache or any build output (the video adapter loads the user's FFmpeg through its own bindings)
+
+== 7. Explicit acquisition into an isolated empty cache (real Hub download)
+seeded: onnx/model.onnx from /home/mark/.cache/starling-models/intfloat/multilingual-e5-small/614241f622f53c4eeff9890bdc4f31cfecc418b3 (the store verifies size and SHA-256 before use)
+lock:  multilingual-e5-small (intfloat/multilingual-e5-small@614241f622f53c4eeff9890bdc4f31cfecc418b3, 2 files)
+cache: /home/mark/.cache/r9-drill-tmp/starlings-drill.JafHAD/models
+onnx/model.onnx: already cached, 470268510 bytes, sha256 ca456c06b3a9505ddfd9131408916dd79290368331e7d76bb621f1cba6bc8665 verified
+tokenizer.json: downloaded, 17082730 bytes, sha256 0b44a9d7b51c3c62626640cda0e2c2f70fdacdc25bbbd68038369d14ebdf4c39 verified
+snapshot: /home/mark/.cache/r9-drill-tmp/starlings-drill.JafHAD/models/intfloat/multilingual-e5-small/614241f622f53c4eeff9890bdc4f31cfecc418b3
+ok:   cache content: ./.downloads/intfloat/multilingual-e5-small/614241f622f53c4eeff9890bdc4f31cfecc418b3/onnx/model.onnx.lock ./.downloads/intfloat/multilingual-e5-small/614241f622f53c4eeff9890bdc4f31cfecc418b3/tokenizer.json.lock ./intfloat/multilingual-e5-small/614241f622f53c4eeff9890bdc4f31cfecc418b3/onnx/model.onnx ./intfloat/multilingual-e5-small/614241f622f53c4eeff9890bdc4f31cfecc418b3/tokenizer.json 
+
+== 8. Offline: sample search and fixture checks with no network
+ok:   huggingface.co unreachable inside the wrapper (network namespace without interfaces (unshare -rn))
+packages: Starlings.Models.E5 0.1.0-preview.5, Starlings.Tokenizers 0.3.0-preview.1, Starlings.Models.E5.Extensions.AI 0.1.0-preview.5
+onnxruntime: native 1.30.0, managed 1.30.0, session providers CPUExecutionProvider
+query: how much protein should a female eat
+  top: protein (0.9252); next: bread (0.7764)
+query: Warum rostet Eisen?
+  top: rust (0.9142); next: bread (0.7373)
+query: 日本の首都はどこですか
+  top: tokyo (0.8890); next: summit (0.7167)
+query: highest mountain in the world
+  top: summit (0.8816); next: tokyo (0.7594)
+extensions.ai: starlings.onnxruntime intfloat/multilingual-e5-small@614241f622f53c4eeff9890bdc4f31cfecc418b3 dims 384; 9 embeddings, 176 tokens, max abs difference from the typed API 0
+ok:   sample ranks the expected passage first for all four queries; Extensions.AI vectors equal the typed API
+bounds (protected model-pipeline/protected/multilingual-e5-small/onnx-fp32-cpu/tolerances.yaml): float.embedding_max_abs 1.0e-5, float.padded_batch_vs_single_embedding_max_abs 1.0e-5
+assembly: Starlings.Acquisition 0.1.0-preview.5+756ba5a8ed42f137cdc72a2fa91f7474bd7c6718 (/home/mark/.cache/r9-drill-tmp/starlings-drill.JafHAD/apps/AiConsumer/bin/Release/net10.0/Starlings.Acquisition.dll)
+assembly: Starlings.Runtime.Onnx 0.1.0-preview.5+756ba5a8ed42f137cdc72a2fa91f7474bd7c6718 (/home/mark/.cache/r9-drill-tmp/starlings-drill.JafHAD/apps/AiConsumer/bin/Release/net10.0/Starlings.Runtime.Onnx.dll)
+assembly: Starlings.Tokenizers 0.3.0-preview.1+79a5863e861edcfed79142293dafabb688c199b9 (/home/mark/.cache/r9-drill-tmp/starlings-drill.JafHAD/apps/AiConsumer/bin/Release/net10.0/Starlings.Tokenizers.dll)
+assembly: Starlings.Models.E5 0.1.0-preview.5+756ba5a8ed42f137cdc72a2fa91f7474bd7c6718 (/home/mark/.cache/r9-drill-tmp/starlings-drill.JafHAD/apps/AiConsumer/bin/Release/net10.0/Starlings.Models.E5.dll)
+assembly: Starlings.Models.E5.Extensions.AI 0.1.0-preview.5+756ba5a8ed42f137cdc72a2fa91f7474bd7c6718 (/home/mark/.cache/r9-drill-tmp/starlings-drill.JafHAD/apps/AiConsumer/bin/Release/net10.0/Starlings.Models.E5.Extensions.AI.dll)
+assembly: Starlings.Models.E5.MLNet 0.1.0-preview.5+756ba5a8ed42f137cdc72a2fa91f7474bd7c6718 (/home/mark/.cache/r9-drill-tmp/starlings-drill.JafHAD/apps/AiConsumer/bin/Release/net10.0/Starlings.Models.E5.MLNet.dll)
+assembly: Microsoft.ML.Data 5.0.0+efefa92f4486a43047c5b47618885a71bf7f0967 (/home/mark/.cache/r9-drill-tmp/starlings-drill.JafHAD/apps/AiConsumer/bin/Release/net10.0/Microsoft.ML.Data.dll)
+runtime:  .NET 10.0.12 linux-x64
+ok:   ONNX Runtime native 1.30.0, managed 1.30.0 (expected 1.30.0)
+ok:   providers: CPUExecutionProvider
+ok:   fixture cases: 46 (expected 46)
+tokenizer.json: /home/mark/.cache/r9-drill-tmp/starlings-drill.JafHAD/models/intfloat/multilingual-e5-small/614241f622f53c4eeff9890bdc4f31cfecc418b3/tokenizer.json
+ok:   owned tokenizer ids and masks exact: 46/46
+session: CPUExecutionProvider, model sha256 ca456c06b3a9505ddfd9131408916dd79290368331e7d76bb621f1cba6bc8665
+ok:   typed API, one text per call vs protected: 46 rows, max abs 2.33E-07, mean abs 1.95E-08, min cosine 0.99999999999945 (bound 1E-05)
+ok:   typed API, one batch of 46 vs protected: 46 rows, max abs 2.33E-07, mean abs 1.95E-08, min cosine 0.99999999999945 (bound 1E-05)
+ok:   typed API, batch vs own single rows: 46 rows, max abs 0, mean abs 0, min cosine 1.00000000000000 (bound 1E-05)
+ok:   Extensions.AI generator vs protected: 46 rows, max abs 2.33E-07, mean abs 1.95E-08, min cosine 0.99999999999945 (bound 1E-05)
+ok:   Extensions.AI generator vs typed batch (report): 46 rows, max abs 0, mean abs 0, min cosine 1.00000000000000 (report only)
+ok:   Extensions.AI usage: 1689 input tokens (fixture ids: 1689)
+ok:   ML.NET transform, row-wise, vs typed API one per call (exact): 46 rows, max abs 0, mean abs 0, min cosine 1.00000000000000 (bound 0)
+ok:   ML.NET transform vs protected: 46 rows, max abs 2.33E-07, mean abs 1.95E-08, min cosine 0.99999999999945 (bound 1E-05)
+ok:   ML.NET transform, look-ahead batch of 46, vs typed batch (exact): 46 rows, max abs 0, mean abs 0, min cosine 1.00000000000000 (bound 0)
+ok:   ML.NET Save of the e5 transformer is rejected (persistence unsupported)
+ok:   no other managed tokenizer assembly loaded ()
+ok:   no native tokenizers library mapped ()
+RESULT: PASS
+
+== 8c. Offline: ML.NET checker on e5 (Starlings.Models.E5.MLNet)
+assembly: Microsoft.ML.Data 5.0.0
+assembly: Starlings.Models.E5.MLNet 0.1.0-preview.5
+ok:   e5: output column type Vector<Single, 384> (expected Vector<Single, 384>)
+ok:   e5: row-wise transform vs typed API one text per call: 3 rows, max abs 0 (exact)
+ok:   e5: look-ahead batched transform vs typed batch: 3 rows, max abs 0 (exact)
+ok:   e5: token-count column 34,22,16 equals the typed API's 34,22,16
+ok:   e5: transform from verified files (own session) vs typed queries: 3 rows, max abs 0 (exact)
+ok:   e5: query 'how much protein should a female eat' ranks passage 0 first (expected 0)
+ok:   e5: query 'Warum rostet Eisen?' ranks passage 1 first (expected 1)
+ok:   e5: query '日本の首都はどこですか' ranks passage 2 first (expected 2)
+ok:   e5: ML.NET Save of the transformer is rejected (persistence unsupported)
+RESULT: PASS
+
+== 9. GLiNER2: seeded graph, tokenizer.json from the Hub, offline extraction
+seeded: onnx/gliner2-entities-fp32.onnx from /home/mark/.cache/starling-models/fastino/gliner2-base-v1/f9634218e53580c56edf0de97ca1a7d3f1c2354e (the store verifies size and SHA-256 before use)
+lock:  gliner2-base-v1 (fastino/gliner2-base-v1@f9634218e53580c56edf0de97ca1a7d3f1c2354e, 2 files)
+cache: /home/mark/.cache/r9-drill-tmp/starlings-drill.JafHAD/models
+note:  the graph's source is not published yet (https://huggingface.co/Starlinghq/gliner2-base-v1-onnx/resolve/c02c3350a0dcaf0bd6d2878043cc6a4ba950dccb/gliner2-entities-fp32.onnx); place it in the snapshot directory first.
+onnx/gliner2-entities-fp32.onnx: already cached, 829284599 bytes, sha256 0ba2db95b18116906ae4ec21aa62ef493e69e0780dcfdfa98c4456ecf4123265 verified
+tokenizer.json: downloaded, 8650701 bytes, sha256 1b7fbabfb4c690bed84c6793bfecae9b8dfe205751b04f9ffd1e76a1e7df9c16 verified
+snapshot: /home/mark/.cache/r9-drill-tmp/starlings-drill.JafHAD/models/fastino/gliner2-base-v1/f9634218e53580c56edf0de97ca1a7d3f1c2354e
+packages: Starlings.Models.Gliner2 0.1.0-preview.5, Starlings.Tokenizers 0.3.0-preview.1
+onnxruntime: native 1.30.0, session providers CPUExecutionProvider
+text: Apple CEO Tim Cook announced the iPhone 15 in Cupertino on September 12, 2023.
+  person: Tim Cook [10, 18) 1.0000
+  organization: Apple [0, 5) 1.0000
+  location: Cupertino [46, 55) 1.0000
+  date: September 12, 2023 [59, 77) 1.0000
+  product: iPhone 15 [33, 42) 1.0000
+text: Marie Curie won the Nobel Prize in Physics in 1903 together with Pierre Curie
+  person: Marie Curie [0, 11) 1.0000
+  person: Pierre Curie [65, 77) 1.0000
+  organization: Nobel Prize [20, 31) 0.9991
+  date: 1903 [46, 50) 0.9996
+long input rejected: 618 tokens > 512
+ok:   GLiNER2 sample extracts the expected entities offline and rejects the 600-word input
+
+== 9b. EmbeddingGemma 2: seeded graph, tokenizer.json and prompt config from the Hub, offline search
+seeded: onnx/embeddinggemma2-text-fp32.onnx from /home/mark/.cache/starling-models/google/embeddinggemma-2/914f7f89142e33e77833254d9c9b90c3cef7303b (the store verifies size and SHA-256 before use)
+lock:  embeddinggemma-2 (google/embeddinggemma-2@914f7f89142e33e77833254d9c9b90c3cef7303b, 3 files)
+cache: /home/mark/.cache/r9-drill-tmp/starlings-drill.JafHAD/models
+onnx/embeddinggemma2-text-fp32.onnx: already cached, 1084327317 bytes, sha256 02cc7ecccbfcb29d812eb104e4c6ea6c599bc87e94f01082606f6a11f0252d11 verified
+tokenizer.json: downloaded, 32170510 bytes, sha256 4d777ef5bdc1aa36227abdfb77c3e49e7b9c892d16e1b6bda41c393504828be4 verified
+config_sentence_transformers.json: downloaded, 1565 bytes, sha256 031e56a498d33c349ab489a21885bcfe25b4fcba841149dc99e1e90d4a7c28f5 verified
+snapshot: /home/mark/.cache/r9-drill-tmp/starlings-drill.JafHAD/models/google/embeddinggemma-2/914f7f89142e33e77833254d9c9b90c3cef7303b
+packages: Starlings.Models.EmbeddingGemma2 0.1.0-preview.5, Starlings.Tokenizers 0.3.0-preview.1, Starlings.Models.EmbeddingGemma2.Extensions.AI 0.1.0-preview.5
+onnxruntime: native 1.30.0, managed 1.30.0, session providers CPUExecutionProvider
+query: how much protein should a female eat
+  top: protein (0.8328); next: summit (0.5447)
+query: Warum rostet Eisen?
+  top: rust (0.8248); next: bread (0.5460)
+query: 日本の首都はどこですか
+  top: tokyo (0.7962); next: summit (0.5587)
+query: highest mountain in the world
+  top: summit (0.7944); next: tokyo (0.5785)
+extensions.ai: starlings.onnxruntime google/embeddinggemma-2@914f7f89142e33e77833254d9c9b90c3cef7303b dims 768; 4 embeddings, 59 tokens, max abs difference from the typed API 0
+matryoshka 256: 256 dimensions; same top document for 4 of 4 queries
+long input rejected: 9002 tokens > 8192
+ok:   EmbeddingGemma 2 sample ranks the expected document first offline, Extensions.AI equals the typed API, rejects > 8,192 tokens
+
+== 9e. Offline: ML.NET checker on EmbeddingGemma 2 (Starlings.Models.EmbeddingGemma2.MLNet)
+assembly: Microsoft.ML.Data 5.0.0
+assembly: Starlings.Models.EmbeddingGemma2.MLNet 0.1.0-preview.5
+ok:   EmbeddingGemma 2: output column type Vector<Single, 768> (expected Vector<Single, 768>)
+ok:   EmbeddingGemma 2: row-wise transform vs typed API one text per call: 3 rows, max abs 0 (exact)
+ok:   EmbeddingGemma 2: look-ahead batched transform vs typed batch: 3 rows, max abs 0 (exact)
+ok:   EmbeddingGemma 2: token-count column 39,25,18 equals the typed API's 39,25,18
+ok:   EmbeddingGemma 2: transform from verified files (own session) vs typed queries: 3 rows, max abs 0 (exact)
+ok:   EmbeddingGemma 2: query 'how much protein should a female eat' ranks passage 0 first (expected 0)
+ok:   EmbeddingGemma 2: query 'Warum rostet Eisen?' ranks passage 1 first (expected 1)
+ok:   EmbeddingGemma 2: query '日本の首都はどこですか' ranks passage 2 first (expected 2)
+ok:   EmbeddingGemma 2: ML.NET Save of the transformer is rejected (persistence unsupported)
+ok:   EmbeddingGemma 2 Matryoshka column type Vector<Single, 256>
+ok:   EmbeddingGemma 2 Matryoshka 256 column vs typed API at 256: 3 rows, max abs 0 (exact)
+RESULT: PASS
+note: /home/mark/.cache/starling-models/google/embeddinggemma-2/914f7f89142e33e77833254d9c9b90c3cef7303b has no image graphs or images/: the image search was built but not run
+note: no videos/ in /home/mark/.cache/starling-models/google/embeddinggemma-2/914f7f89142e33e77833254d9c9b90c3cef7303b or no --ffmpeg-dir: the video search was built but not run
+
+== 10. Qwen3.5: seeded files verified by the download step, offline streamed answer
+seeded: ortgenai-fp32x/, transformers-5.18.0/tokenizer.json and chat_template.jinja from /home/mark/.cache/starling-models/Qwen/Qwen3.5-0.8B/2fc06364715b967f1860aea9cf38778875588b17 (the store verifies sizes and SHA-256)
+lock:  qwen3.5-0.8b-ortgenai-fp32x (Qwen/Qwen3.5-0.8B@2fc06364715b967f1860aea9cf38778875588b17, 5 files)
+cache: /home/mark/.cache/r9-drill-tmp/starlings-drill.JafHAD/models
+from:  https://huggingface.co/Starlinghq/qwen3.5-0.8b-ortgenai/resolve/95a690c1774f144957cb7b76986a9126e8b1bb5f/
+note:  Starlinghq/qwen3.5-0.8b-ortgenai is private for now: set HF_TOKEN to a Hugging Face read token with access to it (files already in the cache need no token).
+chat_template.jinja: already cached, 7755 bytes, sha256 273d8e0e683b885071fb17e08d71e5f2a5ddfb5309756181681de4f5a1822d80 verified
+transformers-5.18.0/tokenizer.json: already cached, 19989339 bytes, sha256 a5cd9732badce41de57e6efce8302930ded1c1188c5f81feb2bd6c24c4a1941f verified
+ortgenai-fp32x/genai_config.json: already cached, 1935 bytes, sha256 e7e1957b2544fdad6170a9cc81cbbb1b88c8819b7016a609170ad7cbebba81ba verified
+ortgenai-fp32x/model.onnx: already cached, 308301 bytes, sha256 4a052c4a1444c9437e00ffd48baecb0838d3d9ca1703c3153dbd46e945e84703 verified
+ortgenai-fp32x/model.onnx.data: already cached, 3077177344 bytes, sha256 129c58a320b6de7192713cc9c7e4ba744dcf7fabb0f57c6535021b45b3dc5143 verified
+snapshot: /home/mark/.cache/r9-drill-tmp/starlings-drill.JafHAD/models/Qwen/Qwen3.5-0.8B/2fc06364715b967f1860aea9cf38778875588b17
+model: qwen3.5-0.8b/ortgenai-fp32x (Qwen/Qwen3.5-0.8B@2fc06364715b967f1860aea9cf38778875588b17) on Cpu, ONNX Runtime GenAI 0.17.1
+tokenizer: Starlings.Tokenizers profile qwen35-bpe-chat, tokenizer.json a5cd9732badce41de57e6efce8302930ded1c1188c5f81feb2bd6c24c4a1941f
+user: What is the capital of France? Answer in one sentence.
+assistant: The capital of France is Paris.
+[Stop; 24 prompt + 7 completion tokens; prefill 778 ms, 3.3 tokens/s]
+ok:   QwenChat answers offline from the packages, stops at <|im_end|> without printing it, reports usage
+model: qwen3.5-0.8b/ortgenai-fp32x (Qwen/Qwen3.5-0.8B@2fc06364715b967f1860aea9cf38778875588b17) on Cpu, ONNX Runtime GenAI 0.17.1
+tokenizer: Starlings.Tokenizers profile qwen35-bpe-chat, tokenizer.json a5cd9732badce41de57e6efce8302930ded1c1188c5f81feb2bd6c24c4a1941f
+user: What is the capital of France? Answer in one sentence.
+assistant: The capital of France is Paris.
+[Stop; 24 prompt + 7 completion tokens; IChatClient]
+ok:   the IChatClient adapter streams the same answer, finish reason and usage
+
+== 11. Download from public hosting (no token, no seed)
+skipped: hosting private (maintainer action M3 pending: the GLiNER2, EmbeddingGemma 2 and Qwen 3.5 files are in private repositories; pass --public-hosting once they are public)
+
+== 12. Native AOT check (tools/aot-check-ai.sh on the drill feed and model cache)
+
+== 0. Inputs
+commit:  756ba5a8ed42f137cdc72a2fa91f7474bd7c6718
+dotnet:  10.0.401, RID linux-x64
+models:  /home/mark/.cache/r9-drill-tmp/starlings-drill.JafHAD/models
+offline: network namespace without interfaces (unshare -rn)
+linker:  /usr/bin/clang
+
+== 1. Packages from /home/mark/.cache/r9-drill-tmp/starlings-drill.JafHAD/feed
+version: 0.1.0-preview.5
+
+== AOT target acquisition
+packages: Starlings.Acquisition 
+publish: yes; warnings: 0 in Starlings.* code, 0 elsewhere (details: /home/mark/.cache/r9-drill-tmp/starlings-drill.JafHAD/aot/acquisition/warnings.txt)
+ok:   AOT results equal JIT: 5 strings exact, 0 vectors max abs 0
+
+== AOT target runtime
+packages: Starlings.Acquisition Starlings.Runtime.Onnx 
+publish: yes; warnings: 0 in Starlings.* code, 0 elsewhere (details: /home/mark/.cache/r9-drill-tmp/starlings-drill.JafHAD/aot/runtime/warnings.txt)
+ok:   AOT results equal JIT: 5 strings exact, 1 vectors max abs 0
+
+== AOT target e5
+packages: Starlings.Acquisition Starlings.Models.E5 Starlings.Runtime.Onnx Starlings.Tokenizers 
+publish: yes; warnings: 0 in Starlings.* code, 0 elsewhere (details: /home/mark/.cache/r9-drill-tmp/starlings-drill.JafHAD/aot/e5/warnings.txt)
+ok:   AOT results equal JIT: 7 strings exact, 12 vectors max abs 0
+
+== AOT target e5-meai
+packages: Starlings.Acquisition Starlings.Models.E5 Starlings.Models.E5.Extensions.AI Starlings.Runtime.Onnx Starlings.Tokenizers 
+publish: yes; warnings: 0 in Starlings.* code, 0 elsewhere (details: /home/mark/.cache/r9-drill-tmp/starlings-drill.JafHAD/aot/e5-meai/warnings.txt)
+ok:   AOT results equal JIT: 3 strings exact, 6 vectors max abs 0
+
+== AOT target e5-mlnet
+packages: Starlings.Acquisition Starlings.Models.E5 Starlings.Models.E5.MLNet Starlings.Runtime.Onnx Starlings.Tokenizers 
+publish: yes; warnings: 0 in Starlings.* code, 20 elsewhere (details: /home/mark/.cache/r9-drill-tmp/starlings-drill.JafHAD/aot/e5-mlnet/warnings.txt)
+target:  e5-mlnet
+mode:    Native AOT (.NET 10.0.12, linux-x64, dynamic code not supported)
+Unhandled exception. System.NotSupportedException: 'Microsoft.ML.ApiUtils.GeneratePeek[Microsoft.ML.Data.DataViewConstructionUtils+DataViewBase`1[TextRow],TextRow,System.String](System.Reflection.PropertyInfo,System.Reflection.Emit.OpCode)' is missing native code. MethodInfo.MakeGenericMethod() is not compatible with AOT compilation. Inspect and fix AOT related warnings that were generated when the app was published. For more information see https://aka.ms/nativeaot-compatibility
+   at System.Reflection.Runtime.MethodInfos.RuntimeNamedMethodInfo`1.GetUncachedMethodInvoker(RuntimeTypeInfo[], MemberInfo) + 0x2a
+   at System.Reflection.Runtime.MethodInfos.RuntimeMethodInfo.Invoke(Object, BindingFlags, Binder, Object[], CultureInfo) + 0x3f
+   at Microsoft.ML.Internal.Utilities.Utils.MarshalInvoke[TArg1,TArg2,TResult](FuncStaticMethodInfo3`3, Type, Type, Type, TArg1, TArg2) + 0x89
+   at Microsoft.ML.ApiUtils.GeneratePeek[TOwn,TRow](InternalSchemaDefinition.Column) + 0x15d
+   at Microsoft.ML.Data.DataViewConstructionUtils.DataViewBase`1..ctor(IHostEnvironment, String, InternalSchemaDefinition) + 0xbe
+   at Microsoft.ML.Data.DataViewConstructionUtils.StreamingDataView`1..ctor(IHostEnvironment, IEnumerable`1, InternalSchemaDefinition) + 0x1e
+   at Microsoft.ML.Data.DataViewConstructionUtils.CreateFromEnumerable[TRow](IHostEnvironment, IEnumerable`1, SchemaDefinition) + 0x84
+   at Program.<Main>$(String[] args) + 0x5fb
+/home/mark/.cache/r9-drill-tmp/starlings-drill.JafHAD/src/tools/aot-check-ai.sh: line 65: 2829996 Aborted                    (core dumped) unshare -rn "$@"
+
+== AOT target gliner2
+packages: Starlings.Acquisition Starlings.Models.Gliner2 Starlings.Runtime.Onnx Starlings.Tokenizers 
+publish: yes; warnings: 0 in Starlings.* code, 0 elsewhere (details: /home/mark/.cache/r9-drill-tmp/starlings-drill.JafHAD/aot/gliner2/warnings.txt)
+ok:   AOT results equal JIT: 3 strings exact, 2 vectors max abs 0
+
+== AOT target eg2
+skipped: model files missing from /home/mark/.cache/r9-drill-tmp/starlings-drill.JafHAD/models: google/embeddinggemma-2/914f7f89142e33e77833254d9c9b90c3cef7303b/onnx/embeddinggemma2-vision-fp32.onnx google/embeddinggemma-2/914f7f89142e33e77833254d9c9b90c3cef7303b/onnx/embeddinggemma2-text-mm-fp32.onnx
+
+== AOT target eg2-meai
+packages: Starlings.Acquisition Starlings.Models.EmbeddingGemma2 Starlings.Models.EmbeddingGemma2.Extensions.AI Starlings.Runtime.Onnx Starlings.Tokenizers 
+publish: yes; warnings: 0 in Starlings.* code, 0 elsewhere (details: /home/mark/.cache/r9-drill-tmp/starlings-drill.JafHAD/aot/eg2-meai/warnings.txt)
+ok:   AOT results equal JIT: 2 strings exact, 4 vectors max abs 0
+
+== AOT target eg2-mlnet
+packages: Starlings.Acquisition Starlings.Models.EmbeddingGemma2 Starlings.Models.EmbeddingGemma2.MLNet Starlings.Runtime.Onnx Starlings.Tokenizers 
+publish: yes; warnings: 0 in Starlings.* code, 20 elsewhere (details: /home/mark/.cache/r9-drill-tmp/starlings-drill.JafHAD/aot/eg2-mlnet/warnings.txt)
+target:  eg2-mlnet
+mode:    Native AOT (.NET 10.0.12, linux-x64, dynamic code not supported)
+Unhandled exception. System.NotSupportedException: 'Microsoft.ML.ApiUtils.GeneratePeek[Microsoft.ML.Data.DataViewConstructionUtils+DataViewBase`1[TextRow],TextRow,System.String](System.Reflection.PropertyInfo,System.Reflection.Emit.OpCode)' is missing native code. MethodInfo.MakeGenericMethod() is not compatible with AOT compilation. Inspect and fix AOT related warnings that were generated when the app was published. For more information see https://aka.ms/nativeaot-compatibility
+   at System.Reflection.Runtime.MethodInfos.RuntimeNamedMethodInfo`1.GetUncachedMethodInvoker(RuntimeTypeInfo[], MemberInfo) + 0x2a
+   at System.Reflection.Runtime.MethodInfos.RuntimeMethodInfo.Invoke(Object, BindingFlags, Binder, Object[], CultureInfo) + 0x3f
+   at Microsoft.ML.Internal.Utilities.Utils.MarshalInvoke[TArg1,TArg2,TResult](FuncStaticMethodInfo3`3, Type, Type, Type, TArg1, TArg2) + 0x89
+   at Microsoft.ML.ApiUtils.GeneratePeek[TOwn,TRow](InternalSchemaDefinition.Column) + 0x15d
+   at Microsoft.ML.Data.DataViewConstructionUtils.DataViewBase`1..ctor(IHostEnvironment, String, InternalSchemaDefinition) + 0xbe
+   at Microsoft.ML.Data.DataViewConstructionUtils.StreamingDataView`1..ctor(IHostEnvironment, IEnumerable`1, InternalSchemaDefinition) + 0x1e
+   at Microsoft.ML.Data.DataViewConstructionUtils.CreateFromEnumerable[TRow](IHostEnvironment, IEnumerable`1, SchemaDefinition) + 0x84
+   at Program.<Main>$(String[] args) + 0x5c1
+/home/mark/.cache/r9-drill-tmp/starlings-drill.JafHAD/src/tools/aot-check-ai.sh: line 65: 2837832 Aborted                    (core dumped) unshare -rn "$@"
+
+== AOT target qwen35
+packages: Starlings.Acquisition Starlings.Generation.OnnxGenAI Starlings.Models.Qwen35 Starlings.Tokenizers 
+publish: yes; warnings: 0 in Starlings.* code, 0 elsewhere (details: /home/mark/.cache/r9-drill-tmp/starlings-drill.JafHAD/aot/qwen35/warnings.txt)
+ok:   AOT results equal JIT: 5 strings exact, 0 vectors max abs 0; genai.version differs (reported only): JIT '0.17.1', AOT 'unknown (qualified with 0.17.1)'
+
+== AOT target qwen35-meai
+packages: Starlings.Acquisition Starlings.Generation.OnnxGenAI Starlings.Models.Qwen35 Starlings.Models.Qwen35.Extensions.AI Starlings.Tokenizers 
+publish: yes; warnings: 0 in Starlings.* code, 0 elsewhere (details: /home/mark/.cache/r9-drill-tmp/starlings-drill.JafHAD/aot/qwen35-meai/warnings.txt)
+ok:   AOT results equal JIT: 5 strings exact, 0 vectors max abs 0; genai.version differs (reported only): JIT '0.17.1', AOT 'unknown (qualified with 0.17.1)'
+
+== Summary (/home/mark/.cache/r9-drill-tmp/starlings-drill.JafHAD/aot/summary.md)
+| Target | Packages | Starlings.* warnings | Other warnings | AOT publish | AOT run | JIT vs AOT |
+| --- | --- | --- | --- | --- | --- | --- |
+| acquisition | Starlings.Acquisition  | 0 | 0 | ok (7.2M) | ok | 5 strings exact, 0 vectors max abs 0 |
+| runtime | Starlings.Acquisition Starlings.Runtime.Onnx  | 0 | 0 | ok (3.2M) | ok | 5 strings exact, 1 vectors max abs 0 |
+| e5 | Starlings.Acquisition Starlings.Models.E5 Starlings.Runtime.Onnx Starlings.Tokenizers  | 0 | 0 | ok (3.8M) | ok | 7 strings exact, 12 vectors max abs 0 |
+| e5-meai | Starlings.Acquisition Starlings.Models.E5 Starlings.Models.E5.Extensions.AI Starlings.Runtime.Onnx Starlings.Tokenizers  | 0 | 0 | ok (3.9M) | ok | 3 strings exact, 6 vectors max abs 0 |
+| e5-mlnet | Starlings.Acquisition Starlings.Models.E5 Starlings.Models.E5.MLNet Starlings.Runtime.Onnx Starlings.Tokenizers  | 0 | 20 | ok (4.9M) | **failed**: Unhandled exception. System.NotSupportedException: 'Microsoft.ML.ApiUtils.GeneratePeek[Microsoft.ML.Data.DataViewConstructionUtils+DataViewBase`1[TextRow],TextRow,System.String](System.Reflection.Prop | expected: AOT unsupported |
+| gliner2 | Starlings.Acquisition Starlings.Models.Gliner2 Starlings.Runtime.Onnx Starlings.Tokenizers  | 0 | 0 | ok (3.8M) | ok | 3 strings exact, 2 vectors max abs 0 |
+| eg2 | | | | | skipped (model files missing) | |
+| eg2-meai | Starlings.Acquisition Starlings.Models.EmbeddingGemma2 Starlings.Models.EmbeddingGemma2.Extensions.AI Starlings.Runtime.Onnx Starlings.Tokenizers  | 0 | 0 | ok (3.9M) | ok | 2 strings exact, 4 vectors max abs 0 |
+| eg2-mlnet | Starlings.Acquisition Starlings.Models.EmbeddingGemma2 Starlings.Models.EmbeddingGemma2.MLNet Starlings.Runtime.Onnx Starlings.Tokenizers  | 0 | 20 | ok (4.9M) | **failed**: Unhandled exception. System.NotSupportedException: 'Microsoft.ML.ApiUtils.GeneratePeek[Microsoft.ML.Data.DataViewConstructionUtils+DataViewBase`1[TextRow],TextRow,System.String](System.Reflection.Prop | expected: AOT unsupported |
+| qwen35 | Starlings.Acquisition Starlings.Generation.OnnxGenAI Starlings.Models.Qwen35 Starlings.Tokenizers  | 0 | 0 | ok (3.3M) | ok | 5 strings exact, 0 vectors max abs 0; genai.version differs (reported only): JIT '0.17.1', AOT 'unknown (qualified with 0.17.1)' |
+| qwen35-meai | Starlings.Acquisition Starlings.Generation.OnnxGenAI Starlings.Models.Qwen35 Starlings.Models.Qwen35.Extensions.AI Starlings.Tokenizers  | 0 | 0 | ok (3.7M) | ok | 5 strings exact, 0 vectors max abs 0; genai.version differs (reported only): JIT '0.17.1', AOT 'unknown (qualified with 0.17.1)' |
+AOT CHECK PASS
+
+== DRILL PASS (seed, GLiNER2 run, EmbeddingGemma 2 run, Qwen3.5 run, AOT check): Starlings 0.1.0-preview.5 + Tokenizers 0.3.0-preview.1 from 756ba5a8ed42f137cdc72a2fa91f7474bd7c6718 (packages and logs in artifacts/release-drill-ai/)
