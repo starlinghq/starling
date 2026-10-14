@@ -1,0 +1,168 @@
+{
+  "name": "miracl-dev-hn-8lang-v1",
+  "status": "PROPOSED: candidate G3 retrieval set, not accepted; not gate evidence until the maintainer commits it under model-pipeline/protected/",
+  "provenance": {
+    "source": "mteb/MIRACLRetrievalHardNegatives",
+    "revision": "332a9acb49f5e83d5397683f79d23e588f685916",
+    "license": "CC-BY-SA-4.0",
+    "license_evidence": "card front matter `license: cc-by-sa-4.0`; upstream miracl/miracl topics and qrels are Apache-2.0 (card at 5be20db9509754dadad47689368639fcec739c00), passages are Wikipedia text (CC BY-SA)",
+    "files": {
+      "ar-corpus/dev-00000-of-00001.parquet": {
+        "url": "https://huggingface.co/datasets/mteb/MIRACLRetrievalHardNegatives/resolve/332a9acb49f5e83d5397683f79d23e588f685916/ar-corpus/dev-00000-of-00001.parquet",
+        "sha256": "447fae09eebc662bfdb311d1039483171a4fccdc7358ce2060243275afde1c64"
+      },
+      "ar-queries/dev-00000-of-00001.parquet": {
+        "url": "https://huggingface.co/datasets/mteb/MIRACLRetrievalHardNegatives/resolve/332a9acb49f5e83d5397683f79d23e588f685916/ar-queries/dev-00000-of-00001.parquet",
+        "sha256": "d36ad1f35905ea776be5421aa11613b67d6750fe14bce9ab54e229714ebee901"
+      },
+      "ar-qrels/dev-00000-of-00001.parquet": {
+        "url": "https://huggingface.co/datasets/mteb/MIRACLRetrievalHardNegatives/resolve/332a9acb49f5e83d5397683f79d23e588f685916/ar-qrels/dev-00000-of-00001.parquet",
+        "sha256": "0dfb43eb0cf9490de66f49686680a87fd4c10db39c7ba9cf3b866ed2312e0a2a"
+      },
+      "de-corpus/dev-00000-of-00001.parquet": {
+        "url": "https://huggingface.co/datasets/mteb/MIRACLRetrievalHardNegatives/resolve/332a9acb49f5e83d5397683f79d23e588f685916/de-corpus/dev-00000-of-00001.parquet",
+        "sha256": "8e33b4da3abaf1bf7101d1d68f50d4c3c59fda65010153d95a7412a5c0d1196b"
+      },
+      "de-queries/dev-00000-of-00001.parquet": {
+        "url": "https://huggingface.co/datasets/mteb/MIRACLRetrievalHardNegatives/resolve/332a9acb49f5e83d5397683f79d23e588f685916/de-queries/dev-00000-of-00001.parquet",
+        "sha256": "467473a078857c52663082b4db7e6c68a2c25dee08f7bb5ca054975fd8dde1f9"
+      },
+      "de-qrels/dev-00000-of-00001.parquet": {
+        "url": "https://huggingface.co/datasets/mteb/MIRACLRetrievalHardNegatives/resolve/332a9acb49f5e83d5397683f79d23e588f685916/de-qrels/dev-00000-of-00001.parquet",
+        "sha256": "a1a8e7b83ed9b197523e6ccd0aad968a59ee7ea1821d4c757c82662832c0d8d1"
+      },
+      "en-corpus/dev-00000-of-00001.parquet": {
+        "url": "https://huggingface.co/datasets/mteb/MIRACLRetrievalHardNegatives/resolve/332a9acb49f5e83d5397683f79d23e588f685916/en-corpus/dev-00000-of-00001.parquet",
+        "sha256": "82177636638bc6a9b99797eee202f26aab835b1fe8a1934b9e8a857456781695"
+      },
+      "en-queries/dev-00000-of-00001.parquet": {
+        "url": "https://huggingface.co/datasets/mteb/MIRACLRetrievalHardNegatives/resolve/332a9acb49f5e83d5397683f79d23e588f685916/en-queries/dev-00000-of-00001.parquet",
+        "sha256": "22e01abd8ff14bee3c7f19482b91934f1e11860ebc63feb66c21ad2f7e688de9"
+      },
+      "en-qrels/dev-00000-of-00001.parquet": {
+        "url": "https://huggingface.co/datasets/mteb/MIRACLRetrievalHardNegatives/resolve/332a9acb49f5e83d5397683f79d23e588f685916/en-qrels/dev-00000-of-00001.parquet",
+        "sha256": "c03d2cb97f55b89c814c2b5dbc004e6254d4747fca5e2831933d0a7cab92ff92"
+      },
+      "es-corpus/dev-00000-of-00001.parquet": {
+        "url": "https://huggingface.co/datasets/mteb/MIRACLRetrievalHardNegatives/resolve/332a9acb49f5e83d5397683f79d23e588f685916/es-corpus/dev-00000-of-00001.parquet",
+        "sha256": "b9adec35c4e8d05f858c03dce3f274b0e1d4429fe813a043ee55533c7ca86982"
+      },
+      "es-queries/dev-00000-of-00001.parquet": {
+        "url": "https://huggingface.co/datasets/mteb/MIRACLRetrievalHardNegatives/resolve/332a9acb49f5e83d5397683f79d23e588f685916/es-queries/dev-00000-of-00001.parquet",
+        "sha256": "db309d2e3b97e16c893e99b53f1a914b41da00de14db0d47292c35c8aebbf721"
+      },
+      "es-qrels/dev-00000-of-00001.parquet": {
+        "url": "https://huggingface.co/datasets/mteb/MIRACLRetrievalHardNegatives/resolve/332a9acb49f5e83d5397683f79d23e588f685916/es-qrels/dev-00000-of-00001.parquet",
+        "sha256": "d418cdeee4e9b6a5a08f8765ff5d5214191902f792c26322b3d7293980a39e94"
+      },
+      "hi-corpus/dev-00000-of-00001.parquet": {
+        "url": "https://huggingface.co/datasets/mteb/MIRACLRetrievalHardNegatives/resolve/332a9acb49f5e83d5397683f79d23e588f685916/hi-corpus/dev-00000-of-00001.parquet",
+        "sha256": "52b4576b99519b04a95db68a6b7863c9f3bfcb36458db0430652355e921528da"
+      },
+      "hi-queries/dev-00000-of-00001.parquet": {
+        "url": "https://huggingface.co/datasets/mteb/MIRACLRetrievalHardNegatives/resolve/332a9acb49f5e83d5397683f79d23e588f685916/hi-queries/dev-00000-of-00001.parquet",
+        "sha256": "8d5d3aaae7ad87d10cf3866cbb104cdfc7508290dc8c0e73aa4e0919ad294e4f"
+      },
+      "hi-qrels/dev-00000-of-00001.parquet": {
+        "url": "https://huggingface.co/datasets/mteb/MIRACLRetrievalHardNegatives/resolve/332a9acb49f5e83d5397683f79d23e588f685916/hi-qrels/dev-00000-of-00001.parquet",
+        "sha256": "de03f45597bac96c844185224a257da57d4bf84f5b9fbfb4d24f70806afae7e6"
+      },
+      "ja-corpus/dev-00000-of-00001.parquet": {
+        "url": "https://huggingface.co/datasets/mteb/MIRACLRetrievalHardNegatives/resolve/332a9acb49f5e83d5397683f79d23e588f685916/ja-corpus/dev-00000-of-00001.parquet",
+        "sha256": "365f2779f9ad290383f87bab863815365bf6a35aa5e1090fdd2684aecc2c9e60"
+      },
+      "ja-queries/dev-00000-of-00001.parquet": {
+        "url": "https://huggingface.co/datasets/mteb/MIRACLRetrievalHardNegatives/resolve/332a9acb49f5e83d5397683f79d23e588f685916/ja-queries/dev-00000-of-00001.parquet",
+        "sha256": "0cc3d8da2951123479c2c0fc686b378c1ea3804eeb17fbc15883d0532ae68ca2"
+      },
+      "ja-qrels/dev-00000-of-00001.parquet": {
+        "url": "https://huggingface.co/datasets/mteb/MIRACLRetrievalHardNegatives/resolve/332a9acb49f5e83d5397683f79d23e588f685916/ja-qrels/dev-00000-of-00001.parquet",
+        "sha256": "dbaf28a360baa18049463d735136ae4ac8aa25f491aec1bbd115909cdd7f9078"
+      },
+      "ru-corpus/dev-00000-of-00001.parquet": {
+        "url": "https://huggingface.co/datasets/mteb/MIRACLRetrievalHardNegatives/resolve/332a9acb49f5e83d5397683f79d23e588f685916/ru-corpus/dev-00000-of-00001.parquet",
+        "sha256": "04efb7c5f194d2b0b17eaa231dac2155fd7764de4d39ccc9cc79e2e71682ae4e"
+      },
+      "ru-queries/dev-00000-of-00001.parquet": {
+        "url": "https://huggingface.co/datasets/mteb/MIRACLRetrievalHardNegatives/resolve/332a9acb49f5e83d5397683f79d23e588f685916/ru-queries/dev-00000-of-00001.parquet",
+        "sha256": "1f2b908ec459217efa8287d9fffc4d7e869cdfb57e860dd47b4c7acc50e9b510"
+      },
+      "ru-qrels/dev-00000-of-00001.parquet": {
+        "url": "https://huggingface.co/datasets/mteb/MIRACLRetrievalHardNegatives/resolve/332a9acb49f5e83d5397683f79d23e588f685916/ru-qrels/dev-00000-of-00001.parquet",
+        "sha256": "0e33fe9858b35abf534e8582715950c7a86dcd1639f4eed26a5670a2325b276a"
+      },
+      "zh-corpus/dev-00000-of-00001.parquet": {
+        "url": "https://huggingface.co/datasets/mteb/MIRACLRetrievalHardNegatives/resolve/332a9acb49f5e83d5397683f79d23e588f685916/zh-corpus/dev-00000-of-00001.parquet",
+        "sha256": "104e2ab8343ee345e874d9336b30508eed6d344e8f231998ca9e368b36b36248"
+      },
+      "zh-queries/dev-00000-of-00001.parquet": {
+        "url": "https://huggingface.co/datasets/mteb/MIRACLRetrievalHardNegatives/resolve/332a9acb49f5e83d5397683f79d23e588f685916/zh-queries/dev-00000-of-00001.parquet",
+        "sha256": "1b8bbbfd5ca450f96a242137772da891d2de7a15fc23ab9242870a1489e570d3"
+      },
+      "zh-qrels/dev-00000-of-00001.parquet": {
+        "url": "https://huggingface.co/datasets/mteb/MIRACLRetrievalHardNegatives/resolve/332a9acb49f5e83d5397683f79d23e588f685916/zh-qrels/dev-00000-of-00001.parquet",
+        "sha256": "f776a49ff24ee7caa79ed0d12c02891164d64540737242426b95e011fcc9cca0"
+      }
+    }
+  },
+  "license": "CC-BY-SA-4.0 (passages: Wikipedia, CC BY-SA; MIRACL topics and judgments: Apache-2.0)",
+  "selection": {
+    "script": "model-pipeline/reference/stable/select_retrieval.py",
+    "seed": 20261014,
+    "queries_per_language": 25,
+    "distractors_per_language": 100,
+    "languages": [
+      "ar",
+      "de",
+      "en",
+      "es",
+      "hi",
+      "ja",
+      "ru",
+      "zh"
+    ],
+    "counts": {
+      "ar": {
+        "queries": 25,
+        "judged_passages": 250,
+        "distractors": 100
+      },
+      "de": {
+        "queries": 25,
+        "judged_passages": 240,
+        "distractors": 100
+      },
+      "en": {
+        "queries": 25,
+        "judged_passages": 260,
+        "distractors": 100
+      },
+      "es": {
+        "queries": 25,
+        "judged_passages": 250,
+        "distractors": 100
+      },
+      "hi": {
+        "queries": 25,
+        "judged_passages": 248,
+        "distractors": 100
+      },
+      "ja": {
+        "queries": 25,
+        "judged_passages": 231,
+        "distractors": 100
+      },
+      "ru": {
+        "queries": 25,
+        "judged_passages": 259,
+        "distractors": 100
+      },
+      "zh": {
+        "queries": 25,
+        "judged_passages": 240,
+        "distractors": 100
+      }
+    }
+  },
+  "note": "The Multilingual E5 technical report (arXiv:2402.05672) lists MIRACL training data in the e5 fine-tuning mix; this subset is the dev split. EmbeddingGemma 2 training data is not documented at this level."
+}

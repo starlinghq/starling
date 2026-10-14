@@ -1,0 +1,28 @@
+{
+  "name": "gsm8k-test-v1",
+  "status": "PROPOSED: candidate G3 generation task set, not accepted; not gate evidence",
+  "provenance": {
+    "source": "openai/gsm8k",
+    "revision": "740312add88f781978c0658806c59bc2815b9866",
+    "license": "MIT",
+    "license_evidence": "card front matter `license: mit` and card text 'licensed under the MIT License'",
+    "files": {
+      "main/test-00000-of-00001.parquet": {
+        "url": "https://huggingface.co/datasets/openai/gsm8k/resolve/740312add88f781978c0658806c59bc2815b9866/main/test-00000-of-00001.parquet",
+        "sha256": "ee7b8da9e381df27b9e3f7758a159ab2bdaa4dbaa910546cbbc47e0cb44e4f59"
+      }
+    }
+  },
+  "license": "MIT",
+  "metric": "exact_match: the last \\boxed{...} of the output (else the last number), commas and a trailing '.0' removed, equals `answer` (reference/stable/score_generation.py)",
+  "selection": {
+    "script": "model-pipeline/reference/stable/select_generation.py",
+    "seed": 20261014,
+    "count": 50,
+    "max_new_tokens": 512,
+    "instruction": "Please reason step by step, and put your final answer within \\boxed{}.",
+    "chat_template_kwargs": {
+      "enable_thinking": false
+    }
+  }
+}

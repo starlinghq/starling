@@ -18,4 +18,7 @@ float:
   step0_logprob_max_abs: 5.0e-3
   step0_top5_logprob_max_abs: 2.0e-3
   cached_vs_uncached_logprob_max_abs: 2.0e-4
+  # Added 2026-10-14 (maintainer delegation, docs/kickoff.md): the key was missing, so G2 could not run. Rule fixed
+  # before the rerun: copy the ortgenai-fp32x-cpu bound for the same key (same dtype), not a value from a CUDA result.
+  chunked_vs_one_call_prefill_logprob_max_abs: 1.0e-4
   nan_or_inf: fail

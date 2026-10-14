@@ -1,0 +1,174 @@
+{
+  "dataset_sha256": "c4322bab27638a6c2b65a3bb306802d4c5f67851d4aa6a90471b32e90d949a55",
+  "predictions_sha256": "6c27d5a29b507ed167f8a5cab0d4de167db35331f29a35f3984afce2b515060a",
+  "offset_text_mismatches": 0,
+  "metrics": {
+    "metrics": {
+      "exact.micro.precision": 0.2599337748344371,
+      "exact.macro.precision": 0.2398418602731468,
+      "exact.label.person.precision": 0.36363636363636365,
+      "exact.label.location.precision": 0.38271604938271603,
+      "exact.label.corporation.precision": 0.23684210526315788,
+      "exact.label.product.precision": 0.06153846153846154,
+      "exact.label.creative-work.precision": 0.18181818181818182,
+      "exact.label.group.precision": 0.2125,
+      "exact.micro.recall": 0.5992366412213741,
+      "exact.macro.recall": 0.5142030691825478,
+      "exact.label.person.recall": 0.7706422018348624,
+      "exact.label.location.recall": 0.775,
+      "exact.label.corporation.recall": 0.5,
+      "exact.label.product.recall": 0.36363636363636365,
+      "exact.label.creative-work.recall": 0.22857142857142856,
+      "exact.label.group.recall": 0.4473684210526316,
+      "exact.micro.f1": 0.36258660508083146,
+      "exact.macro.f1": 0.32064555156449454,
+      "exact.label.person.f1": 0.4941176470588236,
+      "exact.label.location.f1": 0.512396694214876,
+      "exact.label.corporation.f1": 0.32142857142857145,
+      "exact.label.product.f1": 0.10526315789473685,
+      "exact.label.creative-work.f1": 0.20253164556962025,
+      "exact.label.group.f1": 0.288135593220339,
+      "partial.micro.precision": 0.29635761589403975,
+      "partial.macro.precision": 0.2786591386737585,
+      "partial.label.person.precision": 0.4025974025974026,
+      "partial.label.location.precision": 0.41975308641975306,
+      "partial.label.corporation.precision": 0.23684210526315788,
+      "partial.label.product.precision": 0.09230769230769231,
+      "partial.label.creative-work.precision": 0.29545454545454547,
+      "partial.label.group.precision": 0.225,
+      "partial.micro.recall": 0.683206106870229,
+      "partial.macro.recall": 0.5989630560972908,
+      "partial.label.person.recall": 0.8532110091743119,
+      "partial.label.location.recall": 0.85,
+      "partial.label.corporation.recall": 0.5,
+      "partial.label.product.recall": 0.5454545454545454,
+      "partial.label.creative-work.recall": 0.37142857142857144,
+      "partial.label.group.recall": 0.47368421052631576,
+      "partial.micro.f1": 0.4133949191685912,
+      "partial.macro.f1": 0.3704273787813022,
+      "partial.label.person.f1": 0.5470588235294117,
+      "partial.label.location.f1": 0.5619834710743802,
+      "partial.label.corporation.f1": 0.32142857142857145,
+      "partial.label.product.f1": 0.15789473684210525,
+      "partial.label.creative-work.f1": 0.32911392405063294,
+      "partial.label.group.f1": 0.30508474576271183
+    },
+    "per_label": {
+      "exact": {
+        "person": {
+          "tp": 84,
+          "predicted": 231,
+          "gold": 109,
+          "precision": 0.36363636363636365,
+          "recall": 0.7706422018348624,
+          "f1": 0.4941176470588236
+        },
+        "location": {
+          "tp": 31,
+          "predicted": 81,
+          "gold": 40,
+          "precision": 0.38271604938271603,
+          "recall": 0.775,
+          "f1": 0.512396694214876
+        },
+        "corporation": {
+          "tp": 9,
+          "predicted": 38,
+          "gold": 18,
+          "precision": 0.23684210526315788,
+          "recall": 0.5,
+          "f1": 0.32142857142857145
+        },
+        "product": {
+          "tp": 8,
+          "predicted": 130,
+          "gold": 22,
+          "precision": 0.06153846153846154,
+          "recall": 0.36363636363636365,
+          "f1": 0.10526315789473685
+        },
+        "creative-work": {
+          "tp": 8,
+          "predicted": 44,
+          "gold": 35,
+          "precision": 0.18181818181818182,
+          "recall": 0.22857142857142856,
+          "f1": 0.20253164556962025
+        },
+        "group": {
+          "tp": 17,
+          "predicted": 80,
+          "gold": 38,
+          "precision": 0.2125,
+          "recall": 0.4473684210526316,
+          "f1": 0.288135593220339
+        }
+      },
+      "partial": {
+        "person": {
+          "tp": 93,
+          "predicted": 231,
+          "gold": 109,
+          "precision": 0.4025974025974026,
+          "recall": 0.8532110091743119,
+          "f1": 0.5470588235294117
+        },
+        "location": {
+          "tp": 34,
+          "predicted": 81,
+          "gold": 40,
+          "precision": 0.41975308641975306,
+          "recall": 0.85,
+          "f1": 0.5619834710743802
+        },
+        "corporation": {
+          "tp": 9,
+          "predicted": 38,
+          "gold": 18,
+          "precision": 0.23684210526315788,
+          "recall": 0.5,
+          "f1": 0.32142857142857145
+        },
+        "product": {
+          "tp": 12,
+          "predicted": 130,
+          "gold": 22,
+          "precision": 0.09230769230769231,
+          "recall": 0.5454545454545454,
+          "f1": 0.15789473684210525
+        },
+        "creative-work": {
+          "tp": 13,
+          "predicted": 44,
+          "gold": 35,
+          "precision": 0.29545454545454547,
+          "recall": 0.37142857142857144,
+          "f1": 0.32911392405063294
+        },
+        "group": {
+          "tp": 18,
+          "predicted": 80,
+          "gold": 38,
+          "precision": 0.225,
+          "recall": 0.47368421052631576,
+          "f1": 0.30508474576271183
+        }
+      }
+    },
+    "labels_without_gold": []
+  },
+  "extract_seconds": 42.2,
+  "environment": {
+    "python": "3.11.16",
+    "platform": "Linux-7.2.5-3-omarchy-x86_64-with-glibc2.44",
+    "machine": "x86_64",
+    "cpu": "Intel(R) Core(TM) i7-5820K CPU @ 3.30GHz",
+    "cpu_count": 12,
+    "packages": {
+      "torch": "2.14.1+cpu",
+      "transformers": "4.57.6",
+      "tokenizers": "0.22.2",
+      "gliner2": "2.0.0"
+    }
+  }
+}

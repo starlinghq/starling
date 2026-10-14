@@ -1,0 +1,3 @@
+This directory is an excerpt of a dataset licensed under the Creative Commons Attribution-ShareAlike 4.0 International License (CC BY-SA 4.0): https://creativecommons.org/licenses/by-sa/4.0/
+
+It is distributed under CC BY-SA 4.0, not under the repository's MIT OR Apache-2.0. Sources, attribution, revision and selection are in ../SOURCE.md (or SOURCE.md in the parent set directory) and in model-pipeline/THIRD-PARTY-NOTICES.md. Changes made: selection of a seeded subset; passage text is title + " " + text.

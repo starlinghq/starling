@@ -1,0 +1,24 @@
+{
+  "name": "wnut17-test-v1",
+  "status": "PROPOSED: candidate G3 NER set, not accepted; not gate evidence",
+  "provenance": {
+    "source": "github.com/leondz/emerging_entities_17 (Hub copy: leondz/wnut_17 loader)",
+    "revision": "e52a2d2a71ac1a051ca2d532eef28653c5c02603",
+    "license": "CC-BY-4.0",
+    "license_evidence": "upstream README at the pinned commit: 'distributed under the CC-BY 4.0 license'; Hub card leondz/wnut_17 at be8fbd57399293da6f9aad56a793bce5bf1fd30e: `license: cc-by-4.0`",
+    "files": {
+      "emerging.test.annotated": {
+        "url": "https://raw.githubusercontent.com/leondz/emerging_entities_17/e52a2d2a71ac1a051ca2d532eef28653c5c02603/emerging.test.annotated",
+        "sha256": "2aa79b764e56ec9264a1b30fdd9b70195bd00ff400b62edd8f399d5f13c178f0"
+      }
+    }
+  },
+  "license": "CC-BY-4.0",
+  "selection": {
+    "script": "model-pipeline/reference/stable/select_ner.py",
+    "seed": 20261014,
+    "sentences": 300,
+    "entities": 262,
+    "filters": "5 to 60 tokens; tokens joined by single spaces"
+  }
+}

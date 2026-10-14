@@ -1,0 +1,8 @@
+{
+  "reference": "tokenizers library reading tokenizer.json as is",
+  "transformers_class": "GemmaTokenizer",
+  "transformers_pipeline_vs_tokenizer_json": [],
+  "transformers_ids_differ": [],
+  "sentence_transformers_preprocess": "SentenceTransformer.preprocess (message modality: chat_template.jinja renders the prompt as a system message followed by the text, then the processor tokenizes with special tokens)",
+  "sentence_transformers_ids_differ_from_tokenizer_json_of_prompt_plus_text": []
+}

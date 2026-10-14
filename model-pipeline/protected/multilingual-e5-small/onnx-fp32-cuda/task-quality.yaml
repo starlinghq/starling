@@ -1,0 +1,8 @@
+# G3 quality budget, maintainer-owned (plan 10, M2). Accepted 2026-10-14 from the Stable proposal
+# (docs/plan/stable-proposal.md section 3, PR #20) under the maintainer's in-session delegation
+# (docs/kickoff.md). Set from upstream reference scores before any .NET run on the set.
+profile: multilingual-e5-small/onnx-fp32-cuda
+retrieval:
+  # reference (PyTorch fp32) ndcg@10 0.7978, mrr@10 0.7717; margin 0.006
+  dataset_sha256: 614a8d0d4d43a3930cc7ea4fea56a9835c7db108b68b9c071de8e116995d2405
+  minimum: {ndcg@10: 0.792, mrr@10: 0.765}

@@ -1,0 +1,279 @@
+{
+  "fast": "DebertaV2TokenizerFast",
+  "slow": "DebertaV2Tokenizer",
+  "special_token_ids": {
+    "fast": {
+      "[SEP_STRUCT]": 128001,
+      "[SEP_TEXT]": 128002,
+      "[P]": 128003,
+      "[C]": 128004,
+      "[E]": 128005,
+      "[R]": 128006,
+      "[L]": 128007,
+      "[EXAMPLE]": 128008,
+      "[OUTPUT]": 128009,
+      "[DESCRIPTION]": 128010
+    },
+    "slow": {
+      "[SEP_STRUCT]": 128001,
+      "[SEP_TEXT]": 128002,
+      "[P]": 128003,
+      "[C]": 128004,
+      "[E]": 128005,
+      "[R]": 128006,
+      "[L]": 128007,
+      "[EXAMPLE]": 128008,
+      "[OUTPUT]": 128009,
+      "[DESCRIPTION]": 128010
+    },
+    "equal": true
+  },
+  "cases": 232,
+  "cases_with_differences": [
+    "massive-am-ET-635",
+    "massive-km-KH-8387",
+    "massive-kn-IN-9053",
+    "massive-kn-IN-10718",
+    "massive-ml-IN-12121",
+    "massive-te-IN-3581",
+    "massive-te-IN-2960",
+    "massive-zh-TW-14994",
+    "oasst1-45c537e4-373f-4b0f-85aa-6ffa2873031b"
+  ],
+  "differences": [
+    {
+      "id": "massive-am-ET-635",
+      "category": "massive:am-ET",
+      "words": [
+        {
+          "word_index": 1,
+          "word": "አቧራ",
+          "fast": [
+            "▁",
+            "አ",
+            "ቧ",
+            "ራ"
+          ],
+          "slow": [
+            "▁",
+            "አ",
+            "<0xE1>",
+            "<0x89>",
+            "<0xA7>",
+            "ራ"
+          ]
+        },
+        {
+          "word_index": 2,
+          "word": "ማፅጃ",
+          "fast": [
+            "▁",
+            "ማ",
+            "ፅ",
+            "ጃ"
+          ],
+          "slow": [
+            "▁",
+            "ማ",
+            "<0xE1>",
+            "<0x8D>",
+            "<0x85>",
+            "ጃ"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "massive-km-KH-8387",
+      "category": "massive:km-KH",
+      "words": [
+        {
+          "word_index": 10,
+          "word": "កឲ",
+          "fast": [
+            "▁",
+            "ក",
+            "ឲ"
+          ],
+          "slow": [
+            "▁",
+            "ក",
+            "<0xE1>",
+            "<0x9E>",
+            "<0xB2>"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "massive-kn-IN-9053",
+      "category": "massive:kn-IN",
+      "words": [
+        {
+          "word_index": 28,
+          "word": "ಞ",
+          "fast": [
+            "▁",
+            "ಞ"
+          ],
+          "slow": [
+            "▁",
+            "<0xE0>",
+            "<0xB2>",
+            "<0x9E>"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "massive-kn-IN-10718",
+      "category": "massive:kn-IN",
+      "words": [
+        {
+          "word_index": 5,
+          "word": "ಐಟ",
+          "fast": [
+            "▁",
+            "ಐ",
+            "ಟ"
+          ],
+          "slow": [
+            "▁",
+            "<0xE0>",
+            "<0xB2>",
+            "<0x90>",
+            "ಟ"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "massive-ml-IN-12121",
+      "category": "massive:ml-IN",
+      "words": [
+        {
+          "word_index": 26,
+          "word": "‍",
+          "fast": [
+            "▁"
+          ],
+          "slow": []
+        }
+      ]
+    },
+    {
+      "id": "massive-te-IN-3581",
+      "category": "massive:te-IN",
+      "words": [
+        {
+          "word_index": 1,
+          "word": "ౌ",
+          "fast": [
+            "▁",
+            "ౌ"
+          ],
+          "slow": [
+            "▁",
+            "<0xE0>",
+            "<0xB1>",
+            "<0x8C>"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "massive-te-IN-2960",
+      "category": "massive:te-IN",
+      "words": [
+        {
+          "word_index": 8,
+          "word": "‌",
+          "fast": [
+            "▁"
+          ],
+          "slow": []
+        }
+      ]
+    },
+    {
+      "id": "massive-zh-TW-14994",
+      "category": "massive:zh-TW",
+      "words": [
+        {
+          "word_index": 0,
+          "word": "彭于晏的下一部電影是什麼",
+          "fast": [
+            "▁",
+            "彭",
+            "于",
+            "晏",
+            "的",
+            "下",
+            "一",
+            "部",
+            "電",
+            "影",
+            "是",
+            "什",
+            "麼"
+          ],
+          "slow": [
+            "▁",
+            "彭",
+            "于",
+            "<0xE6>",
+            "<0x99>",
+            "<0x8F>",
+            "的",
+            "下",
+            "一",
+            "部",
+            "電",
+            "影",
+            "是",
+            "什",
+            "麼"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "oasst1-45c537e4-373f-4b0f-85aa-6ffa2873031b",
+      "category": "chat:es",
+      "words": [
+        {
+          "word_index": 57,
+          "word": "​",
+          "fast": [
+            "▁"
+          ],
+          "slow": []
+        },
+        {
+          "word_index": 71,
+          "word": "​",
+          "fast": [
+            "▁"
+          ],
+          "slow": []
+        },
+        {
+          "word_index": 85,
+          "word": "​",
+          "fast": [
+            "▁"
+          ],
+          "slow": []
+        },
+        {
+          "word_index": 140,
+          "word": "​",
+          "fast": [
+            "▁"
+          ],
+          "slow": []
+        }
+      ]
+    }
+  ]
+}

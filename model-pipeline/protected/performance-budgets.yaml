@@ -1,0 +1,61 @@
+# G5 performance budgets, maintainer-owned (plan 10 and 11, M2). Accepted 2026-10-14 from the Stable proposal
+# (docs/plan/stable-proposal.md section 4, PR #20) under the maintainer's in-session delegation (docs/kickoff.md),
+# before any qualifying benchmark ran.
+#
+# Budgets are ratios against a Python run on the same backend, same machine, same workload and thread count, so they
+# hold across machines; absolute numbers are recorded per run, not budgeted. A qualifying run follows
+# docs/benchmarks/PROTOCOL.md: quiet machine (no other jobs), 3 warm rounds, 10 cold processes, interleaved, with the
+# environment manifest. A profile whose comparison runner does not exist yet cannot pass G5 until it does.
+# Regression alert for every profile: a repeatable median regression above 5% between releases on the same machine.
+version: 1
+profiles:
+  multilingual-e5-small/onnx-fp32-cpu:
+    comparison: python onnxruntime, same graph (bench_e5_matched.py)
+    warm_median_ratio_max: 1.10      # per workload; the upper 95% bound at most 1.15
+    cold_start_ratio_max: 1.0
+    adapter_overhead_max: "max(1 ms, 10%) of direct C#, on medians"
+  multilingual-e5-small/onnx-fp32-cuda:
+    comparison: python onnxruntime-gpu, same graph (bench_e5_matched.py)
+    warm_median_ratio_max: 1.05
+  embeddinggemma-2/onnx-fp32-cpu:
+    comparison: python onnxruntime, same graph (runner to be factored from bench_e5_matched.py)
+    warm_median_ratio_max: 1.10
+  embeddinggemma-2/onnx-fp32-cuda:
+    comparison: python onnxruntime-gpu, same graph
+    warm_median_ratio_max: 1.10
+  embeddinggemma-2/image-fp32-cpu:
+    comparison: python onnxruntime, same graphs
+    preprocess_share_of_embed_max: 0.05
+    warm_median_ratio_max: 1.10
+  embeddinggemma-2/image-fp32-cuda:
+    comparison: python onnxruntime-gpu, same graphs
+    preprocess_share_of_embed_max: 0.05
+    warm_median_ratio_max: 1.10
+  embeddinggemma-2/video-fp32-cpu:
+    comparison: python onnxruntime, same graphs, decoded frames
+    preprocess_share_of_embed_max: 0.05
+    warm_median_ratio_max: 1.10
+  embeddinggemma-2/video-fp32-cuda:
+    comparison: python onnxruntime-gpu, same graphs, decoded frames
+    preprocess_share_of_embed_max: 0.05
+    warm_median_ratio_max: 1.10
+  gliner2-base-v1/onnx-fp32-cpu:
+    comparison: python onnxruntime on the same inputs (inference stage)
+    prepare_plus_decode_share_of_inference_max: 0.05
+    inference_ratio_max: 1.10
+  gliner2-base-v1/onnx-fp32-cuda:
+    comparison: python onnxruntime-gpu on the same inputs (inference stage)
+    prepare_plus_decode_share_of_inference_max: 0.05
+    inference_ratio_max: 1.10
+  qwen3.5-0.8b/ortgenai-fp32x-cpu:
+    comparison: python onnxruntime-genai, same bundle, same prompts, greedy
+    decode_tokens_per_second_ratio_min: 0.95
+    time_to_first_token_ratio_max: 1.10
+  qwen3.5-0.8b/ortgenai-fp32x-cuda:
+    comparison: python onnxruntime-genai (CUDA), same bundle
+    decode_tokens_per_second_ratio_min: 0.95
+    time_to_first_token_ratio_max: 1.10
+  qwen3.5-0.8b/ortgenai-fp16x-cuda:
+    comparison: python onnxruntime-genai (CUDA), same bundle
+    decode_tokens_per_second_ratio_min: 0.95
+    time_to_first_token_ratio_max: 1.10
