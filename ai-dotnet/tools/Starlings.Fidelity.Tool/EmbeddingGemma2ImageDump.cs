@@ -11,6 +11,12 @@
 //
 //   dotnet run --project ai-dotnet/tools/Starlings.Fidelity.Tool -c Release -- embeddinggemma2-images --out <dir>
 //       --images <dir> [--snapshot <dir>] [--fixtures <dir>] [--profile <id>] [--threads <n>] [--device cpu|cuda[:N]]
+//       [--max-image-pixels <n>]
+//
+// --max-image-pixels raises (or lowers) the decoded-pixel limit of both the SkiaSharp decoder
+// (EmbeddingGemma2ImageDecoderOptions.MaxPixels) and the embedder (EmbeddingGemma2MultimodalOptions.MaxImagePixels), whose
+// default 50,000,000 is a memory bound upstream does not have. The value is recorded in the stage environment
+// (max_image_pixels); without the option the package defaults apply.
 //
 // --device cuda needs the CUDA build (ai-dotnet/tools/Starlings.Fidelity.Tool.Cuda) and defaults the profile to
 // embeddinggemma-2/image-fp32-cuda (same fixtures, same rows and batch layouts). Applies no bounds; writes nothing under
@@ -32,6 +38,7 @@ internal static class EmbeddingGemma2ImageDump
         string? fixturesDir = null;
         string? profile = null;
         int? threads = null;
+        long? maxImagePixels = null;
         var device = ToolDevice.Cpu;
         for (int i = 0; i < args.Length; i++)
         {
@@ -54,6 +61,10 @@ internal static class EmbeddingGemma2ImageDump
                     break;
                 case "--threads" when i + 1 < args.Length && int.TryParse(args[i + 1], out int n) && n > 0:
                     threads = n;
+                    i++;
+                    break;
+                case "--max-image-pixels" when i + 1 < args.Length && long.TryParse(args[i + 1], out long px) && px > 0:
+                    maxImagePixels = px;
                     i++;
                     break;
                 case "--device" when i + 1 < args.Length && ToolDevice.TryParse(args[i + 1], out var parsed):
@@ -102,14 +113,17 @@ internal static class EmbeddingGemma2ImageDump
         Directory.CreateDirectory(outDir);
         string? commit = ToolSupport.GitHead(repoRoot);
         var session = device.Apply(new OnnxSessionOptions { IntraOpNumThreads = threads });
-        using var embedder = EmbeddingGemma2MultimodalEmbedder.Create(files, new EmbeddingGemma2MultimodalOptions { Session = session });
+        using var embedder = EmbeddingGemma2MultimodalEmbedder.Create(files, maxImagePixels is long limit
+            ? new EmbeddingGemma2MultimodalOptions { Session = session, MaxImagePixels = limit }
+            : new EmbeddingGemma2MultimodalOptions { Session = session });
+        var decoderOptions = maxImagePixels is long decoderLimit ? new EmbeddingGemma2ImageDecoderOptions { MaxPixels = decoderLimit } : null;
         var manifest = ReadManifest(Path.Combine(fixturesDir, "images.json"));
         var rows = ReadRows(Path.Combine(fixturesDir, "image-embeddings.jsonl"))
             .Where(r => r.Images.All(i => manifest[i].Mode != "I;16"))
             .ToList();
         var decoded = new Dictionary<string, EmbeddingGemma2Image>(StringComparer.Ordinal);
         EmbeddingGemma2Image Decode(string id) =>
-            decoded.TryGetValue(id, out var image) ? image : decoded[id] = EmbeddingGemma2ImageDecoder.DecodeFile(Path.Combine(imagesDir, manifest[id].File));
+            decoded.TryGetValue(id, out var image) ? image : decoded[id] = EmbeddingGemma2ImageDecoder.DecodeFile(Path.Combine(imagesDir, manifest[id].File), decoderOptions);
 
         var vd = embedder.VisionSession.Diagnostics;
         var environment = new Dictionary<string, object?>
@@ -126,6 +140,7 @@ internal static class EmbeddingGemma2ImageDump
             ["session_providers"] = vd.SessionProviders,
             ["intra_op_threads"] = vd.IntraOpNumThreads,
             ["image_decoder"] = "Starlings.Models.EmbeddingGemma2.Imaging.SkiaSharp (SkiaSharp 4.153.1)",
+            ["max_image_pixels"] = maxImagePixels ?? new EmbeddingGemma2MultimodalOptions().MaxImagePixels,
         };
         device.Describe(environment);
         var tokenizerAsset = new Asset(EmbeddingGemma2ModelAssets.TokenizerFile, EmbeddingGemma2ModelAssets.TokenizerSha256);
