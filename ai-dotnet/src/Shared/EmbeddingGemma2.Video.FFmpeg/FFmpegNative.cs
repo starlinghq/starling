@@ -62,11 +62,45 @@ internal static unsafe partial class FFmpegNative
         }
     }
 
+    /// <summary>The running operating system's shared-library naming.</summary>
+    public static LibraryNaming CurrentNaming =>
+        OperatingSystem.IsWindows() ? LibraryNaming.Windows
+        : OperatingSystem.IsMacOS() ? LibraryNaming.MacOS
+        : LibraryNaming.Unix;
+
     /// <summary>File name of an FFmpeg shared library of a given major on the running operating system.</summary>
-    public static string FileName(string name, int major) =>
-        OperatingSystem.IsWindows() ? $"{name}-{major}.dll"
-        : OperatingSystem.IsMacOS() ? $"lib{name}.{major}.dylib"
-        : $"lib{name}.so.{major}";
+    public static string FileName(string name, int major) => FileName(name, major, CurrentNaming);
+
+    /// <summary>File name of an FFmpeg shared library of a given major under a naming convention.</summary>
+    public static string FileName(string name, int major, LibraryNaming naming) => Format(name, major.ToString(System.Globalization.CultureInfo.InvariantCulture), naming);
+
+    /// <summary>Search pattern for the major-named files of a library (<c>avcodec-*.dll</c>, <c>libavcodec.*.dylib</c>, <c>libavcodec.so.*</c>).</summary>
+    public static string FilePattern(string name, LibraryNaming naming) => Format(name, "*", naming);
+
+    /// <summary>The major of a file named exactly like <see cref="FileName(string, int, LibraryNaming)"/>, else null (other files, full-version names).</summary>
+    public static int? MajorOf(string fileName, string name, LibraryNaming naming)
+    {
+        string prefix = Format(name, "|", naming);
+        int bar = prefix.IndexOf('|', StringComparison.Ordinal);
+        string head = prefix[..bar];
+        string tail = prefix[(bar + 1)..];
+        if (fileName.Length <= head.Length + tail.Length
+            || !fileName.StartsWith(head, StringComparison.Ordinal)
+            || !fileName.EndsWith(tail, StringComparison.Ordinal))
+        {
+            return null;
+        }
+
+        string digits = fileName[head.Length..^tail.Length];
+        return digits.All(char.IsAsciiDigit) && int.TryParse(digits, System.Globalization.CultureInfo.InvariantCulture, out int major) ? major : null;
+    }
+
+    private static string Format(string name, string major, LibraryNaming naming) => naming switch
+    {
+        LibraryNaming.Windows => $"{name}-{major}.dll",
+        LibraryNaming.MacOS => $"lib{name}.{major}.dylib",
+        _ => $"lib{name}.so.{major}",
+    };
 
     /// <summary>A string FFmpeg owns (static or context-owned): copied, never freed.</summary>
     public static string Utf8(byte* value) => Marshal.PtrToStringUTF8((IntPtr)value) ?? string.Empty;
@@ -105,4 +139,17 @@ internal static unsafe partial class FFmpegNative
             ? NativeLibrary.TryLoad(Path.Combine(_directory, file), out handle)
             : NativeLibrary.TryLoad(file, out handle);
     }
+}
+
+/// <summary>How an operating system names FFmpeg's shared libraries of a major.</summary>
+internal enum LibraryNaming
+{
+    /// <summary>Linux and other ELF systems: <c>libavcodec.so.62</c>.</summary>
+    Unix,
+
+    /// <summary>Windows: <c>avcodec-62.dll</c>.</summary>
+    Windows,
+
+    /// <summary>macOS: <c>libavcodec.62.dylib</c>.</summary>
+    MacOS,
 }

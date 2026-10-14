@@ -352,15 +352,30 @@ public sealed class TransformContractTests : IDisposable
                 VBuffer<float> v = default;
                 DataViewRowId rowId = default;
                 int i = 0;
+                bool first = true;
                 while (cursor.MoveNext())
                 {
                     threads[Environment.CurrentManagedThreadId] = 0;
+                    if (first)
+                    {
+                        // Every cursor holds a row before any takes a second, so the four embed concurrently on any
+                        // scheduler: without this rendezvous one thread can drain the shared input before the others
+                        // are scheduled (seen on Windows runners), and the threads assertion measures the scheduler.
+                        first = false;
+                        barrier.SignalAndWait(Ct);
+                    }
+
                     embedding(ref v);
                     embedding(ref v);
                     index(ref i);
                     id(ref rowId);
                     Assert.Equal((ulong)i, rowId.Low);
                     Assert.True(results.TryAdd(i, v.DenseValues().ToArray()), $"row {i} seen twice");
+                }
+
+                if (first)
+                {
+                    barrier.RemoveParticipant();
                 }
             }
         }, Ct, TaskCreationOptions.LongRunning, TaskScheduler.Default)).ToArray();

@@ -174,17 +174,23 @@ public static unsafe class EmbeddingGemma2FFmpeg
 
     private static string Describe(string? directory) => directory ?? "the system library search path";
 
-    internal static string NotFoundMessage(string? directory, string name, int major)
+    internal static string NotFoundMessage(string? directory, string name, int major) =>
+        NotFoundMessage(directory, name, major, FFmpegNative.CurrentNaming);
+
+    /// <summary>The not-found message under a naming convention (testable for every operating system on any).</summary>
+    internal static string NotFoundMessage(string? directory, string name, int major, LibraryNaming naming)
     {
-        string expected = FFmpegNative.FileName(name, major);
+        string expected = FFmpegNative.FileName(name, major, naming);
         string hint = string.Empty;
-        var dirs = directory is not null ? [directory] : new[] { "/usr/lib", "/usr/lib/x86_64-linux-gnu", "/usr/lib64", "/usr/local/lib" };
+        string[] dirs = directory is not null ? [directory] : DefaultSearchDirectories(naming);
         var other = new List<string>();
         foreach (string dir in dirs.Where(System.IO.Directory.Exists))
         {
             try
             {
-                other.AddRange(System.IO.Directory.GetFiles(dir, $"lib{name}.so.*").Select(Path.GetFileName).Where(f => f!.Count(c => c == '.') == 2 && f != expected)!);
+                other.AddRange(System.IO.Directory.GetFiles(dir, FFmpegNative.FilePattern(name, naming))
+                    .Select(f => Path.GetFileName(f)!)
+                    .Where(f => FFmpegNative.MajorOf(f, name, naming) is int found && found != major));
             }
             catch (UnauthorizedAccessException)
             {
@@ -193,11 +199,19 @@ public static unsafe class EmbeddingGemma2FFmpeg
 
         if (other.Count > 0)
         {
-            hint = $" Found {string.Join(", ", other.Distinct())} instead (another FFmpeg major; this package binds FFmpeg {SupportedFFmpegMajor}, lib{name}.so.{major}; the adapter package of the installed major loads it: Starlings.Models.EmbeddingGemma2.Video.FFmpeg for FFmpeg 8, Starlings.Models.EmbeddingGemma2.Video.FFmpeg9 for FFmpeg 9).";
+            hint = $" Found {string.Join(", ", other.Distinct().Order(StringComparer.Ordinal))} instead (another FFmpeg major; this package binds FFmpeg {SupportedFFmpegMajor}, {expected}; the adapter package of the installed major loads it: Starlings.Models.EmbeddingGemma2.Video.FFmpeg for FFmpeg 8, Starlings.Models.EmbeddingGemma2.Video.FFmpeg9 for FFmpeg 9).";
         }
 
         return $"FFmpeg {SupportedFFmpegMajor}.x shared library {expected} could not be loaded from {Describe(directory)}.{hint} Install FFmpeg {SupportedFFmpegMajor}.x shared libraries (an LGPL build; this package ships none) and set EmbeddingGemma2FFmpegOptions.LibraryDirectory or {LibraryDirectoryEnvironmentVariable}.";
     }
+
+    /// <summary>Where the system search usually finds FFmpeg, scanned only for the other-major hint.</summary>
+    private static string[] DefaultSearchDirectories(LibraryNaming naming) => naming switch
+    {
+        LibraryNaming.Windows => [AppContext.BaseDirectory],
+        LibraryNaming.MacOS => ["/opt/homebrew/lib", "/usr/local/lib"],
+        _ => ["/usr/lib", "/usr/lib/x86_64-linux-gnu", "/usr/lib64", "/usr/local/lib"],
+    };
 }
 
 /// <summary>The FFmpeg libraries a process loaded.</summary>

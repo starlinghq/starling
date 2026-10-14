@@ -1,0 +1,437 @@
+name: qualification
+
+# Scheduled qualification (plan section 13.1 "trusted model qualification" and "periodic maintenance"; backlog P-018,
+# workstream R6 of docs/plan/production-readiness.md). Weekly and on manual dispatch only: never on pull_request, so no
+# fork code runs here, and no job can reach release credentials (the `release` environment is used only by
+# release.yml). Every job uses the read-only workflow token and no secret: only publicly hosted, pinned model assets
+# are acquired. Profiles whose graphs are still in private repositories (GLiNER2, EmbeddingGemma 2, Qwen) are skipped
+# with a "hosting private (M3)" notice until maintainer action M3 makes them public; tools/qualification.py reads that
+# from each manifest's `source_status`.
+#
+# Jobs:
+#   assets       restore the pinned public model files (acquisition tool, SHA-256 verified) into an actions/cache
+#                entry keyed by the manifests' file digests
+#   model-tests  the weight-dependent .NET tests, with the models present
+#   evaluator    the protected staged evaluator, G1 and G2 required, per CPU profile (onboarding recipe), plus the G3
+#                task-quality evaluator on the public SMOKE example (not gate evidence: no budget exists, exit 4)
+#   soak         a short G4 soak per CPU profile (--duration 10m; the one-hour run is the qualification length)
+#   catalog      the generated catalog and compatibility matrix are not stale
+#   upstream     upstream change detection (P-020): fails when a pinned Hub repository has a revision newer than the
+#                manifest's latest_known_upstream_revision, so the maintainer is notified by the failed run
+#   gpu          self-hosted CUDA runs, off unless dispatched with gpu=true (maintainer action M6 registers the runner)
+#
+# Evidence from every job is uploaded as an artifact, also when a step fails. Nothing here changes a manifest, a gate
+# or a maturity: the maintainer records results (M10).
+#
+# Tools (draft PRs this workflow depends on): `model-pipeline catalog --check` (#4, r3-catalog); `model-pipeline
+# evaluate --g3` and the Fidelity tool's `retrieval` producer (#5, r5-task-evaluators); Starlings.Soak.Tool (#9,
+# r1-operational-harness); `model-pipeline upstream` (#8, r10-stable-contracts).
+on:
+  schedule:
+    - cron: "23 4 * * 1" # Mondays 04:23 UTC
+  workflow_dispatch:
+    inputs:
+      soak_duration:
+        description: "Soak duration per profile (Starlings.Soak.Tool --duration; 1h is the qualification length)"
+        type: string
+        default: 10m
+      gpu:
+        description: "Also run the self-hosted CUDA job (needs a registered [self-hosted, gpu] runner, M6)"
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: qualification-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  DOTNET_NOLOGO: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+  CI: true
+  STARLING_MODELS: ${{ github.workspace }}/.models
+  EVIDENCE: ${{ github.workspace }}/artifacts/qualification
+  # The CPU profiles of the registry. A new CPU profile is added here; tools/qualification.py decides its hosting.
+  CPU_PROFILES: >-
+    multilingual-e5-small/onnx-fp32-cpu
+    gliner2-base-v1/onnx-fp32-cpu
+    embeddinggemma-2/onnx-fp32-cpu
+    embeddinggemma-2/image-fp32-cpu
+    embeddinggemma-2/video-fp32-cpu
+    qwen3.5-0.8b/ortgenai-fp32x-cpu
+
+jobs:
+  assets:
+    name: model assets
+    if: github.repository == 'starlinghq/starling'
+    runs-on: ubuntu-latest
+    outputs:
+      key: ${{ steps.locks.outputs.key }}
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: "3.11"
+      - run: pip install -e model-pipeline
+      # One lock per public profile, from the manifest's origin.files (paths, sizes, SHA-256 at the pinned commit).
+      # The cache key is the digest of those locks plus the pinned tokenizer assets, so it changes exactly when a
+      # pinned file changes.
+      - name: Locks of the public profiles
+        id: locks
+        run: |
+          mkdir -p "$EVIDENCE/locks"
+          for profile in $CPU_PROFILES; do
+            manifest="model-pipeline/registry/$profile/manifest.yaml"
+            hosting="$(python3 -I tools/qualification.py hosting "$manifest")"
+            if [[ "$hosting" != public ]]; then
+              echo "::notice title=$profile skipped::hosting private (M3): $hosting"
+              continue
+            fi
+            # Files the protected reference run recorded (read only) join the lock: the recipe reruns that runner.
+            extra=()
+            if [[ -f "model-pipeline/protected/$profile/environment.json" ]]; then
+              extra=(--reference-environment "model-pipeline/protected/$profile/environment.json")
+            fi
+            python3 -I tools/qualification.py lock "$manifest" "$EVIDENCE/locks/${profile//\//--}.json" "${extra[@]}"
+          done
+          key="qualification-models-$(cat "$EVIDENCE"/locks/*.json tools/fetch-tokenizer-assets.sh | sha256sum | cut -c1-32)"
+          echo "key=$key" >>"$GITHUB_OUTPUT"
+          echo "cache key $key"
+      - uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        with:
+          path: .models
+          key: ${{ steps.locks.outputs.key }}
+      - uses: actions/setup-dotnet@26b0ec14cb23fa6904739307f278c14f94c95bf1 # v5
+        with:
+          global-json-file: global.json
+      # Downloads what is missing and verifies every file's size and SHA-256, also on a cache hit.
+      - name: Acquire and verify
+        run: |
+          for lock in "$EVIDENCE"/locks/*.json; do
+            dotnet run --project ai-dotnet/tools/Starlings.Acquisition.Tool -c Release -- download "$lock" --cache "$STARLING_MODELS"
+          done
+          tools/fetch-tokenizer-assets.sh
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: always()
+        with:
+          name: qualification-locks
+          path: artifacts/qualification/locks/
+          if-no-files-found: ignore
+
+  model-tests:
+    name: model tests (linux x64 cpu)
+    needs: assets
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+      - uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        with:
+          path: .models
+          key: ${{ needs.assets.outputs.key }}
+          fail-on-cache-miss: true
+      - uses: actions/setup-dotnet@26b0ec14cb23fa6904739307f278c14f94c95bf1 # v5
+        with:
+          global-json-file: global.json
+      - run: dotnet build ai-dotnet/AI.slnx --configuration Release
+      # Tests of models whose files are absent (private hosting) still skip, with the reason in the report.
+      - name: Tests with the public models
+        run: |
+          dotnet test --solution ai-dotnet/AI.slnx --configuration Release --no-build \
+            --results-directory "$EVIDENCE/model-tests" -- --report-xunit-trx
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: always()
+        with:
+          name: qualification-model-tests
+          path: artifacts/qualification/model-tests/
+          if-no-files-found: warn
+
+  evaluator:
+    name: evaluator ${{ matrix.profile }}
+    needs: assets
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - profile: multilingual-e5-small/onnx-fp32-cpu
+            recipe: model-pipeline/recipes/multilingual-e5-small-cpu.yaml
+            reference: model-pipeline/reference/encoder/requirements.txt
+            g3: retrieval
+            g3_model: e5
+          - profile: gliner2-base-v1/onnx-fp32-cpu
+          - profile: embeddinggemma-2/onnx-fp32-cpu
+          - profile: embeddinggemma-2/image-fp32-cpu
+          - profile: embeddinggemma-2/video-fp32-cpu
+          - profile: qwen3.5-0.8b/ortgenai-fp32x-cpu
+    env:
+      PROFILE: ${{ matrix.profile }}
+      MANIFEST: model-pipeline/registry/${{ matrix.profile }}/manifest.yaml
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          fetch-depth: 0 # the evaluator verifies protected evidence against its merge base with origin/main
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: "3.11"
+      - run: pip install -e model-pipeline
+      - name: Hosting
+        id: hosting
+        run: |
+          python3 -I tools/qualification.py hosting "$MANIFEST" | tee hosting.txt
+          if ! grep -qx public hosting.txt; then
+            echo "::notice title=$PROFILE skipped::hosting private (M3): G1/G2 not run. $(cat hosting.txt)"
+          fi
+      # A public profile without a CI runner is reported, not passed: G1 and G2 stay not-run for it.
+      - name: Runner wired
+        id: wired
+        if: steps.hosting.outputs.hosting == 'public'
+        env:
+          RECIPE: ${{ matrix.recipe }}
+        run: |
+          if [[ -z "$RECIPE" ]]; then
+            echo "::warning title=$PROFILE G1/G2 not run::hosting is public, but no qualification recipe is wired for this profile in qualification.yml"
+            echo "run=false" >>"$GITHUB_OUTPUT"
+          else
+            echo "run=true" >>"$GITHUB_OUTPUT"
+          fi
+      - uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        if: steps.wired.outputs.run == 'true'
+        with:
+          path: .models
+          key: ${{ needs.assets.outputs.key }}
+          fail-on-cache-miss: true
+      - uses: actions/setup-dotnet@26b0ec14cb23fa6904739307f278c14f94c95bf1 # v5
+        if: steps.wired.outputs.run == 'true'
+        with:
+          global-json-file: global.json
+      # The reference environment (model-pipeline/ONBOARDING.md, "Prepare"), installed from the hash-locked requirements.
+      - name: Reference environment
+        if: steps.wired.outputs.run == 'true'
+        env:
+          REFERENCE: ${{ matrix.reference }}
+        run: |
+          pip install uv==0.12.19
+          uv venv --python 3.11 "$RUNNER_TEMP/venv-reference"
+          uv pip install --python "$RUNNER_TEMP/venv-reference/bin/python" --require-hashes -r "$REFERENCE" \
+            --index-url https://pypi.org/simple --extra-index-url https://download.pytorch.org/whl/cpu \
+            --index-strategy unsafe-best-match
+          uv pip install --python "$RUNNER_TEMP/venv-reference/bin/python" -e model-pipeline
+      # Recipe stages assets (every manifest file verified), environment, reference, export, dotnet, evaluate (the
+      # protected evaluator; G1 and G2 must pass), review. Exit 1 when a stage fails.
+      - name: G1/G2 (protected evaluator)
+        if: steps.wired.outputs.run == 'true'
+        env:
+          RECIPE: ${{ matrix.recipe }}
+        run: |
+          python3 -I tools/qualification.py lock "$MANIFEST" "$RUNNER_TEMP/snapshot.lock.json" \
+            --reference-environment "model-pipeline/protected/$PROFILE/environment.json"
+          snapshot="$STARLING_MODELS/$(python3 -I tools/qualification.py snapshot "$RUNNER_TEMP/snapshot.lock.json")"
+          out="$EVIDENCE/evaluator/${PROFILE//\//--}"
+          model-pipeline run "$RECIPE" --snapshot "$snapshot" --reference-python "$RUNNER_TEMP/venv-reference/bin/python" \
+            --out "$out/run" --threads 2 --timeout 3600
+      # G3 on the hand-written SMOKE example only (model-pipeline/tests/fixtures/g3-smoke): it exercises the
+      # producer and the metrics. No budget file exists (maintainer action M1/M2), so the evaluator reports "no
+      # budget: not a gate result" with exit 4, which is accepted here; any other non-zero exit fails.
+      - name: G3 smoke (not gate evidence)
+        if: steps.wired.outputs.run == 'true' && matrix.g3 != ''
+        env:
+          G3: ${{ matrix.g3 }}
+          G3_MODEL: ${{ matrix.g3_model }}
+        run: |
+          out="$EVIDENCE/evaluator/${PROFILE//\//--}/g3-smoke"
+          mkdir -p "$out"
+          dataset="model-pipeline/tests/fixtures/g3-smoke/$G3"
+          dotnet run --project ai-dotnet/tools/Starlings.Fidelity.Tool -c Release -- "$G3" --model "$G3_MODEL" \
+            --dataset "$dataset" --out "$out/candidate.jsonl"
+          status=0
+          model-pipeline evaluate "$MANIFEST" --g3 "$G3" --dataset "$dataset" --results "$out/candidate.jsonl" \
+            --out "$out" || status=$?
+          if [[ "$status" != 0 && "$status" != 4 ]]; then
+            exit "$status"
+          fi
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: always() && steps.wired.outputs.run == 'true'
+        with:
+          name: qualification-evaluator-${{ strategy.job-index }}
+          path: artifacts/qualification/evaluator/
+          if-no-files-found: warn
+
+  soak:
+    name: soak ${{ matrix.profile }}
+    needs: assets
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { profile: multilingual-e5-small/onnx-fp32-cpu, workload: e5 }
+          - { profile: gliner2-base-v1/onnx-fp32-cpu, workload: gliner2 }
+          - { profile: embeddinggemma-2/onnx-fp32-cpu, workload: embeddinggemma2 }
+          - { profile: embeddinggemma-2/image-fp32-cpu, workload: embeddinggemma2-image }
+          - { profile: embeddinggemma-2/video-fp32-cpu, workload: "" }
+          - { profile: qwen3.5-0.8b/ortgenai-fp32x-cpu, workload: qwen35 }
+    env:
+      PROFILE: ${{ matrix.profile }}
+      MANIFEST: model-pipeline/registry/${{ matrix.profile }}/manifest.yaml
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: "3.11"
+      - run: pip install -e model-pipeline
+      - name: Hosting
+        id: hosting
+        run: |
+          python3 -I tools/qualification.py hosting "$MANIFEST" | tee hosting.txt
+          if ! grep -qx public hosting.txt; then
+            echo "::notice title=$PROFILE skipped::hosting private (M3): soak not run. $(cat hosting.txt)"
+          fi
+      - name: Workload wired
+        id: wired
+        if: steps.hosting.outputs.hosting == 'public'
+        env:
+          WORKLOAD: ${{ matrix.workload }}
+        run: |
+          if [[ -z "$WORKLOAD" ]]; then
+            echo "::warning title=$PROFILE soak not run::Starlings.Soak.Tool has no workload for this profile"
+            echo "run=false" >>"$GITHUB_OUTPUT"
+          else
+            echo "run=true" >>"$GITHUB_OUTPUT"
+          fi
+      - uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        if: steps.wired.outputs.run == 'true'
+        with:
+          path: .models
+          key: ${{ needs.assets.outputs.key }}
+          fail-on-cache-miss: true
+      - uses: actions/setup-dotnet@26b0ec14cb23fa6904739307f278c14f94c95bf1 # v5
+        if: steps.wired.outputs.run == 'true'
+        with:
+          global-json-file: global.json
+      # A short run on a shared hosted runner: it screens for gross growth, wrong outputs and errors. Its report is
+      # labelled a short development run and does not qualify G4 (the one-hour run on a quiet machine does, M6).
+      - name: Soak
+        if: steps.wired.outputs.run == 'true'
+        env:
+          WORKLOAD: ${{ matrix.workload }}
+          DURATION: ${{ inputs.soak_duration || '10m' }}
+        run: |
+          dotnet run --project ai-dotnet/tools/Starlings.Soak.Tool -c Release -- "$WORKLOAD" \
+            --out "$EVIDENCE/soak" --duration "$DURATION" --note "GitHub-hosted ubuntu-latest, scheduled qualification run ${GITHUB_RUN_ID}"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: always() && steps.wired.outputs.run == 'true'
+        with:
+          name: qualification-soak-${{ matrix.workload }}
+          path: artifacts/qualification/soak/
+          if-no-files-found: warn
+
+  catalog:
+    name: catalog up to date
+    if: github.repository == 'starlinghq/starling'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: "3.11"
+      - run: pip install -e model-pipeline
+      - run: model-pipeline catalog --check
+
+  upstream:
+    name: upstream change detection
+    if: github.repository == 'starlinghq/starling'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: model-pipeline
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: "3.11"
+      - run: pip install -e .
+      # Read-only Hub API calls, no token. Exit 0 nothing new; 1 a newer upstream revision (this job fails, which is
+      # the notification: the read-only token cannot open an issue); 2 a fetch failed. Never edits a manifest; the
+      # maintainer starts the update drill (docs/plan/maintained-update-drill.md).
+      - name: Detect upstream changes
+        run: |
+          mkdir -p "$EVIDENCE/upstream"
+          status=0
+          model-pipeline upstream registry --json "$EVIDENCE/upstream/upstream.json" \
+            >"$EVIDENCE/upstream/upstream.md" || status=$?
+          cat "$EVIDENCE/upstream/upstream.md" | tee -a "$GITHUB_STEP_SUMMARY"
+          if [[ "$status" == 1 ]]; then
+            echo "::warning title=Upstream changed::a pinned upstream repository has a newer revision; see the report"
+          fi
+          exit "$status"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: always()
+        with:
+          name: qualification-upstream
+          path: artifacts/qualification/upstream/
+          if-no-files-found: warn
+
+  # Self-hosted CUDA (plan 13.1: NVIDIA CUDA on Linux x64). Off by default: it runs only on a manual dispatch with
+  # gpu=true. The maintainer must first register a runner with the labels [self-hosted, gpu] (maintainer action M6,
+  # Settings > Actions > Runners); without one the job waits in the queue. Never triggered by pull_request, so fork
+  # code never runs on the self-hosted machine. No secret is used. Models go to a persistent cache on the runner
+  # ($RUNNER_TOOL_CACHE/starling-models), not to actions/cache. The runner needs an NVIDIA driver, the CUDA 13 runtime
+  # and cuDNN 9 on the loader path (ai-dotnet/README.md), Python 3.11 and network access to huggingface.co.
+  gpu:
+    name: cuda (self-hosted)
+    if: github.repository == 'starlinghq/starling' && github.event_name == 'workflow_dispatch' && inputs.gpu
+    runs-on: [self-hosted, gpu]
+    timeout-minutes: 240
+    env:
+      STARLING_CUDA_TESTS: "1"
+      # The CUDA tests refuse to let the runtime pick a device. GPU 0 of the runner unless the repository variable
+      # STARLING_GPU_DEVICE (a configuration value, not a secret) names another.
+      CUDA_DEVICE_ORDER: PCI_BUS_ID
+      CUDA_VISIBLE_DEVICES: ${{ vars.STARLING_GPU_DEVICE || '0' }}
+    steps:
+      - name: Persistent model cache
+        run: echo "STARLING_MODELS=$RUNNER_TOOL_CACHE/starling-models" >>"$GITHUB_ENV"
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: "3.11"
+      - run: pip install -e model-pipeline
+      - uses: actions/setup-dotnet@26b0ec14cb23fa6904739307f278c14f94c95bf1 # v5
+        with:
+          global-json-file: global.json
+      - name: Environment
+        run: |
+          mkdir -p "$EVIDENCE/gpu"
+          nvidia-smi | tee "$EVIDENCE/gpu/nvidia-smi.txt"
+      - name: Acquire and verify (public CUDA profiles)
+        run: |
+          for manifest in model-pipeline/registry/*/*-cuda/manifest.yaml; do
+            profile="${manifest#model-pipeline/registry/}"; profile="${profile%/manifest.yaml}"
+            hosting="$(python3 -I tools/qualification.py hosting "$manifest")"
+            if [[ "$hosting" != public ]]; then
+              echo "::notice title=$profile skipped::hosting private (M3): $hosting"
+              continue
+            fi
+            python3 -I tools/qualification.py lock "$manifest" "$EVIDENCE/gpu/${profile//\//--}.lock.json"
+            dotnet run --project ai-dotnet/tools/Starlings.Acquisition.Tool -c Release -- download \
+              "$EVIDENCE/gpu/${profile//\//--}.lock.json" --cache "$STARLING_MODELS"
+          done
+      # The CUDA test projects are local-only (not in AI.slnx). Only e5's graph is public today.
+      - name: e5 CUDA tests
+        run: |
+          dotnet test --project ai-dotnet/tests/Starlings.Models.E5.Tests.Cuda --configuration Release \
+            --results-directory "$EVIDENCE/gpu/tests" -- --report-xunit-trx
+      - name: e5 CUDA soak
+        env:
+          DURATION: ${{ inputs.soak_duration || '10m' }}
+        run: |
+          dotnet run --project ai-dotnet/tools/Starlings.Soak.Tool -c Release -p:UseCuda=true -- e5 --cuda \
+            --out "$EVIDENCE/gpu/soak" --duration "$DURATION" --note "self-hosted gpu runner, run ${GITHUB_RUN_ID}"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: always()
+        with:
+          name: qualification-gpu
+          path: artifacts/qualification/gpu/
+          if-no-files-found: warn

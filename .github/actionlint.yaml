@@ -1,0 +1,4 @@
+# actionlint configuration. The self-hosted CUDA runner of .github/workflows/qualification.yml (maintainer action M6).
+self-hosted-runner:
+  labels:
+    - gpu

@@ -68,12 +68,63 @@ public sealed class LoaderTests(ITestOutputHelper output)
     {
         int bound = FFmpegNative.AVCODEC_MAJOR;
         Assert.Equal(EmbeddingGemma2FFmpeg.SupportedFFmpegMajor == 8 ? 62 : 63, bound);
+
+        // The running system's naming: avcodec-62.dll on Windows, libavcodec.so.62 on Linux.
         string message = EmbeddingGemma2FFmpeg.NotFoundMessage("/usr/lib", "avcodec", bound);
         output.WriteLine(message);
-        Assert.Contains($"libavcodec.so.{bound}", message, StringComparison.Ordinal);
-        foreach (int other in Enumerable.Range(62, 2).Where(m => m != bound && File.Exists($"/usr/lib/libavcodec.so.{m}")))
+        Assert.Contains(FFmpegNative.FileName("avcodec", bound), message, StringComparison.Ordinal);
+        foreach (int other in Enumerable.Range(62, 2).Where(m => m != bound && File.Exists(Path.Combine("/usr/lib", FFmpegNative.FileName("avcodec", m)))))
         {
-            Assert.Contains($"libavcodec.so.{other}", message, StringComparison.Ordinal);
+            Assert.Contains(FFmpegNative.FileName("avcodec", other), message, StringComparison.Ordinal);
         }
     }
+
+    /// <summary>
+    /// Every operating system's naming, on any: a directory holding other majors (and full-version and unrelated files)
+    /// is reported with that system's file names only.
+    /// </summary>
+    [Theory]
+    [InlineData("Windows", "avcodec-62.dll", "avcodec-63.dll", "avcodec-61.dll")]
+    [InlineData("MacOS", "libavcodec.62.dylib", "libavcodec.63.dylib", "libavcodec.61.dylib")]
+    [InlineData("Unix", "libavcodec.so.62", "libavcodec.so.63", "libavcodec.so.61")]
+    public void AnotherMajorIsNamedForEachOperatingSystem(string system, string expected, string ffmpeg9, string ffmpeg7)
+    {
+        var naming = Enum.Parse<LibraryNaming>(system);
+        string dir = Directory.CreateTempSubdirectory("ffmpeg-naming-").FullName;
+        try
+        {
+            foreach (string file in new[] { ffmpeg9, ffmpeg7, "libavcodec.so.63.3.100", "libavcodec.63.3.100.dylib", "avcodec-63.lib", "avformat-63.dll", "libavformat.so.63" })
+            {
+                File.WriteAllBytes(Path.Combine(dir, file), []);
+            }
+
+            string message = EmbeddingGemma2FFmpeg.NotFoundMessage(dir, "avcodec", 62, naming);
+            output.WriteLine(message);
+            Assert.Contains($"shared library {expected} could not be loaded", message, StringComparison.Ordinal);
+            Assert.Contains($"Found {ffmpeg7}, {ffmpeg9} instead", message, StringComparison.Ordinal);
+            Assert.Contains($", {expected}; the adapter package of the installed major loads it", message, StringComparison.Ordinal);
+            Assert.DoesNotContain("63.3.100", message, StringComparison.Ordinal);
+            Assert.DoesNotContain("avformat", message, StringComparison.Ordinal);
+
+            // The bound major itself (present but not loadable) is not another major.
+            File.WriteAllBytes(Path.Combine(dir, expected), []);
+            Assert.Contains($"Found {ffmpeg7}, {ffmpeg9} instead", EmbeddingGemma2FFmpeg.NotFoundMessage(dir, "avcodec", 62, naming), StringComparison.Ordinal);
+        }
+        finally
+        {
+            Directory.Delete(dir, recursive: true);
+        }
+    }
+
+    [Theory]
+    [InlineData("Windows", "avcodec-62.dll", 62)]
+    [InlineData("Windows", "avcodec-62.lib", null)]
+    [InlineData("Windows", "avcodec-.dll", null)]
+    [InlineData("MacOS", "libavcodec.62.dylib", 62)]
+    [InlineData("MacOS", "libavcodec.62.3.100.dylib", null)]
+    [InlineData("Unix", "libavcodec.so.62", 62)]
+    [InlineData("Unix", "libavcodec.so.62.3.100", null)]
+    [InlineData("Unix", "libavformat.so.62", null)]
+    public void MajorIsParsedFromExactFileNames(string system, string file, int? major) =>
+        Assert.Equal(major, FFmpegNative.MajorOf(file, "avcodec", Enum.Parse<LibraryNaming>(system)));
 }
