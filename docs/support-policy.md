@@ -8,7 +8,7 @@ Sources: plan sections 9, 10, 14 and 16 (`docs/plan/fast-faithful-ai-dotnet.md`)
 
 Support attaches to a **combination**, not to a model name. A combination is the four identities of plan section 9:
 
-1. the package version (`Starlings.Models.E5` `0.1.0-preview.5`);
+1. the package version (`Starlings.Models.E5` `0.1.0-preview.6`);
 2. the model bundle: the asset lock the package ships (repository, full commit SHA, file sizes and SHA-256), and the owned tokenizer package version in `processing.tokenizer.version`;
 3. the runtime profile: backend and native package versions, provider, precision, OS and architecture;
 4. the evidence: fixtures, tolerances, task-quality sets and benchmark protocol that qualified it.

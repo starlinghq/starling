@@ -90,6 +90,12 @@ jobs:
             elif [[ "$proj" != */Starlings.Models.EmbeddingGemma2.Imaging.SkiaSharp.csproj ]] && grep -Eqi '>[[:space:]]+SkiaSharp' <<<"$deps"; then
               echo "FAIL: $proj references SkiaSharp; only Starlings.Models.EmbeddingGemma2.Imaging.SkiaSharp may" >&2
               status=1
+            # Vendor neutral: libraries integrate with .NET AI through Microsoft.Extensions.AI.Abstractions only. No cloud
+            # SDK or provider binding (Azure SDKs, OpenAI, the Microsoft.Extensions.AI provider packages), directly or
+            # transitively, so consumers never inherit a cloud dependency from a Starlings package.
+            elif grep -Eqi '>[[:space:]]+(Azure\.|Microsoft\.Azure\.|OpenAI[[:space:]]|Microsoft\.Extensions\.AI\.(OpenAI|AzureAIInference|Ollama))' <<<"$deps"; then
+              echo "FAIL: $proj references a cloud SDK or AI provider package; libraries use Microsoft.Extensions.AI.Abstractions only" >&2
+              status=1
             # FFmpeg bindings are generated into each EmbeddingGemma 2 video adapter, one package per FFmpeg major
             # (tools/generate-ffmpeg-bindings.py --major 8|9); no project may take a third-party FFmpeg bindings package
             # (FFmpeg itself is user-supplied).

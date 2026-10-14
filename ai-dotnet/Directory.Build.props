@@ -8,7 +8,7 @@
       immutable. The tokenizer keeps its own version and cadence; Directory.Packages.props pins it exactly.
     -->
     <VersionPrefix>0.1.0</VersionPrefix>
-    <VersionSuffix>preview.5</VersionSuffix>
+    <VersionSuffix>preview.6</VersionSuffix>
     <PackageReleaseNotes>https://github.com/starlinghq/starling/blob/main/docs/releases/ai-0.1.0-preview.5.md</PackageReleaseNotes>
   </PropertyGroup>
 </Project>

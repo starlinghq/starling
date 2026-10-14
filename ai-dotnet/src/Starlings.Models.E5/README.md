@@ -39,7 +39,7 @@ e5 expects `"query: "` or `"passage: "` at the start of every text; nothing is a
 
 ## Status
 
-Profile `multilingual-e5-small/onnx-fp32-cpu`: maturity **Preview**. Linux x64 CPU: experimental (46 fixture texts within 2.4e-7 of the PyTorch reference, bound 1e-5). Windows, macOS, ARM64, Native AOT: untested. Profile `multilingual-e5-small/onnx-fp32-cuda` (Linux x64 CUDA): Experimental. Evidence, known issues and reproduction commands: [release notes](https://github.com/starlinghq/starling/blob/main/docs/releases/ai-0.1.0-preview.5.md). Model license: MIT, stated only in the model card.
+Profile `multilingual-e5-small/onnx-fp32-cpu`: maturity **Preview**. Linux x64 CPU: experimental (46 fixture texts within 2.4e-7 of the PyTorch reference, bound 1e-5). Windows, macOS, ARM64, Native AOT: untested. Profile `multilingual-e5-small/onnx-fp32-cuda` (Linux x64 CUDA): Experimental. Evidence, known issues and reproduction commands: [release notes](https://github.com/starlinghq/starling/blob/main/docs/releases/ai-0.1.0-preview.6.md). Model license: MIT, stated only in the model card.
 
 ## Stable contract
 

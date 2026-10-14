@@ -212,8 +212,8 @@
       "starlings.models.e5": {
         "type": "Project",
         "dependencies": {
-          "Starlings.Acquisition": "[0.1.0-preview.5, )",
-          "Starlings.Runtime.Onnx": "[0.1.0-preview.5, )",
+          "Starlings.Acquisition": "[0.1.0-preview.6, )",
+          "Starlings.Runtime.Onnx": "[0.1.0-preview.6, )",
           "Starlings.Tokenizers": "[0.3.0-preview.1, 0.3.0-preview.1]"
         }
       },
@@ -222,7 +222,7 @@
         "dependencies": {
           "Microsoft.Extensions.AI.Abstractions": "[10.10.1, )",
           "Microsoft.Extensions.DependencyInjection.Abstractions": "[10.0.12, )",
-          "Starlings.Models.E5": "[0.1.0-preview.5, )"
+          "Starlings.Models.E5": "[0.1.0-preview.6, )"
         }
       },
       "starlings.runtime.onnx": {

@@ -2,7 +2,7 @@ name: release
 
 # Release the ai-dotnet packages (Starlings.*) to nuget.org.
 #
-#   git tag ai-v0.1.0-preview.5 && git push origin ai-v0.1.0-preview.5
+#   git tag ai-v0.1.0-preview.6 && git push origin ai-v0.1.0-preview.6
 #
 # 1. candidate: boundary check; the tag must equal the ai-dotnet version, point at a commit on main and have a release
 #    record docs/releases/ai-<version>.md. The release drill (tools/release-drill-ai.sh --no-model) then packs every
