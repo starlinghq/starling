@@ -60,6 +60,20 @@ public static class Qwen35Capabilities
         ["extensions_ai.dependency_injection"] = Qwen35CapabilityStatus.Experimental,
         ["extensions_ai.fp16x.cuda"] = Qwen35CapabilityStatus.Untested,
 
+        // Tool calling: the template's tools block, assistant tool calls and tool messages equal the upstream rendering
+        // (transformers 5.18.0) on the proposed P-029 corpus; the output parser and the IChatClient mapping
+        // (FunctionCallContent, FunctionResultContent, ToolMode Auto and None, FunctionInvokingChatClient) are tested
+        // with scripted sequences. On the real fp32x model on CPU, one get_weather call was parsed and the
+        // UseFunctionInvocation loop completed (greedy); a 0.8B model's tool choice is not otherwise qualified.
+        ["tool_calling"] = Qwen35CapabilityStatus.Experimental,
+        ["template.tools"] = Qwen35CapabilityStatus.Experimental,
+        ["template.tool_calls"] = Qwen35CapabilityStatus.Experimental,
+        ["template.tool_messages"] = Qwen35CapabilityStatus.Experimental,
+        ["tool_call_parsing"] = Qwen35CapabilityStatus.Experimental,
+        ["tool_call_parsing.streaming"] = Qwen35CapabilityStatus.Experimental,
+        ["extensions_ai.tools"] = Qwen35CapabilityStatus.Experimental,
+        ["extensions_ai.function_invocation"] = Qwen35CapabilityStatus.Experimental,
+
         // Implemented, without enough evidence.
         ["long_context.over_1666_tokens"] = Qwen35CapabilityStatus.Untested,
         ["windows"] = Qwen35CapabilityStatus.Untested,
@@ -72,9 +86,6 @@ public static class Qwen35Capabilities
         ["batch"] = Qwen35CapabilityStatus.Unsupported,
         ["concurrent_requests.cuda.unserialized"] = Qwen35CapabilityStatus.Unsupported,
         ["conversation_state_reuse"] = Qwen35CapabilityStatus.Unsupported,
-        ["tool_calling"] = Qwen35CapabilityStatus.Unsupported,
-        ["template.tools"] = Qwen35CapabilityStatus.Unsupported,
-        ["template.tool_messages"] = Qwen35CapabilityStatus.Unsupported,
         ["reasoning_split"] = Qwen35CapabilityStatus.Unsupported,
         ["structured_output"] = Qwen35CapabilityStatus.Unsupported,
         ["vision"] = Qwen35CapabilityStatus.Unsupported,
@@ -83,7 +94,7 @@ public static class Qwen35Capabilities
         ["quantized"] = Qwen35CapabilityStatus.Unsupported,
         ["mtp_speculative_decoding"] = Qwen35CapabilityStatus.Unsupported,
         ["backend_tokenizer"] = Qwen35CapabilityStatus.Unsupported,
-        ["extensions_ai.tools"] = Qwen35CapabilityStatus.Unsupported,
+        ["extensions_ai.tool_mode.required"] = Qwen35CapabilityStatus.Unsupported,
         ["extensions_ai.structured_output"] = Qwen35CapabilityStatus.Unsupported,
         ["extensions_ai.multimodal"] = Qwen35CapabilityStatus.Unsupported,
         ["extensions_ai.unseeded_sampling"] = Qwen35CapabilityStatus.Unsupported,

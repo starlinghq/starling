@@ -38,6 +38,12 @@ public sealed record Qwen35ChatOptions
     /// </summary>
     public bool EnableThinking { get; init; }
 
+    /// <summary>
+    /// Tool definitions rendered into the chat template's tools block (default none). The completion may then contain
+    /// tool calls in the template's format; split them out with <see cref="Qwen35ToolCallParser"/>. Experimental.
+    /// </summary>
+    public IReadOnlyList<Qwen35Tool> Tools { get; init; } = [];
+
     /// <summary>Stop strings (see <see cref="GenerationOptions.StopSequences"/>).</summary>
     public IReadOnlyList<string> StopSequences { get; init; } = [];
 

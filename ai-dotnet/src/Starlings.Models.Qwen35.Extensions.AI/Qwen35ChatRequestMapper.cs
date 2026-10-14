@@ -9,7 +9,6 @@ namespace Starlings.Models.Qwen35.Extensions.AI;
 /// <remarks>Anything the model cannot honor fails with <see cref="NotSupportedException"/>; it is never silently ignored.</remarks>
 internal static class Qwen35ChatRequestMapper
 {
-    private const string ToolsUnsupported = "tool calling is unsupported for Qwen3.5-0.8B in this package version (Qwen35Capabilities: tool_calling, template.tools, template.tool_messages)";
 
     public static List<Qwen35Message> MapMessages(IEnumerable<ChatMessage> messages, string? instructions)
     {
@@ -29,6 +28,13 @@ internal static class Qwen35ChatRequestMapper
             }
 
             Qwen35Role role = MapRole(message.Role, index);
+            if (role == Qwen35Role.Tool)
+            {
+                MapToolMessage(message, index, result);
+                index++;
+                continue;
+            }
+
             if (role == Qwen35Role.System && instructions is not null)
             {
                 throw new NotSupportedException(
@@ -42,6 +48,7 @@ internal static class Qwen35ChatRequestMapper
 
             StringBuilder? text = null;
             StringBuilder? reasoning = null;
+            List<Qwen35ToolCall>? calls = null;
             foreach (AIContent content in message.Contents)
             {
                 switch (content)
@@ -54,16 +61,21 @@ internal static class Qwen35ChatRequestMapper
                         break;
                     case TextReasoningContent:
                         throw new NotSupportedException($"Message {index}: reasoning content is supported only in assistant messages.");
-                    case FunctionCallContent or FunctionResultContent:
-                        throw new NotSupportedException($"Message {index}: {content.GetType().Name} is not supported: {ToolsUnsupported}.");
+                    case FunctionCallContent call when role == Qwen35Role.Assistant:
+                        (calls ??= []).Add(MapCall(call, index));
+                        break;
+                    case FunctionCallContent:
+                        throw new NotSupportedException($"Message {index}: FunctionCallContent is supported only in assistant messages.");
+                    case FunctionResultContent:
+                        throw new NotSupportedException($"Message {index}: FunctionResultContent is supported only in tool messages (ChatRole.Tool).");
                     case DataContent or UriContent or HostedFileContent:
                         throw new NotSupportedException($"Message {index}: {content.GetType().Name} is not supported: this model accepts text only (Qwen35Capabilities: vision unsupported).");
                     default:
-                        throw new NotSupportedException($"Message {index}: content of type {content.GetType().Name} is not supported; only TextContent (and TextReasoningContent in assistant messages) can be rendered.");
+                        throw new NotSupportedException($"Message {index}: content of type {content.GetType().Name} is not supported; only TextContent (and TextReasoningContent and FunctionCallContent in assistant messages) can be rendered.");
                 }
             }
 
-            result.Add(new Qwen35Message(role, text?.ToString() ?? string.Empty, reasoning?.ToString()));
+            result.Add(new Qwen35Message(role, text?.ToString() ?? string.Empty, reasoning?.ToString()) { ToolCalls = calls });
             index++;
         }
 
@@ -82,17 +94,18 @@ internal static class Qwen35ChatRequestMapper
             throw new NotSupportedException($"ChatOptions.ModelId = '{requested}' is not supported: this client serves only '{modelId}'.");
         }
 
-        if (options.Tools is { Count: > 0 })
+        if (options.ToolMode is RequiredChatToolMode required)
         {
-            throw new NotSupportedException($"ChatOptions.Tools is not supported: {ToolsUnsupported}.");
+            throw new NotSupportedException(
+                $"ChatOptions.ToolMode = {(required.RequiredFunctionName is { } name ? $"RequireSpecific('{name}')" : "RequireAny")} is not supported: the chat template has no way to require a tool call and decoding is not constrained. Use ChatToolMode.Auto (or None).");
         }
 
-        if (options.ToolMode is RequiredChatToolMode)
+        List<Qwen35Tool> tools = options.ToolMode is NoneChatToolMode ? [] : MapTools(options.Tools);
+        if (tools.Count > 0 && options.AllowMultipleToolCalls == false)
         {
-            throw new NotSupportedException($"ChatOptions.ToolMode = Required is not supported: {ToolsUnsupported}.");
+            throw new NotSupportedException(
+                "ChatOptions.AllowMultipleToolCalls = false is not supported: the chat template lets the model call several tools in one turn and decoding is not constrained.");
         }
-
-        // ToolMode None or Auto and AllowMultipleToolCalls have no effect without tools, so they are accepted.
         if (options.ResponseFormat is not (null or ChatResponseFormatText))
         {
             throw new NotSupportedException("ChatOptions.ResponseFormat other than text is not supported: structured (JSON) output is unsupported (Qwen35Capabilities: structured_output).");
@@ -129,7 +142,7 @@ internal static class Qwen35ChatRequestMapper
             throw new NotSupportedException("ChatOptions.RawRepresentationFactory is not supported: this client has no provider-specific options object.");
         }
 
-        var mapped = defaults;
+        var mapped = defaults with { Tools = tools };
         if (options.MaxOutputTokens is { } max)
         {
             ArgumentOutOfRangeException.ThrowIfNegativeOrZero(max, "ChatOptions.MaxOutputTokens");
@@ -179,11 +192,122 @@ internal static class Qwen35ChatRequestMapper
 
         if (role == ChatRole.Tool)
         {
-            throw new NotSupportedException($"Message {index}: role 'tool' is not supported: {ToolsUnsupported}.");
+            return Qwen35Role.Tool;
         }
 
-        throw new NotSupportedException($"Message {index}: role '{role}' is not supported; the chat template knows system, user and assistant.");
+        throw new NotSupportedException($"Message {index}: role '{role}' is not supported; the chat template knows system, user, assistant and tool.");
     }
+
+    // ChatOptions.Tools: each AIFunctionDeclaration (AIFunction included) becomes
+    // {"type": "function", "function": {"name", "description" (when not empty), "parameters": its JSON schema}}.
+    private static List<Qwen35Tool> MapTools(IList<AITool>? tools)
+    {
+        if (tools is not { Count: > 0 })
+        {
+            return [];
+        }
+
+        var mapped = new List<Qwen35Tool>(tools.Count);
+        var names = new HashSet<string>(StringComparer.Ordinal);
+        foreach (AITool? tool in tools)
+        {
+            if (tool is not AIFunctionDeclaration function)
+            {
+                throw new NotSupportedException(
+                    $"ChatOptions.Tools: {tool?.GetType().Name ?? "null"} is not supported; only function tools (AIFunctionDeclaration, AIFunction) can be rendered by the chat template.");
+            }
+
+            if (!names.Add(function.Name))
+            {
+                throw new NotSupportedException($"ChatOptions.Tools: the function name '{function.Name}' appears twice.");
+            }
+
+            try
+            {
+                mapped.Add(Qwen35Tool.Function(function.Name, string.IsNullOrEmpty(function.Description) ? null : function.Description, function.JsonSchema));
+            }
+            catch (ArgumentException ex)
+            {
+                throw new NotSupportedException($"ChatOptions.Tools: {ex.Message}", ex);
+            }
+        }
+
+        return mapped;
+    }
+
+    private static Qwen35ToolCall MapCall(FunctionCallContent call, int index)
+    {
+        if (string.IsNullOrEmpty(call.Name))
+        {
+            throw new NotSupportedException($"Message {index}: a FunctionCallContent has no name.");
+        }
+
+        var arguments = new List<KeyValuePair<string, JsonElement>>();
+        if (call.Arguments is { } args)
+        {
+            foreach (var (key, value) in args)
+            {
+                arguments.Add(new(key, ToJson(value)));
+            }
+        }
+
+        return Qwen35ToolCall.Create(call.Name, arguments);
+    }
+
+    // A tool message: one template tool message per FunctionResultContent, in order.
+    private static void MapToolMessage(ChatMessage message, int index, List<Qwen35Message> result)
+    {
+        if (message.AuthorName is not null)
+        {
+            throw new NotSupportedException($"Message {index}: ChatMessage.AuthorName is not supported; the chat template has no participant names.");
+        }
+
+        int count = 0;
+        foreach (AIContent content in message.Contents)
+        {
+            if (content is not FunctionResultContent r)
+            {
+                throw new NotSupportedException($"Message {index}: a tool message may contain only FunctionResultContent, not {content.GetType().Name}.");
+            }
+
+            result.Add(Qwen35Message.Tool(ResultText(r.Result)));
+            count++;
+        }
+
+        if (count == 0)
+        {
+            throw new NotSupportedException($"Message {index}: a tool message needs at least one FunctionResultContent.");
+        }
+    }
+
+    // A function result as the tool message text: a string as is, anything else as compact JSON.
+    internal static string ResultText(object? result)
+    {
+        if (result is string s)
+        {
+            return s;
+        }
+
+        JsonElement e = ToJson(result);
+        if (e.ValueKind == JsonValueKind.String)
+        {
+            return e.GetString()!;
+        }
+
+        using var stream = new MemoryStream();
+        using (var writer = new Utf8JsonWriter(stream, new JsonWriterOptions { Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping }))
+        {
+            e.WriteTo(writer);
+        }
+
+        return Encoding.UTF8.GetString(stream.ToArray());
+    }
+
+    private static JsonElement ToJson(object? value) => value switch
+    {
+        JsonElement e => e,
+        _ => JsonSerializer.SerializeToElement(value, AIJsonUtilities.DefaultOptions.GetTypeInfo(typeof(object))),
+    };
 
     // Greedy unless sampling is requested. Sampling needs an explicit seed (P-016: every sampled run is reproducible).
     private static SamplingOptions? MapSampling(ChatOptions options, SamplingOptions? defaults)

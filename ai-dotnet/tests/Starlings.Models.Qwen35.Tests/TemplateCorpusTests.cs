@@ -24,11 +24,11 @@ public sealed class TemplateCorpusTests
         {
             case "render":
                 Assert.True(messages is not null, $"{id}: in the supported subset but not expressible: {reason}");
-                Assert.Equal(c.Rendered, Qwen35ChatTemplate.Render(messages!, c.EnableThinking));
+                Assert.Equal(c.Rendered, Qwen35ChatTemplate.Render(messages!, c.TypedTools, c.EnableThinking));
                 break;
             case "template_error":
                 Assert.True(messages is not null, $"{id}: {reason}");
-                var ex = Assert.Throws<Qwen35TemplateException>(() => Qwen35ChatTemplate.Render(messages!, c.EnableThinking));
+                var ex = Assert.Throws<Qwen35TemplateException>(() => Qwen35ChatTemplate.Render(messages!, c.TypedTools, c.EnableThinking));
                 if (c.ErrorSource == "template")
                 {
                     Assert.Equal(c.Error, ex.Message);
@@ -41,7 +41,7 @@ public sealed class TemplateCorpusTests
                 // Either the typed API cannot express the feature at all, or Render rejects it; it never renders.
                 if (messages is not null)
                 {
-                    Assert.Throws<Qwen35TemplateException>(() => Qwen35ChatTemplate.Render(messages, c.EnableThinking));
+                    Assert.Throws<Qwen35TemplateException>(() => Qwen35ChatTemplate.Render(messages, c.TypedTools, c.EnableThinking));
                 }
 
                 break;
@@ -58,7 +58,7 @@ public sealed class TemplateCorpusTests
         var c = Qwen35TemplateCorpus.Get(id);
         var (tokenizer, reason) = Qwen35TestAssets.Tokenizer;
         Assert.SkipWhen(tokenizer is null, reason);
-        string rendered = Qwen35ChatTemplate.Render(c.ToTypedMessages().Messages!, c.EnableThinking);
+        string rendered = Qwen35ChatTemplate.Render(c.ToTypedMessages().Messages!, c.TypedTools, c.EnableThinking);
         Assert.Equal(c.PromptIds, tokenizer!.Encode(rendered, addSpecialTokens: false).Ids);
     }
 
@@ -66,8 +66,8 @@ public sealed class TemplateCorpusTests
     public void CorpusCoversWhatTheRendererClaims()
     {
         var cases = Qwen35TemplateCorpus.Load();
-        Assert.True(cases.Count >= 80, $"{cases.Count} cases");
-        foreach (string category in new[] { "multi-turn", "system", "enable_thinking", "history-think", "whitespace", "unicode", "long", "unsupported" })
+        Assert.True(cases.Count >= 120, $"{cases.Count} cases");
+        foreach (string category in new[] { "multi-turn", "system", "enable_thinking", "history-think", "whitespace", "unicode", "long", "unsupported", "tools", "tool-calls", "tool-results", "tool-thinking", "tool-multi-turn" })
         {
             Assert.Contains(cases, c => c.Category == category);
         }
@@ -79,14 +79,26 @@ public sealed class TemplateCorpusTests
         Assert.Contains(cases, c => c.Owned == "render" && c.PromptIds!.Length > 10000);
 
         // Every unsupported template feature named in Qwen35ChatTemplate's remarks has a case that must fail.
-        string[] features = ["tools", "tool_message", "tool_calls", "image", "video", "add_vision_id", "add_generation_prompt_false", "role"];
+        string[] features = ["image", "video", "add_vision_id", "add_generation_prompt_false", "role"];
         foreach (string feature in features)
         {
             Assert.Contains(cases, c => c.Owned == "unsupported" && c.UnsupportedFeature == feature);
         }
 
-        // Every error the template itself raises in the text subset.
+        // Tool calling: one and several tools, nested schemas, one and several calls in a turn, consecutive results,
+        // tools with thinking on and off, multi-turn tool conversations; all rendered upstream.
+        var tools = cases.Where(c => c.Owned == "render" && c.Category.StartsWith("tool", StringComparison.Ordinal)).ToList();
+        Assert.True(tools.Count >= 35, $"{tools.Count} tool cases");
+        Assert.Contains(tools, c => c.HasTools && c.Tools.GetArrayLength() == 1);
+        Assert.Contains(tools, c => c.HasTools && c.Tools.GetArrayLength() > 2);
+        Assert.Contains(tools, c => c.HasTools && c.EnableThinking);
+        Assert.Contains(tools, c => c.HasTools && c.Kwargs.TryGetProperty("enable_thinking", out var e) && e.ValueKind == System.Text.Json.JsonValueKind.False);
+        Assert.Contains(tools, c => c.Messages.EnumerateArray().Any(m => m.TryGetProperty("tool_calls", out var calls) && calls.GetArrayLength() > 2));
+        Assert.Contains(tools, c => c.Messages.EnumerateArray().Count(m => m.GetProperty("role").GetString() == "tool") >= 3);
+
+        // Every error the template itself raises.
         string[] errors = ["No user query found in messages.", "System message must be at the beginning."];
+        Assert.Contains(cases, c => c.Owned == "template_error" && c.HasTools && c.Error == "No user query found in messages.");
         foreach (string error in errors)
         {
             Assert.Contains(cases, c => c.Owned == "template_error" && c.ErrorSource == "template" && c.Error == error);

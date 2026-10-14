@@ -1,5 +1,6 @@
 using System.Globalization;
 using Starlings.TestSupport;
+using Microsoft.Extensions.AI;
 
 namespace Starlings.Models.Qwen35.Extensions.AI.Tests;
 
@@ -71,6 +72,90 @@ public sealed class RealModelTests(Qwen35ChatClientFixture fixture) : IClassFixt
             $"cpu cancel during prefill (64-token chunks, 1,666-token prompt, cancelled 1 s in): {latency.TotalMilliseconds:F1} ms from Cancel() to OperationCanceledException, call {total.TotalMilliseconds:F0} ms");
         Assert.True(latency < TimeSpan.FromSeconds(5), $"{latency}");
     }
+
+    /// <summary>
+    /// The prompts-v1 tools prompt (one get_weather tool) through ChatOptions.Tools: the prompt is the reference prompt,
+    /// the greedy completion is the reference completion (transformers fp32: a get_weather call for Paris), and it comes
+    /// back as one FunctionCallContent with finish reason ToolCalls.
+    /// </summary>
+    [Fact]
+    public async Task ToolsPromptGivesTheReferenceCallAsFunctionCallContent()
+    {
+        var c = Case("tools");
+        var tool = c.Tools.Single();
+        var function = tool.Json.GetProperty("function");
+        var options = new ChatOptions
+        {
+            MaxOutputTokens = c.MaxNewTokens,
+            Tools = [AIFunctionFactory.CreateDeclaration(tool.Name, function.GetProperty("description").GetString(), tool.Parameters)],
+        };
+        Assert.Equal(c.PromptIds, Client.Model.CreatePrompt(c.Messages!, c.Tools).TokenIds);
+
+        var response = await Client.GetResponseAsync(ChatClientModelChecks.ToChatMessages(c), options, Ct);
+        var raw = Assert.IsType<Starlings.Generation.OnnxGenAI.GenerationResult>(response.RawRepresentation);
+        Assert.Equal(c.PromptIds.Length, response.Usage!.InputTokenCount);
+        Assert.Equal(c.ContentIds, raw.TokenIds);
+        var call = Assert.IsType<FunctionCallContent>(Assert.Single(response.Messages.Single().Contents));
+        Assert.Equal("get_weather", call.Name);
+        Assert.Equal("Paris", Assert.IsType<System.Text.Json.JsonElement>(call.Arguments!["city"]).GetString());
+        Assert.Equal(ChatFinishReason.ToolCalls, response.FinishReason);
+
+        var streamed = new List<ChatResponseUpdate>();
+        await foreach (var u in Client.GetStreamingResponseAsync(ChatClientModelChecks.ToChatMessages(c), options, Ct))
+        {
+            streamed.Add(u);
+        }
+
+        var combined = streamed.ToChatResponse();
+        Assert.Equal(string.Empty, combined.Text);
+        Assert.Equal("Paris", ((System.Text.Json.JsonElement)combined.Messages.Single().Contents.OfType<FunctionCallContent>().Single().Arguments!["city"]!).GetString());
+        Assert.Equal(ChatFinishReason.ToolCalls, combined.FinishReason);
+    }
+
+    /// <summary>
+    /// The Microsoft.Extensions.AI function-invocation loop on the real model (greedy): the model calls get_weather, the
+    /// middleware invokes it and sends the result back, and the model answers in text. This records what the 0.8B model
+    /// did on this one prompt; it does not qualify its tool choice in general.
+    /// </summary>
+    [Fact]
+    public async Task FunctionInvocationLoopCompletesOnTheRealModel()
+    {
+        var invoked = new List<string>();
+        var getWeather = AIFunctionFactory.Create(
+            (string city) =>
+            {
+                invoked.Add(city);
+                return $"18 C and sunny in {city}.";
+            },
+            "get_weather",
+            "Get the current weather for a city.");
+        using IChatClient pipeline = new ChatClientBuilder(Client).UseFunctionInvocation().Build();
+        var response = await pipeline.GetResponseAsync(
+            [new ChatMessage(ChatRole.User, "What is the weather in Paris today?")],
+            new ChatOptions { Tools = [getWeather], MaxOutputTokens = 128 },
+            Ct);
+
+        var output = TestContext.Current.TestOutputHelper;
+        output?.WriteLine($"invoked: [{string.Join(", ", invoked)}]");
+        foreach (var m in response.Messages)
+        {
+            output?.WriteLine($"{m.Role}: {string.Join(" | ", m.Contents.Select(Describe))}");
+        }
+
+        Assert.Equal(["Paris"], invoked);
+        Assert.Equal([ChatRole.Assistant, ChatRole.Tool, ChatRole.Assistant], response.Messages.Select(m => m.Role));
+        Assert.Empty(response.Messages[^1].Contents.OfType<FunctionCallContent>());
+        Assert.False(string.IsNullOrWhiteSpace(response.Messages[^1].Text));
+        Assert.Equal(ChatFinishReason.Stop, response.FinishReason);
+    }
+
+    private static string Describe(AIContent content) => content switch
+    {
+        FunctionCallContent f => $"call {f.Name}({string.Join(", ", f.Arguments?.Select(a => $"{a.Key}={a.Value}") ?? [])})",
+        FunctionResultContent r => $"result {r.Result}",
+        TextContent t => $"text {t.Text}",
+        _ => content.GetType().Name,
+    };
 
     [Fact]
     public async Task ConcurrentResponsesEqualSequential()

@@ -7,13 +7,18 @@ the C# renderer under test.
 
 Each case also states what the owned C# renderer (``Qwen35ChatTemplate``) must do with it (``owned``):
 
-- ``render``: the conversation is in the supported text subset; the rendering must equal ``rendered`` exactly;
+- ``render``: the conversation is in the supported subset; the rendering must equal ``rendered`` exactly;
 - ``template_error``: upstream raises; the owned renderer must fail too, with the same message when the template
   raised it (``error_source`` ``template``);
-- ``unsupported``: a template feature outside the supported subset (``unsupported_feature``: tools, tool messages,
-  tool calls, images, video, ``add_vision_id``, ``add_generation_prompt=False``, roles the template rejects, and
-  inputs upstream ignores but the package refuses); the owned API must reject it explicitly, never approximate it.
+- ``unsupported``: a template feature outside the supported subset (``unsupported_feature``: images, video,
+  ``add_vision_id``, ``add_generation_prompt=False``, roles the template rejects, and inputs upstream ignores but the
+  package refuses); the owned API must reject it explicitly, never approximate it.
   ``rendered`` or ``error`` still records what upstream does with it.
+
+Tools, assistant tool calls and tool results (the ``tools``, ``tool-calls``, ``tool-results``, ``tool-thinking`` and
+``tool-multi-turn`` categories) are in the supported subset. Every tool definition has the form
+``{"type": "function", "function": {"name", "description" (optional), "parameters"}}``, which the
+Microsoft.Extensions.AI adapter produces from an ``AIFunctionDeclaration``.
 
 Output (JSON Lines, UTF-8, LF; split on ``\\n`` only):
 
@@ -79,6 +84,327 @@ def case(id_, category, messages, owned="render", feature=None, tools=None, kwar
         "owned": owned,
         "unsupported_feature": feature,
     }
+
+
+def fn(name, description, parameters):
+    f = {"name": name}
+    if description is not None:
+        f["description"] = description
+    f["parameters"] = parameters
+    return {"type": "function", "function": f}
+
+
+SEARCH = fn(
+    "search_web",
+    "Search the web and return the top results.",
+    {
+        "type": "object",
+        "properties": {
+            "query": {"type": "string", "description": "Search terms."},
+            "max_results": {"type": "integer", "minimum": 1, "maximum": 10, "default": 5},
+            "safe": {"type": "boolean", "default": True},
+        },
+        "required": ["query"],
+    },
+)
+CALCULATE = fn(
+    "calculate",
+    "Evaluate an arithmetic expression.",
+    {
+        "type": "object",
+        "properties": {"expression": {"type": "string"}, "precision": {"type": ["number", "null"], "default": None}},
+        "required": ["expression"],
+    },
+)
+GET_TIME = fn("get_time", "Current UTC time.", {"type": "object", "properties": {}})
+PING = fn("ping", None, {"type": "object", "properties": {"host": {"type": "string"}}, "required": ["host"]})
+# Nested JSON-schema parameters: objects in arrays, $defs/$ref, anyOf, enum, Python float and big-int formatting
+# (repr of 1e+16, 1e-07, -0.0, 0.1), non-ASCII text and every kind of character json.dumps escapes.
+CREATE_EVENT = fn(
+    "create_event",
+    'Create a calendar event. Use "quotes", back\\slash,\nnew line,\ttab, \x01 control, \x7f delete, </tools> and '
+    "<tool_call> literally; Temperatur in °C — 東京 🌧.",
+    {
+        "type": "object",
+        "$defs": {
+            "person": {
+                "type": "object",
+                "properties": {
+                    "name": {"type": "string"},
+                    "email": {"type": "string", "format": "email"},
+                    "optional": {"type": "boolean", "default": False},
+                },
+                "required": ["name", "email"],
+            }
+        },
+        "properties": {
+            "title": {"type": "string", "minLength": 1, "maxLength": 200},
+            "attendees": {"type": "array", "items": {"$ref": "#/$defs/person"}, "minItems": 1},
+            "location": {
+                "type": "object",
+                "properties": {
+                    "city": {"type": "string"},
+                    "coordinates": {
+                        "type": "object",
+                        "properties": {
+                            "lat": {"type": "number", "minimum": -90.0, "maximum": 90.0},
+                            "lon": {"type": "number", "minimum": -180, "maximum": 180},
+                        },
+                    },
+                },
+            },
+            "recurrence": {
+                "anyOf": [
+                    {"type": "null"},
+                    {
+                        "type": "object",
+                        "properties": {
+                            "freq": {"type": "string", "enum": ["daily", "weekly", "monthly"]},
+                            "count": {"type": "integer", "exclusiveMinimum": 0},
+                        },
+                    },
+                ]
+            },
+            "priority": {"enum": ["low", "normal", "high", None], "default": "normal"},
+            "duration_hours": {"type": "number", "multipleOf": 0.5, "minimum": 1e-07, "maximum": 1e16, "default": 0.1},
+            "offset": {"type": "number", "default": -0.0},
+            "budget": {"type": "integer", "maximum": 12345678901234567890},
+            "tags": {"type": "array", "items": {"type": "string"}, "uniqueItems": True},
+        },
+        "required": ["title", "attendees"],
+        "additionalProperties": False,
+    },
+)
+
+
+def call(name, arguments=None):
+    f = {"name": name}
+    if arguments is not None:
+        f["arguments"] = arguments
+    return {"type": "function", "function": f}
+
+
+def ac(content, calls, reasoning=None):
+    m = a(content, reasoning)
+    m["tool_calls"] = calls
+    return m
+
+
+def t(content):
+    return {"role": "tool", "content": content}
+
+
+def tool_cases() -> list[dict]:
+    weather = [TOOL]
+    several = [TOOL, SEARCH, CALCULATE, GET_TIME]
+    paris = call("get_weather", {"city": "Paris"})
+    tokyo = call("get_weather", {"city": "Tokyo"})
+    berlin = call("get_weather", {"city": "Berlin"})
+    q = u("What is the weather in Paris?")
+    c = []
+    # Tool definitions: the tools system block.
+    c += [
+        case("tools-one", "tools", [q], tools=weather),
+        case("tools-one-system", "tools", [s("Be brief."), q], tools=weather),
+        case("tools-system-empty", "tools", [s(""), q], tools=weather),
+        case("tools-system-whitespace", "tools", [s(" \n\t "), q], tools=weather),
+        case("tools-system-multiline", "tools", [s("\n  Line one.\n\nLine two.  \n"), q], tools=weather),
+        case("tools-several", "tools", [u("Search for the weather, then compute 2*21.")], tools=several),
+        case("tools-nested-schema", "tools", [u("Plan a meeting in Tokyo.")], tools=[CREATE_EVENT]),
+        case("tools-no-description", "tools", [u("Is example.org up?")], tools=[PING]),
+        case("tools-no-parameters", "tools", [u("What time is it?")], tools=[GET_TIME]),
+        case("tools-thinking-on", "tools", [q], tools=weather, kwargs={"enable_thinking": True}),
+        case("tools-thinking-off", "tools", [q], tools=weather, kwargs={"enable_thinking": False}),
+        case("tools-history", "tools", [u("Hi"), a("Hello!"), q], tools=weather),
+    ]
+    # Assistant turns with tool calls.
+    c += [
+        case("call-one", "tool-calls", [q, ac("", [paris]), t("18 C, sunny")], tools=weather),
+        case("call-one-no-tools", "tool-calls", [q, ac("", [paris]), t("18 C, sunny")]),
+        case("call-content-null", "tool-calls", [q, ac(None, [paris]), t("18 C, sunny")], tools=weather),
+        case("call-with-text", "tool-calls", [q, ac("Let me check.", [paris]), t("18 C, sunny")], tools=weather),
+        case("call-text-whitespace", "tool-calls", [q, ac("  \n ", [paris]), t("18 C, sunny")], tools=weather),
+        case(
+            "call-several",
+            "tool-calls",
+            [u("Weather in Paris and Tokyo?"), ac("", [paris, tokyo]), t("18 C, sunny"), t("25 C, rain")],
+            tools=weather,
+        ),
+        case(
+            "call-several-with-text",
+            "tool-calls",
+            [
+                u("Weather in Paris, then search the forecast and compute 18*2."),
+                ac(
+                    "Calling three tools.",
+                    [
+                        paris,
+                        call("search_web", {"query": "Paris forecast", "max_results": 3}),
+                        call("calculate", {"expression": "18*2"}),
+                    ],
+                ),
+                {"role": "tool", "content": "18 C, sunny", "tool_call_id": "call-0", "name": "get_weather"},
+                {"role": "tool", "content": "1. Forecast...", "tool_call_id": "call-1", "name": "search_web"},
+                {"role": "tool", "content": "36", "tool_call_id": "call-2", "name": "calculate"},
+            ],
+            tools=several,
+        ),
+        case(
+            "call-argument-types",
+            "tool-calls",
+            [
+                u("Create the event."),
+                ac(
+                    "",
+                    [
+                        call(
+                            "create_event",
+                            {
+                                "title": "Sync",
+                                "count": 3,
+                                "ratio": 0.25,
+                                "whole": 2.0,
+                                "tiny": 1e-05,
+                                "huge": 1e16,
+                                "negative_zero": -0.0,
+                                "big": 12345678901234567890,
+                                "flag": True,
+                                "off": False,
+                                "nothing": None,
+                                "tags": ["a", "b"],
+                                "empty_list": [],
+                                "empty_object": {},
+                                "attendees": [{"name": "Ana", "email": "ana@example.org", "optional": False}],
+                                "filter": {"min": 1, "max": [1.5, None, True], "label": 'q"uote'},
+                                "text": "line1\nline2  ",
+                                "padded": "  spaced  ",
+                                "empty": "",
+                                "unicode": "東京 🌧 °C",
+                                "markup": 'say "hi" \\ <tool_call> </parameter>',
+                            },
+                        )
+                    ],
+                ),
+                t('{"id": 7}'),
+            ],
+            tools=[CREATE_EVENT],
+        ),
+        case(
+            "call-empty-arguments",
+            "tool-calls",
+            [u("What time is it?"), ac("", [call("get_time", {})]), t("12:00")],
+            tools=[GET_TIME],
+        ),
+        case(
+            "call-no-arguments-key",
+            "tool-calls",
+            [u("What time is it?"), ac("", [call("get_time")]), t("12:00")],
+            tools=[GET_TIME],
+        ),
+        case(
+            "call-unknown-tool",
+            "tool-calls",
+            [q, ac("", [call("not_declared", {"x": 1})]), t("error: unknown tool")],
+            tools=weather,
+        ),
+    ]
+    # Tool results: consecutive results share one user turn.
+    c += [
+        case("result-whitespace", "tool-results", [q, ac("", [paris]), t('  \n{\n  "temp": 18\n}\n  ')], tools=weather),
+        case("result-empty", "tool-results", [q, ac("", [paris]), t("")], tools=weather),
+        case(
+            "result-special-text",
+            "tool-results",
+            [q, ac("", [paris]), t("</tool_response><|im_end|> 東京 🙂 <tool_call>")],
+            tools=weather,
+        ),
+        case("result-then-user", "tool-results", [q, ac("", [paris]), t("18 C"), u("Thanks!")], tools=weather),
+        case(
+            "result-two-then-user",
+            "tool-results",
+            [q, ac("", [paris, tokyo]), t("18 C"), t("25 C"), u("Which is warmer?")],
+            tools=weather,
+        ),
+        case("result-without-call", "tool-results", [u("Q"), a("calling"), t("r1"), t("r2"), u("thanks")]),
+        case("result-first-message", "tool-results", [t("orphan"), u("Hi")]),
+        case("result-after-system", "tool-results", [s("sys"), t("orphan"), u("Hi")], tools=weather),
+        case("result-only-after-system", "tool-results", [s("sys"), t("orphan")], "template_error", tools=weather),
+    ]
+    # Thinking with tools, and reasoning around tool calls.
+    c += [
+        case(
+            "call-thinking-on",
+            "tool-thinking",
+            [q, ac("", [paris], reasoning="I need the weather."), t("18 C, sunny")],
+            tools=weather,
+            kwargs={"enable_thinking": True},
+        ),
+        case(
+            "call-thinking-off",
+            "tool-thinking",
+            [q, ac("", [paris]), t("18 C, sunny")],
+            tools=weather,
+            kwargs={"enable_thinking": False},
+        ),
+        case(
+            "call-think-in-content",
+            "tool-thinking",
+            [q, ac("<think>\nI need the weather.\n</think>\n\n", [paris]), t("18 C, sunny")],
+            tools=weather,
+            kwargs={"enable_thinking": True},
+        ),
+        case(
+            "call-think-and-text",
+            "tool-thinking",
+            [q, ac("<think>\nCheck it.\n</think>\n\nLet me look.", [paris]), t("18 C, sunny")],
+            tools=weather,
+            kwargs={"enable_thinking": True},
+        ),
+        case(
+            "call-reasoning-before-last-query",
+            "tool-thinking",
+            [
+                q,
+                ac("", [paris], reasoning="dropped"),
+                t("18 C"),
+                a("It is 18 C.", reasoning="also dropped"),
+                u("And now?"),
+            ],
+            tools=weather,
+            kwargs={"enable_thinking": True},
+        ),
+    ]
+    # Multi-turn conversations with tools.
+    full = [
+        s("You are a weather assistant."),
+        u("Weather in Paris and Tokyo?"),
+        ac("", [paris, tokyo]),
+        t("18 C, sunny"),
+        t("25 C, rain"),
+        a("Paris is 18 C and sunny; Tokyo is 25 C with rain."),
+        u("And Berlin?"),
+        ac("Let me check Berlin.", [berlin]),
+        t("12 C, cloudy"),
+    ]
+    c += [
+        case("mt-tools", "tool-multi-turn", full, tools=weather),
+        case("mt-tools-final-answer", "tool-multi-turn", [*full, a("Berlin is 12 C and cloudy.")], tools=weather),
+        case("mt-tools-thinking-on", "tool-multi-turn", full, tools=weather, kwargs={"enable_thinking": True}),
+        case(
+            "mt-tools-thinking-reasoning",
+            "tool-multi-turn",
+            [
+                *full[:7],
+                ac("", [berlin], reasoning="Berlin was not asked before."),
+                t("12 C, cloudy"),
+                ac("", [call("search_web", {"query": "Berlin weekend forecast"})], reasoning="Also the weekend."),
+                t("Sunny weekend."),
+            ],
+            tools=several,
+            kwargs={"enable_thinking": True},
+        ),
+    ]
+    return c
 
 
 def cases() -> list[dict]:
@@ -230,6 +556,7 @@ def cases() -> list[dict]:
     c += [
         case("tools-empty-list", "tools-empty", [s("sys"), u("Hi")], tools=[]),
     ]
+    c += tool_cases()
     # Invalid conversations the template rejects.
     c += [
         case("err-no-messages", "template-error", [], owned="template_error"),
@@ -238,56 +565,6 @@ def cases() -> list[dict]:
     image = {"type": "image", "image": "file:///img.png"}
     video = {"type": "video", "video": "file:///clip.mp4"}
     c += [
-        case("uns-tools", "unsupported", [u("Weather in Paris?")], "unsupported", "tools", tools=[TOOL]),
-        case(
-            "uns-tools-system",
-            "unsupported",
-            [s("Be brief."), u("Weather in Paris?")],
-            "unsupported",
-            "tools",
-            tools=[TOOL],
-        ),
-        case(
-            "uns-tool-message",
-            "unsupported",
-            [
-                u("Weather in Paris?"),
-                {
-                    "role": "assistant",
-                    "content": "",
-                    "tool_calls": [
-                        {"type": "function", "function": {"name": "get_weather", "arguments": {"city": "Paris"}}}
-                    ],
-                },
-                {"role": "tool", "content": "18 C, sunny"},
-            ],
-            "unsupported",
-            "tool_message",
-        ),
-        case(
-            "uns-two-tool-messages",
-            "unsupported",
-            [u("Q"), a("calling"), {"role": "tool", "content": "r1"}, {"role": "tool", "content": "r2"}, u("thanks")],
-            "unsupported",
-            "tool_message",
-        ),
-        case(
-            "uns-tool-calls",
-            "unsupported",
-            [
-                u("Weather in Paris?"),
-                {
-                    "role": "assistant",
-                    "content": "Let me check.",
-                    "tool_calls": [
-                        {"type": "function", "function": {"name": "get_weather", "arguments": {"city": "Paris"}}}
-                    ],
-                },
-                u("Never mind."),
-            ],
-            "unsupported",
-            "tool_calls",
-        ),
         case(
             "uns-image",
             "unsupported",

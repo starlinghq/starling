@@ -2,8 +2,8 @@
 //
 // Rendering logic ported from chat_template.jinja of Qwen/Qwen3.5-0.8B at commit
 // 2fc06364715b967f1860aea9cf38778875588b17 (SHA-256 273d8e0e683b885071fb17e08d71e5f2a5ddfb5309756181681de4f5a1822d80),
-// Copyright 2026 Alibaba Cloud, Apache License 2.0. Modified by StarlingHq: C# rendering of the text
-// subset; tools, tool calls, tool messages and vision content are rejected.
+// Copyright 2026 Alibaba Cloud, Apache License 2.0. Modified by StarlingHq: C# rendering of the text and tool-calling
+// subset; vision content is rejected.
 
 using System.Text;
 
@@ -11,28 +11,34 @@ namespace Starlings.Models.Qwen35;
 
 /// <summary>
 /// The pinned chat template of <c>Qwen/Qwen3.5-0.8B</c> (<c>chat_template.jinja</c>, SHA-256
-/// <see cref="TemplateSha256"/>) rendered in C# for text conversations, with the template's own semantics (Jinja
-/// <c>trim</c> as Python <c>str.strip()</c>, reasoning extraction from <c>&lt;think&gt;</c> tags, the generation prompt
-/// with or without thinking). Template features outside that subset are rejected, never approximated.
+/// <see cref="TemplateSha256"/>) rendered in C# for text and tool-calling conversations, with the template's own
+/// semantics (Jinja <c>trim</c> as Python <c>str.strip()</c>, reasoning extraction from <c>&lt;think&gt;</c> tags, the
+/// generation prompt with or without thinking, transformers' <c>tojson</c> as Python <c>json.dumps</c>). Template
+/// features outside that subset are rejected, never approximated.
 /// </summary>
 /// <remarks>
 /// <para>
-/// Supported: a non-empty list of system (first message only), user and assistant messages with string content,
-/// assistant reasoning content, <c>add_generation_prompt=True</c> and <c>enable_thinking</c> true or false (undefined in
-/// the template behaves as false).
+/// Supported: a non-empty list of system (first message only), user, assistant and tool messages with string content;
+/// assistant reasoning content; assistant tool calls (<see cref="Qwen35Message.ToolCalls"/>) rendered as the template's
+/// <c>&lt;tool_call&gt;&lt;function=...&gt;&lt;parameter=...&gt;</c> blocks; tool messages rendered as
+/// <c>&lt;tool_response&gt;</c> blocks, consecutive ones in one user turn; tool definitions (<see cref="Qwen35Tool"/>)
+/// rendered into the tools system block; <c>add_generation_prompt=True</c> and <c>enable_thinking</c> true or false
+/// (undefined in the template behaves as false).
 /// </para>
 /// <para>
-/// Unsupported (the API has no way to express them, or they fail with <see cref="Qwen35TemplateException"/>): tool
-/// definitions and the tools system block, assistant tool calls, tool-role messages, image and video content,
-/// <c>add_vision_id</c>, <c>add_generation_prompt=False</c>. A conversation whose only user messages are wrapped in
-/// <c>&lt;tool_response&gt;</c> raises "No user query found in messages." exactly as the template does.
+/// Unsupported (the API has no way to express them, or they fail with <see cref="Qwen35TemplateException"/>): image and
+/// video content, <c>add_vision_id</c>, <c>add_generation_prompt=False</c>, tool data with duplicate JSON keys or lone
+/// surrogates, and tool-call arguments that are not a JSON object. A conversation whose only user messages are wrapped in
+/// <c>&lt;tool_response&gt;</c> (tool messages do not count) raises "No user query found in messages." exactly as the
+/// template does.
 /// </para>
 /// <para>
 /// This is the port that backlog P-029 qualifies on a template corpus. Until then it is experimental: it equals the
 /// upstream rendering (transformers 5.18.0 <c>apply_chat_template</c>) on the 21 text prompts of
 /// <c>prompts-v1.jsonl</c>, including <c>enable_thinking=true</c>, which ONNX Runtime GenAI's template engine cannot
-/// render. It also equals the upstream rendering on the 65 supported cases of the proposed P-029 corpus
-/// (<c>model-pipeline/proposed/qwen3.5-0.8b/template/</c>), and it rejects that corpus's unsupported and invalid cases.
+/// render. It also equals the upstream rendering on the 105 supported cases of the proposed P-029 corpus
+/// (<c>model-pipeline/proposed/qwen3.5-0.8b/template/</c>), 40 of them with tools, tool calls or tool results, and it
+/// rejects that corpus's unsupported and invalid cases.
 /// </para>
 /// </remarks>
 public static class Qwen35ChatTemplate
@@ -43,6 +49,11 @@ public static class Qwen35ChatTemplate
     private const string ImStart = "<|im_start|>";
     private const string ImEnd = "<|im_end|>";
 
+    // The template's tool instructions, verbatim.
+    private const string ToolsHeader = "# Tools\n\nYou have access to the following functions:\n\n<tools>";
+    private const string ToolsInstructions =
+        "\n\nIf you choose to call a function ONLY reply in the following format with NO suffix:\n\n<tool_call>\n<function=example_function_name>\n<parameter=example_parameter_1>\nvalue_1\n</parameter>\n<parameter=example_parameter_2>\nThis is the value for the second parameter\nthat can span\nmultiple lines\n</parameter>\n</function>\n</tool_call>\n\n<IMPORTANT>\nReminder:\n- Function calls MUST follow the specified format: an inner <function=...></function> block must be nested within <tool_call></tool_call> XML tags\n- Required parameters MUST be specified\n- You may provide optional reasoning for your function call in natural language BEFORE the function call, but NOT after\n- If there is no function call available, answer the question like normal with your current knowledge and do not tell the user about function calls\n</IMPORTANT>";
+
     /// <summary>Renders a conversation followed by the assistant generation prompt.</summary>
     /// <param name="messages">The conversation.</param>
     /// <param name="enableThinking">
@@ -50,7 +61,17 @@ public static class Qwen35ChatTemplate
     /// false (the template default) ends it with an empty think block.
     /// </param>
     /// <exception cref="Qwen35TemplateException">The conversation is invalid for the template.</exception>
-    public static string Render(IReadOnlyList<Qwen35Message> messages, bool enableThinking = false)
+    public static string Render(IReadOnlyList<Qwen35Message> messages, bool enableThinking = false) => Render(messages, tools: null, enableThinking);
+
+    /// <summary>Renders a conversation with tool definitions, followed by the assistant generation prompt.</summary>
+    /// <param name="messages">The conversation.</param>
+    /// <param name="tools">
+    /// The template's <c>tools</c>: rendered into the system block with the template's tool-call instructions. Null or
+    /// empty renders no tools block (an empty list is falsy in the template).
+    /// </param>
+    /// <param name="enableThinking">The template's <c>enable_thinking</c>, as in <see cref="Render(IReadOnlyList{Qwen35Message}, bool)"/>.</param>
+    /// <exception cref="Qwen35TemplateException">The conversation or tool data is invalid for the template.</exception>
+    public static string Render(IReadOnlyList<Qwen35Message> messages, IReadOnlyList<Qwen35Tool>? tools, bool enableThinking = false)
     {
         ArgumentNullException.ThrowIfNull(messages);
         if (messages.Count == 0)
@@ -75,10 +96,37 @@ public static class Qwen35ChatTemplate
             {
                 throw new Qwen35TemplateException($"Message {i}: reasoning content is only rendered for assistant messages.");
             }
+
+            if (m.ToolCalls is { Count: > 0 } && m.Role != Qwen35Role.Assistant)
+            {
+                throw new Qwen35TemplateException($"Message {i}: tool calls are only rendered for assistant messages.");
+            }
         }
 
         var sb = new StringBuilder();
-        if (messages[0].Role == Qwen35Role.System)
+        if (tools is { Count: > 0 })
+        {
+            sb.Append(ImStart).Append("system\n").Append(ToolsHeader);
+            foreach (var tool in tools)
+            {
+                ArgumentNullException.ThrowIfNull(tool, nameof(tools));
+                sb.Append('\n');
+                Qwen35PythonJson.Dumps(sb, tool.Json);
+            }
+
+            sb.Append("\n</tools>").Append(ToolsInstructions);
+            if (messages[0].Role == Qwen35Role.System)
+            {
+                string system = PyStrip(messages[0].Content);
+                if (system.Length > 0)
+                {
+                    sb.Append("\n\n").Append(system);
+                }
+            }
+
+            sb.Append(ImEnd).Append('\n');
+        }
+        else if (messages[0].Role == Qwen35Role.System)
         {
             sb.Append(ImStart).Append("system\n").Append(PyStrip(messages[0].Content)).Append(ImEnd).Append('\n');
         }
@@ -144,14 +192,77 @@ public static class Qwen35ChatTemplate
                             sb.Append("<think>\n").Append(reasoning).Append("\n</think>\n\n");
                         }
 
-                        sb.Append(content).Append(ImEnd).Append('\n');
+                        sb.Append(content);
+                        if (message.ToolCalls is { Count: > 0 } calls)
+                        {
+                            AppendToolCalls(sb, calls, contentIsBlank: PyStrip(content).Length == 0);
+                        }
+
+                        sb.Append(ImEnd).Append('\n');
                         break;
                     }
+
+                case Qwen35Role.Tool:
+                    // loop.previtem is undefined (falsy) for the first message.
+                    if (i > 0 && messages[i - 1].Role != Qwen35Role.Tool)
+                    {
+                        sb.Append(ImStart).Append("user");
+                    }
+
+                    sb.Append("\n<tool_response>\n").Append(content).Append("\n</tool_response>");
+                    if (i == messages.Count - 1 || messages[i + 1].Role != Qwen35Role.Tool)
+                    {
+                        sb.Append(ImEnd).Append('\n');
+                    }
+
+                    break;
             }
         }
 
         sb.Append(ImStart).Append("assistant\n").Append(enableThinking ? "<think>\n" : "<think>\n\n</think>\n\n");
         return sb.ToString();
+    }
+
+    private static void AppendToolCalls(StringBuilder sb, IReadOnlyList<Qwen35ToolCall> calls, bool contentIsBlank)
+    {
+        for (int j = 0; j < calls.Count; j++)
+        {
+            var call = calls[j] ?? throw new ArgumentException($"Tool call {j} is null.", nameof(calls));
+            if (call.Name is null)
+            {
+                throw new Qwen35TemplateException($"Tool call {j} has no name.");
+            }
+
+            sb.Append(j == 0 ? (contentIsBlank ? "<tool_call>\n<function=" : "\n\n<tool_call>\n<function=") : "\n<tool_call>\n<function=")
+                .Append(call.Name).Append(">\n");
+            switch (call.Arguments.ValueKind)
+            {
+                case System.Text.Json.JsonValueKind.Undefined:
+                    break;
+                case System.Text.Json.JsonValueKind.Object:
+                    {
+                        HashSet<string> seen = new(StringComparer.Ordinal);
+                        foreach (var argument in call.Arguments.EnumerateObject())
+                        {
+                            if (!seen.Add(argument.Name))
+                            {
+                                throw new Qwen35TemplateException($"Tool call '{call.Name}' has the argument '{argument.Name}' twice.");
+                            }
+
+                            sb.Append("<parameter=").Append(argument.Name).Append(">\n")
+                                .Append(Qwen35PythonJson.ArgumentText(argument.Value))
+                                .Append("\n</parameter>\n");
+                        }
+
+                        break;
+                    }
+
+                default:
+                    throw new Qwen35TemplateException($"Tool call '{call.Name}': arguments must be a JSON object, not {call.Arguments.ValueKind}.");
+            }
+
+            sb.Append("</function>\n</tool_call>");
+        }
     }
 
     /// <summary>Python <c>str.strip()</c> (what Jinja's <c>trim</c> filter calls): strips <see cref="IsPythonSpace"/> characters.</summary>

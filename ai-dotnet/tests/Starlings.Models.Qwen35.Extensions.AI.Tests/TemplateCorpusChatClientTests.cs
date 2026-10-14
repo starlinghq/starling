@@ -6,10 +6,11 @@ namespace Starlings.Models.Qwen35.Extensions.AI.Tests;
 
 /// <summary>
 /// P-029 through the IChatClient: every case of the template corpus expressed as Microsoft.Extensions.AI messages and
-/// options. Supported cases must reach the model as the upstream prompt ids (transformers 5.18.0 rendering through the
-/// transformers tokenizer); every unsupported template feature (tools, tool messages and calls, images, video,
-/// add_vision_id, add_generation_prompt=False, unknown roles) must fail with <see cref="NotSupportedException"/> before
-/// any generator is created. Scripted native sequence; needs the pinned tokenizer.json.
+/// options. Supported cases, tools (as <see cref="AIFunctionDeclaration"/>), <see cref="FunctionCallContent"/> and
+/// <see cref="FunctionResultContent"/> included, must reach the model as the upstream prompt ids (transformers 5.18.0
+/// rendering through the transformers tokenizer); every unsupported template feature (images, video, add_vision_id,
+/// add_generation_prompt=False, unknown roles) must fail with <see cref="NotSupportedException"/> before any generator
+/// is created. Scripted native sequence; needs the pinned tokenizer.json.
 /// </summary>
 public sealed class TemplateCorpusChatClientTests
 {
@@ -54,7 +55,7 @@ public sealed class TemplateCorpusChatClientTests
         var options = new ChatOptions();
         if (c.Tools.ValueKind == JsonValueKind.Array)
         {
-            options.Tools = c.HasTools ? [AIFunctionFactory.Create((string city) => city, "get_weather", "Current weather for a city.")] : [];
+            options.Tools = [.. c.Tools.EnumerateArray().Select(ToDeclaration)];
         }
 
         foreach (var kw in c.Kwargs.EnumerateObject())
@@ -82,6 +83,10 @@ public sealed class TemplateCorpusChatClientTests
             {
                 contents.Add(new FunctionResultContent("call-0", content.GetString()));
             }
+            else if (content.ValueKind == JsonValueKind.Null)
+            {
+                // No text: an assistant turn with tool calls only.
+            }
             else if (content.ValueKind == JsonValueKind.String)
             {
                 contents.Add(new TextContent(content.GetString()));
@@ -106,7 +111,7 @@ public sealed class TemplateCorpusChatClientTests
                 foreach (var call in calls.EnumerateArray())
                 {
                     var f = call.GetProperty("function");
-                    var args = f.GetProperty("arguments").EnumerateObject().ToDictionary(p => p.Name, p => (object?)p.Value.Clone());
+                    var args = f.TryGetProperty("arguments", out var a) ? a.EnumerateObject().ToDictionary(p => p.Name, p => (object?)p.Value.Clone()) : null;
                     contents.Add(new FunctionCallContent($"call-{i++}", f.GetProperty("name").GetString()!, args));
                 }
             }
@@ -115,5 +120,16 @@ public sealed class TemplateCorpusChatClientTests
         }
 
         return (messages, options);
+    }
+
+    // The corpus tools have the form the adapter writes for a declaration: type, then function name, description
+    // (absent when empty) and parameters.
+    private static AIFunctionDeclaration ToDeclaration(JsonElement tool)
+    {
+        var f = tool.GetProperty("function");
+        return AIFunctionFactory.CreateDeclaration(
+            f.GetProperty("name").GetString()!,
+            f.TryGetProperty("description", out var d) ? d.GetString() : null,
+            f.GetProperty("parameters").Clone());
     }
 }

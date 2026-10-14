@@ -13,11 +13,11 @@
     "markupsafe": "3.0.4"
   },
   "cases": {
-    "render": 65,
-    "template_error": 7,
-    "unsupported": 13
+    "render": 105,
+    "template_error": 8,
+    "unsupported": 8
   },
-  "corpus_sha256": "06ad0133624950faefba38d62d82734c0dcf6a810e9ced1fd95d0253a5336b00",
+  "corpus_sha256": "2b57f6c69057ed1f60118e8fd10157e65135376b0bb93e548e22a2a1bb99e6de",
   "assets": {
     "chat_template.jinja": "273d8e0e683b885071fb17e08d71e5f2a5ddfb5309756181681de4f5a1822d80",
     "config.json": "b90b86f35c8e6925ef74ee04d0e758f0a845c83a42089ad82bbaa948de9b4204",
