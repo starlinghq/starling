@@ -566,6 +566,8 @@ STARLING_MODELS=<cache> dotnet run --project ai-dotnet/tools/Starlings.Soak.Tool
   <e5|gliner2|embeddinggemma2|embeddinggemma2-image|qwen35|all> --out <dir> [--duration 1h] [--cuda] [--concurrency 2] [--threads n]
 ```
 
+Diagnostics: `--malloc-trim` (trim after each unload and sample again), `--keep-loaded` (requests only, one load), and `MALLOC_*` variables in the environment, which each report records. On Linux with glibc, `MALLOC_MMAP_THRESHOLD_=65536` bounds the native memory kept between loads (`docs/evidence/gliner2-soak-growth/README.md`).
+
 Each model test project has an `OperationalTests` class (failed initialization, malformed lock and snapshot, unsupported provider, queue saturation, timed-out requests with cancellation latency, disposal during in-flight work) next to the existing cancellation, concurrency and memory tests; `docs/evidence/g4-soak/README.md` maps each plan 10.2 item to its tests and holds the soak reports.
 
 ## Benchmarks (P-008)

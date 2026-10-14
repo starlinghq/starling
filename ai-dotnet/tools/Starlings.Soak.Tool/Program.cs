@@ -35,6 +35,10 @@
 //   --malloc-trim             Diagnostic (glibc only): after each unloaded sample, call malloc_trim(0) and sample again
 //                             (series "trimmed"). Memory that malloc_trim returns was freed but kept by the allocator,
 //                             not leaked. Changes allocator behaviour for the rest of the run; off by default.
+//   --keep-loaded             Diagnostic: load the model once and keep it loaded; each cycle serves its requests and
+//                             takes the settled samples without unloading (requests only, no load/unload churn). The
+//                             "unloaded" series is then a second settled sample with the model still loaded. Not a
+//                             qualification run (G4 needs the load/unload cycles); off by default.
 //
 // Reanalysis: `-- reanalyze <raw.json>...` recomputes the verdicts and the markdown report of existing raw results
 // with the current analysis (the run's warmup and growth-limit options), rewriting both files; the samples are unchanged.
@@ -116,6 +120,8 @@ internal sealed record SoakOptions
 
     public bool MallocTrim { get; init; }
 
+    public bool KeepLoaded { get; init; }
+
     public bool IsQualificationLength => Duration >= TimeSpan.FromHours(1);
 
     public static SoakOptions Parse(string[] args)
@@ -140,6 +146,7 @@ internal sealed record SoakOptions
                 "--seed" => o with { Seed = int.Parse(Next(), CultureInfo.InvariantCulture) },
                 "--checkpoint-interval" => o with { CheckpointInterval = ParseTime(Next()) },
                 "--malloc-trim" => o with { MallocTrim = true },
+                "--keep-loaded" => o with { KeepLoaded = true },
                 _ => throw new ArgumentException($"unknown option '{args[i]}'"),
             };
         }
@@ -253,17 +260,18 @@ internal sealed class SoakRunner(SoakWorkload workload, SoakOptions options)
         _deadlineEvery = options.DeadlineEvery == 0 ? 0 : Math.Min(options.DeadlineEvery, requestsPerCycle);
         var baseline = MemoryProbe.Sample(0, "baseline", -1, settle: true);
         var lastCheckpoint = TimeSpan.Zero;
+        ISoakInstance? kept = null;
         using (var sampler = new BackgroundSampler(clock, options.SampleInterval))
         {
             for (int cycle = 0; clock.Elapsed < options.Duration; cycle++)
             {
                 double start = clock.Elapsed.TotalSeconds;
-                sampler.SetPhase("load", cycle);
+                sampler.SetPhase(kept is null ? "load" : "serve", cycle);
                 long t = Stopwatch.GetTimestamp();
                 ISoakInstance instance;
                 try
                 {
-                    instance = workload.Load(options);
+                    instance = kept ?? workload.Load(options);
                 }
                 catch (Exception ex)
                 {
@@ -272,6 +280,11 @@ internal sealed class SoakRunner(SoakWorkload workload, SoakOptions options)
                 }
 
                 double loadMs = Stopwatch.GetElapsedTime(t).TotalMilliseconds;
+                if (options.KeepLoaded)
+                {
+                    kept = instance;
+                }
+
                 providers = instance.SessionProviders;
                 sampler.SetPhase("serve", cycle);
                 if (reference is null)
@@ -283,7 +296,11 @@ internal sealed class SoakRunner(SoakWorkload workload, SoakOptions options)
                 var loaded = MemoryProbe.Sample(clock.Elapsed.TotalSeconds, "loaded", cycle, settle: true);
                 sampler.SetPhase("unload", cycle);
                 t = Stopwatch.GetTimestamp();
-                instance.Dispose();
+                if (kept is null)
+                {
+                    instance.Dispose();
+                }
+
                 double unloadMs = Stopwatch.GetElapsedTime(t).TotalMilliseconds;
                 var unloaded = MemoryProbe.Sample(clock.Elapsed.TotalSeconds, "unloaded", cycle, settle: true);
                 MemorySample? trimmed = null;
@@ -311,6 +328,7 @@ internal sealed class SoakRunner(SoakWorkload workload, SoakOptions options)
                 }
             }
 
+            kept?.Dispose();
             sampler.SetPhase("end", cycles.Count);
             string verdict = Write(final: true);
             Console.WriteLine($"[{workload.Name}] {verdict}; wrote {basePath}.json and .md");
@@ -516,6 +534,7 @@ internal sealed class SoakRunner(SoakWorkload workload, SoakOptions options)
                 ["growth_limit_floor_mb"] = options.GrowthLimitMb,
                 ["seed"] = options.Seed,
                 ["malloc_trim"] = options.MallocTrim,
+                ["keep_loaded"] = options.KeepLoaded,
                 ["gpu_sampling"] = MemoryProbe.GpuSamplingAvailable,
             },
             ["baseline"] = Sample(baseline),
@@ -602,6 +621,11 @@ internal static class Report
         sb.AppendLine(CultureInfo.InvariantCulture, $"| Provider (session) | {o["provider"]} ({string.Join(", ", r["session_providers"]!.AsArray().Select(p => (string?)p))}) |");
         sb.AppendLine(CultureInfo.InvariantCulture, $"| Duration requested / elapsed | {F(o["duration_s"], "F0")} s / {F(o["elapsed_s"], "F0")} s |");
         sb.AppendLine(CultureInfo.InvariantCulture, $"| Load/unload cycles | {cycles.Count} |");
+        if (o["keep_loaded"]?.GetValue<bool>() == true)
+        {
+            sb.AppendLine("| Keep loaded (diagnostic) | yes: one load, no unloads; the `unloaded` series is a second sample with the model loaded |");
+        }
+
         sb.AppendLine(CultureInfo.InvariantCulture, $"| Requests per cycle, concurrency | {o["requests_per_cycle"]}, {o["concurrency"]} callers |");
         sb.AppendLine(CultureInfo.InvariantCulture, $"| Intra-op threads | {o["threads"]?.ToString() ?? "runtime default"} |");
         sb.AppendLine(CultureInfo.InvariantCulture, $"| Warmup excluded | first 2 cycles and the first {F(o["warmup_fraction"], "F2")} of the run |");

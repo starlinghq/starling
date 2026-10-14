@@ -52,6 +52,10 @@ This is the contract a Stable `gliner2-base-v1/onnx-fp32-cpu` profile would comm
 | Untested | Windows. |
 | Unsupported | inputs over 512 tokens, unserialized concurrent calls on CUDA (wrong entities in 6 of 8 test runs), truncation, the `max_len` word cap, `extract_long`, GLiNER2's plain de-duplicated output, mixed label sets in one batch, classification, relation extraction, structured (JSON) extraction, per-label thresholds, overlap policies, the character splitter, non-English text, TF32, fp16, quantized graphs, streaming, persistence, training, Microsoft.Extensions.AI, ML.NET (`unsupported` from draft PR #6; no adapter exists). |
 
+## Memory on Linux
+
+With default glibc settings, a process that loads and unloads the extractor repeatedly keeps freed native memory resident: about 1.2 to 1.5 GiB between loads, rising by about 65 to 90 MiB over the first half hour of cycling and then holding. This is allocator retention, not a leak. To bound it, start the process with `MALLOC_MMAP_THRESHOLD_=65536`; in a soak this held the footprint after unloading at about 76 MiB and lowered the loaded footprint by about 740 MiB. Evidence: [GLiNER2 soak growth](https://github.com/starlinghq/starling/blob/main/docs/evidence/gliner2-soak-growth/README.md).
+
 ## Status
 
 Profile `gliner2-base-v1/onnx-fp32-cpu`: Linux x64 CPU and CUDA (`use_tf32=0`) experimental against the protected development fixtures and binding tolerances (one workstation). Evidence and reproduction: [ai-dotnet/README.md](https://github.com/starlinghq/starling/blob/main/ai-dotnet/README.md#gliner2-entity-extraction-p-015). License of the weights and the converted graph: Apache-2.0 (model card); GLiNER2 by Fastino AI, backbone initialised from `microsoft/deberta-v3-base` (MIT).
