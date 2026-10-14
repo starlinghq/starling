@@ -219,7 +219,7 @@ qualification:
     G1: { status: not-run }
     G2: { status: not-run }
     G3: { status: not-run }
-    G4: { status: not-run }
+    G4: { status: passed, evidence: docs/evidence/g4-soak-1h-2026-10-14/README.md, date: 2026-10-14 }
     G5: { status: not-run }
     # G6 checklist: the ai-0.1.0-preview.5 release drill (packed packages, clean consumer, offline sample run on a
     # seeded graph). Acquisition of the hosted graph is not covered while its source is a placeholder or private.
