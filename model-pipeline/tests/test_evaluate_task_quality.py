@@ -372,3 +372,79 @@ def test_generation_cli_without_budget(tmp_path):
     args[1] = str(other.manifest)
     args[args.index("--repo-root") + 1] = str(other.root)
     assert main(args) == 2
+
+
+# Dataset digest forms -----------------------------------------------------------------------------
+
+
+def ner_predictions(path: Path, data: tq.NerSet) -> Path:
+    path.write_text(
+        "".join(
+            json.dumps({"id": name, "entities": [{"start": s, "end": e, "label": lab} for s, e, lab in row["_gold"]]})
+            + "\n"
+            for name, row in data.rows.items()
+        ),
+        encoding="utf-8",
+    )
+    return path
+
+
+@pytest.mark.parametrize("form", ["data", "data+metadata"])
+def test_retrieval_budget_binds_either_digest_form(tmp_path, form):
+    data = tq.load_retrieval_set(SMOKE / "retrieval")
+    assert [f.name for f in data.files] == [*tq.RETRIEVAL_FILES, "dataset.json"]
+    digest = tq.dataset_digest(data.files[:3] if form == "data" else data.files)
+    entry = {"dataset_sha256": digest, "minimum": {"ndcg@10": 0.9}}
+    repo = Repo(tmp_path, budget={"profile": "synthetic-encoder/fp32-cpu", "retrieval": entry})
+    ev = repo.run("retrieval", SMOKE / "retrieval", perfect_embeddings(tmp_path / "e.jsonl", data))
+    assert ev.report["gates"]["G3"]["status"] == "passed", ev.report["gates"]
+    assert ev.report["budget"]["matched_form"] == form
+    assert ev.report["dataset"]["sha256"] == tq.dataset_digest(data.files[:3])
+    assert ev.report["dataset"]["sha256_with_metadata"] == tq.dataset_digest(data.files)
+    assert f"The budget names the {form} digest." in tq.markdown(ev.report)
+
+
+def test_metadata_form_needs_the_same_metadata(tmp_path):
+    data = tq.load_retrieval_set(SMOKE / "retrieval")
+    entry = {"dataset_sha256": tq.dataset_digest(data.files), "minimum": {"ndcg@10": 0.9}}
+    repo = Repo(tmp_path, budget={"profile": "synthetic-encoder/fp32-cpu", "retrieval": entry})
+    good = perfect_embeddings(tmp_path / "e.jsonl", data)
+    # The same data files without dataset.json: the metadata form cannot match.
+    bare = tmp_path / "bare"
+    bare.mkdir()
+    for name in tq.RETRIEVAL_FILES:
+        (bare / name).write_bytes((SMOKE / "retrieval" / name).read_bytes())
+    ev = repo.run("retrieval", bare, good)
+    assert ev.report["dataset"]["sha256_with_metadata"] is None
+    assert ev.report["gates"]["G3"]["status"] == "not-run"
+    assert ev.report["budget"]["matched_form"] is None
+    # The same data files with other metadata: neither form matches.
+    (bare / "dataset.json").write_text(json.dumps({"name": "other"}), encoding="utf-8")
+    ev = repo.run("retrieval", bare, good)
+    assert ev.report["gates"]["G3"]["status"] == "not-run"
+    assert "not the budgeted set" in ev.report["gates"]["G3"]["reason"]
+
+
+@pytest.mark.parametrize("form", ["data", "data+metadata"])
+def test_ner_budget_binds_either_digest_form(tmp_path, form):
+    data = tq.load_ner_set(SMOKE / "ner" / "gold.jsonl")
+    assert [f.name for f in data.files] == ["gold.jsonl", "dataset.json"]
+    digest = tq.dataset_digest(data.files[:1] if form == "data" else data.files)
+    entry = {"dataset_sha256": digest, "minimum": {"exact.micro.f1": 0.9}}
+    repo = Repo(tmp_path, tasks=("extraction",), budget={"profile": "synthetic-encoder/fp32-cpu", "ner": entry})
+    ev = repo.run("ner", SMOKE / "ner" / "gold.jsonl", ner_predictions(tmp_path / "p.jsonl", data))
+    assert ev.report["gates"]["G3"]["status"] == "passed", ev.report["gates"]
+    assert ev.report["budget"]["matched_form"] == form
+
+
+def test_generation_without_metadata_binds_the_data_form_only(tmp_path):
+    prompts = generation_set(tmp_path)
+    entry = {"dataset_sha256": tq.dataset_digest([prompts]), "minimum": {"exact_match": 0.5}}
+    repo = Repo(
+        tmp_path / "repo", tasks=("generation",), budget={"profile": "synthetic-encoder/fp32-cpu", "generation": entry}
+    )
+    out = generations(tmp_path / "g.jsonl", {"g-a": "\\boxed{18}", "g-b": "\\boxed{1200}"})
+    ev = repo.run("generation", prompts, out)
+    assert ev.report["gates"]["G3"]["status"] == "passed", ev.report["gates"]
+    assert ev.report["budget"]["matched_form"] == "data"
+    assert ev.report["dataset"]["sha256_with_metadata"] is None

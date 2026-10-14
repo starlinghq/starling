@@ -222,7 +222,7 @@ generation:
   minimum: {exact_match: <m>}
 ```
 
-The dataset digest is the SHA-256 over `<file name>\0<file sha256>\n` of `queries.jsonl`, `corpus.jsonl`, `qrels.jsonl` (retrieval), of the gold file (NER) or of the prompts file (generation); every report prints it. Candidate files carry outputs only: a `threshold`-like key is refused (exit 3).
+The dataset digest is the SHA-256 over `<file name>\0<file sha256>\n` of `queries.jsonl`, `corpus.jsonl`, `qrels.jsonl` (retrieval), of the gold file (NER) or of the prompts file (generation); every report prints it. A budget may instead name the same digest taken over those files followed by the `dataset.json` beside them (`dataset.sha256_with_metadata` in the report). That is the form in which the accepted P-030 retrieval and NER budgets were computed. Both forms pin the same data bytes, and the second also pins the metadata. The report says which form the budget matched (`budget.matched_form`: `data` or `data+metadata`). Candidate files carry outputs only: a `threshold`-like key is refused (exit 3).
 
 ### Retrieval (e5, EmbeddingGemma 2)
 
