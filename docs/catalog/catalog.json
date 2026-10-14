@@ -159,19 +159,22 @@
           "status": "not-run"
         },
         "G3": {
-          "status": "none"
+          "status": "not-run"
         },
         "G4": {
-          "status": "none"
+          "status": "not-run"
         },
         "G5": {
-          "status": "none"
+          "status": "not-run"
         },
         "G6": {
-          "status": "none"
+          "status": "checklist",
+          "evidence": "docs/releases/ai-0.1.0-preview.5/rc-drill.log",
+          "evidence_found": true,
+          "date": "2026-10-12"
         },
         "G7": {
-          "status": "none"
+          "status": "not-run"
         }
       },
       "capabilities": {
@@ -180,7 +183,7 @@
         "cancellation": "experimental",
         "persistence": "unsupported",
         "training": "unsupported",
-        "aot": "untested",
+        "aot": "experimental",
         "extensions_ai": "experimental",
         "mlnet": "unsupported",
         "audio": "unsupported",
@@ -286,7 +289,6 @@
           "G7"
         ],
         "untested_capabilities": [
-          "aot",
           "image_budget_other",
           "image_decode_gif_bmp_webp"
         ]
@@ -334,19 +336,19 @@
           "status": "not-run"
         },
         "G3": {
-          "status": "none"
+          "status": "not-run"
         },
         "G4": {
-          "status": "none"
+          "status": "not-run"
         },
         "G5": {
-          "status": "none"
+          "status": "not-run"
         },
         "G6": {
-          "status": "none"
+          "status": "not-run"
         },
         "G7": {
-          "status": "none"
+          "status": "not-run"
         }
       },
       "capabilities": {
@@ -508,19 +510,22 @@
           "status": "not-run"
         },
         "G3": {
-          "status": "none"
+          "status": "not-run"
         },
         "G4": {
-          "status": "none"
+          "status": "not-run"
         },
         "G5": {
-          "status": "none"
+          "status": "not-run"
         },
         "G6": {
-          "status": "none"
+          "status": "checklist",
+          "evidence": "docs/releases/ai-0.1.0-preview.5/rc-drill.log",
+          "evidence_found": true,
+          "date": "2026-10-12"
         },
         "G7": {
-          "status": "none"
+          "status": "not-run"
         }
       },
       "capabilities": {
@@ -529,7 +534,7 @@
         "cancellation": "experimental",
         "persistence": "unsupported",
         "training": "unsupported",
-        "aot": "untested",
+        "aot": "experimental",
         "extensions_ai": "experimental",
         "mlnet": "experimental",
         "audio": "unsupported",
@@ -635,7 +640,6 @@
           "G7"
         ],
         "untested_capabilities": [
-          "aot",
           "input_2050_to_8192_tokens",
           "prompts_task"
         ]
@@ -682,19 +686,19 @@
           "status": "not-run"
         },
         "G3": {
-          "status": "none"
+          "status": "not-run"
         },
         "G4": {
-          "status": "none"
+          "status": "not-run"
         },
         "G5": {
-          "status": "none"
+          "status": "not-run"
         },
         "G6": {
-          "status": "none"
+          "status": "not-run"
         },
         "G7": {
-          "status": "none"
+          "status": "not-run"
         }
       },
       "capabilities": {
@@ -833,7 +837,7 @@
         "Gate entries are left to the maintainer: model-pipeline evaluate (task video-embedding) passed G1 and G2 on the C# stage results at dd1ed7f (docs/evidence/embeddinggemma2-video/report.md).",
         "The hosted graphs' download addresses are placeholders until the maintainer creates the GitHub release embeddinggemma-2-vision-onnx-r1; acquisition of the graphs is untested until then.",
         "Synthetic fixture videos only (no camera footage); default settings only; no variable frame rate, interlaced or HDR video. One CPU architecture (AVX2) produced the reference and the decoder comparison: swscale's SIMD paths on other CPUs (ARM in particular) may differ by a level, for upstream as well.",
-        "The decoder profile binds FFmpeg 8 (FFmpeg.AutoGen 8.1.0, libavcodec.so.62). torchcodec on FFmpeg 9.0.1 gave the same RGB in the spike (reported, not gated); this adapter version cannot load FFmpeg 9.",
+        "One decoder profile per FFmpeg adapter: decoder_ffmpeg (FFmpeg 8, libavcodec.so.62) is protected; decoder_ffmpeg9 (FFmpeg 9, libavcodec.so.63) is proposed and waits for the maintainer to commit it, so G1 does not yet cover the FFmpeg 9 adapter. Its exactness evidence used the machine's FFmpeg 9.0.1 distribution build (GPL, loaded with AllowNonLgplBuild); no LGPL FFmpeg 9 build was tested.",
         "CPU video embedding is slow: the vision tower dominates (about 2.7 s per 1,260-patch frame on an i7-5820K), so a 32-frame video takes about 100 s; prefer CUDA for video."
       ],
       "execution": {
@@ -938,7 +942,7 @@
         "video_audio_track": "unsupported",
         "video_batch": "experimental",
         "video_decode_ffmpeg8": "experimental",
-        "video_decode_ffmpeg9": "unsupported",
+        "video_decode_ffmpeg9": "experimental",
         "video_decode_rotation_90": "experimental",
         "video_decode_rotation_other": "untested",
         "video_decode_streams": "experimental",
@@ -1008,7 +1012,7 @@
       "known_issues": [
         "The hosted graphs' download addresses are placeholders until the maintainer creates the GitHub release embeddinggemma-2-vision-onnx-r1; acquisition of the graphs is untested until then.",
         "Synthetic fixture videos only (no camera footage); default settings only; no variable frame rate, interlaced or HDR video. One CPU architecture (AVX2) produced the reference and the decoder comparison: swscale's SIMD paths on other CPUs (ARM in particular) may differ by a level, for upstream as well.",
-        "The decoder profile binds FFmpeg 8 (FFmpeg.AutoGen 8.1.0, libavcodec.so.62). torchcodec on FFmpeg 9.0.1 gave the same RGB in the spike (reported, not gated); this adapter version cannot load FFmpeg 9.",
+        "One decoder profile per FFmpeg adapter: decoder_ffmpeg (FFmpeg 8, libavcodec.so.62) is protected; decoder_ffmpeg9 (FFmpeg 9, libavcodec.so.63) is proposed and waits for the maintainer to commit it, so G1 does not yet cover the FFmpeg 9 adapter. Its exactness evidence used the machine's FFmpeg 9.0.1 distribution build (GPL, loaded with AllowNonLgplBuild); no LGPL FFmpeg 9 build was tested.",
         "GPU memory: frames run in vision calls of MaxVideoFramesPerVisionCall (default 2, 2,520 patches, the padded size of one full-budget image), safe with about 5 GB free; larger calls trade memory for throughput.",
         "Native runtime: Microsoft.ML.OnnxRuntime.Gpu.Linux 1.30.0 needs the CUDA 13 runtime and cuDNN 9 on the loader path (the vision graph's ReduceMax runs through cuDNN); the package does not ship them."
       ],
@@ -1114,7 +1118,7 @@
         "video_audio_track": "unsupported",
         "video_batch": "experimental",
         "video_decode_ffmpeg8": "experimental",
-        "video_decode_ffmpeg9": "unsupported",
+        "video_decode_ffmpeg9": "experimental",
         "video_decode_rotation_90": "experimental",
         "video_decode_rotation_other": "untested",
         "video_decode_streams": "experimental",
@@ -1216,19 +1220,22 @@
           "date": "2026-10-10"
         },
         "G3": {
-          "status": "none"
+          "status": "not-run"
         },
         "G4": {
-          "status": "none"
+          "status": "not-run"
         },
         "G5": {
-          "status": "none"
+          "status": "not-run"
         },
         "G6": {
-          "status": "none"
+          "status": "checklist",
+          "evidence": "docs/releases/ai-0.1.0-preview.5/rc-drill.log",
+          "evidence_found": true,
+          "date": "2026-10-12"
         },
         "G7": {
-          "status": "none"
+          "status": "not-run"
         }
       },
       "capabilities": {
@@ -1237,9 +1244,9 @@
         "cancellation": "experimental",
         "persistence": "unsupported",
         "training": "unsupported",
-        "aot": "untested",
+        "aot": "experimental",
         "extensions_ai": "unsupported",
-        "mlnet": "untested",
+        "mlnet": "unsupported",
         "audio": "unrecorded",
         "cancellation_inside_a_step": "unrecorded",
         "chat_template_owned_text": "unrecorded",
@@ -1344,10 +1351,185 @@
           "G7"
         ],
         "untested_capabilities": [
-          "aot",
           "count_gate_closed",
-          "label_descriptions",
-          "mlnet"
+          "label_descriptions"
+        ]
+      }
+    },
+    {
+      "id": "gliner2-base-v1/onnx-fp32-cuda",
+      "family": "gliner2-base-v1",
+      "profile": "onnx-fp32-cuda",
+      "manifest": "model-pipeline/registry/gliner2-base-v1/onnx-fp32-cuda/manifest.yaml",
+      "maturity": "experimental",
+      "tasks": [
+        "extraction"
+      ],
+      "owner": "Mark",
+      "review_date": "2027-01-05",
+      "last_checked": "2026-10-10",
+      "known_issues": [
+        "Results are ordered by confidence; most entity scores saturate to exactly 1.0 in fp32, so near-ties make the order sensitive to backend noise (ORT CUDA with TF32 reorders one 1,329-token case with the same entity set).",
+        "Upstream span offsets index the normalized text: a span that includes the appended '.' ends one past the original text (seen at threshold 0.0). The C# package maps such spans onto the input (behavior.defaults).",
+        "The hosted graph's download address is a placeholder until the maintainer creates the GitHub release; acquisition of the graph is untested until then (offline verification of a local copy works).",
+        "The count gate (count_pred argmax 0 gives an empty result) never closed on the development corpus, so that path has no fixture.",
+        "CUDA parity evidence (PROPOSED.md) left out the two cases over 600 tokens from the padded-batch check because the GPU was shared; single-row parity covers all 58 cases (span logits max abs 4.0e-3, scores 2.5e-6).",
+        "Native runtime: Microsoft.ML.OnnxRuntime.Gpu.Linux 1.30.0 needs the CUDA 13 runtime and cuDNN 9 on the loader path; the package does not ship them."
+      ],
+      "execution": {
+        "runtime": "onnxruntime",
+        "runtime_version": "1.30.0",
+        "binding": "Microsoft.ML.OnnxRuntime.Gpu.Linux",
+        "binding_version": "1.30.0",
+        "precision": "fp32",
+        "variant": "reference"
+      },
+      "gates": {
+        "G0": {
+          "status": "checklist",
+          "evidence": "docs/m0/gliner2-p014.md",
+          "evidence_found": true,
+          "date": "2026-10-10"
+        },
+        "G1": {
+          "status": "not-run"
+        },
+        "G2": {
+          "status": "not-run"
+        },
+        "G3": {
+          "status": "not-run"
+        },
+        "G4": {
+          "status": "not-run"
+        },
+        "G5": {
+          "status": "not-run"
+        },
+        "G6": {
+          "status": "not-run"
+        },
+        "G7": {
+          "status": "not-run"
+        }
+      },
+      "capabilities": {
+        "batch": "experimental",
+        "streaming": "unsupported",
+        "cancellation": "untested",
+        "persistence": "unsupported",
+        "training": "unsupported",
+        "aot": "untested",
+        "extensions_ai": "unsupported",
+        "mlnet": "unsupported",
+        "audio": "unrecorded",
+        "cancellation_inside_a_step": "unrecorded",
+        "chat_template_owned_text": "unrecorded",
+        "chunked_prefill": "unrecorded",
+        "classification": "unsupported",
+        "concurrent_calls": "untested",
+        "concurrent_requests": "unrecorded",
+        "conversation_state_reuse": "unrecorded",
+        "count_gate_closed": "untested",
+        "embedding_pretokenized": "unrecorded",
+        "embedding_text": "unrecorded",
+        "enable_thinking": "unrecorded",
+        "entity_extraction": "experimental",
+        "greedy_generation": "unrecorded",
+        "image": "unrecorded",
+        "image_16_bit": "unrecorded",
+        "image_alpha_compositing": "unrecorded",
+        "image_batch": "unrecorded",
+        "image_budget_280": "unrecorded",
+        "image_budget_other": "unrecorded",
+        "image_decode_gif_bmp_webp": "unrecorded",
+        "image_decode_png_jpeg": "unrecorded",
+        "image_exif_orientation_opt_in": "unrecorded",
+        "image_interleaved_text": "unrecorded",
+        "image_matryoshka": "unrecorded",
+        "image_multiple_per_input": "unrecorded",
+        "image_prompts": "unrecorded",
+        "input_2050_to_8192_tokens": "unrecorded",
+        "input_over_512_tokens": "unsupported",
+        "input_over_8192_tokens": "unrecorded",
+        "input_up_to_2049_tokens": "unrecorded",
+        "label_descriptions": "untested",
+        "long_context_over_1666_tokens": "unrecorded",
+        "matryoshka": "unrecorded",
+        "max_new_tokens": "unrecorded",
+        "mixed_label_sets_in_batch": "unsupported",
+        "offsets_original_text": "experimental",
+        "plain_deduplicated_output": "unsupported",
+        "prompts_query_document": "unrecorded",
+        "prompts_task": "unrecorded",
+        "reasoning_split": "unrecorded",
+        "relation_extraction": "unsupported",
+        "sampling_seeded": "unrecorded",
+        "step0_logits": "unrecorded",
+        "stop_sequences": "unrecorded",
+        "stop_tokens": "unrecorded",
+        "structured_extraction": "unsupported",
+        "structured_output": "unrecorded",
+        "text_only_inputs": "unrecorded",
+        "tokenizer_owned": "unrecorded",
+        "tool_calling": "unrecorded",
+        "usage": "unrecorded",
+        "video": "unrecorded",
+        "video_audio_track": "unrecorded",
+        "video_batch": "unrecorded",
+        "video_decode_ffmpeg8": "unrecorded",
+        "video_decode_ffmpeg9": "unrecorded",
+        "video_decode_rotation_90": "unrecorded",
+        "video_decode_rotation_other": "unrecorded",
+        "video_decode_streams": "unrecorded",
+        "video_decoded_frames_with_timing": "unrecorded",
+        "video_frames_without_timing": "unrecorded",
+        "video_frames_without_timing_opt_in": "unrecorded",
+        "video_hdr": "unrecorded",
+        "video_interlaced": "unrecorded",
+        "video_interleaved_image": "unrecorded",
+        "video_interleaved_text": "unrecorded",
+        "video_matryoshka": "unrecorded",
+        "video_multiple_per_input": "unrecorded",
+        "video_pre_sampled_frames": "unrecorded",
+        "video_prompts": "unrecorded",
+        "video_timestamps": "unrecorded",
+        "video_variable_frame_rate": "unrecorded",
+        "vision": "unrecorded"
+      },
+      "compatibility": {
+        "linux-x64 cpu": {
+          "status": "unrecorded"
+        },
+        "linux-x64 cuda": {
+          "status": "experimental",
+          "verified": "2026-10-10"
+        },
+        "windows-x64 cpu": {
+          "status": "unrecorded"
+        },
+        "windows-x64 cuda": {
+          "status": "untested"
+        }
+      },
+      "stable_readiness": {
+        "ready": false,
+        "gates_not_passed": [
+          "G0",
+          "G1",
+          "G2",
+          "G3",
+          "G4",
+          "G5",
+          "G6",
+          "G7"
+        ],
+        "untested_capabilities": [
+          "aot",
+          "cancellation",
+          "concurrent_calls",
+          "count_gate_closed",
+          "label_descriptions"
         ]
       }
     },
@@ -1432,7 +1614,7 @@
         "cancellation": "experimental",
         "persistence": "unsupported",
         "training": "unsupported",
-        "aot": "untested",
+        "aot": "experimental",
         "extensions_ai": "experimental",
         "mlnet": "experimental",
         "audio": "unrecorded",
@@ -1533,9 +1715,7 @@
           "G5",
           "G7"
         ],
-        "untested_capabilities": [
-          "aot"
-        ]
+        "untested_capabilities": []
       }
     },
     {
@@ -1578,19 +1758,19 @@
           "status": "not-run"
         },
         "G3": {
-          "status": "none"
+          "status": "not-run"
         },
         "G4": {
-          "status": "none"
+          "status": "not-run"
         },
         "G5": {
-          "status": "none"
+          "status": "not-run"
         },
         "G6": {
           "status": "not-run"
         },
         "G7": {
-          "status": "none"
+          "status": "not-run"
         }
       },
       "capabilities": {
@@ -1757,19 +1937,22 @@
           "date": "2026-10-10"
         },
         "G3": {
-          "status": "none"
+          "status": "not-run"
         },
         "G4": {
-          "status": "none"
+          "status": "checklist",
+          "evidence": "docs/evidence/p016-qwen35/README.md",
+          "evidence_found": true,
+          "date": "2026-10-10"
         },
         "G5": {
-          "status": "none"
+          "status": "not-run"
         },
         "G6": {
-          "status": "none"
+          "status": "not-run"
         },
         "G7": {
-          "status": "none"
+          "status": "not-run"
         }
       },
       "capabilities": {
@@ -1934,19 +2117,25 @@
           "date": "2026-10-10"
         },
         "G3": {
-          "status": "none"
+          "status": "not-run"
         },
         "G4": {
-          "status": "none"
+          "status": "checklist",
+          "evidence": "docs/evidence/p016-qwen35/README.md",
+          "evidence_found": true,
+          "date": "2026-10-10"
         },
         "G5": {
-          "status": "none"
+          "status": "not-run"
         },
         "G6": {
-          "status": "none"
+          "status": "checklist",
+          "evidence": "docs/releases/ai-0.1.0-preview.5/rc-drill.log",
+          "evidence_found": true,
+          "date": "2026-10-12"
         },
         "G7": {
-          "status": "none"
+          "status": "not-run"
         }
       },
       "capabilities": {
@@ -1955,7 +2144,7 @@
         "cancellation": "experimental",
         "persistence": "unsupported",
         "training": "unsupported",
-        "aot": "untested",
+        "aot": "experimental",
         "extensions_ai": "experimental",
         "mlnet": "unsupported",
         "audio": "unrecorded",
@@ -2061,7 +2250,6 @@
           "G7"
         ],
         "untested_capabilities": [
-          "aot",
           "long_context_over_1666_tokens"
         ]
       }
@@ -2112,19 +2300,22 @@
           "date": "2026-10-10"
         },
         "G3": {
-          "status": "none"
+          "status": "not-run"
         },
         "G4": {
-          "status": "none"
+          "status": "checklist",
+          "evidence": "docs/evidence/p016-qwen35/README.md",
+          "evidence_found": true,
+          "date": "2026-10-10"
         },
         "G5": {
-          "status": "none"
+          "status": "not-run"
         },
         "G6": {
-          "status": "none"
+          "status": "not-run"
         },
         "G7": {
-          "status": "none"
+          "status": "not-run"
         }
       },
       "capabilities": {

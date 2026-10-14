@@ -12,18 +12,19 @@ Gate cells link to the evidence the manifest records. The Stable readiness colum
 
 | Profile | Task | Maturity | Owner | Review date | G0 | G1 | G2 | G3 | G4 | G5 | G6 | G7 | Stable readiness |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| [embeddinggemma-2/image-fp32-cpu](../../model-pipeline/registry/embeddinggemma-2/image-fp32-cpu/manifest.yaml) | image-embedding | experimental | Mark | 2027-01-05 | [checklist](../m0/embeddinggemma2-image-spike.md) | not-run | not-run | none | none | none | none | none | gates not passed: G0, G1, G2, G3, G4, G5, G6, G7; untested: aot, image_budget_other, image_decode_gif_bmp_webp |
-| [embeddinggemma-2/image-fp32-cuda](../../model-pipeline/registry/embeddinggemma-2/image-fp32-cuda/manifest.yaml) | image-embedding | experimental | Mark | 2027-01-05 | [checklist](../m0/embeddinggemma2-image-spike.md) | not-run | not-run | none | none | none | none | none | gates not passed: G0, G1, G2, G3, G4, G5, G6, G7; untested: aot, extensions_ai, image_budget_other, image_decode_gif_bmp_webp |
-| [embeddinggemma-2/onnx-fp32-cpu](../../model-pipeline/registry/embeddinggemma-2/onnx-fp32-cpu/manifest.yaml) | embedding | experimental | Mark | 2027-01-05 | [checklist](../m0/hub-pins.md) | not-run | not-run | none | none | none | none | none | gates not passed: G0, G1, G2, G3, G4, G5, G6, G7; untested: aot, input_2050_to_8192_tokens, prompts_task |
-| [embeddinggemma-2/onnx-fp32-cuda](../../model-pipeline/registry/embeddinggemma-2/onnx-fp32-cuda/manifest.yaml) | embedding | experimental | Mark | 2027-01-05 | [checklist](../m0/hub-pins.md) | not-run | not-run | none | none | none | none | none | gates not passed: G0, G1, G2, G3, G4, G5, G6, G7; untested: aot, extensions_ai, input_2050_to_8192_tokens, mlnet, prompts_task |
+| [embeddinggemma-2/image-fp32-cpu](../../model-pipeline/registry/embeddinggemma-2/image-fp32-cpu/manifest.yaml) | image-embedding | experimental | Mark | 2027-01-05 | [checklist](../m0/embeddinggemma2-image-spike.md) | not-run | not-run | not-run | not-run | not-run | [checklist](../releases/ai-0.1.0-preview.5/rc-drill.log) | not-run | gates not passed: G0, G1, G2, G3, G4, G5, G6, G7; untested: image_budget_other, image_decode_gif_bmp_webp |
+| [embeddinggemma-2/image-fp32-cuda](../../model-pipeline/registry/embeddinggemma-2/image-fp32-cuda/manifest.yaml) | image-embedding | experimental | Mark | 2027-01-05 | [checklist](../m0/embeddinggemma2-image-spike.md) | not-run | not-run | not-run | not-run | not-run | not-run | not-run | gates not passed: G0, G1, G2, G3, G4, G5, G6, G7; untested: aot, extensions_ai, image_budget_other, image_decode_gif_bmp_webp |
+| [embeddinggemma-2/onnx-fp32-cpu](../../model-pipeline/registry/embeddinggemma-2/onnx-fp32-cpu/manifest.yaml) | embedding | experimental | Mark | 2027-01-05 | [checklist](../m0/hub-pins.md) | not-run | not-run | not-run | not-run | not-run | [checklist](../releases/ai-0.1.0-preview.5/rc-drill.log) | not-run | gates not passed: G0, G1, G2, G3, G4, G5, G6, G7; untested: input_2050_to_8192_tokens, prompts_task |
+| [embeddinggemma-2/onnx-fp32-cuda](../../model-pipeline/registry/embeddinggemma-2/onnx-fp32-cuda/manifest.yaml) | embedding | experimental | Mark | 2027-01-05 | [checklist](../m0/hub-pins.md) | not-run | not-run | not-run | not-run | not-run | not-run | not-run | gates not passed: G0, G1, G2, G3, G4, G5, G6, G7; untested: aot, extensions_ai, input_2050_to_8192_tokens, mlnet, prompts_task |
 | [embeddinggemma-2/video-fp32-cpu](../../model-pipeline/registry/embeddinggemma-2/video-fp32-cpu/manifest.yaml) | video-embedding | experimental | Mark | 2027-01-05 | [checklist](../m0/embeddinggemma2-video-spike.md) | not-run | not-run | none | none | none | none | none | gates not passed: G0, G1, G2, G3, G4, G5, G6, G7; untested: aot, video_decode_rotation_other, video_hdr, video_interlaced, video_variable_frame_rate |
 | [embeddinggemma-2/video-fp32-cuda](../../model-pipeline/registry/embeddinggemma-2/video-fp32-cuda/manifest.yaml) | video-embedding | experimental | Mark | 2027-01-05 | [checklist](../m0/embeddinggemma2-video-spike.md) | not-run | not-run | none | none | none | none | none | gates not passed: G0, G1, G2, G3, G4, G5, G6, G7; untested: aot, extensions_ai, video_decode_rotation_other, video_hdr, video_interlaced, video_variable_frame_rate |
-| [gliner2-base-v1/onnx-fp32-cpu](../../model-pipeline/registry/gliner2-base-v1/onnx-fp32-cpu/manifest.yaml) | extraction | experimental | Mark | 2027-01-05 | [checklist](../m0/gliner2-p014.md) | [checklist](../m0/gliner2-p014.md) | [checklist](../m0/gliner2-p014.md) | none | none | none | none | none | gates not passed: G0, G1, G2, G3, G4, G5, G6, G7; untested: aot, count_gate_closed, label_descriptions, mlnet |
-| [multilingual-e5-small/onnx-fp32-cpu](../../model-pipeline/registry/multilingual-e5-small/onnx-fp32-cpu/manifest.yaml) | embedding | preview | Mark | 2027-01-05 | [passed](../releases/e5-0.1.0-preview.1.md) | [passed](../releases/e5-0.1.0-preview.2/fidelity-report.md) | [passed](../releases/e5-0.1.0-preview.2/fidelity-report.md) | [checklist](../releases/e5-0.1.0-preview.1.md) | [checklist](../releases/e5-0.1.0-preview.1.md) | [checklist](../benchmarks/e5-2026-10-09.md) | [passed](../releases/e5-0.1.0-preview.2/rc-drill.log) | [checklist](../releases/e5-0.1.0-preview.1.md) | gates not passed: G3, G4, G5, G7; untested: aot |
-| [multilingual-e5-small/onnx-fp32-cuda](../../model-pipeline/registry/multilingual-e5-small/onnx-fp32-cuda/manifest.yaml) | embedding | experimental | Mark | 2027-01-05 | [checklist](../m0/hub-pins.md) | not-run | not-run | none | none | none | not-run | none | gates not passed: G0, G1, G2, G3, G4, G5, G6, G7; untested: aot, extensions_ai, mlnet |
-| [qwen3.5-0.8b/ortgenai-fp16x-cuda](../../model-pipeline/registry/qwen3.5-0.8b/ortgenai-fp16x-cuda/manifest.yaml) | generation | experimental | Mark | 2027-01-05 | [checklist](../evidence/p016-qwen35/README.md) | [checklist](../evidence/p016-qwen35/README.md) | [checklist](../evidence/p016-qwen35/README.md) | none | none | none | none | none | gates not passed: G0, G1, G2, G3, G4, G5, G6, G7; untested: aot, extensions_ai, long_context_over_1666_tokens |
-| [qwen3.5-0.8b/ortgenai-fp32x-cpu](../../model-pipeline/registry/qwen3.5-0.8b/ortgenai-fp32x-cpu/manifest.yaml) | generation | experimental | Mark | 2027-01-05 | [checklist](../evidence/p016-qwen35/README.md) | [checklist](../evidence/p016-qwen35/README.md) | [checklist](../evidence/p016-qwen35/README.md) | none | none | none | none | none | gates not passed: G0, G1, G2, G3, G4, G5, G6, G7; untested: aot, long_context_over_1666_tokens |
-| [qwen3.5-0.8b/ortgenai-fp32x-cuda](../../model-pipeline/registry/qwen3.5-0.8b/ortgenai-fp32x-cuda/manifest.yaml) | generation | experimental | Mark | 2027-01-05 | [checklist](../evidence/p016-qwen35/README.md) | [checklist](../evidence/p016-qwen35/README.md) | [checklist](../evidence/p016-qwen35/README.md) | none | none | none | none | none | gates not passed: G0, G1, G2, G3, G4, G5, G6, G7; untested: aot, long_context_over_1666_tokens |
+| [gliner2-base-v1/onnx-fp32-cpu](../../model-pipeline/registry/gliner2-base-v1/onnx-fp32-cpu/manifest.yaml) | extraction | experimental | Mark | 2027-01-05 | [checklist](../m0/gliner2-p014.md) | [checklist](../m0/gliner2-p014.md) | [checklist](../m0/gliner2-p014.md) | not-run | not-run | not-run | [checklist](../releases/ai-0.1.0-preview.5/rc-drill.log) | not-run | gates not passed: G0, G1, G2, G3, G4, G5, G6, G7; untested: count_gate_closed, label_descriptions |
+| [gliner2-base-v1/onnx-fp32-cuda](../../model-pipeline/registry/gliner2-base-v1/onnx-fp32-cuda/manifest.yaml) | extraction | experimental | Mark | 2027-01-05 | [checklist](../m0/gliner2-p014.md) | not-run | not-run | not-run | not-run | not-run | not-run | not-run | gates not passed: G0, G1, G2, G3, G4, G5, G6, G7; untested: aot, cancellation, concurrent_calls, count_gate_closed, label_descriptions |
+| [multilingual-e5-small/onnx-fp32-cpu](../../model-pipeline/registry/multilingual-e5-small/onnx-fp32-cpu/manifest.yaml) | embedding | preview | Mark | 2027-01-05 | [passed](../releases/e5-0.1.0-preview.1.md) | [passed](../releases/e5-0.1.0-preview.2/fidelity-report.md) | [passed](../releases/e5-0.1.0-preview.2/fidelity-report.md) | [checklist](../releases/e5-0.1.0-preview.1.md) | [checklist](../releases/e5-0.1.0-preview.1.md) | [checklist](../benchmarks/e5-2026-10-09.md) | [passed](../releases/e5-0.1.0-preview.2/rc-drill.log) | [checklist](../releases/e5-0.1.0-preview.1.md) | gates not passed: G3, G4, G5, G7 |
+| [multilingual-e5-small/onnx-fp32-cuda](../../model-pipeline/registry/multilingual-e5-small/onnx-fp32-cuda/manifest.yaml) | embedding | experimental | Mark | 2027-01-05 | [checklist](../m0/hub-pins.md) | not-run | not-run | not-run | not-run | not-run | not-run | not-run | gates not passed: G0, G1, G2, G3, G4, G5, G6, G7; untested: aot, extensions_ai, mlnet |
+| [qwen3.5-0.8b/ortgenai-fp16x-cuda](../../model-pipeline/registry/qwen3.5-0.8b/ortgenai-fp16x-cuda/manifest.yaml) | generation | experimental | Mark | 2027-01-05 | [checklist](../evidence/p016-qwen35/README.md) | [checklist](../evidence/p016-qwen35/README.md) | [checklist](../evidence/p016-qwen35/README.md) | not-run | [checklist](../evidence/p016-qwen35/README.md) | not-run | not-run | not-run | gates not passed: G0, G1, G2, G3, G4, G5, G6, G7; untested: aot, extensions_ai, long_context_over_1666_tokens |
+| [qwen3.5-0.8b/ortgenai-fp32x-cpu](../../model-pipeline/registry/qwen3.5-0.8b/ortgenai-fp32x-cpu/manifest.yaml) | generation | experimental | Mark | 2027-01-05 | [checklist](../evidence/p016-qwen35/README.md) | [checklist](../evidence/p016-qwen35/README.md) | [checklist](../evidence/p016-qwen35/README.md) | not-run | [checklist](../evidence/p016-qwen35/README.md) | not-run | [checklist](../releases/ai-0.1.0-preview.5/rc-drill.log) | not-run | gates not passed: G0, G1, G2, G3, G4, G5, G6, G7; untested: long_context_over_1666_tokens |
+| [qwen3.5-0.8b/ortgenai-fp32x-cuda](../../model-pipeline/registry/qwen3.5-0.8b/ortgenai-fp32x-cuda/manifest.yaml) | generation | experimental | Mark | 2027-01-05 | [checklist](../evidence/p016-qwen35/README.md) | [checklist](../evidence/p016-qwen35/README.md) | [checklist](../evidence/p016-qwen35/README.md) | not-run | [checklist](../evidence/p016-qwen35/README.md) | not-run | not-run | not-run | gates not passed: G0, G1, G2, G3, G4, G5, G6, G7; untested: aot, long_context_over_1666_tokens |
 
 ## Execution
 
@@ -36,6 +37,7 @@ Gate cells link to the evidence the manifest records. The Stable readiness colum
 | embeddinggemma-2/video-fp32-cpu | onnxruntime 1.30.0 | Microsoft.ML.OnnxRuntime | fp32 | reference |
 | embeddinggemma-2/video-fp32-cuda | onnxruntime 1.30.0 | Microsoft.ML.OnnxRuntime.Gpu.Linux 1.30.0 | fp32 | reference |
 | gliner2-base-v1/onnx-fp32-cpu | onnxruntime 1.30.0 | Microsoft.ML.OnnxRuntime | fp32 | reference |
+| gliner2-base-v1/onnx-fp32-cuda | onnxruntime 1.30.0 | Microsoft.ML.OnnxRuntime.Gpu.Linux 1.30.0 | fp32 | reference |
 | multilingual-e5-small/onnx-fp32-cpu | onnxruntime 1.30.0 | Microsoft.ML.OnnxRuntime | fp32 | reference |
 | multilingual-e5-small/onnx-fp32-cuda | onnxruntime 1.30.0 | Microsoft.ML.OnnxRuntime.Gpu 1.30.0 | fp32 | reference |
 | qwen3.5-0.8b/ortgenai-fp16x-cuda | onnxruntime-genai 0.17.1 | Microsoft.ML.OnnxRuntimeGenAI.Cuda 0.17.1 | fp16 | reference |
@@ -55,7 +57,7 @@ One table per family, one column per profile. Rows are every capability any prof
 | cancellation | experimental | experimental | experimental | experimental | experimental | experimental |
 | persistence | unsupported | unsupported | unsupported | unsupported | unsupported | unsupported |
 | training | unsupported | unsupported | unsupported | unsupported | unsupported | unsupported |
-| aot | untested | untested | untested | untested | untested | untested |
+| aot | experimental | untested | experimental | untested | untested | untested |
 | extensions_ai | experimental | untested | experimental | untested | experimental | untested |
 | mlnet | unsupported | unsupported | experimental | untested | unsupported | unsupported |
 | audio | unsupported | unsupported | unsupported | unsupported | unsupported | unsupported |
@@ -87,7 +89,7 @@ One table per family, one column per profile. Rows are every capability any prof
 | video_audio_track | unrecorded | unrecorded | unrecorded | unrecorded | unsupported | unsupported |
 | video_batch | unrecorded | unrecorded | unrecorded | unrecorded | experimental | experimental |
 | video_decode_ffmpeg8 | unrecorded | unrecorded | unrecorded | unrecorded | experimental | experimental |
-| video_decode_ffmpeg9 | unrecorded | unrecorded | unrecorded | unrecorded | unsupported | unsupported |
+| video_decode_ffmpeg9 | unrecorded | unrecorded | unrecorded | unrecorded | experimental | experimental |
 | video_decode_rotation_90 | unrecorded | unrecorded | unrecorded | unrecorded | experimental | experimental |
 | video_decode_rotation_other | unrecorded | unrecorded | unrecorded | unrecorded | untested | untested |
 | video_decode_streams | unrecorded | unrecorded | unrecorded | unrecorded | experimental | experimental |
@@ -107,27 +109,27 @@ One table per family, one column per profile. Rows are every capability any prof
 
 ### gliner2-base-v1
 
-| Capability | onnx-fp32-cpu |
-| --- | --- |
-| batch | experimental |
-| streaming | unsupported |
-| cancellation | experimental |
-| persistence | unsupported |
-| training | unsupported |
-| aot | untested |
-| extensions_ai | unsupported |
-| mlnet | untested |
-| classification | unsupported |
-| concurrent_calls | experimental |
-| count_gate_closed | untested |
-| entity_extraction | experimental |
-| input_over_512_tokens | unsupported |
-| label_descriptions | untested |
-| mixed_label_sets_in_batch | unsupported |
-| offsets_original_text | experimental |
-| plain_deduplicated_output | unsupported |
-| relation_extraction | unsupported |
-| structured_extraction | unsupported |
+| Capability | onnx-fp32-cpu | onnx-fp32-cuda |
+| --- | --- | --- |
+| batch | experimental | experimental |
+| streaming | unsupported | unsupported |
+| cancellation | experimental | untested |
+| persistence | unsupported | unsupported |
+| training | unsupported | unsupported |
+| aot | experimental | untested |
+| extensions_ai | unsupported | unsupported |
+| mlnet | unsupported | unsupported |
+| classification | unsupported | unsupported |
+| concurrent_calls | experimental | untested |
+| count_gate_closed | untested | untested |
+| entity_extraction | experimental | experimental |
+| input_over_512_tokens | unsupported | unsupported |
+| label_descriptions | untested | untested |
+| mixed_label_sets_in_batch | unsupported | unsupported |
+| offsets_original_text | experimental | experimental |
+| plain_deduplicated_output | unsupported | unsupported |
+| relation_extraction | unsupported | unsupported |
+| structured_extraction | unsupported | unsupported |
 
 ### multilingual-e5-small
 
@@ -138,7 +140,7 @@ One table per family, one column per profile. Rows are every capability any prof
 | cancellation | experimental | experimental |
 | persistence | unsupported | unsupported |
 | training | unsupported | unsupported |
-| aot | untested | untested |
+| aot | experimental | untested |
 | extensions_ai | experimental | untested |
 | mlnet | experimental | untested |
 
@@ -151,7 +153,7 @@ One table per family, one column per profile. Rows are every capability any prof
 | cancellation | experimental | experimental | experimental |
 | persistence | unsupported | unsupported | unsupported |
 | training | unsupported | unsupported | unsupported |
-| aot | untested | untested | untested |
+| aot | untested | experimental | untested |
 | extensions_ai | untested | experimental | experimental |
 | mlnet | unsupported | unsupported | unsupported |
 | cancellation_inside_a_step | unsupported | unsupported | unsupported |
@@ -198,17 +200,23 @@ One table per family, one column per profile. Rows are every capability any prof
 - `embeddinggemma-2/video-fp32-cpu`: Gate entries are left to the maintainer: model-pipeline evaluate (task video-embedding) passed G1 and G2 on the C# stage results at dd1ed7f (docs/evidence/embeddinggemma2-video/report.md).
 - `embeddinggemma-2/video-fp32-cpu`: The hosted graphs' download addresses are placeholders until the maintainer creates the GitHub release embeddinggemma-2-vision-onnx-r1; acquisition of the graphs is untested until then.
 - `embeddinggemma-2/video-fp32-cpu`: Synthetic fixture videos only (no camera footage); default settings only; no variable frame rate, interlaced or HDR video. One CPU architecture (AVX2) produced the reference and the decoder comparison: swscale's SIMD paths on other CPUs (ARM in particular) may differ by a level, for upstream as well.
-- `embeddinggemma-2/video-fp32-cpu`: The decoder profile binds FFmpeg 8 (FFmpeg.AutoGen 8.1.0, libavcodec.so.62). torchcodec on FFmpeg 9.0.1 gave the same RGB in the spike (reported, not gated); this adapter version cannot load FFmpeg 9.
+- `embeddinggemma-2/video-fp32-cpu`: One decoder profile per FFmpeg adapter: decoder_ffmpeg (FFmpeg 8, libavcodec.so.62) is protected; decoder_ffmpeg9 (FFmpeg 9, libavcodec.so.63) is proposed and waits for the maintainer to commit it, so G1 does not yet cover the FFmpeg 9 adapter. Its exactness evidence used the machine's FFmpeg 9.0.1 distribution build (GPL, loaded with AllowNonLgplBuild); no LGPL FFmpeg 9 build was tested.
 - `embeddinggemma-2/video-fp32-cpu`: CPU video embedding is slow: the vision tower dominates (about 2.7 s per 1,260-patch frame on an i7-5820K), so a 32-frame video takes about 100 s; prefer CUDA for video.
 - `embeddinggemma-2/video-fp32-cuda`: The hosted graphs' download addresses are placeholders until the maintainer creates the GitHub release embeddinggemma-2-vision-onnx-r1; acquisition of the graphs is untested until then.
 - `embeddinggemma-2/video-fp32-cuda`: Synthetic fixture videos only (no camera footage); default settings only; no variable frame rate, interlaced or HDR video. One CPU architecture (AVX2) produced the reference and the decoder comparison: swscale's SIMD paths on other CPUs (ARM in particular) may differ by a level, for upstream as well.
-- `embeddinggemma-2/video-fp32-cuda`: The decoder profile binds FFmpeg 8 (FFmpeg.AutoGen 8.1.0, libavcodec.so.62). torchcodec on FFmpeg 9.0.1 gave the same RGB in the spike (reported, not gated); this adapter version cannot load FFmpeg 9.
+- `embeddinggemma-2/video-fp32-cuda`: One decoder profile per FFmpeg adapter: decoder_ffmpeg (FFmpeg 8, libavcodec.so.62) is protected; decoder_ffmpeg9 (FFmpeg 9, libavcodec.so.63) is proposed and waits for the maintainer to commit it, so G1 does not yet cover the FFmpeg 9 adapter. Its exactness evidence used the machine's FFmpeg 9.0.1 distribution build (GPL, loaded with AllowNonLgplBuild); no LGPL FFmpeg 9 build was tested.
 - `embeddinggemma-2/video-fp32-cuda`: GPU memory: frames run in vision calls of MaxVideoFramesPerVisionCall (default 2, 2,520 patches, the padded size of one full-budget image), safe with about 5 GB free; larger calls trade memory for throughput.
 - `embeddinggemma-2/video-fp32-cuda`: Native runtime: Microsoft.ML.OnnxRuntime.Gpu.Linux 1.30.0 needs the CUDA 13 runtime and cuDNN 9 on the loader path (the vision graph's ReduceMax runs through cuDNN); the package does not ship them.
 - `gliner2-base-v1/onnx-fp32-cpu`: Results are ordered by confidence; most entity scores saturate to exactly 1.0 in fp32, so near-ties make the order sensitive to backend noise (ORT CUDA with TF32 reorders one 1,329-token case with the same entity set).
 - `gliner2-base-v1/onnx-fp32-cpu`: Upstream span offsets index the normalized text: a span that includes the appended '.' ends one past the original text (seen at threshold 0.0). The C# package maps such spans onto the input (behavior.defaults).
 - `gliner2-base-v1/onnx-fp32-cpu`: The hosted graph's download address is a placeholder until the maintainer creates the GitHub release; acquisition of the graph is untested until then (offline verification of a local copy works).
 - `gliner2-base-v1/onnx-fp32-cpu`: The count gate (count_pred argmax 0 gives an empty result) never closed on the development corpus, so that path has no fixture.
+- `gliner2-base-v1/onnx-fp32-cuda`: Results are ordered by confidence; most entity scores saturate to exactly 1.0 in fp32, so near-ties make the order sensitive to backend noise (ORT CUDA with TF32 reorders one 1,329-token case with the same entity set).
+- `gliner2-base-v1/onnx-fp32-cuda`: Upstream span offsets index the normalized text: a span that includes the appended '.' ends one past the original text (seen at threshold 0.0). The C# package maps such spans onto the input (behavior.defaults).
+- `gliner2-base-v1/onnx-fp32-cuda`: The hosted graph's download address is a placeholder until the maintainer creates the GitHub release; acquisition of the graph is untested until then (offline verification of a local copy works).
+- `gliner2-base-v1/onnx-fp32-cuda`: The count gate (count_pred argmax 0 gives an empty result) never closed on the development corpus, so that path has no fixture.
+- `gliner2-base-v1/onnx-fp32-cuda`: CUDA parity evidence (PROPOSED.md) left out the two cases over 600 tokens from the padded-batch check because the GPU was shared; single-row parity covers all 58 cases (span logits max abs 4.0e-3, scores 2.5e-6).
+- `gliner2-base-v1/onnx-fp32-cuda`: Native runtime: Microsoft.ML.OnnxRuntime.Gpu.Linux 1.30.0 needs the CUDA 13 runtime and cuDNN 9 on the loader path; the package does not ship them.
 - `multilingual-e5-small/onnx-fp32-cpu`: The pinned tokenizer.json emits a lone "▁" token before special-token literals and for trailing whitespace, where SentencePiece and transformers 5.18 emit none. The owned profile follows tokenizer.json; the difference is recorded, not fixed.
 - `multilingual-e5-small/onnx-fp32-cpu`: tokenizer.json leaves decomposed Hangul jamo uncomposed, while SentencePiece composes them.
 - `multilingual-e5-small/onnx-fp32-cpu`: The ONNX file and model.safetensors come from the same revision; ONNX matches PyTorch to 2.1e-6 in hidden states on the M0 corpus.
