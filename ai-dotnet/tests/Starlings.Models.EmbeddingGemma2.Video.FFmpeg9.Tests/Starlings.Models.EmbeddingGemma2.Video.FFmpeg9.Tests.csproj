@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    The FFmpeg 9 adapter's tests: the FFmpeg 8 adapter's test sources compiled against the FFmpeg 9 package
+    (STARLINGS_FFMPEG9 selects the namespace and the tolerance section). The decoding tests need the video set and an
+    FFmpeg 9.x shared build (STARLING_FFMPEG9_DIR; STARLING_FFMPEG_ALLOW_NON_LGPL=1 for a GPL distribution build) and skip
+    otherwise; the loader tests run in CI.
+  -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <DefineConstants>$(DefineConstants);STARLINGS_FFMPEG9</DefineConstants>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="xunit.v3" />
+    <Using Include="Xunit" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="../Starlings.Models.EmbeddingGemma2.Video.FFmpeg.Tests/*.cs" Link="%(Filename)%(Extension)" />
+    <Compile Include="../Shared/EmbeddingGemma2/EmbeddingGemma2TestAssets.cs" Link="Shared/EmbeddingGemma2/EmbeddingGemma2TestAssets.cs" />
+    <Compile Include="../Shared/EmbeddingGemma2Videos/EmbeddingGemma2VideoTestAssets.cs" Link="Shared/EmbeddingGemma2Videos/EmbeddingGemma2VideoTestAssets.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../src/Starlings.Models.EmbeddingGemma2.Video.FFmpeg9/Starlings.Models.EmbeddingGemma2.Video.FFmpeg9.csproj" />
+  </ItemGroup>
+
+</Project>

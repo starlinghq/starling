@@ -1,0 +1,190 @@
+{
+ "decoder": "torchcodec 0.17.0+cpu (VideoDecoder seek_mode exact, num_ffmpeg_threads 0, CPU)",
+ "ffmpeg": {
+  "libavfilter": [
+   12,
+   1,
+   101
+  ],
+  "libavutil": [
+   61,
+   1,
+   101
+  ],
+  "libavcodec": [
+   63,
+   1,
+   101
+  ],
+  "libavformat": [
+   63,
+   1,
+   101
+  ],
+  "ffmpeg_version": "n9.0.1"
+ },
+ "ffmpeg_major_pinned": 9,
+ "compared_with": "model-pipeline/protected/embeddinggemma-2/video-fp32-cpu/video-frames.json (torchcodec 0.17.0 on FFmpeg n8.1.3-17-gc389840894)",
+ "protected_sha256": "e78e2f9797dc311b52d54e08982e03ffec24986431d59845d2ba2726065eab29",
+ "frames_file_sha256": "076ffd7aed4d784255859741c8b6df4fd4163574a1fcc0968b51cdc7f7573525",
+ "videos": 22,
+ "frames": 5367,
+ "equal_frames": 5367,
+ "all_equal": true,
+ "per_video": {
+  "h264-bars-640x360-30fps-5s": {
+   "frames": 150,
+   "metadata_equal": true,
+   "sampled_indices_equal": true,
+   "frame_count_equal": true,
+   "differing_frames": []
+  },
+  "h264-shapes-1280x720-25fps-10s": {
+   "frames": 250,
+   "metadata_equal": true,
+   "sampled_indices_equal": true,
+   "frame_count_equal": true,
+   "differing_frames": []
+  },
+  "h264-long-320x240-30fps-40s": {
+   "frames": 1200,
+   "metadata_equal": true,
+   "sampled_indices_equal": true,
+   "frame_count_equal": true,
+   "differing_frames": []
+  },
+  "h264-32s-160x120-30fps": {
+   "frames": 960,
+   "metadata_equal": true,
+   "sampled_indices_equal": true,
+   "frame_count_equal": true,
+   "differing_frames": []
+  },
+  "h264-33s-160x120-30fps": {
+   "frames": 990,
+   "metadata_equal": true,
+   "sampled_indices_equal": true,
+   "frame_count_equal": true,
+   "differing_frames": []
+  },
+  "h264-short-320x240-24fps-0.5s": {
+   "frames": 12,
+   "metadata_equal": true,
+   "sampled_indices_equal": true,
+   "frame_count_equal": true,
+   "differing_frames": []
+  },
+  "h264-1s-320x240-30fps": {
+   "frames": 30,
+   "metadata_equal": true,
+   "sampled_indices_equal": true,
+   "frame_count_equal": true,
+   "differing_frames": []
+  },
+  "h264-1.9s-320x240-30fps": {
+   "frames": 57,
+   "metadata_equal": true,
+   "sampled_indices_equal": true,
+   "frame_count_equal": true,
+   "differing_frames": []
+  },
+  "h264-ntsc-640x480-29.97fps-12s": {
+   "frames": 360,
+   "metadata_equal": true,
+   "sampled_indices_equal": true,
+   "frame_count_equal": true,
+   "differing_frames": []
+  },
+  "h264-60fps-480x270-3s": {
+   "frames": 180,
+   "metadata_equal": true,
+   "sampled_indices_equal": true,
+   "frame_count_equal": true,
+   "differing_frames": []
+  },
+  "h264-1fps-64x48-8s": {
+   "frames": 8,
+   "metadata_equal": true,
+   "sampled_indices_equal": true,
+   "frame_count_equal": true,
+   "differing_frames": []
+  },
+  "h264-portrait-360x640-30fps-4s": {
+   "frames": 120,
+   "metadata_equal": true,
+   "sampled_indices_equal": true,
+   "frame_count_equal": true,
+   "differing_frames": []
+  },
+  "h264-330x186-30fps-3s": {
+   "frames": 90,
+   "metadata_equal": true,
+   "sampled_indices_equal": true,
+   "frame_count_equal": true,
+   "differing_frames": []
+  },
+  "h264-rot90-640x360-30fps-3s": {
+   "frames": 90,
+   "metadata_equal": true,
+   "sampled_indices_equal": true,
+   "frame_count_equal": true,
+   "differing_frames": []
+  },
+  "h264-fullrange-640x360-30fps-3s": {
+   "frames": 90,
+   "metadata_equal": true,
+   "sampled_indices_equal": true,
+   "frame_count_equal": true,
+   "differing_frames": []
+  },
+  "h264-untagged-640x360-30fps-3s": {
+   "frames": 90,
+   "metadata_equal": true,
+   "sampled_indices_equal": true,
+   "frame_count_equal": true,
+   "differing_frames": []
+  },
+  "h264-10bit-640x360-30fps-3s": {
+   "frames": 90,
+   "metadata_equal": true,
+   "sampled_indices_equal": true,
+   "frame_count_equal": true,
+   "differing_frames": []
+  },
+  "h264-1080p-1920x1080-30fps-4s": {
+   "frames": 120,
+   "metadata_equal": true,
+   "sampled_indices_equal": true,
+   "frame_count_equal": true,
+   "differing_frames": []
+  },
+  "vp9-640x360-30fps-6s": {
+   "frames": 180,
+   "metadata_equal": true,
+   "sampled_indices_equal": true,
+   "frame_count_equal": true,
+   "differing_frames": []
+  },
+  "vp9-odd-321x179-30fps-3s": {
+   "frames": 90,
+   "metadata_equal": true,
+   "sampled_indices_equal": true,
+   "frame_count_equal": true,
+   "differing_frames": []
+  },
+  "hevc-640x360-30fps-4s": {
+   "frames": 120,
+   "metadata_equal": true,
+   "sampled_indices_equal": true,
+   "frame_count_equal": true,
+   "differing_frames": []
+  },
+  "av1-640x360-30fps-3s": {
+   "frames": 90,
+   "metadata_equal": true,
+   "sampled_indices_equal": true,
+   "frame_count_equal": true,
+   "differing_frames": []
+  }
+ }
+}

@@ -1,7 +1,11 @@
 using System.Reflection;
 using System.Runtime.InteropServices;
 
+#if STARLINGS_FFMPEG9
+namespace Starlings.Models.EmbeddingGemma2.Video.FFmpeg9;
+#else
 namespace Starlings.Models.EmbeddingGemma2.Video.FFmpeg;
+#endif
 
 /// <summary>
 /// Where the bound FFmpeg libraries come from: the generated declarations (<c>FFmpegNative.g.cs</c>) name the libraries

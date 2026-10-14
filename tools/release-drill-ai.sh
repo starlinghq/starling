@@ -8,7 +8,7 @@
 #   1. packs the ai-dotnet packages (Runtime.Onnx, Acquisition,
 #      Models.E5, Models.E5.Extensions.AI, Models.E5.MLNet, Models.Gliner2, Generation.OnnxGenAI, Models.Qwen35,
 #      Models.EmbeddingGemma2, Models.EmbeddingGemma2.Extensions.AI, Models.EmbeddingGemma2.MLNet,
-#      Models.EmbeddingGemma2.Imaging.SkiaSharp, Models.EmbeddingGemma2.Video.FFmpeg,
+#      Models.EmbeddingGemma2.Imaging.SkiaSharp, Models.EmbeddingGemma2.Video.FFmpeg, Models.EmbeddingGemma2.Video.FFmpeg9,
 #      Models.Qwen35.Extensions.AI), locked restore, empty private NuGet cache,
 #   2. inspects every nuspec (version, MIT OR Apache-2.0, readme, repository commit, exact dependency list: no native ONNX Runtime or
 #      ONNX Runtime GenAI, no Microsoft.ML.Tokenizers, no FFmpeg bindings package), the packed files (no
@@ -237,6 +237,7 @@ projects=(
     ai-dotnet/src/Starlings.Models.EmbeddingGemma2.MLNet
     ai-dotnet/src/Starlings.Models.EmbeddingGemma2.Imaging.SkiaSharp
     ai-dotnet/src/Starlings.Models.EmbeddingGemma2.Video.FFmpeg
+    ai-dotnet/src/Starlings.Models.EmbeddingGemma2.Video.FFmpeg9
     ai-dotnet/src/Starlings.Generation.OnnxGenAI
     ai-dotnet/src/Starlings.Models.Qwen35
     ai-dotnet/src/Starlings.Models.Qwen35.Extensions.AI
@@ -284,7 +285,7 @@ expect_deps() {
             echo "Starlings.Models.EmbeddingGemma2 [$ai_version]"
             echo "SkiaSharp [$skia_version]"
             echo "SkiaSharp.NativeAssets.Linux.NoDependencies [$skia_version]" ;;
-        Starlings.Models.EmbeddingGemma2.Video.FFmpeg)
+        Starlings.Models.EmbeddingGemma2.Video.FFmpeg | Starlings.Models.EmbeddingGemma2.Video.FFmpeg9)
             echo "Starlings.Models.EmbeddingGemma2 [$ai_version]" ;;
         Starlings.Generation.OnnxGenAI)
             echo "Starlings.Tokenizers [$tok_version]"

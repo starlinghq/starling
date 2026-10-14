@@ -8,9 +8,10 @@
 //                            row in padded batches of 8 (ids), and one padded text batch per prompt.
 //
 //   dotnet run --project ai-dotnet/tools/Starlings.Fidelity.Tool -c Release -- embeddinggemma2 --out <dir>
-//       [--snapshot <dir>] [--fixtures <dir>] [--profile <id>] [--threads <n>]
+//       [--snapshot <dir>] [--fixtures <dir>] [--profile <id>] [--threads <n>] [--device cpu|cuda[:N]]
 //
-// CPU only (the tool references the CPU native runtime). Applies no bounds; writes nothing under protected/.
+// --device cuda needs the CUDA build (ai-dotnet/tools/Starlings.Fidelity.Tool.Cuda) and defaults the profile to
+// embeddinggemma-2/onnx-fp32-cuda (same fixtures). Applies no bounds; writes nothing under protected/.
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.Json;
@@ -25,8 +26,9 @@ internal static class EmbeddingGemma2Dump
         string? outDir = null;
         string? snapshot = Environment.GetEnvironmentVariable("STARLING_EMBEDDINGGEMMA2_SNAPSHOT");
         string? fixturesDir = null;
-        string profile = "embeddinggemma-2/onnx-fp32-cpu";
+        string? profile = null;
         int? threads = null;
+        var device = ToolDevice.Cpu;
         for (int i = 0; i < args.Length; i++)
         {
             switch (args[i])
@@ -47,6 +49,10 @@ internal static class EmbeddingGemma2Dump
                     threads = n;
                     i++;
                     break;
+                case "--device" when i + 1 < args.Length && ToolDevice.TryParse(args[i + 1], out var parsed):
+                    device = parsed;
+                    i++;
+                    break;
                 default:
                     Console.Error.WriteLine($"error: unknown option {args[i]}");
                     return 2;
@@ -58,6 +64,14 @@ internal static class EmbeddingGemma2Dump
             Console.Error.WriteLine("error: --out is required");
             return 2;
         }
+
+        if (device.Unavailable() is { } unavailable)
+        {
+            Console.Error.WriteLine($"error: {unavailable}");
+            return 2;
+        }
+
+        profile ??= device.Profile("embeddinggemma-2/onnx-fp32-cpu");
 
         string? repoRoot = ToolSupport.FindRepositoryRoot();
         fixturesDir ??= repoRoot is null ? null : Path.Combine(repoRoot, "model-pipeline", "protected", "embeddinggemma-2", "onnx-fp32-cpu");
@@ -83,14 +97,14 @@ internal static class EmbeddingGemma2Dump
         var tokenizer = EmbeddingGemma2Tokenizer.FromFile(files.TokenizerPath);
         using var encoder = EmbeddingGemma2Encoder.Create(files.ModelPath, new EmbeddingGemma2EncoderOptions
         {
-            Session = new OnnxSessionOptions { ExpectedModelSha256 = EmbeddingGemma2ModelAssets.ModelSha256, IntraOpNumThreads = threads },
+            Session = device.Apply(new OnnxSessionOptions { ExpectedModelSha256 = EmbeddingGemma2ModelAssets.ModelSha256, IntraOpNumThreads = threads }),
         });
         var embedder = new EmbeddingGemma2TextEmbedder(tokenizer, encoder);
         var d = encoder.Session.Diagnostics;
         var tokenizerAsset = new Asset(EmbeddingGemma2ModelAssets.TokenizerFile, EmbeddingGemma2ModelAssets.TokenizerSha256);
         var modelAsset = new Asset(EmbeddingGemma2ModelAssets.ModelFile, d.ModelSha256 ?? ToolSupport.Sha256(files.ModelPath));
         var rows = ReadRows(Path.Combine(fixturesDir, "embeddings.jsonl"));
-        var environment = StageEnvironment(d);
+        var environment = StageEnvironment(d, device);
 
         // Stage 1: the owned tokenizer on prompt_text + text.
         var tokenizerStage = new StageWriter(profile, "tokenizer", "Starlings.Tokenizers via EmbeddingGemma2Tokenizer (profile gemma-bpe-embeddinggemma2, no truncation), on prompt text + text", commit, environment, [tokenizerAsset]);
@@ -103,7 +117,7 @@ internal static class EmbeddingGemma2Dump
         tokenizerStage.Write(Path.Combine(outDir, "tokenizer.results.json"));
 
         // Stage 3: from ids and from text.
-        var dotnet = new StageWriter(profile, "dotnet", $"C# EmbeddingGemma2Encoder + EmbeddingGemma2TextEmbedder, ONNX Runtime {d.OrtVersion} CPU (managed binding {d.ManagedBindingVersion})", commit, environment, [modelAsset, tokenizerAsset]);
+        var dotnet = new StageWriter(profile, "dotnet", $"C# EmbeddingGemma2Encoder + EmbeddingGemma2TextEmbedder, ONNX Runtime {d.OrtVersion} {device.Label} (managed binding {d.ManagedBindingVersion})", commit, environment, [modelAsset, tokenizerAsset]);
         foreach (var r in rows)
         {
             dotnet.Case(r.Key)
@@ -162,10 +176,17 @@ internal static class EmbeddingGemma2Dump
             .ToList();
     }
 
-    private static Dictionary<string, object?> StageEnvironment(OnnxSessionDiagnostics d) => new()
+    private static Dictionary<string, object?> StageEnvironment(OnnxSessionDiagnostics d, ToolDevice device)
+    {
+        var environment = StageEnvironment(d, device.Name);
+        device.Describe(environment);
+        return environment;
+    }
+
+    private static Dictionary<string, object?> StageEnvironment(OnnxSessionDiagnostics d, string provider) => new()
     {
         ["machine"] = Environment.MachineName,
-        ["provider"] = "cpu",
+        ["provider"] = provider,
         ["provider_options"] = d.ProviderOptions.ToDictionary(kv => kv.Key, kv => (object?)kv.Value),
         ["dotnet"] = RuntimeInformation.FrameworkDescription,
         ["os"] = RuntimeInformation.OSDescription,

@@ -152,6 +152,9 @@ internal sealed class EmbeddingGemma2Tolerances
     /// <summary>NaN or Inf fails the profile.</summary>
     public bool NanOrInfFails => this["float.nan_or_inf"] == "fail";
 
+    /// <summary>Whether the protected file has a flattened key (for a bound the maintainer has not committed yet).</summary>
+    public bool Contains(string key) => _values.ContainsKey(key);
+
     /// <summary>Raw value of a flattened key (<c>section.key</c>).</summary>
     public string this[string key] => _values.TryGetValue(key, out var v) ? v : throw new KeyNotFoundException($"{key} is not in {Source}.");
 

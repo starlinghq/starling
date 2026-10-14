@@ -199,6 +199,15 @@ dotnet run --project ai-dotnet/tools/Starlings.Fidelity.Tool -c Release -- e5 --
 
 The model is resolved like the tests do (`--snapshot`, else `$STARLING_E5_SNAPSHOT`, else the acquisition cache), with the tokenizer and model SHA-256 enforced. The tool references the CPU native runtime and runs the `onnx-fp32-cpu` profile only. See `model-pipeline/README.md` for the evaluator and `model-pipeline/reference/README.md` for the end-to-end commands.
 
+**CUDA build.** `tools/Starlings.Fidelity.Tool.Cuda` compiles the same sources against `Microsoft.ML.OnnxRuntime.Gpu.Linux` (its own `packages.lock.json`; not in `AI.slnx`, so CI never restores the GPU package, as for the CUDA test projects). The two native packages ship `libonnxruntime` under one file name, so one project cannot carry both, and the CPU build stays unchanged. The EmbeddingGemma 2 dumps (`embeddinggemma2`, `embeddinggemma2-images`, `embeddinggemma2-videos`) take `--device cpu|cuda[:N]` (default `cpu`); on `cuda` the default profile is the `-cuda` sibling (same fixtures and rows; videos in vision calls of the package default, 2 frames), the stage environment records `provider: cuda`, the provider options read back from the session (`use_tf32: 0`) and `CUDA_VISIBLE_DEVICES`. The CPU build refuses `--device cuda` with a message naming the CUDA build. The CUDA build also runs `--device cpu`: on 2026-10-13 its `embeddinggemma2` results were identical to the CPU build's (every case, batch and environment value; `model-pipeline evaluate` on `onnx-fp32-cpu`: G1 passed, first divergence none).
+
+```sh
+CUDA_DEVICE_ORDER=PCI_BUS_ID CUDA_VISIBLE_DEVICES=1 dotnet run --project ai-dotnet/tools/Starlings.Fidelity.Tool.Cuda -c Release -- \
+    embeddinggemma2-videos --device cuda --out <dir> --videos <dir> [--ffmpeg <FFmpeg 8 lib dir>]
+model-pipeline evaluate model-pipeline/registry/embeddinggemma-2/video-fp32-cuda/manifest.yaml --results <dir> --out <report dir> \
+    --reference-tensors <ref-clean-tensors> --require-gates G1,G2
+```
+
 ## GLiNER2 entity extraction (P-015)
 
 `Starlings.Models.Gliner2` implements the declared GLiNER2 profile `gliner2-base-v1/onnx-fp32-cpu` (`model-pipeline/registry/gliner2-base-v1/onnx-fp32-cpu/manifest.yaml`; spike and feature inventory in [`docs/m0/gliner2-p014.md`](../docs/m0/gliner2-p014.md)). Contract (kickoff, settled 2026-10-08, and the maintainer's P-015 decisions of 2026-10-10): English entity extraction with labels and a threshold.

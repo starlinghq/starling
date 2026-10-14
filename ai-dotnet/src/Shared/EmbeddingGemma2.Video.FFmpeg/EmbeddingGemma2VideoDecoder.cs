@@ -1,10 +1,14 @@
 using System.Runtime.InteropServices;
 
+#if STARLINGS_FFMPEG9
+namespace Starlings.Models.EmbeddingGemma2.Video.FFmpeg9;
+#else
 namespace Starlings.Models.EmbeddingGemma2.Video.FFmpeg;
+#endif
 
 /// <summary>
 /// Decodes video files and streams into <see cref="EmbeddingGemma2Video"/> exactly as upstream sees them (torchcodec
-/// 0.17.0 on CPU, uint8 RGB, <c>seek_mode="exact"</c>), on the user's own FFmpeg 8.x shared libraries
+/// 0.17.0 on CPU, uint8 RGB, <c>seek_mode="exact"</c>), on the user's own FFmpeg shared libraries of the major this package binds
 /// (<see cref="EmbeddingGemma2FFmpeg"/>; none are shipped).
 /// </summary>
 /// <remarks>
@@ -21,12 +25,13 @@ namespace Starlings.Models.EmbeddingGemma2.Video.FFmpeg;
 /// </para>
 /// <para>
 /// <b>RGB conversion</b>, as torchcodec calls FFmpeg: when the frame width is a multiple of 32 and no rotation applies,
-/// one <c>sws_scale</c> to RGB24 with flags 0 (FFmpeg 8.1: bicubic), the source and destination coefficients
+/// one <c>sws_scale</c> to RGB24 with flags 0 (as torchcodec passes them), the source and destination coefficients
 /// <c>sws_getCoefficients(frame colorspace)</c> (BT.601 when untagged) and the source range from the frame when tagged;
 /// otherwise a filter graph <c>buffer</c> -&gt; <c>copy</c> (or <c>format=rgb24,transpose=cclock</c>,
 /// <c>format=rgb24,transpose=clock</c>, <c>format=rgb24,hflip,vflip</c> for a display matrix of 90, -90 or 180 degrees)
 /// -&gt; <c>buffersink</c> RGB24. This reproduces torchcodec's decoded RGB bit for bit on the 22 fixture videos (H.264
-/// 8- and 10-bit, HEVC, VP9, AV1; rotation 90; odd sizes) with FFmpeg 8.1 on x86-64. Other CPUs (swscale's SIMD paths)
+/// 8- and 10-bit, HEVC, VP9, AV1; rotation 90; odd sizes) on x86-64 with FFmpeg 8.1 (this code with the FFmpeg 8 bindings)
+/// and FFmpeg 9.0.1 (with the FFmpeg 9 bindings), against torchcodec on the same FFmpeg. Other CPUs (swscale's SIMD paths)
 /// and FFmpeg builds are not covered by that evidence.
 /// </para>
 /// <para>Instances are immutable and thread-safe; each call opens its own FFmpeg contexts.</para>
@@ -38,7 +43,7 @@ public sealed unsafe class EmbeddingGemma2VideoDecoder
     private readonly EmbeddingGemma2FFmpegOptions _options;
 
     /// <summary>Loads and checks the FFmpeg libraries (<see cref="EmbeddingGemma2FFmpeg.Load"/>).</summary>
-    /// <exception cref="EmbeddingGemma2FFmpegException">FFmpeg 8.x is missing, has another major, or is a GPL or nonfree build that is not allowed.</exception>
+    /// <exception cref="EmbeddingGemma2FFmpegException">FFmpeg of the bound major is missing, has another major, or is a GPL or nonfree build that is not allowed.</exception>
     public EmbeddingGemma2VideoDecoder(EmbeddingGemma2FFmpegOptions? options = null)
     {
         options ??= new EmbeddingGemma2FFmpegOptions();

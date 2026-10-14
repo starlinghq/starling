@@ -188,7 +188,7 @@ capabilities:
   prompts_task: untested
   matryoshka: experimental
   input_up_to_2049_tokens: experimental
-  input_2050_to_8192_tokens: untested
+  input_2050_to_8192_tokens: untested  # fixtures proposed, not accepted: model-pipeline/proposed/embeddinggemma-2/long-input
   input_over_8192_tokens: unsupported
   concurrent_calls: experimental
   image: unsupported

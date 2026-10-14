@@ -1,32 +1,51 @@
+// Shared source of the FFmpeg adapter packages, one per FFmpeg major (decision D3): compiled into
+// Starlings.Models.EmbeddingGemma2.Video.FFmpeg (FFmpeg 8) and, with STARLINGS_FFMPEG9 defined,
+// Starlings.Models.EmbeddingGemma2.Video.FFmpeg9 (FFmpeg 9). Each package has its own generated bindings (FFmpegNative.g.cs,
+// tools/generate-ffmpeg-bindings.py --major 8|9); everything else is this code.
+#if STARLINGS_FFMPEG9
+namespace Starlings.Models.EmbeddingGemma2.Video.FFmpeg9;
+#else
 namespace Starlings.Models.EmbeddingGemma2.Video.FFmpeg;
+#endif
 
 /// <summary>
-/// Loads the user's own FFmpeg 8.x shared libraries (once per process) through this package's bindings and checks them: the
-/// library majors this adapter binds (libavcodec 62, libavformat 62, libavutil 60, libswscale 9, libavfilter 11), and the
-/// build's license (LGPL expected; GPL and nonfree builds are rejected unless allowed). This package ships no FFmpeg
-/// binaries.
+/// Loads the user's own FFmpeg shared libraries of the major this package binds (<see cref="SupportedFFmpegMajor"/>), once
+/// per process, through this package's bindings and checks them: the library majors the bindings were generated for
+/// (FFmpeg 8: libavcodec 62, libavformat 62, libavutil 60, libswscale 9, libavfilter 11; FFmpeg 9: libavcodec 63,
+/// libavformat 63, libavutil 61, libswscale 10, libavfilter 12), and the build's license (LGPL expected; GPL and nonfree
+/// builds are rejected unless allowed). This package ships no FFmpeg binaries.
 /// </summary>
 /// <remarks>
 /// <para>
 /// <b>Where the libraries come from.</b> <see cref="EmbeddingGemma2FFmpegOptions.LibraryDirectory"/>, else the directory in
 /// <see cref="LibraryDirectoryEnvironmentVariable"/>, else the operating system's standard library search (on Linux
-/// <c>dlopen("libavcodec.so.62")</c>: <c>LD_LIBRARY_PATH</c>, the loader cache, <c>/usr/lib</c>). The runtime keeps the
-/// libraries it loaded for the process, so every decoder in a process must use the same directory.
+/// <c>dlopen("libavcodec.so.62")</c> for FFmpeg 8, <c>libavcodec.so.63</c> for FFmpeg 9: <c>LD_LIBRARY_PATH</c>, the loader
+/// cache, <c>/usr/lib</c>). The runtime keeps the libraries it loaded for the process, so every decoder in a process must
+/// use the same directory.
 /// </para>
 /// <para>
-/// <b>Versions.</b> FFmpeg 8.x only (the ABI the bindings were generated for, from the FFmpeg 8.1 headers by
-/// <c>tools/generate-ffmpeg-bindings.py</c>). FFmpeg 9 has other library majors
-/// (<c>libavcodec.so.63</c>) and is rejected with <see cref="EmbeddingGemma2FFmpegVersionException"/>; FFmpeg 7 and older
-/// are rejected the same way.
+/// <b>Versions.</b> One FFmpeg major per package: the ABI the bindings were generated for, from that major's headers by
+/// <c>tools/generate-ffmpeg-bindings.py</c> (<c>Starlings.Models.EmbeddingGemma2.Video.FFmpeg</c>: FFmpeg 8.x;
+/// <c>Starlings.Models.EmbeddingGemma2.Video.FFmpeg9</c>: FFmpeg 9.x). Another major has other library majors and is
+/// rejected with <see cref="EmbeddingGemma2FFmpegNotFoundException"/> or <see cref="EmbeddingGemma2FFmpegVersionException"/>;
+/// use the package for that major.
 /// </para>
 /// </remarks>
 public static unsafe class EmbeddingGemma2FFmpeg
 {
+#if STARLINGS_FFMPEG9
+    /// <summary>Environment variable naming the directory of the FFmpeg 9 shared libraries (used when the options give none).</summary>
+    public const string LibraryDirectoryEnvironmentVariable = "STARLING_FFMPEG9_DIR";
+
+    /// <summary>The FFmpeg major release this adapter binds.</summary>
+    public const int SupportedFFmpegMajor = 9;
+#else
     /// <summary>Environment variable naming the directory of the FFmpeg shared libraries (used when the options give none).</summary>
     public const string LibraryDirectoryEnvironmentVariable = "STARLING_FFMPEG_DIR";
 
     /// <summary>The FFmpeg major release this adapter binds.</summary>
     public const int SupportedFFmpegMajor = 8;
+#endif
 
     private static readonly (string Name, int Major)[] Libraries =
     [
@@ -59,7 +78,7 @@ public static unsafe class EmbeddingGemma2FFmpeg
     /// </summary>
     /// <param name="options">Where to load from and whether a non-LGPL build is accepted. Null: defaults.</param>
     /// <returns>What was loaded: version, library versions, licenses, configuration.</returns>
-    /// <exception cref="EmbeddingGemma2FFmpegNotFoundException">The FFmpeg 8.x libraries are not found.</exception>
+    /// <exception cref="EmbeddingGemma2FFmpegNotFoundException">The libraries of the bound FFmpeg major are not found.</exception>
     /// <exception cref="EmbeddingGemma2FFmpegVersionException">A library has another major than this adapter binds.</exception>
     /// <exception cref="EmbeddingGemma2FFmpegLicenseException">The build is GPL or nonfree and that is not allowed.</exception>
     /// <exception cref="InvalidOperationException">Libraries from another directory are already loaded in this process.</exception>
@@ -165,7 +184,7 @@ public static unsafe class EmbeddingGemma2FFmpeg
         {
             try
             {
-                other.AddRange(System.IO.Directory.GetFiles(dir, $"lib{name}.so.*").Select(Path.GetFileName).Where(f => f!.Count(c => c == '.') == 2)!);
+                other.AddRange(System.IO.Directory.GetFiles(dir, $"lib{name}.so.*").Select(Path.GetFileName).Where(f => f!.Count(c => c == '.') == 2 && f != expected)!);
             }
             catch (UnauthorizedAccessException)
             {
@@ -174,7 +193,7 @@ public static unsafe class EmbeddingGemma2FFmpeg
 
         if (other.Count > 0)
         {
-            hint = $" Found {string.Join(", ", other.Distinct())} instead (another FFmpeg major; FFmpeg 9 is lib{name}.so.{major + 1} and is not supported by this adapter version).";
+            hint = $" Found {string.Join(", ", other.Distinct())} instead (another FFmpeg major; this package binds FFmpeg {SupportedFFmpegMajor}, lib{name}.so.{major}; the adapter package of the installed major loads it: Starlings.Models.EmbeddingGemma2.Video.FFmpeg for FFmpeg 8, Starlings.Models.EmbeddingGemma2.Video.FFmpeg9 for FFmpeg 9).";
         }
 
         return $"FFmpeg {SupportedFFmpegMajor}.x shared library {expected} could not be loaded from {Describe(directory)}.{hint} Install FFmpeg {SupportedFFmpegMajor}.x shared libraries (an LGPL build; this package ships none) and set EmbeddingGemma2FFmpegOptions.LibraryDirectory or {LibraryDirectoryEnvironmentVariable}.";
@@ -202,7 +221,7 @@ public sealed record EmbeddingGemma2FFmpegLibraries(
 public sealed record EmbeddingGemma2FFmpegOptions
 {
     /// <summary>
-    /// Directory of the FFmpeg 8.x shared libraries. Null (default): <see cref="EmbeddingGemma2FFmpeg.LibraryDirectoryEnvironmentVariable"/>,
+    /// Directory of the FFmpeg shared libraries of the major this package binds (<see cref="EmbeddingGemma2FFmpeg.SupportedFFmpegMajor"/>). Null (default): <see cref="EmbeddingGemma2FFmpeg.LibraryDirectoryEnvironmentVariable"/>,
     /// else the operating system's standard library search.
     /// </summary>
     public string? LibraryDirectory { get; init; }
@@ -256,7 +275,7 @@ public class EmbeddingGemma2FFmpegException : InvalidOperationException
     }
 }
 
-/// <summary>The FFmpeg 8.x shared libraries could not be loaded (not installed, wrong directory, or another major only).</summary>
+/// <summary>The FFmpeg shared libraries of the bound major could not be loaded (not installed, wrong directory, or another major only).</summary>
 public sealed class EmbeddingGemma2FFmpegNotFoundException : EmbeddingGemma2FFmpegException
 {
     /// <summary>Creates the exception.</summary>
@@ -277,7 +296,7 @@ public sealed class EmbeddingGemma2FFmpegNotFoundException : EmbeddingGemma2FFmp
     }
 }
 
-/// <summary>A loaded FFmpeg library has another major version than this adapter binds (FFmpeg 8.x).</summary>
+/// <summary>A loaded FFmpeg library has another major version than this adapter binds (<see cref="EmbeddingGemma2FFmpeg.SupportedFFmpegMajor"/>).</summary>
 public sealed class EmbeddingGemma2FFmpegVersionException : EmbeddingGemma2FFmpegException
 {
     /// <summary>Creates the exception.</summary>

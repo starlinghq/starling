@@ -1,7 +1,11 @@
+using System.Globalization;
 using System.Security.Cryptography;
 using Starlings.TestSupport;
-
+#if STARLINGS_FFMPEG9
+namespace Starlings.Models.EmbeddingGemma2.Video.FFmpeg9.Tests;
+#else
 namespace Starlings.Models.EmbeddingGemma2.Video.FFmpeg.Tests;
+#endif
 
 /// <summary>
 /// The FFmpeg adapter against torchcodec (decoder profile of <c>embeddinggemma-2/video-fp32-cpu</c>, binding key
@@ -9,9 +13,21 @@ namespace Starlings.Models.EmbeddingGemma2.Video.FFmpeg.Tests;
 /// RGB of every frame of every fixture video. Needs the video set and an FFmpeg 8.x LGPL shared build
 /// (<c>STARLING_FFMPEG_DIR</c>); skips otherwise.
 /// </summary>
+/// <remarks>
+/// Shared with the FFmpeg 9 adapter's tests (compiled there with STARLINGS_FFMPEG9; <c>STARLING_FFMPEG9_DIR</c>): the same
+/// checks on FFmpeg 9 against the same protected digests, which torchcodec 0.17.0 on FFmpeg 9.0.1 reproduces for all
+/// 5,367 frames (<c>model-pipeline/reference/embeddinggemma2/torchcodec_eg2_frames.py</c>). The FFmpeg 9 bounds
+/// (<c>decoder_ffmpeg9.*</c>) are proposed, not yet in the protected file; until they are, the tests hold FFmpeg 9 to
+/// <c>exact</c> and say so.
+/// </remarks>
 public sealed class DecoderTests(ITestOutputHelper output)
 {
     private static readonly EmbeddingGemma2Tolerances Tolerances = EmbeddingGemma2Tolerances.Load("video-fp32-cpu");
+
+    private static readonly int Major = EmbeddingGemma2FFmpeg.SupportedFFmpegMajor;
+
+    /// <summary>The tolerance section of this adapter's decoder profile: <c>decoder_ffmpeg</c> (8), <c>decoder_ffmpeg9</c> (9).</summary>
+    private static readonly string Section = Major == 8 ? "decoder_ffmpeg" : $"decoder_ffmpeg{Major}";
 
     [Fact]
     public void TheLoadedFFmpegIsTheGatedMajorAndLgpl()
@@ -20,10 +36,31 @@ public sealed class DecoderTests(ITestOutputHelper output)
         var libs = decoder.Libraries;
         output.WriteLine($"FFmpeg {libs.Version} from {libs.Directory}: {string.Join(", ", libs.LibraryVersions.Select(kv => $"lib{kv.Key} {kv.Value}"))}");
         output.WriteLine($"licenses: {string.Join(", ", libs.Licenses.Select(kv => $"lib{kv.Key}: {kv.Value}"))}");
-        Assert.Equal(Tolerances["decoder_ffmpeg.supported_ffmpeg_major"], EmbeddingGemma2FFmpeg.SupportedFFmpegMajor.ToString(System.Globalization.CultureInfo.InvariantCulture));
-        Assert.StartsWith("n8.", libs.Version, StringComparison.Ordinal);
-        Assert.True(libs.IsLgpl);
-        Assert.Same(libs, EmbeddingGemma2FFmpeg.Load(new EmbeddingGemma2FFmpegOptions { LibraryDirectory = libs.Directory }));
+        if (Tolerances.Contains($"{Section}.supported_ffmpeg_major"))
+        {
+            Assert.Equal(Tolerances[$"{Section}.supported_ffmpeg_major"], Major.ToString(CultureInfo.InvariantCulture));
+        }
+        else
+        {
+            output.WriteLine($"{Section}.supported_ffmpeg_major is not in {Tolerances.Source} yet (proposed); the adapter binds FFmpeg {Major}");
+        }
+
+        Assert.StartsWith($"n{Major}.", libs.Version, StringComparison.Ordinal);
+        if (EmbeddingGemma2VideoTestAssets.AllowNonLgplBuild)
+        {
+            output.WriteLine($"{EmbeddingGemma2VideoTestAssets.AllowNonLgplEnvironmentVariable}=1: license not required to be LGPL (IsLgpl {libs.IsLgpl})");
+            if (!libs.IsLgpl)
+            {
+                // Without the opt-in, the same loaded build is refused.
+                Assert.Throws<EmbeddingGemma2FFmpegLicenseException>(() => EmbeddingGemma2FFmpeg.Load(new EmbeddingGemma2FFmpegOptions { LibraryDirectory = libs.Directory }));
+            }
+        }
+        else
+        {
+            Assert.True(libs.IsLgpl);
+        }
+
+        Assert.Same(libs, EmbeddingGemma2FFmpeg.Load(new EmbeddingGemma2FFmpegOptions { LibraryDirectory = libs.Directory, AllowNonLgplBuild = EmbeddingGemma2VideoTestAssets.AllowNonLgplBuild }));
     }
 
     [Fact]
@@ -51,7 +88,15 @@ public sealed class DecoderTests(ITestOutputHelper output)
     [Fact]
     public void SampledFramesEqualTorchcodecBitForBit()
     {
-        Assert.Equal("exact", Tolerances["decoder_ffmpeg.decoded_rgb_vs_torchcodec"]);
+        if (Tolerances.Contains($"{Section}.decoded_rgb_vs_torchcodec"))
+        {
+            Assert.Equal("exact", Tolerances[$"{Section}.decoded_rgb_vs_torchcodec"]);
+        }
+        else
+        {
+            output.WriteLine($"{Section}.decoded_rgb_vs_torchcodec is not in {Tolerances.Source} yet (proposed: exact); held to exact");
+        }
+
         Assert.True(Tolerances.IsExact("decoded_frames"));
         Assert.True(Tolerances.IsExact("frame_indices"));
         int frames = 0;
@@ -75,7 +120,7 @@ public sealed class DecoderTests(ITestOutputHelper output)
             Assert.Equal(row.Videos[0].FramesSha256, EmbeddingGemma2VideoTestAssets.Sha(decoded.Video.Frames.Select(f => f.Pixels)));
         }
 
-        output.WriteLine($"{EmbeddingGemma2VideoTestAssets.Manifest.Count} videos, {frames} sampled frames: decoded RGB equal to torchcodec on FFmpeg 8 (bound: exact)");
+        output.WriteLine($"{EmbeddingGemma2VideoTestAssets.Manifest.Count} videos, {frames} sampled frames: decoded RGB equal to torchcodec on FFmpeg {Major} (bound: exact)");
     }
 
     [Fact]
@@ -101,7 +146,7 @@ public sealed class DecoderTests(ITestOutputHelper output)
             total += expected.Length;
         }
 
-        output.WriteLine($"{EmbeddingGemma2VideoTestAssets.Manifest.Count} videos, all {total} frames: decoded RGB equal to torchcodec on FFmpeg 8");
+        output.WriteLine($"{EmbeddingGemma2VideoTestAssets.Manifest.Count} videos, all {total} frames: decoded RGB equal to torchcodec on FFmpeg {Major}");
     }
 
     [Fact]
@@ -162,7 +207,7 @@ public sealed class DecoderTests(ITestOutputHelper output)
     public void FrameLimitsAreEnforced()
     {
         _ = EmbeddingGemma2VideoTestAssets.Decoder; // skips without FFmpeg or videos
-        var small = new EmbeddingGemma2VideoDecoder(new EmbeddingGemma2FFmpegOptions { LibraryDirectory = Environment.GetEnvironmentVariable(EmbeddingGemma2VideoTestAssets.FFmpegEnvironmentVariable), MaxFramePixels = 1_000, MaxAllFrames = 10 });
+        var small = new EmbeddingGemma2VideoDecoder(new EmbeddingGemma2FFmpegOptions { LibraryDirectory = Environment.GetEnvironmentVariable(EmbeddingGemma2VideoTestAssets.FFmpegEnvironmentVariable), MaxFramePixels = 1_000, MaxAllFrames = 10, AllowNonLgplBuild = EmbeddingGemma2VideoTestAssets.AllowNonLgplBuild });
         Assert.Throws<EmbeddingGemma2ImageTooLargeException>(() => small.DecodeFile(EmbeddingGemma2VideoTestAssets.PathOf("h264-1s-320x240-30fps"), TestContext.Current.CancellationToken));
         Assert.Throws<EmbeddingGemma2VideoDecodeException>(() => small.DecodeAllFrames(EmbeddingGemma2VideoTestAssets.PathOf("h264-1s-320x240-30fps"), TestContext.Current.CancellationToken));
     }

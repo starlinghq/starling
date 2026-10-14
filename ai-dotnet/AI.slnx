@@ -7,6 +7,7 @@
     <Project Path="src/Starlings.Models.EmbeddingGemma2/Starlings.Models.EmbeddingGemma2.csproj" />
     <Project Path="src/Starlings.Models.EmbeddingGemma2.Imaging.SkiaSharp/Starlings.Models.EmbeddingGemma2.Imaging.SkiaSharp.csproj" />
     <Project Path="src/Starlings.Models.EmbeddingGemma2.Video.FFmpeg/Starlings.Models.EmbeddingGemma2.Video.FFmpeg.csproj" />
+    <Project Path="src/Starlings.Models.EmbeddingGemma2.Video.FFmpeg9/Starlings.Models.EmbeddingGemma2.Video.FFmpeg9.csproj" />
     <Project Path="src/Starlings.Models.Gliner2/Starlings.Models.Gliner2.csproj" />
     <Project Path="src/Starlings.Runtime.Onnx/Starlings.Runtime.Onnx.csproj" />
     <Project Path="src/Starlings.Models.E5.Extensions.AI/Starlings.Models.E5.Extensions.AI.csproj" />
@@ -31,6 +32,7 @@
     <Project Path="tests/Starlings.Models.EmbeddingGemma2.Tests/Starlings.Models.EmbeddingGemma2.Tests.csproj" />
     <Project Path="tests/Starlings.Models.EmbeddingGemma2.Imaging.SkiaSharp.Tests/Starlings.Models.EmbeddingGemma2.Imaging.SkiaSharp.Tests.csproj" />
     <Project Path="tests/Starlings.Models.EmbeddingGemma2.Video.FFmpeg.Tests/Starlings.Models.EmbeddingGemma2.Video.FFmpeg.Tests.csproj" />
+    <Project Path="tests/Starlings.Models.EmbeddingGemma2.Video.FFmpeg9.Tests/Starlings.Models.EmbeddingGemma2.Video.FFmpeg9.Tests.csproj" />
     <Project Path="tests/Starlings.Models.Gliner2.Tests/Starlings.Models.Gliner2.Tests.csproj" />
     <Project Path="tests/Starlings.Generation.OnnxGenAI.Tests/Starlings.Generation.OnnxGenAI.Tests.csproj" />
     <Project Path="tests/Starlings.Models.Qwen35.Tests/Starlings.Models.Qwen35.Tests.csproj" />

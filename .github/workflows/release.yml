@@ -29,8 +29,9 @@ concurrency:
 env:
   DOTNET_NOLOGO: true
   DOTNET_CLI_TELEMETRY_OPTOUT: true
-  # Built and drilled but never published until its legal review is done (docs/kickoff.md, EmbeddingGemma 2 admission).
-  HELD: "Starlings.Models.EmbeddingGemma2.Video.FFmpeg"
+  # Built and drilled but never published until their legal review is done (docs/kickoff.md, EmbeddingGemma 2 admission;
+  # decision D2): the FFmpeg video adapters, one per FFmpeg major.
+  HELD: "Starlings.Models.EmbeddingGemma2.Video.FFmpeg Starlings.Models.EmbeddingGemma2.Video.FFmpeg9"
 
 jobs:
   candidate:

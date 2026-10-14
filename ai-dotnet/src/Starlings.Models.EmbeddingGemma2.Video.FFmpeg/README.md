@@ -2,7 +2,7 @@
 
 **Preview.** **Experimental.** Decodes video files and streams into `EmbeddingGemma2Video` for `Starlings.Models.EmbeddingGemma2` exactly as upstream sees them: sentence-transformers decodes videos with torchcodec 0.17 on FFmpeg, and this adapter makes the same FFmpeg calls (packet-scan metadata, 1 frame per second sampling up to 32 frames, the display matrix applied, FFmpeg's default RGB conversion). The model package itself takes decoded frames and has no native dependency; this adapter is optional.
 
-**This package contains no FFmpeg.** It binds FFmpeg through its own bindings, generated from the FFmpeg 8.1 headers by `tools/generate-ffmpeg-bindings.py` (no third-party bindings package), and loads **your own FFmpeg 8.x shared libraries** at run time. You choose, install and distribute FFmpeg (see [Licenses and patents](#licenses-and-patents)).
+**This package contains no FFmpeg.** It binds FFmpeg through its own bindings, generated from the FFmpeg 8.1 headers by `tools/generate-ffmpeg-bindings.py` (no third-party bindings package), and loads **your own FFmpeg 8.x shared libraries** at run time. For FFmpeg 9.x use `Starlings.Models.EmbeddingGemma2.Video.FFmpeg9` (one adapter package per FFmpeg major; the decoding code is shared). You choose, install and distribute FFmpeg (see [Licenses and patents](#licenses-and-patents)).
 
 ```csharp
 using Starlings.Models.EmbeddingGemma2;
@@ -41,7 +41,7 @@ Errors are typed (`EmbeddingGemma2FFmpegException` and subclasses), checked when
 | Rotation -90 and 180 | torchcodec's transforms, no fixture | untested |
 | All frames (`DecodeAllFrames`), frames by index (`DecodeFramesAt`) | Every frame (with timing: the package then samples like the file), or `get_frames_at` indices | experimental |
 | Streams and memory | Seekable streams through a custom AVIO context; equal to the file on the fixtures | experimental |
-| FFmpeg 9 | Other ABI (bindings generated from the FFmpeg 9 headers would bind it); not loadable by this version. torchcodec on FFmpeg 9.0.1 gave the same RGB in the spike (reported, not gated) | unsupported |
+| FFmpeg 9 | Other ABI; not loadable by this package (typed error naming `libavcodec.so.63`). Use `Starlings.Models.EmbeddingGemma2.Video.FFmpeg9`: the same code with bindings generated from the FFmpeg 9.0.1 headers, exact against torchcodec on FFmpeg 9.0.1 (every frame of the 22 fixture videos) | unsupported here; experimental in the FFmpeg 9 package |
 | Other CPUs (ARM64, non-AVX2) | swscale's SIMD paths may differ by a level (for upstream as well) | untested |
 | Variable frame rate, interlaced, HDR, audio | Sampling is index-based as upstream; audio ignored | untested (audio unsupported) |
 
