@@ -168,11 +168,17 @@ qualification:
   # packed packages, ONNX Runtime CPU natives, offline execution, version diagnostics); other platforms untested.
   # Rerun at Starlings.Tokenizers 0.3.0-preview.1 (2026-10-13, R4): model-pipeline evaluate --require-gates G1,G2
   # gave G1 passed, G2 passed on the development fixtures, which are not P-030 release sets
-  # (docs/evidence/rerun-tokenizer-0.3.0-preview.1/). The gate entries below are unchanged; recording a result is the maintainer's act.
+  # (docs/evidence/rerun-tokenizer-0.3.0-preview.1/).
+  # P-030 release sets (accepted 2026-10-14, docs/kickoff.md): G1 and G2 passed on the accepted release sets
+  # (tokenizer holdout and text-encoder release set, 232 rows; model-pipeline evaluate --tokenizer-fixtures and
+  # --fixtures, protected evidence verified), recorded under the maintainer's 2026-10-14 delegation.
+  # G3 not recorded: MIRACL nDCG@10 0.7978 (min 0.792), MRR@10 0.7717 (min 0.765) on the accepted set, but the
+  # budget's dataset_sha256 covers dataset.json and the evaluator's digest does not, so the evaluator binds no budget
+  # (not-run). Evidence: docs/evidence/release-set-gates-2026-10-14/e5-onnx-fp32-cpu/.
   gates:
     G0: { status: passed, evidence: docs/releases/e5-0.1.0-preview.1.md, date: 2026-10-09 }
-    G1: { status: passed, evidence: docs/releases/e5-0.1.0-preview.2/fidelity-report.md, date: 2026-10-09 }
-    G2: { status: passed, evidence: docs/releases/e5-0.1.0-preview.2/fidelity-report.md, date: 2026-10-09 }
+    G1: { status: passed, evidence: docs/evidence/release-set-gates-2026-10-14/e5-onnx-fp32-cpu/README.md, date: 2026-10-14 }
+    G2: { status: passed, evidence: docs/evidence/release-set-gates-2026-10-14/e5-onnx-fp32-cpu/README.md, date: 2026-10-14 }
     G3: { status: checklist, evidence: docs/releases/e5-0.1.0-preview.1.md, date: 2026-10-09 }
     G4: { status: checklist, evidence: docs/releases/e5-0.1.0-preview.1.md, date: 2026-10-09 }
     G5: { status: checklist, evidence: docs/benchmarks/e5-2026-10-09.md, date: 2026-10-09 }

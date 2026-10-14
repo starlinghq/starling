@@ -1582,15 +1582,15 @@
         },
         "G1": {
           "status": "passed",
-          "evidence": "docs/releases/e5-0.1.0-preview.2/fidelity-report.md",
+          "evidence": "docs/evidence/release-set-gates-2026-10-14/e5-onnx-fp32-cpu/README.md",
           "evidence_found": true,
-          "date": "2026-10-09"
+          "date": "2026-10-14"
         },
         "G2": {
           "status": "passed",
-          "evidence": "docs/releases/e5-0.1.0-preview.2/fidelity-report.md",
+          "evidence": "docs/evidence/release-set-gates-2026-10-14/e5-onnx-fp32-cpu/README.md",
           "evidence_found": true,
-          "date": "2026-10-09"
+          "date": "2026-10-14"
         },
         "G3": {
           "status": "checklist",
