@@ -11,6 +11,7 @@
 # widths for the managed pooling and normalization).
 #
 #   tools/aot-check-ai.sh --models <cache> [--feed <dir>] [--targets a,b] [--download] [--out <dir>]
+#                         [--run-unsupported]
 #
 #   --models <cache>  model cache in the Starlings layout (<repo>/<commit>/<files>); read only. Targets whose files
 #                     are missing are skipped with a note.
@@ -20,10 +21,13 @@
 #   --download        the acquisition target also downloads e5's tokenizer.json from the public Hub (no token) into an
 #                     empty directory, under JIT and under AOT.
 #   --out <dir>       where the per-target logs, warnings and results go (default <repo>/artifacts/aot-check-ai).
+#   --run-unsupported also run the native binaries of the targets recorded as AOT unsupported, to revisit their
+#                     status. Off by default: those binaries abort (SIGABRT) by design, which leaves a core dump and
+#                     a crash notification on every run. When on, the run has core dumps disabled (ulimit -c 0).
 #
 # Exit code 0 when every target that ran published, ran under AOT and matched the JIT results, except the targets whose
 # AOT status is unsupported (the ML.NET adapters: Microsoft.ML builds its row getters with Reflection.Emit), which are
-# run and reported but expected to fail. Warnings do not fail the check: they are the evidence (summary.md lists them).
+# published (their warnings recorded) but not run unless --run-unsupported is given. Warnings do not fail the check: they are the evidence (summary.md lists them).
 set -euo pipefail
 
 root="$(cd "$(dirname "$0")/.." && pwd)"
@@ -32,6 +36,7 @@ models=""
 feed=""
 targets=("${all_targets[@]}")
 download=0
+run_unsupported=0
 out="$root/artifacts/aot-check-ai"
 float_bound="1e-5"
 # Targets whose AOT status is unsupported, with the reason recorded in docs/evidence/aot/README.md: a failure there is
@@ -43,6 +48,7 @@ while [[ $# -gt 0 ]]; do
         --feed) feed="$(cd "$2" && pwd)"; shift 2 ;;
         --targets) IFS=, read -r -a targets <<<"$2"; shift 2 ;;
         --download) download=1; shift ;;
+        --run-unsupported) run_unsupported=1; shift ;;
         --out) mkdir -p "$2"; out="$(cd "$2" && pwd)"; shift 2 ;;
         --float-bound) float_bound="$2"; shift 2 ;;
         *) echo "unknown argument: $1" >&2; exit 2 ;;
@@ -191,8 +197,17 @@ for t in "${targets[@]}"; do
     fi
     ls -la "$app/publish" >"$log/publish-files.txt"
     size="$(du -h "$app/publish/AotConsumer" | cut -f1)"
+    if [[ "$expected_unsupported" == *" $t "* && "$run_unsupported" != 1 ]]; then
+        # Known to abort under AOT (SIGABRT): do not run it, so no core dump or crash notification is produced.
+        echo "not run: $t is recorded as AOT unsupported (pass --run-unsupported to revisit)"
+        echo "| $t | $starlings | $own | $other | ok ($size) | not run | $(expected "$t") |" >>"$summary"
+        continue
+    fi
     run_aot=("$app/publish/AotConsumer" "$models" "$log/results-aot.txt" "${dl_aot[@]}")
     if [[ ${#dl_aot[@]} -eq 0 ]]; then run_aot=(offline "${run_aot[@]}"); fi
+    if [[ "$expected_unsupported" == *" $t "* ]]; then
+        run_aot=(bash -c 'ulimit -c 0; exec "$@"' _ "${run_aot[@]}")
+    fi
     if ! "${run_aot[@]}" >"$log/run-aot.log" 2>&1; then
         tail -30 "$log/run-aot.log"
         echo "| $t | $starlings | $own | $other | ok ($size) | **failed**: $(grep -m1 -E 'Exception|Unhandled' "$log/run-aot.log" | cut -c1-200 | tr '|' '/') | $(expected "$t") |" >>"$summary"
