@@ -26,3 +26,8 @@ decoder_ffmpeg:
   # same FFmpeg major. Other decoders and FFmpeg majors are reported, not gated.
   decoded_rgb_vs_torchcodec: exact
   supported_ffmpeg_major: 8
+decoder_ffmpeg9:
+  # Set by Mark on 2026-10-12: the separate FFmpeg 9 adapter (user-supplied LGPL FFmpeg 9.x, x86-64) must reproduce
+  # torchcodec's decoded RGB exactly on FFmpeg 9. The spike compared torchcodec on FFmpeg 8 and 9: 22/22 equal.
+  decoded_rgb_vs_torchcodec: exact
+  supported_ffmpeg_major: 9
