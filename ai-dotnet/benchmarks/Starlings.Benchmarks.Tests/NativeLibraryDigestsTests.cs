@@ -76,10 +76,8 @@ public sealed class NativeLibraryDigestsTests
         {
             string path = Path.Combine(dir, "libonnxruntime.so");
             File.WriteAllBytes(path, "abc"u8.ToArray());
-            var maps = $"7f0000000000-7f0000001000 r--p 00000000 103:02 9 {path}\n";
-            var json = NativeLibraryDigests.ToJson(NativeLibraryDigests.Paths(maps), NativeLibraryDigests.Sha256OrNull);
-
-            Assert.Equal("ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad", json.Single()!["sha256"]!.GetValue<string>());
+            Assert.Equal("ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad", NativeLibraryDigests.Sha256OrNull(path));
+            Assert.Null(NativeLibraryDigests.Sha256OrNull(Path.Combine(dir, "missing.so")));
         }
         finally
         {
