@@ -29,5 +29,12 @@
   },
   "default_threads": 6,
   "encode_end_to_end_vs_reference_max_abs": 0.0,
-  "nan_or_inf_rows": []
+  "nan_or_inf_rows": [],
+  "embeddings": {
+    "file": "embeddings.jsonl",
+    "rows": 696,
+    "sha256": "c2ffe5e45be11904b7ad0277758c0d8bafc48c6c65dcc87ff932ccbaf574285c",
+    "committed": false,
+    "note": "Kept outside Git for size and pinned by this digest; regenerate with the command in SOURCE.md (default_threads). The same digest was accepted in SOURCE.md with the release set (#23); recorded here so the evaluator can bind it."
+  }
 }
