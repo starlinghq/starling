@@ -12,7 +12,8 @@ this script trusts nothing it did not check today:
    review; the maintainer confirms each license on the description page.
 2. Revision: the current Commons SHA-1 and size must equal the recorded revision (a re-uploaded file is rejected).
 3. Bytes: each kept file is downloaded once into `--out` (5 s between downloads; upload.wikimedia.org rate-limits
-   bulk clients), checked against the recorded SHA-1 and size, and recorded by SHA-256.
+   bulk clients), checked against the recorded SHA-1 and size, and recorded by SHA-256. An image whose recorded
+   revision PIL cannot decode in full (a truncated file) is rejected: upstream's PIL path has no embedding for it.
 
 Writes into `--out`: the media files (never committed), `images.json` and `videos.json` in the manifest shape the
 EmbeddingGemma 2 image and video reference runners read (id, file, how it was made, source, license, attribution,
@@ -198,7 +199,16 @@ def main() -> int:
                 "sha256": hashlib.sha256(data).hexdigest(),
             }
             if kind == "images":
-                entry |= image_properties(target)
+                try:
+                    entry |= image_properties(target)
+                except OSError as exc:
+                    # The recorded revision itself does not decode in full (for example a truncated JPEG): upstream's
+                    # PIL path cannot embed it, so there is no reference for it.
+                    reason = f"the recorded revision does not decode with PIL: {exc}"
+                    licenses[-1] |= {"kept": False, "reason": reason}
+                    rejected.append({"id": name, "title": rec["title"], "reason": reason})
+                    print(f"REJECTED {name} {rec['title']}: {reason}")
+                    continue
             else:
                 entry |= {"width": rec["width"], "height": rec["height"], "duration_s": rec["duration_s"]}
             manifests[kind].append(entry)
