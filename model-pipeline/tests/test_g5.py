@@ -294,3 +294,89 @@ def test_preprocessing_only_workloads_are_not_in_the_warm_ratio():
     v = verdict(results(runs, all_series), budgets, name)
     assert [c["workload"] for c in v["rules"]["warm_median_ratio_max"]["checks"]] == ["warm/image/photo-b1/c1"]
     assert v["verdict"] == "pass"
+
+
+# ------------------------------------------------------------------------------------------- native builds
+
+NUGET_ORT, PIP_ORT, GENAI = "245a6f" + "0" * 58, "c902c7" + "0" * 58, "0cdf80" + "0" * 58
+
+
+def qwen_pair(cs_digests, py_digests):
+    """A Qwen CPU pair whose TTFT passes, with the given ``native_library_digests`` (None: key absent)."""
+    model, name = "qwen3.5-0.8b", "qwen3.5-0.8b/ortgenai-fp32x-cpu"
+    kw = {"model_path": "/s/ortgenai-fp32x/model.onnx"}
+    cs = run("c", model, **kw)
+    py = run("p", model, "python", "python-genai", settings={"variant": "fp32x"}, **kw)
+    for r, d in ((cs, cs_digests), (py, py_digests)):
+        if d is not None:
+            r["environment"]["native_library_digests"] = d
+    metrics = {"ttft_ms": [100.0] * 5}
+    all_series = [series(rid, "short-decode64", [1.0] * 5, path="ids", metrics=metrics) for rid in ("c", "p")]
+    budgets = {name: {"time_to_first_token_ratio_max": 1.10}}
+    return verdict(results([cs, py], all_series), budgets, name)
+
+
+def lib(path, sha):
+    return {"path": path, "sha256": sha}
+
+
+CS_LIBS = [lib("/app/native/libonnxruntime.so", NUGET_ORT), lib("/app/native/libonnxruntime-genai.so", GENAI)]
+PY_LIBS = [
+    lib("/venv/onnxruntime/capi/libonnxruntime.so.1.30.0", PIP_ORT),
+    lib("/venv/onnxruntime/capi/onnxruntime_pybind11_state.cpython-313-x86_64-linux-gnu.so", "e" * 64),
+    lib("/venv/onnxruntime_genai/libonnxruntime-genai.so", GENAI),
+]
+
+
+def test_library_roles_ignore_version_suffixes_and_python_extensions():
+    assert g5.library_role("/a/libonnxruntime.so") == "onnxruntime"
+    assert g5.library_role("/a/libonnxruntime.so.1.30.0") == "onnxruntime"
+    assert g5.library_role("/a/libonnxruntime-genai.so") == "onnxruntime-genai"
+    assert g5.library_role("/a/libonnxruntime_providers_cuda.so") == "onnxruntime_providers_cuda"
+    assert g5.library_role("/a/onnxruntime_pybind11_state.cpython-313-x86_64-linux-gnu.so") is None
+
+
+def test_different_native_builds_are_reported_but_do_not_fail_the_verdict():
+    v = qwen_pair(CS_LIBS, PY_LIBS)
+    assert v["verdict"] == "pass" and v["problems"] == []
+    nb = v["native_builds"]
+    assert nb["status"] == "different" and nb["ort_versions"] == ["1.30.0"]
+    by_role = {e["role"]: e for e in nb["libraries"]}
+    assert by_role["onnxruntime"]["status"] == "different"
+    assert by_role["onnxruntime"]["csharp_sha256"] == [NUGET_ORT]
+    assert by_role["onnxruntime"]["python_sha256"] == [PIP_ORT]
+    assert by_role["onnxruntime"]["python_files"] == ["libonnxruntime.so.1.30.0"]
+    assert by_role["onnxruntime-genai"]["status"] == "identical"
+    text = g5.report([v])
+    assert "NATIVE BUILDS DIFFER: same version, different native build (ONNX Runtime 1.30.0)" in text
+    assert "onnxruntime: C# 245a6f000000 (libonnxruntime.so) | Python c902c7000000 (libonnxruntime.so.1.30.0)" in text
+
+
+def test_identical_native_builds():
+    py = [lib("/venv/x/libonnxruntime.so.1.30.0", NUGET_ORT), lib("/venv/y/libonnxruntime-genai.so", GENAI)]
+    v = qwen_pair(CS_LIBS, py)
+    assert v["native_builds"]["status"] == "identical"
+    assert "native builds: identical (ONNX Runtime 1.30.0;" in g5.report([v])
+
+
+def test_missing_or_unavailable_digests_are_unavailable_never_identical():
+    for py in (None, "unavailable", [lib("/venv/x/libonnxruntime.so.1.30.0", None)]):
+        v = qwen_pair(CS_LIBS, py)
+        nb = v["native_builds"]
+        assert nb["status"] == "unavailable" and nb["unavailable"] == ["run p (python-python-genai)"]
+        assert v["verdict"] == "pass"
+        assert "native builds: unavailable (1 run(s) record no native library digests)" in g5.report([v])
+
+
+def test_python_runtime_inside_the_pybind_extension_is_its_onnxruntime():
+    pybind = "onnxruntime_pybind11_state.cpython-313-x86_64-linux-gnu.so"
+    v = qwen_pair(CS_LIBS[:1], [lib(f"/venv/onnxruntime/capi/{pybind}", "e" * 64)])
+    (entry,) = v["native_builds"]["libraries"]
+    assert entry["role"] == "onnxruntime" and entry["python_files"] == [pybind] and entry["status"] == "different"
+    # With a libonnxruntime loaded too (onnxruntime-genai), the extension is not the runtime compared.
+    assert "e" * 64 not in str(qwen_pair(CS_LIBS, PY_LIBS)["native_builds"]["libraries"])
+
+
+def test_no_common_library():
+    v = qwen_pair(CS_LIBS[1:], [lib("/venv/x/libonnxruntime.so.1.30.0", PIP_ORT)])
+    assert v["native_builds"]["status"] == "no common library"

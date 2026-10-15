@@ -46,3 +46,39 @@ def test_passing_series_keep_the_run_passing_and_non_finite_fails():
     assert quality["failed_series"] == []
     assert runner.apply_quality_gate({"pass": True}, [series("short-b8", "ids", 0.0, finite=False)], 1e-5) is False
     assert runner.apply_quality_gate({"pass": False}, [series("short-b1", "ids", 1e-7)], 1e-5) is False
+
+
+def load_core():
+    spec = importlib.util.spec_from_file_location("matched_core", RUNNER.parents[1] / "bench" / "matched_core.py")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)  # standard library only at import time
+    return module
+
+
+def test_native_library_digests_cover_onnxruntime_and_genai_shared_objects_only(tmp_path):
+    core = load_core()
+    ort = tmp_path / "libonnxruntime.so.1.30.0"
+    ort.write_bytes(b"abc")
+    maps = "\n".join(
+        [
+            f"7f00-7f01 r--p 00000000 103:02 4 {ort}",
+            f"7f01-7f02 r-xp 00001000 103:02 4 {ort}",
+            "7f02-7f03 r--p 00000000 103:02 5 /v/onnxruntime_genai/libonnxruntime-genai.so",
+            "7f03-7f04 r--p 00000000 103:02 6 /v/capi/onnxruntime_pybind11_state.cpython-313-x86_64-linux-gnu.so",
+            "7f04-7f05 rw-s 00000000 103:02 7 /h/.cache/Microsoft/DeveloperTools/.onnxruntime/onnxruntime-genai.db-shm",
+            "7f05-7f06 r--p 00000000 103:02 8 /usr/lib/libcudart.so.13",
+            "7f06-7f07 rw-p 00000000 00:00 0 [heap]",
+            "7f07-7f08 rw-p 00000000 00:00 0",
+        ]
+    )
+    assert core.onnxruntime_library_paths(maps) == sorted(
+        [
+            str(ort),
+            "/v/onnxruntime_genai/libonnxruntime-genai.so",
+            "/v/capi/onnxruntime_pybind11_state.cpython-313-x86_64-linux-gnu.so",
+        ]
+    )
+    assert core.file_sha256(str(ort)) == "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad"
+    assert core.file_sha256(str(tmp_path / "missing.so")) is None
+    digests = core.native_library_digests()
+    assert digests == "unavailable" or isinstance(digests, list)

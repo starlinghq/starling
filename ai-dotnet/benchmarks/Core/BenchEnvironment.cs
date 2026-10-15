@@ -179,6 +179,7 @@ internal static class BenchEnvironment
             ["session_providers"] = sessionProviders is null ? null : new JsonArray(sessionProviders.Select(p => (JsonNode)p).ToArray()),
             ["gpu"] = cuda ? GpuIdentity() : null,
             ["native_libraries"] = new JsonArray(LoadedNativeLibraries().Select(p => (JsonNode)p).ToArray()),
+            ["native_library_digests"] = NativeLibraryDigests.Collect(),
             ["cuda_visible_devices"] = System.Environment.GetEnvironmentVariable("CUDA_VISIBLE_DEVICES"),
             ["cuda_device_order"] = System.Environment.GetEnvironmentVariable("CUDA_DEVICE_ORDER"),
             ["cpu_governor"] = Read("/sys/devices/system/cpu/cpu0/cpufreq/scaling_governor"),
