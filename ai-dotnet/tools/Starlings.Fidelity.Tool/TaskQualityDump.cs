@@ -15,6 +15,8 @@
 // ner: one JSON line per gold row, {"id", "entities": [{"start", "end", "label", "text", "confidence"}]}, from
 // Gliner2EntityExtractor.Extract(text, labels) at the extractor's default operating point; offsets are Unicode
 // scalar values of the row text (Gliner2Entity.ScalarStart/ScalarEnd), the gold format's unit.
+// A row Extract rejects (Gliner2InputTooLongException) is written as {"id", "rejected": "<type>: <message>"} without
+// entities, so the evaluator refuses the file instead of scoring the row as empty; the run continues and exits 1.
 // The tool applies no budgets and reads nothing under model-pipeline/protected/.
 using System.Text;
 using System.Text.Json;
@@ -179,7 +181,7 @@ internal static class TaskQualityDump
             Session = device.Apply(new OnnxSessionOptions { IntraOpNumThreads = threads }),
         });
         var sb = new StringBuilder();
-        int rows = 0;
+        int rows = 0, rejected = 0;
         foreach (string line in File.ReadLines(dataset))
         {
             if (line.Trim().Length == 0)
@@ -190,7 +192,23 @@ internal static class TaskQualityDump
             var node = JsonNode.Parse(line)!;
             string text = (string)node["text"]!;
             var labels = node["labels"]!.AsArray().Select(l => (string)l!).ToList();
-            var result = extractor.Extract(text, labels);
+            Gliner2ExtractionResult result;
+            try
+            {
+                result = extractor.Extract(text, labels);
+            }
+            catch (Gliner2InputTooLongException ex)
+            {
+                // A typed rejection is recorded without entities (never as an empty prediction): the evaluator refuses
+                // the file rather than scoring the row as finding nothing.
+                string id = (string)node["id"]!;
+                sb.Append(new JsonObject { ["id"] = id, ["rejected"] = StageWriter.RejectionReason(ex) }.ToJsonString(Compact)).Append('\n');
+                Console.Error.WriteLine($"{id}: rejected: {StageWriter.RejectionReason(ex)}");
+                rows++;
+                rejected++;
+                continue;
+            }
+
             var entities = new JsonArray(result.Entities.Select(e => (JsonNode?)new JsonObject
             {
                 ["start"] = e.ScalarStart,
@@ -206,6 +224,12 @@ internal static class TaskQualityDump
         Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(outPath))!);
         File.WriteAllText(outPath, sb.ToString());
         Console.WriteLine($"wrote {outPath}: {rows} rows");
+        if (rejected > 0)
+        {
+            Console.Error.WriteLine($"error: {rejected} of {rows} rows rejected (recorded with their reason, without entities)");
+            return 1;
+        }
+
         return 0;
     }
 

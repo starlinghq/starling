@@ -16,7 +16,8 @@
 //
 // Writes <out>/<model>-<utc>.json (raw: environment manifest, options, cycles, samples, latencies, verdicts) and
 // <out>/<model>-<utc>.md (report). Exit code: 0 no unbounded growth, no wrong output, no unexpected error; 1 a failure
-// (any growth verdict, wrong output or unexpected exception); 2 usage error; 3 model files not available.
+// (any growth verdict, wrong output or unexpected exception); 2 usage error; 3 model files not available; 70 an
+// exception escaped the tool (ai-dotnet/tools/Shared/ToolMain.cs).
 //
 // Options:
 //   --duration <t>            Run length: 1h (default; the plan 10.2 qualification length), 5m, 300s, or seconds.
@@ -55,41 +56,46 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 
-if (args.Length == 0 || args[0] is "-h" or "--help")
-{
-    Console.Error.WriteLine("usage: Starlings.Soak.Tool <e5|gliner2|embeddinggemma2|embeddinggemma2-image|embeddinggemma2-video|qwen35|all> --out <dir> [--duration 1h] [options]; see Program.cs");
-    return args.Length == 0 ? 2 : 0;
-}
+return ToolMain.Run(ToolBody);
 
-if (args[0] == "reanalyze")
+int ToolBody()
 {
-    return Reanalysis.Run(args[1..]);
-}
+    if (args.Length == 0 || args[0] is "-h" or "--help")
+    {
+        Console.Error.WriteLine("usage: Starlings.Soak.Tool <e5|gliner2|embeddinggemma2|embeddinggemma2-image|embeddinggemma2-video|qwen35|all> --out <dir> [--duration 1h] [options]; see Program.cs");
+        return args.Length == 0 ? 2 : 0;
+    }
 
-SoakOptions options;
-try
-{
-    options = SoakOptions.Parse(args[1..]);
-}
-catch (ArgumentException ex)
-{
-    Console.Error.WriteLine(ex.Message);
-    return 2;
-}
+    if (args[0] == "reanalyze")
+    {
+        return Reanalysis.Run(args[1..]);
+    }
 
-if (args[0] == "all")
-{
-    return SoakRunner.RunAll(args[1..]);
-}
+    SoakOptions options;
+    try
+    {
+        options = SoakOptions.Parse(args[1..]);
+    }
+    catch (ArgumentException ex)
+    {
+        Console.Error.WriteLine(ex.Message);
+        return 2;
+    }
 
-var workload = SoakWorkload.All.FirstOrDefault(w => w.Name == args[0]);
-if (workload is null)
-{
-    Console.Error.WriteLine($"unknown model '{args[0]}'; expected one of {string.Join(", ", SoakWorkload.All.Select(w => w.Name))}, all");
-    return 2;
-}
+    if (args[0] == "all")
+    {
+        return SoakRunner.RunAll(args[1..]);
+    }
 
-return new SoakRunner(workload, options).Run();
+    var workload = SoakWorkload.All.FirstOrDefault(w => w.Name == args[0]);
+    if (workload is null)
+    {
+        Console.Error.WriteLine($"unknown model '{args[0]}'; expected one of {string.Join(", ", SoakWorkload.All.Select(w => w.Name))}, all");
+        return 2;
+    }
+
+    return new SoakRunner(workload, options).Run();
+}
 
 internal sealed record SoakOptions
 {
@@ -227,9 +233,11 @@ internal sealed class SoakRunner(SoakWorkload workload, SoakOptions options)
             using var child = Process.Start(info)!;
             child.WaitForExit();
             Console.WriteLine($"[all] {w.Name}: exit {child.ExitCode}");
-            if (child.ExitCode is 1 or 2)
+            // 0 passed and 3 skipped (files not available); a usage error stays 2. Anything else is a failure: 1, and
+            // also a child that crashed (70 from ToolMain, or killed by a signal), which used to count as passed.
+            if (child.ExitCode is not (0 or 3))
             {
-                worst = Math.Max(worst, child.ExitCode == 1 ? 1 : 2);
+                worst = Math.Max(worst, child.ExitCode == 2 ? 2 : 1);
             }
         }
 

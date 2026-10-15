@@ -36,4 +36,9 @@
     <ProjectReference Include="../../src/Starlings.Models.EmbeddingGemma2.Video.FFmpeg9/Starlings.Models.EmbeddingGemma2.Video.FFmpeg9.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- Entry-point wrapper: an escaping exception gives "error:" and exit code 70, not an abort and core dump. -->
+    <Compile Include="../Shared/ToolMain.cs" Link="Shared/ToolMain.cs" />
+  </ItemGroup>
+
 </Project>

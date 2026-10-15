@@ -18,195 +18,209 @@ using Starlings.Models.Qwen35;
 using Starlings.Models.Qwen35.Extensions.AI;
 using Microsoft.Extensions.AI;
 
-if (args.Length == 0 || args[0] is not ("download" or "chat" or "ask"))
+// A failure ends with a one-line message and exit code 1, not an unhandled-exception abort.
+try
 {
-    Console.Error.WriteLine("usage: QwenChat download [--cache <dir>] [--variant fp32x|fp16x] | chat|ask [--cache <dir> | --snapshot <dir>] [--variant fp32x|fp16x] [--cuda] [--thinking] [--max-new <n>] [--chat-client] [question]");
-    return 2;
+    return await ToolBody();
+}
+catch (Exception ex) when (ex is not (OutOfMemoryException or StackOverflowException))
+{
+    Console.Error.WriteLine($"error: {ex.Message}");
+    return 1;
 }
 
-string? cache = null;
-string? snapshot = null;
-var variant = Qwen35Variant.Fp32x;
-bool cuda = false;
-bool thinking = false;
-bool useChatClient = false;
-int maxNew = 512;
-var rest = new List<string>();
-for (int i = 1; i < args.Length; i++)
+async Task<int> ToolBody()
 {
-    switch (args[i])
+    if (args.Length == 0 || args[0] is not ("download" or "chat" or "ask"))
     {
-        case "--cache" when i + 1 < args.Length:
-            cache = args[++i];
-            break;
-        case "--snapshot" when i + 1 < args.Length:
-            snapshot = args[++i];
-            break;
-        case "--variant" when i + 1 < args.Length:
-            variant = args[++i] == "fp16x" ? Qwen35Variant.Fp16x : Qwen35Variant.Fp32x;
-            break;
-        case "--cuda":
-            cuda = true;
-            break;
-        case "--thinking":
-            thinking = true;
-            break;
-        case "--chat-client":
-            useChatClient = true;
-            break;
-        case "--max-new" when i + 1 < args.Length:
-            maxNew = int.Parse(args[++i], CultureInfo.InvariantCulture);
-            break;
-        default:
-            rest.Add(args[i]);
-            break;
-    }
-}
-
-var acquisition = new ModelAcquisitionOptions { CacheDirectory = cache };
-
-if (args[0] == "download")
-{
-    // 1. Explicit acquisition of the pinned lock: every file (chat_template.jinja, the runtime tokenizer.json and the built
-    //    graph) from the Hugging Face hosting repository at its pinned commit. The only step that uses the network.
-    var assetLock = Qwen35ModelAssets.GetLock(variant);
-    Console.WriteLine($"lock:  {assetLock}");
-    Console.WriteLine($"cache: {acquisition.ResolveCacheDirectory()}");
-    Console.WriteLine($"from:  {Qwen35ModelAssets.HostingBaseUrl}");
-
-    var progress = new FileProgress();
-    Qwen35ModelFiles downloaded = await Qwen35ModelAssets.DownloadAsync(variant, acquisition, progress);
-    foreach (ModelAssetFile file in assetLock.Files)
-    {
-        string how = progress.Downloaded.Contains(file.Path) ? "downloaded" : "already cached";
-        Console.WriteLine($"{file.Path}: {how}, {file.Size} bytes, sha256 {file.Sha256} verified");
+        Console.Error.WriteLine("usage: QwenChat download [--cache <dir>] [--variant fp32x|fp16x] | chat|ask [--cache <dir> | --snapshot <dir>] [--variant fp32x|fp16x] [--cuda] [--thinking] [--max-new <n>] [--chat-client] [question]");
+        return 2;
     }
 
-    Console.WriteLine($"snapshot: {downloaded.Snapshot.Directory}");
-    return 0;
-}
-
-// 2. Offline load: verifies the files (size and SHA-256) and never downloads. Loading the 3 GB fp32x graph takes a while.
-Qwen35ModelFiles files = snapshot is null ? Qwen35ModelAssets.OpenLocal(variant, acquisition) : Qwen35ModelAssets.OpenDirectory(snapshot, variant);
-using var model = Qwen35ChatModel.Load(files, new Qwen35ModelOptions { Provider = cuda ? GenAIExecutionProvider.Cuda : GenAIExecutionProvider.Cpu });
-Console.WriteLine($"model: {model.Info.Profile} ({model.Info.Checkpoint}) on {model.Info.Provider}, ONNX Runtime GenAI {model.Info.GenAIVersion}");
-Console.WriteLine($"tokenizer: {model.Info.Tokenizer}");
-var options = new Qwen35ChatOptions { MaxNewTokens = maxNew, EnableThinking = thinking };
-// The same model behind Microsoft.Extensions.AI's IChatClient; the client wraps the model and does not own it.
-using IChatClient chatClient = new Qwen35ChatClient(model, new Qwen35ChatClientOptions { Defaults = options });
-
-if (args[0] == "ask")
-{
-    string question = rest.Count > 0 ? string.Join(' ', rest) : "What is the capital of France? Answer in one sentence.";
-    Console.WriteLine($"user: {question}");
-    Console.Write("assistant: ");
-    Qwen35Message[] ask = [Qwen35Message.User(question)];
-    var reply = useChatClient ? await StreamChatClient(ask, CancellationToken.None) : Stream(ask, CancellationToken.None);
-    return reply is null ? 1 : 0;
-}
-
-// 3. Interactive chat. Each turn sends the whole conversation (the template re-renders it); requests share no state.
-var history = new List<Qwen35Message>();
-CancellationTokenSource? current = null;
-Console.CancelKeyPress += (_, e) =>
-{
-    if (current is { IsCancellationRequested: false } cts)
+    string? cache = null;
+    string? snapshot = null;
+    var variant = Qwen35Variant.Fp32x;
+    bool cuda = false;
+    bool thinking = false;
+    bool useChatClient = false;
+    int maxNew = 512;
+    var rest = new List<string>();
+    for (int i = 1; i < args.Length; i++)
     {
-        e.Cancel = true;
-        cts.Cancel();
+        switch (args[i])
+        {
+            case "--cache" when i + 1 < args.Length:
+                cache = args[++i];
+                break;
+            case "--snapshot" when i + 1 < args.Length:
+                snapshot = args[++i];
+                break;
+            case "--variant" when i + 1 < args.Length:
+                variant = args[++i] == "fp16x" ? Qwen35Variant.Fp16x : Qwen35Variant.Fp32x;
+                break;
+            case "--cuda":
+                cuda = true;
+                break;
+            case "--thinking":
+                thinking = true;
+                break;
+            case "--chat-client":
+                useChatClient = true;
+                break;
+            case "--max-new" when i + 1 < args.Length:
+                maxNew = int.Parse(args[++i], CultureInfo.InvariantCulture);
+                break;
+            default:
+                rest.Add(args[i]);
+                break;
+        }
     }
-};
-Console.WriteLine("Type a message (empty line or /exit quits, /reset clears the conversation, Ctrl+C stops an answer).");
-while (true)
-{
-    Console.Write("\nyou> ");
-    string? line = Console.ReadLine();
-    if (string.IsNullOrWhiteSpace(line) || line.Trim() == "/exit")
+
+    var acquisition = new ModelAcquisitionOptions { CacheDirectory = cache };
+
+    if (args[0] == "download")
     {
+        // 1. Explicit acquisition of the pinned lock: every file (chat_template.jinja, the runtime tokenizer.json and the built
+        //    graph) from the Hugging Face hosting repository at its pinned commit. The only step that uses the network.
+        var assetLock = Qwen35ModelAssets.GetLock(variant);
+        Console.WriteLine($"lock:  {assetLock}");
+        Console.WriteLine($"cache: {acquisition.ResolveCacheDirectory()}");
+        Console.WriteLine($"from:  {Qwen35ModelAssets.HostingBaseUrl}");
+
+        var progress = new FileProgress();
+        Qwen35ModelFiles downloaded = await Qwen35ModelAssets.DownloadAsync(variant, acquisition, progress);
+        foreach (ModelAssetFile file in assetLock.Files)
+        {
+            string how = progress.Downloaded.Contains(file.Path) ? "downloaded" : "already cached";
+            Console.WriteLine($"{file.Path}: {how}, {file.Size} bytes, sha256 {file.Sha256} verified");
+        }
+
+        Console.WriteLine($"snapshot: {downloaded.Snapshot.Directory}");
         return 0;
     }
 
-    if (line.Trim() == "/reset")
+    // 2. Offline load: verifies the files (size and SHA-256) and never downloads. Loading the 3 GB fp32x graph takes a while.
+    Qwen35ModelFiles files = snapshot is null ? Qwen35ModelAssets.OpenLocal(variant, acquisition) : Qwen35ModelAssets.OpenDirectory(snapshot, variant);
+    using var model = Qwen35ChatModel.Load(files, new Qwen35ModelOptions { Provider = cuda ? GenAIExecutionProvider.Cuda : GenAIExecutionProvider.Cpu });
+    Console.WriteLine($"model: {model.Info.Profile} ({model.Info.Checkpoint}) on {model.Info.Provider}, ONNX Runtime GenAI {model.Info.GenAIVersion}");
+    Console.WriteLine($"tokenizer: {model.Info.Tokenizer}");
+    var options = new Qwen35ChatOptions { MaxNewTokens = maxNew, EnableThinking = thinking };
+    // The same model behind Microsoft.Extensions.AI's IChatClient; the client wraps the model and does not own it.
+    using IChatClient chatClient = new Qwen35ChatClient(model, new Qwen35ChatClientOptions { Defaults = options });
+
+    if (args[0] == "ask")
     {
-        history.Clear();
-        Console.WriteLine("(conversation cleared)");
-        continue;
+        string question = rest.Count > 0 ? string.Join(' ', rest) : "What is the capital of France? Answer in one sentence.";
+        Console.WriteLine($"user: {question}");
+        Console.Write("assistant: ");
+        Qwen35Message[] ask = [Qwen35Message.User(question)];
+        var reply = useChatClient ? await StreamChatClient(ask, CancellationToken.None) : Stream(ask, CancellationToken.None);
+        return reply is null ? 1 : 0;
     }
 
-    history.Add(Qwen35Message.User(line));
-    using (current = new CancellationTokenSource())
+    // 3. Interactive chat. Each turn sends the whole conversation (the template re-renders it); requests share no state.
+    var history = new List<Qwen35Message>();
+    CancellationTokenSource? current = null;
+    Console.CancelKeyPress += (_, e) =>
     {
-        Console.Write("qwen> ");
-        string? reply = useChatClient ? await StreamChatClient(history, current.Token) : Stream(history, current.Token);
-        if (reply is null)
+        if (current is { IsCancellationRequested: false } cts)
         {
-            history.RemoveAt(history.Count - 1);
+            e.Cancel = true;
+            cts.Cancel();
         }
-        else
-        {
-            history.Add(Qwen35Message.Assistant(reply));
-        }
-    }
-
-    current = null;
-}
-
-// Streams one answer to the console; returns the full text, or null when cancelled.
-string? Stream(IReadOnlyList<Qwen35Message> messages, CancellationToken cancellationToken)
-{
-    try
+    };
+    Console.WriteLine("Type a message (empty line or /exit quits, /reset clears the conversation, Ctrl+C stops an answer).");
+    while (true)
     {
-        foreach (GenerationUpdate update in model.GenerateStreaming(messages, options, cancellationToken))
+        Console.Write("\nyou> ");
+        string? line = Console.ReadLine();
+        if (string.IsNullOrWhiteSpace(line) || line.Trim() == "/exit")
         {
-            Console.Write(update.Text);
-            if (update.Result is { } done)
+            return 0;
+        }
+
+        if (line.Trim() == "/reset")
+        {
+            history.Clear();
+            Console.WriteLine("(conversation cleared)");
+            continue;
+        }
+
+        history.Add(Qwen35Message.User(line));
+        using (current = new CancellationTokenSource())
+        {
+            Console.Write("qwen> ");
+            string? reply = useChatClient ? await StreamChatClient(history, current.Token) : Stream(history, current.Token);
+            if (reply is null)
             {
-                Console.WriteLine();
-                Console.WriteLine(string.Create(CultureInfo.InvariantCulture,
-                    $"[{done.FinishReason}; {done.Usage.PromptTokens} prompt + {done.Usage.CompletionTokens} completion tokens; " +
-                    $"prefill {done.Timings.Prefill.TotalMilliseconds:F0} ms, " +
-                    $"{(done.Usage.CompletionTokens > 0 ? done.Usage.CompletionTokens / done.Timings.Decode.TotalSeconds : 0):F1} tokens/s]"));
-                return done.Text;
+                history.RemoveAt(history.Count - 1);
+            }
+            else
+            {
+                history.Add(Qwen35Message.Assistant(reply));
             }
         }
-    }
-    catch (OperationCanceledException)
-    {
-        Console.WriteLine("\n[cancelled]");
+
+        current = null;
     }
 
-    return null;
-}
-
-// The same through IChatClient: text deltas, then the finish reason and usage on the last update.
-async Task<string?> StreamChatClient(IReadOnlyList<Qwen35Message> messages, CancellationToken cancellationToken)
-{
-    var conversation = messages.Select(m => new ChatMessage(
-        m.Role switch { Qwen35Role.System => ChatRole.System, Qwen35Role.User => ChatRole.User, _ => ChatRole.Assistant },
-        m.Content)).ToList();
-    var text = new StringBuilder();
-    try
+    // Streams one answer to the console; returns the full text, or null when cancelled.
+    string? Stream(IReadOnlyList<Qwen35Message> messages, CancellationToken cancellationToken)
     {
-        await foreach (ChatResponseUpdate update in chatClient.GetStreamingResponseAsync(conversation, cancellationToken: cancellationToken))
+        try
         {
-            Console.Write(update.Text);
-            text.Append(update.Text);
-            if (update.FinishReason is { } finish)
+            foreach (GenerationUpdate update in model.GenerateStreaming(messages, options, cancellationToken))
             {
-                UsageDetails usage = update.Contents.OfType<UsageContent>().Single().Details;
-                Console.WriteLine();
-                Console.WriteLine(string.Create(CultureInfo.InvariantCulture,
-                    $"[{(finish == ChatFinishReason.Stop ? "Stop" : "Length")}; {usage.InputTokenCount} prompt + {usage.OutputTokenCount} completion tokens; IChatClient]"));
-                return text.ToString();
+                Console.Write(update.Text);
+                if (update.Result is { } done)
+                {
+                    Console.WriteLine();
+                    Console.WriteLine(string.Create(CultureInfo.InvariantCulture,
+                        $"[{done.FinishReason}; {done.Usage.PromptTokens} prompt + {done.Usage.CompletionTokens} completion tokens; " +
+                        $"prefill {done.Timings.Prefill.TotalMilliseconds:F0} ms, " +
+                        $"{(done.Usage.CompletionTokens > 0 ? done.Usage.CompletionTokens / done.Timings.Decode.TotalSeconds : 0):F1} tokens/s]"));
+                    return done.Text;
+                }
             }
         }
-    }
-    catch (OperationCanceledException)
-    {
-        Console.WriteLine("\n[cancelled]");
+        catch (OperationCanceledException)
+        {
+            Console.WriteLine("\n[cancelled]");
+        }
+
+        return null;
     }
 
-    return null;
+    // The same through IChatClient: text deltas, then the finish reason and usage on the last update.
+    async Task<string?> StreamChatClient(IReadOnlyList<Qwen35Message> messages, CancellationToken cancellationToken)
+    {
+        var conversation = messages.Select(m => new ChatMessage(
+            m.Role switch { Qwen35Role.System => ChatRole.System, Qwen35Role.User => ChatRole.User, _ => ChatRole.Assistant },
+            m.Content)).ToList();
+        var text = new StringBuilder();
+        try
+        {
+            await foreach (ChatResponseUpdate update in chatClient.GetStreamingResponseAsync(conversation, cancellationToken: cancellationToken))
+            {
+                Console.Write(update.Text);
+                text.Append(update.Text);
+                if (update.FinishReason is { } finish)
+                {
+                    UsageDetails usage = update.Contents.OfType<UsageContent>().Single().Details;
+                    Console.WriteLine();
+                    Console.WriteLine(string.Create(CultureInfo.InvariantCulture,
+                        $"[{(finish == ChatFinishReason.Stop ? "Stop" : "Length")}; {usage.InputTokenCount} prompt + {usage.OutputTokenCount} completion tokens; IChatClient]"));
+                    return text.ToString();
+                }
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            Console.WriteLine("\n[cancelled]");
+        }
+
+        return null;
+    }
 }
 
 internal sealed class FileProgress : IProgress<ModelAssetProgress>

@@ -25,4 +25,9 @@
     <ProjectReference Include="../../src/Starlings.Models.Qwen35/Starlings.Models.Qwen35.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- Entry-point wrapper: an escaping exception gives "error:" and exit code 70, not an abort and core dump. -->
+    <Compile Include="../Shared/ToolMain.cs" Link="Shared/ToolMain.cs" />
+  </ItemGroup>
+
 </Project>

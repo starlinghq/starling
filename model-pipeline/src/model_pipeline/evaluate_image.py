@@ -165,13 +165,24 @@ class ImageEvaluator:
         self.checks.append(check)
         return check
 
-    def _coverage(self, have: set[str]) -> str | None:
+    def _coverage(self, have: set[str], stage: results.StageResults | None = None) -> str | None:
+        """Problems with the set of cases that have the checked output. A case the candidate rejected (the single output
+        `rejected`, a typed per-input error of the package) has no output, so it is missing like any other: required
+        rows never pass by being rejected. The reason is quoted as evidence."""
         expected = set(self.fx.case_ids)
         missing = sorted(expected - have)
         extra = sorted(have - set(self.fx.rows))
         parts = []
         if missing:
             parts.append(f"missing cases {missing} (every protected case is required)")
+        if stage is not None:
+            rejected = {
+                c: stage.cases[c]["rejected"]
+                for c in missing
+                if c in stage.cases and isinstance(stage.cases[c].get("rejected"), str)
+            }
+            if rejected:
+                parts.append(f"rejected by the candidate {rejected}")
         if extra:
             parts.append(f"cases not in the protected fixtures {extra}")
         return "; ".join(parts) or None
@@ -228,7 +239,7 @@ class ImageEvaluator:
             return
         if self._exact_key(ids, "discrete.token_ids"):
             have = {c for c, o in stage.cases.items() if "input_ids" in o}
-            problem = self._coverage(have)
+            problem = self._coverage(have, stage)
             bad = [
                 c for c in self.fx.case_ids if c in have and stage.cases[c]["input_ids"] != self.fx.rows[c].input_ids
             ]
@@ -286,7 +297,7 @@ class ImageEvaluator:
                 self._add(Check(f"dotnet-ids.{name}", "dotnet-ids", name, detail="no results for stage 'dotnet'"))
             return
         emb = {c: o["embedding"] for c, o in stage.cases.items() if "embedding" in o}
-        problem = self._coverage(set(emb))
+        problem = self._coverage(set(emb), stage)
         stats = ErrorStats()
         min_cos, worst_cos = 1.0, ""
         non_finite = []

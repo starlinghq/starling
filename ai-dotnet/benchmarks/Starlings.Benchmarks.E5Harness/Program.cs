@@ -7,35 +7,40 @@ using Starlings.Runtime.Onnx;
 
 // Realistic-workload harness for e5-small (P-008, plan section 11). Writes starlings-bench-raw/1 JSON lines; see
 // ai-dotnet/benchmarks/README.md and model-pipeline/schemas/benchmark-raw.schema.json.
-long mainTimestamp = Stopwatch.GetTimestamp();
-long mainNs = MonotonicClock.NowNs();
+return ToolMain.Run(ToolBody);
 
-if (args.Length == 0 || args[0] is "-h" or "--help")
+int ToolBody()
 {
-    Console.Error.WriteLine(Harness.Usage);
-    return args.Length == 0 ? 2 : 0;
-}
+    long mainTimestamp = Stopwatch.GetTimestamp();
+    long mainNs = MonotonicClock.NowNs();
 
-try
-{
-    var options = HarnessOptions.Parse(args.Skip(1).ToArray());
-    if (args[0] is "warm" or "cold" && string.IsNullOrEmpty(options.Out))
+    if (args.Length == 0 || args[0] is "-h" or "--help")
     {
-        throw new ArgumentException("--out <raw.jsonl> is required.");
+        Console.Error.WriteLine(Harness.Usage);
+        return args.Length == 0 ? 2 : 0;
     }
 
-    return args[0] switch
+    try
     {
-        "warm" => Harness.Warm(options),
-        "cold" => Harness.Cold(options),
-        "cold-child" => Harness.ColdChild(options, mainNs, mainTimestamp),
-        _ => throw new ArgumentException($"Unknown command '{args[0]}'.\n{Harness.Usage}"),
-    };
-}
-catch (ArgumentException ex)
-{
-    Console.Error.WriteLine(ex.Message);
-    return 2;
+        var options = HarnessOptions.Parse(args.Skip(1).ToArray());
+        if (args[0] is "warm" or "cold" && string.IsNullOrEmpty(options.Out))
+        {
+            throw new ArgumentException("--out <raw.jsonl> is required.");
+        }
+
+        return args[0] switch
+        {
+            "warm" => Harness.Warm(options),
+            "cold" => Harness.Cold(options),
+            "cold-child" => Harness.ColdChild(options, mainNs, mainTimestamp),
+            _ => throw new ArgumentException($"Unknown command '{args[0]}'.\n{Harness.Usage}"),
+        };
+    }
+    catch (ArgumentException ex)
+    {
+        Console.Error.WriteLine(ex.Message);
+        return 2;
+    }
 }
 
 /// <summary>Command-line options shared by the commands.</summary>

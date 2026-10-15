@@ -317,6 +317,15 @@ def load_ner_set(path: Path) -> NerSet:
     return NerSet(rows, all_labels, files)
 
 
+def _not_rejected(path: Path, name: str, row: dict[str, Any]) -> None:
+    """A row the candidate rejected (`rejected`: a typed per-input error of the package) has no output to score.
+    Scoring it as empty would turn a rejection into a quality number, so the file is refused instead."""
+    if "rejected" in row:
+        raise EvaluationError(
+            f"{path}: {name!r} was rejected by the candidate ({row['rejected']}); it has no output to score"
+        )
+
+
 def load_predictions(path: Path, data: NerSet) -> dict[str, list[tuple[int, int, str]]]:
     rows = _jsonl(path)
     _no_thresholds(path, rows)
@@ -328,6 +337,7 @@ def load_predictions(path: Path, data: NerSet) -> dict[str, list[tuple[int, int,
     out = {}
     for name, row in preds.items():
         gold = data.rows[name]
+        _not_rejected(path, name, row)
         if not isinstance(row.get("entities"), list):
             raise EvaluationError(f"{path}: {name!r} needs an entities list")
         out[name] = [_span(p, gold["text"], gold["labels"], f"{path}: {name!r}") for p in row["entities"]]
@@ -448,6 +458,7 @@ def load_generations(path: Path, data: GenerationSet) -> dict[str, str]:
         raise EvaluationError(f"{path}: outputs missing rows {missing[:10]} or not in the dataset {extra[:10]}")
     out = {}
     for name, row in outputs.items():
+        _not_rejected(path, name, row)
         text = row.get("output_text")
         if not isinstance(text, str):
             raise EvaluationError(f"{path}: {name!r} needs output_text (the decoded generation)")

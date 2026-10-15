@@ -198,7 +198,7 @@ class VideoEvaluator(im.ImageEvaluator):
         ids = Check("tokenizer.token_ids", "tokenizer", "Rendered ids (placeholder expansion + tokenizer) exact")
         if self._exact_key(ids, "discrete.token_ids"):
             have = {c for c, o in stage.cases.items() if "input_ids" in o}
-            problem = self._coverage(have)
+            problem = self._coverage(have, stage)
             bad = [
                 c for c in self.fx.case_ids if c in have and stage.cases[c]["input_ids"] != self.fx.rows[c].input_ids
             ]

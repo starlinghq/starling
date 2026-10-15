@@ -21,6 +21,11 @@
 // (rendering, preprocessing, embeddings) uses the FFmpeg 8 adapter's frames. --ffmpeg-allow-non-lgpl accepts GPL builds
 // (AllowNonLgplBuild; decoding is identical), for example a distribution's FFmpeg 9.
 //
+// A row the package rejects with a typed per-input error (video decode error, timing required, image too large, input
+// too long) is written in both stages as the single output {"rejected": "<type>: <message>"} and the run continues; the
+// evaluator counts the row as missing, so its checks fail. Exit codes: 0 every row ran; 1 rows rejected (results
+// written); 2 usage or input error.
+//
 // --device cuda needs the CUDA build (ai-dotnet/tools/Starlings.Fidelity.Tool.Cuda) and defaults the profile to
 // embeddinggemma-2/video-fp32-cuda (same fixtures, rows and batch layouts). Single rows run in vision calls of 8 frames on
 // CPU and of the package default (MaxVideoFramesPerVisionCall 2) on CUDA, where the GPU is shared. Applies no bounds;
@@ -213,12 +218,24 @@ internal static class EmbeddingGemma2VideoDump
             "array" => EmbeddingGemma2Video.FromFramesWithoutTiming((all9.TryGetValue(id, out var b) ? b : all9[id] = d9.DecodeAllFrames(PathOf(id)).Video).Frames),
             _ => sampled9.TryGetValue(id, out var s) ? s : sampled9[id] = d9.DecodeFile(PathOf(id)).Video,
         };
+        var rejected = new Dictionary<string, Exception>(StringComparer.Ordinal);
         foreach (var r in rows)
+        {
+            try
+            {
+                inputs[r.Id] = Stage1Row(r);
+            }
+            catch (Exception ex) when (IsRowRejection(ex))
+            {
+                Reject(r.Id, ex, stage1);
+            }
+        }
+
+        EmbeddingGemma2MultimodalInput Stage1Row(Row r)
         {
             var videos = r.Videos.Select(v => VideoFor(v.Video, v.Form)).ToList();
             var still = r.Still is { } st ? decoder.DecodeFramesAt(PathOf(st.Video), [st.Frame])[0] : null;
             var input = BuildInput(r.Text, videos, still);
-            inputs[r.Id] = input;
             var c = stage1.Case(r.Id).Add("input_ids", embedder.Tokenize(input, r.Prompt).InputIds.ToArray());
             for (int k = 0; k < videos.Count; k++)
             {
@@ -244,6 +261,8 @@ internal static class EmbeddingGemma2VideoDump
             {
                 c.Add("image0_rgb_sha256", Sha(still.Pixels.Span));
             }
+
+            return input;
         }
 
         stage1.Write(Path.Combine(outDir, "tokenizer.results.json"));
@@ -252,12 +271,30 @@ internal static class EmbeddingGemma2VideoDump
         // Stage 3: every row alone, with its soft tokens and token embeddings.
         var stage3 = new StageWriter(profile, "dotnet", $"C# EmbeddingGemma2MultimodalEmbedder, ONNX Runtime {vd.OrtVersion} {device.Label} (managed binding {vd.ManagedBindingVersion}), frames from the FFmpeg adapter", commit, environment, [.. graphAssets, tokenizerAsset], task: "video-embedding");
         var collector = new Collector();
+        var embedded = new HashSet<string>(StringComparer.Ordinal);
         foreach (var r in rows)
         {
+            if (rejected.TryGetValue(r.Id, out var earlier))
+            {
+                stage3.Reject(r.Id, earlier);
+                continue;
+            }
+
             collector.Row = r.Id;
             var destination = new float[embedder.Dimension];
             var watch = System.Diagnostics.Stopwatch.StartNew();
-            embedder.EmbedCore([inputs[r.Id]], r.Prompt, destination, default, collector, CancellationToken.None);
+            try
+            {
+                embedder.EmbedCore([inputs[r.Id]], r.Prompt, destination, default, collector, CancellationToken.None);
+            }
+            catch (Exception ex) when (IsRowRejection(ex))
+            {
+                collector.Drop(r.Id);
+                Reject(r.Id, ex, stage3);
+                continue;
+            }
+
+            embedded.Add(r.Id);
             stage3.Case(r.Id).Add("embedding", destination);
             Console.WriteLine($"{r.Id}: embedded in {watch.Elapsed.TotalSeconds:F1} s");
         }
@@ -266,7 +303,7 @@ internal static class EmbeddingGemma2VideoDump
         stage3.Tensor("token_embeddings", outDir, "token_embeddings.f32", collector.Tokens.Select(t => (t.Id, (new[] { t.Values.Length / 768, 768 }, t.Values))));
 
         string[] mixed = ["q-bars", "h264-1s-320x240-30fps", "h264-60fps-480x270-3s", "mm-caption-then-video", "h264-1fps-64x48-8s", "vp9-odd-321x179-30fps-3s", "q-cat", "mm-two-videos", "q-shapes"];
-        var mixedRows = rows.Where(r => mixed.Contains(r.Id) && r.Prompt == EmbeddingGemma2Prompt.None).ToList();
+        var mixedRows = rows.Where(r => mixed.Contains(r.Id) && r.Prompt == EmbeddingGemma2Prompt.None && embedded.Contains(r.Id)).ToList();
         foreach (var (name, batchOptions) in new[]
         {
             ("frame-calls-2-text-batch-4", new EmbeddingGemma2MultimodalOptions { Session = session, MaxBatchSize = 4, VerifyModelSha256 = false }),
@@ -280,8 +317,29 @@ internal static class EmbeddingGemma2VideoDump
 
         stage3.Write(Path.Combine(outDir, "dotnet.results.json"));
         Console.WriteLine($"wrote {Path.Combine(outDir, "tokenizer.results.json")} and dotnet.results.json: {rows.Count} rows");
+        if (rejected.Count > 0)
+        {
+            Console.Error.WriteLine($"error: {rejected.Count} of {rows.Count} rows rejected (recorded with their reason; the evaluator fails them): {string.Join(", ", rejected.Keys)}");
+            return 1;
+        }
+
         return 0;
+
+        void Reject(string id, Exception ex, StageWriter stage)
+        {
+            rejected[id] = ex;
+            stage.Reject(id, ex);
+            Console.Error.WriteLine($"{id}: rejected: {StageWriter.RejectionReason(ex)}");
+        }
     }
+
+    /// <summary>
+    /// Typed per-input rejections by the decoders or the embedder, recorded per row instead of ending the run. Anything
+    /// else (missing libraries, I/O, runtime, programming errors) still ends it.
+    /// </summary>
+    internal static bool IsRowRejection(Exception ex) =>
+        ex is EmbeddingGemma2VideoDecodeException or FFmpeg9.EmbeddingGemma2VideoDecodeException
+            or EmbeddingGemma2VideoTimingRequiredException or EmbeddingGemma2ImageTooLargeException or EmbeddingGemma2InputTooLongException;
 
     private sealed record RowVideo(string Video, string Form);
 
@@ -302,6 +360,13 @@ internal static class EmbeddingGemma2VideoDump
         public void OnVideoSoftTokens(int input, int video, float[] softTokens) => Soft.Add(($"{Row}/video{video}", softTokens));
 
         public void OnTokenEmbeddings(int input, ReadOnlySpan<float> tokenEmbeddings) => Tokens.Add((Row, tokenEmbeddings.ToArray()));
+
+        /// <summary>Removes what a rejected row reported before it was rejected.</summary>
+        public void Drop(string row)
+        {
+            Soft.RemoveAll(s => s.Id.StartsWith(row + "/", StringComparison.Ordinal));
+            Tokens.RemoveAll(t => t.Id == row);
+        }
     }
 
     /// <summary>Upstream's layout: placeholders in the text mark media positions; without any, the image and then the videos follow the text.</summary>
