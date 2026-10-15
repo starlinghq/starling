@@ -307,8 +307,8 @@ qualification:
     G1: { status: passed, evidence: docs/evidence/release-set-gates-2026-10-14/embeddinggemma2-video-fp32-cpu/README.md, date: 2026-10-14 }
     G2: { status: passed, evidence: docs/evidence/release-set-gates-2026-10-14/embeddinggemma2-video-fp32-cpu/README.md, date: 2026-10-14 }
     G3: { status: not-run }
-    G4: { status: not-run }
-    G5: { status: not-run }
+    G4: { status: passed, evidence: docs/evidence/qualification-2026-10-15/README.md, date: 2026-10-15 }
+    G5: { status: passed, evidence: docs/evidence/qualification-2026-10-15/README.md, date: 2026-10-15 }
     # G6 checklist: the ai-0.1.0-preview.5 release drill (packed packages, clean consumer, offline sample run on a
     # seeded graph). Acquisition of the hosted graph is not covered while its source is a placeholder or private.
     # G6 open (2026-10-14, docs/evidence/g6-distribution-2026-10-14/README.md): no clean install from published packages

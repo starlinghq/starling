@@ -1,0 +1,11 @@
+## embeddinggemma-2/onnx-fp32-cpu: PASS (G5 evidence)
+comparison: python onnxruntime, same graph (runner to be factored from bench_e5_matched.py)
+- warm_median_ratio_max = 1.1: pass
+    warm/text/long-b1/c1: 1.080 [0.853, 1.696] pass
+    warm/text/long-b4/c1: 0.991 [0.983, 1.000] pass
+    warm/text/short-b1/c1: 1.073 [0.959, 1.403] pass
+    warm/text/short-b16/c1: 1.032 [0.983, 1.458] pass
+    warm/text/short-b8/c1: 1.012 [0.948, 1.232] pass
+    warm/text/words100-b1/c1: 1.083 [0.980, 1.454] pass
+    warm/text/words400-b1/c1: 1.023 [0.983, 1.707] pass
+- qualifying: yes (run counts and clean checkout)

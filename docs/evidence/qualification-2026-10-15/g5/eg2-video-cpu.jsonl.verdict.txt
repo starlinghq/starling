@@ -1,0 +1,13 @@
+## embeddinggemma-2/video-fp32-cpu: PASS (G5 evidence)
+comparison: python onnxruntime, same graphs, decoded frames
+- preprocess_share_of_embed_max = 0.05: pass
+    warm/video/video-preprocess-only:h264-bars-640x360-30fps-5s: 0.005 [0.005, 0.005] pass
+    warm/video/video-preprocess-only:h264-1080p-1920x1080-30fps-4s: 0.018 [0.017, 0.019] pass
+    warm/video/video-preprocess-only:h264-long-320x240-30fps-40s: 0.004 [0.003, 0.004] pass
+- warm_median_ratio_max = 1.1: pass
+    warm/video/video-1080p-b1/c1: 1.002 [0.981, 1.024] pass
+    warm/video/video-32-frames-b1/c1: 1.006 [0.990, 1.016] pass
+    warm/video/video-b1/c1: 0.993 [0.809, 1.208] pass
+    warm/video/video-b4/c1: 1.006 [0.981, 1.015] pass
+    warm/video/video-text-interleaved/c1: 1.024 [0.909, 1.104] pass
+- qualifying: yes (run counts and clean checkout)

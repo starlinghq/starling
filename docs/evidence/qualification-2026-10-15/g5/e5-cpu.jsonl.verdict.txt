@@ -1,0 +1,37 @@
+## multilingual-e5-small/onnx-fp32-cpu: PASS (G5 evidence)
+comparison: python onnxruntime, same graph (bench_e5_matched.py)
+- warm_median_ratio_max = 1.1: pass  # per workload; the upper 95% bound at most 1.15
+    warm/ids/long512-b1/c1: 0.999 [0.965, 1.043] pass
+    warm/ids/long512-b1/c4: 0.988 [0.945, 1.035] pass
+    warm/ids/long512-b32/c1: 0.989 [0.958, 1.064] pass
+    warm/ids/long512-b8/c1: 1.041 [0.963, 1.101] pass
+    warm/ids/long512-b8/c4: 1.054 [0.969, 1.089] pass
+    warm/ids/short-b1/c1: 0.990 [0.956, 1.043] pass
+    warm/ids/short-b1/c4: 0.970 [0.910, 1.063] pass
+    warm/ids/short-b32/c1: 1.018 [0.940, 1.112] pass
+    warm/ids/short-b8/c1: 1.001 [0.903, 1.104] pass
+    warm/ids/short-b8/c4: 0.942 [0.804, 1.187] pass
+    warm/text/long512-b1/c1: 0.994 [0.921, 1.083] pass
+    warm/text/long512-b1/c4: 1.009 [0.962, 1.062] pass
+    warm/text/long512-b32/c1: 0.994 [0.949, 1.039] pass
+    warm/text/long512-b8/c1: 1.010 [0.977, 1.042] pass
+    warm/text/long512-b8/c4: 1.008 [0.957, 1.044] pass
+    warm/text/short-b1/c1: 0.988 [0.948, 1.027] pass
+    warm/text/short-b1/c4: 0.987 [0.954, 1.021] pass
+    warm/text/short-b32/c1: 1.021 [0.944, 1.050] pass
+    warm/text/short-b8/c1: 0.886 [0.753, 0.996] pass
+    warm/text/short-b8/c4: 1.069 [0.939, 1.211] pass
+- cold_start_ratio_max = 1.0: pass
+    cold/text/cold-start/c1: 0.803 [0.795, 0.811] pass
+- adapter_overhead_max = max(1 ms, 10%) of direct C#, on medians: pass  # , on medians"
+    warm/ids/long512-b1/c1: -2.446 [-11.341, 1.611] limit 9.696 ms pass
+    warm/ids/long512-b1/c4: -14.686 [-31.953, 4.087] limit 36.117 ms pass
+    warm/ids/long512-b32/c1: -29.114 [-249.700, 221.926] limit 362.678 ms pass
+    warm/ids/long512-b8/c1: 32.774 [2.525, 84.375] limit 81.889 ms pass
+    warm/ids/long512-b8/c4: 69.230 [-198.412, 172.497] limit 316.029 ms pass
+    warm/ids/short-b1/c1: -0.097 [-0.409, 0.159] limit 1.000 ms pass
+    warm/ids/short-b1/c4: -0.453 [-1.271, 0.595] limit 1.096 ms pass
+    warm/ids/short-b32/c1: 3.953 [-9.259, 24.051] limit 21.576 ms pass
+    warm/ids/short-b8/c1: -1.839 [-4.503, 2.062] limit 2.725 ms pass
+    warm/ids/short-b8/c4: -3.264 [-15.676, 16.397] limit 8.954 ms pass
+- qualifying: yes (run counts and clean checkout)

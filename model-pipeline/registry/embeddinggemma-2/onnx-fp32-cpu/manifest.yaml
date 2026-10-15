@@ -224,7 +224,7 @@ qualification:
     G2: { status: passed, evidence: docs/evidence/release-set-gates-2026-10-14/embeddinggemma2-onnx-fp32-cpu/README.md, date: 2026-10-15 }
     G3: { status: passed, evidence: docs/evidence/release-set-gates-2026-10-14/embeddinggemma2-onnx-fp32-cpu/README.md, date: 2026-10-14 }
     G4: { status: passed, evidence: docs/evidence/g4-soak-1h-2026-10-14/README.md, date: 2026-10-14 }
-    G5: { status: not-run }
+    G5: { status: passed, evidence: docs/evidence/qualification-2026-10-15/README.md, date: 2026-10-15 }
     G6: { status: passed, evidence: docs/evidence/g6-distribution-2026-10-14/README.md, date: 2026-10-14 }
     G7: { status: passed, evidence: docs/evidence/g7-integration-2026-10-14/README.md, date: 2026-10-14 }
 

@@ -1,0 +1,11 @@
+## embeddinggemma-2/onnx-fp32-cuda: PASS (G5 evidence)
+comparison: python onnxruntime-gpu, same graph
+- warm_median_ratio_max = 1.1: pass
+    warm/text/long-b1/c1: 0.953 [0.881, 1.031] pass
+    warm/text/long-b4/c1: 0.933 [0.931, 0.938] pass
+    warm/text/short-b1/c1: 0.984 [0.932, 1.044] pass
+    warm/text/short-b16/c1: 0.944 [0.936, 0.953] pass
+    warm/text/short-b8/c1: 0.957 [0.953, 0.959] pass
+    warm/text/words100-b1/c1: 1.001 [0.936, 1.042] pass
+    warm/text/words400-b1/c1: 0.957 [0.951, 0.963] pass
+- qualifying: yes (run counts and clean checkout)

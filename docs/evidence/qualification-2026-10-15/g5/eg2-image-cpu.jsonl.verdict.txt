@@ -1,0 +1,13 @@
+## embeddinggemma-2/image-fp32-cpu: PASS (G5 evidence)
+comparison: python onnxruntime, same graphs
+- preprocess_share_of_embed_max = 0.05: pass
+    warm/image/preprocess-only:photo-chelsea: 0.003 [0.003, 0.004] pass
+    warm/image/preprocess-only:photo-coffee: 0.004 [0.003, 0.004] pass
+    warm/image/preprocess-only:size-huge-4000x3000: 0.026 [0.017, 0.028] pass
+- warm_median_ratio_max = 1.1: pass
+    warm/image/huge-b1/c1: 1.005 [0.952, 1.580] pass
+    warm/image/photo-b1/c1: 1.000 [0.967, 1.025] pass
+    warm/image/photo-b4/c1: 0.994 [0.972, 1.018] pass
+    warm/image/tiny-b1/c1: 0.997 [0.965, 1.065] pass
+    warm/image/two-images-interleaved/c1: 0.996 [0.971, 1.018] pass
+- qualifying: yes (run counts and clean checkout)
