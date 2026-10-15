@@ -78,6 +78,10 @@ def test_profile_mapping_by_model_provider_and_path():
     eg2 = run("x", "embeddinggemma-2")
     assert g5.profile_of(eg2, {"path": "text"}) == "embeddinggemma-2/onnx-fp32-cpu"
     assert g5.profile_of(eg2, {"path": "image"}) == "embeddinggemma-2/image-fp32-cpu"
+    assert g5.profile_of(eg2, {"path": "video"}) == "embeddinggemma-2/video-fp32-cpu"
+    assert g5.profile_of(run("x", "embeddinggemma-2", provider="cuda"), {"path": "video"}) == (
+        "embeddinggemma-2/video-fp32-cuda"
+    )
     assert g5.profile_of(run("x", "gliner2-base-v1"), {"path": "text"}) == "gliner2-base-v1/onnx-fp32-cpu"
     # Qwen: the Python runner records the variant; the C# harness's model path names the bundle directory.
     py = run("x", "qwen3.5-0.8b", "python", "python-genai", provider="cuda", settings={"variant": "fp16x"})
@@ -245,6 +249,34 @@ def test_cli_exit_code_and_json(tmp_path, capsys):
     out = tmp_path / "g5.json"
     assert cli.main(["bench", "g5", str(raw), "--json", str(out)]) == 1  # no data is never a pass
     assert json.loads(out.read_text()) == []
+
+
+def test_video_preprocess_share_uses_the_video_preprocessing_workload():
+    name = "embeddinggemma-2/video-fp32-cuda"
+    budgets = {name: {"preprocess_share_of_embed_max": 0.05}}
+    sha = hashlib.sha256((REPO / EG2_WORKLOADS).read_bytes()).hexdigest()
+    cs = run(
+        "c", "embeddinggemma-2", provider="cuda", artifacts={"workload_file": EG2_WORKLOADS, "workload_sha256": sha}
+    )
+    # video-preprocess-only: bars, 1080p, 32 frames (sample i -> request i % 3); each row is embedded alone by
+    # video-b1 (bars first of three), video-1080p-b1 and video-32-frames-b1.
+    pre = series("c", "video-preprocess-only", [1.0] * 3, path="video", stages={"preprocess": [2.0, 30.0, 4.0]})
+    b1 = series("c", "video-b1", [1.0] * 3, path="video", stages={"embed": [100.0, 50.0, 50.0]})
+    hd = series("c", "video-1080p-b1", [1.0] * 2, path="video", stages={"embed": [200.0] * 2})
+    long = series("c", "video-32-frames-b1", [1.0] * 2, path="video", stages={"embed": [400.0] * 2})
+    image_pre = series("c", "preprocess-only", [1.0] * 3, path="image", stages={"preprocess": [1.0] * 3})
+    v = verdict(results([cs], [pre, b1, hd, long, image_pre]), budgets, name)
+    rule = v["rules"]["preprocess_share_of_embed_max"]
+    checks = {c["workload"]: c for c in rule["checks"]}
+    assert set(checks) == {
+        "warm/video/video-preprocess-only:h264-bars-640x360-30fps-5s",
+        "warm/video/video-preprocess-only:h264-1080p-1920x1080-30fps-4s",
+        "warm/video/video-preprocess-only:h264-long-320x240-30fps-40s",
+    }
+    assert checks["warm/video/video-preprocess-only:h264-bars-640x360-30fps-5s"]["value"] == pytest.approx(0.02)
+    assert checks["warm/video/video-preprocess-only:h264-1080p-1920x1080-30fps-4s"]["value"] == pytest.approx(0.15)
+    assert checks["warm/video/video-preprocess-only:h264-long-320x240-30fps-40s"]["value"] == pytest.approx(0.01)
+    assert rule["status"] == "fail"
 
 
 def test_preprocessing_only_workloads_are_not_in_the_warm_ratio():

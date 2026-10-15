@@ -1,7 +1,7 @@
 {
-  "description": "EmbeddingGemma 2 workloads (G5, plan section 11). Text requests name rows of model-pipeline/protected/embeddinggemma-2/onnx-fp32-cpu/embeddings.jsonl by key (id, or id@prompt); image requests name rows of model-pipeline/protected/embeddinggemma-2/image-fp32-cpu/image-embeddings.jsonl. Every output is compared with that row's reference embedding. 'synthetic' text workloads take the first N words of a fixture text to fill the gap between the short and the 1,500-token rows; they have no upstream reference and are compared with the same text embedded alone at load (padded-batch consistency, not fidelity). 'preprocess-only' times the image processor alone and checks the pixel values' SHA-256 against the fixture digest. Video is not covered: the video fixtures need FFmpeg to decode.",
+  "description": "EmbeddingGemma 2 workloads (G5, plan section 11). Text requests name rows of model-pipeline/protected/embeddinggemma-2/onnx-fp32-cpu/embeddings.jsonl by key (id, or id@prompt); image requests name rows of model-pipeline/protected/embeddinggemma-2/image-fp32-cpu/image-embeddings.jsonl. Every output is compared with that row's reference embedding. 'synthetic' text workloads take the first N words of a fixture text to fill the gap between the short and the 1,500-token rows; they have no upstream reference and are compared with the same text embedded alone at load (padded-batch consistency, not fidelity). 'preprocess-only' times the image processor alone and checks the pixel values' SHA-256 against the fixture digest. Video requests name rows of model-pipeline/protected/embeddinggemma-2/video-fp32-cpu/video-embeddings.jsonl and run on decoded frames: the reference's sampled RGB frames (run_embeddinggemma2_video.py --tensors, pinned by video-fp32-cpu/tensors.json), so no video decoder runs in the timed process on either side. 'video-preprocess-only' times the per-frame preprocessing alone (140 soft tokens) and checks each video's pixel-values SHA-256; each of its rows is also embedded alone by another video workload (the denominator of preprocess_share_of_embed_max).",
   "warmup_calls": 3,
-  "cold": { "text": ["ascii-sentence@query"], "image": ["photo-chelsea"] },
+  "cold": { "text": ["ascii-sentence@query"], "image": ["photo-chelsea"], "video": ["h264-bars-640x360-30fps-5s"] },
   "workloads": [
     { "name": "short-b1", "path": "text", "input": "short", "samples": 100,
       "requests": [["ascii-sentence@query"], ["arabic"], ["korean@document"], ["ascii-punct"], ["nfkc-compat@query"], ["emoji-zwj"]] },
@@ -29,6 +29,18 @@
     { "name": "two-images-interleaved", "path": "image", "input": "text+2 images", "samples": 8,
       "requests": [["mm-two-images"]] },
     { "name": "preprocess-only", "path": "image", "input": "photo", "samples": 50, "preprocess_only": true,
-      "requests": [["photo-chelsea"], ["photo-coffee"], ["size-huge-4000x3000"]] }
+      "requests": [["photo-chelsea"], ["photo-coffee"], ["size-huge-4000x3000"]] },
+    { "name": "video-b1", "path": "video", "warmup_calls": 1, "input": "3-6 frames", "samples": 12,
+      "requests": [["h264-bars-640x360-30fps-5s"], ["h264-60fps-480x270-3s"], ["vp9-640x360-30fps-6s"]] },
+    { "name": "video-1080p-b1", "path": "video", "warmup_calls": 1, "input": "4 frames 1920x1080", "samples": 8,
+      "requests": [["h264-1080p-1920x1080-30fps-4s"]] },
+    { "name": "video-32-frames-b1", "path": "video", "warmup_calls": 1, "input": "32 frames", "samples": 4,
+      "requests": [["h264-long-320x240-30fps-40s"]] },
+    { "name": "video-b4", "path": "video", "warmup_calls": 1, "input": "3-5 frames", "batch": 4, "samples": 4,
+      "requests": [["h264-bars-640x360-30fps-5s", "h264-60fps-480x270-3s", "h264-330x186-30fps-3s", "hevc-640x360-30fps-4s"]] },
+    { "name": "video-text-interleaved", "path": "video", "warmup_calls": 1, "input": "text+1-2 videos", "samples": 6,
+      "requests": [["mm-placeholder"], ["mm-two-videos"]] },
+    { "name": "video-preprocess-only", "path": "video", "warmup_calls": 1, "input": "4-32 frames", "samples": 30, "preprocess_only": true,
+      "requests": [["h264-bars-640x360-30fps-5s"], ["h264-1080p-1920x1080-30fps-4s"], ["h264-long-320x240-30fps-40s"]] }
   ]
 }

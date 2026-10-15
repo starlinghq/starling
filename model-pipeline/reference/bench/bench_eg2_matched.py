@@ -2,8 +2,8 @@
 
 The Python side of `ai-dotnet/benchmarks/Starlings.Benchmarks.EmbeddingGemma2Harness`: same graphs, same workload
 file (`embeddinggemma2-v1.json`), same fixture rows, same thread settings, same warm/cold protocol and raw format
-(`matched_core.py`). Budgets: `embeddinggemma-2/onnx-fp32-{cpu,cuda}` (text) and `image-fp32-{cpu,cuda}` in
-`model-pipeline/protected/performance-budgets.yaml`; check with `model-pipeline bench g5`.
+(`matched_core.py`). Budgets: `embeddinggemma-2/onnx-fp32-{cpu,cuda}` (text), `image-fp32-{cpu,cuda}` and
+`video-fp32-{cpu,cuda}` in `model-pipeline/protected/performance-budgets.yaml`; check with `model-pipeline bench g5`.
 
 Text path (`--paths text`; graph `onnx/embeddinggemma2-text-fp32.onnx`), stages as the C# harness:
 
@@ -25,10 +25,21 @@ Image path (`--paths image`; graphs `embeddinggemma2-vision-fp32.onnx` and `embe
   `embed_vision` and `embed_text` (inside `embed`; not added to it);
 - `preprocess-only` workload: `decode` and `preprocess`, checked by the pixel-values SHA-256 against the fixture.
 
+Video path (`--paths video`; the same two graphs), on decoded frames: the reference's sampled RGB frames
+(`run_embeddinggemma2_video.py --tensors`: `<row id>.npz`, `video<k>_frames_uint8`, checked against the protected
+`video-fp32-cpu/tensors.json`), read at load from `$STARLING_EMBEDDINGGEMMA2_VIDEO_TENSORS`, so no decoder runs on
+either side. `embed` restates the C# video path: per frame the video processor at 140 soft tokens (the 1,260-patch
+size rule, uint8 bicubic antialiased resize, x 1/255, 16x16 patches; `eg2_video.preprocess` without the padding),
+rendering (`<|image>` + n x `<|video|>` + `<image|>` per frame at each `<|video|>` placeholder, else after the text),
+the vision graph on the chunk's frames in calls of at most 2 frames padded to the call's largest frame
+(`MaxVideoFramesPerVisionCall` 2, `MaxVisionBatchPatches` 2,520, `PadImagesToMaxPatches` false), the soft tokens at
+the `<|video|>` positions of the multimodal text graph, pooling; parts recorded as `embed_preprocess`,
+`embed_vision`, `embed_text`. `video-preprocess-only`: `preprocess` alone, checked per video by the pixel-values
+SHA-256.
+
 Quality on every series: fixture rows against the protected embeddings (`float.embedding_max_abs` of the profile's
 tolerances), synthetic text rows against the same text embedded alone at load
-(`float.padded_batch_vs_single_embedding_max_abs`), preprocessing by exact digest. Video is not covered (no
-decoded-frame fixtures without FFmpeg; the C# harness does not benchmark it either).
+(`float.padded_batch_vs_single_embedding_max_abs`), preprocessing by exact digest.
 
 Usage:
     python bench_eg2_matched.py warm --snapshot <dir> --provider cpu --threads 6 --paths text --out raw.jsonl
@@ -62,7 +73,11 @@ TEXT_GRAPH = "embeddinggemma2-text-fp32.onnx"
 VISION_GRAPH = "embeddinggemma2-vision-fp32.onnx"
 MM_GRAPH = "embeddinggemma2-text-mm-fp32.onnx"
 IMAGES_ENV = "STARLING_EMBEDDINGGEMMA2_IMAGES"
+VIDEO_FIXTURES = PROTECTED / "video-fp32-cpu"
+VIDEO_TENSORS_ENV = "STARLING_EMBEDDINGGEMMA2_VIDEO_TENSORS"
 IMAGE_TOKEN = 258880
+VIDEO_TOKEN = 258884
+VIDEO_SOFT_TOKENS, MAX_VIDEO_FRAMES_PER_CALL, MAX_VISION_BATCH_PATCHES = 140, 2, 2520  # MultimodalOptions defaults
 MAX_BATCH_SIZE, MAX_BATCH_TOKENS = 16, 8192  # EmbeddingGemma2EncoderOptions / MultimodalOptions defaults
 MAX_SOFT_TOKENS, PATCH, POOL = 280, 16, 3
 RESCALE = 0.00392156862745098  # processor_config rescale_factor
@@ -104,6 +119,26 @@ def render(prompt_text: str, text: str | None, soft_counts: list[int]) -> str:
         return prompt_text + text + "".join(blocks)
     if len(pieces) - 1 != len(blocks):
         raise SystemExit(f"{len(blocks)} images for {len(pieces) - 1} placeholders")
+    out = [prompt_text]
+    for i, piece in enumerate(pieces):
+        out.append(piece)
+        if i < len(blocks):
+            out.append(blocks[i])
+    return "".join(out)
+
+
+def render_video(prompt_text: str, text: str | None, frame_counts: list[tuple[int, int]]) -> str:
+    """EmbeddingGemma2MultimodalInput.Render for text and videos: each video is, per frame, `<|image>` + n x
+    `<|video|>` + `<image|>` (frame_counts: (frames, n) per video), at its `<|video|>` placeholder, else after the
+    text."""
+    blocks = [("<|image>" + "<|video|>" * n + "<image|>") * frames for frames, n in frame_counts]
+    if text is None:
+        return prompt_text + "".join(blocks)
+    pieces = text.split("<|video|>")
+    if len(pieces) == 1:
+        return prompt_text + text + "".join(blocks)
+    if len(pieces) - 1 != len(blocks):
+        raise SystemExit(f"{len(blocks)} videos for {len(pieces) - 1} placeholders")
     out = [prompt_text]
     for i, piece in enumerate(pieces):
         out.append(piece)
@@ -159,6 +194,13 @@ class Eg2Run(core.LoadedRun):
         self.self_tolerance = core.read_tolerance(text_tol, "float", "padded_batch_vs_single_embedding_max_abs")
         self.image_rows: dict[str, dict] = {}
         self.image_bytes: dict[str, bytes] = {}
+        self.video_rows: dict[str, dict] = {}
+        self.video_frames: dict[str, list] = {}
+        if "video" in paths:
+            video_tol = fixture_dir("video", args.provider) / "tolerances.yaml"
+            self.video_tolerance = core.read_tolerance(video_tol, "float", "embedding_max_abs")
+            self.video_rows = {r["id"]: r for r in core.read_jsonl(VIDEO_FIXTURES / "video-embeddings.jsonl")}
+            self.video_digests = json.loads((VIDEO_FIXTURES / "tensors.json").read_text())
         if "image" in paths:
             image_tol = fixture_dir("image", args.provider) / "tolerances.yaml"
             self.image_tolerance = core.read_tolerance(image_tol, "float", "embedding_max_abs")
@@ -176,9 +218,9 @@ class Eg2Run(core.LoadedRun):
             t = time.perf_counter_ns()
             self.text_session = core.ort_session(ort, onnx / TEXT_GRAPH, args)
             stages["session_create"] = core.ms_since(t)
-        if "image" in paths:
+        if paths & {"image", "video"}:
             t = time.perf_counter_ns()
-            import torch  # noqa: F401  (the reference preprocessing)
+            import torch  # (the reference preprocessing)
             from torchvision.transforms.v2 import functional as tvF
 
             self.tvF = tvF
@@ -186,7 +228,14 @@ class Eg2Run(core.LoadedRun):
             from eg2_vision import patchify
 
             self.patchify = patchify
+            self.torch = torch
             target_size(1, 1)  # imports transformers' size rule
+            if "video" in paths:
+                from transformers.models.embedding_gemma2.video_processing_embedding_gemma2 import (
+                    get_aspect_ratio_preserving_size,
+                )
+
+                self.video_size = get_aspect_ratio_preserving_size
             stages["preprocess_init"] = core.ms_since(t)
             t = time.perf_counter_ns()
             self.vision = core.ort_session(ort, onnx / VISION_GRAPH, args)
@@ -425,11 +474,162 @@ class Eg2Run(core.LoadedRun):
             self.read_image(image["image"])
         return row
 
+    # ----------------------------------------------------------------------------------------- video
+
+    def video_row(self, row_id: str) -> dict:
+        """A row of text and videos, its sampled frames read once from the reference tensors (outside any timing)."""
+        if row_id not in self.video_rows:
+            raise SystemExit(f"Workload names unknown video row '{row_id}'.")
+        row = self.video_rows[row_id]
+        if row["image"] is not None:
+            raise SystemExit(f"video row '{row_id}' has a still image; the video workloads take text and videos only")
+        if row_id not in self.video_frames:
+            directory = os.environ.get(VIDEO_TENSORS_ENV)
+            path = Path(directory or "") / f"{row_id}.npz"
+            if not directory or not path.exists():
+                raise SystemExit(
+                    f"set {VIDEO_TENSORS_ENV} to the run_embeddinggemma2_video.py --tensors output ({row_id}.npz)"
+                )
+            frames = []
+            with self.np.load(path) as z:
+                for k, video in enumerate(row["videos"]):
+                    name = f"video{k}_frames_uint8"
+                    array = self.np.ascontiguousarray(z[name])
+                    digest = hashlib.sha256(array.tobytes()).hexdigest()
+                    pinned = self.video_digests[row_id][name]["sha256"]
+                    if digest != pinned or digest != video["digests"]["frames_uint8"]:
+                        raise SystemExit(f"{path}/{name}: not the reference frames (SHA-256 differs from tensors.json)")
+                    frames.append(array)
+            self.video_frames[row_id] = frames
+        return row
+
+    def preprocess_video(self, frames_thwc):
+        """The video processor at 140 soft tokens for one video, unpadded: patches [T, P, 768] and positions [T, P, 2]
+        (eg2_video.preprocess without padding to 1,260 rows)."""
+        torch, tvF = self.torch, self.tvF
+        frames = torch.from_numpy(frames_thwc).permute(0, 3, 1, 2).contiguous()
+        t, _, h, w = frames.shape
+        th, tw = self.video_size(h, w, PATCH, VIDEO_SOFT_TOKENS * POOL * POOL, POOL)
+        resized = (
+            frames
+            if (th, tw) == (h, w)
+            else tvF.resize(frames, [th, tw], interpolation=tvF.InterpolationMode.BICUBIC, antialias=True)
+        )
+        x = resized * RESCALE
+        ph, pw = th // PATCH, tw // PATCH
+        patches = x.reshape(t, 3, ph, PATCH, pw, PATCH).permute(0, 2, 4, 3, 5, 1).reshape(t, ph * pw, -1)
+        gx, gy = torch.meshgrid(torch.arange(pw), torch.arange(ph), indexing="xy")
+        pos = torch.stack([gx, gy], dim=-1).reshape(ph * pw, 2)
+        return patches.numpy(), pos.numpy().astype(self.np.int64), ph * pw // (POOL * POOL)
+
+    def run_vision_frames(self, frames: list):
+        """Frames (pixel values [P, 768], positions [P, 2], soft-token count) through the vision graph in the C# call
+        plan (PlanVisionCalls: at most 2 frames and 2,520 patch rows per call, padded to the call's largest frame);
+        returns each frame's soft tokens [n, 512]."""
+        np = self.np
+        out = []
+        start = 0
+        for count in plan_chunks([f[0].shape[0] for f in frames], MAX_VIDEO_FRAMES_PER_CALL, MAX_VISION_BATCH_PATCHES):
+            call = frames[start : start + count]
+            rows = max(f[0].shape[0] for f in call)
+            pv = np.zeros((count, rows, PATCH * PATCH * 3), dtype=np.float32)
+            pos = np.full((count, rows, 2), -1, dtype=np.int64)
+            for b, (p, q, _) in enumerate(call):
+                pv[b, : p.shape[0]] = p
+                pos[b, : q.shape[0]] = q
+            feeds = {"pixel_values": pv, "pixel_position_ids": pos}
+            soft, mask = self.vision.run(["soft_tokens", "soft_token_mask"], feeds)
+            for b, (_, _, n) in enumerate(call):
+                if not (mask[b, :n].all() and mask[b].sum() == n):
+                    raise SystemExit("the vision graph's soft-token mask is not the first n slots")
+                out.append(soft[b, :n])
+            start += count
+        return out
+
+    def embed_videos(self, request: list[dict]):
+        np = self.np
+        t_embed = time.perf_counter_ns()
+        pre = vision = text = 0.0
+        prepared = []
+        for row in request:
+            t = time.perf_counter_ns()
+            videos = [self.preprocess_video(f) for f in self.video_frames[row["id"]]]
+            pre += core.ms_since(t)
+            rendered = render_video(row["prompt_text"], row["text"], [(v[0].shape[0], v[2]) for v in videos])
+            prepared.append((self.tokenizer.encode(rendered).ids, videos))
+        out, start = [], 0
+        for count in plan_chunks([len(p[0]) for p in prepared]):
+            chunk = prepared[start : start + count]
+            t = time.perf_counter_ns()
+            frames = [(pv[f], pos, n) for _, videos in chunk for pv, pos, n in videos for f in range(pv.shape[0])]
+            soft = self.run_vision_frames(frames) if frames else []
+            vision += core.ms_since(t)
+            t = time.perf_counter_ns()
+            ids, mask = self.pad([p[0] for p in chunk])
+            mm_mask = ids == VIDEO_TOKEN
+            mm = np.zeros((ids.shape[0], ids.shape[1], 512), dtype=np.float32)
+            k = 0
+            for b, (_, videos) in enumerate(chunk):
+                n_frames = sum(v[0].shape[0] for v in videos)
+                if n_frames:
+                    mm[b][mm_mask[b]] = np.concatenate(soft[k : k + n_frames])
+                k += n_frames
+            (tokens,) = self.mm.run(
+                ["token_embeddings"],
+                {"input_ids": ids, "attention_mask": mask, "multimodal_embeds": mm, "multimodal_mask": mm_mask},
+            )
+            out.append(self.pool(tokens, mask))
+            text += core.ms_since(t)
+            start += count
+        stages = {"embed": core.ms_since(t_embed), "embed_preprocess": pre, "embed_vision": vision, "embed_text": text}
+        return (np.concatenate(out), [p[0] for p in prepared]), stages, {}
+
+    def preprocess_videos(self, request: list[dict]):
+        np = self.np
+        t = time.perf_counter_ns()
+        videos = [self.preprocess_video(f) for row in request for f in self.video_frames[row["id"]]]
+        preprocess = core.ms_since(t)
+        digests = [hashlib.sha256(np.ascontiguousarray(v[0], dtype=np.float32).tobytes()).hexdigest() for v in videos]
+        return digests, {"preprocess": preprocess}, {}
+
+    def judge_videos(self, requests: list[list[dict]]):
+        def judge(outputs):
+            parts, ids_equal = [], True
+            for r, (emb, ids) in outputs:
+                parts.append(compare(self.np, emb, [row["embedding"] for row in requests[r]]))
+                ids_equal &= all(i == row["input_ids"] for i, row in zip(ids, requests[r], strict=True))
+            q = merge(parts)
+            q.update({"rows": sum(len(requests[r]) for r, _ in outputs), "tolerance": self.video_tolerance})
+            q["ids_equal"] = ids_equal
+            q["pass"] = bool(q["max_abs"] <= self.video_tolerance and q["finite"] and ids_equal)
+            return q
+
+        return judge
+
+    @staticmethod
+    def judge_video_preprocess(requests: list[list[dict]]):
+        def judge(outputs):
+            videos = equal = 0
+            for r, digests in outputs:
+                expected = [v["digests"]["pixel_values"] for row in requests[r] for v in row["videos"]]
+                for d, e in zip(digests, expected, strict=True):
+                    videos += 1
+                    equal += d == e
+            check = "per-video pixel_values SHA-256 (every sampled frame, 140 soft tokens) equal to the fixture digest"
+            return {"check": check + " (exact)", "videos": videos, "equal": equal, "pass": equal == videos}
+
+        return judge
+
     # ---------------------------------------------------------------------------------------- series
 
     def series(self, name, path, input_, batch, concurrency, samples, warmup, requests, preprocess_only=False):
         if path == "text":
             call, judge, stages = self.embed_text, self.judge_text(requests), ["tokenize", "encode"]
+        elif path == "video" and preprocess_only:
+            call, judge, stages = self.preprocess_videos, self.judge_video_preprocess(requests), ["preprocess"]
+        elif path == "video":
+            call, judge = self.embed_videos, self.judge_videos(requests)
+            stages = ["embed", "embed_preprocess", "embed_vision", "embed_text"]
         elif preprocess_only:
             call, judge, stages = self.preprocess_only, self.judge_preprocess(requests), ["decode", "preprocess"]
         else:
@@ -450,6 +650,11 @@ class Eg2Run(core.LoadedRun):
         )
 
     def requests_of(self, w: dict) -> list[list[dict]]:
+        if w["path"] == "video":
+            requests = [[self.video_row(i) for i in req] for req in w["requests"]]
+            if any(len({r["prompt"] for r in req}) != 1 for req in requests):
+                raise SystemExit(f"{w['name']}: a batch is one call with one prompt; its rows have different prompts")
+            return requests
         if w["path"] == "image":
             return [[self.image_row(i) for i in req] for req in w["requests"]]
         if "synthetic" in w:
@@ -479,6 +684,8 @@ class Eg2Run(core.LoadedRun):
         keys = self.spec["cold"][path]
         if path == "text":
             return self.series("cold-start", "text", "short", len(keys), 1, 1, 0, [[self.text_row(k) for k in keys]])
+        if path == "video":
+            return self.series("cold-start", "video", "video", len(keys), 1, 1, 0, [[self.video_row(k) for k in keys]])
         return self.series("cold-start", "image", "photo", len(keys), 1, 1, 0, [[self.image_row(k) for k in keys]])
 
     def preliminary_quality(self) -> dict:
@@ -512,6 +719,19 @@ class Eg2Run(core.LoadedRun):
             references.append(core.repo_relative(IMAGE_FIXTURES / "image-embeddings.jsonl"))
             passed &= q["pass"]
             cases += len(rows)
+        if "video" in self.paths:
+            rows = [
+                r
+                for k, r in self.video_rows.items()
+                if r["image"] is None and r["videos"] and (everything or k in used)
+            ]
+            singles = [[self.video_row(r["id"])] for r in rows]
+            q = self.judge_videos(singles)([(i, self.embed_videos(req)[0]) for i, req in enumerate(singles)])
+            q["rows_not_run"] = len(self.video_rows) - len(rows)
+            result["video_single"] = q
+            references.append(core.repo_relative(VIDEO_FIXTURES / "video-embeddings.jsonl"))
+            passed &= q["pass"]
+            cases += len(rows)
         result.update({"reference": "; ".join(references), "cases": cases, "pass": bool(passed)})
         return result
 
@@ -523,9 +743,9 @@ class Eg2Driver(core.Driver):
     snapshot_env = "STARLING_EMBEDDINGGEMMA2_SNAPSHOT"
 
     def add_arguments(self, parser: argparse.ArgumentParser, command: str) -> None:
-        parser.add_argument("--paths", default="text", help="text and/or image (default text)")
+        parser.add_argument("--paths", default="text", help="text, image and/or video (default text)")
         if command in ("cold", "cold-child"):
-            parser.add_argument("--cold-path", choices=["text", "image"], default="text")
+            parser.add_argument("--cold-path", choices=["text", "image", "video"], default="text")
         else:
             parser.add_argument("--preliminary", choices=["all", "workloads"], default="all")
 
@@ -535,13 +755,14 @@ class Eg2Driver(core.Driver):
     @staticmethod
     def paths(args: argparse.Namespace) -> set[str]:
         paths = set(args.paths.split(","))
-        if not paths or paths - {"text", "image"}:
-            raise SystemExit("--paths takes text and/or image (video is not benchmarked)")
+        if not paths or paths - {"text", "image", "video"}:
+            raise SystemExit("--paths takes text, image and/or video")
         return paths
 
     def profile(self, args: argparse.Namespace) -> str:
-        names = {"text": f"onnx-fp32-{args.provider}", "image": f"image-fp32-{args.provider}"}
-        return "+".join(names[p] for p in sorted(self.paths(args), key=["text", "image"].index))
+        kinds = {"text": "onnx", "image": "image", "video": "video"}
+        order = ["text", "image", "video"]
+        return "+".join(f"{kinds[p]}-fp32-{args.provider}" for p in sorted(self.paths(args), key=order.index))
 
     def load(self, args: argparse.Namespace) -> core.LoadedRun:
         if args.snapshot is None:
@@ -549,7 +770,11 @@ class Eg2Driver(core.Driver):
         return Eg2Run(args, self.paths(args))
 
     def reference(self, args: argparse.Namespace) -> str:
-        refs = {"text": TEXT_FIXTURE, "image": IMAGE_FIXTURES / "image-embeddings.jsonl"}
+        refs = {
+            "text": TEXT_FIXTURE,
+            "image": IMAGE_FIXTURES / "image-embeddings.jsonl",
+            "video": VIDEO_FIXTURES / "video-embeddings.jsonl",
+        }
         return "; ".join(core.repo_relative(refs[p]) for p in sorted(self.paths(args)))
 
     def artifacts(self, args: argparse.Namespace) -> dict:
@@ -557,8 +782,11 @@ class Eg2Driver(core.Driver):
         onnx = args.snapshot / "onnx"
         fixtures = [TEXT_FIXTURE, PROTECTED / "onnx-fp32-cpu" / "tolerances.yaml"]
         extra = {}
-        if "image" in paths:
-            fixtures += [IMAGE_FIXTURES / n for n in ("image-embeddings.jsonl", "images.json", "tolerances.yaml")]
+        if "video" in paths:
+            fixtures += [VIDEO_FIXTURES / n for n in ("video-embeddings.jsonl", "tensors.json", "tolerances.yaml")]
+        if paths & {"image", "video"}:
+            if "image" in paths:
+                fixtures += [IMAGE_FIXTURES / n for n in ("image-embeddings.jsonl", "images.json", "tolerances.yaml")]
             extra["vision_model_sha256"] = core.sha256_file(onnx / VISION_GRAPH)
             extra["multimodal_model_sha256"] = core.sha256_file(onnx / MM_GRAPH)
         packages = ("onnxruntime", "onnxruntime-gpu", "numpy", "tokenizers", "pillow", "torch", "torchvision")

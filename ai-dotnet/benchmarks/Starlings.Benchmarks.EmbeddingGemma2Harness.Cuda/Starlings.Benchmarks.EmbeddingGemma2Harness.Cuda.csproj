@@ -2,7 +2,7 @@
 
   <!--
     CUDA build of the EmbeddingGemma 2 workload harness (Linux x64), same sources as
-    ../Starlings.Benchmarks.EmbeddingGemma2Harness: profiles onnx-fp32-cuda and image-fp32-cuda (provider cuda).
+    ../Starlings.Benchmarks.EmbeddingGemma2Harness: profiles onnx-fp32-cuda, image-fp32-cuda and video-fp32-cuda (provider cuda).
     Local only: not in AI.slnx, so CI does not restore the GPU package. The CUDA 13 runtime and cuDNN 9 are not in the
     package (run-g5-matched.sh loads those of the Python runner's nvidia-* wheels); see docs/benchmarks/PROTOCOL.md.
   -->

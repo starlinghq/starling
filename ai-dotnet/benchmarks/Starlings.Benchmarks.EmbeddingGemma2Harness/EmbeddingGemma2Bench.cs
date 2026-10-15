@@ -14,7 +14,11 @@ namespace Starlings.Benchmarks;
 /// the ORT run, pooling and normalization). Image path (<c>image-fp32-cpu</c>): <c>decode</c> (SkiaSharp adapter, from
 /// the file bytes in memory) and <c>embed</c> (<see cref="EmbeddingGemma2MultimodalEmbedder"/>: image preprocessing,
 /// the vision graph and the multimodal text graph; the public API does not split them, so the
-/// <c>preprocess-only</c> workload times the image processor alone).
+/// <c>preprocess-only</c> workload times the image processor alone). Video path (<c>video-fp32-cpu</c>), from decoded
+/// frames (<see cref="EmbeddingGemma2VideoFrames"/>: the reference's sampled frames, no decoder in the process):
+/// <c>embed</c> (the same embedder: per-frame preprocessing at 140 soft tokens, the vision graph in calls of at most
+/// <see cref="EmbeddingGemma2MultimodalOptions.MaxVideoFramesPerVisionCall"/> frames, the multimodal text graph);
+/// <c>video-preprocess-only</c> times the per-frame preprocessing alone.
 /// </summary>
 internal sealed class EmbeddingGemma2Driver : IBenchDriver
 {
@@ -22,23 +26,27 @@ internal sealed class EmbeddingGemma2Driver : IBenchDriver
 
     public const string ImageReference = "model-pipeline/protected/embeddinggemma-2/image-fp32-cpu/image-embeddings.jsonl";
 
+    private static readonly string[] s_allPaths = ["text", "image", "video"];
+
     public string Model => "embeddinggemma-2";
 
     public string Profile(HarnessContext context) =>
-        string.Join('+', new[] { ("text", "onnx-fp32"), ("image", "image-fp32") }.Where(p => Paths(context).Contains(p.Item1)).Select(p => context.ProfileOf(p.Item2)));
+        string.Join('+', new[] { ("text", "onnx-fp32"), ("image", "image-fp32"), ("video", "video-fp32") }.Where(p => Paths(context).Contains(p.Item1)).Select(p => context.ProfileOf(p.Item2)));
 
-    public string Reference => $"{TextReference}; {ImageReference}";
+    public string Reference => $"{TextReference}; {ImageReference}; {EmbeddingGemma2VideoFrames.Reference}";
 
     public string HarnessName => "Starlings.Benchmarks.EmbeddingGemma2Harness";
 
     public string WorkloadFile => "embeddinggemma2-v1.json";
 
     public string Usage => $"""
-          --paths text,image        paths to load and run (default text,image; image needs the image set)
-          --cold-path text|image    the cold-start request (default text)
+          --paths text,image,video  paths to load and run (default text,image; image needs the image set, video the
+                                    decoded-frame fixtures)
+          --cold-path text|image|video  the cold-start request (default text)
           --preliminary all|workloads  preliminary sweep over every fixture row (default) or only the rows the workloads use
           model: ${EmbeddingGemma2TestAssets.SnapshotEnvironmentVariable} or $STARLING_MODELS; image set: ${EmbeddingGemma2ImageTestAssets.ImagesEnvironmentVariable}
-          (make_eg2_images.py output) or <models>/embeddinggemma-2-images. Video is not benchmarked (needs FFmpeg).
+          (make_eg2_images.py output) or <models>/embeddinggemma-2-images; decoded video frames: ${EmbeddingGemma2VideoFrames.TensorsEnvironmentVariable}
+          (run_embeddinggemma2_video.py --tensors output) or <models>/embeddinggemma-2-video-tensors.
         """;
 
     public IBenchRun Load(HarnessContext context) => new EmbeddingGemma2Run(context, Paths(context));
@@ -59,6 +67,13 @@ internal sealed class EmbeddingGemma2Driver : IBenchDriver
             fixtures.Add(Path.Combine(BenchPaths.RepositoryRoot, EmbeddingGemma2Tolerances.Load(context.ProfileOf("image-fp32")).Source));
         }
 
+        if (paths.Contains("video"))
+        {
+            fixtures.Add(Path.Combine(EmbeddingGemma2VideoFrames.FixtureDirectory, "video-embeddings.jsonl"));
+            fixtures.Add(Path.Combine(EmbeddingGemma2VideoFrames.FixtureDirectory, "tensors.json"));
+            fixtures.Add(Path.Combine(BenchPaths.RepositoryRoot, EmbeddingGemma2Tolerances.Load(context.ProfileOf("video-fp32")).Source));
+        }
+
         var artifacts = BenchEnvironment.Artifacts(
             text.ModelPath,
             null,
@@ -72,7 +87,7 @@ internal sealed class EmbeddingGemma2Driver : IBenchDriver
         artifacts["model_id"] = $"{EmbeddingGemma2ModelAssets.Repository}@{EmbeddingGemma2ModelAssets.Revision} ({EmbeddingGemma2ModelAssets.ModelFile}, release {EmbeddingGemma2ModelAssets.ReleaseTag})";
         artifacts["expected_model_sha256"] = EmbeddingGemma2ModelAssets.ModelSha256;
         artifacts["tokenizer_version"] = BenchEnvironment.TokenizerVersion;
-        if (paths.Contains("image"))
+        if (paths.Contains("image") || paths.Contains("video"))
         {
             var image = ImageFiles();
             artifacts["image_model_id"] = $"{EmbeddingGemma2ModelAssets.ImageReleaseTag} ({EmbeddingGemma2ModelAssets.VisionModelFile}, {EmbeddingGemma2ModelAssets.MultimodalModelFile})";
@@ -98,9 +113,9 @@ internal sealed class EmbeddingGemma2Driver : IBenchDriver
     private static HashSet<string> Paths(HarnessContext context)
     {
         var paths = (context.Args.GetList("paths") ?? ["text", "image"]).ToHashSet(StringComparer.Ordinal);
-        if (paths.Except(["text", "image"]).Any())
+        if (paths.Count == 0 || paths.Except(s_allPaths).Any())
         {
-            throw new ArgumentException("--paths takes text and/or image (video is not benchmarked: its fixtures need FFmpeg).");
+            throw new ArgumentException("--paths takes text, image and/or video.");
         }
 
         return paths;
@@ -112,6 +127,8 @@ internal sealed class EmbeddingGemma2Run : IBenchRun
     private static readonly string[] s_textStages = ["tokenize", "encode"];
     private static readonly string[] s_imageStages = ["decode", "embed"];
     private static readonly string[] s_preprocessStages = ["decode", "preprocess"];
+    private static readonly string[] s_videoStages = ["embed"];
+    private static readonly string[] s_videoPreprocessStages = ["preprocess"];
     private readonly HarnessContext _context;
     private readonly HashSet<string> _paths;
     private readonly WorkloadSpec _spec;
@@ -124,6 +141,9 @@ internal sealed class EmbeddingGemma2Run : IBenchRun
     private readonly Dictionary<string, ImageRow> _imageRows = new(StringComparer.Ordinal);
     private readonly Dictionary<string, byte[]> _imageBytes = new(StringComparer.Ordinal);
     private readonly Dictionary<string, float[]> _selfReference = new(StringComparer.Ordinal);
+    private readonly EmbeddingGemma2Tolerances _videoTolerances;
+    private readonly Dictionary<string, VideoBenchRow> _videoRows = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, (EmbeddingGemma2Video[] Videos, EmbeddingGemma2MultimodalInput Input)> _videoInputs = new(StringComparer.Ordinal);
 
     public EmbeddingGemma2Run(HarnessContext context, HashSet<string> paths)
     {
@@ -139,6 +159,14 @@ internal sealed class EmbeddingGemma2Run : IBenchRun
 
         _textTolerances = EmbeddingGemma2Tolerances.Load(context.ProfileOf("onnx-fp32"));
         _imageTolerances = EmbeddingGemma2Tolerances.Load(context.ProfileOf("image-fp32"));
+        _videoTolerances = EmbeddingGemma2Tolerances.Load(context.ProfileOf("video-fp32"));
+        if (paths.Contains("video"))
+        {
+            foreach (var (id, row) in EmbeddingGemma2VideoFrames.LoadRows())
+            {
+                _videoRows[id] = row;
+            }
+        }
         if (paths.Contains("image"))
         {
             foreach (var row in EmbeddingGemma2ImageTestAssets.Rows)
@@ -164,7 +192,7 @@ internal sealed class EmbeddingGemma2Run : IBenchRun
             load["session_create"] = MonotonicClock.ElapsedMs(t);
         }
 
-        if (paths.Contains("image"))
+        if (paths.Contains("image") || paths.Contains("video"))
         {
             var files = EmbeddingGemma2Driver.ImageFiles();
             t = Stopwatch.GetTimestamp();
@@ -207,7 +235,12 @@ internal sealed class EmbeddingGemma2Run : IBenchRun
     {
         var result = new JsonObject
         {
-            ["reference"] = string.Join("; ", new[] { _encoder is null ? null : EmbeddingGemma2Driver.TextReference, _multimodal is null ? null : EmbeddingGemma2Driver.ImageReference }.OfType<string>()),
+            ["reference"] = string.Join("; ", new[]
+            {
+                _encoder is null ? null : EmbeddingGemma2Driver.TextReference,
+                _paths.Contains("image") ? EmbeddingGemma2Driver.ImageReference : null,
+                _paths.Contains("video") ? EmbeddingGemma2VideoFrames.Reference : null,
+            }.OfType<string>()),
         };
         bool pass = true;
         int cases = 0;
@@ -236,7 +269,7 @@ internal sealed class EmbeddingGemma2Run : IBenchRun
             cases += rows.Length;
         }
 
-        if (_multimodal is not null)
+        if (_paths.Contains("image"))
         {
             var rows = _imageRows.Values.Where(r => r.InContract && r.Images.All(i => i.Image != "jpeg-exif-orientation") && (all || used.Contains(r.Id))).ToArray();
             var requests = rows.Select(r => new[] { r }).ToArray();
@@ -247,6 +280,19 @@ internal sealed class EmbeddingGemma2Run : IBenchRun
             result["image_tolerance_file"] = _imageTolerances.Source;
             pass &= image["pass"]!.GetValue<bool>();
             cases += available.Length;
+        }
+
+        if (_paths.Contains("video"))
+        {
+            // Every row of text and videos (a row with a still image is not a video workload row), each alone.
+            var rows = _videoRows.Values.Where(r => !r.HasImage && r.Videos.Count > 0 && (all || used.Contains(r.Id))).Select(r => new[] { r }).ToArray();
+            var video = JudgeVideo(rows.Select((r, i) => (i, (object)EmbedVideos(r, stages))).ToList(), rows);
+            video["rows_not_run"] = _videoRows.Count - rows.Length;
+            result["video_single"] = video;
+            result["video_tolerance_file"] = _videoTolerances.Source;
+            result["video_frames"] = "reference sampled frames (run_embeddinggemma2_video.py --tensors), checked against tensors.json";
+            pass &= video["pass"]!.GetValue<bool>();
+            cases += rows.Length;
         }
 
         result["cases"] = cases;
@@ -274,9 +320,12 @@ internal sealed class EmbeddingGemma2Run : IBenchRun
         }
 
         var request = WorkloadSpec.Strings(_spec.Cold.GetProperty(path));
-        return path == "text"
-            ? TextSeries("cold-start", "short", request.Length, 1, 1, 0, [request.Select(TextRow).ToArray()])
-            : ImageSeries("cold-start", "photo", request.Length, 1, 1, 0, [request.Select(ImageRowOf).ToArray()], preprocessOnly: false);
+        return path switch
+        {
+            "text" => TextSeries("cold-start", "short", request.Length, 1, 1, 0, [request.Select(TextRow).ToArray()]),
+            "image" => ImageSeries("cold-start", "photo", request.Length, 1, 1, 0, [request.Select(ImageRowOf).ToArray()], preprocessOnly: false),
+            _ => VideoSeries("cold-start", "video", request.Length, 1, 1, 0, [request.Select(VideoRowOf).ToArray()], preprocessOnly: false),
+        };
     }
 
     public void Dispose()
@@ -287,6 +336,13 @@ internal sealed class EmbeddingGemma2Run : IBenchRun
 
     private BenchSeries Series(string name, string path, string input, int batch, int concurrency, int samples, int warmup, System.Text.Json.JsonElement raw)
     {
+        if (path == "video")
+        {
+            var requests = raw.GetProperty("requests").EnumerateArray().Select(r => WorkloadSpec.Strings(r).Select(VideoRowOf).ToArray()).ToArray();
+            bool preprocessOnly = raw.TryGetProperty("preprocess_only", out var vp) && vp.GetBoolean();
+            return VideoSeries(name, input, batch, concurrency, samples, warmup, requests, preprocessOnly);
+        }
+
         if (path == "image")
         {
             var requests = raw.GetProperty("requests").EnumerateArray().Select(r => WorkloadSpec.Strings(r).Select(ImageRowOf).ToArray()).ToArray();
@@ -355,6 +411,125 @@ internal sealed class EmbeddingGemma2Run : IBenchRun
             Stages = preprocessOnly ? s_preprocessStages : s_imageStages,
             Call = preprocessOnly ? (r, stages, _) => Preprocess(requests[r], stages) : (r, stages, _) => EmbedImages(requests[r], stages),
             Judge = preprocessOnly ? outputs => JudgePreprocess(outputs, requests) : outputs => JudgeImage(outputs, requests),
+        };
+    }
+
+    private BenchSeries VideoSeries(string name, string input, int batch, int concurrency, int samples, int warmup, VideoBenchRow[][] requests, bool preprocessOnly)
+    {
+        foreach (var request in requests)
+        {
+            if (request.Select(r => r.Prompt).Distinct().Count() != 1)
+            {
+                throw new ArgumentException($"{name}: a batch is one call with one prompt; its rows have different prompts.");
+            }
+
+            foreach (var row in request)
+            {
+                _ = VideoInput(row);
+            }
+        }
+
+        return new BenchSeries
+        {
+            Workload = name,
+            Path = "video",
+            Input = input,
+            Batch = batch,
+            Concurrency = concurrency,
+            Samples = samples,
+            WarmupCalls = Math.Max(warmup, requests.Length),
+            Requests = requests.Length,
+            Stages = preprocessOnly ? s_videoPreprocessStages : s_videoStages,
+            Call = preprocessOnly ? (r, stages, _) => PreprocessVideos(requests[r], stages) : (r, stages, _) => EmbedVideos(requests[r], stages),
+            Judge = preprocessOnly ? outputs => JudgeVideoPreprocess(outputs, requests) : outputs => JudgeVideo(outputs, requests),
+        };
+    }
+
+    private VideoBenchRow VideoRowOf(string id) =>
+        _videoRows.TryGetValue(id, out var row) ? row : throw new ArgumentException($"Workload names unknown video row '{id}'.");
+
+    /// <summary>The row's decoded frames and input, built once (outside every timed call).</summary>
+    private (EmbeddingGemma2Video[] Videos, EmbeddingGemma2MultimodalInput Input) VideoInput(VideoBenchRow row)
+    {
+        if (!_videoInputs.TryGetValue(row.Id, out var prepared))
+        {
+            var videos = EmbeddingGemma2VideoFrames.LoadVideos(row);
+            prepared = (videos, EmbeddingGemma2VideoFrames.BuildInput(row, videos));
+            _videoInputs[row.Id] = prepared;
+        }
+
+        return prepared;
+    }
+
+    private float[][] EmbedVideos(VideoBenchRow[] request, double[] stages)
+    {
+        var inputs = request.Select(r => VideoInput(r).Input).ToArray();
+        long t = Stopwatch.GetTimestamp();
+        var output = _multimodal!.EmbedBatch(inputs, request[0].PackagePrompt);
+        stages[0] = MonotonicClock.ElapsedMs(t);
+        return output;
+    }
+
+    /// <summary>Per-frame preprocessing at <see cref="EmbeddingGemma2MultimodalEmbedder.VideoFrameSoftTokens"/>; one pixel-values digest per video.</summary>
+    private string[] PreprocessVideos(VideoBenchRow[] request, double[] stages)
+    {
+        var videos = request.SelectMany(r => VideoInput(r).Videos).ToArray();
+        long t = Stopwatch.GetTimestamp();
+        var patches = videos.Select(v => v.Frames.Select(f => EmbeddingGemma2ImageProcessor.Preprocess(f, EmbeddingGemma2MultimodalEmbedder.VideoFrameSoftTokens)).ToArray()).ToArray();
+        stages[0] = MonotonicClock.ElapsedMs(t);
+        return patches.Select(p => VideoPixelSha(p)).ToArray();
+    }
+
+    private static string VideoPixelSha(EmbeddingGemma2ImagePatches[] frames)
+    {
+        using var hash = System.Security.Cryptography.IncrementalHash.CreateHash(System.Security.Cryptography.HashAlgorithmName.SHA256);
+        foreach (var f in frames)
+        {
+            hash.AppendData(System.Runtime.InteropServices.MemoryMarshal.AsBytes(f.PixelValues.Span));
+        }
+
+        return Convert.ToHexStringLower(hash.GetHashAndReset());
+    }
+
+    private JsonObject JudgeVideo(IReadOnlyList<(int Request, object Output)> outputs, VideoBenchRow[][] requests)
+    {
+        var q = Quality.Empty;
+        int rows = 0;
+        foreach (var (r, o) in outputs)
+        {
+            var embeddings = (float[][])o;
+            q = q.Merge(Quality.Of(embeddings, requests[r].Select(row => row.Embedding).ToArray()));
+            rows += embeddings.Length;
+        }
+
+        double tolerance = _videoTolerances.EmbeddingMaxAbs;
+        var json = q.ToJson();
+        json["rows"] = rows;
+        json["tolerance"] = tolerance;
+        json["pass"] = q.MaxAbs <= tolerance && q.Finite;
+        return json;
+    }
+
+    private static JsonObject JudgeVideoPreprocess(IReadOnlyList<(int Request, object Output)> outputs, VideoBenchRow[][] requests)
+    {
+        int videos = 0, equal = 0;
+        foreach (var (r, o) in outputs)
+        {
+            var digests = (string[])o;
+            var expected = requests[r].SelectMany(row => row.Videos).Select(v => v.PixelValuesSha256).ToArray();
+            for (int i = 0; i < digests.Length; i++)
+            {
+                videos++;
+                equal += digests[i] == expected[i] ? 1 : 0;
+            }
+        }
+
+        return new JsonObject
+        {
+            ["check"] = "per-video pixel_values SHA-256 (every sampled frame, 140 soft tokens) equal to the fixture digest (exact)",
+            ["videos"] = videos,
+            ["equal"] = equal,
+            ["pass"] = equal == videos,
         };
     }
 

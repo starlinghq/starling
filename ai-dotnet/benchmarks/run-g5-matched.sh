@@ -3,7 +3,7 @@
 # (model-pipeline/reference/bench/) on the same graphs, workload file, thread settings and warm/cold protocol,
 # interleaved over several rounds of fresh processes. Then check the budgets with `model-pipeline bench g5 <out.jsonl>`.
 #
-#   ai-dotnet/benchmarks/run-g5-matched.sh eg2-text|eg2-image|gliner2|qwen35|qwen35-fp16x cpu|cuda <out.jsonl> \
+#   ai-dotnet/benchmarks/run-g5-matched.sh eg2-text|eg2-image|eg2-video|gliner2|qwen35|qwen35-fp16x cpu|cuda <out.jsonl> \
 #       [rounds=3] [threads=6] [cold-processes-per-round=10]
 #
 # cpu runs the CPU builds of the C# harnesses; cuda runs their .Cuda builds (CUDA natives, --provider cuda, device 0 of
@@ -19,10 +19,12 @@
 #   BENCH_WARM_ARGS        extra warm arguments for both sides, for development smokes only (for example
 #                          "--samples-scale 0.05 --only short-b1"); a qualifying run leaves it unset
 #   STARLING_EMBEDDINGGEMMA2_IMAGES   image set (make_eg2_images.py output), for eg2-image
+#   STARLING_EMBEDDINGGEMMA2_VIDEO_TENSORS   decoded-frame video fixtures (run_embeddinggemma2_video.py --tensors
+#                          output, pinned by video-fp32-cpu/tensors.json), for eg2-video
 #   CUDA_DEVICE_ORDER, CUDA_VISIBLE_DEVICES   required for cuda (the GPU to use; never implicit)
 set -euo pipefail
 
-model="${1:?eg2-text|eg2-image|gliner2|qwen35|qwen35-fp16x}"
+model="${1:?eg2-text|eg2-image|eg2-video|gliner2|qwen35|qwen35-fp16x}"
 provider="${2:?cpu|cuda}"
 out="${3:?out.jsonl}"
 rounds="${4:-3}"
@@ -57,7 +59,7 @@ py_args=()
 cs_warm=()
 cs_cold=()
 case "$model" in
-  eg2-text|eg2-image)
+  eg2-text|eg2-image|eg2-video)
     project="Starlings.Benchmarks.EmbeddingGemma2Harness"
     runner="$bench/bench_eg2_matched.py"
     path="${model#eg2-}"
@@ -87,7 +89,7 @@ case "$model" in
     py_cold=()
     ;;
   *)
-    echo "unknown model '$model' (eg2-text, eg2-image, gliner2, qwen35, qwen35-fp16x; e5 has run-e5-matched.sh)" >&2
+    echo "unknown model '$model' (eg2-text, eg2-image, eg2-video, gliner2, qwen35, qwen35-fp16x; e5 has run-e5-matched.sh)" >&2
     exit 2
     ;;
 esac

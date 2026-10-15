@@ -13,14 +13,14 @@ The matched-backend benchmark program of plan section 11 for `multilingual-e5-sm
 | `run-e5-matched.sh` | Runs the whole comparison, interleaving C# library, C# direct and Python over several rounds of fresh processes, then cold starts. | n/a |
 | `Starlings.Benchmarks.Gliner2Harness` | G5 harness for GLiNER2 entity extraction: stages `prepare`, `inference`, `decode`; entities checked against the protected reference on every series. `dump-inputs --out <file>` writes the prepared model inputs of every workload request for the Python inference-stage runner. CPU. | yes |
 | `Starlings.Benchmarks.Gliner2Harness.Cuda` | Same sources, CUDA native package (`--provider cuda`). | no (local) |
-| `Starlings.Benchmarks.EmbeddingGemma2Harness` | G5 harness for EmbeddingGemma 2 text and image (no video: its fixtures need FFmpeg). CPU. | yes |
+| `Starlings.Benchmarks.EmbeddingGemma2Harness` | G5 harness for EmbeddingGemma 2 text, image and video (video on decoded frames: the reference's sampled frames, `STARLING_EMBEDDINGGEMMA2_VIDEO_TENSORS`; no decoder). CPU. | yes |
 | `Starlings.Benchmarks.EmbeddingGemma2Harness.Cuda` | Same sources, CUDA native package (`--provider cuda`). | no (local) |
 | `Starlings.Benchmarks.Qwen35Harness` | G5 harness for Qwen3.5 greedy generation: prefill, decode tokens/s, time to first token, greedy ids checked against the reference under the profile's rule. CPU (fp32x). | yes |
 | `Starlings.Benchmarks.Qwen35Harness.Cuda` | Same sources, GenAI CUDA natives (`--provider cuda`, `--variant fp32x|fp16x`). | no (local) |
 | `Core/` | Shared harness core: timing loop, cold-start spawning, environment manifest, raw writer, quality gate, and the warm/cold/cold-child host the three G5 harnesses run on (`HarnessHost`, one `IBenchDriver` per model). The e5 harness uses the same timing, spawning, environment and writer code. | n/a |
 | `workloads/{gliner2,embeddinggemma2,qwen35}-v1.json` | The G5 workload files (requests as protected fixture ids). | n/a |
 | `../../model-pipeline/reference/bench/` | The Python same-backend runners of the G5 harnesses (`bench_eg2_matched.py`, `bench_gliner2_matched.py`, `bench_qwen35_matched.py`) and their shared core; same graphs, workload files, thread settings, warm/cold protocol and raw format. | n/a |
-| `run-g5-matched.sh` | Runs one model's comparison (`eg2-text`, `eg2-image`, `gliner2`, `qwen35`, `qwen35-fp16x`) on `cpu` or `cuda` (the `.Cuda` builds), interleaving the C# harness and the Python runner over rounds of fresh processes, then cold starts. | n/a |
+| `run-g5-matched.sh` | Runs one model's comparison (`eg2-text`, `eg2-image`, `eg2-video`, `gliner2`, `qwen35`, `qwen35-fp16x`) on `cpu` or `cuda` (the `.Cuda` builds), interleaving the C# harness and the Python runner over rounds of fresh processes, then cold starts. | n/a |
 
 Summaries: `model-pipeline bench validate <raw.jsonl>`, `model-pipeline bench summarize <raw.jsonl> [--json summary.json]` and the G5 budget check `model-pipeline bench g5 <raw.jsonl>...` (`g5.py`) (`model-pipeline/src/model_pipeline/benchmarks.py`, schema `model-pipeline/schemas/benchmark-raw.schema.json`).
 

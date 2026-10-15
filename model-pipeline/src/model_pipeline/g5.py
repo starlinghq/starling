@@ -5,19 +5,21 @@ them against `model-pipeline/protected/performance-budgets.yaml`, profile by pro
 rule; a key this module does not implement is an error, so a budget can never be skipped silently. The rules:
 
 - `warm_median_ratio_max`: per warm workload (path, workload, concurrency), median C# library total over median
-  Python total at most the budget. Workloads that run no graph (EmbeddingGemma 2 `preprocess-only`: SkiaSharp and
-  the C# resampler against Pillow and torchvision) are not same-backend comparisons and are left out; the C#
-  preprocessing is bounded by `preprocess_share_of_embed_max` instead.
+  Python total at most the budget. Workloads that run no graph (EmbeddingGemma 2 `preprocess-only` and
+  `video-preprocess-only`: SkiaSharp and the C# resampler against Pillow and torchvision) are not same-backend
+  comparisons and are left out; the C# preprocessing is bounded by `preprocess_share_of_embed_max` instead.
 - `cold_start_ratio_max`: the same on the cold-start series (spawn to result).
 - `adapter_overhead_max` (``"max(1 ms, 10%) of direct C#, on medians"``): per warm workload with a direct C# series,
   median library minus median direct at most max(1 ms, 10% of the direct median).
 - `inference_ratio_max`: per warm workload, median C# `inference` stage over median Python `inference` stage.
 - `prepare_plus_decode_share_of_inference_max` (C# only): per warm workload, the median of each sample's
   `prepare` + `decode` over the median `inference`; every workload within the budget.
-- `preprocess_share_of_embed_max` (C# only, image path): per image row of the `preprocess-only` workload, the median
+- `preprocess_share_of_embed_max` (C# only, image and video paths): per row of the path's preprocessing-only
+  workload (stage `preprocess` without `embed`: image `preprocess-only`, video `video-preprocess-only`), the median
   `preprocess` of that row's samples over the median `embed` of the samples that embedded the same row alone (any
-  other warm image workload whose request is that one row; samples map to requests as `i % requests`, concurrency
-  1). The requests come from the workload file the run names, checked by its SHA-256. Every row within the budget.
+  other warm workload of the path whose request is that one row; samples map to requests as `i % requests`,
+  concurrency 1). The requests come from the workload file the run names, checked by its SHA-256. Every row within
+  the budget.
 - `decode_tokens_per_second_ratio_min`: per warm workload, median C# `decode_tokens_per_s` over the Python median at
   least the budget.
 - `time_to_first_token_ratio_max`: per warm workload, median C# `ttft_ms` over the Python median.
@@ -81,7 +83,7 @@ def profile_of(run: dict, series: dict) -> str | None:
     if model in ("multilingual-e5-small", "gliner2-base-v1"):
         return f"{model}/onnx-fp32-{provider}"
     if model == "embeddinggemma-2":
-        kind = {"text": "onnx", "image": "image", "ids": "onnx"}.get(series["path"])
+        kind = {"text": "onnx", "image": "image", "ids": "onnx", "video": "video"}.get(series["path"])
         return f"{model}/{kind}-fp32-{provider}" if kind else None
     if model == "qwen3.5-0.8b":
         variant = run["settings"].get("variant")
@@ -163,7 +165,8 @@ def pairs(groups: dict, a_side: str, b_side: str, mode: str, extract, required=N
 
 def runs_a_graph(s: dict) -> bool:
     """False for preprocessing-only series (stage ``preprocess`` without ``embed``: EmbeddingGemma 2
-    ``preprocess-only``), which run no graph on either side; ``preprocess_share_of_embed_max`` bounds them."""
+    ``preprocess-only`` and ``video-preprocess-only``), which run no graph on either side;
+    ``preprocess_share_of_embed_max`` bounds them."""
     return not ("preprocess" in s["stages_ms"] and "embed" not in s["stages_ms"])
 
 
@@ -250,20 +253,24 @@ def _by_request(values: list[float], requests: int) -> list[list[float]]:
 
 
 def rule_preprocess_share(groups, runs: dict, budget: float, resamples: int, seed: int) -> list[dict]:
-    """Per row of `preprocess-only`: median preprocess over median embed of the same row alone (see module doc)."""
-    pre_key = next((k for k in groups if k[0] == "csharp" and k[1] == "warm" and k[3] == "preprocess-only"), None)
+    """Per row of the preprocessing-only workload: median preprocess over median embed of the same row alone (see
+    module doc). A profile holds one path, so its groups hold at most one such workload."""
+    pre_key = next(
+        (k for k, v in groups.items() if k[0] == "csharp" and k[1] == "warm" and not runs_a_graph(v[0])), None
+    )
     if pre_key is None or pre_key[4] != 1:
         return []
     pre_series = groups[pre_key]
+    path, pre_name = pre_key[2], pre_key[3]
     requests = _workload_requests(runs[pre_series[0]["run_id"]])
-    pre_rows = [r[0] for r in requests["preprocess-only"]]
+    pre_rows = [r[0] for r in requests[pre_name]]
     numer: dict[str, list[list[float]]] = defaultdict(list)
     for s in pre_series:
         for row, values in zip(pre_rows, _by_request(s["stages_ms"]["preprocess"], len(pre_rows)), strict=True):
             numer[row].append(values)
     denom: dict[str, list[list[float]]] = defaultdict(list)
     for key, series in groups.items():
-        if key[0] != "csharp" or key[1] != "warm" or key[2] != "image" or key[3] == "preprocess-only" or key[4] != 1:
+        if key[0] != "csharp" or key[1] != "warm" or key[2] != path or key[3] == pre_name or key[4] != 1:
             continue
         reqs = requests.get(key[3], [])
         if not reqs:
@@ -276,11 +283,12 @@ def rule_preprocess_share(groups, runs: dict, budget: float, resamples: int, see
                     denom[req[0]].append(values)
     checks = []
     for row in pre_rows:
+        label = f"warm/{path}/{pre_name}:{row}"
         if row not in denom or not all(numer[row]):
-            checks.append({"workload": f"warm/image/preprocess-only:{row}", "value": None, "pass": None})
+            checks.append({"workload": label, "value": None, "pass": None})
             continue
         c = share_check(numer[row], denom[row], resamples, seed)
-        c.update({"workload": f"warm/image/preprocess-only:{row}", "pass": c["value"] <= budget})
+        c.update({"workload": label, "pass": c["value"] <= budget})
         checks.append(c)
     return checks
 

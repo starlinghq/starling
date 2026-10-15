@@ -79,7 +79,7 @@ public sealed class HarnessCoreTests
 
     [Theory]
     [InlineData("gliner2-v1.json", "text")]
-    [InlineData("embeddinggemma2-v1.json", "text,image")]
+    [InlineData("embeddinggemma2-v1.json", "text,image,video")]
     [InlineData("qwen35-v1.json", "ids,text")]
     public void WorkloadFilesParseWithUniqueNamesAndKnownPaths(string file, string paths)
     {
