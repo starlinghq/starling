@@ -64,6 +64,23 @@ public sealed class OptionsAndLoadTests
     }
 
     [Fact]
+    public void UnsetIntraOpThreadsUsesTheContainerAwareDefault()
+    {
+        // Constrained process (CPU quota or affinity): the decoder gets Environment.ProcessorCount threads instead of
+        // one per physical core of the host. Unconstrained: no overlay, the GenAI default.
+        var overlays = new GenAIModelOptions().BuildOverlays();
+        if (Starlings.Threading.IntraOpThreadDefaults.ForProcess() is int threads)
+        {
+            Assert.Single(overlays);
+            Assert.Equal(threads, JsonDocument.Parse(overlays[0]).RootElement.GetProperty("model").GetProperty("decoder").GetProperty("session_options").GetProperty("intra_op_num_threads").GetInt32());
+        }
+        else
+        {
+            Assert.Empty(overlays);
+        }
+    }
+
+    [Fact]
     public void NativeCallsAreSerializedByDefaultOnCudaOnly()
     {
         Assert.False(new GenAIModelOptions().EffectiveSerializeNativeCalls);

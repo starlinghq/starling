@@ -30,7 +30,11 @@ public sealed record GenAIModelOptions
     /// </summary>
     public bool UseTf32 { get; init; }
 
-    /// <summary>Intra-op thread count of the decoder session, or null for the GenAI default.</summary>
+    /// <summary>
+    /// Intra-op thread count of the decoder session. Null selects the default: when a CPU quota or affinity mask
+    /// limits the process (<see cref="Environment.ProcessorCount"/> below the host's online CPUs, as in most
+    /// containers), that processor count; otherwise the GenAI default (one per physical core of the host).
+    /// </summary>
     public int? IntraOpThreads { get; init; }
 
     /// <summary>
@@ -86,7 +90,7 @@ public sealed record GenAIModelOptions
     internal IReadOnlyList<string> BuildOverlays()
     {
         var overlays = new List<string>();
-        if (IntraOpThreads is int threads)
+        if (Starlings.Threading.IntraOpThreadDefaults.Resolve(IntraOpThreads) is int threads)
         {
             overlays.Add(string.Create(CultureInfo.InvariantCulture, $"{{\"model\":{{\"decoder\":{{\"session_options\":{{\"intra_op_num_threads\":{threads}}}}}}}}}"));
         }
