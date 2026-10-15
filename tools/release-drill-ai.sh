@@ -975,6 +975,8 @@ if [[ -n "$cuda_device" ]]; then
         grep -Eq "^model: .* on Cuda, ONNX Runtime GenAI $genai_version$" "$work/cuda-qwen-$v-ask.log" \
             || fail "QwenChatCuda $v: expected the model on Cuda with ONNX Runtime GenAI $genai_version"
         grep -q "^model: .*$v" "$work/cuda-qwen-$v-ask.log" || fail "QwenChatCuda $v: the loaded profile is not $v"
+        grep -Eq "^packages: Starlings.Models.Qwen35 $ai_version, Starlings.Generation.OnnxGenAI $ai_version, Starlings.Tokenizers $tok_version, .*; GenAI managed $genai_version, native Microsoft.ML.OnnxRuntimeGenAI.Cuda/$genai_version$" "$work/cuda-qwen-$v-ask.log" \
+            || fail "QwenChatCuda $v: expected the packed packages and Microsoft.ML.OnnxRuntimeGenAI.Cuda $genai_version in the diagnostics"
         check_qwen_reference "$work/cuda-qwen-$v-ask.log" "QwenChatCuda $v"
         offline "${cuda_env[@]}" "${qwen_cuda[@]}" ask --cache "$cuda_models" --variant "$v" --cuda --max-new 64 --chat-client "$qwen_question" \
             | tee "$work/cuda-qwen-$v-ask-chat-client.log" || fail "QwenChatCuda $v --chat-client failed"
@@ -995,4 +997,6 @@ cp "$work"/sample-*.log "$work"/consumer-*.log "$work"/public-*.log "$work"/cuda
 if [[ -d "$work/aot" ]]; then cp -r "$work/aot" "$out/aot"; fi
 aot_label=""
 [[ "$aot" != 1 ]] || aot_label=", AOT check"
-step "DRILL PASS ($mode${gliner2_seed:+, GLiNER2 run}${eg2_seed:+, EmbeddingGemma 2 run}${ffmpeg_dir:+ with FFmpeg $ffmpeg_dir}${qwen_seed:+, Qwen3.5 run}${public_ran:+, public hosting: $public_ran}$aot_label${cuda_ran:+, CUDA: $cuda_ran}): Starlings $ai_version + Tokenizers $tok_version from $sha (packages and logs in artifacts/release-drill-ai/)"
+cpu_label="$mode${gliner2_seed:+, GLiNER2 run}${eg2_seed:+, EmbeddingGemma 2 run}${ffmpeg_dir:+ with FFmpeg $ffmpeg_dir}${qwen_seed:+, Qwen3.5 run}"
+[[ "$cuda_only" != 1 ]] || cpu_label="CPU runs skipped (--cuda-only)"
+step "DRILL PASS ($cpu_label${public_ran:+, public hosting: $public_ran}$aot_label${cuda_ran:+, CUDA: $cuda_ran}): Starlings $ai_version + Tokenizers $tok_version from $sha (packages and logs in artifacts/release-drill-ai/)"

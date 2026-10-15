@@ -11,6 +11,7 @@
 // an empty line or /exit quits, /reset clears the conversation. --chat-client streams through the Microsoft.Extensions.AI
 // IChatClient adapter (Qwen35ChatClient) instead of the typed API; the tokens are the same.
 using System.Globalization;
+using System.Reflection;
 using System.Text;
 using Starlings.Acquisition;
 using Starlings.Generation.OnnxGenAI;
@@ -104,6 +105,8 @@ async Task<int> ToolBody()
     using var model = Qwen35ChatModel.Load(files, new Qwen35ModelOptions { Provider = cuda ? GenAIExecutionProvider.Cuda : GenAIExecutionProvider.Cpu });
     Console.WriteLine($"model: {model.Info.Profile} ({model.Info.Checkpoint}) on {model.Info.Provider}, ONNX Runtime GenAI {model.Info.GenAIVersion}");
     Console.WriteLine($"tokenizer: {model.Info.Tokenizer}");
+    Console.WriteLine($"packages: {Version<Qwen35ChatModel>()}, {Version<GenAIModel>()}, {Version<Starlings.Tokenizers.Tokenizer>()}, {Version<Qwen35ChatClient>()}; " +
+        $"GenAI managed {GenAIRuntimeInfo.ManagedVersion ?? "unknown"}, native {GenAIRuntimeInfo.NativePackage ?? "unknown"}");
     var options = new Qwen35ChatOptions { MaxNewTokens = maxNew, EnableThinking = thinking };
     // The same model behind Microsoft.Extensions.AI's IChatClient; the client wraps the model and does not own it.
     using IChatClient chatClient = new Qwen35ChatClient(model, new Qwen35ChatClientOptions { Defaults = options });
@@ -221,6 +224,14 @@ async Task<int> ToolBody()
 
         return null;
     }
+}
+
+// Package name and version of the assembly that defines T (the diagnostics line).
+static string Version<T>()
+{
+    AssemblyName name = typeof(T).Assembly.GetName();
+    string? informational = typeof(T).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion;
+    return $"{name.Name} {informational?.Split('+')[0]}";
 }
 
 internal sealed class FileProgress : IProgress<ModelAssetProgress>
