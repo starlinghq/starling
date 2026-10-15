@@ -1,0 +1,9 @@
+2026-10-15T19:48:05+00:00 start a-baseline (e5, 12m)  
+2026-10-15T20:00:31+00:00 end a-baseline exit 0 wall 745s: [e5] PASS: every gating settled series plateaus after warmup; no wrong output or error; wrote /workspace/out/starling-q-c1-fix/a-baseline/e5-20261015T194806Z.json and .md
+2026-10-15T20:00:31+00:00 start b-mmap-threshold-64k (e5, 12m) MALLOC_MMAP_THRESHOLD_=65536 
+2026-10-15T20:12:55+00:00 end b-mmap-threshold-64k exit 0 wall 744s: [e5] PASS: every gating settled series plateaus after warmup; no wrong output or error; wrote /workspace/out/starling-q-c1-fix/b-mmap-threshold-64k/e5-20261015T200031Z.json and .md
+2026-10-15T20:12:55+00:00 start d-requests-only (e5, 12m)  --keep-loaded
+2026-10-15T20:25:00+00:00 end d-requests-only exit 0 wall 725s: [e5] PASS: every gating settled series plateaus after warmup; no wrong output or error; wrote /workspace/out/starling-q-c1-fix/d-requests-only/e5-20261015T201256Z.json and .md
+2026-10-15T20:25:00+00:00 start f-malloc-trim (e5, 12m)  --malloc-trim
+2026-10-15T20:37:24+00:00 end f-malloc-trim exit 0 wall 744s: [e5] PASS: every gating settled series plateaus after warmup; no wrong output or error; wrote /workspace/out/starling-q-c1-fix/f-malloc-trim/e5-20261015T202500Z.json and .md
+2026-10-15T20:37:24+00:00 DIAG DONE

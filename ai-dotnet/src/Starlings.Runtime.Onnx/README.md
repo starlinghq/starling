@@ -32,4 +32,8 @@ The package references only `Microsoft.ML.OnnxRuntime.Managed` (exactly 1.30.0).
 
 Both ship `libonnxruntime` under the same file name. Without a native package, or with a different version, session creation fails with `OnnxRuntimeUnavailableException` naming the package to add.
 
+## Threads in containers
+
+When `IntraOpNumThreads` is not set and a CPU quota or affinity mask limits the process (`Environment.ProcessorCount` below the host's online CPUs on Linux), the session uses `Environment.ProcessorCount` intra-op threads. ONNX Runtime's own default ignores a container's CPU quota and starts one thread per physical core of the host (147 threads, each with its own glibc malloc arena, for one CUDA e5 session in a 31-CPU container on a 256-CPU host). On an unconstrained host the ONNX Runtime default is kept. `OnnxSessionDiagnostics.IntraOpNumThreads` reports the count used. Evidence: [CUDA soak growth](https://github.com/starlinghq/starling/blob/main/docs/evidence/cuda-soak-growth/README.md).
+
 Most applications use this package through a model package such as `Starlings.Models.E5`. Documentation: [ai-dotnet/README.md](https://github.com/starlinghq/starling/blob/main/ai-dotnet/README.md#runtime-component-p-005).
