@@ -317,7 +317,7 @@ qualification:
     G1: { status: passed, evidence: docs/evidence/release-set-gates-2026-10-14/embeddinggemma2-video-fp32-cuda/README.md, date: 2026-10-14 }
     G2: { status: passed, evidence: docs/evidence/release-set-gates-2026-10-14/embeddinggemma2-video-fp32-cuda/README.md, date: 2026-10-14 }
     G3: { status: not-run }
-    G4: { status: not-run }
+    G4: { status: failed, evidence: docs/evidence/qualification-2026-10-15/README.md, date: 2026-10-15 }
     G5: { status: failed, evidence: docs/evidence/qualification-2026-10-15/README.md, date: 2026-10-15 }
     # G6 open (2026-10-14, docs/evidence/g6-distribution-2026-10-14/README.md): no clean install from published packages
     # exists for this profile yet. D2 cleared 2026-10-15; gate pending its runs.

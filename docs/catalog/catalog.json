@@ -358,7 +358,10 @@
           "status": "not-run"
         },
         "G4": {
-          "status": "not-run"
+          "status": "failed",
+          "evidence": "docs/evidence/qualification-2026-10-15/README.md",
+          "evidence_found": true,
+          "date": "2026-10-15"
         },
         "G5": {
           "status": "failed",
@@ -1100,7 +1103,10 @@
           "status": "not-run"
         },
         "G4": {
-          "status": "not-run"
+          "status": "failed",
+          "evidence": "docs/evidence/qualification-2026-10-15/README.md",
+          "evidence_found": true,
+          "date": "2026-10-15"
         },
         "G5": {
           "status": "failed",
@@ -1471,7 +1477,10 @@
           "date": "2026-10-14"
         },
         "G4": {
-          "status": "not-run"
+          "status": "failed",
+          "evidence": "docs/evidence/qualification-2026-10-15/README.md",
+          "evidence_found": true,
+          "date": "2026-10-15"
         },
         "G5": {
           "status": "failed",
