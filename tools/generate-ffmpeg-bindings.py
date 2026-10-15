@@ -123,6 +123,7 @@ STRUCTS = [
         [
             ("codecpar", "AVCodecParameters *", "AVCodecParameters*"),
             ("time_base", "AVRational", "AVRational"),
+            ("discard", "enum AVDiscard", "int"),
         ],
     ),
     (
@@ -162,6 +163,8 @@ STRUCTS = [
         "AVCodecContext",
         [
             ("thread_count", "int", "int"),
+            ("active_thread_type", "int", "int"),
+            ("has_b_frames", "int", "int"),
             ("pkt_timebase", "AVRational", "AVRational"),
         ],
     ),
@@ -170,6 +173,8 @@ STRUCTS = [
         "AVFrame",
         [
             ("data", "uint8_t *[8]", "fixed ulong [8]"),
+            ("pts", "int64_t", "long"),
+            ("pkt_dts", "int64_t", "long"),
             ("linesize", "int [8]", "fixed int [8]"),
             ("width", "int", "int"),
             ("height", "int", "int"),
@@ -281,9 +286,14 @@ FUNCTIONS = [
     ),
     ("avcodec", "int avcodec_receive_frame(AVCodecContext *avctx, AVFrame *frame)"),
     ("avcodec", "void avcodec_free_context(AVCodecContext **avctx)"),
+    ("avcodec", "void avcodec_flush_buffers(AVCodecContext *avctx)"),
     ("avformat", "unsigned avformat_version(void)"),
     ("avformat", "const char *avformat_license(void)"),
     ("avformat", "int av_read_frame(AVFormatContext *s, AVPacket *pkt)"),
+    (
+        "avformat",
+        "int avformat_seek_file(AVFormatContext *s, int stream_index, int64_t min_ts, int64_t ts, int64_t max_ts, int flags)",
+    ),
     ("avformat", "AVFormatContext *avformat_alloc_context(void)"),
     (
         "avformat",
@@ -357,6 +367,9 @@ FUNCTIONS = [
 CONSTANTS = [
     ("AV_LOG_ERROR", "AV_LOG_ERROR", "int"),
     ("AV_PKT_FLAG_DISCARD", "AV_PKT_FLAG_DISCARD", "int"),
+    ("AV_PKT_FLAG_KEY", "AV_PKT_FLAG_KEY", "int"),
+    ("AVDISCARD_ALL", "AVDISCARD_ALL", "int"),
+    ("FF_THREAD_FRAME", "FF_THREAD_FRAME", "int"),
     ("AV_NOPTS_VALUE", "AV_NOPTS_VALUE", "long"),
     ("AVERROR_EOF", "AVERROR_EOF", "int"),
     ("AVERROR_EINVAL", "AVERROR(EINVAL)", "int"),

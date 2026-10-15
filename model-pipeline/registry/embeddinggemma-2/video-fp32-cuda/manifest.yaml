@@ -306,12 +306,13 @@ qualification:
   tolerances: model-pipeline/protected/embeddinggemma-2/video-fp32-cuda/tolerances.yaml
   # CUDA G1/G2, 2026-10-14 (RTX 3090, use_tf32 0): the protected staged evaluator gave G1 passed, G2 passed on the accepted
   # development fixtures, which are not P-030 release sets, so the entries are checklist, not passed (docs/evidence/cuda-qualification-2026-10-14/).
-  # P-030 release sets (accepted 2026-10-14, docs/kickoff.md), 2026-10-14: no gate passed on the release sets (docs/evidence/release-set-gates-2026-10-14/embeddinggemma2-video-fp32-cuda/README.md).
-  # G1 and G2 FAILED on the video release set (commons-video-02, Ogg Theora frames; as on CPU). Entries unchanged.
+  # P-030 release sets (accepted 2026-10-14, docs/kickoff.md), 2026-10-14: G1 and G2 passed on the video release set (docs/evidence/release-set-gates-2026-10-14/embeddinggemma2-video-fp32-cuda/README.md),
+  # after the FFmpeg adapter was changed to decode as torchcodec does (seeking where it seeks; the first run failed on the
+  # Ogg Theora frames of commons-video-02). Embedding max abs 2.77e-6 vs 1e-5; soft tokens 2.50e-4 vs 1e-3.
   gates:
     G0: { status: checklist, evidence: docs/m0/embeddinggemma2-video-spike.md, date: 2026-10-11 }
-    G1: { status: checklist, evidence: docs/evidence/cuda-qualification-2026-10-14/embeddinggemma2-video-fp32-cuda/README.md, date: 2026-10-14 }
-    G2: { status: checklist, evidence: docs/evidence/cuda-qualification-2026-10-14/embeddinggemma2-video-fp32-cuda/README.md, date: 2026-10-14 }
+    G1: { status: passed, evidence: docs/evidence/release-set-gates-2026-10-14/embeddinggemma2-video-fp32-cuda/README.md, date: 2026-10-14 }
+    G2: { status: passed, evidence: docs/evidence/release-set-gates-2026-10-14/embeddinggemma2-video-fp32-cuda/README.md, date: 2026-10-14 }
     G3: { status: not-run }
     G4: { status: not-run }
     G5: { status: not-run }
@@ -325,6 +326,11 @@ maintenance:
   last_checked: 2026-10-11
   review_date: 2027-01-05
   known_issues:
+    - >-
+      Sampled frames follow torchcodec's seek-based decoding, including the decoder state after a seek: on the Ogg
+      Theora release video commons-video-02 the frame after torchcodec's seek differs from a sequential decode, and that
+      frame depends on FFmpeg frame threading (upstream's num_ffmpeg_threads=0 is the adapter's DecoderThreads default;
+      another thread count changes which frames differ, for upstream as well).
     - >-
       The hosted graphs' download addresses are placeholders until the maintainer creates the GitHub release
       embeddinggemma-2-vision-onnx-r1; acquisition of the graphs is untested until then.

@@ -20,8 +20,12 @@ namespace Starlings.Models.EmbeddingGemma2.Video.FFmpeg;
 /// </para>
 /// <para>
 /// <b>Sampling and decoding</b> (<see cref="DecodeFile(string, CancellationToken)"/>): upstream's indices
-/// (<see cref="EmbeddingGemma2VideoSampling.SampleIndices"/> on that metadata; 1 frame per second, at most 32), then one
-/// sequential decode in presentation order that converts and keeps only the sampled frames (at most 32 in memory).
+/// (<see cref="EmbeddingGemma2VideoSampling.SampleIndices"/> on that metadata; 1 frame per second, at most 32), then
+/// torchcodec's <c>get_frames_at</c> on the same demuxer: in index order, each frame is reached by decoding on or by
+/// seeking to the scanned keyframe before it (<c>avformat_seek_file</c>, then <c>avcodec_flush_buffers</c>), with torchcodec's
+/// rule for when a seek is avoided (which depends on the decoder's frame threads), and only the sampled frames are converted
+/// (at most 32 in memory). The decoder state after a seek is part of upstream's output: on an Ogg Theora video of the
+/// release set, torchcodec's frame after a seek differs from a sequential decode, and this adapter returns torchcodec's.
 /// </para>
 /// <para>
 /// <b>RGB conversion</b>, as torchcodec calls FFmpeg: when the frame width is a multiple of 32 and no rotation applies,
@@ -124,15 +128,15 @@ public sealed unsafe class EmbeddingGemma2VideoDecoder
     {
         ArgumentException.ThrowIfNullOrEmpty(path);
         using var input = Input.OpenFile(path);
-        var metadata = Scan(input, cancellationToken);
+        var metadata = Scan(input, cancellationToken, out var table);
         if (metadata.FrameCount > _options.MaxAllFrames)
         {
             throw new EmbeddingGemma2VideoDecodeException($"{path} has {metadata.FrameCount} frames; DecodeAllFrames keeps at most {_options.MaxAllFrames} (EmbeddingGemma2FFmpegOptions.MaxAllFrames). Use DecodeFile, which keeps only the sampled frames.");
         }
 
         int[] all = Enumerable.Range(0, metadata.FrameCount).ToArray();
-        input.Rewind();
-        var frames = DecodeFrames(input, metadata, all, cancellationToken);
+        input.SeekToStartAfterScan();
+        var frames = DecodeFrames(input, metadata, table, all, cancellationToken);
         var video = metadata.AverageFramesPerSecond is { } fps
             ? EmbeddingGemma2Video.FromDecodedFrames(frames, fps, metadata.DurationSeconds)
             : EmbeddingGemma2Video.FromFramesWithoutTiming(frames);
@@ -141,7 +145,7 @@ public sealed unsafe class EmbeddingGemma2VideoDecoder
 
     /// <summary>
     /// The frames at <paramref name="indices"/> (presentation order indices, as torchcodec's <c>get_frames_at</c>), in the
-    /// order given; repeats allowed. Decodes sequentially up to the largest index and keeps only the requested frames.
+    /// order given; repeats allowed. Decodes as torchcodec does (seeking where it seeks) and keeps only the requested frames.
     /// </summary>
     /// <exception cref="ArgumentOutOfRangeException">An index is negative or not below the scanned frame count.</exception>
     public IReadOnlyList<EmbeddingGemma2Image> DecodeFramesAt(string path, IReadOnlyList<int> indices, CancellationToken cancellationToken = default)
@@ -154,36 +158,44 @@ public sealed unsafe class EmbeddingGemma2VideoDecoder
         }
 
         using var input = Input.OpenFile(path);
-        var metadata = Scan(input, cancellationToken);
+        var metadata = Scan(input, cancellationToken, out var table);
         foreach (int i in indices)
         {
             ArgumentOutOfRangeException.ThrowIfNegative(i, nameof(indices));
             ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual(i, metadata.FrameCount, nameof(indices));
         }
 
-        input.Rewind();
-        return DecodeFrames(input, metadata, [.. indices], cancellationToken);
+        input.SeekToStartAfterScan();
+        return DecodeFrames(input, metadata, table, [.. indices], cancellationToken);
     }
 
     private EmbeddingGemma2DecodedVideo Decode(Func<Input> open, CancellationToken cancellationToken)
     {
         using var input = open();
-        var metadata = Scan(input, cancellationToken);
+        var metadata = Scan(input, cancellationToken, out var table);
 
         // Upstream: sample from the scanned metadata (average_fps is None when the duration is 0: every frame, capped).
         int[] indices = EmbeddingGemma2VideoSampling.SampleIndices(metadata.FrameCount, metadata.AverageFramesPerSecond, metadata.AverageFramesPerSecond is null ? null : metadata.DurationSeconds);
-        input.Rewind();
-        var frames = DecodeFrames(input, metadata, indices, cancellationToken);
+        input.SeekToStartAfterScan();
+        var frames = DecodeFrames(input, metadata, table, indices, cancellationToken);
         return new EmbeddingGemma2DecodedVideo(EmbeddingGemma2Video.FromSampledFrames(frames, indices), metadata, indices);
     }
 
-    private static EmbeddingGemma2VideoMetadata Scan(Input input, CancellationToken cancellationToken)
+    private static EmbeddingGemma2VideoMetadata Scan(Input input, CancellationToken cancellationToken) => Scan(input, cancellationToken, out _);
+
+    /// <summary>
+    /// torchcodec's exact-mode scan (<c>scan_file_and_update_metadata_and_index</c>): every packet of the video stream (packets
+    /// flagged discard skipped), its pts (dts when unset) and keyframe flag; the frame table is sorted by pts.
+    /// </summary>
+    private static EmbeddingGemma2VideoMetadata Scan(Input input, CancellationToken cancellationToken, out FrameTable table)
     {
         var fmt = input.Format;
         int si = input.StreamIndex;
         var st = fmt->streams[si];
         long begin = long.MaxValue, end = long.MinValue;
         int n = 0;
+        var pts = new List<long>();
+        var keys = new List<bool>();
         var pkt = FFmpegNative.av_packet_alloc();
         try
         {
@@ -192,9 +204,11 @@ public sealed unsafe class EmbeddingGemma2VideoDecoder
             {
                 if (pkt->stream_index == si && (pkt->flags & FFmpegNative.AV_PKT_FLAG_DISCARD) == 0)
                 {
-                    long pts = pkt->pts != FFmpegNative.AV_NOPTS_VALUE ? pkt->pts : pkt->dts;
-                    begin = Math.Min(begin, pts);
-                    end = Math.Max(end, pts + pkt->duration);
+                    long p = pkt->pts != FFmpegNative.AV_NOPTS_VALUE ? pkt->pts : pkt->dts;
+                    begin = Math.Min(begin, p);
+                    end = Math.Max(end, p + pkt->duration);
+                    pts.Add(p);
+                    keys.Add((pkt->flags & FFmpegNative.AV_PKT_FLAG_KEY) != 0);
                     n++;
                     if ((n & 1023) == 0)
                     {
@@ -220,8 +234,9 @@ public sealed unsafe class EmbeddingGemma2VideoDecoder
             throw new EmbeddingGemma2VideoDecodeException($"{input.Name}: the video stream has no packets.");
         }
 
+        table = FrameTable.Create(pts, keys, st->time_base);
         var tb = st->time_base;
-        double Seconds(long pts) => (double)pts * tb.num / tb.den;
+        double Seconds(long p) => (double)p * tb.num / tb.den;
         double? rotation = null;
         var sd = FFmpegNative.av_packet_side_data_get(st->codecpar->coded_side_data, st->codecpar->nb_coded_side_data, FFmpegNative.AV_PKT_DATA_DISPLAYMATRIX);
         if (sd != null && sd->size >= 9 * sizeof(int))
@@ -247,24 +262,22 @@ public sealed unsafe class EmbeddingGemma2VideoDecoder
             si);
     }
 
-    private List<EmbeddingGemma2Image> DecodeFrames(Input input, EmbeddingGemma2VideoMetadata metadata, int[] indices, CancellationToken cancellationToken)
+    /// <summary>
+    /// torchcodec's <c>get_frames_at</c> on the decoder that made the scan (<c>SingleStreamDecoder</c>, exact mode, CPU): the
+    /// indices are decoded in sorted order (a repeated index is copied); an index that does not follow the previous one sets
+    /// the cursor to its scanned pts, and the cursor is reached either by decoding on or by seeking
+    /// (<c>avformat_seek_file</c> to the scanned keyframe at or before it, then <c>avcodec_flush_buffers</c>) with
+    /// torchcodec's rule for when a seek is avoided; the frame returned is the first decoded frame whose pts (dts when unset)
+    /// is at or after the cursor. The decoder state after a seek is part of what upstream returns (an Ogg Theora seek, for
+    /// example, can yield a frame that differs from a sequential decode), so the same calls are made in the same order.
+    /// </summary>
+    private List<EmbeddingGemma2Image> DecodeFrames(Input input, EmbeddingGemma2VideoMetadata metadata, FrameTable table, int[] indices, CancellationToken cancellationToken)
     {
         int quarterTurns = QuarterTurns(metadata.Rotation);
         var fmt = input.Format;
         int si = input.StreamIndex;
         var st = fmt->streams[si];
-        var wanted = new Dictionary<int, List<int>>();
-        for (int k = 0; k < indices.Length; k++)
-        {
-            if (!wanted.TryGetValue(indices[k], out var slots))
-            {
-                wanted[indices[k]] = slots = [];
-            }
-
-            slots.Add(k);
-        }
-
-        int last = indices.Max();
+        int[] order = Enumerable.Range(0, indices.Length).OrderBy(k => indices[k]).ToArray();
         var output = new EmbeddingGemma2Image?[indices.Length];
         var codec = FFmpegNative.avcodec_find_decoder(st->codecpar->codec_id);
         if (codec == null)
@@ -282,72 +295,47 @@ public sealed unsafe class EmbeddingGemma2VideoDecoder
             cc->thread_count = _options.DecoderThreads;
             cc->pkt_timebase = st->time_base;
             Check(FFmpegNative.avcodec_open2(cc, codec, null), input.Name, "avcodec_open2");
-            int index = 0;
-            bool flushing = false;
-            while (index <= last)
+
+            // torchcodec reads only the active stream once the codec is open.
+            for (uint s = 0; s < fmt->nb_streams; s++)
+            {
+                if (s != (uint)si)
+                {
+                    fmt->streams[s]->discard = FFmpegNative.AVDISCARD_ALL;
+                }
+            }
+
+            var state = new SeekState();
+            EmbeddingGemma2Image? previous = null;
+            int previousIndex = -1;
+            foreach (int slot in order)
             {
                 cancellationToken.ThrowIfCancellationRequested();
-                if (!flushing)
+                int index = indices[slot];
+                if (previous is not null && index == previousIndex)
                 {
-                    int r = FFmpegNative.av_read_frame(fmt, pkt);
-                    if (r < 0)
-                    {
-                        if (r != FFmpegNative.AVERROR_EOF)
-                        {
-                            throw new EmbeddingGemma2VideoDecodeException($"{input.Name}: reading packets failed: {Error(r)}.");
-                        }
-
-                        flushing = true;
-                        Check(FFmpegNative.avcodec_send_packet(cc, null), input.Name, "avcodec_send_packet (flush)");
-                    }
-                    else
-                    {
-                        try
-                        {
-                            if (pkt->stream_index == si)
-                            {
-                                Check(FFmpegNative.avcodec_send_packet(cc, pkt), input.Name, "avcodec_send_packet");
-                            }
-                        }
-                        finally
-                        {
-                            FFmpegNative.av_packet_unref(pkt);
-                        }
-                    }
+                    output[slot] = previous;
+                    continue;
                 }
 
-                while (index <= last)
+                if (index != state.LastIndex + 1)
                 {
-                    int r = FFmpegNative.avcodec_receive_frame(cc, frame);
-                    if (r == FFmpegNative.AVERROR_EAGAIN)
-                    {
-                        break;
-                    }
-
-                    if (r == FFmpegNative.AVERROR_EOF)
-                    {
-                        throw new EmbeddingGemma2VideoDecodeException($"{input.Name}: the decoder produced {index} frames; frame {last} was requested (the packet scan counted {metadata.FrameCount}).");
-                    }
-
-                    Check(r, input.Name, "avcodec_receive_frame");
-                    try
-                    {
-                        if (wanted.TryGetValue(index, out var slots))
-                        {
-                            var image = converter.Convert(frame, st->time_base);
-                            foreach (int slot in slots)
-                            {
-                                output[slot] = image;
-                            }
-                        }
-                    }
-                    finally
-                    {
-                        FFmpegNative.av_frame_unref(frame);
-                    }
-
-                    index++;
+                    state.Cursor = table.SecondsToClosestPts(table.PtsToSeconds(table.Pts[index]));
+                    state.CursorJustSet = true;
                 }
+
+                DecodeAt(input, cc, pkt, frame, table, state, cancellationToken);
+                try
+                {
+                    previous = output[slot] = converter.Convert(frame, st->time_base);
+                }
+                finally
+                {
+                    FFmpegNative.av_frame_unref(frame);
+                }
+
+                previousIndex = index;
+                state.LastIndex = index;
             }
         }
         finally
@@ -358,6 +346,247 @@ public sealed unsafe class EmbeddingGemma2VideoDecoder
         }
 
         return output.Select(f => f!).ToList();
+    }
+
+    /// <summary>torchcodec's <c>decode_av_frame</c> with the filter <c>pts &gt;= cursor</c>: on return <paramref name="frame"/> holds that frame.</summary>
+    private static void DecodeAt(Input input, AVCodecContext* cc, AVPacket* pkt, AVFrame* frame, FrameTable table, SeekState state, CancellationToken cancellationToken)
+    {
+        var fmt = input.Format;
+        int si = input.StreamIndex;
+        if (!CanAvoidSeeking(cc, table, state))
+        {
+            long desired = state.Cursor;
+            int key = table.KeyFrameFor(desired);
+            if (key >= 0)
+            {
+                desired = table.KeyPts[key];
+            }
+
+            int s = FFmpegNative.avformat_seek_file(fmt, si, long.MinValue, desired, desired, 0);
+            if (s < 0)
+            {
+                throw new EmbeddingGemma2VideoDecodeException($"{input.Name}: seeking to pts {desired} failed: {Error(s)} (torchcodec seeks as well and fails the same way).");
+            }
+
+            FFmpegNative.avcodec_flush_buffers(cc);
+        }
+
+        state.CursorJustSet = false;
+        bool reachedEof = false;
+        int r;
+        int received = 0;
+        while (true)
+        {
+            r = FFmpegNative.avcodec_receive_frame(cc, frame);
+            if (r != 0 && r != FFmpegNative.AVERROR_EAGAIN)
+            {
+                break;
+            }
+
+            if (r == 0)
+            {
+                if (PtsOrDts(frame) >= state.Cursor)
+                {
+                    break;
+                }
+
+                FFmpegNative.av_frame_unref(frame);
+                if ((++received & 63) == 0)
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+                }
+
+                continue;
+            }
+
+            if (reachedEof)
+            {
+                continue;
+            }
+
+            int p;
+            do
+            {
+                FFmpegNative.av_packet_unref(pkt);
+                p = FFmpegNative.av_read_frame(fmt, pkt);
+            }
+            while (p >= 0 && pkt->stream_index != si);
+
+            if (p == FFmpegNative.AVERROR_EOF)
+            {
+                Check(FFmpegNative.avcodec_send_packet(cc, null), input.Name, "avcodec_send_packet (flush)");
+                reachedEof = true;
+                continue;
+            }
+
+            if (p < 0)
+            {
+                throw new EmbeddingGemma2VideoDecodeException($"{input.Name}: reading packets failed: {Error(p)}.");
+            }
+
+            try
+            {
+                Check(FFmpegNative.avcodec_send_packet(cc, pkt), input.Name, "avcodec_send_packet");
+            }
+            finally
+            {
+                FFmpegNative.av_packet_unref(pkt);
+            }
+        }
+
+        if (r < 0)
+        {
+            if (reachedEof || r == FFmpegNative.AVERROR_EOF)
+            {
+                throw new EmbeddingGemma2VideoDecodeException($"{input.Name}: the decoder has no frame at or after pts {state.Cursor} (the packet scan counted {table.Pts.Length} frames).");
+            }
+
+            Check(r, input.Name, "avcodec_receive_frame");
+        }
+
+        state.LastPts = PtsOrDts(frame);
+    }
+
+    /// <summary>torchcodec's <c>can_we_avoid_seeking</c> (video, CPU).</summary>
+    private static bool CanAvoidSeeking(AVCodecContext* cc, FrameTable table, SeekState state)
+    {
+        if (!state.CursorJustSet)
+        {
+            return true;
+        }
+
+        if (state.Cursor < state.LastPts || state.Cursor == state.LastPts)
+        {
+            return false;
+        }
+
+        int lastKey = table.KeyFrameFor(state.LastPts);
+        int targetKey = table.KeyFrameFor(state.Cursor);
+        if (lastKey < 0 || targetKey < 0)
+        {
+            return false;
+        }
+
+        if (lastKey == targetKey)
+        {
+            return true;
+        }
+
+        long x = table.SecondsToIndexLowerBound(table.PtsToSeconds(state.LastPts));
+        long j = table.KeyFrameIndex[targetKey];
+        long reorder = Math.Max(cc->has_b_frames, 0);
+        long inFlight = (cc->active_thread_type & FFmpegNative.FF_THREAD_FRAME) != 0 ? Math.Max(cc->thread_count, 1) - 1 : 0;
+        return j - x <= reorder + inFlight;
+    }
+
+    private static long PtsOrDts(AVFrame* frame) => frame->pts == FFmpegNative.AV_NOPTS_VALUE ? frame->pkt_dts : frame->pts;
+
+    /// <summary>torchcodec's decoding position: the cursor pts, whether it was just set, the last decoded frame.</summary>
+    private sealed class SeekState
+    {
+        public long Cursor { get; set; } = long.MinValue;
+
+        public bool CursorJustSet { get; set; }
+
+        public long LastPts { get; set; } = long.MinValue;
+
+        public long LastIndex { get; set; } = long.MinValue;
+    }
+
+    /// <summary>torchcodec's scanned index (<c>all_frames</c>, <c>key_frames</c> after <c>sort_all_frames</c>).</summary>
+    private sealed class FrameTable
+    {
+        private FrameTable(long[] pts, long[] nextPts, long[] keyPts, long[] keyFrameIndex, AVRational timeBase)
+        {
+            Pts = pts;
+            NextPts = nextPts;
+            KeyPts = keyPts;
+            KeyFrameIndex = keyFrameIndex;
+            TimeBase = timeBase;
+        }
+
+        /// <summary>Frame pts in presentation order (the frame index is the position).</summary>
+        public long[] Pts { get; }
+
+        /// <summary>The next frame's pts (<see cref="long.MaxValue"/> for the last frame).</summary>
+        public long[] NextPts { get; }
+
+        /// <summary>Keyframe pts, sorted.</summary>
+        public long[] KeyPts { get; }
+
+        /// <summary>The frame index of each keyframe.</summary>
+        public long[] KeyFrameIndex { get; }
+
+        public AVRational TimeBase { get; }
+
+        public static FrameTable Create(List<long> pts, List<bool> keys, AVRational timeBase)
+        {
+            // Sorted by pts (std::sort in torchcodec; equal pts keep their packet order here).
+            int[] order = Enumerable.Range(0, pts.Count).OrderBy(i => pts[i]).ToArray();
+            long[] sorted = order.Select(i => pts[i]).ToArray();
+            long[] next = new long[sorted.Length];
+            for (int i = 0; i < sorted.Length; i++)
+            {
+                next[i] = i + 1 < sorted.Length ? sorted[i + 1] : long.MaxValue;
+            }
+
+            var keyPts = new List<long>();
+            var keyIndex = new List<long>();
+            for (int i = 0; i < order.Length; i++)
+            {
+                if (keys[order[i]])
+                {
+                    keyPts.Add(sorted[i]);
+                    keyIndex.Add(i);
+                }
+            }
+
+            return new FrameTable(sorted, next, [.. keyPts], [.. keyIndex], timeBase);
+        }
+
+        public double PtsToSeconds(long pts) => (double)pts * TimeBase.num / TimeBase.den;
+
+        public long SecondsToClosestPts(double seconds) => (long)Math.Round(seconds * TimeBase.den / TimeBase.num, MidpointRounding.AwayFromZero);
+
+        /// <summary>The last keyframe at or before <paramref name="pts"/> (its position in <see cref="KeyPts"/>), or -1.</summary>
+        public int KeyFrameFor(long pts)
+        {
+            int lo = 0, hi = KeyPts.Length;
+            while (lo < hi)
+            {
+                int mid = (lo + hi) >>> 1;
+                if (pts < KeyPts[mid])
+                {
+                    hi = mid;
+                }
+                else
+                {
+                    lo = mid + 1;
+                }
+            }
+
+            return lo - 1;
+        }
+
+        /// <summary>The first frame whose next pts (in seconds) is after <paramref name="seconds"/>.</summary>
+        public long SecondsToIndexLowerBound(double seconds)
+        {
+            int lo = 0, hi = NextPts.Length;
+            while (lo < hi)
+            {
+                int mid = (lo + hi) >>> 1;
+                if (PtsToSeconds(NextPts[mid]) <= seconds)
+                {
+                    lo = mid + 1;
+                }
+                else
+                {
+                    hi = mid;
+                }
+            }
+
+            return lo;
+        }
     }
 
     /// <summary>torchcodec's rotation handling: the display matrix angle rounded to a multiple of 90 degrees.</summary>
@@ -448,16 +677,17 @@ public sealed unsafe class EmbeddingGemma2VideoDecoder
             return input;
         }
 
-        /// <summary>Closes and reopens the container (torchcodec's decoder starts from a fresh demuxer after the scan).</summary>
-        public void Rewind()
+        /// <summary>
+        /// torchcodec after its scan: <c>avformat_seek_file(ctx, 0, INT64_MIN, 0, 0, 0)</c> on the same demuxer, which then
+        /// decodes. A container that cannot seek fails here, as it does in torchcodec.
+        /// </summary>
+        public void SeekToStartAfterScan()
         {
-            Close();
-            if (_stream is not null)
+            int r = FFmpegNative.avformat_seek_file(_format, 0, long.MinValue, 0, 0, 0);
+            if (r < 0)
             {
-                _stream.Position = _streamStart;
+                throw new EmbeddingGemma2VideoDecodeException($"{Name}: seeking back to the start after the packet scan failed: {Error(r)} (torchcodec makes the same seek and fails the same way).");
             }
-
-            Open();
         }
 
         private long _streamStart = -1;

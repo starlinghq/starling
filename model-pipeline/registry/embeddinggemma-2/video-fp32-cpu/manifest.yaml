@@ -296,13 +296,13 @@ qualification:
   # model-pipeline/reference/embeddinggemma2/requirements-video.txt (torchcodec 0.17.0 on the pinned FFmpeg 8.1).
   fixtures: model-pipeline/protected/embeddinggemma-2/video-fp32-cpu
   tolerances: model-pipeline/protected/embeddinggemma-2/video-fp32-cpu/tolerances.yaml
-  # P-030 release sets (accepted 2026-10-14, docs/kickoff.md), 2026-10-14: no gate passed on the release sets (docs/evidence/release-set-gates-2026-10-14/embeddinggemma2-video-fp32-cpu/README.md).
-  # G1 and G2 FAILED on the video release set: decoded frames of commons-video-02 (Ogg Theora) differ from
-  # torchcodec's seek-based decode (3/12 video inputs; embedding max abs 8.9e-3 vs 1e-5 on those rows). Entries unchanged.
+  # P-030 release sets (accepted 2026-10-14, docs/kickoff.md), 2026-10-14: G1 and G2 passed on the video release set (docs/evidence/release-set-gates-2026-10-14/embeddinggemma2-video-fp32-cpu/README.md),
+  # after the FFmpeg adapter was changed to decode as torchcodec does (seeking where it seeks; the first run failed on the
+  # Ogg Theora frames of commons-video-02). Embedding max abs 1.29e-6 vs 1e-5; soft tokens 2.37e-4 vs 1e-3.
   gates:
     G0: { status: checklist, evidence: docs/m0/embeddinggemma2-video-spike.md, date: 2026-10-11 }
-    G1: { status: not-run }
-    G2: { status: not-run }
+    G1: { status: passed, evidence: docs/evidence/release-set-gates-2026-10-14/embeddinggemma2-video-fp32-cpu/README.md, date: 2026-10-14 }
+    G2: { status: passed, evidence: docs/evidence/release-set-gates-2026-10-14/embeddinggemma2-video-fp32-cpu/README.md, date: 2026-10-14 }
     G3: { status: not-run }
     G4: { status: not-run }
     G5: { status: not-run }
@@ -318,6 +318,11 @@ maintenance:
   last_checked: 2026-10-11
   review_date: 2027-01-05
   known_issues:
+    - >-
+      Sampled frames follow torchcodec's seek-based decoding, including the decoder state after a seek: on the Ogg
+      Theora release video commons-video-02 the frame after torchcodec's seek differs from a sequential decode, and that
+      frame depends on FFmpeg frame threading (upstream's num_ffmpeg_threads=0 is the adapter's DecoderThreads default;
+      another thread count changes which frames differ, for upstream as well).
     - >-
       Gate entries are left to the maintainer: model-pipeline evaluate (task video-embedding) passed G1 and G2 on the
       C# stage results at dd1ed7f (docs/evidence/embeddinggemma2-video/report.md).
