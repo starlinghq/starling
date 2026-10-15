@@ -72,3 +72,23 @@ dotnet <Starlings.Fidelity.Tool build>/Starlings.Fidelity.Tool.dll retrieval --m
 model-pipeline evaluate model-pipeline/registry/embeddinggemma-2/video-fp32-cpu/manifest.yaml --g3 retrieval \
   --dataset $SET --results <run>/embeddings.jsonl --out <run>/g3-retrieval
 ```
+
+## FFmpeg 9 decoder check (2026-10-15): G1 and G2 passed
+
+#64 (protected-change) committed the `decoder_ffmpeg9` bound (decoded RGB exact against torchcodec on FFmpeg 9) to both video profiles' `tolerances.yaml`. Since then `model-pipeline evaluate` adds `tokenizer.decoder_ffmpeg9_frame_sha256` to G1, and G1 is not-run without FFmpeg 9 frames. So G1 and G2 were run again with both adapters in one evaluation: `embeddinggemma2-videos --ffmpeg <FFmpeg 8> --ffmpeg9 <FFmpeg 9>`.
+
+| Gate | Result | Key numbers (bound) | Report |
+| --- | --- | --- | --- |
+| G1 | **passed** | ids 11/11; frame indices 12/12; decoded frames, resized pixels, pixel values and positions exact. `tokenizer.decoder_frame_sha256` (FFmpeg 8.1.3) exact 12/12, and **`tokenizer.decoder_ffmpeg9_frame_sha256` (FFmpeg 9.0.2) exact 12/12** | [`g1-g2-video-release-ffmpeg9/report.md`](g1-g2-video-release-ffmpeg9/report.md) |
+| G2 | **passed** | embedding max abs 1.29e-6 (1e-5), min cosine 0.999999999959; soft tokens 2.37e-4 and token embeddings 3.81e-4 row-relative (1e-3); batches vs single 0 (1e-5) | same |
+
+- **Run.** At `38567c2` (this change's branch on `main` after #64; the tool and the packages are unchanged since). On CPU (`Starlings.Fidelity.Tool`, `--threads 12`); .NET dump 507 s (shared machine, not a benchmark). The evaluator verified the protected evidence, and nothing under `protected/` changed.
+- **FFmpeg.** FFmpeg 8 was the pinned `n8.1.3-17-gc389840894` LGPL shared build. FFmpeg 9 was the BtbN LGPL shared build `n9.0.2-28-g669f5ab083` (release `autobuild-2026-10-15-13-03`, archive SHA-256 `5838264a2cff06ddc6b7b2fc43edeb51358ead38fd56d82f83f49c270fe0f5ff`), loaded without `--ffmpeg-allow-non-lgpl`. The 4 release videos (2 Ogg Theora, 2 WebM) decode to the protected sampled-frame digests on both majors. That includes `commons-video-02`'s frame after torchcodec's seek.
+- **Reference tensors.** The 6-thread regeneration recorded above (every `.npz` checked against `tensors.json`).
+
+```sh
+dotnet <Starlings.Fidelity.Tool build>/Starlings.Fidelity.Tool.dll embeddinggemma2-videos --out <run>/stages --videos <media dir> \
+  --ffmpeg <FFmpeg n8.1.3 LGPL>/lib --ffmpeg9 <FFmpeg n9.0.2 LGPL>/lib --fixtures $REL --threads 12
+model-pipeline evaluate model-pipeline/registry/embeddinggemma-2/video-fp32-cpu/manifest.yaml --fixtures $REL \
+  --results <run>/stages --out <report> --reference-tensors <tensors> --require-gates G1,G2
+```

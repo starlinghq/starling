@@ -2,7 +2,7 @@
 
 Plan section 10, G7: adapter behavior, representative downstream use, and persistence if advertised. Release rule: integration badges only for tested capabilities. Plan section 15 names the integrations: Microsoft.Extensions.AI (15.1) and ML.NET (15.2).
 
-G7 is recorded as `passed` for the 11 profiles below. It stays open for the two EmbeddingGemma 2 video profiles.
+G7 is recorded as `passed` for the 11 profiles below. The two EmbeddingGemma 2 video profiles followed on 2026-10-15 ([Video, 2026-10-15](#video-2026-10-15)).
 
 ## What each profile advertises
 
@@ -41,12 +41,12 @@ The drill's sample consumers are the representative downstream use: E5Search, Gl
 | `qwen3.5-0.8b/ortgenai-fp32x-cpu` | `Qwen35.Extensions.AI.Tests`: `ChatClientContractTests`, `RealModelTests` (21 prompts, streaming equals non-streamed equals reference, cancellation, concurrency), and tool calling (`ToolCallingTests`: 54 core and 21 client tests; `TemplateCorpusChatClientTests`; the real-model call and the `UseFunctionInvocation` loop, [qwen35-tool-calling](../qwen35-tool-calling/README.md)) | QwenChat: typed API and `--chat-client` give the same answer, finish reason and usage | **passed** |
 | `qwen3.5-0.8b/ortgenai-fp32x-cuda` | `Fp32xCudaChatClientTests` (P-017 on CUDA, [log](../cuda-qualification-2026-10-14/cuda-tests/Starlings.Models.Qwen35.Tests.Cuda.log)). **New**: tool calling on CUDA. The tools prompt gives the reference `get_weather(Paris)` call, with all 25 completion ids equal to the fp32 reference, and the `UseFunctionInvocation` loop completes ([qwen-cuda-tool-calling.log](qwen-cuda-tool-calling.log)) | QwenChatCuda: the protected reference answer through the typed API and IChatClient | **passed** |
 | `qwen3.5-0.8b/ortgenai-fp16x-cuda` | `Fp16xCudaChatClientTests` (#19, [log](../capability-closure-2026-10-14/logs/qwen-fp16x-cuda-chat-client.log)). **New**: tool calling on CUDA, the same two checks. The fp16x completion ids also equal the reference (reported, not required) | QwenChatCuda: as fp32x, from the publicly downloaded fp16x bundle | **passed** |
-| `embeddinggemma-2/video-fp32-cpu` | Extensions.AI video is tested: `MultimodalGeneratorContractTests.VideosUseTheVideoDecoderAndEqualTheEmbedder` (fake graphs). The preview.4 drill ran the sample's video search with the user's FFmpeg 8: `extensions.ai videos: … max abs difference from the typed API 0` ([excerpt](../embeddinggemma2-video/release-drill-excerpt.txt)). ML.NET unsupported. | Needs `Starlings.Models.EmbeddingGemma2.Video.FFmpeg`, held (D2) | **open** |
-| `embeddinggemma-2/video-fp32-cuda` | `CudaAdapterTests`: multimodal generator over CUDA, 6 videos from bytes, max abs 2.7e-7 (#19). ML.NET unsupported. | as CPU | **open** |
+| `embeddinggemma-2/video-fp32-cpu` | Extensions.AI video is tested: `MultimodalGeneratorContractTests.VideosUseTheVideoDecoderAndEqualTheEmbedder` (fake graphs). The preview.4 drill ran the sample's video search with the user's FFmpeg 8: `extensions.ai videos: … max abs difference from the typed API 0` ([excerpt](../embeddinggemma2-video/release-drill-excerpt.txt)). ML.NET unsupported. | EmbeddingGemma2Search `videos` and EmbeddingGemma2SearchFFmpeg9 from the packed adapters: the multimodal generator with the adapter as `VideoDecoder` equals the typed API (max abs 0); the packed ML.NET adapter rejects a video column ([below](#video-2026-10-15)) | **passed** (2026-10-15) |
+| `embeddinggemma-2/video-fp32-cuda` | `CudaAdapterTests`: multimodal generator over CUDA, 6 videos from bytes, max abs 2.7e-7 (#19). ML.NET unsupported. | CudaConsumer `eg2-video` (generator over CUDA, 6 videos from bytes through each packed adapter, 3.89e-6 from the protected rows) and EmbeddingGemma2SearchCuda `videos --cuda` (generator 1.88e-7 from the typed batch) ([below](#video-2026-10-15)) | **passed** (2026-10-15) |
 
 ## What stays open
 
-- **EmbeddingGemma 2 video.** The adapter behavior is tested, but representative downstream use means a user installing the published packages, and the FFmpeg adapters are held pending legal review D2. G0 and G6 are open for the same reason.
+- ~~**EmbeddingGemma 2 video.**~~ Closed on 2026-10-15 ([below](#video-2026-10-15)): D2 cleared the FFmpeg adapters, and the drill now runs the sample's video path and the Extensions.AI video generator from the packed packages on CPU and CUDA.
 - **Tool use quality** is not part of G7 and stays unqualified. One prompt on the 0.8B model shows the mechanics, not reliable tool choice ([qwen35-tool-calling](../qwen35-tool-calling/README.md), "Not done").
 - **No named downstream consumer yet** (M7, P-028 in the support policy). The drill's samples stand in for one. A first named consumer remains a maintainer action before a Stable label.
 
@@ -54,3 +54,20 @@ The drill's sample consumers are the representative downstream use: E5Search, Gl
 
 - `Starlings.Models.Qwen35.Tests.Cuda`: `CudaToolCallingChecks` and two facts per variant (`ToolsPromptGivesTheReferenceCallAsFunctionCallContent`, `FunctionInvocationLoopCompletesOnCuda`). The project references `Microsoft.Extensions.AI` for the function-invocation middleware. These are local GPU tests, outside `AI.slnx`, run on GPU 0 with TF32 off.
 - The fp32x and fp16x CUDA manifests' `tool_calling` comments now cite this run instead of "not on CUDA".
+
+## Video, 2026-10-15
+
+G7 is now `passed` for `embeddinggemma-2/video-fp32-cpu` and `video-fp32-cuda`. Legal review D2 cleared the FFmpeg adapters, so representative downstream use, a user installing the packages, is possible. The runs are the 2026-10-15 drills of [G6](../g6-distribution-2026-10-14/README.md#video-2026-10-15). All three were built outside the repository from packages packed at `5b04d83`, and each run was offline.
+
+What the video profiles advertise is unchanged: `extensions_ai: experimental` (the multimodal generator), `mlnet: unsupported`, `persistence: unsupported`.
+
+| Integration | CPU (`video-fp32-cpu`) | CUDA (`video-fp32-cuda`) |
+| --- | --- | --- |
+| The sample's video path (EmbeddingGemma2Search `videos`) | The packed `…Video.FFmpeg` on the user's LGPL FFmpeg 8.1.3, and the same sample on the packed `…Video.FFmpeg9` on LGPL FFmpeg 9.0.2: the expected clip first for 3/3 queries; frames without timing rejected (`EmbeddingGemma2VideoTimingRequiredException`). Also from the anonymously downloaded graphs ([eg2-video-cpu-drill.log](../g6-distribution-2026-10-14/eg2-video-cpu-drill.log), [eg2-video-public-drill.log](../g6-distribution-2026-10-14/eg2-video-public-drill.log)) | EmbeddingGemma2SearchCuda `videos --cuda` (GPU natives only, `use_tf32=0`, `device_id=0`): the same top clips; frames without timing rejected ([eg2-video-cuda-drill.log](../g6-distribution-2026-10-14/eg2-video-cuda-drill.log) lines 656 to 671) |
+| Microsoft.Extensions.AI video generator (`EmbeddingGemma2MultimodalEmbeddingGenerator` with the adapter as `VideoDecoder`, a video `DataContent` from bytes) | Equal to the typed API, max abs 0, through both adapters | The sample: 1.88e-7 from the typed batch (bound 1e-5, `padded_batch_vs_single_embedding_max_abs`). CudaConsumer: 6 videos from bytes through each adapter, 3.89e-6 from the protected embeddings (bound 1e-5) |
+| ML.NET | `unsupported`. The packed `Starlings.Models.EmbeddingGemma2.MLNet` rejects a video column explicitly: `Schema mismatch for input column 'Video': expected String …, got Vector<Byte>` (`ArgumentOutOfRangeException` from `Fit`; MlNetConsumer, cpu log line 327). The weight-free `WrongInputColumnFailsWithASchemaError` test covers the same error for a non-text vector column | as CPU (one adapter, no provider-specific path) |
+| Persistence | `unsupported`; Save of the transformer rejected (MlNetConsumer, the same run) | as CPU |
+
+The adapter behavior is tested as recorded above. `MultimodalGeneratorContractTests.VideosUseTheVideoDecoderAndEqualTheEmbedder` runs in CI on fake graphs, and `CudaAdapterTests` ran on six videos (#19). The FFmpeg 9 adapter's tests (the FFmpeg 8 tests compiled for FFmpeg 9) ran on the LGPL FFmpeg 9.0.2 build with the fixture videos: 26 passed, and 2 were skipped (the edge-case videos were not set, and the release-video test is FFmpeg 8 only). That includes every decoded frame of the 22 fixture videos equal to torchcodec's.
+
+The named downstream consumer (M7) is still missing, as for the other profiles.

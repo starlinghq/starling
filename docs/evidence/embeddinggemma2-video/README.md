@@ -64,7 +64,7 @@ Weight-free checks in CI: the sampling subset, the rendered ids of all 36 rows (
 | --- | --- | --- |
 | torchcodec 0.17.0 on FFmpeg 9.0.1 vs the protected digests (torchcodec on FFmpeg 8.1), every frame of the 22 videos (`torchcodec_eg2_frames.py`) | 5,367 of 5,367 equal; metadata and sampled indices equal | (the reference of the FFmpeg 9 gate) |
 | FFmpeg 9 adapter: metadata and sampled indices, 22 videos | equal to torchcodec | |
-| FFmpeg 9 adapter: decoded RGB of the sampled frames (176) and of every frame (5,367) | exact | `decoder_ffmpeg9.decoded_rgb_vs_torchcodec: exact`, proposed (`model-pipeline/proposed/embeddinggemma-2/decoder-ffmpeg9/`) |
+| FFmpeg 9 adapter: decoded RGB of the sampled frames (176) and of every frame (5,367) | exact | `decoder_ffmpeg9.decoded_rgb_vs_torchcodec: exact`, proposed then; protected since 2026-10-15 (#64, `model-pipeline/protected/embeddinggemma-2/decoder-ffmpeg9/`) |
 | FFmpeg 9 adapter: streams and memory vs file; GPL build refused without the opt-in | pass | |
 
 The `decoder_ffmpeg9` tolerance section is the maintainer's to commit; until then the evaluator adds no FFmpeg 9 check and the manifests' G1 does not cover the FFmpeg 9 adapter. No LGPL FFmpeg 9 build was tested.
