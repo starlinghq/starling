@@ -14,8 +14,8 @@ A manifest gate entry becomes `passed` only where the evaluator reported that ga
 | EmbeddingGemma 2 `onnx-fp32-cuda` | passed | **not-run** (same; measured 9.8e-7) | passed: 0.8325 / 0.8136 | [embeddinggemma2-onnx-fp32-cuda](embeddinggemma2-onnx-fp32-cuda/README.md) |
 | EmbeddingGemma 2 `image-fp32-cpu` | passed | passed (8.55e-7 / 1e-5; soft tokens 8.7e-5 / 1e-3), with `--max-image-pixels` for one 79 MP image | none | [embeddinggemma2-image-fp32-cpu](embeddinggemma2-image-fp32-cpu/README.md) |
 | EmbeddingGemma 2 `image-fp32-cuda` | passed | passed (1.53e-6 / 1e-5; soft tokens 1.06e-4 / 1e-3) | none | [embeddinggemma2-image-fp32-cuda](embeddinggemma2-image-fp32-cuda/README.md) |
-| EmbeddingGemma 2 `video-fp32-cpu` | **failed** (Ogg Theora frames of `commons-video-02`) | **failed** (8.9e-3 / 1e-5 on those rows) | none | [embeddinggemma2-video-fp32-cpu](embeddinggemma2-video-fp32-cpu/README.md) |
-| EmbeddingGemma 2 `video-fp32-cuda` | **failed** (same) | **failed** (same) | none | [embeddinggemma2-video-fp32-cuda](embeddinggemma2-video-fp32-cuda/README.md) |
+| EmbeddingGemma 2 `video-fp32-cpu` | passed on rerun (first run failed: Ogg Theora frames of `commons-video-02`) | passed on rerun (1.29e-6 / 1e-5; soft tokens 2.4e-4 / 1e-3); first run failed (8.9e-3) | none | [embeddinggemma2-video-fp32-cpu](embeddinggemma2-video-fp32-cpu/README.md) |
+| EmbeddingGemma 2 `video-fp32-cuda` | passed on rerun (first run failed, same) | passed on rerun (2.77e-6 / 1e-5; soft tokens 2.5e-4 / 1e-3); first run failed | none | [embeddinggemma2-video-fp32-cuda](embeddinggemma2-video-fp32-cuda/README.md) |
 | GLiNER2 `onnx-fp32-cpu` | passed | passed (span logits 1.78e-5 / 1e-4) | passed: exact F1 0.3626 ≥ 0.352, partial 0.4134 ≥ 0.403 | [gliner2-onnx-fp32-cpu](gliner2-onnx-fp32-cpu/README.md) |
 | GLiNER2 `onnx-fp32-cuda` | passed | passed (1.24e-5 / 1e-4) | passed: 0.3626 / 0.4134 | [gliner2-onnx-fp32-cuda](gliner2-onnx-fp32-cuda/README.md) |
 | Qwen3.5 `ortgenai-fp32x-cpu` | passed | passed on rerun (step 0 9.27e-4 / 5e-3; cached 2.67e-5 / 2e-4; chunked 0 / 1e-4); first run not-run | passed: exact match 0.64 ≥ 0.60 | [qwen35-ortgenai-fp32x-cpu](qwen35-ortgenai-fp32x-cpu/README.md) |
@@ -24,7 +24,7 @@ A manifest gate entry becomes `passed` only where the evaluator reported that ga
 
 ## Findings for the maintainer
 
-1. **Video, Ogg Theora:** the C# FFmpeg adapter's frames for `commons-video-02` differ from torchcodec's seek-based decode. The set's `SOURCE.md` predicted this. G1 and G2 fail on CPU and CUDA, while every row without that file is within the bounds.
+1. **Video, Ogg Theora (resolved by the rerun: the adapter now decodes as torchcodec does, seeking where it seeks; see the video READMEs):** the C# FFmpeg adapter's frames for `commons-video-02` differ from torchcodec's seek-based decode. The set's `SOURCE.md` predicted this. G1 and G2 fail on CPU and CUDA, while every row without that file is within the bounds.
 2. **EmbeddingGemma 2 text:** the accepted release set lacks `embeddings.jsonl` (`SOURCE.md` decision 2, still open). At 6 threads the reference regenerates byte-identical to the recorded digest.
 3. **Qwen G2 (resolved by the rerun, see the Qwen READMEs: the step-0 vectors regenerate byte-identical in the recorded environment, torch +cpu at 6 threads, and `--modes fixture-semantics` measures the semantics keys on the release prompts):** the runtime-semantics tolerance keys can be produced only on the development prompts. The full step-0 reference vectors did not reproduce bit for bit in the available environment (torch +cu130 wheel, 4 threads; the reference used +cpu with 6 threads).
 4. **Image pixel limit:** one accepted image (79 MP) exceeds the package's 50 MP default. The coordinator's decision is to keep the default and evaluate that row with the option, recorded as an `experimental` capability.
