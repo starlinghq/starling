@@ -1,9 +1,9 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <!--
-    Realistic-workload harness for EmbeddingGemma 2, text and image paths (G5): warm series with stage timings, cold
+    Realistic-workload harness for EmbeddingGemma 2, text, image and video paths (G5): warm series with stage timings, cold
     starts in fresh processes, quality attached to every series. Shared harness core in ../Core. CPU native runtime.
-    Video is not benchmarked (its fixtures need FFmpeg). Not packed; never run in CI.
+    Video runs on decoded frames (the reference's sampled frames; no decoder). Not packed; never run in CI.
   -->
   <PropertyGroup>
     <OutputType>Exe</OutputType>
