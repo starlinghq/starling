@@ -106,7 +106,15 @@ def _evaluate(args: argparse.Namespace) -> int:
     from model_pipeline import evaluate, protection, results
 
     if args.tokenizer_fixtures:
-        if args.g3 or args.fixtures or args.dataset or args.baseline or args.reference_tensors or args.require_gates:
+        if (
+            args.g3
+            or args.fixtures
+            or args.dataset
+            or args.baseline
+            or args.reference_tensors
+            or args.reference_embeddings
+            or args.require_gates
+        ):
             print(
                 "error: --tokenizer-fixtures takes only --results, --out, --protected-base and --repo-root",
                 file=sys.stderr,
@@ -114,8 +122,12 @@ def _evaluate(args: argparse.Namespace) -> int:
             return evaluate.EXIT_INPUT
         return _evaluate_tokenizer_fixtures(args)
     if args.g3:
-        if args.fixtures:
-            print("error: --fixtures applies to staged fidelity (G1/G2) only; --g3 takes --dataset", file=sys.stderr)
+        if args.fixtures or args.reference_embeddings:
+            print(
+                "error: --fixtures and --reference-embeddings apply to staged fidelity (G1/G2) only; --g3 takes "
+                "--dataset",
+                file=sys.stderr,
+            )
             return evaluate.EXIT_INPUT
         return _evaluate_g3(args)
     if args.dataset or args.baseline:
@@ -130,6 +142,7 @@ def _evaluate(args: argparse.Namespace) -> int:
             require_gates=tuple(g for g in args.require_gates.split(",") if g),
             reference_tensors=Path(args.reference_tensors) if args.reference_tensors else None,
             fixtures_dir_override=args.fixtures,
+            reference_embeddings=Path(args.reference_embeddings) if args.reference_embeddings else None,
         )
     except (protection.ProtectedEvidenceError, results.ToleranceOverrideError) as exc:
         print(f"refused: {exc}", file=sys.stderr)
@@ -293,6 +306,13 @@ def main(argv: list[str] | None = None) -> int:
         help="protected fixtures directory to evaluate against instead of the manifest's qualification.fixtures, "
         "for example a P-030 release set (model-pipeline/protected/<family>/release/<set>); repository-relative, "
         "inside model-pipeline/protected/ (anything else is refused, exit 3). Tolerances still come from the manifest",
+    )
+    ev.add_argument(
+        "--reference-embeddings",
+        help="task embedding: an embeddings.jsonl kept outside Git (for example the EmbeddingGemma 2 text release "
+        "set's) to use as the reference; its SHA-256 must equal embeddings.sha256 in the fixtures directory's "
+        "protected reference.json. A mismatch, a missing digest, or a path inside the repository but outside "
+        "model-pipeline/protected/ is refused (exit 3)",
     )
     ev.add_argument(
         "--tokenizer-fixtures",
