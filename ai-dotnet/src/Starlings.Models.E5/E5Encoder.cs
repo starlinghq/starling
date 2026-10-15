@@ -18,7 +18,8 @@ namespace Starlings.Models.E5;
 /// <para>
 /// <b>Threading and lifetime.</b> Methods are synchronous and safe to call concurrently; each call uses its own pooled
 /// buffers. Cancellation follows <see cref="OnnxModelSession"/>: checked before each chunk of
-/// <see cref="E5EncoderOptions.MaxBatchSize"/> rows and between graph nodes inside a run. A cancelled call throws
+/// <see cref="E5EncoderOptions.MaxBatchSize"/> rows and inside a run (between graph nodes on CPU; on CUDA when the run
+/// completes). A cancelled call throws
 /// <see cref="OperationCanceledException"/> and returns nothing; the <see cref="Span{T}"/> overload may already have
 /// written the chunks that completed before cancellation.
 /// </para>

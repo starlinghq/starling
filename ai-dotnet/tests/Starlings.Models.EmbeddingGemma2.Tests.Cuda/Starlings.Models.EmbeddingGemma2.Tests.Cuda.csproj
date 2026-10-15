@@ -19,6 +19,7 @@
 
   <ItemGroup>
     <Compile Include="../Shared/EmbeddingGemma2/*.cs" Link="Shared/EmbeddingGemma2/%(Filename)%(Extension)" />
+    <Compile Include="../Shared/Cuda/*.cs" Link="Shared/Cuda/%(Filename)%(Extension)" />
     <Compile Include="../Shared/EmbeddingGemma2Images/*.cs" Link="Shared/EmbeddingGemma2Images/%(Filename)%(Extension)" />
     <Compile Include="../Shared/EmbeddingGemma2Videos/*.cs" Link="Shared/EmbeddingGemma2Videos/%(Filename)%(Extension)" />
   </ItemGroup>

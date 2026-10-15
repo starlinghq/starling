@@ -22,8 +22,9 @@ namespace Starlings.Models.E5.Extensions.AI;
 /// </para>
 /// <para>
 /// <b>Cancellation.</b> The token is checked before each value is tokenized, before each chunk of
-/// <c>MaxBatchSize</c> rows, and between graph nodes inside a run (ONNX Runtime's terminate flag): the current
-/// operator finishes, then the task is cancelled. Latency is bounded by the longest single node. Nothing is returned
+/// <c>MaxBatchSize</c> rows, and inside a run: on CPU between graph nodes (ONNX Runtime's terminate flag; latency
+/// bounded by the longest single node), on CUDA when the current run completes (latency bounded by one chunk); then
+/// the task is cancelled. Nothing is returned
 /// for a cancelled call, and the generator stays usable.
 /// </para>
 /// <para>

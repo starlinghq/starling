@@ -131,6 +131,27 @@ public class CudaParityTests(Gliner2CudaFixture fixture, ITestOutputHelper outpu
         Assert.Equal(c.Entities.Count, after.Entities.Count);
     }
 
+    /// <summary>
+    /// Regression (docs/evidence/gliner2-cuda-wrong-output/): a cancelled call returns only after the device work it
+    /// queued has finished, so no later or concurrent run can compute on memory that abandoned work still writes. Before
+    /// the fix, runs were terminated at a node boundary and about one cancelled call in 20 returned with up to 33 ms
+    /// of work still queued; requests served right after such calls returned empty entities. Afterwards the
+    /// extractor gives the reference entities.
+    /// </summary>
+    [Fact]
+    public void ACancelledCallLeavesNoDeviceWorkQueued()
+    {
+        var extractor = fixture.Extractor;
+        var c = fixture.Cases.First(c => c.Id == "basic-multi-label");
+        var batch = Enumerable.Repeat(fixture.Cases.Where(x => x.OutOfContract is null).MaxBy(x => x.Text.Length)!.Text, 16).ToList();
+        var probe = CudaQueueProbe.CancelledCalls(ct => extractor.ExtractBatch(batch, c.LabelsRequested, c.Threshold, ct), cancellations: 300);
+        output.WriteLine($"16 texts in batches of 8: {probe}");
+        Assert.True(probe.Drains.Count >= 100, probe.ToString());
+        Assert.Equal(0, probe.Pending);
+        var after = extractor.Extract(c.Text, c.LabelsRequested, c.Threshold, TestContext.Current.CancellationToken);
+        Assert.Equal(c.Entities.Count, after.Entities.Count);
+    }
+
     [Fact]
     public void PlacementPutsMostNodesOnCuda()
     {

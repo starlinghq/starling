@@ -141,4 +141,25 @@ public class CudaParityTests(EmbeddingGemma2CudaFixture fixture, ITestOutputHelp
         stats.Add(fixture.Rows[5].Key, after, fixture.Rows[5].Embedding);
         Assert.True(stats.Max <= Tolerances.EmbeddingMaxAbs);
     }
+
+    /// <summary>
+    /// Regression (docs/evidence/gliner2-cuda-wrong-output/; same shared session code as GLiNER2): a cancelled call
+    /// returns only after the device work it queued has finished, and the encoder then gives the reference embedding.
+    /// </summary>
+    [Fact]
+    public void ACancelledCallLeavesNoDeviceWorkQueued()
+    {
+        var encoder = fixture.Encoder;
+        var longRow = fixture.Rows.MaxBy(r => r.InputIds.Length)!;
+        var inputs = Enumerable.Repeat(new EmbeddingGemma2Input(longRow.InputIds), 4).ToList();
+        var probe = CudaQueueProbe.CancelledCalls(ct => encoder.EmbedBatch(inputs, ct), cancellations: 150);
+        output.WriteLine($"4 x {longRow.InputIds.Length} tokens (one chunk): {probe}");
+        Assert.True(probe.Drains.Count >= 75, probe.ToString());
+        Assert.Equal(0, probe.Pending);
+
+        var after = encoder.Embed(new EmbeddingGemma2Input(fixture.Rows[5].InputIds), TestContext.Current.CancellationToken);
+        var stats = new EmbeddingGemma2ErrorStats();
+        stats.Add(fixture.Rows[5].Key, after, fixture.Rows[5].Embedding);
+        Assert.True(stats.Max <= Tolerances.EmbeddingMaxAbs);
+    }
 }

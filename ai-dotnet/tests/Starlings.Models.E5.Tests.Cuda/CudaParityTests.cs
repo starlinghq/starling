@@ -151,6 +151,46 @@ public class CudaParityTests(E5CudaFixture fixture, ITestOutputHelper output) : 
         stats.Add(encoder.Embed(new EncoderInput(c0.InputIds), TestContext.Current.CancellationToken), c0.Embedding);
         Assert.True(stats.Max <= Tolerances.EmbeddingMaxAbs, $"after cancellation: {stats}");
     }
+
+    /// <summary>
+    /// Regression (docs/evidence/gliner2-cuda-wrong-output/; same shared session code as GLiNER2): a cancelled call
+    /// returns only after the device work it queued has finished, and the encoder then gives the protected embedding.
+    /// </summary>
+    [Fact]
+    public void ACancelledCallLeavesNoDeviceWorkQueued()
+    {
+        var encoder = fixture.Encoder;
+        var longCase = E5Fixtures.Cases.Single(c => c.Id == "long-english");
+        var inputs = Enumerable.Repeat(new EncoderInput(longCase.InputIds), 32).ToList();
+        var probe = CudaQueueProbe.CancelledCalls(ct => encoder.EmbedBatch(inputs, ct), cancellations: 300);
+        output.WriteLine($"32 x 512 (one chunk): {probe}");
+        Assert.True(probe.Drains.Count >= 100, probe.ToString());
+        Assert.Equal(0, probe.Pending);
+
+        var c0 = E5Fixtures.Cases[0];
+        var stats = new ErrorStats();
+        stats.Add(encoder.Embed(new EncoderInput(c0.InputIds), TestContext.Current.CancellationToken), c0.Embedding);
+        Assert.True(stats.Max <= Tolerances.EmbeddingMaxAbs, $"after cancellation: {stats}");
+    }
+
+    // Cancels on a dedicated thread after the delay, recording the elapsed time just before Cancel(). Join the thread
+    // before reading the result.
+    private static Thread CancelAfter(CancellationTokenSource cts, Stopwatch sw, TimeSpan delay, StrongBox<TimeSpan> cancelledAt)
+    {
+        var thread = new Thread(() =>
+        {
+            while (sw.Elapsed < delay)
+            {
+                Thread.Sleep(1);
+            }
+
+            cancelledAt.Value = sw.Elapsed;
+            cts.Cancel();
+        })
+        { IsBackground = true, Name = "canceller" };
+        thread.Start();
+        return thread;
+    }
 }
 
 /// <summary>
@@ -187,24 +227,5 @@ public class CudaUnavailableTests(ITestOutputHelper output)
             E5TestAssets.FindModel().Path ?? throw new InvalidOperationException("model missing"),
             new OnnxSessionOptions { Provider = OnnxExecutionProvider.Cuda, CudaDeviceId = visible, ComputeModelSha256 = false }));
         output.WriteLine($"device_id {visible} with CUDA_VISIBLE_DEVICES={Environment.GetEnvironmentVariable("CUDA_VISIBLE_DEVICES")}: {ex.Message}");
-    }
-
-    // Cancels on a dedicated thread after the delay, recording the elapsed time just before Cancel(). Join the thread
-    // before reading the result.
-    private static Thread CancelAfter(CancellationTokenSource cts, Stopwatch sw, TimeSpan delay, StrongBox<TimeSpan> cancelledAt)
-    {
-        var thread = new Thread(() =>
-        {
-            while (sw.Elapsed < delay)
-            {
-                Thread.Sleep(1);
-            }
-
-            cancelledAt.Value = sw.Elapsed;
-            cts.Cancel();
-        })
-        { IsBackground = true, Name = "canceller" };
-        thread.Start();
-        return thread;
     }
 }

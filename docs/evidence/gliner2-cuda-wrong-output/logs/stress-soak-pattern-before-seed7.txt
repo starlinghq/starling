@@ -1,0 +1,387 @@
+serialized=True providers=CUDAExecutionProvider,CPUExecutionProvider
+MISMATCH cycle 0 request 118 input 10: '' vs 'location:39-46;location:51-57;location:31-37;location:78-87;location:4-16'
+count logits: -22.728, -12.8038, -19.0212, -20.656, -23.0506, -25.7305, -27.9043, -28.4629, -28.8926, -29.4551, -29.5622, -31.6032, -32.083, -34.083, -32.8577, -30.9082, -31.2605, -30.5388, -30.4398, -27.0472
+ref count:    -12.7117, -1.19732, -22.2022, -32.4986, -36.5211, -35.7546, -34.3591, -32.3477, -33.9649, -35.2564, -31.7431, -33.763, -32.1694, -31.1382, -31.6203, -30.3007, -30.965, -28.6821, -28.7412, -25.0262
+span logits: n=512 nan=0 zero=0 min=-84236.84 max=-508.18875 maxAbsDiffFromRef=84216.03134346008
+span first 16: -5605.09, -7061.79, -45214.8, -19210, -3312.43, -3248.71, -7207.42, -7143.69, -7331.79, -45484.5, -19479.6, -3582.87, -3519.19, -7477.16, -7413.56, -4805.97
+ref  first 16: -23.2874, -20.9659, -17.4757, -25.2225, -22.9263, -35.6208, -36.7112, -61.4062, -21.1608, -24.227, -33.4381, -34.3828, -70.8302, -56.6968, -89.8362, -53.2925
+history (last 40):
+  14288.810 [6] k=102 input 6 start
+  14309.004 [6] k=102 input 6 done 'person:0-13;organization:27-42;location:57-64'
+  14309.082 [6] k=103 long start deadline 119 ms
+  14368.049 [5] k=101 long cancelled
+  14368.079 [5] k=104 input 8 start
+  14428.244 [6] k=103 long cancelled
+  14428.322 [6] k=105 long start deadline 80 ms
+  14456.893 [5] k=104 input 8 done 'person:0-11;organization:15-19;organization:66-87;location:23-34;date:91-98'
+  14456.912 [5] k=106 input 10 start
+  14469.334 [5] k=106 input 10 done 'location:39-46;location:51-57;location:31-37;location:78-87;location:4-16'
+  14469.390 [5] k=107 long start deadline 74 ms
+  14541.540 [6] k=105 long cancelled
+  14541.562 [6] k=108 input 0 start
+  14544.906 [5] k=107 long cancelled
+  14544.961 [5] k=109 long start deadline 30 ms
+  14575.174 [6] k=108 input 0 done 'person:0-12;person:17-32;location:36-42;date:46-55'
+  14575.195 [6] k=110 input 2 start
+  14577.760 [5] k=109 long cancelled
+  14577.811 [5] k=111 long start deadline 122 ms
+  14594.691 [6] k=110 input 2 done 'person:0-11;organization:26-45;location:40-45'
+  14594.707 [6] k=112 input 4 start
+  14614.259 [6] k=112 input 4 done 'organization:3-18;location:22-28;date:34-58'
+  14614.375 [6] k=113 long start deadline 101 ms
+  14720.491 [6] k=113 long cancelled
+  14720.515 [6] k=114 input 6 start
+  14741.809 [6] k=114 input 6 done 'person:0-13;organization:27-42;location:57-64'
+  14741.858 [6] k=115 long start deadline 120 ms
+  14784.927 [5] k=111 long completed
+  14784.946 [5] k=116 input 8 start
+  14798.552 [5] k=116 input 8 done 'person:0-11;organization:15-19;organization:66-87;location:23-34;date:91-98'
+  14798.597 [5] k=117 long start deadline 121 ms
+  14862.694 [6] k=115 long cancelled
+  14862.725 [6] k=118 input 10 start
+  14925.409 [5] k=117 long cancelled
+  14925.511 [5] k=119 long start deadline 42 ms
+  14975.502 [6] k=118 input 10 done ''
+  14978.247 [5] k=119 long cancelled
+  14978.292 [5] k=120 input 0 start
+  15026.314 [5] k=120 input 0 done 'person:0-12;person:17-32;location:36-42;date:46-55'
+  15026.413 [5] k=121 long start deadline 65 ms
+
+MISMATCH cycle 4 request 804 input 0: '' vs 'person:0-12;person:17-32;location:36-42;date:46-55'
+count logits: -22.9318, -10.7762, -18.9854, -22.2283, -24.8442, -25.4555, -26.0268, -25.1719, -25.3469, -25.7392, -24.4991, -26.0661, -26.3857, -27.1696, -26.4441, -25.0943, -25.9106, -26.3702, -26.576, -23.2893
+ref count:    -16.8472, -1.10294, -23.8237, -36.4046, -41.6175, -40.7344, -39.7868, -37.6968, -39.3506, -40.7714, -37.6736, -39.5844, -38.4986, -37.4059, -37.7139, -37.2036, -37.3359, -35.3583, -34.7834, -31.4112
+span logits: n=352 nan=0 zero=0 min=-82897.25 max=-506.4228 maxAbsDiffFromRef=82867.90722846985
+span first 16: -3174.66, -5243.92, -41453.3, -17059.8, -1763.54, -2048, -5625.93, -6497.28, -6802.21, -43013.8, -18618.8, -3323.93, -3608.47, -7184.2, -8056.29, -5137.45
+ref  first 16: -22.4744, 20.6677, -50.3347, -64.3939, -50.4342, -122.876, -128.06, -119.958, -23.8048, -37.4702, -51.5436, -60.9561, -87.8965, -98.9159, -90.5712, -82.4889
+history (last 40):
+  153695.200 [3] k=786 input 6 start
+  153712.535 [6] k=785 long cancelled
+  153712.556 [6] k=787 long start deadline 64 ms
+  153718.851 [3] k=786 input 6 done 'person:0-13;organization:27-42;location:57-64'
+  153718.855 [3] k=788 input 8 start
+  153725.207 [3] k=788 input 8 done 'person:0-11;organization:15-19;organization:66-87;location:23-34;date:91-98'
+  153725.224 [3] k=789 long start deadline 35 ms
+  153760.478 [3] k=789 long cancelled
+  153760.485 [3] k=790 input 10 start
+  153793.284 [6] k=787 long cancelled
+  153793.304 [6] k=791 long start deadline 7 ms
+  153800.861 [6] k=791 long cancelled
+  153800.879 [6] k=792 input 0 start
+  153801.092 [3] k=790 input 10 done 'location:39-46;location:51-57;location:31-37;location:78-87;location:4-16'
+  153801.104 [3] k=793 long start deadline 67 ms
+  153811.505 [6] k=792 input 0 done 'person:0-12;person:17-32;location:36-42;date:46-55'
+  153811.509 [6] k=794 input 2 start
+  153820.627 [6] k=794 input 2 done 'person:0-11;organization:26-45;location:40-45'
+  153820.644 [6] k=795 long start deadline 26 ms
+  153848.556 [6] k=795 long cancelled
+  153848.566 [6] k=796 input 4 start
+  153880.873 [3] k=793 long cancelled
+  153880.895 [3] k=797 long start deadline 48 ms
+  153890.681 [6] k=796 input 4 done 'organization:3-18;location:22-28;date:34-58'
+  153890.686 [6] k=798 input 6 start
+  153904.212 [6] k=798 input 6 done 'person:0-13;organization:27-42;location:57-64'
+  153904.248 [6] k=799 long start deadline 142 ms
+  153968.272 [3] k=797 long cancelled
+  153968.282 [3] k=800 input 8 start
+  154024.882 [3] k=800 input 8 done 'person:0-11;organization:15-19;organization:66-87;location:23-34;date:91-98'
+  154024.901 [3] k=801 long start deadline 60 ms
+  154075.757 [6] k=799 long completed
+  154075.763 [6] k=802 input 10 start
+  154086.741 [3] k=801 long cancelled
+  154086.792 [3] k=803 long start deadline 35 ms
+  154114.088 [6] k=802 input 10 done 'location:39-46;location:51-57;location:31-37;location:78-87;location:4-16'
+  154114.098 [6] k=804 input 0 start
+  154122.470 [3] k=803 long cancelled
+  154122.500 [3] k=805 long start deadline 107 ms
+  154126.810 [6] k=804 input 0 done ''
+
+MISMATCH cycle 4 request 864 input 0: '' vs 'person:0-12;person:17-32;location:36-42;date:46-55'
+count logits: -22.7277, -11.2303, -18.4734, -21.0803, -23.5805, -24.5939, -25.2179, -24.6162, -24.9468, -25.4363, -24.3409, -26.0291, -26.2275, -27.1066, -26.348, -24.867, -25.8603, -26.3382, -26.7474, -23.2849
+ref count:    -16.8472, -1.10294, -23.8237, -36.4046, -41.6175, -40.7344, -39.7868, -37.6968, -39.3506, -40.7714, -37.6736, -39.5844, -38.4986, -37.4059, -37.7139, -37.2036, -37.3359, -35.3583, -34.7834, -31.4112
+span logits: n=352 nan=0 zero=0 min=-82136.4 max=-499.1742 maxAbsDiffFromRef=82107.05566596985
+span first 16: -3157.89, -5215.78, -41155.5, -16894.3, -1754.57, -2066.01, -5587.21, -6389.39, -6765.96, -42707.9, -18445.2, -3306.8, -3618.33, -7137.35, -7940.28, -5072.65
+ref  first 16: -22.4744, 20.6677, -50.3347, -64.3939, -50.4342, -122.876, -128.06, -119.958, -23.8048, -37.4702, -51.5436, -60.9561, -87.8965, -98.9159, -90.5712, -82.4889
+history (last 40):
+  155341.967 [3] k=845 long start deadline 86 ms
+  155351.784 [6] k=844 input 4 done 'organization:3-18;location:22-28;date:34-58'
+  155351.790 [6] k=846 input 6 start
+  155361.713 [6] k=846 input 6 done 'person:0-13;organization:27-42;location:57-64'
+  155361.750 [6] k=847 long start deadline 65 ms
+  155428.277 [3] k=845 long cancelled
+  155428.288 [3] k=848 input 8 start
+  155458.819 [6] k=847 long cancelled
+  155458.837 [6] k=849 long start deadline 26 ms
+  155468.663 [3] k=848 input 8 done 'person:0-11;organization:15-19;organization:66-87;location:23-34;date:91-98'
+  155468.669 [3] k=850 input 10 start
+  155478.562 [3] k=850 input 10 done 'location:39-46;location:51-57;location:31-37;location:78-87;location:4-16'
+  155478.584 [3] k=851 long start deadline 60 ms
+  155487.387 [6] k=849 long cancelled
+  155487.397 [6] k=852 input 0 start
+  155497.653 [6] k=852 input 0 done 'person:0-12;person:17-32;location:36-42;date:46-55'
+  155497.682 [6] k=853 long start deadline 120 ms
+  155560.121 [3] k=851 long cancelled
+  155560.145 [3] k=854 input 2 start
+  155618.084 [6] k=853 long cancelled
+  155618.109 [6] k=855 long start deadline 86 ms
+  155621.042 [3] k=854 input 2 done 'person:0-11;organization:26-45;location:40-45'
+  155621.048 [3] k=856 input 4 start
+  155631.751 [3] k=856 input 4 done 'organization:3-18;location:22-28;date:34-58'
+  155631.771 [3] k=857 long start deadline 56 ms
+  155688.098 [3] k=857 long cancelled
+  155688.105 [3] k=858 input 6 start
+  155704.157 [6] k=855 long cancelled
+  155704.179 [6] k=859 long start deadline 44 ms
+  155707.006 [3] k=858 input 6 done 'person:0-13;organization:27-42;location:57-64'
+  155707.012 [3] k=860 input 8 start
+  155717.576 [3] k=860 input 8 done 'person:0-11;organization:15-19;organization:66-87;location:23-34;date:91-98'
+  155717.598 [3] k=861 long start deadline 27 ms
+  155746.436 [3] k=861 long cancelled
+  155746.449 [3] k=862 input 10 start
+  155749.939 [6] k=859 long cancelled
+  155749.965 [6] k=863 long start deadline 66 ms
+  155777.004 [3] k=862 input 10 done 'location:39-46;location:51-57;location:31-37;location:78-87;location:4-16'
+  155777.012 [3] k=864 input 0 start
+  155799.094 [3] k=864 input 0 done ''
+
+MISMATCH cycle 5 request 188 input 8: '' vs 'person:0-11;organization:15-19;organization:66-87;location:23-34;date:91-98'
+count logits: -22.7604, -11.8132, -19.7892, -21.4024, -24.2427, -27.2271, -29.2411, -29.3897, -29.9902, -31.129, -30.8846, -33.2222, -32.875, -33.8018, -32.2948, -29.6488, -29.0287, -28.1153, -27.8609, -25.0584
+ref count:    -14.6055, -0.172165, -18.9277, -29.6907, -34.3683, -33.7248, -32.7738, -30.9638, -32.3282, -33.513, -31.1908, -32.3686, -31.5612, -30.7045, -30.716, -30.8011, -30.689, -29.3422, -28.8615, -26.295
+span logits: n=512 nan=0 zero=0 min=-58011.066 max=-304.32944 maxAbsDiffFromRef=57996.1183757782
+span first 16: -14176.2, -16598.3, -10450.8, -37969.7, -7534.16, -9356.14, -10895.4, -40243.4, -19532.4, -13385.7, -40898, -10469.5, -12290.6, -13829.5, -43171.7, -10589.4
+ref  first 16: 0.801508, -27.1141, -9.72691, -41.0639, -23.1904, -25.4257, -31.7394, -34.1327, -21.4687, -14.9813, -28.2296, -22.9389, -25.9036, -38.2777, -43.1654, -34.4388
+history (last 40):
+  164563.615 [13] k=169 long start deadline 87 ms
+  164675.070 [12] k=167 long cancelled
+  164675.080 [12] k=170 input 2 start
+  164679.210 [13] k=169 long cancelled
+  164679.274 [13] k=171 long start deadline 110 ms
+  164716.048 [12] k=170 input 2 done 'person:0-11;organization:26-45;location:40-45'
+  164716.060 [12] k=172 input 4 start
+  164732.796 [12] k=172 input 4 done 'organization:3-18;location:22-28;date:34-58'
+  164732.840 [12] k=173 long start deadline 95 ms
+  164790.782 [13] k=171 long cancelled
+  164790.789 [13] k=174 input 6 start
+  164829.659 [12] k=173 long cancelled
+  164829.754 [12] k=175 long start deadline 110 ms
+  164847.503 [13] k=174 input 6 done 'person:0-13;organization:27-42;location:57-64'
+  164847.510 [13] k=176 input 8 start
+  164860.595 [13] k=176 input 8 done 'person:0-11;organization:15-19;organization:66-87;location:23-34;date:91-98'
+  164860.664 [13] k=177 long start deadline 141 ms
+  164939.883 [12] k=175 long cancelled
+  164939.889 [12] k=178 input 10 start
+  165008.441 [13] k=177 long completed
+  165008.484 [13] k=179 long start deadline 127 ms
+  165015.999 [12] k=178 input 10 done 'location:39-46;location:51-57;location:31-37;location:78-87;location:4-16'
+  165016.005 [12] k=180 input 0 start
+  165026.749 [12] k=180 input 0 done 'person:0-12;person:17-32;location:36-42;date:46-55'
+  165026.863 [12] k=181 long start deadline 74 ms
+  165101.066 [12] k=181 long cancelled
+  165101.073 [12] k=182 input 2 start
+  165152.830 [13] k=179 long completed
+  165152.865 [13] k=183 long start deadline 85 ms
+  165162.929 [12] k=182 input 2 done 'person:0-11;organization:26-45;location:40-45'
+  165162.935 [12] k=184 input 4 start
+  165173.631 [12] k=184 input 4 done 'organization:3-18;location:22-28;date:34-58'
+  165173.684 [12] k=185 long start deadline 49 ms
+  165225.250 [12] k=185 long cancelled
+  165225.256 [12] k=186 input 6 start
+  165239.004 [13] k=183 long cancelled
+  165239.093 [13] k=187 long start deadline 141 ms
+  165268.531 [12] k=186 input 6 done 'person:0-13;organization:27-42;location:57-64'
+  165268.537 [12] k=188 input 8 start
+  165284.116 [12] k=188 input 8 done ''
+
+MISMATCH cycle 6 request 326 input 2: '' vs 'person:0-11;organization:26-45;location:40-45'
+count logits: -21.992, -11.0234, -19.491, -20.6943, -22.2413, -23.1534, -23.9611, -23.2068, -24.4126, -26.4457, -26.7932, -30.3614, -30.2689, -31.0923, -29.9901, -27.0393, -28.0937, -26.9915, -26.9211, -23.1947
+ref count:    -15.0988, -0.486073, -20.9752, -32.9953, -38.3405, -37.6549, -36.4472, -34.078, -35.1794, -36.2483, -33.3303, -34.5242, -33.6736, -32.8784, -33.2128, -33.3384, -33.4627, -32.076, -31.5551, -28.9277
+span logits: n=448 nan=0 zero=0 min=-106081.89 max=-740.41376 maxAbsDiffFromRef=106061.84368896484
+span first 16: -7339.49, -9063.19, -57152.4, -24389.1, -4349.99, -5358.46, -9824.6, -11551.9, -9220.38, -57309, -24545.8, -4507.58, -5515.91, -9981.41, -11709, -7124.25
+ref  first 16: -21.0829, 13.6879, -38.501, -45.8556, -60.8094, -31.9657, -111.069, -19.1736, -14.2296, -23.6476, -26.4439, -37.0964, -23.2453, -70.0566, -18.3692, -35.9345
+history (last 40):
+  198921.338 [3] k=309 long start deadline 41 ms
+  198949.425 [5] k=308 input 8 done 'person:0-11;organization:15-19;organization:66-87;location:23-34;date:91-98'
+  198949.431 [5] k=310 input 10 start
+  198962.592 [3] k=309 long cancelled
+  198962.630 [3] k=311 long start deadline 32 ms
+  198968.074 [5] k=310 input 10 done 'location:39-46;location:51-57;location:31-37;location:78-87;location:4-16'
+  198968.080 [5] k=312 input 0 start
+  198991.404 [5] k=312 input 0 done 'person:0-12;person:17-32;location:36-42;date:46-55'
+  198991.412 [5] k=313 long start deadline 71 ms
+  198999.856 [3] k=311 long cancelled
+  198999.867 [3] k=314 input 2 start
+  199028.084 [3] k=314 input 2 done 'person:0-11;organization:26-45;location:40-45'
+  199028.096 [3] k=315 long start deadline 67 ms
+  199066.676 [5] k=313 long cancelled
+  199066.684 [5] k=316 input 4 start
+  199086.628 [5] k=316 input 4 done 'organization:3-18;location:22-28;date:34-58'
+  199086.637 [5] k=317 long start deadline 80 ms
+  199096.005 [3] k=315 long cancelled
+  199096.016 [3] k=318 input 6 start
+  199121.406 [3] k=318 input 6 done 'person:0-13;organization:27-42;location:57-64'
+  199121.500 [3] k=319 long start deadline 15 ms
+  199138.624 [3] k=319 long cancelled
+  199138.636 [3] k=320 input 8 start
+  199154.925 [3] k=320 input 8 done 'person:0-11;organization:15-19;organization:66-87;location:23-34;date:91-98'
+  199156.602 [3] k=321 long start deadline 11 ms
+  199167.660 [5] k=317 long cancelled
+  199167.671 [5] k=322 input 10 start
+  199167.750 [3] k=321 long cancelled
+  199167.790 [3] k=323 long start deadline 111 ms
+  199189.117 [5] k=322 input 10 done 'location:39-46;location:51-57;location:31-37;location:78-87;location:4-16'
+  199189.130 [5] k=324 input 0 start
+  199219.396 [5] k=324 input 0 done 'person:0-12;person:17-32;location:36-42;date:46-55'
+  199219.414 [5] k=325 long start deadline 83 ms
+  199288.968 [3] k=323 long cancelled
+  199288.985 [3] k=326 input 2 start
+  199305.465 [5] k=325 long cancelled
+  199305.535 [5] k=327 long start deadline 12 ms
+  199324.370 [5] k=327 long cancelled
+  199324.397 [5] k=328 input 4 start
+  199341.881 [3] k=326 input 2 done ''
+
+MISMATCH cycle 7 request 348 input 0: '' vs 'person:0-12;person:17-32;location:36-42;date:46-55'
+count logits: -20.6479, -10.5508, -18.3129, -20.6691, -23.1739, -24.2024, -25.0673, -24.2539, -24.4798, -25.4115, -24.1781, -25.6733, -25.4815, -25.8952, -24.7029, -22.9879, -22.5613, -23.4043, -23.6532, -21.3415
+ref count:    -16.8472, -1.10294, -23.8237, -36.4046, -41.6175, -40.7344, -39.7868, -37.6968, -39.3506, -40.7714, -37.6736, -39.5844, -38.4986, -37.4059, -37.7139, -37.2036, -37.3359, -35.3583, -34.7834, -31.4112
+span logits: n=352 nan=0 zero=0 min=-105148.42 max=-585.58215 maxAbsDiffFromRef=105119.07910346985
+span first 16: -4093.67, -6761, -53442.9, -22287.8, -2274.75, -2919.55, -7297.34, -8855.13, -8769.85, -55454.6, -24297.4, -4286.37, -4931.21, -9306.11, -10864.7, -6586.8
+ref  first 16: -22.4744, 20.6677, -50.3347, -64.3939, -50.4342, -122.876, -128.06, -119.958, -23.8048, -37.4702, -51.5436, -60.9561, -87.8965, -98.9159, -90.5712, -82.4889
+history (last 40):
+  230539.198 [12] k=331 long start deadline 87 ms
+  230589.267 [6] k=329 long cancelled
+  230589.282 [6] k=332 input 8 start
+  230638.752 [12] k=331 long cancelled
+  230638.796 [12] k=333 long start deadline 11 ms
+  230653.203 [12] k=333 long cancelled
+  230653.214 [12] k=334 input 10 start
+  230669.678 [6] k=332 input 8 done 'person:0-11;organization:15-19;organization:66-87;location:23-34;date:91-98'
+  230669.719 [6] k=335 long start deadline 89 ms
+  230741.816 [12] k=334 input 10 done 'location:39-46;location:51-57;location:31-37;location:78-87;location:4-16'
+  230741.822 [12] k=336 input 0 start
+  230749.794 [12] k=336 input 0 done 'person:0-12;person:17-32;location:36-42;date:46-55'
+  230749.827 [12] k=337 long start deadline 34 ms
+  230762.284 [6] k=335 long cancelled
+  230762.296 [6] k=338 input 2 start
+  230785.374 [12] k=337 long cancelled
+  230785.403 [12] k=339 long start deadline 119 ms
+  230793.228 [6] k=338 input 2 done 'person:0-11;organization:26-45;location:40-45'
+  230793.236 [6] k=340 input 4 start
+  230817.400 [6] k=340 input 4 done 'organization:3-18;location:22-28;date:34-58'
+  230817.420 [6] k=341 long start deadline 66 ms
+  230884.332 [6] k=341 long cancelled
+  230884.340 [6] k=342 input 6 start
+  230915.458 [12] k=339 long completed
+  230915.515 [12] k=343 long start deadline 45 ms
+  230941.361 [6] k=342 input 6 done 'person:0-13;organization:27-42;location:57-64'
+  230941.367 [6] k=344 input 8 start
+  230960.902 [12] k=343 long cancelled
+  230960.929 [12] k=345 long start deadline 103 ms
+  230974.667 [6] k=344 input 8 done 'person:0-11;organization:15-19;organization:66-87;location:23-34;date:91-98'
+  230974.673 [6] k=346 input 10 start
+  231003.953 [6] k=346 input 10 done 'location:39-46;location:51-57;location:31-37;location:78-87;location:4-16'
+  231004.237 [6] k=347 long start deadline 48 ms
+  231052.565 [6] k=347 long cancelled
+  231052.580 [6] k=348 input 0 start
+  231064.315 [12] k=345 long cancelled
+  231064.363 [12] k=349 long start deadline 26 ms
+  231097.355 [12] k=349 long cancelled
+  231097.380 [12] k=350 input 2 start
+  231112.894 [6] k=348 input 0 done ''
+
+MISMATCH cycle 7 request 524 input 8: '' vs 'person:0-11;organization:15-19;organization:66-87;location:23-34;date:91-98'
+count logits: -20.1033, -10.1055, -17.408, -20.3151, -23.3763, -25.3726, -26.7186, -25.8096, -25.6886, -26.3578, -25.5873, -27.3072, -26.7805, -27.3329, -26.5432, -23.9687, -23.6699, -23.1015, -23.3495, -20.393
+ref count:    -14.6055, -0.172165, -18.9277, -29.6907, -34.3683, -33.7248, -32.7738, -30.9638, -32.3282, -33.513, -31.1908, -32.3686, -31.5612, -30.7045, -30.716, -30.8011, -30.689, -29.3422, -28.8615, -26.295
+span logits: n=512 nan=0 zero=0 min=-56859.21 max=-335.70636 maxAbsDiffFromRef=56844.2629070282
+span first 16: -12075.3, -15194.1, -9167.71, -36145.9, -6308.98, -8095.43, -9604.55, -38374.6, -19143.9, -13119, -40089.3, -10260.9, -12046.2, -13554.6, -42318.1, -10378.4
+ref  first 16: 0.801508, -27.1141, -9.72691, -41.0639, -23.1904, -25.4257, -31.7394, -34.1327, -21.4687, -14.9813, -28.2296, -22.9389, -25.9036, -38.2777, -43.1654, -34.4388
+history (last 40):
+  236125.867 [12] k=506 input 2 start
+  236138.718 [6] k=505 long cancelled
+  236140.453 [6] k=507 long start deadline 10 ms
+  236155.440 [6] k=507 long cancelled
+  236155.452 [6] k=508 input 4 start
+  236161.075 [12] k=506 input 2 done 'person:0-11;organization:26-45;location:40-45'
+  236161.139 [12] k=509 long start deadline 80 ms
+  236189.179 [6] k=508 input 4 done 'organization:3-18;location:22-28;date:34-58'
+  236189.184 [6] k=510 input 6 start
+  236215.254 [6] k=510 input 6 done 'person:0-13;organization:27-42;location:57-64'
+  236215.318 [6] k=511 long start deadline 22 ms
+  236239.754 [6] k=511 long cancelled
+  236239.773 [6] k=512 input 8 start
+  236243.371 [12] k=509 long cancelled
+  236243.429 [12] k=513 long start deadline 20 ms
+  236266.153 [6] k=512 input 8 done 'person:0-11;organization:15-19;organization:66-87;location:23-34;date:91-98'
+  236266.174 [6] k=514 input 10 start
+  236269.580 [12] k=513 long cancelled
+  236269.652 [12] k=515 long start deadline 86 ms
+  236297.959 [6] k=514 input 10 done 'location:39-46;location:51-57;location:31-37;location:78-87;location:4-16'
+  236297.968 [6] k=516 input 0 start
+  236330.985 [6] k=516 input 0 done 'person:0-12;person:17-32;location:36-42;date:46-55'
+  236331.022 [6] k=517 long start deadline 138 ms
+  236358.103 [12] k=515 long cancelled
+  236358.119 [12] k=518 input 2 start
+  236383.934 [12] k=518 input 2 done 'person:0-11;organization:26-45;location:40-45'
+  236383.954 [12] k=519 long start deadline 119 ms
+  236491.208 [6] k=517 long completed
+  236491.216 [6] k=520 input 4 start
+  236504.895 [12] k=519 long cancelled
+  236505.879 [12] k=521 long start deadline 97 ms
+  236532.293 [6] k=520 input 4 done 'organization:3-18;location:22-28;date:34-58'
+  236532.298 [6] k=522 input 6 start
+  236550.331 [6] k=522 input 6 done 'person:0-13;organization:27-42;location:57-64'
+  236550.358 [6] k=523 long start deadline 31 ms
+  236585.470 [6] k=523 long cancelled
+  236585.483 [6] k=524 input 8 start
+  236603.696 [12] k=521 long cancelled
+  236603.731 [12] k=525 long start deadline 80 ms
+  236631.316 [6] k=524 input 8 done ''
+
+MISMATCH cycle 7 request 552 input 0: '' vs 'person:0-12;person:17-32;location:36-42;date:46-55'
+count logits: -21.3342, -9.52455, -16.7593, -19.3837, -21.6604, -22.994, -24.2065, -23.8689, -24.5391, -25.5042, -24.6746, -26.3709, -26.2881, -27.051, -26.3737, -24.7392, -24.7195, -24.6847, -24.4319, -21.5366
+ref count:    -16.8472, -1.10294, -23.8237, -36.4046, -41.6175, -40.7344, -39.7868, -37.6968, -39.3506, -40.7714, -37.6736, -39.5844, -38.4986, -37.4059, -37.7139, -37.2036, -37.3359, -35.3583, -34.7834, -31.4112
+span logits: n=352 nan=0 zero=0 min=-100529.11 max=-560.6987 maxAbsDiffFromRef=100505.74513435364
+span first 16: -3940.28, -6506.33, -51614.2, -21524.3, -2189.54, -2724.29, -6936.04, -8537.28, -8439.5, -53550.2, -23458.2, -4125.46, -4660.25, -8869.16, -10471.1, -6317.26
+ref  first 16: -22.4744, 20.6677, -50.3347, -64.3939, -50.4342, -122.876, -128.06, -119.958, -23.8048, -37.4702, -51.5436, -60.9561, -87.8965, -98.9159, -90.5712, -82.4889
+history (last 40):
+  236894.636 [6] k=534 input 6 start
+  236905.650 [6] k=534 input 6 done 'person:0-13;organization:27-42;location:57-64'
+  236905.715 [6] k=535 long start deadline 60 ms
+  237006.865 [6] k=535 long cancelled
+  237006.879 [6] k=536 input 8 start
+  237009.352 [12] k=533 long completed
+  237009.389 [12] k=537 long start deadline 75 ms
+  237034.008 [6] k=536 input 8 done 'person:0-11;organization:15-19;organization:66-87;location:23-34;date:91-98'
+  237034.016 [6] k=538 input 10 start
+  237062.391 [6] k=538 input 10 done 'location:39-46;location:51-57;location:31-37;location:78-87;location:4-16'
+  237062.910 [6] k=539 long start deadline 128 ms
+  237087.108 [12] k=537 long cancelled
+  237087.125 [12] k=540 input 0 start
+  237117.724 [12] k=540 input 0 done 'person:0-12;person:17-32;location:36-42;date:46-55'
+  237119.439 [12] k=541 long start deadline 58 ms
+  237176.586 [12] k=541 long cancelled
+  237176.597 [12] k=542 input 2 start
+  237190.479 [6] k=539 long cancelled
+  237190.526 [6] k=543 long start deadline 87 ms
+  237202.082 [12] k=542 input 2 done 'person:0-11;organization:26-45;location:40-45'
+  237202.088 [12] k=544 input 4 start
+  237212.439 [12] k=544 input 4 done 'organization:3-18;location:22-28;date:34-58'
+  237212.526 [12] k=545 long start deadline 12 ms
+  237225.510 [12] k=545 long cancelled
+  237225.530 [12] k=546 input 6 start
+  237250.042 [12] k=546 input 6 done 'person:0-13;organization:27-42;location:57-64'
+  237250.087 [12] k=547 long start deadline 76 ms
+  237302.869 [6] k=543 long cancelled
+  237302.878 [6] k=548 input 8 start
+  237327.793 [12] k=547 long cancelled
+  237327.824 [12] k=549 long start deadline 123 ms
+  237362.704 [6] k=548 input 8 done 'person:0-11;organization:15-19;organization:66-87;location:23-34;date:91-98'
+  237362.715 [6] k=550 input 10 start
+  237376.402 [6] k=550 input 10 done 'location:39-46;location:51-57;location:31-37;location:78-87;location:4-16'
+  237376.480 [6] k=551 long start deadline 67 ms
+  237448.041 [6] k=551 long cancelled
+  237448.053 [6] k=552 input 0 start
+  237452.625 [12] k=549 long cancelled
+  237452.660 [12] k=553 long start deadline 102 ms
+  237477.410 [6] k=552 input 0 done ''
+
+cycle 8/8 t=251s checked 4000 mismatches 8 long cancelled 3440 completed 560
+RESULT checked 4000 mismatches 8 long cancelled 3440 completed 560

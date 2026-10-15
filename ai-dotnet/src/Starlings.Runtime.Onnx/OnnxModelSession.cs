@@ -20,11 +20,16 @@ namespace Starlings.Runtime.Onnx;
 /// <para>
 /// <b>Cancellation.</b> Runs are synchronous; there is no asynchronous API, because ONNX Runtime's C# binding has no
 /// truly asynchronous run for these providers and wrapping a blocking call in a task would not make it cancellable.
-/// A token that is already cancelled prevents the run. A token cancelled during a run sets ONNX Runtime's terminate
-/// flag, which the executor checks between graph nodes: the operator currently executing finishes first (and on CUDA,
-/// kernels already queued on the device complete), then the run stops and throws
-/// <see cref="OperationCanceledException"/>. Cancellation latency is therefore bounded by the longest single node.
-/// The session stays usable after a cancelled run.
+/// A token that is already cancelled prevents the run. On CPU, a token cancelled during a run sets ONNX Runtime's
+/// terminate flag, which the executor checks between graph nodes: the operator currently executing finishes first,
+/// then the run stops and throws <see cref="OperationCanceledException"/>, so cancellation latency is bounded by the
+/// longest single node. On CUDA a run is never terminated mid-graph: ONNX Runtime returns from a terminated CUDA run
+/// with device work still pending on buffers it has already released, which corrupted later runs (wrong entities in a
+/// GLiNER2 soak; <c>docs/evidence/gliner2-cuda-wrong-output/</c>). There a token cancelled during a run takes effect
+/// when the run completes (its outputs are discarded and the call throws <see cref="OperationCanceledException"/>), so
+/// cancellation latency is bounded by one run; callers that split work into chunks check the token between them. A
+/// CUDA run that fails for another reason drains the device before the exception propagates. The session stays usable
+/// after a cancelled run.
 /// </para>
 /// </remarks>
 public sealed class OnnxModelSession : IDisposable
@@ -130,7 +135,17 @@ public sealed class OnnxModelSession : IDisposable
         ArgumentNullException.ThrowIfNull(inputValues);
         ArgumentNullException.ThrowIfNull(outputNames);
         IDisposableReadOnlyCollection<OrtValue>? result = null;
-        Execute(runOptions => result = _session.Run(runOptions, inputNames, inputValues, outputNames), cancellationToken);
+        try
+        {
+            Execute(runOptions => result = _session.Run(runOptions, inputNames, inputValues, outputNames), cancellationToken);
+        }
+        catch
+        {
+            // A CUDA run cancelled while executing completes, then throws: its outputs are not returned.
+            result?.Dispose();
+            throw;
+        }
+
         return result!;
     }
 
@@ -354,10 +369,16 @@ public sealed class OnnxModelSession : IDisposable
         }
     }
 
-    private static void RunOnce(Action<RunOptions> run, CancellationToken cancellationToken)
+    private void RunOnce(Action<RunOptions> run, CancellationToken cancellationToken)
     {
         // RunOptions is per call: its terminate flag must not leak into concurrent runs.
         using var runOptions = new RunOptions();
+        if (_cudaOptions is not null)
+        {
+            RunOnceCuda(run, runOptions, cancellationToken);
+            return;
+        }
+
         using var registration = cancellationToken.CanBeCanceled
             ? cancellationToken.UnsafeRegister(static state => ((RunOptions)state!).Terminate = true, runOptions)
             : default;
@@ -368,6 +389,50 @@ public sealed class OnnxModelSession : IDisposable
         catch (OnnxRuntimeException ex) when (cancellationToken.IsCancellationRequested)
         {
             throw new OperationCanceledException("The ONNX Runtime run was cancelled at a node boundary.", ex, cancellationToken);
+        }
+    }
+
+    /// <summary>
+    /// A CUDA run is never terminated mid-graph. ONNX Runtime 1.30 returns from a terminated CUDA run while kernels and
+    /// copies it already queued are still pending, and the run's buffers are back in its allocators: the next run (or a
+    /// concurrent one) can then compute on memory that the abandoned work still writes. A GLiNER2 soak returned empty
+    /// entities after such runs (docs/evidence/gliner2-cuda-wrong-output/). So the run completes, and a token cancelled
+    /// meanwhile takes effect when it returns. Any other failure drains the device before the exception propagates.
+    /// </summary>
+    private void RunOnceCuda(Action<RunOptions> run, RunOptions runOptions, CancellationToken cancellationToken)
+    {
+        try
+        {
+            run(runOptions);
+        }
+        catch (OnnxRuntimeException)
+        {
+            DrainDevice();
+            throw;
+        }
+
+        if (cancellationToken.IsCancellationRequested)
+        {
+            throw new OperationCanceledException("The ONNX Runtime run was cancelled; on CUDA the run completes before the cancellation takes effect.", cancellationToken);
+        }
+    }
+
+    /// <summary>
+    /// Waits for all work queued on the session's device (the CUDA provider's <c>Sync</c>, a device synchronization,
+    /// reached through the I/O binding's synchronize calls, which sync every non-CPU provider of the graph's inputs and
+    /// outputs).
+    /// </summary>
+    private void DrainDevice()
+    {
+        try
+        {
+            using var binding = _session.CreateIoBinding();
+            binding.SynchronizeBoundInputs();
+            binding.SynchronizeBoundOutputs();
+        }
+        catch (OnnxRuntimeException)
+        {
+            // The run's own exception is the one to report; a device that cannot synchronize fails the next run.
         }
     }
 
