@@ -105,6 +105,13 @@ These cannot be done by an agent. Each row names what it unblocks.
 
 Each workstream PR updates this document's tables when it lands. The catalog (R3) becomes the source of truth for status once it exists.
 
+### Status 2026-10-15
+
+- **First Stable profile: `gliner2-base-v1/onnx-fp32-cpu`** (#56 preconditions, then the maturity flip). Every gate passed; the weekly qualification workflow reruns its release-set G1 to G3 and a one-hour soak (with `MALLOC_MMAP_THRESHOLD_=65536`) on hosted runners, green. Single-owner exception recorded (M7 open).
+- **e5 `onnx-fp32-cpu` and EmbeddingGemma 2 text `onnx-fp32-cpu`: every gate passed, Stable blocked.** e5's hosted one-hour soak fails the growth rule (about 50 MB/h, undiagnosed; the workstation hour plateaued). EmbeddingGemma 2's G2 cannot rerun off the reference CPU (outside-Git reference embeddings; maintainer action: commit them under `protected/`, SOURCE.md decision 2); its hosted soak also fails (about 160 MB/h).
+- **CUDA profiles:** EmbeddingGemma 2 text, Qwen fp32x and Qwen fp16x pass every gate where recorded; e5 CUDA has G4 failed. Promotion of any CUDA profile awaits scheduled GPU regression runs (M6).
+- **Versions:** maturity is per profile (generated README blocks); the next ai-dotnet version is `0.2.0` (`docs/kickoff.md`).
+
 ### Status 2026-10-14
 
 - **Workstreams R1 to R10** are integrated in the `0.1.0-preview.6` release candidate (`docs/releases/ai-0.1.0-preview.6.md`), which merges draft PRs #3 to #12 and #14.

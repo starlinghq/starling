@@ -1,6 +1,6 @@
 # Support policy
 
-Status: **draft for maintainer review** (workstream R10, `docs/plan/production-readiness.md`). This document states what each maturity label commits the project to. It does not change any label: no profile is Stable today, and maturity changes only when the maintainer records gate results (M10). Where this document proposes a number or a rule that the plan does not fix, it says so and lists it under [open questions](#open-questions).
+Status: **draft for maintainer review** (workstream R10, `docs/plan/production-readiness.md`). This document states what each maturity label commits the project to. It does not change any label; maturity changes only when the maintainer records gate results (M10). Since 2026-10-15 one profile is Stable: `gliner2-base-v1/onnx-fp32-cpu` (`docs/kickoff.md`, "First Stable profile"). Where this document proposes a number or a rule that the plan does not fix, it says so and lists it under [open questions](#open-questions).
 
 Sources: plan sections 9, 10, 14 and 16 (`docs/plan/fast-faithful-ai-dotnet.md`), `.github/SUPPORT.md`, `.github/SECURITY.md`, `docs/kickoff.md`.
 
@@ -33,7 +33,7 @@ Maturity belongs to profiles, not packages (`docs/kickoff.md`, "ai-dotnet packag
 
 ### Promotion and demotion
 
-- **Promotion** happens only when the maintainer records gate results in the manifest (M10). Agents produce evidence and tooling; they never set a gate to `passed` or raise maturity. The manifest validator refuses `stable` while any gate is not `passed` or any capability is `untested` (`model-pipeline/src/model_pipeline/manifest.py`). The catalog's Stable readiness column lists what still fails (draft PR #4).
+- **Promotion** happens only when the maintainer records gate results in the manifest (M10). Agents produce evidence and tooling; they never set a gate to `passed` or raise maturity. The manifest validator refuses `stable` while any gate is not `passed` or any capability is `untested` (`model-pipeline/src/model_pipeline/manifest.py`). The catalog's Stable readiness column lists what still fails, and notes that CUDA profiles also await scheduled GPU regression runs. The first promotion (GLiNER2 CPU, 2026-10-15) was made on the maintainer's instruction; the agent change set `maturity: stable` only where every gate was recorded passed and the scheduled regression runs were green.
 - **Demotion** from Stable to Preview or Experimental needs a release note and a visible catalog change. It never rewrites what an earlier release promised: the earlier release record stays as published.
 
 ## Security and correctness issues
@@ -106,7 +106,7 @@ These are for the maintainer. None is settled by this document.
 
 1. **M8, tokenizer bumps:** option A, B or the middle path (see [Tokenizer bumps](#tokenizer-bumps)).
 2. **Support windows:** confirm or change the proposed figures: 6 months for the previous Stable minor, at least 6 months for Maintenance and Deprecated, the 5-working-day regression triage target, and a weekly scheduled qualification.
-3. **Stable and 1.0:** does a Stable profile require its package to leave `0.x` (`1.0.0`), or can a `0.x` package carry a Stable profile?
-4. **Second release owner (M7):** does the first Stable promotion (e5 `onnx-fp32-cpu`) wait for a second release owner, or ship with a recorded single-owner exception?
+3. **Stable and 1.0:** settled 2026-10-15: a `0.x` package can carry a Stable profile; maturity is per profile and the next version is `0.2.0` (`docs/kickoff.md`).
+4. **Second release owner (M7):** the first Stable promotion (GLiNER2 `onnx-fp32-cpu`, 2026-10-15) ships with a recorded single-owner exception (`docs/kickoff.md`); M7 stays open.
 5. **Advisory records:** use GitHub advisories only, or also `docs/advisories/` records that the catalog links? Should the manifest schema gain a field for affected version ranges?
 6. **Old and new profile identities** after an upstream update: see `docs/plan/maintained-update-drill.md`, open questions.
