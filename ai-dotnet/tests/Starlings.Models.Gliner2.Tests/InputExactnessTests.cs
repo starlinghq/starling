@@ -110,6 +110,30 @@ public class InputExactnessTests(ITestOutputHelper output)
     }
 
     [Fact]
+    public void ConcurrentBuildsShareTheMemoAndGiveTheReferenceInputs()
+    {
+        // Eight threads build every case at once on one fresh preprocessor (the memo filled concurrently); every input
+        // must equal the reference. The memo never evicts: it keeps the first MaxCachedTokens distinct tokens.
+        var (tokenizerPath, reason) = Gliner2TestAssets.FindTokenizer();
+        Assert.SkipWhen(tokenizerPath is null, reason);
+        var (path, fixtureReason) = Gliner2TestAssets.FindExtractionFixtures();
+        Assert.SkipWhen(path is null, fixtureReason);
+        var preprocessor = Gliner2Preprocessor.FromFile(tokenizerPath!, Gliner2ModelAssets.TokenizerSha256);
+        var cases = Gliner2Fixtures.LoadCases(path!).Where(c => c.MaxLen is null).ToList();
+        var failures = new System.Collections.Concurrent.ConcurrentBag<string>();
+        Parallel.For(0, 8 * cases.Count, new ParallelOptions { MaxDegreeOfParallelism = 8 }, i =>
+        {
+            var c = cases[i % cases.Count];
+            var input = preprocessor.Build(c.Text, Gliner2Preprocessor.NormalizeLabels(c.LabelsRequested, "labels"), c.Descriptions);
+            if (!c.InputIds.AsSpan().SequenceEqual(input.InputIds) || !c.WordIndex.AsSpan().SequenceEqual(input.WordIndex))
+            {
+                failures.Add(c.Id);
+            }
+        });
+        Assert.Empty(failures);
+    }
+
+    [Fact]
     public void LabelsAreDeduplicatedInOrderAndValidated()
     {
         Assert.Equal(["person", "Person", "location"], Gliner2Preprocessor.NormalizeLabels(["person", "Person", "person", "location"], "labels"));
