@@ -13,7 +13,7 @@ Maturity is per profile, generated from the registry manifests by `model-pipelin
 
 | Profile | Maturity | Platforms |
 | --- | --- | --- |
-| `multilingual-e5-small/onnx-fp32-cpu` | preview | linux-x64 cpu: supported; windows-x64 cpu: experimental |
+| `multilingual-e5-small/onnx-fp32-cpu` | preview | linux-x64 cpu: experimental; windows-x64 cpu: experimental |
 | `multilingual-e5-small/onnx-fp32-cuda` | experimental | linux-x64 cuda: experimental; windows-x64 cuda: untested |
 <!-- /catalog:maturity -->
 
@@ -50,11 +50,11 @@ e5 expects `"query: "` or `"passage: "` at the start of every text; nothing is a
 
 ## Status
 
-Profile `multilingual-e5-small/onnx-fp32-cpu` (Linux x64 CPU) has passed every qualification gate, G0 to G7; its maturity is in the table above. Profile `multilingual-e5-small/onnx-fp32-cuda` (Linux x64 CUDA) is Experimental: its one-hour soak failed (memory growth, recorded in the catalog), and there are no scheduled GPU regression runs. Gate evidence: the [catalog](https://github.com/starlinghq/starling/blob/main/docs/catalog/README.md). Model license: MIT, stated only in the model card.
+Profile `multilingual-e5-small/onnx-fp32-cpu` (Linux x64 CPU) has passed every qualification gate, G0 to G7; its maturity is in the table above. It is not promoted to Stable: **Blocked from Stable (2026-10-15): the weekly one-hour soak on a GitHub-hosted runner (AMD EPYC 9V45, 4 logical CPUs, 1,918 load/unload cycles) fails the unchanged growth rule: unloaded and loaded rss_anon grow about 50 MB/h (unloaded 210 to 363 MB; first half 33 MB, second half 21 MB, limit 32 MB), although the qualifying workstation hour plateaued (1,368 cycles, unloaded 450 to 490 MB). Until it is diagnosed (as GLiNER2's allocator retention was) or passes, the scheduled G4 screen gives no regression support.** Profile `multilingual-e5-small/onnx-fp32-cuda` (Linux x64 CUDA) is Experimental: its one-hour soak failed (memory growth, recorded in the catalog), and there are no scheduled GPU regression runs. Gate evidence: the [catalog](https://github.com/starlinghq/starling/blob/main/docs/catalog/README.md). Model license: MIT, stated only in the model card.
 
 ## Stable contract
 
-This is the contract of profile `multilingual-e5-small/onnx-fp32-cpu`. Its Stable label commits to it under the [support policy](https://github.com/starlinghq/starling/blob/main/docs/support-policy.md). The statuses are the registry manifest's and `E5Capabilities.Profiles`, which a test keeps equal key for key.
+This is the target contract of profile `multilingual-e5-small/onnx-fp32-cpu`, which a Stable label would commit to under the [support policy](https://github.com/starlinghq/starling/blob/main/docs/support-policy.md). **Blocked:** the weekly soak fails (see [Status](#status)), so the profile stays Preview and its capabilities experimental; "Supported" below is the target. The statuses in force are the registry manifest's and `E5Capabilities.Profiles`, which a test keeps equal key for key.
 
 | Item | Contract |
 | --- | --- |
@@ -79,4 +79,4 @@ This is the contract of profile `multilingual-e5-small/onnx-fp32-cpu`. Its Stabl
 - G1, G2 and G3 on the P-030 release sets: [release-set gates](https://github.com/starlinghq/starling/blob/main/docs/evidence/release-set-gates-2026-10-14/e5-onnx-fp32-cpu/README.md).
 - G4 one-hour soak: [2026-10-14](https://github.com/starlinghq/starling/blob/main/docs/evidence/g4-soak-1h-2026-10-14/README.md). G5 matched benchmark: [2026-10-15](https://github.com/starlinghq/starling/blob/main/docs/evidence/qualification-2026-10-15/README.md).
 - G6 distribution and G7 integration: [G6](https://github.com/starlinghq/starling/blob/main/docs/evidence/g6-distribution-2026-10-14/README.md), [G7](https://github.com/starlinghq/starling/blob/main/docs/evidence/g7-integration-2026-10-14/README.md).
-- Regression support: the weekly [qualification workflow](https://github.com/starlinghq/starling/blob/main/.github/workflows/qualification.yml) (jobs `release-gates` and `soak`).
+- Regression support: the weekly [qualification workflow](https://github.com/starlinghq/starling/blob/main/.github/workflows/qualification.yml): G1 to G3 pass there (job `release-gates`); the one-hour soak fails the growth rule, which blocks Stable.

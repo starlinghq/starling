@@ -34,53 +34,55 @@ public static class EmbeddingGemma2Capabilities
 
     /// <summary>
     /// Status per capability. Evidence for each entry is listed in <c>ai-dotnet/README.md</c> and, for
-    /// <see cref="EmbeddingGemma2CapabilityStatus.Supported"/>, in the profile's gate evidence (<c>docs/catalog/README.md</c>).
+    /// <see cref="EmbeddingGemma2CapabilityStatus.Experimental"/>, in the profile's gate evidence (<c>docs/catalog/README.md</c>).
     /// </summary>
     public static IReadOnlyDictionary<string, EmbeddingGemma2CapabilityStatus> All { get; } = new Dictionary<string, EmbeddingGemma2CapabilityStatus>(StringComparer.Ordinal)
     {
-        // Supported text on Linux x64 CPU: G1 on the P-030 tokenizer holdout (232 rows, ids exact) and G2 on the text
+        // Text on Linux x64 CPU passed every gate, but stays experimental: the weekly qualification cannot rerun G2 (the
+        // outside-Git reference regenerates byte-identical only on the reference CPU; see the README's Stable contract).
+        // Evidence: G1 on the P-030 tokenizer holdout (232 rows, ids exact) and G2 on the text
         // release set (696 rows: no prompt, query and document; embeddings within 5.1e-7 against 5e-6, padded batches
         // within 2.0e-7 of single calls), the accepted development fixtures (138 rows up to 1,750 tokens, batch
         // independence to 2,049), G3 on MIRACL (nDCG@10 0.8325), G4 one-hour soak (concurrent callers, timed-out
         // requests, plateau), G6 anonymous graph download and offline run, G7 adapter tests and drill consumers.
-        ["embedding.pretokenized.cpu"] = EmbeddingGemma2CapabilityStatus.Supported,
+        ["embedding.pretokenized.cpu"] = EmbeddingGemma2CapabilityStatus.Experimental,
         ["embedding.pretokenized.cuda"] = EmbeddingGemma2CapabilityStatus.Experimental,
 
         // Text through EmbeddingGemma2Tokenizer (owned profile gemma-bpe-embeddinggemma2, Starlings.Tokenizers 0.3.0-preview.1).
-        ["embedding.text"] = EmbeddingGemma2CapabilityStatus.Supported,
-        ["tokenizer.owned"] = EmbeddingGemma2CapabilityStatus.Supported,
+        ["embedding.text"] = EmbeddingGemma2CapabilityStatus.Experimental,
+        ["tokenizer.owned"] = EmbeddingGemma2CapabilityStatus.Experimental,
 
         // Explicit named prompts from config_sentence_transformers.json (never inserted silently; default none). The
         // accepted fixtures and the release set cover none, query and document; all 20 names on four public texts are in
         // the proposed task-prompt rows (ids exact, within the protected text bound on CPU and CUDA;
         // docs/evidence/capability-closure-2026-10-14/), proposed rows and so outside the Stable contract.
-        ["prompts.query_document"] = EmbeddingGemma2CapabilityStatus.Supported,
+        ["prompts.query_document"] = EmbeddingGemma2CapabilityStatus.Experimental,
         ["prompts.task"] = EmbeddingGemma2CapabilityStatus.Experimental,
         ["prompt_insertion.implicit"] = EmbeddingGemma2CapabilityStatus.Unsupported,
 
         // Truncate the leading dimensions, then L2-normalize again (equal to sentence-transformers truncate_dim); checked
         // against the reference sliced and renormalized, within the protected bound, and through both adapters (G7).
-        ["matryoshka.512"] = EmbeddingGemma2CapabilityStatus.Supported,
-        ["matryoshka.256"] = EmbeddingGemma2CapabilityStatus.Supported,
-        ["matryoshka.128"] = EmbeddingGemma2CapabilityStatus.Supported,
+        ["matryoshka.512"] = EmbeddingGemma2CapabilityStatus.Experimental,
+        ["matryoshka.256"] = EmbeddingGemma2CapabilityStatus.Experimental,
+        ["matryoshka.128"] = EmbeddingGemma2CapabilityStatus.Experimental,
         ["matryoshka.other_sizes"] = EmbeddingGemma2CapabilityStatus.Unsupported,
 
         // Input length, special tokens and prompt included. Accepted fixtures reach 1,750 tokens, batch-independence
         // checks 2,049; 2,050 to 8,192 tokens is covered only by the proposed long-input rows (8 text rows on CPU and
         // CUDA within the protected bound), so it is outside the Stable contract. Longer input is rejected, never truncated.
-        ["input.up_to_2049_tokens"] = EmbeddingGemma2CapabilityStatus.Supported,
+        ["input.up_to_2049_tokens"] = EmbeddingGemma2CapabilityStatus.Experimental,
         ["input.2050_to_8192_tokens"] = EmbeddingGemma2CapabilityStatus.Experimental,
         ["input.over_8192_tokens"] = EmbeddingGemma2CapabilityStatus.Unsupported,
         ["truncation"] = EmbeddingGemma2CapabilityStatus.Unsupported,
 
-        ["batch"] = EmbeddingGemma2CapabilityStatus.Supported,
-        ["cancellation"] = EmbeddingGemma2CapabilityStatus.Supported,
-        ["concurrent_calls"] = EmbeddingGemma2CapabilityStatus.Supported,
-        ["asset_acquisition"] = EmbeddingGemma2CapabilityStatus.Supported,
+        ["batch"] = EmbeddingGemma2CapabilityStatus.Experimental,
+        ["cancellation"] = EmbeddingGemma2CapabilityStatus.Experimental,
+        ["concurrent_calls"] = EmbeddingGemma2CapabilityStatus.Experimental,
+        ["asset_acquisition"] = EmbeddingGemma2CapabilityStatus.Experimental,
         // The text graph is hosted in the public Hugging Face repository EmbeddingGemma2ModelAssets.HostingRepository. The
         // release drills downloaded it with no token into an empty cache, verified it and ran the search sample offline
         // (G6, docs/evidence/g6-distribution-2026-10-14/).
-        ["asset_acquisition.graph_download"] = EmbeddingGemma2CapabilityStatus.Supported,
+        ["asset_acquisition.graph_download"] = EmbeddingGemma2CapabilityStatus.Experimental,
 
         // Images (contract of 2026-10-11, EmbeddingGemma2MultimodalEmbedder; profiles image-fp32-cpu and image-fp32-cuda).
         // From decoded RGB: 42 protected rows (28 images alone, 6 interleaved or prompted, 8 text queries) within the
@@ -166,22 +168,22 @@ public static class EmbeddingGemma2Capabilities
 
         // Microsoft.Extensions.AI IEmbeddingGenerator, in Starlings.Models.EmbeddingGemma2.Extensions.AI. Supported on
         // the CPU text profile (G7), experimental over CUDA sessions (EmbeddingGemma2.Tests.Cuda).
-        ["extensions_ai.embedding_generator"] = EmbeddingGemma2CapabilityStatus.Supported,
+        ["extensions_ai.embedding_generator"] = EmbeddingGemma2CapabilityStatus.Experimental,
         ["extensions_ai.embedding_generator.cuda"] = EmbeddingGemma2CapabilityStatus.Experimental,
-        ["extensions_ai.dimensions_matryoshka"] = EmbeddingGemma2CapabilityStatus.Supported,
+        ["extensions_ai.dimensions_matryoshka"] = EmbeddingGemma2CapabilityStatus.Experimental,
 
         // ML.NET estimator/transformer, in Starlings.Models.EmbeddingGemma2.MLNet (G7 on the CPU text profile).
         // Persistence: Save throws.
-        ["mlnet.embedding_transform"] = EmbeddingGemma2CapabilityStatus.Supported,
+        ["mlnet.embedding_transform"] = EmbeddingGemma2CapabilityStatus.Experimental,
         ["mlnet.embedding_transform.cuda"] = EmbeddingGemma2CapabilityStatus.Experimental,
-        ["mlnet.batching"] = EmbeddingGemma2CapabilityStatus.Supported,
+        ["mlnet.batching"] = EmbeddingGemma2CapabilityStatus.Experimental,
         ["mlnet.persistence"] = EmbeddingGemma2CapabilityStatus.Unsupported,
         ["mlnet.cancellation"] = EmbeddingGemma2CapabilityStatus.Unsupported,
         ["mlnet.training"] = EmbeddingGemma2CapabilityStatus.Unsupported,
 
         // Native AOT on Linux x64 CPU from the packed packages: no trim/AOT warnings, equal to JIT bit for bit (typed text
         // API and Extensions.AI generator; docs/evidence/aot/). The ML.NET adapter does not run under Native AOT.
-        ["aot"] = EmbeddingGemma2CapabilityStatus.Supported,
+        ["aot"] = EmbeddingGemma2CapabilityStatus.Experimental,
         ["mlnet.aot"] = EmbeddingGemma2CapabilityStatus.Unsupported,
         // Windows x64: build, weight-free tests and the clean-install drill without the model in CI (ci.yml,
         // ai-dotnet-windows); no model run, so outside the Stable contract. macOS and ARM64: no evidence and no CI job.
@@ -199,24 +201,24 @@ public static class EmbeddingGemma2Capabilities
         {
             [StableProfile] = new Dictionary<string, EmbeddingGemma2CapabilityStatus>(StringComparer.Ordinal)
             {
-                ["batch"] = EmbeddingGemma2CapabilityStatus.Supported,
+                ["batch"] = EmbeddingGemma2CapabilityStatus.Experimental,
                 ["streaming"] = EmbeddingGemma2CapabilityStatus.Unsupported,
-                ["cancellation"] = EmbeddingGemma2CapabilityStatus.Supported,
+                ["cancellation"] = EmbeddingGemma2CapabilityStatus.Experimental,
                 ["persistence"] = EmbeddingGemma2CapabilityStatus.Unsupported,
                 ["training"] = EmbeddingGemma2CapabilityStatus.Unsupported,
-                ["aot"] = EmbeddingGemma2CapabilityStatus.Supported,
-                ["extensions_ai"] = EmbeddingGemma2CapabilityStatus.Supported,
-                ["mlnet"] = EmbeddingGemma2CapabilityStatus.Supported,
-                ["embedding_pretokenized"] = EmbeddingGemma2CapabilityStatus.Supported,
-                ["embedding_text"] = EmbeddingGemma2CapabilityStatus.Supported,
-                ["tokenizer_owned"] = EmbeddingGemma2CapabilityStatus.Supported,
-                ["prompts_query_document"] = EmbeddingGemma2CapabilityStatus.Supported,
+                ["aot"] = EmbeddingGemma2CapabilityStatus.Experimental,
+                ["extensions_ai"] = EmbeddingGemma2CapabilityStatus.Experimental,
+                ["mlnet"] = EmbeddingGemma2CapabilityStatus.Experimental,
+                ["embedding_pretokenized"] = EmbeddingGemma2CapabilityStatus.Experimental,
+                ["embedding_text"] = EmbeddingGemma2CapabilityStatus.Experimental,
+                ["tokenizer_owned"] = EmbeddingGemma2CapabilityStatus.Experimental,
+                ["prompts_query_document"] = EmbeddingGemma2CapabilityStatus.Experimental,
                 ["prompts_task"] = EmbeddingGemma2CapabilityStatus.Experimental,
-                ["matryoshka"] = EmbeddingGemma2CapabilityStatus.Supported,
-                ["input_up_to_2049_tokens"] = EmbeddingGemma2CapabilityStatus.Supported,
+                ["matryoshka"] = EmbeddingGemma2CapabilityStatus.Experimental,
+                ["input_up_to_2049_tokens"] = EmbeddingGemma2CapabilityStatus.Experimental,
                 ["input_2050_to_8192_tokens"] = EmbeddingGemma2CapabilityStatus.Experimental,
                 ["input_over_8192_tokens"] = EmbeddingGemma2CapabilityStatus.Unsupported,
-                ["concurrent_calls"] = EmbeddingGemma2CapabilityStatus.Supported,
+                ["concurrent_calls"] = EmbeddingGemma2CapabilityStatus.Experimental,
                 // The text profile; images and videos are the image-fp32-* and video-fp32-* profiles.
                 ["image"] = EmbeddingGemma2CapabilityStatus.Unsupported,
                 ["audio"] = EmbeddingGemma2CapabilityStatus.Unsupported,

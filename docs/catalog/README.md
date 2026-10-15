@@ -52,18 +52,18 @@ One table per family, one column per profile. Rows are every capability any prof
 
 | Capability | image-fp32-cpu | image-fp32-cuda | onnx-fp32-cpu | onnx-fp32-cuda | video-fp32-cpu | video-fp32-cuda |
 | --- | --- | --- | --- | --- | --- | --- |
-| batch | experimental | experimental | supported | experimental | experimental | experimental |
+| batch | experimental | experimental | experimental | experimental | experimental | experimental |
 | streaming | unsupported | unsupported | unsupported | unsupported | unsupported | unsupported |
-| cancellation | experimental | experimental | supported | experimental | experimental | experimental |
+| cancellation | experimental | experimental | experimental | experimental | experimental | experimental |
 | persistence | unsupported | unsupported | unsupported | unsupported | unsupported | unsupported |
 | training | unsupported | unsupported | unsupported | unsupported | unsupported | unsupported |
-| aot | experimental | experimental | supported | experimental | experimental | experimental |
-| extensions_ai | experimental | experimental | supported | experimental | experimental | experimental |
-| mlnet | unsupported | unsupported | supported | experimental | unsupported | unsupported |
+| aot | experimental | experimental | experimental | experimental | experimental | experimental |
+| extensions_ai | experimental | experimental | experimental | experimental | experimental | experimental |
+| mlnet | unsupported | unsupported | experimental | experimental | unsupported | unsupported |
 | audio | unsupported | unsupported | unsupported | unsupported | unsupported | unsupported |
-| concurrent_calls | experimental | experimental | supported | experimental | experimental | experimental |
-| embedding_pretokenized | unrecorded | unrecorded | supported | experimental | unrecorded | unrecorded |
-| embedding_text | unrecorded | unrecorded | supported | experimental | unrecorded | unrecorded |
+| concurrent_calls | experimental | experimental | experimental | experimental | experimental | experimental |
+| embedding_pretokenized | unrecorded | unrecorded | experimental | experimental | unrecorded | unrecorded |
+| embedding_text | unrecorded | unrecorded | experimental | experimental | unrecorded | unrecorded |
 | image | experimental | experimental | unsupported | unsupported | experimental | experimental |
 | image_16_bit | unsupported | unsupported | unrecorded | unrecorded | unrecorded | unrecorded |
 | image_alpha_compositing | unsupported | unsupported | unrecorded | unrecorded | unrecorded | unrecorded |
@@ -81,12 +81,12 @@ One table per family, one column per profile. Rows are every capability any prof
 | image_prompts | experimental | experimental | unrecorded | unrecorded | unrecorded | unrecorded |
 | input_2050_to_8192_tokens | unrecorded | unrecorded | experimental | experimental | unrecorded | unrecorded |
 | input_over_8192_tokens | unsupported | unsupported | unsupported | unsupported | unsupported | unsupported |
-| input_up_to_2049_tokens | unrecorded | unrecorded | supported | experimental | unrecorded | unrecorded |
-| matryoshka | unrecorded | unrecorded | supported | experimental | unrecorded | unrecorded |
-| prompts_query_document | unrecorded | unrecorded | supported | experimental | unrecorded | unrecorded |
+| input_up_to_2049_tokens | unrecorded | unrecorded | experimental | experimental | unrecorded | unrecorded |
+| matryoshka | unrecorded | unrecorded | experimental | experimental | unrecorded | unrecorded |
+| prompts_query_document | unrecorded | unrecorded | experimental | experimental | unrecorded | unrecorded |
 | prompts_task | unrecorded | unrecorded | experimental | experimental | unrecorded | unrecorded |
 | text_only_inputs | experimental | experimental | unrecorded | unrecorded | experimental | experimental |
-| tokenizer_owned | unrecorded | unrecorded | supported | experimental | unrecorded | unrecorded |
+| tokenizer_owned | unrecorded | unrecorded | experimental | experimental | unrecorded | unrecorded |
 | video | unsupported | unsupported | unsupported | unsupported | experimental | experimental |
 | video_audio_track | unrecorded | unrecorded | unrecorded | unrecorded | unsupported | unsupported |
 | video_batch | unrecorded | unrecorded | unrecorded | unrecorded | experimental | experimental |
@@ -138,14 +138,14 @@ One table per family, one column per profile. Rows are every capability any prof
 
 | Capability | onnx-fp32-cpu | onnx-fp32-cuda |
 | --- | --- | --- |
-| batch | supported | experimental |
+| batch | experimental | experimental |
 | streaming | unsupported | unsupported |
-| cancellation | supported | experimental |
+| cancellation | experimental | experimental |
 | persistence | unsupported | unsupported |
 | training | unsupported | unsupported |
-| aot | supported | experimental |
-| extensions_ai | supported | experimental |
-| mlnet | supported | experimental |
+| aot | experimental | experimental |
+| extensions_ai | experimental | experimental |
+| mlnet | experimental | experimental |
 
 ### qwen3.5-0.8b
 
@@ -192,6 +192,7 @@ One table per family, one column per profile. Rows are every capability any prof
 - `embeddinggemma-2/image-fp32-cuda`: The 16-bit fixture image (mode-gray16) has a reference row that no C# path reproduces: upstream renders it white, this profile rejects it.
 - `embeddinggemma-2/image-fp32-cuda`: GPU memory: one 2,520-patch image needs about 610 MB of attention buffer per vision layer on ONNX Runtime CUDA; a vision batch of two failed with about 5.5 GB free in the spike. EmbeddingGemma2MultimodalOptions.MaxVisionBatchSize defaults to 1; the three graphs take about 2.9 GB of GPU memory when text-only inputs are also embedded.
 - `embeddinggemma-2/image-fp32-cuda`: Native runtime: Microsoft.ML.OnnxRuntime.Gpu.Linux 1.30.0 needs the CUDA 13 runtime and cuDNN 9 on the loader path; the package does not ship them.
+- `embeddinggemma-2/onnx-fp32-cpu`: Stable blocked (2026-10-15): the scheduled qualification cannot rerun G2. The text release set's embeddings.jsonl, kept outside the repository and bound by digest, regenerates byte-identical only on the reference CPU; on two hosted runners (Intel Xeon 8370C, AMD EPYC 7763; 6 threads, AVX2) it differed by up to 8e-7 and the evaluator refused it. Fix: SOURCE.md decision 2 (commit the file under protected/). The hosted one-hour soak also failed the growth rule (about 160 MB/h).
 - `embeddinggemma-2/onnx-fp32-cpu`: Evaluator run 2026-10-11 (docs/evidence/embeddinggemma2-dotnet/, CPU): G1 passed; G2 failed only on export.token_embeddings (Python ORT vs PyTorch): the tolerance file's \|d\| <= 1e-4 * max(1, \|ref\|) judged per value gives 1.7e-2, while the per-case max \|d\| / max(1, max \|ref\|) the bound was set from is 6.2e-6. Which reading binds is a maintainer decision; every .NET check passed.
 - `embeddinggemma-2/onnx-fp32-cpu`: The hosted graph is public since 2026-10-14. The 0.1.0-preview.6 release drill downloaded it with no token into an empty cache, verified it and ran the sample offline (Linux x64, one machine); other platforms are untested.
 - `embeddinggemma-2/onnx-fp32-cpu`: Accepted fixtures reach 1,750 tokens and batch-independence checks 2,049; 2,050 to 8,192 tokens is covered by the proposed long-input rows (not yet accepted). One 8,192-token row took 80 s on the 12-thread workstation CPU (process peak working set 5.9 GB during the test run); temporary memory grows with the square of the length in the full-attention layers.
@@ -223,6 +224,7 @@ One table per family, one column per profile. Rows are every capability any prof
 - `gliner2-base-v1/onnx-fp32-cuda`: The count gate (count_pred argmax 0 gives an empty result) never closed on the development corpus. The proposed capability cases (model-pipeline/proposed/gliner2-base-v1/capability-cases) add 12 public-text cases where it closes; they are not yet accepted fixtures.
 - `gliner2-base-v1/onnx-fp32-cuda`: CUDA parity evidence (PROPOSED.md) left out the two cases over 600 tokens from the padded-batch check because the GPU was shared; single-row parity covers all 58 cases (span logits max abs 4.0e-3, scores 2.5e-6).
 - `gliner2-base-v1/onnx-fp32-cuda`: Native runtime: Microsoft.ML.OnnxRuntime.Gpu.Linux 1.30.0 needs the CUDA 13 runtime and cuDNN 9 on the loader path; the package does not ship them.
+- `multilingual-e5-small/onnx-fp32-cpu`: Stable blocked (2026-10-15): the scheduled one-hour soak on a GitHub-hosted runner (AMD EPYC 9V45, 4 logical CPUs, 1,918 cycles; qualification run 38793842060) fails the growth rule at about 50 MB/h (unloaded rss_anon 210 to 363 MB, halves 33 and 21 MB against a 32 MB limit); the workstation G4 hour plateaued. Not yet diagnosed.
 - `multilingual-e5-small/onnx-fp32-cpu`: The pinned tokenizer.json emits a lone "▁" token before special-token literals and for trailing whitespace, where SentencePiece and transformers 5.18 emit none. The owned profile follows tokenizer.json; the difference is recorded, not fixed.
 - `multilingual-e5-small/onnx-fp32-cpu`: tokenizer.json leaves decomposed Hangul jamo uncomposed, while SentencePiece composes them.
 - `multilingual-e5-small/onnx-fp32-cpu`: The ONNX file and model.safetensors come from the same revision; ONNX matches PyTorch to 2.1e-6 in hidden states on the M0 corpus.

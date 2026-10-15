@@ -609,8 +609,8 @@ public sealed class TransformContractTests : IDisposable
     public void CapabilityDescriptorReportsTheMlNetStatuses()
     {
         var all = EmbeddingGemma2Capabilities.All;
-        Assert.Equal(EmbeddingGemma2CapabilityStatus.Supported, all["mlnet.embedding_transform"]);
-        Assert.Equal(EmbeddingGemma2CapabilityStatus.Supported, all["mlnet.batching"]);
+        Assert.Equal(EmbeddingGemma2CapabilityStatus.Experimental, all["mlnet.embedding_transform"]);
+        Assert.Equal(EmbeddingGemma2CapabilityStatus.Experimental, all["mlnet.batching"]);
         Assert.Equal(EmbeddingGemma2CapabilityStatus.Unsupported, all["mlnet.persistence"]);
         Assert.Equal(EmbeddingGemma2CapabilityStatus.Unsupported, all["mlnet.cancellation"]);
         Assert.Equal(EmbeddingGemma2CapabilityStatus.Unsupported, all["mlnet.training"]);

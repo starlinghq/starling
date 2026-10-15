@@ -9,7 +9,7 @@ Maturity is per profile, generated from the registry manifests by `model-pipelin
 
 | Profile | Maturity | Platforms |
 | --- | --- | --- |
-| `multilingual-e5-small/onnx-fp32-cpu` | preview | linux-x64 cpu: supported; windows-x64 cpu: experimental |
+| `multilingual-e5-small/onnx-fp32-cpu` | preview | linux-x64 cpu: experimental; windows-x64 cpu: experimental |
 | `multilingual-e5-small/onnx-fp32-cuda` | experimental | linux-x64 cuda: experimental; windows-x64 cuda: untested |
 <!-- /catalog:maturity -->
 
@@ -41,4 +41,4 @@ var embeddings = await generator.GenerateAsync(["how much protein should a femal
 - `GenerateAsync` runs synchronously on the calling thread and returns a completed task.
 - Unsupported options (`Dimensions` other than 384, another `ModelId`, unknown additional properties) fail with `NotSupportedException` instead of being ignored.
 
-Status: supported on the e5 `onnx-fp32-cpu` profile (Linux x64 CPU; G7, and part of that profile's Stable contract in the `Starlings.Models.E5` README); over a CUDA session experimental (46 protected texts within the CUDA profile's bound). See the [release notes](https://github.com/starlinghq/starling/blob/main/docs/releases/ai-0.1.0-preview.6.md).
+Status: experimental on the e5 `onnx-fp32-cpu` profile (Linux x64 CPU; G7 passed, Stable promotion blocked, see the `Starlings.Models.E5` README); over a CUDA session experimental (46 protected texts within the CUDA profile's bound). See the [release notes](https://github.com/starlinghq/starling/blob/main/docs/releases/ai-0.1.0-preview.6.md).

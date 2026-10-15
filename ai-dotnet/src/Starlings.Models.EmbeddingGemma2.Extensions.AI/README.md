@@ -11,7 +11,7 @@ Maturity is per profile, generated from the registry manifests by `model-pipelin
 | --- | --- | --- |
 | `embeddinggemma-2/image-fp32-cpu` | experimental | linux-x64 cpu: experimental; windows-x64 cpu: untested |
 | `embeddinggemma-2/image-fp32-cuda` | experimental | linux-x64 cuda: experimental; windows-x64 cuda: untested |
-| `embeddinggemma-2/onnx-fp32-cpu` | experimental | linux-x64 cpu: supported; windows-x64 cpu: experimental |
+| `embeddinggemma-2/onnx-fp32-cpu` | experimental | linux-x64 cpu: experimental; windows-x64 cpu: experimental |
 | `embeddinggemma-2/onnx-fp32-cuda` | experimental | linux-x64 cuda: experimental; windows-x64 cuda: untested |
 | `embeddinggemma-2/video-fp32-cpu` | experimental | linux-x64 cpu: experimental; windows-x64 cpu: untested |
 | `embeddinggemma-2/video-fp32-cuda` | experimental | linux-x64 cuda: experimental; windows-x64 cuda: untested |
@@ -47,7 +47,7 @@ var embeddings = await generator.GenerateAsync(["how much protein should a femal
 - `GenerateAsync` runs synchronously on the calling thread and returns a completed task.
 - Unsupported options (another `ModelId`, `RawRepresentationFactory`, unknown additional properties) fail with `NotSupportedException` instead of being ignored.
 
-Status: the text generator is supported on the `embeddinggemma-2/onnx-fp32-cpu` profile (Linux x64 CPU; G7, part of that profile's Stable contract in the `Starlings.Models.EmbeddingGemma2` README), including Matryoshka dimensions; the image and video generators and everything over CUDA sessions are experimental (within each profile's bound).
+Status: the text generator passed G7 on the `embeddinggemma-2/onnx-fp32-cpu` profile (Linux x64 CPU), including Matryoshka dimensions, and is experimental while that profile's Stable promotion is blocked (`Starlings.Models.EmbeddingGemma2` README); the image and video generators and everything over CUDA sessions are experimental (within each profile's bound).
 
 ## Images and videos
 

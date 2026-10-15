@@ -271,6 +271,7 @@ jobs:
     needs: assets
     runs-on: ubuntu-latest
     timeout-minutes: 300
+    continue-on-error: ${{ matrix.allowed_to_fail == true }}
     strategy:
       fail-fast: false
       matrix:
@@ -278,9 +279,13 @@ jobs:
           - profile: multilingual-e5-small/onnx-fp32-cpu
             reference: model-pipeline/reference/encoder/requirements.txt
             hashes: --require-hashes
+          # Not a Stable profile: its G2 is refused here until the maintainer commits the release set's embeddings.jsonl
+          # under protected/ (SOURCE.md decision 2); the outside-repository reference regenerates byte-identical only on
+          # the reference CPU. G1 and G3 still run, and the refusal stays visible in the job, without failing the run.
           - profile: embeddinggemma-2/onnx-fp32-cpu
             reference: model-pipeline/reference/embeddinggemma2/requirements.txt
             hashes: --require-hashes
+            allowed_to_fail: true
           # gliner2 is pinned by a full commit of its Git repository, which cannot carry a hash, so not every
           # requirement has one; uv verifies every hash the file lists (--verify-hashes).
           - profile: gliner2-base-v1/onnx-fp32-cpu

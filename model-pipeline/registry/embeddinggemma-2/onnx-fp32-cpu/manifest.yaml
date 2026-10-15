@@ -163,47 +163,52 @@ execution:
       - { name: token_embeddings, type: float32, shape: [batch, sequence, 768] }
 
 capabilities:
-  # Starlings.Models.EmbeddingGemma2; per-capability evidence in ai-dotnet/README.md. Statuses follow the Stable
-  # contract in the package README: supported where the gate evidence (G1 to G7, and the accepted development fixtures)
-  # covers it on Linux x64 CPU, experimental where only proposed rows do, unsupported outside it.
+  # Starlings.Models.EmbeddingGemma2; per-capability evidence in ai-dotnet/README.md. Every gate G0 to G7 passed, but
+  # the statuses stay experimental: no regression support for G2 yet. Blocked from Stable (2026-10-15): the weekly
+  # qualification cannot rerun G2. The release set's reference embeddings are kept outside Git and bound by digest,
+  # and they regenerate byte-identical only on the reference CPU (i7-5820K): two hosted runs (Intel Xeon 8370C; AMD
+  # EPYC 7763 with threads held at 6 and the ISA at AVX2) gave other digests, within 8e-7 of the recorded file, so the
+  # evaluator refuses them. The fix is the open decision 2 of the set's SOURCE.md: commit embeddings.jsonl under
+  # model-pipeline/protected/ (a protected-change).
   # EmbeddingGemma2Capabilities.Profiles holds the same statuses (tested key for key).
-  batch: supported
+  batch: experimental
   streaming: unsupported
-  cancellation: supported
+  cancellation: experimental
   persistence: unsupported
   training: unsupported
   # aot: Native AOT publish on Linux x64 CPU, no trim/AOT warnings, results equal to JIT bit for bit
   # (typed text API and Extensions.AI generator; docs/evidence/aot/README.md).
   # The ML.NET adapter does not run under Native AOT (Microsoft.ML uses Reflection.Emit).
-  aot: supported
-  extensions_ai: supported
-  mlnet: supported
-  embedding_pretokenized: supported
-  embedding_text: supported
-  tokenizer_owned: supported
-  prompts_query_document: supported
+  aot: experimental
+  extensions_ai: experimental
+  mlnet: experimental
+  embedding_pretokenized: experimental
+  embedding_text: experimental
+  tokenizer_owned: experimental
+  prompts_query_document: experimental
   # prompts_task (capability closure 2026-10-14, docs/evidence/capability-closure-2026-10-14/README.md): all 20 prompt names on four public texts
   # (proposed task-prompt rows from sentence-transformers): ids exact, embedding max abs 3.6e-7 (CpuParityTests.TaskPromptParityWithTheOwnedTokenizer).
   # Proposed rows, protected bounds: outside the Stable contract until accepted.
   prompts_task: experimental
-  matryoshka: supported
-  input_up_to_2049_tokens: supported
+  matryoshka: experimental
+  input_up_to_2049_tokens: experimental
   # input_2050_to_8192_tokens (capability closure 2026-10-14): the C# CPU run in model-pipeline/proposed/embeddinggemma-2/long-input/csharp-compare.md: 8 text rows of 2,600 to 8,192 tokens, embedding max abs 1.0e-7, ids exact, rejections over 8,192
   # exact, within the protected text bound. Proposed rows (not accepted), protected bounds: outside the Stable contract.
   input_2050_to_8192_tokens: experimental
   input_over_8192_tokens: unsupported
-  concurrent_calls: supported
+  concurrent_calls: experimental
   image: unsupported
   audio: unsupported
   video: unsupported
 
 compatibility:
   # Linux x64 CPU: gates G0 to G7 (G1 to G5 on an Intel i7-5820K, AVX2, no AVX-512; the G2 reference regenerates
-  # byte-identical only at 6 threads); the scheduled qualification reruns G1 to G3 and a short soak.
+  # byte-identical only on that CPU at 6 threads); the scheduled qualification reruns G1 and G3 and a soak, but G2 is
+  # refused there (reference digest), so the row stays experimental.
   - os: linux
     arch: x64
     provider: cpu
-    status: supported
+    status: experimental
     verified: 2026-10-15
   # Windows x64 CPU: the CI job ai-dotnet-windows builds, runs the weight-free tests and the clean-install drill without
   # the model on every change; no model runs there. Outside the Stable contract (the package README says so).
@@ -242,6 +247,12 @@ maintenance:
   last_checked: 2026-10-10
   review_date: 2027-01-05
   known_issues:
+    - >-
+      Stable blocked (2026-10-15): the scheduled qualification cannot rerun G2. The text release set's
+      embeddings.jsonl, kept outside the repository and bound by digest, regenerates byte-identical only on the
+      reference CPU; on two hosted runners (Intel Xeon 8370C, AMD EPYC 7763; 6 threads, AVX2) it differed by up to
+      8e-7 and the evaluator refused it. Fix: SOURCE.md decision 2 (commit the file under protected/). The hosted
+      one-hour soak also failed the growth rule (about 160 MB/h).
     - >-
       Evaluator run 2026-10-11 (docs/evidence/embeddinggemma2-dotnet/, CPU): G1 passed; G2 failed only on
       export.token_embeddings (Python ORT vs PyTorch): the tolerance file's |d| <= 1e-4 * max(1, |ref|) judged per value

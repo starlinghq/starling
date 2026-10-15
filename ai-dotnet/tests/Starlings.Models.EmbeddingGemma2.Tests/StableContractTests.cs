@@ -81,7 +81,8 @@ public class StableContractTests
         }
 
         var stable = Family.Single(m => m.Id == EmbeddingGemma2Capabilities.StableProfile);
-        Assert.Equal("supported", stable.Compatibility["linux-x64 cpu"]);
+        // Every gate passed, but Stable is blocked (no G2 regression run, see the README): the row stays experimental.
+        Assert.Equal("experimental", stable.Compatibility["linux-x64 cpu"]);
         Assert.Equal(stable.Compatibility["windows-x64 cpu"], Name(EmbeddingGemma2Capabilities.All["windows"]));
         Assert.Equal(EmbeddingGemma2CapabilityStatus.Experimental, EmbeddingGemma2Capabilities.All["embedding.pretokenized.cuda"]);
     }
