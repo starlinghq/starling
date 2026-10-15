@@ -1,0 +1,9 @@
+2026-10-15T19:45:25+00:00 start a-baseline (embeddinggemma2-image, 12m)  
+2026-10-15T19:57:52+00:00 end a-baseline exit 0 wall 747s: [embeddinggemma2-image] PASS: every gating settled series plateaus after warmup; no wrong output or error; wrote /workspace/out/starling-q-c3-fix/a-baseline/embeddinggemma2-image-20261015T194526Z.json and .md
+2026-10-15T19:57:52+00:00 start b-mmap-threshold-64k (embeddinggemma2-image, 12m) MALLOC_MMAP_THRESHOLD_=65536 
+2026-10-15T20:10:18+00:00 end b-mmap-threshold-64k exit 0 wall 746s: [embeddinggemma2-image] PASS: every gating settled series plateaus after warmup; no wrong output or error; wrote /workspace/out/starling-q-c3-fix/b-mmap-threshold-64k/embeddinggemma2-image-20261015T195753Z.json and .md
+2026-10-15T20:10:18+00:00 start d-requests-only (embeddinggemma2-image, 12m)  --keep-loaded
+2026-10-15T20:22:44+00:00 end d-requests-only exit 0 wall 746s: [embeddinggemma2-image] PASS: every gating settled series plateaus after warmup; no wrong output or error; wrote /workspace/out/starling-q-c3-fix/d-requests-only/embeddinggemma2-image-20261015T201019Z.json and .md
+2026-10-15T20:22:44+00:00 start f-malloc-trim (embeddinggemma2-image, 12m)  --malloc-trim
+2026-10-15T20:35:11+00:00 end f-malloc-trim exit 0 wall 747s: [embeddinggemma2-image] PASS: every gating settled series plateaus after warmup; no wrong output or error; wrote /workspace/out/starling-q-c3-fix/f-malloc-trim/embeddinggemma2-image-20261015T202245Z.json and .md
+2026-10-15T20:35:11+00:00 DIAG DONE

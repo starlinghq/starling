@@ -47,7 +47,10 @@ public sealed record OnnxSessionDiagnostics
     /// <summary>Options of the non-CPU provider as ONNX Runtime reports them after configuration; empty for CPU.</summary>
     public required IReadOnlyDictionary<string, string> ProviderOptions { get; init; }
 
-    /// <summary>Configured intra-op threads; <see langword="null"/> means the ONNX Runtime default.</summary>
+    /// <summary>
+    /// Intra-op threads configured on the session: the requested count, or the container-aware default
+    /// (<see cref="OnnxSessionOptions.IntraOpNumThreads"/>); <see langword="null"/> means the ONNX Runtime default.
+    /// </summary>
     public int? IntraOpNumThreads { get; init; }
 
     /// <summary>Configured inter-op threads; <see langword="null"/> means the ONNX Runtime default.</summary>

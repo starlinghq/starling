@@ -26,8 +26,12 @@ public sealed record OnnxSessionOptions
     public OnnxExecutionProvider Provider { get; init; } = OnnxExecutionProvider.Cpu;
 
     /// <summary>
-    /// Threads used inside one operator (<c>intra_op_num_threads</c>). <see langword="null"/> keeps ONNX
-    /// Runtime's default (one per physical core). Must be positive when set.
+    /// Threads used inside one operator (<c>intra_op_num_threads</c>). Must be positive when set.
+    /// <see langword="null"/> selects the default: when a CPU quota or affinity mask limits the process
+    /// (<see cref="Environment.ProcessorCount"/> below the host's online CPUs, as in most containers), that
+    /// processor count; otherwise ONNX Runtime's default (one per physical core). ONNX Runtime's own default ignores a
+    /// container's CPU quota and would start one thread per physical core of the host. The count used is in
+    /// <see cref="OnnxSessionDiagnostics.IntraOpNumThreads"/>.
     /// </summary>
     public int? IntraOpNumThreads { get; init; }
 

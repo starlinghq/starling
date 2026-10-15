@@ -15,6 +15,11 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- Container-aware default intra-op thread count (docs/evidence/cuda-soak-growth/). -->
+    <Compile Include="../Shared/Threading/*.cs" Link="Shared/%(Filename)%(Extension)" />
+  </ItemGroup>
+
+  <ItemGroup>
     <!--
       Managed binding only (it brings Microsoft.Extensions.AI.Abstractions for its own IChatClient, which this package
       does not use). The native runtime is the application's choice: Microsoft.ML.OnnxRuntimeGenAI (CPU, brings

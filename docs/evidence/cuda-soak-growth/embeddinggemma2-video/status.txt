@@ -1,0 +1,9 @@
+2026-10-15T19:48:09+00:00 start a-baseline (embeddinggemma2-video, 12m)  
+2026-10-15T20:00:35+00:00 end a-baseline exit 1 wall 745s: [embeddinggemma2-video] FAIL: loaded working_set grows 51 MB (319 MB/h); loaded rss_anon grows 50 MB (316 MB/h); wrote /workspace/out/starling-q-c2-fix/a-baseline/embeddinggemma2-video-20261015T194810Z.json and .md
+2026-10-15T20:00:35+00:00 start b-mmap-threshold-64k (embeddinggemma2-video, 12m) MALLOC_MMAP_THRESHOLD_=65536 
+2026-10-15T20:13:00+00:00 end b-mmap-threshold-64k exit 0 wall 745s: [embeddinggemma2-video] PASS: every gating settled series plateaus after warmup; no wrong output or error; wrote /workspace/out/starling-q-c2-fix/b-mmap-threshold-64k/embeddinggemma2-video-20261015T200035Z.json and .md
+2026-10-15T20:13:00+00:00 start d-requests-only (embeddinggemma2-video, 12m)  --keep-loaded
+2026-10-15T20:25:25+00:00 end d-requests-only exit 0 wall 745s: [embeddinggemma2-video] PASS: every gating settled series plateaus after warmup; no wrong output or error; wrote /workspace/out/starling-q-c2-fix/d-requests-only/embeddinggemma2-video-20261015T201300Z.json and .md
+2026-10-15T20:25:25+00:00 start f-malloc-trim (embeddinggemma2-video, 12m)  --malloc-trim
+2026-10-15T20:37:50+00:00 end f-malloc-trim exit 0 wall 745s: [embeddinggemma2-video] PASS: every gating settled series plateaus after warmup; no wrong output or error; wrote /workspace/out/starling-q-c2-fix/f-malloc-trim/embeddinggemma2-video-20261015T202525Z.json and .md
+2026-10-15T20:37:50+00:00 DIAG DONE

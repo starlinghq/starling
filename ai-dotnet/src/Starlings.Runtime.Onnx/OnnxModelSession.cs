@@ -212,11 +212,14 @@ public sealed class OnnxModelSession : IDisposable
         InferenceSession? session = null;
         try
         {
-            if (options.IntraOpNumThreads is int intra)
+            // ONNX Runtime's own default ignores a container CPU quota; see IntraOpThreadDefaults.
+            int? intraOpThreads = Starlings.Threading.IntraOpThreadDefaults.Resolve(options.IntraOpNumThreads);
+            if (intraOpThreads is int intra)
             {
                 sessionOptions.IntraOpNumThreads = intra;
             }
 
+            // Execution is sequential, so ONNX Runtime creates no inter-op pool; the value only matters if set.
             if (options.InterOpNumThreads is int inter)
             {
                 sessionOptions.InterOpNumThreads = inter;
@@ -276,7 +279,7 @@ public sealed class OnnxModelSession : IDisposable
                     ? [OnnxRuntimeInfo.CudaProviderName, OnnxRuntimeInfo.CpuProviderName]
                     : [OnnxRuntimeInfo.CpuProviderName],
                 ProviderOptions = providerOptions,
-                IntraOpNumThreads = options.IntraOpNumThreads,
+                IntraOpNumThreads = intraOpThreads,
                 InterOpNumThreads = options.InterOpNumThreads,
                 GraphOptimizationLevel = sessionOptions.GraphOptimizationLevel.ToString(),
                 ModelSource = source,
