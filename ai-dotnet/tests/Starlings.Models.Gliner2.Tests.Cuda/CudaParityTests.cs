@@ -146,8 +146,8 @@ public class CudaParityTests(Gliner2CudaFixture fixture, ITestOutputHelper outpu
         var batch = Enumerable.Repeat(fixture.Cases.Where(x => x.OutOfContract is null).MaxBy(x => x.Text.Length)!.Text, 16).ToList();
         var probe = CudaQueueProbe.CancelledCalls(ct => extractor.ExtractBatch(batch, c.LabelsRequested, c.Threshold, ct), cancellations: 300);
         output.WriteLine($"16 texts in batches of 8: {probe}");
+        Assert.True(probe.Pending == 0, probe.ToString());
         Assert.True(probe.Drains.Count >= 100, probe.ToString());
-        Assert.Equal(0, probe.Pending);
         var after = extractor.Extract(c.Text, c.LabelsRequested, c.Threshold, TestContext.Current.CancellationToken);
         Assert.Equal(c.Entities.Count, after.Entities.Count);
     }

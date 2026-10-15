@@ -164,8 +164,8 @@ public class CudaParityTests(E5CudaFixture fixture, ITestOutputHelper output) : 
         var inputs = Enumerable.Repeat(new EncoderInput(longCase.InputIds), 32).ToList();
         var probe = CudaQueueProbe.CancelledCalls(ct => encoder.EmbedBatch(inputs, ct), cancellations: 300);
         output.WriteLine($"32 x 512 (one chunk): {probe}");
+        Assert.True(probe.Pending == 0, probe.ToString());
         Assert.True(probe.Drains.Count >= 100, probe.ToString());
-        Assert.Equal(0, probe.Pending);
 
         var c0 = E5Fixtures.Cases[0];
         var stats = new ErrorStats();

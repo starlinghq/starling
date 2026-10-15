@@ -154,8 +154,8 @@ public class CudaParityTests(EmbeddingGemma2CudaFixture fixture, ITestOutputHelp
         var inputs = Enumerable.Repeat(new EmbeddingGemma2Input(longRow.InputIds), 4).ToList();
         var probe = CudaQueueProbe.CancelledCalls(ct => encoder.EmbedBatch(inputs, ct), cancellations: 150);
         output.WriteLine($"4 x {longRow.InputIds.Length} tokens (one chunk): {probe}");
+        Assert.True(probe.Pending == 0, probe.ToString());
         Assert.True(probe.Drains.Count >= 75, probe.ToString());
-        Assert.Equal(0, probe.Pending);
 
         var after = encoder.Embed(new EmbeddingGemma2Input(fixture.Rows[5].InputIds), TestContext.Current.CancellationToken);
         var stats = new EmbeddingGemma2ErrorStats();

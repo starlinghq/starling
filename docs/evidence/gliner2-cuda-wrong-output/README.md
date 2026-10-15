@@ -62,7 +62,7 @@ The capability statuses are unchanged (`cancellation: experimental`), and the do
 
 The pattern was in the shared session code, so every ONNX Runtime library on CUDA was affected:
 
-- **e5** and **EmbeddingGemma 2** (text, image and video graphs) leave the same queued work. The probe above shows it, larger than in GLiNER2. Both are fixed by the same change and covered by the new probe test. Wrong outputs were not separately reproduced for them. They are not serialized on CUDA, so concurrent runs were exposed as well as the next run.
+- **e5** and the **EmbeddingGemma 2** text encoder leave the same queued work. The probe above shows it, larger than in GLiNER2. Only those two were measured. The EmbeddingGemma 2 image and video graphs run through the same `OnnxModelSession`, so the same change covers them. The new probe test covers e5 and the EmbeddingGemma 2 text encoder. Wrong outputs were not separately reproduced for them. They are not serialized on CUDA, so concurrent runs were exposed as well as the next run.
 - **Qwen3.5** runs on ONNX Runtime GenAI and does not use `OnnxModelSession`. It cancels only between prefill chunks and decode steps, so it is not affected.
 
 Also fixed: `tests/Starlings.Models.E5.Tests.Cuda` did not compile on `main`. Its `CancelAfter` helper was in the wrong class. The project is local only, so CI never built it.
