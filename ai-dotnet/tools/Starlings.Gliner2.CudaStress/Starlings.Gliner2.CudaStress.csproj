@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <ServerGarbageCollection>false</ServerGarbageCollection>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.ML.OnnxRuntime.Gpu.Linux" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="../../src/Starlings.Models.Gliner2/Starlings.Models.Gliner2.csproj" />
+  </ItemGroup>
+</Project>

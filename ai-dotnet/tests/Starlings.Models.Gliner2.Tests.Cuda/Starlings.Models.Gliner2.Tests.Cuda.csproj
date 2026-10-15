@@ -19,6 +19,7 @@
 
   <ItemGroup>
     <Compile Include="../Shared/Gliner2/*.cs" Link="Shared/Gliner2/%(Filename)%(Extension)" />
+    <Compile Include="../Shared/Cuda/*.cs" Link="Shared/Cuda/%(Filename)%(Extension)" />
   </ItemGroup>
 
   <ItemGroup>

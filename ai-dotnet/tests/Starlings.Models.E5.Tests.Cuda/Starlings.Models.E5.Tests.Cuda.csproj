@@ -18,6 +18,7 @@
 
   <ItemGroup>
     <Compile Include="../Shared/E5/*.cs" Link="Shared/E5/%(Filename)%(Extension)" />
+    <Compile Include="../Shared/Cuda/*.cs" Link="Shared/Cuda/%(Filename)%(Extension)" />
   </ItemGroup>
 
   <ItemGroup>

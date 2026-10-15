@@ -26,7 +26,8 @@ namespace Starlings.Models.Gliner2;
 /// <para>
 /// <b>Threading and lifetime.</b> Methods are synchronous and safe to call concurrently. Cancellation follows E5 and
 /// <see cref="OnnxModelSession"/>: checked while preparing each text, before each chunk of
-/// <see cref="Gliner2ExtractorOptions.MaxBatchSize"/> texts and between graph nodes inside a run. A cancelled call
+/// <see cref="Gliner2ExtractorOptions.MaxBatchSize"/> texts and inside a run (between graph nodes on CPU; on CUDA when
+/// the run completes). A cancelled call
 /// throws <see cref="OperationCanceledException"/> and returns nothing; the extractor stays usable.
 /// </para>
 /// </remarks>

@@ -34,8 +34,8 @@ namespace Starlings.Models.EmbeddingGemma2.Extensions.AI;
 /// <see cref="EmbeddingGemma2InputTooLongException"/>; nothing is truncated.
 /// </para>
 /// <para>
-/// <b>Cancellation.</b> The token is checked before each value is tokenized, before each chunk, and between graph nodes
-/// inside a run: the current operator finishes, then the task is cancelled. Nothing is returned for a cancelled call,
+/// <b>Cancellation.</b> The token is checked before each value is tokenized, before each chunk, and inside a run (on CPU
+/// between graph nodes, on CUDA when the current run completes); then the task is cancelled. Nothing is returned for a cancelled call,
 /// and the generator stays usable.
 /// </para>
 /// <para>

@@ -1,6 +1,6 @@
 # Starlings.Runtime.Onnx
 
-ONNX Runtime session ownership for Starlings models: provider selection with no silent fallback (CPU, or CUDA with TF32 always off), native/managed version check, diagnostics (versions, providers, options, model SHA-256, graph signature), node-boundary cancellation and reference-counted disposal. The API may still change.
+ONNX Runtime session ownership for Starlings models: provider selection with no silent fallback (CPU, or CUDA with TF32 always off), native/managed version check, diagnostics (versions, providers, options, model SHA-256, graph signature), cancellation (at node boundaries on CPU, after the current run on CUDA) and reference-counted disposal. The API may still change.
 
 ## Maturity
 
