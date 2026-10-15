@@ -2,7 +2,7 @@
 
 Plan section 10, G6: clean install from built packages, native dependency resolution, offline execution, and version diagnostics. Release rule: no reliance on the developer's source checkout or local caches.
 
-G6 is recorded as `passed` for the 11 CPU and CUDA profiles below. It stays open for the two EmbeddingGemma 2 video profiles.
+G6 is recorded as `passed` for the 11 CPU and CUDA profiles below. The two EmbeddingGemma 2 video profiles followed on 2026-10-15, after legal review D2 cleared the FFmpeg adapters ([Video, 2026-10-15](#video-2026-10-15)).
 
 ## Runs
 
@@ -55,12 +55,54 @@ The restore-graph check requires the GPU natives exactly once, at the pinned ver
 | `qwen3.5-0.8b/ortgenai-fp32x-cpu` | cpu-drill, preview.6 | "The capital of France is Paris.", Stop, 24 + 7 tokens, also through IChatClient | bundle downloaded and run offline (cpu-drill step 11) | **passed** |
 | `qwen3.5-0.8b/ortgenai-fp32x-cuda` | cuda-drill: QwenChatCuda, GenAI.Cuda only | Exactly the protected reference answer (row `en-short` of `qwen3.5-0.8b/reference/generation.jsonl`): text, Stop, 24 + 7 tokens; IChatClient gives the same answer and usage | as CPU | **passed** |
 | `qwen3.5-0.8b/ortgenai-fp16x-cuda` | cuda-drill | The same protected reference answer, through the typed API and IChatClient | **fp16x bundle downloaded** (1,572,143,104-byte data file, SHA-256 verified) and answered offline on CUDA from that cache | **passed** |
-| `embeddinggemma-2/video-fp32-cpu` | not drilled here | — | the graphs are public; decoding needs the FFmpeg adapter | **open** |
-| `embeddinggemma-2/video-fp32-cuda` | not drilled here | — | as CPU | **open** |
+| `embeddinggemma-2/video-fp32-cpu` | eg2-video-cpu-drill: EmbeddingGemma2Search (FFmpeg adapter) and EmbeddingGemma2SearchFFmpeg9, CPU natives only | Expected clip first for 3/3 queries through each adapter; Extensions.AI videos equal the typed API (max abs 0); frames without timing rejected; GPL builds refused ([below](#video-2026-10-15)) | **vision and multimodal graphs downloaded** with no token, then the video search run offline from that cache (eg2-video-public-drill) | **passed** (2026-10-15) |
+| `embeddinggemma-2/video-fp32-cuda` | eg2-video-cuda-drill: CudaConsumer (both adapters) and EmbeddingGemma2SearchCuda, Gpu.Linux only | 22 fixture videos through each adapter: sampled indices 23/23 and 181/181 frames exact; 28 rows max abs 6.5e-7 (bound 1e-5); Extensions.AI 3.9e-6; the sample's video search on CUDA ([below](#video-2026-10-15)) | as CPU | **passed** (2026-10-15) |
 
 ## What stays open
 
-- **EmbeddingGemma 2 video.** Both FFmpeg adapters are held from publishing until legal review D2, so no clean install from published packages is possible for a video profile. The drill does build the adapter: the preview.4 video run (`docs/evidence/embeddinggemma2-video/`) used the user's own FFmpeg 8. G6 waits for D2.
+- ~~**EmbeddingGemma 2 video.**~~ Closed on 2026-10-15 ([below](#video-2026-10-15)): D2 cleared both FFmpeg adapters, and the drill now runs the video path from the packed adapters on CPU and CUDA.
 - **Windows and other platforms.** These runs cover Linux x64 only, the one platform row the manifests record as `experimental`. Windows x64 stays `untested` beyond CI's build and weight-free tests.
 - **Native AOT** is a capability, not part of G6. The preview.6 drill and `docs/evidence/aot/` cover CPU; `docs/evidence/capability-closure-2026-10-14/aot-cuda/` covers CUDA. These runs did not repeat it.
 - **Qwen GenAI diagnostics** report ONNX Runtime GenAI from the dependency manifest. The GenAI native library exports no version function, so this is the best the binding offers. The ONNX Runtime it loads is `Microsoft.ML.OnnxRuntime.Gpu` 1.30.0 from the checked restore graph.
+
+## Video, 2026-10-15
+
+G6 is now `passed` for `embeddinggemma-2/video-fp32-cpu` and `video-fp32-cuda`. Legal review D2 cleared both FFmpeg adapters on 2026-10-15, so consumers can install them from the published set. The drill gained the video steps it lacked (this change), and all three runs below passed from one set of packages.
+
+**Packages.** The CPU run packed all 15 packages from a clean clone of `5b04d83` (this change's branch commit, on `main` after #64), with a locked restore and an empty package cache. That commit disappears with the squash merge. Its `ai-dotnet/src` is tree `a6481bcc11411e982b29b9a806910d908ab30c78`, the same as in the merged change; the later commits add only evidence. The CUDA and public-hosting runs reused those files (`--packages-from`), and every package check of step 4 ran again. The adapter packages hold their DLL, XML docs, README and `THIRD-PARTY-NOTICES.md`, and no FFmpeg library.
+
+**The user's FFmpeg.** No FFmpeg is packed, restored or downloaded by any package. The drill passes the user's own shared libraries with `--ffmpeg-dir`:
+
+- FFmpeg 8: the pinned BtbN LGPL shared build `n8.1.3-17-gc389840894`, the one the earlier video evidence used (`fetch_eg2_ffmpeg.sh`, archive SHA-256 `bf3db18a…`).
+- FFmpeg 9 (`--ffmpeg9-dir`, new): the BtbN LGPL shared build `n9.0.2-28-g669f5ab083`. It is `ffmpeg-n9.0.2-28-g669f5ab083-linux64-lgpl-shared-9.0.tar.xz` from release `autobuild-2026-10-15-13-03`, SHA-256 `5838264a2cff06ddc6b7b2fc43edeb51358ead38fd56d82f83f49c270fe0f5ff`. Autobuild releases expire upstream, so the archive is kept outside Git.
+- GPL builds to refuse (`--ffmpeg-gpl-dir`, `--ffmpeg9-gpl-dir`, new): BtbN GPL shared `n8.1.3-17-gc389840894`, and the distribution's GPL FFmpeg 9.0.1 (`/usr/lib`).
+
+| Log | Command (abridged) | What it covers |
+| --- | --- | --- |
+| [eg2-video-cpu-drill.log](eg2-video-cpu-drill.log) | `--no-model --seed-embeddinggemma2-from <graphs + images + videos> --ffmpeg-dir <8.1.3 LGPL> --ffmpeg9-dir <9.0.2 LGPL> --ffmpeg-gpl-dir <8.1.3 GPL> --ffmpeg9-gpl-dir /usr/lib` | Pack (step 3). Restore graphs: EmbeddingGemma2Search holds exactly `…Video.FFmpeg`, and EmbeddingGemma2SearchFFmpeg9 exactly `…Video.FFmpeg9` (lines 255 to 258). The ML.NET video rejection (line 327). Video search through each adapter: 9d (line 352) and 9f (line 370). The GPL refusals (lines 387 to 390). 384 s. |
+| [eg2-video-cuda-drill.log](eg2-video-cuda-drill.log) | `--seed-* … --ffmpeg-dir … --ffmpeg9-dir … --cuda 0 --cuda-lib-path <CUDA 13 + cuDNN 9> --cuda-only --packages-from <pack>` | Step 6: EmbeddingGemma2SearchCuda and CudaConsumer, with GPU natives only (lines 343 and 345). Step 13: the six CUDA profiles of 2026-10-14 again, plus `video-fp32-cuda`: CudaConsumer `eg2-video` with each adapter (lines 554 to 655), then the sample's video search with `--cuda` (lines 656 to 671). 275 s. |
+| [eg2-video-public-drill.log](eg2-video-public-drill.log) | the CPU command plus `--public-hosting-only "EmbeddingGemma 2 videos" --packages-from <pack>` | The CPU video steps again. Step 11: the text, vision and multimodal graphs downloaded into an empty cache with no token and no seed (lines 399 to 403; 671,256,072 and 1,084,327,898 bytes, SHA-256 verified), then the video search run offline from that cache (lines 405 to 420). 365 s. |
+
+**Machine.** As above: i7-5820K, RTX 3090 as GPU 0 (`CUDA_DEVICE_ORDER=PCI_BUS_ID CUDA_VISIBLE_DEVICES=0`), driver 610.57.04. GPU 1 was not used. CUDA 13 and cuDNN 9 came from the `nvidia-*` wheels of the EmbeddingGemma 2 CUDA venv, on `LD_LIBRARY_PATH` for the CUDA runs only. The machine was shared.
+
+### New in the drill
+
+- `EmbeddingGemma2SearchFFmpeg9`: the sample with `Starlings.Models.EmbeddingGemma2.Video.FFmpeg9` in place of `.FFmpeg`. Only the package id and the `using` line differ; the adapters share their code and type names. Step 9f runs its video search on the FFmpeg 9 build.
+- GPL refusal: with `--ffmpeg-gpl-dir` or `--ffmpeg9-gpl-dir`, the matching sample must exit 3 with "is not LGPL".
+- `EmbeddingGemma2SearchCuda`: the sample with `Microsoft.ML.OnnxRuntime.Gpu.Linux` 1.30.0 in place of `Microsoft.ML.OnnxRuntime`. The restore graph is checked like CudaConsumer's: GPU natives exactly once and no CPU natives. The sample gained `--cuda` (device 0, package defaults) and now prints its session diagnostics.
+- CudaConsumer `eg2-video <cache> <fixtures> <tolerances> <video dir> <FFmpeg dir> 8|9`. It checks the 22 fixture videos against the protected `videos.json` (SHA-256), decodes them with the adapter of that major (an LGPL build only, with no opt-in), and checks the sampled indices and every sampled frame's SHA-256 (exact). It then checks the embeddings of the 23 video rows and 5 text queries, and the Extensions.AI generator on the 6 smallest videos from their bytes, within the protected `video-fp32-cuda` bounds.
+- Step 11 `EmbeddingGemma 2 videos`: the video path's graphs (the image lock) downloaded or verified anonymously, then the video search run offline from that cache.
+- Every video search log is checked the same way. The FFmpeg major is reported as LGPL. The expected clip is first for each of the three queries. Frames without timing are rejected. Extensions.AI must equal the typed API exactly on CPU. On CUDA the generator embeds one video alone while the typed API embeds a batch, so it must stay within the profile's protected `padded_batch_vs_single_embedding_max_abs`.
+
+### Per profile
+
+| Profile | Clean install and native resolution | Offline run and correct output | Version diagnostics | Public download (no token) |
+| --- | --- | --- | --- | --- |
+| `video-fp32-cpu` | EmbeddingGemma2Search and EmbeddingGemma2SearchFFmpeg9 restore only packages, and every `Starlings.*` package is the packed bytes. No GPU natives and no FFmpeg library | FFmpeg 8 and FFmpeg 9: `h264-1fps-64x48-8s`, `h264-1.9s-320x240-30fps` and `h264-portrait-360x640-30fps-4s` ranked first for their queries (0.7780, 0.7831, 0.7420, the same on both majors). Extensions.AI max abs 0 from the typed API. Frames without timing rejected | `ffmpeg: <version> (LGPL) from <dir>; <adapter package> 0.1.0-preview.6`, ONNX Runtime native and managed 1.30.0, the session providers and model SHA-256 | vision and multimodal graphs downloaded, then the search run from them |
+| `video-fp32-cuda` | EmbeddingGemma2SearchCuda and CudaConsumer: `Microsoft.ML.OnnxRuntime.Gpu.Linux` 1.30.0 only. ONNX Runtime and its CUDA provider mapped from the consumer's build output | CudaConsumer, each adapter (FFmpeg 8.1.3 and FFmpeg 9.0.2 LGPL): fixture files 22/22, indices 23/23 and frames 181/181 exact. 28 rows max abs 6.50e-7 (bound 1e-5), min cosine 1.0 (bound 0.9999995). Extensions.AI over CUDA, 6 videos from bytes, 3.89e-6. The sample with `--cuda`: the same top clips, Extensions.AI 1.88e-7 from the typed batch (bound 1e-5) | as CPU, plus `use_tf32=0` and `device_id=0` on both sessions, and the CUDA 13, cuBLAS and cuDNN libraries the process mapped | as CPU (one lock) |
+
+### Not covered
+
+- **Windows.** The video adapters target x86-64 Linux; the generated bindings record the target, and the adapter refuses other process architectures. Windows stays `untested`, as for the other profiles.
+- **Native AOT** of the FFmpeg adapters is untested (the manifests say so). These runs did not use `--aot`.
+- **CPU video on the release-candidate drill.** `--public-hosting` without a video seed or `--ffmpeg-dir` downloads and verifies the graphs, but it skips the video search with a note, as the image entry does without images.

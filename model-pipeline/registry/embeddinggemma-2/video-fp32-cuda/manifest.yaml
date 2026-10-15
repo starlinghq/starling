@@ -261,8 +261,9 @@ capabilities:
   video_audio_track: unsupported
   video_decode_ffmpeg8: experimental
   # Starlings.Models.EmbeddingGemma2.Video.FFmpeg9: exact against torchcodec on FFmpeg 9.0.1 (every frame of the 22
-  # fixture videos, ai-dotnet adapter tests and the evaluator's decoder check). The decoder_ffmpeg9 bound is proposed
-  # (model-pipeline/proposed/embeddinggemma-2/decoder-ffmpeg9/), not yet in the protected tolerances.
+  # fixture videos, ai-dotnet adapter tests and the evaluator's decoder check). The decoder_ffmpeg9 bound is protected
+  # (#64, model-pipeline/protected/embeddinggemma-2/decoder-ffmpeg9/); on the LGPL FFmpeg 9.0.2 BtbN build every frame of
+  # the 22 fixture videos (adapter tests) and the release set's sampled frames (G1) are exact too.
   video_decode_ffmpeg9: experimental
   video_decode_rotation_90: experimental
   video_decode_rotation_other: experimental  # display rotation -90 and 180 (edge-case videos), equal to torchcodec
@@ -310,24 +311,27 @@ qualification:
   # after the FFmpeg adapter was changed to decode as torchcodec does (seeking where it seeks; the first run failed on the
   # Ogg Theora frames of commons-video-02). Embedding max abs 2.77e-6 vs 1e-5; soft tokens 2.50e-4 vs 1e-3.
   gates:
-    # G0 open (2026-10-14, docs/evidence/g0-provenance-2026-10-14/README.md): source and asset lock pinned and every
-    # lock file served anonymously with its SHA-256, rights recorded; the decoding path needs the FFmpeg adapters.
-    # D2 cleared 2026-10-15; gate pending its runs.
-    G0: { status: checklist, evidence: docs/m0/embeddinggemma2-video-spike.md, date: 2026-10-11 }
-    G1: { status: passed, evidence: docs/evidence/release-set-gates-2026-10-14/embeddinggemma2-video-fp32-cuda/README.md, date: 2026-10-14 }
+    # G0 passed 2026-10-15 (docs/evidence/g0-provenance-2026-10-14/README.md, "Video, 2026-10-15"): lock pinned and
+    # served anonymously (17/17); both FFmpeg adapters publishable (D2 cleared), their generated bindings regenerate
+    # byte-identical from the pinned FFmpeg n8.1.3 and n9.0.1 headers; notices packed; GPL builds refused without opt-in.
+    G0: { status: passed, evidence: docs/evidence/g0-provenance-2026-10-14/README.md, date: 2026-10-15 }
+    # G1 rerun 2026-10-15 with the protected decoder_ffmpeg9 bound (#64): both decoder checks exact on the release set
+    # (FFmpeg 8.1.3 and 9.0.2 LGPL), G1 and G2 passed (README, "FFmpeg 9 decoder check").
+    G1: { status: passed, evidence: docs/evidence/release-set-gates-2026-10-14/embeddinggemma2-video-fp32-cuda/README.md, date: 2026-10-15 }
     G2: { status: passed, evidence: docs/evidence/release-set-gates-2026-10-14/embeddinggemma2-video-fp32-cuda/README.md, date: 2026-10-14 }
     # G3 passed 2026-10-15 on the video retrieval set release/video-retrieval-v1 (#57): nDCG@10 0.8126 >= 0.797,
     # MRR@10 0.7714 >= 0.751 (upstream reference 0.8126 / 0.7714).
     G3: { status: passed, evidence: docs/evidence/release-set-gates-2026-10-14/embeddinggemma2-video-fp32-cuda/README.md, date: 2026-10-15 }
     G4: { status: failed, evidence: docs/evidence/qualification-2026-10-15/README.md, date: 2026-10-15 }
     G5: { status: failed, evidence: docs/evidence/qualification-2026-10-15/README.md, date: 2026-10-15 }
-    # G6 open (2026-10-14, docs/evidence/g6-distribution-2026-10-14/README.md): no clean install from published packages
-    # exists for this profile yet. D2 cleared 2026-10-15; gate pending its runs.
-    G6: { status: not-run }
-    # G7 open (2026-10-14, docs/evidence/g7-integration-2026-10-14/README.md): Extensions.AI video is tested (contract
-    # tests on fake graphs; CudaAdapterTests on six videos; the drill's sample at preview.4), ML.NET unsupported;
-    # representative downstream use needs the FFmpeg adapter. D2 cleared 2026-10-15; gate pending its runs.
-    G7: { status: not-run }
+    # G6 passed 2026-10-15 (docs/evidence/g6-distribution-2026-10-14/README.md, "Video, 2026-10-15"): the drill's CUDA
+    # mode on GPU 0, GPU natives only; the 22 fixture videos through both packed adapters (frames exact, embeddings
+    # within the protected bounds) and the sample's video search on CUDA, with version diagnostics.
+    G6: { status: passed, evidence: docs/evidence/g6-distribution-2026-10-14/README.md, date: 2026-10-15 }
+    # G7 passed 2026-10-15 (docs/evidence/g7-integration-2026-10-14/README.md, "Video, 2026-10-15"): EmbeddingGemma2Search's
+    # video path and the Extensions.AI video generator through the packed packages on CPU and CUDA; ML.NET video
+    # unsupported and a video column rejected with a schema error from the packed ML.NET adapter.
+    G7: { status: passed, evidence: docs/evidence/g7-integration-2026-10-14/README.md, date: 2026-10-15 }
 
 maintenance:
   owner: Mark
@@ -342,17 +346,19 @@ maintenance:
       frame depends on FFmpeg frame threading (upstream's num_ffmpeg_threads=0 is the adapter's DecoderThreads default;
       another thread count changes which frames differ, for upstream as well).
     - >-
-      The hosted graphs' download addresses are placeholders until the maintainer creates the GitHub release
-      embeddinggemma-2-vision-onnx-r1; acquisition of the graphs is untested until then.
+      Hosting: the vision and multimodal graphs are public at Starlinghq/embeddinggemma-2-vision-onnx (pinned commit
+      above); the release drill downloaded them with no token on 2026-10-15 and ran the video search offline from that
+      cache (docs/evidence/g6-distribution-2026-10-14/README.md).
     - >-
       Synthetic fixture videos only (no camera footage); default settings only; no variable frame rate, interlaced or
       HDR video. One CPU architecture (AVX2) produced the reference and the decoder comparison: swscale's SIMD paths on
       other CPUs (ARM in particular) may differ by a level, for upstream as well.
     - >-
-      One decoder profile per FFmpeg adapter: decoder_ffmpeg (FFmpeg 8, libavcodec.so.62) is protected; decoder_ffmpeg9
-      (FFmpeg 9, libavcodec.so.63) is proposed and waits for the maintainer to commit it, so G1 does not yet cover the
-      FFmpeg 9 adapter. Its exactness evidence used the machine's FFmpeg 9.0.1 distribution build (GPL, loaded with
-      AllowNonLgplBuild); no LGPL FFmpeg 9 build was tested.
+      One decoder profile per FFmpeg adapter: decoder_ffmpeg (FFmpeg 8, libavcodec.so.62) and decoder_ffmpeg9 (FFmpeg 9,
+      libavcodec.so.63) are both protected, and G1 checks both. The FFmpeg 9 evidence covers FFmpeg 9.0.1 (a GPL
+      distribution build, every frame of the fixture videos, loaded with AllowNonLgplBuild) and the BtbN LGPL build
+      n9.0.2-28-g669f5ab083 (every frame of the fixture videos, the sampled frames of the release videos); other 9.x
+      point releases are untested.
     - >-
       GPU memory: frames run in vision calls of MaxVideoFramesPerVisionCall (default 2, 2,520 patches, the padded size
       of one full-budget image), safe with about 5 GB free; larger calls trade memory for throughput.

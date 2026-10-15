@@ -1,0 +1,699 @@
+
+== 0. Inputs
+commit:    5b04d83684bb662f2488c332bd0faca814e3ec14
+dotnet:    /home/mark/.dotnet/dotnet (SDK in the clone: pinned by global.json; outside: 10.0.401)
+mode:      seed (seed: /home/mark/.cache/starling-models/intfloat/multilingual-e5-small/614241f622f53c4eeff9890bdc4f31cfecc418b3); GLiNER2 graph seed: /home/mark/.cache/starling-models/fastino/gliner2-base-v1/f9634218e53580c56edf0de97ca1a7d3f1c2354e; EmbeddingGemma 2 graph seed: /home/mark/.cache/video-g6-a4fa/eg2-seed; user FFmpeg: /home/mark/Projects/AI-models/embeddinggemma2/video-spike/ffmpeg/ffmpeg-n8.1.3-17-gc389840894-linux64-lgpl-shared-8.1/lib; user FFmpeg 9: /home/mark/.cache/video-g6-a4fa/ffmpeg9-lgpl/ffmpeg-n9.0.2-28-g669f5ab083-linux64-lgpl-shared-9.0/lib; Qwen3.5 bundle seed: /home/mark/.cache/starling-models/Qwen/Qwen3.5-0.8B/2fc06364715b967f1860aea9cf38778875588b17
+offline:   network namespace without interfaces (unshare -rn)
+work dir:  /home/mark/.cache/drill-tmp/starlings-drill.IDneKt
+cuda:      device 0 (CUDA_DEVICE_ORDER=PCI_BUS_ID); CUDA runtime and cuDNN from /home/mark/Projects/AI-models/embeddinggemma2/venv-cuda/lib/python3.11/site-packages/nvidia/cu13/lib:/home/mark/Projects/AI-models/embeddinggemma2/venv-cuda/lib/python3.11/site-packages/nvidia/cudnn/lib; CPU runs skipped (--cuda-only)
+gpu:       0, 00000000:03:00.0, GPU-9e21a72e-3a6f-e082-3d74-4b8d361de70c, NVIDIA GeForce RTX 3090, 610.57.04
+gpu:       1, 00000000:04:00.0, GPU-29a0f21a-bfe7-f44b-1c3a-f8983fdf8b23, NVIDIA GeForce RTX 4060 Ti, 610.57.04
+packages:  reused from /home/mark/.cache/video-g6-a4fa/packages-final
+
+== 1. Clean checkout of 5b04d83684bb662f2488c332bd0faca814e3ec14
+ok:   no build outputs, caches or untracked files in the checkout
+
+== 2. Versions
+Starlings.Tokenizers: 0.3.0-preview.1
+ai-dotnet packages:            0.1.0-preview.6
+ok:   sample references 0.1.0-preview.6; manifest pins tokenizer 0.3.0-preview.1
+
+== 3. Pack (locked restore, empty package cache)
+ok:   packages reused from /home/mark/.cache/video-g6-a4fa/packages-final, built from 5b04d83684bb662f2488c332bd0faca814e3ec14; no change to ai-dotnet/src ai-dotnet/Directory.Build.props ai-dotnet/Directory.Build.targets ai-dotnet/Directory.Packages.props Directory.Build.props .editorconfig global.json LICENSE-APACHE LICENSE-MIT between 5b04d83684bb662f2488c332bd0faca814e3ec14 and 5b04d83684bb662f2488c332bd0faca814e3ec14
+Starlings.Acquisition.0.1.0-preview.6.nupkg
+Starlings.Acquisition.0.1.0-preview.6.snupkg
+Starlings.Generation.OnnxGenAI.0.1.0-preview.6.nupkg
+Starlings.Generation.OnnxGenAI.0.1.0-preview.6.snupkg
+Starlings.Models.E5.0.1.0-preview.6.nupkg
+Starlings.Models.E5.0.1.0-preview.6.snupkg
+Starlings.Models.E5.Extensions.AI.0.1.0-preview.6.nupkg
+Starlings.Models.E5.Extensions.AI.0.1.0-preview.6.snupkg
+Starlings.Models.E5.MLNet.0.1.0-preview.6.nupkg
+Starlings.Models.E5.MLNet.0.1.0-preview.6.snupkg
+Starlings.Models.EmbeddingGemma2.0.1.0-preview.6.nupkg
+Starlings.Models.EmbeddingGemma2.0.1.0-preview.6.snupkg
+Starlings.Models.EmbeddingGemma2.Extensions.AI.0.1.0-preview.6.nupkg
+Starlings.Models.EmbeddingGemma2.Extensions.AI.0.1.0-preview.6.snupkg
+Starlings.Models.EmbeddingGemma2.Imaging.SkiaSharp.0.1.0-preview.6.nupkg
+Starlings.Models.EmbeddingGemma2.Imaging.SkiaSharp.0.1.0-preview.6.snupkg
+Starlings.Models.EmbeddingGemma2.MLNet.0.1.0-preview.6.nupkg
+Starlings.Models.EmbeddingGemma2.MLNet.0.1.0-preview.6.snupkg
+Starlings.Models.EmbeddingGemma2.Video.FFmpeg.0.1.0-preview.6.nupkg
+Starlings.Models.EmbeddingGemma2.Video.FFmpeg.0.1.0-preview.6.snupkg
+Starlings.Models.EmbeddingGemma2.Video.FFmpeg9.0.1.0-preview.6.nupkg
+Starlings.Models.EmbeddingGemma2.Video.FFmpeg9.0.1.0-preview.6.snupkg
+Starlings.Models.Gliner2.0.1.0-preview.6.nupkg
+Starlings.Models.Gliner2.0.1.0-preview.6.snupkg
+Starlings.Models.Qwen35.0.1.0-preview.6.nupkg
+Starlings.Models.Qwen35.0.1.0-preview.6.snupkg
+Starlings.Models.Qwen35.Extensions.AI.0.1.0-preview.6.nupkg
+Starlings.Models.Qwen35.Extensions.AI.0.1.0-preview.6.snupkg
+Starlings.Runtime.Onnx.0.1.0-preview.6.nupkg
+Starlings.Runtime.Onnx.0.1.0-preview.6.snupkg
+
+== 4. Inspect packages
+ok:   Starlings.Acquisition 0.1.0-preview.6: MIT OR Apache-2.0, per-profile maturity in README and description, repository commit, SourceLink to the commit; dependencies: none 
+      sha256 b85c43b8e4a0bdf552daae24e25240b1b6775a88886fac62febe32118c69f8e6
+ok:   Starlings.Runtime.Onnx 0.1.0-preview.6: MIT OR Apache-2.0, per-profile maturity in README and description, repository commit, SourceLink to the commit; dependencies: Microsoft.ML.OnnxRuntime.Managed [1.30.0] 
+      sha256 670babe9fe89477552c2b4da38a8f63efc7cff9c12f9586805c607162c0ed548
+ok:   Starlings.Models.E5 0.1.0-preview.6: MIT OR Apache-2.0, per-profile maturity in README and description, repository commit, SourceLink to the commit; dependencies: Starlings.Acquisition [0.1.0-preview.6] Starlings.Runtime.Onnx [0.1.0-preview.6] Starlings.Tokenizers [0.3.0-preview.1] 
+      sha256 1d83bd4585946ea913432772f12ef59dbe1444cb2b416b5af8e110b0f6225610
+ok:   Starlings.Models.E5.Extensions.AI 0.1.0-preview.6: MIT OR Apache-2.0, per-profile maturity in README and description, repository commit, SourceLink to the commit; dependencies: Microsoft.Extensions.AI.Abstractions 10.10.1 Microsoft.Extensions.DependencyInjection.Abstractions 10.0.12 Starlings.Models.E5 [0.1.0-preview.6] 
+      sha256 2805a472e2784436e218881ce4613452cf66e818c711be3a606d8f321f326747
+ok:   Starlings.Models.E5.MLNet 0.1.0-preview.6: MIT OR Apache-2.0, per-profile maturity in README and description, repository commit, SourceLink to the commit; dependencies: Microsoft.ML 5.0.0 Starlings.Models.E5 [0.1.0-preview.6] 
+      sha256 7695cb5185f3573bff04903a422d53dfed6f387555f0f6639f491a698045c3b1
+ok:   Starlings.Models.Gliner2 0.1.0-preview.6: MIT OR Apache-2.0, per-profile maturity in README and description, repository commit, SourceLink to the commit; dependencies: Starlings.Acquisition [0.1.0-preview.6] Starlings.Runtime.Onnx [0.1.0-preview.6] Starlings.Tokenizers [0.3.0-preview.1] 
+      sha256 1f44fa43f17883e6777c0cbc53e8e09d7a4aa97552ee2ce0b679d985218a8d2f
+ok:   Starlings.Models.EmbeddingGemma2 0.1.0-preview.6: MIT OR Apache-2.0, per-profile maturity in README and description, repository commit, SourceLink to the commit; dependencies: Starlings.Acquisition [0.1.0-preview.6] Starlings.Runtime.Onnx [0.1.0-preview.6] Starlings.Tokenizers [0.3.0-preview.1] 
+      sha256 af263c0e1028137d882a356d1056d067fcaf4546aa85c135c43aaee56e4234d0
+ok:   Starlings.Models.EmbeddingGemma2.Extensions.AI 0.1.0-preview.6: MIT OR Apache-2.0, per-profile maturity in README and description, repository commit, SourceLink to the commit; dependencies: Microsoft.Extensions.AI.Abstractions 10.10.1 Microsoft.Extensions.DependencyInjection.Abstractions 10.0.12 Starlings.Models.EmbeddingGemma2 [0.1.0-preview.6] 
+      sha256 39cd33f7799c7c5f3dd6c3360ab67fa3cb171d9c341e92a85a35f29c19d1155c
+ok:   Starlings.Models.EmbeddingGemma2.MLNet 0.1.0-preview.6: MIT OR Apache-2.0, per-profile maturity in README and description, repository commit, SourceLink to the commit; dependencies: Microsoft.ML 5.0.0 Starlings.Models.EmbeddingGemma2 [0.1.0-preview.6] 
+      sha256 a9ce4964421620bd9fee3cf685ba7b8b5d69e01b44b5e64322d6a8a3db1ff86e
+ok:   Starlings.Models.EmbeddingGemma2.Imaging.SkiaSharp 0.1.0-preview.6: MIT OR Apache-2.0, per-profile maturity in README and description, repository commit, SourceLink to the commit; dependencies: SkiaSharp [4.153.1] SkiaSharp.NativeAssets.Linux.NoDependencies [4.153.1] Starlings.Models.EmbeddingGemma2 [0.1.0-preview.6] 
+      sha256 d1d02f3c93d2e0d9c2e8c3abecf67d03690b09d493b91d950c7bf7293d3e1165
+ok:   Starlings.Models.EmbeddingGemma2.Video.FFmpeg 0.1.0-preview.6: MIT OR Apache-2.0, per-profile maturity in README and description, repository commit, SourceLink to the commit; dependencies: Starlings.Models.EmbeddingGemma2 [0.1.0-preview.6] 
+      sha256 08d3f3e6a55fd908cb36616842bb68e4e66d5601dce4f019cd83afe3c65e0bc9
+ok:   Starlings.Models.EmbeddingGemma2.Video.FFmpeg9 0.1.0-preview.6: MIT OR Apache-2.0, per-profile maturity in README and description, repository commit, SourceLink to the commit; dependencies: Starlings.Models.EmbeddingGemma2 [0.1.0-preview.6] 
+      sha256 3873acf6e4a6fe83125e5e76ca8f430744080579d1f312b310012163a5552a06
+ok:   Starlings.Generation.OnnxGenAI 0.1.0-preview.6: MIT OR Apache-2.0, per-profile maturity in README and description, repository commit, SourceLink to the commit; dependencies: Microsoft.ML.OnnxRuntimeGenAI.Managed [0.17.1] Starlings.Tokenizers [0.3.0-preview.1] 
+      sha256 0f49943e3fd10bb37a379a37e7594fbb2d52c703ac6efe056f886c27141cf400
+ok:   Starlings.Models.Qwen35 0.1.0-preview.6: MIT OR Apache-2.0, per-profile maturity in README and description, repository commit, SourceLink to the commit; dependencies: Starlings.Acquisition [0.1.0-preview.6] Starlings.Generation.OnnxGenAI [0.1.0-preview.6] Starlings.Tokenizers [0.3.0-preview.1] 
+      sha256 ed0ad2fa6ebd71b9849e4e7eb8d6f43b503ecac3bcb01b3e7eeb83c0b5ab9629
+ok:   Starlings.Models.Qwen35.Extensions.AI 0.1.0-preview.6: MIT OR Apache-2.0, per-profile maturity in README and description, repository commit, SourceLink to the commit; dependencies: Microsoft.Extensions.AI.Abstractions 10.10.1 Microsoft.Extensions.DependencyInjection.Abstractions 10.0.12 Starlings.Models.Qwen35 [0.1.0-preview.6] 
+      sha256 d99dfc586e78c589997315e645b582cebf890e8c22b5bc27f7b870f425fd9960
+
+== 5. Push to a local folder feed (never nuget.org)
+Starlings.Acquisition.0.1.0-preview.6.nupkg
+Starlings.Generation.OnnxGenAI.0.1.0-preview.6.nupkg
+Starlings.Models.E5.0.1.0-preview.6.nupkg
+Starlings.Models.E5.Extensions.AI.0.1.0-preview.6.nupkg
+Starlings.Models.E5.MLNet.0.1.0-preview.6.nupkg
+Starlings.Models.EmbeddingGemma2.0.1.0-preview.6.nupkg
+Starlings.Models.EmbeddingGemma2.Extensions.AI.0.1.0-preview.6.nupkg
+Starlings.Models.EmbeddingGemma2.Imaging.SkiaSharp.0.1.0-preview.6.nupkg
+Starlings.Models.EmbeddingGemma2.MLNet.0.1.0-preview.6.nupkg
+Starlings.Models.EmbeddingGemma2.Video.FFmpeg.0.1.0-preview.6.nupkg
+Starlings.Models.EmbeddingGemma2.Video.FFmpeg9.0.1.0-preview.6.nupkg
+Starlings.Models.Gliner2.0.1.0-preview.6.nupkg
+Starlings.Models.Qwen35.0.1.0-preview.6.nupkg
+Starlings.Models.Qwen35.Extensions.AI.0.1.0-preview.6.nupkg
+Starlings.Runtime.Onnx.0.1.0-preview.6.nupkg
+
+== 6. Clean consumers outside the repository
+  Determining projects to restore...
+  All projects are up-to-date for restore.
+Project 'E5Search' has the following package references
+   [net10.0]: 
+   Top-level Package                        Requested         Resolved       
+   > Microsoft.ML.OnnxRuntime               1.30.0            1.30.0         
+   > Starlings.Models.E5.Extensions.AI      0.1.0-preview.6   0.1.0-preview.6
+
+   Transitive Package                                           Resolved       
+   > Microsoft.Extensions.AI.Abstractions                       10.10.1        
+   > Microsoft.Extensions.DependencyInjection.Abstractions      10.0.12        
+   > Microsoft.ML.OnnxRuntime.Managed                           1.30.0         
+   > Starlings.Acquisition                                      0.1.0-preview.6
+   > Starlings.Models.E5                                        0.1.0-preview.6
+   > Starlings.Runtime.Onnx                                     0.1.0-preview.6
+   > Starlings.Tokenizers                                       0.3.0-preview.1
+   > System.Numerics.Tensors                                    9.0.0          
+
+  Determining projects to restore...
+  All projects are up-to-date for restore.
+Project 'Gliner2Ner' has the following package references
+   [net10.0]: 
+   Top-level Package               Requested         Resolved       
+   > Microsoft.ML.OnnxRuntime      1.30.0            1.30.0         
+   > Starlings.Models.Gliner2      0.1.0-preview.6   0.1.0-preview.6
+
+   Transitive Package                      Resolved       
+   > Microsoft.ML.OnnxRuntime.Managed      1.30.0         
+   > Starlings.Acquisition                 0.1.0-preview.6
+   > Starlings.Runtime.Onnx                0.1.0-preview.6
+   > Starlings.Tokenizers                  0.3.0-preview.1
+   > System.Numerics.Tensors               9.0.0          
+
+  Determining projects to restore...
+  All projects are up-to-date for restore.
+Project 'QwenChat' has the following package references
+   [net10.0]: 
+   Top-level Package                            Requested         Resolved       
+   > Microsoft.ML.OnnxRuntimeGenAI              0.17.1            0.17.1         
+   > Starlings.Models.Qwen35                    0.1.0-preview.6   0.1.0-preview.6
+   > Starlings.Models.Qwen35.Extensions.AI      0.1.0-preview.6   0.1.0-preview.6
+
+   Transitive Package                                           Resolved       
+   > Microsoft.Extensions.AI.Abstractions                       10.10.1        
+   > Microsoft.Extensions.DependencyInjection.Abstractions      10.0.12        
+   > Microsoft.ML.OnnxRuntime                                   1.30.0         
+   > Microsoft.ML.OnnxRuntime.Managed                           1.30.0         
+   > Microsoft.ML.OnnxRuntimeGenAI.Managed                      0.17.1         
+   > Starlings.Acquisition                                      0.1.0-preview.6
+   > Starlings.Generation.OnnxGenAI                             0.1.0-preview.6
+   > Starlings.Tokenizers                                       0.3.0-preview.1
+   > System.Numerics.Tensors                                    9.0.0          
+
+  Determining projects to restore...
+  All projects are up-to-date for restore.
+Project 'EmbeddingGemma2Search' has the following package references
+   [net10.0]: 
+   Top-level Package                                         Requested         Resolved       
+   > Microsoft.ML.OnnxRuntime                                1.30.0            1.30.0         
+   > Starlings.Models.EmbeddingGemma2.Extensions.AI          0.1.0-preview.6   0.1.0-preview.6
+   > Starlings.Models.EmbeddingGemma2.Imaging.SkiaSharp      0.1.0-preview.6   0.1.0-preview.6
+   > Starlings.Models.EmbeddingGemma2.Video.FFmpeg           0.1.0-preview.6   0.1.0-preview.6
+
+   Transitive Package                                           Resolved       
+   > Microsoft.Extensions.AI.Abstractions                       10.10.1        
+   > Microsoft.Extensions.DependencyInjection.Abstractions      10.0.12        
+   > Microsoft.ML.OnnxRuntime.Managed                           1.30.0         
+   > SkiaSharp                                                  4.153.1        
+   > SkiaSharp.NativeAssets.Linux.NoDependencies                4.153.1        
+   > SkiaSharp.NativeAssets.macOS                               4.153.1        
+   > SkiaSharp.NativeAssets.Win32                               4.153.1        
+   > Starlings.Acquisition                                      0.1.0-preview.6
+   > Starlings.Models.EmbeddingGemma2                           0.1.0-preview.6
+   > Starlings.Runtime.Onnx                                     0.1.0-preview.6
+   > Starlings.Tokenizers                                       0.3.0-preview.1
+   > System.Numerics.Tensors                                    9.0.0          
+
+  Determining projects to restore...
+  All projects are up-to-date for restore.
+Project 'EmbeddingGemma2SearchFFmpeg9' has the following package references
+   [net10.0]: 
+   Top-level Package                                         Requested         Resolved       
+   > Microsoft.ML.OnnxRuntime                                1.30.0            1.30.0         
+   > Starlings.Models.EmbeddingGemma2.Extensions.AI          0.1.0-preview.6   0.1.0-preview.6
+   > Starlings.Models.EmbeddingGemma2.Imaging.SkiaSharp      0.1.0-preview.6   0.1.0-preview.6
+   > Starlings.Models.EmbeddingGemma2.Video.FFmpeg9          0.1.0-preview.6   0.1.0-preview.6
+
+   Transitive Package                                           Resolved       
+   > Microsoft.Extensions.AI.Abstractions                       10.10.1        
+   > Microsoft.Extensions.DependencyInjection.Abstractions      10.0.12        
+   > Microsoft.ML.OnnxRuntime.Managed                           1.30.0         
+   > SkiaSharp                                                  4.153.1        
+   > SkiaSharp.NativeAssets.Linux.NoDependencies                4.153.1        
+   > SkiaSharp.NativeAssets.macOS                               4.153.1        
+   > SkiaSharp.NativeAssets.Win32                               4.153.1        
+   > Starlings.Acquisition                                      0.1.0-preview.6
+   > Starlings.Models.EmbeddingGemma2                           0.1.0-preview.6
+   > Starlings.Runtime.Onnx                                     0.1.0-preview.6
+   > Starlings.Tokenizers                                       0.3.0-preview.1
+   > System.Numerics.Tensors                                    9.0.0          
+
+  Determining projects to restore...
+  All projects are up-to-date for restore.
+Project 'AiConsumer' has the following package references
+   [net10.0]: 
+   Top-level Package                        Requested           Resolved       
+   > Microsoft.ML.OnnxRuntime               1.30.0              1.30.0         
+   > Starlings.Models.E5.Extensions.AI      [0.1.0-preview.6]   0.1.0-preview.6
+   > Starlings.Models.E5.MLNet              [0.1.0-preview.6]   0.1.0-preview.6
+
+   Transitive Package                                           Resolved       
+   > Microsoft.Bcl.AsyncInterfaces                              9.0.4          
+   > Microsoft.Extensions.AI.Abstractions                       10.10.1        
+   > Microsoft.Extensions.DependencyInjection.Abstractions      10.0.12        
+   > Microsoft.ML                                               5.0.0          
+   > Microsoft.ML.CpuMath                                       5.0.0          
+   > Microsoft.ML.DataView                                      5.0.0          
+   > Microsoft.ML.OnnxRuntime.Managed                           1.30.0         
+   > Newtonsoft.Json                                            13.0.3         
+   > Starlings.Acquisition                                      0.1.0-preview.6
+   > Starlings.Models.E5                                        0.1.0-preview.6
+   > Starlings.Runtime.Onnx                                     0.1.0-preview.6
+   > Starlings.Tokenizers                                       0.3.0-preview.1
+   > System.CodeDom                                             9.0.4          
+   > System.Numerics.Tensors                                    9.0.4          
+
+  Determining projects to restore...
+  All projects are up-to-date for restore.
+Project 'MlNetConsumer' has the following package references
+   [net10.0]: 
+   Top-level Package                             Requested           Resolved       
+   > Microsoft.ML.OnnxRuntime                    1.30.0              1.30.0         
+   > Starlings.Models.E5.MLNet                   [0.1.0-preview.6]   0.1.0-preview.6
+   > Starlings.Models.EmbeddingGemma2.MLNet      [0.1.0-preview.6]   0.1.0-preview.6
+
+   Transitive Package                      Resolved       
+   > Microsoft.Bcl.AsyncInterfaces         9.0.4          
+   > Microsoft.ML                          5.0.0          
+   > Microsoft.ML.CpuMath                  5.0.0          
+   > Microsoft.ML.DataView                 5.0.0          
+   > Microsoft.ML.OnnxRuntime.Managed      1.30.0         
+   > Newtonsoft.Json                       13.0.3         
+   > Starlings.Acquisition                 0.1.0-preview.6
+   > Starlings.Models.E5                   0.1.0-preview.6
+   > Starlings.Models.EmbeddingGemma2      0.1.0-preview.6
+   > Starlings.Runtime.Onnx                0.1.0-preview.6
+   > Starlings.Tokenizers                  0.3.0-preview.1
+   > System.CodeDom                        9.0.4          
+   > System.Numerics.Tensors               9.0.4          
+
+  Determining projects to restore...
+  All projects are up-to-date for restore.
+Project 'EmbeddingGemma2SearchCuda' has the following package references
+   [net10.0]: 
+   Top-level Package                                         Requested         Resolved       
+   > Microsoft.ML.OnnxRuntime.Gpu.Linux                      1.30.0            1.30.0         
+   > Starlings.Models.EmbeddingGemma2.Extensions.AI          0.1.0-preview.6   0.1.0-preview.6
+   > Starlings.Models.EmbeddingGemma2.Imaging.SkiaSharp      0.1.0-preview.6   0.1.0-preview.6
+   > Starlings.Models.EmbeddingGemma2.Video.FFmpeg           0.1.0-preview.6   0.1.0-preview.6
+
+   Transitive Package                                           Resolved       
+   > Microsoft.Extensions.AI.Abstractions                       10.10.1        
+   > Microsoft.Extensions.DependencyInjection.Abstractions      10.0.12        
+   > Microsoft.ML.OnnxRuntime.Managed                           1.30.0         
+   > SkiaSharp                                                  4.153.1        
+   > SkiaSharp.NativeAssets.Linux.NoDependencies                4.153.1        
+   > SkiaSharp.NativeAssets.macOS                               4.153.1        
+   > SkiaSharp.NativeAssets.Win32                               4.153.1        
+   > Starlings.Acquisition                                      0.1.0-preview.6
+   > Starlings.Models.EmbeddingGemma2                           0.1.0-preview.6
+   > Starlings.Runtime.Onnx                                     0.1.0-preview.6
+   > Starlings.Tokenizers                                       0.3.0-preview.1
+   > System.Numerics.Tensors                                    9.0.0          
+
+  Determining projects to restore...
+  All projects are up-to-date for restore.
+Project 'CudaConsumer' has the following package references
+   [net10.0]: 
+   Top-level Package                                         Requested           Resolved       
+   > Microsoft.ML.OnnxRuntime.Gpu.Linux                      1.30.0              1.30.0         
+   > Starlings.Models.E5.Extensions.AI                       [0.1.0-preview.6]   0.1.0-preview.6
+   > Starlings.Models.EmbeddingGemma2.Extensions.AI          [0.1.0-preview.6]   0.1.0-preview.6
+   > Starlings.Models.EmbeddingGemma2.Imaging.SkiaSharp      [0.1.0-preview.6]   0.1.0-preview.6
+   > Starlings.Models.EmbeddingGemma2.Video.FFmpeg           [0.1.0-preview.6]   0.1.0-preview.6
+   > Starlings.Models.EmbeddingGemma2.Video.FFmpeg9          [0.1.0-preview.6]   0.1.0-preview.6
+   > Starlings.Models.Gliner2                                [0.1.0-preview.6]   0.1.0-preview.6
+
+   Transitive Package                                           Resolved       
+   > Microsoft.Extensions.AI.Abstractions                       10.10.1        
+   > Microsoft.Extensions.DependencyInjection.Abstractions      10.0.12        
+   > Microsoft.ML.OnnxRuntime.Managed                           1.30.0         
+   > SkiaSharp                                                  4.153.1        
+   > SkiaSharp.NativeAssets.Linux.NoDependencies                4.153.1        
+   > SkiaSharp.NativeAssets.macOS                               4.153.1        
+   > SkiaSharp.NativeAssets.Win32                               4.153.1        
+   > Starlings.Acquisition                                      0.1.0-preview.6
+   > Starlings.Models.E5                                        0.1.0-preview.6
+   > Starlings.Models.EmbeddingGemma2                           0.1.0-preview.6
+   > Starlings.Runtime.Onnx                                     0.1.0-preview.6
+   > Starlings.Tokenizers                                       0.3.0-preview.1
+   > System.Numerics.Tensors                                    9.0.0          
+
+  Determining projects to restore...
+  All projects are up-to-date for restore.
+Project 'QwenChatCuda' has the following package references
+   [net10.0]: 
+   Top-level Package                            Requested         Resolved       
+   > Microsoft.ML.OnnxRuntimeGenAI.Cuda         0.17.1            0.17.1         
+   > Starlings.Models.Qwen35                    0.1.0-preview.6   0.1.0-preview.6
+   > Starlings.Models.Qwen35.Extensions.AI      0.1.0-preview.6   0.1.0-preview.6
+
+   Transitive Package                                           Resolved       
+   > Microsoft.Extensions.AI.Abstractions                       10.10.1        
+   > Microsoft.Extensions.DependencyInjection.Abstractions      10.0.12        
+   > Microsoft.ML.OnnxRuntime.Gpu                               1.30.0         
+   > Microsoft.ML.OnnxRuntime.Gpu.Linux                         1.30.0         
+   > Microsoft.ML.OnnxRuntime.Gpu.Windows                       1.30.0         
+   > Microsoft.ML.OnnxRuntime.Managed                           1.30.0         
+   > Microsoft.ML.OnnxRuntimeGenAI.Managed                      0.17.1         
+   > Starlings.Acquisition                                      0.1.0-preview.6
+   > Starlings.Generation.OnnxGenAI                             0.1.0-preview.6
+   > Starlings.Tokenizers                                       0.3.0-preview.1
+   > System.Numerics.Tensors                                    9.0.0          
+
+E5Search: 10 packages: Microsoft.Extensions.AI.Abstractions/10.10.1, Microsoft.Extensions.DependencyInjection.Abstractions/10.0.12, Microsoft.ML.OnnxRuntime.Managed/1.30.0, Microsoft.ML.OnnxRuntime/1.30.0, Starlings.Acquisition/0.1.0-preview.6, Starlings.Models.E5.Extensions.AI/0.1.0-preview.6, Starlings.Models.E5/0.1.0-preview.6, Starlings.Runtime.Onnx/0.1.0-preview.6, Starlings.Tokenizers/0.3.0-preview.1, System.Numerics.Tensors/9.0.0
+ok:   E5Search: only packages; Starlings.* sha512 equal the packed .nupkg files and the locked tokenizer; no foreign tokenizer; no GPU natives
+Gliner2Ner: 7 packages: Microsoft.ML.OnnxRuntime.Managed/1.30.0, Microsoft.ML.OnnxRuntime/1.30.0, Starlings.Acquisition/0.1.0-preview.6, Starlings.Models.Gliner2/0.1.0-preview.6, Starlings.Runtime.Onnx/0.1.0-preview.6, Starlings.Tokenizers/0.3.0-preview.1, System.Numerics.Tensors/9.0.0
+ok:   Gliner2Ner: only packages; Starlings.* sha512 equal the packed .nupkg files and the locked tokenizer; no foreign tokenizer; no GPU natives
+QwenChat: 12 packages: Microsoft.Extensions.AI.Abstractions/10.10.1, Microsoft.Extensions.DependencyInjection.Abstractions/10.0.12, Microsoft.ML.OnnxRuntime.Managed/1.30.0, Microsoft.ML.OnnxRuntime/1.30.0, Microsoft.ML.OnnxRuntimeGenAI.Managed/0.17.1, Microsoft.ML.OnnxRuntimeGenAI/0.17.1, Starlings.Acquisition/0.1.0-preview.6, Starlings.Generation.OnnxGenAI/0.1.0-preview.6, Starlings.Models.Qwen35.Extensions.AI/0.1.0-preview.6, Starlings.Models.Qwen35/0.1.0-preview.6, Starlings.Tokenizers/0.3.0-preview.1, System.Numerics.Tensors/9.0.0
+ok:   QwenChat: only packages; Starlings.* sha512 equal the packed .nupkg files and the locked tokenizer; no foreign tokenizer; no GPU natives
+EmbeddingGemma2Search: 16 packages: Microsoft.Extensions.AI.Abstractions/10.10.1, Microsoft.Extensions.DependencyInjection.Abstractions/10.0.12, Microsoft.ML.OnnxRuntime.Managed/1.30.0, Microsoft.ML.OnnxRuntime/1.30.0, SkiaSharp.NativeAssets.Linux.NoDependencies/4.153.1, SkiaSharp.NativeAssets.Win32/4.153.1, SkiaSharp.NativeAssets.macOS/4.153.1, SkiaSharp/4.153.1, Starlings.Acquisition/0.1.0-preview.6, Starlings.Models.EmbeddingGemma2.Extensions.AI/0.1.0-preview.6, Starlings.Models.EmbeddingGemma2.Imaging.SkiaSharp/0.1.0-preview.6, Starlings.Models.EmbeddingGemma2.Video.FFmpeg/0.1.0-preview.6, Starlings.Models.EmbeddingGemma2/0.1.0-preview.6, Starlings.Runtime.Onnx/0.1.0-preview.6, Starlings.Tokenizers/0.3.0-preview.1, System.Numerics.Tensors/9.0.0
+ok:   EmbeddingGemma2Search: only packages; Starlings.* sha512 equal the packed .nupkg files and the locked tokenizer; no foreign tokenizer; no GPU natives
+EmbeddingGemma2SearchFFmpeg9: 16 packages: Microsoft.Extensions.AI.Abstractions/10.10.1, Microsoft.Extensions.DependencyInjection.Abstractions/10.0.12, Microsoft.ML.OnnxRuntime.Managed/1.30.0, Microsoft.ML.OnnxRuntime/1.30.0, SkiaSharp.NativeAssets.Linux.NoDependencies/4.153.1, SkiaSharp.NativeAssets.Win32/4.153.1, SkiaSharp.NativeAssets.macOS/4.153.1, SkiaSharp/4.153.1, Starlings.Acquisition/0.1.0-preview.6, Starlings.Models.EmbeddingGemma2.Extensions.AI/0.1.0-preview.6, Starlings.Models.EmbeddingGemma2.Imaging.SkiaSharp/0.1.0-preview.6, Starlings.Models.EmbeddingGemma2.Video.FFmpeg9/0.1.0-preview.6, Starlings.Models.EmbeddingGemma2/0.1.0-preview.6, Starlings.Runtime.Onnx/0.1.0-preview.6, Starlings.Tokenizers/0.3.0-preview.1, System.Numerics.Tensors/9.0.0
+ok:   EmbeddingGemma2SearchFFmpeg9: only packages; Starlings.* sha512 equal the packed .nupkg files and the locked tokenizer; no foreign tokenizer; no GPU natives
+AiConsumer: 17 packages: Microsoft.Bcl.AsyncInterfaces/9.0.4, Microsoft.Extensions.AI.Abstractions/10.10.1, Microsoft.Extensions.DependencyInjection.Abstractions/10.0.12, Microsoft.ML.CpuMath/5.0.0, Microsoft.ML.DataView/5.0.0, Microsoft.ML.OnnxRuntime.Managed/1.30.0, Microsoft.ML.OnnxRuntime/1.30.0, Microsoft.ML/5.0.0, Newtonsoft.Json/13.0.3, Starlings.Acquisition/0.1.0-preview.6, Starlings.Models.E5.Extensions.AI/0.1.0-preview.6, Starlings.Models.E5.MLNet/0.1.0-preview.6, Starlings.Models.E5/0.1.0-preview.6, Starlings.Runtime.Onnx/0.1.0-preview.6, Starlings.Tokenizers/0.3.0-preview.1, System.CodeDom/9.0.4, System.Numerics.Tensors/9.0.4
+ok:   AiConsumer: only packages; Starlings.* sha512 equal the packed .nupkg files and the locked tokenizer; no foreign tokenizer; no GPU natives
+MlNetConsumer: 16 packages: Microsoft.Bcl.AsyncInterfaces/9.0.4, Microsoft.ML.CpuMath/5.0.0, Microsoft.ML.DataView/5.0.0, Microsoft.ML.OnnxRuntime.Managed/1.30.0, Microsoft.ML.OnnxRuntime/1.30.0, Microsoft.ML/5.0.0, Newtonsoft.Json/13.0.3, Starlings.Acquisition/0.1.0-preview.6, Starlings.Models.E5.MLNet/0.1.0-preview.6, Starlings.Models.E5/0.1.0-preview.6, Starlings.Models.EmbeddingGemma2.MLNet/0.1.0-preview.6, Starlings.Models.EmbeddingGemma2/0.1.0-preview.6, Starlings.Runtime.Onnx/0.1.0-preview.6, Starlings.Tokenizers/0.3.0-preview.1, System.CodeDom/9.0.4, System.Numerics.Tensors/9.0.4
+ok:   MlNetConsumer: only packages; Starlings.* sha512 equal the packed .nupkg files and the locked tokenizer; no foreign tokenizer; no GPU natives
+EmbeddingGemma2SearchCuda: 16 packages: Microsoft.Extensions.AI.Abstractions/10.10.1, Microsoft.Extensions.DependencyInjection.Abstractions/10.0.12, Microsoft.ML.OnnxRuntime.Gpu.Linux/1.30.0, Microsoft.ML.OnnxRuntime.Managed/1.30.0, SkiaSharp.NativeAssets.Linux.NoDependencies/4.153.1, SkiaSharp.NativeAssets.Win32/4.153.1, SkiaSharp.NativeAssets.macOS/4.153.1, SkiaSharp/4.153.1, Starlings.Acquisition/0.1.0-preview.6, Starlings.Models.EmbeddingGemma2.Extensions.AI/0.1.0-preview.6, Starlings.Models.EmbeddingGemma2.Imaging.SkiaSharp/0.1.0-preview.6, Starlings.Models.EmbeddingGemma2.Video.FFmpeg/0.1.0-preview.6, Starlings.Models.EmbeddingGemma2/0.1.0-preview.6, Starlings.Runtime.Onnx/0.1.0-preview.6, Starlings.Tokenizers/0.3.0-preview.1, System.Numerics.Tensors/9.0.0
+ok:   EmbeddingGemma2SearchCuda: only packages; Starlings.* sha512 equal the packed .nupkg files and the locked tokenizer; no foreign tokenizer; GPU natives only (Microsoft.ML.OnnxRuntime.Gpu.Linux/1.30.0)
+CudaConsumer: 20 packages: Microsoft.Extensions.AI.Abstractions/10.10.1, Microsoft.Extensions.DependencyInjection.Abstractions/10.0.12, Microsoft.ML.OnnxRuntime.Gpu.Linux/1.30.0, Microsoft.ML.OnnxRuntime.Managed/1.30.0, SkiaSharp.NativeAssets.Linux.NoDependencies/4.153.1, SkiaSharp.NativeAssets.Win32/4.153.1, SkiaSharp.NativeAssets.macOS/4.153.1, SkiaSharp/4.153.1, Starlings.Acquisition/0.1.0-preview.6, Starlings.Models.E5.Extensions.AI/0.1.0-preview.6, Starlings.Models.E5/0.1.0-preview.6, Starlings.Models.EmbeddingGemma2.Extensions.AI/0.1.0-preview.6, Starlings.Models.EmbeddingGemma2.Imaging.SkiaSharp/0.1.0-preview.6, Starlings.Models.EmbeddingGemma2.Video.FFmpeg/0.1.0-preview.6, Starlings.Models.EmbeddingGemma2.Video.FFmpeg9/0.1.0-preview.6, Starlings.Models.EmbeddingGemma2/0.1.0-preview.6, Starlings.Models.Gliner2/0.1.0-preview.6, Starlings.Runtime.Onnx/0.1.0-preview.6, Starlings.Tokenizers/0.3.0-preview.1, System.Numerics.Tensors/9.0.0
+ok:   CudaConsumer: only packages; Starlings.* sha512 equal the packed .nupkg files and the locked tokenizer; no foreign tokenizer; GPU natives only (Microsoft.ML.OnnxRuntime.Gpu.Linux/1.30.0)
+QwenChatCuda: 14 packages: Microsoft.Extensions.AI.Abstractions/10.10.1, Microsoft.Extensions.DependencyInjection.Abstractions/10.0.12, Microsoft.ML.OnnxRuntime.Gpu.Linux/1.30.0, Microsoft.ML.OnnxRuntime.Gpu.Windows/1.30.0, Microsoft.ML.OnnxRuntime.Gpu/1.30.0, Microsoft.ML.OnnxRuntime.Managed/1.30.0, Microsoft.ML.OnnxRuntimeGenAI.Cuda/0.17.1, Microsoft.ML.OnnxRuntimeGenAI.Managed/0.17.1, Starlings.Acquisition/0.1.0-preview.6, Starlings.Generation.OnnxGenAI/0.1.0-preview.6, Starlings.Models.Qwen35.Extensions.AI/0.1.0-preview.6, Starlings.Models.Qwen35/0.1.0-preview.6, Starlings.Tokenizers/0.3.0-preview.1, System.Numerics.Tensors/9.0.0
+ok:   QwenChatCuda: only packages; Starlings.* sha512 equal the packed .nupkg files and the locked tokenizer; no foreign tokenizer; GPU natives only (Microsoft.ML.OnnxRuntime.Gpu.Linux/1.30.0, Microsoft.ML.OnnxRuntime.Gpu.Windows/1.30.0, Microsoft.ML.OnnxRuntime.Gpu/1.30.0, Microsoft.ML.OnnxRuntimeGenAI.Cuda/0.17.1)
+ok:   consumer package cache holds only: microsoft.bcl.asyncinterfaces microsoft.extensions.ai.abstractions microsoft.extensions.dependencyinjection.abstractions microsoft.ml microsoft.ml.cpumath microsoft.ml.dataview microsoft.ml.onnxruntime microsoft.ml.onnxruntimegenai microsoft.ml.onnxruntimegenai.cuda microsoft.ml.onnxruntimegenai.managed microsoft.ml.onnxruntime.gpu microsoft.ml.onnxruntime.gpu.linux microsoft.ml.onnxruntime.gpu.windows microsoft.ml.onnxruntime.managed newtonsoft.json skiasharp skiasharp.nativeassets.linux.nodependencies skiasharp.nativeassets.macos skiasharp.nativeassets.win32 starlings.acquisition starlings.generation.onnxgenai starlings.models.e5 starlings.models.e5.extensions.ai starlings.models.e5.mlnet starlings.models.embeddinggemma2 starlings.models.embeddinggemma2.extensions.ai starlings.models.embeddinggemma2.imaging.skiasharp starlings.models.embeddinggemma2.mlnet starlings.models.embeddinggemma2.video.ffmpeg starlings.models.embeddinggemma2.video.ffmpeg9 starlings.models.gliner2 starlings.models.qwen35 starlings.models.qwen35.extensions.ai starlings.runtime.onnx starlings.tokenizers system.codedom system.numerics.tensors 
+ok:   no file in the consumers (sources, NuGet.config, obj, bin) names the repository path
+ok:   build outputs hold no tokenizer library other than Starlings.Tokenizers.dll
+ok:   no FFmpeg library in the consumer package cache or any build output (the video adapter loads the user's FFmpeg through its own bindings)
+note: --cuda-only: the CPU runs (steps 7 to 10 and 12) were skipped; the CPU consumers were restored and built
+
+== 11. Download from public hosting (no token, no seed)
+skipped: not requested (pass --public-hosting to download the GLiNER2, EmbeddingGemma 2 and Qwen 3.5 files, about 4 GB, from their public hosting)
+note: no --aot: the Native AOT check was not run
+
+== 13. CUDA profiles on device 0: seeded files verified by the packages' download steps, offline runs on the GPU
+lock:  multilingual-e5-small (intfloat/multilingual-e5-small@614241f622f53c4eeff9890bdc4f31cfecc418b3, 2 files)
+cache: /home/mark/.cache/drill-tmp/starlings-drill.IDneKt/models-cuda
+onnx/model.onnx: already cached, 470268510 bytes, sha256 ca456c06b3a9505ddfd9131408916dd79290368331e7d76bb621f1cba6bc8665 verified
+tokenizer.json: downloaded, 17082730 bytes, sha256 0b44a9d7b51c3c62626640cda0e2c2f70fdacdc25bbbd68038369d14ebdf4c39 verified
+snapshot: /home/mark/.cache/drill-tmp/starlings-drill.IDneKt/models-cuda/intfloat/multilingual-e5-small/614241f622f53c4eeff9890bdc4f31cfecc418b3
+lock:  gliner2-base-v1 (fastino/gliner2-base-v1@f9634218e53580c56edf0de97ca1a7d3f1c2354e, 2 files)
+cache: /home/mark/.cache/drill-tmp/starlings-drill.IDneKt/models-cuda
+onnx/gliner2-entities-fp32.onnx: already cached, 829284599 bytes, sha256 0ba2db95b18116906ae4ec21aa62ef493e69e0780dcfdfa98c4456ecf4123265 verified
+tokenizer.json: downloaded, 8650701 bytes, sha256 1b7fbabfb4c690bed84c6793bfecae9b8dfe205751b04f9ffd1e76a1e7df9c16 verified
+snapshot: /home/mark/.cache/drill-tmp/starlings-drill.IDneKt/models-cuda/fastino/gliner2-base-v1/f9634218e53580c56edf0de97ca1a7d3f1c2354e
+onnx/embeddinggemma2-text-fp32.onnx: already cached, 1084327317 bytes, sha256 02cc7ecccbfcb29d812eb104e4c6ea6c599bc87e94f01082606f6a11f0252d11 verified
+tokenizer.json: downloaded, 32170510 bytes, sha256 4d777ef5bdc1aa36227abdfb77c3e49e7b9c892d16e1b6bda41c393504828be4 verified
+config_sentence_transformers.json: downloaded, 1565 bytes, sha256 031e56a498d33c349ab489a21885bcfe25b4fcba841149dc99e1e90d4a7c28f5 verified
+onnx/embeddinggemma2-vision-fp32.onnx: already cached, 671256072 bytes, sha256 6c97f477a82f6863d22d800476de6d0a618b23e514aa9b65a46b220c4b106b92 verified
+onnx/embeddinggemma2-text-mm-fp32.onnx: already cached, 1084327898 bytes, sha256 a2c22e072ec230b105b35c2787dcfccba186254e6a921e729c45b40e50dbbb74 verified
+snapshot: /home/mark/.cache/drill-tmp/starlings-drill.IDneKt/models-cuda/google/embeddinggemma-2/914f7f89142e33e77833254d9c9b90c3cef7303b
+lock:  qwen3.5-0.8b-ortgenai-fp32x (Qwen/Qwen3.5-0.8B@2fc06364715b967f1860aea9cf38778875588b17, 5 files)
+cache: /home/mark/.cache/drill-tmp/starlings-drill.IDneKt/models-cuda
+from:  https://huggingface.co/Starlinghq/qwen3.5-0.8b-ortgenai/resolve/95a690c1774f144957cb7b76986a9126e8b1bb5f/
+chat_template.jinja: already cached, 7755 bytes, sha256 273d8e0e683b885071fb17e08d71e5f2a5ddfb5309756181681de4f5a1822d80 verified
+transformers-5.18.0/tokenizer.json: already cached, 19989339 bytes, sha256 a5cd9732badce41de57e6efce8302930ded1c1188c5f81feb2bd6c24c4a1941f verified
+ortgenai-fp32x/genai_config.json: already cached, 1935 bytes, sha256 e7e1957b2544fdad6170a9cc81cbbb1b88c8819b7016a609170ad7cbebba81ba verified
+ortgenai-fp32x/model.onnx: already cached, 308301 bytes, sha256 4a052c4a1444c9437e00ffd48baecb0838d3d9ca1703c3153dbd46e945e84703 verified
+ortgenai-fp32x/model.onnx.data: already cached, 3077177344 bytes, sha256 129c58a320b6de7192713cc9c7e4ba744dcf7fabb0f57c6535021b45b3dc5143 verified
+snapshot: /home/mark/.cache/drill-tmp/starlings-drill.IDneKt/models-cuda/Qwen/Qwen3.5-0.8B/2fc06364715b967f1860aea9cf38778875588b17
+lock:  qwen3.5-0.8b-ortgenai-fp16x (Qwen/Qwen3.5-0.8B@2fc06364715b967f1860aea9cf38778875588b17, 5 files)
+cache: /home/mark/.cache/drill-tmp/starlings-drill.IDneKt/models-cuda
+from:  https://huggingface.co/Starlinghq/qwen3.5-0.8b-ortgenai/resolve/95a690c1774f144957cb7b76986a9126e8b1bb5f/
+chat_template.jinja: already cached, 7755 bytes, sha256 273d8e0e683b885071fb17e08d71e5f2a5ddfb5309756181681de4f5a1822d80 verified
+transformers-5.18.0/tokenizer.json: already cached, 19989339 bytes, sha256 a5cd9732badce41de57e6efce8302930ded1c1188c5f81feb2bd6c24c4a1941f verified
+ortgenai-fp16x/genai_config.json: already cached, 2109 bytes, sha256 ded164b67284883a13c6454d7445f814014a1e12277ce323011683cd6a69d055 verified
+ortgenai-fp16x/model.onnx: already cached, 316521 bytes, sha256 26895023e4be1f528aef04ce3a07a14e70a2421cfb400a49fec639ea9a14f46d verified
+ortgenai-fp16x/model.onnx.data: already cached, 1572143104 bytes, sha256 47f6ee15d95080acc66f7c4acdf4012c83b20063cf0cfeb59a6b7ae09950a3b2 verified
+snapshot: /home/mark/.cache/drill-tmp/starlings-drill.IDneKt/models-cuda/Qwen/Qwen3.5-0.8B/2fc06364715b967f1860aea9cf38778875588b17
+assembly: Starlings.Acquisition 0.1.0-preview.6+5b04d83684bb662f2488c332bd0faca814e3ec14 (/home/mark/.cache/drill-tmp/starlings-drill.IDneKt/apps/CudaConsumer/bin/Release/net10.0/Starlings.Acquisition.dll)
+assembly: Starlings.Runtime.Onnx 0.1.0-preview.6+5b04d83684bb662f2488c332bd0faca814e3ec14 (/home/mark/.cache/drill-tmp/starlings-drill.IDneKt/apps/CudaConsumer/bin/Release/net10.0/Starlings.Runtime.Onnx.dll)
+assembly: Starlings.Tokenizers 0.3.0-preview.1+79a5863e861edcfed79142293dafabb688c199b9 (/home/mark/.cache/drill-tmp/starlings-drill.IDneKt/apps/CudaConsumer/bin/Release/net10.0/Starlings.Tokenizers.dll)
+assembly: Starlings.Models.E5 0.1.0-preview.6+5b04d83684bb662f2488c332bd0faca814e3ec14 (/home/mark/.cache/drill-tmp/starlings-drill.IDneKt/apps/CudaConsumer/bin/Release/net10.0/Starlings.Models.E5.dll)
+assembly: Starlings.Models.E5.Extensions.AI 0.1.0-preview.6+5b04d83684bb662f2488c332bd0faca814e3ec14 (/home/mark/.cache/drill-tmp/starlings-drill.IDneKt/apps/CudaConsumer/bin/Release/net10.0/Starlings.Models.E5.Extensions.AI.dll)
+assembly: Starlings.Models.Gliner2 0.1.0-preview.6+5b04d83684bb662f2488c332bd0faca814e3ec14 (/home/mark/.cache/drill-tmp/starlings-drill.IDneKt/apps/CudaConsumer/bin/Release/net10.0/Starlings.Models.Gliner2.dll)
+assembly: Starlings.Models.EmbeddingGemma2 0.1.0-preview.6+5b04d83684bb662f2488c332bd0faca814e3ec14 (/home/mark/.cache/drill-tmp/starlings-drill.IDneKt/apps/CudaConsumer/bin/Release/net10.0/Starlings.Models.EmbeddingGemma2.dll)
+assembly: Starlings.Models.EmbeddingGemma2.Extensions.AI 0.1.0-preview.6+5b04d83684bb662f2488c332bd0faca814e3ec14 (/home/mark/.cache/drill-tmp/starlings-drill.IDneKt/apps/CudaConsumer/bin/Release/net10.0/Starlings.Models.EmbeddingGemma2.Extensions.AI.dll)
+assembly: Starlings.Models.EmbeddingGemma2.Imaging.SkiaSharp 0.1.0-preview.6+5b04d83684bb662f2488c332bd0faca814e3ec14 (/home/mark/.cache/drill-tmp/starlings-drill.IDneKt/apps/CudaConsumer/bin/Release/net10.0/Starlings.Models.EmbeddingGemma2.Imaging.SkiaSharp.dll)
+assembly: Starlings.Models.EmbeddingGemma2.Video.FFmpeg 0.1.0-preview.6+5b04d83684bb662f2488c332bd0faca814e3ec14 (/home/mark/.cache/drill-tmp/starlings-drill.IDneKt/apps/CudaConsumer/bin/Release/net10.0/Starlings.Models.EmbeddingGemma2.Video.FFmpeg.dll)
+assembly: Starlings.Models.EmbeddingGemma2.Video.FFmpeg9 0.1.0-preview.6+5b04d83684bb662f2488c332bd0faca814e3ec14 (/home/mark/.cache/drill-tmp/starlings-drill.IDneKt/apps/CudaConsumer/bin/Release/net10.0/Starlings.Models.EmbeddingGemma2.Video.FFmpeg9.dll)
+runtime:  .NET 10.0.12 linux-x64
+gpu:      CUDA_DEVICE_ORDER=PCI_BUS_ID CUDA_VISIBLE_DEVICES=0
+bounds:   /home/mark/.cache/drill-tmp/starlings-drill.IDneKt/src/model-pipeline/protected/multilingual-e5-small/onnx-fp32-cuda/tolerances.yaml: embedding_max_abs 1E-05, last_hidden_state_max_abs 0.0001, padded_batch_vs_single_embedding_max_abs 1E-05
+ok:   ONNX Runtime native 1.30.0, managed 1.30.0 (expected 1.30.0)
+ok:   providers: TensorrtExecutionProvider, CUDAExecutionProvider, CPUExecutionProvider
+ok:   e5 fixture cases: 46 (expected 46)
+session:  e5: ORT 1.30.0 (managed 1.30.0); providers CUDAExecutionProvider,CPUExecutionProvider; options arena_extend_strategy=kNextPowerOfTwo, cudnn_conv1d_pad_to_nc1d=0, cudnn_conv_algo_search=EXHAUSTIVE, cudnn_conv_use_max_workspace=1, device_id=0, do_copy_in_default_stream=1, enable_cudnn=1, fuse_conv_bias=0, gpu_mem_limit=18446744073709551615, has_user_compute_stream=0, prefer_nhwc=0, sdpa_kernel=0, tunable_op_enable=0, tunable_op_max_tuning_duration_ms=0, tunable_op_tuning_enable=0, use_ep_level_unified_stream=0, use_tf32=0, user_compute_stream=0; model sha256 ca456c06b3a9505ddfd9131408916dd79290368331e7d76bb621f1cba6bc8665
+ok:   e5: session runs on CUDAExecutionProvider
+ok:   e5: use_tf32=0
+ok:   e5: device_id=0
+ok:   e5: model sha256 is the lock's ca456c06b3a9505ddfd9131408916dd79290368331e7d76bb621f1cba6bc8665
+ok:   owned tokenizer ids exact: 46/46
+ok:   e5 typed API on CUDA, one text per call, vs protected: 46 rows, max abs 1.658E-007 (bound 1E-05), min cosine 1.000000000
+ok:   e5 typed API on CUDA, one batch of 46, vs protected: 46 rows, max abs 1.658E-007 (bound 1E-05), min cosine 1.000000000
+ok:   e5 typed API on CUDA, batch vs own single rows: 46 rows, max abs 1.055E-007 (bound 1E-05), min cosine 1.000000000
+ok:   e5 Extensions.AI generator over the CUDA session vs protected: 46 rows, max abs 1.658E-007 (bound 1E-05), min cosine 1.000000000
+mapped:   /home/mark/.cache/drill-tmp/starlings-drill.IDneKt/apps/CudaConsumer/bin/Release/net10.0/runtimes/linux-x64/native/libonnxruntime_providers_cuda.so
+mapped:   /home/mark/.cache/drill-tmp/starlings-drill.IDneKt/apps/CudaConsumer/bin/Release/net10.0/runtimes/linux-x64/native/libonnxruntime.so
+mapped:   /home/mark/.cache/drill-tmp/starlings-drill.IDneKt/apps/CudaConsumer/bin/Release/net10.0/runtimes/linux-x64/native/libonnxruntime_providers_shared.so
+mapped:   /home/mark/Projects/AI-models/embeddinggemma2/venv-cuda/lib/python3.11/site-packages/nvidia/cudnn/lib/libcudnn_graph.so.9
+mapped:   /home/mark/Projects/AI-models/embeddinggemma2/venv-cuda/lib/python3.11/site-packages/nvidia/cudnn/lib/libcudnn.so.9
+mapped:   /home/mark/Projects/AI-models/embeddinggemma2/venv-cuda/lib/python3.11/site-packages/nvidia/cu13/lib/libcublasLt.so.13
+mapped:   /home/mark/Projects/AI-models/embeddinggemma2/venv-cuda/lib/python3.11/site-packages/nvidia/cu13/lib/libcudart.so.13
+mapped:   /home/mark/Projects/AI-models/embeddinggemma2/venv-cuda/lib/python3.11/site-packages/nvidia/cu13/lib/libcublas.so.13
+ok:   ONNX Runtime and its CUDA provider are mapped from the consumer's own build output (/home/mark/.cache/drill-tmp/starlings-drill.IDneKt/apps/CudaConsumer/bin/Release/net10.0/)
+ok:   no native tokenizers library mapped ()
+ok:   no other managed tokenizer assembly loaded ()
+RESULT: PASS
+ok:   multilingual-e5-small/onnx-fp32-cuda: offline on CUDA from the packed packages; outputs within the protected bounds of multilingual-e5-small/onnx-fp32-cuda/tolerances.yaml
+assembly: Starlings.Acquisition 0.1.0-preview.6+5b04d83684bb662f2488c332bd0faca814e3ec14 (/home/mark/.cache/drill-tmp/starlings-drill.IDneKt/apps/CudaConsumer/bin/Release/net10.0/Starlings.Acquisition.dll)
+assembly: Starlings.Runtime.Onnx 0.1.0-preview.6+5b04d83684bb662f2488c332bd0faca814e3ec14 (/home/mark/.cache/drill-tmp/starlings-drill.IDneKt/apps/CudaConsumer/bin/Release/net10.0/Starlings.Runtime.Onnx.dll)
+assembly: Starlings.Tokenizers 0.3.0-preview.1+79a5863e861edcfed79142293dafabb688c199b9 (/home/mark/.cache/drill-tmp/starlings-drill.IDneKt/apps/CudaConsumer/bin/Release/net10.0/Starlings.Tokenizers.dll)
+assembly: Starlings.Models.E5 0.1.0-preview.6+5b04d83684bb662f2488c332bd0faca814e3ec14 (/home/mark/.cache/drill-tmp/starlings-drill.IDneKt/apps/CudaConsumer/bin/Release/net10.0/Starlings.Models.E5.dll)
+assembly: Starlings.Models.E5.Extensions.AI 0.1.0-preview.6+5b04d83684bb662f2488c332bd0faca814e3ec14 (/home/mark/.cache/drill-tmp/starlings-drill.IDneKt/apps/CudaConsumer/bin/Release/net10.0/Starlings.Models.E5.Extensions.AI.dll)
+assembly: Starlings.Models.Gliner2 0.1.0-preview.6+5b04d83684bb662f2488c332bd0faca814e3ec14 (/home/mark/.cache/drill-tmp/starlings-drill.IDneKt/apps/CudaConsumer/bin/Release/net10.0/Starlings.Models.Gliner2.dll)
+assembly: Starlings.Models.EmbeddingGemma2 0.1.0-preview.6+5b04d83684bb662f2488c332bd0faca814e3ec14 (/home/mark/.cache/drill-tmp/starlings-drill.IDneKt/apps/CudaConsumer/bin/Release/net10.0/Starlings.Models.EmbeddingGemma2.dll)
+assembly: Starlings.Models.EmbeddingGemma2.Extensions.AI 0.1.0-preview.6+5b04d83684bb662f2488c332bd0faca814e3ec14 (/home/mark/.cache/drill-tmp/starlings-drill.IDneKt/apps/CudaConsumer/bin/Release/net10.0/Starlings.Models.EmbeddingGemma2.Extensions.AI.dll)
+assembly: Starlings.Models.EmbeddingGemma2.Imaging.SkiaSharp 0.1.0-preview.6+5b04d83684bb662f2488c332bd0faca814e3ec14 (/home/mark/.cache/drill-tmp/starlings-drill.IDneKt/apps/CudaConsumer/bin/Release/net10.0/Starlings.Models.EmbeddingGemma2.Imaging.SkiaSharp.dll)
+assembly: Starlings.Models.EmbeddingGemma2.Video.FFmpeg 0.1.0-preview.6+5b04d83684bb662f2488c332bd0faca814e3ec14 (/home/mark/.cache/drill-tmp/starlings-drill.IDneKt/apps/CudaConsumer/bin/Release/net10.0/Starlings.Models.EmbeddingGemma2.Video.FFmpeg.dll)
+assembly: Starlings.Models.EmbeddingGemma2.Video.FFmpeg9 0.1.0-preview.6+5b04d83684bb662f2488c332bd0faca814e3ec14 (/home/mark/.cache/drill-tmp/starlings-drill.IDneKt/apps/CudaConsumer/bin/Release/net10.0/Starlings.Models.EmbeddingGemma2.Video.FFmpeg9.dll)
+runtime:  .NET 10.0.12 linux-x64
+gpu:      CUDA_DEVICE_ORDER=PCI_BUS_ID CUDA_VISIBLE_DEVICES=0
+bounds:   /home/mark/.cache/drill-tmp/starlings-drill.IDneKt/src/model-pipeline/protected/gliner2-base-v1/onnx-fp32-cuda/tolerances.yaml: confidence_max_abs 2E-05, count_logits_max_abs 0.0005, last_hidden_state_max_abs 0.0001, padded_batch_vs_single_span_logits_relative 0.0001, scores_max_abs 2E-05, span_logits_relative 0.0001
+ok:   ONNX Runtime native 1.30.0, managed 1.30.0 (expected 1.30.0)
+ok:   providers: TensorrtExecutionProvider, CUDAExecutionProvider, CPUExecutionProvider
+session:  gliner2: ORT 1.30.0 (managed 1.30.0); providers CUDAExecutionProvider,CPUExecutionProvider; options arena_extend_strategy=kNextPowerOfTwo, cudnn_conv1d_pad_to_nc1d=0, cudnn_conv_algo_search=EXHAUSTIVE, cudnn_conv_use_max_workspace=1, device_id=0, do_copy_in_default_stream=1, enable_cudnn=1, fuse_conv_bias=0, gpu_mem_limit=18446744073709551615, has_user_compute_stream=0, prefer_nhwc=0, sdpa_kernel=0, tunable_op_enable=0, tunable_op_max_tuning_duration_ms=0, tunable_op_tuning_enable=0, use_ep_level_unified_stream=0, use_tf32=0, user_compute_stream=0; model sha256 0ba2db95b18116906ae4ec21aa62ef493e69e0780dcfdfa98c4456ecf4123265
+ok:   gliner2: session runs on CUDAExecutionProvider
+ok:   gliner2: use_tf32=0
+ok:   gliner2: device_id=0
+ok:   gliner2: model sha256 is the lock's 0ba2db95b18116906ae4ec21aa62ef493e69e0780dcfdfa98c4456ecf4123265
+ok:   gliner2 long-over-512-tokens: 566 tokens > 512 rejected
+ok:   gliner2 long-over-1024-tokens: 1329 tokens > 512 rejected
+ok:   gliner2 entities equal the reference (label and text) on 54/54 in-contract cases (expected 54)
+ok:   gliner2 confidence max abs 1.132E-006 (bound confidence_max_abs 2E-05)
+mapped:   /home/mark/.cache/drill-tmp/starlings-drill.IDneKt/apps/CudaConsumer/bin/Release/net10.0/runtimes/linux-x64/native/libonnxruntime_providers_cuda.so
+mapped:   /home/mark/.cache/drill-tmp/starlings-drill.IDneKt/apps/CudaConsumer/bin/Release/net10.0/runtimes/linux-x64/native/libonnxruntime.so
+mapped:   /home/mark/.cache/drill-tmp/starlings-drill.IDneKt/apps/CudaConsumer/bin/Release/net10.0/runtimes/linux-x64/native/libonnxruntime_providers_shared.so
+mapped:   /home/mark/Projects/AI-models/embeddinggemma2/venv-cuda/lib/python3.11/site-packages/nvidia/cudnn/lib/libcudnn_graph.so.9
+mapped:   /home/mark/Projects/AI-models/embeddinggemma2/venv-cuda/lib/python3.11/site-packages/nvidia/cudnn/lib/libcudnn.so.9
+mapped:   /home/mark/Projects/AI-models/embeddinggemma2/venv-cuda/lib/python3.11/site-packages/nvidia/cu13/lib/libcublas.so.13
+mapped:   /home/mark/Projects/AI-models/embeddinggemma2/venv-cuda/lib/python3.11/site-packages/nvidia/cu13/lib/libcublasLt.so.13
+mapped:   /home/mark/Projects/AI-models/embeddinggemma2/venv-cuda/lib/python3.11/site-packages/nvidia/cu13/lib/libcudart.so.13
+ok:   ONNX Runtime and its CUDA provider are mapped from the consumer's own build output (/home/mark/.cache/drill-tmp/starlings-drill.IDneKt/apps/CudaConsumer/bin/Release/net10.0/)
+ok:   no native tokenizers library mapped ()
+ok:   no other managed tokenizer assembly loaded ()
+RESULT: PASS
+ok:   gliner2-base-v1/onnx-fp32-cuda: offline on CUDA from the packed packages; outputs within the protected bounds of gliner2-base-v1/onnx-fp32-cuda/tolerances.yaml
+assembly: Starlings.Acquisition 0.1.0-preview.6+5b04d83684bb662f2488c332bd0faca814e3ec14 (/home/mark/.cache/drill-tmp/starlings-drill.IDneKt/apps/CudaConsumer/bin/Release/net10.0/Starlings.Acquisition.dll)
+assembly: Starlings.Runtime.Onnx 0.1.0-preview.6+5b04d83684bb662f2488c332bd0faca814e3ec14 (/home/mark/.cache/drill-tmp/starlings-drill.IDneKt/apps/CudaConsumer/bin/Release/net10.0/Starlings.Runtime.Onnx.dll)
+assembly: Starlings.Tokenizers 0.3.0-preview.1+79a5863e861edcfed79142293dafabb688c199b9 (/home/mark/.cache/drill-tmp/starlings-drill.IDneKt/apps/CudaConsumer/bin/Release/net10.0/Starlings.Tokenizers.dll)
+assembly: Starlings.Models.E5 0.1.0-preview.6+5b04d83684bb662f2488c332bd0faca814e3ec14 (/home/mark/.cache/drill-tmp/starlings-drill.IDneKt/apps/CudaConsumer/bin/Release/net10.0/Starlings.Models.E5.dll)
+assembly: Starlings.Models.E5.Extensions.AI 0.1.0-preview.6+5b04d83684bb662f2488c332bd0faca814e3ec14 (/home/mark/.cache/drill-tmp/starlings-drill.IDneKt/apps/CudaConsumer/bin/Release/net10.0/Starlings.Models.E5.Extensions.AI.dll)
+assembly: Starlings.Models.Gliner2 0.1.0-preview.6+5b04d83684bb662f2488c332bd0faca814e3ec14 (/home/mark/.cache/drill-tmp/starlings-drill.IDneKt/apps/CudaConsumer/bin/Release/net10.0/Starlings.Models.Gliner2.dll)
+assembly: Starlings.Models.EmbeddingGemma2 0.1.0-preview.6+5b04d83684bb662f2488c332bd0faca814e3ec14 (/home/mark/.cache/drill-tmp/starlings-drill.IDneKt/apps/CudaConsumer/bin/Release/net10.0/Starlings.Models.EmbeddingGemma2.dll)
+assembly: Starlings.Models.EmbeddingGemma2.Extensions.AI 0.1.0-preview.6+5b04d83684bb662f2488c332bd0faca814e3ec14 (/home/mark/.cache/drill-tmp/starlings-drill.IDneKt/apps/CudaConsumer/bin/Release/net10.0/Starlings.Models.EmbeddingGemma2.Extensions.AI.dll)
+assembly: Starlings.Models.EmbeddingGemma2.Imaging.SkiaSharp 0.1.0-preview.6+5b04d83684bb662f2488c332bd0faca814e3ec14 (/home/mark/.cache/drill-tmp/starlings-drill.IDneKt/apps/CudaConsumer/bin/Release/net10.0/Starlings.Models.EmbeddingGemma2.Imaging.SkiaSharp.dll)
+assembly: Starlings.Models.EmbeddingGemma2.Video.FFmpeg 0.1.0-preview.6+5b04d83684bb662f2488c332bd0faca814e3ec14 (/home/mark/.cache/drill-tmp/starlings-drill.IDneKt/apps/CudaConsumer/bin/Release/net10.0/Starlings.Models.EmbeddingGemma2.Video.FFmpeg.dll)
+assembly: Starlings.Models.EmbeddingGemma2.Video.FFmpeg9 0.1.0-preview.6+5b04d83684bb662f2488c332bd0faca814e3ec14 (/home/mark/.cache/drill-tmp/starlings-drill.IDneKt/apps/CudaConsumer/bin/Release/net10.0/Starlings.Models.EmbeddingGemma2.Video.FFmpeg9.dll)
+runtime:  .NET 10.0.12 linux-x64
+gpu:      CUDA_DEVICE_ORDER=PCI_BUS_ID CUDA_VISIBLE_DEVICES=0
+bounds:   /home/mark/.cache/drill-tmp/starlings-drill.IDneKt/src/model-pipeline/protected/embeddinggemma-2/onnx-fp32-cuda/tolerances.yaml: embedding_max_abs 5E-06, min_cosine 0.9999999, padded_batch_vs_single_embedding_max_abs 5E-06, token_embeddings_relative 0.0001
+ok:   ONNX Runtime native 1.30.0, managed 1.30.0 (expected 1.30.0)
+ok:   providers: TensorrtExecutionProvider, CUDAExecutionProvider, CPUExecutionProvider
+session:  eg2-text: ORT 1.30.0 (managed 1.30.0); providers CUDAExecutionProvider,CPUExecutionProvider; options arena_extend_strategy=kNextPowerOfTwo, cudnn_conv1d_pad_to_nc1d=0, cudnn_conv_algo_search=EXHAUSTIVE, cudnn_conv_use_max_workspace=1, device_id=0, do_copy_in_default_stream=1, enable_cudnn=1, fuse_conv_bias=0, gpu_mem_limit=18446744073709551615, has_user_compute_stream=0, prefer_nhwc=0, sdpa_kernel=0, tunable_op_enable=0, tunable_op_max_tuning_duration_ms=0, tunable_op_tuning_enable=0, use_ep_level_unified_stream=0, use_tf32=0, user_compute_stream=0; model sha256 02cc7ecccbfcb29d812eb104e4c6ea6c599bc87e94f01082606f6a11f0252d11
+ok:   eg2-text: session runs on CUDAExecutionProvider
+ok:   eg2-text: use_tf32=0
+ok:   eg2-text: device_id=0
+ok:   eg2-text: model sha256 is the lock's 02cc7ecccbfcb29d812eb104e4c6ea6c599bc87e94f01082606f6a11f0252d11
+ok:   eg2 text fixture rows: 138 (expected 138)
+ok:   eg2 typed API on CUDA, one text per call, vs protected: 138 rows, max abs 4.712E-007 (bound 5E-06), min cosine 1.000000000 (bound 0.9999999)
+ok:   eg2 typed API on CUDA, padded batches of 8, vs own single rows: 138 rows, max abs 3.353E-007 (bound 5E-06), min cosine 1.000000000
+ok:   eg2 Extensions.AI generator over the CUDA session, 46 query rows, vs protected: 46 rows, max abs 2.570E-007 (bound 5E-06), min cosine 1.000000000
+mapped:   /home/mark/.cache/drill-tmp/starlings-drill.IDneKt/apps/CudaConsumer/bin/Release/net10.0/runtimes/linux-x64/native/libonnxruntime_providers_cuda.so
+mapped:   /home/mark/.cache/drill-tmp/starlings-drill.IDneKt/apps/CudaConsumer/bin/Release/net10.0/runtimes/linux-x64/native/libonnxruntime.so
+mapped:   /home/mark/.cache/drill-tmp/starlings-drill.IDneKt/apps/CudaConsumer/bin/Release/net10.0/runtimes/linux-x64/native/libonnxruntime_providers_shared.so
+mapped:   /home/mark/Projects/AI-models/embeddinggemma2/venv-cuda/lib/python3.11/site-packages/nvidia/cudnn/lib/libcudnn_graph.so.9
+mapped:   /home/mark/Projects/AI-models/embeddinggemma2/venv-cuda/lib/python3.11/site-packages/nvidia/cudnn/lib/libcudnn.so.9
+mapped:   /home/mark/Projects/AI-models/embeddinggemma2/venv-cuda/lib/python3.11/site-packages/nvidia/cu13/lib/libcublas.so.13
+mapped:   /home/mark/Projects/AI-models/embeddinggemma2/venv-cuda/lib/python3.11/site-packages/nvidia/cu13/lib/libcublasLt.so.13
+mapped:   /home/mark/Projects/AI-models/embeddinggemma2/venv-cuda/lib/python3.11/site-packages/nvidia/cu13/lib/libcudart.so.13
+ok:   ONNX Runtime and its CUDA provider are mapped from the consumer's own build output (/home/mark/.cache/drill-tmp/starlings-drill.IDneKt/apps/CudaConsumer/bin/Release/net10.0/)
+ok:   no native tokenizers library mapped ()
+ok:   no other managed tokenizer assembly loaded ()
+RESULT: PASS
+ok:   embeddinggemma-2/onnx-fp32-cuda: offline on CUDA from the packed packages; outputs within the protected bounds of embeddinggemma-2/onnx-fp32-cuda/tolerances.yaml
+assembly: Starlings.Acquisition 0.1.0-preview.6+5b04d83684bb662f2488c332bd0faca814e3ec14 (/home/mark/.cache/drill-tmp/starlings-drill.IDneKt/apps/CudaConsumer/bin/Release/net10.0/Starlings.Acquisition.dll)
+assembly: Starlings.Runtime.Onnx 0.1.0-preview.6+5b04d83684bb662f2488c332bd0faca814e3ec14 (/home/mark/.cache/drill-tmp/starlings-drill.IDneKt/apps/CudaConsumer/bin/Release/net10.0/Starlings.Runtime.Onnx.dll)
+assembly: Starlings.Tokenizers 0.3.0-preview.1+79a5863e861edcfed79142293dafabb688c199b9 (/home/mark/.cache/drill-tmp/starlings-drill.IDneKt/apps/CudaConsumer/bin/Release/net10.0/Starlings.Tokenizers.dll)
+assembly: Starlings.Models.E5 0.1.0-preview.6+5b04d83684bb662f2488c332bd0faca814e3ec14 (/home/mark/.cache/drill-tmp/starlings-drill.IDneKt/apps/CudaConsumer/bin/Release/net10.0/Starlings.Models.E5.dll)
+assembly: Starlings.Models.E5.Extensions.AI 0.1.0-preview.6+5b04d83684bb662f2488c332bd0faca814e3ec14 (/home/mark/.cache/drill-tmp/starlings-drill.IDneKt/apps/CudaConsumer/bin/Release/net10.0/Starlings.Models.E5.Extensions.AI.dll)
+assembly: Starlings.Models.Gliner2 0.1.0-preview.6+5b04d83684bb662f2488c332bd0faca814e3ec14 (/home/mark/.cache/drill-tmp/starlings-drill.IDneKt/apps/CudaConsumer/bin/Release/net10.0/Starlings.Models.Gliner2.dll)
+assembly: Starlings.Models.EmbeddingGemma2 0.1.0-preview.6+5b04d83684bb662f2488c332bd0faca814e3ec14 (/home/mark/.cache/drill-tmp/starlings-drill.IDneKt/apps/CudaConsumer/bin/Release/net10.0/Starlings.Models.EmbeddingGemma2.dll)
+assembly: Starlings.Models.EmbeddingGemma2.Extensions.AI 0.1.0-preview.6+5b04d83684bb662f2488c332bd0faca814e3ec14 (/home/mark/.cache/drill-tmp/starlings-drill.IDneKt/apps/CudaConsumer/bin/Release/net10.0/Starlings.Models.EmbeddingGemma2.Extensions.AI.dll)
+assembly: Starlings.Models.EmbeddingGemma2.Imaging.SkiaSharp 0.1.0-preview.6+5b04d83684bb662f2488c332bd0faca814e3ec14 (/home/mark/.cache/drill-tmp/starlings-drill.IDneKt/apps/CudaConsumer/bin/Release/net10.0/Starlings.Models.EmbeddingGemma2.Imaging.SkiaSharp.dll)
+assembly: Starlings.Models.EmbeddingGemma2.Video.FFmpeg 0.1.0-preview.6+5b04d83684bb662f2488c332bd0faca814e3ec14 (/home/mark/.cache/drill-tmp/starlings-drill.IDneKt/apps/CudaConsumer/bin/Release/net10.0/Starlings.Models.EmbeddingGemma2.Video.FFmpeg.dll)
+assembly: Starlings.Models.EmbeddingGemma2.Video.FFmpeg9 0.1.0-preview.6+5b04d83684bb662f2488c332bd0faca814e3ec14 (/home/mark/.cache/drill-tmp/starlings-drill.IDneKt/apps/CudaConsumer/bin/Release/net10.0/Starlings.Models.EmbeddingGemma2.Video.FFmpeg9.dll)
+runtime:  .NET 10.0.12 linux-x64
+gpu:      CUDA_DEVICE_ORDER=PCI_BUS_ID CUDA_VISIBLE_DEVICES=0
+bounds:   /home/mark/.cache/drill-tmp/starlings-drill.IDneKt/src/model-pipeline/protected/embeddinggemma-2/image-fp32-cuda/tolerances.yaml: embedding_max_abs 1E-05, min_cosine 0.9999995, padded_batch_vs_single_embedding_max_abs 1E-05, soft_tokens_row_relative 0.001, token_embeddings_row_relative 0.001
+ok:   ONNX Runtime native 1.30.0, managed 1.30.0 (expected 1.30.0)
+ok:   providers: TensorrtExecutionProvider, CUDAExecutionProvider, CPUExecutionProvider
+session:  eg2-image vision: ORT 1.30.0 (managed 1.30.0); providers CUDAExecutionProvider,CPUExecutionProvider; options arena_extend_strategy=kNextPowerOfTwo, cudnn_conv1d_pad_to_nc1d=0, cudnn_conv_algo_search=EXHAUSTIVE, cudnn_conv_use_max_workspace=1, device_id=0, do_copy_in_default_stream=1, enable_cudnn=1, fuse_conv_bias=0, gpu_mem_limit=18446744073709551615, has_user_compute_stream=0, prefer_nhwc=0, sdpa_kernel=0, tunable_op_enable=0, tunable_op_max_tuning_duration_ms=0, tunable_op_tuning_enable=0, use_ep_level_unified_stream=0, use_tf32=0, user_compute_stream=0; model sha256 6c97f477a82f6863d22d800476de6d0a618b23e514aa9b65a46b220c4b106b92
+ok:   eg2-image vision: session runs on CUDAExecutionProvider
+ok:   eg2-image vision: use_tf32=0
+ok:   eg2-image vision: device_id=0
+ok:   eg2-image vision: model sha256 is the lock's 6c97f477a82f6863d22d800476de6d0a618b23e514aa9b65a46b220c4b106b92
+session:  eg2-image multimodal text: ORT 1.30.0 (managed 1.30.0); providers CUDAExecutionProvider,CPUExecutionProvider; options arena_extend_strategy=kNextPowerOfTwo, cudnn_conv1d_pad_to_nc1d=0, cudnn_conv_algo_search=EXHAUSTIVE, cudnn_conv_use_max_workspace=1, device_id=0, do_copy_in_default_stream=1, enable_cudnn=1, fuse_conv_bias=0, gpu_mem_limit=18446744073709551615, has_user_compute_stream=0, prefer_nhwc=0, sdpa_kernel=0, tunable_op_enable=0, tunable_op_max_tuning_duration_ms=0, tunable_op_tuning_enable=0, use_ep_level_unified_stream=0, use_tf32=0, user_compute_stream=0; model sha256 a2c22e072ec230b105b35c2787dcfccba186254e6a921e729c45b40e50dbbb74
+ok:   eg2-image multimodal text: session runs on CUDAExecutionProvider
+ok:   eg2-image multimodal text: use_tf32=0
+ok:   eg2-image multimodal text: device_id=0
+ok:   eg2-image multimodal text: model sha256 is the lock's a2c22e072ec230b105b35c2787dcfccba186254e6a921e729c45b40e50dbbb74
+ok:   eg2-image mode-gray16: rejected (HighBitDepth); only mode-gray16 may be rejected
+eg2-image rows: 30 image rows decoded with the SkiaSharp adapter, 8 text rows, 4 interleaved rows not run here
+ok:   eg2-image: 30 image rows compared (expected at least 30)
+ok:   eg2-image typed API on CUDA, one input per call, vs protected: 38 rows, max abs 3.636E-006 (bound 1E-05), min cosine 1.000000000 (bound 0.9999995)
+ok:   eg2-image Extensions.AI generator over the CUDA sessions, 28 image rows, vs protected: 28 rows, max abs 3.750E-006 (bound 1E-05), min cosine 1.000000000
+mapped:   /home/mark/.cache/drill-tmp/starlings-drill.IDneKt/apps/CudaConsumer/bin/Release/net10.0/runtimes/linux-x64/native/libonnxruntime_providers_cuda.so
+mapped:   /home/mark/.cache/drill-tmp/starlings-drill.IDneKt/apps/CudaConsumer/bin/Release/net10.0/runtimes/linux-x64/native/libonnxruntime.so
+mapped:   /home/mark/.cache/drill-tmp/starlings-drill.IDneKt/apps/CudaConsumer/bin/Release/net10.0/runtimes/linux-x64/native/libonnxruntime_providers_shared.so
+mapped:   /home/mark/Projects/AI-models/embeddinggemma2/venv-cuda/lib/python3.11/site-packages/nvidia/cudnn/lib/libcudnn_ops.so.9
+mapped:   /home/mark/Projects/AI-models/embeddinggemma2/venv-cuda/lib/python3.11/site-packages/nvidia/cudnn/lib/libcudnn_graph.so.9
+mapped:   /home/mark/Projects/AI-models/embeddinggemma2/venv-cuda/lib/python3.11/site-packages/nvidia/cudnn/lib/libcudnn.so.9
+mapped:   /home/mark/Projects/AI-models/embeddinggemma2/venv-cuda/lib/python3.11/site-packages/nvidia/cu13/lib/libcublas.so.13
+mapped:   /home/mark/Projects/AI-models/embeddinggemma2/venv-cuda/lib/python3.11/site-packages/nvidia/cu13/lib/libcublasLt.so.13
+mapped:   /home/mark/Projects/AI-models/embeddinggemma2/venv-cuda/lib/python3.11/site-packages/nvidia/cu13/lib/libcudart.so.13
+ok:   ONNX Runtime and its CUDA provider are mapped from the consumer's own build output (/home/mark/.cache/drill-tmp/starlings-drill.IDneKt/apps/CudaConsumer/bin/Release/net10.0/)
+ok:   no native tokenizers library mapped ()
+ok:   no other managed tokenizer assembly loaded ()
+RESULT: PASS
+ok:   embeddinggemma-2/image-fp32-cuda: offline on CUDA from the packed packages; outputs within the protected bounds of embeddinggemma-2/image-fp32-cuda/tolerances.yaml
+assembly: Starlings.Acquisition 0.1.0-preview.6+5b04d83684bb662f2488c332bd0faca814e3ec14 (/home/mark/.cache/drill-tmp/starlings-drill.IDneKt/apps/CudaConsumer/bin/Release/net10.0/Starlings.Acquisition.dll)
+assembly: Starlings.Runtime.Onnx 0.1.0-preview.6+5b04d83684bb662f2488c332bd0faca814e3ec14 (/home/mark/.cache/drill-tmp/starlings-drill.IDneKt/apps/CudaConsumer/bin/Release/net10.0/Starlings.Runtime.Onnx.dll)
+assembly: Starlings.Tokenizers 0.3.0-preview.1+79a5863e861edcfed79142293dafabb688c199b9 (/home/mark/.cache/drill-tmp/starlings-drill.IDneKt/apps/CudaConsumer/bin/Release/net10.0/Starlings.Tokenizers.dll)
+assembly: Starlings.Models.E5 0.1.0-preview.6+5b04d83684bb662f2488c332bd0faca814e3ec14 (/home/mark/.cache/drill-tmp/starlings-drill.IDneKt/apps/CudaConsumer/bin/Release/net10.0/Starlings.Models.E5.dll)
+assembly: Starlings.Models.E5.Extensions.AI 0.1.0-preview.6+5b04d83684bb662f2488c332bd0faca814e3ec14 (/home/mark/.cache/drill-tmp/starlings-drill.IDneKt/apps/CudaConsumer/bin/Release/net10.0/Starlings.Models.E5.Extensions.AI.dll)
+assembly: Starlings.Models.Gliner2 0.1.0-preview.6+5b04d83684bb662f2488c332bd0faca814e3ec14 (/home/mark/.cache/drill-tmp/starlings-drill.IDneKt/apps/CudaConsumer/bin/Release/net10.0/Starlings.Models.Gliner2.dll)
+assembly: Starlings.Models.EmbeddingGemma2 0.1.0-preview.6+5b04d83684bb662f2488c332bd0faca814e3ec14 (/home/mark/.cache/drill-tmp/starlings-drill.IDneKt/apps/CudaConsumer/bin/Release/net10.0/Starlings.Models.EmbeddingGemma2.dll)
+assembly: Starlings.Models.EmbeddingGemma2.Extensions.AI 0.1.0-preview.6+5b04d83684bb662f2488c332bd0faca814e3ec14 (/home/mark/.cache/drill-tmp/starlings-drill.IDneKt/apps/CudaConsumer/bin/Release/net10.0/Starlings.Models.EmbeddingGemma2.Extensions.AI.dll)
+assembly: Starlings.Models.EmbeddingGemma2.Imaging.SkiaSharp 0.1.0-preview.6+5b04d83684bb662f2488c332bd0faca814e3ec14 (/home/mark/.cache/drill-tmp/starlings-drill.IDneKt/apps/CudaConsumer/bin/Release/net10.0/Starlings.Models.EmbeddingGemma2.Imaging.SkiaSharp.dll)
+assembly: Starlings.Models.EmbeddingGemma2.Video.FFmpeg 0.1.0-preview.6+5b04d83684bb662f2488c332bd0faca814e3ec14 (/home/mark/.cache/drill-tmp/starlings-drill.IDneKt/apps/CudaConsumer/bin/Release/net10.0/Starlings.Models.EmbeddingGemma2.Video.FFmpeg.dll)
+assembly: Starlings.Models.EmbeddingGemma2.Video.FFmpeg9 0.1.0-preview.6+5b04d83684bb662f2488c332bd0faca814e3ec14 (/home/mark/.cache/drill-tmp/starlings-drill.IDneKt/apps/CudaConsumer/bin/Release/net10.0/Starlings.Models.EmbeddingGemma2.Video.FFmpeg9.dll)
+runtime:  .NET 10.0.12 linux-x64
+gpu:      CUDA_DEVICE_ORDER=PCI_BUS_ID CUDA_VISIBLE_DEVICES=0
+bounds:   /home/mark/.cache/drill-tmp/starlings-drill.IDneKt/src/model-pipeline/protected/embeddinggemma-2/video-fp32-cuda/tolerances.yaml: embedding_max_abs 1E-05, min_cosine 0.9999995, padded_batch_vs_single_embedding_max_abs 1E-05, soft_tokens_row_relative 0.001, token_embeddings_row_relative 0.001
+ok:   ONNX Runtime native 1.30.0, managed 1.30.0 (expected 1.30.0)
+ok:   providers: TensorrtExecutionProvider, CUDAExecutionProvider, CPUExecutionProvider
+ok:   eg2-video: Starlings.Models.EmbeddingGemma2.Video.FFmpeg binds FFmpeg 8
+ffmpeg:   n8.1.3-17-gc389840894-20261011 from /home/mark/Projects/AI-models/embeddinggemma2/video-spike/ffmpeg/ffmpeg-n8.1.3-17-gc389840894-linux64-lgpl-shared-8.1/lib; Starlings.Models.EmbeddingGemma2.Video.FFmpeg 0.1.0-preview.6; licenses: avutil LGPL version 3 or later, avcodec LGPL version 3 or later, avformat LGPL version 3 or later, swscale LGPL version 3 or later, avfilter LGPL version 3 or later
+ok:   eg2-video: the user's FFmpeg n8.1.3-17-gc389840894-20261011 is an LGPL build
+ok:   eg2-video: FFmpeg n8.1.3-17-gc389840894-20261011 is major 8
+ok:   eg2-video: 22/22 fixture videos present with the protected SHA-256 (expected 22)
+session:  eg2-video vision: ORT 1.30.0 (managed 1.30.0); providers CUDAExecutionProvider,CPUExecutionProvider; options arena_extend_strategy=kNextPowerOfTwo, cudnn_conv1d_pad_to_nc1d=0, cudnn_conv_algo_search=EXHAUSTIVE, cudnn_conv_use_max_workspace=1, device_id=0, do_copy_in_default_stream=1, enable_cudnn=1, fuse_conv_bias=0, gpu_mem_limit=18446744073709551615, has_user_compute_stream=0, prefer_nhwc=0, sdpa_kernel=0, tunable_op_enable=0, tunable_op_max_tuning_duration_ms=0, tunable_op_tuning_enable=0, use_ep_level_unified_stream=0, use_tf32=0, user_compute_stream=0; model sha256 6c97f477a82f6863d22d800476de6d0a618b23e514aa9b65a46b220c4b106b92
+ok:   eg2-video vision: session runs on CUDAExecutionProvider
+ok:   eg2-video vision: use_tf32=0
+ok:   eg2-video vision: device_id=0
+ok:   eg2-video vision: model sha256 is the lock's 6c97f477a82f6863d22d800476de6d0a618b23e514aa9b65a46b220c4b106b92
+session:  eg2-video multimodal text: ORT 1.30.0 (managed 1.30.0); providers CUDAExecutionProvider,CPUExecutionProvider; options arena_extend_strategy=kNextPowerOfTwo, cudnn_conv1d_pad_to_nc1d=0, cudnn_conv_algo_search=EXHAUSTIVE, cudnn_conv_use_max_workspace=1, device_id=0, do_copy_in_default_stream=1, enable_cudnn=1, fuse_conv_bias=0, gpu_mem_limit=18446744073709551615, has_user_compute_stream=0, prefer_nhwc=0, sdpa_kernel=0, tunable_op_enable=0, tunable_op_max_tuning_duration_ms=0, tunable_op_tuning_enable=0, use_ep_level_unified_stream=0, use_tf32=0, user_compute_stream=0; model sha256 a2c22e072ec230b105b35c2787dcfccba186254e6a921e729c45b40e50dbbb74
+ok:   eg2-video multimodal text: session runs on CUDAExecutionProvider
+ok:   eg2-video multimodal text: use_tf32=0
+ok:   eg2-video multimodal text: device_id=0
+ok:   eg2-video multimodal text: model sha256 is the lock's a2c22e072ec230b105b35c2787dcfccba186254e6a921e729c45b40e50dbbb74
+eg2-video rows: 23 video rows decoded with the FFmpeg 8 adapter, 5 text rows, 8 interleaved or array rows not run here
+ok:   eg2-video: 23 video rows compared (expected at least 23)
+ok:   eg2-video: sampled frame indices equal the reference on 23/23 videos (exact)
+ok:   eg2-video: decoded RGB of 181/181 sampled frames equal torchcodec's (SHA-256; decoder bound exact)
+ok:   eg2-video typed API on CUDA, one input per call, vs protected: 28 rows, max abs 6.501E-007 (bound 1E-05), min cosine 1.000000000 (bound 0.9999995)
+ok:   eg2-video Extensions.AI generator over the CUDA sessions, 6 videos from bytes, vs protected: 6 rows, max abs 3.889E-006 (bound 1E-05), min cosine 1.000000000
+mapped:   /home/mark/.cache/drill-tmp/starlings-drill.IDneKt/apps/CudaConsumer/bin/Release/net10.0/runtimes/linux-x64/native/libonnxruntime_providers_cuda.so
+mapped:   /home/mark/.cache/drill-tmp/starlings-drill.IDneKt/apps/CudaConsumer/bin/Release/net10.0/runtimes/linux-x64/native/libonnxruntime.so
+mapped:   /home/mark/.cache/drill-tmp/starlings-drill.IDneKt/apps/CudaConsumer/bin/Release/net10.0/runtimes/linux-x64/native/libonnxruntime_providers_shared.so
+mapped:   /home/mark/Projects/AI-models/embeddinggemma2/venv-cuda/lib/python3.11/site-packages/nvidia/cudnn/lib/libcudnn_ops.so.9
+mapped:   /home/mark/Projects/AI-models/embeddinggemma2/venv-cuda/lib/python3.11/site-packages/nvidia/cudnn/lib/libcudnn_graph.so.9
+mapped:   /home/mark/Projects/AI-models/embeddinggemma2/venv-cuda/lib/python3.11/site-packages/nvidia/cu13/lib/libcublas.so.13
+mapped:   /home/mark/Projects/AI-models/embeddinggemma2/venv-cuda/lib/python3.11/site-packages/nvidia/cu13/lib/libcublasLt.so.13
+mapped:   /home/mark/Projects/AI-models/embeddinggemma2/venv-cuda/lib/python3.11/site-packages/nvidia/cudnn/lib/libcudnn.so.9
+mapped:   /home/mark/Projects/AI-models/embeddinggemma2/venv-cuda/lib/python3.11/site-packages/nvidia/cu13/lib/libcudart.so.13
+ok:   ONNX Runtime and its CUDA provider are mapped from the consumer's own build output (/home/mark/.cache/drill-tmp/starlings-drill.IDneKt/apps/CudaConsumer/bin/Release/net10.0/)
+ok:   no native tokenizers library mapped ()
+ok:   no other managed tokenizer assembly loaded ()
+RESULT: PASS
+ok:   embeddinggemma-2/video-fp32-cuda, FFmpeg 8 adapter: offline on CUDA from the packed packages; frames exact and embeddings within the protected bounds
+assembly: Starlings.Acquisition 0.1.0-preview.6+5b04d83684bb662f2488c332bd0faca814e3ec14 (/home/mark/.cache/drill-tmp/starlings-drill.IDneKt/apps/CudaConsumer/bin/Release/net10.0/Starlings.Acquisition.dll)
+assembly: Starlings.Runtime.Onnx 0.1.0-preview.6+5b04d83684bb662f2488c332bd0faca814e3ec14 (/home/mark/.cache/drill-tmp/starlings-drill.IDneKt/apps/CudaConsumer/bin/Release/net10.0/Starlings.Runtime.Onnx.dll)
+assembly: Starlings.Tokenizers 0.3.0-preview.1+79a5863e861edcfed79142293dafabb688c199b9 (/home/mark/.cache/drill-tmp/starlings-drill.IDneKt/apps/CudaConsumer/bin/Release/net10.0/Starlings.Tokenizers.dll)
+assembly: Starlings.Models.E5 0.1.0-preview.6+5b04d83684bb662f2488c332bd0faca814e3ec14 (/home/mark/.cache/drill-tmp/starlings-drill.IDneKt/apps/CudaConsumer/bin/Release/net10.0/Starlings.Models.E5.dll)
+assembly: Starlings.Models.E5.Extensions.AI 0.1.0-preview.6+5b04d83684bb662f2488c332bd0faca814e3ec14 (/home/mark/.cache/drill-tmp/starlings-drill.IDneKt/apps/CudaConsumer/bin/Release/net10.0/Starlings.Models.E5.Extensions.AI.dll)
+assembly: Starlings.Models.Gliner2 0.1.0-preview.6+5b04d83684bb662f2488c332bd0faca814e3ec14 (/home/mark/.cache/drill-tmp/starlings-drill.IDneKt/apps/CudaConsumer/bin/Release/net10.0/Starlings.Models.Gliner2.dll)
+assembly: Starlings.Models.EmbeddingGemma2 0.1.0-preview.6+5b04d83684bb662f2488c332bd0faca814e3ec14 (/home/mark/.cache/drill-tmp/starlings-drill.IDneKt/apps/CudaConsumer/bin/Release/net10.0/Starlings.Models.EmbeddingGemma2.dll)
+assembly: Starlings.Models.EmbeddingGemma2.Extensions.AI 0.1.0-preview.6+5b04d83684bb662f2488c332bd0faca814e3ec14 (/home/mark/.cache/drill-tmp/starlings-drill.IDneKt/apps/CudaConsumer/bin/Release/net10.0/Starlings.Models.EmbeddingGemma2.Extensions.AI.dll)
+assembly: Starlings.Models.EmbeddingGemma2.Imaging.SkiaSharp 0.1.0-preview.6+5b04d83684bb662f2488c332bd0faca814e3ec14 (/home/mark/.cache/drill-tmp/starlings-drill.IDneKt/apps/CudaConsumer/bin/Release/net10.0/Starlings.Models.EmbeddingGemma2.Imaging.SkiaSharp.dll)
+assembly: Starlings.Models.EmbeddingGemma2.Video.FFmpeg 0.1.0-preview.6+5b04d83684bb662f2488c332bd0faca814e3ec14 (/home/mark/.cache/drill-tmp/starlings-drill.IDneKt/apps/CudaConsumer/bin/Release/net10.0/Starlings.Models.EmbeddingGemma2.Video.FFmpeg.dll)
+assembly: Starlings.Models.EmbeddingGemma2.Video.FFmpeg9 0.1.0-preview.6+5b04d83684bb662f2488c332bd0faca814e3ec14 (/home/mark/.cache/drill-tmp/starlings-drill.IDneKt/apps/CudaConsumer/bin/Release/net10.0/Starlings.Models.EmbeddingGemma2.Video.FFmpeg9.dll)
+runtime:  .NET 10.0.12 linux-x64
+gpu:      CUDA_DEVICE_ORDER=PCI_BUS_ID CUDA_VISIBLE_DEVICES=0
+bounds:   /home/mark/.cache/drill-tmp/starlings-drill.IDneKt/src/model-pipeline/protected/embeddinggemma-2/video-fp32-cuda/tolerances.yaml: embedding_max_abs 1E-05, min_cosine 0.9999995, padded_batch_vs_single_embedding_max_abs 1E-05, soft_tokens_row_relative 0.001, token_embeddings_row_relative 0.001
+ok:   ONNX Runtime native 1.30.0, managed 1.30.0 (expected 1.30.0)
+ok:   providers: TensorrtExecutionProvider, CUDAExecutionProvider, CPUExecutionProvider
+ok:   eg2-video: Starlings.Models.EmbeddingGemma2.Video.FFmpeg9 binds FFmpeg 9
+ffmpeg:   n9.0.2-28-g669f5ab083-20261015 from /home/mark/.cache/video-g6-a4fa/ffmpeg9-lgpl/ffmpeg-n9.0.2-28-g669f5ab083-linux64-lgpl-shared-9.0/lib; Starlings.Models.EmbeddingGemma2.Video.FFmpeg9 0.1.0-preview.6; licenses: avutil LGPL version 3 or later, avcodec LGPL version 3 or later, avformat LGPL version 3 or later, swscale LGPL version 3 or later, avfilter LGPL version 3 or later
+ok:   eg2-video: the user's FFmpeg n9.0.2-28-g669f5ab083-20261015 is an LGPL build
+ok:   eg2-video: FFmpeg n9.0.2-28-g669f5ab083-20261015 is major 9
+ok:   eg2-video: 22/22 fixture videos present with the protected SHA-256 (expected 22)
+session:  eg2-video vision: ORT 1.30.0 (managed 1.30.0); providers CUDAExecutionProvider,CPUExecutionProvider; options arena_extend_strategy=kNextPowerOfTwo, cudnn_conv1d_pad_to_nc1d=0, cudnn_conv_algo_search=EXHAUSTIVE, cudnn_conv_use_max_workspace=1, device_id=0, do_copy_in_default_stream=1, enable_cudnn=1, fuse_conv_bias=0, gpu_mem_limit=18446744073709551615, has_user_compute_stream=0, prefer_nhwc=0, sdpa_kernel=0, tunable_op_enable=0, tunable_op_max_tuning_duration_ms=0, tunable_op_tuning_enable=0, use_ep_level_unified_stream=0, use_tf32=0, user_compute_stream=0; model sha256 6c97f477a82f6863d22d800476de6d0a618b23e514aa9b65a46b220c4b106b92
+ok:   eg2-video vision: session runs on CUDAExecutionProvider
+ok:   eg2-video vision: use_tf32=0
+ok:   eg2-video vision: device_id=0
+ok:   eg2-video vision: model sha256 is the lock's 6c97f477a82f6863d22d800476de6d0a618b23e514aa9b65a46b220c4b106b92
+session:  eg2-video multimodal text: ORT 1.30.0 (managed 1.30.0); providers CUDAExecutionProvider,CPUExecutionProvider; options arena_extend_strategy=kNextPowerOfTwo, cudnn_conv1d_pad_to_nc1d=0, cudnn_conv_algo_search=EXHAUSTIVE, cudnn_conv_use_max_workspace=1, device_id=0, do_copy_in_default_stream=1, enable_cudnn=1, fuse_conv_bias=0, gpu_mem_limit=18446744073709551615, has_user_compute_stream=0, prefer_nhwc=0, sdpa_kernel=0, tunable_op_enable=0, tunable_op_max_tuning_duration_ms=0, tunable_op_tuning_enable=0, use_ep_level_unified_stream=0, use_tf32=0, user_compute_stream=0; model sha256 a2c22e072ec230b105b35c2787dcfccba186254e6a921e729c45b40e50dbbb74
+ok:   eg2-video multimodal text: session runs on CUDAExecutionProvider
+ok:   eg2-video multimodal text: use_tf32=0
+ok:   eg2-video multimodal text: device_id=0
+ok:   eg2-video multimodal text: model sha256 is the lock's a2c22e072ec230b105b35c2787dcfccba186254e6a921e729c45b40e50dbbb74
+eg2-video rows: 23 video rows decoded with the FFmpeg 9 adapter, 5 text rows, 8 interleaved or array rows not run here
+ok:   eg2-video: 23 video rows compared (expected at least 23)
+ok:   eg2-video: sampled frame indices equal the reference on 23/23 videos (exact)
+ok:   eg2-video: decoded RGB of 181/181 sampled frames equal torchcodec's (SHA-256; decoder bound exact)
+ok:   eg2-video typed API on CUDA, one input per call, vs protected: 28 rows, max abs 6.501E-007 (bound 1E-05), min cosine 1.000000000 (bound 0.9999995)
+ok:   eg2-video Extensions.AI generator over the CUDA sessions, 6 videos from bytes, vs protected: 6 rows, max abs 3.889E-006 (bound 1E-05), min cosine 1.000000000
+mapped:   /home/mark/.cache/drill-tmp/starlings-drill.IDneKt/apps/CudaConsumer/bin/Release/net10.0/runtimes/linux-x64/native/libonnxruntime_providers_cuda.so
+mapped:   /home/mark/.cache/drill-tmp/starlings-drill.IDneKt/apps/CudaConsumer/bin/Release/net10.0/runtimes/linux-x64/native/libonnxruntime.so
+mapped:   /home/mark/.cache/drill-tmp/starlings-drill.IDneKt/apps/CudaConsumer/bin/Release/net10.0/runtimes/linux-x64/native/libonnxruntime_providers_shared.so
+mapped:   /home/mark/Projects/AI-models/embeddinggemma2/venv-cuda/lib/python3.11/site-packages/nvidia/cudnn/lib/libcudnn_ops.so.9
+mapped:   /home/mark/Projects/AI-models/embeddinggemma2/venv-cuda/lib/python3.11/site-packages/nvidia/cudnn/lib/libcudnn_graph.so.9
+mapped:   /home/mark/Projects/AI-models/embeddinggemma2/venv-cuda/lib/python3.11/site-packages/nvidia/cu13/lib/libcublasLt.so.13
+mapped:   /home/mark/Projects/AI-models/embeddinggemma2/venv-cuda/lib/python3.11/site-packages/nvidia/cudnn/lib/libcudnn.so.9
+mapped:   /home/mark/Projects/AI-models/embeddinggemma2/venv-cuda/lib/python3.11/site-packages/nvidia/cu13/lib/libcublas.so.13
+mapped:   /home/mark/Projects/AI-models/embeddinggemma2/venv-cuda/lib/python3.11/site-packages/nvidia/cu13/lib/libcudart.so.13
+ok:   ONNX Runtime and its CUDA provider are mapped from the consumer's own build output (/home/mark/.cache/drill-tmp/starlings-drill.IDneKt/apps/CudaConsumer/bin/Release/net10.0/)
+ok:   no native tokenizers library mapped ()
+ok:   no other managed tokenizer assembly loaded ()
+RESULT: PASS
+ok:   embeddinggemma-2/video-fp32-cuda, FFmpeg 9 adapter: offline on CUDA from the packed packages; frames exact and embeddings within the protected bounds
+ffmpeg: n8.1.3-17-gc389840894-20261011 (LGPL) from /home/mark/Projects/AI-models/embeddinggemma2/video-spike/ffmpeg/ffmpeg-n8.1.3-17-gc389840894-linux64-lgpl-shared-8.1/lib; Starlings.Models.EmbeddingGemma2.Video.FFmpeg 0.1.0-preview.6
+onnxruntime: native 1.30.0, managed 1.30.0, providers available TensorrtExecutionProvider,CUDAExecutionProvider,CPUExecutionProvider
+session vision: providers CUDAExecutionProvider,CPUExecutionProvider; options arena_extend_strategy=kNextPowerOfTwo, cudnn_conv1d_pad_to_nc1d=0, cudnn_conv_algo_search=EXHAUSTIVE, cudnn_conv_use_max_workspace=1, device_id=0, do_copy_in_default_stream=1, enable_cudnn=1, fuse_conv_bias=0, gpu_mem_limit=18446744073709551615, has_user_compute_stream=0, prefer_nhwc=0, sdpa_kernel=0, tunable_op_enable=0, tunable_op_max_tuning_duration_ms=0, tunable_op_tuning_enable=0, use_ep_level_unified_stream=0, use_tf32=0, user_compute_stream=0; model sha256 6c97f477a82f6863d22d800476de6d0a618b23e514aa9b65a46b220c4b106b92
+session multimodal text: providers CUDAExecutionProvider,CPUExecutionProvider; options arena_extend_strategy=kNextPowerOfTwo, cudnn_conv1d_pad_to_nc1d=0, cudnn_conv_algo_search=EXHAUSTIVE, cudnn_conv_use_max_workspace=1, device_id=0, do_copy_in_default_stream=1, enable_cudnn=1, fuse_conv_bias=0, gpu_mem_limit=18446744073709551615, has_user_compute_stream=0, prefer_nhwc=0, sdpa_kernel=0, tunable_op_enable=0, tunable_op_max_tuning_duration_ms=0, tunable_op_tuning_enable=0, use_ep_level_unified_stream=0, use_tf32=0, user_compute_stream=0; model sha256 a2c22e072ec230b105b35c2787dcfccba186254e6a921e729c45b40e50dbbb74
+decoded h264-1.9s-320x240-30fps.mp4: h264 320x240, 57 frames, 1.90 s -> frames [0]
+decoded h264-1fps-64x48-8s.mp4: h264 64x48, 8 frames, 8.00 s -> frames [0, 1, 2, 3, 4, 5, 6, 7]
+decoded h264-portrait-360x640-30fps-4s.mp4: h264 360x640, 120 frames, 4.00 s -> frames [0, 30, 60, 90]
+video query: colour bars test pattern with a moving white square
+  top: h264-1fps-64x48-8s.mp4 (0.7780); next: h264-portrait-360x640-30fps-4s.mp4 (0.7098)
+video query: colourful circles and rectangles moving over a dark background
+  top: h264-1.9s-320x240-30fps.mp4 (0.7831); next: h264-1fps-64x48-8s.mp4 (0.6976)
+video query: white words scrolling across a colour gradient
+  top: h264-portrait-360x640-30fps-4s.mp4 (0.7420); next: h264-1fps-64x48-8s.mp4 (0.6985)
+extensions.ai videos: h264-1.9s-320x240-30fps.mp4, 134 tokens, max abs difference from the typed API 1.88E-07
+frames without timing rejected: EmbeddingGemma2VideoTimingRequiredException
+ok:   embeddinggemma-2/video-fp32-cuda: the sample's video search on CUDA from the packed packages; Extensions.AI within 1.0e-5 of the typed batch
+model: qwen3.5-0.8b/ortgenai-fp32x (Qwen/Qwen3.5-0.8B@2fc06364715b967f1860aea9cf38778875588b17) on Cuda, ONNX Runtime GenAI 0.17.1
+tokenizer: Starlings.Tokenizers profile qwen35-bpe-chat, tokenizer.json a5cd9732badce41de57e6efce8302930ded1c1188c5f81feb2bd6c24c4a1941f
+packages: Starlings.Models.Qwen35 0.1.0-preview.6, Starlings.Generation.OnnxGenAI 0.1.0-preview.6, Starlings.Tokenizers 0.3.0-preview.1, Starlings.Models.Qwen35.Extensions.AI 0.1.0-preview.6; GenAI managed 0.17.1, native Microsoft.ML.OnnxRuntimeGenAI.Cuda/0.17.1
+user: What is the capital of France? Answer in one sentence.
+assistant: The capital of France is Paris.
+[Stop; 24 prompt + 7 completion tokens; prefill 190 ms, 71.0 tokens/s]
+model: qwen3.5-0.8b/ortgenai-fp32x (Qwen/Qwen3.5-0.8B@2fc06364715b967f1860aea9cf38778875588b17) on Cuda, ONNX Runtime GenAI 0.17.1
+tokenizer: Starlings.Tokenizers profile qwen35-bpe-chat, tokenizer.json a5cd9732badce41de57e6efce8302930ded1c1188c5f81feb2bd6c24c4a1941f
+packages: Starlings.Models.Qwen35 0.1.0-preview.6, Starlings.Generation.OnnxGenAI 0.1.0-preview.6, Starlings.Tokenizers 0.3.0-preview.1, Starlings.Models.Qwen35.Extensions.AI 0.1.0-preview.6; GenAI managed 0.17.1, native Microsoft.ML.OnnxRuntimeGenAI.Cuda/0.17.1
+user: What is the capital of France? Answer in one sentence.
+assistant: The capital of France is Paris.
+[Stop; 24 prompt + 7 completion tokens; IChatClient]
+ok:   qwen3.5-0.8b/ortgenai-fp32x-cuda: offline on CUDA from the packed packages; the protected reference answer through the typed API and IChatClient
+model: qwen3.5-0.8b/ortgenai-fp16x (Qwen/Qwen3.5-0.8B@2fc06364715b967f1860aea9cf38778875588b17) on Cuda, ONNX Runtime GenAI 0.17.1
+tokenizer: Starlings.Tokenizers profile qwen35-bpe-chat, tokenizer.json a5cd9732badce41de57e6efce8302930ded1c1188c5f81feb2bd6c24c4a1941f
+packages: Starlings.Models.Qwen35 0.1.0-preview.6, Starlings.Generation.OnnxGenAI 0.1.0-preview.6, Starlings.Tokenizers 0.3.0-preview.1, Starlings.Models.Qwen35.Extensions.AI 0.1.0-preview.6; GenAI managed 0.17.1, native Microsoft.ML.OnnxRuntimeGenAI.Cuda/0.17.1
+user: What is the capital of France? Answer in one sentence.
+assistant: The capital of France is Paris.
+[Stop; 24 prompt + 7 completion tokens; prefill 237 ms, 81.5 tokens/s]
+model: qwen3.5-0.8b/ortgenai-fp16x (Qwen/Qwen3.5-0.8B@2fc06364715b967f1860aea9cf38778875588b17) on Cuda, ONNX Runtime GenAI 0.17.1
+tokenizer: Starlings.Tokenizers profile qwen35-bpe-chat, tokenizer.json a5cd9732badce41de57e6efce8302930ded1c1188c5f81feb2bd6c24c4a1941f
+packages: Starlings.Models.Qwen35 0.1.0-preview.6, Starlings.Generation.OnnxGenAI 0.1.0-preview.6, Starlings.Tokenizers 0.3.0-preview.1, Starlings.Models.Qwen35.Extensions.AI 0.1.0-preview.6; GenAI managed 0.17.1, native Microsoft.ML.OnnxRuntimeGenAI.Cuda/0.17.1
+user: What is the capital of France? Answer in one sentence.
+assistant: The capital of France is Paris.
+[Stop; 24 prompt + 7 completion tokens; IChatClient]
+ok:   qwen3.5-0.8b/ortgenai-fp16x-cuda: offline on CUDA from the packed packages; the protected reference answer through the typed API and IChatClient
+
+== DRILL PASS (CPU runs skipped (--cuda-only), CUDA: multilingual-e5-small/onnx-fp32-cuda, gliner2-base-v1/onnx-fp32-cuda, embeddinggemma-2/onnx-fp32-cuda, embeddinggemma-2/image-fp32-cuda, embeddinggemma-2/video-fp32-cuda, qwen3.5-0.8b/ortgenai-fp32x-cuda, qwen3.5-0.8b/ortgenai-fp16x-cuda): Starlings 0.1.0-preview.6 + Tokenizers 0.3.0-preview.1 from 5b04d83684bb662f2488c332bd0faca814e3ec14 (packages and logs in artifacts/release-drill-ai/)

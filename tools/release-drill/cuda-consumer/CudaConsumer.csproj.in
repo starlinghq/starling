@@ -19,6 +19,9 @@
     <PackageReference Include="Starlings.Models.Gliner2" Version="[@VERSION@]" />
     <PackageReference Include="Starlings.Models.EmbeddingGemma2.Extensions.AI" Version="[@VERSION@]" />
     <PackageReference Include="Starlings.Models.EmbeddingGemma2.Imaging.SkiaSharp" Version="[@VERSION@]" />
+    <!-- Both video adapters (one per FFmpeg major); each run loads one of them on the user's own FFmpeg. -->
+    <PackageReference Include="Starlings.Models.EmbeddingGemma2.Video.FFmpeg" Version="[@VERSION@]" />
+    <PackageReference Include="Starlings.Models.EmbeddingGemma2.Video.FFmpeg9" Version="[@VERSION@]" />
     <PackageReference Include="Microsoft.ML.OnnxRuntime.Gpu.Linux" Version="1.30.0" />
   </ItemGroup>
 

@@ -5,10 +5,12 @@
 //   dotnet run -- download-images [--cache <dir>]                           explicit acquisition of the image graphs
 //   dotnet run -- images          [--cache <dir> | --snapshot <dir>] --images <dir> [query ...]
 //                                 offline: decodes the PNG and JPEG files of <dir>, ranks them for text queries
-//   dotnet run -- videos          [--cache <dir> | --snapshot <dir>] --videos <dir> [--ffmpeg <dir>] [query ...]
+//   dotnet run -- videos          [--cache <dir> | --snapshot <dir>] --videos <dir> [--ffmpeg <dir>] [--cuda] [query ...]
 //                                 offline: decodes the videos of <dir> with the FFmpeg adapter on your own FFmpeg 8.x
 //                                 shared libraries (--ffmpeg, else $STARLING_FFMPEG_DIR, else the system
-//                                 library path; none are shipped) and ranks them for text queries (image lock files)
+//                                 library path; none are shipped) and ranks them for text queries (image lock files).
+//                                 --cuda runs the model on CUDA device 0; the application then references
+//                                 Microsoft.ML.OnnxRuntime.Gpu.Linux in place of Microsoft.ML.OnnxRuntime
 //
 // Without --cache the files go to $STARLING_MODELS or the user cache directory. --snapshot verifies an existing directory
 // holding tokenizer.json, config_sentence_transformers.json and onnx/embeddinggemma2-text-fp32.onnx (images: also
@@ -41,7 +43,7 @@ async Task<int> ToolBody()
     {
         Console.Error.WriteLine("usage: EmbeddingGemma2Search download [--cache <dir>] | search [--cache <dir> | --snapshot <dir>] [query ...]");
         Console.Error.WriteLine("       EmbeddingGemma2Search download-images [--cache <dir>] | images [--cache <dir> | --snapshot <dir>] --images <dir> [query ...]");
-        Console.Error.WriteLine("       EmbeddingGemma2Search videos [--cache <dir> | --snapshot <dir>] --videos <dir> [--ffmpeg <FFmpeg 8 lib dir>] [query ...]");
+        Console.Error.WriteLine("       EmbeddingGemma2Search videos [--cache <dir> | --snapshot <dir>] --videos <dir> [--ffmpeg <FFmpeg 8 lib dir>] [--cuda] [query ...]");
         return 2;
     }
 
@@ -50,6 +52,7 @@ async Task<int> ToolBody()
     string? imageDirectory = null;
     string? videoDirectory = null;
     string? ffmpegDirectory = null;
+    bool cuda = false;
     var rest = new List<string>();
     for (int i = 1; i < args.Length; i++)
     {
@@ -69,6 +72,9 @@ async Task<int> ToolBody()
                 break;
             case "--ffmpeg" when i + 1 < args.Length:
                 ffmpegDirectory = args[++i];
+                break;
+            case "--cuda":
+                cuda = true;
                 break;
             default:
                 rest.Add(args[i]);
@@ -119,7 +125,7 @@ async Task<int> ToolBody()
 
     if (args[0] == "videos")
     {
-        return await SearchVideosAsync(acquisition, snapshot, videoDirectory, ffmpegDirectory, rest);
+        return await SearchVideosAsync(acquisition, snapshot, videoDirectory, ffmpegDirectory, cuda, rest);
     }
 
     // 2. Offline load: verifies the files (size and SHA-256) and never downloads.
@@ -274,7 +280,7 @@ async Task<int> ToolBody()
     // Text to video: videos decoded with the FFmpeg adapter on the user's own FFmpeg 8.x (torchcodec's metadata, sampling at
     // 1 frame per second up to 32 frames, torchcodec's RGB), embedded alone and without a prompt; queries with the query
     // prompt on the released text graph.
-    static async Task<int> SearchVideosAsync(ModelAcquisitionOptions acquisition, string? snapshot, string? videoDirectory, string? ffmpegDirectory, List<string> rest)
+    static async Task<int> SearchVideosAsync(ModelAcquisitionOptions acquisition, string? snapshot, string? videoDirectory, string? ffmpegDirectory, bool cuda, List<string> rest)
     {
         if (videoDirectory is null)
         {
@@ -298,8 +304,17 @@ async Task<int> ToolBody()
             ? EmbeddingGemma2ModelAssets.OpenLocalImageAssets(acquisition)
             : EmbeddingGemma2ModelAssets.OpenImageDirectory(snapshot);
 
-        // CPU: frame batches equal single frames bit for bit, so larger vision calls only trade memory for speed.
-        using var embedder = EmbeddingGemma2MultimodalEmbedder.Create(files, new EmbeddingGemma2MultimodalOptions { MaxVideoFramesPerVisionCall = 8, MaxVisionBatchPatches = 8 * 1_260 });
+        // CPU: frame batches equal single frames bit for bit, so larger vision calls only trade memory for speed. CUDA: the
+        // package defaults (two frames per vision call), device 0, TF32 off (Starlings.Runtime.Onnx always sets it).
+        using var embedder = EmbeddingGemma2MultimodalEmbedder.Create(files, cuda
+            ? new EmbeddingGemma2MultimodalOptions { Session = new OnnxSessionOptions { Provider = OnnxExecutionProvider.Cuda, CudaDeviceId = 0 } }
+            : new EmbeddingGemma2MultimodalOptions { MaxVideoFramesPerVisionCall = 8, MaxVisionBatchPatches = 8 * 1_260 });
+        Console.WriteLine($"onnxruntime: native {OnnxRuntimeInfo.NativeVersion}, managed {OnnxRuntimeInfo.ManagedVersion}, providers available {string.Join(",", OnnxRuntimeInfo.AvailableProviders)}");
+        foreach (var (name, session) in new[] { ("vision", embedder.VisionSession), ("multimodal text", embedder.MultimodalSession) })
+        {
+            OnnxSessionDiagnostics d = session.Diagnostics;
+            Console.WriteLine($"session {name}: providers {string.Join(",", d.SessionProviders)}; options {string.Join(", ", d.ProviderOptions.OrderBy(kv => kv.Key, StringComparer.Ordinal).Select(kv => $"{kv.Key}={kv.Value}"))}; model sha256 {d.ModelSha256}");
+        }
         string[] paths = [.. Directory.EnumerateFiles(videoDirectory)
             .Where(p => Path.GetExtension(p).ToLowerInvariant() is ".mp4" or ".webm" or ".mkv" or ".mov")
             .Order(StringComparer.Ordinal)];

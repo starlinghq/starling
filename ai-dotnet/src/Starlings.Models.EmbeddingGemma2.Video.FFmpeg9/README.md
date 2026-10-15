@@ -54,11 +54,11 @@ As the FFmpeg 8 package (its README has the full table): torchcodec 0.17.0's pac
 | Decoded RGB of every frame, 22 videos (5,367 frames; H.264 High and High 10, HEVC, VP9, AV1; BT.601, BT.709, full range, untagged; rotation 90; odd 321x179) | exact against torchcodec 0.17.0 on FFmpeg 9.0.1 | experimental |
 | Seekable stream and in-memory input vs file | identical metadata and frames | experimental |
 | Loader: missing directory, other major, license classification, GPL build refused without `AllowNonLgplBuild` | typed errors | experimental |
-| LGPL FFmpeg 9 build | the evidence used the machine's distribution build (GPL, `AllowNonLgplBuild`); decoding does not depend on the license flags, but no LGPL 9.x build was run | untested |
+| LGPL FFmpeg 9 build | the BtbN LGPL shared build n9.0.2-28-g669f5ab083 (2026-10-15): every frame of the 22 fixture videos equal to torchcodec's digests (adapter tests: 26 passed, the edge-case and FFmpeg-8-only release tests skipped), and the sampled frames of the 4 release videos (G1) | experimental |
 | Rotation -90 and 180, variable frame rate, interlaced, HDR | every frame of the generated edge-case videos equal to torchcodec's digests on FFmpeg 9.0.1 | experimental |
 | Other CPUs | as for FFmpeg 8 | untested |
 
-torchcodec 0.17.0 on FFmpeg 9.0.1 decodes every frame of the fixture videos to the same RGB as on FFmpeg 8.1 (the protected digests), so the FFmpeg 9 gate is the same digests (`model-pipeline/reference/embeddinggemma2/torchcodec_eg2_frames.py`). The binding tolerance section `decoder_ffmpeg9` is proposed for the maintainer (`model-pipeline/proposed/embeddinggemma-2/decoder-ffmpeg9/`); until it is committed, the tests hold this adapter to exact and `model-pipeline evaluate` adds no FFmpeg 9 check.
+torchcodec 0.17.0 on FFmpeg 9.0.1 decodes every frame of the fixture videos to the same RGB as on FFmpeg 8.1 (the protected digests), so the FFmpeg 9 gate is the same digests (`model-pipeline/reference/embeddinggemma2/torchcodec_eg2_frames.py`). The binding tolerance section `decoder_ffmpeg9` (exact) is protected since 2026-10-15 (`model-pipeline/protected/embeddinggemma-2/decoder-ffmpeg9/`, appended to both video profiles' `tolerances.yaml`): the tests read it, and `model-pipeline evaluate` checks the FFmpeg 9 frames in G1 next to the FFmpeg 8 ones.
 
 ## Licenses and patents
 

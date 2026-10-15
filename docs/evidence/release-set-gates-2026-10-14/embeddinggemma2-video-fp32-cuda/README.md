@@ -53,3 +53,23 @@ dotnet <Starlings.Fidelity.Tool.Cuda build>/Starlings.Fidelity.Tool.dll retrieva
 model-pipeline evaluate model-pipeline/registry/embeddinggemma-2/video-fp32-cuda/manifest.yaml --g3 retrieval \
   --dataset $SET --results <run>/embeddings.jsonl --out <run>/g3-retrieval
 ```
+
+## FFmpeg 9 decoder check (2026-10-15): G1 and G2 passed
+
+#64 (protected-change) committed the `decoder_ffmpeg9` bound (decoded RGB exact against torchcodec on FFmpeg 9) to both video profiles' `tolerances.yaml`. Since then `model-pipeline evaluate` adds `tokenizer.decoder_ffmpeg9_frame_sha256` to G1, and G1 is not-run without FFmpeg 9 frames. So G1 and G2 were run again with both adapters in one evaluation: `embeddinggemma2-videos --ffmpeg <FFmpeg 8> --ffmpeg9 <FFmpeg 9>`.
+
+| Gate | Result | Key numbers (bound) | Report |
+| --- | --- | --- | --- |
+| G1 | **passed** | ids 11/11; frame indices 12/12; decoded frames, resized pixels, pixel values and positions exact. `tokenizer.decoder_frame_sha256` (FFmpeg 8.1.3) exact 12/12, and **`tokenizer.decoder_ffmpeg9_frame_sha256` (FFmpeg 9.0.2) exact 12/12** | [`g1-g2-video-release-ffmpeg9/report.md`](g1-g2-video-release-ffmpeg9/report.md) |
+| G2 | **passed** | embedding max abs 2.77e-6 (1e-5), min cosine 0.999999999818; soft tokens 2.50e-4 and token embeddings 7.97e-4 row-relative (1e-3); batches vs single 0 and 4.64e-7 (1e-5) | same |
+
+- **Run.** At `38567c2`, this change's branch on `main` after #64. That commit disappears with the squash merge. Its `ai-dotnet/tools` is tree `8f81071d5dfe06e8c170f00957cd79b6586a4896`, the same as in the merged change, and its `ai-dotnet/src` differs only in the FFmpeg 9 adapter's README. On CUDA (`Starlings.Fidelity.Tool.Cuda --device cuda:0`, RTX 3090 as GPU 0, `CUDA_DEVICE_ORDER=PCI_BUS_ID CUDA_VISIBLE_DEVICES=0`, `use_tf32: 0`); .NET dump 58 s. The evaluator verified the protected evidence, and nothing under `protected/` changed.
+- **FFmpeg.** FFmpeg 8 was the pinned `n8.1.3-17-gc389840894` LGPL shared build. FFmpeg 9 was the BtbN LGPL shared build `n9.0.2-28-g669f5ab083` (release `autobuild-2026-10-15-13-03`, archive SHA-256 `5838264a2cff06ddc6b7b2fc43edeb51358ead38fd56d82f83f49c270fe0f5ff`), loaded without `--ffmpeg-allow-non-lgpl`. The 4 release videos (2 Ogg Theora, 2 WebM) decode to the protected sampled-frame digests on both majors. That includes `commons-video-02`'s frame after torchcodec's seek.
+- **Reference tensors.** The 6-thread regeneration recorded above (every `.npz` checked against `tensors.json`).
+
+```sh
+dotnet <Starlings.Fidelity.Tool.Cuda build>/Starlings.Fidelity.Tool.dll embeddinggemma2-videos --out <run>/stages --videos <media dir> \
+  --ffmpeg <FFmpeg n8.1.3 LGPL>/lib --ffmpeg9 <FFmpeg n9.0.2 LGPL>/lib --fixtures $REL --threads 4 --device cuda:0
+model-pipeline evaluate model-pipeline/registry/embeddinggemma-2/video-fp32-cuda/manifest.yaml --fixtures $REL \
+  --results <run>/stages --out <report> --reference-tensors <tensors> --require-gates G1,G2
+```
