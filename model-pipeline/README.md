@@ -225,20 +225,20 @@ generation:
 
 The dataset digest is the SHA-256 over `<file name>\0<file sha256>\n` of `queries.jsonl`, `corpus.jsonl`, `qrels.jsonl` (retrieval), of the gold file (NER) or of the prompts file (generation); every report prints it. A budget may instead name the same digest taken over those files followed by the `dataset.json` beside them (`dataset.sha256_with_metadata` in the report). That is the form in which the accepted P-030 retrieval and NER budgets were computed. Both forms pin the same data bytes, and the second also pins the metadata. The report says which form the budget matched (`budget.matched_form`: `data` or `data+metadata`). Candidate files carry outputs only: a `threshold`-like key is refused (exit 3).
 
-### Retrieval (e5, EmbeddingGemma 2)
+### Retrieval (e5, EmbeddingGemma 2 text, image and video)
 
 Dataset: a directory with
 
 | File | One JSON object per line |
 | --- | --- |
 | `queries.jsonl` | `{"id": str, "text": str}` |
-| `corpus.jsonl` | `{"id": str, "text": str}` (only `text` is embedded) |
+| `corpus.jsonl` | `{"id": str, "text": str}` (only `text` is embedded); or, for an image or video corpus, `{"id": str, "file": str, "sha256": str}`: a media file outside the repository, which the producer verifies by SHA-256 before embedding (so the dataset digest pins the media bytes). Text and media rows do not mix. |
 | `qrels.jsonl` | `{"query_id": str, "doc_id": str, "relevance": int >= 0}`; every query needs at least one judgment above 0 |
-| `dataset.json` (optional) | name, status, provenance, license; copied into the report |
+| `dataset.json` (optional; required for a media corpus) | name, status, provenance, license; `"modality": "image" \| "video"` for a media corpus, whose profile manifest must have the matching `image-embedding` or `video-embedding` task; copied into the report |
 
 Candidate (`--results`, and `--baseline`): JSON lines `{"kind": "query" | "document", "id": str, "embedding": [float], "prompt": str (optional)}`, one per query and document of the dataset, same dimension, finite. The producer applies the model's prompts (e5 `query: ` / `passage: `; EmbeddingGemma 2 query and document prompts). Producer: `dotnet run --project ai-dotnet/tools/Starlings.Fidelity.Tool -c Release -- retrieval --model e5|embeddinggemma2 --dataset <dir> --out <file>`; the reference runners can write the same format.
 
-Metrics: exhaustive ranking by cosine similarity (ties by document id); per query, then averaged: `ndcg@10` (gain = relevance, log2 discount, as trec_eval and BEIR), `recall@1|5|10|100` (relevant = relevance > 0), `mrr@10`. With `--baseline <fp32 embeddings>`: `top10_overlap_vs_baseline.mean` and `.min`, per query |top 10 of the candidate ∩ top 10 of the baseline| / 10, the browser int8 metric. Image and video retrieval use the same format once a producer embeds media.
+Metrics: exhaustive ranking by cosine similarity (ties by document id); per query, then averaged: `ndcg@10` (gain = relevance, log2 discount, as trec_eval and BEIR), `recall@1|5|10|100` (relevant = relevance > 0), `mrr@10`. With `--baseline <fp32 embeddings>`: `top10_overlap_vs_baseline.mean` and `.min`, per query |top 10 of the candidate ∩ top 10 of the baseline| / 10, the browser int8 metric. Image and video retrieval (text queries against a media corpus) use the same candidate format and metrics; the producer is `retrieval --model embeddinggemma2-image|embeddinggemma2-video --dataset <dir> --media <dir> --out <file>` (queries with the `query` prompt through the multimodal embedder, media without a prompt), and the upstream reference is `reference/embeddinggemma2/reference_eg2_media_retrieval.py`.
 
 ### Named-entity recognition (GLiNER2)
 
