@@ -1,0 +1,13 @@
+## embeddinggemma-2/video-fp32-cuda: FAIL
+comparison: python onnxruntime-gpu, same graphs, decoded frames
+- preprocess_share_of_embed_max = 0.05: fail
+    warm/video/video-preprocess-only:h264-bars-640x360-30fps-5s: 0.137 [0.134, 0.140] FAIL
+    warm/video/video-preprocess-only:h264-1080p-1920x1080-30fps-4s: 0.363 [0.353, 0.371] FAIL
+    warm/video/video-preprocess-only:h264-long-320x240-30fps-40s: 0.111 [0.108, 0.116] FAIL
+- warm_median_ratio_max = 1.1: fail
+    warm/video/video-1080p-b1/c1: 1.229 [1.201, 1.277] FAIL
+    warm/video/video-32-frames-b1/c1: 1.042 [1.032, 1.053] pass
+    warm/video/video-b1/c1: 1.045 [0.854, 1.252] pass
+    warm/video/video-b4/c1: 1.031 [1.022, 1.048] pass
+    warm/video/video-text-interleaved/c1: 1.082 [1.046, 1.125] pass
+- not qualifying G5 evidence (0 run-protocol reason(s)):

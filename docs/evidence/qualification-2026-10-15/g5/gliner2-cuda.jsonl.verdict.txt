@@ -1,0 +1,21 @@
+## gliner2-base-v1/onnx-fp32-cuda: FAIL
+comparison: python onnxruntime-gpu on the same inputs (inference stage)
+- prepare_plus_decode_share_of_inference_max = 0.05: fail
+    warm/text/short-l1/c1: 0.093 [0.090, 0.095] FAIL
+    warm/text/short-l12/c1: 0.044 [0.043, 0.045] pass
+    warm/text/short-l2-b8/c1: 0.080 [0.078, 0.081] FAIL
+    warm/text/short-l3/c1: 0.127 [0.122, 0.130] FAIL
+    warm/text/short-l5/c1: 0.105 [0.094, 0.139] FAIL
+    warm/text/words100-l3/c1: 0.085 [0.083, 0.088] FAIL
+    warm/text/words250-l3/c1: 0.104 [0.100, 0.109] FAIL
+    warm/text/words400-l3/c1: 0.109 [0.105, 0.115] FAIL
+- inference_ratio_max = 1.1: pass
+    warm/text/short-l1/c1: 1.010 [0.995, 1.024] pass
+    warm/text/short-l12/c1: 1.009 [0.991, 1.033] pass
+    warm/text/short-l2-b8/c1: 0.981 [0.978, 0.987] pass
+    warm/text/short-l3/c1: 1.021 [1.004, 1.036] pass
+    warm/text/short-l5/c1: 1.013 [0.997, 1.023] pass
+    warm/text/words100-l3/c1: 0.985 [0.983, 0.988] pass
+    warm/text/words250-l3/c1: 0.982 [0.978, 0.986] pass
+    warm/text/words400-l3/c1: 0.985 [0.981, 0.987] pass
+- not qualifying G5 evidence (0 run-protocol reason(s)):

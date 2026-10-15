@@ -1,0 +1,61 @@
+2026-10-14T21:54:58-07:00 commit 683457f
+2026-10-14T21:55:14-07:00 soak start gliner2 cpu MALLOC_MMAP_THRESHOLD_=65536
+2026-10-14T22:55:18-07:00 soak end gliner2 cpu exit 0: [gliner2] PASS: every gating settled series plateaus after warmup; no wrong output or error; wrote /home/mark/.cache/starling-qualification/2026-10-15/soak/gliner2-cpu/gliner2-20261015T045514Z.json an
+2026-10-14T22:55:18-07:00 soak start embeddinggemma2-image cpu 
+2026-10-14T23:55:42-07:00 soak end embeddinggemma2-image cpu exit 0: [embeddinggemma2-image] PASS: every gating settled series plateaus after warmup; no wrong output or error (note: unloaded working_set retention 672 MB between loads, reused by the next load; unloaded 
+2026-10-14T23:55:42-07:00 soak start embeddinggemma2-video cpu 
+2026-10-15T00:55:58-07:00 soak end embeddinggemma2-video cpu exit 0: [embeddinggemma2-video] PASS: every gating settled series plateaus after warmup; no wrong output or error; wrote /home/mark/.cache/starling-qualification/2026-10-15/soak/embeddinggemma2-video-cpu/embe
+2026-10-15T00:55:58-07:00 soak start e5 cuda 
+2026-10-15T01:56:00-07:00 soak end e5 cuda exit 1: [e5] FAIL: unloaded working_set grows 167 MB (209 MB/h); unloaded rss_anon grows 167 MB (208 MB/h); loaded working_set grows 150 MB (188 MB/h); loaded rss_anon grows 150 MB (187 MB/h); wrote /home/mar
+2026-10-15T01:56:00-07:00 soak start gliner2 cuda MALLOC_MMAP_THRESHOLD_=65536
+2026-10-15T01:56:05-07:00 soak end gliner2 cuda exit 70: 
+2026-10-15T01:56:05-07:00 soak start embeddinggemma2 cuda 
+2026-10-15T02:56:11-07:00 soak end embeddinggemma2 cuda exit 0: [embeddinggemma2] PASS: every gating settled series plateaus after warmup; no wrong output or error; wrote /home/mark/.cache/starling-qualification/2026-10-15/soak/embeddinggemma2-cuda/embeddinggemma2
+2026-10-15T02:56:11-07:00 soak start embeddinggemma2-image cuda 
+2026-10-15T02:56:21-07:00 soak end embeddinggemma2-image cuda exit 70: 
+2026-10-15T02:56:21-07:00 soak start embeddinggemma2-video cuda 
+2026-10-15T02:56:31-07:00 soak end embeddinggemma2-video cuda exit 70: 
+2026-10-15T02:56:31-07:00 soak start qwen35 cuda 
+2026-10-15T03:56:40-07:00 soak end qwen35 cuda exit 0: [qwen35] PASS: every gating settled series plateaus after warmup; no wrong output or error; wrote /home/mark/.cache/starling-qualification/2026-10-15/soak/qwen35-cuda/qwen35-20261015T095631Z.json and 
+2026-10-15T03:56:40-07:00 soak start qwen35-fp16x cuda 
+2026-10-15T04:56:50-07:00 soak end qwen35-fp16x cuda exit 0: [qwen35-fp16x] PASS: every gating settled series plateaus after warmup; no wrong output or error; wrote /home/mark/.cache/starling-qualification/2026-10-15/soak/qwen35-fp16x-cuda/qwen35-fp16x-20261015
+2026-10-15T04:56:51-07:00 g5 start e5 cpu
+2026-10-15T05:30:03-07:00 g5 run end e5 cpu exit 0
+2026-10-15T05:30:09-07:00 g5 verdict e5 cpu exit 0:     warm/ids/short-b8/c1: -1.839 [-4.503, 2.062] limit 2.725 ms pass     warm/ids/short-b8/c4: -3.264 [-15.676, 16.397] limit 8.954 ms pass - qualifying: yes (run counts and clean checkout) 
+2026-10-15T05:30:09-07:00 g5 start eg2-text cpu
+2026-10-15T05:54:48-07:00 g5 run end eg2-text cpu exit 0
+2026-10-15T05:54:48-07:00 g5 verdict eg2-text cpu exit 0:     warm/text/words100-b1/c1: 1.083 [0.980, 1.454] pass     warm/text/words400-b1/c1: 1.023 [0.983, 1.707] pass - qualifying: yes (run counts and clean checkout) 
+2026-10-15T05:54:48-07:00 g5 start eg2-image cpu
+2026-10-15T07:11:02-07:00 g5 run end eg2-image cpu exit 0
+2026-10-15T07:11:03-07:00 g5 verdict eg2-image cpu exit 0:     warm/image/tiny-b1/c1: 0.997 [0.965, 1.065] pass     warm/image/two-images-interleaved/c1: 0.996 [0.971, 1.018] pass - qualifying: yes (run counts and clean checkout) 
+2026-10-15T07:11:03-07:00 g5 start eg2-video cpu
+2026-10-15T09:28:44-07:00 g5 run end eg2-video cpu exit 0
+2026-10-15T09:28:44-07:00 g5 verdict eg2-video cpu exit 0:     warm/video/video-b4/c1: 1.006 [0.981, 1.015] pass     warm/video/video-text-interleaved/c1: 1.024 [0.909, 1.104] pass - qualifying: yes (run counts and clean checkout) 
+2026-10-15T09:28:44-07:00 g5 start gliner2 cpu
+2026-10-15T09:38:13-07:00 g5 run end gliner2 cpu exit 0
+2026-10-15T09:38:16-07:00 g5 verdict gliner2 cpu exit 0:     warm/text/words250-l3/c1: 0.957 [0.847, 1.057] pass     warm/text/words400-l3/c1: 0.937 [0.667, 0.982] pass - qualifying: yes (run counts and clean checkout) 
+2026-10-15T09:38:16-07:00 g5 start qwen35 cpu
+2026-10-15T10:12:51-07:00 g5 run end qwen35 cpu exit 0
+2026-10-15T10:12:52-07:00 g5 verdict qwen35 cpu exit 1:     warm/ids/tools-decode32/c1: 0.982 [0.953, 1.077] pass     warm/text/short-decode64-text/c1: 0.952 [0.726, 1.492] pass - not qualifying G5 evidence (0 run-protocol reason(s)): 
+2026-10-15T10:12:52-07:00 g5 start e5 cuda
+2026-10-15T10:17:55-07:00 g5 run end e5 cuda exit 0
+2026-10-15T10:18:03-07:00 g5 verdict e5 cuda exit 0:     warm/text/short-b8/c1: 0.900 [0.884, 0.918] pass     warm/text/short-b8/c4: 0.926 [0.881, 0.987] pass - qualifying: yes (run counts and clean checkout) 
+2026-10-15T10:18:03-07:00 g5 start eg2-text cuda
+2026-10-15T10:22:47-07:00 g5 run end eg2-text cuda exit 0
+2026-10-15T10:22:47-07:00 g5 verdict eg2-text cuda exit 0:     warm/text/words100-b1/c1: 1.001 [0.936, 1.042] pass     warm/text/words400-b1/c1: 0.957 [0.951, 0.963] pass - qualifying: yes (run counts and clean checkout) 
+2026-10-15T10:22:47-07:00 g5 start eg2-image cuda
+2026-10-15T10:34:16-07:00 g5 run end eg2-image cuda exit 0
+2026-10-15T10:34:17-07:00 g5 verdict eg2-image cuda exit 1:     warm/image/tiny-b1/c1: 1.026 [0.973, 1.078] pass     warm/image/two-images-interleaved/c1: 1.063 [1.058, 1.068] pass - not qualifying G5 evidence (0 run-protocol reason(s)): 
+2026-10-15T10:34:17-07:00 g5 start eg2-video cuda
+2026-10-15T10:47:46-07:00 g5 run end eg2-video cuda exit 0
+2026-10-15T10:47:46-07:00 g5 verdict eg2-video cuda exit 1:     warm/video/video-b4/c1: 1.031 [1.022, 1.048] pass     warm/video/video-text-interleaved/c1: 1.082 [1.046, 1.125] pass - not qualifying G5 evidence (0 run-protocol reason(s)): 
+2026-10-15T10:47:46-07:00 g5 start gliner2 cuda
+2026-10-15T10:52:07-07:00 g5 run end gliner2 cuda exit 0
+2026-10-15T10:52:09-07:00 g5 verdict gliner2 cuda exit 1:     warm/text/words250-l3/c1: 0.982 [0.978, 0.986] pass     warm/text/words400-l3/c1: 0.985 [0.981, 0.987] pass - not qualifying G5 evidence (0 run-protocol reason(s)): 
+2026-10-15T10:52:09-07:00 g5 start qwen35 cuda
+2026-10-15T10:59:11-07:00 g5 run end qwen35 cuda exit 0
+2026-10-15T10:59:12-07:00 g5 verdict qwen35 cuda exit 0:     warm/ids/tools-decode32/c1: 0.990 [0.940, 1.020] pass     warm/text/short-decode64-text/c1: 0.986 [0.806, 1.285] pass - qualifying: yes (run counts and clean checkout) 
+2026-10-15T10:59:12-07:00 g5 start qwen35-fp16x cuda
+2026-10-15T11:03:51-07:00 g5 run end qwen35-fp16x cuda exit 0
+2026-10-15T11:03:52-07:00 g5 verdict qwen35-fp16x cuda exit 0:     warm/ids/tools-decode32/c1: 0.996 [0.992, 1.000] pass     warm/text/short-decode64-text/c1: 1.025 [0.870, 1.448] pass - qualifying: yes (run counts and clean checkout) 
+2026-10-15T11:03:52-07:00 ALL DONE

@@ -1,0 +1,13 @@
+## embeddinggemma-2/image-fp32-cuda: FAIL
+comparison: python onnxruntime-gpu, same graphs
+- preprocess_share_of_embed_max = 0.05: fail
+    warm/image/preprocess-only:photo-chelsea: 0.083 [0.081, 0.088] FAIL
+    warm/image/preprocess-only:photo-coffee: 0.091 [0.087, 0.096] FAIL
+    warm/image/preprocess-only:size-huge-4000x3000: 0.475 [0.470, 0.482] FAIL
+- warm_median_ratio_max = 1.1: fail
+    warm/image/huge-b1/c1: 1.000 [0.990, 1.011] pass
+    warm/image/photo-b1/c1: 1.118 [1.106, 1.123] FAIL
+    warm/image/photo-b4/c1: 1.057 [1.053, 1.061] pass
+    warm/image/tiny-b1/c1: 1.026 [0.973, 1.078] pass
+    warm/image/two-images-interleaved/c1: 1.063 [1.058, 1.068] pass
+- not qualifying G5 evidence (0 run-protocol reason(s)):

@@ -172,10 +172,16 @@
           "status": "not-run"
         },
         "G4": {
-          "status": "not-run"
+          "status": "passed",
+          "evidence": "docs/evidence/qualification-2026-10-15/README.md",
+          "evidence_found": true,
+          "date": "2026-10-15"
         },
         "G5": {
-          "status": "not-run"
+          "status": "passed",
+          "evidence": "docs/evidence/qualification-2026-10-15/README.md",
+          "evidence_found": true,
+          "date": "2026-10-15"
         },
         "G6": {
           "status": "passed",
@@ -296,9 +302,7 @@
       "stable_readiness": {
         "ready": false,
         "gates_not_passed": [
-          "G3",
-          "G4",
-          "G5"
+          "G3"
         ],
         "untested_capabilities": []
       }
@@ -357,7 +361,10 @@
           "status": "not-run"
         },
         "G5": {
-          "status": "not-run"
+          "status": "failed",
+          "evidence": "docs/evidence/qualification-2026-10-15/README.md",
+          "evidence_found": true,
+          "date": "2026-10-15"
         },
         "G6": {
           "status": "passed",
@@ -543,7 +550,10 @@
           "date": "2026-10-14"
         },
         "G5": {
-          "status": "not-run"
+          "status": "passed",
+          "evidence": "docs/evidence/qualification-2026-10-15/README.md",
+          "evidence_found": true,
+          "date": "2026-10-15"
         },
         "G6": {
           "status": "passed",
@@ -662,10 +672,8 @@
         }
       },
       "stable_readiness": {
-        "ready": false,
-        "gates_not_passed": [
-          "G5"
-        ],
+        "ready": true,
+        "gates_not_passed": [],
         "untested_capabilities": []
       }
     },
@@ -722,10 +730,16 @@
           "date": "2026-10-14"
         },
         "G4": {
-          "status": "not-run"
+          "status": "passed",
+          "evidence": "docs/evidence/qualification-2026-10-15/README.md",
+          "evidence_found": true,
+          "date": "2026-10-15"
         },
         "G5": {
-          "status": "not-run"
+          "status": "passed",
+          "evidence": "docs/evidence/qualification-2026-10-15/README.md",
+          "evidence_found": true,
+          "date": "2026-10-15"
         },
         "G6": {
           "status": "passed",
@@ -844,11 +858,8 @@
         }
       },
       "stable_readiness": {
-        "ready": false,
-        "gates_not_passed": [
-          "G4",
-          "G5"
-        ],
+        "ready": true,
+        "gates_not_passed": [],
         "untested_capabilities": []
       }
     },
@@ -903,10 +914,16 @@
           "status": "not-run"
         },
         "G4": {
-          "status": "not-run"
+          "status": "passed",
+          "evidence": "docs/evidence/qualification-2026-10-15/README.md",
+          "evidence_found": true,
+          "date": "2026-10-15"
         },
         "G5": {
-          "status": "not-run"
+          "status": "passed",
+          "evidence": "docs/evidence/qualification-2026-10-15/README.md",
+          "evidence_found": true,
+          "date": "2026-10-15"
         },
         "G6": {
           "status": "checklist",
@@ -1026,8 +1043,6 @@
         "gates_not_passed": [
           "G0",
           "G3",
-          "G4",
-          "G5",
           "G6",
           "G7"
         ],
@@ -1088,7 +1103,10 @@
           "status": "not-run"
         },
         "G5": {
-          "status": "not-run"
+          "status": "failed",
+          "evidence": "docs/evidence/qualification-2026-10-15/README.md",
+          "evidence_found": true,
+          "date": "2026-10-15"
         },
         "G6": {
           "status": "not-run"
@@ -1265,10 +1283,16 @@
           "date": "2026-10-14"
         },
         "G4": {
-          "status": "not-run"
+          "status": "passed",
+          "evidence": "docs/evidence/qualification-2026-10-15/README.md",
+          "evidence_found": true,
+          "date": "2026-10-15"
         },
         "G5": {
-          "status": "not-run"
+          "status": "passed",
+          "evidence": "docs/evidence/qualification-2026-10-15/README.md",
+          "evidence_found": true,
+          "date": "2026-10-15"
         },
         "G6": {
           "status": "passed",
@@ -1388,11 +1412,8 @@
         }
       },
       "stable_readiness": {
-        "ready": false,
-        "gates_not_passed": [
-          "G4",
-          "G5"
-        ],
+        "ready": true,
+        "gates_not_passed": [],
         "untested_capabilities": []
       }
     },
@@ -1453,7 +1474,10 @@
           "status": "not-run"
         },
         "G5": {
-          "status": "not-run"
+          "status": "failed",
+          "evidence": "docs/evidence/qualification-2026-10-15/README.md",
+          "evidence_found": true,
+          "date": "2026-10-15"
         },
         "G6": {
           "status": "passed",
@@ -1637,10 +1661,10 @@
           "date": "2026-10-14"
         },
         "G5": {
-          "status": "checklist",
-          "evidence": "docs/benchmarks/e5-2026-10-09.md",
+          "status": "passed",
+          "evidence": "docs/evidence/qualification-2026-10-15/README.md",
           "evidence_found": true,
-          "date": "2026-10-09"
+          "date": "2026-10-15"
         },
         "G6": {
           "status": "passed",
@@ -1759,10 +1783,8 @@
         }
       },
       "stable_readiness": {
-        "ready": false,
-        "gates_not_passed": [
-          "G5"
-        ],
+        "ready": true,
+        "gates_not_passed": [],
         "untested_capabilities": []
       }
     },
@@ -1818,10 +1840,16 @@
           "date": "2026-10-14"
         },
         "G4": {
-          "status": "not-run"
+          "status": "failed",
+          "evidence": "docs/evidence/qualification-2026-10-15/README.md",
+          "evidence_found": true,
+          "date": "2026-10-15"
         },
         "G5": {
-          "status": "not-run"
+          "status": "passed",
+          "evidence": "docs/evidence/qualification-2026-10-15/README.md",
+          "evidence_found": true,
+          "date": "2026-10-15"
         },
         "G6": {
           "status": "passed",
@@ -1942,8 +1970,7 @@
       "stable_readiness": {
         "ready": false,
         "gates_not_passed": [
-          "G4",
-          "G5"
+          "G4"
         ],
         "untested_capabilities": []
       }
@@ -1999,13 +2026,16 @@
           "date": "2026-10-14"
         },
         "G4": {
-          "status": "checklist",
-          "evidence": "docs/evidence/p016-qwen35/README.md",
+          "status": "passed",
+          "evidence": "docs/evidence/qualification-2026-10-15/README.md",
           "evidence_found": true,
-          "date": "2026-10-10"
+          "date": "2026-10-15"
         },
         "G5": {
-          "status": "not-run"
+          "status": "passed",
+          "evidence": "docs/evidence/qualification-2026-10-15/README.md",
+          "evidence_found": true,
+          "date": "2026-10-15"
         },
         "G6": {
           "status": "passed",
@@ -2124,11 +2154,8 @@
         }
       },
       "stable_readiness": {
-        "ready": false,
-        "gates_not_passed": [
-          "G4",
-          "G5"
-        ],
+        "ready": true,
+        "gates_not_passed": [],
         "untested_capabilities": []
       }
     },
@@ -2187,7 +2214,10 @@
           "date": "2026-10-14"
         },
         "G5": {
-          "status": "not-run"
+          "status": "failed",
+          "evidence": "docs/evidence/qualification-2026-10-15/README.md",
+          "evidence_found": true,
+          "date": "2026-10-15"
         },
         "G6": {
           "status": "passed",
@@ -2364,13 +2394,16 @@
           "date": "2026-10-14"
         },
         "G4": {
-          "status": "checklist",
-          "evidence": "docs/evidence/p016-qwen35/README.md",
+          "status": "passed",
+          "evidence": "docs/evidence/qualification-2026-10-15/README.md",
           "evidence_found": true,
-          "date": "2026-10-10"
+          "date": "2026-10-15"
         },
         "G5": {
-          "status": "not-run"
+          "status": "passed",
+          "evidence": "docs/evidence/qualification-2026-10-15/README.md",
+          "evidence_found": true,
+          "date": "2026-10-15"
         },
         "G6": {
           "status": "passed",
@@ -2489,11 +2522,8 @@
         }
       },
       "stable_readiness": {
-        "ready": false,
-        "gates_not_passed": [
-          "G4",
-          "G5"
-        ],
+        "ready": true,
+        "gates_not_passed": [],
         "untested_capabilities": []
       }
     }

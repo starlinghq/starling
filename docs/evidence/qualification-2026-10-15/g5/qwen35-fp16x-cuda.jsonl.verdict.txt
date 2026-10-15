@@ -1,0 +1,13 @@
+## qwen3.5-0.8b/ortgenai-fp16x-cuda: PASS (G5 evidence)
+comparison: python onnxruntime-genai (CUDA), same bundle
+- decode_tokens_per_second_ratio_min = 0.95: pass
+    warm/ids/long-prefill/c1: 0.983 [0.929, 1.037] pass
+    warm/ids/short-decode64/c1: 1.001 [0.979, 1.022] pass
+    warm/ids/tools-decode32/c1: 0.998 [0.963, 1.028] pass
+    warm/text/short-decode64-text/c1: 0.985 [0.965, 1.013] pass
+- time_to_first_token_ratio_max = 1.1: pass
+    warm/ids/long-prefill/c1: 0.997 [0.995, 1.002] pass
+    warm/ids/short-decode64/c1: 0.987 [0.962, 1.032] pass
+    warm/ids/tools-decode32/c1: 0.996 [0.992, 1.000] pass
+    warm/text/short-decode64-text/c1: 1.025 [0.870, 1.448] pass
+- qualifying: yes (run counts and clean checkout)
