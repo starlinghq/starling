@@ -286,6 +286,50 @@ def test_semantics_failures(tmp_path):
     assert status(ev, "dotnet-text.concurrent_requests")["status"] == "failed"
 
 
+def test_semantics_of_another_fixture_are_refused(tmp_path):
+    # A semantics.json measured on other prompts (for example the development prompts during a release evaluation)
+    # cannot stand in for the evaluated fixture.
+    repo = Repo(tmp_path)
+    for sem in (
+        {"cached_vs_uncached": {"prompt": "en-list", "max_abs_logprob": 3e-5}},
+        {"chunked_prefill": {"long-license/128": {"tokens_equal_whole": True, "step0_max_abs_logprob_vs_whole": 0.0}}},
+        {"concurrency": {"interleaved_streams_prefix_equal": {"zh": True}}},
+        {"selection": {"cached_vs_uncached": {"case": "en-list"}}},
+    ):
+        repo.write_run(semantics=sem)
+        with pytest.raises(evaluate.EvaluationError, match="not in the fixture"):
+            repo.run()
+
+
+def test_fixture_semantics_with_selection_pass(tmp_path):
+    repo = Repo(tmp_path)
+    repo.write_run(
+        semantics={
+            "selection": {
+                "rule": "fixed rule",
+                "cached_vs_uncached": {"case": "b", "min_margin_12_steps": 0.5},
+                "concurrency_parallel": [{"case": "a"}, {"case": "b"}],
+                "chunked_prefill": [{"case": "a", "chunk": 7, "prompt_tokens": 9}],
+            },
+            "cached_vs_uncached": {
+                "prompt": "b",
+                "max_abs_logprob": 3e-5,
+                "steps": 12,
+                "generated_equals_reference_prefix": True,
+            },
+            "chunked_prefill": {
+                "a/7": {"whole_prefill_error": None, "tokens_equal_whole": True, "step0_max_abs_logprob_vs_whole": 0.0}
+            },
+            "concurrency": {
+                "parallel_two_threads_prefix_equal": {"a": True, "b": True},
+                "interleaved_streams_prefix_equal": {"a": True},
+            },
+        }
+    )
+    ev = repo.run()
+    assert ev.report["gates"]["G2"]["status"] == "passed", ev.report["gates"]
+
+
 def test_missing_case_fails(tmp_path):
     repo = Repo(tmp_path)
     repo.write_run()

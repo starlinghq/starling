@@ -1,0 +1,337 @@
+{
+  "format": "starlings.fidelity-report",
+  "format_version": 2,
+  "task": "generation",
+  "profile": "qwen3.5-0.8b/ortgenai-fp32x-cpu",
+  "date": "2026-10-15",
+  "evaluator": {
+    "name": "model-pipeline evaluate",
+    "version": "0.1.0",
+    "repository_commit": "e3601881c87ad35f48f015c24dd6638a7abab684"
+  },
+  "inputs": {
+    "manifest": {
+      "path": "model-pipeline/registry/qwen3.5-0.8b/ortgenai-fp32x-cpu/manifest.yaml",
+      "sha256": "1a2452ca841168ecf2c8e0c50dfc35d81b5f79df1a27c8747d21fb6834ef642e"
+    },
+    "tolerances": {
+      "path": "model-pipeline/protected/qwen3.5-0.8b/ortgenai-fp32x-cpu/tolerances.yaml",
+      "sha256": "656fd8acdbaf17fd5f6fbb1fc8ab354ef8d862082fac05ba9874672b8765c5e8"
+    },
+    "fixtures_directory": {
+      "path": "model-pipeline/protected/qwen3.5-0.8b/release/release-prompts/reference",
+      "source": "--fixtures"
+    },
+    "fixtures": [
+      {
+        "path": "model-pipeline/protected/qwen3.5-0.8b/release/release-prompts/reference/generation.jsonl",
+        "sha256": "506c543e766bbf307212e74d8cf053a951f8840236fc019fc430c1c50dd6647b"
+      },
+      {
+        "path": "model-pipeline/protected/qwen3.5-0.8b/release/release-prompts/reference/environment.json",
+        "sha256": "351cf051544ca97f634bb83365d1c122141f13cbe821c2b40d669cb6004aaa87"
+      }
+    ],
+    "results": {
+      "results.jsonl": {
+        "path": "/home/mark/.cache/starling-release-refs/runs/qwen-fp32x-cpu/run/results.jsonl",
+        "sha256": "e1f8dd5fdb3e25a3c9049e12f337eec6b69b224864581207feff6cd3ea5be894"
+      },
+      "semantics.json": {
+        "path": "/home/mark/.cache/starling-release-refs/runs/qwen-fp32x-cpu/run/semantics.json",
+        "sha256": "6aa52ce026ab312ff4280e8b7c9bfc0d34311ddfb68835b982b48ce61869ba7c"
+      },
+      "environment.json": {
+        "path": "/home/mark/.cache/starling-release-refs/runs/qwen-fp32x-cpu/run/environment.json",
+        "sha256": "b0562572b810677b3f5ed93d0aaf98169d290a3cbd7a00180ddddcb4b483e15d"
+      },
+      "runner": "ai-dotnet/tools/Starlings.Qwen35.Fidelity",
+      "backend": "df-qwen35-cpu-ortgenai-fp32x",
+      "source_revision": "e3601881c87ad35f48f015c24dd6638a7abab684"
+    }
+  },
+  "protected_evidence": {
+    "status": "verified",
+    "base": "a82604b3a6aa2df2e71c8ea936bd16c2c679fd1f",
+    "detail": "merge base of HEAD and origin/main",
+    "changed": [],
+    "sha256": {
+      "model-pipeline/protected/qwen3.5-0.8b/ortgenai-fp32x-cpu/tolerances.yaml": "656fd8acdbaf17fd5f6fbb1fc8ab354ef8d862082fac05ba9874672b8765c5e8",
+      "model-pipeline/protected/qwen3.5-0.8b/release/release-prompts/reference/generation.jsonl": "506c543e766bbf307212e74d8cf053a951f8840236fc019fc430c1c50dd6647b",
+      "model-pipeline/protected/qwen3.5-0.8b/release/release-prompts/reference/environment.json": "351cf051544ca97f634bb83365d1c122141f13cbe821c2b40d669cb6004aaa87"
+    }
+  },
+  "report_only_metrics": [],
+  "stages": {
+    "tokenizer": "passed",
+    "export": "incomplete",
+    "dotnet-ids": "passed",
+    "dotnet-text": "passed"
+  },
+  "first_divergence": null,
+  "findings": [],
+  "gates": {
+    "G1": {
+      "status": "passed",
+      "reason": "every check passed or is not applicable by the manifest"
+    },
+    "G2": {
+      "status": "passed",
+      "reason": "every check passed or is not applicable by the manifest"
+    }
+  },
+  "manifest_gates": {
+    "G1": {
+      "status": "passed",
+      "date": "2026-10-15"
+    },
+    "G2": {
+      "status": "passed",
+      "date": "2026-10-15"
+    }
+  },
+  "checks": [
+    {
+      "id": "dotnet-ids.identity",
+      "stage": "dotnet",
+      "substage": "dotnet-ids",
+      "gate": "G2",
+      "title": "Runner identity and fed prompt ids",
+      "tolerance_key": null,
+      "bound": null,
+      "status": "passed",
+      "metrics": {
+        "cases": 32,
+        "environment": true
+      },
+      "detail": ""
+    },
+    {
+      "id": "tokenizer.template_rendering",
+      "stage": "tokenizer",
+      "substage": "tokenizer",
+      "gate": "G1",
+      "title": "Owned template rendering exact",
+      "tolerance_key": "discrete.template_rendering",
+      "bound": "exact",
+      "status": "passed",
+      "metrics": {
+        "compared": 32,
+        "failed": 0,
+        "excluded_by_contract": []
+      },
+      "detail": ""
+    },
+    {
+      "id": "tokenizer.prompt_ids",
+      "stage": "tokenizer",
+      "substage": "tokenizer",
+      "gate": "G1",
+      "title": "Owned tokenizer ids exact",
+      "tolerance_key": "discrete.prompt_ids",
+      "bound": "exact",
+      "status": "passed",
+      "metrics": {
+        "compared": 32,
+        "failed": 0,
+        "excluded_by_contract": []
+      },
+      "detail": ""
+    },
+    {
+      "id": "dotnet-ids.greedy_ids",
+      "stage": "dotnet",
+      "substage": "dotnet-ids",
+      "gate": "G2",
+      "title": "Greedy ids against the reference",
+      "tolerance_key": "discrete.greedy_ids",
+      "bound": "exact_except_listed_margin_below_1e-3",
+      "status": "passed",
+      "metrics": {
+        "exact": 32,
+        "compared": 32,
+        "divergences": []
+      },
+      "detail": ""
+    },
+    {
+      "id": "dotnet-ids.finish_reason",
+      "stage": "dotnet",
+      "substage": "dotnet-ids",
+      "gate": "G2",
+      "title": "Finish reason",
+      "tolerance_key": "discrete.finish_reason",
+      "bound": "equal",
+      "status": "passed",
+      "metrics": {
+        "equal": 32,
+        "compared": 32
+      },
+      "detail": ""
+    },
+    {
+      "id": "dotnet-ids.nan_or_inf",
+      "stage": "dotnet",
+      "substage": "dotnet-ids",
+      "gate": "G2",
+      "title": "Step-0 log-probabilities finite",
+      "tolerance_key": "float.nan_or_inf",
+      "bound": "fail",
+      "status": "passed",
+      "metrics": {
+        "non_finite_cases": []
+      },
+      "detail": ""
+    },
+    {
+      "id": "dotnet-ids.step0_argmax",
+      "stage": "dotnet",
+      "substage": "dotnet-ids",
+      "gate": "G2",
+      "title": "Step-0 argmax",
+      "tolerance_key": "discrete.step0_argmax",
+      "bound": "equal",
+      "status": "passed",
+      "metrics": {
+        "equal": 32
+      },
+      "detail": ""
+    },
+    {
+      "id": "dotnet-ids.step0_top5_logprob",
+      "stage": "dotnet",
+      "substage": "dotnet-ids",
+      "gate": "G2",
+      "title": "Step-0 log-probability, reference top 5",
+      "tolerance_key": "float.step0_top5_logprob_max_abs",
+      "bound": 0.002,
+      "status": "passed",
+      "metrics": {
+        "max_abs": 0.000453948974609375,
+        "worst_case": "oasst1-b30fb622"
+      },
+      "detail": ""
+    },
+    {
+      "id": "dotnet-ids.step0_logprob",
+      "stage": "dotnet",
+      "substage": "dotnet-ids",
+      "gate": "G2",
+      "title": "Step-0 log-probability, full vocabulary",
+      "tolerance_key": "float.step0_logprob_max_abs",
+      "bound": 0.005,
+      "status": "passed",
+      "metrics": {
+        "top64_max_abs": 0.00058746337890625,
+        "full_vocabulary_max_abs": 0.000926971435546875,
+        "worst_case": "oasst1-b30fb622"
+      },
+      "detail": ""
+    },
+    {
+      "id": "dotnet-ids.streaming_reassembly",
+      "stage": "dotnet",
+      "substage": "dotnet-ids",
+      "gate": "G2",
+      "title": "Streaming reassembly",
+      "tolerance_key": "discrete.streaming_reassembly",
+      "bound": "exact",
+      "status": "passed",
+      "metrics": {
+        "failed": []
+      },
+      "detail": ""
+    },
+    {
+      "id": "dotnet-ids.usage",
+      "stage": "dotnet",
+      "substage": "dotnet-ids",
+      "gate": "G2",
+      "title": "Usage counts",
+      "tolerance_key": "discrete.usage",
+      "bound": "exact",
+      "status": "passed",
+      "metrics": {
+        "failed": []
+      },
+      "detail": ""
+    },
+    {
+      "id": "dotnet-ids.provider_options",
+      "stage": "dotnet",
+      "substage": "dotnet-ids",
+      "gate": "G2",
+      "title": "Provider options equal the tolerances",
+      "tolerance_key": "provider_options",
+      "bound": {},
+      "status": "passed",
+      "metrics": {
+        "runner": {}
+      },
+      "detail": ""
+    },
+    {
+      "id": "dotnet-text.cached_vs_uncached",
+      "stage": "dotnet",
+      "substage": "dotnet-text",
+      "gate": "G2",
+      "title": "Cached vs uncached decoding logits",
+      "tolerance_key": "float.cached_vs_uncached_logprob_max_abs",
+      "bound": 0.0002,
+      "status": "passed",
+      "metrics": {
+        "max_abs": 2.6702880859375e-05,
+        "steps": 12,
+        "generated_equals_reference_prefix": true
+      },
+      "detail": ""
+    },
+    {
+      "id": "dotnet-text.chunked_prefill",
+      "stage": "dotnet",
+      "substage": "dotnet-text",
+      "gate": "G2",
+      "title": "Chunked vs one-call prefill, step 0",
+      "tolerance_key": "float.chunked_vs_one_call_prefill_logprob_max_abs",
+      "bound": 0.0001,
+      "status": "passed",
+      "metrics": {
+        "max_abs": 0.0,
+        "measured": [
+          "oasst1-330fc1cf/32",
+          "oasst1-330fc1cf/64",
+          "oasst1-3c5b52fd/7"
+        ],
+        "not_measured": {}
+      },
+      "detail": ""
+    },
+    {
+      "id": "dotnet-text.concurrent_requests",
+      "stage": "dotnet",
+      "substage": "dotnet-text",
+      "gate": "G2",
+      "title": "Concurrent and interleaved requests equal the reference",
+      "tolerance_key": "discrete.concurrent_requests",
+      "bound": "equal_to_sequential",
+      "status": "passed",
+      "metrics": {
+        "results": {
+          "parallel_two_threads_prefix_equal/oasst1-e4c5240b": true,
+          "parallel_two_threads_prefix_equal/oasst1-c2883e98": true,
+          "parallel_two_threads_prefix_equal/oasst1-b426a32f": true,
+          "parallel_two_threads_prefix_equal/oasst1-0514ed04": true,
+          "interleaved_streams_prefix_equal/oasst1-b30fb622": true,
+          "interleaved_streams_prefix_equal/oasst1-68a06244": true
+        }
+      },
+      "detail": ""
+    }
+  ],
+  "greedy_divergences": [],
+  "excluded_by_contract": {},
+  "reference_tensors": {
+    "directory": "/home/mark/.cache/starling-release-refs/qwen-release-t6"
+  },
+  "exit_code": 0
+}

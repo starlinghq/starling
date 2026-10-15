@@ -1971,8 +1971,8 @@
           "date": "2026-10-14"
         },
         "G2": {
-          "status": "checklist",
-          "evidence": "docs/evidence/cuda-qualification-2026-10-14/qwen35-ortgenai-fp16x-cuda/README.md",
+          "status": "passed",
+          "evidence": "docs/evidence/release-set-gates-2026-10-14/qwen35-ortgenai-fp16x-cuda/README.md",
           "evidence_found": true,
           "date": "2026-10-14"
         },
@@ -2105,7 +2105,6 @@
         "ready": false,
         "gates_not_passed": [
           "G0",
-          "G2",
           "G4",
           "G5",
           "G6",
@@ -2151,10 +2150,10 @@
           "date": "2026-10-14"
         },
         "G2": {
-          "status": "checklist",
-          "evidence": "docs/evidence/p016-qwen35/README.md",
+          "status": "passed",
+          "evidence": "docs/evidence/release-set-gates-2026-10-14/qwen35-ortgenai-fp32x-cpu/README.md",
           "evidence_found": true,
-          "date": "2026-10-10"
+          "date": "2026-10-14"
         },
         "G3": {
           "status": "passed",
@@ -2288,7 +2287,6 @@
         "ready": false,
         "gates_not_passed": [
           "G0",
-          "G2",
           "G5",
           "G6",
           "G7"
@@ -2335,8 +2333,8 @@
           "date": "2026-10-14"
         },
         "G2": {
-          "status": "checklist",
-          "evidence": "docs/evidence/cuda-qualification-2026-10-14/qwen35-ortgenai-fp32x-cuda/README.md",
+          "status": "passed",
+          "evidence": "docs/evidence/release-set-gates-2026-10-14/qwen35-ortgenai-fp32x-cuda/README.md",
           "evidence_found": true,
           "date": "2026-10-14"
         },
@@ -2469,7 +2467,6 @@
         "ready": false,
         "gates_not_passed": [
           "G0",
-          "G2",
           "G4",
           "G5",
           "G6",
