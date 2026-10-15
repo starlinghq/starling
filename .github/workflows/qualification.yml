@@ -56,7 +56,7 @@ on:
       soak_variants:
         description: >-
           Diagnostics: JSON array of soak variants, each '+'-joined from default, no-heap-trim (tool --no-heap-trim),
-          tool-trim (--malloc-trim), smaps (--smaps-every 25), mmap64k (MALLOC_MMAP_THRESHOLD_=65536), arena2 (MALLOC_ARENA_MAX=2), no-env
+          tool-trim (--malloc-trim), smaps (--smaps-every 25), thp-always (keep the image's THP setting), mmap64k (MALLOC_MMAP_THRESHOLD_=65536), arena2 (MALLOC_ARENA_MAX=2), no-env
           (drop the profile's documented MALLOC_ setting)
         type: string
         default: '["default"]'
@@ -291,7 +291,6 @@ jobs:
     if: ${{ !inputs.soak_only }}
     runs-on: ubuntu-latest
     timeout-minutes: 300
-    continue-on-error: ${{ matrix.allowed_to_fail == true }}
     strategy:
       fail-fast: false
       matrix:
@@ -419,6 +418,11 @@ jobs:
       # regression signal. Shorter runs (workflow_dispatch soak_duration) end in the warm-up ramp of glibc's resident
       # high-water mark and are expected to trip the growth rule.
       # MALLOC_MMAP_THRESHOLD_ is set only for the workload that documents it; the soak report records it.
+      # Transparent huge pages: the hosted image sets THP to `always`, where khugepaged collapses partly used 2 MiB
+      # ranges of the malloc heaps into huge pages and fills in their absent pages, so resident memory rises with no
+      # allocation behind it (docs/evidence/scheduled-regression-fix/). The soak sets `madvise`, the Ubuntu kernel
+      # default, as an environment precondition (like a quiet machine); the report records the setting. The variant
+      # part thp-always keeps the image's setting.
       - name: Soak
         if: steps.wired.outputs.run == 'true'
         env:
@@ -430,6 +434,7 @@ jobs:
           dotnet build ai-dotnet/tools/Starlings.Soak.Tool -c Release --nologo -v quiet
           note="GitHub-hosted ubuntu-latest, scheduled qualification run ${GITHUB_RUN_ID}"
           extra=()
+          thp=madvise
           IFS=+ read -ra parts <<<"$VARIANT"
           for part in "${parts[@]}"; do
             case "$part" in
@@ -440,9 +445,15 @@ jobs:
               mmap64k) export MALLOC_MMAP_THRESHOLD_=65536 ;;
               arena2) export MALLOC_ARENA_MAX=2 ;;
               no-env) MMAP_THRESHOLD="" ;;
+              thp-always) thp="" ;;
               *) echo "::error::unknown soak variant part '$part'"; exit 2 ;;
             esac
           done
+          thp_file=/sys/kernel/mm/transparent_hugepage/enabled
+          if [[ -n "$thp" && -f "$thp_file" ]] && sudo -n true 2>/dev/null; then
+            echo "$thp" | sudo tee "$thp_file" >/dev/null
+          fi
+          echo "transparent_hugepage: $(cat "$thp_file" 2>/dev/null || echo n/a)"
           if [[ -n "$MMAP_THRESHOLD" ]]; then
             export MALLOC_MMAP_THRESHOLD_="$MMAP_THRESHOLD"
             note="$note, MALLOC_MMAP_THRESHOLD_=$MMAP_THRESHOLD"
