@@ -219,16 +219,14 @@ qualification:
   # evaluator cannot read a reference. Measured against a regenerated reference with the recorded digest c2ffe5e4...:
   # no failing check (embedding max abs 5.1e-7 vs 5e-6); not gate evidence.
   gates:
-    G0: { status: checklist, evidence: docs/m0/hub-pins.md, date: 2026-10-10 }
+    G0: { status: passed, evidence: docs/evidence/g0-provenance-2026-10-14/README.md, date: 2026-10-14 }
     G1: { status: passed, evidence: docs/evidence/release-set-gates-2026-10-14/embeddinggemma2-onnx-fp32-cpu/README.md, date: 2026-10-14 }
     G2: { status: not-run }
     G3: { status: passed, evidence: docs/evidence/release-set-gates-2026-10-14/embeddinggemma2-onnx-fp32-cpu/README.md, date: 2026-10-14 }
     G4: { status: passed, evidence: docs/evidence/g4-soak-1h-2026-10-14/README.md, date: 2026-10-14 }
     G5: { status: not-run }
-    # G6 checklist: the ai-0.1.0-preview.5 release drill (packed packages, clean consumer, offline sample run on a
-    # seeded graph). Acquisition of the hosted graph is not covered while its source is a placeholder or private.
-    G6: { status: checklist, evidence: docs/releases/ai-0.1.0-preview.5/rc-drill.log, date: 2026-10-12 }
-    G7: { status: not-run }
+    G6: { status: passed, evidence: docs/evidence/g6-distribution-2026-10-14/README.md, date: 2026-10-14 }
+    G7: { status: passed, evidence: docs/evidence/g7-integration-2026-10-14/README.md, date: 2026-10-14 }
 
 maintenance:
   owner: Mark

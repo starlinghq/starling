@@ -14,6 +14,8 @@
     <PackageReference Include="xunit.v3" />
     <!-- CUDA natives (include the CPU provider). The CUDA 13 runtime and cuBLAS are not in the package. -->
     <PackageReference Include="Microsoft.ML.OnnxRuntimeGenAI.Cuda" />
+    <!-- The function-invocation middleware for the tool-calling checks on CUDA. -->
+    <PackageReference Include="Microsoft.Extensions.AI" />
     <Using Include="Xunit" />
   </ItemGroup>
 

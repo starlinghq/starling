@@ -151,10 +151,10 @@
       },
       "gates": {
         "G0": {
-          "status": "checklist",
-          "evidence": "docs/m0/embeddinggemma2-image-spike.md",
+          "status": "passed",
+          "evidence": "docs/evidence/g0-provenance-2026-10-14/README.md",
           "evidence_found": true,
-          "date": "2026-10-11"
+          "date": "2026-10-14"
         },
         "G1": {
           "status": "passed",
@@ -178,13 +178,16 @@
           "status": "not-run"
         },
         "G6": {
-          "status": "checklist",
-          "evidence": "docs/releases/ai-0.1.0-preview.5/rc-drill.log",
+          "status": "passed",
+          "evidence": "docs/evidence/g6-distribution-2026-10-14/README.md",
           "evidence_found": true,
-          "date": "2026-10-12"
+          "date": "2026-10-14"
         },
         "G7": {
-          "status": "not-run"
+          "status": "passed",
+          "evidence": "docs/evidence/g7-integration-2026-10-14/README.md",
+          "evidence_found": true,
+          "date": "2026-10-14"
         }
       },
       "capabilities": {
@@ -293,12 +296,9 @@
       "stable_readiness": {
         "ready": false,
         "gates_not_passed": [
-          "G0",
           "G3",
           "G4",
-          "G5",
-          "G6",
-          "G7"
+          "G5"
         ],
         "untested_capabilities": []
       }
@@ -333,10 +333,10 @@
       },
       "gates": {
         "G0": {
-          "status": "checklist",
-          "evidence": "docs/m0/embeddinggemma2-image-spike.md",
+          "status": "passed",
+          "evidence": "docs/evidence/g0-provenance-2026-10-14/README.md",
           "evidence_found": true,
-          "date": "2026-10-11"
+          "date": "2026-10-14"
         },
         "G1": {
           "status": "passed",
@@ -360,10 +360,16 @@
           "status": "not-run"
         },
         "G6": {
-          "status": "not-run"
+          "status": "passed",
+          "evidence": "docs/evidence/g6-distribution-2026-10-14/README.md",
+          "evidence_found": true,
+          "date": "2026-10-14"
         },
         "G7": {
-          "status": "not-run"
+          "status": "passed",
+          "evidence": "docs/evidence/g7-integration-2026-10-14/README.md",
+          "evidence_found": true,
+          "date": "2026-10-14"
         }
       },
       "capabilities": {
@@ -472,12 +478,9 @@
       "stable_readiness": {
         "ready": false,
         "gates_not_passed": [
-          "G0",
           "G3",
           "G4",
-          "G5",
-          "G6",
-          "G7"
+          "G5"
         ],
         "untested_capabilities": []
       }
@@ -510,10 +513,10 @@
       },
       "gates": {
         "G0": {
-          "status": "checklist",
-          "evidence": "docs/m0/hub-pins.md",
+          "status": "passed",
+          "evidence": "docs/evidence/g0-provenance-2026-10-14/README.md",
           "evidence_found": true,
-          "date": "2026-10-10"
+          "date": "2026-10-14"
         },
         "G1": {
           "status": "passed",
@@ -540,13 +543,16 @@
           "status": "not-run"
         },
         "G6": {
-          "status": "checklist",
-          "evidence": "docs/releases/ai-0.1.0-preview.5/rc-drill.log",
+          "status": "passed",
+          "evidence": "docs/evidence/g6-distribution-2026-10-14/README.md",
           "evidence_found": true,
-          "date": "2026-10-12"
+          "date": "2026-10-14"
         },
         "G7": {
-          "status": "not-run"
+          "status": "passed",
+          "evidence": "docs/evidence/g7-integration-2026-10-14/README.md",
+          "evidence_found": true,
+          "date": "2026-10-14"
         }
       },
       "capabilities": {
@@ -655,11 +661,8 @@
       "stable_readiness": {
         "ready": false,
         "gates_not_passed": [
-          "G0",
           "G2",
-          "G5",
-          "G6",
-          "G7"
+          "G5"
         ],
         "untested_capabilities": []
       }
@@ -693,10 +696,10 @@
       },
       "gates": {
         "G0": {
-          "status": "checklist",
-          "evidence": "docs/m0/hub-pins.md",
+          "status": "passed",
+          "evidence": "docs/evidence/g0-provenance-2026-10-14/README.md",
           "evidence_found": true,
-          "date": "2026-10-10"
+          "date": "2026-10-14"
         },
         "G1": {
           "status": "passed",
@@ -723,10 +726,16 @@
           "status": "not-run"
         },
         "G6": {
-          "status": "not-run"
+          "status": "passed",
+          "evidence": "docs/evidence/g6-distribution-2026-10-14/README.md",
+          "evidence_found": true,
+          "date": "2026-10-14"
         },
         "G7": {
-          "status": "not-run"
+          "status": "passed",
+          "evidence": "docs/evidence/g7-integration-2026-10-14/README.md",
+          "evidence_found": true,
+          "date": "2026-10-14"
         }
       },
       "capabilities": {
@@ -835,12 +844,9 @@
       "stable_readiness": {
         "ready": false,
         "gates_not_passed": [
-          "G0",
           "G2",
           "G4",
-          "G5",
-          "G6",
-          "G7"
+          "G5"
         ],
         "untested_capabilities": []
       }
@@ -1234,10 +1240,10 @@
       },
       "gates": {
         "G0": {
-          "status": "checklist",
-          "evidence": "docs/m0/gliner2-p014.md",
+          "status": "passed",
+          "evidence": "docs/evidence/g0-provenance-2026-10-14/README.md",
           "evidence_found": true,
-          "date": "2026-10-10"
+          "date": "2026-10-14"
         },
         "G1": {
           "status": "passed",
@@ -1264,13 +1270,16 @@
           "status": "not-run"
         },
         "G6": {
-          "status": "checklist",
-          "evidence": "docs/releases/ai-0.1.0-preview.5/rc-drill.log",
+          "status": "passed",
+          "evidence": "docs/evidence/g6-distribution-2026-10-14/README.md",
           "evidence_found": true,
-          "date": "2026-10-12"
+          "date": "2026-10-14"
         },
         "G7": {
-          "status": "not-run"
+          "status": "passed",
+          "evidence": "docs/evidence/g7-integration-2026-10-14/README.md",
+          "evidence_found": true,
+          "date": "2026-10-14"
         }
       },
       "capabilities": {
@@ -1380,11 +1389,8 @@
       "stable_readiness": {
         "ready": false,
         "gates_not_passed": [
-          "G0",
           "G4",
-          "G5",
-          "G6",
-          "G7"
+          "G5"
         ],
         "untested_capabilities": []
       }
@@ -1419,10 +1425,10 @@
       },
       "gates": {
         "G0": {
-          "status": "checklist",
-          "evidence": "docs/m0/gliner2-p014.md",
+          "status": "passed",
+          "evidence": "docs/evidence/g0-provenance-2026-10-14/README.md",
           "evidence_found": true,
-          "date": "2026-10-10"
+          "date": "2026-10-14"
         },
         "G1": {
           "status": "passed",
@@ -1449,10 +1455,16 @@
           "status": "not-run"
         },
         "G6": {
-          "status": "not-run"
+          "status": "passed",
+          "evidence": "docs/evidence/g6-distribution-2026-10-14/README.md",
+          "evidence_found": true,
+          "date": "2026-10-14"
         },
         "G7": {
-          "status": "not-run"
+          "status": "passed",
+          "evidence": "docs/evidence/g7-integration-2026-10-14/README.md",
+          "evidence_found": true,
+          "date": "2026-10-14"
         }
       },
       "capabilities": {
@@ -1561,11 +1573,8 @@
       "stable_readiness": {
         "ready": false,
         "gates_not_passed": [
-          "G0",
           "G4",
-          "G5",
-          "G6",
-          "G7"
+          "G5"
         ],
         "untested_capabilities": []
       }
@@ -1634,15 +1643,15 @@
         },
         "G6": {
           "status": "passed",
-          "evidence": "docs/releases/e5-0.1.0-preview.2/rc-drill.log",
+          "evidence": "docs/evidence/g6-distribution-2026-10-14/README.md",
           "evidence_found": true,
-          "date": "2026-10-09"
+          "date": "2026-10-14"
         },
         "G7": {
-          "status": "checklist",
-          "evidence": "docs/releases/e5-0.1.0-preview.1.md",
+          "status": "passed",
+          "evidence": "docs/evidence/g7-integration-2026-10-14/README.md",
           "evidence_found": true,
-          "date": "2026-10-09"
+          "date": "2026-10-14"
         }
       },
       "capabilities": {
@@ -1751,8 +1760,7 @@
       "stable_readiness": {
         "ready": false,
         "gates_not_passed": [
-          "G5",
-          "G7"
+          "G5"
         ],
         "untested_capabilities": []
       }
@@ -1785,10 +1793,10 @@
       },
       "gates": {
         "G0": {
-          "status": "checklist",
-          "evidence": "docs/m0/hub-pins.md",
+          "status": "passed",
+          "evidence": "docs/evidence/g0-provenance-2026-10-14/README.md",
           "evidence_found": true,
-          "date": "2026-10-05"
+          "date": "2026-10-14"
         },
         "G1": {
           "status": "passed",
@@ -1815,10 +1823,16 @@
           "status": "not-run"
         },
         "G6": {
-          "status": "not-run"
+          "status": "passed",
+          "evidence": "docs/evidence/g6-distribution-2026-10-14/README.md",
+          "evidence_found": true,
+          "date": "2026-10-14"
         },
         "G7": {
-          "status": "not-run"
+          "status": "passed",
+          "evidence": "docs/evidence/g7-integration-2026-10-14/README.md",
+          "evidence_found": true,
+          "date": "2026-10-14"
         }
       },
       "capabilities": {
@@ -1927,11 +1941,8 @@
       "stable_readiness": {
         "ready": false,
         "gates_not_passed": [
-          "G0",
           "G4",
-          "G5",
-          "G6",
-          "G7"
+          "G5"
         ],
         "untested_capabilities": []
       }
@@ -1963,10 +1974,10 @@
       },
       "gates": {
         "G0": {
-          "status": "checklist",
-          "evidence": "docs/evidence/p016-qwen35/README.md",
+          "status": "passed",
+          "evidence": "docs/evidence/g0-provenance-2026-10-14/README.md",
           "evidence_found": true,
-          "date": "2026-10-10"
+          "date": "2026-10-14"
         },
         "G1": {
           "status": "passed",
@@ -1996,10 +2007,16 @@
           "status": "not-run"
         },
         "G6": {
-          "status": "not-run"
+          "status": "passed",
+          "evidence": "docs/evidence/g6-distribution-2026-10-14/README.md",
+          "evidence_found": true,
+          "date": "2026-10-14"
         },
         "G7": {
-          "status": "not-run"
+          "status": "passed",
+          "evidence": "docs/evidence/g7-integration-2026-10-14/README.md",
+          "evidence_found": true,
+          "date": "2026-10-14"
         }
       },
       "capabilities": {
@@ -2108,11 +2125,8 @@
       "stable_readiness": {
         "ready": false,
         "gates_not_passed": [
-          "G0",
           "G4",
-          "G5",
-          "G6",
-          "G7"
+          "G5"
         ],
         "untested_capabilities": []
       }
@@ -2142,10 +2156,10 @@
       },
       "gates": {
         "G0": {
-          "status": "checklist",
-          "evidence": "docs/evidence/p016-qwen35/README.md",
+          "status": "passed",
+          "evidence": "docs/evidence/g0-provenance-2026-10-14/README.md",
           "evidence_found": true,
-          "date": "2026-10-10"
+          "date": "2026-10-14"
         },
         "G1": {
           "status": "passed",
@@ -2175,13 +2189,16 @@
           "status": "not-run"
         },
         "G6": {
-          "status": "checklist",
-          "evidence": "docs/releases/ai-0.1.0-preview.5/rc-drill.log",
+          "status": "passed",
+          "evidence": "docs/evidence/g6-distribution-2026-10-14/README.md",
           "evidence_found": true,
-          "date": "2026-10-12"
+          "date": "2026-10-14"
         },
         "G7": {
-          "status": "not-run"
+          "status": "passed",
+          "evidence": "docs/evidence/g7-integration-2026-10-14/README.md",
+          "evidence_found": true,
+          "date": "2026-10-14"
         }
       },
       "capabilities": {
@@ -2290,10 +2307,7 @@
       "stable_readiness": {
         "ready": false,
         "gates_not_passed": [
-          "G0",
-          "G5",
-          "G6",
-          "G7"
+          "G5"
         ],
         "untested_capabilities": []
       }
@@ -2325,10 +2339,10 @@
       },
       "gates": {
         "G0": {
-          "status": "checklist",
-          "evidence": "docs/evidence/p016-qwen35/README.md",
+          "status": "passed",
+          "evidence": "docs/evidence/g0-provenance-2026-10-14/README.md",
           "evidence_found": true,
-          "date": "2026-10-10"
+          "date": "2026-10-14"
         },
         "G1": {
           "status": "passed",
@@ -2358,10 +2372,16 @@
           "status": "not-run"
         },
         "G6": {
-          "status": "not-run"
+          "status": "passed",
+          "evidence": "docs/evidence/g6-distribution-2026-10-14/README.md",
+          "evidence_found": true,
+          "date": "2026-10-14"
         },
         "G7": {
-          "status": "not-run"
+          "status": "passed",
+          "evidence": "docs/evidence/g7-integration-2026-10-14/README.md",
+          "evidence_found": true,
+          "date": "2026-10-14"
         }
       },
       "capabilities": {
@@ -2470,11 +2490,8 @@
       "stable_readiness": {
         "ready": false,
         "gates_not_passed": [
-          "G0",
           "G4",
-          "G5",
-          "G6",
-          "G7"
+          "G5"
         ],
         "untested_capabilities": []
       }

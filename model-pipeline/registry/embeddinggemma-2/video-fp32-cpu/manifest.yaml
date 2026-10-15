@@ -224,7 +224,7 @@ execution:
       - path: onnx/embeddinggemma2-text-fp32.onnx
         sha256: "02cc7ecccbfcb29d812eb104e4c6ea6c599bc87e94f01082606f6a11f0252d11"
         size: 1084327317
-        # Text-only inputs; the asset of embeddinggemma-2/onnx-fp32-cpu (release embeddinggemma-2-onnx-r1, placeholder).
+        # Text-only inputs; the asset of embeddinggemma-2/onnx-fp32-cpu (Starlinghq/embeddinggemma-2-onnx, public since 2026-10-14).
         source: https://huggingface.co/Starlinghq/embeddinggemma-2-onnx/resolve/92a02ae2887a91180e611776dd9c286dc5fa35da/embeddinggemma2-text-fp32.onnx
         source_status: public
         notice: model-pipeline/reference/embeddinggemma2/NOTICE-embeddinggemma2-onnx.txt
@@ -300,6 +300,9 @@ qualification:
   # after the FFmpeg adapter was changed to decode as torchcodec does (seeking where it seeks; the first run failed on the
   # Ogg Theora frames of commons-video-02). Embedding max abs 1.29e-6 vs 1e-5; soft tokens 2.37e-4 vs 1e-3.
   gates:
+    # G0 open (2026-10-14, docs/evidence/g0-provenance-2026-10-14/README.md): source and asset lock pinned and every
+    # lock file served anonymously with its SHA-256, rights recorded; but the decoding path needs the FFmpeg adapters,
+    # held pending legal review D2, so there is no clear distribution route for this profile yet.
     G0: { status: checklist, evidence: docs/m0/embeddinggemma2-video-spike.md, date: 2026-10-11 }
     G1: { status: passed, evidence: docs/evidence/release-set-gates-2026-10-14/embeddinggemma2-video-fp32-cpu/README.md, date: 2026-10-14 }
     G2: { status: passed, evidence: docs/evidence/release-set-gates-2026-10-14/embeddinggemma2-video-fp32-cpu/README.md, date: 2026-10-14 }
@@ -308,7 +311,12 @@ qualification:
     G5: { status: not-run }
     # G6 checklist: the ai-0.1.0-preview.5 release drill (packed packages, clean consumer, offline sample run on a
     # seeded graph). Acquisition of the hosted graph is not covered while its source is a placeholder or private.
+    # G6 open (2026-10-14, docs/evidence/g6-distribution-2026-10-14/README.md): the FFmpeg adapters are held (D2) and
+    # not publishable, so no clean install from published packages exists for this profile.
     G6: { status: checklist, evidence: docs/releases/ai-0.1.0-preview.5/rc-drill.log, date: 2026-10-12 }
+    # G7 open (2026-10-14, docs/evidence/g7-integration-2026-10-14/README.md): Extensions.AI video is tested (contract
+    # tests on fake graphs; CudaAdapterTests on six videos; the drill's sample at preview.4), ML.NET unsupported;
+    # representative downstream use needs the held FFmpeg adapter (D2).
     G7: { status: not-run }
 
 maintenance:
