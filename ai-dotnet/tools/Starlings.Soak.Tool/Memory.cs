@@ -74,8 +74,117 @@ internal static class MemoryProbe
         }
     }
 
+    /// <summary>glibc's <c>gnu_get_libc_version()</c>, or null where it does not exist.</summary>
+    public static string? GlibcVersion()
+    {
+        if (!OperatingSystem.IsLinux())
+        {
+            return null;
+        }
+
+        try
+        {
+            return System.Runtime.InteropServices.Marshal.PtrToStringUTF8(NativeMethods.gnu_get_libc_version());
+        }
+        catch (EntryPointNotFoundException)
+        {
+            return null;
+        }
+        catch (DllNotFoundException)
+        {
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Appends one JSON line: the anonymous mappings of <c>/proc/self/smaps</c> with more than 2 MiB resident (start,
+    /// end, permissions, name, Rss, Anonymous, AnonHugePages in KiB), and the totals over all mappings.
+    /// </summary>
+    public static void AppendSmaps(string path, double seconds, int cycle)
+    {
+        var maps = new System.Text.Json.Nodes.JsonArray();
+        long rss = 0, anon = 0, huge = 0;
+        string? header = null;
+        long mRss = 0, mAnon = 0, mHuge = 0;
+        void Flush()
+        {
+            if (header is not null && mAnon > 2048)
+            {
+                var parts = header.Split(' ', 6, StringSplitOptions.RemoveEmptyEntries);
+                maps.Add(new System.Text.Json.Nodes.JsonObject
+                {
+                    ["range"] = parts[0],
+                    ["perms"] = parts[1],
+                    ["name"] = parts.Length > 5 ? parts[5].Trim() : "",
+                    ["rss_kb"] = mRss,
+                    ["anon_kb"] = mAnon,
+                    ["anon_huge_kb"] = mHuge,
+                });
+            }
+
+            rss += mRss;
+            anon += mAnon;
+            huge += mHuge;
+            mRss = mAnon = mHuge = 0;
+        }
+
+        try
+        {
+            foreach (string line in File.ReadLines("/proc/self/smaps"))
+            {
+                // A mapping header starts with "<start>-<end> "; field lines start with "<Name>:".
+                int space = line.IndexOf(' ', StringComparison.Ordinal);
+                if (space > 0 && line[space - 1] != ':' && line.AsSpan(0, space).Contains('-'))
+                {
+                    Flush();
+                    header = line;
+                }
+                else if (line.StartsWith("Rss:", StringComparison.Ordinal))
+                {
+                    mRss = KbOf(line);
+                }
+                else if (line.StartsWith("Anonymous:", StringComparison.Ordinal))
+                {
+                    mAnon = KbOf(line);
+                }
+                else if (line.StartsWith("AnonHugePages:", StringComparison.Ordinal))
+                {
+                    mHuge = KbOf(line);
+                }
+            }
+
+            Flush();
+        }
+        catch (IOException)
+        {
+            return;
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return;
+        }
+
+        var row = new System.Text.Json.Nodes.JsonObject
+        {
+            ["t_s"] = Math.Round(seconds, 1),
+            ["cycle"] = cycle,
+            ["rss_kb"] = rss,
+            ["anon_kb"] = anon,
+            ["anon_huge_kb"] = huge,
+            ["maps"] = maps,
+        };
+        File.AppendAllText(path, row.ToJsonString() + "\n");
+
+        static long KbOf(string line) =>
+            long.Parse(line.Split(':', 2)[1].Trim().Split(' ')[0], CultureInfo.InvariantCulture);
+    }
+
     private static class NativeMethods
     {
+        [System.Runtime.InteropServices.DllImport("libc", EntryPoint = "gnu_get_libc_version")]
+        [System.Runtime.InteropServices.DefaultDllImportSearchPaths(System.Runtime.InteropServices.DllImportSearchPath.SafeDirectories)]
+        internal static extern IntPtr gnu_get_libc_version();
+
         [System.Runtime.InteropServices.DllImport("libc", EntryPoint = "malloc_trim")]
         [System.Runtime.InteropServices.DefaultDllImportSearchPaths(System.Runtime.InteropServices.DllImportSearchPath.SafeDirectories)]
         internal static extern int malloc_trim(nuint pad);

@@ -40,6 +40,9 @@
 //   --no-heap-trim            Diagnostic: set the AppContext switch Starlings.Runtime.Onnx.DisableNativeHeapTrim, so
 //                             releasing a session does not call malloc_trim(0) (the library default on Linux glibc;
 //                             docs/evidence/scheduled-regression-fix/). Off by default.
+//   --smaps-every <n>         Diagnostic (Linux): after the unloaded sample of every n-th cycle (and cycle 0), append the
+//                             anonymous mappings of /proc/self/smaps above 2 MiB resident (range, name, Rss, Anonymous,
+//                             AnonHugePages) to <model>-<utc>.smaps.jsonl. Off by default.
 //   --keep-loaded             Diagnostic: load the model once and keep it loaded; each cycle serves its requests and
 //                             takes the settled samples without unloading (requests only, no load/unload churn). The
 //                             "unloaded" series is then a second settled sample with the model still loaded. Not a
@@ -134,6 +137,8 @@ internal sealed record SoakOptions
 
     public bool NoHeapTrim { get; init; }
 
+    public int? SmapsEvery { get; init; }
+
     public bool IsQualificationLength => Duration >= TimeSpan.FromHours(1);
 
     public static SoakOptions Parse(string[] args)
@@ -160,6 +165,7 @@ internal sealed record SoakOptions
                 "--malloc-trim" => o with { MallocTrim = true },
                 "--keep-loaded" => o with { KeepLoaded = true },
                 "--no-heap-trim" => o with { NoHeapTrim = true },
+                "--smaps-every" => o with { SmapsEvery = Positive(Next(), "--smaps-every") },
                 _ => throw new ArgumentException($"unknown option '{args[i]}'"),
             };
         }
@@ -327,6 +333,11 @@ internal sealed class SoakRunner(SoakWorkload workload, SoakOptions options)
                 if (options.MallocTrim && MemoryProbe.MallocTrim())
                 {
                     trimmed = MemoryProbe.Sample(clock.Elapsed.TotalSeconds, "trimmed", cycle, settle: false);
+                }
+
+                if (options.SmapsEvery is int every && cycle % every == 0)
+                {
+                    MemoryProbe.AppendSmaps(basePath + ".smaps.jsonl", clock.Elapsed.TotalSeconds, cycle);
                 }
 
                 cycles.Add(new CycleRecord(
