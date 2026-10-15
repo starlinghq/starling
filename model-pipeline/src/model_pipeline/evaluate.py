@@ -26,6 +26,7 @@ every bound-dependent check is not-run, no gate can pass, and the exit code is 4
 from __future__ import annotations
 
 import datetime as dt
+import json
 import math
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -154,9 +155,62 @@ class Fixtures:
         return list(self.embedding)
 
 
-def load_fixtures(directory: Path) -> Fixtures:
+REFERENCE_DESCRIPTION = "reference.json"
+
+
+def bind_reference_embeddings(repo_root: Path, directory: Path, path: Path) -> dict[str, Any]:
+    """Check an `embeddings.jsonl` kept outside Git against the digest the protected set records.
+
+    The protected `reference.json` of the fixtures directory must name the file's SHA-256 under
+    `embeddings.sha256`; the file must match it. A path inside the repository is accepted only under
+    `model-pipeline/protected/`, so an unreviewed copy in the work tree cannot stand in for the reference.
+    Any refusal is a `ProtectedEvidenceError` (exit 3). Returns the binding for the report.
+    """
+    resolved = path.resolve()
+    root = repo_root.resolve()
+    if resolved.is_relative_to(root) and not resolved.is_relative_to((root / protection.PROTECTED_ROOT).resolve()):
+        raise protection.ProtectedEvidenceError(
+            f"reference embeddings {path} lie inside the repository but outside {protection.PROTECTED_ROOT}/; "
+            "only protected evidence or a file outside the repository is read"
+        )
+    if (directory / "embeddings.jsonl").exists():
+        raise protection.ProtectedEvidenceError(
+            f"{directory} commits its own embeddings.jsonl; --reference-embeddings applies only to a set that keeps "
+            "the file outside Git"
+        )
+    ref_path = directory / REFERENCE_DESCRIPTION
+    if not ref_path.is_file():
+        raise protection.ProtectedEvidenceError(
+            f"{ref_path} is missing; an external reference is accepted only against the digest it records"
+        )
+    try:
+        description = json.loads(ref_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise protection.ProtectedEvidenceError(f"{ref_path}: {exc}") from exc
+    binding = description.get("embeddings") if isinstance(description, dict) else None
+    expected = binding.get("sha256") if isinstance(binding, dict) else None
+    if not isinstance(expected, str) or len(expected) != 64:
+        raise protection.ProtectedEvidenceError(
+            f"{ref_path} records no embeddings.sha256; an external reference cannot be bound to it"
+        )
+    if not resolved.is_file():
+        raise protection.ProtectedEvidenceError(f"reference embeddings {path} do not exist")
+    actual = fixtures.sha256_file(resolved)
+    if actual != expected.lower():
+        raise protection.ProtectedEvidenceError(
+            f"reference embeddings {path} have SHA-256 {actual}; {ref_path.name} records {expected}"
+        )
+    return {"path": str(resolved), "sha256": actual, "rows": binding.get("rows")}
+
+
+def load_fixtures(directory: Path, reference_embeddings: Path | None = None) -> Fixtures:
+    """Read the protected tokenizer and embedding fixtures.
+
+    With `reference_embeddings` (already bound by `bind_reference_embeddings`), the embeddings come from that
+    file and the protected `reference.json` that pins its digest takes its place among the verified files.
+    """
     tok_path = directory / "tokenizer.jsonl"
-    emb_path = directory / "embeddings.jsonl"
+    emb_path = directory / "embeddings.jsonl" if reference_embeddings is None else reference_embeddings
     for p in (tok_path, emb_path):
         if not p.is_file():
             raise EvaluationError(f"protected fixture {p} is missing")
@@ -191,7 +245,8 @@ def load_fixtures(directory: Path) -> Fixtures:
     missing = sorted(set(ids) - set(embedding))
     if missing:
         raise EvaluationError(f"{emb_path}: no embedding for single-text cases {missing}")
-    return Fixtures(ids=ids, attention_mask=masks, embedding=embedding, files=[tok_path, emb_path])
+    verified = [tok_path, emb_path] if reference_embeddings is None else [tok_path, directory / REFERENCE_DESCRIPTION]
+    return Fixtures(ids=ids, attention_mask=masks, embedding=embedding, files=verified)
 
 
 def load_tolerances(path: Path, profile_id: str) -> dict[str, Any]:
@@ -1050,12 +1105,16 @@ def evaluate(
     now: dt.datetime | None = None,
     reference_tensors: Path | None = None,
     fixtures_dir_override: str | None = None,
+    reference_embeddings: Path | None = None,
 ) -> Evaluation:
     """Evaluate one profile's stage results.
 
     `fixtures_dir_override` names another protected fixtures directory (repository-relative, inside
     `model-pipeline/protected/`), for example a P-030 release set; by default the manifest's
     `qualification.fixtures` is read. Tolerances always come from the manifest.
+
+    `reference_embeddings` (task `embedding` only) is an `embeddings.jsonl` kept outside Git, accepted only if its
+    SHA-256 equals `embeddings.sha256` in the fixtures directory's protected `reference.json`.
     """
     problems = manifest.validate_file(manifest_path)
     if problems:
@@ -1075,6 +1134,8 @@ def evaluate(
     # unset, so every bound-dependent check is not-run and no gate can pass (exit code 4).
     tolerances_missing = not tol_path.exists()
     tol = {} if tolerances_missing else load_tolerances(tol_path, man["id"])
+    if reference_embeddings is not None and task != "embedding":
+        raise EvaluationError(f"--reference-embeddings applies to the embedding task only, not {task!r}")
     run = None
     if task == "generation":
         from model_pipeline import evaluate_generation as ge
@@ -1099,7 +1160,10 @@ def evaluate(
         first, findings = ge.diagnose(checks)
         exceptions = None
     elif task == "embedding":
-        fx = load_fixtures(fixtures_dir)
+        bound = None
+        if reference_embeddings is not None:
+            bound = bind_reference_embeddings(root, fixtures_dir, reference_embeddings)
+        fx = load_fixtures(fixtures_dir, reference_embeddings)
         verification = protection.verify_unchanged(root, [tol_path, *fx.files], protected_base)
         checks = EncoderEvaluator(man, fx, tol, stages).run()
         first, findings = diagnose(checks)
@@ -1189,6 +1253,10 @@ def evaluate(
     }
     if exceptions is not None:
         report["entity_exceptions"] = exceptions
+    if task == "embedding" and reference_embeddings is not None:
+        report["inputs"]["reference_embeddings"] = bound | {
+            "bound_by": f"{rel(fixtures_dir / REFERENCE_DESCRIPTION)} embeddings.sha256",
+        }
     if task in ("image-embedding", "video-embedding"):
         report["excluded_by_contract"] = fx.excluded
         if task == "video-embedding":
@@ -1248,6 +1316,12 @@ def markdown(report: dict[str, Any]) -> str:
         head2, sep2, rest2 = rest.partition("\n\n")
         origin = "manifest" if fx["source"] == "manifest" else "--fixtures option"
         line = f"Fixtures: `{fx['path']}` (from the {origin})."
+        ref = report["inputs"].get("reference_embeddings")
+        if ref:
+            line += (
+                f" Reference embeddings: `{ref['path']}` (outside Git), SHA-256 `{ref['sha256']}`, equal to "
+                f"`{ref['bound_by']}`."
+            )
         text = f"{head}{sep}{head2}\n\n{line}{sep2}{rest2}"
     return text
 
