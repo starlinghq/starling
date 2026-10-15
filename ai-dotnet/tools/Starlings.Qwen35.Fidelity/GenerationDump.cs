@@ -9,7 +9,10 @@
 // {"id", "output_text", "output_ids", "finish_reason", "prompt_tokens", "completion_tokens"}, where output_text is the
 // decoded completion without the stop token (the text the G3 metric scores) and output_ids include the stop token
 // when generation stopped on one (the format of results.jsonl in --modes parity). Also <out>/environment.json.
-// Rows with tool definitions are refused (the owned renderer has no tools input in this tool).
+// Rows with tool definitions are refused (the owned renderer has no tools input in this tool). A row the package rejects
+// with a typed error (GenerationContextLengthException, Qwen35TemplateException) is written as {"id", "backend",
+// "rejected": "<type>: <message>"} without output_text; the run continues and exits 1 (the evaluator refuses such a
+// file, so a rejected row is never scored). Exit codes: 0 every row generated; 1 rows rejected; 2 usage or input error.
 // The tool applies no budgets and reads nothing under model-pipeline/protected/.
 using System.Diagnostics;
 using System.Globalization;
@@ -89,6 +92,7 @@ internal static class GenerationDump
             return 2;
         }
 
+        var rejected = new List<string>();
         using (model)
         {
             double loadMs = clock.Elapsed.TotalMilliseconds;
@@ -98,7 +102,23 @@ internal static class GenerationDump
             {
                 foreach (var (id, messages, thinking, maxNewTokens) in rows)
                 {
-                    var result = model.Generate(messages, new Qwen35ChatOptions { MaxNewTokens = maxNewTokens, EnableThinking = thinking });
+                    GenerationResult result;
+                    try
+                    {
+                        result = model.Generate(messages, new Qwen35ChatOptions { MaxNewTokens = maxNewTokens, EnableThinking = thinking });
+                    }
+                    catch (Exception e) when (e is GenerationContextLengthException or Qwen35TemplateException)
+                    {
+                        // A typed rejection of this prompt is evidence, not a crash: the row records it without
+                        // output_text, so `model-pipeline evaluate --g3 generation` refuses the file (it never scores it).
+                        string reason = $"{e.GetType().Name}: {e.Message}";
+                        rejected.Add(id);
+                        writer.WriteLine(new JsonObject { ["id"] = id, ["backend"] = backend, ["rejected"] = reason }.ToJsonString(Json.Compact));
+                        writer.Flush();
+                        Console.Error.WriteLine($"{id}: rejected: {reason}");
+                        continue;
+                    }
+
                     int[] outputIds = result.StopTokenId is int stop ? [.. result.TokenIds, stop] : [.. result.TokenIds];
                     var row = new JsonObject
                     {
@@ -141,6 +161,12 @@ internal static class GenerationDump
             };
             File.WriteAllText(Path.Combine(output, "environment.json"), env.ToJsonString(Json.Indented) + "\n");
             Console.WriteLine($"wrote {path}: {rows.Count} rows");
+        }
+
+        if (rejected.Count > 0)
+        {
+            Console.Error.WriteLine($"error: {rejected.Count} of {rows.Count} rows rejected (recorded with their reason): {string.Join(", ", rejected)}");
+            return 1;
         }
 
         return 0;

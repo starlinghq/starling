@@ -40,241 +40,246 @@ using Starlings.Models.E5;
 using Starlings.Runtime.Onnx;
 using Microsoft.ML.OnnxRuntime;
 
-if (args.Length >= 1 && args[0] is "retrieval" or "ner")
-{
-    return TaskQualityDump.Run(args[0], args[1..]);
-}
+return ToolMain.Run(ToolBody);
 
-if (args.Length >= 1 && args[0] == "tokenizer")
+int ToolBody()
 {
-    return TokenizerDump.Run(args[1..]);
-}
-
-if (args.Length >= 1 && args[0] == "gliner2")
-{
-    return Gliner2Dump.Run(args[1..]);
-}
-
-if (args.Length >= 1 && args[0] == "embeddinggemma2-videos")
-{
-    return EmbeddingGemma2VideoDump.Run(args[1..]);
-}
-
-if (args.Length >= 1 && args[0] == "embeddinggemma2-long")
-{
-    return EmbeddingGemma2LongDump.Run(args[1..]);
-}
-
-if (args.Length >= 1 && args[0] == "embeddinggemma2-images")
-{
-    return EmbeddingGemma2ImageDump.Run(args[1..]);
-}
-
-if (args.Length >= 1 && args[0] == "embeddinggemma2")
-{
-    return EmbeddingGemma2Dump.Run(args[1..]);
-}
-
-if (args.Length < 1 || args[0] is "-h" or "--help" || args[0] != "e5")
-{
-    return Usage(args.Length > 0 && args[0] is not ("-h" or "--help") ? $"unknown model '{args[0]}'" : null);
-}
-
-string? outDir = null;
-string? snapshot = Environment.GetEnvironmentVariable("STARLING_E5_SNAPSHOT");
-string? fixturesDir = null;
-string? profile = null;
-bool hidden = false;
-int? threads = null;
-var device = ToolDevice.Cpu;
-for (int i = 1; i < args.Length; i++)
-{
-    switch (args[i])
+    if (args.Length >= 1 && args[0] is "retrieval" or "ner")
     {
-        case "--out" when i + 1 < args.Length:
-            outDir = args[++i];
-            break;
-        case "--snapshot" when i + 1 < args.Length:
-            snapshot = args[++i];
-            break;
-        case "--fixtures" when i + 1 < args.Length:
-            fixturesDir = args[++i];
-            break;
-        case "--profile" when i + 1 < args.Length:
-            profile = args[++i];
-            break;
-        case "--hidden":
-            hidden = true;
-            break;
-        case "--threads" when i + 1 < args.Length:
-            if (!int.TryParse(args[++i], NumberStyles.None, CultureInfo.InvariantCulture, out int count) || count <= 0)
-            {
-                return Usage("--threads must be a positive integer");
-            }
-
-            threads = count;
-            break;
-        case "--device" when i + 1 < args.Length:
-            if (!ToolDevice.TryParse(args[++i], out device))
-            {
-                return Usage("--device must be cpu, cuda or cuda:N");
-            }
-
-            break;
-        default:
-            return Usage($"unknown option {args[i]}");
-    }
-}
-
-if (outDir is null)
-{
-    return Usage("--out is required");
-}
-
-if (device.Unavailable() is { } unavailable)
-{
-    return Usage(unavailable);
-}
-
-profile ??= device.Profile("multilingual-e5-small/onnx-fp32-cpu");
-
-string? repoRoot = ToolSupport.FindRepositoryRoot();
-fixturesDir ??= repoRoot is null
-    ? null
-    : Path.Combine(repoRoot, "model-pipeline", "protected", "multilingual-e5-small", "onnx-fp32-cpu");
-if (fixturesDir is null || !File.Exists(Path.Combine(fixturesDir, "embeddings.jsonl")))
-{
-    return Usage($"protected fixtures not found ({fixturesDir ?? "no repository root"}); pass --fixtures");
-}
-
-E5ModelFiles files;
-try
-{
-    files = string.IsNullOrEmpty(snapshot)
-        ? E5ModelAssets.OpenLocal()
-        : E5ModelAssets.OpenDirectory(snapshot, CacheVerification.Sha256);
-}
-catch (ModelAcquisitionException ex)
-{
-    Console.Error.WriteLine(ex.Message);
-    return 2;
-}
-
-var cases = Fixtures.LoadCases(fixturesDir);
-var texts = Fixtures.LoadTexts(fixturesDir);
-var batchRows = Fixtures.LoadBatchRows(fixturesDir);
-Directory.CreateDirectory(outDir);
-
-string? commit = ToolSupport.GitHead(repoRoot);
-var tokenizer = E5Tokenizer.FromFile(files.TokenizerPath, E5ModelAssets.TokenizerSha256);
-using var encoder = E5Encoder.Create(files.ModelPath, new E5EncoderOptions
-{
-    Session = device.Apply(new OnnxSessionOptions
-    {
-        ExpectedModelSha256 = E5ModelAssets.ModelSha256,
-        IntraOpNumThreads = threads,
-        InterOpNumThreads = threads is null ? null : 1,
-    }),
-});
-var embedder = new E5TextEmbedder(tokenizer, encoder);
-var diagnostics = encoder.Session.Diagnostics;
-var tokenizerAsset = new Asset(E5ModelAssets.TokenizerFile, E5ModelAssets.TokenizerSha256);
-var modelAsset = new Asset(E5ModelAssets.ModelFile, diagnostics.ModelSha256 ?? ToolSupport.Sha256(files.ModelPath));
-
-// Stage 1: tokenizer.
-var tokenizerResults = new StageWriter(profile, "tokenizer", "Starlings.Tokenizers via E5Tokenizer (profile xlmr-unigram-e5, right truncation to 512)", commit, StageEnvironment(diagnostics, device), [tokenizerAsset]);
-foreach (var c in cases)
-{
-    var input = tokenizer.Tokenize(texts[c.Id]);
-    tokenizerResults.Case(c.Id).Add("input_ids", input.InputIds.ToArray()).Add("attention_mask", input.AttentionMask.ToArray());
-}
-
-tokenizerResults.Write(Path.Combine(outDir, "tokenizer.results.json"));
-
-// Stage 3: .NET, from ids and from text.
-var dotnet = new StageWriter(profile, "dotnet", $"C# E5Encoder + E5TextEmbedder, ONNX Runtime {diagnostics.OrtVersion} {device.Label} (managed binding {diagnostics.ManagedBindingVersion})", commit, StageEnvironment(diagnostics, device), [modelAsset, tokenizerAsset]);
-foreach (var c in cases)
-{
-    dotnet.Case(c.Id)
-        .Add("input_ids", c.InputIds)
-        .Add("embedding", encoder.Embed(new EncoderInput(c.InputIds)))
-        .Add("text_embedding", embedder.Embed(texts[c.Id]));
-}
-
-dotnet.Batch("fixture-padded", "embedding", batchRows.Select(r => r.Id).ToList(), encoder.EmbedBatch(batchRows.Select(r => new EncoderInput(r.Ids, r.AttentionMask)).ToList()));
-var batched = new List<float[]>();
-for (int start = 0; start < cases.Count; start += 16)
-{
-    batched.AddRange(encoder.EmbedBatch(cases.Skip(start).Take(16).Select(c => new EncoderInput(c.InputIds)).ToList()));
-}
-
-dotnet.Batch("all-cases-batch16", "embedding", cases.Select(c => c.Id).ToList(), batched);
-dotnet.Batch("text-batch", "text_embedding", cases.Select(c => c.Id).ToList(), embedder.EmbedBatch(cases.Select(c => texts[c.Id]).ToList()));
-
-if (hidden)
-{
-    dotnet.Tensor("last_hidden_state", outDir, "dotnet-last-hidden-state.f32", cases.Select(c => (c.Id, HiddenState(encoder.Session, c.InputIds))));
-}
-
-dotnet.Write(Path.Combine(outDir, "dotnet.results.json"));
-Console.WriteLine($"wrote {Path.Combine(outDir, "tokenizer.results.json")} and dotnet.results.json: {cases.Count} cases");
-return 0;
-
-static (int[] Shape, float[] Values) HiddenState(OnnxModelSession session, long[] ids)
-{
-    long[] shape = [1, ids.Length];
-    long[] mask = Enumerable.Repeat(1L, ids.Length).ToArray();
-    long[] types = new long[ids.Length];
-    using var idsValue = OrtValue.CreateTensorValueFromMemory(ids, shape);
-    using var maskValue = OrtValue.CreateTensorValueFromMemory(mask, shape);
-    using var typesValue = OrtValue.CreateTensorValueFromMemory(types, shape);
-    using var outputs = session.Run(
-        [E5Encoder.InputIdsName, E5Encoder.AttentionMaskName, E5Encoder.TokenTypeIdsName],
-        [idsValue, maskValue, typesValue],
-        [E5Encoder.LastHiddenStateName]);
-    var values = outputs[0].GetTensorDataAsSpan<float>().ToArray();
-    return ([ids.Length, values.Length / ids.Length], values);
-}
-
-static Dictionary<string, object?> StageEnvironment(OnnxSessionDiagnostics d, ToolDevice device)
-{
-    var environment = BaseEnvironment(d, device.Name);
-    device.Describe(environment);
-    return environment;
-}
-
-static Dictionary<string, object?> BaseEnvironment(OnnxSessionDiagnostics d, string provider) => new()
-{
-    ["machine"] = System.Environment.MachineName,
-    ["provider"] = provider,
-    ["provider_options"] = d.ProviderOptions.ToDictionary(kv => kv.Key, kv => (object?)kv.Value),
-    ["dotnet"] = RuntimeInformation.FrameworkDescription,
-    ["os"] = RuntimeInformation.OSDescription,
-    ["process_architecture"] = RuntimeInformation.ProcessArchitecture.ToString(),
-    ["cpu_count"] = System.Environment.ProcessorCount,
-    ["cpu"] = ToolSupport.CpuModel(),
-    ["onnxruntime"] = d.OrtVersion,
-    ["onnxruntime_managed"] = d.ManagedBindingVersion,
-    ["session_providers"] = d.SessionProviders,
-    ["intra_op_threads"] = d.IntraOpNumThreads,
-    ["graph_optimization_level"] = d.GraphOptimizationLevel,
-};
-
-static int Usage(string? error = null)
-{
-    if (error is not null)
-    {
-        Console.Error.WriteLine($"error: {error}");
+        return TaskQualityDump.Run(args[0], args[1..]);
     }
 
-    Console.Error.WriteLine("usage: Starlings.Fidelity.Tool e5 --out <dir> [--snapshot <dir>] [--fixtures <dir>] [--profile <id>] [--hidden] [--threads <n>] [--device cpu|cuda[:N]]");
-    Console.Error.WriteLine("       Starlings.Fidelity.Tool gliner2 --out <dir> [--snapshot <dir>] [--fixtures <dir>] [--profile <id>] [--threads <n>] [--device cpu|cuda[:N]]");
-    Console.Error.WriteLine("       Starlings.Fidelity.Tool embeddinggemma2 --out <dir> [--snapshot <dir>] [--fixtures <dir>] [--profile <id>] [--threads <n>] [--device cpu|cuda[:N]]");
-    Console.Error.WriteLine("       Starlings.Fidelity.Tool embeddinggemma2-images --out <dir> --images <dir> [options as embeddinggemma2]");
-    Console.Error.WriteLine("       Starlings.Fidelity.Tool embeddinggemma2-videos --out <dir> --videos <dir> [--ffmpeg <dir>] [options as embeddinggemma2]");
-    Console.Error.WriteLine("       Starlings.Fidelity.Tool embeddinggemma2-long --out <dir> --rows <long-embeddings.jsonl> --images <dir> --videos <dir> [--ffmpeg <dir>] [options as embeddinggemma2]");
-    Console.Error.WriteLine("  --device cuda needs the CUDA build: ai-dotnet/tools/Starlings.Fidelity.Tool.Cuda");
-    return error is null ? 0 : 2;
+    if (args.Length >= 1 && args[0] == "tokenizer")
+    {
+        return TokenizerDump.Run(args[1..]);
+    }
+
+    if (args.Length >= 1 && args[0] == "gliner2")
+    {
+        return Gliner2Dump.Run(args[1..]);
+    }
+
+    if (args.Length >= 1 && args[0] == "embeddinggemma2-videos")
+    {
+        return EmbeddingGemma2VideoDump.Run(args[1..]);
+    }
+
+    if (args.Length >= 1 && args[0] == "embeddinggemma2-long")
+    {
+        return EmbeddingGemma2LongDump.Run(args[1..]);
+    }
+
+    if (args.Length >= 1 && args[0] == "embeddinggemma2-images")
+    {
+        return EmbeddingGemma2ImageDump.Run(args[1..]);
+    }
+
+    if (args.Length >= 1 && args[0] == "embeddinggemma2")
+    {
+        return EmbeddingGemma2Dump.Run(args[1..]);
+    }
+
+    if (args.Length < 1 || args[0] is "-h" or "--help" || args[0] != "e5")
+    {
+        return Usage(args.Length > 0 && args[0] is not ("-h" or "--help") ? $"unknown model '{args[0]}'" : null);
+    }
+
+    string? outDir = null;
+    string? snapshot = Environment.GetEnvironmentVariable("STARLING_E5_SNAPSHOT");
+    string? fixturesDir = null;
+    string? profile = null;
+    bool hidden = false;
+    int? threads = null;
+    var device = ToolDevice.Cpu;
+    for (int i = 1; i < args.Length; i++)
+    {
+        switch (args[i])
+        {
+            case "--out" when i + 1 < args.Length:
+                outDir = args[++i];
+                break;
+            case "--snapshot" when i + 1 < args.Length:
+                snapshot = args[++i];
+                break;
+            case "--fixtures" when i + 1 < args.Length:
+                fixturesDir = args[++i];
+                break;
+            case "--profile" when i + 1 < args.Length:
+                profile = args[++i];
+                break;
+            case "--hidden":
+                hidden = true;
+                break;
+            case "--threads" when i + 1 < args.Length:
+                if (!int.TryParse(args[++i], NumberStyles.None, CultureInfo.InvariantCulture, out int count) || count <= 0)
+                {
+                    return Usage("--threads must be a positive integer");
+                }
+
+                threads = count;
+                break;
+            case "--device" when i + 1 < args.Length:
+                if (!ToolDevice.TryParse(args[++i], out device))
+                {
+                    return Usage("--device must be cpu, cuda or cuda:N");
+                }
+
+                break;
+            default:
+                return Usage($"unknown option {args[i]}");
+        }
+    }
+
+    if (outDir is null)
+    {
+        return Usage("--out is required");
+    }
+
+    if (device.Unavailable() is { } unavailable)
+    {
+        return Usage(unavailable);
+    }
+
+    profile ??= device.Profile("multilingual-e5-small/onnx-fp32-cpu");
+
+    string? repoRoot = ToolSupport.FindRepositoryRoot();
+    fixturesDir ??= repoRoot is null
+        ? null
+        : Path.Combine(repoRoot, "model-pipeline", "protected", "multilingual-e5-small", "onnx-fp32-cpu");
+    if (fixturesDir is null || !File.Exists(Path.Combine(fixturesDir, "embeddings.jsonl")))
+    {
+        return Usage($"protected fixtures not found ({fixturesDir ?? "no repository root"}); pass --fixtures");
+    }
+
+    E5ModelFiles files;
+    try
+    {
+        files = string.IsNullOrEmpty(snapshot)
+            ? E5ModelAssets.OpenLocal()
+            : E5ModelAssets.OpenDirectory(snapshot, CacheVerification.Sha256);
+    }
+    catch (ModelAcquisitionException ex)
+    {
+        Console.Error.WriteLine(ex.Message);
+        return 2;
+    }
+
+    var cases = Fixtures.LoadCases(fixturesDir);
+    var texts = Fixtures.LoadTexts(fixturesDir);
+    var batchRows = Fixtures.LoadBatchRows(fixturesDir);
+    Directory.CreateDirectory(outDir);
+
+    string? commit = ToolSupport.GitHead(repoRoot);
+    var tokenizer = E5Tokenizer.FromFile(files.TokenizerPath, E5ModelAssets.TokenizerSha256);
+    using var encoder = E5Encoder.Create(files.ModelPath, new E5EncoderOptions
+    {
+        Session = device.Apply(new OnnxSessionOptions
+        {
+            ExpectedModelSha256 = E5ModelAssets.ModelSha256,
+            IntraOpNumThreads = threads,
+            InterOpNumThreads = threads is null ? null : 1,
+        }),
+    });
+    var embedder = new E5TextEmbedder(tokenizer, encoder);
+    var diagnostics = encoder.Session.Diagnostics;
+    var tokenizerAsset = new Asset(E5ModelAssets.TokenizerFile, E5ModelAssets.TokenizerSha256);
+    var modelAsset = new Asset(E5ModelAssets.ModelFile, diagnostics.ModelSha256 ?? ToolSupport.Sha256(files.ModelPath));
+
+    // Stage 1: tokenizer.
+    var tokenizerResults = new StageWriter(profile, "tokenizer", "Starlings.Tokenizers via E5Tokenizer (profile xlmr-unigram-e5, right truncation to 512)", commit, StageEnvironment(diagnostics, device), [tokenizerAsset]);
+    foreach (var c in cases)
+    {
+        var input = tokenizer.Tokenize(texts[c.Id]);
+        tokenizerResults.Case(c.Id).Add("input_ids", input.InputIds.ToArray()).Add("attention_mask", input.AttentionMask.ToArray());
+    }
+
+    tokenizerResults.Write(Path.Combine(outDir, "tokenizer.results.json"));
+
+    // Stage 3: .NET, from ids and from text.
+    var dotnet = new StageWriter(profile, "dotnet", $"C# E5Encoder + E5TextEmbedder, ONNX Runtime {diagnostics.OrtVersion} {device.Label} (managed binding {diagnostics.ManagedBindingVersion})", commit, StageEnvironment(diagnostics, device), [modelAsset, tokenizerAsset]);
+    foreach (var c in cases)
+    {
+        dotnet.Case(c.Id)
+            .Add("input_ids", c.InputIds)
+            .Add("embedding", encoder.Embed(new EncoderInput(c.InputIds)))
+            .Add("text_embedding", embedder.Embed(texts[c.Id]));
+    }
+
+    dotnet.Batch("fixture-padded", "embedding", batchRows.Select(r => r.Id).ToList(), encoder.EmbedBatch(batchRows.Select(r => new EncoderInput(r.Ids, r.AttentionMask)).ToList()));
+    var batched = new List<float[]>();
+    for (int start = 0; start < cases.Count; start += 16)
+    {
+        batched.AddRange(encoder.EmbedBatch(cases.Skip(start).Take(16).Select(c => new EncoderInput(c.InputIds)).ToList()));
+    }
+
+    dotnet.Batch("all-cases-batch16", "embedding", cases.Select(c => c.Id).ToList(), batched);
+    dotnet.Batch("text-batch", "text_embedding", cases.Select(c => c.Id).ToList(), embedder.EmbedBatch(cases.Select(c => texts[c.Id]).ToList()));
+
+    if (hidden)
+    {
+        dotnet.Tensor("last_hidden_state", outDir, "dotnet-last-hidden-state.f32", cases.Select(c => (c.Id, HiddenState(encoder.Session, c.InputIds))));
+    }
+
+    dotnet.Write(Path.Combine(outDir, "dotnet.results.json"));
+    Console.WriteLine($"wrote {Path.Combine(outDir, "tokenizer.results.json")} and dotnet.results.json: {cases.Count} cases");
+    return 0;
+
+    static (int[] Shape, float[] Values) HiddenState(OnnxModelSession session, long[] ids)
+    {
+        long[] shape = [1, ids.Length];
+        long[] mask = Enumerable.Repeat(1L, ids.Length).ToArray();
+        long[] types = new long[ids.Length];
+        using var idsValue = OrtValue.CreateTensorValueFromMemory(ids, shape);
+        using var maskValue = OrtValue.CreateTensorValueFromMemory(mask, shape);
+        using var typesValue = OrtValue.CreateTensorValueFromMemory(types, shape);
+        using var outputs = session.Run(
+            [E5Encoder.InputIdsName, E5Encoder.AttentionMaskName, E5Encoder.TokenTypeIdsName],
+            [idsValue, maskValue, typesValue],
+            [E5Encoder.LastHiddenStateName]);
+        var values = outputs[0].GetTensorDataAsSpan<float>().ToArray();
+        return ([ids.Length, values.Length / ids.Length], values);
+    }
+
+    static Dictionary<string, object?> StageEnvironment(OnnxSessionDiagnostics d, ToolDevice device)
+    {
+        var environment = BaseEnvironment(d, device.Name);
+        device.Describe(environment);
+        return environment;
+    }
+
+    static Dictionary<string, object?> BaseEnvironment(OnnxSessionDiagnostics d, string provider) => new()
+    {
+        ["machine"] = System.Environment.MachineName,
+        ["provider"] = provider,
+        ["provider_options"] = d.ProviderOptions.ToDictionary(kv => kv.Key, kv => (object?)kv.Value),
+        ["dotnet"] = RuntimeInformation.FrameworkDescription,
+        ["os"] = RuntimeInformation.OSDescription,
+        ["process_architecture"] = RuntimeInformation.ProcessArchitecture.ToString(),
+        ["cpu_count"] = System.Environment.ProcessorCount,
+        ["cpu"] = ToolSupport.CpuModel(),
+        ["onnxruntime"] = d.OrtVersion,
+        ["onnxruntime_managed"] = d.ManagedBindingVersion,
+        ["session_providers"] = d.SessionProviders,
+        ["intra_op_threads"] = d.IntraOpNumThreads,
+        ["graph_optimization_level"] = d.GraphOptimizationLevel,
+    };
+
+    static int Usage(string? error = null)
+    {
+        if (error is not null)
+        {
+            Console.Error.WriteLine($"error: {error}");
+        }
+
+        Console.Error.WriteLine("usage: Starlings.Fidelity.Tool e5 --out <dir> [--snapshot <dir>] [--fixtures <dir>] [--profile <id>] [--hidden] [--threads <n>] [--device cpu|cuda[:N]]");
+        Console.Error.WriteLine("       Starlings.Fidelity.Tool gliner2 --out <dir> [--snapshot <dir>] [--fixtures <dir>] [--profile <id>] [--threads <n>] [--device cpu|cuda[:N]]");
+        Console.Error.WriteLine("       Starlings.Fidelity.Tool embeddinggemma2 --out <dir> [--snapshot <dir>] [--fixtures <dir>] [--profile <id>] [--threads <n>] [--device cpu|cuda[:N]]");
+        Console.Error.WriteLine("       Starlings.Fidelity.Tool embeddinggemma2-images --out <dir> --images <dir> [options as embeddinggemma2]");
+        Console.Error.WriteLine("       Starlings.Fidelity.Tool embeddinggemma2-videos --out <dir> --videos <dir> [--ffmpeg <dir>] [options as embeddinggemma2]");
+        Console.Error.WriteLine("       Starlings.Fidelity.Tool embeddinggemma2-long --out <dir> --rows <long-embeddings.jsonl> --images <dir> --videos <dir> [--ffmpeg <dir>] [options as embeddinggemma2]");
+        Console.Error.WriteLine("  --device cuda needs the CUDA build: ai-dotnet/tools/Starlings.Fidelity.Tool.Cuda");
+        return error is null ? 0 : 2;
+    }
 }
 
 internal sealed record Asset(string Path, string Sha256);
@@ -334,6 +339,21 @@ internal sealed class StageWriter(string profile, string stage, string candidate
 
         return outputs;
     }
+
+    /// <summary>
+    /// Records that the package rejected case <paramref name="id"/> with a typed error (format version 2): the case's
+    /// outputs are replaced by the single string output <c>rejected</c> ("type: message"). The evaluators require their
+    /// named outputs per case, so a rejected case counts as missing and fails its checks; the reason is evidence.
+    /// </summary>
+    public void Reject(string id, Exception error)
+    {
+        var outputs = Case(id);
+        outputs.Items.Clear();
+        outputs.Add("rejected", RejectionReason(error));
+    }
+
+    /// <summary>The recorded reason of a typed rejection: the exception type name and its message.</summary>
+    public static string RejectionReason(Exception error) => $"{error.GetType().Name}: {error.Message}";
 
     public void Batch(string name, string output, List<string> ids, IReadOnlyList<float[]> rows) => _batches.Add((name, output, ids, rows.Cast<object>().ToList()));
 

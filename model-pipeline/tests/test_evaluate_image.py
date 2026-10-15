@@ -301,6 +301,29 @@ def test_a_missing_required_row_fails_but_the_excluded_row_may_be_absent(repo):
     assert "missing cases ['mm-b']" in check(ev, "dotnet-ids.embedding")["detail"]
 
 
+def test_a_row_the_candidate_rejected_fails_with_its_reason(repo):
+    # Starlings.Fidelity.Tool embeddinggemma2-images records a typed per-input rejection (here: the decoder's pixel
+    # limit) as the row's single output in both stages and continues. Evidence, but never a pass.
+    reason = "EmbeddingGemma2ImageTooLargeException: The image is 8000 x 10000 pixels; the limit is 50000000."
+    repo.stage1()
+    repo.stage3(drop="mm-b")
+    for name in ("tokenizer.results.json", "dotnet.results.json"):
+        path = repo.results / name
+        data = json.loads(path.read_text(encoding="utf-8"))
+        data["cases"]["mm-b"] = {"rejected": reason}
+        fixtures.write_json(path, data)
+    ev = repo.run(require_gates=("G1", "G2"))
+    for check_id in ("tokenizer.token_ids", "dotnet-ids.embedding"):
+        c = check(ev, check_id)
+        assert c["status"] == "failed"
+        assert "missing cases ['mm-b']" in c["detail"]
+        assert "rejected by the candidate" in c["detail"] and "EmbeddingGemma2ImageTooLargeException" in c["detail"]
+    assert check(ev, "tokenizer.resized_sha256")["status"] == "failed"  # the rejected row's image digests are missing
+    assert ev.report["gates"]["G1"]["status"] == "failed"
+    assert ev.report["gates"]["G2"]["status"] != "passed"
+    assert ev.exit_code == evaluate.EXIT_FAILED
+
+
 def test_provider_options_must_match_the_profile(repo):
     repo.stage1()
     repo.stage3(provider_options={"use_tf32": "1"})

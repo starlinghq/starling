@@ -135,6 +135,17 @@ def test_ner_rejects_bad_offsets_and_labels(tmp_path):
         tq.load_predictions(preds, data)
 
 
+def test_a_rejected_ner_row_is_refused_not_scored_as_empty(tmp_path):
+    data = tq.load_ner_set(SMOKE / "ner" / "gold.jsonl")
+    names = list(data.rows)
+    preds = tmp_path / "p.jsonl"
+    rows = [{"id": n, "entities": []} for n in names[1:]]
+    rows.insert(0, {"id": names[0], "rejected": "Gliner2InputTooLongException: 600 tokens > 512"})
+    preds.write_text("".join(json.dumps(r) + "\n" for r in rows), encoding="utf-8")
+    with pytest.raises(tq.EvaluationError, match="rejected by the candidate .Gliner2InputTooLongException"):
+        tq.load_predictions(preds, data)
+
+
 # SMOKE fixtures and budgets -------------------------------------------------------------------------
 
 
@@ -345,6 +356,15 @@ def test_generation_inputs_are_checked(tmp_path):
         tq.load_generations(ids_only, data)
     with pytest.raises(tq.results.ToleranceOverrideError):
         tq.load_generations(generations(tmp_path / "t.jsonl", {"g-a": "1", "g-b": "2"}, threshold=0.5), data)
+    # A row the candidate rejected (Starlings.Qwen35.Fidelity generation: a typed per-input error) is never scored.
+    rejected = tmp_path / "rejected.jsonl"
+    rejected.write_text(
+        '{"id": "g-a", "output_text": "18"}\n'
+        '{"id": "g-b", "rejected": "GenerationContextLengthException: prompt too long"}\n',
+        encoding="utf-8",
+    )
+    with pytest.raises(tq.EvaluationError, match="'g-b' was rejected by the candidate .GenerationContextLength"):
+        tq.load_generations(rejected, data)
     no_answer = tmp_path / "no-answer.jsonl"
     no_answer.write_text('{"id": "x", "messages": [{"role": "user", "content": "q"}]}\n', encoding="utf-8")
     with pytest.raises(tq.EvaluationError, match="answer"):

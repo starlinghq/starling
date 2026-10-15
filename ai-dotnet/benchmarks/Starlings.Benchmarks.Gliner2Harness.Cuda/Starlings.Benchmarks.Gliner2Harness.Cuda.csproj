@@ -29,4 +29,9 @@
     <ProjectReference Include="../../src/Starlings.Models.Gliner2/Starlings.Models.Gliner2.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- Entry-point wrapper: an escaping exception gives "error:" and exit code 70, not an abort and core dump. -->
+    <Compile Include="../../tools/Shared/ToolMain.cs" Link="Shared/ToolMain.cs" />
+  </ItemGroup>
+
 </Project>
