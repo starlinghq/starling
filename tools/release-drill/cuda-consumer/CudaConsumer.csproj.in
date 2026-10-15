@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Throwaway clean CUDA consumer for tools/release-drill-ai.sh (cuda-drill mode). The script copies this file outside
+    the repository and replaces @VERSION@. Its only dependencies are the drill's packages from the local feed and the
+    CUDA natives of ONNX Runtime from nuget.org: the application's choice, in place of Microsoft.ML.OnnxRuntime (the
+    libraries reference only the managed binding). The CUDA 13 runtime and cuDNN 9 come from the machine.
+  -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Starlings.Models.E5.Extensions.AI" Version="[@VERSION@]" />
+    <PackageReference Include="Starlings.Models.Gliner2" Version="[@VERSION@]" />
+    <PackageReference Include="Starlings.Models.EmbeddingGemma2.Extensions.AI" Version="[@VERSION@]" />
+    <PackageReference Include="Starlings.Models.EmbeddingGemma2.Imaging.SkiaSharp" Version="[@VERSION@]" />
+    <PackageReference Include="Microsoft.ML.OnnxRuntime.Gpu.Linux" Version="1.30.0" />
+  </ItemGroup>
+
+</Project>
