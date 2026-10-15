@@ -76,6 +76,7 @@ internal unsafe struct AVStream
 {
     [FieldOffset(16)] public AVCodecParameters* codecpar;
     [FieldOffset(32)] public AVRational time_base;
+    [FieldOffset(68)] public int discard;
 }
 
 /// <summary><c>AVCodecParameters</c> (184 bytes); only the fields the adapter uses, at FFmpeg's offsets.</summary>
@@ -115,6 +116,8 @@ internal unsafe struct AVPacket
 internal unsafe struct AVCodecContext
 {
     [FieldOffset(656)] public int thread_count;
+    [FieldOffset(664)] public int active_thread_type;
+    [FieldOffset(172)] public int has_b_frames;
     [FieldOffset(92)] public AVRational pkt_timebase;
 }
 
@@ -123,6 +126,8 @@ internal unsafe struct AVCodecContext
 internal unsafe struct AVFrame
 {
     [FieldOffset(0)] public fixed ulong data[8];
+    [FieldOffset(136)] public long pts;
+    [FieldOffset(144)] public long pkt_dts;
     [FieldOffset(64)] public fixed int linesize[8];
     [FieldOffset(104)] public int width;
     [FieldOffset(108)] public int height;
@@ -173,6 +178,9 @@ internal static unsafe partial class FFmpegNative
 
     public const int AV_LOG_ERROR = 16;
     public const int AV_PKT_FLAG_DISCARD = 4;
+    public const int AV_PKT_FLAG_KEY = 1;
+    public const int AVDISCARD_ALL = 48;
+    public const int FF_THREAD_FRAME = 1;
     public const long AV_NOPTS_VALUE = -9223372036854775808L;
     public const int AVERROR_EOF = -541478725;
     public const int AVERROR_EINVAL = -22;
@@ -307,6 +315,10 @@ internal static unsafe partial class FFmpegNative
     [LibraryImport("avcodec")]
     public static partial void avcodec_free_context(AVCodecContext** avctx);
 
+    /// <summary><c>void avcodec_flush_buffers(AVCodecContext *avctx)</c></summary>
+    [LibraryImport("avcodec")]
+    public static partial void avcodec_flush_buffers(AVCodecContext* avctx);
+
     /// <summary><c>unsigned avformat_version(void)</c></summary>
     [LibraryImport("avformat")]
     public static partial uint avformat_version();
@@ -318,6 +330,10 @@ internal static unsafe partial class FFmpegNative
     /// <summary><c>int av_read_frame(AVFormatContext *s, AVPacket *pkt)</c></summary>
     [LibraryImport("avformat")]
     public static partial int av_read_frame(AVFormatContext* s, AVPacket* pkt);
+
+    /// <summary><c>int avformat_seek_file(AVFormatContext *s, int stream_index, int64_t min_ts, int64_t ts, int64_t max_ts, int flags)</c></summary>
+    [LibraryImport("avformat")]
+    public static partial int avformat_seek_file(AVFormatContext* s, int stream_index, long min_ts, long ts, long max_ts, int flags);
 
     /// <summary><c>AVFormatContext *avformat_alloc_context(void)</c></summary>
     [LibraryImport("avformat")]

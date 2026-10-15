@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Security.Cryptography;
+using System.Text.Json;
 using Starlings.TestSupport;
 #if STARLINGS_FFMPEG9
 namespace Starlings.Models.EmbeddingGemma2.Video.FFmpeg9.Tests;
@@ -218,6 +219,59 @@ public sealed class DecoderTests(ITestOutputHelper output)
         output.WriteLine($"{videos.Count} edge-case videos, {total} frames, FFmpeg {Major}; differing: {(failures.Count == 0 ? "none" : string.Join(", ", failures))}");
         Assert.Empty(failures);
         Assert.Equal(9, videos.Count);
+    }
+
+    /// <summary>Directory holding the four P-030 release videos (<c>fetch_eg2_release_media.py</c>); the test skips without it.</summary>
+    private const string ReleaseVideosEnvironmentVariable = "STARLING_EMBEDDINGGEMMA2_RELEASE_VIDEOS";
+
+    /// <summary>
+    /// The P-030 video release set's sampled frames, which torchcodec decodes by seeking: on <c>commons-video-02</c> (Ogg
+    /// Theora) its seek to frame 24 yields a frame that differs from a sequential decode, and the adapter must return
+    /// torchcodec's frame. Checked against the protected per-row frame digests (<c>release/video-fp32-release</c>); the
+    /// sequential frames are checked against <c>video-frames.json</c>. Needs the release videos and FFmpeg 8 (the
+    /// protected digests are torchcodec's on FFmpeg 8.1.3); skips otherwise.
+    /// </summary>
+    [Fact]
+    public void ReleaseVideosSampleTorchcodecsSeekedFrames()
+    {
+        Assert.SkipWhen(Major != 8, "the release digests are torchcodec's on FFmpeg 8");
+        string? dir = Environment.GetEnvironmentVariable(ReleaseVideosEnvironmentVariable);
+        Assert.SkipWhen(dir is not { Length: > 0 } || !Directory.Exists(dir), $"set {ReleaseVideosEnvironmentVariable} to the release videos (fetch_eg2_release_media.py)");
+        Assert.SkipWhen(EmbeddingGemma2VideoTestAssets.FFmpegSkipReason is not null, EmbeddingGemma2VideoTestAssets.FFmpegSkipReason ?? string.Empty);
+        var decoder = new EmbeddingGemma2VideoDecoder(new EmbeddingGemma2FFmpegOptions { AllowNonLgplBuild = EmbeddingGemma2VideoTestAssets.AllowNonLgplBuild });
+        string release = Path.Combine(EmbeddingGemma2TestAssets.ProtectedRoot, "release", "video-fp32-release");
+        using var frames = JsonDocument.Parse(File.ReadAllText(Path.Combine(release, "video-frames.json")));
+        int videos = 0;
+        foreach (string line in File.ReadLines(Path.Combine(release, "video-embeddings.jsonl")))
+        {
+            using var row = JsonDocument.Parse(line);
+            var r = row.RootElement;
+            if (r.GetProperty("input_form").GetString() != "path" || r.GetProperty("videos").GetArrayLength() != 1 || r.GetProperty("prompt").GetString() != "none" ||
+                r.GetProperty("text").ValueKind != JsonValueKind.Null || r.GetProperty("image").ValueKind != JsonValueKind.Null)
+            {
+                continue;
+            }
+
+            var v = r.GetProperty("videos")[0];
+            string id = v.GetProperty("video").GetString()!;
+            string path = Directory.GetFiles(dir!, id + ".*").Single();
+            string[] want = [.. v.GetProperty("frame_sha256").EnumerateArray().Select(e => e.GetString()!)];
+            var decoded = decoder.DecodeFile(path, TestContext.Current.CancellationToken);
+            Assert.Equal(want, decoded.Video.Frames.Select(f => Sha(f.Pixels.Span)));
+            videos++;
+            if (id == "commons-video-02")
+            {
+                // Sequential decoding (torchcodec's get_frames_in_range) gives another frame 24.
+                string[] sequential = [.. frames.RootElement.GetProperty(id).GetProperty("all_frame_sha256").EnumerateArray().Select(e => e.GetString()!)];
+                var all = decoder.DecodeAllFrames(path, TestContext.Current.CancellationToken);
+                Assert.Equal(sequential, all.Video.Frames.Select(f => Sha(f.Pixels.Span)));
+                Assert.NotEqual(sequential[24], want[1]);
+                output.WriteLine($"{id}: sampled frame 24 {want[1][..12]} (seek) vs {sequential[24][..12]} (sequential); every frame of the sequential decode equals torchcodec's");
+            }
+        }
+
+        Assert.Equal(4, videos);
+        output.WriteLine($"{videos} release videos: sampled frames equal torchcodec's (seek-based get_frames_at)");
     }
 
     [Fact]
