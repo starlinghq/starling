@@ -470,15 +470,23 @@ internal sealed class EmbeddingGemma2Run : IBenchRun
         return output;
     }
 
-    /// <summary>Per-frame preprocessing at <see cref="EmbeddingGemma2MultimodalEmbedder.VideoFrameSoftTokens"/>; one pixel-values digest per video.</summary>
+    /// <summary>
+    /// Per-frame preprocessing at <see cref="EmbeddingGemma2MultimodalEmbedder.VideoFrameSoftTokens"/> as the embedder
+    /// runs it: the batch processor on up to <see cref="FramesPreprocessedAhead"/> frames at a time (frames in
+    /// parallel); one pixel-values digest per video.
+    /// </summary>
     private string[] PreprocessVideos(VideoBenchRow[] request, double[] stages)
     {
         var videos = request.SelectMany(r => VideoInput(r).Videos).ToArray();
         long t = Stopwatch.GetTimestamp();
-        var patches = videos.Select(v => v.Frames.Select(f => EmbeddingGemma2ImageProcessor.Preprocess(f, EmbeddingGemma2MultimodalEmbedder.VideoFrameSoftTokens)).ToArray()).ToArray();
+        var patches = videos.Select(v => v.Frames.Chunk(FramesPreprocessedAhead)
+            .SelectMany(frames => EmbeddingGemma2ImageProcessor.Preprocess(frames, EmbeddingGemma2MultimodalEmbedder.VideoFrameSoftTokens)).ToArray()).ToArray();
         stages[0] = MonotonicClock.ElapsedMs(t);
         return patches.Select(p => VideoPixelSha(p)).ToArray();
     }
+
+    /// <summary>The embedder's internal <c>VideoFramesPreprocessedAhead</c>: frames preprocessed together ahead of their vision calls.</summary>
+    private const int FramesPreprocessedAhead = 8;
 
     private static string VideoPixelSha(EmbeddingGemma2ImagePatches[] frames)
     {

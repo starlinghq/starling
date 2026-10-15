@@ -1,3 +1,8 @@
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
+using System.Runtime.Intrinsics;
+using System.Runtime.Intrinsics.X86;
+
 namespace Starlings.Models.EmbeddingGemma2;
 
 /// <summary>
@@ -123,19 +128,63 @@ public static class EmbeddingGemma2ImageProcessor
 
     /// <summary>
     /// Runs the whole processor on one image: target size, resize (skipped when the size already matches), rescale,
-    /// patches and positions, unpadded (the vision graph pads; padding rows are zero pixels at (-1, -1)).
+    /// patches and positions, unpadded (the vision graph pads; padding rows are zero pixels at (-1, -1)). Large images
+    /// split their rows over the thread pool; the result does not depend on it.
     /// </summary>
     public static EmbeddingGemma2ImagePatches Preprocess(EmbeddingGemma2Image image, int maxSoftTokens = DefaultMaxSoftTokens)
     {
         ArgumentNullException.ThrowIfNull(image);
         var (tw, th) = GetTargetSize(image.Width, image.Height, maxSoftTokens);
+        return Preprocess(image, tw, th, Environment.ProcessorCount);
+    }
+
+    /// <summary>
+    /// <see cref="Preprocess(EmbeddingGemma2Image, int)"/> on several images (video frames, for example), in order. The
+    /// images are independent, so they run in parallel on the thread pool (at most one per processor, the processors
+    /// shared out among them); each result equals the single-image call. Every target size is checked before any work.
+    /// </summary>
+    /// <exception cref="ArgumentException">An image is null or resizes to nothing at this budget.</exception>
+    public static EmbeddingGemma2ImagePatches[] Preprocess(IReadOnlyList<EmbeddingGemma2Image> images, int maxSoftTokens = DefaultMaxSoftTokens)
+    {
+        ArgumentNullException.ThrowIfNull(images);
+        var targets = new (int Width, int Height)[images.Count];
+        for (int i = 0; i < targets.Length; i++)
+        {
+            var image = images[i] ?? throw new ArgumentException($"Image {i} is null.", nameof(images));
+            targets[i] = GetTargetSize(image.Width, image.Height, maxSoftTokens);
+        }
+
+        var result = new EmbeddingGemma2ImagePatches[targets.Length];
+        int degree = Math.Min(targets.Length, Environment.ProcessorCount);
+        if (degree <= 1)
+        {
+            for (int i = 0; i < targets.Length; i++)
+            {
+                result[i] = Preprocess(images[i], targets[i].Width, targets[i].Height, Environment.ProcessorCount);
+            }
+
+            return result;
+        }
+
+        int inner = Math.Max(1, Environment.ProcessorCount / degree);
+        Parallel.For(0, targets.Length, new ParallelOptions { MaxDegreeOfParallelism = degree }, i =>
+            result[i] = Preprocess(images[i], targets[i].Width, targets[i].Height, inner));
+        return result;
+    }
+
+    private static EmbeddingGemma2ImagePatches Preprocess(EmbeddingGemma2Image image, int tw, int th, int maxThreads)
+    {
         byte[] resized = tw == image.Width && th == image.Height
             ? image.Pixels.ToArray()
-            : TorchAntialiasResampler.Resize(image.Pixels.Span, image.Width, image.Height, tw, th);
+            : TorchAntialiasResampler.Resize(image.Pixels.Span, image.Pixels, image.Width, image.Height, tw, th, vectorized: true, maxThreads);
         int patches = (tw / PatchSize) * (th / PatchSize);
-        var pixelValues = new float[patches * PatchValues];
+
+        // Every value is written below, so the array need not be zeroed first.
+        var pixelValues = GC.AllocateUninitializedArray<float>(patches * PatchValues);
         var positions = new long[patches * 2];
-        WritePatches(resized, tw, th, pixelValues, positions);
+        int pw = tw / PatchSize;
+        TorchAntialiasResampler.For(th / PatchSize, (long)pw * PatchValues, maxThreads, (py0, py1) =>
+            WritePatchRows(resized, tw, pixelValues, positions, py0, py1, vectorized: true));
         return new EmbeddingGemma2ImagePatches(tw, th, resized, pixelValues, positions);
     }
 
@@ -143,10 +192,21 @@ public static class EmbeddingGemma2ImageProcessor
     /// Writes the patches of a resized image (sides multiples of 16) row-major over the patch grid, each patch as (row,
     /// column, channel) values times <see cref="RescaleFactor"/>, and their (x, y) positions.
     /// </summary>
-    internal static void WritePatches(ReadOnlySpan<byte> resized, int width, int height, Span<float> pixelValues, Span<long> positions)
+    internal static void WritePatches(ReadOnlySpan<byte> resized, int width, int height, Span<float> pixelValues, Span<long> positions) =>
+        WritePatches(resized, width, height, pixelValues, positions, Avx2.IsSupported);
+
+    /// <summary>As <see cref="WritePatches(ReadOnlySpan{byte}, int, int, Span{float}, Span{long})"/>, choosing the AVX2 or the scalar loop (same values).</summary>
+    internal static void WritePatches(ReadOnlySpan<byte> resized, int width, int height, Span<float> pixelValues, Span<long> positions, bool vectorized) =>
+        WritePatchRows(resized, width, pixelValues, positions, 0, height / PatchSize, vectorized);
+
+    /// <summary>Patch rows [<paramref name="py0"/>, <paramref name="py1"/>) of <see cref="WritePatches(ReadOnlySpan{byte}, int, int, Span{float}, Span{long}, bool)"/>.</summary>
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    private static void WritePatchRows(ReadOnlySpan<byte> resized, int width, Span<float> pixelValues, Span<long> positions, int py0, int py1, bool vectorized)
     {
-        int pw = width / PatchSize, ph = height / PatchSize;
-        for (int py = 0; py < ph; py++)
+        int pw = width / PatchSize;
+        vectorized &= Avx2.IsSupported;
+        var factor = Vector256.Create(RescaleFactor);
+        for (int py = py0; py < py1; py++)
         {
             for (int px = 0; px < pw; px++)
             {
@@ -158,6 +218,21 @@ public static class EmbeddingGemma2ImageProcessor
                 {
                     var src = resized.Slice(((py * PatchSize + dy) * width + px * PatchSize) * 3, PatchSize * 3);
                     var dst = patch.Slice(dy * PatchSize * 3, PatchSize * 3);
+                    if (vectorized)
+                    {
+                        // 48 bytes as 6 x 8: uint8 to int32 to float32 (exact), times the float32 factor, as the scalar loop.
+                        ref byte s = ref MemoryMarshal.GetReference(src);
+                        ref float d = ref MemoryMarshal.GetReference(dst);
+                        for (int k = 0; k < PatchSize * 3; k += 8)
+                        {
+                            var bytes = Vector128.CreateScalarUnsafe(Unsafe.ReadUnaligned<long>(ref Unsafe.Add(ref s, k))).AsByte();
+                            var values = Avx.Multiply(Avx.ConvertToVector256Single(Avx2.ConvertToVector256Int32(bytes)), factor);
+                            values.StoreUnsafe(ref d, (nuint)k);
+                        }
+
+                        continue;
+                    }
+
                     for (int k = 0; k < src.Length; k++)
                     {
                         dst[k] = src[k] * RescaleFactor;

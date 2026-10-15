@@ -89,6 +89,12 @@ public sealed class EmbeddingGemma2MultimodalEmbedder : IDisposable
     /// </summary>
     public const int VideoFrameSoftTokens = 140;
 
+    /// <summary>
+    /// Video frames preprocessed together (in parallel) ahead of their vision calls: 8 frames at 140 soft tokens hold at
+    /// most about 31 MB of patch values (1,260 x 768 float32 each).
+    /// </summary>
+    internal const int VideoFramesPreprocessedAhead = 8;
+
     private static readonly string[] VisionInputNames = [PixelValuesName, PixelPositionIdsName];
     private static readonly string[] VisionOutputNames = [SoftTokensName, SoftTokenMaskName];
     private static readonly string[] TextInputNames = [EmbeddingGemma2Encoder.InputIdsName, EmbeddingGemma2Encoder.AttentionMaskName, MultimodalEmbedsName, MultimodalMaskName];
@@ -563,7 +569,7 @@ public sealed class EmbeddingGemma2MultimodalEmbedder : IDisposable
         var soft = new float[images.Count][];
         if (images.Count > 0)
         {
-            RunVision(images.Select(x => x.Image).ToArray(), _options.MaxImageSoftTokens, _options.MaxVisionBatchSize, soft, cancellationToken);
+            RunVision(images.Select(x => x.Image).ToArray(), _options.MaxImageSoftTokens, _options.MaxVisionBatchSize, _options.MaxVisionBatchSize, soft, cancellationToken);
         }
 
         if (diagnostics is not null)
@@ -587,7 +593,7 @@ public sealed class EmbeddingGemma2MultimodalEmbedder : IDisposable
         var frameSoft = new float[frames.Count][];
         if (frames.Count > 0)
         {
-            RunVision(frames.ToArray(), VideoFrameSoftTokens, _options.MaxVideoFramesPerVisionCall, frameSoft, cancellationToken);
+            RunVision(frames.ToArray(), VideoFrameSoftTokens, _options.MaxVideoFramesPerVisionCall, VideoFramesPreprocessedAhead, frameSoft, cancellationToken);
         }
 
         var rowVideoSoft = new float[rows][];
@@ -687,7 +693,7 @@ public sealed class EmbeddingGemma2MultimodalEmbedder : IDisposable
     /// Preprocesses images (or video frames) at <paramref name="budget"/> soft tokens and runs them through the vision graph
     /// in planned calls of at most <paramref name="maxPerCall"/>; writes each one's valid soft tokens.
     /// </summary>
-    private void RunVision(EmbeddingGemma2Image[] images, int budget, int maxPerCall, float[][] soft, CancellationToken cancellationToken)
+    private void RunVision(EmbeddingGemma2Image[] images, int budget, int maxPerCall, int preprocessAhead, float[][] soft, CancellationToken cancellationToken)
     {
         int maxPatches = EmbeddingGemma2ImageProcessor.MaxPatches(budget);
         var patchCounts = new int[images.Length];
@@ -704,15 +710,23 @@ public sealed class EmbeddingGemma2MultimodalEmbedder : IDisposable
             }
         }
 
+        // Images are preprocessed in parallel ahead of their vision calls, at least preprocessAhead at a time (video
+        // frames: VideoFramesPreprocessedAhead; images: one call's worth), which bounds the preprocessed memory held.
         int start = 0;
+        int ready = 0;
+        var preprocessed = new EmbeddingGemma2ImagePatches[images.Length];
         foreach (int count in PlanVisionCalls(patchCounts, maxPerCall, _options.MaxVisionBatchPatches))
         {
             cancellationToken.ThrowIfCancellationRequested();
-            var batch = new EmbeddingGemma2ImagePatches[count];
-            for (int b = 0; b < count; b++)
+            if (ready < start + count)
             {
-                batch[b] = EmbeddingGemma2ImageProcessor.Preprocess(images[start + b], budget);
+                int take = Math.Min(images.Length - ready, Math.Max(start + count - ready, preprocessAhead));
+                EmbeddingGemma2ImageProcessor.Preprocess(new ArraySegment<EmbeddingGemma2Image>(images, ready, take), budget).CopyTo(preprocessed, ready);
+                ready += take;
             }
+
+            var batch = preprocessed.AsSpan(start, count).ToArray();
+            preprocessed.AsSpan(start, count).Clear();
 
             int rows = _options.PadImagesToMaxPatches ? maxPatches : batch.Max(p => p.PatchCount);
             RunVisionCall(batch, rows, soft.AsSpan(start, count), cancellationToken);
