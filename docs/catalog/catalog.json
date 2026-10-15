@@ -525,7 +525,10 @@
           "date": "2026-10-14"
         },
         "G2": {
-          "status": "not-run"
+          "status": "passed",
+          "evidence": "docs/evidence/release-set-gates-2026-10-14/embeddinggemma2-onnx-fp32-cpu/README.md",
+          "evidence_found": true,
+          "date": "2026-10-15"
         },
         "G3": {
           "status": "passed",
@@ -661,7 +664,6 @@
       "stable_readiness": {
         "ready": false,
         "gates_not_passed": [
-          "G2",
           "G5"
         ],
         "untested_capabilities": []
@@ -708,10 +710,10 @@
           "date": "2026-10-14"
         },
         "G2": {
-          "status": "checklist",
-          "evidence": "docs/evidence/cuda-qualification-2026-10-14/embeddinggemma2-onnx-fp32-cuda/README.md",
+          "status": "passed",
+          "evidence": "docs/evidence/release-set-gates-2026-10-14/embeddinggemma2-onnx-fp32-cuda/README.md",
           "evidence_found": true,
-          "date": "2026-10-14"
+          "date": "2026-10-15"
         },
         "G3": {
           "status": "passed",
@@ -844,7 +846,6 @@
       "stable_readiness": {
         "ready": false,
         "gates_not_passed": [
-          "G2",
           "G4",
           "G5"
         ],
