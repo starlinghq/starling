@@ -169,7 +169,10 @@
           "date": "2026-10-14"
         },
         "G3": {
-          "status": "not-run"
+          "status": "passed",
+          "evidence": "docs/evidence/release-set-gates-2026-10-14/embeddinggemma2-image-fp32-cpu/README.md",
+          "evidence_found": true,
+          "date": "2026-10-15"
         },
         "G4": {
           "status": "passed",
@@ -300,10 +303,8 @@
         }
       },
       "stable_readiness": {
-        "ready": false,
-        "gates_not_passed": [
-          "G3"
-        ],
+        "ready": true,
+        "gates_not_passed": [],
         "untested_capabilities": []
       },
       "scheduled_regression": true
@@ -356,7 +357,10 @@
           "date": "2026-10-14"
         },
         "G3": {
-          "status": "not-run"
+          "status": "passed",
+          "evidence": "docs/evidence/release-set-gates-2026-10-14/embeddinggemma2-image-fp32-cuda/README.md",
+          "evidence_found": true,
+          "date": "2026-10-15"
         },
         "G4": {
           "status": "failed",
@@ -489,7 +493,6 @@
       "stable_readiness": {
         "ready": false,
         "gates_not_passed": [
-          "G3",
           "G4",
           "G5"
         ],
@@ -920,7 +923,10 @@
           "date": "2026-10-14"
         },
         "G3": {
-          "status": "not-run"
+          "status": "passed",
+          "evidence": "docs/evidence/release-set-gates-2026-10-14/embeddinggemma2-video-fp32-cpu/README.md",
+          "evidence_found": true,
+          "date": "2026-10-15"
         },
         "G4": {
           "status": "passed",
@@ -1051,7 +1057,6 @@
         "ready": false,
         "gates_not_passed": [
           "G0",
-          "G3",
           "G6",
           "G7"
         ],
@@ -1107,7 +1112,10 @@
           "date": "2026-10-14"
         },
         "G3": {
-          "status": "not-run"
+          "status": "passed",
+          "evidence": "docs/evidence/release-set-gates-2026-10-14/embeddinggemma2-video-fp32-cuda/README.md",
+          "evidence_found": true,
+          "date": "2026-10-15"
         },
         "G4": {
           "status": "failed",
@@ -1235,7 +1243,6 @@
         "ready": false,
         "gates_not_passed": [
           "G0",
-          "G3",
           "G4",
           "G5",
           "G6",

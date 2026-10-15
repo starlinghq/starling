@@ -7,6 +7,7 @@ Run on 2026-10-14 at `472e187` on the RTX 3090, GPU 0 only. Decoding used the sa
 | G1 and G2 (rerun) | **passed** | see "Rerun after the adapter decodes as torchcodec does" below | [`g1-g2-video-release-torchcodec-seek/report.md`](g1-g2-video-release-torchcodec-seek/report.md) |
 | G1 (first run) | **failed** | The same mismatch as on CPU: decoded frames, resized pixels and pixel values differ on the 3/12 video inputs that sample `commons-video-02` (Ogg Theora), and on the still image taken from it. Ids, frame indices and positions are exact. | [`g1-g2-video-release/report.md`](g1-g2-video-release/report.md) |
 | G2 (first run) | **failed** | embedding max abs 8.88e-3 (1e-5), min cosine 0.99793, worst `mm-image-and-video`. Rows without `-02` measure 2.0e-7 to 2.8e-6 per row; rows with it measure 2.6e-3 to 8.9e-3. Soft-token and token-embedding checks not run (4-thread reference tensors). | same |
+| G3 (2026-10-15) | **passed** | `video-retrieval-v1`, 50 queries, 50 videos: nDCG@10 **0.8126** (minimum 0.797), MRR@10 **0.7714** (minimum 0.751); recall@1 0.6800, recall@10 0.9400. The upstream reference scores 0.8126 / 0.7714. | [`g3-retrieval/report.md`](g3-retrieval/report.md) |
 
 The failure comes from decoding, which runs on the CPU, so the provider does not change it. Wall clock: .NET dump 61.5 s.
 
@@ -27,3 +28,28 @@ The output is deterministic: five runs of the fixture's call gave the same frame
 
 Run at `a8717f6` (branch `eg2-video-torchcodec-seek`, rebased on main after #38) on CUDA (RTX 3090, GPU 0 only, `use_tf32: 0`). Bounds come from the profile's protected `tolerances.yaml`; nothing under `protected/` changed. The report's date is UTC (2026-10-15). Wall clock for the .NET dump: 59 s (shared machine, not a benchmark); reference regeneration about 9 minutes to the tensors.
 
+## G3 on the image and video retrieval sets (2026-10-15)
+
+The set is `embeddinggemma-2/release/video-retrieval-v1`, added in #57 (protected-change): 50 queries, 50 videos from Wikimedia Commons. Each query is a file's own Commons description, and that file is the query's only relevant document. The set's `SOURCE.md` gives the sources, licenses and selection. The budget comes from `protected/embeddinggemma-2/video-fp32-cuda/task-quality.yaml`. It is the upstream reference's score on this exact set minus a stated margin, and it was committed before any .NET run on the set.
+
+| Metric | .NET (CUDA) | Upstream reference (PyTorch CPU fp32) | Minimum |
+| --- | ---: | ---: | ---: |
+| nDCG@10 | 0.8126 | 0.8126 | 0.797 |
+| MRR@10 | 0.7714 | 0.7714 | 0.751 |
+| recall@1 | 0.6800 | 0.6800 | |
+| recall@10 | 0.9400 | 0.9400 | |
+
+**G3 passed, exit 0.** The evaluator verified the budget against Git, and the budget matched the data+metadata digest `c1573b0f0715d310875399c48510c2275fc92adb78b1bb618d785bf8af349ed9`. Every metric equals the reference's exactly. Compared with the reference embeddings, the .NET embeddings measure max abs 5.4e-6 per element, with min cosine 0.999999999. That is measured, not a G3 bound.
+
+- **Producer.** `Starlings.Fidelity.Tool retrieval --model embeddinggemma2-video` ran at `1aa26e5` (main after #57) on CUDA (`Starlings.Fidelity.Tool.Cuda`, `--device cuda`, RTX 3090, `CUDA_VISIBLE_DEVICES=0`, `use_tf32: 0`, CUDA 13 and cuDNN 9 from the pinned `eg2-cuda` wheels). Before embedding anything, it checked every media file against `corpus.jsonl`'s SHA-256. Queries used the `query` prompt through the multimodal embedder. Each video was embedded alone, with no prompt, through the FFmpeg 8 adapter on the pinned FFmpeg `n8.1.3-17-gc389840894` LGPL shared build (`--ffmpeg`). Everything ran at the package defaults. Wall clock: 117 s.
+- **Reference.** `reference/embeddinggemma2/reference_eg2_media_retrieval.py` (#53) ran on sentence-transformers 6.1.0 and PyTorch 2.14.1+cpu at 14 threads, in 2575 s, with embeddings SHA-256 `87e57a9599780ed933cf92b3248509ffe3a3617dc232d934b285af5e526bafe0`.
+- **Machine.** Both ran on RunPod pod `starling-q-eg2g3`: secure cloud EU-CZ-1, AMD EPYC 7H12 (31-CPU quota), RTX 3090, .NET SDK 10.0.100. Wall clock is not a benchmark.
+- **Outside Git.** The candidate embeddings (100 rows) are `574a70ee08b8737cf58352b747af69eef63c9d15eaf167eaff76ccf6977aba33`. The media are fetched with the set's `SOURCE.md` commands.
+
+```sh
+SET=model-pipeline/protected/embeddinggemma-2/release/video-retrieval-v1
+dotnet <Starlings.Fidelity.Tool.Cuda build>/Starlings.Fidelity.Tool.dll retrieval --model embeddinggemma2-video --dataset $SET \
+  --media <media dir> --out <run>/embeddings.jsonl --ffmpeg <FFmpeg 8 LGPL lib> --device cuda --threads 16
+model-pipeline evaluate model-pipeline/registry/embeddinggemma-2/video-fp32-cuda/manifest.yaml --g3 retrieval \
+  --dataset $SET --results <run>/embeddings.jsonl --out <run>/g3-retrieval
+```
