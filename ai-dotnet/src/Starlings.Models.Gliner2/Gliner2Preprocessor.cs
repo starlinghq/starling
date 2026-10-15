@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Security.Cryptography;
 using Starlings.Tokenizers;
 
@@ -10,9 +11,20 @@ namespace Starlings.Models.Gliner2;
 /// piece is mapped with the vocabulary (unknown pieces to <c>[UNK]</c>, id 3), like <c>tokenize</c> followed by
 /// <c>convert_tokens_to_ids</c>.
 /// </summary>
-/// <remarks>Immutable; safe to use from several threads (the owned tokenizer is immutable).</remarks>
+/// <remarks>
+/// Safe to use from several threads (the owned tokenizer is immutable). Each token is tokenized alone, so its ids
+/// depend on the token string only: the ids of up to <see cref="MaxCachedTokens"/> distinct tokens (labels, schema
+/// tokens, words) of at most <see cref="MaxCachedTokenLength"/> UTF-16 units are memoized, as Hugging Face tokenizers
+/// cache per-word results; a cached token gives the ids it gave when it was computed.
+/// </remarks>
 internal sealed class Gliner2Preprocessor
 {
+    /// <summary>Most distinct tokens whose ids are memoized; later tokens are tokenized on every call.</summary>
+    internal const int MaxCachedTokens = 16_384;
+
+    /// <summary>Longest token (UTF-16 units) whose ids are memoized.</summary>
+    internal const int MaxCachedTokenLength = 64;
+
     /// <summary><c>[UNK]</c> id in the GLiNER2 vocabulary.</summary>
     public const long UnknownId = 3;
 
@@ -20,6 +32,7 @@ internal sealed class Gliner2Preprocessor
     public const string EntitiesPrompt = "entities";
 
     private readonly Tokenizer _tokenizer;
+    private readonly ConcurrentDictionary<string, long[]> _ids = new(StringComparer.Ordinal);
 
     private Gliner2Preprocessor(Tokenizer tokenizer)
     {
@@ -165,11 +178,29 @@ internal sealed class Gliner2Preprocessor
             schemaIndex);
     }
 
-    private void AddPieces(string token, List<long> ids)
+    private void AddPieces(string token, List<long> ids) => ids.AddRange(PieceIds(token));
+
+    /// <summary>The token's pieces mapped with the vocabulary (unknown pieces to <see cref="UnknownId"/>); do not modify.</summary>
+    internal long[] PieceIds(string token)
     {
-        foreach (string piece in _tokenizer.Encode(token, addSpecialTokens: false).Tokens)
+        if (_ids.TryGetValue(token, out long[]? cached))
         {
-            ids.Add(_tokenizer.TokenToId(piece) ?? UnknownId);
+            return cached;
         }
+
+        var encoding = _tokenizer.Encode(token, addSpecialTokens: false);
+        var pieces = encoding.Tokens;
+        var result = new long[encoding.Count];
+        for (int i = 0; i < result.Length; i++)
+        {
+            result[i] = _tokenizer.TokenToId(pieces[i]) ?? UnknownId;
+        }
+
+        if (token.Length <= MaxCachedTokenLength && _ids.Count < MaxCachedTokens)
+        {
+            _ids.TryAdd(token, result);
+        }
+
+        return result;
     }
 }
