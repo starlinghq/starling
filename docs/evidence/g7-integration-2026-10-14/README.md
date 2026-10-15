@@ -19,7 +19,7 @@ These are taken from the manifests' `capabilities`. Missing never means supporte
 
 **Persistence** is `unsupported` everywhere. It is advertised nowhere, and the one API that could imply it is rejected explicitly. Saving an ML.NET transformer throws `NotSupportedException`, also inside a chain: `SaveIsUnsupportedAlsoInsideAChain` in `Starlings.Models.E5.MLNet.Tests` and `Starlings.Models.EmbeddingGemma2.MLNet.Tests` (`TransformContractTests`). The release drills confirm it from the packed packages:
 
-- `ML.NET Save of the e5 transformer is rejected (persistence unsupported)` (AiConsumer) and `e5: ML.NET Save of the transformer is rejected` (MlNetConsumer), in [cpu-drill.log](../g6-distribution-2026-10-14/cpu-drill.log) lines 292 and 308;
+- `ML.NET Save of the e5 transformer is rejected (persistence unsupported)` (AiConsumer) and `e5: ML.NET Save of the transformer is rejected` (MlNetConsumer), in [cpu-drill.log](../g6-distribution-2026-10-14/cpu-drill.log) lines 291 and 307;
 - `EmbeddingGemma 2: ML.NET Save of the transformer is rejected (persistence unsupported)`, in [eg2-image-cpu-drill.log](../g6-distribution-2026-10-14/eg2-image-cpu-drill.log) line 300.
 
 The Qwen and GLiNER2 packages expose no save API.

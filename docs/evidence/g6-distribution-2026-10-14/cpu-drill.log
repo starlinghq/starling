@@ -1,14 +1,13 @@
 
 == 0. Inputs
-commit:    54d9fa36c4797827295ce63125ee92c446d48341
-note:      working tree has uncommitted changes; the drill ignores them and builds 54d9fa36c4797827295ce63125ee92c446d48341
+commit:    e656703e7cade301c2c11e96b6995a97f971509a
 dotnet:    /home/mark/.dotnet/dotnet (SDK in the clone: pinned by global.json; outside: 10.0.401)
 mode:      seed (seed: /home/mark/.cache/starling-models/intfloat/multilingual-e5-small/614241f622f53c4eeff9890bdc4f31cfecc418b3); GLiNER2 graph seed: /home/mark/.cache/starling-models/fastino/gliner2-base-v1/f9634218e53580c56edf0de97ca1a7d3f1c2354e; Qwen3.5 bundle seed: /home/mark/.cache/starling-models/Qwen/Qwen3.5-0.8B/2fc06364715b967f1860aea9cf38778875588b17
 offline:   network namespace without interfaces (unshare -rn)
-work dir:  /home/mark/.cache/drill-tmp/starlings-drill.j1FQky
+work dir:  /home/mark/.cache/drill-tmp/starlings-drill.41af9m
 packages:  reused from /home/mark/.cache/g6-drill-seed/packages
 
-== 1. Clean checkout of 54d9fa36c4797827295ce63125ee92c446d48341
+== 1. Clean checkout of e656703e7cade301c2c11e96b6995a97f971509a
 ok:   no build outputs, caches or untracked files in the checkout
 
 == 2. Versions
@@ -17,7 +16,7 @@ ai-dotnet packages:            0.1.0-preview.6
 ok:   sample references 0.1.0-preview.6; manifest pins tokenizer 0.3.0-preview.1
 
 == 3. Pack (locked restore, empty package cache)
-ok:   packages reused from /home/mark/.cache/g6-drill-seed/packages, built from b69070309274cd0761287da0ceb2a1a56b22d49d; no change to ai-dotnet/src ai-dotnet/Directory.Build.props ai-dotnet/Directory.Build.targets ai-dotnet/Directory.Packages.props Directory.Build.props .editorconfig global.json LICENSE-APACHE LICENSE-MIT between b69070309274cd0761287da0ceb2a1a56b22d49d and 54d9fa36c4797827295ce63125ee92c446d48341
+ok:   packages reused from /home/mark/.cache/g6-drill-seed/packages, built from b69070309274cd0761287da0ceb2a1a56b22d49d; no change to ai-dotnet/src ai-dotnet/Directory.Build.props ai-dotnet/Directory.Build.targets ai-dotnet/Directory.Packages.props Directory.Build.props .editorconfig global.json LICENSE-APACHE LICENSE-MIT between b69070309274cd0761287da0ceb2a1a56b22d49d and e656703e7cade301c2c11e96b6995a97f971509a
 Starlings.Acquisition.0.1.0-preview.6.nupkg
 Starlings.Acquisition.0.1.0-preview.6.snupkg
 Starlings.Generation.OnnxGenAI.0.1.0-preview.6.nupkg
@@ -245,10 +244,10 @@ ok:   no FFmpeg library in the consumer package cache or any build output (the v
 == 7. Explicit acquisition into an isolated empty cache (real Hub download)
 seeded: onnx/model.onnx from /home/mark/.cache/starling-models/intfloat/multilingual-e5-small/614241f622f53c4eeff9890bdc4f31cfecc418b3 (the store verifies size and SHA-256 before use)
 lock:  multilingual-e5-small (intfloat/multilingual-e5-small@614241f622f53c4eeff9890bdc4f31cfecc418b3, 2 files)
-cache: /home/mark/.cache/drill-tmp/starlings-drill.j1FQky/models
+cache: /home/mark/.cache/drill-tmp/starlings-drill.41af9m/models
 onnx/model.onnx: already cached, 470268510 bytes, sha256 ca456c06b3a9505ddfd9131408916dd79290368331e7d76bb621f1cba6bc8665 verified
 tokenizer.json: downloaded, 17082730 bytes, sha256 0b44a9d7b51c3c62626640cda0e2c2f70fdacdc25bbbd68038369d14ebdf4c39 verified
-snapshot: /home/mark/.cache/drill-tmp/starlings-drill.j1FQky/models/intfloat/multilingual-e5-small/614241f622f53c4eeff9890bdc4f31cfecc418b3
+snapshot: /home/mark/.cache/drill-tmp/starlings-drill.41af9m/models/intfloat/multilingual-e5-small/614241f622f53c4eeff9890bdc4f31cfecc418b3
 ok:   cache content: ./.downloads/intfloat/multilingual-e5-small/614241f622f53c4eeff9890bdc4f31cfecc418b3/onnx/model.onnx.lock ./.downloads/intfloat/multilingual-e5-small/614241f622f53c4eeff9890bdc4f31cfecc418b3/tokenizer.json.lock ./intfloat/multilingual-e5-small/614241f622f53c4eeff9890bdc4f31cfecc418b3/onnx/model.onnx ./intfloat/multilingual-e5-small/614241f622f53c4eeff9890bdc4f31cfecc418b3/tokenizer.json 
 
 == 8. Offline: sample search and fixture checks with no network
@@ -266,18 +265,18 @@ query: highest mountain in the world
 extensions.ai: starlings.onnxruntime intfloat/multilingual-e5-small@614241f622f53c4eeff9890bdc4f31cfecc418b3 dims 384; 9 embeddings, 176 tokens, max abs difference from the typed API 0
 ok:   sample ranks the expected passage first for all four queries; Extensions.AI vectors equal the typed API
 bounds (protected model-pipeline/protected/multilingual-e5-small/onnx-fp32-cpu/tolerances.yaml): float.embedding_max_abs 1.0e-5, float.padded_batch_vs_single_embedding_max_abs 1.0e-5
-assembly: Starlings.Acquisition 0.1.0-preview.6+b69070309274cd0761287da0ceb2a1a56b22d49d (/home/mark/.cache/drill-tmp/starlings-drill.j1FQky/apps/AiConsumer/bin/Release/net10.0/Starlings.Acquisition.dll)
-assembly: Starlings.Runtime.Onnx 0.1.0-preview.6+b69070309274cd0761287da0ceb2a1a56b22d49d (/home/mark/.cache/drill-tmp/starlings-drill.j1FQky/apps/AiConsumer/bin/Release/net10.0/Starlings.Runtime.Onnx.dll)
-assembly: Starlings.Tokenizers 0.3.0-preview.1+79a5863e861edcfed79142293dafabb688c199b9 (/home/mark/.cache/drill-tmp/starlings-drill.j1FQky/apps/AiConsumer/bin/Release/net10.0/Starlings.Tokenizers.dll)
-assembly: Starlings.Models.E5 0.1.0-preview.6+b69070309274cd0761287da0ceb2a1a56b22d49d (/home/mark/.cache/drill-tmp/starlings-drill.j1FQky/apps/AiConsumer/bin/Release/net10.0/Starlings.Models.E5.dll)
-assembly: Starlings.Models.E5.Extensions.AI 0.1.0-preview.6+b69070309274cd0761287da0ceb2a1a56b22d49d (/home/mark/.cache/drill-tmp/starlings-drill.j1FQky/apps/AiConsumer/bin/Release/net10.0/Starlings.Models.E5.Extensions.AI.dll)
-assembly: Starlings.Models.E5.MLNet 0.1.0-preview.6+b69070309274cd0761287da0ceb2a1a56b22d49d (/home/mark/.cache/drill-tmp/starlings-drill.j1FQky/apps/AiConsumer/bin/Release/net10.0/Starlings.Models.E5.MLNet.dll)
-assembly: Microsoft.ML.Data 5.0.0+efefa92f4486a43047c5b47618885a71bf7f0967 (/home/mark/.cache/drill-tmp/starlings-drill.j1FQky/apps/AiConsumer/bin/Release/net10.0/Microsoft.ML.Data.dll)
+assembly: Starlings.Acquisition 0.1.0-preview.6+b69070309274cd0761287da0ceb2a1a56b22d49d (/home/mark/.cache/drill-tmp/starlings-drill.41af9m/apps/AiConsumer/bin/Release/net10.0/Starlings.Acquisition.dll)
+assembly: Starlings.Runtime.Onnx 0.1.0-preview.6+b69070309274cd0761287da0ceb2a1a56b22d49d (/home/mark/.cache/drill-tmp/starlings-drill.41af9m/apps/AiConsumer/bin/Release/net10.0/Starlings.Runtime.Onnx.dll)
+assembly: Starlings.Tokenizers 0.3.0-preview.1+79a5863e861edcfed79142293dafabb688c199b9 (/home/mark/.cache/drill-tmp/starlings-drill.41af9m/apps/AiConsumer/bin/Release/net10.0/Starlings.Tokenizers.dll)
+assembly: Starlings.Models.E5 0.1.0-preview.6+b69070309274cd0761287da0ceb2a1a56b22d49d (/home/mark/.cache/drill-tmp/starlings-drill.41af9m/apps/AiConsumer/bin/Release/net10.0/Starlings.Models.E5.dll)
+assembly: Starlings.Models.E5.Extensions.AI 0.1.0-preview.6+b69070309274cd0761287da0ceb2a1a56b22d49d (/home/mark/.cache/drill-tmp/starlings-drill.41af9m/apps/AiConsumer/bin/Release/net10.0/Starlings.Models.E5.Extensions.AI.dll)
+assembly: Starlings.Models.E5.MLNet 0.1.0-preview.6+b69070309274cd0761287da0ceb2a1a56b22d49d (/home/mark/.cache/drill-tmp/starlings-drill.41af9m/apps/AiConsumer/bin/Release/net10.0/Starlings.Models.E5.MLNet.dll)
+assembly: Microsoft.ML.Data 5.0.0+efefa92f4486a43047c5b47618885a71bf7f0967 (/home/mark/.cache/drill-tmp/starlings-drill.41af9m/apps/AiConsumer/bin/Release/net10.0/Microsoft.ML.Data.dll)
 runtime:  .NET 10.0.12 linux-x64
 ok:   ONNX Runtime native 1.30.0, managed 1.30.0 (expected 1.30.0)
 ok:   providers: CPUExecutionProvider
 ok:   fixture cases: 46 (expected 46)
-tokenizer.json: /home/mark/.cache/drill-tmp/starlings-drill.j1FQky/models/intfloat/multilingual-e5-small/614241f622f53c4eeff9890bdc4f31cfecc418b3/tokenizer.json
+tokenizer.json: /home/mark/.cache/drill-tmp/starlings-drill.41af9m/models/intfloat/multilingual-e5-small/614241f622f53c4eeff9890bdc4f31cfecc418b3/tokenizer.json
 ok:   owned tokenizer ids and masks exact: 46/46
 session: CPUExecutionProvider, model sha256 ca456c06b3a9505ddfd9131408916dd79290368331e7d76bb621f1cba6bc8665
 ok:   typed API, one text per call vs protected: 46 rows, max abs 2.33E-07, mean abs 1.95E-08, min cosine 0.99999999999945 (bound 1E-05)
@@ -311,10 +310,10 @@ RESULT: PASS
 == 9. GLiNER2: seeded graph, tokenizer.json from the Hub, offline extraction
 seeded: onnx/gliner2-entities-fp32.onnx from /home/mark/.cache/starling-models/fastino/gliner2-base-v1/f9634218e53580c56edf0de97ca1a7d3f1c2354e (the store verifies size and SHA-256 before use)
 lock:  gliner2-base-v1 (fastino/gliner2-base-v1@f9634218e53580c56edf0de97ca1a7d3f1c2354e, 2 files)
-cache: /home/mark/.cache/drill-tmp/starlings-drill.j1FQky/models
+cache: /home/mark/.cache/drill-tmp/starlings-drill.41af9m/models
 onnx/gliner2-entities-fp32.onnx: already cached, 829284599 bytes, sha256 0ba2db95b18116906ae4ec21aa62ef493e69e0780dcfdfa98c4456ecf4123265 verified
 tokenizer.json: downloaded, 8650701 bytes, sha256 1b7fbabfb4c690bed84c6793bfecae9b8dfe205751b04f9ffd1e76a1e7df9c16 verified
-snapshot: /home/mark/.cache/drill-tmp/starlings-drill.j1FQky/models/fastino/gliner2-base-v1/f9634218e53580c56edf0de97ca1a7d3f1c2354e
+snapshot: /home/mark/.cache/drill-tmp/starlings-drill.41af9m/models/fastino/gliner2-base-v1/f9634218e53580c56edf0de97ca1a7d3f1c2354e
 packages: Starlings.Models.Gliner2 0.1.0-preview.6, Starlings.Tokenizers 0.3.0-preview.1
 onnxruntime: native 1.30.0, session providers CPUExecutionProvider
 text: Apple CEO Tim Cook announced the iPhone 15 in Cupertino on September 12, 2023.
@@ -335,20 +334,20 @@ note: no --seed-embeddinggemma2-from: the EmbeddingGemma 2 packages (including t
 == 10. Qwen3.5: seeded files verified by the download step, offline streamed answer
 seeded: ortgenai-fp32x/, transformers-5.18.0/tokenizer.json and chat_template.jinja from /home/mark/.cache/starling-models/Qwen/Qwen3.5-0.8B/2fc06364715b967f1860aea9cf38778875588b17 (the store verifies sizes and SHA-256)
 lock:  qwen3.5-0.8b-ortgenai-fp32x (Qwen/Qwen3.5-0.8B@2fc06364715b967f1860aea9cf38778875588b17, 5 files)
-cache: /home/mark/.cache/drill-tmp/starlings-drill.j1FQky/models
+cache: /home/mark/.cache/drill-tmp/starlings-drill.41af9m/models
 from:  https://huggingface.co/Starlinghq/qwen3.5-0.8b-ortgenai/resolve/95a690c1774f144957cb7b76986a9126e8b1bb5f/
 chat_template.jinja: already cached, 7755 bytes, sha256 273d8e0e683b885071fb17e08d71e5f2a5ddfb5309756181681de4f5a1822d80 verified
 transformers-5.18.0/tokenizer.json: already cached, 19989339 bytes, sha256 a5cd9732badce41de57e6efce8302930ded1c1188c5f81feb2bd6c24c4a1941f verified
 ortgenai-fp32x/genai_config.json: already cached, 1935 bytes, sha256 e7e1957b2544fdad6170a9cc81cbbb1b88c8819b7016a609170ad7cbebba81ba verified
 ortgenai-fp32x/model.onnx: already cached, 308301 bytes, sha256 4a052c4a1444c9437e00ffd48baecb0838d3d9ca1703c3153dbd46e945e84703 verified
 ortgenai-fp32x/model.onnx.data: already cached, 3077177344 bytes, sha256 129c58a320b6de7192713cc9c7e4ba744dcf7fabb0f57c6535021b45b3dc5143 verified
-snapshot: /home/mark/.cache/drill-tmp/starlings-drill.j1FQky/models/Qwen/Qwen3.5-0.8B/2fc06364715b967f1860aea9cf38778875588b17
+snapshot: /home/mark/.cache/drill-tmp/starlings-drill.41af9m/models/Qwen/Qwen3.5-0.8B/2fc06364715b967f1860aea9cf38778875588b17
 model: qwen3.5-0.8b/ortgenai-fp32x (Qwen/Qwen3.5-0.8B@2fc06364715b967f1860aea9cf38778875588b17) on Cpu, ONNX Runtime GenAI 0.17.1
 tokenizer: Starlings.Tokenizers profile qwen35-bpe-chat, tokenizer.json a5cd9732badce41de57e6efce8302930ded1c1188c5f81feb2bd6c24c4a1941f
 packages: Starlings.Models.Qwen35 0.1.0-preview.6, Starlings.Generation.OnnxGenAI 0.1.0-preview.6, Starlings.Tokenizers 0.3.0-preview.1, Starlings.Models.Qwen35.Extensions.AI 0.1.0-preview.6; GenAI managed 0.17.1, native Microsoft.ML.OnnxRuntimeGenAI/0.17.1
 user: What is the capital of France? Answer in one sentence.
 assistant: The capital of France is Paris.
-[Stop; 24 prompt + 7 completion tokens; prefill 324 ms, 7.2 tokens/s]
+[Stop; 24 prompt + 7 completion tokens; prefill 211 ms, 10.7 tokens/s]
 ok:   QwenChat answers offline from the packages, stops at <|im_end|> without printing it, reports usage
 model: qwen3.5-0.8b/ortgenai-fp32x (Qwen/Qwen3.5-0.8B@2fc06364715b967f1860aea9cf38778875588b17) on Cpu, ONNX Runtime GenAI 0.17.1
 tokenizer: Starlings.Tokenizers profile qwen35-bpe-chat, tokenizer.json a5cd9732badce41de57e6efce8302930ded1c1188c5f81feb2bd6c24c4a1941f
@@ -360,10 +359,10 @@ ok:   the IChatClient adapter streams the same answer, finish reason and usage
 
 == 11. Download from public hosting (no token, no seed)
 lock:  gliner2-base-v1 (fastino/gliner2-base-v1@f9634218e53580c56edf0de97ca1a7d3f1c2354e, 2 files)
-cache: /home/mark/.cache/drill-tmp/starlings-drill.j1FQky/models-public
+cache: /home/mark/.cache/drill-tmp/starlings-drill.41af9m/models-public
 onnx/gliner2-entities-fp32.onnx: downloaded, 829284599 bytes, sha256 0ba2db95b18116906ae4ec21aa62ef493e69e0780dcfdfa98c4456ecf4123265 verified
 tokenizer.json: downloaded, 8650701 bytes, sha256 1b7fbabfb4c690bed84c6793bfecae9b8dfe205751b04f9ffd1e76a1e7df9c16 verified
-snapshot: /home/mark/.cache/drill-tmp/starlings-drill.j1FQky/models-public/fastino/gliner2-base-v1/f9634218e53580c56edf0de97ca1a7d3f1c2354e
+snapshot: /home/mark/.cache/drill-tmp/starlings-drill.41af9m/models-public/fastino/gliner2-base-v1/f9634218e53580c56edf0de97ca1a7d3f1c2354e
 packages: Starlings.Models.Gliner2 0.1.0-preview.6, Starlings.Tokenizers 0.3.0-preview.1
 onnxruntime: native 1.30.0, session providers CPUExecutionProvider
 text: Apple CEO Tim Cook announced the iPhone 15 in Cupertino on September 12, 2023.
@@ -382,23 +381,23 @@ ok:   GLiNER2 downloaded from public hosting with no token and no seed, and ran 
 skipped: EmbeddingGemma 2 not in --public-hosting-only GLiNER2,Qwen 3.5
 skipped: EmbeddingGemma 2 images not in --public-hosting-only GLiNER2,Qwen 3.5
 lock:  qwen3.5-0.8b-ortgenai-fp32x (Qwen/Qwen3.5-0.8B@2fc06364715b967f1860aea9cf38778875588b17, 5 files)
-cache: /home/mark/.cache/drill-tmp/starlings-drill.j1FQky/models-public
+cache: /home/mark/.cache/drill-tmp/starlings-drill.41af9m/models-public
 from:  https://huggingface.co/Starlinghq/qwen3.5-0.8b-ortgenai/resolve/95a690c1774f144957cb7b76986a9126e8b1bb5f/
 chat_template.jinja: downloaded, 7755 bytes, sha256 273d8e0e683b885071fb17e08d71e5f2a5ddfb5309756181681de4f5a1822d80 verified
 transformers-5.18.0/tokenizer.json: downloaded, 19989339 bytes, sha256 a5cd9732badce41de57e6efce8302930ded1c1188c5f81feb2bd6c24c4a1941f verified
 ortgenai-fp32x/genai_config.json: downloaded, 1935 bytes, sha256 e7e1957b2544fdad6170a9cc81cbbb1b88c8819b7016a609170ad7cbebba81ba verified
 ortgenai-fp32x/model.onnx: downloaded, 308301 bytes, sha256 4a052c4a1444c9437e00ffd48baecb0838d3d9ca1703c3153dbd46e945e84703 verified
 ortgenai-fp32x/model.onnx.data: downloaded, 3077177344 bytes, sha256 129c58a320b6de7192713cc9c7e4ba744dcf7fabb0f57c6535021b45b3dc5143 verified
-snapshot: /home/mark/.cache/drill-tmp/starlings-drill.j1FQky/models-public/Qwen/Qwen3.5-0.8B/2fc06364715b967f1860aea9cf38778875588b17
+snapshot: /home/mark/.cache/drill-tmp/starlings-drill.41af9m/models-public/Qwen/Qwen3.5-0.8B/2fc06364715b967f1860aea9cf38778875588b17
 model: qwen3.5-0.8b/ortgenai-fp32x (Qwen/Qwen3.5-0.8B@2fc06364715b967f1860aea9cf38778875588b17) on Cpu, ONNX Runtime GenAI 0.17.1
 tokenizer: Starlings.Tokenizers profile qwen35-bpe-chat, tokenizer.json a5cd9732badce41de57e6efce8302930ded1c1188c5f81feb2bd6c24c4a1941f
 packages: Starlings.Models.Qwen35 0.1.0-preview.6, Starlings.Generation.OnnxGenAI 0.1.0-preview.6, Starlings.Tokenizers 0.3.0-preview.1, Starlings.Models.Qwen35.Extensions.AI 0.1.0-preview.6; GenAI managed 0.17.1, native Microsoft.ML.OnnxRuntimeGenAI/0.17.1
 user: What is the capital of France? Answer in one sentence.
 assistant: The capital of France is Paris.
-[Stop; 24 prompt + 7 completion tokens; prefill 321 ms, 7.0 tokens/s]
+[Stop; 24 prompt + 7 completion tokens; prefill 217 ms, 10.6 tokens/s]
 ok:   Qwen 3.5 downloaded from public hosting with no token and no seed, and ran offline from that cache
 skipped: Qwen 3.5 fp16x not in --public-hosting-only GLiNER2,Qwen 3.5
 note: no --aot: the Native AOT check was not run
 
-== DRILL PASS (seed, GLiNER2 run, Qwen3.5 run, public hosting: GLiNER2, Qwen 3.5): Starlings 0.1.0-preview.6 + Tokenizers 0.3.0-preview.1 from 54d9fa36c4797827295ce63125ee92c446d48341 (packages and logs in artifacts/release-drill-ai/)
-exit 0 after 271 s
+== DRILL PASS (seed, GLiNER2 run, Qwen3.5 run, public hosting: GLiNER2, Qwen 3.5): Starlings 0.1.0-preview.6 + Tokenizers 0.3.0-preview.1 from e656703e7cade301c2c11e96b6995a97f971509a (packages and logs in artifacts/release-drill-ai/)
+exit 0 after 244 s

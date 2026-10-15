@@ -1,13 +1,13 @@
 
 == 0. Inputs
-commit:    54d9fa36c4797827295ce63125ee92c446d48341
+commit:    e656703e7cade301c2c11e96b6995a97f971509a
 dotnet:    /home/mark/.dotnet/dotnet (SDK in the clone: pinned by global.json; outside: 10.0.401)
 mode:      no-model; EmbeddingGemma 2 graph seed: /home/mark/.cache/g6-drill-seed/eg2
 offline:   network namespace without interfaces (unshare -rn)
-work dir:  /home/mark/.cache/drill-tmp/starlings-drill.8NPVvM
+work dir:  /home/mark/.cache/drill-tmp/starlings-drill.qgyKMk
 packages:  reused from /home/mark/.cache/g6-drill-seed/packages
 
-== 1. Clean checkout of 54d9fa36c4797827295ce63125ee92c446d48341
+== 1. Clean checkout of e656703e7cade301c2c11e96b6995a97f971509a
 ok:   no build outputs, caches or untracked files in the checkout
 
 == 2. Versions
@@ -16,7 +16,7 @@ ai-dotnet packages:            0.1.0-preview.6
 ok:   sample references 0.1.0-preview.6; manifest pins tokenizer 0.3.0-preview.1
 
 == 3. Pack (locked restore, empty package cache)
-ok:   packages reused from /home/mark/.cache/g6-drill-seed/packages, built from b69070309274cd0761287da0ceb2a1a56b22d49d; no change to ai-dotnet/src ai-dotnet/Directory.Build.props ai-dotnet/Directory.Build.targets ai-dotnet/Directory.Packages.props Directory.Build.props .editorconfig global.json LICENSE-APACHE LICENSE-MIT between b69070309274cd0761287da0ceb2a1a56b22d49d and 54d9fa36c4797827295ce63125ee92c446d48341
+ok:   packages reused from /home/mark/.cache/g6-drill-seed/packages, built from b69070309274cd0761287da0ceb2a1a56b22d49d; no change to ai-dotnet/src ai-dotnet/Directory.Build.props ai-dotnet/Directory.Build.targets ai-dotnet/Directory.Packages.props Directory.Build.props .editorconfig global.json LICENSE-APACHE LICENSE-MIT between b69070309274cd0761287da0ceb2a1a56b22d49d and e656703e7cade301c2c11e96b6995a97f971509a
 Starlings.Acquisition.0.1.0-preview.6.nupkg
 Starlings.Acquisition.0.1.0-preview.6.snupkg
 Starlings.Generation.OnnxGenAI.0.1.0-preview.6.nupkg
@@ -242,19 +242,19 @@ ok:   build outputs hold no tokenizer library other than Starlings.Tokenizers.dl
 ok:   no FFmpeg library in the consumer package cache or any build output (the video adapter loads the user's FFmpeg through its own bindings)
 
 == 7. Acquisition of tokenizer.json only (real Hub download; no model)
-assembly: Starlings.Acquisition 0.1.0-preview.6+b69070309274cd0761287da0ceb2a1a56b22d49d (/home/mark/.cache/drill-tmp/starlings-drill.8NPVvM/apps/AiConsumer/bin/Release/net10.0/Starlings.Acquisition.dll)
-assembly: Starlings.Runtime.Onnx 0.1.0-preview.6+b69070309274cd0761287da0ceb2a1a56b22d49d (/home/mark/.cache/drill-tmp/starlings-drill.8NPVvM/apps/AiConsumer/bin/Release/net10.0/Starlings.Runtime.Onnx.dll)
-assembly: Starlings.Tokenizers 0.3.0-preview.1+79a5863e861edcfed79142293dafabb688c199b9 (/home/mark/.cache/drill-tmp/starlings-drill.8NPVvM/apps/AiConsumer/bin/Release/net10.0/Starlings.Tokenizers.dll)
-assembly: Starlings.Models.E5 0.1.0-preview.6+b69070309274cd0761287da0ceb2a1a56b22d49d (/home/mark/.cache/drill-tmp/starlings-drill.8NPVvM/apps/AiConsumer/bin/Release/net10.0/Starlings.Models.E5.dll)
-assembly: Starlings.Models.E5.Extensions.AI 0.1.0-preview.6+b69070309274cd0761287da0ceb2a1a56b22d49d (/home/mark/.cache/drill-tmp/starlings-drill.8NPVvM/apps/AiConsumer/bin/Release/net10.0/Starlings.Models.E5.Extensions.AI.dll)
-assembly: Starlings.Models.E5.MLNet 0.1.0-preview.6+b69070309274cd0761287da0ceb2a1a56b22d49d (/home/mark/.cache/drill-tmp/starlings-drill.8NPVvM/apps/AiConsumer/bin/Release/net10.0/Starlings.Models.E5.MLNet.dll)
-assembly: Microsoft.ML.Data 5.0.0+efefa92f4486a43047c5b47618885a71bf7f0967 (/home/mark/.cache/drill-tmp/starlings-drill.8NPVvM/apps/AiConsumer/bin/Release/net10.0/Microsoft.ML.Data.dll)
+assembly: Starlings.Acquisition 0.1.0-preview.6+b69070309274cd0761287da0ceb2a1a56b22d49d (/home/mark/.cache/drill-tmp/starlings-drill.qgyKMk/apps/AiConsumer/bin/Release/net10.0/Starlings.Acquisition.dll)
+assembly: Starlings.Runtime.Onnx 0.1.0-preview.6+b69070309274cd0761287da0ceb2a1a56b22d49d (/home/mark/.cache/drill-tmp/starlings-drill.qgyKMk/apps/AiConsumer/bin/Release/net10.0/Starlings.Runtime.Onnx.dll)
+assembly: Starlings.Tokenizers 0.3.0-preview.1+79a5863e861edcfed79142293dafabb688c199b9 (/home/mark/.cache/drill-tmp/starlings-drill.qgyKMk/apps/AiConsumer/bin/Release/net10.0/Starlings.Tokenizers.dll)
+assembly: Starlings.Models.E5 0.1.0-preview.6+b69070309274cd0761287da0ceb2a1a56b22d49d (/home/mark/.cache/drill-tmp/starlings-drill.qgyKMk/apps/AiConsumer/bin/Release/net10.0/Starlings.Models.E5.dll)
+assembly: Starlings.Models.E5.Extensions.AI 0.1.0-preview.6+b69070309274cd0761287da0ceb2a1a56b22d49d (/home/mark/.cache/drill-tmp/starlings-drill.qgyKMk/apps/AiConsumer/bin/Release/net10.0/Starlings.Models.E5.Extensions.AI.dll)
+assembly: Starlings.Models.E5.MLNet 0.1.0-preview.6+b69070309274cd0761287da0ceb2a1a56b22d49d (/home/mark/.cache/drill-tmp/starlings-drill.qgyKMk/apps/AiConsumer/bin/Release/net10.0/Starlings.Models.E5.MLNet.dll)
+assembly: Microsoft.ML.Data 5.0.0+efefa92f4486a43047c5b47618885a71bf7f0967 (/home/mark/.cache/drill-tmp/starlings-drill.qgyKMk/apps/AiConsumer/bin/Release/net10.0/Microsoft.ML.Data.dll)
 runtime:  .NET 10.0.12 linux-x64
 ok:   ONNX Runtime native 1.30.0, managed 1.30.0 (expected 1.30.0)
 ok:   providers: CPUExecutionProvider
 ok:   fixture cases: 46 (expected 46)
 ok:   tokenizer.json downloaded from https://huggingface.co/intfloat/multilingual-e5-small/resolve/614241f622f53c4eeff9890bdc4f31cfecc418b3/ and verified (17082730 bytes, sha256 0b44a9d7b51c3c62626640cda0e2c2f70fdacdc25bbbd68038369d14ebdf4c39)
-tokenizer.json: /home/mark/.cache/drill-tmp/starlings-drill.8NPVvM/models/intfloat/multilingual-e5-small/614241f622f53c4eeff9890bdc4f31cfecc418b3/tokenizer.json
+tokenizer.json: /home/mark/.cache/drill-tmp/starlings-drill.qgyKMk/models/intfloat/multilingual-e5-small/614241f622f53c4eeff9890bdc4f31cfecc418b3/tokenizer.json
 ok:   owned tokenizer ids and masks exact: 46/46
 ok:   no other managed tokenizer assembly loaded ()
 ok:   no native tokenizers library mapped ()
@@ -266,11 +266,11 @@ note: no --seed-gliner2-from: the GLiNER2 package was packed, inspected and its 
 == 9b. EmbeddingGemma 2: seeded graph, tokenizer.json and prompt config from the Hub, offline search
 seeded: onnx/embeddinggemma2-text-fp32.onnx from /home/mark/.cache/g6-drill-seed/eg2 (the store verifies size and SHA-256 before use)
 lock:  embeddinggemma-2 (google/embeddinggemma-2@914f7f89142e33e77833254d9c9b90c3cef7303b, 3 files)
-cache: /home/mark/.cache/drill-tmp/starlings-drill.8NPVvM/models
+cache: /home/mark/.cache/drill-tmp/starlings-drill.qgyKMk/models
 onnx/embeddinggemma2-text-fp32.onnx: already cached, 1084327317 bytes, sha256 02cc7ecccbfcb29d812eb104e4c6ea6c599bc87e94f01082606f6a11f0252d11 verified
 tokenizer.json: downloaded, 32170510 bytes, sha256 4d777ef5bdc1aa36227abdfb77c3e49e7b9c892d16e1b6bda41c393504828be4 verified
 config_sentence_transformers.json: downloaded, 1565 bytes, sha256 031e56a498d33c349ab489a21885bcfe25b4fcba841149dc99e1e90d4a7c28f5 verified
-snapshot: /home/mark/.cache/drill-tmp/starlings-drill.8NPVvM/models/google/embeddinggemma-2/914f7f89142e33e77833254d9c9b90c3cef7303b
+snapshot: /home/mark/.cache/drill-tmp/starlings-drill.qgyKMk/models/google/embeddinggemma-2/914f7f89142e33e77833254d9c9b90c3cef7303b
 packages: Starlings.Models.EmbeddingGemma2 0.1.0-preview.6, Starlings.Tokenizers 0.3.0-preview.1, Starlings.Models.EmbeddingGemma2.Extensions.AI 0.1.0-preview.6
 onnxruntime: native 1.30.0, managed 1.30.0, session providers CPUExecutionProvider
 query: how much protein should a female eat
@@ -308,8 +308,8 @@ tokenizer.json: already cached, 32170510 bytes, sha256 4d777ef5bdc1aa36227abdfb7
 config_sentence_transformers.json: already cached, 1565 bytes, sha256 031e56a498d33c349ab489a21885bcfe25b4fcba841149dc99e1e90d4a7c28f5 verified
 onnx/embeddinggemma2-vision-fp32.onnx: already cached, 671256072 bytes, sha256 6c97f477a82f6863d22d800476de6d0a618b23e514aa9b65a46b220c4b106b92 verified
 onnx/embeddinggemma2-text-mm-fp32.onnx: already cached, 1084327898 bytes, sha256 a2c22e072ec230b105b35c2787dcfccba186254e6a921e729c45b40e50dbbb74 verified
-snapshot: /home/mark/.cache/drill-tmp/starlings-drill.8NPVvM/models/google/embeddinggemma-2/914f7f89142e33e77833254d9c9b90c3cef7303b
-images: 6 decoded from /home/mark/.cache/drill-tmp/starlings-drill.8NPVvM/eg2-images; vision session providers CPUExecutionProvider
+snapshot: /home/mark/.cache/drill-tmp/starlings-drill.qgyKMk/models/google/embeddinggemma-2/914f7f89142e33e77833254d9c9b90c3cef7303b
+images: 6 decoded from /home/mark/.cache/drill-tmp/starlings-drill.qgyKMk/eg2-images; vision session providers CPUExecutionProvider
 image query: a photo of a cat
   top: chelsea.png (0.7051); next: hubble_deep_field.jpg (0.5971)
 image query: a cup of coffee
@@ -334,8 +334,8 @@ tokenizer.json: downloaded, 32170510 bytes, sha256 4d777ef5bdc1aa36227abdfb77c3e
 config_sentence_transformers.json: downloaded, 1565 bytes, sha256 031e56a498d33c349ab489a21885bcfe25b4fcba841149dc99e1e90d4a7c28f5 verified
 onnx/embeddinggemma2-vision-fp32.onnx: downloaded, 671256072 bytes, sha256 6c97f477a82f6863d22d800476de6d0a618b23e514aa9b65a46b220c4b106b92 verified
 onnx/embeddinggemma2-text-mm-fp32.onnx: downloaded, 1084327898 bytes, sha256 a2c22e072ec230b105b35c2787dcfccba186254e6a921e729c45b40e50dbbb74 verified
-snapshot: /home/mark/.cache/drill-tmp/starlings-drill.8NPVvM/models-public/google/embeddinggemma-2/914f7f89142e33e77833254d9c9b90c3cef7303b
-images: 6 decoded from /home/mark/.cache/drill-tmp/starlings-drill.8NPVvM/public-eg2-images; vision session providers CPUExecutionProvider
+snapshot: /home/mark/.cache/drill-tmp/starlings-drill.qgyKMk/models-public/google/embeddinggemma-2/914f7f89142e33e77833254d9c9b90c3cef7303b
+images: 6 decoded from /home/mark/.cache/drill-tmp/starlings-drill.qgyKMk/public-eg2-images; vision session providers CPUExecutionProvider
 image query: a photo of a cat
   top: chelsea.png (0.7051); next: hubble_deep_field.jpg (0.5971)
 image query: a cup of coffee
@@ -353,5 +353,5 @@ skipped: Qwen 3.5 not in --public-hosting-only EmbeddingGemma 2 images
 skipped: Qwen 3.5 fp16x not in --public-hosting-only EmbeddingGemma 2 images
 note: no --aot: the Native AOT check was not run
 
-== DRILL PASS (no-model, EmbeddingGemma 2 run, public hosting: EmbeddingGemma 2 images): Starlings 0.1.0-preview.6 + Tokenizers 0.3.0-preview.1 from 54d9fa36c4797827295ce63125ee92c446d48341 (packages and logs in artifacts/release-drill-ai/)
-exit 0 after 579 s
+== DRILL PASS (no-model, EmbeddingGemma 2 run, public hosting: EmbeddingGemma 2 images): Starlings 0.1.0-preview.6 + Tokenizers 0.3.0-preview.1 from e656703e7cade301c2c11e96b6995a97f971509a (packages and logs in artifacts/release-drill-ai/)
+exit 0 after 322 s
