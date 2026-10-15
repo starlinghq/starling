@@ -227,11 +227,14 @@ qualification:
   tolerances: model-pipeline/protected/embeddinggemma-2/onnx-fp32-cuda/tolerances.yaml
   # CUDA G1/G2, 2026-10-14 (RTX 3090, use_tf32 0): the protected staged evaluator gave G1 passed, G2 passed on the accepted
   # development fixtures, which are not P-030 release sets, so the entries are checklist, not passed (docs/evidence/cuda-qualification-2026-10-14/).
+  # P-030 release sets (accepted 2026-10-14, docs/kickoff.md), 2026-10-14: G1, G3 passed on the release sets (docs/evidence/release-set-gates-2026-10-14/embeddinggemma2-onnx-fp32-cuda/README.md).
+  # G2 not recorded: no committed embeddings.jsonl in the accepted text release set (see the CPU profile); measured
+  # against the regenerated reference (digest c2ffe5e4...): no failing check (9.8e-7 vs 5e-6); not gate evidence.
   gates:
     G0: { status: checklist, evidence: docs/m0/hub-pins.md, date: 2026-10-10 }
-    G1: { status: checklist, evidence: docs/evidence/cuda-qualification-2026-10-14/embeddinggemma2-onnx-fp32-cuda/README.md, date: 2026-10-14 }
+    G1: { status: passed, evidence: docs/evidence/release-set-gates-2026-10-14/embeddinggemma2-onnx-fp32-cuda/README.md, date: 2026-10-14 }
     G2: { status: checklist, evidence: docs/evidence/cuda-qualification-2026-10-14/embeddinggemma2-onnx-fp32-cuda/README.md, date: 2026-10-14 }
-    G3: { status: not-run }
+    G3: { status: passed, evidence: docs/evidence/release-set-gates-2026-10-14/embeddinggemma2-onnx-fp32-cuda/README.md, date: 2026-10-14 }
     G4: { status: not-run }
     G5: { status: not-run }
     G6: { status: not-run }

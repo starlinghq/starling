@@ -172,14 +172,13 @@ qualification:
   # P-030 release sets (accepted 2026-10-14, docs/kickoff.md): G1 and G2 passed on the accepted release sets
   # (tokenizer holdout and text-encoder release set, 232 rows; model-pipeline evaluate --tokenizer-fixtures and
   # --fixtures, protected evidence verified), recorded under the maintainer's 2026-10-14 delegation.
-  # G3 not recorded: MIRACL nDCG@10 0.7978 (min 0.792), MRR@10 0.7717 (min 0.765) on the accepted set, but the
-  # budget's dataset_sha256 covers dataset.json and the evaluator's digest does not, so the evaluator binds no budget
-  # (not-run). Evidence: docs/evidence/release-set-gates-2026-10-14/e5-onnx-fp32-cpu/.
+  # G3: MIRACL nDCG@10 0.7978 (min 0.792), MRR@10 0.7717 (min 0.765); bound after the digest-form fix (#26).
+  # P-030 release sets (accepted 2026-10-14, docs/kickoff.md), 2026-10-14: G1, G2, G3 passed on the release sets (docs/evidence/release-set-gates-2026-10-14/e5-onnx-fp32-cpu/README.md).
   gates:
     G0: { status: passed, evidence: docs/releases/e5-0.1.0-preview.1.md, date: 2026-10-09 }
     G1: { status: passed, evidence: docs/evidence/release-set-gates-2026-10-14/e5-onnx-fp32-cpu/README.md, date: 2026-10-14 }
     G2: { status: passed, evidence: docs/evidence/release-set-gates-2026-10-14/e5-onnx-fp32-cpu/README.md, date: 2026-10-14 }
-    G3: { status: checklist, evidence: docs/releases/e5-0.1.0-preview.1.md, date: 2026-10-09 }
+    G3: { status: passed, evidence: docs/evidence/release-set-gates-2026-10-14/e5-onnx-fp32-cpu/README.md, date: 2026-10-14 }
     G4: { status: passed, evidence: docs/evidence/g4-soak-1h-2026-10-14/README.md, date: 2026-10-14 }
     G5: { status: checklist, evidence: docs/benchmarks/e5-2026-10-09.md, date: 2026-10-09 }
     G6: { status: passed, evidence: docs/releases/e5-0.1.0-preview.2/rc-drill.log, date: 2026-10-09 }

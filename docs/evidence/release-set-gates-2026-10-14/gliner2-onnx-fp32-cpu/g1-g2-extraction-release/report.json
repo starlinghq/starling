@@ -1,0 +1,1273 @@
+{
+  "format": "starlings.fidelity-report",
+  "format_version": 2,
+  "task": "entity-extraction",
+  "profile": "gliner2-base-v1/onnx-fp32-cpu",
+  "date": "2026-10-14",
+  "evaluator": {
+    "name": "model-pipeline evaluate",
+    "version": "0.1.0",
+    "repository_commit": "10c016c1e8724983306d79a5db02b84326109c32"
+  },
+  "inputs": {
+    "manifest": {
+      "path": "model-pipeline/registry/gliner2-base-v1/onnx-fp32-cpu/manifest.yaml",
+      "sha256": "3dc22cd83591859a003be851334db482ea995b8f60e11dfbf4d1d810fa5bdaeb"
+    },
+    "tolerances": {
+      "path": "model-pipeline/protected/gliner2-base-v1/onnx-fp32-cpu/tolerances.yaml",
+      "sha256": "522ffd8c4945d3b4d7d09368b8d6cab18e87044c4e6f8009c0a40aec91c67f85"
+    },
+    "fixtures_directory": {
+      "path": "model-pipeline/protected/gliner2-base-v1/release/extraction-release",
+      "source": "--fixtures"
+    },
+    "fixtures": [
+      {
+        "path": "model-pipeline/protected/gliner2-base-v1/release/extraction-release/extraction.jsonl",
+        "sha256": "dac63a49413cd0fe382b7cecebaa51733e5027ce2589e1329f7735e6974389ec"
+      }
+    ],
+    "results": {
+      "tokenizer": {
+        "path": "/home/mark/.cache/starling-release-gates/runs/gliner2-cpu/stages/tokenizer.results.json",
+        "sha256": "75cc65e0b16ea66f985f58618270c6fe0cb6fd828e79b82245485f03a0e4a070",
+        "candidate": "Starlings.Models.Gliner2 processor (Python-compatible normalization, splitter and lower-casing; schema prefix through the owned tokenizer, profile gliner2-base-v1-unigram)",
+        "producer": {
+          "name": "ai-dotnet/tools/Starlings.Fidelity.Tool",
+          "repository_commit": "10c016c1e8724983306d79a5db02b84326109c32"
+        },
+        "environment": {
+          "machine": "omarchy",
+          "provider": "cpu",
+          "provider_options": {},
+          "dotnet": ".NET 10.0.12",
+          "os": "Omarchy",
+          "process_architecture": "X64",
+          "cpu_count": 12,
+          "cpu": "Intel(R) Core(TM) i7-5820K CPU @ 3.30GHz",
+          "onnxruntime": "1.30.0",
+          "onnxruntime_managed": "1.30.0",
+          "session_providers": [
+            "CPUExecutionProvider"
+          ],
+          "intra_op_threads": 4,
+          "graph_optimization_level": "ORT_ENABLE_ALL",
+          "package": "Starlings.Models.Gliner2 0.1.0.0",
+          "cases_outside_contract": {}
+        },
+        "assets": [
+          {
+            "path": "tokenizer.json",
+            "sha256": "1b7fbabfb4c690bed84c6793bfecae9b8dfe205751b04f9ffd1e76a1e7df9c16"
+          }
+        ]
+      },
+      "export": {
+        "path": "/home/mark/.cache/starling-release-gates/runs/gliner2-cpu/stages/export.results.json",
+        "sha256": "0c76415c7d6227aa0bb22daa370e4fd6fdaa066a48e0ec1e45b34b960f3039bb",
+        "candidate": "Python onnxruntime 1.30.0 CPUExecutionProvider on gliner2-entities-fp32.onnx (route A, fixture inputs); entities decoded with gliner2_entity.decode_entities; reference hidden states from the GLiNER2 encoder on torch 2.14.1+cpu fp32 CPU, same ids",
+        "producer": {
+          "name": "model-pipeline/reference/gliner2/stage_gliner2.py",
+          "repository_commit": "10c016c1e8724983306d79a5db02b84326109c32"
+        },
+        "environment": {
+          "python": "3.11.16",
+          "platform": "Linux-7.2.5-3-omarchy-x86_64-with-glibc2.44",
+          "machine": "omarchy",
+          "cpu": "Intel(R) Core(TM) i7-5820K CPU @ 3.30GHz",
+          "cpu_count": 12,
+          "packages": {
+            "gliner2": "2.0.0",
+            "torch": "2.14.1+cpu",
+            "transformers": "4.57.6",
+            "tokenizers": "0.22.2",
+            "onnxruntime": "1.30.0",
+            "numpy": "2.4.6"
+          },
+          "provider": "cpu",
+          "provider_options": {},
+          "onnxruntime_providers": [
+            "CPUExecutionProvider"
+          ],
+          "intra_op_threads": 4,
+          "torch_threads": 4
+        },
+        "assets": [
+          {
+            "path": "onnx/gliner2-entities-fp32.onnx",
+            "sha256": "0ba2db95b18116906ae4ec21aa62ef493e69e0780dcfdfa98c4456ecf4123265"
+          },
+          {
+            "path": "model.safetensors",
+            "sha256": "845fc4bd93c525b86124c58ab4f56c9eacf8587953086b14c501fab25957c007"
+          }
+        ]
+      },
+      "dotnet": {
+        "path": "/home/mark/.cache/starling-release-gates/runs/gliner2-cpu/stages/dotnet.results.json",
+        "sha256": "64a3f9f8569a404d66764059d8ff8c5c2512f378c787c9778bbebefd60dc2654",
+        "candidate": "C# Gliner2EntityExtractor: RunModel + decoder on the fixture inputs, and Prepare/RunModel/Decode from text; ONNX Runtime 1.30.0 CPU (managed binding 1.30.0)",
+        "producer": {
+          "name": "ai-dotnet/tools/Starlings.Fidelity.Tool",
+          "repository_commit": "10c016c1e8724983306d79a5db02b84326109c32"
+        },
+        "environment": {
+          "machine": "omarchy",
+          "provider": "cpu",
+          "provider_options": {},
+          "dotnet": ".NET 10.0.12",
+          "os": "Omarchy",
+          "process_architecture": "X64",
+          "cpu_count": 12,
+          "cpu": "Intel(R) Core(TM) i7-5820K CPU @ 3.30GHz",
+          "onnxruntime": "1.30.0",
+          "onnxruntime_managed": "1.30.0",
+          "session_providers": [
+            "CPUExecutionProvider"
+          ],
+          "intra_op_threads": 4,
+          "graph_optimization_level": "ORT_ENABLE_ALL",
+          "package": "Starlings.Models.Gliner2 0.1.0.0",
+          "cases_outside_contract": {}
+        },
+        "assets": [
+          {
+            "path": "onnx/gliner2-entities-fp32.onnx",
+            "sha256": "0ba2db95b18116906ae4ec21aa62ef493e69e0780dcfdfa98c4456ecf4123265"
+          },
+          {
+            "path": "tokenizer.json",
+            "sha256": "1b7fbabfb4c690bed84c6793bfecae9b8dfe205751b04f9ffd1e76a1e7df9c16"
+          }
+        ]
+      }
+    }
+  },
+  "protected_evidence": {
+    "status": "verified",
+    "base": "10c016c1e8724983306d79a5db02b84326109c32",
+    "detail": "merge base of HEAD and origin/main",
+    "changed": [],
+    "sha256": {
+      "model-pipeline/protected/gliner2-base-v1/onnx-fp32-cpu/tolerances.yaml": "522ffd8c4945d3b4d7d09368b8d6cab18e87044c4e6f8009c0a40aec91c67f85",
+      "model-pipeline/protected/gliner2-base-v1/release/extraction-release/extraction.jsonl": "dac63a49413cd0fe382b7cecebaa51733e5027ce2589e1329f7735e6974389ec"
+    }
+  },
+  "report_only_metrics": [
+    "mean_abs",
+    "p99_abs"
+  ],
+  "stages": {
+    "tokenizer": "passed",
+    "export": "passed",
+    "dotnet-ids": "passed",
+    "dotnet-text": "passed"
+  },
+  "first_divergence": null,
+  "findings": [],
+  "gates": {
+    "G1": {
+      "status": "passed",
+      "reason": "every check passed or is not applicable by the manifest"
+    },
+    "G2": {
+      "status": "passed",
+      "reason": "every check passed or is not applicable by the manifest"
+    }
+  },
+  "manifest_gates": {
+    "G1": {
+      "status": "passed",
+      "date": "2026-10-14"
+    },
+    "G2": {
+      "status": "passed",
+      "date": "2026-10-14"
+    }
+  },
+  "checks": [
+    {
+      "id": "dotnet.identity",
+      "stage": "dotnet",
+      "substage": "dotnet-ids",
+      "gate": "G2",
+      "title": "dotnet: profile and artifact digests match the manifest",
+      "tolerance_key": null,
+      "bound": null,
+      "status": "passed",
+      "metrics": {},
+      "detail": ""
+    },
+    {
+      "id": "export.identity",
+      "stage": "export",
+      "substage": "export",
+      "gate": "G2",
+      "title": "export: profile and artifact digests match the manifest",
+      "tolerance_key": null,
+      "bound": null,
+      "status": "passed",
+      "metrics": {},
+      "detail": ""
+    },
+    {
+      "id": "tokenizer.identity",
+      "stage": "tokenizer",
+      "substage": "tokenizer",
+      "gate": "G1",
+      "title": "tokenizer: profile and artifact digests match the manifest",
+      "tolerance_key": null,
+      "bound": null,
+      "status": "passed",
+      "metrics": {},
+      "detail": ""
+    },
+    {
+      "id": "tokenizer.normalized_text",
+      "stage": "tokenizer",
+      "substage": "tokenizer",
+      "gate": "G1",
+      "title": "processor normalized_text exact",
+      "tolerance_key": "discrete.normalized_text",
+      "bound": "exact",
+      "status": "passed",
+      "metrics": {
+        "cases": 30,
+        "mismatched_cases": []
+      },
+      "detail": ""
+    },
+    {
+      "id": "tokenizer.words",
+      "stage": "tokenizer",
+      "substage": "tokenizer",
+      "gate": "G1",
+      "title": "processor words exact",
+      "tolerance_key": "discrete.words",
+      "bound": "exact",
+      "status": "passed",
+      "metrics": {
+        "cases": 30,
+        "mismatched_cases": []
+      },
+      "detail": ""
+    },
+    {
+      "id": "tokenizer.start_map",
+      "stage": "tokenizer",
+      "substage": "tokenizer",
+      "gate": "G1",
+      "title": "processor start_map exact",
+      "tolerance_key": "discrete.character_maps",
+      "bound": "exact",
+      "status": "passed",
+      "metrics": {
+        "cases": 30,
+        "mismatched_cases": []
+      },
+      "detail": ""
+    },
+    {
+      "id": "tokenizer.end_map",
+      "stage": "tokenizer",
+      "substage": "tokenizer",
+      "gate": "G1",
+      "title": "processor end_map exact",
+      "tolerance_key": "discrete.character_maps",
+      "bound": "exact",
+      "status": "passed",
+      "metrics": {
+        "cases": 30,
+        "mismatched_cases": []
+      },
+      "detail": ""
+    },
+    {
+      "id": "tokenizer.input_ids",
+      "stage": "tokenizer",
+      "substage": "tokenizer",
+      "gate": "G1",
+      "title": "processor input_ids exact",
+      "tolerance_key": "discrete.token_ids",
+      "bound": "exact",
+      "status": "passed",
+      "metrics": {
+        "cases": 30,
+        "mismatched_cases": []
+      },
+      "detail": ""
+    },
+    {
+      "id": "tokenizer.attention_mask",
+      "stage": "tokenizer",
+      "substage": "tokenizer",
+      "gate": "G1",
+      "title": "processor attention_mask exact",
+      "tolerance_key": "discrete.attention_mask",
+      "bound": "exact",
+      "status": "passed",
+      "metrics": {
+        "cases": 30,
+        "mismatched_cases": []
+      },
+      "detail": ""
+    },
+    {
+      "id": "tokenizer.word_index",
+      "stage": "tokenizer",
+      "substage": "tokenizer",
+      "gate": "G1",
+      "title": "processor word_index exact",
+      "tolerance_key": "discrete.word_positions",
+      "bound": "exact",
+      "status": "passed",
+      "metrics": {
+        "cases": 30,
+        "mismatched_cases": []
+      },
+      "detail": ""
+    },
+    {
+      "id": "tokenizer.schema_index",
+      "stage": "tokenizer",
+      "substage": "tokenizer",
+      "gate": "G1",
+      "title": "processor schema_index exact",
+      "tolerance_key": "discrete.schema_positions",
+      "bound": "exact",
+      "status": "passed",
+      "metrics": {
+        "cases": 30,
+        "mismatched_cases": []
+      },
+      "detail": ""
+    },
+    {
+      "id": "tokenizer.character_maps.well_formed",
+      "stage": "tokenizer",
+      "substage": "tokenizer",
+      "gate": "G1",
+      "title": "processor character maps are well formed",
+      "tolerance_key": null,
+      "bound": null,
+      "status": "passed",
+      "metrics": {
+        "malformed_cases": {}
+      },
+      "detail": ""
+    },
+    {
+      "id": "export.inputs",
+      "stage": "export",
+      "substage": "export",
+      "gate": "G2",
+      "title": "export: ran on the protected fixture inputs",
+      "tolerance_key": null,
+      "bound": null,
+      "status": "passed",
+      "metrics": {},
+      "detail": ""
+    },
+    {
+      "id": "export.provider_options",
+      "stage": "export",
+      "substage": "export",
+      "gate": "G2",
+      "title": "export: provider options of the profile",
+      "tolerance_key": null,
+      "bound": {},
+      "status": "passed",
+      "metrics": {
+        "declared": {}
+      },
+      "detail": ""
+    },
+    {
+      "id": "export.finite",
+      "stage": "export",
+      "substage": "export",
+      "gate": "G2",
+      "title": "export: no NaN or Inf in any output",
+      "tolerance_key": "float.nan_or_inf",
+      "bound": "fail",
+      "status": "passed",
+      "metrics": {
+        "non_finite": []
+      },
+      "detail": ""
+    },
+    {
+      "id": "export.last_hidden_state",
+      "stage": "export",
+      "substage": "export",
+      "gate": "G2",
+      "title": "Python ORT hidden states vs PyTorch hidden states",
+      "tolerance_key": "float.last_hidden_state_max_abs",
+      "bound": 0.0001,
+      "status": "passed",
+      "metrics": {
+        "max_abs": 2.47955322265625e-05,
+        "mean_abs": 3.673095742831e-07,
+        "p99_abs": 2.51084566116333e-06,
+        "values": 972288,
+        "cases": 30,
+        "worst_case": "wnut17-test-33",
+        "non_finite_cases": [],
+        "reference_rerun_bit_identical_to_fixture_cases": 27
+      },
+      "detail": ""
+    },
+    {
+      "id": "export.count_logits",
+      "stage": "export",
+      "substage": "export",
+      "gate": "G2",
+      "title": "export: count logits vs reference",
+      "tolerance_key": "float.count_logits_max_abs",
+      "bound": 0.0005,
+      "status": "passed",
+      "metrics": {
+        "max_abs": 3.999999999848569e-05,
+        "mean_abs": 1.0096283333234298e-05,
+        "p99_abs": 3.7999999996500834e-05,
+        "values": 600,
+        "cases": 30,
+        "worst_case": "wnut17-test-95",
+        "non_finite_cases": []
+      },
+      "detail": ""
+    },
+    {
+      "id": "export.gate_decision",
+      "stage": "export",
+      "substage": "export",
+      "gate": "G2",
+      "title": "export: count gate decision exact",
+      "tolerance_key": "discrete.gate_decision",
+      "bound": "exact",
+      "status": "passed",
+      "metrics": {
+        "cases": 30,
+        "mismatched_cases": [],
+        "entities_gate_inconsistent_with_count_logits": []
+      },
+      "detail": ""
+    },
+    {
+      "id": "export.span_logits",
+      "stage": "export",
+      "substage": "export",
+      "gate": "G2",
+      "title": "export: span logits (valid spans) vs reference, relative",
+      "tolerance_key": "float.span_logits_relative",
+      "bound": 0.0001,
+      "status": "passed",
+      "metrics": {
+        "max_abs": 0.0008499999999997954,
+        "mean_abs": 3.845989811360025e-05,
+        "p99_abs": 0.0003399999999942338,
+        "values": 17706,
+        "cases": 30,
+        "worst_case": "wnut17-test-20",
+        "non_finite_cases": [],
+        "max_rel": 1.7753884233333954e-05,
+        "worst_case_rel": "wnut17-test-4"
+      },
+      "detail": ""
+    },
+    {
+      "id": "export.scores",
+      "stage": "export",
+      "substage": "export",
+      "gate": "G2",
+      "title": "export: scores (float32 sigmoid of span logits) vs reference",
+      "tolerance_key": "float.scores_max_abs",
+      "bound": 2e-05,
+      "status": "passed",
+      "metrics": {
+        "max_abs": 2.905726432800293e-06,
+        "mean_abs": 4.407173471608833e-09,
+        "p99_abs": 3.166496753692627e-08,
+        "values": 17706,
+        "cases": 30,
+        "worst_case": "wnut17-test-4",
+        "non_finite_cases": []
+      },
+      "detail": ""
+    },
+    {
+      "id": "export.entities",
+      "stage": "export",
+      "substage": "export",
+      "gate": "G2",
+      "title": "export: entities decoded from Python ORT logits vs reference",
+      "tolerance_key": "entities.identity",
+      "bound": {
+        "entities.identity": "exact",
+        "entities.order_swap_max_confidence_delta": 2e-05,
+        "entities.threshold_flip_max_score_margin": 2e-05
+      },
+      "status": "passed",
+      "metrics": {
+        "cases": 30,
+        "exact_cases": 30,
+        "cases_with_allowed_exceptions": [],
+        "allowed_exceptions": [],
+        "violations": {}
+      },
+      "detail": ""
+    },
+    {
+      "id": "export.entities.confidence",
+      "stage": "export",
+      "substage": "export",
+      "gate": "G2",
+      "title": "export: entities confidence vs reference (matched items)",
+      "tolerance_key": "float.confidence_max_abs",
+      "bound": 2e-05,
+      "status": "passed",
+      "metrics": {
+        "max_abs": 2.86102294921875e-06,
+        "mean_abs": 5.300555910382952e-07,
+        "p99_abs": 2.5874376296997077e-06,
+        "values": 28,
+        "cases": 28,
+        "worst_case": "wnut17-test-10",
+        "non_finite_cases": []
+      },
+      "detail": ""
+    },
+    {
+      "id": "export.batch_evidence.span_logits",
+      "stage": "export",
+      "substage": "export",
+      "gate": "G2",
+      "title": "export: a padded batch exercises 'span_logits'",
+      "tolerance_key": "float.padded_batch_vs_single_span_logits_relative",
+      "bound": 0.0001,
+      "status": "passed",
+      "metrics": {
+        "batches": [
+          "by-label-count-batch8"
+        ],
+        "padding_batches": [
+          "by-label-count-batch8"
+        ]
+      },
+      "detail": ""
+    },
+    {
+      "id": "export.batch.by-label-count-batch8.vs_single",
+      "stage": "export",
+      "substage": "export",
+      "gate": "G2",
+      "title": "export: batch 'by-label-count-batch8' vs own single rows",
+      "tolerance_key": "float.padded_batch_vs_single_span_logits_relative",
+      "bound": 0.0001,
+      "status": "passed",
+      "metrics": {
+        "max_abs": 0.0,
+        "mean_abs": 0.0,
+        "p99_abs": 0.0,
+        "values": 17706,
+        "cases": 30,
+        "worst_case": "wnut17-test-3",
+        "non_finite_cases": [],
+        "max_rel": 0.0,
+        "worst_case_rel": "wnut17-test-3"
+      },
+      "detail": ""
+    },
+    {
+      "id": "export.batch.by-label-count-batch8.vs_reference",
+      "stage": "export",
+      "substage": "export",
+      "gate": "G2",
+      "title": "export: batch 'by-label-count-batch8' vs reference",
+      "tolerance_key": "float.span_logits_relative",
+      "bound": 0.0001,
+      "status": "passed",
+      "metrics": {
+        "max_abs": 0.0008499999999997954,
+        "mean_abs": 3.845989811360025e-05,
+        "p99_abs": 0.0003399999999942338,
+        "values": 17706,
+        "cases": 30,
+        "worst_case": "wnut17-test-20",
+        "non_finite_cases": [],
+        "max_rel": 1.7753884233333954e-05,
+        "worst_case_rel": "wnut17-test-4"
+      },
+      "detail": ""
+    },
+    {
+      "id": "export.batch.by-label-count-batch8-count.vs_single",
+      "stage": "export",
+      "substage": "export",
+      "gate": "G2",
+      "title": "export: batch 'by-label-count-batch8-count' vs own single rows",
+      "tolerance_key": "float.count_logits_max_abs",
+      "bound": 0.0005,
+      "status": "passed",
+      "metrics": {
+        "max_abs": 0.0,
+        "mean_abs": 0.0,
+        "p99_abs": 0.0,
+        "values": 600,
+        "cases": 30,
+        "worst_case": "wnut17-test-3",
+        "non_finite_cases": []
+      },
+      "detail": ""
+    },
+    {
+      "id": "export.batch.by-label-count-batch8-count.vs_reference",
+      "stage": "export",
+      "substage": "export",
+      "gate": "G2",
+      "title": "export: batch 'by-label-count-batch8-count' vs reference",
+      "tolerance_key": "float.count_logits_max_abs",
+      "bound": 0.0005,
+      "status": "passed",
+      "metrics": {
+        "max_abs": 3.999999999848569e-05,
+        "mean_abs": 1.0096283333234298e-05,
+        "p99_abs": 3.7999999996500834e-05,
+        "values": 600,
+        "cases": 30,
+        "worst_case": "wnut17-test-95",
+        "non_finite_cases": []
+      },
+      "detail": ""
+    },
+    {
+      "id": "dotnet.inputs",
+      "stage": "dotnet",
+      "substage": "dotnet-ids",
+      "gate": "G2",
+      "title": "dotnet: ran on the protected fixture inputs",
+      "tolerance_key": null,
+      "bound": null,
+      "status": "passed",
+      "metrics": {},
+      "detail": ""
+    },
+    {
+      "id": "dotnet.provider_options",
+      "stage": "dotnet",
+      "substage": "dotnet-ids",
+      "gate": "G2",
+      "title": "dotnet: provider options of the profile",
+      "tolerance_key": null,
+      "bound": {},
+      "status": "passed",
+      "metrics": {
+        "declared": {}
+      },
+      "detail": ""
+    },
+    {
+      "id": "dotnet.finite",
+      "stage": "dotnet",
+      "substage": "dotnet-ids",
+      "gate": "G2",
+      "title": "dotnet: no NaN or Inf in any output",
+      "tolerance_key": "float.nan_or_inf",
+      "bound": "fail",
+      "status": "passed",
+      "metrics": {
+        "non_finite": []
+      },
+      "detail": ""
+    },
+    {
+      "id": "dotnet.count_logits",
+      "stage": "dotnet",
+      "substage": "dotnet-ids",
+      "gate": "G2",
+      "title": "dotnet: count logits vs reference",
+      "tolerance_key": "float.count_logits_max_abs",
+      "bound": 0.0005,
+      "status": "passed",
+      "metrics": {
+        "max_abs": 3.999999999848569e-05,
+        "mean_abs": 1.0096283333234298e-05,
+        "p99_abs": 3.7999999996500834e-05,
+        "values": 600,
+        "cases": 30,
+        "worst_case": "wnut17-test-95",
+        "non_finite_cases": []
+      },
+      "detail": ""
+    },
+    {
+      "id": "dotnet.gate_decision",
+      "stage": "dotnet",
+      "substage": "dotnet-ids",
+      "gate": "G2",
+      "title": "dotnet: count gate decision exact",
+      "tolerance_key": "discrete.gate_decision",
+      "bound": "exact",
+      "status": "passed",
+      "metrics": {
+        "cases": 30,
+        "mismatched_cases": [],
+        "entities_gate_inconsistent_with_count_logits": []
+      },
+      "detail": ""
+    },
+    {
+      "id": "dotnet.span_logits",
+      "stage": "dotnet",
+      "substage": "dotnet-ids",
+      "gate": "G2",
+      "title": "dotnet: span logits (valid spans) vs reference, relative",
+      "tolerance_key": "float.span_logits_relative",
+      "bound": 0.0001,
+      "status": "passed",
+      "metrics": {
+        "max_abs": 0.0008499999999997954,
+        "mean_abs": 3.845989811360025e-05,
+        "p99_abs": 0.0003399999999942338,
+        "values": 17706,
+        "cases": 30,
+        "worst_case": "wnut17-test-20",
+        "non_finite_cases": [],
+        "max_rel": 1.7753884233333954e-05,
+        "worst_case_rel": "wnut17-test-4"
+      },
+      "detail": ""
+    },
+    {
+      "id": "dotnet.scores",
+      "stage": "dotnet",
+      "substage": "dotnet-ids",
+      "gate": "G2",
+      "title": "dotnet: scores (float32 sigmoid of span logits) vs reference",
+      "tolerance_key": "float.scores_max_abs",
+      "bound": 2e-05,
+      "status": "passed",
+      "metrics": {
+        "max_abs": 2.905726432800293e-06,
+        "mean_abs": 4.407173471608833e-09,
+        "p99_abs": 3.166496753692627e-08,
+        "values": 17706,
+        "cases": 30,
+        "worst_case": "wnut17-test-4",
+        "non_finite_cases": []
+      },
+      "detail": ""
+    },
+    {
+      "id": "dotnet.entities",
+      "stage": "dotnet",
+      "substage": "dotnet-ids",
+      "gate": "G2",
+      "title": "C# entities from fixture inputs vs reference",
+      "tolerance_key": "entities.identity",
+      "bound": {
+        "entities.identity": "exact",
+        "entities.order_swap_max_confidence_delta": 2e-05,
+        "entities.threshold_flip_max_score_margin": 2e-05
+      },
+      "status": "passed",
+      "metrics": {
+        "cases": 30,
+        "exact_cases": 30,
+        "cases_with_allowed_exceptions": [],
+        "allowed_exceptions": [],
+        "violations": {}
+      },
+      "detail": ""
+    },
+    {
+      "id": "dotnet.entities.confidence",
+      "stage": "dotnet",
+      "substage": "dotnet-ids",
+      "gate": "G2",
+      "title": "dotnet: entities confidence vs reference (matched items)",
+      "tolerance_key": "float.confidence_max_abs",
+      "bound": 2e-05,
+      "status": "passed",
+      "metrics": {
+        "max_abs": 2.876696777343035e-06,
+        "mean_abs": 5.327552958908235e-07,
+        "p99_abs": 2.6005645523075054e-06,
+        "values": 28,
+        "cases": 28,
+        "worst_case": "wnut17-test-10",
+        "non_finite_cases": []
+      },
+      "detail": ""
+    },
+    {
+      "id": "dotnet.span_logits.vs_python",
+      "stage": "dotnet",
+      "substage": "dotnet-ids",
+      "gate": "G2",
+      "title": "C# vs Python ORT span logits, same inputs, relative",
+      "tolerance_key": "csharp_vs_python_same_machine_and_provider.span_logits_relative",
+      "bound": 1e-06,
+      "status": "passed",
+      "metrics": {
+        "max_abs": 0.0,
+        "mean_abs": 0.0,
+        "p99_abs": 0.0,
+        "values": 17706,
+        "cases": 30,
+        "worst_case": "wnut17-test-3",
+        "non_finite_cases": [],
+        "max_rel": 0.0,
+        "worst_case_rel": "wnut17-test-3"
+      },
+      "detail": ""
+    },
+    {
+      "id": "dotnet.text_entities",
+      "stage": "dotnet",
+      "substage": "dotnet-text",
+      "gate": "G2",
+      "title": "C# entities from text vs reference",
+      "tolerance_key": "entities.identity",
+      "bound": {
+        "entities.identity": "exact",
+        "entities.order_swap_max_confidence_delta": 2e-05,
+        "entities.threshold_flip_max_score_margin": 2e-05
+      },
+      "status": "passed",
+      "metrics": {
+        "cases": 30,
+        "exact_cases": 30,
+        "cases_with_allowed_exceptions": [],
+        "allowed_exceptions": [],
+        "violations": {}
+      },
+      "detail": ""
+    },
+    {
+      "id": "dotnet.text_entities.confidence",
+      "stage": "dotnet",
+      "substage": "dotnet-text",
+      "gate": "G2",
+      "title": "dotnet: text_entities confidence vs reference (matched items)",
+      "tolerance_key": "float.confidence_max_abs",
+      "bound": 2e-05,
+      "status": "passed",
+      "metrics": {
+        "max_abs": 2.876696777343035e-06,
+        "mean_abs": 5.327552958908235e-07,
+        "p99_abs": 2.6005645523075054e-06,
+        "values": 28,
+        "cases": 28,
+        "worst_case": "wnut17-test-10",
+        "non_finite_cases": []
+      },
+      "detail": ""
+    },
+    {
+      "id": "dotnet.batch_evidence.span_logits",
+      "stage": "dotnet",
+      "substage": "dotnet-ids",
+      "gate": "G2",
+      "title": "dotnet: a padded batch exercises 'span_logits'",
+      "tolerance_key": "float.padded_batch_vs_single_span_logits_relative",
+      "bound": 0.0001,
+      "status": "passed",
+      "metrics": {
+        "batches": [
+          "span-logits-labels6-part0",
+          "span-logits-labels6-part1",
+          "span-logits-labels6-part2",
+          "span-logits-labels6-part3"
+        ],
+        "padding_batches": [
+          "span-logits-labels6-part0",
+          "span-logits-labels6-part1",
+          "span-logits-labels6-part2",
+          "span-logits-labels6-part3"
+        ]
+      },
+      "detail": ""
+    },
+    {
+      "id": "dotnet.batch_evidence.text_entities",
+      "stage": "dotnet",
+      "substage": "dotnet-text",
+      "gate": "G2",
+      "title": "dotnet: a padded batch exercises 'text_entities'",
+      "tolerance_key": "entities.identity",
+      "bound": "exact",
+      "status": "passed",
+      "metrics": {
+        "batches": [
+          "text-entities-labels6-part0",
+          "text-entities-labels6-part1",
+          "text-entities-labels6-part2",
+          "text-entities-labels6-part3"
+        ],
+        "padding_batches": [
+          "text-entities-labels6-part0",
+          "text-entities-labels6-part1",
+          "text-entities-labels6-part2",
+          "text-entities-labels6-part3"
+        ]
+      },
+      "detail": ""
+    },
+    {
+      "id": "dotnet.batch.span-logits-labels6-part0.vs_single",
+      "stage": "dotnet",
+      "substage": "dotnet-ids",
+      "gate": "G2",
+      "title": "dotnet: batch 'span-logits-labels6-part0' vs own single rows",
+      "tolerance_key": "float.padded_batch_vs_single_span_logits_relative",
+      "bound": 0.0001,
+      "status": "passed",
+      "metrics": {
+        "max_abs": 0.0,
+        "mean_abs": 0.0,
+        "p99_abs": 0.0,
+        "values": 6768,
+        "cases": 8,
+        "worst_case": "wnut17-test-3",
+        "non_finite_cases": [],
+        "max_rel": 0.0,
+        "worst_case_rel": "wnut17-test-3"
+      },
+      "detail": ""
+    },
+    {
+      "id": "dotnet.batch.span-logits-labels6-part0.vs_reference",
+      "stage": "dotnet",
+      "substage": "dotnet-ids",
+      "gate": "G2",
+      "title": "dotnet: batch 'span-logits-labels6-part0' vs reference",
+      "tolerance_key": "float.span_logits_relative",
+      "bound": 0.0001,
+      "status": "passed",
+      "metrics": {
+        "max_abs": 0.0008499999999997954,
+        "mean_abs": 4.355207594559129e-05,
+        "p99_abs": 0.0004193300000070365,
+        "values": 6768,
+        "cases": 8,
+        "worst_case": "wnut17-test-20",
+        "non_finite_cases": [],
+        "max_rel": 1.7753884233333954e-05,
+        "worst_case_rel": "wnut17-test-4"
+      },
+      "detail": ""
+    },
+    {
+      "id": "dotnet.batch.span-logits-labels6-part1.vs_single",
+      "stage": "dotnet",
+      "substage": "dotnet-ids",
+      "gate": "G2",
+      "title": "dotnet: batch 'span-logits-labels6-part1' vs own single rows",
+      "tolerance_key": "float.padded_batch_vs_single_span_logits_relative",
+      "bound": 0.0001,
+      "status": "passed",
+      "metrics": {
+        "max_abs": 0.0,
+        "mean_abs": 0.0,
+        "p99_abs": 0.0,
+        "values": 3570,
+        "cases": 8,
+        "worst_case": "wnut17-test-33",
+        "non_finite_cases": [],
+        "max_rel": 0.0,
+        "worst_case_rel": "wnut17-test-33"
+      },
+      "detail": ""
+    },
+    {
+      "id": "dotnet.batch.span-logits-labels6-part1.vs_reference",
+      "stage": "dotnet",
+      "substage": "dotnet-ids",
+      "gate": "G2",
+      "title": "dotnet: batch 'span-logits-labels6-part1' vs reference",
+      "tolerance_key": "float.span_logits_relative",
+      "bound": 0.0001,
+      "status": "passed",
+      "metrics": {
+        "max_abs": 0.0007090000000005148,
+        "mean_abs": 3.431952941180872e-05,
+        "p99_abs": 0.0002694800000012516,
+        "values": 3570,
+        "cases": 8,
+        "worst_case": "wnut17-test-50",
+        "non_finite_cases": [],
+        "max_rel": 1.1155936610724588e-05,
+        "worst_case_rel": "wnut17-test-33"
+      },
+      "detail": ""
+    },
+    {
+      "id": "dotnet.batch.span-logits-labels6-part2.vs_single",
+      "stage": "dotnet",
+      "substage": "dotnet-ids",
+      "gate": "G2",
+      "title": "dotnet: batch 'span-logits-labels6-part2' vs own single rows",
+      "tolerance_key": "float.padded_batch_vs_single_span_logits_relative",
+      "bound": 0.0001,
+      "status": "passed",
+      "metrics": {
+        "max_abs": 0.0,
+        "mean_abs": 0.0,
+        "p99_abs": 0.0,
+        "values": 4002,
+        "cases": 8,
+        "worst_case": "wnut17-test-61",
+        "non_finite_cases": [],
+        "max_rel": 0.0,
+        "worst_case_rel": "wnut17-test-61"
+      },
+      "detail": ""
+    },
+    {
+      "id": "dotnet.batch.span-logits-labels6-part2.vs_reference",
+      "stage": "dotnet",
+      "substage": "dotnet-ids",
+      "gate": "G2",
+      "title": "dotnet: batch 'span-logits-labels6-part2' vs reference",
+      "tolerance_key": "float.span_logits_relative",
+      "bound": 0.0001,
+      "status": "passed",
+      "metrics": {
+        "max_abs": 0.0006199999999978445,
+        "mean_abs": 4.089993503241583e-05,
+        "p99_abs": 0.00035990000000054814,
+        "values": 4002,
+        "cases": 8,
+        "worst_case": "wnut17-test-77",
+        "non_finite_cases": [],
+        "max_rel": 9.02999999999321e-06,
+        "worst_case_rel": "wnut17-test-66"
+      },
+      "detail": ""
+    },
+    {
+      "id": "dotnet.batch.span-logits-labels6-part3.vs_single",
+      "stage": "dotnet",
+      "substage": "dotnet-ids",
+      "gate": "G2",
+      "title": "dotnet: batch 'span-logits-labels6-part3' vs own single rows",
+      "tolerance_key": "float.padded_batch_vs_single_span_logits_relative",
+      "bound": 0.0001,
+      "status": "passed",
+      "metrics": {
+        "max_abs": 0.0,
+        "mean_abs": 0.0,
+        "p99_abs": 0.0,
+        "values": 3366,
+        "cases": 6,
+        "worst_case": "wnut17-test-85",
+        "non_finite_cases": [],
+        "max_rel": 0.0,
+        "worst_case_rel": "wnut17-test-85"
+      },
+      "detail": ""
+    },
+    {
+      "id": "dotnet.batch.span-logits-labels6-part3.vs_reference",
+      "stage": "dotnet",
+      "substage": "dotnet-ids",
+      "gate": "G2",
+      "title": "dotnet: batch 'span-logits-labels6-part3' vs reference",
+      "tolerance_key": "float.span_logits_relative",
+      "bound": 0.0001,
+      "status": "passed",
+      "metrics": {
+        "max_abs": 0.0005840000000034706,
+        "mean_abs": 2.9711303030231415e-05,
+        "p99_abs": 0.0002099999999956026,
+        "values": 3366,
+        "cases": 6,
+        "worst_case": "wnut17-test-85",
+        "non_finite_cases": [],
+        "max_rel": 9.60000000005401e-06,
+        "worst_case_rel": "wnut17-test-98"
+      },
+      "detail": ""
+    },
+    {
+      "id": "dotnet.batch.text-entities-labels6-part0.vs_single",
+      "stage": "dotnet",
+      "substage": "dotnet-text",
+      "gate": "G2",
+      "title": "dotnet: batch 'text-entities-labels6-part0' entities vs own single rows",
+      "tolerance_key": "entities.identity",
+      "bound": {
+        "entities.identity": "exact",
+        "entities.order_swap_max_confidence_delta": 2e-05,
+        "entities.threshold_flip_max_score_margin": 2e-05
+      },
+      "status": "passed",
+      "metrics": {
+        "cases": 8,
+        "exact_cases": 8,
+        "cases_with_allowed_exceptions": [],
+        "allowed_exceptions": [],
+        "violations": {}
+      },
+      "detail": ""
+    },
+    {
+      "id": "dotnet.batch.text-entities-labels6-part0.vs_reference",
+      "stage": "dotnet",
+      "substage": "dotnet-text",
+      "gate": "G2",
+      "title": "dotnet: batch 'text-entities-labels6-part0' entities vs reference",
+      "tolerance_key": "entities.identity",
+      "bound": {
+        "entities.identity": "exact",
+        "entities.order_swap_max_confidence_delta": 2e-05,
+        "entities.threshold_flip_max_score_margin": 2e-05
+      },
+      "status": "passed",
+      "metrics": {
+        "cases": 8,
+        "exact_cases": 8,
+        "cases_with_allowed_exceptions": [],
+        "allowed_exceptions": [],
+        "violations": {}
+      },
+      "detail": ""
+    },
+    {
+      "id": "dotnet.batch.text-entities-labels6-part1.vs_single",
+      "stage": "dotnet",
+      "substage": "dotnet-text",
+      "gate": "G2",
+      "title": "dotnet: batch 'text-entities-labels6-part1' entities vs own single rows",
+      "tolerance_key": "entities.identity",
+      "bound": {
+        "entities.identity": "exact",
+        "entities.order_swap_max_confidence_delta": 2e-05,
+        "entities.threshold_flip_max_score_margin": 2e-05
+      },
+      "status": "passed",
+      "metrics": {
+        "cases": 8,
+        "exact_cases": 8,
+        "cases_with_allowed_exceptions": [],
+        "allowed_exceptions": [],
+        "violations": {}
+      },
+      "detail": ""
+    },
+    {
+      "id": "dotnet.batch.text-entities-labels6-part1.vs_reference",
+      "stage": "dotnet",
+      "substage": "dotnet-text",
+      "gate": "G2",
+      "title": "dotnet: batch 'text-entities-labels6-part1' entities vs reference",
+      "tolerance_key": "entities.identity",
+      "bound": {
+        "entities.identity": "exact",
+        "entities.order_swap_max_confidence_delta": 2e-05,
+        "entities.threshold_flip_max_score_margin": 2e-05
+      },
+      "status": "passed",
+      "metrics": {
+        "cases": 8,
+        "exact_cases": 8,
+        "cases_with_allowed_exceptions": [],
+        "allowed_exceptions": [],
+        "violations": {}
+      },
+      "detail": ""
+    },
+    {
+      "id": "dotnet.batch.text-entities-labels6-part2.vs_single",
+      "stage": "dotnet",
+      "substage": "dotnet-text",
+      "gate": "G2",
+      "title": "dotnet: batch 'text-entities-labels6-part2' entities vs own single rows",
+      "tolerance_key": "entities.identity",
+      "bound": {
+        "entities.identity": "exact",
+        "entities.order_swap_max_confidence_delta": 2e-05,
+        "entities.threshold_flip_max_score_margin": 2e-05
+      },
+      "status": "passed",
+      "metrics": {
+        "cases": 8,
+        "exact_cases": 8,
+        "cases_with_allowed_exceptions": [],
+        "allowed_exceptions": [],
+        "violations": {}
+      },
+      "detail": ""
+    },
+    {
+      "id": "dotnet.batch.text-entities-labels6-part2.vs_reference",
+      "stage": "dotnet",
+      "substage": "dotnet-text",
+      "gate": "G2",
+      "title": "dotnet: batch 'text-entities-labels6-part2' entities vs reference",
+      "tolerance_key": "entities.identity",
+      "bound": {
+        "entities.identity": "exact",
+        "entities.order_swap_max_confidence_delta": 2e-05,
+        "entities.threshold_flip_max_score_margin": 2e-05
+      },
+      "status": "passed",
+      "metrics": {
+        "cases": 8,
+        "exact_cases": 8,
+        "cases_with_allowed_exceptions": [],
+        "allowed_exceptions": [],
+        "violations": {}
+      },
+      "detail": ""
+    },
+    {
+      "id": "dotnet.batch.text-entities-labels6-part3.vs_single",
+      "stage": "dotnet",
+      "substage": "dotnet-text",
+      "gate": "G2",
+      "title": "dotnet: batch 'text-entities-labels6-part3' entities vs own single rows",
+      "tolerance_key": "entities.identity",
+      "bound": {
+        "entities.identity": "exact",
+        "entities.order_swap_max_confidence_delta": 2e-05,
+        "entities.threshold_flip_max_score_margin": 2e-05
+      },
+      "status": "passed",
+      "metrics": {
+        "cases": 6,
+        "exact_cases": 6,
+        "cases_with_allowed_exceptions": [],
+        "allowed_exceptions": [],
+        "violations": {}
+      },
+      "detail": ""
+    },
+    {
+      "id": "dotnet.batch.text-entities-labels6-part3.vs_reference",
+      "stage": "dotnet",
+      "substage": "dotnet-text",
+      "gate": "G2",
+      "title": "dotnet: batch 'text-entities-labels6-part3' entities vs reference",
+      "tolerance_key": "entities.identity",
+      "bound": {
+        "entities.identity": "exact",
+        "entities.order_swap_max_confidence_delta": 2e-05,
+        "entities.threshold_flip_max_score_margin": 2e-05
+      },
+      "status": "passed",
+      "metrics": {
+        "cases": 6,
+        "exact_cases": 6,
+        "cases_with_allowed_exceptions": [],
+        "allowed_exceptions": [],
+        "violations": {}
+      },
+      "detail": ""
+    }
+  ],
+  "entity_exceptions": [],
+  "exit_code": 0
+}

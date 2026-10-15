@@ -1,0 +1,354 @@
+{
+  "format": "starlings.task-quality-report",
+  "format_version": 1,
+  "task": "generation",
+  "profile": "qwen3.5-0.8b/ortgenai-fp16x-cuda",
+  "date": "2026-10-15",
+  "evaluator": {
+    "name": "model-pipeline evaluate --g3",
+    "version": "0.1.0",
+    "repository_commit": "472e1876ba69b2c4c0f2a7956adfb5e6c9e0b023"
+  },
+  "dataset": {
+    "sha256": "3822aadb9b45fb968faaea2cc4cf272387456528373e07d554319350f67c46b9",
+    "sha256_with_metadata": "92b56302626e7ffd6e662f9e4b00698300499034931f55faba898d7bb81a7cc5",
+    "files": [
+      {
+        "path": "model-pipeline/protected/qwen3.5-0.8b/release/task-quality/gsm8k-test-v1/prompts.jsonl",
+        "sha256": "c60ad0bc2f80c9ceb63e1bdd62f6d8fc7e5fff451ac8b23f9a6570da8bb14884"
+      },
+      {
+        "path": "model-pipeline/protected/qwen3.5-0.8b/release/task-quality/gsm8k-test-v1/dataset.json",
+        "sha256": "a6e24f225d6d5514617dddbac73067cefb80ceabc7e48c9474d31d6e08b70e73"
+      }
+    ],
+    "metadata": {
+      "name": "gsm8k-test-v1",
+      "status": "PROPOSED: candidate G3 generation task set, not accepted; not gate evidence",
+      "provenance": {
+        "source": "openai/gsm8k",
+        "revision": "740312add88f781978c0658806c59bc2815b9866",
+        "license": "MIT",
+        "license_evidence": "card front matter `license: mit` and card text 'licensed under the MIT License'",
+        "files": {
+          "main/test-00000-of-00001.parquet": {
+            "url": "https://huggingface.co/datasets/openai/gsm8k/resolve/740312add88f781978c0658806c59bc2815b9866/main/test-00000-of-00001.parquet",
+            "sha256": "ee7b8da9e381df27b9e3f7758a159ab2bdaa4dbaa910546cbbc47e0cb44e4f59"
+          }
+        }
+      },
+      "license": "MIT",
+      "metric": "exact_match: the last \\boxed{...} of the output (else the last number), commas and a trailing '.0' removed, equals `answer` (reference/stable/score_generation.py)",
+      "selection": {
+        "script": "model-pipeline/reference/stable/select_generation.py",
+        "seed": 20261014,
+        "count": 50,
+        "max_new_tokens": 512,
+        "instruction": "Please reason step by step, and put your final answer within \\boxed{}.",
+        "chat_template_kwargs": {
+          "enable_thinking": false
+        }
+      }
+    },
+    "size": {
+      "rows": 50,
+      "correct": 32
+    }
+  },
+  "results": {
+    "path": "/home/mark/.cache/starling-release-gates/runs/qwen-fp16x-cuda/g3/generations.jsonl",
+    "sha256": "e11e1f16d6b4affb53de36177682cd45cd08f5e064116bdbfb3337d422ed7189"
+  },
+  "baseline": null,
+  "budget": {
+    "path": "model-pipeline/protected/qwen3.5-0.8b/ortgenai-fp16x-cuda/task-quality.yaml",
+    "entry": {
+      "dataset_sha256": "3822aadb9b45fb968faaea2cc4cf272387456528373e07d554319350f67c46b9",
+      "minimum": {
+        "exact_match": 0.56
+      }
+    },
+    "status": "present",
+    "matched_form": "data"
+  },
+  "protected_evidence": {
+    "status": "verified",
+    "base": "75574190e77f5528a416e87c6e12ea17e3b85d33",
+    "detail": "merge base of HEAD and origin/main",
+    "changed": [],
+    "sha256": {
+      "model-pipeline/protected/qwen3.5-0.8b/ortgenai-fp16x-cuda/task-quality.yaml": "53fd48b2da2416e2928e11bbd9903f0ff8aa0af68144ceff46d62363d8351ff0"
+    }
+  },
+  "metrics": {
+    "exact_match": 0.64
+  },
+  "budget_checks": [
+    {
+      "metric": "exact_match",
+      "minimum": 0.56,
+      "value": 0.64,
+      "status": "passed",
+      "detail": ""
+    }
+  ],
+  "gates": {
+    "G3": {
+      "status": "passed",
+      "reason": "every budgeted metric meets its minimum"
+    }
+  },
+  "per_row": {
+    "gsm8k-test-1157": {
+      "answer": "3",
+      "extracted": "3",
+      "correct": true
+    },
+    "gsm8k-test-789": {
+      "answer": "4",
+      "extracted": "0",
+      "correct": false
+    },
+    "gsm8k-test-493": {
+      "answer": "25",
+      "extracted": "200",
+      "correct": false
+    },
+    "gsm8k-test-1256": {
+      "answer": "15",
+      "extracted": "15",
+      "correct": true
+    },
+    "gsm8k-test-591": {
+      "answer": "220",
+      "extracted": "220",
+      "correct": true
+    },
+    "gsm8k-test-881": {
+      "answer": "16",
+      "extracted": "8",
+      "correct": false
+    },
+    "gsm8k-test-358": {
+      "answer": "20",
+      "extracted": "4.75",
+      "correct": false
+    },
+    "gsm8k-test-475": {
+      "answer": "20",
+      "extracted": "60",
+      "correct": false
+    },
+    "gsm8k-test-940": {
+      "answer": "280",
+      "extracted": "35",
+      "correct": false
+    },
+    "gsm8k-test-429": {
+      "answer": "13",
+      "extracted": "13",
+      "correct": true
+    },
+    "gsm8k-test-966": {
+      "answer": "48",
+      "extracted": "0,",
+      "correct": false
+    },
+    "gsm8k-test-405": {
+      "answer": "50",
+      "extracted": "20",
+      "correct": false
+    },
+    "gsm8k-test-1079": {
+      "answer": "10",
+      "extracted": "10",
+      "correct": true
+    },
+    "gsm8k-test-339": {
+      "answer": "160",
+      "extracted": "160",
+      "correct": true
+    },
+    "gsm8k-test-386": {
+      "answer": "80",
+      "extracted": "80",
+      "correct": true
+    },
+    "gsm8k-test-833": {
+      "answer": "40",
+      "extracted": "12",
+      "correct": false
+    },
+    "gsm8k-test-390": {
+      "answer": "12",
+      "extracted": "12",
+      "correct": true
+    },
+    "gsm8k-test-417": {
+      "answer": "3140",
+      "extracted": "960",
+      "correct": false
+    },
+    "gsm8k-test-606": {
+      "answer": "6",
+      "extracted": "10,440,000",
+      "correct": false
+    },
+    "gsm8k-test-1313": {
+      "answer": "2",
+      "extracted": "2",
+      "correct": true
+    },
+    "gsm8k-test-877": {
+      "answer": "7000",
+      "extracted": "11000",
+      "correct": false
+    },
+    "gsm8k-test-1144": {
+      "answer": "34",
+      "extracted": "34",
+      "correct": true
+    },
+    "gsm8k-test-473": {
+      "answer": "10",
+      "extracted": "40\\%",
+      "correct": false
+    },
+    "gsm8k-test-10": {
+      "answer": "366",
+      "extracted": "366",
+      "correct": true
+    },
+    "gsm8k-test-807": {
+      "answer": "4",
+      "extracted": "4",
+      "correct": true
+    },
+    "gsm8k-test-1152": {
+      "answer": "12",
+      "extracted": "12",
+      "correct": true
+    },
+    "gsm8k-test-697": {
+      "answer": "27",
+      "extracted": "27",
+      "correct": true
+    },
+    "gsm8k-test-555": {
+      "answer": "2",
+      "extracted": "2",
+      "correct": true
+    },
+    "gsm8k-test-517": {
+      "answer": "18",
+      "extracted": "18",
+      "correct": true
+    },
+    "gsm8k-test-359": {
+      "answer": "4",
+      "extracted": "15",
+      "correct": false
+    },
+    "gsm8k-test-200": {
+      "answer": "55",
+      "extracted": "55",
+      "correct": true
+    },
+    "gsm8k-test-774": {
+      "answer": "10",
+      "extracted": "14",
+      "correct": false
+    },
+    "gsm8k-test-448": {
+      "answer": "539",
+      "extracted": "539",
+      "correct": true
+    },
+    "gsm8k-test-393": {
+      "answer": "20",
+      "extracted": "20",
+      "correct": true
+    },
+    "gsm8k-test-1110": {
+      "answer": "60",
+      "extracted": "3625",
+      "correct": false
+    },
+    "gsm8k-test-748": {
+      "answer": "336",
+      "extracted": "336",
+      "correct": true
+    },
+    "gsm8k-test-850": {
+      "answer": "70",
+      "extracted": "70",
+      "correct": true
+    },
+    "gsm8k-test-1222": {
+      "answer": "350",
+      "extracted": "350",
+      "correct": true
+    },
+    "gsm8k-test-225": {
+      "answer": "9",
+      "extracted": "9",
+      "correct": true
+    },
+    "gsm8k-test-334": {
+      "answer": "6",
+      "extracted": "6",
+      "correct": true
+    },
+    "gsm8k-test-1245": {
+      "answer": "96",
+      "extracted": "576",
+      "correct": false
+    },
+    "gsm8k-test-84": {
+      "answer": "15",
+      "extracted": "15",
+      "correct": true
+    },
+    "gsm8k-test-571": {
+      "answer": "308",
+      "extracted": "308",
+      "correct": true
+    },
+    "gsm8k-test-378": {
+      "answer": "15",
+      "extracted": "15",
+      "correct": true
+    },
+    "gsm8k-test-16": {
+      "answer": "230",
+      "extracted": "230",
+      "correct": true
+    },
+    "gsm8k-test-414": {
+      "answer": "56",
+      "extracted": "56",
+      "correct": true
+    },
+    "gsm8k-test-1085": {
+      "answer": "26",
+      "extracted": "26",
+      "correct": true
+    },
+    "gsm8k-test-1244": {
+      "answer": "35",
+      "extracted": "0.70",
+      "correct": false
+    },
+    "gsm8k-test-376": {
+      "answer": "15",
+      "extracted": "15",
+      "correct": true
+    },
+    "gsm8k-test-810": {
+      "answer": "310",
+      "extracted": "310",
+      "correct": true
+    }
+  },
+  "exit_code": 0
+}

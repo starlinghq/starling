@@ -235,6 +235,11 @@ capabilities:
   image_exif_orientation_opt_in: experimental
   image_16_bit: unsupported
   image_alpha_compositing: unsupported
+  # image_over_default_pixel_limit_with_option (2026-10-14): images above the default 50,000,000 decoded pixels
+  # (MaxImagePixels and the decoder's MaxPixels, a documented memory bound; the default stays) are refused unless the
+  # caller raises the limit. With it raised (Fidelity tool --max-image-pixels 80000000), the 79 MP release image
+  # commons-image-14 passes G1 and G2 on the P-030 image release set (docs/evidence/release-set-gates-2026-10-14/embeddinggemma2-image-fp32-cpu/).
+  image_over_default_pixel_limit_with_option: experimental
   text_only_inputs: experimental
   batch: experimental
   streaming: unsupported
@@ -270,11 +275,14 @@ qualification:
   tolerances: model-pipeline/protected/embeddinggemma-2/image-fp32-cpu/tolerances.yaml
   # Rerun at Starlings.Tokenizers 0.3.0-preview.1 (2026-10-13, R4): model-pipeline evaluate --require-gates G1,G2
   # gave G1 passed, G2 passed on the development fixtures, which are not P-030 release sets
-  # (docs/evidence/rerun-tokenizer-0.3.0-preview.1/). The gate entries below are unchanged; recording a result is the maintainer's act.
+  # (docs/evidence/rerun-tokenizer-0.3.0-preview.1/); that rerun changed no gate entry.
+  # P-030 release sets (accepted 2026-10-14, docs/kickoff.md), 2026-10-14: G1, G2 passed on the release sets (docs/evidence/release-set-gates-2026-10-14/embeddinggemma2-image-fp32-cpu/README.md).
+  # G2 passed with --max-image-pixels 80000000 for commons-image-14 (10977x7200, 79 MP); the package default
+  # (50,000,000) refuses that image (capability image_over_default_pixel_limit_with_option).
   gates:
     G0: { status: checklist, evidence: docs/m0/embeddinggemma2-image-spike.md, date: 2026-10-11 }
-    G1: { status: not-run }
-    G2: { status: not-run }
+    G1: { status: passed, evidence: docs/evidence/release-set-gates-2026-10-14/embeddinggemma2-image-fp32-cpu/README.md, date: 2026-10-14 }
+    G2: { status: passed, evidence: docs/evidence/release-set-gates-2026-10-14/embeddinggemma2-image-fp32-cpu/README.md, date: 2026-10-14 }
     G3: { status: not-run }
     G4: { status: not-run }
     G5: { status: not-run }

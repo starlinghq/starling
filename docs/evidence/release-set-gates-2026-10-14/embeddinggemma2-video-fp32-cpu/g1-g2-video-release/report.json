@@ -1,0 +1,544 @@
+{
+  "format": "starlings.fidelity-report",
+  "format_version": 2,
+  "task": "video-embedding",
+  "profile": "embeddinggemma-2/video-fp32-cpu",
+  "date": "2026-10-14",
+  "evaluator": {
+    "name": "model-pipeline evaluate",
+    "version": "0.1.0",
+    "repository_commit": "cc59fee3f97b88ade7f472706816ada238b8f1d0"
+  },
+  "inputs": {
+    "manifest": {
+      "path": "model-pipeline/registry/embeddinggemma-2/video-fp32-cpu/manifest.yaml",
+      "sha256": "a2cbc94472d21f45030bcba102b8328010e7bafc9b53d06082fb3bb5139dfa6a"
+    },
+    "tolerances": {
+      "path": "model-pipeline/protected/embeddinggemma-2/video-fp32-cpu/tolerances.yaml",
+      "sha256": "6b9de23d8d15703094ad93205066e4b05fa55b73ad2b21f1f699235cc0558172"
+    },
+    "fixtures_directory": {
+      "path": "model-pipeline/protected/embeddinggemma-2/release/video-fp32-release",
+      "source": "--fixtures"
+    },
+    "fixtures": [
+      {
+        "path": "model-pipeline/protected/embeddinggemma-2/release/video-fp32-release/video-embeddings.jsonl",
+        "sha256": "a9c69aaa2bf91df5497ba2572bb43cef93c1b20415a22186eb39756a8e49d1ab"
+      },
+      {
+        "path": "model-pipeline/protected/embeddinggemma-2/release/video-fp32-release/videos.json",
+        "sha256": "71f059885ccde317b7c27731b596243fd5c4597531f6c116e64f7a6ae4caac0c"
+      },
+      {
+        "path": "model-pipeline/protected/embeddinggemma-2/release/video-fp32-release/tensors.json",
+        "sha256": "9d2ec884fbb34a0213e14b8fd12ee661703af5f29da62367d15e7b34d36082fe"
+      }
+    ],
+    "results": {
+      "tokenizer": {
+        "path": "/home/mark/.cache/starling-release-gates/runs/eg2-video-cpu/stages/tokenizer.results.json",
+        "sha256": "749fc40fe57972f3eb123f4ebbe16a98080cb19bcaa6b02337256c16ae65cb1f",
+        "candidate": "FFmpeg adapter on FFmpeg n8.1.3-17-gc389840894-20261011; EmbeddingGemma2VideoSampling; EmbeddingGemma2ImageProcessor at 140 soft tokens; EmbeddingGemma2MultimodalEmbedder rendering with EmbeddingGemma2Tokenizer",
+        "producer": {
+          "name": "ai-dotnet/tools/Starlings.Fidelity.Tool",
+          "repository_commit": "cc59fee3f97b88ade7f472706816ada238b8f1d0"
+        },
+        "environment": {
+          "machine": "omarchy",
+          "provider": "cpu",
+          "provider_options": {},
+          "dotnet": ".NET 10.0.12",
+          "os": "Omarchy",
+          "cpu_count": 12,
+          "cpu": "Intel(R) Core(TM) i7-5820K CPU @ 3.30GHz",
+          "onnxruntime": "1.30.0",
+          "onnxruntime_managed": "1.30.0",
+          "session_providers": [
+            "CPUExecutionProvider"
+          ],
+          "intra_op_threads": 4,
+          "video_decoder": "Starlings.Models.EmbeddingGemma2.Video.FFmpeg (generated FFmpeg 8.1 bindings)",
+          "ffmpeg_version": "n8.1.3-17-gc389840894-20261011",
+          "ffmpeg_major": 8,
+          "ffmpeg_libraries": {
+            "avutil": "60.26.103",
+            "avcodec": "62.28.103",
+            "avformat": "62.12.103",
+            "swscale": "9.5.103",
+            "avfilter": "11.14.103"
+          },
+          "ffmpeg_license": "LGPL version 3 or later",
+          "max_video_frames_per_vision_call": 8
+        },
+        "assets": [
+          {
+            "path": "tokenizer.json",
+            "sha256": "4d777ef5bdc1aa36227abdfb77c3e49e7b9c892d16e1b6bda41c393504828be4"
+          }
+        ]
+      },
+      "dotnet": {
+        "path": "/home/mark/.cache/starling-release-gates/runs/eg2-video-cpu/stages/dotnet.results.json",
+        "sha256": "53317f2148e4c4d6ce5678cfa95076edf50c1e040876bc58e383319960479104",
+        "candidate": "C# EmbeddingGemma2MultimodalEmbedder, ONNX Runtime 1.30.0 CPU (managed binding 1.30.0), frames from the FFmpeg adapter",
+        "producer": {
+          "name": "ai-dotnet/tools/Starlings.Fidelity.Tool",
+          "repository_commit": "cc59fee3f97b88ade7f472706816ada238b8f1d0"
+        },
+        "environment": {
+          "machine": "omarchy",
+          "provider": "cpu",
+          "provider_options": {},
+          "dotnet": ".NET 10.0.12",
+          "os": "Omarchy",
+          "cpu_count": 12,
+          "cpu": "Intel(R) Core(TM) i7-5820K CPU @ 3.30GHz",
+          "onnxruntime": "1.30.0",
+          "onnxruntime_managed": "1.30.0",
+          "session_providers": [
+            "CPUExecutionProvider"
+          ],
+          "intra_op_threads": 4,
+          "video_decoder": "Starlings.Models.EmbeddingGemma2.Video.FFmpeg (generated FFmpeg 8.1 bindings)",
+          "ffmpeg_version": "n8.1.3-17-gc389840894-20261011",
+          "ffmpeg_major": 8,
+          "ffmpeg_libraries": {
+            "avutil": "60.26.103",
+            "avcodec": "62.28.103",
+            "avformat": "62.12.103",
+            "swscale": "9.5.103",
+            "avfilter": "11.14.103"
+          },
+          "ffmpeg_license": "LGPL version 3 or later",
+          "max_video_frames_per_vision_call": 8
+        },
+        "assets": [
+          {
+            "path": "onnx/embeddinggemma2-vision-fp32.onnx",
+            "sha256": "6c97f477a82f6863d22d800476de6d0a618b23e514aa9b65a46b220c4b106b92"
+          },
+          {
+            "path": "onnx/embeddinggemma2-text-mm-fp32.onnx",
+            "sha256": "a2c22e072ec230b105b35c2787dcfccba186254e6a921e729c45b40e50dbbb74"
+          },
+          {
+            "path": "onnx/embeddinggemma2-text-fp32.onnx",
+            "sha256": "02cc7ecccbfcb29d812eb104e4c6ea6c599bc87e94f01082606f6a11f0252d11"
+          },
+          {
+            "path": "tokenizer.json",
+            "sha256": "4d777ef5bdc1aa36227abdfb77c3e49e7b9c892d16e1b6bda41c393504828be4"
+          }
+        ]
+      }
+    }
+  },
+  "protected_evidence": {
+    "status": "verified",
+    "base": "7a915d94eaceb1114b77e19490581187cfbe808a",
+    "detail": "merge base of HEAD and origin/main",
+    "changed": [],
+    "sha256": {
+      "model-pipeline/protected/embeddinggemma-2/video-fp32-cpu/tolerances.yaml": "6b9de23d8d15703094ad93205066e4b05fa55b73ad2b21f1f699235cc0558172",
+      "model-pipeline/protected/embeddinggemma-2/release/video-fp32-release/video-embeddings.jsonl": "a9c69aaa2bf91df5497ba2572bb43cef93c1b20415a22186eb39756a8e49d1ab",
+      "model-pipeline/protected/embeddinggemma-2/release/video-fp32-release/videos.json": "71f059885ccde317b7c27731b596243fd5c4597531f6c116e64f7a6ae4caac0c",
+      "model-pipeline/protected/embeddinggemma-2/release/video-fp32-release/tensors.json": "9d2ec884fbb34a0213e14b8fd12ee661703af5f29da62367d15e7b34d36082fe"
+    }
+  },
+  "report_only_metrics": [
+    "mean_abs",
+    "p99_abs",
+    "per_value_relative"
+  ],
+  "stages": {
+    "tokenizer": "failed",
+    "export": "passed",
+    "dotnet-ids": "failed",
+    "dotnet-text": "passed"
+  },
+  "first_divergence": "tokenizer",
+  "findings": [
+    {
+      "stage": "tokenizer",
+      "taxonomy": "decoding, sampling, rendering or preprocessing",
+      "finding": "tokenizer.frames_sha256: differ ['commons-video-02/video0', 'mm-two-videos/video0', 'mm-image-and-video/video0']"
+    },
+    {
+      "stage": "tokenizer",
+      "taxonomy": "decoding, sampling, rendering or preprocessing",
+      "finding": "tokenizer.resized_sha256: differ ['commons-video-02/video0', 'mm-two-videos/video0', 'mm-image-and-video/video0']"
+    },
+    {
+      "stage": "tokenizer",
+      "taxonomy": "decoding, sampling, rendering or preprocessing",
+      "finding": "tokenizer.pixel_values_sha256: differ ['commons-video-02/video0', 'mm-two-videos/video0', 'mm-image-and-video/video0']"
+    },
+    {
+      "stage": "tokenizer",
+      "taxonomy": "decoding, sampling, rendering or preprocessing",
+      "finding": "tokenizer.image_rgb_sha256: differ ['mm-image-and-video']"
+    },
+    {
+      "stage": "tokenizer",
+      "taxonomy": "decoding, sampling, rendering or preprocessing",
+      "finding": "tokenizer.decoder_frame_sha256: differ ['commons-video-02/video0', 'mm-two-videos/video0', 'mm-image-and-video/video0']"
+    },
+    {
+      "stage": "dotnet-ids",
+      "taxonomy": "numerics",
+      "finding": "dotnet-ids.embedding: 0.00888373 against bound 1e-05 (worst mm-image-and-video)"
+    },
+    {
+      "stage": "dotnet-ids",
+      "taxonomy": "numerics",
+      "finding": "dotnet-ids.min_cosine: 0.997926 against bound 1 (worst mm-image-and-video)"
+    }
+  ],
+  "gates": {
+    "G1": {
+      "status": "failed",
+      "reason": "failing checks: tokenizer.frames_sha256, tokenizer.resized_sha256, tokenizer.pixel_values_sha256, tokenizer.image_rgb_sha256, tokenizer.decoder_frame_sha256"
+    },
+    "G2": {
+      "status": "failed",
+      "reason": "failing checks: dotnet-ids.embedding, dotnet-ids.min_cosine"
+    }
+  },
+  "manifest_gates": {
+    "G1": {
+      "status": "failed",
+      "date": "2026-10-14"
+    },
+    "G2": {
+      "status": "failed",
+      "date": "2026-10-14"
+    }
+  },
+  "checks": [
+    {
+      "id": "tokenizer.assets",
+      "stage": "tokenizer",
+      "substage": "tokenizer",
+      "gate": "G1",
+      "title": "Assets the stage loaded equal the manifest's origin.files",
+      "tolerance_key": null,
+      "bound": null,
+      "status": "passed",
+      "metrics": {
+        "assets": [
+          "tokenizer.json"
+        ]
+      },
+      "detail": ""
+    },
+    {
+      "id": "dotnet-ids.assets",
+      "stage": "dotnet",
+      "substage": "dotnet-ids",
+      "gate": "G2",
+      "title": "Assets the stage loaded equal the manifest's origin.files",
+      "tolerance_key": null,
+      "bound": null,
+      "status": "passed",
+      "metrics": {
+        "assets": [
+          "onnx/embeddinggemma2-text-fp32.onnx",
+          "onnx/embeddinggemma2-text-mm-fp32.onnx",
+          "onnx/embeddinggemma2-vision-fp32.onnx",
+          "tokenizer.json"
+        ]
+      },
+      "detail": ""
+    },
+    {
+      "id": "tokenizer.token_ids",
+      "stage": "tokenizer",
+      "substage": "tokenizer",
+      "gate": "G1",
+      "title": "Rendered ids (placeholder expansion + tokenizer) exact",
+      "tolerance_key": "discrete.token_ids",
+      "bound": "exact",
+      "status": "passed",
+      "metrics": {
+        "cases": 11,
+        "excluded_by_contract": {
+          "vid-array-no-metadata": "decoded frames without timing metadata (rejected by contract unless opted in)"
+        }
+      },
+      "detail": ""
+    },
+    {
+      "id": "tokenizer.frame_indices",
+      "stage": "tokenizer",
+      "substage": "tokenizer",
+      "gate": "G1",
+      "title": "Per video sampled frame indices exact",
+      "tolerance_key": "discrete.frame_indices",
+      "bound": "exact",
+      "status": "passed",
+      "metrics": {
+        "videos": 12,
+        "cases": 12,
+        "mismatched": 0
+      },
+      "detail": ""
+    },
+    {
+      "id": "tokenizer.frames_sha256",
+      "stage": "tokenizer",
+      "substage": "tokenizer",
+      "gate": "G1",
+      "title": "Per video frames_uint8 digest exact",
+      "tolerance_key": "discrete.decoded_frames",
+      "bound": "exact",
+      "status": "failed",
+      "metrics": {
+        "videos": 12,
+        "cases": 12,
+        "mismatched": 3
+      },
+      "detail": "differ ['commons-video-02/video0', 'mm-two-videos/video0', 'mm-image-and-video/video0']"
+    },
+    {
+      "id": "tokenizer.resized_sha256",
+      "stage": "tokenizer",
+      "substage": "tokenizer",
+      "gate": "G1",
+      "title": "Per video resized_uint8 digest exact",
+      "tolerance_key": "discrete.resized_pixels",
+      "bound": "exact",
+      "status": "failed",
+      "metrics": {
+        "videos": 12,
+        "cases": 12,
+        "mismatched": 3
+      },
+      "detail": "differ ['commons-video-02/video0', 'mm-two-videos/video0', 'mm-image-and-video/video0']"
+    },
+    {
+      "id": "tokenizer.pixel_values_sha256",
+      "stage": "tokenizer",
+      "substage": "tokenizer",
+      "gate": "G1",
+      "title": "Per video pixel_values digest exact",
+      "tolerance_key": "discrete.pixel_values",
+      "bound": "exact",
+      "status": "failed",
+      "metrics": {
+        "videos": 12,
+        "cases": 12,
+        "mismatched": 3
+      },
+      "detail": "differ ['commons-video-02/video0', 'mm-two-videos/video0', 'mm-image-and-video/video0']"
+    },
+    {
+      "id": "tokenizer.positions_sha256",
+      "stage": "tokenizer",
+      "substage": "tokenizer",
+      "gate": "G1",
+      "title": "Per video positions digest exact",
+      "tolerance_key": "discrete.video_positions",
+      "bound": "exact",
+      "status": "passed",
+      "metrics": {
+        "videos": 12,
+        "cases": 12,
+        "mismatched": 0
+      },
+      "detail": ""
+    },
+    {
+      "id": "tokenizer.image_rgb_sha256",
+      "stage": "tokenizer",
+      "substage": "tokenizer",
+      "gate": "G1",
+      "title": "Still image (a decoded frame) RGB digest exact",
+      "tolerance_key": "discrete.decoded_frames",
+      "bound": "exact",
+      "status": "failed",
+      "metrics": {
+        "images": 1,
+        "mismatched": 1
+      },
+      "detail": "differ ['mm-image-and-video']"
+    },
+    {
+      "id": "tokenizer.decoder_frame_sha256",
+      "stage": "tokenizer",
+      "substage": "tokenizer",
+      "gate": "G1",
+      "title": "FFmpeg decoder: each sampled frame's RGB exact",
+      "tolerance_key": "decoder_ffmpeg.decoded_rgb_vs_torchcodec",
+      "bound": "exact",
+      "status": "failed",
+      "metrics": {
+        "ffmpeg_major": 8,
+        "ffmpeg_version": "n8.1.3-17-gc389840894-20261011",
+        "videos": 12,
+        "cases": 12,
+        "mismatched": 3
+      },
+      "detail": "differ ['commons-video-02/video0', 'mm-two-videos/video0', 'mm-image-and-video/video0']"
+    },
+    {
+      "id": "dotnet-ids.embedding",
+      "stage": "dotnet",
+      "substage": "dotnet-ids",
+      "gate": "G2",
+      "title": "Embedding vs the reference, max abs",
+      "tolerance_key": "float.embedding_max_abs",
+      "bound": 1e-05,
+      "status": "failed",
+      "metrics": {
+        "max_abs": 0.008883731,
+        "mean_abs": 0.00031934795479551375,
+        "p99_abs": 0.00371407590000002,
+        "values": 8448,
+        "cases": 11,
+        "worst_case": "mm-image-and-video",
+        "non_finite_cases": [],
+        "excluded_by_contract": {
+          "vid-array-no-metadata": "decoded frames without timing metadata (rejected by contract unless opted in)"
+        }
+      },
+      "detail": "0.00888373 against bound 1e-05 (worst mm-image-and-video)"
+    },
+    {
+      "id": "dotnet-ids.min_cosine",
+      "stage": "dotnet",
+      "substage": "dotnet-ids",
+      "gate": "G2",
+      "title": "Embedding vs the reference, minimum cosine (float64)",
+      "tolerance_key": "float.min_cosine",
+      "bound": 0.9999995,
+      "status": "failed",
+      "metrics": {
+        "min_cosine": 0.9979263823827497,
+        "cases": 11
+      },
+      "detail": "0.997926 against bound 1 (worst mm-image-and-video)"
+    },
+    {
+      "id": "dotnet-ids.soft_tokens",
+      "stage": "dotnet",
+      "substage": "dotnet-ids",
+      "gate": "G2",
+      "title": "soft_tokens, row-relative max |d| / max |ref|",
+      "tolerance_key": "float.soft_tokens_row_relative",
+      "bound": null,
+      "status": "not-run",
+      "metrics": {},
+      "detail": "reference tensors not given (--reference-tensors <dir of run_embeddinggemma2_video.py .npz>)"
+    },
+    {
+      "id": "dotnet-ids.token_embeddings",
+      "stage": "dotnet",
+      "substage": "dotnet-ids",
+      "gate": "G2",
+      "title": "token_embeddings, row-relative max |d| / max |ref|",
+      "tolerance_key": "float.token_embeddings_row_relative",
+      "bound": null,
+      "status": "not-run",
+      "metrics": {},
+      "detail": "reference tensors not given (--reference-tensors <dir of run_embeddinggemma2_video.py .npz>)"
+    },
+    {
+      "id": "dotnet-ids.finite",
+      "stage": "dotnet",
+      "substage": "dotnet-ids",
+      "gate": "G2",
+      "title": "No NaN or Inf in embeddings or tensors",
+      "tolerance_key": "float.nan_or_inf",
+      "bound": "fail",
+      "status": "passed",
+      "metrics": {},
+      "detail": ""
+    },
+    {
+      "id": "dotnet-ids.batch.frame-calls-2-text-batch-4",
+      "stage": "dotnet",
+      "substage": "dotnet-ids",
+      "gate": "G2",
+      "title": "Batch 'frame-calls-2-text-batch-4' vs single rows",
+      "tolerance_key": "float.padded_batch_vs_single_embedding_max_abs",
+      "bound": 1e-05,
+      "status": "passed",
+      "metrics": {
+        "max_abs": 0.0,
+        "mean_abs": 0.0,
+        "p99_abs": 0.0,
+        "values": 768,
+        "cases": 1,
+        "worst_case": "mm-two-videos",
+        "non_finite_cases": []
+      },
+      "detail": ""
+    },
+    {
+      "id": "dotnet-ids.batch.padded-1260-frame-calls-3",
+      "stage": "dotnet",
+      "substage": "dotnet-ids",
+      "gate": "G2",
+      "title": "Batch 'padded-1260-frame-calls-3' vs single rows",
+      "tolerance_key": "float.padded_batch_vs_single_embedding_max_abs",
+      "bound": 1e-05,
+      "status": "passed",
+      "metrics": {
+        "max_abs": 0.0,
+        "mean_abs": 0.0,
+        "p99_abs": 0.0,
+        "values": 768,
+        "cases": 1,
+        "worst_case": "mm-two-videos",
+        "non_finite_cases": []
+      },
+      "detail": ""
+    },
+    {
+      "id": "dotnet-ids.provider_options",
+      "stage": "dotnet",
+      "substage": "dotnet-ids",
+      "gate": "G2",
+      "title": "Provider options of the run",
+      "tolerance_key": "provider_options",
+      "bound": {},
+      "status": "passed",
+      "metrics": {},
+      "detail": ""
+    },
+    {
+      "id": "export.not_applicable",
+      "stage": "export",
+      "substage": "export",
+      "gate": "G2",
+      "title": "Stage 2, export (not applicable: Python ORT parity is protected evidence of its own)",
+      "tolerance_key": null,
+      "bound": null,
+      "status": "not-applicable",
+      "metrics": {},
+      "detail": "the video tolerances bind the C# path; Python ORT parity: protected parity-cpu.json"
+    },
+    {
+      "id": "dotnet-text.not_applicable",
+      "stage": "dotnet",
+      "substage": "dotnet-text",
+      "gate": "G2",
+      "title": "Stage 4 (not applicable: text-only rows run in stage 3 on the released text graph)",
+      "tolerance_key": null,
+      "bound": null,
+      "status": "not-applicable",
+      "metrics": {},
+      "detail": "text-only rows are stage 3 rows (released text graph)"
+    }
+  ],
+  "excluded_by_contract": {
+    "vid-array-no-metadata": "decoded frames without timing metadata (rejected by contract unless opted in)"
+  },
+  "evaluated_although_excluded": [
+    "vid-array-no-metadata"
+  ],
+  "reference_tensors": null,
+  "exit_code": 1
+}

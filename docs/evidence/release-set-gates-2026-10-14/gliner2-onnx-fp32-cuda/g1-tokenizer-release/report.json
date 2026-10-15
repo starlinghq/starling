@@ -1,0 +1,177 @@
+{
+  "format": "starlings.tokenizer-fixtures-report",
+  "format_version": 1,
+  "task": "tokenizer-fixtures",
+  "profile": "gliner2-base-v1/onnx-fp32-cuda",
+  "date": "2026-10-15",
+  "evaluator": {
+    "name": "model-pipeline evaluate --tokenizer-fixtures",
+    "repository_commit": "472e1876ba69b2c4c0f2a7956adfb5e6c9e0b023"
+  },
+  "inputs": {
+    "manifest": {
+      "path": "model-pipeline/registry/gliner2-base-v1/onnx-fp32-cuda/manifest.yaml",
+      "sha256": "c5033be0eb9d2a24b082302e8b644418e1592d575e1bde363fbd0cd7b47ad85c"
+    },
+    "tolerances": {
+      "path": "model-pipeline/protected/gliner2-base-v1/onnx-fp32-cuda/tolerances.yaml",
+      "sha256": "6735d00f44f07ad7739a5e921f4496ded0921e515a3423e704c039b12c683957"
+    },
+    "fixtures": {
+      "path": "model-pipeline/protected/gliner2-base-v1/release/tokenizer-release/gliner2-tokenizer.jsonl",
+      "sha256": "90eb38666294ac12074583934a88c71597229770f177d5a4f2db1eb3efaa666e",
+      "format": "whitespace_splitter",
+      "rows": 232
+    },
+    "results": {
+      "path": "/home/mark/.cache/starling-release-gates/runs/gliner2-cuda/g1-tokenizer/tokenizer.candidate.jsonl",
+      "sha256": "e397015a294ba96f52bd81e8993cf034f36bac833f8f2001d44b5b7cb6d14084",
+      "environment": {
+        "format": "starlings.tokenizer-candidate",
+        "format_version": 1,
+        "model": "gliner2",
+        "producer": {
+          "name": "Starlings.Fidelity.Tool tokenizer",
+          "repository_commit": "10c016c1e8724983306d79a5db02b84326109c32",
+          "tokenizer_library": "0.3.0.0",
+          "tokenizer_library_informational_version": "0.3.0-preview.1+79a5863e861edcfed79142293dafabb688c199b9",
+          "dotnet": "10.0.12"
+        },
+        "tokenizer": {
+          "path": "tokenizer.json",
+          "sha256": "1b7fbabfb4c690bed84c6793bfecae9b8dfe205751b04f9ffd1e76a1e7df9c16"
+        },
+        "fixtures": {
+          "path": "model-pipeline/protected/gliner2-base-v1/release/tokenizer-release/gliner2-tokenizer.jsonl",
+          "sha256": "90eb38666294ac12074583934a88c71597229770f177d5a4f2db1eb3efaa666e"
+        },
+        "rows": 232
+      }
+    }
+  },
+  "offsets_unit": "unicode-scalars",
+  "protected_evidence": {
+    "status": "verified",
+    "base": "75574190e77f5528a416e87c6e12ea17e3b85d33",
+    "detail": "merge base of HEAD and origin/main",
+    "changed": [],
+    "sha256": {
+      "model-pipeline/protected/gliner2-base-v1/onnx-fp32-cuda/tolerances.yaml": "6735d00f44f07ad7739a5e921f4496ded0921e515a3423e704c039b12c683957",
+      "model-pipeline/protected/gliner2-base-v1/release/tokenizer-release/gliner2-tokenizer.jsonl": "90eb38666294ac12074583934a88c71597229770f177d5a4f2db1eb3efaa666e"
+    }
+  },
+  "gates": {
+    "G1": {
+      "status": "passed",
+      "reason": "every bound field is exact on every fixture row"
+    }
+  },
+  "manifest_gates": {
+    "G1": {
+      "status": "passed",
+      "date": "2026-10-15"
+    }
+  },
+  "checks": [
+    {
+      "id": "identity",
+      "gate": "G1",
+      "tolerance_key": null,
+      "binding": true,
+      "status": "passed",
+      "cases": 0,
+      "mismatches": 0,
+      "mismatched_ids": [],
+      "detail": ""
+    },
+    {
+      "id": "cases",
+      "gate": "G1",
+      "tolerance_key": null,
+      "binding": true,
+      "status": "passed",
+      "cases": 232,
+      "mismatches": 0,
+      "mismatched_ids": [],
+      "detail": ""
+    },
+    {
+      "id": "normalized_text",
+      "gate": "G1",
+      "tolerance_key": "discrete.normalized_text",
+      "binding": true,
+      "status": "passed",
+      "cases": 232,
+      "mismatches": 0,
+      "mismatched_ids": [],
+      "detail": ""
+    },
+    {
+      "id": "words",
+      "gate": "G1",
+      "tolerance_key": "discrete.words",
+      "binding": true,
+      "status": "passed",
+      "cases": 232,
+      "mismatches": 0,
+      "mismatched_ids": [],
+      "detail": ""
+    },
+    {
+      "id": "word_offsets",
+      "gate": "G1",
+      "tolerance_key": "discrete.character_maps",
+      "binding": true,
+      "status": "passed",
+      "cases": 232,
+      "mismatches": 0,
+      "mismatched_ids": [],
+      "detail": ""
+    },
+    {
+      "id": "schema_tokens",
+      "gate": null,
+      "tolerance_key": null,
+      "binding": false,
+      "status": "passed",
+      "cases": 232,
+      "mismatches": 0,
+      "mismatched_ids": [],
+      "detail": ""
+    },
+    {
+      "id": "input_ids",
+      "gate": "G1",
+      "tolerance_key": "discrete.token_ids",
+      "binding": true,
+      "status": "passed",
+      "cases": 232,
+      "mismatches": 0,
+      "mismatched_ids": [],
+      "detail": ""
+    },
+    {
+      "id": "word_positions",
+      "gate": "G1",
+      "tolerance_key": "discrete.word_positions",
+      "binding": true,
+      "status": "passed",
+      "cases": 232,
+      "mismatches": 0,
+      "mismatched_ids": [],
+      "detail": ""
+    },
+    {
+      "id": "schema_positions",
+      "gate": "G1",
+      "tolerance_key": "discrete.schema_positions",
+      "binding": true,
+      "status": "passed",
+      "cases": 232,
+      "mismatches": 0,
+      "mismatched_ids": [],
+      "detail": ""
+    }
+  ],
+  "exit_code": 0
+}

@@ -1,10 +1,10 @@
 # Task quality (G3): multilingual-e5-small/onnx-fp32-cpu (retrieval)
 
-Date 2026-10-14. Evaluator model-pipeline evaluate --g3 0.1.0 at `b469654b17262920457e810af410063b13cce8ea`. Exit code 4.
+Date 2026-10-14. Evaluator model-pipeline evaluate --g3 0.1.0 at `10c016c1e8724983306d79a5db02b84326109c32`. Exit code 0.
 
-**G3: not-run**: no budget: not a gate result (the dataset digest 4791590718868341 is not the budgeted set 614a8d0d4d43a393).
+**G3: passed**: every budgeted metric meets its minimum.
 
-Dataset `4791590718868341a87ef94f11c3829023386741835947b8305855864c83471e` (miracl-dev-hn-8lang-v1, status PROPOSED: candidate G3 retrieval set, not accepted; not gate evidence until the maintainer commits it under model-pipeline/protected/): queries 200, documents 2778, judgments 2000.
+Dataset `4791590718868341a87ef94f11c3829023386741835947b8305855864c83471e` (miracl-dev-hn-8lang-v1, status PROPOSED: candidate G3 retrieval set, not accepted; not gate evidence until the maintainer commits it under model-pipeline/protected/): queries 200, documents 2778, judgments 2000. With `dataset.json`: `614a8d0d4d43a3930cc7ea4fea56a9835c7db108b68b9c071de8e116995d2405`. The budget names the data+metadata digest.
 
 | Metric | Value |
 | --- | ---: |
