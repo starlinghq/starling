@@ -38,7 +38,11 @@
 #      images, the Extensions.AI image path equal to the typed API); when <dir> also holds videos/ (fixture clips of
 #      make_eg2_videos.py) and --ffmpeg-dir names the user's own FFmpeg 8.x shared libraries, runs its text-to-video
 #      search offline through the FFmpeg adapter (expected top clips, the Extensions.AI video path equal to the typed
-#      API, frames without timing rejected). No FFmpeg binary is packed, restored or built into any output,
+#      API, frames without timing rejected). With --ffmpeg9-dir (the user's own FFmpeg 9.x shared libraries, LGPL) the
+#      same search runs through a copy of the sample that references Starlings.Models.EmbeddingGemma2.Video.FFmpeg9
+#      instead (EmbeddingGemma2SearchFFmpeg9: the package id and namespace swapped, nothing else). With --ffmpeg-gpl-dir
+#      or --ffmpeg9-gpl-dir (a GPL FFmpeg 8 or 9 build) the matching sample must refuse that build without the opt-in
+#      (exit 3, "is not LGPL"). No FFmpeg binary is packed, restored or built into any output,
 #   8. with --seed-gliner2-from: seeds the GLiNER2 ONNX graph into the isolated cache, acquires
 #      tokenizer.json from the Hub through the Gliner2Ner sample's explicit download step, and runs its extraction with
 #      no network (expected entities, offsets inside the text, the 512-token rejection),
@@ -53,10 +57,12 @@
 #      "skipped: not requested". A model whose packaged library still records its hosting as private or a placeholder
 #      is skipped with "skipped: hosting private",
 #      With --public-hosting the EmbeddingGemma 2 image graphs (vision and multimodal text) are also downloaded with
-#      no token and, when the seed holds images/, the image search runs offline from that cache; the Qwen 3.5 fp16x
-#      bundle is downloaded too and, with --cuda, answers offline on the GPU. --public-hosting-only <labels> limits
-#      step 11 to a comma-separated subset of: GLiNER2, EmbeddingGemma 2, EmbeddingGemma 2 images, Qwen 3.5,
-#      Qwen 3.5 fp16x,
+#      no token and, when the seed holds images/, the image search runs offline from that cache; with the label
+#      "EmbeddingGemma 2 videos" the same graphs (the video path's vision graphs) are downloaded or verified into that
+#      cache and, when the seed holds videos/ and --ffmpeg-dir is given, the video search runs offline from it; the
+#      Qwen 3.5 fp16x bundle is downloaded too and, with --cuda, answers offline on the GPU. --public-hosting-only
+#      <labels> limits step 11 to a comma-separated subset of: GLiNER2, EmbeddingGemma 2, EmbeddingGemma 2 images,
+#      EmbeddingGemma 2 videos, Qwen 3.5, Qwen 3.5 fp16x,
 #  12. with --aot: tools/aot-check-ai.sh on the drill's feed and model cache (Native AOT publish of a consumer per
 #      package, trim/AOT warnings recorded, AOT results compared with JIT results),
 #  13. with --cuda <device>: the CUDA profiles from the same packed packages. Step 6 also builds two CUDA consumers
@@ -72,6 +78,12 @@
 #      IChatClient adapter. Needs --seed-gliner2-from, --seed-embeddinggemma2-from (with the image graphs and images/)
 #      and --seed-qwen35-from (with ortgenai-fp16x/). The CUDA 13 runtime, cuBLAS and cuDNN 9 are the machine's
 #      (never in a package): --cuda-lib-path <dir[:dir]> puts them on LD_LIBRARY_PATH for the CUDA runs only.
+#      Video on CUDA (embeddinggemma-2/video-fp32-cuda), when the seed holds video-fixtures/ (the 22 make_eg2_videos.py
+#      fixture videos) and videos/, and --ffmpeg-dir is given: the CUDA consumer decodes the fixture videos with the
+#      FFmpeg 8 adapter (and with the FFmpeg 9 adapter when --ffmpeg9-dir is given) and checks sampled indices and
+#      frames (exact) and embeddings (the CUDA profile's protected bounds), also through Extensions.AI; then
+#      EmbeddingGemma2SearchCuda (the sample with Microsoft.ML.OnnxRuntime.Gpu.Linux in place of the CPU natives) runs
+#      its video search with --cuda.
 #
 # Resuming (each call stays short): --packages-from <dir> reuses the .nupkg and .snupkg files of an earlier drill
 # (artifacts/release-drill-ai/) instead of packing; their nuspecs' commit must differ from HEAD in nothing that is
@@ -100,7 +112,12 @@
 #                                                               # h264-portrait-360x640-30fps-4s.mp4)
 #   ... --ffmpeg-dir <dir>                                      # with --seed-embeddinggemma2-from: the lib directory of
 #                                                               # the user's own FFmpeg 8.x shared build (LGPL) for the
-#                                                               # video search; FFmpeg is never shipped or downloaded
+#                                                               # video search; FFmpeg is never shipped or downloaded;
+#                                                               # the seed may also hold video-fixtures/ (the 22
+#                                                               # make_eg2_videos.py videos) for the CUDA video check
+#   ... --ffmpeg9-dir <dir>                                     # also the video search through the FFmpeg 9 adapter on
+#                                                               # the user's own FFmpeg 9.x shared build (LGPL)
+#   ... --ffmpeg-gpl-dir <dir> | --ffmpeg9-gpl-dir <dir>        # a GPL FFmpeg 8 or 9 build the adapter must refuse
 #   ... --seed-qwen35-from <dir>                                # also run the QwenChat sample on CPU; <dir> is a bundle built
 #                                                               # by build_ortgenai_bundle.py --variant fp32x (3.1 GB)
 #   ... --public-hosting                                        # also download GLiNER2, EmbeddingGemma 2 and Qwen 3.5
@@ -144,6 +161,9 @@ gliner2_seed=""
 eg2_seed=""
 qwen_seed=""
 ffmpeg_dir=""
+ffmpeg9_dir=""
+ffmpeg_gpl_dir=""
+ffmpeg9_gpl_dir=""
 public_hosting=0
 public_only=""
 aot=0
@@ -163,6 +183,9 @@ while [[ $# -gt 0 ]]; do
         --seed-embeddinggemma2-from) eg2_seed="$(cd "$2" && pwd)"; shift 2 ;;
         --seed-qwen35-from) qwen_seed="$(cd "$2" && pwd)"; shift 2 ;;
         --ffmpeg-dir) ffmpeg_dir="$(cd "$2" && pwd)"; shift 2 ;;
+        --ffmpeg9-dir) ffmpeg9_dir="$(cd "$2" && pwd)"; shift 2 ;;
+        --ffmpeg-gpl-dir) ffmpeg_gpl_dir="$(cd "$2" && pwd)"; shift 2 ;;
+        --ffmpeg9-gpl-dir) ffmpeg9_gpl_dir="$(cd "$2" && pwd)"; shift 2 ;;
         --no-model) mode="no-model"; shift ;;
         --public-hosting) public_hosting=1; shift ;;
         --aot) aot=1; shift ;;
@@ -217,7 +240,7 @@ if [[ -n "$(git -C "$root" status --porcelain)" ]]; then
     echo "note:      working tree has uncommitted changes; the drill ignores them and builds $sha"
 fi
 echo "dotnet:    $(command -v dotnet) (SDK in the clone: pinned by global.json; outside: $(cd "$work" && dotnet --version))"
-echo "mode:      $mode${seed:+ (seed: $seed)}${gliner2_seed:+; GLiNER2 graph seed: $gliner2_seed}${eg2_seed:+; EmbeddingGemma 2 graph seed: $eg2_seed}${ffmpeg_dir:+; user FFmpeg: $ffmpeg_dir}${qwen_seed:+; Qwen3.5 bundle seed: $qwen_seed}"
+echo "mode:      $mode${seed:+ (seed: $seed)}${gliner2_seed:+; GLiNER2 graph seed: $gliner2_seed}${eg2_seed:+; EmbeddingGemma 2 graph seed: $eg2_seed}${ffmpeg_dir:+; user FFmpeg: $ffmpeg_dir}${ffmpeg9_dir:+; user FFmpeg 9: $ffmpeg9_dir}${ffmpeg_gpl_dir:+; GPL FFmpeg 8 to refuse: $ffmpeg_gpl_dir}${ffmpeg9_gpl_dir:+; GPL FFmpeg 9 to refuse: $ffmpeg9_gpl_dir}${qwen_seed:+; Qwen3.5 bundle seed: $qwen_seed}"
 echo "offline:   $offline_how"
 echo "work dir:  $work"
 if [[ -n "$cuda_device" ]]; then
@@ -438,7 +461,7 @@ ls "$feed"
 
 step "6. Clean consumers outside the repository"
 apps="$work/apps"
-mkdir -p "$apps/E5Search" "$apps/Gliner2Ner" "$apps/QwenChat" "$apps/EmbeddingGemma2Search" "$apps/AiConsumer" "$apps/MlNetConsumer" "$work/fixtures"
+mkdir -p "$apps/E5Search" "$apps/Gliner2Ner" "$apps/QwenChat" "$apps/EmbeddingGemma2Search" "$apps/EmbeddingGemma2SearchFFmpeg9" "$apps/AiConsumer" "$apps/MlNetConsumer" "$work/fixtures"
 # Only the sample's sources and project file; nothing above it (its Directory.Build.* files exist only to stop
 # repository imports inside the checkout).
 cp "$src/ai-dotnet/samples/E5Search/Program.cs" "$src/ai-dotnet/samples/E5Search/E5Search.csproj" "$apps/E5Search/"
@@ -450,10 +473,24 @@ sed "s/@VERSION@/$ai_version/" "$src/tools/release-drill/ai-consumer/AiConsumer.
 cp "$src/tools/release-drill/mlnet-consumer/Program.cs" "$apps/MlNetConsumer/"
 sed "s/@VERSION@/$ai_version/" "$src/tools/release-drill/mlnet-consumer/MlNetConsumer.csproj.in" >"$apps/MlNetConsumer/MlNetConsumer.csproj"
 cp "$src/$fixtures_rel/embeddings.jsonl" "$src/$fixtures_rel/tokenizer.jsonl" "$work/fixtures/"
-consumer_apps=(E5Search Gliner2Ner QwenChat EmbeddingGemma2Search AiConsumer MlNetConsumer)
+# The sample on the FFmpeg 9 adapter: the same code with the package id and namespace of Starlings.Models.EmbeddingGemma2.Video.FFmpeg9.
+sed 's|using Starlings.Models.EmbeddingGemma2.Video.FFmpeg;|using Starlings.Models.EmbeddingGemma2.Video.FFmpeg9;|' \
+    "$src/ai-dotnet/samples/EmbeddingGemma2Search/Program.cs" >"$apps/EmbeddingGemma2SearchFFmpeg9/Program.cs"
+sed 's|<PackageReference Include="Starlings.Models.EmbeddingGemma2.Video.FFmpeg" |<PackageReference Include="Starlings.Models.EmbeddingGemma2.Video.FFmpeg9" |' \
+    "$src/ai-dotnet/samples/EmbeddingGemma2Search/EmbeddingGemma2Search.csproj" >"$apps/EmbeddingGemma2SearchFFmpeg9/EmbeddingGemma2SearchFFmpeg9.csproj"
+grep -q '^using Starlings.Models.EmbeddingGemma2.Video.FFmpeg9;$' "$apps/EmbeddingGemma2SearchFFmpeg9/Program.cs" \
+    && grep -q '<PackageReference Include="Starlings.Models.EmbeddingGemma2.Video.FFmpeg9" ' "$apps/EmbeddingGemma2SearchFFmpeg9/EmbeddingGemma2SearchFFmpeg9.csproj" \
+    || fail "EmbeddingGemma2SearchFFmpeg9: could not swap the FFmpeg 8 adapter for Starlings.Models.EmbeddingGemma2.Video.FFmpeg9"
+consumer_apps=(E5Search Gliner2Ner QwenChat EmbeddingGemma2Search EmbeddingGemma2SearchFFmpeg9 AiConsumer MlNetConsumer)
 if [[ -n "$cuda_device" ]]; then
     # The CUDA consumers: the GPU native packages in place of the CPU ones, never both (two libonnxruntime.so copies).
-    mkdir -p "$apps/CudaConsumer" "$apps/QwenChatCuda"
+    mkdir -p "$apps/CudaConsumer" "$apps/QwenChatCuda" "$apps/EmbeddingGemma2SearchCuda"
+    cp "$src/ai-dotnet/samples/EmbeddingGemma2Search/Program.cs" "$apps/EmbeddingGemma2SearchCuda/"
+    sed 's|<PackageReference Include="Microsoft.ML.OnnxRuntime" Version="|<PackageReference Include="Microsoft.ML.OnnxRuntime.Gpu.Linux" Version="|' \
+        "$src/ai-dotnet/samples/EmbeddingGemma2Search/EmbeddingGemma2Search.csproj" >"$apps/EmbeddingGemma2SearchCuda/EmbeddingGemma2SearchCuda.csproj"
+    grep -q "Microsoft.ML.OnnxRuntime.Gpu.Linux\" Version=\"$ort_version\"" "$apps/EmbeddingGemma2SearchCuda/EmbeddingGemma2SearchCuda.csproj" \
+        || fail "EmbeddingGemma2SearchCuda: could not swap the ONNX Runtime natives for Microsoft.ML.OnnxRuntime.Gpu.Linux $ort_version"
+    consumer_apps+=(EmbeddingGemma2SearchCuda)
     cp "$src/tools/release-drill/cuda-consumer/Program.cs" "$apps/CudaConsumer/"
     sed "s/@VERSION@/$ai_version/" "$src/tools/release-drill/cuda-consumer/CudaConsumer.csproj.in" >"$apps/CudaConsumer/CudaConsumer.csproj"
     cp "$src/ai-dotnet/samples/QwenChat/Program.cs" "$apps/QwenChatCuda/"
@@ -506,9 +543,9 @@ for path in sys.argv[5:]:
     app = path.split("/")[-3]
     gpu = [n for n in names if re.match(r"Microsoft\.ML\.OnnxRuntime(GenAI\.Cuda|\.Gpu)", n, re.I)]
     cpu_natives = [n for n in names if n.split("/")[0] in ("Microsoft.ML.OnnxRuntime", "Microsoft.ML.OnnxRuntimeGenAI")]
-    if app == "CudaConsumer":
+    if app in ("CudaConsumer", "EmbeddingGemma2SearchCuda"):
         # The CUDA natives of ONNX Runtime, exactly once and at the pinned version; no CPU natives beside them.
-        assert gpu == [f"Microsoft.ML.OnnxRuntime.Gpu.Linux/{ort_version}"], f"CudaConsumer GPU natives: {gpu}"
+        assert gpu == [f"Microsoft.ML.OnnxRuntime.Gpu.Linux/{ort_version}"], f"{app} GPU natives: {gpu}"
         assert not cpu_natives, f"CPU natives restored beside the GPU ones: {cpu_natives}"
     elif app == "QwenChatCuda":
         # Microsoft.ML.OnnxRuntimeGenAI.Cuda brings Microsoft.ML.OnnxRuntime.Gpu (Linux and Windows natives) at the pinned ORT.
@@ -520,7 +557,8 @@ for path in sys.argv[5:]:
         assert not gpu, "GPU natives restored"
     assert not [n for n in names if re.match(r"SixLabors\.", n, re.I)], "ImageSharp restored"
     skia = [n for n in names if n.lower().startswith("skiasharp")]
-    assert not skia or app in ("EmbeddingGemma2Search", "CudaConsumer"), f"SkiaSharp restored outside the image consumers: {skia}"
+    eg2_search = ("EmbeddingGemma2Search", "EmbeddingGemma2SearchFFmpeg9", "EmbeddingGemma2SearchCuda")
+    assert not skia or app in eg2_search + ("CudaConsumer",), f"SkiaSharp restored outside the image consumers: {skia}"
     # FFmpeg: the video adapter carries its own generated bindings; no FFmpeg bindings package and never FFmpeg binaries.
     bundled = [n for n in names if re.search(r"sdcb\.ffmpeg|ffmpeg\.(native|runtime|redist)|ffmpeg\.autogen\.(redist|runtime)|ffmpegcore\.binaries|xabe\.ffmpeg\.downloader", n, re.I)]
     assert not bundled, f"FFmpeg binaries or Sdcb.FFmpeg restored: {bundled}"
@@ -544,17 +582,24 @@ for path in sys.argv[5:]:
         assert not [n for n in names if n.split("/")[0] in unrelated], "unrelated packages restored"
     else:
         common = ["Starlings.Tokenizers", "Starlings.Acquisition", "Starlings.Runtime.Onnx",
-                  "Microsoft.ML.OnnxRuntime.Gpu.Linux" if app == "CudaConsumer" else "Microsoft.ML.OnnxRuntime",
+                  "Microsoft.ML.OnnxRuntime.Gpu.Linux" if app in ("CudaConsumer", "EmbeddingGemma2SearchCuda") else "Microsoft.ML.OnnxRuntime",
                   "Microsoft.ML.OnnxRuntime.Managed"]
+        # Each EmbeddingGemma2Search copy restores exactly one video adapter: FFmpeg9 for its FFmpeg 9 copy, FFmpeg otherwise.
+        video_adapters = [n.split("/")[0] for n in names if n.startswith("Starlings.Models.EmbeddingGemma2.Video.")]
+        if app in eg2_search:
+            want_adapter = "Starlings.Models.EmbeddingGemma2.Video.FFmpeg9" if app == "EmbeddingGemma2SearchFFmpeg9" else "Starlings.Models.EmbeddingGemma2.Video.FFmpeg"
+            assert video_adapters == [want_adapter], f"{app} video adapters: {video_adapters}, expected [{want_adapter}]"
+        elif app != "CudaConsumer":
+            assert not video_adapters, f"{app} restored a video adapter: {video_adapters}"
         models = (["Starlings.Models.Gliner2"] if app == "Gliner2Ner"
                   else ["Starlings.Models.E5", "Starlings.Models.E5.Extensions.AI", "Starlings.Models.Gliner2",
                         "Starlings.Models.EmbeddingGemma2", "Starlings.Models.EmbeddingGemma2.Extensions.AI",
                         "Microsoft.Extensions.AI.Abstractions", "Starlings.Models.EmbeddingGemma2.Imaging.SkiaSharp",
-                        "SkiaSharp", "SkiaSharp.NativeAssets.Linux.NoDependencies"] if app == "CudaConsumer"
+                        "SkiaSharp", "SkiaSharp.NativeAssets.Linux.NoDependencies",
+                        "Starlings.Models.EmbeddingGemma2.Video.FFmpeg", "Starlings.Models.EmbeddingGemma2.Video.FFmpeg9"] if app == "CudaConsumer"
                   else ["Starlings.Models.EmbeddingGemma2", "Starlings.Models.EmbeddingGemma2.Extensions.AI",
                         "Microsoft.Extensions.AI.Abstractions", "Starlings.Models.EmbeddingGemma2.Imaging.SkiaSharp",
-                        "SkiaSharp", "SkiaSharp.NativeAssets.Linux.NoDependencies",
-                        "Starlings.Models.EmbeddingGemma2.Video.FFmpeg"] if app == "EmbeddingGemma2Search"
+                        "SkiaSharp", "SkiaSharp.NativeAssets.Linux.NoDependencies", want_adapter] if app in eg2_search
                   else ["Starlings.Models.E5", "Starlings.Models.E5.MLNet", "Starlings.Models.EmbeddingGemma2",
                         "Starlings.Models.EmbeddingGemma2.MLNet", "Microsoft.ML"] if app == "MlNetConsumer"
                   else ["Starlings.Models.E5", "Starlings.Models.E5.Extensions.AI"])
@@ -571,7 +616,7 @@ for path in sys.argv[5:]:
             nupkg = os.path.join(pack, f"{name}.{version}.nupkg")
             packed = base64.b64encode(hashlib.sha512(open(nupkg, "rb").read()).digest()).decode()
             assert libraries[hits[0]]["sha512"] == packed, f"{hits[0]} differs from the packed package"
-    natives = (f"GPU natives only ({', '.join(gpu)})" if app in ("CudaConsumer", "QwenChatCuda") else "no GPU natives")
+    natives = (f"GPU natives only ({', '.join(gpu)})" if app in ("CudaConsumer", "QwenChatCuda", "EmbeddingGemma2SearchCuda") else "no GPU natives")
     print(f"ok:   {app}: only packages; Starlings.* sha512 equal the packed .nupkg files and the locked tokenizer; no foreign tokenizer; {natives}")
 EOF
 if find "$NUGET_PACKAGES" -iname '*tokeni[sz]er*' | grep -vi '/starlings\.tokenizers' | grep -q .; then
@@ -681,6 +726,44 @@ elif [[ -z "$gliner2_seed" ]]; then
     echo "note: no --seed-gliner2-from: the GLiNER2 package was packed, inspected and its sample built, but not run"
 fi
 
+eg2_search_ffmpeg9=(dotnet "$apps/EmbeddingGemma2SearchFFmpeg9/bin/Release/net10.0/EmbeddingGemma2SearchFFmpeg9.dll")
+# Checks one log of the sample's text-to-video search: <log> <FFmpeg major> <label> [<bound>]. The user's FFmpeg is the
+# given major and LGPL, the expected clip ranks first for each query, frames without timing are rejected, and the
+# Extensions.AI video path equals the typed API: exactly (CPU: one video per call and in a batch give the same bits) or,
+# with <bound>, within it (CUDA: the generator's single video against the typed batch).
+check_video_search() {
+    local log="$1" major="$2" label="$3" bound="${4:-}"
+    grep -Eq "^ffmpeg: n$major\\..* \\(LGPL\\)" "$log" || fail "$label: FFmpeg $major LGPL not reported"
+    for expect in 'colour bars test pattern with a moving white square:h264-1fps-64x48-8s.mp4' \
+        'colourful circles and rectangles moving over a dark background:h264-1.9s-320x240-30fps.mp4' \
+        'white words scrolling across a colour gradient:h264-portrait-360x640-30fps-4s.mp4'; do
+        query="${expect%:*}"
+        top="${expect##*:}"
+        grep -A1 -xF "video query: $query" "$log" | grep -q "^  top: $top " || fail "$label: '$query' did not rank '$top' first"
+    done
+    if [[ -z "$bound" ]]; then
+        grep -q '^extensions.ai videos: .* max abs difference from the typed API 0$' "$log" || fail "$label: Extensions.AI video path differs from the typed API"
+    else
+        diff="$(sed -n 's/^extensions.ai videos: .* max abs difference from the typed API \(.*\)$/\1/p' "$log")"
+        [[ -n "$diff" ]] && python3 -c "import sys; sys.exit(0 if float(sys.argv[1]) <= float(sys.argv[2]) else 1)" "$diff" "$bound" \
+            || fail "$label: Extensions.AI video path differs from the typed API by '$diff' (bound $bound)"
+    fi
+    grep -q '^frames without timing rejected' "$log" || fail "$label: frames without timing were not rejected"
+}
+# A GPL (or nonfree) FFmpeg build is refused by the adapter without the explicit opt-in: <label> <lib dir> <sample...>.
+check_gpl_refused() {
+    local label="$1" dir="$2"
+    shift 2
+    set +e
+    offline "$@" videos --cache "$models" --videos "$work/eg2-videos" --ffmpeg "$dir" >"$work/sample-$label-gpl.log" 2>&1
+    local rc=$?
+    set -e
+    cat "$work/sample-$label-gpl.log"
+    [[ "$rc" == 3 ]] && grep -q '^videos: The FFmpeg build at .* is not LGPL (' "$work/sample-$label-gpl.log" \
+        || fail "$label: the GPL FFmpeg build at $dir was not refused (exit $rc)"
+    echo "ok:   $label: the GPL FFmpeg build at $dir is refused without AllowNonLgplBuild (exit 3)"
+}
+
 if [[ -n "$eg2_seed" && "$cuda_only" != 1 ]]; then
     step "9b. EmbeddingGemma 2: seeded graph, tokenizer.json and prompt config from the Hub, offline search"
     target="$models/$eg2_repo/$eg2_commit/$(dirname "$eg2_graph")"
@@ -740,17 +823,19 @@ if [[ -n "$eg2_seed" && "$cuda_only" != 1 ]]; then
         mkdir -p "$work/eg2-videos"
         cp "$eg2_seed"/videos/*.mp4 "$eg2_seed"/videos/*.webm "$work/eg2-videos/" 2>/dev/null || true
         offline "${eg2_sample[@]}" videos --cache "$models" --videos "$work/eg2-videos" --ffmpeg "$ffmpeg_dir" | tee "$work/sample-eg2-videos.log" || fail "EmbeddingGemma2Search videos failed"
-        grep -Eq '^ffmpeg: n8\..* \(LGPL\)' "$work/sample-eg2-videos.log" || fail "EmbeddingGemma2Search videos: FFmpeg 8 LGPL not reported"
-        for expect in 'colour bars test pattern with a moving white square:h264-1fps-64x48-8s.mp4' \
-            'colourful circles and rectangles moving over a dark background:h264-1.9s-320x240-30fps.mp4' \
-            'white words scrolling across a colour gradient:h264-portrait-360x640-30fps-4s.mp4'; do
-            query="${expect%:*}"
-            top="${expect##*:}"
-            grep -A1 -xF "video query: $query" "$work/sample-eg2-videos.log" | grep -q "^  top: $top " || fail "EmbeddingGemma2Search videos: '$query' did not rank '$top' first"
-        done
-        grep -q '^extensions.ai videos: .* max abs difference from the typed API 0$' "$work/sample-eg2-videos.log" || fail "EmbeddingGemma 2 Extensions.AI video path differs from the typed API"
-        grep -q '^frames without timing rejected' "$work/sample-eg2-videos.log" || fail "EmbeddingGemma 2 did not reject frames without timing"
-        echo "ok:   EmbeddingGemma 2 video search ranks the expected clip first offline on the user-supplied FFmpeg; Extensions.AI videos equal the typed API"
+        check_video_search "$work/sample-eg2-videos.log" 8 "EmbeddingGemma2Search videos"
+        echo "ok:   EmbeddingGemma 2 video search ranks the expected clip first offline on the user-supplied FFmpeg 8 (Starlings.Models.EmbeddingGemma2.Video.FFmpeg); Extensions.AI videos equal the typed API"
+        if [[ -n "$ffmpeg9_dir" ]]; then
+            step "9f. EmbeddingGemma 2 videos: user-supplied FFmpeg 9 ($ffmpeg9_dir), offline text-to-video search (EmbeddingGemma2SearchFFmpeg9)"
+            offline "${eg2_search_ffmpeg9[@]}" videos --cache "$models" --videos "$work/eg2-videos" --ffmpeg "$ffmpeg9_dir" | tee "$work/sample-eg2-videos-ffmpeg9.log" || fail "EmbeddingGemma2SearchFFmpeg9 videos failed"
+            check_video_search "$work/sample-eg2-videos-ffmpeg9.log" 9 "EmbeddingGemma2SearchFFmpeg9 videos"
+            grep -q 'Starlings.Models.EmbeddingGemma2.Video.FFmpeg9 ' "$work/sample-eg2-videos-ffmpeg9.log" || fail "EmbeddingGemma2SearchFFmpeg9: the FFmpeg9 adapter was not loaded"
+            echo "ok:   EmbeddingGemma 2 video search ranks the expected clip first offline on the user-supplied FFmpeg 9 (Starlings.Models.EmbeddingGemma2.Video.FFmpeg9); Extensions.AI videos equal the typed API"
+        else
+            echo "note: no --ffmpeg9-dir: the FFmpeg 9 sample was built but its video search not run"
+        fi
+        [[ -z "$ffmpeg_gpl_dir" ]] || check_gpl_refused eg2-videos-ffmpeg8 "$ffmpeg_gpl_dir" "${eg2_sample[@]}"
+        [[ -z "$ffmpeg9_gpl_dir" ]] || check_gpl_refused eg2-videos-ffmpeg9 "$ffmpeg9_gpl_dir" "${eg2_search_ffmpeg9[@]}"
     else
         echo "note: no videos/ in $eg2_seed or no --ffmpeg-dir: the video search was built but not run"
     fi
@@ -801,6 +886,7 @@ hosting=(
     "GLiNER2|ai-dotnet/src/Starlings.Models.Gliner2/Gliner2ModelAssets.cs|ModelSourceIsPlaceholder = true"
     "EmbeddingGemma 2|ai-dotnet/src/Starlings.Models.EmbeddingGemma2/EmbeddingGemma2ModelAssets.cs|ModelSourceIsPlaceholder = true"
     "EmbeddingGemma 2 images|ai-dotnet/src/Starlings.Models.EmbeddingGemma2/EmbeddingGemma2ModelAssets.cs|ImageModelSourceIsPlaceholder = true"
+    "EmbeddingGemma 2 videos|ai-dotnet/src/Starlings.Models.EmbeddingGemma2/EmbeddingGemma2ModelAssets.cs|ImageModelSourceIsPlaceholder = true"
     "Qwen 3.5|ai-dotnet/src/Starlings.Models.Qwen35/Qwen35ModelAssets.cs|HostingIsPrivate = true"
     "Qwen 3.5 fp16x|ai-dotnet/src/Starlings.Models.Qwen35/Qwen35ModelAssets.cs|HostingIsPrivate = true"
 )
@@ -887,6 +973,22 @@ else
                     grep -q '^extensions.ai images: .* max abs difference from the typed API 0$' "$work/public-eg2-images.log" || fail "EmbeddingGemma 2 Extensions.AI image path from public files differs from the typed API"
                 else
                     echo "note: no images/ in the EmbeddingGemma 2 seed: the image graphs were downloaded and verified but the image search was not run"
+                fi
+                ;;
+            "EmbeddingGemma 2 videos")
+                # The video path runs on the image lock's vision and multimodal graphs: downloaded here with no token, or
+                # already downloaded (and verified again) by the "EmbeddingGemma 2 images" entry into the same cache.
+                "${eg2_sample[@]}" download-images --cache "$public_models" | tee "$work/public-eg2-download-videos.log" || fail "EmbeddingGemma 2 video graphs public download failed"
+                for g in "${eg2_image_graphs[@]}" "$eg2_graph" tokenizer.json config_sentence_transformers.json; do
+                    grep -Eq "^$g: (downloaded|already cached)," "$work/public-eg2-download-videos.log" || fail "$g was not verified"
+                done
+                if [[ -n "$eg2_seed" && -d "$eg2_seed/videos" && -n "$ffmpeg_dir" ]]; then
+                    mkdir -p "$work/public-eg2-videos"
+                    cp "$eg2_seed"/videos/*.mp4 "$eg2_seed"/videos/*.webm "$work/public-eg2-videos/" 2>/dev/null || true
+                    offline "${eg2_sample[@]}" videos --cache "$public_models" --videos "$work/public-eg2-videos" --ffmpeg "$ffmpeg_dir" | tee "$work/public-eg2-videos.log" || fail "EmbeddingGemma 2 video search from public files failed"
+                    check_video_search "$work/public-eg2-videos.log" 8 "EmbeddingGemma 2 videos from public files"
+                else
+                    echo "note: no videos/ in the EmbeddingGemma 2 seed or no --ffmpeg-dir: the video path's graphs were downloaded and verified but the video search was not run"
                 fi
                 ;;
             "Qwen 3.5 fp16x")
@@ -981,6 +1083,39 @@ if [[ -n "$cuda_device" ]]; then
         echo "ok:   $profile: offline on CUDA from the packed packages; outputs within the protected bounds of $tolerances_rel"
         cuda_ran="$cuda_ran${cuda_ran:+, }$profile"
     done
+    if [[ -d "$eg2_seed/video-fixtures" && -d "$eg2_seed/videos" && -n "$ffmpeg_dir" ]]; then
+        # Video on CUDA: the fixture videos through each adapter on the user's FFmpeg, then the sample's video search.
+        profile="embeddinggemma-2/video-fp32-cuda"
+        video_tolerances="$protected/embeddinggemma-2/video-fp32-cuda/tolerances.yaml"
+        for major in 8 9; do
+            dir="$ffmpeg_dir"
+            if [[ "$major" == 9 ]]; then
+                [[ -n "$ffmpeg9_dir" ]] || { echo "note: no --ffmpeg9-dir: the FFmpeg 9 adapter was not run on CUDA"; continue; }
+                dir="$ffmpeg9_dir"
+            fi
+            offline "${cuda_env[@]}" "${cuda_checker[@]}" eg2-video "$cuda_models" "$protected/embeddinggemma-2/video-fp32-cpu" "$video_tolerances" \
+                "$eg2_seed/video-fixtures" "$dir" "$major" | tee "$work/cuda-eg2-video-ffmpeg$major.log" || fail "CudaConsumer eg2-video FFmpeg $major ($profile) failed"
+            grep -qx 'RESULT: PASS' "$work/cuda-eg2-video-ffmpeg$major.log" || fail "CudaConsumer eg2-video FFmpeg $major ($profile) did not pass"
+            echo "ok:   $profile, FFmpeg $major adapter: offline on CUDA from the packed packages; frames exact and embeddings within the protected bounds"
+        done
+        eg2_search_cuda=(dotnet "$apps/EmbeddingGemma2SearchCuda/bin/Release/net10.0/EmbeddingGemma2SearchCuda.dll")
+        mkdir -p "$work/cuda-eg2-videos"
+        cp "$eg2_seed"/videos/*.mp4 "$eg2_seed"/videos/*.webm "$work/cuda-eg2-videos/" 2>/dev/null || true
+        offline "${cuda_env[@]}" "${eg2_search_cuda[@]}" videos --cuda --cache "$cuda_models" --videos "$work/cuda-eg2-videos" --ffmpeg "$ffmpeg_dir" \
+            | tee "$work/cuda-eg2-search-videos.log" || fail "EmbeddingGemma2SearchCuda videos --cuda failed"
+        for s in vision "multimodal text"; do
+            grep -Eq "^session $s: providers CUDAExecutionProvider.*; options .*device_id=0.*use_tf32=0" "$work/cuda-eg2-search-videos.log" \
+                || fail "EmbeddingGemma2SearchCuda: the $s session does not run on CUDAExecutionProvider with device_id=0 and use_tf32=0"
+        done
+        grep -q "^onnxruntime: native $ort_version, managed $ort_version" "$work/cuda-eg2-search-videos.log" || fail "EmbeddingGemma2SearchCuda: ONNX Runtime $ort_version not reported"
+        batch_bound="$(awk '/^[^ ]/{section=$1} section=="float:" && $1=="padded_batch_vs_single_embedding_max_abs:"{print $2}' "$video_tolerances")"
+        [[ -n "$batch_bound" ]] || fail "cannot read float.padded_batch_vs_single_embedding_max_abs from $video_tolerances"
+        check_video_search "$work/cuda-eg2-search-videos.log" 8 "EmbeddingGemma2SearchCuda videos" "$batch_bound"
+        echo "ok:   $profile: the sample's video search on CUDA from the packed packages; Extensions.AI within $batch_bound of the typed batch"
+        cuda_ran="$cuda_ran${cuda_ran:+, }$profile"
+    else
+        echo "note: no video-fixtures/ or videos/ in $eg2_seed, or no --ffmpeg-dir: embeddinggemma-2/video-fp32-cuda was built but not run"
+    fi
     for v in fp32x fp16x; do
         profile="qwen3.5-0.8b/ortgenai-$v-cuda"
         offline "${cuda_env[@]}" "${qwen_cuda[@]}" ask --cache "$cuda_models" --variant "$v" --cuda --max-new 64 "$qwen_question" \
@@ -1010,6 +1145,6 @@ cp "$work"/sample-*.log "$work"/consumer-*.log "$work"/public-*.log "$work"/cuda
 if [[ -d "$work/aot" ]]; then cp -r "$work/aot" "$out/aot"; fi
 aot_label=""
 [[ "$aot" != 1 ]] || aot_label=", AOT check"
-cpu_label="$mode${gliner2_seed:+, GLiNER2 run}${eg2_seed:+, EmbeddingGemma 2 run}${ffmpeg_dir:+ with FFmpeg $ffmpeg_dir}${qwen_seed:+, Qwen3.5 run}"
+cpu_label="$mode${gliner2_seed:+, GLiNER2 run}${eg2_seed:+, EmbeddingGemma 2 run}${ffmpeg_dir:+ with FFmpeg $ffmpeg_dir}${ffmpeg9_dir:+ and FFmpeg 9 $ffmpeg9_dir}${qwen_seed:+, Qwen3.5 run}"
 [[ "$cuda_only" != 1 ]] || cpu_label="CPU runs skipped (--cuda-only)"
 step "DRILL PASS ($cpu_label${public_ran:+, public hosting: $public_ran}$aot_label${cuda_ran:+, CUDA: $cuda_ran}): Starlings $ai_version + Tokenizers $tok_version from $sha (packages and logs in artifacts/release-drill-ai/)"

@@ -9,7 +9,8 @@
 // For each: the pipeline's output column type (Vector<Single, n>), the row-wise transform equal to the typed API one
 // text per call (exactly), the look-ahead batched transform equal to the typed batch (exactly), the token-count column
 // equal to the typed API's counts, the expected passage ranked first for every query, a Matryoshka 256 column
-// (EmbeddingGemma 2), and Save rejected (persistence unsupported). Exit code 0 only if every check passes.
+// (EmbeddingGemma 2), Save rejected (persistence unsupported), and a video column rejected with a schema error
+// (EmbeddingGemma 2; ML.NET video is unsupported). Exit code 0 only if every check passes.
 using System.Reflection;
 using Microsoft.ML;
 using Microsoft.ML.Data;
@@ -115,6 +116,22 @@ int ToolBody()
         Check(smallOut.Schema["Embedding"].Type is VectorDataViewType { Size: 256 }, $"EmbeddingGemma 2 Matryoshka column type {smallOut.Schema["Embedding"].Type}");
         float[][] smallRows = [.. smallOut.GetColumn<float[]>("Embedding")];
         Compare("EmbeddingGemma 2 Matryoshka 256 column vs typed API at 256", smallRows, [.. passages.Select(p => embedder256.Embed(p, EmbeddingGemma2Prompt.Document))]);
+
+        // Video (and image) columns are unsupported in ML.NET (capability mlnet: unsupported for the image and video
+        // profiles): a column of encoded video bytes is rejected with a schema error, never embedded as something else.
+        IDataView videoView = ml.Data.LoadFromEnumerable([new VideoRow { Video = [0x00, 0x00, 0x00, 0x18, 0x66, 0x74, 0x79, 0x70] }]);
+        string? videoError = null;
+        try
+        {
+            ml.Transforms.ApplyEmbeddingGemma2Embedding(embedder, "Embedding", "Video").Fit(videoView);
+        }
+        catch (ArgumentOutOfRangeException ex)
+        {
+            videoError = ex.Message;
+        }
+
+        Check(videoError is not null && videoError.Contains("Schema mismatch for input column 'Video'", StringComparison.Ordinal),
+            $"EmbeddingGemma 2: a video column (Vector<Byte>) is rejected by the ML.NET transform (mlnet unsupported for video): {videoError}");
     }
 
     Console.WriteLine(failures == 0 ? "RESULT: PASS" : $"RESULT: FAIL ({failures})");
@@ -174,4 +191,10 @@ int ToolBody()
 internal sealed class TextRow
 {
     public string Text { get; set; } = string.Empty;
+}
+
+internal sealed class VideoRow
+{
+    [VectorType]
+    public byte[] Video { get; set; } = [];
 }

@@ -5,7 +5,7 @@
     each with its own bindings and its own exactness gate. The adapter code is shared with the FFmpeg 8 package
     (../Shared/EmbeddingGemma2.Video.FFmpeg, compiled here with STARLINGS_FFMPEG9 for the namespace, the bound major and the
     library-directory variable); FFmpegNative.g.cs is generated from the FFmpeg 9.0.1 headers
-    (tools/generate-ffmpeg-bindings.py with major 9). Held from publishing until the D2 legal review, like the FFmpeg 8 package.
+    (tools/generate-ffmpeg-bindings.py with major 9). Publishable like the FFmpeg 8 package (legal review D2 cleared 2026-10-15).
   -->
   <PropertyGroup>
     <IsPackable>true</IsPackable>
