@@ -56,7 +56,7 @@ on:
       soak_variants:
         description: >-
           Diagnostics: JSON array of soak variants, each '+'-joined from default, no-heap-trim (tool --no-heap-trim),
-          tool-trim (--malloc-trim), mmap64k (MALLOC_MMAP_THRESHOLD_=65536), arena2 (MALLOC_ARENA_MAX=2), no-env
+          tool-trim (--malloc-trim), smaps (--smaps-every 25), mmap64k (MALLOC_MMAP_THRESHOLD_=65536), arena2 (MALLOC_ARENA_MAX=2), no-env
           (drop the profile's documented MALLOC_ setting)
         type: string
         default: '["default"]'
@@ -440,6 +440,7 @@ jobs:
               default) ;;
               no-heap-trim) extra+=(--no-heap-trim) ;;
               tool-trim) extra+=(--malloc-trim) ;;
+              smaps) extra+=(--smaps-every 25) ;;
               mmap64k) export MALLOC_MMAP_THRESHOLD_=65536 ;;
               arena2) export MALLOC_ARENA_MAX=2 ;;
               no-env) MMAP_THRESHOLD="" ;;
