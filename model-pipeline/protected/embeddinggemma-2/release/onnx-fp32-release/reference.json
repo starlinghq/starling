@@ -34,7 +34,7 @@
     "file": "embeddings.jsonl",
     "rows": 696,
     "sha256": "c2ffe5e45be11904b7ad0277758c0d8bafc48c6c65dcc87ff932ccbaf574285c",
-    "committed": false,
-    "note": "Kept outside Git for size and pinned by this digest; regenerate with the command in SOURCE.md (default_threads). The same digest was accepted in SOURCE.md with the release set (#23); recorded here so the evaluator can bind it."
+    "committed": true,
+    "note": "Committed 2026-10-16: regenerating it on other CPUs gives values within 8e-7 but a different digest, so the scheduled job cannot bind a regenerated copy. These are the bytes accepted with the release set (#23, #43)."
   }
 }
