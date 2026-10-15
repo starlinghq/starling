@@ -15,7 +15,7 @@ EmbeddingGemma 2 text, image and video embeddings are merged into `main` (video:
 
 What is not finished:
 
-- Nothing is published. The EmbeddingGemma 2 packages are in the 0.1.0-preview.5 candidate (`docs/releases/ai-0.1.0-preview.5.md`, PR #52, W5 done): 14 publishable packages, the FFmpeg adapter built and drilled but held until the D2 legal review. Publishing itself still waits for the `release` environment and the NuGet prefix reservation.
+- Nothing is published. The EmbeddingGemma 2 packages are in the 0.1.0-preview.5 candidate (`docs/releases/ai-0.1.0-preview.5.md`, PR #52, W5 done): 14 publishable packages, the FFmpeg adapter built and drilled but held until the D2 legal review. Update 2026-10-15: D2 is cleared and both FFmpeg adapters (8 and 9) are publishable from the next release. Publishing itself still waits for the `release` environment and the NuGet prefix reservation.
 - The registry manifests for all six EmbeddingGemma 2 profiles keep G1 and G2 at "not run".
 - CUDA profiles (image and video) have test-project evidence only. The fidelity tool references the CPU natives, so the protected evaluator has never run on CUDA.
 - The CUDA video error rose from the spike's 4.5e-7 to 3.3e-6 after the default moved from 4 frames per vision call to 2.
@@ -27,14 +27,14 @@ What is not finished:
 
 All seven were approved by Mark on 2026-10-12 as recommended, and recorded in `docs/kickoff.md`. Mark added one rule: every adapter is a voluntary addition. Users choose to reference it, so they decide how deep to go. That covers SkiaSharp imaging, each FFmpeg-major video adapter, the browser's WebGPU support, and any future adapter. No core package may reference an adapter, directly or transitively.
 
-What remains with Mark: the legal review itself (D2), the P-030 sets (D5), and committing the protected tolerance files in section 1.1 (the browser files now, the FFmpeg 9 gate with W4). The safety controls on agent sessions block agents from writing under `model-pipeline/protected/`.
+What remains with Mark: the P-030 sets (D5), and committing the protected tolerance files in section 1.1 (the browser files now, the FFmpeg 9 gate with W4). The safety controls on agent sessions block agents from writing under `model-pipeline/protected/`.
 
 The browser spike made no recommendation on hosting (its decision 4). The recorded default is a GitHub release asset, as for the GLiNER2 and EmbeddingGemma 2 graphs. The spike's quantization script stays available for users who build the graph themselves.
 
 | ID | Decision | Recommendation | Unblocks |
 | --- | --- | --- | --- |
 | D1 (approved) | Browser decisions 1 to 8 from the spike report: target, e5 variant, registry profiles for quantized variants, hosting, onnxruntime-web as a redistributed dependency, CI, AOT, spike code. | As in the spike: e5 only, WASM qualified and WebGPU experimental, int8-embed default, separate registry profiles with maintainer-set tolerances, AOT for consumers, keep `browser/spike/` as the package seed. | W6 |
-| D2 (approved) | Legal review of the FFmpeg adapter before any publish. Scope for the reviewer: dynamic loading of the user's LGPL FFmpeg, no FFmpeg binaries shipped, GPL and nonfree builds rejected unless opted in, codec patent responsibility placed on the deployer, the adapter's own FFmpeg bindings generated from FFmpeg's headers (`ai-dotnet/THIRD-PARTY-NOTICES.md`; FFmpeg.AutoGen was replaced on 2026-10-13). | Review before the adapter package is published, not before other packages. The adapter can be held back from a release on its own. | W5 (adapter package only) |
+| D2 (approved; cleared 2026-10-15) | Legal review of the FFmpeg adapter before any publish. Scope for the reviewer: dynamic loading of the user's LGPL FFmpeg, no FFmpeg binaries shipped, GPL and nonfree builds rejected unless opted in, codec patent responsibility placed on the deployer, the adapter's own FFmpeg bindings generated from FFmpeg's headers (`ai-dotnet/THIRD-PARTY-NOTICES.md`; FFmpeg.AutoGen was replaced on 2026-10-13). | Review before the adapter package is published, not before other packages. The adapter can be held back from a release on its own. | W5 (adapter package only) |
 | D3 (approved) | FFmpeg 9 support, and how: a second adapter package with bindings generated from the FFmpeg 9 headers, or one adapter that binds both majors. | Separate package per FFmpeg major. Each keeps a single decoder profile and its own exactness gate. Bindings differ per major, so one package would carry two binding sets. | W4 |
 | D4 (approved) | Confirm the gate policy: G1 and G2 move into the manifests only after the protected release set (P-030) exists. Or accept development-fixture evidence for Experimental profiles now. | Keep the existing policy, starting with `video-fp32-cpu` once P-030 lands. | W7 |
 | D5 (approved) | Curate P-030 release sets for EmbeddingGemma 2 (text, image, video). Plan 17 budgets 10 to 20 maintainer hours for the encoder and tokenizer sets; multimodal sets add to that. | Start with a small retrieval-style text set and a handful of licensed images and videos with known sources. Agents do not author these sets. | W7 |

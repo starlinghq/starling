@@ -311,20 +311,20 @@ qualification:
   # Ogg Theora frames of commons-video-02). Embedding max abs 2.77e-6 vs 1e-5; soft tokens 2.50e-4 vs 1e-3.
   gates:
     # G0 open (2026-10-14, docs/evidence/g0-provenance-2026-10-14/README.md): source and asset lock pinned and every
-    # lock file served anonymously with its SHA-256, rights recorded; but the decoding path needs the FFmpeg adapters,
-    # held pending legal review D2, so there is no clear distribution route for this profile yet.
+    # lock file served anonymously with its SHA-256, rights recorded; the decoding path needs the FFmpeg adapters.
+    # D2 cleared 2026-10-15; gate pending its runs.
     G0: { status: checklist, evidence: docs/m0/embeddinggemma2-video-spike.md, date: 2026-10-11 }
     G1: { status: passed, evidence: docs/evidence/release-set-gates-2026-10-14/embeddinggemma2-video-fp32-cuda/README.md, date: 2026-10-14 }
     G2: { status: passed, evidence: docs/evidence/release-set-gates-2026-10-14/embeddinggemma2-video-fp32-cuda/README.md, date: 2026-10-14 }
     G3: { status: not-run }
     G4: { status: not-run }
     G5: { status: not-run }
-    # G6 open (2026-10-14, docs/evidence/g6-distribution-2026-10-14/README.md): the FFmpeg adapters are held (D2) and
-    # not publishable, so no clean install from published packages exists for this profile.
+    # G6 open (2026-10-14, docs/evidence/g6-distribution-2026-10-14/README.md): no clean install from published packages
+    # exists for this profile yet. D2 cleared 2026-10-15; gate pending its runs.
     G6: { status: not-run }
     # G7 open (2026-10-14, docs/evidence/g7-integration-2026-10-14/README.md): Extensions.AI video is tested (contract
     # tests on fake graphs; CudaAdapterTests on six videos; the drill's sample at preview.4), ML.NET unsupported;
-    # representative downstream use needs the held FFmpeg adapter (D2).
+    # representative downstream use needs the FFmpeg adapter. D2 cleared 2026-10-15; gate pending its runs.
     G7: { status: not-run }
 
 maintenance:
