@@ -1,6 +1,18 @@
 # Starlings.Models.Qwen35.Extensions.AI
 
-**Preview.** [Microsoft.Extensions.AI](https://learn.microsoft.com/dotnet/ai/microsoft-extensions-ai) `IChatClient` over the `Qwen/Qwen3.5-0.8B` chat model in `Starlings.Models.Qwen35`: the same template, tokenizer, decode loop and tokens, usable with Microsoft.Extensions.AI middleware and dependency injection. The API may still change.
+[Microsoft.Extensions.AI](https://learn.microsoft.com/dotnet/ai/microsoft-extensions-ai) `IChatClient` over the `Qwen/Qwen3.5-0.8B` chat model in `Starlings.Models.Qwen35`: the same template, tokenizer, decode loop and tokens, usable with Microsoft.Extensions.AI middleware and dependency injection. The API may still change.
+
+## Maturity
+
+<!-- catalog:maturity profiles=qwen3.5-0.8b/* -->
+Maturity is per profile, generated from the registry manifests by `model-pipeline catalog` (do not edit this table by hand). Gates, evidence and capabilities per profile: the [model catalog](https://github.com/starlinghq/starling/blob/main/docs/catalog/README.md).
+
+| Profile | Maturity | Platforms |
+| --- | --- | --- |
+| `qwen3.5-0.8b/ortgenai-fp16x-cuda` | experimental | linux-x64 cuda: experimental; windows-x64 cuda: untested |
+| `qwen3.5-0.8b/ortgenai-fp32x-cpu` | experimental | linux-x64 cpu: experimental; windows-x64 cpu: untested |
+| `qwen3.5-0.8b/ortgenai-fp32x-cuda` | experimental | linux-x64 cuda: experimental; windows-x64 cuda: untested |
+<!-- /catalog:maturity -->
 
 ## Install
 

@@ -4,7 +4,7 @@
     <IsPackable>true</IsPackable>
     <!-- Trim, AOT and single-file analyzers on (warnings are errors); Native AOT evidence: docs/evidence/aot/. -->
     <IsAotCompatible>true</IsAotCompatible>
-    <Description>Preview. Microsoft.Extensions.AI IEmbeddingGenerator&lt;string, Embedding&lt;float&gt;&gt; over the multilingual-e5-small text embedder (Starlings.Models.E5): explicit e5 input-type prefixes, batching, usage, node-boundary cancellation, model metadata and DI registration.</Description>
+    <Description>Microsoft.Extensions.AI IEmbeddingGenerator&lt;string, Embedding&lt;float&gt;&gt; over the multilingual-e5-small text embedder (Starlings.Models.E5): explicit e5 input-type prefixes, batching, usage, node-boundary cancellation, model metadata and DI registration. Maturity is per model profile (Stable, Preview or Experimental): see the README, generated from the model registry.</Description>
     <PackageTags>embeddings;e5;microsoft.extensions.ai;iembeddinggenerator;onnxruntime</PackageTags>
     <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>

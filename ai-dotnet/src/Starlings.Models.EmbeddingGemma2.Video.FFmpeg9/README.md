@@ -1,6 +1,6 @@
 # Starlings.Models.EmbeddingGemma2.Video.FFmpeg9
 
-**Preview.** **Experimental.** The FFmpeg 9 counterpart of `Starlings.Models.EmbeddingGemma2.Video.FFmpeg`: decodes video files and streams into `EmbeddingGemma2Video` for `Starlings.Models.EmbeddingGemma2` exactly as upstream sees them (sentence-transformers decodes videos with torchcodec 0.17 on FFmpeg; this adapter makes the same FFmpeg calls). One adapter package per FFmpeg major: use this one with FFmpeg 9.x, the `...Video.FFmpeg` package with FFmpeg 8.x. Both are optional; the model package takes decoded frames and references neither.
+The FFmpeg 9 counterpart of `Starlings.Models.EmbeddingGemma2.Video.FFmpeg`: decodes video files and streams into `EmbeddingGemma2Video` for `Starlings.Models.EmbeddingGemma2` exactly as upstream sees them (sentence-transformers decodes videos with torchcodec 0.17 on FFmpeg; this adapter makes the same FFmpeg calls). One adapter package per FFmpeg major: use this one with FFmpeg 9.x, the `...Video.FFmpeg` package with FFmpeg 8.x. Both are optional; the model package takes decoded frames and references neither.
 
 **This package contains no FFmpeg.** It binds FFmpeg through its own bindings, generated from the FFmpeg 9.0.1 headers (commit `bf1b838f2ab88b4f8fd83443325c782ea0e0f7fa`) by `tools/generate-ffmpeg-bindings.py --major 9` (no third-party bindings package), and loads **your own FFmpeg 9.x shared libraries** at run time. You choose, install and distribute FFmpeg (see [Licenses and patents](#licenses-and-patents)). The decoding code is the FFmpeg 8 adapter's, shared as source; only the bindings differ.
 
@@ -18,6 +18,17 @@ float[] embedding = embedder.Embed(clip.Video);                       // no prom
 ```
 
 The types have the same names as in the FFmpeg 8 package, in the namespace `Starlings.Models.EmbeddingGemma2.Video.FFmpeg9`. A process loads one FFmpeg; reference the package of the major you install.
+
+## Maturity
+
+<!-- catalog:maturity profiles=embeddinggemma-2/video-* -->
+Maturity is per profile, generated from the registry manifests by `model-pipeline catalog` (do not edit this table by hand). Gates, evidence and capabilities per profile: the [model catalog](https://github.com/starlinghq/starling/blob/main/docs/catalog/README.md).
+
+| Profile | Maturity | Platforms |
+| --- | --- | --- |
+| `embeddinggemma-2/video-fp32-cpu` | experimental | linux-x64 cpu: experimental; windows-x64 cpu: untested |
+| `embeddinggemma-2/video-fp32-cuda` | experimental | linux-x64 cuda: experimental; windows-x64 cuda: untested |
+<!-- /catalog:maturity -->
 
 ## Installing FFmpeg 9
 

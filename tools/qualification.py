@@ -14,8 +14,10 @@
         recorded in `assets` are added too, when its `model` is the same repository and revision (e5's reference
         runner also reads `onnx/tokenizer.json`, which origin.files does not list). For e5 this is the full source
         snapshot the onboarding recipe needs (reference weights, configuration, tokenizer, ONNX graph); its runtime
-        files are the same cache entries the tests and the soak read. Only public, single-repository Hub origins are
-        supported; anything else is an error, never a guess.
+        files are the same cache entries the tests and the soak read. Files Starling hosts outside the upstream
+        repository carry their download address (`url`, lock schema_version 2): an `execution.graph` asset's
+        `source`, and for a `hosting.source_base` the runtime files the package downloads from there (the same rule as
+        tools/check-provenance.py). Only public Hub origins are supported; anything else is an error, never a guess.
 
     python3 -I tools/qualification.py snapshot <lock.json>
         Prints the lock's snapshot directory relative to the cache root: <repository>/<revision>.
@@ -65,6 +67,23 @@ def hosting(manifest: Path) -> int:
     return 0
 
 
+def _hosted_sources(data: dict) -> tuple[dict[str, str], str | None]:
+    """Download addresses of files Starling hosts: graph assets by path, and the hosting base address (if any)."""
+    graph = (data.get("execution") or {}).get("graph") or {}
+    assets = list(graph.get("assets") or [])
+    if graph.get("asset"):
+        assets.append(graph["asset"])
+    sources = {str(a["path"]): str(a["source"]) for a in assets if isinstance(a, dict) and a.get("source")}
+    hosting = graph.get("hosting") or {}
+    return sources, (str(hosting["source_base"]) if hosting.get("source_base") else None)
+
+
+def _hosted_by_base(path: str) -> bool:
+    # The files a `hosting.source_base` serves (Qwen35ModelAssets: chat template, tokenizer, ortgenai-* graphs); the
+    # same rule as tools/check-provenance.py, which verified each address anonymously (G0, 2026-10-14).
+    return path.startswith(("ortgenai-", "transformers-")) or path == "chat_template.jinja"
+
+
 def lock(manifest: Path, out: Path, reference_environment: Path | None = None) -> int:
     data = yaml.safe_load(manifest.read_text(encoding="utf-8"))
     if any(status in PRIVATE_STATUSES for _, status in _statuses(data)):
@@ -82,12 +101,18 @@ def lock(manifest: Path, out: Path, reference_environment: Path | None = None) -
             file=sys.stderr,
         )
         return 2
+    sources, source_base = _hosted_sources(data)
     entries = []
     for f in files:
         if not isinstance(f, dict) or not {"path", "sha256", "size"} <= f.keys() or "url" in f or "repository" in f:
             print(f"error: {manifest}: unsupported origin.files entry {f!r}", file=sys.stderr)
             return 2
-        entries.append({"path": str(f["path"]), "size": int(f["size"]), "sha256": str(f["sha256"])})
+        entry = {"path": str(f["path"]), "size": int(f["size"]), "sha256": str(f["sha256"])}
+        if entry["path"] in sources:
+            entry["url"] = sources[entry["path"]]
+        elif source_base and _hosted_by_base(entry["path"]):
+            entry["url"] = source_base + entry["path"]
+        entries.append(entry)
     if reference_environment is not None:
         env = json.loads(reference_environment.read_text(encoding="utf-8"))
         model = env.get("model") or {}
@@ -100,11 +125,12 @@ def lock(manifest: Path, out: Path, reference_environment: Path | None = None) -
             if entry["path"] not in known:
                 entries.append(entry)
                 known[entry["path"]] = entry
-            elif known[entry["path"]] != entry:
+            elif {k: v for k, v in known[entry["path"]].items() if k != "url"} != entry:
                 print(f"error: {entry['path']}: manifest and reference environment disagree", file=sys.stderr)
                 return 2
     document = {
-        "schema_version": 1,
+        # Version 1 is Hub-only; version 2 lets a file carry its own download address.
+        "schema_version": 2 if any("url" in e for e in entries) else 1,
         "name": str(data["id"]).replace("/", "-") + "-snapshot",
         "repository": match.group(1),
         "revision": revision,

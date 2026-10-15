@@ -1,6 +1,6 @@
 # Starlings.Models.EmbeddingGemma2.Imaging.SkiaSharp
 
-**Preview.** **Experimental.** Decodes image files and streams with [SkiaSharp](https://github.com/mono/SkiaSharp) into `EmbeddingGemma2Image` for `Starlings.Models.EmbeddingGemma2`, reproducing what the upstream processor receives from PIL (`Image.open(...).convert("RGB")`). The model package itself takes decoded RGB and has no native dependency; this adapter is optional.
+Decodes image files and streams with [SkiaSharp](https://github.com/mono/SkiaSharp) into `EmbeddingGemma2Image` for `Starlings.Models.EmbeddingGemma2`, reproducing what the upstream processor receives from PIL (`Image.open(...).convert("RGB")`). The model package itself takes decoded RGB and has no native dependency; this adapter is optional.
 
 ```csharp
 using Starlings.Models.EmbeddingGemma2;
@@ -10,6 +10,17 @@ EmbeddingGemma2Image image = EmbeddingGemma2ImageDecoder.DecodeFile("cat.jpg");
 using var embedder = EmbeddingGemma2MultimodalEmbedder.Create(EmbeddingGemma2ModelAssets.OpenLocalImageAssets());
 float[] embedding = embedder.Embed(image);
 ```
+
+## Maturity
+
+<!-- catalog:maturity profiles=embeddinggemma-2/image-* -->
+Maturity is per profile, generated from the registry manifests by `model-pipeline catalog` (do not edit this table by hand). Gates, evidence and capabilities per profile: the [model catalog](https://github.com/starlinghq/starling/blob/main/docs/catalog/README.md).
+
+| Profile | Maturity | Platforms |
+| --- | --- | --- |
+| `embeddinggemma-2/image-fp32-cpu` | experimental | linux-x64 cpu: experimental; windows-x64 cpu: untested |
+| `embeddinggemma-2/image-fp32-cuda` | experimental | linux-x64 cuda: experimental; windows-x64 cuda: untested |
+<!-- /catalog:maturity -->
 
 ## Rules
 

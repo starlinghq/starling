@@ -1,6 +1,17 @@
 # Starlings.Models.EmbeddingGemma2.MLNet
 
-**Preview.** **Experimental, text only.** An ML.NET estimator and transformer that turn a text column into an EmbeddingGemma 2 embedding column (`Vector<Single, 768>`, or a Matryoshka size of 512, 256 or 128, L2-normalized) with the embedder in `Starlings.Models.EmbeddingGemma2`. The API may still change.
+Text only. An ML.NET estimator and transformer that turn a text column into an EmbeddingGemma 2 embedding column (`Vector<Single, 768>`, or a Matryoshka size of 512, 256 or 128, L2-normalized) with the embedder in `Starlings.Models.EmbeddingGemma2`. The API may still change.
+
+## Maturity
+
+<!-- catalog:maturity profiles=embeddinggemma-2/onnx-* -->
+Maturity is per profile, generated from the registry manifests by `model-pipeline catalog` (do not edit this table by hand). Gates, evidence and capabilities per profile: the [model catalog](https://github.com/starlinghq/starling/blob/main/docs/catalog/README.md).
+
+| Profile | Maturity | Platforms |
+| --- | --- | --- |
+| `embeddinggemma-2/onnx-fp32-cpu` | experimental | linux-x64 cpu: experimental; windows-x64 cpu: experimental |
+| `embeddinggemma-2/onnx-fp32-cuda` | experimental | linux-x64 cuda: experimental; windows-x64 cuda: untested |
+<!-- /catalog:maturity -->
 
 ## Install
 
@@ -30,7 +41,7 @@ IDataView embedded = transformer.Transform(data);
 - `BatchSize` above 1 batches sequential, unshuffled cursors with a look-ahead cursor; row ids are checked.
 - Saving the transformer throws (`mlnet.persistence: unsupported`); cursors take no cancellation token.
 
-Status: Linux x64 CPU experimental; over a CUDA session experimental (document rows within the CUDA profile's bound).
+Status: experimental on the `embeddinggemma-2/onnx-fp32-cpu` profile (Linux x64 CPU; G7 passed, Stable promotion blocked, see the `Starlings.Models.EmbeddingGemma2` README); over a CUDA session experimental (document rows within the CUDA profile's bound); Native AOT unsupported (Microsoft.ML).
 
 ## License and usage policy
 

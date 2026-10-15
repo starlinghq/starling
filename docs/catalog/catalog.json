@@ -305,7 +305,8 @@
           "G3"
         ],
         "untested_capabilities": []
-      }
+      },
+      "scheduled_regression": true
     },
     {
       "id": "embeddinggemma-2/image-fp32-cuda",
@@ -493,7 +494,8 @@
           "G5"
         ],
         "untested_capabilities": []
-      }
+      },
+      "scheduled_regression": false
     },
     {
       "id": "embeddinggemma-2/onnx-fp32-cpu",
@@ -508,6 +510,7 @@
       "review_date": "2027-01-05",
       "last_checked": "2026-10-10",
       "known_issues": [
+        "Stable blocked (2026-10-15): the scheduled qualification cannot rerun G2. The text release set's embeddings.jsonl, kept outside the repository and bound by digest, regenerates byte-identical only on the reference CPU; on two hosted runners (Intel Xeon 8370C, AMD EPYC 7763; 6 threads, AVX2) it differed by up to 8e-7 and the evaluator refused it. Fix: SOURCE.md decision 2 (commit the file under protected/). The hosted one-hour soak also failed the growth rule (about 160 MB/h).",
         "Evaluator run 2026-10-11 (docs/evidence/embeddinggemma2-dotnet/, CPU): G1 passed; G2 failed only on export.token_embeddings (Python ORT vs PyTorch): the tolerance file's |d| <= 1e-4 * max(1, |ref|) judged per value gives 1.7e-2, while the per-case max |d| / max(1, max |ref|) the bound was set from is 6.2e-6. Which reading binds is a maintainer decision; every .NET check passed.",
         "The hosted graph is public since 2026-10-14. The 0.1.0-preview.6 release drill downloaded it with no token into an empty cache, verified it and ran the sample offline (Linux x64, one machine); other platforms are untested.",
         "Accepted fixtures reach 1,750 tokens and batch-independence checks 2,049; 2,050 to 8,192 tokens is covered by the proposed long-input rows (not yet accepted). One 8,192-token row took 80 s on the 12-thread workstation CPU (process peak working set 5.9 GB during the test run); temporary memory grows with the square of the length in the full-attention layers.",
@@ -662,13 +665,14 @@
       "compatibility": {
         "linux-x64 cpu": {
           "status": "experimental",
-          "verified": "2026-10-10"
+          "verified": "2026-10-15"
         },
         "linux-x64 cuda": {
           "status": "unrecorded"
         },
         "windows-x64 cpu": {
-          "status": "untested"
+          "status": "experimental",
+          "verified": "2026-10-15"
         },
         "windows-x64 cuda": {
           "status": "unrecorded"
@@ -678,7 +682,8 @@
         "ready": true,
         "gates_not_passed": [],
         "untested_capabilities": []
-      }
+      },
+      "scheduled_regression": true
     },
     {
       "id": "embeddinggemma-2/onnx-fp32-cuda",
@@ -864,7 +869,8 @@
         "ready": true,
         "gates_not_passed": [],
         "untested_capabilities": []
-      }
+      },
+      "scheduled_regression": false
     },
     {
       "id": "embeddinggemma-2/video-fp32-cpu",
@@ -1050,7 +1056,8 @@
           "G7"
         ],
         "untested_capabilities": []
-      }
+      },
+      "scheduled_regression": true
     },
     {
       "id": "embeddinggemma-2/video-fp32-cuda",
@@ -1235,7 +1242,8 @@
           "G7"
         ],
         "untested_capabilities": []
-      }
+      },
+      "scheduled_regression": false
     },
     {
       "id": "gliner2-base-v1/onnx-fp32-cpu",
@@ -1314,12 +1322,12 @@
         }
       },
       "capabilities": {
-        "batch": "experimental",
+        "batch": "supported",
         "streaming": "unsupported",
-        "cancellation": "experimental",
+        "cancellation": "supported",
         "persistence": "unsupported",
         "training": "unsupported",
-        "aot": "experimental",
+        "aot": "supported",
         "extensions_ai": "unsupported",
         "mlnet": "unsupported",
         "audio": "unrecorded",
@@ -1327,7 +1335,7 @@
         "chat_template_owned_text": "unrecorded",
         "chunked_prefill": "unrecorded",
         "classification": "unsupported",
-        "concurrent_calls": "experimental",
+        "concurrent_calls": "supported",
         "concurrent_calls_unserialized": "unrecorded",
         "concurrent_requests": "unrecorded",
         "conversation_state_reuse": "unrecorded",
@@ -1335,7 +1343,7 @@
         "embedding_pretokenized": "unrecorded",
         "embedding_text": "unrecorded",
         "enable_thinking": "unrecorded",
-        "entity_extraction": "experimental",
+        "entity_extraction": "supported",
         "greedy_generation": "unrecorded",
         "image": "unrecorded",
         "image_16_bit": "unrecorded",
@@ -1362,7 +1370,7 @@
         "matryoshka": "unrecorded",
         "max_new_tokens": "unrecorded",
         "mixed_label_sets_in_batch": "unsupported",
-        "offsets_original_text": "experimental",
+        "offsets_original_text": "supported",
         "plain_deduplicated_output": "unsupported",
         "prompts_query_document": "unrecorded",
         "prompts_task": "unrecorded",
@@ -1403,15 +1411,16 @@
       },
       "compatibility": {
         "linux-x64 cpu": {
-          "status": "experimental",
-          "verified": "2026-10-10"
+          "status": "supported",
+          "verified": "2026-10-15"
         },
         "linux-x64 cuda": {
           "status": "experimental",
           "verified": "2026-10-10"
         },
         "windows-x64 cpu": {
-          "status": "untested"
+          "status": "experimental",
+          "verified": "2026-10-15"
         },
         "windows-x64 cuda": {
           "status": "unrecorded"
@@ -1421,7 +1430,8 @@
         "ready": true,
         "gates_not_passed": [],
         "untested_capabilities": []
-      }
+      },
+      "scheduled_regression": true
     },
     {
       "id": "gliner2-base-v1/onnx-fp32-cuda",
@@ -1611,7 +1621,8 @@
           "G5"
         ],
         "untested_capabilities": []
-      }
+      },
+      "scheduled_regression": false
     },
     {
       "id": "multilingual-e5-small/onnx-fp32-cpu",
@@ -1626,6 +1637,7 @@
       "review_date": "2027-01-05",
       "last_checked": "2026-10-09",
       "known_issues": [
+        "Stable blocked (2026-10-15): the scheduled one-hour soak on a GitHub-hosted runner (AMD EPYC 9V45, 4 logical CPUs, 1,918 cycles; qualification run 38793842060) fails the growth rule at about 50 MB/h (unloaded rss_anon 210 to 363 MB, halves 33 and 21 MB against a 32 MB limit); the workstation G4 hour plateaued. Not yet diagnosed.",
         "The pinned tokenizer.json emits a lone \"▁\" token before special-token literals and for trailing whitespace, where SentencePiece and transformers 5.18 emit none. The owned profile follows tokenizer.json; the difference is recorded, not fixed.",
         "tokenizer.json leaves decomposed Hangul jamo uncomposed, while SentencePiece composes them.",
         "The ONNX file and model.safetensors come from the same revision; ONNX matches PyTorch to 2.1e-6 in hidden states on the M0 corpus."
@@ -1779,13 +1791,14 @@
       "compatibility": {
         "linux-x64 cpu": {
           "status": "experimental",
-          "verified": "2026-10-09"
+          "verified": "2026-10-15"
         },
         "linux-x64 cuda": {
           "status": "unrecorded"
         },
         "windows-x64 cpu": {
-          "status": "untested"
+          "status": "experimental",
+          "verified": "2026-10-15"
         },
         "windows-x64 cuda": {
           "status": "unrecorded"
@@ -1795,7 +1808,8 @@
         "ready": true,
         "gates_not_passed": [],
         "untested_capabilities": []
-      }
+      },
+      "scheduled_regression": true
     },
     {
       "id": "multilingual-e5-small/onnx-fp32-cuda",
@@ -1982,7 +1996,8 @@
           "G4"
         ],
         "untested_capabilities": []
-      }
+      },
+      "scheduled_regression": false
     },
     {
       "id": "qwen3.5-0.8b/ortgenai-fp16x-cuda",
@@ -2166,7 +2181,8 @@
         "ready": true,
         "gates_not_passed": [],
         "untested_capabilities": []
-      }
+      },
+      "scheduled_regression": false
     },
     {
       "id": "qwen3.5-0.8b/ortgenai-fp32x-cpu",
@@ -2350,7 +2366,8 @@
           "G5"
         ],
         "untested_capabilities": []
-      }
+      },
+      "scheduled_regression": true
     },
     {
       "id": "qwen3.5-0.8b/ortgenai-fp32x-cuda",
@@ -2534,7 +2551,8 @@
         "ready": true,
         "gates_not_passed": [],
         "untested_capabilities": []
-      }
+      },
+      "scheduled_regression": false
     }
   ]
 }

@@ -256,7 +256,12 @@ PY
 ai_version="$(cd "$src" && dotnet msbuild ai-dotnet/src/Starlings.Models.E5 -getProperty:Version)"
 echo "Starlings.Tokenizers: $tok_version"
 echo "ai-dotnet packages:            $ai_version"
-[[ "$ai_version" == *-preview.* && "$tok_version" == *-preview.* ]] || fail "release candidates are labeled preview"
+# Version scheme (docs/kickoff.md, "ai-dotnet package versions and maturity"): 0.MINOR.PATCH, or 0.MINOR.PATCH-preview.N
+# for a candidate before it; maturity is per profile (README maturity block), not a package label. The tokenizer keeps
+# its own scheme.
+[[ "$ai_version" =~ ^0\.[0-9]+\.[0-9]+(-preview\.[0-9]+)?$ ]] \
+    || fail "ai-dotnet version $ai_version is not 0.MINOR.PATCH or 0.MINOR.PATCH-preview.N"
+[[ "$tok_version" == *-preview.* ]] || fail "the tokenizer release candidate is labeled preview"
 sample_version="$(sed -n 's:.*<StarlingsVersion>\(.*\)</StarlingsVersion>.*:\1:p' "$src/ai-dotnet/samples/E5Search/E5Search.csproj")"
 [[ "$sample_version" == "$ai_version" ]] || fail "sample references $sample_version, the packages are $ai_version"
 gliner2_sample_version="$(sed -n 's:.*<StarlingsVersion>\(.*\)</StarlingsVersion>.*:\1:p' "$src/ai-dotnet/samples/Gliner2Ner/Gliner2Ner.csproj")"
@@ -388,8 +393,14 @@ for proj in "${projects[@]}"; do
     grep -q '<readme>README.md</readme>' <<<"$nuspec" || fail "$id: nuspec readme"
     grep -q "url=\"https://github.com/starlinghq/starling\".*commit=\"$pack_sha\"" <<<"$nuspec" || fail "$id: nuspec repository commit"
     if [[ "$id" != Starlings.Tokenizers ]]; then
-        grep -q '<description>Preview\. ' <<<"$nuspec" || fail "$id: description does not start with the Preview label"
-        unzip -p "$nupkg" README.md | grep -q '\*\*Preview\.\*\*' || fail "$id: packed README lacks the Preview label"
+        # Maturity is per profile: the description points to the README, whose maturity block the catalog generates
+        # from the registry manifests (model-pipeline catalog --check keeps it current). No blanket Preview label.
+        if grep -q '<description>Preview\. ' <<<"$nuspec"; then fail "$id: description starts with a blanket Preview label"; fi
+        grep -q 'Maturity is per model profile' <<<"$nuspec" || fail "$id: description does not state per-profile maturity"
+        readme_text="$(unzip -p "$nupkg" README.md)"
+        grep -q '^<!-- catalog:maturity profiles=' <<<"$readme_text" || fail "$id: packed README lacks the generated maturity block"
+        grep -q '^| Profile | Maturity | Platforms |$' <<<"$readme_text" || fail "$id: packed README maturity block is empty"
+        if grep -q '\*\*Preview\.\*\*' <<<"$readme_text"; then fail "$id: packed README carries a blanket Preview label"; fi
     fi
     actual="$(sed -n 's:.*<dependency id="\([^"]*\)" version="\([^"]*\)".*:\1 \2:p' <<<"$nuspec" | sort)"
     expected="$(expect_deps "$id" | sort)"
@@ -409,7 +420,7 @@ $expected"
     fi
     pdb="$(unzip -p "${nupkg%.nupkg}.snupkg" "lib/net10.0/$id.pdb" | grep -a -o "raw.githubusercontent.com/starlinghq/starling/$pack_sha/\*" | head -1 || true)"
     [[ -n "$pdb" ]] || fail "$id: symbols lack SourceLink to $pack_sha"
-    label="README and description labeled Preview"
+    label="per-profile maturity in README and description"
     # The tokenizer is released on its own (P-025); its preview status is its version suffix and its README.
     [[ "$id" == Starlings.Tokenizers ]] && label="README, preview version"
     echo "ok:   $id $version: MIT OR Apache-2.0, $label, repository commit, SourceLink to the commit; dependencies: ${expected:-none}" | tr '\n' ' '

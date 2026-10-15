@@ -154,25 +154,27 @@ execution:
       - { name: last_hidden_state, type: float32, shape: [batch, sequence, 768] }
 
 capabilities:
-  # Starlings.Models.Gliner2 (P-015); per-capability evidence in ai-dotnet/README.md. Experimental means tested
-  # against the protected development fixtures with the protected tolerances (CPU and, local only, CUDA).
-  batch: experimental
+  # Starlings.Models.Gliner2 (P-015); per-capability evidence in ai-dotnet/README.md. Statuses follow the Stable
+  # contract in the package README: supported where the gate evidence (G1 to G7) covers it on Linux x64 CPU,
+  # experimental where only proposed cases do, unsupported outside it. Gliner2Capabilities.Profiles holds the same
+  # statuses (tested key for key).
+  batch: supported
   streaming: unsupported
-  cancellation: experimental
+  cancellation: supported
   persistence: unsupported
   training: unsupported
   # aot: Native AOT publish on Linux x64 CPU, no trim/AOT warnings, results equal to JIT bit for bit
   # (typed extraction API; docs/evidence/aot/README.md).
-  aot: experimental
+  aot: supported
   extensions_ai: unsupported
   mlnet: unsupported  # no ML.NET adapter package exists for GLiNER2
-  entity_extraction: experimental
-  offsets_original_text: experimental
-  concurrent_calls: experimental
+  entity_extraction: supported
+  offsets_original_text: supported
+  concurrent_calls: supported
   # label_descriptions and count_gate_closed (capability closure 2026-10-14, docs/evidence/capability-closure-2026-10-14/README.md): 22 proposed
   # cases on public-domain text run by the pinned GLiNER2 (model-pipeline/proposed/gliner2-base-v1/capability-cases;
   # 11 with label descriptions, 12 where the count gate closes): inputs, gate and entities exact, logits within this
-  # profile's protected tolerances. Proposed cases, protected bounds.
+  # profile's protected tolerances. Proposed cases, protected bounds: outside the Stable contract until accepted.
   label_descriptions: experimental
   count_gate_closed: experimental
   input_over_512_tokens: unsupported
@@ -183,20 +185,26 @@ capabilities:
   structured_extraction: unsupported
 
 compatibility:
+  # Linux x64 CPU: gates G0 to G7 (G1 to G5 on an Intel i7-5820K, AVX2, no AVX-512), G4 with the documented setting
+  # MALLOC_MMAP_THRESHOLD_=65536; the scheduled qualification reruns G1 to G3 and a short soak with that setting.
   - os: linux
     arch: x64
     provider: cpu
-    status: experimental
-    verified: 2026-10-10
+    status: supported
+    verified: 2026-10-15
+  # CUDA is the separate, experimental profile gliner2-base-v1/onnx-fp32-cuda; outside this profile's Stable contract.
   - os: linux
     arch: x64
     provider: cuda
     status: experimental
     verified: 2026-10-10
+  # Windows x64 CPU: the CI job ai-dotnet-windows builds, runs the weight-free tests and the clean-install drill without
+  # the model on every change; no model runs there. Outside the Stable contract (the package README says so).
   - os: windows
     arch: x64
     provider: cpu
-    status: untested
+    status: experimental
+    verified: 2026-10-15
 
 qualification:
   reference_runner: model-pipeline/reference/gliner2/run_gliner2_extraction.py

@@ -3,8 +3,14 @@
 # (preview.1, P-010: docs/releases/e5-0.1.0-preview.1.md).
 schema_version: 1
 id: multilingual-e5-small/onnx-fp32-cpu
-# Preview (plan 14): G0, G1, G2 and G6 passed in full, G3-G5 and G7 as checklists (plan 10 phasing). Capability and
-# platform statuses stay experimental until qualification CI and controlled hardware (P-018).
+# Every gate G0 to G7 passed in full (qualification below), but capability and platform statuses stay experimental.
+# Blocked from Stable (2026-10-15): the weekly one-hour soak on a GitHub-hosted runner (AMD EPYC 9V45, 4 logical
+# CPUs, 1,918 load/unload cycles) fails the unchanged growth rule: unloaded and loaded rss_anon grow about 50 MB/h
+# (unloaded 210 to 363 MB; first half 33 MB, second half 21 MB, limit 32 MB), although the qualifying workstation
+# hour plateaued (1,368 cycles, unloaded 450 to 490 MB). Until it is diagnosed (as GLiNER2's allocator retention
+# was) or passes, the scheduled G4 screen gives no regression support.
+# E5Capabilities.Profiles holds the same statuses (tested key for key). Regression support: the scheduled
+# qualification workflow (.github/workflows/qualification.yml, jobs release-gates and soak).
 maturity: preview
 
 origin:
@@ -135,6 +141,8 @@ capabilities:
   # row-wise output equal to E5TextEmbedder bit for bit on the 46 fixture texts (max abs 2.3e-7 vs protected), one
   # inference per row for any number of getters, schema errors, parallel cursor sets and look-ahead batching tested.
   # Saving the transformer is unsupported (persistence above); there is no cancellation in ML.NET cursors.
+  # Stable contract targets (package README) for Linux x64 CPU: batch, cancellation, aot, extensions_ai, mlnet; experimental
+  # while the profile is blocked (header).
   batch: experimental
   streaming: unsupported
   cancellation: experimental
@@ -148,16 +156,20 @@ capabilities:
   mlnet: experimental
 
 compatibility:
-  # Linux x64 CPU: C# parity on one AVX2 workstation (embedding max abs 2.3e-7 vs the 1e-5 bound). Not qualification.
+  # Linux x64 CPU: gates G0 to G7 (G1 to G5 on an Intel i7-5820K, AVX2, no AVX-512; the scheduled qualification
+  # reruns G1 to G3 and a short soak on GitHub-hosted ubuntu-latest).
   - os: linux
     arch: x64
     provider: cpu
     status: experimental
-    verified: 2026-10-09
+    verified: 2026-10-15
+  # Windows x64 CPU: the CI job ai-dotnet-windows builds, runs the weight-free tests and the clean-install drill without
+  # the model on every change; no model runs there. Outside the Stable contract (the package README says so).
   - os: windows
     arch: x64
     provider: cpu
-    status: untested
+    status: experimental
+    verified: 2026-10-15
 
 qualification:
   reference_runner: model-pipeline/reference/encoder/run_e5.py
@@ -191,6 +203,11 @@ maintenance:
   last_checked: 2026-10-09
   review_date: 2027-01-05
   known_issues:
+    - >-
+      Stable blocked (2026-10-15): the scheduled one-hour soak on a GitHub-hosted runner (AMD EPYC 9V45, 4 logical
+      CPUs, 1,918 cycles; qualification run 38793842060) fails the growth rule at about 50 MB/h (unloaded rss_anon
+      210 to 363 MB, halves 33 and 21 MB against a 32 MB limit); the workstation G4 hour plateaued. Not yet
+      diagnosed.
     - >-
       The pinned tokenizer.json emits a lone "▁" token before special-token literals and for trailing
       whitespace, where SentencePiece and transformers 5.18 emit none. The owned profile follows

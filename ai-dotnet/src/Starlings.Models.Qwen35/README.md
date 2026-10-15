@@ -1,10 +1,22 @@
 # Starlings.Models.Qwen35
 
-**Preview.** Chat generation with [`Qwen/Qwen3.5-0.8B`](https://huggingface.co/Qwen/Qwen3.5-0.8B) at revision `2fc06364715b967f1860aea9cf38778875588b17`, in-process on ONNX Runtime GenAI 0.17.1, offline after an explicit acquisition. The API and the supported platforms may still change. The registry profiles are Experimental; see [Path to Stable](#path-to-stable).
+Chat generation with [`Qwen/Qwen3.5-0.8B`](https://huggingface.co/Qwen/Qwen3.5-0.8B) at revision `2fc06364715b967f1860aea9cf38778875588b17`, in-process on ONNX Runtime GenAI 0.17.1, offline after an explicit acquisition. The API and the supported platforms may still change. The registry profiles are Experimental; see [Path to Stable](#path-to-stable).
 
 - The pinned chat template is rendered in C# for text and tool-calling conversations (system, user, assistant and tool messages, tool definitions, assistant tool calls, `enable_thinking`); images are rejected. Prompt ids come from the owned tokenizer `Starlings.Tokenizers` (profile `qwen35-bpe-chat`): no Microsoft.ML.Tokenizers, no GenAI tokenizer, no Python.
 - Starling's decode loop (`Starlings.Generation.OnnxGenAI`): greedy or seeded sampling, stop at `<|im_end|>` / `<|endoftext|>` and at stop strings, streaming, cancellation between decode steps, usage.
 - The package ships the asset locks (sizes and SHA-256), not the model files (fp32x 3.1 GB, fp16x 1.6 GB). Acquisition is an explicit call; generation never downloads.
+
+## Maturity
+
+<!-- catalog:maturity profiles=qwen3.5-0.8b/* -->
+Maturity is per profile, generated from the registry manifests by `model-pipeline catalog` (do not edit this table by hand). Gates, evidence and capabilities per profile: the [model catalog](https://github.com/starlinghq/starling/blob/main/docs/catalog/README.md).
+
+| Profile | Maturity | Platforms |
+| --- | --- | --- |
+| `qwen3.5-0.8b/ortgenai-fp16x-cuda` | experimental | linux-x64 cuda: experimental; windows-x64 cuda: untested |
+| `qwen3.5-0.8b/ortgenai-fp32x-cpu` | experimental | linux-x64 cpu: experimental; windows-x64 cpu: untested |
+| `qwen3.5-0.8b/ortgenai-fp32x-cuda` | experimental | linux-x64 cuda: experimental; windows-x64 cuda: untested |
+<!-- /catalog:maturity -->
 
 ## Install
 

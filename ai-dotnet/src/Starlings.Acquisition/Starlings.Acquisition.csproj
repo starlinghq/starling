@@ -4,7 +4,7 @@
     <IsPackable>true</IsPackable>
     <!-- Trim, AOT and single-file analyzers on (warnings are errors); Native AOT evidence: docs/evidence/aot/. -->
     <IsAotCompatible>true</IsAotCompatible>
-    <Description>Preview. Explicit, verified acquisition of model assets: downloads the files of an immutable asset lock (Hub repository, full commit SHA, per-file size and SHA-256) into a local cache, verifies them, and resolves them offline afterwards. No network access happens unless DownloadAsync is called. No dependencies beyond the BCL.</Description>
+    <Description>Explicit, verified acquisition of model assets: downloads the files of an immutable asset lock (Hub repository, full commit SHA, per-file size and SHA-256) into a local cache, verifies them, and resolves them offline afterwards. No network access happens unless DownloadAsync is called. No dependencies beyond the BCL. Maturity is per model profile (Stable, Preview or Experimental): see the README, generated from the model registry.</Description>
     <PackageTags>huggingface;model;download;cache;sha256;offline</PackageTags>
     <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
