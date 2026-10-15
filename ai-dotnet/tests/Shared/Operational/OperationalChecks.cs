@@ -133,15 +133,28 @@ internal static class OperationalChecks
         for (int r = 0; r < repeats; r++)
         {
             using var cts = new CancellationTokenSource();
-            long fired = 0;
-            using var registration = cts.Token.Register(() => Volatile.Write(ref fired, Stopwatch.GetTimestamp()));
             var sw = Stopwatch.StartNew();
-            cts.CancelAfter(deadline);
-            var ex = Assert.ThrowsAny<OperationCanceledException>(() => longCall(cts.Token));
-            long now = Stopwatch.GetTimestamp();
-            Assert.True(cts.IsCancellationRequested, "the call threw before its deadline");
+
+            // The deadline's time is read before Cancel(), on the cancelling thread, and read here after joining it. A
+            // callback registered on the token would race the call: callbacks run newest first, so the call's own
+            // cancellation callback (registered later) can stop the call before a recorder registered here has run.
+            var canceller = CancelAfter(cts, deadline);
+            OperationCanceledException ex;
+            long now;
+            try
+            {
+                ex = Assert.ThrowsAny<OperationCanceledException>(() => longCall(cts.Token));
+            }
+            finally
+            {
+                now = Stopwatch.GetTimestamp();
+                canceller.Join();
+            }
+
+            long fired = Volatile.Read(ref canceller.CancelledAt);
+            Assert.True(fired != 0 && fired <= now, "the call threw before its deadline");
             Assert.Equal(cts.Token, ex.CancellationToken);
-            latencies[r] = (now - Volatile.Read(ref fired)) * 1000.0 / Stopwatch.Frequency;
+            latencies[r] = (now - fired) * 1000.0 / Stopwatch.Frequency;
             output.WriteLine(string.Create(CultureInfo.InvariantCulture,
                 $"deadline {deadline.TotalMilliseconds:F0} ms: threw after {sw.Elapsed.TotalMilliseconds:F0} ms, cancellation latency {latencies[r]:F2} ms"));
             reuse();
@@ -149,6 +162,45 @@ internal static class OperationalChecks
 
         Assert.All(latencies, l => Assert.True(l < latencyBound.TotalMilliseconds, $"cancellation latency {l:F0} ms exceeds {latencyBound.TotalMilliseconds:F0} ms"));
         return latencies;
+    }
+
+    /// <summary>
+    /// Cancels <paramref name="cts"/> <paramref name="delay"/> from now on a dedicated thread, recording the clock
+    /// (<see cref="Stopwatch.GetTimestamp"/>) immediately before <see cref="CancellationTokenSource.Cancel()"/>.
+    /// <see cref="Canceller.Join"/> it before reading <see cref="Canceller.CancelledAt"/> or disposing the source.
+    /// </summary>
+    public static Canceller CancelAfter(CancellationTokenSource cts, TimeSpan delay)
+    {
+        var canceller = new Canceller();
+        long due = Stopwatch.GetTimestamp() + (long)(delay.TotalSeconds * Stopwatch.Frequency);
+        canceller.Thread = new Thread(() =>
+        {
+            while (Stopwatch.GetTimestamp() < due)
+            {
+                Thread.Sleep(1);
+            }
+
+            Volatile.Write(ref canceller.CancelledAt, Stopwatch.GetTimestamp());
+            cts.Cancel();
+        })
+        { IsBackground = true, Name = "canceller" };
+        canceller.Thread.Start();
+        return canceller;
+    }
+
+    /// <summary>A pending cancellation started by <see cref="CancelAfter"/>.</summary>
+    public sealed class Canceller
+    {
+        /// <summary>Clock reading taken just before cancelling; 0 until then.</summary>
+        public long CancelledAt;
+
+        internal Thread Thread = null!;
+
+        /// <summary>Waits until the cancellation has been requested and its callbacks have run.</summary>
+        public void Join() => Thread.Join();
+
+        /// <summary>Milliseconds from <paramref name="from"/> (a <see cref="Stopwatch.GetTimestamp"/> reading) to the cancellation.</summary>
+        public double MillisecondsSince(long from) => (Volatile.Read(ref CancelledAt) - from) * 1000.0 / Stopwatch.Frequency;
     }
 
     /// <summary>

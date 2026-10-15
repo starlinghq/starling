@@ -108,12 +108,25 @@ public class CpuParityTests(E5CpuFixture fixture, ITestOutputHelper output) : IC
         var inputs = Enumerable.Repeat(new EncoderInput(longCase.InputIds), 32).ToList();
 
         using var cts = new CancellationTokenSource();
-        var sw = Stopwatch.StartNew();
-        TimeSpan cancelledAt = TimeSpan.Zero;
-        cts.Token.Register(() => cancelledAt = sw.Elapsed);
-        cts.CancelAfter(TimeSpan.FromMilliseconds(200));
-        Assert.ThrowsAny<OperationCanceledException>(() => encoder.EmbedBatch(inputs, cts.Token));
-        var latency = sw.Elapsed - cancelledAt;
+
+        // The cancellation time is read on the cancelling thread before Cancel() and read here after joining it, not
+        // from a callback registered on the token: callbacks run newest first, so the run's own (later) cancellation
+        // callback can stop it before a recorder registered here has run.
+        long start = Stopwatch.GetTimestamp();
+        var canceller = OperationalChecks.CancelAfter(cts, TimeSpan.FromMilliseconds(200));
+        long returned;
+        try
+        {
+            Assert.ThrowsAny<OperationCanceledException>(() => encoder.EmbedBatch(inputs, cts.Token));
+        }
+        finally
+        {
+            returned = Stopwatch.GetTimestamp();
+            canceller.Join();
+        }
+
+        var cancelledAt = TimeSpan.FromMilliseconds(canceller.MillisecondsSince(start));
+        var latency = Stopwatch.GetElapsedTime(start, returned) - cancelledAt;
         output.WriteLine($"32 x 512 batch: cancelled at {cancelledAt.TotalMilliseconds:F0} ms, threw {latency.TotalMilliseconds:F1} ms later (an uncancelled 32 x 512 CPU run took ~10 s in docs/m0/e5-gpu.md)");
         Assert.True(latency < TimeSpan.FromSeconds(2), $"cancellation latency {latency.TotalMilliseconds:F0} ms");
 
