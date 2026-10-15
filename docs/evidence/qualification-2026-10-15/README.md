@@ -19,7 +19,7 @@ Yesterday's CPU soaks (`docs/evidence/g4-soak-1h-2026-10-14/`) covered e5, Embed
 | multilingual-e5-small `onnx-fp32-cuda` | **FAIL**: loaded and unloaded memory grow about 190 to 209 MB/h | `e5-*` (cuda) |
 | gliner2-base-v1 `onnx-fp32-cuda`, embeddinggemma-2 `image-fp32-cuda`, `video-fp32-cuda` | **not run**: the run environment lacked the cuDNN libraries (`libcudnn.so` not found), so each exited at its first cuDNN kernel. A test-setup error, rerun with the pinned wheels' CUDA libraries on `LD_LIBRARY_PATH` | run log |
 
-The e5 CUDA soak ran in the same environment without cuDNN, and e5's kernels did not need it; whether its growth relates to that environment is checked by the rerun with the CUDA libraries present.
+All CUDA soaks of this round ran without cuDNN on the library path. The EmbeddingGemma 2 text and both Qwen CUDA runs completed because none of their kernels needs cuDNN; their sessions placed every node on the CUDA execution provider as in the fidelity runs, so those passes stand. The e5 CUDA run also completed, but in an environment the ONNX Runtime CUDA execution provider does not support (no cuDNN); it is therefore not a qualifying run. Rule fixed before the rerun: the rerun with the pinned wheels' CUDA and cuDNN libraries is the qualifying e5 CUDA soak, and its result stands whichever way it goes. If it fails, the growth is investigated as GLiNER2's was, not run a third time. The rerun records the GPU it used.
 
 ## G5: matched benchmarks (C# against the Python same-backend run)
 
