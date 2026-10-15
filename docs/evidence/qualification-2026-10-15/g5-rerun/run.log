@@ -1,0 +1,41 @@
+== round 1/3 (qwen35, cpu)
+preliminary quality: pass=true
+short-decode64 ids c=1: median 5907.966 ms (n=10) quality pass=true
+short-decode64-text text c=1: median 5863.126 ms (n=5) quality pass=true
+tools-decode32 ids c=1: median 3842.956 ms (n=4) quality pass=true
+long-prefill ids c=1: median 7714.126 ms (n=4) quality pass=true
+preliminary quality: pass=True
+short-decode64 ids c=1: median 5886.144 ms (n=10) quality pass=True
+short-decode64-text text c=1: median 5888.794 ms (n=5) quality pass=True
+tools-decode32 ids c=1: median 3437.741 ms (n=4) quality pass=True
+long-prefill ids c=1: median 7818.491 ms (n=4) quality pass=True
+cold-start: median spawn-to-result 7254.4 ms (n=10)
+cold-start: median spawn-to-result 8706.3 ms (n=10)
+== round 2/3 (qwen35, cpu)
+preliminary quality: pass=true
+short-decode64 ids c=1: median 5895.404 ms (n=10) quality pass=true
+short-decode64-text text c=1: median 5843.748 ms (n=5) quality pass=true
+tools-decode32 ids c=1: median 3431.788 ms (n=4) quality pass=true
+long-prefill ids c=1: median 7740.280 ms (n=4) quality pass=true
+preliminary quality: pass=True
+short-decode64 ids c=1: median 5976.276 ms (n=10) quality pass=True
+short-decode64-text text c=1: median 5866.219 ms (n=5) quality pass=True
+tools-decode32 ids c=1: median 3408.857 ms (n=4) quality pass=True
+long-prefill ids c=1: median 7945.376 ms (n=4) quality pass=True
+cold-start: median spawn-to-result 7400.3 ms (n=10)
+cold-start: median spawn-to-result 8866.0 ms (n=10)
+== round 3/3 (qwen35, cpu)
+preliminary quality: pass=true
+short-decode64 ids c=1: median 5908.881 ms (n=10) quality pass=true
+short-decode64-text text c=1: median 5892.398 ms (n=5) quality pass=true
+tools-decode32 ids c=1: median 3451.452 ms (n=4) quality pass=true
+long-prefill ids c=1: median 7726.041 ms (n=4) quality pass=true
+preliminary quality: pass=True
+short-decode64 ids c=1: median 5890.301 ms (n=10) quality pass=True
+short-decode64-text text c=1: median 5915.655 ms (n=5) quality pass=True
+tools-decode32 ids c=1: median 3430.301 ms (n=4) quality pass=True
+long-prefill ids c=1: median 7789.431 ms (n=4) quality pass=True
+cold-start: median spawn-to-result 7525.5 ms (n=10)
+cold-start: median spawn-to-result 8767.1 ms (n=10)
+raw results in /workspace/out/g5-rerun/qwen35-cpu.jsonl; check: model-pipeline bench g5 /workspace/out/g5-rerun/qwen35-cpu.jsonl
+G5-DONE exit 0

@@ -34,7 +34,7 @@ All CUDA soaks of this round ran without cuDNN on the library path. The Embeddin
 | GLiNER2 `onnx-fp32-cpu` | **PASS**, qualifying | inference 0.94 to 0.96 |
 | Qwen `ortgenai-fp32x-cuda` | **PASS**, qualifying | decode and time to first token within budget |
 | Qwen `ortgenai-fp16x-cuda` | **PASS**, qualifying | decode and time to first token within budget |
-| Qwen `ortgenai-fp32x-cpu` | **FAIL** (profile stays Preview) | time to first token 1.119 [0.848, 1.447] on `short-decode64` against 1.10; the gap is inside the native prefill call, and the two sides load different native ONNX Runtime 1.30.0 builds (NuGet against pip). Cause not established; see [Qwen CPU time to first token](#qwen-cpu-time-to-first-token) |
+| Qwen `ortgenai-fp32x-cpu` | **FAIL** (profile stays Preview) | time to first token 1.119 [0.848, 1.447] on `short-decode64` against 1.10; the gap is inside the native prefill call, and the two sides load different native ONNX Runtime 1.30.0 builds (NuGet against pip). Cause not established; see [Qwen CPU time to first token](#qwen-cpu-time-to-first-token). **Rerun on a quiet host: PASS, qualifying** (1.045 [0.823, 1.274]); the gap was host load, with no configuration or build effect. See [the diagnosis](#qwen-cpu-time-to-first-token-diagnosis-on-a-quiet-host) |
 | EmbeddingGemma 2 `image-fp32-cuda` | **FAIL** | preprocessing 8 to 48% of embed against 5%; photo warm ratio 1.118 against 1.10 |
 | EmbeddingGemma 2 `video-fp32-cuda` | **FAIL** | preprocessing 11 to 36% of embed against 5%; 1080p warm ratio 1.229 |
 | GLiNER2 `onnx-fp32-cuda` | **FAIL** | prepare + decode 8 to 13% of inference against 5% |
@@ -77,6 +77,46 @@ Is the native build the cause? This is not established. A follow-up swapped the 
 The build difference is a documented fact. Its effect on prefill is an open question.
 
 Conclusion: G5 stays **failed** for `ortgenai-fp32x-cpu`, and the profile stays **Preview**. The run is not repeated in search of a pass. The budget compares the shipped products, and C# users of the package get the NuGet build, so a pass obtained some other way would not describe what they run. From now on, every run records the path and SHA-256 of each native ONNX Runtime and GenAI library it loaded (`environment.native_library_digests`). `model-pipeline bench g5` prints whether the two sides' builds are identical, as context rather than as a verdict input. The raw files of this round predate that field, so `bench g5` reports their builds as "unavailable". The digests above were taken from the files the runs loaded, at the paths in their `native_libraries`. A draft upstream report, not filed, is [`upstream-ort-nuget-vs-pip-draft.md`](upstream-ort-nuget-vs-pip-draft.md).
+
+### Qwen CPU time to first token: diagnosis on a quiet host
+
+This was a diagnosis, not a repeat in search of a pass. Its plan was fixed before measuring. If a configuration difference explained the gap, fix the C# defaults. If only the native build explained it, report the build difference and ship nothing. Then run the qualifying G5 once on the same host, and let that result stand whichever way it went. Raw files are in [`g5-rerun/`](g5-rerun/).
+
+**Effective configuration: identical by construction.** Both sides hand the same inputs to the same GenAI binary (`libonnxruntime-genai.so` `0cdf8076…` on both), and that binary builds the ORT session:
+
+- the same bundle `genai_config.json`, whose decoder `session_options` are only `{"log_id": "onnxruntime-genai", "provider_options": []}`;
+- the same two overlays in the same order: `intra_op_num_threads` 6, then `pad_token_id` 248319;
+- `clear_providers` (CPU);
+- the same search options: `max_length` = prompt + max_new_tokens, `do_sample` false.
+
+Neither side sets inter-op threads, spinning, affinity, execution mode, graph level, memory pattern or arena, so GenAI's defaults apply to both. On CPU, `GenAISequence.Invoke` calls the native function directly, with no lock and no thread hop. No configuration difference was found to align.
+
+**Diagnosis.** The host was a RunPod pod: AMD EPYC 7H12, 256 logical CPUs, load average about 10, no cgroup CPU quota. Each run pinned itself to physical cores 16 to 21 (NUMA node 0). The workload was warm `short-decode64` with `--samples-scale 3`: 30 samples per run, 6 per prompt. The runs, interleaved:
+
+- (a) C# as shipped (NuGet `libonnxruntime.so` `245a6f8c…`), and Python;
+- (b) C# with the pip `libonnxruntime.so` swapped in; its recorded digest is `c902c70b…`;
+- (c) C# with `DOTNET_TieredPGO=0`, with `DOTNET_TieredCompilation=0`, and with `DOTNET_gcConcurrent=0`. These are the only process-level differences between the sides that we control.
+
+Each cell is the native prefill median / minimum, in ms. Raw files: [`g5-rerun/prefill-diagnosis/`](g5-rerun/prefill-diagnosis/).
+
+| Run | 20 tokens | 22 tokens | 29 tokens | 40 tokens | 61 tokens |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| (a) C# NuGet build | 144.5 / 143.1 | 142.6 / 141.0 | 160.7 / 159.5 | 201.7 / 200.9 | 273.1 / 272.9 |
+| (a) Python | 144.5 / 143.2 | 142.4 / 141.3 | 161.8 / 157.3 | 201.7 / 200.1 | 275.3 / 273.9 |
+| (b) C# pip build | 144.6 / 143.0 | 143.5 / 140.8 | 161.0 / 159.7 | 202.3 / 201.0 | 272.7 / 272.3 |
+| (c) C# TieredPGO off | 146.3 / 145.5 | 140.3 / 139.6 | 158.0 / 156.3 | 198.7 / 196.9 | 277.1 / 274.7 |
+| (c) C# tiered compilation off | 147.8 / 146.5 | 142.4 / 141.0 | 159.2 / 157.4 | 200.6 / 199.1 | 274.9 / 273.7 |
+| (c) C# concurrent GC off | 143.3 / 141.9 | 142.0 / 141.4 | 157.7 / 155.4 | 199.3 / 198.1 | 276.2 / 274.4 |
+
+On a quiet host, the shipped C# prefill matches Python's to within about 1% at every prompt length, the 22-token prompt included (142.6 ms against 142.4 ms). Neither the native build nor any runtime setting moves it. The 1.119 of the first round came from host load: that run was on the shared workstation at load average 5 to 12. No code or default was changed.
+
+**Qualifying rerun.** One `run-g5-matched.sh qwen35 cpu … 3 6 10` on the same pod, at clean commit `12907ef`, with both sides pinned to the same cores. The load average was 6 to 59 on 256 logical CPUs (see `qwen35-cpu.load.tsv`). Result: **PASS**, qualifying. Full verdict: [`g5-rerun/qwen35-cpu.jsonl.verdict.txt`](g5-rerun/qwen35-cpu.jsonl.verdict.txt).
+
+- Time to first token, `short-decode64`: 1.045 [0.823, 1.274]. The per-length warm prefill medians are equal (22 tokens: 142.1 ms against 142.6 ms).
+- Other time-to-first-token ratios: 0.994 (long-prefill), 1.014 (tools), 1.026 (text).
+- Decode: 0.992 to 1.037.
+
+`bench g5` notes that the ORT native builds differ, as context only. Under the rule above, this G5 pass for `ortgenai-fp32x-cpu` stands. The rerun measured the shipped NuGet build, so it describes what C# users run. Promoting the profile's status is a separate change.
 
 Raw results and full verdicts: [`g5/`](g5/) (`<profile>.jsonl`, `<profile>.jsonl.verdict.txt`).
 

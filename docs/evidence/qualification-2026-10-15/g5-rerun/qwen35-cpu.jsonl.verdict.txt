@@ -1,0 +1,17 @@
+## qwen3.5-0.8b/ortgenai-fp32x-cpu: PASS (G5 evidence)
+comparison: python onnxruntime-genai, same bundle, same prompts, greedy
+- NATIVE BUILDS DIFFER: same version, different native build (ONNX Runtime 1.30.0). Context, not a verdict input: the budget compares the shipped products
+    onnxruntime: C# 245a6f8c3812 (libonnxruntime.so) | Python 04995c66eb46, c902c70b3003 (libonnxruntime.so.1.30.0, onnxruntime_pybind11_state.cpython-311-x86_64-linux-gnu.so): different
+    onnxruntime-genai: C# 0cdf8076ecf7 (libonnxruntime-genai.so) | Python 0cdf8076ecf7 (libonnxruntime-genai.so): identical
+    onnxruntime_providers_shared: C# - | Python 086ec1d5388f (libonnxruntime_providers_shared.so): python only
+- decode_tokens_per_second_ratio_min = 0.95: pass
+    warm/ids/long-prefill/c1: 1.037 [1.017, 1.070] pass
+    warm/ids/short-decode64/c1: 1.000 [0.996, 1.003] pass
+    warm/ids/tools-decode32/c1: 0.992 [0.924, 1.003] pass
+    warm/text/short-decode64-text/c1: 1.004 [0.998, 1.010] pass
+- time_to_first_token_ratio_max = 1.1: pass
+    warm/ids/long-prefill/c1: 0.994 [0.987, 1.000] pass
+    warm/ids/short-decode64/c1: 1.045 [0.823, 1.274] pass
+    warm/ids/tools-decode32/c1: 1.014 [0.974, 1.222] pass
+    warm/text/short-decode64-text/c1: 1.026 [0.712, 1.514] pass
+- qualifying: yes (run counts and clean checkout)
