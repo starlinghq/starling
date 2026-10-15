@@ -13,7 +13,7 @@ Maturity is per profile, generated from the registry manifests by `model-pipelin
 
 | Profile | Maturity | Platforms |
 | --- | --- | --- |
-| `gliner2-base-v1/onnx-fp32-cpu` | experimental | linux-x64 cpu: supported; linux-x64 cuda: experimental; windows-x64 cpu: experimental |
+| `gliner2-base-v1/onnx-fp32-cpu` | stable | linux-x64 cpu: supported; linux-x64 cuda: experimental; windows-x64 cpu: experimental |
 | `gliner2-base-v1/onnx-fp32-cuda` | experimental | linux-x64 cuda: experimental; windows-x64 cuda: untested |
 <!-- /catalog:maturity -->
 

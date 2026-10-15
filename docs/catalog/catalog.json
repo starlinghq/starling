@@ -1250,7 +1250,7 @@
       "family": "gliner2-base-v1",
       "profile": "onnx-fp32-cpu",
       "manifest": "model-pipeline/registry/gliner2-base-v1/onnx-fp32-cpu/manifest.yaml",
-      "maturity": "experimental",
+      "maturity": "stable",
       "tasks": [
         "extraction"
       ],

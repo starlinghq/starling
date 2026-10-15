@@ -6,7 +6,10 @@
 # digest. Development fixtures accepted (PR #19) and binding tolerances set (PR #21) on 2026-10-10.
 schema_version: 1
 id: gliner2-base-v1/onnx-fp32-cpu
-maturity: experimental
+# Stable since 2026-10-15 (maintainer's promotion instruction; docs/kickoff.md, "First Stable profile"): every gate G0 to
+# G7 passed, the contract is the Starlings.Models.Gliner2 README's "Stable contract" (Linux x64 CPU, with
+# MALLOC_MMAP_THRESHOLD_=65536), and the scheduled qualification reruns G1 to G3 and a one-hour soak weekly.
+maturity: stable
 
 origin:
   code:
