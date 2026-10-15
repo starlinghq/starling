@@ -42,3 +42,16 @@ All CUDA soaks of this round ran without cuDNN on the library path. The Embeddin
 The failures are real: on a fast GPU the C# CPU-side work (image and video preprocessing, GLiNER2 preparation and decoding) becomes a large share of the request, and Qwen's CPU path spends more than Python before its first token. They are being fixed in code; budgets are unchanged, and a fixed profile is benchmarked again under this protocol.
 
 Raw results and full verdicts: [`g5/`](g5/) (`<profile>.jsonl`, `<profile>.jsonl.verdict.txt`).
+
+## G4 CUDA soaks on RunPod (binding reruns), 2026-10-15
+
+The four CUDA soaks that could not qualify locally were run on RunPod pods (commit `26249631`; CUDA 13 and cuDNN 9 from the pinned wheels on `LD_LIBRARY_PATH`; TF32 off; one model per pod; one hour each). Reports are in [`runpod-soak/`](runpod-soak/). Under the rule fixed above, these results are binding.
+
+| Profile | GPU, driver | Verdict |
+| --- | --- | --- |
+| gliner2-base-v1 `onnx-fp32-cuda` (`MALLOC_MMAP_THRESHOLD_=65536`) | RTX 3090, 580.126.20 | **FAIL**: 1 wrong output in 80,100 requests (cycle 388, request 14: an empty entity list instead of the reference). Memory plateaued. A correctness defect under investigation. |
+| embeddinggemma-2 `image-fp32-cuda` | RTX 3090, 580.159.03 | **FAIL**: native memory growth, unloaded +85 MB/h, loaded +77 MB/h; 0 wrong outputs |
+| embeddinggemma-2 `video-fp32-cuda` | RTX 4090, 580.159.03 | **FAIL**: native memory growth, unloaded +105 MB/h, loaded +103 MB/h; 0 wrong outputs |
+| multilingual-e5-small `onnx-fp32-cuda` | RTX 3090, 580.126.20 | **FAIL**: unloaded +120 MB/h (82 MB in the first half, 12 MB in the second, limit 32 MB), loaded +110 MB/h; 1,492 cycles, 268,560 requests, 0 wrong outputs. The missing cuDNN did not cause the growth. |
+
+The managed heap stayed flat in every run, so the growth is native. Its cause is being investigated per model, as the CPU GLiNER2 growth was, and is not settled by more runs.
