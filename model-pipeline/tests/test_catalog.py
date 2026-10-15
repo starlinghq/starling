@@ -126,6 +126,78 @@ def test_profile_meeting_stable_rules_is_ready(repo):
     assert catalog.stable_readiness_text(readiness) == "meets the validator's Stable rules"
 
 
+def _ready(m):
+    m["qualification"]["gates"] = {g: {"status": "passed"} for g in GATES}
+    m["capabilities"] = {k: "supported" for k in m["capabilities"]}
+
+
+def _cuda_only(m):
+    for row in m["compatibility"]:
+        row["provider"] = "cuda"
+
+
+def test_stable_profile_is_labelled_stable(repo):
+    def stable(m):
+        _ready(m)
+        m["maturity"] = "stable"
+
+    add_profile(repo / "registry", "fam/a", stable)
+    p = profile(catalog.build(repo / "registry", repo), "fam/a")
+    text = catalog.stable_readiness_text(
+        p["stable_readiness"], maturity=p["maturity"], scheduled_regression=p["scheduled_regression"]
+    )
+    assert text == "stable: meets the validator's Stable rules"
+
+
+def test_gpu_only_profile_awaits_scheduled_regression(repo):
+    add_profile(repo / "registry", "fam/cuda", lambda m: (_ready(m), _cuda_only(m)))
+    add_profile(
+        repo / "registry",
+        "fam/cuda-g4",
+        lambda m: (_ready(m), _cuda_only(m), m["qualification"]["gates"]["G4"].update(status="failed")),
+    )
+    cat = catalog.build(repo / "registry", repo)
+    ready, failed = profile(cat, "fam/cuda"), profile(cat, "fam/cuda-g4")
+    assert not ready["scheduled_regression"]
+    assert catalog.stable_readiness_text(ready["stable_readiness"], scheduled_regression=False) == (
+        "all eight gates pass where recorded; promotion awaits scheduled GPU regression runs"
+    )
+    assert catalog.stable_readiness_text(failed["stable_readiness"], scheduled_regression=False) == (
+        "gates not passed: G4; promotion also awaits scheduled GPU regression runs"
+    )
+    readme = catalog.render(cat, repo / "docs" / "catalog", repo)["README.md"]
+    assert "promotion awaits scheduled GPU regression runs" in readme
+
+
+def test_package_readme_maturity_blocks_are_generated_and_checked(repo):
+    add_profile(repo / "registry", "fam/a-cpu")
+    add_profile(repo / "registry", "fam/a-cuda", _cuda_only)
+    add_profile(repo / "registry", "other/b")
+    pkg = repo / "ai-dotnet" / "src" / "Pkg"
+    pkg.mkdir(parents=True)
+    readme = pkg / "README.md"
+    readme.write_text(
+        "# Pkg\n\n<!-- catalog:maturity profiles=fam/* -->\nhand-written\n<!-- /catalog:maturity -->\n\nRest.\n",
+        encoding="utf-8",
+    )
+    (repo / "ai-dotnet" / "src" / "NoBlock").mkdir()
+    (repo / "ai-dotnet" / "src" / "NoBlock" / "README.md").write_text("# No block\n", encoding="utf-8")
+    assert run(repo, "--check") == 1
+    assert run(repo) == 0
+    text = readme.read_text(encoding="utf-8")
+    assert "hand-written" not in text
+    assert "| `fam/a-cpu` | preview | linux-x64 cpu: supported |" in text
+    assert "| `fam/a-cuda` | preview | linux-x64 cuda: supported |" in text
+    assert "other/b" not in text
+    assert text.endswith("<!-- /catalog:maturity -->\n\nRest.\n")
+    assert run(repo, "--check") == 0
+
+    readme.write_text(
+        text.replace("<!-- catalog:maturity profiles=fam/* -->", "<!-- catalog:maturity profiles=none/* -->")
+    )
+    assert run(repo, "--check") == 2
+
+
 def test_synthetic_manifests_are_not_published(repo):
     add_profile(repo / "registry", "fam/real")
     add_profile(repo / "registry", "fam/fake", synthetic=True)
@@ -169,6 +241,7 @@ def test_output_is_deterministic(repo):
 
 
 def test_committed_catalog_is_up_to_date():
-    files = catalog.generate()
-    stale = catalog.stale(files, catalog.DEFAULT_OUT)
+    built = catalog.build()
+    stale = catalog.stale(catalog.render(built), catalog.DEFAULT_OUT)
+    stale += [str(path) for path in catalog.stale_readmes(catalog.package_readmes(built))]
     assert not stale, f"docs/catalog is stale ({', '.join(stale)}); regenerate with: model-pipeline catalog"

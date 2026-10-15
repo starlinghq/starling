@@ -163,48 +163,55 @@ execution:
       - { name: token_embeddings, type: float32, shape: [batch, sequence, 768] }
 
 capabilities:
-  # Starlings.Models.EmbeddingGemma2; per-capability evidence in ai-dotnet/README.md. Experimental means tested
-  # from fixture ids against the protected development fixtures with the protected tolerances.
-  batch: experimental
+  # Starlings.Models.EmbeddingGemma2; per-capability evidence in ai-dotnet/README.md. Statuses follow the Stable
+  # contract in the package README: supported where the gate evidence (G1 to G7, and the accepted development fixtures)
+  # covers it on Linux x64 CPU, experimental where only proposed rows do, unsupported outside it.
+  # EmbeddingGemma2Capabilities.Profiles holds the same statuses (tested key for key).
+  batch: supported
   streaming: unsupported
-  cancellation: experimental
+  cancellation: supported
   persistence: unsupported
   training: unsupported
   # aot: Native AOT publish on Linux x64 CPU, no trim/AOT warnings, results equal to JIT bit for bit
   # (typed text API and Extensions.AI generator; docs/evidence/aot/README.md).
   # The ML.NET adapter does not run under Native AOT (Microsoft.ML uses Reflection.Emit).
-  aot: experimental
-  extensions_ai: experimental
-  mlnet: experimental
-  embedding_pretokenized: experimental
-  embedding_text: experimental
-  tokenizer_owned: experimental
-  prompts_query_document: experimental
+  aot: supported
+  extensions_ai: supported
+  mlnet: supported
+  embedding_pretokenized: supported
+  embedding_text: supported
+  tokenizer_owned: supported
+  prompts_query_document: supported
   # prompts_task (capability closure 2026-10-14, docs/evidence/capability-closure-2026-10-14/README.md): all 20 prompt names on four public texts
   # (proposed task-prompt rows from sentence-transformers): ids exact, embedding max abs 3.6e-7 (CpuParityTests.TaskPromptParityWithTheOwnedTokenizer).
-  # Proposed rows, protected bounds.
+  # Proposed rows, protected bounds: outside the Stable contract until accepted.
   prompts_task: experimental
-  matryoshka: experimental
-  input_up_to_2049_tokens: experimental
+  matryoshka: supported
+  input_up_to_2049_tokens: supported
   # input_2050_to_8192_tokens (capability closure 2026-10-14): the C# CPU run in model-pipeline/proposed/embeddinggemma-2/long-input/csharp-compare.md: 8 text rows of 2,600 to 8,192 tokens, embedding max abs 1.0e-7, ids exact, rejections over 8,192
-  # exact, within the protected text bound. Proposed rows (not accepted), protected bounds.
+  # exact, within the protected text bound. Proposed rows (not accepted), protected bounds: outside the Stable contract.
   input_2050_to_8192_tokens: experimental
   input_over_8192_tokens: unsupported
-  concurrent_calls: experimental
+  concurrent_calls: supported
   image: unsupported
   audio: unsupported
   video: unsupported
 
 compatibility:
+  # Linux x64 CPU: gates G0 to G7 (G1 to G5 on an Intel i7-5820K, AVX2, no AVX-512; the G2 reference regenerates
+  # byte-identical only at 6 threads); the scheduled qualification reruns G1 to G3 and a short soak.
   - os: linux
     arch: x64
     provider: cpu
-    status: experimental
-    verified: 2026-10-10
+    status: supported
+    verified: 2026-10-15
+  # Windows x64 CPU: the CI job ai-dotnet-windows builds, runs the weight-free tests and the clean-install drill without
+  # the model on every change; no model runs there. Outside the Stable contract (the package README says so).
   - os: windows
     arch: x64
     provider: cpu
-    status: untested
+    status: experimental
+    verified: 2026-10-15
 
 qualification:
   reference_runner: model-pipeline/reference/embeddinggemma2/run_embeddinggemma2.py

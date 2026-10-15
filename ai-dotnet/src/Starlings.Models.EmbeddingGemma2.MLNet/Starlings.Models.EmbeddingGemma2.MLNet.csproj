@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <IsPackable>true</IsPackable>
-    <Description>Preview. Experimental. ML.NET estimator and transformer for the EmbeddingGemma 2 text embedder (Starlings.Models.EmbeddingGemma2): a text column to a fixed-size Vector&lt;Single, 768/512/256/128&gt; embedding column and an optional token-count column, one inference per row however many getters are requested, explicit prompts and optional look-ahead batching. Text only. Pipeline composition only: saving the transformer is unsupported (it throws); the model is resolved from its asset lock at run time. Deployments must adhere to the Gemma Prohibited Use Policy.</Description>
+    <Description>ML.NET estimator and transformer for the EmbeddingGemma 2 text embedder (Starlings.Models.EmbeddingGemma2): a text column to a fixed-size Vector&lt;Single, 768/512/256/128&gt; embedding column and an optional token-count column, one inference per row however many getters are requested, explicit prompts and optional look-ahead batching. Text only. Pipeline composition only: saving the transformer is unsupported (it throws); the model is resolved from its asset lock at run time. Deployments must adhere to the Gemma Prohibited Use Policy. Maturity is per model profile (Stable, Preview or Experimental): see the README, generated from the model registry.</Description>
     <PackageTags>embeddings;embeddinggemma;embeddinggemma-2;ml.net;mlnet;idataview;onnxruntime</PackageTags>
     <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>

@@ -171,7 +171,9 @@ try {
     Push-Location $src; $aiVersion = (dotnet msbuild ai-dotnet/src/Starlings.Models.E5 -getProperty:Version).Trim(); Pop-Location
     Write-Host "Starlings.Tokenizers: $tokVersion"
     Write-Host "ai-dotnet packages:   $aiVersion"
-    if ($aiVersion -notlike '*-preview.*' -or $tokVersion -notlike '*-preview.*') { Fail 'release candidates are labeled preview' }
+    # Version scheme (docs/kickoff.md): 0.MINOR.PATCH, or 0.MINOR.PATCH-preview.N before it; maturity is per profile.
+    if ($aiVersion -notmatch '^0\.[0-9]+\.[0-9]+(-preview\.[0-9]+)?$') { Fail "ai-dotnet version $aiVersion is not 0.MINOR.PATCH or 0.MINOR.PATCH-preview.N" }
+    if ($tokVersion -notlike '*-preview.*') { Fail 'the tokenizer release candidate is labeled preview' }
     foreach ($sample in 'E5Search', 'Gliner2Ner', 'EmbeddingGemma2Search', 'QwenChat') {
         $csproj = Get-Content (Join-Path $src "ai-dotnet/samples/$sample/$sample.csproj") -Raw
         if ($csproj -notmatch '<StarlingsVersion>(.*)</StarlingsVersion>' -or $Matches[1] -ne $aiVersion) { Fail "$sample references another version than $aiVersion" }
@@ -242,8 +244,13 @@ try {
         if ($nuspec -notmatch '<license type="expression">MIT OR Apache-2.0</license>') { Fail "${id}: nuspec license" }
         if ($nuspec -notmatch '<readme>README.md</readme>') { Fail "${id}: nuspec readme" }
         if ($nuspec -notmatch "url=`"https://github.com/starlinghq/starling`".*commit=`"$sha`"") { Fail "${id}: nuspec repository commit" }
-        if ($nuspec -notmatch '<description>Preview\. ') { Fail "${id}: description does not start with the Preview label" }
-        if ((Read-Entry $nupkg 'README.md') -notmatch '\*\*Preview\.\*\*') { Fail "${id}: packed README lacks the Preview label" }
+        # Maturity is per profile: the description points to the README's generated maturity block. No blanket Preview label.
+        if ($nuspec -match '<description>Preview\. ') { Fail "${id}: description starts with a blanket Preview label" }
+        if ($nuspec -notmatch 'Maturity is per model profile') { Fail "${id}: description does not state per-profile maturity" }
+        $readmeText = Read-Entry $nupkg 'README.md'
+        if ($readmeText -notmatch '(?m)^<!-- catalog:maturity profiles=') { Fail "${id}: packed README lacks the generated maturity block" }
+        if ($readmeText -notmatch '(?m)^\| Profile \| Maturity \| Platforms \|') { Fail "${id}: packed README maturity block is empty" }
+        if ($readmeText -match '\*\*Preview\.\*\*') { Fail "${id}: packed README carries a blanket Preview label" }
         $actual = @([regex]::Matches($nuspec, '<dependency id="([^"]*)" version="([^"]*)"') | ForEach-Object { "$($_.Groups[1].Value) $($_.Groups[2].Value)" } | Sort-Object)
         $expected = @($expectedDeps[$id] | Sort-Object)
         if (($actual -join "`n") -ne ($expected -join "`n")) { Fail "${id}: dependencies`n$($actual -join "`n")`nexpected`n$($expected -join "`n")" }
@@ -254,7 +261,7 @@ try {
         if ($contents | Where-Object { $_ -match '(?i)\.(onnx|safetensors|bin|gguf)$|tokenizer\.json$' }) { Fail "${id}: package contains model assets" }
         $pdb = Read-Entry $snupkg "lib/net10.0/$id.pdb"
         if (-not $pdb -or -not $pdb.Contains("raw.githubusercontent.com/starlinghq/starling/$sha/*")) { Fail "${id}: symbols lack SourceLink to $sha" }
-        Write-Host "ok:   $id ${aiVersion}: MIT OR Apache-2.0, Preview label, repository commit, SourceLink; dependencies: $(if ($expected) { $expected -join ', ' } else { 'none' })"
+        Write-Host "ok:   $id ${aiVersion}: MIT OR Apache-2.0, per-profile maturity, repository commit, SourceLink; dependencies: $(if ($expected) { $expected -join ', ' } else { 'none' })"
         Write-Host "      sha256 $((Get-FileHash $nupkg -Algorithm SHA256).Hash.ToLowerInvariant())"
     }
 

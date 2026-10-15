@@ -21,7 +21,8 @@ name: qualification
 #                  an onboarding recipe, plus the G3 task-quality evaluator on the public SMOKE example (not gate evidence)
 #   release-gates  G1, G2 and G3 on the accepted P-030 release sets (tools/release-gates.sh) for the Stable CPU profiles,
 #                  with the commands of docs/evidence/release-set-gates-2026-10-14/; every gate must pass
-#   soak           a short G4 soak per CPU profile (--duration 10m; the one-hour run is the qualification length)
+#   soak           a one-hour G4 soak per CPU profile (the qualification length; a 10-minute run sits in the allocator's
+#                  warm-up ramp and trips the growth rule for e5, as the 2026-10-13 screening did)
 #   catalog        the generated catalog, compatibility matrix and package README maturity blocks are not stale
 #   upstream       upstream change detection (P-020): fails when a pinned Hub repository has a revision newer than the
 #                  manifest's latest_known_upstream_revision, so the maintainer is notified by the failed run
@@ -37,7 +38,7 @@ on:
       soak_duration:
         description: "Soak duration per profile (Starlings.Soak.Tool --duration; 1h is the qualification length)"
         type: string
-        default: 10m
+        default: 1h
       gpu:
         description: "Also run the self-hosted CUDA job (needs a registered [self-hosted, gpu] runner, M6)"
         type: boolean
@@ -132,10 +133,12 @@ jobs:
           tools/acquire-models.sh "$EVIDENCE/locks" $CPU_PROFILES
           tools/fetch-tokenizer-assets.sh
       - run: dotnet build ai-dotnet/AI.slnx --configuration Release
-      # Tests of models whose files are absent (private hosting) still skip, with the reason in the report.
+      # Tests of models whose files are absent (private hosting) still skip, with the reason in the report. One test
+      # module at a time: several modules each loading their models exhaust the hosted runner's memory (the first
+      # dispatched run lost its runner that way).
       - name: Tests with the public models
         run: |
-          dotnet test --solution ai-dotnet/AI.slnx --configuration Release --no-build \
+          dotnet test --solution ai-dotnet/AI.slnx --configuration Release --no-build --max-parallel-test-modules 1 \
             --results-directory "$EVIDENCE/model-tests" -- --report-xunit-trx
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         if: always()
@@ -333,7 +336,7 @@ jobs:
     name: soak ${{ matrix.profile }}
     needs: assets
     runs-on: ubuntu-latest
-    timeout-minutes: 120
+    timeout-minutes: 150
     strategy:
       fail-fast: false
       matrix:
@@ -384,14 +387,16 @@ jobs:
       - name: Acquire and verify
         if: steps.wired.outputs.run == 'true'
         run: tools/acquire-models.sh "$RUNNER_TEMP/locks" "$PROFILE"
-      # A short run on a shared hosted runner: it screens for gross growth, wrong outputs and errors. Its report is
-      # labelled a short development run and does not qualify G4 (the one-hour run on a quiet machine does, M6).
+      # The qualification length on a shared hosted runner: it screens for growth, wrong outputs and errors with the
+      # tool's unchanged growth rule. It does not replace the G4 run on a quiet machine (M6), but a failure here is a
+      # regression signal. Shorter runs (workflow_dispatch soak_duration) end in the warm-up ramp of glibc's resident
+      # high-water mark and are expected to trip the growth rule.
       # MALLOC_MMAP_THRESHOLD_ is set only for the workload that documents it; the soak report records it.
       - name: Soak
         if: steps.wired.outputs.run == 'true'
         env:
           WORKLOAD: ${{ matrix.workload }}
-          DURATION: ${{ inputs.soak_duration || '10m' }}
+          DURATION: ${{ inputs.soak_duration || '1h' }}
           MMAP_THRESHOLD: ${{ matrix.malloc_mmap_threshold }}
         run: |
           dotnet build ai-dotnet/tools/Starlings.Soak.Tool -c Release --nologo -v quiet
@@ -508,7 +513,7 @@ jobs:
             --results-directory "$EVIDENCE/gpu/tests" -- --report-xunit-trx
       - name: e5 CUDA soak
         env:
-          DURATION: ${{ inputs.soak_duration || '10m' }}
+          DURATION: ${{ inputs.soak_duration || '1h' }}
         run: |
           dotnet run --project ai-dotnet/tools/Starlings.Soak.Tool -c Release -p:UseCuda=true -- e5 --cuda \
             --out "$EVIDENCE/gpu/soak" --duration "$DURATION" --note "self-hosted gpu runner, run ${GITHUB_RUN_ID}"

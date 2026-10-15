@@ -1,6 +1,6 @@
 # Starlings.Models.EmbeddingGemma2.Video.FFmpeg
 
-**Preview.** **Experimental.** Decodes video files and streams into `EmbeddingGemma2Video` for `Starlings.Models.EmbeddingGemma2` exactly as upstream sees them: sentence-transformers decodes videos with torchcodec 0.17 on FFmpeg, and this adapter makes the same FFmpeg calls (packet-scan metadata, 1 frame per second sampling up to 32 frames, the display matrix applied, FFmpeg's default RGB conversion). The model package itself takes decoded frames and has no native dependency; this adapter is optional.
+Decodes video files and streams into `EmbeddingGemma2Video` for `Starlings.Models.EmbeddingGemma2` exactly as upstream sees them: sentence-transformers decodes videos with torchcodec 0.17 on FFmpeg, and this adapter makes the same FFmpeg calls (packet-scan metadata, 1 frame per second sampling up to 32 frames, the display matrix applied, FFmpeg's default RGB conversion). The model package itself takes decoded frames and has no native dependency; this adapter is optional.
 
 **This package contains no FFmpeg.** It binds FFmpeg through its own bindings, generated from the FFmpeg 8.1 headers by `tools/generate-ffmpeg-bindings.py` (no third-party bindings package), and loads **your own FFmpeg 8.x shared libraries** at run time. For FFmpeg 9.x use `Starlings.Models.EmbeddingGemma2.Video.FFmpeg9` (one adapter package per FFmpeg major; the decoding code is shared). You choose, install and distribute FFmpeg (see [Licenses and patents](#licenses-and-patents)).
 
@@ -16,6 +16,17 @@ EmbeddingGemma2DecodedVideo clip = decoder.DecodeFile("clip.mp4");   // metadata
 using var embedder = EmbeddingGemma2MultimodalEmbedder.Create(EmbeddingGemma2ModelAssets.OpenLocalImageAssets());
 float[] embedding = embedder.Embed(clip.Video);                       // no prompt for media (the model card)
 ```
+
+## Maturity
+
+<!-- catalog:maturity profiles=embeddinggemma-2/video-* -->
+Maturity is per profile, generated from the registry manifests by `model-pipeline catalog` (do not edit this table by hand). Gates, evidence and capabilities per profile: the [model catalog](https://github.com/starlinghq/starling/blob/main/docs/catalog/README.md).
+
+| Profile | Maturity | Platforms |
+| --- | --- | --- |
+| `embeddinggemma-2/video-fp32-cpu` | experimental | linux-x64 cpu: experimental; windows-x64 cpu: untested |
+| `embeddinggemma-2/video-fp32-cuda` | experimental | linux-x64 cuda: experimental; windows-x64 cuda: untested |
+<!-- /catalog:maturity -->
 
 ## Installing FFmpeg 8
 

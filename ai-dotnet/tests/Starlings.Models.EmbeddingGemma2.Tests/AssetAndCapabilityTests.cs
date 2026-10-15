@@ -132,10 +132,10 @@ public class AssetAndCapabilityTests
     public void CapabilitiesAreExplicitAndMatchTheContract()
     {
         var all = EmbeddingGemma2Capabilities.All;
-        Assert.Equal(EmbeddingGemma2CapabilityStatus.Experimental, all["embedding.pretokenized.cpu"]);
+        Assert.Equal(EmbeddingGemma2CapabilityStatus.Supported, all["embedding.pretokenized.cpu"]);
         Assert.Equal(EmbeddingGemma2CapabilityStatus.Experimental, all["embedding.pretokenized.cuda"]);
-        Assert.Equal(EmbeddingGemma2CapabilityStatus.Experimental, all["embedding.text"]);
-        Assert.Equal(EmbeddingGemma2CapabilityStatus.Experimental, all["tokenizer.owned"]);
+        Assert.Equal(EmbeddingGemma2CapabilityStatus.Supported, all["embedding.text"]);
+        Assert.Equal(EmbeddingGemma2CapabilityStatus.Supported, all["tokenizer.owned"]);
         Assert.Equal(EmbeddingGemma2CapabilityStatus.Experimental, all["input.2050_to_8192_tokens"]);
         Assert.Equal(EmbeddingGemma2CapabilityStatus.Experimental, all["prompts.task"]);
         Assert.Equal(EmbeddingGemma2CapabilityStatus.Unsupported, all["image.decode.gif_transparency"]);
@@ -147,12 +147,7 @@ public class AssetAndCapabilityTests
         Assert.All(all.Values, v => Assert.True(Enum.IsDefined(v)));
 
         string cpu = Manifest("onnx-fp32-cpu");
-        Assert.Contains("maturity: experimental", cpu, StringComparison.Ordinal);
-        Assert.Contains("  embedding_text: experimental", cpu, StringComparison.Ordinal);
-        Assert.Contains("  tokenizer_owned: experimental", cpu, StringComparison.Ordinal);
         Assert.Contains("    version: 0.3.0-preview.1\n    profile_id: gemma-bpe-embeddinggemma2\n", cpu, StringComparison.Ordinal);
-        Assert.Contains("  input_over_8192_tokens: unsupported", cpu, StringComparison.Ordinal);
-        Assert.Contains("  image: unsupported", cpu, StringComparison.Ordinal); // the text profile; images are the image-fp32-* profiles
         Assert.Equal(EmbeddingGemma2CapabilityStatus.Experimental, all["image"]);
         Assert.Equal(EmbeddingGemma2CapabilityStatus.Experimental, all["image.budget_other"]);
         string image = Manifest("image-fp32-cpu");

@@ -55,7 +55,8 @@ public class AssetAndCapabilityTests
     public void CapabilitiesMatchTheManifestAndTheContract()
     {
         var all = Gliner2Capabilities.All;
-        Assert.Equal(Gliner2CapabilityStatus.Experimental, all["entity_extraction.cpu"]);
+        Assert.Equal(Gliner2CapabilityStatus.Supported, all["entity_extraction.cpu"]);
+        Assert.Equal(Gliner2CapabilityStatus.Experimental, all["entity_extraction.cuda"]);
         Assert.Equal(Gliner2CapabilityStatus.Experimental, all["label_descriptions"]);
         Assert.Equal(Gliner2CapabilityStatus.Unsupported, all["concurrent_calls.cuda.unserialized"]);
         foreach (var key in new[] { "classification", "relation_extraction", "structured_extraction", "plain_deduplicated_output", "input_over_512_tokens", "truncation", "tf32", "extensions_ai", "mlnet" })
@@ -63,17 +64,6 @@ public class AssetAndCapabilityTests
             Assert.Equal(Gliner2CapabilityStatus.Unsupported, all[key]);
         }
 
-        // The manifest states the same statuses for the keys it shares with the package.
-        string manifest = Manifest;
-        Assert.Contains("  entity_extraction: experimental", manifest, StringComparison.Ordinal);
-        Assert.Contains("  label_descriptions: experimental", manifest, StringComparison.Ordinal);
-        Assert.Contains("  count_gate_closed: experimental", manifest, StringComparison.Ordinal);
-        Assert.Contains("  classification: unsupported", manifest, StringComparison.Ordinal);
-        Assert.Contains("  relation_extraction: unsupported", manifest, StringComparison.Ordinal);
-        Assert.Contains("  structured_extraction: unsupported", manifest, StringComparison.Ordinal);
-        Assert.Contains("  cancellation: experimental", manifest, StringComparison.Ordinal);
-        Assert.Contains("  extensions_ai: unsupported", manifest, StringComparison.Ordinal);
-        Assert.Contains("  mlnet: unsupported", manifest, StringComparison.Ordinal);
     }
 
     [Fact]

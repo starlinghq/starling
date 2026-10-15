@@ -548,8 +548,8 @@ public sealed class TransformContractTests : IDisposable
     [Fact]
     public void CapabilityDescriptorReportsTheMlNetStatuses()
     {
-        Assert.Equal(CapabilityStatus.Experimental, E5Capabilities.All["mlnet.embedding_transform"]);
-        Assert.Equal(CapabilityStatus.Experimental, E5Capabilities.All["mlnet.batching"]);
+        Assert.Equal(CapabilityStatus.Supported, E5Capabilities.All["mlnet.embedding_transform"]);
+        Assert.Equal(CapabilityStatus.Supported, E5Capabilities.All["mlnet.batching"]);
         Assert.Equal(CapabilityStatus.Unsupported, E5Capabilities.All["mlnet.persistence"]);
         Assert.Equal(CapabilityStatus.Unsupported, E5Capabilities.All["mlnet.cancellation"]);
         Assert.Equal(CapabilityStatus.Unsupported, E5Capabilities.All["mlnet.training"]);

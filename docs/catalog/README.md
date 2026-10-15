@@ -8,23 +8,23 @@ Maturity and support are published separately (plan section 14). The compatibili
 
 ## Profiles
 
-Gate cells link to the evidence the manifest records. The Stable readiness column applies the validator's Stable rules (every gate G0 to G7 `passed`, no capability `untested`) and lists exactly what fails them.
+Gate cells link to the evidence the manifest records. The Stable readiness column applies the validator's Stable rules (every gate G0 to G7 `passed`, no capability `untested`) and lists exactly what fails them. Stable also needs regression support: the scheduled qualification workflow runs CPU profiles only, so a CUDA profile is not promoted until scheduled GPU regression runs exist.
 
 | Profile | Task | Maturity | Owner | Review date | G0 | G1 | G2 | G3 | G4 | G5 | G6 | G7 | Stable readiness |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | [embeddinggemma-2/image-fp32-cpu](../../model-pipeline/registry/embeddinggemma-2/image-fp32-cpu/manifest.yaml) | image-embedding | experimental | Mark | 2027-01-05 | [passed](../evidence/g0-provenance-2026-10-14/README.md) | [passed](../evidence/release-set-gates-2026-10-14/embeddinggemma2-image-fp32-cpu/README.md) | [passed](../evidence/release-set-gates-2026-10-14/embeddinggemma2-image-fp32-cpu/README.md) | not-run | [passed](../evidence/qualification-2026-10-15/README.md) | [passed](../evidence/qualification-2026-10-15/README.md) | [passed](../evidence/g6-distribution-2026-10-14/README.md) | [passed](../evidence/g7-integration-2026-10-14/README.md) | gates not passed: G3 |
-| [embeddinggemma-2/image-fp32-cuda](../../model-pipeline/registry/embeddinggemma-2/image-fp32-cuda/manifest.yaml) | image-embedding | experimental | Mark | 2027-01-05 | [passed](../evidence/g0-provenance-2026-10-14/README.md) | [passed](../evidence/release-set-gates-2026-10-14/embeddinggemma2-image-fp32-cuda/README.md) | [passed](../evidence/release-set-gates-2026-10-14/embeddinggemma2-image-fp32-cuda/README.md) | not-run | [failed](../evidence/qualification-2026-10-15/README.md) | [failed](../evidence/qualification-2026-10-15/README.md) | [passed](../evidence/g6-distribution-2026-10-14/README.md) | [passed](../evidence/g7-integration-2026-10-14/README.md) | gates not passed: G3, G4, G5 |
+| [embeddinggemma-2/image-fp32-cuda](../../model-pipeline/registry/embeddinggemma-2/image-fp32-cuda/manifest.yaml) | image-embedding | experimental | Mark | 2027-01-05 | [passed](../evidence/g0-provenance-2026-10-14/README.md) | [passed](../evidence/release-set-gates-2026-10-14/embeddinggemma2-image-fp32-cuda/README.md) | [passed](../evidence/release-set-gates-2026-10-14/embeddinggemma2-image-fp32-cuda/README.md) | not-run | [failed](../evidence/qualification-2026-10-15/README.md) | [failed](../evidence/qualification-2026-10-15/README.md) | [passed](../evidence/g6-distribution-2026-10-14/README.md) | [passed](../evidence/g7-integration-2026-10-14/README.md) | gates not passed: G3, G4, G5; promotion also awaits scheduled GPU regression runs |
 | [embeddinggemma-2/onnx-fp32-cpu](../../model-pipeline/registry/embeddinggemma-2/onnx-fp32-cpu/manifest.yaml) | embedding | experimental | Mark | 2027-01-05 | [passed](../evidence/g0-provenance-2026-10-14/README.md) | [passed](../evidence/release-set-gates-2026-10-14/embeddinggemma2-onnx-fp32-cpu/README.md) | [passed](../evidence/release-set-gates-2026-10-14/embeddinggemma2-onnx-fp32-cpu/README.md) | [passed](../evidence/release-set-gates-2026-10-14/embeddinggemma2-onnx-fp32-cpu/README.md) | [passed](../evidence/g4-soak-1h-2026-10-14/README.md) | [passed](../evidence/qualification-2026-10-15/README.md) | [passed](../evidence/g6-distribution-2026-10-14/README.md) | [passed](../evidence/g7-integration-2026-10-14/README.md) | meets the validator's Stable rules |
-| [embeddinggemma-2/onnx-fp32-cuda](../../model-pipeline/registry/embeddinggemma-2/onnx-fp32-cuda/manifest.yaml) | embedding | experimental | Mark | 2027-01-05 | [passed](../evidence/g0-provenance-2026-10-14/README.md) | [passed](../evidence/release-set-gates-2026-10-14/embeddinggemma2-onnx-fp32-cuda/README.md) | [passed](../evidence/release-set-gates-2026-10-14/embeddinggemma2-onnx-fp32-cuda/README.md) | [passed](../evidence/release-set-gates-2026-10-14/embeddinggemma2-onnx-fp32-cuda/README.md) | [passed](../evidence/qualification-2026-10-15/README.md) | [passed](../evidence/qualification-2026-10-15/README.md) | [passed](../evidence/g6-distribution-2026-10-14/README.md) | [passed](../evidence/g7-integration-2026-10-14/README.md) | meets the validator's Stable rules |
+| [embeddinggemma-2/onnx-fp32-cuda](../../model-pipeline/registry/embeddinggemma-2/onnx-fp32-cuda/manifest.yaml) | embedding | experimental | Mark | 2027-01-05 | [passed](../evidence/g0-provenance-2026-10-14/README.md) | [passed](../evidence/release-set-gates-2026-10-14/embeddinggemma2-onnx-fp32-cuda/README.md) | [passed](../evidence/release-set-gates-2026-10-14/embeddinggemma2-onnx-fp32-cuda/README.md) | [passed](../evidence/release-set-gates-2026-10-14/embeddinggemma2-onnx-fp32-cuda/README.md) | [passed](../evidence/qualification-2026-10-15/README.md) | [passed](../evidence/qualification-2026-10-15/README.md) | [passed](../evidence/g6-distribution-2026-10-14/README.md) | [passed](../evidence/g7-integration-2026-10-14/README.md) | all eight gates pass where recorded; promotion awaits scheduled GPU regression runs |
 | [embeddinggemma-2/video-fp32-cpu](../../model-pipeline/registry/embeddinggemma-2/video-fp32-cpu/manifest.yaml) | video-embedding | experimental | Mark | 2027-01-05 | [checklist](../m0/embeddinggemma2-video-spike.md) | [passed](../evidence/release-set-gates-2026-10-14/embeddinggemma2-video-fp32-cpu/README.md) | [passed](../evidence/release-set-gates-2026-10-14/embeddinggemma2-video-fp32-cpu/README.md) | not-run | [passed](../evidence/qualification-2026-10-15/README.md) | [passed](../evidence/qualification-2026-10-15/README.md) | [checklist](../releases/ai-0.1.0-preview.5/rc-drill.log) | not-run | gates not passed: G0, G3, G6, G7 |
-| [embeddinggemma-2/video-fp32-cuda](../../model-pipeline/registry/embeddinggemma-2/video-fp32-cuda/manifest.yaml) | video-embedding | experimental | Mark | 2027-01-05 | [checklist](../m0/embeddinggemma2-video-spike.md) | [passed](../evidence/release-set-gates-2026-10-14/embeddinggemma2-video-fp32-cuda/README.md) | [passed](../evidence/release-set-gates-2026-10-14/embeddinggemma2-video-fp32-cuda/README.md) | not-run | [failed](../evidence/qualification-2026-10-15/README.md) | [failed](../evidence/qualification-2026-10-15/README.md) | not-run | not-run | gates not passed: G0, G3, G4, G5, G6, G7 |
+| [embeddinggemma-2/video-fp32-cuda](../../model-pipeline/registry/embeddinggemma-2/video-fp32-cuda/manifest.yaml) | video-embedding | experimental | Mark | 2027-01-05 | [checklist](../m0/embeddinggemma2-video-spike.md) | [passed](../evidence/release-set-gates-2026-10-14/embeddinggemma2-video-fp32-cuda/README.md) | [passed](../evidence/release-set-gates-2026-10-14/embeddinggemma2-video-fp32-cuda/README.md) | not-run | [failed](../evidence/qualification-2026-10-15/README.md) | [failed](../evidence/qualification-2026-10-15/README.md) | not-run | not-run | gates not passed: G0, G3, G4, G5, G6, G7; promotion also awaits scheduled GPU regression runs |
 | [gliner2-base-v1/onnx-fp32-cpu](../../model-pipeline/registry/gliner2-base-v1/onnx-fp32-cpu/manifest.yaml) | extraction | experimental | Mark | 2027-01-05 | [passed](../evidence/g0-provenance-2026-10-14/README.md) | [passed](../evidence/release-set-gates-2026-10-14/gliner2-onnx-fp32-cpu/README.md) | [passed](../evidence/release-set-gates-2026-10-14/gliner2-onnx-fp32-cpu/README.md) | [passed](../evidence/release-set-gates-2026-10-14/gliner2-onnx-fp32-cpu/README.md) | [passed](../evidence/qualification-2026-10-15/README.md) | [passed](../evidence/qualification-2026-10-15/README.md) | [passed](../evidence/g6-distribution-2026-10-14/README.md) | [passed](../evidence/g7-integration-2026-10-14/README.md) | meets the validator's Stable rules |
-| [gliner2-base-v1/onnx-fp32-cuda](../../model-pipeline/registry/gliner2-base-v1/onnx-fp32-cuda/manifest.yaml) | extraction | experimental | Mark | 2027-01-05 | [passed](../evidence/g0-provenance-2026-10-14/README.md) | [passed](../evidence/release-set-gates-2026-10-14/gliner2-onnx-fp32-cuda/README.md) | [passed](../evidence/release-set-gates-2026-10-14/gliner2-onnx-fp32-cuda/README.md) | [passed](../evidence/release-set-gates-2026-10-14/gliner2-onnx-fp32-cuda/README.md) | [failed](../evidence/qualification-2026-10-15/README.md) | [failed](../evidence/qualification-2026-10-15/README.md) | [passed](../evidence/g6-distribution-2026-10-14/README.md) | [passed](../evidence/g7-integration-2026-10-14/README.md) | gates not passed: G4, G5 |
+| [gliner2-base-v1/onnx-fp32-cuda](../../model-pipeline/registry/gliner2-base-v1/onnx-fp32-cuda/manifest.yaml) | extraction | experimental | Mark | 2027-01-05 | [passed](../evidence/g0-provenance-2026-10-14/README.md) | [passed](../evidence/release-set-gates-2026-10-14/gliner2-onnx-fp32-cuda/README.md) | [passed](../evidence/release-set-gates-2026-10-14/gliner2-onnx-fp32-cuda/README.md) | [passed](../evidence/release-set-gates-2026-10-14/gliner2-onnx-fp32-cuda/README.md) | [failed](../evidence/qualification-2026-10-15/README.md) | [failed](../evidence/qualification-2026-10-15/README.md) | [passed](../evidence/g6-distribution-2026-10-14/README.md) | [passed](../evidence/g7-integration-2026-10-14/README.md) | gates not passed: G4, G5; promotion also awaits scheduled GPU regression runs |
 | [multilingual-e5-small/onnx-fp32-cpu](../../model-pipeline/registry/multilingual-e5-small/onnx-fp32-cpu/manifest.yaml) | embedding | preview | Mark | 2027-01-05 | [passed](../releases/e5-0.1.0-preview.1.md) | [passed](../evidence/release-set-gates-2026-10-14/e5-onnx-fp32-cpu/README.md) | [passed](../evidence/release-set-gates-2026-10-14/e5-onnx-fp32-cpu/README.md) | [passed](../evidence/release-set-gates-2026-10-14/e5-onnx-fp32-cpu/README.md) | [passed](../evidence/g4-soak-1h-2026-10-14/README.md) | [passed](../evidence/qualification-2026-10-15/README.md) | [passed](../evidence/g6-distribution-2026-10-14/README.md) | [passed](../evidence/g7-integration-2026-10-14/README.md) | meets the validator's Stable rules |
-| [multilingual-e5-small/onnx-fp32-cuda](../../model-pipeline/registry/multilingual-e5-small/onnx-fp32-cuda/manifest.yaml) | embedding | experimental | Mark | 2027-01-05 | [passed](../evidence/g0-provenance-2026-10-14/README.md) | [passed](../evidence/release-set-gates-2026-10-14/e5-onnx-fp32-cuda/README.md) | [passed](../evidence/release-set-gates-2026-10-14/e5-onnx-fp32-cuda/README.md) | [passed](../evidence/release-set-gates-2026-10-14/e5-onnx-fp32-cuda/README.md) | [failed](../evidence/qualification-2026-10-15/README.md) | [passed](../evidence/qualification-2026-10-15/README.md) | [passed](../evidence/g6-distribution-2026-10-14/README.md) | [passed](../evidence/g7-integration-2026-10-14/README.md) | gates not passed: G4 |
-| [qwen3.5-0.8b/ortgenai-fp16x-cuda](../../model-pipeline/registry/qwen3.5-0.8b/ortgenai-fp16x-cuda/manifest.yaml) | generation | experimental | Mark | 2027-01-05 | [passed](../evidence/g0-provenance-2026-10-14/README.md) | [passed](../evidence/release-set-gates-2026-10-14/qwen35-ortgenai-fp16x-cuda/README.md) | [passed](../evidence/release-set-gates-2026-10-14/qwen35-ortgenai-fp16x-cuda/README.md) | [passed](../evidence/release-set-gates-2026-10-14/qwen35-ortgenai-fp16x-cuda/README.md) | [passed](../evidence/qualification-2026-10-15/README.md) | [passed](../evidence/qualification-2026-10-15/README.md) | [passed](../evidence/g6-distribution-2026-10-14/README.md) | [passed](../evidence/g7-integration-2026-10-14/README.md) | meets the validator's Stable rules |
+| [multilingual-e5-small/onnx-fp32-cuda](../../model-pipeline/registry/multilingual-e5-small/onnx-fp32-cuda/manifest.yaml) | embedding | experimental | Mark | 2027-01-05 | [passed](../evidence/g0-provenance-2026-10-14/README.md) | [passed](../evidence/release-set-gates-2026-10-14/e5-onnx-fp32-cuda/README.md) | [passed](../evidence/release-set-gates-2026-10-14/e5-onnx-fp32-cuda/README.md) | [passed](../evidence/release-set-gates-2026-10-14/e5-onnx-fp32-cuda/README.md) | [failed](../evidence/qualification-2026-10-15/README.md) | [passed](../evidence/qualification-2026-10-15/README.md) | [passed](../evidence/g6-distribution-2026-10-14/README.md) | [passed](../evidence/g7-integration-2026-10-14/README.md) | gates not passed: G4; promotion also awaits scheduled GPU regression runs |
+| [qwen3.5-0.8b/ortgenai-fp16x-cuda](../../model-pipeline/registry/qwen3.5-0.8b/ortgenai-fp16x-cuda/manifest.yaml) | generation | experimental | Mark | 2027-01-05 | [passed](../evidence/g0-provenance-2026-10-14/README.md) | [passed](../evidence/release-set-gates-2026-10-14/qwen35-ortgenai-fp16x-cuda/README.md) | [passed](../evidence/release-set-gates-2026-10-14/qwen35-ortgenai-fp16x-cuda/README.md) | [passed](../evidence/release-set-gates-2026-10-14/qwen35-ortgenai-fp16x-cuda/README.md) | [passed](../evidence/qualification-2026-10-15/README.md) | [passed](../evidence/qualification-2026-10-15/README.md) | [passed](../evidence/g6-distribution-2026-10-14/README.md) | [passed](../evidence/g7-integration-2026-10-14/README.md) | all eight gates pass where recorded; promotion awaits scheduled GPU regression runs |
 | [qwen3.5-0.8b/ortgenai-fp32x-cpu](../../model-pipeline/registry/qwen3.5-0.8b/ortgenai-fp32x-cpu/manifest.yaml) | generation | experimental | Mark | 2027-01-05 | [passed](../evidence/g0-provenance-2026-10-14/README.md) | [passed](../evidence/release-set-gates-2026-10-14/qwen35-ortgenai-fp32x-cpu/README.md) | [passed](../evidence/release-set-gates-2026-10-14/qwen35-ortgenai-fp32x-cpu/README.md) | [passed](../evidence/release-set-gates-2026-10-14/qwen35-ortgenai-fp32x-cpu/README.md) | [passed](../evidence/g4-soak-1h-2026-10-14/README.md) | [failed](../evidence/qualification-2026-10-15/README.md) | [passed](../evidence/g6-distribution-2026-10-14/README.md) | [passed](../evidence/g7-integration-2026-10-14/README.md) | gates not passed: G5 |
-| [qwen3.5-0.8b/ortgenai-fp32x-cuda](../../model-pipeline/registry/qwen3.5-0.8b/ortgenai-fp32x-cuda/manifest.yaml) | generation | experimental | Mark | 2027-01-05 | [passed](../evidence/g0-provenance-2026-10-14/README.md) | [passed](../evidence/release-set-gates-2026-10-14/qwen35-ortgenai-fp32x-cuda/README.md) | [passed](../evidence/release-set-gates-2026-10-14/qwen35-ortgenai-fp32x-cuda/README.md) | [passed](../evidence/release-set-gates-2026-10-14/qwen35-ortgenai-fp32x-cuda/README.md) | [passed](../evidence/qualification-2026-10-15/README.md) | [passed](../evidence/qualification-2026-10-15/README.md) | [passed](../evidence/g6-distribution-2026-10-14/README.md) | [passed](../evidence/g7-integration-2026-10-14/README.md) | meets the validator's Stable rules |
+| [qwen3.5-0.8b/ortgenai-fp32x-cuda](../../model-pipeline/registry/qwen3.5-0.8b/ortgenai-fp32x-cuda/manifest.yaml) | generation | experimental | Mark | 2027-01-05 | [passed](../evidence/g0-provenance-2026-10-14/README.md) | [passed](../evidence/release-set-gates-2026-10-14/qwen35-ortgenai-fp32x-cuda/README.md) | [passed](../evidence/release-set-gates-2026-10-14/qwen35-ortgenai-fp32x-cuda/README.md) | [passed](../evidence/release-set-gates-2026-10-14/qwen35-ortgenai-fp32x-cuda/README.md) | [passed](../evidence/qualification-2026-10-15/README.md) | [passed](../evidence/qualification-2026-10-15/README.md) | [passed](../evidence/g6-distribution-2026-10-14/README.md) | [passed](../evidence/g7-integration-2026-10-14/README.md) | all eight gates pass where recorded; promotion awaits scheduled GPU regression runs |
 
 ## Execution
 
@@ -52,18 +52,18 @@ One table per family, one column per profile. Rows are every capability any prof
 
 | Capability | image-fp32-cpu | image-fp32-cuda | onnx-fp32-cpu | onnx-fp32-cuda | video-fp32-cpu | video-fp32-cuda |
 | --- | --- | --- | --- | --- | --- | --- |
-| batch | experimental | experimental | experimental | experimental | experimental | experimental |
+| batch | experimental | experimental | supported | experimental | experimental | experimental |
 | streaming | unsupported | unsupported | unsupported | unsupported | unsupported | unsupported |
-| cancellation | experimental | experimental | experimental | experimental | experimental | experimental |
+| cancellation | experimental | experimental | supported | experimental | experimental | experimental |
 | persistence | unsupported | unsupported | unsupported | unsupported | unsupported | unsupported |
 | training | unsupported | unsupported | unsupported | unsupported | unsupported | unsupported |
-| aot | experimental | experimental | experimental | experimental | experimental | experimental |
-| extensions_ai | experimental | experimental | experimental | experimental | experimental | experimental |
-| mlnet | unsupported | unsupported | experimental | experimental | unsupported | unsupported |
+| aot | experimental | experimental | supported | experimental | experimental | experimental |
+| extensions_ai | experimental | experimental | supported | experimental | experimental | experimental |
+| mlnet | unsupported | unsupported | supported | experimental | unsupported | unsupported |
 | audio | unsupported | unsupported | unsupported | unsupported | unsupported | unsupported |
-| concurrent_calls | experimental | experimental | experimental | experimental | experimental | experimental |
-| embedding_pretokenized | unrecorded | unrecorded | experimental | experimental | unrecorded | unrecorded |
-| embedding_text | unrecorded | unrecorded | experimental | experimental | unrecorded | unrecorded |
+| concurrent_calls | experimental | experimental | supported | experimental | experimental | experimental |
+| embedding_pretokenized | unrecorded | unrecorded | supported | experimental | unrecorded | unrecorded |
+| embedding_text | unrecorded | unrecorded | supported | experimental | unrecorded | unrecorded |
 | image | experimental | experimental | unsupported | unsupported | experimental | experimental |
 | image_16_bit | unsupported | unsupported | unrecorded | unrecorded | unrecorded | unrecorded |
 | image_alpha_compositing | unsupported | unsupported | unrecorded | unrecorded | unrecorded | unrecorded |
@@ -81,12 +81,12 @@ One table per family, one column per profile. Rows are every capability any prof
 | image_prompts | experimental | experimental | unrecorded | unrecorded | unrecorded | unrecorded |
 | input_2050_to_8192_tokens | unrecorded | unrecorded | experimental | experimental | unrecorded | unrecorded |
 | input_over_8192_tokens | unsupported | unsupported | unsupported | unsupported | unsupported | unsupported |
-| input_up_to_2049_tokens | unrecorded | unrecorded | experimental | experimental | unrecorded | unrecorded |
-| matryoshka | unrecorded | unrecorded | experimental | experimental | unrecorded | unrecorded |
-| prompts_query_document | unrecorded | unrecorded | experimental | experimental | unrecorded | unrecorded |
+| input_up_to_2049_tokens | unrecorded | unrecorded | supported | experimental | unrecorded | unrecorded |
+| matryoshka | unrecorded | unrecorded | supported | experimental | unrecorded | unrecorded |
+| prompts_query_document | unrecorded | unrecorded | supported | experimental | unrecorded | unrecorded |
 | prompts_task | unrecorded | unrecorded | experimental | experimental | unrecorded | unrecorded |
 | text_only_inputs | experimental | experimental | unrecorded | unrecorded | experimental | experimental |
-| tokenizer_owned | unrecorded | unrecorded | experimental | experimental | unrecorded | unrecorded |
+| tokenizer_owned | unrecorded | unrecorded | supported | experimental | unrecorded | unrecorded |
 | video | unsupported | unsupported | unsupported | unsupported | experimental | experimental |
 | video_audio_track | unrecorded | unrecorded | unrecorded | unrecorded | unsupported | unsupported |
 | video_batch | unrecorded | unrecorded | unrecorded | unrecorded | experimental | experimental |
@@ -113,23 +113,23 @@ One table per family, one column per profile. Rows are every capability any prof
 
 | Capability | onnx-fp32-cpu | onnx-fp32-cuda |
 | --- | --- | --- |
-| batch | experimental | experimental |
+| batch | supported | experimental |
 | streaming | unsupported | unsupported |
-| cancellation | experimental | experimental |
+| cancellation | supported | experimental |
 | persistence | unsupported | unsupported |
 | training | unsupported | unsupported |
-| aot | experimental | experimental |
+| aot | supported | experimental |
 | extensions_ai | unsupported | unsupported |
 | mlnet | unsupported | unsupported |
 | classification | unsupported | unsupported |
-| concurrent_calls | experimental | experimental |
+| concurrent_calls | supported | experimental |
 | concurrent_calls_unserialized | unrecorded | unsupported |
 | count_gate_closed | experimental | experimental |
-| entity_extraction | experimental | experimental |
+| entity_extraction | supported | experimental |
 | input_over_512_tokens | unsupported | unsupported |
 | label_descriptions | experimental | experimental |
 | mixed_label_sets_in_batch | unsupported | unsupported |
-| offsets_original_text | experimental | experimental |
+| offsets_original_text | supported | experimental |
 | plain_deduplicated_output | unsupported | unsupported |
 | relation_extraction | unsupported | unsupported |
 | structured_extraction | unsupported | unsupported |
@@ -138,14 +138,14 @@ One table per family, one column per profile. Rows are every capability any prof
 
 | Capability | onnx-fp32-cpu | onnx-fp32-cuda |
 | --- | --- | --- |
-| batch | experimental | experimental |
+| batch | supported | experimental |
 | streaming | unsupported | unsupported |
-| cancellation | experimental | experimental |
+| cancellation | supported | experimental |
 | persistence | unsupported | unsupported |
 | training | unsupported | unsupported |
-| aot | experimental | experimental |
-| extensions_ai | experimental | experimental |
-| mlnet | experimental | experimental |
+| aot | supported | experimental |
+| extensions_ai | supported | experimental |
+| mlnet | supported | experimental |
 
 ### qwen3.5-0.8b
 

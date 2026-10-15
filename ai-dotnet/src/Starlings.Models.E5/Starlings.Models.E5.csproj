@@ -4,7 +4,7 @@
     <IsPackable>true</IsPackable>
     <!-- Trim, AOT and single-file analyzers on (warnings are errors); Native AOT evidence: docs/evidence/aot/. -->
     <IsAotCompatible>true</IsAotCompatible>
-    <Description>Preview. intfloat/multilingual-e5-small (revision 614241f6) sentence embeddings on ONNX Runtime, from text through the owned tokenizer (Starlings.Tokenizers: no Microsoft.ML.Tokenizers, no native tokenizer) or from token ids: right padding, mean pooling, L2 normalization. Ships the model's asset lock, not the weights; acquire them explicitly. Profile multilingual-e5-small/onnx-fp32-cpu (Linux x64, experimental). The application adds the ONNX Runtime native package.</Description>
+    <Description>intfloat/multilingual-e5-small (revision 614241f6) sentence embeddings on ONNX Runtime, from text through the owned tokenizer (Starlings.Tokenizers: no Microsoft.ML.Tokenizers, no native tokenizer) or from token ids: right padding, mean pooling, L2 normalization. Ships the model's asset lock, not the weights; acquire them explicitly. Profiles multilingual-e5-small/onnx-fp32-cpu and onnx-fp32-cuda. The application adds the ONNX Runtime native package. Maturity is per model profile (Stable, Preview or Experimental): see the README, generated from the model registry.</Description>
     <PackageTags>embeddings;e5;multilingual-e5-small;sentence-embeddings;onnxruntime;semantic-search</PackageTags>
     <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>

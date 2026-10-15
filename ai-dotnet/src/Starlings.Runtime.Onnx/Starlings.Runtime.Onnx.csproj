@@ -4,7 +4,7 @@
     <IsPackable>true</IsPackable>
     <!-- Trim, AOT and single-file analyzers on (warnings are errors); Native AOT evidence: docs/evidence/aot/. -->
     <IsAotCompatible>true</IsAotCompatible>
-    <Description>Preview. ONNX Runtime session ownership, execution-provider validation and diagnostics for Starlings models. References only the managed ONNX Runtime binding (exactly 1.30.0): the application adds one native package, Microsoft.ML.OnnxRuntime (CPU) or Microsoft.ML.OnnxRuntime.Gpu.Linux (CUDA).</Description>
+    <Description>ONNX Runtime session ownership, execution-provider validation and diagnostics for Starlings models. References only the managed ONNX Runtime binding (exactly 1.30.0): the application adds one native package, Microsoft.ML.OnnxRuntime (CPU) or Microsoft.ML.OnnxRuntime.Gpu.Linux (CUDA). Maturity is per model profile (Stable, Preview or Experimental): see the README, generated from the model registry.</Description>
     <PackageTags>onnxruntime;onnx;inference;ai</PackageTags>
     <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>

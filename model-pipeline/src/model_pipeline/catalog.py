@@ -4,12 +4,18 @@ The registry is the only input: there is no hand-kept support list. Every capabi
 an explicit value. A capability or platform a manifest does not record renders as `unrecorded` and a gate it does not
 record as `none`; neither ever reads as supported. Output is deterministic (no timestamps), so `--check` can compare
 the committed files byte for byte.
+
+Package READMEs (`ai-dotnet/src/*/README.md`) state maturity per profile, not one label per package: each holds a block
+between `<!-- catalog:maturity profiles=<glob>[,<glob>...] -->` and `<!-- /catalog:maturity -->` that this module
+regenerates from the same manifests, and `--check` fails when one is stale.
 """
 
 from __future__ import annotations
 
+import fnmatch
 import json
 import os
+import re
 from dataclasses import dataclass
 from pathlib import Path, PurePosixPath
 from typing import Any
@@ -39,6 +45,20 @@ VOCABULARY = (
     "Capability and platform statuses: `supported`, `unsupported`, `experimental`, `untested`, or `unrecorded` (the "
     "manifest records no status; never read as supported). Gate statuses: `passed`, `failed`, `checklist`, `not-run`, "
     "or `none` (the manifest records no entry for the gate)."
+)
+
+
+# Providers the scheduled qualification workflow (.github/workflows/qualification.yml) runs on GitHub-hosted runners:
+# regression support exists only for profiles with a compatibility row on one of them. The self-hosted GPU job runs only
+# on manual dispatch, so a CUDA-only profile has no scheduled regression runs.
+SCHEDULED_REGRESSION_PROVIDERS = ("cpu",)
+GPU_PROMOTION_NOTE = "promotion awaits scheduled GPU regression runs"
+
+# Package README maturity blocks.
+PACKAGE_READMES = "ai-dotnet/src/*/README.md"
+CATALOG_URL = "https://github.com/starlinghq/starling/blob/main/docs/catalog/README.md"
+README_BLOCK = re.compile(
+    r"(<!-- catalog:maturity profiles=(?P<globs>[^ ]+) -->\n)(?P<body>.*?)(<!-- /catalog:maturity -->)", re.DOTALL
 )
 
 
@@ -120,6 +140,7 @@ def build(registry: Path = DEFAULT_REGISTRY, repo_root: Path = REPO_ROOT) -> dic
                 cell["verified"] = str(c["verified"])
             compatibility[Platform(c["os"], c["arch"], c["provider"]).label] = cell
         blockers = stable_blockers(m)
+        providers = {c["provider"] for c in m["compatibility"]}
         backend = m["execution"]["backend"]
         maintenance = m["maintenance"]
         entries.append(
@@ -150,6 +171,7 @@ def build(registry: Path = DEFAULT_REGISTRY, repo_root: Path = REPO_ROOT) -> dic
                     "gates_not_passed": list(blockers.gates_not_passed),
                     "untested_capabilities": list(blockers.untested_capabilities),
                 },
+                "scheduled_regression": any(p in providers for p in SCHEDULED_REGRESSION_PROVIDERS),
             }
         )
 
@@ -197,14 +219,24 @@ def _gate_cell(gate: dict[str, Any], out: Path, repo_root: Path) -> str:
     return text
 
 
-def stable_readiness_text(readiness: dict[str, Any]) -> str:
+def stable_readiness_text(
+    readiness: dict[str, Any], *, maturity: str | None = None, scheduled_regression: bool = True
+) -> str:
+    """The Stable readiness cell. Stable needs every gate and regression support (docs/support-policy.md); a profile
+    without scheduled regression runs is not promoted even when its gates pass."""
     if readiness["ready"]:
+        if maturity == "stable":
+            return "stable: meets the validator's Stable rules"
+        if not scheduled_regression:
+            return f"all eight gates pass where recorded; {GPU_PROMOTION_NOTE}"
         return "meets the validator's Stable rules"
     parts = []
     if readiness["gates_not_passed"]:
         parts.append("gates not passed: " + ", ".join(readiness["gates_not_passed"]))
     if readiness["untested_capabilities"]:
         parts.append("untested: " + ", ".join(readiness["untested_capabilities"]))
+    if not scheduled_regression:
+        parts.append("promotion also awaits scheduled GPU regression runs")
     return "; ".join(parts)
 
 
@@ -223,7 +255,9 @@ def _render_readme(catalog: dict[str, Any], out: Path, repo_root: Path) -> str:
         "## Profiles",
         "",
         "Gate cells link to the evidence the manifest records. The Stable readiness column applies the validator's "
-        "Stable rules (every gate G0 to G7 `passed`, no capability `untested`) and lists exactly what fails them.",
+        "Stable rules (every gate G0 to G7 `passed`, no capability `untested`) and lists exactly what fails them. "
+        "Stable also needs regression support: the scheduled qualification workflow runs CPU profiles only, so a "
+        "CUDA profile is not promoted until scheduled GPU regression runs exist.",
         "",
     ]
     header = ["Profile", "Task", "Maturity", "Owner", "Review date", *GATES, "Stable readiness"]
@@ -235,7 +269,9 @@ def _render_readme(catalog: dict[str, Any], out: Path, repo_root: Path) -> str:
             p["owner"],
             p["review_date"],
             *(_gate_cell(p["gates"][g], out, repo_root) for g in GATES),
-            stable_readiness_text(p["stable_readiness"]),
+            stable_readiness_text(
+                p["stable_readiness"], maturity=p["maturity"], scheduled_regression=p["scheduled_regression"]
+            ),
         ]
         for p in profiles
     ]
@@ -324,6 +360,57 @@ def write(files: dict[str, str], out: Path) -> None:
     out.mkdir(parents=True, exist_ok=True)
     for name, content in files.items():
         (out / name).write_text(content, encoding="utf-8", newline="\n")
+
+
+def _render_maturity_block(profiles: list[dict[str, Any]]) -> str:
+    rows = [
+        [
+            f"`{p['id']}`",
+            p["maturity"],
+            "; ".join(
+                f"{label}: {cell['status']}"
+                for label, cell in p["compatibility"].items()
+                if cell["status"] != UNRECORDED
+            ),
+        ]
+        for p in profiles
+    ]
+    lines = [
+        "Maturity is per profile, generated from the registry manifests by `model-pipeline catalog` (do not edit this "
+        f"table by hand). Gates, evidence and capabilities per profile: the [model catalog]({CATALOG_URL}).",
+        "",
+        *_table(["Profile", "Maturity", "Platforms"], rows),
+        "",
+    ]
+    return "\n".join(lines)
+
+
+def package_readmes(catalog: dict[str, Any], repo_root: Path = REPO_ROOT) -> dict[Path, str]:
+    """Package README path to its content with every maturity block regenerated. Only READMEs with a block."""
+    result = {}
+    for path in sorted(repo_root.glob(PACKAGE_READMES)):
+        text = path.read_text(encoding="utf-8")
+        if not README_BLOCK.search(text):
+            continue
+
+        def block(match: re.Match[str], *, readme: Path = path) -> str:
+            globs = match.group("globs").split(",")
+            members = [p for p in catalog["profiles"] if any(fnmatch.fnmatchcase(p["id"], g) for g in globs)]
+            if not members:
+                raise CatalogError(f"{readme}: maturity block matches no profile ({match.group('globs')})")
+            return match.group(1) + _render_maturity_block(members) + match.group(4)
+
+        result[path] = README_BLOCK.sub(block, text)
+    return result
+
+
+def write_readmes(readmes: dict[Path, str]) -> None:
+    for path, content in readmes.items():
+        path.write_text(content, encoding="utf-8", newline="\n")
+
+
+def stale_readmes(readmes: dict[Path, str]) -> list[Path]:
+    return [path for path, content in readmes.items() if path.read_text(encoding="utf-8") != content]
 
 
 def stale(files: dict[str, str], out: Path) -> list[str]:

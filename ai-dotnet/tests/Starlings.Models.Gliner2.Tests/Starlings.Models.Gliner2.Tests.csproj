@@ -13,6 +13,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Include="../Shared/Registry/*.cs" Link="Shared/Registry/%(Filename)%(Extension)" />
     <Compile Include="../Shared/Gliner2/*.cs" Link="Shared/Gliner2/%(Filename)%(Extension)" />
     <Compile Include="../Shared/TestModels/*.cs" Link="Shared/TestModels/%(Filename)%(Extension)" />
     <Compile Include="../Shared/Operational/*.cs" Link="Shared/Operational/%(Filename)%(Extension)" />

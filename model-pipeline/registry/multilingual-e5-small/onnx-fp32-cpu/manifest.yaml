@@ -3,8 +3,10 @@
 # (preview.1, P-010: docs/releases/e5-0.1.0-preview.1.md).
 schema_version: 1
 id: multilingual-e5-small/onnx-fp32-cpu
-# Preview (plan 14): G0, G1, G2 and G6 passed in full, G3-G5 and G7 as checklists (plan 10 phasing). Capability and
-# platform statuses stay experimental until qualification CI and controlled hardware (P-018).
+# Every gate G0 to G7 passed in full (qualification below). Capability statuses follow the Stable contract in the
+# Starlings.Models.E5 README: supported where the gate evidence covers it on Linux x64 CPU, unsupported outside it.
+# E5Capabilities.Profiles holds the same statuses (tested key for key). Regression support: the scheduled
+# qualification workflow (.github/workflows/qualification.yml, jobs release-gates and soak).
 maturity: preview
 
 origin:
@@ -135,29 +137,35 @@ capabilities:
   # row-wise output equal to E5TextEmbedder bit for bit on the 46 fixture texts (max abs 2.3e-7 vs protected), one
   # inference per row for any number of getters, schema errors, parallel cursor sets and look-ahead batching tested.
   # Saving the transformer is unsupported (persistence above); there is no cancellation in ML.NET cursors.
-  batch: experimental
+  # Supported (Stable contract, Linux x64 CPU): batch (release set: every padded batch equals single calls), cancellation
+  # (G4 soak with timed-out requests; cancellation at ONNX Runtime node boundaries), extensions_ai and mlnet (G7).
+  batch: supported
   streaming: unsupported
-  cancellation: experimental
+  cancellation: supported
   persistence: unsupported
   training: unsupported
   # aot: Native AOT publish on Linux x64 CPU, no trim/AOT warnings, results equal to JIT bit for bit
   # (typed API and Extensions.AI generator; docs/evidence/aot/README.md).
   # The ML.NET adapter does not run under Native AOT (Microsoft.ML uses Reflection.Emit).
-  aot: experimental
-  extensions_ai: experimental
-  mlnet: experimental
+  aot: supported
+  extensions_ai: supported
+  mlnet: supported
 
 compatibility:
-  # Linux x64 CPU: C# parity on one AVX2 workstation (embedding max abs 2.3e-7 vs the 1e-5 bound). Not qualification.
+  # Linux x64 CPU: gates G0 to G7 (G1 to G5 on an Intel i7-5820K, AVX2, no AVX-512; the scheduled qualification
+  # reruns G1 to G3 and a short soak on GitHub-hosted ubuntu-latest).
   - os: linux
     arch: x64
     provider: cpu
-    status: experimental
-    verified: 2026-10-09
+    status: supported
+    verified: 2026-10-15
+  # Windows x64 CPU: the CI job ai-dotnet-windows builds, runs the weight-free tests and the clean-install drill without
+  # the model on every change; no model runs there. Outside the Stable contract (the package README says so).
   - os: windows
     arch: x64
     provider: cpu
-    status: untested
+    status: experimental
+    verified: 2026-10-15
 
 qualification:
   reference_runner: model-pipeline/reference/encoder/run_e5.py

@@ -305,7 +305,8 @@
           "G3"
         ],
         "untested_capabilities": []
-      }
+      },
+      "scheduled_regression": true
     },
     {
       "id": "embeddinggemma-2/image-fp32-cuda",
@@ -493,7 +494,8 @@
           "G5"
         ],
         "untested_capabilities": []
-      }
+      },
+      "scheduled_regression": false
     },
     {
       "id": "embeddinggemma-2/onnx-fp32-cpu",
@@ -572,26 +574,26 @@
         }
       },
       "capabilities": {
-        "batch": "experimental",
+        "batch": "supported",
         "streaming": "unsupported",
-        "cancellation": "experimental",
+        "cancellation": "supported",
         "persistence": "unsupported",
         "training": "unsupported",
-        "aot": "experimental",
-        "extensions_ai": "experimental",
-        "mlnet": "experimental",
+        "aot": "supported",
+        "extensions_ai": "supported",
+        "mlnet": "supported",
         "audio": "unsupported",
         "cancellation_inside_a_step": "unrecorded",
         "chat_template_owned_text": "unrecorded",
         "chunked_prefill": "unrecorded",
         "classification": "unrecorded",
-        "concurrent_calls": "experimental",
+        "concurrent_calls": "supported",
         "concurrent_calls_unserialized": "unrecorded",
         "concurrent_requests": "unrecorded",
         "conversation_state_reuse": "unrecorded",
         "count_gate_closed": "unrecorded",
-        "embedding_pretokenized": "experimental",
-        "embedding_text": "experimental",
+        "embedding_pretokenized": "supported",
+        "embedding_text": "supported",
         "enable_thinking": "unrecorded",
         "entity_extraction": "unrecorded",
         "greedy_generation": "unrecorded",
@@ -613,16 +615,16 @@
         "input_2050_to_8192_tokens": "experimental",
         "input_over_512_tokens": "unrecorded",
         "input_over_8192_tokens": "unsupported",
-        "input_up_to_2049_tokens": "experimental",
+        "input_up_to_2049_tokens": "supported",
         "label_descriptions": "unrecorded",
         "long_context_1667_to_8192_tokens": "unrecorded",
         "long_context_over_8192_tokens": "unrecorded",
-        "matryoshka": "experimental",
+        "matryoshka": "supported",
         "max_new_tokens": "unrecorded",
         "mixed_label_sets_in_batch": "unrecorded",
         "offsets_original_text": "unrecorded",
         "plain_deduplicated_output": "unrecorded",
-        "prompts_query_document": "experimental",
+        "prompts_query_document": "supported",
         "prompts_task": "experimental",
         "reasoning_split": "unrecorded",
         "relation_extraction": "unrecorded",
@@ -633,7 +635,7 @@
         "structured_extraction": "unrecorded",
         "structured_output": "unrecorded",
         "text_only_inputs": "unrecorded",
-        "tokenizer_owned": "experimental",
+        "tokenizer_owned": "supported",
         "tool_calling": "unrecorded",
         "usage": "unrecorded",
         "video": "unsupported",
@@ -661,14 +663,15 @@
       },
       "compatibility": {
         "linux-x64 cpu": {
-          "status": "experimental",
-          "verified": "2026-10-10"
+          "status": "supported",
+          "verified": "2026-10-15"
         },
         "linux-x64 cuda": {
           "status": "unrecorded"
         },
         "windows-x64 cpu": {
-          "status": "untested"
+          "status": "experimental",
+          "verified": "2026-10-15"
         },
         "windows-x64 cuda": {
           "status": "unrecorded"
@@ -678,7 +681,8 @@
         "ready": true,
         "gates_not_passed": [],
         "untested_capabilities": []
-      }
+      },
+      "scheduled_regression": true
     },
     {
       "id": "embeddinggemma-2/onnx-fp32-cuda",
@@ -864,7 +868,8 @@
         "ready": true,
         "gates_not_passed": [],
         "untested_capabilities": []
-      }
+      },
+      "scheduled_regression": false
     },
     {
       "id": "embeddinggemma-2/video-fp32-cpu",
@@ -1050,7 +1055,8 @@
           "G7"
         ],
         "untested_capabilities": []
-      }
+      },
+      "scheduled_regression": true
     },
     {
       "id": "embeddinggemma-2/video-fp32-cuda",
@@ -1235,7 +1241,8 @@
           "G7"
         ],
         "untested_capabilities": []
-      }
+      },
+      "scheduled_regression": false
     },
     {
       "id": "gliner2-base-v1/onnx-fp32-cpu",
@@ -1314,12 +1321,12 @@
         }
       },
       "capabilities": {
-        "batch": "experimental",
+        "batch": "supported",
         "streaming": "unsupported",
-        "cancellation": "experimental",
+        "cancellation": "supported",
         "persistence": "unsupported",
         "training": "unsupported",
-        "aot": "experimental",
+        "aot": "supported",
         "extensions_ai": "unsupported",
         "mlnet": "unsupported",
         "audio": "unrecorded",
@@ -1327,7 +1334,7 @@
         "chat_template_owned_text": "unrecorded",
         "chunked_prefill": "unrecorded",
         "classification": "unsupported",
-        "concurrent_calls": "experimental",
+        "concurrent_calls": "supported",
         "concurrent_calls_unserialized": "unrecorded",
         "concurrent_requests": "unrecorded",
         "conversation_state_reuse": "unrecorded",
@@ -1335,7 +1342,7 @@
         "embedding_pretokenized": "unrecorded",
         "embedding_text": "unrecorded",
         "enable_thinking": "unrecorded",
-        "entity_extraction": "experimental",
+        "entity_extraction": "supported",
         "greedy_generation": "unrecorded",
         "image": "unrecorded",
         "image_16_bit": "unrecorded",
@@ -1362,7 +1369,7 @@
         "matryoshka": "unrecorded",
         "max_new_tokens": "unrecorded",
         "mixed_label_sets_in_batch": "unsupported",
-        "offsets_original_text": "experimental",
+        "offsets_original_text": "supported",
         "plain_deduplicated_output": "unsupported",
         "prompts_query_document": "unrecorded",
         "prompts_task": "unrecorded",
@@ -1403,15 +1410,16 @@
       },
       "compatibility": {
         "linux-x64 cpu": {
-          "status": "experimental",
-          "verified": "2026-10-10"
+          "status": "supported",
+          "verified": "2026-10-15"
         },
         "linux-x64 cuda": {
           "status": "experimental",
           "verified": "2026-10-10"
         },
         "windows-x64 cpu": {
-          "status": "untested"
+          "status": "experimental",
+          "verified": "2026-10-15"
         },
         "windows-x64 cuda": {
           "status": "unrecorded"
@@ -1421,7 +1429,8 @@
         "ready": true,
         "gates_not_passed": [],
         "untested_capabilities": []
-      }
+      },
+      "scheduled_regression": true
     },
     {
       "id": "gliner2-base-v1/onnx-fp32-cuda",
@@ -1611,7 +1620,8 @@
           "G5"
         ],
         "untested_capabilities": []
-      }
+      },
+      "scheduled_regression": false
     },
     {
       "id": "multilingual-e5-small/onnx-fp32-cpu",
@@ -1689,14 +1699,14 @@
         }
       },
       "capabilities": {
-        "batch": "experimental",
+        "batch": "supported",
         "streaming": "unsupported",
-        "cancellation": "experimental",
+        "cancellation": "supported",
         "persistence": "unsupported",
         "training": "unsupported",
-        "aot": "experimental",
-        "extensions_ai": "experimental",
-        "mlnet": "experimental",
+        "aot": "supported",
+        "extensions_ai": "supported",
+        "mlnet": "supported",
         "audio": "unrecorded",
         "cancellation_inside_a_step": "unrecorded",
         "chat_template_owned_text": "unrecorded",
@@ -1778,14 +1788,15 @@
       },
       "compatibility": {
         "linux-x64 cpu": {
-          "status": "experimental",
-          "verified": "2026-10-09"
+          "status": "supported",
+          "verified": "2026-10-15"
         },
         "linux-x64 cuda": {
           "status": "unrecorded"
         },
         "windows-x64 cpu": {
-          "status": "untested"
+          "status": "experimental",
+          "verified": "2026-10-15"
         },
         "windows-x64 cuda": {
           "status": "unrecorded"
@@ -1795,7 +1806,8 @@
         "ready": true,
         "gates_not_passed": [],
         "untested_capabilities": []
-      }
+      },
+      "scheduled_regression": true
     },
     {
       "id": "multilingual-e5-small/onnx-fp32-cuda",
@@ -1982,7 +1994,8 @@
           "G4"
         ],
         "untested_capabilities": []
-      }
+      },
+      "scheduled_regression": false
     },
     {
       "id": "qwen3.5-0.8b/ortgenai-fp16x-cuda",
@@ -2166,7 +2179,8 @@
         "ready": true,
         "gates_not_passed": [],
         "untested_capabilities": []
-      }
+      },
+      "scheduled_regression": false
     },
     {
       "id": "qwen3.5-0.8b/ortgenai-fp32x-cpu",
@@ -2350,7 +2364,8 @@
           "G5"
         ],
         "untested_capabilities": []
-      }
+      },
+      "scheduled_regression": true
     },
     {
       "id": "qwen3.5-0.8b/ortgenai-fp32x-cuda",
@@ -2534,7 +2549,8 @@
         "ready": true,
         "gates_not_passed": [],
         "untested_capabilities": []
-      }
+      },
+      "scheduled_regression": false
     }
   ]
 }

@@ -17,19 +17,33 @@ public enum CapabilityStatus
 }
 
 /// <summary>Capability descriptor for this package version.</summary>
+/// <remarks>
+/// <see cref="All"/> is package-wide. Keys without a provider suffix give the status on the Stable-contract profile
+/// <see cref="StableProfile"/> (Linux x64 CPU); keys ending in <c>.cuda</c> give the status on the experimental CUDA
+/// profile <c>multilingual-e5-small/onnx-fp32-cuda</c>. <see cref="Profiles"/> repeats the Stable-contract profile's
+/// statuses keyed exactly as its registry manifest's <c>capabilities</c>, and a test keeps the two equal key for key.
+/// </remarks>
 public static class E5Capabilities
 {
+    /// <summary>The profile of this package's Stable contract (the README's "Stable contract" section).</summary>
+    public const string StableProfile = "multilingual-e5-small/onnx-fp32-cpu";
+
     /// <summary>
-    /// Status per capability. Evidence for each entry is listed in <c>ai-dotnet/README.md</c>.
+    /// Status per capability. Evidence for each entry is listed in <c>ai-dotnet/README.md</c> and, for
+    /// <see cref="CapabilityStatus.Supported"/>, in the profile's gate evidence (<c>docs/catalog/README.md</c>).
     /// </summary>
     public static IReadOnlyDictionary<string, CapabilityStatus> All { get; } = new Dictionary<string, CapabilityStatus>(StringComparer.Ordinal)
     {
-        ["embedding.pretokenized.cpu"] = CapabilityStatus.Experimental,
+        // Supported on Linux x64 CPU: G1 and G2 on the P-030 release set (232 rows: ids exact, embeddings within 1.46e-7
+        // of the reference against 1e-5, every padded batch equal to single calls), G3 on MIRACL (nDCG@10 0.7978), G4
+        // one-hour soak (concurrent callers and timed-out requests, 1,368 load/unload cycles, plateau), G6 anonymous
+        // download into an empty cache and offline run, G7 adapter tests and drill consumers.
+        ["embedding.pretokenized.cpu"] = CapabilityStatus.Supported,
         ["embedding.pretokenized.cuda"] = CapabilityStatus.Experimental,
-        ["embedding.text"] = CapabilityStatus.Experimental,
-        ["batch"] = CapabilityStatus.Experimental,
-        ["cancellation"] = CapabilityStatus.Experimental,
-        ["concurrent_calls"] = CapabilityStatus.Experimental,
+        ["embedding.text"] = CapabilityStatus.Supported,
+        ["batch"] = CapabilityStatus.Supported,
+        ["cancellation"] = CapabilityStatus.Supported,
+        ["concurrent_calls"] = CapabilityStatus.Supported,
         ["streaming"] = CapabilityStatus.Unsupported,
         ["pair_input"] = CapabilityStatus.Unsupported,
         ["token_type_ids_nonzero"] = CapabilityStatus.Unsupported,
@@ -41,11 +55,11 @@ public static class E5Capabilities
         ["tensorrt"] = CapabilityStatus.Unsupported,
         ["persistence"] = CapabilityStatus.Unsupported,
         ["training"] = CapabilityStatus.Unsupported,
-        ["asset_acquisition"] = CapabilityStatus.Experimental,
+        ["asset_acquisition"] = CapabilityStatus.Supported,
 
-        // Microsoft.Extensions.AI IEmbeddingGenerator, in Starlings.Models.E5.Extensions.AI (P-011). Tested
-        // over the CPU and CUDA profiles; the explicit input-type prefix option lives there, prefix_insertion stays unsupported here.
-        ["extensions_ai.embedding_generator"] = CapabilityStatus.Experimental,
+        // Microsoft.Extensions.AI IEmbeddingGenerator, in Starlings.Models.E5.Extensions.AI (P-011). Supported on the
+        // CPU profile (G7), experimental over CUDA; the explicit input-type prefix option lives there, prefix_insertion stays unsupported here.
+        ["extensions_ai.embedding_generator"] = CapabilityStatus.Supported,
         ["extensions_ai.embedding_generator.cuda"] = CapabilityStatus.Experimental,
         ["extensions_ai.dimensions_truncation"] = CapabilityStatus.Unsupported,
 
@@ -53,15 +67,38 @@ public static class E5Capabilities
         // composition (embedding_transform, CPU profile), save/load and portable asset packaging (persistence:
         // Save throws; the model is resolved from the asset lock at run time), training (none). Cursors have no
         // cancellation token.
-        ["mlnet.embedding_transform"] = CapabilityStatus.Experimental,
+        ["mlnet.embedding_transform"] = CapabilityStatus.Supported,
         ["mlnet.embedding_transform.cuda"] = CapabilityStatus.Experimental,
-        ["mlnet.batching"] = CapabilityStatus.Experimental,
+        ["mlnet.batching"] = CapabilityStatus.Supported,
         ["mlnet.persistence"] = CapabilityStatus.Unsupported,
         ["mlnet.cancellation"] = CapabilityStatus.Unsupported,
         ["mlnet.training"] = CapabilityStatus.Unsupported,
-        // Native AOT on Linux x64, CPU and CUDA natives (docs/evidence/aot/, docs/evidence/capability-closure-2026-10-14/); not the ML.NET adapter.
-        ["aot"] = CapabilityStatus.Experimental,
+        // Native AOT on Linux x64 CPU from the packed packages, results equal to JIT bit for bit (typed API and
+        // Extensions.AI generator; docs/evidence/aot/, the release drill's step 12); not the ML.NET adapter.
+        ["aot"] = CapabilityStatus.Supported,
         ["mlnet.aot"] = CapabilityStatus.Unsupported,
-        ["windows"] = CapabilityStatus.Untested,
+        // Windows x64: build, weight-free tests and the clean-install drill without the model in CI; no model run, so
+        // outside the Stable contract.
+        ["windows"] = CapabilityStatus.Experimental,
     };
+
+    /// <summary>
+    /// Status per capability of each profile this package version publishes a contract for, keyed exactly as the
+    /// profile's registry manifest (<c>model-pipeline/registry/&lt;profile&gt;/manifest.yaml</c>, <c>capabilities</c>).
+    /// </summary>
+    public static IReadOnlyDictionary<string, IReadOnlyDictionary<string, CapabilityStatus>> Profiles { get; } =
+        new Dictionary<string, IReadOnlyDictionary<string, CapabilityStatus>>(StringComparer.Ordinal)
+        {
+            [StableProfile] = new Dictionary<string, CapabilityStatus>(StringComparer.Ordinal)
+            {
+                ["batch"] = CapabilityStatus.Supported,
+                ["streaming"] = CapabilityStatus.Unsupported,
+                ["cancellation"] = CapabilityStatus.Supported,
+                ["persistence"] = CapabilityStatus.Unsupported,
+                ["training"] = CapabilityStatus.Unsupported,
+                ["aot"] = CapabilityStatus.Supported,
+                ["extensions_ai"] = CapabilityStatus.Supported,
+                ["mlnet"] = CapabilityStatus.Supported,
+            },
+        };
 }

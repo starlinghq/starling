@@ -17,35 +17,55 @@ public enum Gliner2CapabilityStatus
 }
 
 /// <summary>Capability descriptor for this package version (profile <c>gliner2-base-v1/onnx-fp32-cpu</c>).</summary>
+/// <remarks>
+/// <see cref="All"/> is package-wide. Keys without a provider suffix give the status on the Stable-contract profile
+/// <see cref="StableProfile"/> (Linux x64 CPU); keys with <c>.cuda</c> give the status on the experimental CUDA profile
+/// <c>gliner2-base-v1/onnx-fp32-cuda</c>. <see cref="Profiles"/> repeats the Stable-contract profile's statuses keyed
+/// exactly as its registry manifest's <c>capabilities</c>, and a test keeps the two equal key for key.
+/// </remarks>
 public static class Gliner2Capabilities
 {
-    /// <summary>Status per capability. Evidence for each entry is listed in <c>ai-dotnet/README.md</c>.</summary>
+    /// <summary>The profile of this package's Stable contract (the README's "Stable contract" section).</summary>
+    public const string StableProfile = "gliner2-base-v1/onnx-fp32-cpu";
+
+    /// <summary>
+    /// Status per capability. Evidence for each entry is listed in <c>ai-dotnet/README.md</c> and, for
+    /// <see cref="Gliner2CapabilityStatus.Supported"/>, in the profile's gate evidence (<c>docs/catalog/README.md</c>).
+    /// </summary>
     public static IReadOnlyDictionary<string, Gliner2CapabilityStatus> All { get; } = new Dictionary<string, Gliner2CapabilityStatus>(StringComparer.Ordinal)
     {
         // Declared contract (docs/kickoff.md, settled 2026-10-08): English entity extraction with labels and threshold.
-        ["entity_extraction.cpu"] = Gliner2CapabilityStatus.Experimental,
+        // Supported on Linux x64 CPU: G1 and G2 on the P-030 release sets (processor outputs and offsets exact, span
+        // logits within 1.78e-5 relative against 1e-4, entities 30/30 from inputs and from text, every padded batch equal
+        // to single calls), G3 on WNUT-17 (exact F1 0.3626), G4 one-hour soak with MALLOC_MMAP_THRESHOLD_=65536 (the
+        // documented Linux setting; concurrent callers, timed-out requests), G6 anonymous download and offline run.
+        ["entity_extraction.cpu"] = Gliner2CapabilityStatus.Supported,
         ["entity_extraction.cuda"] = Gliner2CapabilityStatus.Experimental,
-        ["entity_extraction.staged"] = Gliner2CapabilityStatus.Experimental,
-        ["threshold"] = Gliner2CapabilityStatus.Experimental,
-        ["offsets.original_text"] = Gliner2CapabilityStatus.Experimental,
-        ["batch"] = Gliner2CapabilityStatus.Experimental,
-        ["cancellation"] = Gliner2CapabilityStatus.Experimental,
-        ["concurrent_calls"] = Gliner2CapabilityStatus.Experimental,
+        ["entity_extraction.staged"] = Gliner2CapabilityStatus.Supported,
+        ["threshold"] = Gliner2CapabilityStatus.Supported,
+        ["offsets.original_text"] = Gliner2CapabilityStatus.Supported,
+        ["batch"] = Gliner2CapabilityStatus.Supported,
+        ["cancellation"] = Gliner2CapabilityStatus.Supported,
+        ["concurrent_calls"] = Gliner2CapabilityStatus.Supported,
         // On CUDA, concurrent runs on one session returned wrong entities (6 of 8 test runs); calls are serialized
         // there by default (Gliner2ExtractorOptions.SerializeNativeCalls).
         ["concurrent_calls.cuda.serialized"] = Gliner2CapabilityStatus.Experimental,
         ["concurrent_calls.cuda.unserialized"] = Gliner2CapabilityStatus.Unsupported,
-        ["asset_acquisition.offline"] = Gliner2CapabilityStatus.Experimental,
+        ["asset_acquisition.offline"] = Gliner2CapabilityStatus.Supported,
 
         // Proposed capability cases on public text, run by the pinned GLiNER2: 11 with label descriptions, 12 where the
         // count gate closes; inputs, gate and entities exact on CPU and CUDA (docs/evidence/capability-closure-2026-10-14/).
+        // Proposed cases, not accepted fixtures: outside the Stable contract.
         ["label_descriptions"] = Gliner2CapabilityStatus.Experimental,
         ["count_gate.closed"] = Gliner2CapabilityStatus.Experimental,
-        // The 0.1.0-preview.6 release drill downloaded the graph from the public hosting repository with no token into an
-        // empty cache, verified it and ran the sample offline (Linux x64, one machine).
-        ["asset_acquisition.download"] = Gliner2CapabilityStatus.Experimental,
-        ["aot"] = Gliner2CapabilityStatus.Experimental, // Linux x64, CPU and CUDA natives (docs/evidence/aot/, docs/evidence/capability-closure-2026-10-14/)
-        ["windows"] = Gliner2CapabilityStatus.Untested,
+        // G6: the release drills downloaded the graph from the public hosting repository with no token into an empty
+        // cache, verified it and ran the sample offline (docs/evidence/g6-distribution-2026-10-14/).
+        ["asset_acquisition.download"] = Gliner2CapabilityStatus.Supported,
+        // Native AOT on Linux x64 CPU from the packed package: entity spans exact, confidences equal to JIT (docs/evidence/aot/).
+        ["aot"] = Gliner2CapabilityStatus.Supported,
+        // Windows x64: build, weight-free tests and the clean-install drill without the model in CI (ci.yml,
+        // ai-dotnet-windows); no model run, so outside the Stable contract.
+        ["windows"] = Gliner2CapabilityStatus.Experimental,
 
         // Outside the contract.
         ["input_over_512_tokens"] = Gliner2CapabilityStatus.Unsupported,
@@ -70,4 +90,35 @@ public static class Gliner2Capabilities
         ["extensions_ai"] = Gliner2CapabilityStatus.Unsupported,
         ["mlnet"] = Gliner2CapabilityStatus.Unsupported,
     };
+
+    /// <summary>
+    /// Status per capability of each profile this package version publishes a contract for, keyed exactly as the
+    /// profile's registry manifest (<c>model-pipeline/registry/&lt;profile&gt;/manifest.yaml</c>, <c>capabilities</c>).
+    /// </summary>
+    public static IReadOnlyDictionary<string, IReadOnlyDictionary<string, Gliner2CapabilityStatus>> Profiles { get; } =
+        new Dictionary<string, IReadOnlyDictionary<string, Gliner2CapabilityStatus>>(StringComparer.Ordinal)
+        {
+            [StableProfile] = new Dictionary<string, Gliner2CapabilityStatus>(StringComparer.Ordinal)
+            {
+                ["batch"] = Gliner2CapabilityStatus.Supported,
+                ["streaming"] = Gliner2CapabilityStatus.Unsupported,
+                ["cancellation"] = Gliner2CapabilityStatus.Supported,
+                ["persistence"] = Gliner2CapabilityStatus.Unsupported,
+                ["training"] = Gliner2CapabilityStatus.Unsupported,
+                ["aot"] = Gliner2CapabilityStatus.Supported,
+                ["extensions_ai"] = Gliner2CapabilityStatus.Unsupported,
+                ["mlnet"] = Gliner2CapabilityStatus.Unsupported,
+                ["entity_extraction"] = Gliner2CapabilityStatus.Supported,
+                ["offsets_original_text"] = Gliner2CapabilityStatus.Supported,
+                ["concurrent_calls"] = Gliner2CapabilityStatus.Supported,
+                ["label_descriptions"] = Gliner2CapabilityStatus.Experimental,
+                ["count_gate_closed"] = Gliner2CapabilityStatus.Experimental,
+                ["input_over_512_tokens"] = Gliner2CapabilityStatus.Unsupported,
+                ["plain_deduplicated_output"] = Gliner2CapabilityStatus.Unsupported,
+                ["mixed_label_sets_in_batch"] = Gliner2CapabilityStatus.Unsupported,
+                ["classification"] = Gliner2CapabilityStatus.Unsupported,
+                ["relation_extraction"] = Gliner2CapabilityStatus.Unsupported,
+                ["structured_extraction"] = Gliner2CapabilityStatus.Unsupported,
+            },
+        };
 }

@@ -1,6 +1,21 @@
 # Starlings.Models.EmbeddingGemma2.Extensions.AI
 
-**Preview.** **Experimental.** [Microsoft.Extensions.AI](https://learn.microsoft.com/dotnet/ai/microsoft-extensions-ai) `IEmbeddingGenerator<string, Embedding<float>>` over the EmbeddingGemma 2 text embedder (and generators for images and videos, [below](#images-and-videos)) in `Starlings.Models.EmbeddingGemma2`: the same tokenizer, encoder and numbers, usable with Microsoft.Extensions.AI middleware and dependency injection. The API may still change.
+[Microsoft.Extensions.AI](https://learn.microsoft.com/dotnet/ai/microsoft-extensions-ai) `IEmbeddingGenerator<string, Embedding<float>>` over the EmbeddingGemma 2 text embedder (and generators for images and videos, [below](#images-and-videos)) in `Starlings.Models.EmbeddingGemma2`: the same tokenizer, encoder and numbers, usable with Microsoft.Extensions.AI middleware and dependency injection. The API may still change.
+
+## Maturity
+
+<!-- catalog:maturity profiles=embeddinggemma-2/* -->
+Maturity is per profile, generated from the registry manifests by `model-pipeline catalog` (do not edit this table by hand). Gates, evidence and capabilities per profile: the [model catalog](https://github.com/starlinghq/starling/blob/main/docs/catalog/README.md).
+
+| Profile | Maturity | Platforms |
+| --- | --- | --- |
+| `embeddinggemma-2/image-fp32-cpu` | experimental | linux-x64 cpu: experimental; windows-x64 cpu: untested |
+| `embeddinggemma-2/image-fp32-cuda` | experimental | linux-x64 cuda: experimental; windows-x64 cuda: untested |
+| `embeddinggemma-2/onnx-fp32-cpu` | experimental | linux-x64 cpu: supported; windows-x64 cpu: experimental |
+| `embeddinggemma-2/onnx-fp32-cuda` | experimental | linux-x64 cuda: experimental; windows-x64 cuda: untested |
+| `embeddinggemma-2/video-fp32-cpu` | experimental | linux-x64 cpu: experimental; windows-x64 cpu: untested |
+| `embeddinggemma-2/video-fp32-cuda` | experimental | linux-x64 cuda: experimental; windows-x64 cuda: untested |
+<!-- /catalog:maturity -->
 
 ## Install
 
@@ -32,7 +47,7 @@ var embeddings = await generator.GenerateAsync(["how much protein should a femal
 - `GenerateAsync` runs synchronously on the calling thread and returns a completed task.
 - Unsupported options (another `ModelId`, `RawRepresentationFactory`, unknown additional properties) fail with `NotSupportedException` instead of being ignored.
 
-Status: Linux x64 CPU experimental (fixture texts with and without prompts within the binding bound); over CUDA sessions experimental (text, image and video generators within each CUDA profile's bound).
+Status: the text generator is supported on the `embeddinggemma-2/onnx-fp32-cpu` profile (Linux x64 CPU; G7, part of that profile's Stable contract in the `Starlings.Models.EmbeddingGemma2` README), including Matryoshka dimensions; the image and video generators and everything over CUDA sessions are experimental (within each profile's bound).
 
 ## Images and videos
 
