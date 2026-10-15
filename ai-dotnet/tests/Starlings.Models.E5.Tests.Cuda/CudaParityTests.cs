@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using System.Text.Json;
 using Starlings.Runtime.Onnx;
 using Starlings.TestSupport;
@@ -122,14 +123,28 @@ public class CudaParityTests(E5CudaFixture fixture, ITestOutputHelper output) : 
         full.Stop();
 
         using var cts = new CancellationTokenSource();
+
+        // The cancellation time is read on the cancelling thread before Cancel() and read here after joining it, not
+        // from a callback registered on the token: callbacks run newest first, so the run's own (later) cancellation
+        // callback can stop it before a recorder registered here has run.
         var sw = Stopwatch.StartNew();
-        TimeSpan cancelledAt = TimeSpan.Zero;
-        cts.Token.Register(() => cancelledAt = sw.Elapsed);
-        cts.CancelAfter(full.Elapsed / 4);
-        Assert.ThrowsAny<OperationCanceledException>(() => encoder.EmbedBatch(inputs, cts.Token));
-        var latency = sw.Elapsed - cancelledAt;
+        var cancelled = new StrongBox<TimeSpan>();
+        var canceller = CancelAfter(cts, sw, full.Elapsed / 4, cancelled);
+        TimeSpan returnedAt;
+        try
+        {
+            Assert.ThrowsAny<OperationCanceledException>(() => encoder.EmbedBatch(inputs, cts.Token));
+        }
+        finally
+        {
+            returnedAt = sw.Elapsed;
+            canceller.Join();
+        }
+
+        var cancelledAt = cancelled.Value;
+        var latency = returnedAt - cancelledAt;
         output.WriteLine($"96 x 512 (3 chunks of 32): uncancelled {full.Elapsed.TotalMilliseconds:F0} ms; cancelled at {cancelledAt.TotalMilliseconds:F0} ms; threw {latency.TotalMilliseconds:F1} ms later");
-        Assert.True(sw.Elapsed < full.Elapsed);
+        Assert.True(returnedAt < full.Elapsed, "the cancelled run took as long as an uncancelled one");
 
         var c0 = E5Fixtures.Cases[0];
         var stats = new ErrorStats();
@@ -172,5 +187,24 @@ public class CudaUnavailableTests(ITestOutputHelper output)
             E5TestAssets.FindModel().Path ?? throw new InvalidOperationException("model missing"),
             new OnnxSessionOptions { Provider = OnnxExecutionProvider.Cuda, CudaDeviceId = visible, ComputeModelSha256 = false }));
         output.WriteLine($"device_id {visible} with CUDA_VISIBLE_DEVICES={Environment.GetEnvironmentVariable("CUDA_VISIBLE_DEVICES")}: {ex.Message}");
+    }
+
+    // Cancels on a dedicated thread after the delay, recording the elapsed time just before Cancel(). Join the thread
+    // before reading the result.
+    private static Thread CancelAfter(CancellationTokenSource cts, Stopwatch sw, TimeSpan delay, StrongBox<TimeSpan> cancelledAt)
+    {
+        var thread = new Thread(() =>
+        {
+            while (sw.Elapsed < delay)
+            {
+                Thread.Sleep(1);
+            }
+
+            cancelledAt.Value = sw.Elapsed;
+            cts.Cancel();
+        })
+        { IsBackground = true, Name = "canceller" };
+        thread.Start();
+        return thread;
     }
 }

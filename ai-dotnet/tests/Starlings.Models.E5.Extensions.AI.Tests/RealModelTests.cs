@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using Starlings.TestSupport;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.DependencyInjection;
@@ -109,14 +110,29 @@ public class RealModelTests(E5GeneratorFixture fixture, ITestOutputHelper output
         var texts = Enumerable.Repeat(longText, 32).ToList();
 
         using var cts = new CancellationTokenSource();
+
+        // The cancellation time is read on the cancelling thread before Cancel() and read here after joining it, not
+        // from a callback registered on the token: callbacks run newest first, so the run's own (later) cancellation
+        // callback can stop it before a recorder registered here has run.
         var sw = Stopwatch.StartNew();
-        TimeSpan cancelledAt = TimeSpan.Zero;
-        cts.Token.Register(() => cancelledAt = sw.Elapsed);
-        cts.CancelAfter(TimeSpan.FromMilliseconds(200));
+        var cancelled = new StrongBox<TimeSpan>();
+        var canceller = CancelAfter(cts, sw, TimeSpan.FromMilliseconds(200), cancelled);
 
         // Synchronous: the call blocks this thread until ONNX Runtime stops at the next node boundary.
-        var task = generator.GenerateAsync(texts, cancellationToken: cts.Token);
-        var latency = sw.Elapsed - cancelledAt;
+        Task<GeneratedEmbeddings<Embedding<float>>> task;
+        TimeSpan returnedAt;
+        try
+        {
+            task = generator.GenerateAsync(texts, cancellationToken: cts.Token);
+        }
+        finally
+        {
+            returnedAt = sw.Elapsed;
+            canceller.Join();
+        }
+
+        var cancelledAt = cancelled.Value;
+        var latency = returnedAt - cancelledAt;
         Assert.True(task.IsCanceled, $"task status {task.Status}");
         output.WriteLine($"32 x 512 tokens: cancelled at {cancelledAt.TotalMilliseconds:F0} ms, task returned {latency.TotalMilliseconds:F1} ms later");
         Assert.True(latency < TimeSpan.FromSeconds(2), $"cancellation latency {latency.TotalMilliseconds:F0} ms");
@@ -147,5 +163,24 @@ public class RealModelTests(E5GeneratorFixture fixture, ITestOutputHelper output
         }
 
         Assert.Throws<ObjectDisposedException>(() => encoder.Embed(new EncoderInput(new long[] { 0, 2 }), Ct));
+    }
+
+    // Cancels on a dedicated thread after the delay, recording the elapsed time just before Cancel(). Join the thread
+    // before reading the result.
+    private static Thread CancelAfter(CancellationTokenSource cts, Stopwatch sw, TimeSpan delay, StrongBox<TimeSpan> cancelledAt)
+    {
+        var thread = new Thread(() =>
+        {
+            while (sw.Elapsed < delay)
+            {
+                Thread.Sleep(1);
+            }
+
+            cancelledAt.Value = sw.Elapsed;
+            cts.Cancel();
+        })
+        { IsBackground = true, Name = "canceller" };
+        thread.Start();
+        return thread;
     }
 }
