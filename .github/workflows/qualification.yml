@@ -43,6 +43,23 @@ on:
         description: "Also run the self-hosted CUDA job (needs a registered [self-hosted, gpu] runner, M6)"
         type: boolean
         default: false
+      # Allocator diagnostics on the hosted runner (docs/evidence/scheduled-regression-fix/). The defaults leave the
+      # qualification run unchanged.
+      soak_only:
+        description: "Diagnostics: run only the soak jobs (skip model tests, evaluator, release gates, catalog, upstream)"
+        type: boolean
+        default: false
+      soak_workloads:
+        description: "Diagnostics: space-separated soak workloads to run (e5 gliner2 ...); empty runs all"
+        type: string
+        default: ""
+      soak_variants:
+        description: >-
+          Diagnostics: JSON array of soak variants, each '+'-joined from default, no-heap-trim (tool --no-heap-trim),
+          tool-trim (--malloc-trim), mmap64k (MALLOC_MMAP_THRESHOLD_=65536), arena2 (MALLOC_ARENA_MAX=2), no-env
+          (drop the profile's documented MALLOC_ setting)
+        type: string
+        default: '["default"]'
 
 permissions:
   contents: read
@@ -106,6 +123,7 @@ jobs:
   model-tests:
     name: model tests (linux x64 cpu)
     needs: assets
+    if: ${{ !inputs.soak_only }}
     runs-on: ubuntu-latest
     timeout-minutes: 180
     steps:
@@ -150,6 +168,7 @@ jobs:
   evaluator:
     name: evaluator ${{ matrix.profile }}
     needs: assets
+    if: ${{ !inputs.soak_only }}
     runs-on: ubuntu-latest
     timeout-minutes: 120
     strategy:
@@ -269,6 +288,7 @@ jobs:
   release-gates:
     name: release gates ${{ matrix.profile }}
     needs: assets
+    if: ${{ !inputs.soak_only }}
     runs-on: ubuntu-latest
     timeout-minutes: 300
     continue-on-error: ${{ matrix.allowed_to_fail == true }}
@@ -338,22 +358,24 @@ jobs:
           if-no-files-found: warn
 
   soak:
-    name: soak ${{ matrix.profile }}
+    name: soak ${{ matrix.profile }}${{ matrix.variant != 'default' && format(' ({0})', matrix.variant) || '' }}
     needs: assets
     runs-on: ubuntu-latest
     timeout-minutes: 150
     strategy:
       fail-fast: false
       matrix:
+        workload: [e5, gliner2, embeddinggemma2, embeddinggemma2-image, embeddinggemma2-video, qwen35]
+        variant: ${{ fromJSON(inputs.soak_variants || '["default"]') }}
         include:
-          - { profile: multilingual-e5-small/onnx-fp32-cpu, workload: e5 }
+          - { workload: e5, profile: multilingual-e5-small/onnx-fp32-cpu }
           # The documented Linux deployment setting of GLiNER2 (its README, "Memory on Linux";
           # docs/evidence/gliner2-soak-growth/): with default glibc, retained freed memory trips the growth rule.
-          - { profile: gliner2-base-v1/onnx-fp32-cpu, workload: gliner2, malloc_mmap_threshold: "65536" }
-          - { profile: embeddinggemma-2/onnx-fp32-cpu, workload: embeddinggemma2 }
-          - { profile: embeddinggemma-2/image-fp32-cpu, workload: embeddinggemma2-image }
-          - { profile: embeddinggemma-2/video-fp32-cpu, workload: "" }
-          - { profile: qwen3.5-0.8b/ortgenai-fp32x-cpu, workload: qwen35 }
+          - { workload: gliner2, profile: gliner2-base-v1/onnx-fp32-cpu, malloc_mmap_threshold: "65536" }
+          - { workload: embeddinggemma2, profile: embeddinggemma-2/onnx-fp32-cpu }
+          - { workload: embeddinggemma2-image, profile: embeddinggemma-2/image-fp32-cpu }
+          - { workload: embeddinggemma2-video, profile: embeddinggemma-2/video-fp32-cpu, unwired: true }
+          - { workload: qwen35, profile: qwen3.5-0.8b/ortgenai-fp32x-cpu }
     env:
       PROFILE: ${{ matrix.profile }}
       MANIFEST: model-pipeline/registry/${{ matrix.profile }}/manifest.yaml
@@ -374,10 +396,14 @@ jobs:
         id: wired
         if: steps.hosting.outputs.hosting == 'public'
         env:
+          UNWIRED: ${{ matrix.unwired }}
           WORKLOAD: ${{ matrix.workload }}
+          SELECTED: ${{ inputs.soak_workloads }}
         run: |
-          if [[ -z "$WORKLOAD" ]]; then
+          if [[ "$UNWIRED" == true ]]; then
             echo "::warning title=$PROFILE soak not run::Starlings.Soak.Tool has no workload for this profile"
+            echo "run=false" >>"$GITHUB_OUTPUT"
+          elif [[ -n "$SELECTED" && " $SELECTED " != *" $WORKLOAD "* ]]; then
             echo "run=false" >>"$GITHUB_OUTPUT"
           else
             echo "run=true" >>"$GITHUB_OUTPUT"
@@ -403,25 +429,42 @@ jobs:
           WORKLOAD: ${{ matrix.workload }}
           DURATION: ${{ inputs.soak_duration || '1h' }}
           MMAP_THRESHOLD: ${{ matrix.malloc_mmap_threshold }}
+          VARIANT: ${{ matrix.variant }}
         run: |
           dotnet build ai-dotnet/tools/Starlings.Soak.Tool -c Release --nologo -v quiet
           note="GitHub-hosted ubuntu-latest, scheduled qualification run ${GITHUB_RUN_ID}"
+          extra=()
+          IFS=+ read -ra parts <<<"$VARIANT"
+          for part in "${parts[@]}"; do
+            case "$part" in
+              default) ;;
+              no-heap-trim) extra+=(--no-heap-trim) ;;
+              tool-trim) extra+=(--malloc-trim) ;;
+              mmap64k) export MALLOC_MMAP_THRESHOLD_=65536 ;;
+              arena2) export MALLOC_ARENA_MAX=2 ;;
+              no-env) MMAP_THRESHOLD="" ;;
+              *) echo "::error::unknown soak variant part '$part'"; exit 2 ;;
+            esac
+          done
           if [[ -n "$MMAP_THRESHOLD" ]]; then
             export MALLOC_MMAP_THRESHOLD_="$MMAP_THRESHOLD"
             note="$note, MALLOC_MMAP_THRESHOLD_=$MMAP_THRESHOLD"
           fi
+          if [[ "$VARIANT" != default ]]; then
+            note="$note, variant $VARIANT"
+          fi
           dotnet run --project ai-dotnet/tools/Starlings.Soak.Tool -c Release --no-build -- "$WORKLOAD" \
-            --out "$EVIDENCE/soak" --duration "$DURATION" --note "$note"
+            --out "$EVIDENCE/soak" --duration "$DURATION" --note "$note" "${extra[@]}"
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         if: always() && steps.wired.outputs.run == 'true'
         with:
-          name: qualification-soak-${{ matrix.workload }}
+          name: qualification-soak-${{ matrix.workload }}${{ matrix.variant != 'default' && format('-{0}', matrix.variant) || '' }}
           path: artifacts/qualification/soak/
           if-no-files-found: warn
 
   catalog:
     name: catalog up to date
-    if: github.repository == 'starlinghq/starling'
+    if: github.repository == 'starlinghq/starling' && !inputs.soak_only
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
@@ -434,7 +477,7 @@ jobs:
 
   upstream:
     name: upstream change detection
-    if: github.repository == 'starlinghq/starling'
+    if: github.repository == 'starlinghq/starling' && !inputs.soak_only
     runs-on: ubuntu-latest
     defaults:
       run:

@@ -59,6 +59,8 @@ internal static class SoakEnvironment
                 .Order(StringComparer.Ordinal)
                 .Select(k => KeyValuePair.Create(k, (JsonNode?)Environment.GetEnvironmentVariable(k)))),
             ["cpu_governor"] = Read("/sys/devices/system/cpu/cpu0/cpufreq/scaling_governor"),
+            ["transparent_hugepage"] = Read("/sys/kernel/mm/transparent_hugepage/enabled"),
+            ["transparent_hugepage_defrag"] = Read("/sys/kernel/mm/transparent_hugepage/defrag"),
             ["git_commit"] = commit,
             ["git_dirty"] = dirty,
             ["command_line"] = string.Join(' ', Environment.GetCommandLineArgs().Skip(1)),

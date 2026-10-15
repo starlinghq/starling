@@ -37,6 +37,9 @@
 //   --malloc-trim             Diagnostic (glibc only): after each unloaded sample, call malloc_trim(0) and sample again
 //                             (series "trimmed"). Memory that malloc_trim returns was freed but kept by the allocator,
 //                             not leaked. Changes allocator behaviour for the rest of the run; off by default.
+//   --no-heap-trim            Diagnostic: set the AppContext switch Starlings.Runtime.Onnx.DisableNativeHeapTrim, so
+//                             releasing a session does not call malloc_trim(0) (the library default on Linux glibc;
+//                             docs/evidence/scheduled-regression-fix/). Off by default.
 //   --keep-loaded             Diagnostic: load the model once and keep it loaded; each cycle serves its requests and
 //                             takes the settled samples without unloading (requests only, no load/unload churn). The
 //                             "unloaded" series is then a second settled sample with the model still loaded. Not a
@@ -129,6 +132,8 @@ internal sealed record SoakOptions
 
     public bool KeepLoaded { get; init; }
 
+    public bool NoHeapTrim { get; init; }
+
     public bool IsQualificationLength => Duration >= TimeSpan.FromHours(1);
 
     public static SoakOptions Parse(string[] args)
@@ -154,6 +159,7 @@ internal sealed record SoakOptions
                 "--checkpoint-interval" => o with { CheckpointInterval = ParseTime(Next()) },
                 "--malloc-trim" => o with { MallocTrim = true },
                 "--keep-loaded" => o with { KeepLoaded = true },
+                "--no-heap-trim" => o with { NoHeapTrim = true },
                 _ => throw new ArgumentException($"unknown option '{args[i]}'"),
             };
         }
@@ -246,6 +252,11 @@ internal sealed class SoakRunner(SoakWorkload workload, SoakOptions options)
 
     public int Run()
     {
+        if (options.NoHeapTrim)
+        {
+            AppContext.SetSwitch("Starlings.Runtime.Onnx.DisableNativeHeapTrim", true);
+        }
+
         Directory.CreateDirectory(options.Out);
         string stamp = DateTime.UtcNow.ToString("yyyyMMdd'T'HHmmss'Z'", CultureInfo.InvariantCulture);
         string basePath = Path.Combine(options.Out, $"{workload.Name}-{stamp}");
@@ -544,6 +555,7 @@ internal sealed class SoakRunner(SoakWorkload workload, SoakOptions options)
                 ["seed"] = options.Seed,
                 ["malloc_trim"] = options.MallocTrim,
                 ["keep_loaded"] = options.KeepLoaded,
+                ["native_heap_trim_disabled"] = options.NoHeapTrim,
                 ["gpu_sampling"] = MemoryProbe.GpuSamplingAvailable,
             },
             ["baseline"] = Sample(baseline),
@@ -596,6 +608,7 @@ internal sealed class SoakRunner(SoakWorkload workload, SoakOptions options)
         ["rss_file_mb"] = s.RssFileMb is { } f ? Math.Round(f, 3) : null,
         ["vm_data_mb"] = s.VmDataMb is { } d ? Math.Round(d, 3) : null,
         ["gpu_mb"] = s.GpuMb,
+        ["anon_huge_pages_mb"] = s.AnonHugePagesMb is { } h ? Math.Round(h, 3) : null,
     };
 }
 

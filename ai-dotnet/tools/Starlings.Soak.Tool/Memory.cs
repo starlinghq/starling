@@ -13,7 +13,8 @@ internal sealed record MemorySample(
     double? RssAnonMb,
     double? RssFileMb,
     double? VmDataMb,
-    double? GpuMb)
+    double? GpuMb,
+    double? AnonHugePagesMb = null)
 {
     public static readonly string[] Metrics = ["managed_heap", "working_set", "private", "rss_anon", "gpu"];
 
@@ -94,6 +95,7 @@ internal static class MemoryProbe
         using var process = Process.GetCurrentProcess();
         process.Refresh();
         var (anon, file, data) = ProcStatus();
+        double? hugePages = settle ? AnonHugePages() : null;
         return new MemorySample(
             seconds,
             phase,
@@ -105,7 +107,35 @@ internal static class MemoryProbe
             anon,
             file,
             data,
-            GpuMb(process.Id));
+            GpuMb(process.Id),
+            hugePages);
+    }
+
+    /// <summary>
+    /// <c>AnonHugePages</c> of <c>/proc/self/smaps_rollup</c> (anonymous memory backed by transparent huge pages): with
+    /// THP <c>always</c>, a freed hole inside a huge page stays resident until the whole 2 MiB is free. Settled samples
+    /// only (the rollup walks every mapping).
+    /// </summary>
+    private static double? AnonHugePages()
+    {
+        try
+        {
+            foreach (string line in File.ReadLines("/proc/self/smaps_rollup"))
+            {
+                if (line.StartsWith("AnonHugePages:", StringComparison.Ordinal))
+                {
+                    return double.Parse(line.Split(':', 2)[1].Trim().Split(' ')[0], CultureInfo.InvariantCulture) / 1024.0;
+                }
+            }
+        }
+        catch (IOException)
+        {
+        }
+        catch (UnauthorizedAccessException)
+        {
+        }
+
+        return null;
     }
 
     private static (double? Anon, double? File, double? Data) ProcStatus()

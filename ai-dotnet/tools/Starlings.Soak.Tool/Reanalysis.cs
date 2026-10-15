@@ -50,5 +50,6 @@ internal static class Reanalysis
         (double?)s["rss_anon_mb"],
         (double?)s["rss_file_mb"],
         (double?)s["vm_data_mb"],
-        (double?)s["gpu_mb"]);
+        (double?)s["gpu_mb"],
+        (double?)s["anon_huge_pages_mb"]);
 }
