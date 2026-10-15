@@ -279,11 +279,13 @@ qualification:
   # development fixtures, which are not P-030 release sets, so the entries are checklist, not passed (docs/evidence/cuda-qualification-2026-10-14/).
   # P-030 release sets (accepted 2026-10-14, docs/kickoff.md), 2026-10-14: G1, G2 passed on the release sets (docs/evidence/release-set-gates-2026-10-14/embeddinggemma2-image-fp32-cuda/README.md).
   # G2 passed with --max-image-pixels 80000000 for commons-image-14 (79 MP); the default 50 MP limit refuses it.
+  # G3 passed 2026-10-15 on the image retrieval set release/image-retrieval-v1 (#57): nDCG@10 0.9222 >= 0.916,
+  # MRR@10 0.9008 >= 0.893 (upstream reference 0.9222 / 0.9008) (docs/evidence/release-set-gates-2026-10-14/embeddinggemma2-image-fp32-cuda/README.md).
   gates:
     G0: { status: passed, evidence: docs/evidence/g0-provenance-2026-10-14/README.md, date: 2026-10-14 }
     G1: { status: passed, evidence: docs/evidence/release-set-gates-2026-10-14/embeddinggemma2-image-fp32-cuda/README.md, date: 2026-10-14 }
     G2: { status: passed, evidence: docs/evidence/release-set-gates-2026-10-14/embeddinggemma2-image-fp32-cuda/README.md, date: 2026-10-14 }
-    G3: { status: not-run }
+    G3: { status: passed, evidence: docs/evidence/release-set-gates-2026-10-14/embeddinggemma2-image-fp32-cuda/README.md, date: 2026-10-15 }
     G4: { status: failed, evidence: docs/evidence/qualification-2026-10-15/README.md, date: 2026-10-15 }
     G5: { status: failed, evidence: docs/evidence/qualification-2026-10-15/README.md, date: 2026-10-15 }
     G6: { status: passed, evidence: docs/evidence/g6-distribution-2026-10-14/README.md, date: 2026-10-14 }

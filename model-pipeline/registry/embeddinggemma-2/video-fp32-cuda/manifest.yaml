@@ -316,7 +316,9 @@ qualification:
     G0: { status: checklist, evidence: docs/m0/embeddinggemma2-video-spike.md, date: 2026-10-11 }
     G1: { status: passed, evidence: docs/evidence/release-set-gates-2026-10-14/embeddinggemma2-video-fp32-cuda/README.md, date: 2026-10-14 }
     G2: { status: passed, evidence: docs/evidence/release-set-gates-2026-10-14/embeddinggemma2-video-fp32-cuda/README.md, date: 2026-10-14 }
-    G3: { status: not-run }
+    # G3 passed 2026-10-15 on the video retrieval set release/video-retrieval-v1 (#57): nDCG@10 0.8126 >= 0.797,
+    # MRR@10 0.7714 >= 0.751 (upstream reference 0.8126 / 0.7714).
+    G3: { status: passed, evidence: docs/evidence/release-set-gates-2026-10-14/embeddinggemma2-video-fp32-cuda/README.md, date: 2026-10-15 }
     G4: { status: failed, evidence: docs/evidence/qualification-2026-10-15/README.md, date: 2026-10-15 }
     G5: { status: failed, evidence: docs/evidence/qualification-2026-10-15/README.md, date: 2026-10-15 }
     # G6 open (2026-10-14, docs/evidence/g6-distribution-2026-10-14/README.md): no clean install from published packages

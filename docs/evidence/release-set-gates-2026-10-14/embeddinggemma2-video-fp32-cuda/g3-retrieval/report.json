@@ -1,0 +1,1342 @@
+{
+  "format": "starlings.task-quality-report",
+  "format_version": 1,
+  "task": "retrieval",
+  "profile": "embeddinggemma-2/video-fp32-cuda",
+  "date": "2026-10-15",
+  "evaluator": {
+    "name": "model-pipeline evaluate --g3",
+    "version": "0.1.0",
+    "repository_commit": "1aa26e586d1322cfe58bd74f15ba0aa447adec30"
+  },
+  "dataset": {
+    "sha256": "fe9b83c107c717d55d78e464f0c47ff8b53f05d380423b79c28a8b893c2fac08",
+    "sha256_with_metadata": "c1573b0f0715d310875399c48510c2275fc92adb78b1bb618d785bf8af349ed9",
+    "files": [
+      {
+        "path": "model-pipeline/protected/embeddinggemma-2/release/video-retrieval-v1/queries.jsonl",
+        "sha256": "eaa48c40e064b693abea47f62ba1f343c132b3c3e7724cfe86c70844aa6f307f"
+      },
+      {
+        "path": "model-pipeline/protected/embeddinggemma-2/release/video-retrieval-v1/corpus.jsonl",
+        "sha256": "74e13c5c3f345dcccc58f60073093aa13b0c24392a48cbe281177814566b6da7"
+      },
+      {
+        "path": "model-pipeline/protected/embeddinggemma-2/release/video-retrieval-v1/qrels.jsonl",
+        "sha256": "be87b18510e0218a0523e72d08b4959fdd1f8d3f04b24618d8f90acffa6a8532"
+      },
+      {
+        "path": "model-pipeline/protected/embeddinggemma-2/release/video-retrieval-v1/dataset.json",
+        "sha256": "47fabcab0c7146e00bddb4c72eac022f6c14a289c9c7b01246ae9bb6812f931d"
+      }
+    ],
+    "metadata": {
+      "name": "embeddinggemma2-commons-video-retrieval-v1",
+      "modality": "video",
+      "prompts": {
+        "query": "the model's `query` prompt (task: search result | query: )",
+        "document": "none: the video alone, without a prompt (model card: prefixes apply to text only)"
+      },
+      "queries": "the file's English Commons description (ImageDescription), cleaned and cut as the script says",
+      "selection": {
+        "script": "model-pipeline/reference/embeddinggemma2/select_eg2_retrieval.py",
+        "seed": 20261015,
+        "queried": "2026-10-15T19:23:31Z",
+        "media_list": "video-media.json",
+        "media_list_sha256": "b0bce3f45b318f4c1005041279b101804cb174dcefdcfcfbde4ef22ba5c4aa7e",
+        "fetch": "model-pipeline/reference/embeddinggemma2/fetch_eg2_release_media.py",
+        "selected": 50,
+        "kept_at_fetch": 50
+      },
+      "media_in_git": false,
+      "files": [
+        {
+          "id": "commons-video-00",
+          "title": "File:Active Sun in 3-D.webm",
+          "source": "https://commons.wikimedia.org/wiki/File:Active_Sun_in_3-D.webm",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/1/11/Active_Sun_in_3-D.webm",
+          "revision_timestamp": "2013-06-23T15:08:53Z",
+          "sha1": "6b2f9e73e7025198a161e68e1e6116ec9c3f7777",
+          "bytes": 4061542,
+          "license": "CC BY 3.0",
+          "license_page_templates": [
+            "Cc-by-3.0",
+            "Cc-by-layout"
+          ],
+          "artist": "https://www.youtube.com/user/SDOmission2009",
+          "credit": "YouTube: https://www.youtube.com/watch?v=ysrNwDXPXlA – View/save archived versions on archive.org"
+        },
+        {
+          "id": "commons-video-01",
+          "title": "File:Animation of Rotating Earth at Night.webm",
+          "source": "https://commons.wikimedia.org/wiki/File:Animation_of_Rotating_Earth_at_Night.webm",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/9/99/Animation_of_Rotating_Earth_at_Night.webm",
+          "revision_timestamp": "2016-02-03T20:28:37Z",
+          "sha1": "32e57a466204081c5e7d9991996aa451a1987365",
+          "bytes": 2962571,
+          "license": "Public domain",
+          "license_page_templates": [
+            "PD-Layout",
+            "PD-NASA",
+            "PD-USGov-NASA"
+          ],
+          "artist": "NASA",
+          "credit": "http://www.nasa.gov/multimedia/hd/index.html [1]"
+        },
+        {
+          "id": "commons-video-02",
+          "title": "File:B-52H Flying over the Mojave Desert in California.webm",
+          "source": "https://commons.wikimedia.org/wiki/File:B-52H_Flying_over_the_Mojave_Desert_in_California.webm",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/c/c3/B-52H_Flying_over_the_Mojave_Desert_in_California.webm",
+          "revision_timestamp": "2017-04-04T15:09:39Z",
+          "sha1": "14d60eb6cb0eeae7a1aa4457e75bbafa04ad9970",
+          "bytes": 1733494,
+          "license": "Public domain",
+          "license_page_templates": [
+            "PD-Layout",
+            "PD-USGov-NASA"
+          ],
+          "artist": "NASA Armstrong Flight Research Center",
+          "credit": "YouTube: B-52H Flying over the Mojave Desert in California – View/save archived versions on archive.org"
+        },
+        {
+          "id": "commons-video-03",
+          "title": "File:Bermuda High.webm",
+          "source": "https://commons.wikimedia.org/wiki/File:Bermuda_High.webm",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/6/63/Bermuda_High.webm",
+          "revision_timestamp": "2014-01-30T05:27:19Z",
+          "sha1": "d35fda23f3b257915363b61cc94a7fb7302796a2",
+          "bytes": 12370355,
+          "license": "Public domain",
+          "license_page_templates": [
+            "PD-Layout",
+            "PD-USGov-NASA"
+          ],
+          "artist": "NASA",
+          "credit": "http://svs.gsfc.nasa.gov/vis/a010000/a010000/a010069/"
+        },
+        {
+          "id": "commons-video-04",
+          "title": "File:Black Brant stage separation.webm",
+          "source": "https://commons.wikimedia.org/wiki/File:Black_Brant_stage_separation.webm",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/7/74/Black_Brant_stage_separation.webm",
+          "revision_timestamp": "2024-06-20T23:10:54Z",
+          "sha1": "9896b71cc14c28bcbcdaacace2cb8229ae60c8ae",
+          "bytes": 396333,
+          "license": "Public domain",
+          "license_page_templates": [
+            "PD-Layout",
+            "PD-NASA",
+            "PD-USGov-NASA"
+          ],
+          "artist": "NASA/Wallops Flight Facility",
+          "credit": "https://sites.wff.nasa.gov/code810/videopage.html - https://sites.wff.nasa.gov/code810/video/Black%20Brant%20sep%20Leclair.mp4"
+        },
+        {
+          "id": "commons-video-05",
+          "title": "File:Black Hole Accretion Disk Visualization.webm",
+          "source": "https://commons.wikimedia.org/wiki/File:Black_Hole_Accretion_Disk_Visualization.webm",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/2/20/Black_Hole_Accretion_Disk_Visualization.webm",
+          "revision_timestamp": "2020-04-15T17:53:10Z",
+          "sha1": "d4a2d84460c28521a5825523128e394903a97e77",
+          "bytes": 28324203,
+          "license": "Public domain",
+          "license_page_templates": [
+            "PD-Layout",
+            "PD-USGov-NASA"
+          ],
+          "artist": "NASA’s Goddard Space Flight Center/Jeremy Schnittman",
+          "credit": "https://svs.gsfc.nasa.gov/13326"
+        },
+        {
+          "id": "commons-video-06",
+          "title": "File:Breakaway Prominence.webm",
+          "source": "https://commons.wikimedia.org/wiki/File:Breakaway_Prominence.webm",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/8/8f/Breakaway_Prominence.webm",
+          "revision_timestamp": "2013-06-23T15:42:37Z",
+          "sha1": "cd3ae91978f1148bf41ee44d319f062eae411c30",
+          "bytes": 5530285,
+          "license": "CC BY 3.0",
+          "license_page_templates": [
+            "Cc-by-3.0",
+            "Cc-by-layout"
+          ],
+          "artist": "https://www.youtube.com/user/SDOmission2009",
+          "credit": "YouTube: https://www.youtube.com/watch?v=5YNPsjZ--Y8 – View/save archived versions on archive.org"
+        },
+        {
+          "id": "commons-video-07",
+          "title": "File:CILab Greenhouse Gases Effect on Global Warming.webm",
+          "source": "https://commons.wikimedia.org/wiki/File:CILab_Greenhouse_Gases_Effect_on_Global_Warming.webm",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/d/dd/CILab_Greenhouse_Gases_Effect_on_Global_Warming.webm",
+          "revision_timestamp": "2025-10-12T09:18:43Z",
+          "sha1": "6846406b11494b6a6d67290861644f1f252df41c",
+          "bytes": 19398098,
+          "license": "Public domain",
+          "license_page_templates": [
+            "PD-Layout",
+            "PD-USGov-NASA"
+          ],
+          "artist": "NASA/Goddard Space Flight Center Conceptual Image Lab",
+          "credit": "https://svs.gsfc.nasa.gov/20114"
+        },
+        {
+          "id": "commons-video-08",
+          "title": "File:Concept animation of exoplanet candidate HD 137010 b.webm",
+          "source": "https://commons.wikimedia.org/wiki/File:Concept_animation_of_exoplanet_candidate_HD_137010_b.webm",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/3/3d/Concept_animation_of_exoplanet_candidate_HD_137010_b.webm",
+          "revision_timestamp": "2026-02-02T09:10:05Z",
+          "sha1": "eefcf4e9d09300e9e6e7c0d15e8c0fc411a60047",
+          "bytes": 14673022,
+          "license": "Public domain",
+          "license_page_templates": [
+            "PD-Layout",
+            "PD-USGov-NASA"
+          ],
+          "artist": "NASA/JPL-Caltech/Keith Miller (Caltech/IPAC)",
+          "credit": "https://science.nasa.gov/universe/exoplanets/discovery-alert-an-ice-cold-earth/"
+        },
+        {
+          "id": "commons-video-09",
+          "title": "File:EPIC View of Moon Transiting the Earth.webm",
+          "source": "https://commons.wikimedia.org/wiki/File:EPIC_View_of_Moon_Transiting_the_Earth.webm",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/8/89/EPIC_View_of_Moon_Transiting_the_Earth.webm",
+          "revision_timestamp": "2015-08-06T15:02:02Z",
+          "sha1": "4fb579f3cb4ca38390b8b811174f2ab651f4dff8",
+          "bytes": 6608740,
+          "license": "Public domain",
+          "license_page_templates": [
+            "PD-Layout",
+            "PD-USGov-NASA"
+          ],
+          "artist": "NASA image courtesy of the DSCOVR EPIC team. DSCOVR is a partnership between NASA, NOAA and the U.S. Air Force, with the primary objective of maintaining the nation’s real-time solar wind monitoring capabilities.",
+          "credit": "The Dark Side and the Bright Side From a Million Miles Away, NASA Camera Shows Moon Crossing Face of Earth"
+        },
+        {
+          "id": "commons-video-10",
+          "title": "File:GPM Captures Hurricane Matthew Before Haiti Landfall.webm",
+          "source": "https://commons.wikimedia.org/wiki/File:GPM_Captures_Hurricane_Matthew_Before_Haiti_Landfall.webm",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/f/f5/GPM_Captures_Hurricane_Matthew_Before_Haiti_Landfall.webm",
+          "revision_timestamp": "2016-10-06T08:59:25Z",
+          "sha1": "2431ec1d184d193f20e7b5d67f87645b4af15954",
+          "bytes": 7002915,
+          "license": "Public domain",
+          "license_page_templates": [
+            "PD-Layout",
+            "PD-USGov-NASA"
+          ],
+          "artist": "NASA Scientific Visualization",
+          "credit": "NASA Scientific Visualization"
+        },
+        {
+          "id": "commons-video-11",
+          "title": "File:Global Temperature Anomalies from 1880 to 2019 - 2.webm",
+          "source": "https://commons.wikimedia.org/wiki/File:Global_Temperature_Anomalies_from_1880_to_2019_-_2.webm",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/7/75/Global_Temperature_Anomalies_from_1880_to_2019_-_2.webm",
+          "revision_timestamp": "2020-04-25T14:56:24Z",
+          "sha1": "359a3c9d6ffc5bce3fc0771b6da74732633ab206",
+          "bytes": 6047935,
+          "license": "Public domain",
+          "license_page_templates": [
+            "PD-Layout",
+            "PD-USGov-NASA"
+          ],
+          "artist": "NASA's Scientific Visualization Studio Data provided by Robert B. Schmunk (NASA/GSFC GISS)",
+          "credit": "https://svs.gsfc.nasa.gov/4787"
+        },
+        {
+          "id": "commons-video-12",
+          "title": "File:HurrArthur720p.webm",
+          "source": "https://commons.wikimedia.org/wiki/File:HurrArthur720p.webm",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/6/6b/HurrArthur720p.webm",
+          "revision_timestamp": "2014-07-08T16:05:33Z",
+          "sha1": "58116585f0c9b6589ba809ad5fcb4b7269092000",
+          "bytes": 10543075,
+          "license": "Public domain",
+          "license_page_templates": [
+            "PD-Layout",
+            "PD-USGov-NASA"
+          ],
+          "artist": "NASA's Scientific Visualization Studio. Data provided by the joint NASA/JAXA GPM mission.",
+          "credit": "http://svs.gsfc.nasa.gov/cgi-bin/details.cgi?aid=4186"
+        },
+        {
+          "id": "commons-video-13",
+          "title": "File:Joaquin 360.webm",
+          "source": "https://commons.wikimedia.org/wiki/File:Joaquin_360.webm",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/3/3b/Joaquin_360.webm",
+          "revision_timestamp": "2015-10-03T08:41:42Z",
+          "sha1": "961698413628c033cac9b81f0e5adfd5d9566072",
+          "bytes": 3753856,
+          "license": "Public domain",
+          "license_page_templates": [
+            "PD-Layout",
+            "PD-USGov-NASA"
+          ],
+          "artist": "NASA's Scientific Visualization Studio",
+          "credit": "NASA's Scientific Visualization Studio"
+        },
+        {
+          "id": "commons-video-14",
+          "title": "File:Kepler-452b Transit graph-ukr.webm",
+          "source": "https://commons.wikimedia.org/wiki/File:Kepler-452b_Transit_graph-ukr.webm",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/8/89/Kepler-452b_Transit_graph-ukr.webm",
+          "revision_timestamp": "2016-04-28T19:54:18Z",
+          "sha1": "f7571567e628de07e5bdee94584c3c911a925c55",
+          "bytes": 228845,
+          "license": "Public domain",
+          "license_page_templates": [
+            "PD-Layout",
+            "PD-USGov-NASA"
+          ],
+          "artist": "NASA Ames Berry Dana Berry",
+          "credit": "YouTube: Transit graph – View/save archived versions on archive.org"
+        },
+        {
+          "id": "commons-video-15",
+          "title": "File:LDCM spacecraft in orbit around the Earth (2).webm",
+          "source": "https://commons.wikimedia.org/wiki/File:LDCM_spacecraft_in_orbit_around_the_Earth_(2).webm",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/7/70/LDCM_spacecraft_in_orbit_around_the_Earth_%282%29.webm",
+          "revision_timestamp": "2014-06-21T01:10:28Z",
+          "sha1": "e83055ae33eaa619c5ce8ee1290bda9355bb271d",
+          "bytes": 9060325,
+          "license": "Public domain",
+          "license_page_templates": [
+            "PD-Layout",
+            "PD-USGov-NASA"
+          ],
+          "artist": "NASA/Goddard Space Flight Center Conceptual Image Lab",
+          "credit": "http://svs.gsfc.nasa.gov/goto?10812 (direct link)"
+        },
+        {
+          "id": "commons-video-16",
+          "title": "File:M2-F2 experiencing lateral oscillations in flight.webm",
+          "source": "https://commons.wikimedia.org/wiki/File:M2-F2_experiencing_lateral_oscillations_in_flight.webm",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/f/f8/M2-F2_experiencing_lateral_oscillations_in_flight.webm",
+          "revision_timestamp": "2017-06-05T22:38:46Z",
+          "sha1": "a2ba17845784464307a47cb523aec8a0e1390a9b",
+          "bytes": 1849579,
+          "license": "Public domain",
+          "license_page_templates": [
+            "PD-Layout",
+            "PD-USGov-NASA"
+          ],
+          "artist": "NASA Dryden Flight Research Center",
+          "credit": "https://www.dfrc.nasa.gov/Gallery/Movie/M2-F2/HTML/EM-0021-03.html"
+        },
+        {
+          "id": "commons-video-17",
+          "title": "File:M2-F2 flight preparation and launch.webm",
+          "source": "https://commons.wikimedia.org/wiki/File:M2-F2_flight_preparation_and_launch.webm",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/a/a1/M2-F2_flight_preparation_and_launch.webm",
+          "revision_timestamp": "2017-06-05T22:38:49Z",
+          "sha1": "7868b450fe1f4f151bd48a1708abd3e6ce335089",
+          "bytes": 1530369,
+          "license": "Public domain",
+          "license_page_templates": [
+            "PD-Layout",
+            "PD-USGov-NASA"
+          ],
+          "artist": "NASA Dryden Flight Research Center",
+          "credit": "https://www.dfrc.nasa.gov/Gallery/Movie/M2-F2/HTML/EM-0021-01.html"
+        },
+        {
+          "id": "commons-video-18",
+          "title": "File:M83-zoomin-NASA.webm",
+          "source": "https://commons.wikimedia.org/wiki/File:M83-zoomin-NASA.webm",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/0/0c/M83-zoomin-NASA.webm",
+          "revision_timestamp": "2018-02-13T06:53:31Z",
+          "sha1": "fc9786019762cfaf8eb156bc3f5f8336e7d9aaca",
+          "bytes": 12160971,
+          "license": "Public domain",
+          "license_page_templates": [
+            "PD-Layout",
+            "PD-USGov-NASA"
+          ],
+          "artist": "NASA",
+          "credit": "NASA"
+        },
+        {
+          "id": "commons-video-19",
+          "title": "File:MMS Spacecraft Transition to Tetrahedral Flying Formation.webm",
+          "source": "https://commons.wikimedia.org/wiki/File:MMS_Spacecraft_Transition_to_Tetrahedral_Flying_Formation.webm",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/b/bf/MMS_Spacecraft_Transition_to_Tetrahedral_Flying_Formation.webm",
+          "revision_timestamp": "2015-08-07T17:16:03Z",
+          "sha1": "80825bade34002b4b79b51c667828a974924de30",
+          "bytes": 7883005,
+          "license": "Public domain",
+          "license_page_templates": [
+            "PD-Layout",
+            "PD-USGov-NASA"
+          ],
+          "artist": "NASA's Scientific Visualization Studio",
+          "credit": "NASA's Scientific Visualization Studio"
+        },
+        {
+          "id": "commons-video-20",
+          "title": "File:Major Hurricane Drought.webm",
+          "source": "https://commons.wikimedia.org/wiki/File:Major_Hurricane_Drought.webm",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/5/57/Major_Hurricane_Drought.webm",
+          "revision_timestamp": "2015-05-16T14:52:31Z",
+          "sha1": "922c4b393d94f7ef82c109e04278cc13afcba020",
+          "bytes": 5900159,
+          "license": "Public domain",
+          "license_page_templates": [
+            "PD-Layout",
+            "PD-USGov-NASA"
+          ],
+          "artist": "NASA's Scientific Visualization Studio",
+          "credit": "NASA's Scientific Visualization Studio"
+        },
+        {
+          "id": "commons-video-21",
+          "title": "File:Milt Thompson prepares for M2-F2 glide flight.webm",
+          "source": "https://commons.wikimedia.org/wiki/File:Milt_Thompson_prepares_for_M2-F2_glide_flight.webm",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/a/a0/Milt_Thompson_prepares_for_M2-F2_glide_flight.webm",
+          "revision_timestamp": "2017-06-05T22:38:50Z",
+          "sha1": "0ab11416fb0421671b52fb6fe7cff4b1d8eada2f",
+          "bytes": 2177885,
+          "license": "Public domain",
+          "license_page_templates": [
+            "PD-Layout",
+            "PD-USGov-NASA"
+          ],
+          "artist": "NASA Dryden Flight Research Center",
+          "credit": "https://www.dfrc.nasa.gov/Gallery/Movie/M2-F2/HTML/EM-0021-05.html"
+        },
+        {
+          "id": "commons-video-22",
+          "title": "File:NASA - How to Get Colder Than Anywhere Else.webm",
+          "source": "https://commons.wikimedia.org/wiki/File:NASA_-_How_to_Get_Colder_Than_Anywhere_Else.webm",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/0/0d/NASA_-_How_to_Get_Colder_Than_Anywhere_Else.webm",
+          "revision_timestamp": "2014-05-18T19:49:52Z",
+          "sha1": "01cf3573f6411d75f7e0e48e381b6511400e41eb",
+          "bytes": 4951050,
+          "license": "Public domain",
+          "license_page_templates": [
+            "PD-Layout",
+            "PD-NASA",
+            "PD-USGov-NASA"
+          ],
+          "artist": "NASA Goddard",
+          "credit": "YouTube: NASA - How to Get Colder Than Anywhere Else – View/save archived versions on archive.org"
+        },
+        {
+          "id": "commons-video-23",
+          "title": "File:NASA - The Sun Reverses its Magnetic Poles.webm",
+          "source": "https://commons.wikimedia.org/wiki/File:NASA_-_The_Sun_Reverses_its_Magnetic_Poles.webm",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/a/a7/NASA_-_The_Sun_Reverses_its_Magnetic_Poles.webm",
+          "revision_timestamp": "2014-05-18T19:46:08Z",
+          "sha1": "8d8b8ad74696001fdb1336bdc3749e164676a676",
+          "bytes": 13365355,
+          "license": "Public domain",
+          "license_page_templates": [
+            "PD-Layout",
+            "PD-NASA",
+            "PD-USGov-NASA"
+          ],
+          "artist": "NASA Goddard",
+          "credit": "YouTube: NASA - The Sun Reverses its Magnetic Poles – View/save archived versions on archive.org"
+        },
+        {
+          "id": "commons-video-24",
+          "title": "File:NASA Meatball Reinstalled at NASA’s Michoud Assembly Facility.webm",
+          "source": "https://commons.wikimedia.org/wiki/File:NASA_Meatball_Reinstalled_at_NASA%E2%80%99s_Michoud_Assembly_Facility.webm",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/1/10/NASA_Meatball_Reinstalled_at_NASA%E2%80%99s_Michoud_Assembly_Facility.webm",
+          "revision_timestamp": "2022-02-18T06:09:29Z",
+          "sha1": "6616921f8c858504e3b5136cde3f643d786f3e64",
+          "bytes": 13212168,
+          "license": "Public domain",
+          "license_page_templates": [
+            "PD-Layout",
+            "PD-NASA",
+            "PD-USGov-NASA"
+          ],
+          "artist": "MAF",
+          "credit": "https://images.nasa.gov/details-MAF_20220201_NASA-Logo_TL"
+        },
+        {
+          "id": "commons-video-25",
+          "title": "File:NASA Starshade animation.webm",
+          "source": "https://commons.wikimedia.org/wiki/File:NASA_Starshade_animation.webm",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/2/2b/NASA_Starshade_animation.webm",
+          "revision_timestamp": "2014-04-01T00:02:08Z",
+          "sha1": "fca7cc628c1538a0599f148732b7c5c00d26e087",
+          "bytes": 7678707,
+          "license": "Public domain",
+          "license_page_templates": [
+            "PD-Layout",
+            "PD-NASA",
+            "PD-USGov-NASA"
+          ],
+          "artist": "NASA/JPL/Caltech",
+          "credit": "http://planetquest.jpl.nasa.gov/video/15"
+        },
+        {
+          "id": "commons-video-26",
+          "title": "File:NASA's Aquarius Sees Salty Shifts hd video.webm",
+          "source": "https://commons.wikimedia.org/wiki/File:NASA%27s_Aquarius_Sees_Salty_Shifts_hd_video.webm",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/b/b3/NASA%27s_Aquarius_Sees_Salty_Shifts_hd_video.webm",
+          "revision_timestamp": "2018-05-24T18:37:24Z",
+          "sha1": "5158ee9c588086f6f8bbfe5b9bf0c9eddb31fa5e",
+          "bytes": 6452208,
+          "license": "Public domain",
+          "license_page_templates": [
+            "PD-Layout",
+            "PD-USGov-NASA"
+          ],
+          "artist": "NASA",
+          "credit": "https://www.flickr.com/photos/gsfc/8512918417/in/photolist-dYfW4t-dYfUU6"
+        },
+        {
+          "id": "commons-video-27",
+          "title": "File:NASA's AquariusSAC D Spacecraft Separation.webm",
+          "source": "https://commons.wikimedia.org/wiki/File:NASA%27s_AquariusSAC_D_Spacecraft_Separation.webm",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/d/db/NASA%27s_AquariusSAC_D_Spacecraft_Separation.webm",
+          "revision_timestamp": "2015-08-12T00:38:09Z",
+          "sha1": "46d252c176512c002fa9b2748dbd0947ef92dfb6",
+          "bytes": 6481494,
+          "license": "Public domain",
+          "license_page_templates": [
+            "PD-Layout",
+            "PD-USGov-NASA"
+          ],
+          "artist": "NASA",
+          "credit": "YouTube: NASA's Aquarius/SAC-D has a Successful Spacecraft Separation – View/save archived versions on archive.org"
+        },
+        {
+          "id": "commons-video-28",
+          "title": "File:NASA's Armstrong Flight Research Center G-III Captures Eclipse Umbra.webm",
+          "source": "https://commons.wikimedia.org/wiki/File:NASA%27s_Armstrong_Flight_Research_Center_G-III_Captures_Eclipse_Umbra.webm",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/c/cb/NASA%27s_Armstrong_Flight_Research_Center_G-III_Captures_Eclipse_Umbra.webm",
+          "revision_timestamp": "2017-09-04T00:55:46Z",
+          "sha1": "0cac41b98d8e7bc50cb595f5d55067553f98ce4f",
+          "bytes": 3349833,
+          "license": "Public domain",
+          "license_page_templates": [
+            "PD-Layout",
+            "PD-NASA",
+            "PD-USGov-NASA"
+          ],
+          "artist": "NASA Armstrong Flight Research Center",
+          "credit": "YouTube: NASA's Armstrong Flight Research Center G-III Captures Eclipse Umbra – View/save archived versions on archive.org"
+        },
+        {
+          "id": "commons-video-29",
+          "title": "File:NASA's Hubble Celebrates 21st Anniversary with \"Rose\" of Galaxies (HD Video).webm",
+          "source": "https://commons.wikimedia.org/wiki/File:NASA%27s_Hubble_Celebrates_21st_Anniversary_with_%22Rose%22_of_Galaxies_(HD_Video).webm",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/b/b6/NASA%27s_Hubble_Celebrates_21st_Anniversary_with_%22Rose%22_of_Galaxies_%28HD_Video%29.webm",
+          "revision_timestamp": "2020-06-06T15:44:58Z",
+          "sha1": "9be0ef979baec445c2ce66349a16edc8083c8e69",
+          "bytes": 20721643,
+          "license": "CC BY 2.0",
+          "license_page_templates": [
+            "Cc-by-2.0",
+            "Cc-by-layout"
+          ],
+          "artist": "NASA Goddard Space Flight Center",
+          "credit": "NASA's Hubble Celebrates 21st Anniversary with \"Rose\" of Galaxies [HD Video - Flickr]"
+        },
+        {
+          "id": "commons-video-30",
+          "title": "File:NASA's MISR instrument sees Arizona wildfires burn.webm",
+          "source": "https://commons.wikimedia.org/wiki/File:NASA%27s_MISR_instrument_sees_Arizona_wildfires_burn.webm",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/9/92/NASA%27s_MISR_instrument_sees_Arizona_wildfires_burn.webm",
+          "revision_timestamp": "2016-03-31T22:20:34Z",
+          "sha1": "1c0988bd3bb14c442c22bf8f9bc99d61d9acb0d1",
+          "bytes": 97417,
+          "license": "Public domain",
+          "license_page_templates": [
+            "PD-Layout",
+            "PD-USGov-NASA"
+          ],
+          "artist": "NASA/GSFC/LaRC/JPL/MISR Team",
+          "credit": "https://www.nasa.gov/mission_pages/terra/videos/index.html"
+        },
+        {
+          "id": "commons-video-31",
+          "title": "File:Neptune's Dynamic Environment.webm",
+          "source": "https://commons.wikimedia.org/wiki/File:Neptune%27s_Dynamic_Environment.webm",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/b/b3/Neptune%27s_Dynamic_Environment.webm",
+          "revision_timestamp": "2016-05-18T03:48:54Z",
+          "sha1": "521eee48d4228d0a42cb4e91c763ef38a83b0e8c",
+          "bytes": 1157372,
+          "license": "Public domain",
+          "license_page_templates": [
+            "PD-Layout",
+            "PD-USGov-NASA"
+          ],
+          "artist": "NASA/ESA/E. Karkoschka (University of Arizona)/H.B. Hammel (Space Science Institute, Boulder, Colo.)/G. Bacon (STScI)",
+          "credit": "https://www.nasa.gov/multimedia/imagegallery/image_feature_399.html (direct link)"
+        },
+        {
+          "id": "commons-video-32",
+          "title": "File:Ocean Moon Glint and City Night Lights in 4K.webm",
+          "source": "https://commons.wikimedia.org/wiki/File:Ocean_Moon_Glint_and_City_Night_Lights_in_4K.webm",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/b/b9/Ocean_Moon_Glint_and_City_Night_Lights_in_4K.webm",
+          "revision_timestamp": "2019-11-23T21:32:23Z",
+          "sha1": "9eda5d235b1b0cafca6115b53f4cfe8c73604281",
+          "bytes": 9600365,
+          "license": "Public domain",
+          "license_page_templates": [
+            "PD-Layout",
+            "PD-USGov-NASA"
+          ],
+          "artist": "NASA",
+          "credit": "https://www.nasa.gov/content/ultra-high-definition-video-gallery; see original page at https://www.youtube.com/watch?v=8HW9gYGMiwo"
+        },
+        {
+          "id": "commons-video-33",
+          "title": "File:Permanent Shadows on Ceres.webm",
+          "source": "https://commons.wikimedia.org/wiki/File:Permanent_Shadows_on_Ceres.webm",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/4/4f/Permanent_Shadows_on_Ceres.webm",
+          "revision_timestamp": "2016-07-11T11:48:30Z",
+          "sha1": "3ac1820302e1c44b0a3d99ece223e2b1e6efe58d",
+          "bytes": 5369530,
+          "license": "Public domain",
+          "license_page_templates": [
+            "PD-Layout",
+            "PD-USGov-NASA"
+          ],
+          "artist": "NASA's Scientific Visualization Studio",
+          "credit": "NASA's Scientific Visualization Studio"
+        },
+        {
+          "id": "commons-video-34",
+          "title": "File:Reiner Gamma vid.webm",
+          "source": "https://commons.wikimedia.org/wiki/File:Reiner_Gamma_vid.webm",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/2/24/Reiner_Gamma_vid.webm",
+          "revision_timestamp": "2017-03-28T09:52:15Z",
+          "sha1": "81658f755cdaf57ff78883bcd5a6a91160f1c10d",
+          "bytes": 8331914,
+          "license": "Public domain",
+          "license_page_templates": [
+            "PD-Layout",
+            "PD-USGov-NASA"
+          ],
+          "artist": "NASA's Scientific Visualization Studio",
+          "credit": "NASA's Scientific Visualization Studio"
+        },
+        {
+          "id": "commons-video-35",
+          "title": "File:SR-71 Blackbird Refueling in Flight.webm",
+          "source": "https://commons.wikimedia.org/wiki/File:SR-71_Blackbird_Refueling_in_Flight.webm",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/2/29/SR-71_Blackbird_Refueling_in_Flight.webm",
+          "revision_timestamp": "2017-07-25T21:39:27Z",
+          "sha1": "796b17dbd6e55b997a38fd3d92002b1973e1a2ea",
+          "bytes": 3509945,
+          "license": "Public domain",
+          "license_page_templates": [
+            "PD-Layout",
+            "PD-NASA",
+            "PD-USGov-NASA"
+          ],
+          "artist": "NASA Armstrong Flight Research Center",
+          "credit": "YouTube: SR-71 Blackbird Refueling in Flight – View/save archived versions on archive.org"
+        },
+        {
+          "id": "commons-video-36",
+          "title": "File:SR-71B Blackbird Pilot Trainer Aircraft.webm",
+          "source": "https://commons.wikimedia.org/wiki/File:SR-71B_Blackbird_Pilot_Trainer_Aircraft.webm",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/0/03/SR-71B_Blackbird_Pilot_Trainer_Aircraft.webm",
+          "revision_timestamp": "2017-07-25T21:43:12Z",
+          "sha1": "6dd2da500a7bdd9c2743ad08425a6b0e1f1996fc",
+          "bytes": 2035372,
+          "license": "Public domain",
+          "license_page_templates": [
+            "PD-Layout",
+            "PD-NASA",
+            "PD-USGov-NASA"
+          ],
+          "artist": "NASA Armstrong Flight Research Center",
+          "credit": "YouTube: SR-71B Blackbird Pilot Trainer Aircraft – View/save archived versions on archive.org"
+        },
+        {
+          "id": "commons-video-37",
+          "title": "File:STS-51 IMAX footage part 1.webm",
+          "source": "https://commons.wikimedia.org/wiki/File:STS-51_IMAX_footage_part_1.webm",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/3/39/STS-51_IMAX_footage_part_1.webm",
+          "revision_timestamp": "2026-07-22T18:39:43Z",
+          "sha1": "b6c1f57dbefcb9d80883fcd47225c81d4783d955",
+          "bytes": 5603367,
+          "license": "Public domain",
+          "license_page_templates": [
+            "PD-Layout",
+            "PD-USGov-NASA"
+          ],
+          "artist": "NASA / STS-51 crew",
+          "credit": "Reddit post"
+        },
+        {
+          "id": "commons-video-38",
+          "title": "File:Satellite Movie from NASA Shows Large Hurricane Irene Slamming East Coast.webm",
+          "source": "https://commons.wikimedia.org/wiki/File:Satellite_Movie_from_NASA_Shows_Large_Hurricane_Irene_Slamming_East_Coast.webm",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/5/51/Satellite_Movie_from_NASA_Shows_Large_Hurricane_Irene_Slamming_East_Coast.webm",
+          "revision_timestamp": "2017-10-23T18:35:11Z",
+          "sha1": "0662aa610f1ce91ff572ae488cd8868b68cb5c6b",
+          "bytes": 1846305,
+          "license": "Public domain",
+          "license_page_templates": [
+            "Cc-by-2.0",
+            "Cc-by-layout",
+            "PD-Layout",
+            "PD-NASA",
+            "PD-USGov-NASA"
+          ],
+          "artist": "NASA Goddard Space Flight Center",
+          "credit": "Satellite Movie from NASA Shows Large Hurricane Irene Slamming East Coast - Flickr"
+        },
+        {
+          "id": "commons-video-39",
+          "title": "File:Small Satellite With Exo-Brake Technology Launches From International Space Station.webm",
+          "source": "https://commons.wikimedia.org/wiki/File:Small_Satellite_With_Exo-Brake_Technology_Launches_From_International_Space_Station.webm",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/b/bd/Small_Satellite_With_Exo-Brake_Technology_Launches_From_International_Space_Station.webm",
+          "revision_timestamp": "2017-03-12T19:15:14Z",
+          "sha1": "17a2d659b708158781f4f1850fc557ded462c0d9",
+          "bytes": 5789069,
+          "license": "Public domain",
+          "license_page_templates": [
+            "PD-Layout",
+            "PD-NASA",
+            "PD-USGov-NASA"
+          ],
+          "artist": "NASA's Ames Research Center",
+          "credit": "YouTube: Small Satellite With Exo-Brake Technology Launches From International Space Station – View/save archived versions on archive.org"
+        },
+        {
+          "id": "commons-video-40",
+          "title": "File:SnowEx Field Campaign - B-roll From The P-3 Orion Aircraft.webm",
+          "source": "https://commons.wikimedia.org/wiki/File:SnowEx_Field_Campaign_-_B-roll_From_The_P-3_Orion_Aircraft.webm",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/b/bf/SnowEx_Field_Campaign_-_B-roll_From_The_P-3_Orion_Aircraft.webm",
+          "revision_timestamp": "2020-04-15T22:51:55Z",
+          "sha1": "aa4ca40837d7542ce26f44dd358a46ff3b570212",
+          "bytes": 14120759,
+          "license": "Public domain",
+          "license_page_templates": [
+            "PD-Layout",
+            "PD-USGov-NASA"
+          ],
+          "artist": "NASA's Goddard Space Flight Center",
+          "credit": "https://svs.gsfc.nasa.gov/12489"
+        },
+        {
+          "id": "commons-video-41",
+          "title": "File:SpaceX Falcon 9 Rocket Explodes During CRS-7 Launch (Explosion).webm",
+          "source": "https://commons.wikimedia.org/wiki/File:SpaceX_Falcon_9_Rocket_Explodes_During_CRS-7_Launch_(Explosion).webm",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/1/11/SpaceX_Falcon_9_Rocket_Explodes_During_CRS-7_Launch_%28Explosion%29.webm",
+          "revision_timestamp": "2015-06-28T16:28:27Z",
+          "sha1": "20391962b5f791c818b8086ac17b9115cb2fce01",
+          "bytes": 4702092,
+          "license": "Public domain",
+          "license_page_templates": [
+            "PD-Layout",
+            "PD-USGov-NASA"
+          ],
+          "artist": "NASA TV",
+          "credit": "YouTube: https://www.youtube.com/watch?v=2K030HRTutU – View/save archived versions on archive.org"
+        },
+        {
+          "id": "commons-video-42",
+          "title": "File:Spacecraft View of Aurora Australis from Space.webm",
+          "source": "https://commons.wikimedia.org/wiki/File:Spacecraft_View_of_Aurora_Australis_from_Space.webm",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/e/ee/Spacecraft_View_of_Aurora_Australis_from_Space.webm",
+          "revision_timestamp": "2025-10-13T21:17:12Z",
+          "sha1": "593d2e06749cb1c983ad42453257bfed20d72507",
+          "bytes": 692830,
+          "license": "Public domain",
+          "license_page_templates": [
+            "Cc-by-2.0",
+            "Cc-by-layout",
+            "PD-Layout",
+            "PD-NASA",
+            "PD-USGov-NASA"
+          ],
+          "artist": "NASA Goddard Space Flight Center",
+          "credit": "https://www.flickr.com/photos/gsfc/6257608714/"
+        },
+        {
+          "id": "commons-video-43",
+          "title": "File:Sun Tight Loops Close-Up.webm",
+          "source": "https://commons.wikimedia.org/wiki/File:Sun_Tight_Loops_Close-Up.webm",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/5/5d/Sun_Tight_Loops_Close-Up.webm",
+          "revision_timestamp": "2016-02-04T14:10:46Z",
+          "sha1": "7a5d1a33fc2389a807692e7e68282384c3a2d61b",
+          "bytes": 1854602,
+          "license": "Public domain",
+          "license_page_templates": [
+            "Cc-by-2.0",
+            "Cc-by-layout",
+            "PD-Layout",
+            "PD-NASA",
+            "PD-USGov-NASA"
+          ],
+          "artist": "NASA Goddard Space Flight Center",
+          "credit": "https://www.flickr.com/photos/gsfc/14221958452/ [1]"
+        },
+        {
+          "id": "commons-video-44",
+          "title": "File:The Rivers of the Mississippi Watershed.webm",
+          "source": "https://commons.wikimedia.org/wiki/File:The_Rivers_of_the_Mississippi_Watershed.webm",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/f/fe/The_Rivers_of_the_Mississippi_Watershed.webm",
+          "revision_timestamp": "2016-09-13T08:51:42Z",
+          "sha1": "633c5211f02f996b8e55440bae8960ef0243f27f",
+          "bytes": 2513839,
+          "license": "Public domain",
+          "license_page_templates": [
+            "PD-Layout",
+            "PD-USGov-NASA"
+          ],
+          "artist": "NASA's Scientific Visualization Studio",
+          "credit": "NASA's Scientific Visualization Studio"
+        },
+        {
+          "id": "commons-video-45",
+          "title": "File:The Road to L2.webm",
+          "source": "https://commons.wikimedia.org/wiki/File:The_Road_to_L2.webm",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/f/f6/The_Road_to_L2.webm",
+          "revision_timestamp": "2016-09-21T08:20:50Z",
+          "sha1": "33321263af08bb43df9b2e424351552c6b108503",
+          "bytes": 14190628,
+          "license": "Public domain",
+          "license_page_templates": [
+            "PD-Layout",
+            "PD-USGov-NASA"
+          ],
+          "artist": "NASA's Scientific Visualization Studio",
+          "credit": "NASA's Scientific Visualization Studio"
+        },
+        {
+          "id": "commons-video-46",
+          "title": "File:Video-MoonPassingEarth-20150716.webm",
+          "source": "https://commons.wikimedia.org/wiki/File:Video-MoonPassingEarth-20150716.webm",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/4/40/Video-MoonPassingEarth-20150716.webm",
+          "revision_timestamp": "2016-07-22T17:46:18Z",
+          "sha1": "264d15458318826e422e5f6333ec5335e6c04c64",
+          "bytes": 1836013,
+          "license": "Public domain",
+          "license_page_templates": [
+            "PD-Layout",
+            "PD-USGov-NASA"
+          ],
+          "artist": "NASA/EPIC",
+          "credit": "https://www.nasa.gov/feature/goddard/from-a-million-miles-away-nasa-camera-shows-moon-crossing-face-of-earth http://svs.gsfc.nasa.gov/cgi-bin/details.cgi?aid=11971, http://svs.gsfc.nasa.gov/vis/a010000/a011900/a011971/APPLE_TV_DSCOVR_Earth_Moon_Dark_Side_appletv.m4v"
+        },
+        {
+          "id": "commons-video-47",
+          "title": "File:We're continuing to tally rainfall accumulations in the storm's wake, as -Har....webm",
+          "source": "https://commons.wikimedia.org/wiki/File:We%27re_continuing_to_tally_rainfall_accumulations_in_the_storm%27s_wake,_as_-Har....webm",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/f/fa/We%27re_continuing_to_tally_rainfall_accumulations_in_the_storm%27s_wake%2C_as_-Har....webm",
+          "revision_timestamp": "2017-08-31T01:06:33Z",
+          "sha1": "cb3ce1e6e85128eddcfac408ae19067abd85493f",
+          "bytes": 1315939,
+          "license": "Public domain",
+          "license_page_templates": [
+            "PD-Layout",
+            "PD-NASA",
+            "PD-USGov-NASA"
+          ],
+          "artist": "NASA - National Aeronautics and Space Administration",
+          "credit": "We're continuing to tally rainfall accumulations in the storm's wake, as #Har... - Facebook"
+        },
+        {
+          "id": "commons-video-48",
+          "title": "File:YF-12A Landing at Edwards Air Force Base.webm",
+          "source": "https://commons.wikimedia.org/wiki/File:YF-12A_Landing_at_Edwards_Air_Force_Base.webm",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/c/cb/YF-12A_Landing_at_Edwards_Air_Force_Base.webm",
+          "revision_timestamp": "2017-07-25T21:44:14Z",
+          "sha1": "84f25ca714c6bcb508030f854bb06122c30a7979",
+          "bytes": 2358322,
+          "license": "Public domain",
+          "license_page_templates": [
+            "PD-Layout",
+            "PD-NASA",
+            "PD-USGov-NASA"
+          ],
+          "artist": "NASA Armstrong Flight Research Center",
+          "credit": "YouTube: YF-12A Landing at Edwards Air Force Base – View/save archived versions on archive.org"
+        },
+        {
+          "id": "commons-video-49",
+          "title": "File:YF-12C Takeoff from Edwards Air Force Base.webm",
+          "source": "https://commons.wikimedia.org/wiki/File:YF-12C_Takeoff_from_Edwards_Air_Force_Base.webm",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/9/9d/YF-12C_Takeoff_from_Edwards_Air_Force_Base.webm",
+          "revision_timestamp": "2017-07-25T21:34:03Z",
+          "sha1": "97bea9d08926aee6d9b872c29a3a5b8950897b74",
+          "bytes": 2245304,
+          "license": "Public domain",
+          "license_page_templates": [
+            "PD-Layout",
+            "PD-USGov-NASA"
+          ],
+          "artist": "NASA Armstrong Flight Research Center",
+          "credit": "YouTube: YF-12C Takeoff from Edwards Air Force Base – View/save archived versions on archive.org"
+        }
+      ]
+    },
+    "size": {
+      "modality": "video",
+      "queries": 50,
+      "documents": 50,
+      "judgments": 50
+    }
+  },
+  "results": {
+    "path": "/root/g3/out/dotnet-video-cuda/embeddings.jsonl",
+    "sha256": "574a70ee08b8737cf58352b747af69eef63c9d15eaf167eaff76ccf6977aba33"
+  },
+  "baseline": null,
+  "budget": {
+    "path": "model-pipeline/protected/embeddinggemma-2/video-fp32-cuda/task-quality.yaml",
+    "entry": {
+      "dataset_sha256": "c1573b0f0715d310875399c48510c2275fc92adb78b1bb618d785bf8af349ed9",
+      "minimum": {
+        "ndcg@10": 0.797,
+        "mrr@10": 0.751
+      }
+    },
+    "status": "present",
+    "matched_form": "data+metadata"
+  },
+  "protected_evidence": {
+    "status": "verified",
+    "base": "1aa26e586d1322cfe58bd74f15ba0aa447adec30",
+    "detail": "merge base of HEAD and origin/main",
+    "changed": [],
+    "sha256": {
+      "model-pipeline/protected/embeddinggemma-2/video-fp32-cuda/task-quality.yaml": "5150f4bb8a87ac6741de0bb19657ef830a22306475beea2b5c3df5e7a6d6ed2e"
+    }
+  },
+  "metrics": {
+    "ndcg@10": 0.8126499351290757,
+    "recall@1": 0.68,
+    "recall@5": 0.9,
+    "recall@10": 0.94,
+    "recall@100": 1.0,
+    "mrr@10": 0.771388888888889
+  },
+  "budget_checks": [
+    {
+      "metric": "mrr@10",
+      "minimum": 0.751,
+      "value": 0.771388888888889,
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "metric": "ndcg@10",
+      "minimum": 0.797,
+      "value": 0.8126499351290757,
+      "status": "passed",
+      "detail": ""
+    }
+  ],
+  "gates": {
+    "G3": {
+      "status": "passed",
+      "reason": "every budgeted metric meets its minimum"
+    }
+  },
+  "per_query": {
+    "q-commons-video-00": {
+      "ndcg@10": 1.0,
+      "recall@1": 1.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 1.0
+    },
+    "q-commons-video-01": {
+      "ndcg@10": 1.0,
+      "recall@1": 1.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 1.0
+    },
+    "q-commons-video-02": {
+      "ndcg@10": 1.0,
+      "recall@1": 1.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 1.0
+    },
+    "q-commons-video-03": {
+      "ndcg@10": 1.0,
+      "recall@1": 1.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 1.0
+    },
+    "q-commons-video-04": {
+      "ndcg@10": 0.31546487678572877,
+      "recall@1": 0.0,
+      "recall@5": 0.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 0.125
+    },
+    "q-commons-video-05": {
+      "ndcg@10": 1.0,
+      "recall@1": 1.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 1.0
+    },
+    "q-commons-video-06": {
+      "ndcg@10": 0.5,
+      "recall@1": 0.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 0.3333333333333333
+    },
+    "q-commons-video-07": {
+      "ndcg@10": 0.5,
+      "recall@1": 0.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 0.3333333333333333
+    },
+    "q-commons-video-08": {
+      "ndcg@10": 1.0,
+      "recall@1": 1.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 1.0
+    },
+    "q-commons-video-09": {
+      "ndcg@10": 0.6309297535714575,
+      "recall@1": 0.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 0.5
+    },
+    "q-commons-video-10": {
+      "ndcg@10": 1.0,
+      "recall@1": 1.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 1.0
+    },
+    "q-commons-video-11": {
+      "ndcg@10": 1.0,
+      "recall@1": 1.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 1.0
+    },
+    "q-commons-video-12": {
+      "ndcg@10": 1.0,
+      "recall@1": 1.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 1.0
+    },
+    "q-commons-video-13": {
+      "ndcg@10": 0.0,
+      "recall@1": 0.0,
+      "recall@5": 0.0,
+      "recall@10": 0.0,
+      "recall@100": 1.0,
+      "mrr@10": 0.0
+    },
+    "q-commons-video-14": {
+      "ndcg@10": 0.43067655807339306,
+      "recall@1": 0.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 0.25
+    },
+    "q-commons-video-15": {
+      "ndcg@10": 0.5,
+      "recall@1": 0.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 0.3333333333333333
+    },
+    "q-commons-video-16": {
+      "ndcg@10": 1.0,
+      "recall@1": 1.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 1.0
+    },
+    "q-commons-video-17": {
+      "ndcg@10": 1.0,
+      "recall@1": 1.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 1.0
+    },
+    "q-commons-video-18": {
+      "ndcg@10": 0.6309297535714575,
+      "recall@1": 0.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 0.5
+    },
+    "q-commons-video-19": {
+      "ndcg@10": 1.0,
+      "recall@1": 1.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 1.0
+    },
+    "q-commons-video-20": {
+      "ndcg@10": 1.0,
+      "recall@1": 1.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 1.0
+    },
+    "q-commons-video-21": {
+      "ndcg@10": 1.0,
+      "recall@1": 1.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 1.0
+    },
+    "q-commons-video-22": {
+      "ndcg@10": 1.0,
+      "recall@1": 1.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 1.0
+    },
+    "q-commons-video-23": {
+      "ndcg@10": 1.0,
+      "recall@1": 1.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 1.0
+    },
+    "q-commons-video-24": {
+      "ndcg@10": 1.0,
+      "recall@1": 1.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 1.0
+    },
+    "q-commons-video-25": {
+      "ndcg@10": 1.0,
+      "recall@1": 1.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 1.0
+    },
+    "q-commons-video-26": {
+      "ndcg@10": 1.0,
+      "recall@1": 1.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 1.0
+    },
+    "q-commons-video-27": {
+      "ndcg@10": 1.0,
+      "recall@1": 1.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 1.0
+    },
+    "q-commons-video-28": {
+      "ndcg@10": 0.0,
+      "recall@1": 0.0,
+      "recall@5": 0.0,
+      "recall@10": 0.0,
+      "recall@100": 1.0,
+      "mrr@10": 0.0
+    },
+    "q-commons-video-29": {
+      "ndcg@10": 0.43067655807339306,
+      "recall@1": 0.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 0.25
+    },
+    "q-commons-video-30": {
+      "ndcg@10": 1.0,
+      "recall@1": 1.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 1.0
+    },
+    "q-commons-video-31": {
+      "ndcg@10": 1.0,
+      "recall@1": 1.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 1.0
+    },
+    "q-commons-video-32": {
+      "ndcg@10": 1.0,
+      "recall@1": 1.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 1.0
+    },
+    "q-commons-video-33": {
+      "ndcg@10": 1.0,
+      "recall@1": 1.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 1.0
+    },
+    "q-commons-video-34": {
+      "ndcg@10": 1.0,
+      "recall@1": 1.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 1.0
+    },
+    "q-commons-video-35": {
+      "ndcg@10": 1.0,
+      "recall@1": 1.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 1.0
+    },
+    "q-commons-video-36": {
+      "ndcg@10": 1.0,
+      "recall@1": 1.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 1.0
+    },
+    "q-commons-video-37": {
+      "ndcg@10": 1.0,
+      "recall@1": 1.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 1.0
+    },
+    "q-commons-video-38": {
+      "ndcg@10": 1.0,
+      "recall@1": 1.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 1.0
+    },
+    "q-commons-video-39": {
+      "ndcg@10": 0.0,
+      "recall@1": 0.0,
+      "recall@5": 0.0,
+      "recall@10": 0.0,
+      "recall@100": 1.0,
+      "mrr@10": 0.0
+    },
+    "q-commons-video-40": {
+      "ndcg@10": 0.6309297535714575,
+      "recall@1": 0.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 0.5
+    },
+    "q-commons-video-41": {
+      "ndcg@10": 1.0,
+      "recall@1": 1.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 1.0
+    },
+    "q-commons-video-42": {
+      "ndcg@10": 0.3010299956639812,
+      "recall@1": 0.0,
+      "recall@5": 0.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 0.1111111111111111
+    },
+    "q-commons-video-43": {
+      "ndcg@10": 1.0,
+      "recall@1": 1.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 1.0
+    },
+    "q-commons-video-44": {
+      "ndcg@10": 1.0,
+      "recall@1": 1.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 1.0
+    },
+    "q-commons-video-45": {
+      "ndcg@10": 0.6309297535714575,
+      "recall@1": 0.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 0.5
+    },
+    "q-commons-video-46": {
+      "ndcg@10": 0.5,
+      "recall@1": 0.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 0.3333333333333333
+    },
+    "q-commons-video-47": {
+      "ndcg@10": 1.0,
+      "recall@1": 1.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 1.0
+    },
+    "q-commons-video-48": {
+      "ndcg@10": 0.6309297535714575,
+      "recall@1": 0.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 0.5
+    },
+    "q-commons-video-49": {
+      "ndcg@10": 1.0,
+      "recall@1": 1.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 1.0
+    }
+  },
+  "exit_code": 0
+}

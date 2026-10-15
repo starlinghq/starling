@@ -1,0 +1,3940 @@
+{
+  "format": "starlings.task-quality-report",
+  "format_version": 1,
+  "task": "retrieval",
+  "profile": "embeddinggemma-2/image-fp32-cpu",
+  "date": "2026-10-15",
+  "evaluator": {
+    "name": "model-pipeline evaluate --g3",
+    "version": "0.1.0",
+    "repository_commit": "1aa26e586d1322cfe58bd74f15ba0aa447adec30"
+  },
+  "dataset": {
+    "sha256": "55fead382caaa09aea32d5cca8ad4a115f801641d7c5bcdd1a28d629f903823e",
+    "sha256_with_metadata": "43b3a8d41907ce5fda042554eb8485378b5cacacfa4d994cfebd6bc2631f0607",
+    "files": [
+      {
+        "path": "model-pipeline/protected/embeddinggemma-2/release/image-retrieval-v1/queries.jsonl",
+        "sha256": "f1451b49fbb1521ab8198bc4db5979d5c77aa2f668fb9e70b2a97ee1804b1faf"
+      },
+      {
+        "path": "model-pipeline/protected/embeddinggemma-2/release/image-retrieval-v1/corpus.jsonl",
+        "sha256": "33b32dbb8452c034d27b66aa14786159528f55a4ea47834b21eb9f7925b607bb"
+      },
+      {
+        "path": "model-pipeline/protected/embeddinggemma-2/release/image-retrieval-v1/qrels.jsonl",
+        "sha256": "bfb5f23f1a9f507ec37f9359c1af5967c85c689b32070e1bcad1dc8089084071"
+      },
+      {
+        "path": "model-pipeline/protected/embeddinggemma-2/release/image-retrieval-v1/dataset.json",
+        "sha256": "a7f9d88a71c5e3e57ed02de4cac9c8acdbd734d693657c2a13625458aa5d7a3b"
+      }
+    ],
+    "metadata": {
+      "name": "embeddinggemma2-commons-image-retrieval-v1",
+      "modality": "image",
+      "prompts": {
+        "query": "the model's `query` prompt (task: search result | query: )",
+        "document": "none: the image alone, without a prompt (model card: prefixes apply to text only)"
+      },
+      "queries": "the file's English Commons description (ImageDescription), cleaned and cut as the script says",
+      "selection": {
+        "script": "model-pipeline/reference/embeddinggemma2/select_eg2_retrieval.py",
+        "seed": 20261015,
+        "queried": "2026-10-15T19:23:47Z",
+        "media_list": "image-media.json",
+        "media_list_sha256": "51e91517bea51b0ea294a20148bf2b97cb1b09fc28e548d8bf4267c63b2ab19a",
+        "fetch": "model-pipeline/reference/embeddinggemma2/fetch_eg2_release_media.py",
+        "selected": 150,
+        "kept_at_fetch": 149
+      },
+      "media_in_git": false,
+      "files": [
+        {
+          "id": "commons-image-00",
+          "title": "File:A Brazilian family in Rio de Janeiro by Jean-Baptiste Debret 1839.jpg",
+          "source": "https://commons.wikimedia.org/wiki/File:A_Brazilian_family_in_Rio_de_Janeiro_by_Jean-Baptiste_Debret_1839.jpg",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/1/14/A_Brazilian_family_in_Rio_de_Janeiro_by_Jean-Baptiste_Debret_1839.jpg",
+          "revision_timestamp": "2016-08-12T16:50:18Z",
+          "sha1": "a82441e4fedf8864c180093487364e3f4106af51",
+          "bytes": 5353564,
+          "license": "Public domain",
+          "license_page_templates": [
+            "Cc-pd-mark-footer",
+            "PD-Art",
+            "PD-Brazil-media",
+            "PD-Layout",
+            "PD-art-category",
+            "PD-old-100",
+            "PD-old-text",
+            "PD-old-warning-text"
+          ],
+          "artist": "Jean-Baptiste Debret",
+          "credit": "Wilfredor"
+        },
+        {
+          "id": "commons-image-01",
+          "title": "File:A Brouhot car in Paris, 1910.jpg",
+          "source": "https://commons.wikimedia.org/wiki/File:A_Brouhot_car_in_Paris,_1910.jpg",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/c/c0/A_Brouhot_car_in_Paris%2C_1910.jpg",
+          "revision_timestamp": "2015-01-23T22:56:49Z",
+          "sha1": "7ecd69e763e5769973a2bf5168ec3a7272544713",
+          "bytes": 2630843,
+          "license": "Public domain",
+          "license_page_templates": [
+            "Cc-pd-mark-footer",
+            "PD-Layout",
+            "PD-old-100",
+            "PD-old-text",
+            "PD-old-warning-text"
+          ],
+          "artist": "Alexandre Louis",
+          "credit": "Album de photo de Marcel Louis"
+        },
+        {
+          "id": "commons-image-02",
+          "title": "File:A Delta Oasis in Southeastern Kazakhstan.jpg",
+          "source": "https://commons.wikimedia.org/wiki/File:A_Delta_Oasis_in_Southeastern_Kazakhstan.jpg",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/3/3e/A_Delta_Oasis_in_Southeastern_Kazakhstan.jpg",
+          "revision_timestamp": "2021-02-01T20:51:21Z",
+          "sha1": "0c2329498758bb246d461c87aeca165731ceee14",
+          "bytes": 7915992,
+          "license": "Public domain",
+          "license_page_templates": [
+            "PD-Layout",
+            "PD-USGov-NASA"
+          ],
+          "artist": "NASA Earth Observatory images by Joshua Stevens, using Landsat data from the U.S. Geological Survey. Story by Adam Voiland.",
+          "credit": "https://earthobservatory.nasa.gov/images/146552/a-delta-oasis-in-southeastern-kazakhstan"
+        },
+        {
+          "id": "commons-image-03",
+          "title": "File:A Meat Stall with the Holy Family Giving Alms - Pieter Aertsen - Google Cultural Institute.jpg",
+          "source": "https://commons.wikimedia.org/wiki/File:A_Meat_Stall_with_the_Holy_Family_Giving_Alms_-_Pieter_Aertsen_-_Google_Cultural_Institute.jpg",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/4/46/A_Meat_Stall_with_the_Holy_Family_Giving_Alms_-_Pieter_Aertsen_-_Google_Cultural_Institute.jpg",
+          "revision_timestamp": "2015-06-08T00:37:52Z",
+          "sha1": "bb55b8b3691fb375189c537f96f9428d35904184",
+          "bytes": 9141759,
+          "license": "Public domain",
+          "license_page_templates": [
+            "Cc-pd-mark-footer",
+            "PD-Art",
+            "PD-Layout",
+            "PD-US-expired-text",
+            "PD-art-category",
+            "PD-old-X-expired",
+            "PD-old-auto-expired",
+            "PD-old-text"
+          ],
+          "artist": "Pieter Aertsen",
+          "credit": "Google Arts &amp; Culture — fgF8j5tB3UFgAg"
+        },
+        {
+          "id": "commons-image-04",
+          "title": "File:A Musica by Oscar Pereira da Silva 1896.jpg",
+          "source": "https://commons.wikimedia.org/wiki/File:A_Musica_by_Oscar_Pereira_da_Silva_1896.jpg",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/9/9b/A_Musica_by_Oscar_Pereira_da_Silva_1896.jpg",
+          "revision_timestamp": "2015-01-11T17:37:47Z",
+          "sha1": "054aba2518d1f0cca83e563019db293e195f3a35",
+          "bytes": 8086629,
+          "license": "Public domain",
+          "license_page_templates": [
+            "Cc-pd-mark-footer",
+            "PD-Art",
+            "PD-Layout",
+            "PD-US-expired-text",
+            "PD-art-category",
+            "PD-old-X-expired",
+            "PD-old-auto-expired",
+            "PD-old-text"
+          ],
+          "artist": "Oscar Pereira da Silva",
+          "credit": "Own work"
+        },
+        {
+          "id": "commons-image-05",
+          "title": "File:A chinstrap penguin (Pygoscelis antarcticus) on Deception Island in Antarctica.jpg",
+          "source": "https://commons.wikimedia.org/wiki/File:A_chinstrap_penguin_(Pygoscelis_antarcticus)_on_Deception_Island_in_Antarctica.jpg",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/0/09/A_chinstrap_penguin_%28Pygoscelis_antarcticus%29_on_Deception_Island_in_Antarctica.jpg",
+          "revision_timestamp": "2014-01-05T04:47:41Z",
+          "sha1": "220a34f6ba8b46b47057edf8444e04bdc8aa262e",
+          "bytes": 1604457,
+          "license": "CC BY 2.0",
+          "license_page_templates": [
+            "Cc-by-2.0",
+            "Cc-by-layout"
+          ],
+          "artist": "Christopher Michel",
+          "credit": "welcome to my island, human!"
+        },
+        {
+          "id": "commons-image-06",
+          "title": "File:A dip in the road in Färlev.jpg",
+          "source": "https://commons.wikimedia.org/wiki/File:A_dip_in_the_road_in_F%C3%A4rlev.jpg",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/a/ae/A_dip_in_the_road_in_F%C3%A4rlev.jpg",
+          "revision_timestamp": "2019-09-07T13:15:19Z",
+          "sha1": "f0398e25811b87bf9c12ea69c62fbf1514f7f8dd",
+          "bytes": 14041707,
+          "license": "CC0",
+          "license_page_templates": [
+            "CC-Layout",
+            "Cc-zero"
+          ],
+          "artist": "W.carter",
+          "credit": "Own work"
+        },
+        {
+          "id": "commons-image-07",
+          "title": "File:A girl set fire to cook breakfast by using a coal-filled clay pot; July 2014.jpg",
+          "source": "https://commons.wikimedia.org/wiki/File:A_girl_set_fire_to_cook_breakfast_by_using_a_coal-filled_clay_pot;_July_2014.jpg",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/e/e9/A_girl_set_fire_to_cook_breakfast_by_using_a_coal-filled_clay_pot%3B_July_2014.jpg",
+          "revision_timestamp": "2018-08-24T16:36:10Z",
+          "sha1": "1597f40fca2ba9cf3a3b9c72a33a133dad13c352",
+          "bytes": 773777,
+          "license": "CC BY 2.0",
+          "license_page_templates": [
+            "Cc-by-2.0",
+            "Cc-by-layout"
+          ],
+          "artist": "Gumilang Aryo Sahadewo",
+          "credit": "Morning Routine"
+        },
+        {
+          "id": "commons-image-08",
+          "title": "File:B'nai B'rith membership certificate 1876.jpg",
+          "source": "https://commons.wikimedia.org/wiki/File:B%27nai_B%27rith_membership_certificate_1876.jpg",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/4/4b/B%27nai_B%27rith_membership_certificate_1876.jpg",
+          "revision_timestamp": "2009-04-15T17:57:39Z",
+          "sha1": "d879af5b1236851d84fa11bc253d68060fcd3e32",
+          "bytes": 4001209,
+          "license": "Public domain",
+          "license_page_templates": [
+            "PD-1923",
+            "PD-Layout",
+            "PD-US-expired",
+            "PD-US-expired-text"
+          ],
+          "artist": "Louis Kurz (1833-1921), for the American Oleograph Company",
+          "credit": "This image is available from the United States Library of Congress's Prints and Photographs division under the digital ID ppmsca.05662.This tag does not indicate the copyright status of the attached work. A normal copyright tag is still required. See Commons:Licensing."
+        },
+        {
+          "id": "commons-image-09",
+          "title": "File:B-2 Spirit original.jpg",
+          "source": "https://commons.wikimedia.org/wiki/File:B-2_Spirit_original.jpg",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/4/47/B-2_Spirit_original.jpg",
+          "revision_timestamp": "2007-02-20T15:32:12Z",
+          "sha1": "f197aa4336fe4774a1fc607abaae5a1d453376a0",
+          "bytes": 1770335,
+          "license": "Public domain",
+          "license_page_templates": [
+            "PD-Layout",
+            "PD-USGov-Military-Air Force"
+          ],
+          "artist": "U.S. Air Force photo/Staff Sgt. Bennie J. Davis III",
+          "credit": "This image was released by the United States Air Force with the ID 060530-F-5040D-22 (next). This tag does not indicate the copyright status of the attached work. A normal copyright tag is still required. See Commons:Licensing. العربية ∙ বাংলা ∙ Bahasa Indonesia ∙ Bahaso Jambi ∙ Deutsch ∙ Deutsch (Sie-Form) ∙ English ∙ español ∙ euskara ∙ فارسی ∙ français ∙ italiano ∙ 日本語 ∙ 한국어 ∙ македонски ∙ മലയാളം ∙ Plattdüütsch ∙ Nederlands ∙ polski ∙ پښتو ∙ português ∙ русский ∙ slovenščina ∙ svenska ∙ Türkçe ∙ українська ∙ 简体中文 ∙ 繁體中文 ∙ +/− http://www.af.mil/shared/media/photodb/photos/060530-F-5040D-220.jpg (Originally from en.wikipedia; description page is/was here.)"
+        },
+        {
+          "id": "commons-image-10",
+          "title": "File:Baba in Nepal.jpg",
+          "source": "https://commons.wikimedia.org/wiki/File:Baba_in_Nepal.jpg",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/2/2b/Baba_in_Nepal.jpg",
+          "revision_timestamp": "2011-12-13T13:46:52Z",
+          "sha1": "0592ce9f7b7ed3234bf0d7836aad35f915a814eb",
+          "bytes": 2704205,
+          "license": "CC BY 2.0",
+          "license_page_templates": [
+            "Cc-by-2.0",
+            "Cc-by-layout"
+          ],
+          "artist": "Wen-Yan King (NGO [http://www.medapt.org medapt)]",
+          "credit": "Flickr"
+        },
+        {
+          "id": "commons-image-11",
+          "title": "File:Baby playing with yellow paint. Work by Dutch artist Peter Klashorst entitled \"Experimental\".jpg",
+          "source": "https://commons.wikimedia.org/wiki/File:Baby_playing_with_yellow_paint._Work_by_Dutch_artist_Peter_Klashorst_entitled_%22Experimental%22.jpg",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/c/ca/Baby_playing_with_yellow_paint._Work_by_Dutch_artist_Peter_Klashorst_entitled_%22Experimental%22.jpg",
+          "revision_timestamp": "2013-10-07T18:58:06Z",
+          "sha1": "c4e031a779ba637401394789aa2c5cf77153d0af",
+          "bytes": 3720810,
+          "license": "CC BY 2.0",
+          "license_page_templates": [
+            "Cc-by-2.0",
+            "Cc-by-layout"
+          ],
+          "artist": "Peter Klashorst",
+          "credit": "Flickr"
+        },
+        {
+          "id": "commons-image-12",
+          "title": "File:Backenswarft, Hallig Hooge, Germany.jpg",
+          "source": "https://commons.wikimedia.org/wiki/File:Backenswarft,_Hallig_Hooge,_Germany.jpg",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/4/40/Backenswarft%2C_Hallig_Hooge%2C_Germany.jpg",
+          "revision_timestamp": "2012-09-23T19:55:34Z",
+          "sha1": "98e8ce4d9ea6920a23e31055610c300679cf2f66",
+          "bytes": 3375312,
+          "license": "CC BY 3.0",
+          "license_page_templates": [
+            "Cc-by-3.0",
+            "Cc-by-layout"
+          ],
+          "artist": "Michael Gäbler",
+          "credit": "Own work"
+        },
+        {
+          "id": "commons-image-13",
+          "title": "File:Backlit Margarita Island Sunset in Las Guevaras, Venezuela CaptureNX2.jpg",
+          "source": "https://commons.wikimedia.org/wiki/File:Backlit_Margarita_Island_Sunset_in_Las_Guevaras,_Venezuela_CaptureNX2.jpg",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/b/b8/Backlit_Margarita_Island_Sunset_in_Las_Guevaras%2C_Venezuela_CaptureNX2.jpg",
+          "revision_timestamp": "2024-09-28T23:55:04Z",
+          "sha1": "b7ccc23cd71a1481976a543ccec9a3e2008c2eb5",
+          "bytes": 3978984,
+          "license": "CC0",
+          "license_page_templates": [
+            "CC-Layout",
+            "Cc-zero"
+          ],
+          "artist": "Wilfredor",
+          "credit": "Own work"
+        },
+        {
+          "id": "commons-image-14",
+          "title": "File:Backlit ficus elastica leaf texture 2014 02.jpg",
+          "source": "https://commons.wikimedia.org/wiki/File:Backlit_ficus_elastica_leaf_texture_2014_02.jpg",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/d/d7/Backlit_ficus_elastica_leaf_texture_2014_02.jpg",
+          "revision_timestamp": "2014-03-27T11:00:15Z",
+          "sha1": "7092471d1a497341d0086659112ccd2c36648888",
+          "bytes": 5140159,
+          "license": "CC BY 4.0",
+          "license_page_templates": [
+            "Cc-by-4.0",
+            "Cc-by-layout"
+          ],
+          "artist": "Julian Herzog (Website)",
+          "credit": "Own work"
+        },
+        {
+          "id": "commons-image-15",
+          "title": "File:C-17 test sortie.jpg",
+          "source": "https://commons.wikimedia.org/wiki/File:C-17_test_sortie.jpg",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/b/bc/C-17_test_sortie.jpg",
+          "revision_timestamp": "2011-10-06T11:51:19Z",
+          "sha1": "06403e01c5fc8428e085b3b8c8099995a120ff8b",
+          "bytes": 601859,
+          "license": "Public domain",
+          "license_page_templates": [
+            "PD-Layout",
+            "PD-USAF",
+            "PD-USGov-Military-Air Force"
+          ],
+          "artist": "U.S. Air Force",
+          "credit": "https://www.flickr.com/photos/usairforce/6211172589/in/photostream/"
+        },
+        {
+          "id": "commons-image-16",
+          "title": "File:C.M. Gilbert. - John Hay, c. 1904.jpg",
+          "source": "https://commons.wikimedia.org/wiki/File:C.M._Gilbert._-_John_Hay,_c._1904.jpg",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/c/c7/C.M._Gilbert._-_John_Hay%2C_c._1904.jpg",
+          "revision_timestamp": "2014-08-11T16:06:42Z",
+          "sha1": "2031930f0fb40cd1a19432cc6cc2bc5cb4e5a18d",
+          "bytes": 5201553,
+          "license": "Public domain",
+          "license_page_templates": [
+            "Cc-pd-mark-footer",
+            "PD-Layout",
+            "PD-US-expired-text",
+            "PD-old-100-expired",
+            "PD-old-X-expired",
+            "PD-old-text"
+          ],
+          "artist": "C. M. Gilbert; restored by Adam Cuerden",
+          "credit": "This image is available from the United States Library of Congress's Prints and Photographs division under the digital ID cph.3f06265.This tag does not indicate the copyright status of the attached work. A normal copyright tag is still required. See Commons:Licensing."
+        },
+        {
+          "id": "commons-image-17",
+          "title": "File:C62 3 Niseko (2).jpg",
+          "source": "https://commons.wikimedia.org/wiki/File:C62_3_Niseko_(2).jpg",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/c/c2/C62_3_Niseko_%282%29.jpg",
+          "revision_timestamp": "2025-05-03T08:04:01Z",
+          "sha1": "d15a9564a72bf55b424d08804b0617e6b5ac04ec",
+          "bytes": 739000,
+          "license": "CC0",
+          "license_page_templates": [
+            "CC-Layout",
+            "Cc-zero"
+          ],
+          "artist": "Shellparakeet",
+          "credit": "Own work"
+        },
+        {
+          "id": "commons-image-18",
+          "title": "File:Ca d Oro doppio ritratto di Tullio Lombardo Venezia.jpg",
+          "source": "https://commons.wikimedia.org/wiki/File:Ca_d_Oro_doppio_ritratto_di_Tullio_Lombardo_Venezia.jpg",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/4/45/Ca_d_Oro_doppio_ritratto_di_Tullio_Lombardo_Venezia.jpg",
+          "revision_timestamp": "2017-04-28T17:20:24Z",
+          "sha1": "7a1c132a05353b87bab438a0d36078fdb4b88b7c",
+          "bytes": 13360812,
+          "license": "CC BY 3.0",
+          "license_page_templates": [
+            "Cc-by-3.0",
+            "Cc-by-layout"
+          ],
+          "artist": "This Photo was taken by Wolfgang Moroder. Feel free to use my photos, but please mention me as the author and send me a message. This image is not in the public domain. Please respect the copyright protection. It may only be used according to the rules mentioned here. This specifically excludes use in social media, if applicable terms of the licenses listed here not appropriate. Please do not upload an updated image here without consultation with the Author. The author would like to make corrections only at his own source. This ensures that the changes are preserved.Please if you think that any changes should be required, please inform the author.Otherwise you can upload a new image with a new name. Please use one of the templates derivative or extract.",
+          "credit": "Own work"
+        },
+        {
+          "id": "commons-image-19",
+          "title": "File:Cabanes du Breuil 1.jpg",
+          "source": "https://commons.wikimedia.org/wiki/File:Cabanes_du_Breuil_1.jpg",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/e/e5/Cabanes_du_Breuil_1.jpg",
+          "revision_timestamp": "2011-08-27T10:12:00Z",
+          "sha1": "e5a1439b7050a526773d447dbe8d116b8c77ea0a",
+          "bytes": 5580531,
+          "license": "CC0",
+          "license_page_templates": [
+            "CC-Layout",
+            "Cc-zero"
+          ],
+          "artist": "Jebulon",
+          "credit": "Own work"
+        },
+        {
+          "id": "commons-image-20",
+          "title": "File:Caesium Chloride.jpg",
+          "source": "https://commons.wikimedia.org/wiki/File:Caesium_Chloride.jpg",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/8/81/Caesium_Chloride.jpg",
+          "revision_timestamp": "2021-12-15T11:27:27Z",
+          "sha1": "495c6ee001579608cc97eed8fcc9d08d88e95c0c",
+          "bytes": 13343727,
+          "license": "CC BY 4.0",
+          "license_page_templates": [
+            "Cc-by-4.0",
+            "Cc-by-layout"
+          ],
+          "artist": "KarlGaff",
+          "credit": "Own work"
+        },
+        {
+          "id": "commons-image-21",
+          "title": "File:Cais Mauá by Renato Soares (edited).jpg",
+          "source": "https://commons.wikimedia.org/wiki/File:Cais_Mau%C3%A1_by_Renato_Soares_(edited).jpg",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/2/20/Cais_Mau%C3%A1_by_Renato_Soares_%28edited%29.jpg",
+          "revision_timestamp": "2025-11-08T23:48:49Z",
+          "sha1": "c4216e6b66aaaf544d4d0c9cec471784399bcf55",
+          "bytes": 6205178,
+          "license": "Public domain",
+          "license_page_templates": [
+            "PD-Layout",
+            "PD-author-FlickrPDM"
+          ],
+          "artist": "Renato Soares via MTur Destinos",
+          "credit": "Renato Soares_Rio Guaiba_Porto Alegre_RS"
+        },
+        {
+          "id": "commons-image-22",
+          "title": "File:Da Vinci Studies of Embryos Luc Viatour.jpg",
+          "source": "https://commons.wikimedia.org/wiki/File:Da_Vinci_Studies_of_Embryos_Luc_Viatour.jpg",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/c/c9/Da_Vinci_Studies_of_Embryos_Luc_Viatour.jpg",
+          "revision_timestamp": "2010-06-08T15:12:22Z",
+          "sha1": "8af3f289894cacd9ae73e76e19e338dc7e47651a",
+          "bytes": 2787767,
+          "license": "Public domain",
+          "license_page_templates": [
+            "Cc-pd-mark-footer",
+            "PD-Layout",
+            "PD-old-100",
+            "PD-old-text",
+            "PD-old-warning-text"
+          ],
+          "artist": "Leonardo da Vinci",
+          "credit": "Photography *own work www.lucnix.be Nikon case D80 optical Sigma 17-70mm F2,8/4,5 Macro"
+        },
+        {
+          "id": "commons-image-23",
+          "title": "File:Dactylorhiza × braunii (Halácsy) Borsos & Soó (1961).jpg",
+          "source": "https://commons.wikimedia.org/wiki/File:Dactylorhiza_%C3%97_braunii_(Hal%C3%A1csy)_Borsos_%26_So%C3%B3_(1961).jpg",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/d/d5/Dactylorhiza_%C3%97_braunii_%28Hal%C3%A1csy%29_Borsos_%26_So%C3%B3_%281961%29.jpg",
+          "revision_timestamp": "2013-05-06T14:17:14Z",
+          "sha1": "3ef222011bd3156d26b7dd951274bb184473c165",
+          "bytes": 2443669,
+          "license": "CC BY 3.0",
+          "license_page_templates": [
+            "Cc-by-3.0",
+            "Cc-by-layout"
+          ],
+          "artist": "Michael Gäbler",
+          "credit": "Own work"
+        },
+        {
+          "id": "commons-image-24",
+          "title": "File:Dagestani man and woman.jpg",
+          "source": "https://commons.wikimedia.org/wiki/File:Dagestani_man_and_woman.jpg",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/3/37/Dagestani_man_and_woman.jpg",
+          "revision_timestamp": "2009-06-19T22:29:49Z",
+          "sha1": "66b66021e96d16c7e53fd498b4cae2263f124c40",
+          "bytes": 1588507,
+          "license": "Public domain",
+          "license_page_templates": [
+            "Cc-pd-mark-footer",
+            "PD-Layout",
+            "PD-US-expired-text",
+            "PD-old-X-expired",
+            "PD-old-auto-1923",
+            "PD-old-auto-expired",
+            "PD-old-text"
+          ],
+          "artist": "Sergei Prokudin-Gorskii",
+          "credit": "This image is available from the United States Library of Congress's Prints and Photographs division under the digital ID ppmsc.03945.This tag does not indicate the copyright status of the attached work. A normal copyright tag is still required. See Commons:Licensing."
+        },
+        {
+          "id": "commons-image-25",
+          "title": "File:Eakins, Thomas - The Agnew Clinic.jpg",
+          "source": "https://commons.wikimedia.org/wiki/File:Eakins,_Thomas_-_The_Agnew_Clinic.jpg",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/8/8b/Eakins%2C_Thomas_-_The_Agnew_Clinic.jpg",
+          "revision_timestamp": "2020-08-31T02:07:52Z",
+          "sha1": "12533493272bb8471dc33ca1595b83e19adbd20d",
+          "bytes": 1329867,
+          "license": "Public domain",
+          "license_page_templates": [
+            "Cc-pd-mark-footer",
+            "PD-Art",
+            "PD-Layout",
+            "PD-US-expired-text",
+            "PD-art-category",
+            "PD-old-X-expired",
+            "PD-old-auto-expired",
+            "PD-old-text"
+          ],
+          "artist": "Thomas Eakins",
+          "credit": "https://static01.nyt.com/newsgraphics/2020/05/11/zoomy-eakins/assets/images/agnew-eakins-4000.jpg"
+        },
+        {
+          "id": "commons-image-26",
+          "title": "File:Early flight 02562u.jpg",
+          "source": "https://commons.wikimedia.org/wiki/File:Early_flight_02562u.jpg",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/9/92/Early_flight_02562u.jpg",
+          "revision_timestamp": "2013-01-28T09:29:20Z",
+          "sha1": "1766ef801a8bb1a0a24f4791ccbfe4323aca1c23",
+          "bytes": 14153384,
+          "license": "Public domain",
+          "license_page_templates": [
+            "Cc-pd-mark-footer",
+            "PD-Layout",
+            "PD-old",
+            "PD-old-text",
+            "PD-old-warning-text"
+          ],
+          "artist": "Created/published: Paris : Romanet &amp; Cie., imp. edit.,",
+          "credit": "ppmsca.02562"
+        },
+        {
+          "id": "commons-image-27",
+          "title": "File:Earth's City Lights by DMSP, 1994-1995 (large).jpg",
+          "source": "https://commons.wikimedia.org/wiki/File:Earth%27s_City_Lights_by_DMSP,_1994-1995_(large).jpg",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/e/e1/Earth%27s_City_Lights_by_DMSP%2C_1994-1995_%28large%29.jpg",
+          "revision_timestamp": "2014-04-02T18:45:58Z",
+          "sha1": "f8dd4c8959257a753d1d147bb64ea6c53918f1c8",
+          "bytes": 4228149,
+          "license": "Public domain",
+          "license_page_templates": [
+            "PD-Layout",
+            "PD-USGov-NASA"
+          ],
+          "artist": "Data: Marc Imhoff/NASA GSFC, Christopher Elvidge/NOAA NGDC; Image: Craig Mayhew and Robert Simmon/NASA GSFC",
+          "credit": "https://visibleearth.nasa.gov/view.php?id=55167 (image link)"
+        },
+        {
+          "id": "commons-image-28",
+          "title": "File:Earth, Moon and Lunar Module, AS11-44-6643.jpg",
+          "source": "https://commons.wikimedia.org/wiki/File:Earth,_Moon_and_Lunar_Module,_AS11-44-6643.jpg",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/8/81/Earth%2C_Moon_and_Lunar_Module%2C_AS11-44-6643.jpg",
+          "revision_timestamp": "2015-07-06T14:23:02Z",
+          "sha1": "843f03e653a1d36f7d2dcf4eb2e86e8a871c986b",
+          "bytes": 9719093,
+          "license": "Public domain",
+          "license_page_templates": [
+            "PD-Layout",
+            "PD-USGov-NASA"
+          ],
+          "artist": "NASA / Apollo 11",
+          "credit": "http://eol.jsc.nasa.gov/SearchPhotos/photo.pl?mission=AS11&amp;roll=44&amp;frame=6643"
+        },
+        {
+          "id": "commons-image-29",
+          "title": "File:East and West Shaking hands at the laying of last rail Union Pacific Railroad - Restoration.jpg",
+          "source": "https://commons.wikimedia.org/wiki/File:East_and_West_Shaking_hands_at_the_laying_of_last_rail_Union_Pacific_Railroad_-_Restoration.jpg",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/5/5d/East_and_West_Shaking_hands_at_the_laying_of_last_rail_Union_Pacific_Railroad_-_Restoration.jpg",
+          "revision_timestamp": "2015-07-01T06:35:02Z",
+          "sha1": "c9d05283e2b44eec61c07ed67f4ab3f36518dfdd",
+          "bytes": 8024139,
+          "license": "Public domain",
+          "license_page_templates": [
+            "Cc-pd-mark-footer",
+            "PD-Layout",
+            "PD-US-expired-text",
+            "PD-old-100-expired",
+            "PD-old-X-expired",
+            "PD-old-text"
+          ],
+          "artist": "Andrew J. Russell / Adam Cuerden",
+          "credit": "Yale University Libraries"
+        },
+        {
+          "id": "commons-image-30",
+          "title": "File:F---18.jpg",
+          "source": "https://commons.wikimedia.org/wiki/File:F---18.jpg",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/2/27/F---18.jpg",
+          "revision_timestamp": "2006-10-02T03:48:34Z",
+          "sha1": "a74dd4753861df5cda2b39b7d40d71efe130360d",
+          "bytes": 170211,
+          "license": "Public domain",
+          "license_page_templates": [
+            "Cc-pd-mark-footer",
+            "PD-Layout",
+            "PD-USGov-Military-Navy"
+          ],
+          "artist": "Photographer’s Mate Airman Apprentice Ricardo Reyes",
+          "credit": "This image was released by the United States Navy with the ID 050102-N-2984R-118 (next). This tag does not indicate the copyright status of the attached work. A normal copyright tag is still required. See Commons:Licensing. العربية ∙ বাংলা ∙ Bahasa Indonesia ∙ Bahaso Jambi ∙ Deutsch ∙ Deutsch (Sie-Form) ∙ English ∙ español ∙ euskara ∙ فارسی ∙ français ∙ italiano ∙ 日本語 ∙ 한국어 ∙ македонски ∙ മലയാളം ∙ Plattdüütsch ∙ Nederlands ∙ polski ∙ پښتو ∙ português ∙ русский ∙ slovenščina ∙ svenska ∙ Türkçe ∙ українська ∙ 简体中文 ∙ 繁體中文 ∙ +/−"
+        },
+        {
+          "id": "commons-image-31",
+          "title": "File:F-15EX Eagle II.jpg",
+          "source": "https://commons.wikimedia.org/wiki/File:F-15EX_Eagle_II.jpg",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/4/43/F-15EX_Eagle_II.jpg",
+          "revision_timestamp": "2021-05-22T19:49:07Z",
+          "sha1": "5a8627885c0bd20e949bb79c8bc93bb05317c298",
+          "bytes": 6938668,
+          "license": "Public domain",
+          "license_page_templates": [
+            "PD-Layout",
+            "PD-USAF",
+            "PD-USGov-Military-Air Force"
+          ],
+          "artist": "Ethan Wagner",
+          "credit": "https://www.edwards.af.mil/News/Photos/igphoto/2002660458/https://www.dvidshub.net/image/6650896/370th-flight-test-squadron-conducts-air-refueling-operations-with-f-15ex-eagle-iis"
+        },
+        {
+          "id": "commons-image-32",
+          "title": "File:F-16 June 2008.jpg",
+          "source": "https://commons.wikimedia.org/wiki/File:F-16_June_2008.jpg",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/c/c9/F-16_June_2008.jpg",
+          "revision_timestamp": "2020-05-27T03:33:50Z",
+          "sha1": "64e3daf183837c979666fc03ad5e586aff328f50",
+          "bytes": 2752180,
+          "license": "Public domain",
+          "license_page_templates": [
+            "PD-Layout",
+            "PD-USGov-Military-Air Force"
+          ],
+          "artist": "Master Sgt. Andy Dunaway",
+          "credit": "This image was released by the United States Air Force with the ID 080610-F-BC606-048 (next). This tag does not indicate the copyright status of the attached work. A normal copyright tag is still required. See Commons:Licensing. العربية ∙ বাংলা ∙ Bahasa Indonesia ∙ Bahaso Jambi ∙ Deutsch ∙ Deutsch (Sie-Form) ∙ English ∙ español ∙ euskara ∙ فارسی ∙ français ∙ italiano ∙ 日本語 ∙ 한국어 ∙ македонски ∙ മലയാളം ∙ Plattdüütsch ∙ Nederlands ∙ polski ∙ پښتو ∙ português ∙ русский ∙ slovenščina ∙ svenska ∙ Türkçe ∙ українська ∙ 简体中文 ∙ 繁體中文 ∙ +/−"
+        },
+        {
+          "id": "commons-image-33",
+          "title": "File:F-16 refuelling, Exercise Green Flag East - 081201-F-3071N-235.jpg",
+          "source": "https://commons.wikimedia.org/wiki/File:F-16_refuelling,_Exercise_Green_Flag_East_-_081201-F-3071N-235.jpg",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/1/1f/F-16_refuelling%2C_Exercise_Green_Flag_East_-_081201-F-3071N-235.jpg",
+          "revision_timestamp": "2009-05-21T19:09:08Z",
+          "sha1": "bacfafce217a3e31082a0478d5c76a008ce9010c",
+          "bytes": 1028528,
+          "license": "Public domain",
+          "license_page_templates": [
+            "PD-Layout",
+            "PD-USGov-Military-Air Force"
+          ],
+          "artist": "U.S. Air Force photo/Master Sgt. John Nimmo Sr.",
+          "credit": "This image was released by the United States Air Force with the ID 081201-F-3071N-23 (next). This tag does not indicate the copyright status of the attached work. A normal copyright tag is still required. See Commons:Licensing. العربية ∙ বাংলা ∙ Bahasa Indonesia ∙ Bahaso Jambi ∙ Deutsch ∙ Deutsch (Sie-Form) ∙ English ∙ español ∙ euskara ∙ فارسی ∙ français ∙ italiano ∙ 日本語 ∙ 한국어 ∙ македонски ∙ മലയാളം ∙ Plattdüütsch ∙ Nederlands ∙ polski ∙ پښتو ∙ português ∙ русский ∙ slovenščina ∙ svenska ∙ Türkçe ∙ українська ∙ 简体中文 ∙ 繁體中文 ∙ +/− http://www.af.mil/shared/media/photodb/photos/081201-F-3071N-235.jpg"
+        },
+        {
+          "id": "commons-image-34",
+          "title": "File:F-22 Raptor edit1.jpg",
+          "source": "https://commons.wikimedia.org/wiki/File:F-22_Raptor_edit1.jpg",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/e/e2/F-22_Raptor_edit1.jpg",
+          "revision_timestamp": "2009-06-09T10:56:04Z",
+          "sha1": "a9eddb5e0b5611bc076e069acf9ababed0fec3a1",
+          "bytes": 512929,
+          "license": "Public domain",
+          "license_page_templates": [
+            "PD-Layout",
+            "PD-USGov-Military-Air Force"
+          ],
+          "artist": "F-22_Raptor.JPG: Master Sgt. Andy Dunaway",
+          "credit": "This image was released by the United States Air Force with the ID 090123-F-2828D-942 (next). This tag does not indicate the copyright status of the attached work. A normal copyright tag is still required. See Commons:Licensing. العربية ∙ বাংলা ∙ Bahasa Indonesia ∙ Bahaso Jambi ∙ Deutsch ∙ Deutsch (Sie-Form) ∙ English ∙ español ∙ euskara ∙ فارسی ∙ français ∙ italiano ∙ 日本語 ∙ 한국어 ∙ македонски ∙ മലയാളം ∙ Plattdüütsch ∙ Nederlands ∙ polski ∙ پښتو ∙ português ∙ русский ∙ slovenščina ∙ svenska ∙ Türkçe ∙ українська ∙ 简体中文 ∙ 繁體中文 ∙ +/− This file was derived from: F-22 Raptor.JPG"
+        },
+        {
+          "id": "commons-image-35",
+          "title": "File:F-22 Raptor flying at twilight 190728-F-VA182-1014.jpg",
+          "source": "https://commons.wikimedia.org/wiki/File:F-22_Raptor_flying_at_twilight_190728-F-VA182-1014.jpg",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/8/8e/F-22_Raptor_flying_at_twilight_190728-F-VA182-1014.jpg",
+          "revision_timestamp": "2021-12-03T16:29:02Z",
+          "sha1": "f4a41e57c183b5058830fe07b9751831b7d3531b",
+          "bytes": 2927340,
+          "license": "Public domain",
+          "license_page_templates": [
+            "PD-Layout",
+            "PD-USAF",
+            "PD-USGov-Military-Air Force"
+          ],
+          "artist": "2nd Lt. Samuel Eckholm",
+          "credit": "https://www.usafa.af.mil/News/Art/igphoto/2002231795/"
+        },
+        {
+          "id": "commons-image-36",
+          "title": "File:F-35 Heritage Flight Team performs in Bell Fort Worth Alliance AirShow.jpg",
+          "source": "https://commons.wikimedia.org/wiki/File:F-35_Heritage_Flight_Team_performs_in_Bell_Fort_Worth_Alliance_AirShow.jpg",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/6/6d/F-35_Heritage_Flight_Team_performs_in_Bell_Fort_Worth_Alliance_AirShow.jpg",
+          "revision_timestamp": "2022-08-12T20:13:36Z",
+          "sha1": "1ea8bacfe842c512480b723218934a027d9ee73d",
+          "bytes": 2980779,
+          "license": "Public domain",
+          "license_page_templates": [
+            "PD-Layout",
+            "PD-USAF",
+            "PD-USGov-Military-Air Force"
+          ],
+          "artist": "Airman 1st Class Alexander Cook",
+          "credit": "https://www.dvidshub.net/image/4822354/f-35-heritage-flight-team-performs-bell-fort-worth-alliance-airshow"
+        },
+        {
+          "id": "commons-image-37",
+          "title": "File:F16 Idaho airshow.jpg",
+          "source": "https://commons.wikimedia.org/wiki/File:F16_Idaho_airshow.jpg",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/4/4c/F16_Idaho_airshow.jpg",
+          "revision_timestamp": "2013-01-05T07:35:16Z",
+          "sha1": "1b31f8cf7625951a8e831a1dd23a7c18199e24d2",
+          "bytes": 3480462,
+          "license": "Public domain",
+          "license_page_templates": [
+            "PD-Layout",
+            "PD-USGov-Military-Air Force"
+          ],
+          "artist": "Staff Sgt. Bennie J. Davis III, U.S. Air Force",
+          "credit": "This image was released by the United States Air Force with the ID 040130-F-0000C-002 (next). This tag does not indicate the copyright status of the attached work. A normal copyright tag is still required. See Commons:Licensing. العربية ∙ বাংলা ∙ Bahasa Indonesia ∙ Bahaso Jambi ∙ Deutsch ∙ Deutsch (Sie-Form) ∙ English ∙ español ∙ euskara ∙ فارسی ∙ français ∙ italiano ∙ 日本語 ∙ 한국어 ∙ македонски ∙ മലയാളം ∙ Plattdüütsch ∙ Nederlands ∙ polski ∙ پښتو ∙ português ∙ русский ∙ slovenščina ∙ svenska ∙ Türkçe ∙ українська ∙ 简体中文 ∙ 繁體中文 ∙ +/− [1]"
+        },
+        {
+          "id": "commons-image-38",
+          "title": "File:Facade monastery San Lorenzo de El Escorial Spain.jpg",
+          "source": "https://commons.wikimedia.org/wiki/File:Facade_monastery_San_Lorenzo_de_El_Escorial_Spain.jpg",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/3/36/Facade_monastery_San_Lorenzo_de_El_Escorial_Spain.jpg",
+          "revision_timestamp": "2012-10-02T23:25:13Z",
+          "sha1": "e54481163a7d04a1dbe980612d273c523f0f1835",
+          "bytes": 6154946,
+          "license": "CC0",
+          "license_page_templates": [
+            "CC-Layout",
+            "Cc-zero"
+          ],
+          "artist": "Jebulon",
+          "credit": "Own work"
+        },
+        {
+          "id": "commons-image-39",
+          "title": "File:Facade of the Conjunto Nacional cropped version.jpg",
+          "source": "https://commons.wikimedia.org/wiki/File:Facade_of_the_Conjunto_Nacional_cropped_version.jpg",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/c/c1/Facade_of_the_Conjunto_Nacional_cropped_version.jpg",
+          "revision_timestamp": "2014-09-04T00:00:13Z",
+          "sha1": "31c63c97787fe7ffbaeaa9334ac163366f311fbc",
+          "bytes": 7817609,
+          "license": "CC0",
+          "license_page_templates": [
+            "CC-Layout",
+            "Cc-zero"
+          ],
+          "artist": "Wilfredor",
+          "credit": "Own work"
+        },
+        {
+          "id": "commons-image-40",
+          "title": "File:Fagus sylvatica Purpurea JPG4a.jpg",
+          "source": "https://commons.wikimedia.org/wiki/File:Fagus_sylvatica_Purpurea_JPG4a.jpg",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/b/ba/Fagus_sylvatica_Purpurea_JPG4a.jpg",
+          "revision_timestamp": "2007-11-24T23:57:05Z",
+          "sha1": "0532dc33026a611ce3753cb4be40c81cba8f9b4e",
+          "bytes": 2532859,
+          "license": "CC BY 3.0",
+          "license_page_templates": [
+            "Cc-by-3.0",
+            "Cc-by-layout",
+            "Cc-by-sa-3.0",
+            "Cc-by-sa-layout"
+          ],
+          "artist": "Jean-Pol GRANDMONT",
+          "credit": "Self-photographed"
+        },
+        {
+          "id": "commons-image-41",
+          "title": "File:Falco cherrug cherrug (Gray, 1834).jpg",
+          "source": "https://commons.wikimedia.org/wiki/File:Falco_cherrug_cherrug_(Gray,_1834).jpg",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/d/de/Falco_cherrug_cherrug_%28Gray%2C_1834%29.jpg",
+          "revision_timestamp": "2012-04-25T15:28:40Z",
+          "sha1": "d6a476b0c910ac08537b61dfd5907ae3e8cc71ef",
+          "bytes": 2469774,
+          "license": "CC BY 3.0",
+          "license_page_templates": [
+            "Cc-by-3.0",
+            "Cc-by-layout"
+          ],
+          "artist": "Michael Gäbler",
+          "credit": "Own work"
+        },
+        {
+          "id": "commons-image-42",
+          "title": "File:Falcon 9 rollout with TurkmenAlem52E-MonacoSAT to SLC-40 (17108097439).jpg",
+          "source": "https://commons.wikimedia.org/wiki/File:Falcon_9_rollout_with_TurkmenAlem52E-MonacoSAT_to_SLC-40_(17108097439).jpg",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/2/25/Falcon_9_rollout_with_TurkmenAlem52E-MonacoSAT_to_SLC-40_%2817108097439%29.jpg",
+          "revision_timestamp": "2015-04-28T05:14:34Z",
+          "sha1": "48c370e867ef6d11f9a424734451970a430b2aa3",
+          "bytes": 2515280,
+          "license": "CC0",
+          "license_page_templates": [
+            "CC-Layout",
+            "CC-Zero",
+            "Cc-zero",
+            "Cc-zero-SpaceX"
+          ],
+          "artist": "SpaceX",
+          "credit": "https://www.flickr.com/photos/spacexphotos/17108097439/"
+        },
+        {
+          "id": "commons-image-43",
+          "title": "File:Fallow Deer (Dama dama).jpg",
+          "source": "https://commons.wikimedia.org/wiki/File:Fallow_Deer_(Dama_dama).jpg",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/5/52/Fallow_Deer_%28Dama_dama%29.jpg",
+          "revision_timestamp": "2011-10-27T23:11:07Z",
+          "sha1": "2900e300f49d650e5c4cbb36c6ca0dbcb8aa2697",
+          "bytes": 4628354,
+          "license": "CC BY 3.0",
+          "license_page_templates": [
+            "Cc-by-3.0",
+            "Cc-by-layout"
+          ],
+          "artist": "Michael Gäbler",
+          "credit": "Own work"
+        },
+        {
+          "id": "commons-image-44",
+          "title": "File:Fallow Deer in the German wood.jpg",
+          "source": "https://commons.wikimedia.org/wiki/File:Fallow_Deer_in_the_German_wood.jpg",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/5/52/Fallow_Deer_in_the_German_wood.jpg",
+          "revision_timestamp": "2010-10-13T21:06:05Z",
+          "sha1": "01f86739b4d6d40153e4b51a2ab914ca273693da",
+          "bytes": 6673966,
+          "license": "CC BY 3.0",
+          "license_page_templates": [
+            "Cc-by-3.0",
+            "Cc-by-layout"
+          ],
+          "artist": "Michael Gäbler",
+          "credit": "Own work"
+        },
+        {
+          "id": "commons-image-45",
+          "title": "File:Gabrielle Aplin 03 10 2018 -1 (27078864258).jpg",
+          "source": "https://commons.wikimedia.org/wiki/File:Gabrielle_Aplin_03_10_2018_-1_(27078864258).jpg",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/4/4f/Gabrielle_Aplin_03_10_2018_-1_%2827078864258%29.jpg",
+          "revision_timestamp": "2018-12-27T01:53:27Z",
+          "sha1": "225e9366c0d5eebbae17965f5656fcf996604eb4",
+          "bytes": 3092941,
+          "license": "CC BY 2.0",
+          "license_page_templates": [
+            "Cc-by-2.0",
+            "Cc-by-layout"
+          ],
+          "artist": "Justin Higuchi from Los Angeles, CA, USA",
+          "credit": "Gabrielle Aplin 03/10/2018 #1"
+        },
+        {
+          "id": "commons-image-46",
+          "title": "File:Galerie Colbert.jpg",
+          "source": "https://commons.wikimedia.org/wiki/File:Galerie_Colbert.jpg",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/5/5d/Galerie_Colbert.jpg",
+          "revision_timestamp": "2016-11-22T21:50:14Z",
+          "sha1": "68d510928f7fa7072fdc96afb3f2e7588ce9e541",
+          "bytes": 6222096,
+          "license": "CC BY 3.0",
+          "license_page_templates": [
+            "Cc-by-3.0",
+            "Cc-by-layout"
+          ],
+          "artist": "Benh LIEU SONG",
+          "credit": "Own work"
+        },
+        {
+          "id": "commons-image-47",
+          "title": "File:Galleria Umberto I Naples n01.jpg",
+          "source": "https://commons.wikimedia.org/wiki/File:Galleria_Umberto_I_Naples_n01.jpg",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/f/fa/Galleria_Umberto_I_Naples_n01.jpg",
+          "revision_timestamp": "2012-10-28T11:12:21Z",
+          "sha1": "4d370ae21c171b99d28403ccfa9c6ab1f4ca37ac",
+          "bytes": 9317057,
+          "license": "CC BY 2.5",
+          "license_page_templates": [
+            "Cc-by-2.5",
+            "Cc-by-layout"
+          ],
+          "artist": "Marie-Lan Nguyen",
+          "credit": "Own work"
+        },
+        {
+          "id": "commons-image-48",
+          "title": "File:H. R. Millar - Rudyard Kipling - Puck of Pook's Hill 1.jpg",
+          "source": "https://commons.wikimedia.org/wiki/File:H._R._Millar_-_Rudyard_Kipling_-_Puck_of_Pook%27s_Hill_1.jpg",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/8/87/H._R._Millar_-_Rudyard_Kipling_-_Puck_of_Pook%27s_Hill_1.jpg",
+          "revision_timestamp": "2013-09-04T22:34:02Z",
+          "sha1": "0489542296174cf6e0a282e4356ea44ecbc66dbe",
+          "bytes": 10246116,
+          "license": "Public domain",
+          "license_page_templates": [
+            "Cc-pd-mark-footer",
+            "PD-Layout",
+            "PD-US-expired-text",
+            "PD-old-X-expired",
+            "PD-old-auto-expired",
+            "PD-old-text"
+          ],
+          "artist": "Harold Robert Millar / Adam Cuerden",
+          "credit": "Kipling, Rudyard; ill. Harold Robert Millar (1906) Puck of Pook's Hill (1st reprint (October 1906) ed.), London: Macmillan and Co., Limited"
+        },
+        {
+          "id": "commons-image-49",
+          "title": "File:H. R. Millar - Rudyard Kipling - Puck of Pook's Hill 13.jpg",
+          "source": "https://commons.wikimedia.org/wiki/File:H._R._Millar_-_Rudyard_Kipling_-_Puck_of_Pook%27s_Hill_13.jpg",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/2/25/H._R._Millar_-_Rudyard_Kipling_-_Puck_of_Pook%27s_Hill_13.jpg",
+          "revision_timestamp": "2013-09-26T02:13:26Z",
+          "sha1": "da70343fa37179375539d3d3d51d9fe4b2bdaf2d",
+          "bytes": 8590211,
+          "license": "Public domain",
+          "license_page_templates": [
+            "Cc-pd-mark-footer",
+            "PD-Layout",
+            "PD-US-expired-text",
+            "PD-old-X-expired",
+            "PD-old-auto-expired",
+            "PD-old-text"
+          ],
+          "artist": "Harold Robert Millar / Adam Cuerden",
+          "credit": "Kipling, Rudyard; ill. Harold Robert Millar (1906) Puck of Pook's Hill (First reprint (October 1906) ed.), London: Macmillan and Co., Limited A small area of misinking, basically an eyebrow, is from the 1920 reprint of the Pocket Edition, also Macmillan."
+        },
+        {
+          "id": "commons-image-50",
+          "title": "File:H. R. Millar - Rudyard Kipling - Puck of Pook's Hill 14.jpg",
+          "source": "https://commons.wikimedia.org/wiki/File:H._R._Millar_-_Rudyard_Kipling_-_Puck_of_Pook%27s_Hill_14.jpg",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/b/b8/H._R._Millar_-_Rudyard_Kipling_-_Puck_of_Pook%27s_Hill_14.jpg",
+          "revision_timestamp": "2013-09-20T22:35:08Z",
+          "sha1": "fc5c87517163b855e2b7a75da8dac286b84da853",
+          "bytes": 9453497,
+          "license": "Public domain",
+          "license_page_templates": [
+            "Cc-pd-mark-footer",
+            "PD-Layout",
+            "PD-US-expired-text",
+            "PD-old-X-expired",
+            "PD-old-auto-expired",
+            "PD-old-text"
+          ],
+          "artist": "Harold Robert Millar / Adam Cuerden",
+          "credit": "Kipling, Rudyard; ill. Harold Robert Millar (1906) Puck of Pook's Hill (First reprint (October 1906) ed.), London: Macmillan and Co., Limited"
+        },
+        {
+          "id": "commons-image-51",
+          "title": "File:H. R. Millar - Rudyard Kipling - Puck of Pook's Hill 16.jpg",
+          "source": "https://commons.wikimedia.org/wiki/File:H._R._Millar_-_Rudyard_Kipling_-_Puck_of_Pook%27s_Hill_16.jpg",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/5/5b/H._R._Millar_-_Rudyard_Kipling_-_Puck_of_Pook%27s_Hill_16.jpg",
+          "revision_timestamp": "2013-09-22T05:26:25Z",
+          "sha1": "f1b6deab2e8fe69f1281f03f24800d6cf36f04df",
+          "bytes": 10059208,
+          "license": "Public domain",
+          "license_page_templates": [
+            "Cc-pd-mark-footer",
+            "PD-Layout",
+            "PD-US-expired-text",
+            "PD-old-X-expired",
+            "PD-old-auto-expired",
+            "PD-old-text"
+          ],
+          "artist": "Harold Robert Millar / Adam Cuerden",
+          "credit": "Kipling, Rudyard; ill. Harold Robert Millar (1906) Puck of Pook's Hill (First reprint (October 1906) ed.), London: Macmillan and Co., Limited"
+        },
+        {
+          "id": "commons-image-52",
+          "title": "File:H. R. Millar - Rudyard Kipling - Puck of Pook's Hill 17.jpg",
+          "source": "https://commons.wikimedia.org/wiki/File:H._R._Millar_-_Rudyard_Kipling_-_Puck_of_Pook%27s_Hill_17.jpg",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/d/d6/H._R._Millar_-_Rudyard_Kipling_-_Puck_of_Pook%27s_Hill_17.jpg",
+          "revision_timestamp": "2013-09-25T03:18:39Z",
+          "sha1": "ef18b879bccdb29ae2b007ebdb03db7fd5954b80",
+          "bytes": 9614470,
+          "license": "Public domain",
+          "license_page_templates": [
+            "Cc-pd-mark-footer",
+            "PD-Layout",
+            "PD-US-expired-text",
+            "PD-old-X-expired",
+            "PD-old-auto-expired",
+            "PD-old-text"
+          ],
+          "artist": "Harold Robert Millar / Adam Cuerden",
+          "credit": "Kipling, Rudyard; ill. Harold Robert Millar (1906) Puck of Pook's Hill (First reprint (October 1906) ed.), London: Macmillan and Co., Limited"
+        },
+        {
+          "id": "commons-image-53",
+          "title": "File:H. R. Millar - Rudyard Kipling - Puck of Pook's Hill 18.jpg",
+          "source": "https://commons.wikimedia.org/wiki/File:H._R._Millar_-_Rudyard_Kipling_-_Puck_of_Pook%27s_Hill_18.jpg",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/4/41/H._R._Millar_-_Rudyard_Kipling_-_Puck_of_Pook%27s_Hill_18.jpg",
+          "revision_timestamp": "2013-09-25T15:32:37Z",
+          "sha1": "665379f6dc8267286bd0e4c8f8a8d19c020be7e3",
+          "bytes": 10002790,
+          "license": "Public domain",
+          "license_page_templates": [
+            "Cc-pd-mark-footer",
+            "PD-Layout",
+            "PD-US-expired-text",
+            "PD-old-X-expired",
+            "PD-old-auto-expired",
+            "PD-old-text"
+          ],
+          "artist": "Harold Robert Millar / Adam Cuerden",
+          "credit": "Kipling, Rudyard; ill. Harold Robert Millar (1906) Puck of Pook's Hill (First reprint (October 1906) ed.), London: Macmillan and Co., Limited"
+        },
+        {
+          "id": "commons-image-54",
+          "title": "File:H. R. Millar - Rudyard Kipling - Puck of Pook's Hill 19.jpg",
+          "source": "https://commons.wikimedia.org/wiki/File:H._R._Millar_-_Rudyard_Kipling_-_Puck_of_Pook%27s_Hill_19.jpg",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/f/f5/H._R._Millar_-_Rudyard_Kipling_-_Puck_of_Pook%27s_Hill_19.jpg",
+          "revision_timestamp": "2013-09-26T04:11:17Z",
+          "sha1": "4a735f5bdff673850c82b472556772d54b9321c2",
+          "bytes": 10510544,
+          "license": "Public domain",
+          "license_page_templates": [
+            "Cc-pd-mark-footer",
+            "PD-Layout",
+            "PD-US-expired-text",
+            "PD-old-70-1923",
+            "PD-old-70-expired",
+            "PD-old-X-expired",
+            "PD-old-text"
+          ],
+          "artist": "Harold Robert Millar / Adam Cuerden",
+          "credit": "Kipling, Rudyard; ill. Harold Robert Millar (1906) Puck of Pook's Hill (First reprint (October 1906) ed.), London: Macmillan and Co., Limited"
+        },
+        {
+          "id": "commons-image-55",
+          "title": "File:H. R. Millar - Rudyard Kipling - Puck of Pook's Hill 20.jpg",
+          "source": "https://commons.wikimedia.org/wiki/File:H._R._Millar_-_Rudyard_Kipling_-_Puck_of_Pook%27s_Hill_20.jpg",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/8/87/H._R._Millar_-_Rudyard_Kipling_-_Puck_of_Pook%27s_Hill_20.jpg",
+          "revision_timestamp": "2013-09-23T15:02:12Z",
+          "sha1": "8f2d88085e502bf26fe0477383b5bbc44bf4b5f1",
+          "bytes": 9575501,
+          "license": "Public domain",
+          "license_page_templates": [
+            "Cc-pd-mark-footer",
+            "PD-Layout",
+            "PD-US-expired-text",
+            "PD-old-X-expired",
+            "PD-old-auto-expired",
+            "PD-old-text"
+          ],
+          "artist": "Harold Robert Millar / Adam Cuerden",
+          "credit": "Kipling, Rudyard; ill. Harold Robert Millar (1906) Puck of Pook's Hill (First reprint (October 1906) ed.), London: Macmillan and Co., Limited"
+        },
+        {
+          "id": "commons-image-56",
+          "title": "File:H. R. Millar - Rudyard Kipling - Puck of Pook's Hill 3.jpg",
+          "source": "https://commons.wikimedia.org/wiki/File:H._R._Millar_-_Rudyard_Kipling_-_Puck_of_Pook%27s_Hill_3.jpg",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/c/c8/H._R._Millar_-_Rudyard_Kipling_-_Puck_of_Pook%27s_Hill_3.jpg",
+          "revision_timestamp": "2013-09-26T03:04:12Z",
+          "sha1": "7cb6e260dbc651b70d416e9d5364f4f2e329e6d6",
+          "bytes": 11377134,
+          "license": "Public domain",
+          "license_page_templates": [
+            "Cc-pd-mark-footer",
+            "PD-Layout",
+            "PD-US-expired-text",
+            "PD-old-X-expired",
+            "PD-old-auto-expired",
+            "PD-old-text"
+          ],
+          "artist": "Harold Robert Millar / Adam Cuerden",
+          "credit": "The vast majority is from: Kipling, Rudyard; ill. Harold Robert Millar (1906) Puck of Pook's Hill (First reprint (October 1906) ed.), London: Macmillan and Co., Limited A small area of misinking, about 50x50px, is from the 1920 reprint of the Pocket Edition, also Macmillan."
+        },
+        {
+          "id": "commons-image-57",
+          "title": "File:H. R. Millar - Rudyard Kipling - Puck of Pook's Hill 9.jpg",
+          "source": "https://commons.wikimedia.org/wiki/File:H._R._Millar_-_Rudyard_Kipling_-_Puck_of_Pook%27s_Hill_9.jpg",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/6/60/H._R._Millar_-_Rudyard_Kipling_-_Puck_of_Pook%27s_Hill_9.jpg",
+          "revision_timestamp": "2013-09-15T12:44:27Z",
+          "sha1": "0509a8346b70183cd24f96c993563815c4a932b4",
+          "bytes": 9967055,
+          "license": "Public domain",
+          "license_page_templates": [
+            "Cc-pd-mark-footer",
+            "PD-Layout",
+            "PD-US-expired-text",
+            "PD-old-X-expired",
+            "PD-old-auto-expired",
+            "PD-old-text"
+          ],
+          "artist": "Harold Robert Millar / Adam Cuerden",
+          "credit": "Kipling, Rudyard; ill. Harold Robert Millar (1906) Puck of Pook's Hill (First reprint (October 1906) ed.), London: Macmillan and Co., Limited"
+        },
+        {
+          "id": "commons-image-58",
+          "title": "File:Haeckel Chaetopoda-edit.jpg",
+          "source": "https://commons.wikimedia.org/wiki/File:Haeckel_Chaetopoda-edit.jpg",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/6/69/Haeckel_Chaetopoda-edit.jpg",
+          "revision_timestamp": "2008-05-31T22:58:13Z",
+          "sha1": "67e26926360106b39af14ae1594c14a029f89e9c",
+          "bytes": 4036469,
+          "license": "Public domain",
+          "license_page_templates": [
+            "Cc-pd-mark-footer",
+            "PD-Layout",
+            "PD-old",
+            "PD-old-text",
+            "PD-old-warning-text"
+          ],
+          "artist": "Ernst Haeckel",
+          "credit": "Kunstformen der Natur (1904), plate 96: Chaetopoda (see here, here and here)"
+        },
+        {
+          "id": "commons-image-59",
+          "title": "File:Haetosmia male 1.jpg",
+          "source": "https://commons.wikimedia.org/wiki/File:Haetosmia_male_1.jpg",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/a/aa/Haetosmia_male_1.jpg",
+          "revision_timestamp": "2012-08-22T13:04:10Z",
+          "sha1": "1deb6c996359307fee8055ccb2a1ed0221f32469",
+          "bytes": 1502197,
+          "license": "CC BY 3.0",
+          "license_page_templates": [
+            "Cc-by-3.0",
+            "Cc-by-layout"
+          ],
+          "artist": "Gideon Pisanty (Gidip) גדעון פיזנטי",
+          "credit": "Own work"
+        },
+        {
+          "id": "commons-image-60",
+          "title": "File:IC10 (HaIRG, 22.75 hr).jpg",
+          "source": "https://commons.wikimedia.org/wiki/File:IC10_(HaIRG,_22.75_hr).jpg",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/0/06/IC10_%28HaIRG%2C_22.75_hr%29.jpg",
+          "revision_timestamp": "2025-10-30T06:20:32Z",
+          "sha1": "898c9dde4c3c1e651f134a78af2e707cdf865a2c",
+          "bytes": 5951559,
+          "license": "CC BY 4.0",
+          "license_page_templates": [
+            "Cc-by-4.0",
+            "Cc-by-layout"
+          ],
+          "artist": "Brainandforce",
+          "credit": "Own work"
+        },
+        {
+          "id": "commons-image-61",
+          "title": "File:IC10 (HaRGB, 24.95 hr).jpg",
+          "source": "https://commons.wikimedia.org/wiki/File:IC10_(HaRGB,_24.95_hr).jpg",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/8/88/IC10_%28HaRGB%2C_24.95_hr%29.jpg",
+          "revision_timestamp": "2025-10-30T06:20:33Z",
+          "sha1": "46279d6bc7ea5311edfc3d08ccabb6baf5600bd7",
+          "bytes": 5913631,
+          "license": "CC BY 4.0",
+          "license_page_templates": [
+            "Cc-by-4.0",
+            "Cc-by-layout"
+          ],
+          "artist": "Brainandforce",
+          "credit": "Own work"
+        },
+        {
+          "id": "commons-image-62",
+          "title": "File:Iapetus as seen by the Cassini probe - 20071008.jpg",
+          "source": "https://commons.wikimedia.org/wiki/File:Iapetus_as_seen_by_the_Cassini_probe_-_20071008.jpg",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/c/c9/Iapetus_as_seen_by_the_Cassini_probe_-_20071008.jpg",
+          "revision_timestamp": "2018-12-12T18:07:51Z",
+          "sha1": "b3a30643f5592719e32229b7eaafd4b19a3b7610",
+          "bytes": 6520573,
+          "license": "Public domain",
+          "license_page_templates": [
+            "PD-Layout",
+            "PD-USGov-NASA"
+          ],
+          "artist": "NASA / JPL / Space Science Institute",
+          "credit": "PIA08384: The Other Side of Iapetus"
+        },
+        {
+          "id": "commons-image-63",
+          "title": "File:Ibuprofen-crystals-polarized-light-microscopy.jpg",
+          "source": "https://commons.wikimedia.org/wiki/File:Ibuprofen-crystals-polarized-light-microscopy.jpg",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/d/d7/Ibuprofen-crystals-polarized-light-microscopy.jpg",
+          "revision_timestamp": "2026-01-02T07:33:27Z",
+          "sha1": "42dc5a820184faf483c90680bee1ccf811fce7e9",
+          "bytes": 9396180,
+          "license": "CC BY 4.0",
+          "license_page_templates": [
+            "Cc-by-4.0",
+            "Cc-by-layout"
+          ],
+          "artist": "Janeklass",
+          "credit": "Own work"
+        },
+        {
+          "id": "commons-image-64",
+          "title": "File:Ice sculpture in Quebec city downtown.jpg",
+          "source": "https://commons.wikimedia.org/wiki/File:Ice_sculpture_in_Quebec_city_downtown.jpg",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/c/cb/Ice_sculpture_in_Quebec_city_downtown.jpg",
+          "revision_timestamp": "2021-03-17T13:43:55Z",
+          "sha1": "ff9f0d661c60e2a538fed088ac7d0d96e7368579",
+          "bytes": 14605025,
+          "license": "CC0",
+          "license_page_templates": [
+            "CC-Layout",
+            "Cc-zero"
+          ],
+          "artist": "Wilfredor",
+          "credit": "Own work"
+        },
+        {
+          "id": "commons-image-65",
+          "title": "File:Ida Husted Harper photograph by Aime Dupont.jpg",
+          "source": "https://commons.wikimedia.org/wiki/File:Ida_Husted_Harper_photograph_by_Aime_Dupont.jpg",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/4/48/Ida_Husted_Harper_photograph_by_Aime_Dupont.jpg",
+          "revision_timestamp": "2018-11-28T04:53:25Z",
+          "sha1": "1efffd63618d526e19f10e3331b158e648c5a57f",
+          "bytes": 5264029,
+          "license": "Public domain",
+          "license_page_templates": [
+            "PD-Layout",
+            "PD-US-expired",
+            "PD-US-expired-text"
+          ],
+          "artist": "Adam Cuerden",
+          "credit": "This image is available from the United States Library of Congress's Manuscript Division under the digital ID mnwp.151012.This tag does not indicate the copyright status of the attached work. A normal copyright tag is still required. See Commons:Licensing."
+        },
+        {
+          "id": "commons-image-66",
+          "title": "File:Ida M. Tarbell.jpg",
+          "source": "https://commons.wikimedia.org/wiki/File:Ida_M._Tarbell.jpg",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/9/9e/Ida_M._Tarbell.jpg",
+          "revision_timestamp": "2018-12-14T03:06:45Z",
+          "sha1": "9d0975c699cac36d49238c960925a6579d5a5e08",
+          "bytes": 3220132,
+          "license": "Public domain",
+          "license_page_templates": [
+            "Cc-pd-mark-footer",
+            "PD-Layout",
+            "PD-US-expired-text",
+            "PD-old-X-expired",
+            "PD-old-auto-expired",
+            "PD-old-text"
+          ],
+          "artist": "James E. Purdy / Adam Cuerden",
+          "credit": "This image is available from the United States Library of Congress's Prints and Photographs division under the digital ID cph.3c17943.This tag does not indicate the copyright status of the attached work. A normal copyright tag is still required. See Commons:Licensing."
+        },
+        {
+          "id": "commons-image-67",
+          "title": "File:J. M. Wright - Edward Scriven - Robert Burns - Halloween.JPG",
+          "source": "https://commons.wikimedia.org/wiki/File:J._M._Wright_-_Edward_Scriven_-_Robert_Burns_-_Halloween.JPG",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/e/e4/J._M._Wright_-_Edward_Scriven_-_Robert_Burns_-_Halloween.JPG",
+          "revision_timestamp": "2013-06-18T11:18:00Z",
+          "sha1": "48da66ffb51ac515e43499bcae8318060346b7d8",
+          "bytes": 13397061,
+          "license": "Public domain",
+          "license_page_templates": [
+            "Cc-pd-mark-footer",
+            "PD-Layout",
+            "PD-US-expired-text",
+            "PD-old-100-expired",
+            "PD-old-X-expired",
+            "PD-old-text"
+          ],
+          "artist": "Adam Cuerden",
+          "credit": "The Complete Works of Robert Burns: Containing the Poems, Songs, and Correspondence. Illustrated By W.H. Bartlett, T. Allom, and Other Artists. With a New Life of the Poet, and Notices, Critical and Biographical by Allan Cunningham, London: George Virtue. See above for notes."
+        },
+        {
+          "id": "commons-image-68",
+          "title": "File:JA1271 crossing the Otaki River.jpg",
+          "source": "https://commons.wikimedia.org/wiki/File:JA1271_crossing_the_Otaki_River.jpg",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/1/1f/JA1271_crossing_the_Otaki_River.jpg",
+          "revision_timestamp": "2012-09-23T06:36:22Z",
+          "sha1": "1d0bfc247b41e0b0654306b1f72f75c09d61ba3d",
+          "bytes": 1523762,
+          "license": "Public domain",
+          "license_page_templates": [
+            "CC-Layout",
+            "Cc-zero",
+            "PD-Layout",
+            "PD-self"
+          ],
+          "artist": "Karora",
+          "credit": "Own work"
+        },
+        {
+          "id": "commons-image-69",
+          "title": "File:Jacana jacana -Cleveland Metroparks Zoo, Ohio, USA-8a.jpg",
+          "source": "https://commons.wikimedia.org/wiki/File:Jacana_jacana_-Cleveland_Metroparks_Zoo,_Ohio,_USA-8a.jpg",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/c/cb/Jacana_jacana_-Cleveland_Metroparks_Zoo%2C_Ohio%2C_USA-8a.jpg",
+          "revision_timestamp": "2010-03-08T23:55:06Z",
+          "sha1": "80c6e87098a3a35db6edbcebed41566df2f9f082",
+          "bytes": 1985822,
+          "license": "CC BY 2.0",
+          "license_page_templates": [
+            "Cc-by-2.0",
+            "Cc-by-layout"
+          ],
+          "artist": "Ozan Kilic",
+          "credit": "originally posted to Flickr as Cleveland Zoo #2"
+        },
+        {
+          "id": "commons-image-70",
+          "title": "File:Jackie Robinson, Brooklyn Dodgers, 1954.jpg",
+          "source": "https://commons.wikimedia.org/wiki/File:Jackie_Robinson,_Brooklyn_Dodgers,_1954.jpg",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/2/2d/Jackie_Robinson%2C_Brooklyn_Dodgers%2C_1954.jpg",
+          "revision_timestamp": "2016-01-27T08:52:54Z",
+          "sha1": "768c47c5e89f7bcf1cce4d773dc1b9cc1ef0db05",
+          "bytes": 5253504,
+          "license": "Public domain",
+          "license_page_templates": [
+            "PD-Layout",
+            "PD-Look",
+            "PD-copyright holder"
+          ],
+          "artist": "Photo by Bob Sandberg, Look photographer Restoration by Adam Cuerden",
+          "credit": "This image is available from the United States Library of Congress's Prints and Photographs division under the digital ID ppmsc.00048.This tag does not indicate the copyright status of the attached work. A normal copyright tag is still required. See Commons:Licensing."
+        },
+        {
+          "id": "commons-image-71",
+          "title": "File:Jacques Offenbach by Nadar.jpg",
+          "source": "https://commons.wikimedia.org/wiki/File:Jacques_Offenbach_by_Nadar.jpg",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/c/c1/Jacques_Offenbach_by_Nadar.jpg",
+          "revision_timestamp": "2023-06-02T08:55:07Z",
+          "sha1": "87bec9b82f3cfe8aa90cbe469677bde21336e3eb",
+          "bytes": 1221360,
+          "license": "Public domain",
+          "license_page_templates": [
+            "Cc-pd-mark-footer",
+            "PD-France",
+            "PD-Layout",
+            "PD-US-expired-text",
+            "PD-old-100-expired",
+            "PD-old-X-expired",
+            "PD-old-text"
+          ],
+          "artist": "Nadar / Adam Cuerden",
+          "credit": "This file comes from Gallica Digital Library and is available under the digital ID btv1b530922314"
+        },
+        {
+          "id": "commons-image-72",
+          "title": "File:James Abram Garfield, photo portrait seated.jpg",
+          "source": "https://commons.wikimedia.org/wiki/File:James_Abram_Garfield,_photo_portrait_seated.jpg",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/1/1f/James_Abram_Garfield%2C_photo_portrait_seated.jpg",
+          "revision_timestamp": "2021-11-24T20:18:46Z",
+          "sha1": "b48873c99c4548949b6eacc5842ba93308a610bf",
+          "bytes": 697666,
+          "license": "Public domain",
+          "license_page_templates": [
+            "PD-Layout",
+            "PD-US-expired",
+            "PD-US-expired-text"
+          ],
+          "artist": "Unknown; part of Brady-Handy Photograph Collection.",
+          "credit": "This image is available from the United States Library of Congress's Prints and Photographs division under the digital ID cwpbh.03744.This tag does not indicate the copyright status of the attached work. A normal copyright tag is still required. See Commons:Licensing."
+        },
+        {
+          "id": "commons-image-73",
+          "title": "File:James Birdseye McPherson c. 1862 by Barr & Young.jpg",
+          "source": "https://commons.wikimedia.org/wiki/File:James_Birdseye_McPherson_c._1862_by_Barr_%26_Young.jpg",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/8/80/James_Birdseye_McPherson_c._1862_by_Barr_%26_Young.jpg",
+          "revision_timestamp": "2022-05-30T10:02:06Z",
+          "sha1": "e825ba8200dbab486901ada1cfb6a3903f15062e",
+          "bytes": 7884243,
+          "license": "Public domain",
+          "license_page_templates": [
+            "CC-Layout",
+            "CC0",
+            "Cc-pd-mark-footer",
+            "Cc-zero",
+            "PD-Layout",
+            "PD-US-expired-text",
+            "PD-old-100-expired",
+            "PD-old-X-expired",
+            "PD-old-text"
+          ],
+          "artist": "Adam Cuerden",
+          "credit": "National Portrait Gallery (United States) Object Number S/NPG.79.246.21"
+        },
+        {
+          "id": "commons-image-74",
+          "title": "File:James Flamingos MC.jpg",
+          "source": "https://commons.wikimedia.org/wiki/File:James_Flamingos_MC.jpg",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/b/b8/James_Flamingos_MC.jpg",
+          "revision_timestamp": "2009-04-12T07:51:36Z",
+          "sha1": "c2e2d47c4ed188cc1d2ee040b7853436a54b4535",
+          "bytes": 1615143,
+          "license": "CC BY 3.0",
+          "license_page_templates": [
+            "Cc-by-3.0",
+            "Cc-by-layout"
+          ],
+          "artist": "Christian Mehlführer, User:Chmehl",
+          "credit": "Own work"
+        },
+        {
+          "id": "commons-image-75",
+          "title": "File:James Gillray The King of Brobdingnag and Gulliver.–Vide. Swift's Gulliver- Voyage to Brobdingnag The Metropolitan Museum of Art edit.jpg",
+          "source": "https://commons.wikimedia.org/wiki/File:James_Gillray_The_King_of_Brobdingnag_and_Gulliver.%E2%80%93Vide._Swift%27s_Gulliver-_Voyage_to_Brobdingnag_The_Metropolitan_Museum_of_Art_edit.jpg",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/5/58/James_Gillray_The_King_of_Brobdingnag_and_Gulliver.%E2%80%93Vide._Swift%27s_Gulliver-_Voyage_to_Brobdingnag_The_Metropolitan_Museum_of_Art_edit.jpg",
+          "revision_timestamp": "2015-08-11T10:53:23Z",
+          "sha1": "c95abefc5cf7b2a7b4981afae0e727c35559a636",
+          "bytes": 7745205,
+          "license": "Public domain",
+          "license_page_templates": [
+            "Cc-pd-mark-footer",
+            "PD-Art",
+            "PD-Layout",
+            "PD-US-expired-text",
+            "PD-art",
+            "PD-art-category",
+            "PD-old-X-expired",
+            "PD-old-auto-1923",
+            "PD-old-auto-expired",
+            "PD-old-text"
+          ],
+          "artist": "James Gillray",
+          "credit": "Metropolitan Museum of Art, online collection: entry 391822"
+        },
+        {
+          "id": "commons-image-76",
+          "title": "File:James Pinson Labulo Davies and Sara Forbes Bonetta.jpg",
+          "source": "https://commons.wikimedia.org/wiki/File:James_Pinson_Labulo_Davies_and_Sara_Forbes_Bonetta.jpg",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/1/1a/James_Pinson_Labulo_Davies_and_Sara_Forbes_Bonetta.jpg",
+          "revision_timestamp": "2024-12-27T18:32:05Z",
+          "sha1": "0568ac4d80aeef4c0b8cf1296e55d1c8ae843221",
+          "bytes": 3305003,
+          "license": "Public domain",
+          "license_page_templates": [
+            "Cc-pd-mark-footer",
+            "PD-Layout",
+            "PD-Old-auto-1923",
+            "PD-US-expired-text",
+            "PD-old-X-expired",
+            "PD-old-auto-expired",
+            "PD-old-text"
+          ],
+          "artist": "Camille Silvy / Adam Cuerden",
+          "credit": "https://editions.covecollective.org/content/princess-omoba-aina-sarah-forbes-bonetta-nigeria"
+        },
+        {
+          "id": "commons-image-77",
+          "title": "File:James Webb Primary Mirror.jpg",
+          "source": "https://commons.wikimedia.org/wiki/File:James_Webb_Primary_Mirror.jpg",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/1/10/James_Webb_Primary_Mirror.jpg",
+          "revision_timestamp": "2017-11-16T22:22:27Z",
+          "sha1": "2d24e07f725e18207f76231d8c5872676c2e7ad7",
+          "bytes": 10054470,
+          "license": "Public domain",
+          "license_page_templates": [
+            "PD-Layout",
+            "PD-USGov-NASA"
+          ],
+          "artist": "NASA/MSFC/David Higginbotham",
+          "credit": "NASA Image of the Day"
+        },
+        {
+          "id": "commons-image-78",
+          "title": "File:James Webb Space Telescope Mirror37.jpg",
+          "source": "https://commons.wikimedia.org/wiki/File:James_Webb_Space_Telescope_Mirror37.jpg",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/9/99/James_Webb_Space_Telescope_Mirror37.jpg",
+          "revision_timestamp": "2010-08-05T14:34:33Z",
+          "sha1": "455168ed8778b13c8939d69e3fc9aee79e4d03e0",
+          "bytes": 11431453,
+          "license": "Public domain",
+          "license_page_templates": [
+            "PD-Layout",
+            "PD-USGov-NASA"
+          ],
+          "artist": "NASA/MSFC/David Higginbotham/Emmett Given",
+          "credit": "http://www.jwst.nasa.gov/images_mirror45.html"
+        },
+        {
+          "id": "commons-image-79",
+          "title": "File:James Webb Space Telescope Mirrors Will Piece Together Cosmic Puzzles (30108124923).jpg",
+          "source": "https://commons.wikimedia.org/wiki/File:James_Webb_Space_Telescope_Mirrors_Will_Piece_Together_Cosmic_Puzzles_(30108124923).jpg",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/6/60/James_Webb_Space_Telescope_Mirrors_Will_Piece_Together_Cosmic_Puzzles_%2830108124923%29.jpg",
+          "revision_timestamp": "2016-12-14T09:12:26Z",
+          "sha1": "7adee9c0625250f23226d6be6ddb1a956483d282",
+          "bytes": 1162307,
+          "license": "CC BY 2.0",
+          "license_page_templates": [
+            "Cc-by-2.0",
+            "Cc-by-layout"
+          ],
+          "artist": "Chris Gunn",
+          "credit": "https://www.flickr.com/photos/gsfc/30108124923/"
+        },
+        {
+          "id": "commons-image-80",
+          "title": "File:Kairo Ibn Tulun Moschee BW 5.jpg",
+          "source": "https://commons.wikimedia.org/wiki/File:Kairo_Ibn_Tulun_Moschee_BW_5.jpg",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/e/e0/Kairo_Ibn_Tulun_Moschee_BW_5.jpg",
+          "revision_timestamp": "2010-11-21T13:03:21Z",
+          "sha1": "177efa1bd4e161b3ced69f9e16742135664aff5a",
+          "bytes": 3176797,
+          "license": "CC BY 3.0",
+          "license_page_templates": [
+            "Cc-by-3.0",
+            "Cc-by-layout"
+          ],
+          "artist": "Berthold Werner",
+          "credit": "Own work"
+        },
+        {
+          "id": "commons-image-81",
+          "title": "File:Kairo Ibn Tulun Moschee BW 7.jpg",
+          "source": "https://commons.wikimedia.org/wiki/File:Kairo_Ibn_Tulun_Moschee_BW_7.jpg",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/a/ac/Kairo_Ibn_Tulun_Moschee_BW_7.jpg",
+          "revision_timestamp": "2010-11-24T16:49:29Z",
+          "sha1": "1ed3f8b267580ac6543ae4065085b31b8a6c7b5a",
+          "bytes": 2181646,
+          "license": "CC BY 3.0",
+          "license_page_templates": [
+            "Cc-by-3.0",
+            "Cc-by-layout"
+          ],
+          "artist": "Berthold Werner",
+          "credit": "Own work"
+        },
+        {
+          "id": "commons-image-82",
+          "title": "File:Kaiserfeldgasse 8 Leoben 06-2025.jpg",
+          "source": "https://commons.wikimedia.org/wiki/File:Kaiserfeldgasse_8_Leoben_06-2025.jpg",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/c/cc/Kaiserfeldgasse_8_Leoben_06-2025.jpg",
+          "revision_timestamp": "2026-01-11T22:17:54Z",
+          "sha1": "1d56d1557eb5cbc3bd482937f630c09efb042de2",
+          "bytes": 11042950,
+          "license": "CC BY 4.0",
+          "license_page_templates": [
+            "Cc-by-4.0",
+            "Cc-by-layout"
+          ],
+          "artist": "Aciarium",
+          "credit": "Own work"
+        },
+        {
+          "id": "commons-image-83",
+          "title": "File:Kaldari Zygoballus rufipes female 02.jpg",
+          "source": "https://commons.wikimedia.org/wiki/File:Kaldari_Zygoballus_rufipes_female_02.jpg",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/9/91/Kaldari_Zygoballus_rufipes_female_02.jpg",
+          "revision_timestamp": "2012-08-29T05:10:41Z",
+          "sha1": "7a769160688deebc05e81a7d5808d81f101764bd",
+          "bytes": 1463906,
+          "license": "CC0",
+          "license_page_templates": [
+            "CC-Layout",
+            "Cc-zero"
+          ],
+          "artist": "Ryan Kaldari",
+          "credit": "Own work"
+        },
+        {
+          "id": "commons-image-84",
+          "title": "File:Kamal Bahamdan & Noblesse Des Tess - 2013 Longines Global Champions Tour.jpg",
+          "source": "https://commons.wikimedia.org/wiki/File:Kamal_Bahamdan_%26_Noblesse_Des_Tess_-_2013_Longines_Global_Champions_Tour.jpg",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/3/3a/Kamal_Bahamdan_%26_Noblesse_Des_Tess_-_2013_Longines_Global_Champions_Tour.jpg",
+          "revision_timestamp": "2014-03-07T19:53:36Z",
+          "sha1": "d910a80d82f1d101c375a8b24fd280975409e482",
+          "bytes": 12846263,
+          "license": "CC BY 3.0",
+          "license_page_templates": [
+            "Cc-by-3.0",
+            "Cc-by-layout"
+          ],
+          "artist": "Fanny Schertzer",
+          "credit": "Own work"
+        },
+        {
+          "id": "commons-image-85",
+          "title": "File:L'Atlas curieux ou le Monde réprésenté dans des cartes générales et particuliéres du ciel et de la terre, p. 11 (cropped).jpg",
+          "source": "https://commons.wikimedia.org/wiki/File:L%27Atlas_curieux_ou_le_Monde_r%C3%A9pr%C3%A9sent%C3%A9_dans_des_cartes_g%C3%A9n%C3%A9rales_et_particuli%C3%A9res_du_ciel_et_de_la_terre,_p._11_(cropped).jpg",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/c/c6/L%27Atlas_curieux_ou_le_Monde_r%C3%A9pr%C3%A9sent%C3%A9_dans_des_cartes_g%C3%A9n%C3%A9rales_et_particuli%C3%A9res_du_ciel_et_de_la_terre%2C_p._11_%28cropped%29.jpg",
+          "revision_timestamp": "2023-05-19T15:39:48Z",
+          "sha1": "698ee688296f5f3fae0fed37411c432597f5119c",
+          "bytes": 8107012,
+          "license": "Public domain",
+          "license_page_templates": [
+            "Cc-pd-mark-footer",
+            "PD-Art",
+            "PD-Layout",
+            "PD-US-expired-text",
+            "PD-art-category",
+            "PD-old-100-expired",
+            "PD-old-X-expired",
+            "PD-old-text"
+          ],
+          "artist": "Nicolas de Fer",
+          "credit": "https://purl.stanford.edu/gd904zc0443"
+        },
+        {
+          "id": "commons-image-86",
+          "title": "File:L'Aurore Philippe Magnier Louvre MR3243.JPG",
+          "source": "https://commons.wikimedia.org/wiki/File:L%27Aurore_Philippe_Magnier_Louvre_MR3243.JPG",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/4/48/L%27Aurore_Philippe_Magnier_Louvre_MR3243.JPG",
+          "revision_timestamp": "2010-10-28T21:51:02Z",
+          "sha1": "376016191d7caa4694c0c30aba7b6251a3529e79",
+          "bytes": 431476,
+          "license": "Public domain",
+          "license_page_templates": [
+            "Cc-pd-mark-footer",
+            "PD-Layout",
+            "PD-old-100",
+            "PD-old-text",
+            "PD-old-warning-text"
+          ],
+          "artist": "Philippe MAGNIER (1647-1715)",
+          "credit": "Jebulon, octobre 2010"
+        },
+        {
+          "id": "commons-image-87",
+          "title": "File:L'Image et le Pouvoir - Buste d'homme cuirassé-2.jpg",
+          "source": "https://commons.wikimedia.org/wiki/File:L%27Image_et_le_Pouvoir_-_Buste_d%27homme_cuirass%C3%A9-2.jpg",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/8/8c/L%27Image_et_le_Pouvoir_-_Buste_d%27homme_cuirass%C3%A9-2.jpg",
+          "revision_timestamp": "2012-01-19T18:46:46Z",
+          "sha1": "4cb3cecfede01fa0205aa0be9a6249664eec3435",
+          "bytes": 5733437,
+          "license": "CC BY 3.0",
+          "license_page_templates": [
+            "Cc-by-3.0",
+            "Cc-by-layout"
+          ],
+          "artist": "",
+          "credit": "Self-photographed"
+        },
+        {
+          "id": "commons-image-88",
+          "title": "File:L'execution de Maximilien de Robespierre a la guillotine.jpg",
+          "source": "https://commons.wikimedia.org/wiki/File:L%27execution_de_Maximilien_de_Robespierre_a_la_guillotine.jpg",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/0/05/L%27execution_de_Maximilien_de_Robespierre_a_la_guillotine.jpg",
+          "revision_timestamp": "2021-01-07T06:55:36Z",
+          "sha1": "5836f525334fe3deb2eb6356dc785921f7d18886",
+          "bytes": 4860308,
+          "license": "Public domain",
+          "license_page_templates": [
+            "Cc-pd-mark-footer",
+            "PD-Art",
+            "PD-Layout",
+            "PD-US-expired-text",
+            "PD-art",
+            "PD-art-category",
+            "PD-old-100-expired",
+            "PD-old-X-expired",
+            "PD-old-text"
+          ],
+          "artist": "Giacomo Aliprandi (1775-1855), graveur. Giacomo Beys, dessinateur.",
+          "credit": "This file comes from Gallica Digital Library and is available under the digital ID btv1b53009891h/f1"
+        },
+        {
+          "id": "commons-image-89",
+          "title": "File:L-Assemblee-Nationale-Gillray.jpeg",
+          "source": "https://commons.wikimedia.org/wiki/File:L-Assemblee-Nationale-Gillray.jpeg",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/4/4f/L-Assemblee-Nationale-Gillray.jpeg",
+          "revision_timestamp": "2008-08-22T06:50:36Z",
+          "sha1": "90fd54282058cc6d9b502f187d9def5f1084929a",
+          "bytes": 5485617,
+          "license": "Public domain",
+          "license_page_templates": [
+            "Cc-pd-mark-footer",
+            "PD-Layout",
+            "PD-old-100",
+            "PD-old-text",
+            "PD-old-warning-text"
+          ],
+          "artist": "James Gillray",
+          "credit": "Library of Congress, Prints &amp; Photographs Division, LC-USZC4-13054 (color film copy transparency), uncompressed archival TIFF version (66 MB), level color (pick white point, adjust black level), cropped, and converted to JPEG (quality level 88) with the GIMP 2.4.5."
+        },
+        {
+          "id": "commons-image-90",
+          "title": "File:La Belle Otero, par Jean Reutlinger, sepia.jpg",
+          "source": "https://commons.wikimedia.org/wiki/File:La_Belle_Otero,_par_Jean_Reutlinger,_sepia.jpg",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/9/99/La_Belle_Otero%2C_par_Jean_Reutlinger%2C_sepia.jpg",
+          "revision_timestamp": "2015-04-18T20:07:28Z",
+          "sha1": "89ee6896917b92d17d4be7aa6e155169123e9c73",
+          "bytes": 1589235,
+          "license": "Public domain",
+          "license_page_templates": [
+            "Cc-pd-mark-footer",
+            "PD-Layout",
+            "PD-old-100",
+            "PD-old-text",
+            "PD-old-warning-text"
+          ],
+          "artist": "Jean Reutlinger",
+          "credit": "This file comes from Gallica Digital Library and is available under the digital ID btv1b85969490"
+        },
+        {
+          "id": "commons-image-91",
+          "title": "File:La Défense de nuit, Paris, France 2.jpg",
+          "source": "https://commons.wikimedia.org/wiki/File:La_D%C3%A9fense_de_nuit,_Paris,_France_2.jpg",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/c/c9/La_D%C3%A9fense_de_nuit%2C_Paris%2C_France_2.jpg",
+          "revision_timestamp": "2012-04-27T01:10:37Z",
+          "sha1": "f9228ce5066925e0436c3bb719494aaa8ee6e225",
+          "bytes": 12191359,
+          "license": "CC BY 2.0",
+          "license_page_templates": [
+            "Cc-by-2.0",
+            "Cc-by-layout"
+          ],
+          "artist": "Ros K",
+          "credit": "Flickr: La Défense"
+        },
+        {
+          "id": "commons-image-92",
+          "title": "File:La Marquise de Baglion en Flore, Jean Marc Nattier, Alte Pinakothek Munich.jpg",
+          "source": "https://commons.wikimedia.org/wiki/File:La_Marquise_de_Baglion_en_Flore,_Jean_Marc_Nattier,_Alte_Pinakothek_Munich.jpg",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/b/b5/La_Marquise_de_Baglion_en_Flore%2C_Jean_Marc_Nattier%2C_Alte_Pinakothek_Munich.jpg",
+          "revision_timestamp": "2014-05-04T15:09:43Z",
+          "sha1": "b12e6e4913773147065b4688db32c86b8a07927c",
+          "bytes": 5424716,
+          "license": "Public domain",
+          "license_page_templates": [
+            "CC-Layout",
+            "Cc-pd-mark-footer",
+            "Cc-zero",
+            "PD-Art",
+            "PD-Layout",
+            "PD-US-expired-text",
+            "PD-art-category",
+            "PD-art-old-100-expired",
+            "PD-old-100-expired",
+            "PD-old-X-expired",
+            "PD-old-text"
+          ],
+          "artist": "Jean-Marc Nattier",
+          "credit": "Own work : Jebulon, 2013-10-23"
+        },
+        {
+          "id": "commons-image-93",
+          "title": "File:La Martre lighthouse - La Martre, QC, CA - 16-06-2013.jpg",
+          "source": "https://commons.wikimedia.org/wiki/File:La_Martre_lighthouse_-_La_Martre,_QC,_CA_-_16-06-2013.jpg",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/9/9c/La_Martre_lighthouse_-_La_Martre%2C_QC%2C_CA_-_16-06-2013.jpg",
+          "revision_timestamp": "2013-08-02T19:23:42Z",
+          "sha1": "4833227e66579d220e942d5d97ce4d3bc4bc5fa8",
+          "bytes": 6290811,
+          "license": "CC BY 3.0",
+          "license_page_templates": [
+            "Cc-by-3.0",
+            "Cc-by-layout"
+          ],
+          "artist": "Letartean",
+          "credit": "Own work"
+        },
+        {
+          "id": "commons-image-94",
+          "title": "File:La mort Saint-Innocent Louvre R.F.2625.jpg",
+          "source": "https://commons.wikimedia.org/wiki/File:La_mort_Saint-Innocent_Louvre_R.F.2625.jpg",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/1/17/La_mort_Saint-Innocent_Louvre_R.F.2625.jpg",
+          "revision_timestamp": "2012-04-02T21:38:02Z",
+          "sha1": "bb4fe833058222c470a01e0b6bb68c2b106d193b",
+          "bytes": 1492029,
+          "license": "CC0",
+          "license_page_templates": [
+            "CC-Layout",
+            "Cc-zero"
+          ],
+          "artist": "Jebulon",
+          "credit": "Own work"
+        },
+        {
+          "id": "commons-image-95",
+          "title": "File:M. François Coppée (auteur) - btv1b53111903w restaured.jpg",
+          "source": "https://commons.wikimedia.org/wiki/File:M._Fran%C3%A7ois_Copp%C3%A9e_(auteur)_-_btv1b53111903w_restaured.jpg",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/2/2d/M._Fran%C3%A7ois_Copp%C3%A9e_%28auteur%29_-_btv1b53111903w_restaured.jpg",
+          "revision_timestamp": "2026-05-24T14:07:04Z",
+          "sha1": "31f0daaa4993179603520267390fdbef5eced0e3",
+          "bytes": 6228946,
+          "license": "Public domain",
+          "license_page_templates": [
+            "CC-Layout",
+            "Cc-pd-mark-footer",
+            "Cc-zero",
+            "PD-France",
+            "PD-Layout",
+            "PD-US-expired",
+            "PD-US-expired-text",
+            "PD-old-100-expired",
+            "PD-old-X-expired",
+            "PD-old-auto-expired",
+            "PD-old-text"
+          ],
+          "artist": "Nadar",
+          "credit": "Bibliothèque nationale de France"
+        },
+        {
+          "id": "commons-image-96",
+          "title": "File:M42 (infrared, S-II, O-III).jpg",
+          "source": "https://commons.wikimedia.org/wiki/File:M42_(infrared,_S-II,_O-III).jpg",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/0/01/M42_%28infrared%2C_S-II%2C_O-III%29.jpg",
+          "revision_timestamp": "2025-10-02T21:16:40Z",
+          "sha1": "8357f1793712005ee4385950d7148b1ea65ca2de",
+          "bytes": 6149412,
+          "license": "CC BY 4.0",
+          "license_page_templates": [
+            "Cc-by-4.0",
+            "Cc-by-layout"
+          ],
+          "artist": "Brainandforce",
+          "credit": "Own work"
+        },
+        {
+          "id": "commons-image-97",
+          "title": "File:Maardu Northern lights — Estonia, 2022.jpg",
+          "source": "https://commons.wikimedia.org/wiki/File:Maardu_Northern_lights_%E2%80%94_Estonia,_2022.jpg",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/e/e7/Maardu_Northern_lights_%E2%80%94_Estonia%2C_2022.jpg",
+          "revision_timestamp": "2023-12-15T00:27:27Z",
+          "sha1": "c60c034bb90fcfdd7732033c9620d4b0e3a3fb70",
+          "bytes": 8992689,
+          "license": "CC BY 4.0",
+          "license_page_templates": [
+            "Cc-by-4.0",
+            "Cc-by-layout"
+          ],
+          "artist": "Maxim Bilovitskiy",
+          "credit": "Own work"
+        },
+        {
+          "id": "commons-image-98",
+          "title": "File:Machu Picchu.png",
+          "source": "https://commons.wikimedia.org/wiki/File:Machu_Picchu.png",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/8/88/Machu_Picchu.png",
+          "revision_timestamp": "2024-08-24T17:10:20Z",
+          "sha1": "b8f0f9728bf860b217c95f3aa3b79b702ee9f124",
+          "bytes": 6705270,
+          "license": "Public domain",
+          "license_page_templates": [
+            "PD-Layout",
+            "PD-US"
+          ],
+          "artist": "Hiram Bingham III",
+          "credit": "National Geographic Magazine, April 1913, [1]"
+        },
+        {
+          "id": "commons-image-99",
+          "title": "File:NASA Mars Rover.jpg",
+          "source": "https://commons.wikimedia.org/wiki/File:NASA_Mars_Rover.jpg",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/d/d8/NASA_Mars_Rover.jpg",
+          "revision_timestamp": "2009-01-03T00:55:28Z",
+          "sha1": "041b4941ae3679d7ec2538f808e3ac1c890a0d85",
+          "bytes": 877752,
+          "license": "Public domain",
+          "license_page_templates": [
+            "PD-Layout",
+            "PD-USGov-NASA"
+          ],
+          "artist": "NASA/JPL/Cornell University, Maas Digital LLC",
+          "credit": "http://photojournal.jpl.nasa.gov/catalog/PIA04413 (image link)"
+        },
+        {
+          "id": "commons-image-100",
+          "title": "File:NASA astronaut Leland D. Melvin with his dogs Jake and Scout.jpg",
+          "source": "https://commons.wikimedia.org/wiki/File:NASA_astronaut_Leland_D._Melvin_with_his_dogs_Jake_and_Scout.jpg",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/8/80/NASA_astronaut_Leland_D._Melvin_with_his_dogs_Jake_and_Scout.jpg",
+          "revision_timestamp": "2024-08-23T15:11:49Z",
+          "sha1": "d70fe4bd18ffd66bc7d63dd07d76f48f00d66d5c",
+          "bytes": 1393276,
+          "license": "Public domain",
+          "license_page_templates": [
+            "PD-Layout",
+            "PD-USGov-NASA"
+          ],
+          "artist": "Robert Markowitz",
+          "credit": "NASA on Twitter (archive); direct link to image (image archived)"
+        },
+        {
+          "id": "commons-image-101",
+          "title": "File:NASA's Orion Spacecraft Parachutes Tested at U.S. Army Yuma Proving Ground.jpg",
+          "source": "https://commons.wikimedia.org/wiki/File:NASA%27s_Orion_Spacecraft_Parachutes_Tested_at_U.S._Army_Yuma_Proving_Ground.jpg",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/f/f4/NASA%27s_Orion_Spacecraft_Parachutes_Tested_at_U.S._Army_Yuma_Proving_Ground.jpg",
+          "revision_timestamp": "2017-03-10T16:57:02Z",
+          "sha1": "164021edb4a1c4bba57b2ffb94f34b921468b5a2",
+          "bytes": 5173960,
+          "license": "Public domain",
+          "license_page_templates": [
+            "PD-Layout",
+            "PD-USGov-NASA"
+          ],
+          "artist": "NASA",
+          "credit": "NASA"
+        },
+        {
+          "id": "commons-image-102",
+          "title": "File:NASA's Shuttle Carrier Aircraft 905 (front) and 911 (rear).jpg",
+          "source": "https://commons.wikimedia.org/wiki/File:NASA%27s_Shuttle_Carrier_Aircraft_905_(front)_and_911_(rear).jpg",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/9/99/NASA%27s_Shuttle_Carrier_Aircraft_905_%28front%29_and_911_%28rear%29.jpg",
+          "revision_timestamp": "2017-10-13T10:51:07Z",
+          "sha1": "794f223ef3366eebbd28c7686d8e373e8455bb38",
+          "bytes": 10132263,
+          "license": "Public domain",
+          "license_page_templates": [
+            "PD-Layout",
+            "PD-USGov-NASA"
+          ],
+          "artist": "NASA/Carla Thomas",
+          "credit": "https://www.nasa.gov/centers/dryden/multimedia/imagegallery/SCA/ED11-0237-18.html direct link"
+        },
+        {
+          "id": "commons-image-103",
+          "title": "File:NASA-SNR0519690-ChandraXRayObservatory-20150122.jpg",
+          "source": "https://commons.wikimedia.org/wiki/File:NASA-SNR0519690-ChandraXRayObservatory-20150122.jpg",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/0/03/NASA-SNR0519690-ChandraXRayObservatory-20150122.jpg",
+          "revision_timestamp": "2015-03-11T00:50:56Z",
+          "sha1": "356e4f3a023b5657264cb2d99d699fd877a06e36",
+          "bytes": 3166896,
+          "license": "Public domain",
+          "license_page_templates": [
+            "PD-Hubble",
+            "PD-Layout",
+            "PD-USGov-NASA"
+          ],
+          "artist": "X-ray: NASA/CXC/Rutgers/J.Hughes; Optical: NASA/STScI",
+          "credit": "http://astropix.ipac.caltech.edu/image/chandra/587b (direct link); see also http://chandra.harvard.edu/photo/2015/iyl/"
+        },
+        {
+          "id": "commons-image-104",
+          "title": "File:Nagasaki temple destroyed.jpg",
+          "source": "https://commons.wikimedia.org/wiki/File:Nagasaki_temple_destroyed.jpg",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/3/32/Nagasaki_temple_destroyed.jpg",
+          "revision_timestamp": "2015-08-08T23:49:39Z",
+          "sha1": "75900649dd08b6dd7c28ab35dbe93fdd8182a0fa",
+          "bytes": 1101745,
+          "license": "Public domain",
+          "license_page_templates": [
+            "PD-Layout",
+            "PD-USGov-Military-Marines"
+          ],
+          "artist": "Cpl. Lynn P. Walker, Jr. (Marine Corps)",
+          "credit": "archive copy at the Wayback Machine \"War and Conflict\" image collection] (HD-SN-99-02900)"
+        },
+        {
+          "id": "commons-image-105",
+          "title": "File:Napoleon III after Death - Illustrated London News Jan 25 1873-2.PNG",
+          "source": "https://commons.wikimedia.org/wiki/File:Napoleon_III_after_Death_-_Illustrated_London_News_Jan_25_1873-2.PNG",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/9/93/Napoleon_III_after_Death_-_Illustrated_London_News_Jan_25_1873-2.PNG",
+          "revision_timestamp": "2009-03-12T21:08:06Z",
+          "sha1": "8b8dbd046ec029cea63470e9aac22aca1c0df6e4",
+          "bytes": 1733436,
+          "license": "Public domain",
+          "license_page_templates": [
+            "Cc-pd-mark-footer",
+            "PD-Art",
+            "PD-Layout",
+            "PD-US-expired-text",
+            "PD-art-category",
+            "PD-art-old-100-1923",
+            "PD-art-old-100-expired",
+            "PD-old-100-expired",
+            "PD-old-X-expired",
+            "PD-old-text"
+          ],
+          "artist": "R. &amp; E. Taylor (Firm) / After W. &amp; D. Downey",
+          "credit": "The Illustrated London News"
+        },
+        {
+          "id": "commons-image-106",
+          "title": "File:Narasimha oil colour.jpg",
+          "source": "https://commons.wikimedia.org/wiki/File:Narasimha_oil_colour.jpg",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/0/01/Narasimha_oil_colour.jpg",
+          "revision_timestamp": "2010-03-18T15:32:31Z",
+          "sha1": "097285b3baff733c79c2588a0dc417290a38b88f",
+          "bytes": 3943203,
+          "license": "Public domain",
+          "license_page_templates": [
+            "PD-1923",
+            "PD-Art-two",
+            "PD-India",
+            "PD-Layout",
+            "PD-US-expired",
+            "PD-US-expired-text",
+            "PD-art-category",
+            "PD-old-warning-text"
+          ],
+          "artist": "AnonymousUnknown author",
+          "credit": "British Library"
+        },
+        {
+          "id": "commons-image-107",
+          "title": "File:Obama family in mist in Rio de Janeiro.jpg",
+          "source": "https://commons.wikimedia.org/wiki/File:Obama_family_in_mist_in_Rio_de_Janeiro.jpg",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/a/a5/Obama_family_in_mist_in_Rio_de_Janeiro.jpg",
+          "revision_timestamp": "2012-05-25T09:25:21Z",
+          "sha1": "1c666aad4ffa66a49657f91514d69aa820624b9b",
+          "bytes": 1146520,
+          "license": "Public domain",
+          "license_page_templates": [
+            "PD-Layout",
+            "PD-POTUS",
+            "PD-USGov-POTUS"
+          ],
+          "artist": "Pete Souza",
+          "credit": "White House Flickr account"
+        },
+        {
+          "id": "commons-image-108",
+          "title": "File:Obra de Teatro Don Quijote en el Teatro Teresa Carreño.jpg",
+          "source": "https://commons.wikimedia.org/wiki/File:Obra_de_Teatro_Don_Quijote_en_el_Teatro_Teresa_Carre%C3%B1o.jpg",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/7/77/Obra_de_Teatro_Don_Quijote_en_el_Teatro_Teresa_Carre%C3%B1o.jpg",
+          "revision_timestamp": "2020-11-08T16:06:02Z",
+          "sha1": "3be9bbc8ebd0dfe176ab9c66b78c2d49323d199c",
+          "bytes": 3383449,
+          "license": "CC0",
+          "license_page_templates": [
+            "CC-Layout",
+            "Cc-zero"
+          ],
+          "artist": "Theatrical Artwork by Laura Fiorucci. Picture by Wilfredor",
+          "credit": "Own work"
+        },
+        {
+          "id": "commons-image-109",
+          "title": "File:Ockerbrauner-Trichterling-Clitocybe-gibba.jpg",
+          "source": "https://commons.wikimedia.org/wiki/File:Ockerbrauner-Trichterling-Clitocybe-gibba.jpg",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/c/cf/Ockerbrauner-Trichterling-Clitocybe-gibba.jpg",
+          "revision_timestamp": "2011-07-23T17:37:05Z",
+          "sha1": "a4972d1ea7e165cc7d2788b8cab342d91aae835f",
+          "bytes": 4507636,
+          "license": "CC BY 3.0",
+          "license_page_templates": [
+            "Cc-by-3.0",
+            "Cc-by-layout"
+          ],
+          "artist": "Holger Krisp",
+          "credit": "Own work"
+        },
+        {
+          "id": "commons-image-110",
+          "title": "File:Octopus macropus Merculiano.jpg",
+          "source": "https://commons.wikimedia.org/wiki/File:Octopus_macropus_Merculiano.jpg",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/e/eb/Octopus_macropus_Merculiano.jpg",
+          "revision_timestamp": "2012-07-14T10:06:40Z",
+          "sha1": "50efc92dd1097085523f9ae8a865bc7efc3bec01",
+          "bytes": 1955505,
+          "license": "Public domain",
+          "license_page_templates": [
+            "Cc-pd-mark-footer",
+            "PD-Layout",
+            "PD-art-category",
+            "PD-old-70",
+            "PD-old-text",
+            "PD-old-warning-text",
+            "PD-scan"
+          ],
+          "artist": "Comingio Merculiano in Jatta Giuseppe",
+          "credit": "I Cefalopodi viventi nel Golfo di Napoli (sistematica) : monografia"
+        },
+        {
+          "id": "commons-image-111",
+          "title": "File:Pach Brothers - George Foster Peabody.jpg",
+          "source": "https://commons.wikimedia.org/wiki/File:Pach_Brothers_-_George_Foster_Peabody.jpg",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/3/3d/Pach_Brothers_-_George_Foster_Peabody.jpg",
+          "revision_timestamp": "2013-06-22T04:36:09Z",
+          "sha1": "1325bd153579d3ef3dfc81f5f34e24db1f5cad8a",
+          "bytes": 9496787,
+          "license": "Public domain",
+          "license_page_templates": [
+            "PD-Layout",
+            "PD-US-expired",
+            "PD-US-expired-text"
+          ],
+          "artist": "Adam Cuerden",
+          "credit": "This image is available from the United States Library of Congress's Prints and Photographs division under the digital ID ppmsca.17490.This tag does not indicate the copyright status of the attached work. A normal copyright tag is still required. See Commons:Licensing."
+        },
+        {
+          "id": "commons-image-112",
+          "title": "File:Pachygrapsus marmoratus 2008 G1.jpg",
+          "source": "https://commons.wikimedia.org/wiki/File:Pachygrapsus_marmoratus_2008_G1.jpg",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/b/be/Pachygrapsus_marmoratus_2008_G1.jpg",
+          "revision_timestamp": "2008-08-06T13:52:47Z",
+          "sha1": "f1ea4a40fb18e9f554bb19a3a7ed64d8f0a97c92",
+          "bytes": 2480796,
+          "license": "Public domain",
+          "license_page_templates": [
+            "PD-Layout",
+            "PD-self"
+          ],
+          "artist": "George Chernilevsky",
+          "credit": "Own work"
+        },
+        {
+          "id": "commons-image-113",
+          "title": "File:Pachygrapsus marmoratus 2009 G4.jpg",
+          "source": "https://commons.wikimedia.org/wiki/File:Pachygrapsus_marmoratus_2009_G4.jpg",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/c/c3/Pachygrapsus_marmoratus_2009_G4.jpg",
+          "revision_timestamp": "2009-11-13T11:12:47Z",
+          "sha1": "d00cc381855cd43895c23716c6be92b15049f4bf",
+          "bytes": 3582262,
+          "license": "Public domain",
+          "license_page_templates": [
+            "PD-Layout",
+            "PD-self"
+          ],
+          "artist": "George Chernilevsky",
+          "credit": "Own work"
+        },
+        {
+          "id": "commons-image-114",
+          "title": "File:Pacific National freight train Virginia, SA.jpg",
+          "source": "https://commons.wikimedia.org/wiki/File:Pacific_National_freight_train_Virginia,_SA.jpg",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/4/43/Pacific_National_freight_train_Virginia%2C_SA.jpg",
+          "revision_timestamp": "2025-11-01T05:21:57Z",
+          "sha1": "969fe4f31feccae599d6ecb49a00cdd27f44c9e8",
+          "bytes": 2776203,
+          "license": "CC BY 4.0",
+          "license_page_templates": [
+            "Cc-by-4.0",
+            "Cc-by-layout"
+          ],
+          "artist": "Tomoyn",
+          "credit": "Own work"
+        },
+        {
+          "id": "commons-image-115",
+          "title": "File:Paddlefish Polyodon spathula.jpg",
+          "source": "https://commons.wikimedia.org/wiki/File:Paddlefish_Polyodon_spathula.jpg",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/4/44/Paddlefish_Polyodon_spathula.jpg",
+          "revision_timestamp": "2011-02-17T20:35:14Z",
+          "sha1": "50ca20c37148f4f4275177213f19b0dc9e7c4b60",
+          "bytes": 896262,
+          "license": "Public domain",
+          "license_page_templates": [
+            "PD-Layout",
+            "PD-USGov-FWS"
+          ],
+          "artist": "Timothy Knepp",
+          "credit": "US Fish and Wildlife Service, item WO-ART-51-CDKnepp1"
+        },
+        {
+          "id": "commons-image-116",
+          "title": "File:Pahoeoe fountain edit2.jpg",
+          "source": "https://commons.wikimedia.org/wiki/File:Pahoeoe_fountain_edit2.jpg",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/9/9f/Pahoeoe_fountain_edit2.jpg",
+          "revision_timestamp": "2008-05-01T12:36:08Z",
+          "sha1": "f5eecbfede7fbf0f0c0cf2afa14b0e0860dbf846",
+          "bytes": 2384924,
+          "license": "Public domain",
+          "license_page_templates": [
+            "PD-Layout",
+            "PD-USGov-Interior-USGS",
+            "PD-USGov-USGS",
+            "PD-retouched-user"
+          ],
+          "artist": "J.D. Griggs",
+          "credit": "https://pubs.usgs.gov/dds/dds-80/"
+        },
+        {
+          "id": "commons-image-117",
+          "title": "File:QeshmIsland NASA.jpg",
+          "source": "https://commons.wikimedia.org/wiki/File:QeshmIsland_NASA.jpg",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/7/7c/QeshmIsland_NASA.jpg",
+          "revision_timestamp": "2013-05-28T00:20:49Z",
+          "sha1": "e6b96f995d6539f7095c68b745e14cfc85cc1e6d",
+          "bytes": 6616058,
+          "license": "Public domain",
+          "license_page_templates": [
+            "PD-Layout",
+            "PD-USGov-NASA"
+          ],
+          "artist": "NASA image using data provided courtesy of the University of Maryland’s Global Land Cover Facility",
+          "credit": "http://earthobservatory.nasa.gov/IOTD/view.php?id=7460"
+        },
+        {
+          "id": "commons-image-118",
+          "title": "File:Quant Zurlauben.jpg",
+          "source": "https://commons.wikimedia.org/wiki/File:Quant_Zurlauben.jpg",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/b/be/Quant_Zurlauben.jpg",
+          "revision_timestamp": "2022-05-28T15:43:56Z",
+          "sha1": "4e40af0288f48b31b5f4861b4a0c4e52d70f12f8",
+          "bytes": 10684301,
+          "license": "Public domain",
+          "license_page_templates": [
+            "Cc-pd-mark-footer",
+            "PD-Layout",
+            "PD-Old-auto-expired",
+            "PD-US-expired-text",
+            "PD-old-X-expired",
+            "PD-old-auto-expired",
+            "PD-old-text"
+          ],
+          "artist": "Fritz Quant",
+          "credit": "Private collectioninstitution QS:P195,somevalue,P3831,Q768717"
+        },
+        {
+          "id": "commons-image-119",
+          "title": "File:Quentin Matsys - A Grotesque old woman.jpg",
+          "source": "https://commons.wikimedia.org/wiki/File:Quentin_Matsys_-_A_Grotesque_old_woman.jpg",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/3/36/Quentin_Matsys_-_A_Grotesque_old_woman.jpg",
+          "revision_timestamp": "2026-07-31T11:14:05Z",
+          "sha1": "23e6c7751de25294d402f4761ed6fc8ac78127fe",
+          "bytes": 3730115,
+          "license": "Public domain",
+          "license_page_templates": [
+            "Cc-pd-mark-footer",
+            "PD-Art",
+            "PD-Art-two-auto",
+            "PD-Layout",
+            "PD-US-expired-text",
+            "PD-art-category",
+            "PD-old-X-expired",
+            "PD-old-auto-expired",
+            "PD-old-text"
+          ],
+          "artist": "Quinten Metsys",
+          "credit": "National Gallery, London"
+        },
+        {
+          "id": "commons-image-120",
+          "title": "File:Quiabo.jpg",
+          "source": "https://commons.wikimedia.org/wiki/File:Quiabo.jpg",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/5/54/Quiabo.jpg",
+          "revision_timestamp": "2024-08-06T16:25:43Z",
+          "sha1": "9451f96090b040e07e4a085f46cf507338e6acef",
+          "bytes": 2280779,
+          "license": "CC0",
+          "license_page_templates": [
+            "CC-Layout",
+            "Cc-zero"
+          ],
+          "artist": "ArionStar",
+          "credit": "Own work"
+        },
+        {
+          "id": "commons-image-121",
+          "title": "File:Quinten Metsys - Triptyque de la confrérie de Sainte-Anne à Louvain.jpg",
+          "source": "https://commons.wikimedia.org/wiki/File:Quinten_Metsys_-_Triptyque_de_la_confr%C3%A9rie_de_Sainte-Anne_%C3%A0_Louvain.jpg",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/e/e8/Quinten_Metsys_-_Triptyque_de_la_confr%C3%A9rie_de_Sainte-Anne_%C3%A0_Louvain.jpg",
+          "revision_timestamp": "2012-05-10T11:05:15Z",
+          "sha1": "ea53948720d00287189c119612860680ca88c511",
+          "bytes": 13878976,
+          "license": "Public domain",
+          "license_page_templates": [
+            "Cc-pd-mark-footer",
+            "PD-Art",
+            "PD-Layout",
+            "PD-US-expired-text",
+            "PD-art-category",
+            "PD-old-100-expired",
+            "PD-old-X-expired",
+            "PD-old-text"
+          ],
+          "artist": "Quinten Metsys",
+          "credit": "This illustration was made by Antoine Motte dit Falisse alias M0tty but it is in the public domain because it is a faithful photographic reproduction of an original two-dimensional work of art and the work of art itself is in the public domain. English | français | +/−"
+        },
+        {
+          "id": "commons-image-122",
+          "title": "File:RAF Eurofighter Typhoon.jpg",
+          "source": "https://commons.wikimedia.org/wiki/File:RAF_Eurofighter_Typhoon.jpg",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/0/0b/RAF_Eurofighter_Typhoon.jpg",
+          "revision_timestamp": "2016-04-06T08:42:41Z",
+          "sha1": "a204ed15d96f0f64cfb1b865643647bfeba744ba",
+          "bytes": 1303250,
+          "license": "CC BY 2.0",
+          "license_page_templates": [
+            "Cc-by-2.0",
+            "Cc-by-layout"
+          ],
+          "artist": "Peter Gronemann",
+          "credit": "Flickr: RAF Eurofighter Typhoon"
+        },
+        {
+          "id": "commons-image-123",
+          "title": "File:Radcliffe Camera, Oxford - Oct 2006.jpg",
+          "source": "https://commons.wikimedia.org/wiki/File:Radcliffe_Camera,_Oxford_-_Oct_2006.jpg",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/2/2b/Radcliffe_Camera%2C_Oxford_-_Oct_2006.jpg",
+          "revision_timestamp": "2024-12-30T09:32:44Z",
+          "sha1": "58f5b34525d51f41f5f48e380dff52b79863605b",
+          "bytes": 4384178,
+          "license": "CC BY 2.5",
+          "license_page_templates": [
+            "CC-Layout",
+            "Cc-by-2.5",
+            "Cc-by-layout",
+            "Cc-by-sa-3.0-migrated"
+          ],
+          "artist": "Diliff",
+          "credit": "Own work"
+        },
+        {
+          "id": "commons-image-124",
+          "title": "File:Raia da Atalaia Fernando de Noronha 05.jpg",
+          "source": "https://commons.wikimedia.org/wiki/File:Raia_da_Atalaia_Fernando_de_Noronha_05.jpg",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/a/a8/Raia_da_Atalaia_Fernando_de_Noronha_05.jpg",
+          "revision_timestamp": "2006-01-23T00:41:21Z",
+          "sha1": "1d5891fdb3faba72964c4076ef56f9a7fdeea975",
+          "bytes": 852996,
+          "license": "CC BY 2.0",
+          "license_page_templates": [
+            "Cc-by-2.0",
+            "Cc-by-layout"
+          ],
+          "artist": "Hughes Leglise, Paris, France (Hugo*)",
+          "credit": "flickr"
+        },
+        {
+          "id": "commons-image-125",
+          "title": "File:Railway station Kreiensen 1963.JPG",
+          "source": "https://commons.wikimedia.org/wiki/File:Railway_station_Kreiensen_1963.JPG",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/5/56/Railway_station_Kreiensen_1963.JPG",
+          "revision_timestamp": "2012-02-17T22:40:28Z",
+          "sha1": "6e1c1c671dbec5d699b8a96e13b9693db67a6ab1",
+          "bytes": 1381044,
+          "license": "CC BY 3.0",
+          "license_page_templates": [
+            "Cc-by-3.0",
+            "Cc-by-layout"
+          ],
+          "artist": "Michael Gäbler",
+          "credit": "Own work"
+        },
+        {
+          "id": "commons-image-126",
+          "title": "File:S-IC engines and Von Braun.jpg",
+          "source": "https://commons.wikimedia.org/wiki/File:S-IC_engines_and_Von_Braun.jpg",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/1/16/S-IC_engines_and_Von_Braun.jpg",
+          "revision_timestamp": "2019-09-27T18:54:05Z",
+          "sha1": "31c2cdae04e4a52d8de5f98c61740b1059c6a3ed",
+          "bytes": 1048638,
+          "license": "Public domain",
+          "license_page_templates": [
+            "PD-Layout",
+            "PD-USGov-NASA"
+          ],
+          "artist": "NASA",
+          "credit": "NIX #: MSFC-0201422. , Alt. URL."
+        },
+        {
+          "id": "commons-image-127",
+          "title": "File:Sacsayhuamán Décembre 2006 - Vue Panoramique - Pleine résolution.jpg",
+          "source": "https://commons.wikimedia.org/wiki/File:Sacsayhuam%C3%A1n_D%C3%A9cembre_2006_-_Vue_Panoramique_-_Pleine_r%C3%A9solution.jpg",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/4/48/Sacsayhuam%C3%A1n_D%C3%A9cembre_2006_-_Vue_Panoramique_-_Pleine_r%C3%A9solution.jpg",
+          "revision_timestamp": "2008-06-20T19:54:28Z",
+          "sha1": "9b83febc569be7eda483ea315fd2fdcb5847ceab",
+          "bytes": 14562955,
+          "license": "CC BY 3.0",
+          "license_page_templates": [
+            "Cc-by-3.0",
+            "Cc-by-layout"
+          ],
+          "artist": "Martin St-Amant (S23678)",
+          "credit": "Own work"
+        },
+        {
+          "id": "commons-image-128",
+          "title": "File:Safety boats, ferry, Aidipsos, Evia Greece.jpg",
+          "source": "https://commons.wikimedia.org/wiki/File:Safety_boats,_ferry,_Aidipsos,_Evia_Greece.jpg",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/4/4c/Safety_boats%2C_ferry%2C_Aidipsos%2C_Evia_Greece.jpg",
+          "revision_timestamp": "2017-08-20T16:45:50Z",
+          "sha1": "73810f3c237c68d954930ca1d3a38b8518e9f063",
+          "bytes": 8928599,
+          "license": "CC0",
+          "license_page_templates": [
+            "CC-Layout",
+            "Cc-zero"
+          ],
+          "artist": "Jebulon",
+          "credit": "Own work"
+        },
+        {
+          "id": "commons-image-129",
+          "title": "File:T-45A Goshawk 03.jpg",
+          "source": "https://commons.wikimedia.org/wiki/File:T-45A_Goshawk_03.jpg",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/b/bb/T-45A_Goshawk_03.jpg",
+          "revision_timestamp": "2009-09-30T07:19:49Z",
+          "sha1": "9fc24c76c19bb2391f74e4c529a2652f7cc644ba",
+          "bytes": 1957882,
+          "license": "Public domain",
+          "license_page_templates": [
+            "Cc-pd-mark-footer",
+            "PD-Layout",
+            "PD-USGov-Military-Navy"
+          ],
+          "artist": "Lt. j.g. John A. Ivancic",
+          "credit": "This image was released by the United States Navy with the ID 080604-N-2798I-002 (next). This tag does not indicate the copyright status of the attached work. A normal copyright tag is still required. See Commons:Licensing. العربية ∙ বাংলা ∙ Bahasa Indonesia ∙ Bahaso Jambi ∙ Deutsch ∙ Deutsch (Sie-Form) ∙ English ∙ español ∙ euskara ∙ فارسی ∙ français ∙ italiano ∙ 日本語 ∙ 한국어 ∙ македонски ∙ മലയാളം ∙ Plattdüütsch ∙ Nederlands ∙ polski ∙ پښتو ∙ português ∙ русский ∙ slovenščina ∙ svenska ∙ Türkçe ∙ українська ∙ 简体中文 ∙ 繁體中文 ∙ +/−"
+        },
+        {
+          "id": "commons-image-130",
+          "title": "File:T-Centralen central underground metro station Stockholm 2016 01.jpg",
+          "source": "https://commons.wikimedia.org/wiki/File:T-Centralen_central_underground_metro_station_Stockholm_2016_01.jpg",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/5/5c/T-Centralen_central_underground_metro_station_Stockholm_2016_01.jpg",
+          "revision_timestamp": "2017-09-30T10:10:55Z",
+          "sha1": "aa05f96a6eea52bdcf225265a616f5194a005000",
+          "bytes": 9535061,
+          "license": "CC BY 4.0",
+          "license_page_templates": [
+            "Cc-by-4.0",
+            "Cc-by-layout"
+          ],
+          "artist": "Julian Herzog (Website)",
+          "credit": "Own work"
+        },
+        {
+          "id": "commons-image-131",
+          "title": "File:Tableau 31 Indians hunting the bison by Karl Bodmer.jpg",
+          "source": "https://commons.wikimedia.org/wiki/File:Tableau_31_Indians_hunting_the_bison_by_Karl_Bodmer.jpg",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/f/f0/Tableau_31_Indians_hunting_the_bison_by_Karl_Bodmer.jpg",
+          "revision_timestamp": "2009-07-30T21:45:47Z",
+          "sha1": "a1836e84cf7d8323d97d6c2791aea20fcf5c5bb8",
+          "bytes": 3756290,
+          "license": "Public domain",
+          "license_page_templates": [
+            "Cc-pd-mark-footer",
+            "PD-Layout",
+            "PD-old-100",
+            "PD-old-text",
+            "PD-old-warning-text"
+          ],
+          "artist": "Karl Bodmer",
+          "credit": "NONAM, Nordamerika Native Museum - Indianer und Inuit Kulturen, Zürich, Switzerland. First state of the Tableau 31 from the German edition: Maximilian zu Wied-Neuwied: Reise in das innere Nord-America in den Jahren 1832 bis 1834, 2 Textbände und 1 Bildatlas mit Illustrationen von Karl Bodmer, J. Hölscher, Koblenz 1839–1841. Engraver: Charles Vogel. Aquatint, etching, stipple."
+        },
+        {
+          "id": "commons-image-132",
+          "title": "File:U.S. Air Force at Pittsburgh air show.jpg",
+          "source": "https://commons.wikimedia.org/wiki/File:U.S._Air_Force_at_Pittsburgh_air_show.jpg",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/8/8d/U.S._Air_Force_at_Pittsburgh_air_show.jpg",
+          "revision_timestamp": "2017-05-22T15:53:36Z",
+          "sha1": "6c7af6f28e30273f36771958d751af9367821f02",
+          "bytes": 1880894,
+          "license": "Public domain",
+          "license_page_templates": [
+            "PD-Layout",
+            "PD-USGov-Military-Air Force"
+          ],
+          "artist": "Staff Sergeant Jason Couillard",
+          "credit": "http://www.af.mil/News/Photos/igphoto/2001749720/"
+        },
+        {
+          "id": "commons-image-134",
+          "title": "File:Ultraviolet image of the Cygnus Loop Nebula crop.jpg",
+          "source": "https://commons.wikimedia.org/wiki/File:Ultraviolet_image_of_the_Cygnus_Loop_Nebula_crop.jpg",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/5/5b/Ultraviolet_image_of_the_Cygnus_Loop_Nebula_crop.jpg",
+          "revision_timestamp": "2013-01-30T02:28:44Z",
+          "sha1": "a637a6b2cce5a2b1f20941dce6d030eceba8d32e",
+          "bytes": 12651471,
+          "license": "Public domain",
+          "license_page_templates": [
+            "PD-Layout",
+            "PD-USGov-NASA"
+          ],
+          "artist": "NASA/JPL-Caltech",
+          "credit": "This file was derived from: Cygnus Loop Nebula.jpg:"
+        },
+        {
+          "id": "commons-image-135",
+          "title": "File:V-2victimAntwerp1944.jpg",
+          "source": "https://commons.wikimedia.org/wiki/File:V-2victimAntwerp1944.jpg",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/d/d0/V-2victimAntwerp1944.jpg",
+          "revision_timestamp": "2007-05-28T07:26:48Z",
+          "sha1": "28a90d176ec7b6db499c958aab14eb0964476d9d",
+          "bytes": 792987,
+          "license": "Public domain",
+          "license_page_templates": [
+            "PD-Layout",
+            "PD-USGov-Military-Army"
+          ],
+          "artist": "Signal Corps Photographs of American Military Activity",
+          "credit": "This tag does not indicate the copyright status of the attached work. A normal copyright tag is still required. See Commons:Licensing."
+        },
+        {
+          "id": "commons-image-136",
+          "title": "File:V22-Osprey.jpg",
+          "source": "https://commons.wikimedia.org/wiki/File:V22-Osprey.jpg",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/1/11/V22-Osprey.jpg",
+          "revision_timestamp": "2013-11-03T09:36:37Z",
+          "sha1": "c1d4d9e2e3caea3e0abda5d2edf4c848b77b3245",
+          "bytes": 11809798,
+          "license": "CC BY 2.0",
+          "license_page_templates": [
+            "Cc-by-2.0",
+            "Cc-by-layout"
+          ],
+          "artist": "Peter Gronemann",
+          "credit": "Flickr: V22-Osprey"
+        },
+        {
+          "id": "commons-image-137",
+          "title": "File:Vajdahunyad vára Budapest September 2013.jpg",
+          "source": "https://commons.wikimedia.org/wiki/File:Vajdahunyad_v%C3%A1ra_Budapest_September_2013.jpg",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/2/22/Vajdahunyad_v%C3%A1ra_Budapest_September_2013.jpg",
+          "revision_timestamp": "2013-09-13T10:43:11Z",
+          "sha1": "40cbb1d3482c594da9f54f4cf4a93496648d5d16",
+          "bytes": 7081150,
+          "license": "CC BY 3.0",
+          "license_page_templates": [
+            "Cc-by-3.0",
+            "Cc-by-layout"
+          ],
+          "artist": "Felix König",
+          "credit": "Own work"
+        },
+        {
+          "id": "commons-image-138",
+          "title": "File:Vallee-brouillard.jpg",
+          "source": "https://commons.wikimedia.org/wiki/File:Vallee-brouillard.jpg",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/4/46/Vallee-brouillard.jpg",
+          "revision_timestamp": "2011-01-03T17:31:13Z",
+          "sha1": "a3d7af4ed8320ce9221408c1338e91033b52e0b6",
+          "bytes": 5947709,
+          "license": "CC BY 3.0",
+          "license_page_templates": [
+            "Cc-by-3.0",
+            "Cc-by-layout"
+          ],
+          "artist": "Thomas Bresson",
+          "credit": "Own work"
+        },
+        {
+          "id": "commons-image-139",
+          "title": "File:Valley of the shadow of death.jpg",
+          "source": "https://commons.wikimedia.org/wiki/File:Valley_of_the_shadow_of_death.jpg",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/b/b3/Valley_of_the_shadow_of_death.jpg",
+          "revision_timestamp": "2025-09-07T16:34:13Z",
+          "sha1": "6581c22c2f8dcff05d74cd83704cf0ea7ccd49de",
+          "bytes": 12987462,
+          "license": "Public domain",
+          "license_page_templates": [
+            "Cc-pd-mark-footer",
+            "PD-Layout",
+            "PD-US-expired",
+            "PD-US-expired-text",
+            "PD-old-100",
+            "PD-old-text",
+            "PD-old-warning-text"
+          ],
+          "artist": "Roger Fenton",
+          "credit": "This image is available from the United States Library of Congress's Prints and Photographs division under the digital ID ppmsca.35546.This tag does not indicate the copyright status of the attached work. A normal copyright tag is still required. See Commons:Licensing."
+        },
+        {
+          "id": "commons-image-140",
+          "title": "File:W. S. Penley in Charley's Aunt by Thomas Charles Turner.jpg",
+          "source": "https://commons.wikimedia.org/wiki/File:W._S._Penley_in_Charley%27s_Aunt_by_Thomas_Charles_Turner.jpg",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/b/ba/W._S._Penley_in_Charley%27s_Aunt_by_Thomas_Charles_Turner.jpg",
+          "revision_timestamp": "2025-02-25T15:55:30Z",
+          "sha1": "ff4ce454229446739196bedfc557e28d2ef7793d",
+          "bytes": 2241616,
+          "license": "Public domain",
+          "license_page_templates": [
+            "Cc-pd-mark-footer",
+            "PD-Art",
+            "PD-Layout",
+            "PD-Old-auto-1923",
+            "PD-US-expired-text",
+            "PD-art-category",
+            "PD-old-X-expired",
+            "PD-old-auto-expired",
+            "PD-old-text"
+          ],
+          "artist": "Thomas Charles Turner / Adam Cuerden",
+          "credit": "Victoria and Albert Museum"
+        },
+        {
+          "id": "commons-image-141",
+          "title": "File:W.S. Gilbert's burlesque comedy, Engaged.jpg",
+          "source": "https://commons.wikimedia.org/wiki/File:W.S._Gilbert%27s_burlesque_comedy,_Engaged.jpg",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/a/a9/W.S._Gilbert%27s_burlesque_comedy%2C_Engaged.jpg",
+          "revision_timestamp": "2023-05-20T16:12:25Z",
+          "sha1": "18dc328cf3955889655a43fdbdd56f8945b14b8c",
+          "bytes": 14344514,
+          "license": "Public domain",
+          "license_page_templates": [
+            "Cc-pd-mark-footer",
+            "PD-Layout",
+            "PD-US-expired-text",
+            "PD-old-X-expired",
+            "PD-old-auto-expired",
+            "PD-old-text"
+          ],
+          "artist": "Adam Cuerden",
+          "credit": "This image is available from the United States Library of Congress's Prints and Photographs division under the digital ID cph.3g10765.This tag does not indicate the copyright status of the attached work. A normal copyright tag is still required. See Commons:Licensing."
+        },
+        {
+          "id": "commons-image-142",
+          "title": "File:Waldenburg1945edit.jpg",
+          "source": "https://commons.wikimedia.org/wiki/File:Waldenburg1945edit.jpg",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/e/e4/Waldenburg1945edit.jpg",
+          "revision_timestamp": "2008-12-06T23:02:01Z",
+          "sha1": "6bc499fba4dddf49f711afc7ce41b670ba8d554d",
+          "bytes": 2657622,
+          "license": "Public domain",
+          "license_page_templates": [
+            "PD-Layout",
+            "PD-USGov-Military-Army"
+          ],
+          "artist": "2d Lt. Jacob Harris. This edit (remove stains and catalogue number, slight contrast and sharpness enhancement) by mixpix 09:53, 18 January 2008 (UTC)",
+          "credit": "https://www.archives.gov/research/ww2/photos/images/ww2-119.jpg (English text from https://www.archives.gov/research/ww2/photos/). Originally from de.wikipedia; description page is/was here."
+        },
+        {
+          "id": "commons-image-143",
+          "title": "File:XO-Beta1-mikemcgregor-2.jpg",
+          "source": "https://commons.wikimedia.org/wiki/File:XO-Beta1-mikemcgregor-2.jpg",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/4/42/XO-Beta1-mikemcgregor-2.jpg",
+          "revision_timestamp": "2007-02-27T10:01:30Z",
+          "sha1": "b66bd8a9746b6b95b65d93dcedf735ae4e2a4583",
+          "bytes": 2238511,
+          "license": "CC BY 2.5",
+          "license_page_templates": [
+            "Cc-by-2.5",
+            "Cc-by-layout"
+          ],
+          "artist": "Photo credit: \"Mike McGregor\"; upload to OLPC-Wiki: OLPC user \"Walter\"",
+          "credit": "http://wiki.laptop.org/go/Image:B1-mikemcgregor-2.jpg"
+        },
+        {
+          "id": "commons-image-144",
+          "title": "File:Xantho poressa 2009 G1.jpg",
+          "source": "https://commons.wikimedia.org/wiki/File:Xantho_poressa_2009_G1.jpg",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/3/3e/Xantho_poressa_2009_G1.jpg",
+          "revision_timestamp": "2009-09-18T07:01:19Z",
+          "sha1": "c7989bc7bb282b425b6d78d593fc2f4d72a228de",
+          "bytes": 2666307,
+          "license": "Public domain",
+          "license_page_templates": [
+            "PD-Layout",
+            "PD-self"
+          ],
+          "artist": "George Chernilevsky",
+          "credit": "Own work"
+        },
+        {
+          "id": "commons-image-145",
+          "title": "File:Yellow mite (Tydeidae) Lorryia formosa 2 edit.jpg",
+          "source": "https://commons.wikimedia.org/wiki/File:Yellow_mite_(Tydeidae)_Lorryia_formosa_2_edit.jpg",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/3/3d/Yellow_mite_%28Tydeidae%29_Lorryia_formosa_2_edit.jpg",
+          "revision_timestamp": "2006-07-18T06:56:41Z",
+          "sha1": "2548c0820d2f4eb5e10913309863c808a5950b23",
+          "bytes": 1714351,
+          "license": "Public domain",
+          "license_page_templates": [
+            "PD-Layout",
+            "PD-USGov-USDA-ARS"
+          ],
+          "artist": "Photo by Eric Erbe; digital colorization by Chris Pooley. Edited by Fir0002",
+          "credit": "This image was released by the Agricultural Research Service, the research agency of the United States Department of Agriculture, with the ID K9077-22 (next)."
+        },
+        {
+          "id": "commons-image-146",
+          "title": "File:Yellow mite (Tydeidae), Lorryia formosa.jpg",
+          "source": "https://commons.wikimedia.org/wiki/File:Yellow_mite_(Tydeidae),_Lorryia_formosa.jpg",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/5/5f/Yellow_mite_%28Tydeidae%29%2C_Lorryia_formosa.jpg",
+          "revision_timestamp": "2008-01-28T22:39:49Z",
+          "sha1": "3f7c824eb66349ec15b4ff6510eb249c6141260e",
+          "bytes": 2323997,
+          "license": "Public domain",
+          "license_page_templates": [
+            "PD-Layout",
+            "PD-USGov-USDA-ARS"
+          ],
+          "artist": "Photo by Eric Erbe; digital colorization by Chris Pooley",
+          "credit": "This image was released by the Agricultural Research Service, the research agency of the United States Department of Agriculture, with the ID K9077-21 (next)."
+        },
+        {
+          "id": "commons-image-147",
+          "title": "File:Yellow-billed stork (Mycteria ibis).jpg",
+          "source": "https://commons.wikimedia.org/wiki/File:Yellow-billed_stork_(Mycteria_ibis).jpg",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/d/d1/Yellow-billed_stork_%28Mycteria_ibis%29.jpg",
+          "revision_timestamp": "2025-01-31T11:15:09Z",
+          "sha1": "1923e78622acdb480d0bfa02ef0288ed512f5fbc",
+          "bytes": 2296000,
+          "license": "CC0",
+          "license_page_templates": [
+            "CC-Layout",
+            "Cc-zero"
+          ],
+          "artist": "Hobbyfotowiki",
+          "credit": "Own work"
+        },
+        {
+          "id": "commons-image-148",
+          "title": "File:Yellow-eyed Penguin crying MC.jpg",
+          "source": "https://commons.wikimedia.org/wiki/File:Yellow-eyed_Penguin_crying_MC.jpg",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/6/6d/Yellow-eyed_Penguin_crying_MC.jpg",
+          "revision_timestamp": "2008-03-23T06:36:59Z",
+          "sha1": "21d44ac5b9425d6faf977543e491c94196ad0337",
+          "bytes": 914445,
+          "license": "CC BY 2.5",
+          "license_page_templates": [
+            "Cc-by-2.5",
+            "Cc-by-layout"
+          ],
+          "artist": "Christian Mehlführer, User:Chmehl",
+          "credit": "Own work"
+        },
+        {
+          "id": "commons-image-149",
+          "title": "File:Zara Larsson @ The Observatory OC 05 02 2019 (48498569766).jpg",
+          "source": "https://commons.wikimedia.org/wiki/File:Zara_Larsson_@_The_Observatory_OC_05_02_2019_(48498569766).jpg",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/c/c0/Zara_Larsson_%40_The_Observatory_OC_05_02_2019_%2848498569766%29.jpg",
+          "revision_timestamp": "2019-08-10T00:56:29Z",
+          "sha1": "6dc0df90466dd3cc5b8a769b8d3119417e7eea36",
+          "bytes": 3412261,
+          "license": "CC BY 2.0",
+          "license_page_templates": [
+            "Cc-by-2.0",
+            "Cc-by-layout"
+          ],
+          "artist": "Justin Higuchi from Los Angeles, CA, USA",
+          "credit": "Zara Larsson @ The Observatory OC 05/02/2019"
+        }
+      ]
+    },
+    "size": {
+      "modality": "image",
+      "queries": 149,
+      "documents": 149,
+      "judgments": 149
+    }
+  },
+  "results": {
+    "path": "/root/g3/out/dotnet-image-cpu/embeddings.jsonl",
+    "sha256": "d3eba5d44c1e389bea8bca29e7c0a7461b39c1b0e2519c71faca57e62cc01835"
+  },
+  "baseline": null,
+  "budget": {
+    "path": "model-pipeline/protected/embeddinggemma-2/image-fp32-cpu/task-quality.yaml",
+    "entry": {
+      "dataset_sha256": "43b3a8d41907ce5fda042554eb8485378b5cacacfa4d994cfebd6bc2631f0607",
+      "minimum": {
+        "ndcg@10": 0.916,
+        "mrr@10": 0.893
+      }
+    },
+    "status": "present",
+    "matched_form": "data+metadata"
+  },
+  "protected_evidence": {
+    "status": "verified",
+    "base": "1aa26e586d1322cfe58bd74f15ba0aa447adec30",
+    "detail": "merge base of HEAD and origin/main",
+    "changed": [],
+    "sha256": {
+      "model-pipeline/protected/embeddinggemma-2/image-fp32-cpu/task-quality.yaml": "9753245136bf19a1c4ef36ce9467891a60598b1cbd576f91f6433c02e9844f85"
+    }
+  },
+  "metrics": {
+    "ndcg@10": 0.9221916433873352,
+    "recall@1": 0.8456375838926175,
+    "recall@5": 0.9731543624161074,
+    "recall@10": 0.9865771812080537,
+    "recall@100": 1.0,
+    "mrr@10": 0.9007909875359539
+  },
+  "budget_checks": [
+    {
+      "metric": "mrr@10",
+      "minimum": 0.893,
+      "value": 0.9007909875359539,
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "metric": "ndcg@10",
+      "minimum": 0.916,
+      "value": 0.9221916433873352,
+      "status": "passed",
+      "detail": ""
+    }
+  ],
+  "gates": {
+    "G3": {
+      "status": "passed",
+      "reason": "every budgeted metric meets its minimum"
+    }
+  },
+  "per_query": {
+    "q-commons-image-00": {
+      "ndcg@10": 1.0,
+      "recall@1": 1.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 1.0
+    },
+    "q-commons-image-01": {
+      "ndcg@10": 1.0,
+      "recall@1": 1.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 1.0
+    },
+    "q-commons-image-02": {
+      "ndcg@10": 1.0,
+      "recall@1": 1.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 1.0
+    },
+    "q-commons-image-03": {
+      "ndcg@10": 1.0,
+      "recall@1": 1.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 1.0
+    },
+    "q-commons-image-04": {
+      "ndcg@10": 1.0,
+      "recall@1": 1.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 1.0
+    },
+    "q-commons-image-05": {
+      "ndcg@10": 1.0,
+      "recall@1": 1.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 1.0
+    },
+    "q-commons-image-06": {
+      "ndcg@10": 0.5,
+      "recall@1": 0.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 0.3333333333333333
+    },
+    "q-commons-image-07": {
+      "ndcg@10": 1.0,
+      "recall@1": 1.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 1.0
+    },
+    "q-commons-image-08": {
+      "ndcg@10": 1.0,
+      "recall@1": 1.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 1.0
+    },
+    "q-commons-image-09": {
+      "ndcg@10": 1.0,
+      "recall@1": 1.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 1.0
+    },
+    "q-commons-image-10": {
+      "ndcg@10": 1.0,
+      "recall@1": 1.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 1.0
+    },
+    "q-commons-image-11": {
+      "ndcg@10": 1.0,
+      "recall@1": 1.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 1.0
+    },
+    "q-commons-image-12": {
+      "ndcg@10": 1.0,
+      "recall@1": 1.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 1.0
+    },
+    "q-commons-image-13": {
+      "ndcg@10": 1.0,
+      "recall@1": 1.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 1.0
+    },
+    "q-commons-image-14": {
+      "ndcg@10": 1.0,
+      "recall@1": 1.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 1.0
+    },
+    "q-commons-image-15": {
+      "ndcg@10": 1.0,
+      "recall@1": 1.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 1.0
+    },
+    "q-commons-image-16": {
+      "ndcg@10": 0.5,
+      "recall@1": 0.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 0.3333333333333333
+    },
+    "q-commons-image-17": {
+      "ndcg@10": 1.0,
+      "recall@1": 1.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 1.0
+    },
+    "q-commons-image-18": {
+      "ndcg@10": 1.0,
+      "recall@1": 1.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 1.0
+    },
+    "q-commons-image-19": {
+      "ndcg@10": 1.0,
+      "recall@1": 1.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 1.0
+    },
+    "q-commons-image-20": {
+      "ndcg@10": 0.0,
+      "recall@1": 0.0,
+      "recall@5": 0.0,
+      "recall@10": 0.0,
+      "recall@100": 1.0,
+      "mrr@10": 0.0
+    },
+    "q-commons-image-21": {
+      "ndcg@10": 1.0,
+      "recall@1": 1.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 1.0
+    },
+    "q-commons-image-22": {
+      "ndcg@10": 1.0,
+      "recall@1": 1.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 1.0
+    },
+    "q-commons-image-23": {
+      "ndcg@10": 1.0,
+      "recall@1": 1.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 1.0
+    },
+    "q-commons-image-24": {
+      "ndcg@10": 1.0,
+      "recall@1": 1.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 1.0
+    },
+    "q-commons-image-25": {
+      "ndcg@10": 1.0,
+      "recall@1": 1.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 1.0
+    },
+    "q-commons-image-26": {
+      "ndcg@10": 1.0,
+      "recall@1": 1.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 1.0
+    },
+    "q-commons-image-27": {
+      "ndcg@10": 1.0,
+      "recall@1": 1.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 1.0
+    },
+    "q-commons-image-28": {
+      "ndcg@10": 1.0,
+      "recall@1": 1.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 1.0
+    },
+    "q-commons-image-29": {
+      "ndcg@10": 1.0,
+      "recall@1": 1.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 1.0
+    },
+    "q-commons-image-30": {
+      "ndcg@10": 1.0,
+      "recall@1": 1.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 1.0
+    },
+    "q-commons-image-31": {
+      "ndcg@10": 1.0,
+      "recall@1": 1.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 1.0
+    },
+    "q-commons-image-32": {
+      "ndcg@10": 1.0,
+      "recall@1": 1.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 1.0
+    },
+    "q-commons-image-33": {
+      "ndcg@10": 0.6309297535714575,
+      "recall@1": 0.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 0.5
+    },
+    "q-commons-image-34": {
+      "ndcg@10": 1.0,
+      "recall@1": 1.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 1.0
+    },
+    "q-commons-image-35": {
+      "ndcg@10": 0.5,
+      "recall@1": 0.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 0.3333333333333333
+    },
+    "q-commons-image-36": {
+      "ndcg@10": 1.0,
+      "recall@1": 1.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 1.0
+    },
+    "q-commons-image-37": {
+      "ndcg@10": 1.0,
+      "recall@1": 1.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 1.0
+    },
+    "q-commons-image-38": {
+      "ndcg@10": 1.0,
+      "recall@1": 1.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 1.0
+    },
+    "q-commons-image-39": {
+      "ndcg@10": 1.0,
+      "recall@1": 1.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 1.0
+    },
+    "q-commons-image-40": {
+      "ndcg@10": 0.0,
+      "recall@1": 0.0,
+      "recall@5": 0.0,
+      "recall@10": 0.0,
+      "recall@100": 1.0,
+      "mrr@10": 0.0
+    },
+    "q-commons-image-41": {
+      "ndcg@10": 1.0,
+      "recall@1": 1.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 1.0
+    },
+    "q-commons-image-42": {
+      "ndcg@10": 1.0,
+      "recall@1": 1.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 1.0
+    },
+    "q-commons-image-43": {
+      "ndcg@10": 0.6309297535714575,
+      "recall@1": 0.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 0.5
+    },
+    "q-commons-image-44": {
+      "ndcg@10": 1.0,
+      "recall@1": 1.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 1.0
+    },
+    "q-commons-image-45": {
+      "ndcg@10": 0.6309297535714575,
+      "recall@1": 0.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 0.5
+    },
+    "q-commons-image-46": {
+      "ndcg@10": 1.0,
+      "recall@1": 1.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 1.0
+    },
+    "q-commons-image-47": {
+      "ndcg@10": 1.0,
+      "recall@1": 1.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 1.0
+    },
+    "q-commons-image-48": {
+      "ndcg@10": 1.0,
+      "recall@1": 1.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 1.0
+    },
+    "q-commons-image-49": {
+      "ndcg@10": 1.0,
+      "recall@1": 1.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 1.0
+    },
+    "q-commons-image-50": {
+      "ndcg@10": 1.0,
+      "recall@1": 1.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 1.0
+    },
+    "q-commons-image-51": {
+      "ndcg@10": 1.0,
+      "recall@1": 1.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 1.0
+    },
+    "q-commons-image-52": {
+      "ndcg@10": 0.6309297535714575,
+      "recall@1": 0.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 0.5
+    },
+    "q-commons-image-53": {
+      "ndcg@10": 1.0,
+      "recall@1": 1.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 1.0
+    },
+    "q-commons-image-54": {
+      "ndcg@10": 1.0,
+      "recall@1": 1.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 1.0
+    },
+    "q-commons-image-55": {
+      "ndcg@10": 1.0,
+      "recall@1": 1.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 1.0
+    },
+    "q-commons-image-56": {
+      "ndcg@10": 1.0,
+      "recall@1": 1.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 1.0
+    },
+    "q-commons-image-57": {
+      "ndcg@10": 1.0,
+      "recall@1": 1.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 1.0
+    },
+    "q-commons-image-58": {
+      "ndcg@10": 1.0,
+      "recall@1": 1.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 1.0
+    },
+    "q-commons-image-59": {
+      "ndcg@10": 1.0,
+      "recall@1": 1.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 1.0
+    },
+    "q-commons-image-60": {
+      "ndcg@10": 0.6309297535714575,
+      "recall@1": 0.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 0.5
+    },
+    "q-commons-image-61": {
+      "ndcg@10": 1.0,
+      "recall@1": 1.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 1.0
+    },
+    "q-commons-image-62": {
+      "ndcg@10": 1.0,
+      "recall@1": 1.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 1.0
+    },
+    "q-commons-image-63": {
+      "ndcg@10": 1.0,
+      "recall@1": 1.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 1.0
+    },
+    "q-commons-image-64": {
+      "ndcg@10": 1.0,
+      "recall@1": 1.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 1.0
+    },
+    "q-commons-image-65": {
+      "ndcg@10": 1.0,
+      "recall@1": 1.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 1.0
+    },
+    "q-commons-image-66": {
+      "ndcg@10": 1.0,
+      "recall@1": 1.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 1.0
+    },
+    "q-commons-image-67": {
+      "ndcg@10": 1.0,
+      "recall@1": 1.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 1.0
+    },
+    "q-commons-image-68": {
+      "ndcg@10": 1.0,
+      "recall@1": 1.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 1.0
+    },
+    "q-commons-image-69": {
+      "ndcg@10": 1.0,
+      "recall@1": 1.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 1.0
+    },
+    "q-commons-image-70": {
+      "ndcg@10": 1.0,
+      "recall@1": 1.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 1.0
+    },
+    "q-commons-image-71": {
+      "ndcg@10": 0.43067655807339306,
+      "recall@1": 0.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 0.25
+    },
+    "q-commons-image-72": {
+      "ndcg@10": 1.0,
+      "recall@1": 1.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 1.0
+    },
+    "q-commons-image-73": {
+      "ndcg@10": 0.31546487678572877,
+      "recall@1": 0.0,
+      "recall@5": 0.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 0.125
+    },
+    "q-commons-image-74": {
+      "ndcg@10": 1.0,
+      "recall@1": 1.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 1.0
+    },
+    "q-commons-image-75": {
+      "ndcg@10": 1.0,
+      "recall@1": 1.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 1.0
+    },
+    "q-commons-image-76": {
+      "ndcg@10": 1.0,
+      "recall@1": 1.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 1.0
+    },
+    "q-commons-image-77": {
+      "ndcg@10": 0.6309297535714575,
+      "recall@1": 0.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 0.5
+    },
+    "q-commons-image-78": {
+      "ndcg@10": 1.0,
+      "recall@1": 1.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 1.0
+    },
+    "q-commons-image-79": {
+      "ndcg@10": 1.0,
+      "recall@1": 1.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 1.0
+    },
+    "q-commons-image-80": {
+      "ndcg@10": 1.0,
+      "recall@1": 1.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 1.0
+    },
+    "q-commons-image-81": {
+      "ndcg@10": 1.0,
+      "recall@1": 1.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 1.0
+    },
+    "q-commons-image-82": {
+      "ndcg@10": 1.0,
+      "recall@1": 1.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 1.0
+    },
+    "q-commons-image-83": {
+      "ndcg@10": 1.0,
+      "recall@1": 1.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 1.0
+    },
+    "q-commons-image-84": {
+      "ndcg@10": 0.5,
+      "recall@1": 0.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 0.3333333333333333
+    },
+    "q-commons-image-85": {
+      "ndcg@10": 1.0,
+      "recall@1": 1.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 1.0
+    },
+    "q-commons-image-86": {
+      "ndcg@10": 1.0,
+      "recall@1": 1.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 1.0
+    },
+    "q-commons-image-87": {
+      "ndcg@10": 1.0,
+      "recall@1": 1.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 1.0
+    },
+    "q-commons-image-88": {
+      "ndcg@10": 1.0,
+      "recall@1": 1.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 1.0
+    },
+    "q-commons-image-89": {
+      "ndcg@10": 1.0,
+      "recall@1": 1.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 1.0
+    },
+    "q-commons-image-90": {
+      "ndcg@10": 1.0,
+      "recall@1": 1.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 1.0
+    },
+    "q-commons-image-91": {
+      "ndcg@10": 1.0,
+      "recall@1": 1.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 1.0
+    },
+    "q-commons-image-92": {
+      "ndcg@10": 1.0,
+      "recall@1": 1.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 1.0
+    },
+    "q-commons-image-93": {
+      "ndcg@10": 1.0,
+      "recall@1": 1.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 1.0
+    },
+    "q-commons-image-94": {
+      "ndcg@10": 1.0,
+      "recall@1": 1.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 1.0
+    },
+    "q-commons-image-95": {
+      "ndcg@10": 0.5,
+      "recall@1": 0.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 0.3333333333333333
+    },
+    "q-commons-image-96": {
+      "ndcg@10": 1.0,
+      "recall@1": 1.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 1.0
+    },
+    "q-commons-image-97": {
+      "ndcg@10": 1.0,
+      "recall@1": 1.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 1.0
+    },
+    "q-commons-image-98": {
+      "ndcg@10": 1.0,
+      "recall@1": 1.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 1.0
+    },
+    "q-commons-image-99": {
+      "ndcg@10": 1.0,
+      "recall@1": 1.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 1.0
+    },
+    "q-commons-image-100": {
+      "ndcg@10": 1.0,
+      "recall@1": 1.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 1.0
+    },
+    "q-commons-image-101": {
+      "ndcg@10": 1.0,
+      "recall@1": 1.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 1.0
+    },
+    "q-commons-image-102": {
+      "ndcg@10": 1.0,
+      "recall@1": 1.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 1.0
+    },
+    "q-commons-image-103": {
+      "ndcg@10": 1.0,
+      "recall@1": 1.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 1.0
+    },
+    "q-commons-image-104": {
+      "ndcg@10": 1.0,
+      "recall@1": 1.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 1.0
+    },
+    "q-commons-image-105": {
+      "ndcg@10": 1.0,
+      "recall@1": 1.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 1.0
+    },
+    "q-commons-image-106": {
+      "ndcg@10": 1.0,
+      "recall@1": 1.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 1.0
+    },
+    "q-commons-image-107": {
+      "ndcg@10": 1.0,
+      "recall@1": 1.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 1.0
+    },
+    "q-commons-image-108": {
+      "ndcg@10": 1.0,
+      "recall@1": 1.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 1.0
+    },
+    "q-commons-image-109": {
+      "ndcg@10": 1.0,
+      "recall@1": 1.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 1.0
+    },
+    "q-commons-image-110": {
+      "ndcg@10": 0.5,
+      "recall@1": 0.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 0.3333333333333333
+    },
+    "q-commons-image-111": {
+      "ndcg@10": 1.0,
+      "recall@1": 1.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 1.0
+    },
+    "q-commons-image-112": {
+      "ndcg@10": 0.6309297535714575,
+      "recall@1": 0.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 0.5
+    },
+    "q-commons-image-113": {
+      "ndcg@10": 1.0,
+      "recall@1": 1.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 1.0
+    },
+    "q-commons-image-114": {
+      "ndcg@10": 1.0,
+      "recall@1": 1.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 1.0
+    },
+    "q-commons-image-115": {
+      "ndcg@10": 1.0,
+      "recall@1": 1.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 1.0
+    },
+    "q-commons-image-116": {
+      "ndcg@10": 1.0,
+      "recall@1": 1.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 1.0
+    },
+    "q-commons-image-117": {
+      "ndcg@10": 1.0,
+      "recall@1": 1.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 1.0
+    },
+    "q-commons-image-118": {
+      "ndcg@10": 1.0,
+      "recall@1": 1.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 1.0
+    },
+    "q-commons-image-119": {
+      "ndcg@10": 1.0,
+      "recall@1": 1.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 1.0
+    },
+    "q-commons-image-120": {
+      "ndcg@10": 1.0,
+      "recall@1": 1.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 1.0
+    },
+    "q-commons-image-121": {
+      "ndcg@10": 1.0,
+      "recall@1": 1.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 1.0
+    },
+    "q-commons-image-122": {
+      "ndcg@10": 0.3333333333333333,
+      "recall@1": 0.0,
+      "recall@5": 0.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 0.14285714285714285
+    },
+    "q-commons-image-123": {
+      "ndcg@10": 1.0,
+      "recall@1": 1.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 1.0
+    },
+    "q-commons-image-124": {
+      "ndcg@10": 1.0,
+      "recall@1": 1.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 1.0
+    },
+    "q-commons-image-125": {
+      "ndcg@10": 1.0,
+      "recall@1": 1.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 1.0
+    },
+    "q-commons-image-126": {
+      "ndcg@10": 1.0,
+      "recall@1": 1.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 1.0
+    },
+    "q-commons-image-127": {
+      "ndcg@10": 1.0,
+      "recall@1": 1.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 1.0
+    },
+    "q-commons-image-128": {
+      "ndcg@10": 1.0,
+      "recall@1": 1.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 1.0
+    },
+    "q-commons-image-129": {
+      "ndcg@10": 0.6309297535714575,
+      "recall@1": 0.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 0.5
+    },
+    "q-commons-image-130": {
+      "ndcg@10": 1.0,
+      "recall@1": 1.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 1.0
+    },
+    "q-commons-image-131": {
+      "ndcg@10": 1.0,
+      "recall@1": 1.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 1.0
+    },
+    "q-commons-image-132": {
+      "ndcg@10": 1.0,
+      "recall@1": 1.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 1.0
+    },
+    "q-commons-image-134": {
+      "ndcg@10": 0.6309297535714575,
+      "recall@1": 0.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 0.5
+    },
+    "q-commons-image-135": {
+      "ndcg@10": 1.0,
+      "recall@1": 1.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 1.0
+    },
+    "q-commons-image-136": {
+      "ndcg@10": 1.0,
+      "recall@1": 1.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 1.0
+    },
+    "q-commons-image-137": {
+      "ndcg@10": 1.0,
+      "recall@1": 1.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 1.0
+    },
+    "q-commons-image-138": {
+      "ndcg@10": 1.0,
+      "recall@1": 1.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 1.0
+    },
+    "q-commons-image-139": {
+      "ndcg@10": 1.0,
+      "recall@1": 1.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 1.0
+    },
+    "q-commons-image-140": {
+      "ndcg@10": 0.38685280723454163,
+      "recall@1": 0.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 0.2
+    },
+    "q-commons-image-141": {
+      "ndcg@10": 1.0,
+      "recall@1": 1.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 1.0
+    },
+    "q-commons-image-142": {
+      "ndcg@10": 1.0,
+      "recall@1": 1.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 1.0
+    },
+    "q-commons-image-143": {
+      "ndcg@10": 1.0,
+      "recall@1": 1.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 1.0
+    },
+    "q-commons-image-144": {
+      "ndcg@10": 1.0,
+      "recall@1": 1.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 1.0
+    },
+    "q-commons-image-145": {
+      "ndcg@10": 1.0,
+      "recall@1": 1.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 1.0
+    },
+    "q-commons-image-146": {
+      "ndcg@10": 0.6309297535714575,
+      "recall@1": 0.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 0.5
+    },
+    "q-commons-image-147": {
+      "ndcg@10": 1.0,
+      "recall@1": 1.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 1.0
+    },
+    "q-commons-image-148": {
+      "ndcg@10": 0.6309297535714575,
+      "recall@1": 0.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 0.5
+    },
+    "q-commons-image-149": {
+      "ndcg@10": 1.0,
+      "recall@1": 1.0,
+      "recall@5": 1.0,
+      "recall@10": 1.0,
+      "recall@100": 1.0,
+      "mrr@10": 1.0
+    }
+  },
+  "exit_code": 0
+}
