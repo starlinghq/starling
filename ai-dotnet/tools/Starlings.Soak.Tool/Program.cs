@@ -4,7 +4,7 @@
 //   dotnet run --project ai-dotnet/tools/Starlings.Soak.Tool -c Release -- <model|all> --out <dir> [options]
 //
 // Models: e5, gliner2, embeddinggemma2 (text), embeddinggemma2-image, embeddinggemma2-video (synthetic clips served as
-// decoded frames with their timing; no decoder), qwen35 (fp32x), or all (each model in its own child process, one after
+// decoded frames with their timing; no decoder), qwen35 (fp32x), qwen35-fp16x (CUDA only), or all (each model in its own child process, one after
 // the other; a model whose files are not in the cache is reported as skipped).
 //
 // Every cycle loads the model (tokenizer and sessions), checks that each fixed input gives the reference output of the
@@ -62,7 +62,7 @@ int ToolBody()
 {
     if (args.Length == 0 || args[0] is "-h" or "--help")
     {
-        Console.Error.WriteLine("usage: Starlings.Soak.Tool <e5|gliner2|embeddinggemma2|embeddinggemma2-image|embeddinggemma2-video|qwen35|all> --out <dir> [--duration 1h] [options]; see Program.cs");
+        Console.Error.WriteLine("usage: Starlings.Soak.Tool <e5|gliner2|embeddinggemma2|embeddinggemma2-image|embeddinggemma2-video|qwen35|qwen35-fp16x|all> --out <dir> [--duration 1h] [options]; see Program.cs");
         return args.Length == 0 ? 2 : 0;
     }
 

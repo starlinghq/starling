@@ -102,7 +102,7 @@ internal abstract class SoakWorkload
 
     public static IReadOnlyList<SoakWorkload> All { get; } =
     [
-        new E5Workload(), new Gliner2Workload(), new EmbeddingGemma2TextWorkload(), new EmbeddingGemma2ImageWorkload(), new EmbeddingGemma2VideoWorkload(), new Qwen35Workload(),
+        new E5Workload(), new Gliner2Workload(), new EmbeddingGemma2TextWorkload(), new EmbeddingGemma2ImageWorkload(), new EmbeddingGemma2VideoWorkload(), new Qwen35Workload(), new Qwen35Workload(Qwen35Variant.Fp16x),
     ];
 }
 
@@ -468,23 +468,31 @@ internal sealed class EmbeddingGemma2VideoWorkload : SoakWorkload
     }
 }
 
-internal sealed class Qwen35Workload : SoakWorkload
+/// <summary>Qwen3.5 chat: <c>qwen35</c> is the fp32x graph (CPU or CUDA), <c>qwen35-fp16x</c> the fp16x graph (CUDA only).</summary>
+internal sealed class Qwen35Workload(Qwen35Variant variant = Qwen35Variant.Fp32x) : SoakWorkload
 {
     private Qwen35ModelFiles? _files;
 
-    public override string Name => "qwen35";
+    public override string Name => variant == Qwen35Variant.Fp32x ? "qwen35" : "qwen35-fp16x";
 
     public override int DefaultRequestsPerCycle => 12;
 
-    public override string Profile(SoakOptions options) => "qwen3.5-0.8b/" + (options.Cuda ? "ortgenai-fp32x-cuda" : "ortgenai-fp32x-cpu");
+    public override string Profile(SoakOptions options) => variant == Qwen35Variant.Fp32x
+        ? "qwen3.5-0.8b/" + (options.Cuda ? "ortgenai-fp32x-cuda" : "ortgenai-fp32x-cpu")
+        : "qwen3.5-0.8b/ortgenai-fp16x-cuda";
 
     public override string? Locate(SoakOptions options)
     {
+        if (variant == Qwen35Variant.Fp16x && !options.Cuda)
+        {
+            return "the fp16x graph is a CUDA profile (ortgenai-fp16x-cuda); run with --cuda on a -p:UseCuda=true build";
+        }
+
         try
         {
             _files = Snapshot("STARLING_QWEN35_SNAPSHOT") is { } dir
-                ? Qwen35ModelAssets.OpenDirectory(dir, Qwen35Variant.Fp32x)
-                : Qwen35ModelAssets.OpenLocal(Qwen35Variant.Fp32x, Acquisition);
+                ? Qwen35ModelAssets.OpenDirectory(dir, variant)
+                : Qwen35ModelAssets.OpenLocal(variant, Acquisition);
             return null;
         }
         catch (ModelAcquisitionException ex)
@@ -493,7 +501,7 @@ internal sealed class Qwen35Workload : SoakWorkload
         }
     }
 
-    public override JsonObject Artifacts() => Lock(Qwen35ModelAssets.GetLock(Qwen35Variant.Fp32x));
+    public override JsonObject Artifacts() => Lock(Qwen35ModelAssets.GetLock(variant));
 
     public override ISoakInstance Load(SoakOptions options) =>
         new Instance(Qwen35ChatModel.Load(_files!, new Qwen35ModelOptions
