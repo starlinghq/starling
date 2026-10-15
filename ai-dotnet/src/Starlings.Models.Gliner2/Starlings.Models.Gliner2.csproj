@@ -28,6 +28,7 @@
     <InternalsVisibleTo Include="Starlings.Fidelity.Tool" />
     <!-- The same upstream-format spans for the benchmark harness's per-series quality check (rules of the parity tests). -->
     <InternalsVisibleTo Include="Starlings.Benchmarks.Gliner2Harness" />
+    <InternalsVisibleTo Include="Starlings.Benchmarks.Gliner2Harness.Cuda" />
   </ItemGroup>
 
 </Project>
