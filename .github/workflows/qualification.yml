@@ -283,8 +283,8 @@ jobs:
 
   # Regression support of the Stable CPU profiles: G1, G2 and G3 on the accepted P-030 release sets, with the commands
   # and pinned reference environments of docs/evidence/release-set-gates-2026-10-14/. Bounds and budgets are the
-  # protected ones, verified against Git; every gate must pass. EmbeddingGemma 2's text reference embeddings are not in
-  # Git: they are regenerated here and bound to the digest the protected reference.json records.
+  # protected ones, verified against Git; every gate must pass. EmbeddingGemma 2's text reference embeddings are
+  # committed under protected/ (#60) and also checked against the digest its reference.json records.
   release-gates:
     name: release gates ${{ matrix.profile }}
     needs: assets
@@ -299,13 +299,9 @@ jobs:
           - profile: multilingual-e5-small/onnx-fp32-cpu
             reference: model-pipeline/reference/encoder/requirements.txt
             hashes: --require-hashes
-          # Not a Stable profile: its G2 is refused here until the maintainer commits the release set's embeddings.jsonl
-          # under protected/ (SOURCE.md decision 2); the outside-repository reference regenerates byte-identical only on
-          # the reference CPU. G1 and G3 still run, and the refusal stays visible in the job, without failing the run.
           - profile: embeddinggemma-2/onnx-fp32-cpu
             reference: model-pipeline/reference/embeddinggemma2/requirements.txt
             hashes: --require-hashes
-            allowed_to_fail: true
           # gliner2 is pinned by a full commit of its Git repository, which cannot carry a hash, so not every
           # requirement has one; uv verifies every hash the file lists (--verify-hashes).
           - profile: gliner2-base-v1/onnx-fp32-cpu

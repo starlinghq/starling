@@ -133,40 +133,24 @@ case "$profile" in
     embeddinggemma-2/onnx-fp32-cpu)
         REL=$P/embeddinggemma-2/release/onnx-fp32-release
         DS=$P/release-shared/retrieval/miracl-dev-hn-8lang-v1
-        # The release set's embeddings.jsonl is kept outside Git, pinned by the digest in its protected reference.json
-        # (#43). Regenerate it as SOURCE.md states, at the recorded torch_threads (6), and let the evaluator bind it
-        # by digest (--reference-embeddings, #45). The reference was produced on an AVX2 CPU; the ISA is held there.
-        # MKL and OpenMP may otherwise shrink the thread count on a runner with fewer cores.
-        step reference-regeneration env OMP_NUM_THREADS=6 MKL_NUM_THREADS=6 MKL_DYNAMIC=FALSE OMP_DYNAMIC=FALSE \
-            ATEN_CPU_CAPABILITY=avx2 ONEDNN_MAX_CPU_ISA=AVX2 MKL_ENABLE_INSTRUCTIONS=AVX2 MKL_CBWR=AVX2 \
-            PYTHONPATH=model-pipeline/reference/embeddinggemma2 \
-            "$refpy" model-pipeline/reference/embeddinggemma2/run_embeddinggemma2.py --model-dir "$SNAP" \
-            --revision 914f7f89142e33e77833254d9c9b90c3cef7303b \
-            --corpus "$P/embeddinggemma-2/release/tokenizer-holdout/corpus.jsonl" --out "$work/reference" \
-            --batch-ids massive-km-KH-9760,massive-ja-JP-2798,massive-ar-SA-15109,massive-th-TH-13186,humaneval-120,oasst1-06f21312-d9c1-4970-9d7a-b129e8069aba
-        # The regenerated reference and its environment record go into the evidence (7 MB), so a digest mismatch
-        # can be measured against the reference CPU's copy.
-        mkdir -p "$out/reference"
-        cp "$work/reference/embeddings.jsonl" "$work/reference/environment.json" "$out/reference/" 2>/dev/null || true
-        python3 -I -c 'import json, sys; e = json.load(open(sys.argv[1]))["environment"]; print("reference run:", e.get("cpu"), "torch_threads", e.get("torch_threads"))' \
-            "$work/reference/environment.json" || true
-        python3 -I - "$work/reference" "$REL" <<'PY' >"$out/reference-digests.txt"
+        # The release set commits its embeddings.jsonl under protected/ (#60). It is no longer regenerated here: a copy
+        # regenerated on another CPU differs within 8e-7 and has another digest. The evaluator reads the protected file
+        # and verifies it against Git; the digest that reference.json records is checked as well, and a mismatch fails
+        # the job.
+        if ! python3 -I - "$REL" <<'PY' >"$out/reference-digests.txt"; then
 import hashlib, json, pathlib, sys
-ref, rel = pathlib.Path(sys.argv[1]), pathlib.Path(sys.argv[2])
-def sha(p):
-    return hashlib.sha256(p.read_bytes()).hexdigest() if p.is_file() else "missing"
+rel = pathlib.Path(sys.argv[1])
 want = json.loads((rel / "reference.json").read_text(encoding="utf-8")).get("embeddings", {}).get("sha256")
-got = sha(ref / "embeddings.jsonl")
-print(f"embeddings.jsonl {got} ({'equals' if got == want else 'differs from'} reference.json embeddings.sha256 {want})")
-for name in ("tokenizer.jsonl", "tokenizer-batch.json", "tokenizer-implementations.json"):
-    a, b = sha(ref / name), sha(rel / name)
-    print(f"{name} {a} ({'byte-identical to' if a == b else 'differs from'} the protected file {b})")
+got = hashlib.sha256((rel / "embeddings.jsonl").read_bytes()).hexdigest()
+print(f"embeddings.jsonl (protected) {got} ({'equals' if got == want else 'differs from'} reference.json embeddings.sha256 {want})")
+sys.exit(0 if got == want else 1)
 PY
-        # The producers read the case ids from embeddings.jsonl: a copy of the release set plus the regenerated file,
-        # outside the repository. The evaluation itself reads the real protected set.
+            results+=("| reference digest | G2 | embeddings.jsonl differs from reference.json | - |")
+            failed=1
+        fi
+        # The producers read the case ids from the release set; the evaluation reads the same protected set.
         mkdir -p "$work/fixtures"
         cp "$REL"/* "$work/fixtures/"
-        cp "$work/reference/embeddings.jsonl" "$work/fixtures/" 2>/dev/null || true
         step g1-holdout-producer "${TOOL[@]}" tokenizer --model embeddinggemma2 --tokenizer "$SNAP/tokenizer.json" \
             --fixtures "$REL/tokenizer.jsonl" --out "$work/g1-holdout"
         evaluate g1-tokenizer-holdout G1 --tokenizer-fixtures "$REL/tokenizer.jsonl" --results "$work/g1-holdout"
@@ -176,8 +160,7 @@ PY
             model-pipeline/reference/embeddinggemma2/stage_embeddinggemma2_export.py --model-dir "$SNAP" \
             --graph "$SNAP/onnx/embeddinggemma2-text-fp32.onnx" --fixtures "$work/fixtures" --profile "$profile" \
             --out "$work/stages" --intra-op-threads "$threads"
-        evaluate g2-release G1,G2 --fixtures "$REL" --reference-embeddings "$work/reference/embeddings.jsonl" \
-            --results "$work/stages" --require-gates G1,G2
+        evaluate g2-release G1,G2 --fixtures "$REL" --results "$work/stages" --require-gates G1,G2
         step g3-producer "${TOOL[@]}" retrieval --model embeddinggemma2 --dataset "$DS" \
             --out "$work/g3/embeddings.jsonl" --snapshot "$SNAP" --threads "$threads"
         evaluate g3-retrieval G3 --g3 retrieval --dataset "$DS" --results "$work/g3/embeddings.jsonl"
