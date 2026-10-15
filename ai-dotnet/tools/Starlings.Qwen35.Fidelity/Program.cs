@@ -11,13 +11,18 @@
 //            step0/<id>.f32 (log-softmax after the prefill), plus streaming reassembly and usage checks per prompt.
 // semantics: max-token boundary, stop sequences, additional stop ids, cached vs uncached logits, cancellation and
 //            reuse, concurrent and interleaved requests, seeded sampling, the text path with enable_thinking:
-//            semantics.json.
+//            semantics.json. Development prompts only (the checks pick prompts by id).
+// fixture-semantics: the three checks of `semantics` that feed G2 (cached vs uncached, chunked prefill, concurrency) on
+//            any generation fixture, the cases chosen from the fixture by a fixed rule (FixtureSemantics below), for
+//            example the release prompts: semantics.json, with a `selection` section naming the rule and the cases.
 // longcontext: per prompt, greedy decoding on the native sequence with chunked prefill (--prefill-chunk, default 512),
 //            the chosen-token log-probability at every step against the reference's (transformers' cached decoding),
 //            and cached vs uncached logits at a few steps (a fresh chunked prefill of the same prefix): longcontext.json.
 // Score with: python model-pipeline/reference/generation/compare.py --reference <ref> --candidate <out>.
 // semantics, stress and rawstress use fixed prompts of prompts-v1.jsonl (Cases.ModePrompts); with a prompt set that
 // lacks them (for example a release prompt set) the tool stops before loading the model, with exit code 2.
+// fixture-semantics needs a generation fixture (step_margin per case), at least 6 cases, the longest prompt above 64
+// tokens and the second longest above 7; otherwise, and with semantics in the same run, the tool stops with exit 2.
 // Exit codes: 0 done; 2 usage or input error; 70 an exception escaped (ai-dotnet/tools/Shared/ToolMain.cs).
 //
 // Task quality (G3): `-- generation --bundle <dir> --prompts <jsonl> --out <dir>` runs the chat path (owned template,
@@ -57,6 +62,14 @@ int ToolBody()
     {
         // Checked before the model loads: semantics and stress run on fixed prompts of prompts-v1.jsonl.
         Console.Error.WriteLine($"error: {missingForModes} are not in {opt.Prompts}; use --prompts model-pipeline/reference/generation/prompts-v1.jsonl for these modes, or --modes parity");
+        return 2;
+    }
+
+    if (opt.Modes.Contains("fixture-semantics") && (opt.Modes.Contains("semantics")
+        ? "--modes semantics and fixture-semantics both write semantics.json; pick one"
+        : Cases.FixtureSemanticsProblem(cases)) is { } fixtureProblem)
+    {
+        Console.Error.WriteLine($"error: {fixtureProblem}");
         return 2;
     }
 
@@ -112,6 +125,11 @@ int ToolBody()
     if (opt.Modes.Contains("semantics"))
     {
         Semantics();
+    }
+
+    if (opt.Modes.Contains("fixture-semantics"))
+    {
+        FixtureSemantics();
     }
 
     if (opt.Modes.Contains("stress"))
@@ -279,61 +297,7 @@ int ToolBody()
         }
 
         // 4. Cached vs uncached: logits during cached decoding against a fresh prefill of the same prefix.
-        {
-            var c = Get("en-list");
-            const int steps = 12;
-            var gen = new List<int>();
-            var cached = new List<float[]>();
-            using (var seq = model.Backend.CreateSequence(new GenAISequenceOptions { MaxLength = c.RefPromptIds.Length + steps + 1 }))
-            {
-                seq.AppendTokens(c.RefPromptIds);
-                var l0 = new float[seq.VocabularySize];
-                seq.CopyLastLogits(l0);
-                cached.Add(l0);
-                for (int k = 0; k < steps; k++)
-                {
-                    gen.Add(seq.GenerateNextToken());
-                    var l = new float[seq.VocabularySize];
-                    seq.CopyLastLogits(l);
-                    cached.Add(l);
-                }
-            }
-
-            // After GenerateNextToken GenAI reports either the logits that selected the token or those of the next
-            // position, depending on when it runs the model; the matching uncached prefix is found by argmax.
-            var perStep = new JsonArray();
-            double worst = 0;
-            int tokensEqual = 0;
-            for (int k = 1; k <= steps; k++)
-            {
-                int[] prefixA = [.. c.RefPromptIds, .. gen.Take(k)];
-                int[] prefixB = [.. c.RefPromptIds, .. gen.Take(k - 1)];
-                var ua = Prefill(prefixA);
-                var ub = Prefill(prefixB);
-                var lc = LogSoftmax(cached[k]);
-                double da = MaxAbs(lc, LogSoftmax(ua));
-                double db = MaxAbs(lc, LogSoftmax(ub));
-                bool aligned = da <= db;
-                double d = Math.Min(da, db);
-                worst = Math.Max(worst, d);
-                if (gen[k - 1] == ArgMax(LogSoftmax(Prefill(prefixB))))
-                {
-                    tokensEqual++;
-                }
-
-                perStep.Add(new JsonObject { ["step"] = k, ["max_abs_logprob"] = d, ["aligned_with"] = aligned ? "prefix incl. token k" : "prefix before token k" });
-            }
-
-            res["cached_vs_uncached"] = new JsonObject
-            {
-                ["prompt"] = c.Id,
-                ["steps"] = steps,
-                ["tokens_equal_uncached_argmax"] = tokensEqual,
-                ["max_abs_logprob"] = worst,
-                ["generated_equals_reference_prefix"] = gen.SequenceEqual(c.RefOutputIds.Take(steps)),
-                ["per_step"] = perStep,
-            };
-        }
+        res["cached_vs_uncached"] = CachedVsUncached(Get("en-list"));
 
         // 5. Cancellation between decode steps, then reuse of the model.
         {
@@ -385,46 +349,7 @@ int ToolBody()
         }
 
         // 6. Concurrent requests on one model (two threads) and two interleaved streams.
-        {
-            string[] ids = ["zh", "code-py", "en-math", "ja"];
-            var outs = new ConcurrentDictionary<string, bool>();
-            Parallel.ForEach(ids, new ParallelOptions { MaxDegreeOfParallelism = 2 }, id =>
-            {
-                var c = Get(id);
-                var r = Run(c, new GenerationOptions { MaxNewTokens = 24 });
-                outs[id] = PrefixOfRef(c, r.TokenIds);
-            });
-
-            var a = Get("zh");
-            var b = Get("code-cs");
-            using var ea = model.Generator.GenerateStreaming(a.RefPromptIds, new GenerationOptions { MaxNewTokens = 24 }).GetEnumerator();
-            using var eb = model.Generator.GenerateStreaming(b.RefPromptIds, new GenerationOptions { MaxNewTokens = 24 }).GetEnumerator();
-            var ia = new List<int>();
-            var ib = new List<int>();
-            bool ma = true, mb = true;
-            while (ma || mb)
-            {
-                if (ma && (ma = ea.MoveNext()))
-                {
-                    ia.AddRange(ea.Current.TokenIds);
-                }
-
-                if (mb && (mb = eb.MoveNext()))
-                {
-                    ib.AddRange(eb.Current.TokenIds);
-                }
-            }
-
-            res["concurrency"] = new JsonObject
-            {
-                ["parallel_two_threads_prefix_equal"] = new JsonObject(outs.Select(kv => KeyValuePair.Create(kv.Key, (JsonNode?)kv.Value))),
-                ["interleaved_streams_prefix_equal"] = new JsonObject
-                {
-                    [a.Id] = ia.SequenceEqual(a.RefOutputIds.Take(ia.Count)) && ia.Count > 0,
-                    [b.Id] = ib.SequenceEqual(b.RefOutputIds.Take(ib.Count)) && ib.Count > 0,
-                },
-            };
-        }
+        res["concurrency"] = Concurrency(["zh", "code-py", "en-math", "ja"], Get("zh"), Get("code-cs"));
 
         // 7. Seeded sampling: reproducible with the same seed; top_k = 1 equals greedy.
         {
@@ -457,39 +382,186 @@ int ToolBody()
         }
 
         // 9. Chunked prefill against a one-call prefill: step-0 logits and the first 32 tokens.
+        res["chunked_prefill"] = ChunkedPrefill([("long-license", 128), ("long-license", 100), ("multi-turn", 7)]);
+
+        File.WriteAllText(Path.Combine(opt.Out, "semantics.json"), res.ToJsonString(Json.Indented) + "\n");
+        Console.WriteLine(res.ToJsonString(Json.Indented));
+    }
+
+    // Cached vs uncached: logits during cached decoding (12 steps) against a fresh prefill of the same prefix.
+    JsonObject CachedVsUncached(Case cachedCase)
+    {
+        var c = cachedCase;
+        const int steps = 12;
+        var gen = new List<int>();
+        var cached = new List<float[]>();
+        using (var seq = model.Backend.CreateSequence(new GenAISequenceOptions { MaxLength = c.RefPromptIds.Length + steps + 1 }))
         {
-            var o = new JsonObject();
-            foreach (var (id, chunk) in new[] { ("long-license", 128), ("long-license", 100), ("multi-turn", 7) })
+            seq.AppendTokens(c.RefPromptIds);
+            var l0 = new float[seq.VocabularySize];
+            seq.CopyLastLogits(l0);
+            cached.Add(l0);
+            for (int k = 0; k < steps; k++)
             {
-                var c = Get(id);
-                float[]? whole = null, chunked = null;
-                GenerationResult? a = null;
-                string? wholeError = null;
-                try
-                {
-                    a = model.Generator.GenerateStreamingCore(c.RefPromptIds, new GenerationOptions { MaxNewTokens = 32 }, l => whole = l, CancellationToken.None).Last().Result!;
-                }
-                catch (GenAIModelException e)
-                {
-                    // A one-call prefill can exhaust device memory (logits for every prompt position).
-                    wholeError = e.Message.Split('\n')[0];
-                }
-
-                var b = model.Generator.GenerateStreamingCore(c.RefPromptIds, new GenerationOptions { MaxNewTokens = 32, PrefillChunkTokens = chunk }, l => chunked = l, CancellationToken.None).Last().Result!;
-                o[$"{id}/{chunk}"] = new JsonObject
-                {
-                    ["whole_prefill_error"] = wholeError,
-                    ["tokens_equal_whole"] = a is null ? null : a.TokenIds.SequenceEqual(b.TokenIds),
-                    ["equal_reference_prefix"] = PrefixOfRef(c, b.TokenIds),
-                    ["step0_max_abs_logprob_vs_whole"] = whole is null ? null : MaxAbs(LogSoftmax(whole), LogSoftmax(chunked!)),
-                    ["prefill_ms_whole"] = a?.Timings.Prefill.TotalMilliseconds,
-                    ["prefill_ms_chunked"] = b.Timings.Prefill.TotalMilliseconds,
-                };
+                gen.Add(seq.GenerateNextToken());
+                var l = new float[seq.VocabularySize];
+                seq.CopyLastLogits(l);
+                cached.Add(l);
             }
-
-            res["chunked_prefill"] = o;
         }
 
+        // After GenerateNextToken GenAI reports either the logits that selected the token or those of the next
+        // position, depending on when it runs the model; the matching uncached prefix is found by argmax.
+        var perStep = new JsonArray();
+        double worst = 0;
+        int tokensEqual = 0;
+        for (int k = 1; k <= steps; k++)
+        {
+            int[] prefixA = [.. c.RefPromptIds, .. gen.Take(k)];
+            int[] prefixB = [.. c.RefPromptIds, .. gen.Take(k - 1)];
+            var ua = Prefill(prefixA);
+            var ub = Prefill(prefixB);
+            var lc = LogSoftmax(cached[k]);
+            double da = MaxAbs(lc, LogSoftmax(ua));
+            double db = MaxAbs(lc, LogSoftmax(ub));
+            bool aligned = da <= db;
+            double d = Math.Min(da, db);
+            worst = Math.Max(worst, d);
+            if (gen[k - 1] == ArgMax(LogSoftmax(Prefill(prefixB))))
+            {
+                tokensEqual++;
+            }
+
+            perStep.Add(new JsonObject { ["step"] = k, ["max_abs_logprob"] = d, ["aligned_with"] = aligned ? "prefix incl. token k" : "prefix before token k" });
+        }
+
+        return new JsonObject
+        {
+            ["prompt"] = c.Id,
+            ["steps"] = steps,
+            ["tokens_equal_uncached_argmax"] = tokensEqual,
+            ["max_abs_logprob"] = worst,
+            ["generated_equals_reference_prefix"] = gen.SequenceEqual(c.RefOutputIds.Take(steps)),
+            ["per_step"] = perStep,
+        };
+    }
+
+    // Concurrent requests on one model (two threads, 24 tokens, prefix of the reference) and two interleaved streams.
+    JsonObject Concurrency(string[] parallelIds, Case interleavedA, Case interleavedB)
+    {
+        Case Get(string id) => cases.First(c => c.Id == id);
+        bool PrefixOfRef(Case c, ImmutableArray<int> ids) => ids.SequenceEqual(c.RefOutputIds.Take(ids.Length));
+        GenerationResult Run(Case c, GenerationOptions o) => model.Generator.Generate(c.RefPromptIds, o, default);
+        string[] ids = parallelIds;
+        var outs = new ConcurrentDictionary<string, bool>();
+        Parallel.ForEach(ids, new ParallelOptions { MaxDegreeOfParallelism = 2 }, id =>
+        {
+            var c = Get(id);
+            var r = Run(c, new GenerationOptions { MaxNewTokens = 24 });
+            outs[id] = PrefixOfRef(c, r.TokenIds);
+        });
+
+        var a = interleavedA;
+        var b = interleavedB;
+        using var ea = model.Generator.GenerateStreaming(a.RefPromptIds, new GenerationOptions { MaxNewTokens = 24 }).GetEnumerator();
+        using var eb = model.Generator.GenerateStreaming(b.RefPromptIds, new GenerationOptions { MaxNewTokens = 24 }).GetEnumerator();
+        var ia = new List<int>();
+        var ib = new List<int>();
+        bool ma = true, mb = true;
+        while (ma || mb)
+        {
+            if (ma && (ma = ea.MoveNext()))
+            {
+                ia.AddRange(ea.Current.TokenIds);
+            }
+
+            if (mb && (mb = eb.MoveNext()))
+            {
+                ib.AddRange(eb.Current.TokenIds);
+            }
+        }
+
+        return new JsonObject
+        {
+            ["parallel_two_threads_prefix_equal"] = new JsonObject(outs.Select(kv => KeyValuePair.Create(kv.Key, (JsonNode?)kv.Value))),
+            ["interleaved_streams_prefix_equal"] = new JsonObject
+            {
+                [a.Id] = ia.SequenceEqual(a.RefOutputIds.Take(ia.Count)) && ia.Count > 0,
+                [b.Id] = ib.SequenceEqual(b.RefOutputIds.Take(ib.Count)) && ib.Count > 0,
+            },
+        };
+    }
+
+    // Chunked prefill against a one-call prefill: step-0 logits and the first 32 tokens, per (case, chunk size).
+    JsonObject ChunkedPrefill((string Id, int Chunk)[] runs)
+    {
+        Case Get(string id) => cases.First(c => c.Id == id);
+        bool PrefixOfRef(Case c, ImmutableArray<int> ids) => ids.SequenceEqual(c.RefOutputIds.Take(ids.Length));
+        var o = new JsonObject();
+        foreach (var (id, chunk) in runs)
+        {
+            var c = Get(id);
+            float[]? whole = null, chunked = null;
+            GenerationResult? a = null;
+            string? wholeError = null;
+            try
+            {
+                a = model.Generator.GenerateStreamingCore(c.RefPromptIds, new GenerationOptions { MaxNewTokens = 32 }, l => whole = l, CancellationToken.None).Last().Result!;
+            }
+            catch (GenAIModelException e)
+            {
+                // A one-call prefill can exhaust device memory (logits for every prompt position).
+                wholeError = e.Message.Split('\n')[0];
+            }
+
+            var b = model.Generator.GenerateStreamingCore(c.RefPromptIds, new GenerationOptions { MaxNewTokens = 32, PrefillChunkTokens = chunk }, l => chunked = l, CancellationToken.None).Last().Result!;
+            o[$"{id}/{chunk}"] = new JsonObject
+            {
+                ["whole_prefill_error"] = wholeError,
+                ["tokens_equal_whole"] = a is null ? null : a.TokenIds.SequenceEqual(b.TokenIds),
+                ["equal_reference_prefix"] = PrefixOfRef(c, b.TokenIds),
+                ["step0_max_abs_logprob_vs_whole"] = whole is null ? null : MaxAbs(LogSoftmax(whole), LogSoftmax(chunked!)),
+                ["prefill_ms_whole"] = a?.Timings.Prefill.TotalMilliseconds,
+                ["prefill_ms_chunked"] = b.Timings.Prefill.TotalMilliseconds,
+            };
+        }
+
+        return o;
+    }
+
+    // The runtime-semantics checks that feed G2 (cached vs uncached, chunked prefill, concurrency) on any generation
+    // fixture, with the cases chosen from the fixture by a fixed rule instead of by development-prompt id. The checks
+    // compare with the reference's greedy prefix, so the cases are those whose reference is furthest from a near tie (the
+    // near-tie rule belongs to the greedy-ids check, not to these): cached vs uncached on the case with the largest
+    // smallest top-2 margin over its first 12 steps; concurrency on the six cases with the largest smallest margin over
+    // their first 24 steps (four in parallel on two threads, two interleaved); chunked prefill on the longest prompt
+    // (chunks of 64 and 32 tokens) and the second longest (chunks of 7). Ties go to the earlier case in the fixture.
+    void FixtureSemantics()
+    {
+        double MinMargin(Case c, int steps) => c.RefStepMargin!.Take(steps).DefaultIfEmpty(double.PositiveInfinity).Min();
+        List<Case> Rank(Func<Case, double> key) => [.. cases.Select((c, i) => (c, i)).OrderByDescending(x => key(x.c)).ThenBy(x => x.i).Select(x => x.c)];
+        var byCached = Rank(c => MinMargin(c, 12));
+        var byConcurrency = Rank(c => MinMargin(c, 24));
+        var byLength = Rank(c => c.RefPromptIds.Length);
+        var cached = byCached[0];
+        var parallel = byConcurrency.Take(4).ToArray();
+        var (ia, ib) = (byConcurrency[4], byConcurrency[5]);
+        (string Id, int Chunk)[] chunkRuns = [(byLength[0].Id, 64), (byLength[0].Id, 32), (byLength[1].Id, 7)];
+        JsonNode Margin(Case c, int steps, string key) => new JsonObject { ["case"] = c.Id, [key] = MinMargin(c, steps) };
+        var res = new JsonObject
+        {
+            ["selection"] = new JsonObject
+            {
+                ["rule"] = "cached_vs_uncached: largest min reference step_margin over steps 0-11; concurrency: six largest min step_margin over steps 0-23 (4 parallel on 2 threads, 2 interleaved); chunked_prefill: longest prompt (chunks 64, 32) and second longest (chunk 7); ties to fixture order",
+                ["cached_vs_uncached"] = Margin(cached, 12, "min_margin_12_steps"),
+                ["concurrency_parallel"] = new JsonArray([.. parallel.Select(c => Margin(c, 24, "min_margin_24_steps"))]),
+                ["concurrency_interleaved"] = new JsonArray([.. new[] { ia, ib }.Select(c => Margin(c, 24, "min_margin_24_steps"))]),
+                ["chunked_prefill"] = new JsonArray([.. chunkRuns.Select(r => (JsonNode)new JsonObject { ["case"] = r.Id, ["chunk"] = r.Chunk, ["prompt_tokens"] = cases.First(c => c.Id == r.Id).RefPromptIds.Length })]),
+            },
+            ["cached_vs_uncached"] = CachedVsUncached(cached),
+            ["concurrency"] = Concurrency([.. parallel.Select(c => c.Id)], ia, ib),
+            ["chunked_prefill"] = ChunkedPrefill(chunkRuns),
+        };
         File.WriteAllText(Path.Combine(opt.Out, "semantics.json"), res.ToJsonString(Json.Indented) + "\n");
         Console.WriteLine(res.ToJsonString(Json.Indented));
     }
@@ -844,7 +916,7 @@ internal sealed record Options(string Bundle, Qwen35Variant Variant, string Devi
     }
 }
 
-internal sealed record Case(string Id, IReadOnlyList<Qwen35Message> Messages, bool EnableThinking, bool HasTools, int MaxNewTokens, string RefRendered, int[] RefPromptIds, int[] RefOutputIds);
+internal sealed record Case(string Id, IReadOnlyList<Qwen35Message> Messages, bool EnableThinking, bool HasTools, int MaxNewTokens, string RefRendered, int[] RefPromptIds, int[] RefOutputIds, double[]? RefStepMargin = null);
 
 internal static class Cases
 {
@@ -874,7 +946,8 @@ internal static class Cases
             var kwargs = p["chat_template_kwargs"]?.AsObject();
             bool thinking = kwargs?["enable_thinking"] is JsonNode t && (bool)t;
             list.Add(new Case(id, p["tools"] is null ? messages : new ToolsUnsupported(messages), thinking, p["tools"] is not null, (int)p["max_new_tokens"]!,
-                (string)r["rendered"]!, [.. r["prompt_ids"]!.AsArray().Select(x => (int)x!)], [.. r["output_ids"]!.AsArray().Select(x => (int)x!)]));
+                (string)r["rendered"]!, [.. r["prompt_ids"]!.AsArray().Select(x => (int)x!)], [.. r["output_ids"]!.AsArray().Select(x => (int)x!)],
+                r["step_margin"] is JsonArray margins ? [.. margins.Select(x => (double)x!)] : null));
         }
 
         return list;
@@ -887,6 +960,20 @@ internal static class Cases
         ["stress"] = ["zh", "code-py", "en-math", "ja", "en-list", "th"],
         ["rawstress"] = ["zh", "code-py", "en-math", "ja", "en-list", "th"],
     };
+
+    /// <summary>Why --modes fixture-semantics cannot run on these cases (see FixtureSemantics), or null.</summary>
+    public static string? FixtureSemanticsProblem(IReadOnlyList<Case> cases)
+    {
+        if (cases.Any(c => c.RefStepMargin is null))
+        {
+            return "--modes fixture-semantics needs a generation fixture (generation.jsonl with step_margin) as --reference";
+        }
+
+        int[] lengths = [.. cases.Select(c => c.RefPromptIds.Length).OrderDescending()];
+        return cases.Count < 6 || lengths[0] <= 64 || lengths[1] <= 7
+            ? "--modes fixture-semantics needs at least 6 cases, the longest prompt above 64 tokens and the second longest above 7"
+            : null;
+    }
 
     /// <summary>The prompts the requested modes need but the prompt set lacks, described for an error message; null if none.</summary>
     public static string? MissingForModes(IReadOnlyList<Case> cases, IReadOnlySet<string> modes)

@@ -13,7 +13,9 @@ version 1), using only the profile's protected tolerances:
                  full vocabulary only with the reference vectors), NaN/Inf, streaming reassembly, usage, provider
                  options                                                                                   (G2)
     dotnet-text  runtime semantics from `semantics.json`: cached vs uncached logits, chunked vs one-call prefill,
-                 concurrent and interleaved requests                                                       (G2)
+                 concurrent and interleaved requests; written by `--modes semantics` (development prompts)
+                 or `--modes fixture-semantics` (any fixture, cases chosen by a recorded rule). Every case
+                 it names must be a fixture case                                                           (G2)
 
 Runner directory (`--results`): `results.jsonl` (one row per case, the format of
 `model-pipeline/reference/generation/compare.py` plus the runner's checks), `step0/<id>.f32` (log-softmax after the
@@ -538,6 +540,13 @@ class GenerationEvaluator:
             for c in (cached, chunked, conc):
                 c.detail = (c.detail + "; " if c.detail else "") + "no semantics.json (runner --modes semantics)"
             return
+        foreign = sorted(semantics_case_ids(sem) - set(self.fx.cases))
+        if foreign:
+            raise EvaluationError(
+                f"{self.run.directory / 'semantics.json'}: runtime semantics measured on cases not in the fixture: "
+                f"{foreign}; semantics.json must come from a run on the evaluated fixture (--modes semantics for the "
+                "development prompts, --modes fixture-semantics for any fixture)"
+            )
         b = _bound(self.tol, "float.cached_vs_uncached_logprob_max_abs")
         part = sem.get("cached_vs_uncached")
         if isinstance(part, dict) and isinstance(part.get("max_abs_logprob"), int | float):
@@ -600,6 +609,30 @@ class GenerationEvaluator:
                     conc.detail = f"differs: {bad}" if bad else ""
         elif "discrete.concurrent_requests" in self.tol:
             conc.detail = "semantics.json has no concurrency section"
+
+
+def semantics_case_ids(sem: dict) -> set[str]:
+    """The fixture cases the gate-feeding sections of semantics.json name: cached_vs_uncached.prompt, the case part of
+    the chunked_prefill keys (`<case>/<chunk>`), the concurrency result keys, and `selection` (fixture-semantics)."""
+    ids: set[str] = set()
+    part = sem.get("cached_vs_uncached")
+    if isinstance(part, dict) and isinstance(part.get("prompt"), str):
+        ids.add(part["prompt"])
+    part = sem.get("chunked_prefill")
+    if isinstance(part, dict):
+        ids.update(str(k).rsplit("/", 1)[0] for k in part)
+    part = sem.get("concurrency")
+    if isinstance(part, dict):
+        for group in ("parallel_two_threads_prefix_equal", "interleaved_streams_prefix_equal"):
+            if isinstance(part.get(group), dict):
+                ids.update(str(k) for k in part[group])
+    sel = sem.get("selection")
+    if isinstance(sel, dict):
+        for value in sel.values():
+            for item in value if isinstance(value, list) else [value]:
+                if isinstance(item, dict) and isinstance(item.get("case"), str):
+                    ids.add(item["case"])
+    return ids
 
 
 def diagnose(checks: list[Check]) -> tuple[str | None, list[dict[str, str]]]:

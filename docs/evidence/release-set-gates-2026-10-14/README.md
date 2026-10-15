@@ -18,15 +18,15 @@ A manifest gate entry becomes `passed` only where the evaluator reported that ga
 | EmbeddingGemma 2 `video-fp32-cuda` | **failed** (same) | **failed** (same) | none | [embeddinggemma2-video-fp32-cuda](embeddinggemma2-video-fp32-cuda/README.md) |
 | GLiNER2 `onnx-fp32-cpu` | passed | passed (span logits 1.78e-5 / 1e-4) | passed: exact F1 0.3626 ≥ 0.352, partial 0.4134 ≥ 0.403 | [gliner2-onnx-fp32-cpu](gliner2-onnx-fp32-cpu/README.md) |
 | GLiNER2 `onnx-fp32-cuda` | passed | passed (1.24e-5 / 1e-4) | passed: 0.3626 / 0.4134 | [gliner2-onnx-fp32-cuda](gliner2-onnx-fp32-cuda/README.md) |
-| Qwen3.5 `ortgenai-fp32x-cpu` | passed | **not-run**: semantics keys exist only for the development prompts (greedy 32/32 exact) | passed: exact match 0.64 ≥ 0.60 | [qwen35-ortgenai-fp32x-cpu](qwen35-ortgenai-fp32x-cpu/README.md) |
-| Qwen3.5 `ortgenai-fp32x-cuda` | passed | **not-run** (same); development-fixture rerun G2 passed | passed: 0.64 ≥ 0.60 | [qwen35-ortgenai-fp32x-cuda](qwen35-ortgenai-fp32x-cuda/README.md) |
-| Qwen3.5 `ortgenai-fp16x-cuda` | passed | **not-run** (same; 2 allowed near-tie divergences) | passed: 0.64 ≥ 0.56 | [qwen35-ortgenai-fp16x-cuda](qwen35-ortgenai-fp16x-cuda/README.md) |
+| Qwen3.5 `ortgenai-fp32x-cpu` | passed | passed on rerun (step 0 9.27e-4 / 5e-3; cached 2.67e-5 / 2e-4; chunked 0 / 1e-4); first run not-run | passed: exact match 0.64 ≥ 0.60 | [qwen35-ortgenai-fp32x-cpu](qwen35-ortgenai-fp32x-cpu/README.md) |
+| Qwen3.5 `ortgenai-fp32x-cuda` | passed | passed on rerun (9.27e-4 / 5e-3; cached 5.53e-5 / 2e-4; chunked 3.53e-5 / 1e-4); first run not-run | passed: 0.64 ≥ 0.60 | [qwen35-ortgenai-fp32x-cuda](qwen35-ortgenai-fp32x-cuda/README.md) |
+| Qwen3.5 `ortgenai-fp16x-cuda` | passed | passed on rerun (0.0478 / 0.15; cached 0.0531 / 0.1; chunked 0.0401 / 0.1; 2 allowed near-tie divergences); first run not-run | passed: 0.64 ≥ 0.56 | [qwen35-ortgenai-fp16x-cuda](qwen35-ortgenai-fp16x-cuda/README.md) |
 
 ## Findings for the maintainer
 
 1. **Video, Ogg Theora:** the C# FFmpeg adapter's frames for `commons-video-02` differ from torchcodec's seek-based decode. The set's `SOURCE.md` predicted this. G1 and G2 fail on CPU and CUDA, while every row without that file is within the bounds.
 2. **EmbeddingGemma 2 text:** the accepted release set lacks `embeddings.jsonl` (`SOURCE.md` decision 2, still open). At 6 threads the reference regenerates byte-identical to the recorded digest.
-3. **Qwen G2:** the runtime-semantics tolerance keys can be produced only on the development prompts. The full step-0 reference vectors did not reproduce bit for bit in the available environment (torch +cu130 wheel, 4 threads; the reference used +cpu with 6 threads).
+3. **Qwen G2 (resolved by the rerun, see the Qwen READMEs: the step-0 vectors regenerate byte-identical in the recorded environment, torch +cpu at 6 threads, and `--modes fixture-semantics` measures the semantics keys on the release prompts):** the runtime-semantics tolerance keys can be produced only on the development prompts. The full step-0 reference vectors did not reproduce bit for bit in the available environment (torch +cu130 wheel, 4 threads; the reference used +cpu with 6 threads).
 4. **Image pixel limit:** one accepted image (79 MP) exceeds the package's 50 MP default. The coordinator's decision is to keep the default and evaluate that row with the option, recorded as an `experimental` capability.
 5. **Reproducing outside-Git reference artifacts depends on the thread count.** The image tensors and the text embeddings matched only at the reference's 6 threads.
 6. **G3 digest form:** fixed in #26.
