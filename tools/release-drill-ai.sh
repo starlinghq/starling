@@ -129,6 +129,8 @@ eg2_repo="google/embeddinggemma-2"
 eg2_commit="914f7f89142e33e77833254d9c9b90c3cef7303b"
 eg2_graph="onnx/embeddinggemma2-text-fp32.onnx"
 eg2_image_graphs=(onnx/embeddinggemma2-vision-fp32.onnx onnx/embeddinggemma2-text-mm-fp32.onnx)
+# The six photos of make_eg2_images.py (scikit-image data); the derived and synthetic images would compete in the search.
+eg2_photos=(chelsea.png coffee.png camera.png astronaut.png rocket.jpg hubble_deep_field.jpg)
 skia_version="4.153.1"
 manifest_rel="model-pipeline/registry/multilingual-e5-small/onnx-fp32-cpu/manifest.yaml"
 ort_version="1.30.0"
@@ -701,7 +703,7 @@ if [[ -n "$eg2_seed" && "$cuda_only" != 1 ]]; then
             cp --reflink=auto "$eg2_seed/$g" "$target/"
         done
         mkdir -p "$work/eg2-images"
-        cp "$eg2_seed"/images/*.png "$eg2_seed"/images/*.jpg "$work/eg2-images/" 2>/dev/null || true
+        for f in "${eg2_photos[@]}"; do cp "$eg2_seed/images/$f" "$work/eg2-images/"; done
         "${eg2_sample[@]}" download-images --cache "$models" | tee "$work/sample-eg2-download-images.log" || fail "EmbeddingGemma2Search download-images failed"
         for g in "${eg2_image_graphs[@]}" "$eg2_graph" tokenizer.json config_sentence_transformers.json; do
             grep -q "^$g: already cached," "$work/sample-eg2-download-images.log" || fail "$g was not verified from the cache"
@@ -863,7 +865,7 @@ else
                 done
                 if [[ -d "$eg2_images_all" ]]; then
                     mkdir -p "$work/public-eg2-images"
-                    cp "$eg2_images_all"/*.png "$eg2_images_all"/*.jpg "$work/public-eg2-images/"
+                    for f in "${eg2_photos[@]}"; do cp "$eg2_images_all/$f" "$work/public-eg2-images/"; done
                     offline "${eg2_sample[@]}" images --cache "$public_models" --images "$work/public-eg2-images" | tee "$work/public-eg2-images.log" || fail "EmbeddingGemma 2 image search from public files failed"
                     for expect in 'a photo of a cat:chelsea.png' 'a cup of coffee:coffee.png' 'a rocket launch:rocket.jpg' \
                         'portrait of an astronaut:astronaut.png' 'deep space full of galaxies:hubble_deep_field.jpg'; do
