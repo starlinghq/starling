@@ -69,7 +69,7 @@ The restore-graph check requires the GPU natives exactly once, at the pinned ver
 
 G6 is now `passed` for `embeddinggemma-2/video-fp32-cpu` and `video-fp32-cuda`. Legal review D2 cleared both FFmpeg adapters on 2026-10-15, so consumers can install them from the published set. The drill gained the video steps it lacked (this change), and all three runs below passed from one set of packages.
 
-**Packages.** The CPU run packed all 15 packages from a clean clone of `5b04d83` (this change's branch commit, on `main` after #64), with a locked restore and an empty package cache. The CUDA and public-hosting runs reused those files (`--packages-from`), and every package check of step 4 ran again. The adapter packages hold their DLL, XML docs, README and `THIRD-PARTY-NOTICES.md`, and no FFmpeg library.
+**Packages.** The CPU run packed all 15 packages from a clean clone of `5b04d83` (this change's branch commit, on `main` after #64), with a locked restore and an empty package cache. That commit disappears with the squash merge. Its `ai-dotnet/src` is tree `a6481bcc11411e982b29b9a806910d908ab30c78`, the same as in the merged change; the later commits add only evidence. The CUDA and public-hosting runs reused those files (`--packages-from`), and every package check of step 4 ran again. The adapter packages hold their DLL, XML docs, README and `THIRD-PARTY-NOTICES.md`, and no FFmpeg library.
 
 **The user's FFmpeg.** No FFmpeg is packed, restored or downloaded by any package. The drill passes the user's own shared libraries with `--ffmpeg-dir`:
 
