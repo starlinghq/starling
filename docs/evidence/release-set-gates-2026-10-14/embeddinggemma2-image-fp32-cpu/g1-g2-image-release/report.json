@@ -3,11 +3,11 @@
   "format_version": 2,
   "task": "image-embedding",
   "profile": "embeddinggemma-2/image-fp32-cpu",
-  "date": "2026-10-14",
+  "date": "2026-10-15",
   "evaluator": {
     "name": "model-pipeline evaluate",
     "version": "0.1.0",
-    "repository_commit": "e0e29b9677c1c4b3e99d1dbe5161c794b426dff4"
+    "repository_commit": "472e1876ba69b2c4c0f2a7956adfb5e6c9e0b023"
   },
   "inputs": {
     "manifest": {
@@ -117,7 +117,7 @@
   },
   "protected_evidence": {
     "status": "verified",
-    "base": "10c016c1e8724983306d79a5db02b84326109c32",
+    "base": "75574190e77f5528a416e87c6e12ea17e3b85d33",
     "detail": "merge base of HEAD and origin/main",
     "changed": [],
     "sha256": {
@@ -135,7 +135,7 @@
   "stages": {
     "tokenizer": "passed",
     "export": "passed",
-    "dotnet-ids": "incomplete",
+    "dotnet-ids": "passed",
     "dotnet-text": "passed"
   },
   "first_divergence": null,
@@ -146,14 +146,18 @@
       "reason": "every check passed or is not applicable by the manifest"
     },
     "G2": {
-      "status": "not-run",
-      "reason": "checks not run: dotnet-ids.soft_tokens, dotnet-ids.token_embeddings"
+      "status": "passed",
+      "reason": "every check passed or is not applicable by the manifest"
     }
   },
   "manifest_gates": {
     "G1": {
       "status": "passed",
-      "date": "2026-10-14"
+      "date": "2026-10-15"
+    },
+    "G2": {
+      "status": "passed",
+      "date": "2026-10-15"
     }
   },
   "checks": [
@@ -310,10 +314,14 @@
       "gate": "G2",
       "title": "soft_tokens, row-relative max |d| / max |ref|",
       "tolerance_key": "float.soft_tokens_row_relative",
-      "bound": null,
-      "status": "not-run",
-      "metrics": {},
-      "detail": "reference tensors not given (--reference-tensors <dir of run_embeddinggemma2_image.py .npz>)"
+      "bound": 0.001,
+      "status": "passed",
+      "metrics": {
+        "max_row_relative": 8.675219570916982e-05,
+        "worst_case": "commons-image-14/image0",
+        "cases": 20
+      },
+      "detail": ""
     },
     {
       "id": "dotnet-ids.token_embeddings",
@@ -322,10 +330,14 @@
       "gate": "G2",
       "title": "token_embeddings, row-relative max |d| / max |ref|",
       "tolerance_key": "float.token_embeddings_row_relative",
-      "bound": null,
-      "status": "not-run",
-      "metrics": {},
-      "detail": "reference tensors not given (--reference-tensors <dir of run_embeddinggemma2_image.py .npz>)"
+      "bound": 0.001,
+      "status": "passed",
+      "metrics": {
+        "max_row_relative": 1.7856107686095463e-05,
+        "worst_case": "commons-image-10",
+        "cases": 19
+      },
+      "detail": ""
     },
     {
       "id": "dotnet-ids.finite",
@@ -417,6 +429,8 @@
     }
   ],
   "excluded_by_contract": {},
-  "reference_tensors": null,
-  "exit_code": 4
+  "reference_tensors": {
+    "directory": "/home/mark/.cache/starling-release-gates/runs/eg2-image-ref/tensors"
+  },
+  "exit_code": 0
 }

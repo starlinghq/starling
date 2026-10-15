@@ -296,6 +296,9 @@ qualification:
   # model-pipeline/reference/embeddinggemma2/requirements-video.txt (torchcodec 0.17.0 on the pinned FFmpeg 8.1).
   fixtures: model-pipeline/protected/embeddinggemma-2/video-fp32-cpu
   tolerances: model-pipeline/protected/embeddinggemma-2/video-fp32-cpu/tolerances.yaml
+  # P-030 release sets (accepted 2026-10-14, docs/kickoff.md), 2026-10-14: no gate passed on the release sets (docs/evidence/release-set-gates-2026-10-14/embeddinggemma2-video-fp32-cpu/README.md).
+  # G1 and G2 FAILED on the video release set: decoded frames of commons-video-02 (Ogg Theora) differ from
+  # torchcodec's seek-based decode (3/12 video inputs; embedding max abs 8.9e-3 vs 1e-5 on those rows). Entries unchanged.
   gates:
     G0: { status: checklist, evidence: docs/m0/embeddinggemma2-video-spike.md, date: 2026-10-11 }
     G1: { status: not-run }

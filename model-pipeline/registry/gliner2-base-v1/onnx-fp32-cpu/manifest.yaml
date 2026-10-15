@@ -206,12 +206,13 @@ qualification:
   tolerances: model-pipeline/protected/gliner2-base-v1/onnx-fp32-cpu/tolerances.yaml
   # Rerun at Starlings.Tokenizers 0.3.0-preview.1 (2026-10-13, R4): model-pipeline evaluate --require-gates G1,G2
   # gave G1 passed, G2 passed on the development fixtures, which are not P-030 release sets
-  # (docs/evidence/rerun-tokenizer-0.3.0-preview.1/). The gate entries below are unchanged; recording a result is the maintainer's act.
+  # (docs/evidence/rerun-tokenizer-0.3.0-preview.1/); that rerun changed no gate entry.
+  # P-030 release sets (accepted 2026-10-14, docs/kickoff.md), 2026-10-14: G1, G2, G3 passed on the release sets (docs/evidence/release-set-gates-2026-10-14/gliner2-onnx-fp32-cpu/README.md).
   gates:
     G0: { status: checklist, evidence: docs/m0/gliner2-p014.md, date: 2026-10-10 }
-    G1: { status: checklist, evidence: docs/m0/gliner2-p014.md, date: 2026-10-10 }
-    G2: { status: checklist, evidence: docs/m0/gliner2-p014.md, date: 2026-10-10 }
-    G3: { status: not-run }
+    G1: { status: passed, evidence: docs/evidence/release-set-gates-2026-10-14/gliner2-onnx-fp32-cpu/README.md, date: 2026-10-14 }
+    G2: { status: passed, evidence: docs/evidence/release-set-gates-2026-10-14/gliner2-onnx-fp32-cpu/README.md, date: 2026-10-14 }
+    G3: { status: passed, evidence: docs/evidence/release-set-gates-2026-10-14/gliner2-onnx-fp32-cpu/README.md, date: 2026-10-14 }
     G4: { status: not-run }
     G5: { status: not-run }
     # G6 checklist: the ai-0.1.0-preview.5 release drill (packed packages, clean consumer, offline sample run on a

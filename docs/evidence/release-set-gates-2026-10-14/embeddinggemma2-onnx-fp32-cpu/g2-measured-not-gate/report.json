@@ -2,7 +2,7 @@
   "format": "starlings.fidelity-report",
   "format_version": 1,
   "profile": "embeddinggemma-2/onnx-fp32-cpu",
-  "date": "2026-10-14",
+  "date": "2026-10-15",
   "evaluator": {
     "name": "model-pipeline evaluate",
     "version": "0.1.0",
@@ -28,7 +28,7 @@
       },
       {
         "path": "model-pipeline/protected/embeddinggemma-2/release/onnx-fp32-release/embeddings.jsonl",
-        "sha256": "ac0a3a9b64c6c241df721727ac48e7abe9acd1f7b926185c8d487e79def4b47c"
+        "sha256": "c2ffe5e45be11904b7ad0277758c0d8bafc48c6c65dcc87ff932ccbaf574285c"
       }
     ],
     "results": {
@@ -150,7 +150,7 @@
     "sha256": {
       "model-pipeline/protected/embeddinggemma-2/onnx-fp32-cpu/tolerances.yaml": "cadfb7a767968f9bdbee8501a6386a872e7dd72919b688edc486105472d69bb3",
       "model-pipeline/protected/embeddinggemma-2/release/onnx-fp32-release/tokenizer.jsonl": "25a991f55885ce1fc686e7daf23bb62e727f6cad0a0f3b2a7546de0b4abe2954",
-      "model-pipeline/protected/embeddinggemma-2/release/onnx-fp32-release/embeddings.jsonl": "ac0a3a9b64c6c241df721727ac48e7abe9acd1f7b926185c8d487e79def4b47c"
+      "model-pipeline/protected/embeddinggemma-2/release/onnx-fp32-release/embeddings.jsonl": "c2ffe5e45be11904b7ad0277758c0d8bafc48c6c65dcc87ff932ccbaf574285c"
     }
   },
   "report_only_metrics": [
@@ -347,8 +347,8 @@
       "status": "passed",
       "metrics": {
         "max_abs": 5.100000000091143e-07,
-        "mean_abs": 2.3448927319463618e-08,
-        "p99_abs": 9.59999999980421e-08,
+        "mean_abs": 2.3483771868290593e-08,
+        "p99_abs": 9.600000000151154e-08,
         "values": 534528,
         "cases": 696,
         "worst_case": "massive-nl-NL-10563@document",
@@ -427,14 +427,14 @@
       "bound": 5e-06,
       "status": "passed",
       "metrics": {
-        "max_abs": 1.5000000003206893e-07,
-        "mean_abs": 2.1367324001728162e-08,
-        "p99_abs": 8.387199999960506e-08,
+        "max_abs": 1.4500000000000624e-07,
+        "mean_abs": 2.1807631076403848e-08,
+        "p99_abs": 8.892999999990757e-08,
         "values": 4608,
         "cases": 6,
         "worst_case": "humaneval-120",
         "non_finite_cases": [],
-        "min_cosine": 0.9999999999993477,
+        "min_cosine": 0.9999999999992364,
         "min_cosine_case": "humaneval-120"
       },
       "detail": ""
@@ -449,7 +449,7 @@
       "bound": 0.9999999,
       "status": "passed",
       "metrics": {
-        "min_cosine": 0.9999999999993477,
+        "min_cosine": 0.9999999999992364,
         "cases": 6,
         "worst_case": "humaneval-120"
       },
@@ -488,8 +488,8 @@
       "status": "passed",
       "metrics": {
         "max_abs": 5.100000000091143e-07,
-        "mean_abs": 2.3405436567810125e-08,
-        "p99_abs": 9.600000000151154e-08,
+        "mean_abs": 2.343135571852846e-08,
+        "p99_abs": 9.697299999832432e-08,
         "values": 534528,
         "cases": 696,
         "worst_case": "massive-nl-NL-10563@document",
@@ -566,8 +566,8 @@
       "status": "passed",
       "metrics": {
         "max_abs": 5.100000000091143e-07,
-        "mean_abs": 2.3278704984821475e-08,
-        "p99_abs": 9.50000000020379e-08,
+        "mean_abs": 2.3315547286096316e-08,
+        "p99_abs": 9.559999999995701e-08,
         "values": 534528,
         "cases": 696,
         "worst_case": "massive-nl-NL-10563@document",
@@ -626,8 +626,8 @@
       "status": "passed",
       "metrics": {
         "max_abs": 5.100000000091143e-07,
-        "mean_abs": 2.3278704984821475e-08,
-        "p99_abs": 9.50000000020379e-08,
+        "mean_abs": 2.3315547286096316e-08,
+        "p99_abs": 9.559999999995701e-08,
         "values": 534528,
         "cases": 696,
         "worst_case": "massive-nl-NL-10563@document",
@@ -729,14 +729,14 @@
       "bound": 5e-06,
       "status": "passed",
       "metrics": {
-        "max_abs": 1.2249999999970618e-07,
-        "mean_abs": 2.078412717010636e-08,
-        "p99_abs": 8.299999999794583e-08,
+        "max_abs": 1.5100000000031755e-07,
+        "mean_abs": 2.1274342664922335e-08,
+        "p99_abs": 8.499999999689312e-08,
         "values": 4608,
         "cases": 6,
         "worst_case": "humaneval-120",
         "non_finite_cases": [],
-        "min_cosine": 0.9999999999993878,
+        "min_cosine": 0.9999999999992801,
         "min_cosine_case": "humaneval-120"
       },
       "detail": ""
@@ -751,7 +751,7 @@
       "bound": 0.9999999,
       "status": "passed",
       "metrics": {
-        "min_cosine": 0.9999999999993878,
+        "min_cosine": 0.9999999999992801,
         "cases": 6,
         "worst_case": "humaneval-120"
       },
@@ -790,8 +790,8 @@
       "status": "passed",
       "metrics": {
         "max_abs": 5.100000000091143e-07,
-        "mean_abs": 2.3236269492199897e-08,
-        "p99_abs": 9.550000000004e-08,
+        "mean_abs": 2.326282952724994e-08,
+        "p99_abs": 9.59999999980421e-08,
         "values": 534528,
         "cases": 696,
         "worst_case": "massive-nl-NL-10563@document",
@@ -850,8 +850,8 @@
       "status": "passed",
       "metrics": {
         "max_abs": 3.350000000006126e-07,
-        "mean_abs": 2.077125605923285e-08,
-        "p99_abs": 8.500000000036256e-08,
+        "mean_abs": 2.0727966856592592e-08,
+        "p99_abs": 8.500000000383201e-08,
         "values": 178176,
         "cases": 232,
         "worst_case": "massive-ka-GE-5600",
@@ -910,8 +910,8 @@
       "status": "passed",
       "metrics": {
         "max_abs": 2.9999999999821836e-07,
-        "mean_abs": 2.270884203447515e-08,
-        "p99_abs": 9.200000000014752e-08,
+        "mean_abs": 2.2795763572701516e-08,
+        "p99_abs": 9.300000000135589e-08,
         "values": 178176,
         "cases": 232,
         "worst_case": "massive-lv-LV-2373@query",
@@ -970,7 +970,7 @@
       "status": "passed",
       "metrics": {
         "max_abs": 3.6459999999943066e-07,
-        "mean_abs": 2.5215820624383426e-08,
+        "mean_abs": 2.525307169063463e-08,
         "p99_abs": 1.0400000000077014e-07,
         "values": 178176,
         "cases": 232,

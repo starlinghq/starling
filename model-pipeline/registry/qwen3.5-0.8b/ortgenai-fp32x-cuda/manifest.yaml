@@ -235,11 +235,14 @@ qualification:
   # (exit 4) on the accepted development fixtures, which are not P-030 release sets. Every bound check passed, but
   # the protected tolerances bind no float.chunked_vs_one_call_prefill_logprob_max_abs for this profile (measured
   # 5.9e-5), so that check cannot run. The entries are checklist, not passed (docs/evidence/cuda-qualification-2026-10-14/).
+  # P-030 release sets (accepted 2026-10-14, docs/kickoff.md), 2026-10-14: G1, G3 passed on the release sets (docs/evidence/release-set-gates-2026-10-14/qwen35-ortgenai-fp32x-cuda/README.md).
+  # G2 not-run on the release prompts (as for fp32x CPU). Rerun on the development fixtures with the now-bound
+  # chunked-prefill key: G2 passed (chunked 5.9e-5 vs 1e-4); development fixtures, so the entry stays checklist.
   gates:
     G0: { status: checklist, evidence: docs/evidence/p016-qwen35/README.md, date: 2026-10-10 }
-    G1: { status: checklist, evidence: docs/evidence/cuda-qualification-2026-10-14/qwen35-ortgenai-fp32x-cuda/README.md, date: 2026-10-14 }
+    G1: { status: passed, evidence: docs/evidence/release-set-gates-2026-10-14/qwen35-ortgenai-fp32x-cuda/README.md, date: 2026-10-14 }
     G2: { status: checklist, evidence: docs/evidence/cuda-qualification-2026-10-14/qwen35-ortgenai-fp32x-cuda/README.md, date: 2026-10-14 }
-    G3: { status: not-run }
+    G3: { status: passed, evidence: docs/evidence/release-set-gates-2026-10-14/qwen35-ortgenai-fp32x-cuda/README.md, date: 2026-10-14 }
     # G4 checklist: plan 10.1 LLM semantics (max tokens, stop, EOS, cache, chunked prefill, cancellation, isolation,
     # seeded sampling) in section 4; CUDA concurrency defect and serialization in section 5. No soak (plan 10.2).
     G4: { status: checklist, evidence: docs/evidence/p016-qwen35/README.md, date: 2026-10-10 }

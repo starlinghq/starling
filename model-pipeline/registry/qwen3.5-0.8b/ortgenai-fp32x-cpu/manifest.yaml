@@ -233,12 +233,16 @@ qualification:
   # Rerun at Starlings.Tokenizers 0.3.0-preview.1 (2026-10-13, R4): Starlings.Qwen35.Fidelity parity mode and
   # compare.py against the protected generation.jsonl: renderings and prompt ids 21/21, greedy ids 22/22, step-0
   # 1.38e-3 / top-5 6.2e-4, within the protected tolerances, on the development fixtures, which are not P-030 release
-  # sets (docs/evidence/rerun-tokenizer-0.3.0-preview.1/). The gate entries below are unchanged.
+  # sets (docs/evidence/rerun-tokenizer-0.3.0-preview.1/); that rerun changed no gate entry.
+  # P-030 release sets (accepted 2026-10-14, docs/kickoff.md), 2026-10-14: G1, G3 passed on the release sets (docs/evidence/release-set-gates-2026-10-14/qwen35-ortgenai-fp32x-cpu/README.md).
+  # G2 not-run on the release prompts: the runtime-semantics keys (cached vs uncached, chunked prefill, concurrency)
+  # are produced only on the development prompts, and the full step-0 vectors did not reproduce bit for bit; every
+  # parity check that ran passed (greedy 32/32 exact). Entry unchanged.
   gates:
     G0: { status: checklist, evidence: docs/evidence/p016-qwen35/README.md, date: 2026-10-10 }
-    G1: { status: checklist, evidence: docs/evidence/p016-qwen35/README.md, date: 2026-10-10 }
+    G1: { status: passed, evidence: docs/evidence/release-set-gates-2026-10-14/qwen35-ortgenai-fp32x-cpu/README.md, date: 2026-10-14 }
     G2: { status: checklist, evidence: docs/evidence/p016-qwen35/README.md, date: 2026-10-10 }
-    G3: { status: not-run }
+    G3: { status: passed, evidence: docs/evidence/release-set-gates-2026-10-14/qwen35-ortgenai-fp32x-cpu/README.md, date: 2026-10-14 }
     # G4 checklist: plan 10.1 LLM semantics (max tokens, stop, EOS, cache, chunked prefill, cancellation, isolation,
     # seeded sampling) in section 4; CUDA concurrency defect and serialization in section 5. No soak (plan 10.2).
     G4: { status: passed, evidence: docs/evidence/g4-soak-1h-2026-10-14/README.md, date: 2026-10-14 }

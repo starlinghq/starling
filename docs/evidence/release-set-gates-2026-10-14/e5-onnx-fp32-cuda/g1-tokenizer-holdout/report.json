@@ -1,0 +1,210 @@
+{
+  "format": "starlings.tokenizer-fixtures-report",
+  "format_version": 1,
+  "task": "tokenizer-fixtures",
+  "profile": "multilingual-e5-small/onnx-fp32-cuda",
+  "date": "2026-10-15",
+  "evaluator": {
+    "name": "model-pipeline evaluate --tokenizer-fixtures",
+    "repository_commit": "472e1876ba69b2c4c0f2a7956adfb5e6c9e0b023"
+  },
+  "inputs": {
+    "manifest": {
+      "path": "model-pipeline/registry/multilingual-e5-small/onnx-fp32-cuda/manifest.yaml",
+      "sha256": "4bfd366155123617d7f7b04035377f9c95dc96b60aafce66ced3306c73bbfdc6"
+    },
+    "tolerances": {
+      "path": "model-pipeline/protected/multilingual-e5-small/onnx-fp32-cuda/tolerances.yaml",
+      "sha256": "fdb34fa7ca8c6e9d8601e6592300e3733c3523ccef38337e392b326c592b5d1e"
+    },
+    "fixtures": {
+      "path": "model-pipeline/protected/multilingual-e5-small/release/onnx-fp32-release/tokenizer.jsonl",
+      "sha256": "0469daa84f5225c4b11b63f78ba85ba0b5f7d2f3b48f96c124fafe24a868af1b",
+      "format": "encoding",
+      "rows": 232
+    },
+    "results": {
+      "path": "/home/mark/.cache/starling-release-gates/runs/e5-cpu/g1-holdout/tokenizer.candidate.jsonl",
+      "sha256": "4d73242b90bf50170e4c853f1570ebcc084c452bb481b40359cf570e1a068796",
+      "environment": {
+        "format": "starlings.tokenizer-candidate",
+        "format_version": 1,
+        "model": "e5",
+        "producer": {
+          "name": "Starlings.Fidelity.Tool tokenizer",
+          "repository_commit": "b469654b17262920457e810af410063b13cce8ea",
+          "tokenizer_library": "0.3.0.0",
+          "tokenizer_library_informational_version": "0.3.0-preview.1+79a5863e861edcfed79142293dafabb688c199b9",
+          "dotnet": "10.0.12"
+        },
+        "tokenizer": {
+          "path": "tokenizer.json",
+          "sha256": "0b44a9d7b51c3c62626640cda0e2c2f70fdacdc25bbbd68038369d14ebdf4c39"
+        },
+        "fixtures": {
+          "path": "model-pipeline/protected/multilingual-e5-small/release/onnx-fp32-release/tokenizer.jsonl",
+          "sha256": "0469daa84f5225c4b11b63f78ba85ba0b5f7d2f3b48f96c124fafe24a868af1b"
+        },
+        "rows": 232
+      }
+    }
+  },
+  "offsets_unit": "none",
+  "protected_evidence": {
+    "status": "verified",
+    "base": "75574190e77f5528a416e87c6e12ea17e3b85d33",
+    "detail": "merge base of HEAD and origin/main",
+    "changed": [],
+    "sha256": {
+      "model-pipeline/protected/multilingual-e5-small/onnx-fp32-cuda/tolerances.yaml": "fdb34fa7ca8c6e9d8601e6592300e3733c3523ccef38337e392b326c592b5d1e",
+      "model-pipeline/protected/multilingual-e5-small/release/onnx-fp32-release/tokenizer.jsonl": "0469daa84f5225c4b11b63f78ba85ba0b5f7d2f3b48f96c124fafe24a868af1b"
+    }
+  },
+  "gates": {
+    "G1": {
+      "status": "passed",
+      "reason": "every bound field is exact on every fixture row"
+    }
+  },
+  "manifest_gates": {
+    "G1": {
+      "status": "passed",
+      "date": "2026-10-15"
+    }
+  },
+  "checks": [
+    {
+      "id": "identity",
+      "gate": "G1",
+      "tolerance_key": null,
+      "binding": true,
+      "status": "passed",
+      "cases": 0,
+      "mismatches": 0,
+      "mismatched_ids": [],
+      "detail": ""
+    },
+    {
+      "id": "cases",
+      "gate": "G1",
+      "tolerance_key": null,
+      "binding": true,
+      "status": "passed",
+      "cases": 232,
+      "mismatches": 0,
+      "mismatched_ids": [],
+      "detail": ""
+    },
+    {
+      "id": "ids",
+      "gate": "G1",
+      "tolerance_key": "discrete.token_ids",
+      "binding": true,
+      "status": "passed",
+      "cases": 232,
+      "mismatches": 0,
+      "mismatched_ids": [],
+      "detail": ""
+    },
+    {
+      "id": "attention_mask",
+      "gate": "G1",
+      "tolerance_key": "discrete.attention_mask",
+      "binding": true,
+      "status": "passed",
+      "cases": 232,
+      "mismatches": 0,
+      "mismatched_ids": [],
+      "detail": ""
+    },
+    {
+      "id": "tokens",
+      "gate": null,
+      "tolerance_key": null,
+      "binding": false,
+      "status": "passed",
+      "cases": 232,
+      "mismatches": 0,
+      "mismatched_ids": [],
+      "detail": ""
+    },
+    {
+      "id": "type_ids",
+      "gate": null,
+      "tolerance_key": null,
+      "binding": false,
+      "status": "passed",
+      "cases": 232,
+      "mismatches": 0,
+      "mismatched_ids": [],
+      "detail": ""
+    },
+    {
+      "id": "special_tokens_mask",
+      "gate": null,
+      "tolerance_key": null,
+      "binding": false,
+      "status": "passed",
+      "cases": 232,
+      "mismatches": 0,
+      "mismatched_ids": [],
+      "detail": ""
+    },
+    {
+      "id": "decode.skip_special_tokens",
+      "gate": null,
+      "tolerance_key": null,
+      "binding": false,
+      "status": "passed",
+      "cases": 232,
+      "mismatches": 0,
+      "mismatched_ids": [],
+      "detail": ""
+    },
+    {
+      "id": "decode.keep_special_tokens",
+      "gate": null,
+      "tolerance_key": null,
+      "binding": false,
+      "status": "passed",
+      "cases": 232,
+      "mismatches": 0,
+      "mismatched_ids": [],
+      "detail": ""
+    },
+    {
+      "id": "offsets.unicode-scalars",
+      "gate": null,
+      "tolerance_key": null,
+      "binding": false,
+      "status": "passed",
+      "cases": 232,
+      "mismatches": 0,
+      "mismatched_ids": [],
+      "detail": "behavior.offsets_unit is none: the profile exposes no offsets; discrete.offsets does not apply"
+    },
+    {
+      "id": "offsets.utf16-code-units",
+      "gate": null,
+      "tolerance_key": null,
+      "binding": false,
+      "status": "passed",
+      "cases": 232,
+      "mismatches": 0,
+      "mismatched_ids": [],
+      "detail": "behavior.offsets_unit is none: the profile exposes no offsets; discrete.offsets does not apply"
+    },
+    {
+      "id": "offsets.utf8-bytes",
+      "gate": null,
+      "tolerance_key": null,
+      "binding": false,
+      "status": "passed",
+      "cases": 232,
+      "mismatches": 0,
+      "mismatched_ids": [],
+      "detail": "behavior.offsets_unit is none: the profile exposes no offsets; discrete.offsets does not apply"
+    }
+  ],
+  "exit_code": 0
+}
