@@ -71,6 +71,20 @@
           "properties": {
             "cpu_flags": { "type": "array", "items": { "type": "string" } },
             "gpu": { "type": ["object", "null"] },
+            "native_library_digests": {
+              "description": "Every ONNX Runtime and GenAI native library the process mapped (/proc/self/maps), with its SHA-256 (null if unreadable); \"unavailable\" off Linux. Older files lack it.",
+              "oneOf": [
+                { "const": "unavailable" },
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": ["path", "sha256"],
+                    "properties": { "path": { "type": "string" }, "sha256": { "oneOf": [{ "$ref": "#/$defs/sha256" }, { "type": "null" }] } }
+                  }
+                }
+              ]
+            },
             "load_before": { "$ref": "#/$defs/load" },
             "load_after": { "$ref": "#/$defs/load" }
           }

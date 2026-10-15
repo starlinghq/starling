@@ -28,6 +28,12 @@ Decisions use the point estimates (ratios of medians, pooled over runs). Each on
 hierarchical bootstrap interval (runs, then samples); budget comments in the YAML (for example "the upper 95% bound
 at most 1.15") are printed with the rule, not gated. A rule without data is `no data`, never a pass.
 
+Native builds (context, never a verdict input): each run records the path and SHA-256 of every ONNX Runtime and
+GenAI native library it mapped (`environment.native_library_digests`); the report says whether both sides loaded
+identical builds or the same version in different native builds (NuGet against pip), or that the digests are
+unavailable. A difference does not fail the profile: the budget compares the shipped products, and C# users get the
+NuGet builds.
+
 Verdict per profile: `pass` (every rule has data and passes), `fail` (a rule fails, a series failed quality, or the
 sides are not comparable: different graph, workload, provider, thread count or runtime version), `incomplete` (a
 rule has no data). Separately, `qualifying` lists what the run lacks to be G5 evidence under docs/benchmarks/
@@ -344,6 +350,101 @@ def comparability(profile: dict) -> list[str]:
     return problems
 
 
+# ------------------------------------------------------------------------------------------- native builds
+
+UNAVAILABLE = "unavailable"
+SIDE_NAMES = {"csharp": "C#", "python": "Python"}
+PYBIND_CORE = "onnxruntime_pybind11_state"
+
+
+def library_role(path: str) -> str | None:
+    """What a native library is, independent of its file name's version suffix: ``libonnxruntime.so`` and
+    ``libonnxruntime.so.1.30.0`` are both ``onnxruntime``; ``libonnxruntime-genai.so`` is ``onnxruntime-genai``;
+    ``libonnxruntime_providers_cuda.so`` is ``onnxruntime_providers_cuda``. Python extension modules
+    (``onnxruntime_pybind11_state.*.so``, ``onnxruntime_genai.*.so``) have no C# counterpart: role None (but see
+    `native_builds` for a Python process whose only runtime is the pybind extension)."""
+    found = re.match(r"^lib(onnxruntime[\w-]*?)\.so(\.\d+)*$", path.rsplit("/", 1)[-1])
+    return found.group(1) if found else None
+
+
+def native_builds(profile: dict) -> dict:
+    """Whether both sides loaded the same native ONNX Runtime and GenAI builds, from each run's
+    ``environment.native_library_digests`` (path and SHA-256 of every such library the process mapped).
+
+    Context only, never a verdict input: the budget compares the shipped products, and users of the C# packages get
+    the NuGet builds. Status ``identical`` (every library role both sides loaded has the same SHA-256 on both),
+    ``different`` (a role's SHA-256 differs), ``no common library``, or ``unavailable`` (a run records no digests:
+    a raw file written before they were recorded, or a run off Linux)."""
+    roles: dict[str, dict[str, dict[str, set[str]]]] = defaultdict(lambda: defaultdict(lambda: defaultdict(set)))
+    unavailable = []
+    for side, side_runs in profile["runs"].items():
+        name = "python" if side == "python" else "csharp"  # the direct C# harness loads the C# natives
+        for run in side_runs.values():
+            digests = run["environment"].get("native_library_digests")
+            if not isinstance(digests, list) or any(not d.get("sha256") for d in digests):
+                unavailable.append(f"run {run['run_id']} ({run['harness']['name']})")
+                continue
+            # A Python process that loaded no libonnxruntime (plain `onnxruntime`: e5, EmbeddingGemma 2, GLiNER2)
+            # runs the copy of the runtime linked into its pybind11 extension; that is its `onnxruntime`.
+            has_core = any(library_role(d["path"]) == "onnxruntime" for d in digests)
+            for d in digests:
+                role = library_role(d["path"])
+                if role is None and not has_core and PYBIND_CORE in d["path"].rsplit("/", 1)[-1]:
+                    role = "onnxruntime"
+                if role:
+                    roles[role][name][d["sha256"]].add(d["path"].rsplit("/", 1)[-1])
+    versions = {_versions(r)["ort"] for side in profile["runs"].values() for r in side.values()} - {None}
+    libraries = []
+    for role in sorted(roles):
+        sides = roles[role]
+        entry: dict = {"role": role}
+        for n in SIDE_NAMES:
+            entry[f"{n}_sha256"] = sorted(sides[n])
+            entry[f"{n}_files"] = sorted({f for files in sides[n].values() for f in files})
+        if sides["csharp"] and sides["python"]:
+            entry["status"] = "identical" if set(sides["csharp"]) == set(sides["python"]) else "different"
+        else:
+            entry["status"] = "csharp only" if sides["csharp"] else "python only"
+        libraries.append(entry)
+    common = [e["status"] for e in libraries if e["status"] in ("identical", "different")]
+    if unavailable:
+        status = UNAVAILABLE
+    elif "different" in common:
+        status = "different"
+    elif common:
+        status = "identical"
+    else:
+        status = "no common library"
+    return {"status": status, "ort_versions": sorted(versions), "libraries": libraries, "unavailable": unavailable}
+
+
+def _native_side(entry: dict, side: str) -> str:
+    digests = entry[f"{side}_sha256"]
+    if not digests:
+        return f"{SIDE_NAMES[side]} -"
+    return f"{SIDE_NAMES[side]} {', '.join(d[:12] for d in digests)} ({', '.join(entry[f'{side}_files'])})"
+
+
+def native_builds_lines(nb: dict) -> list[str]:
+    version = f"ONNX Runtime {nb['ort_versions'][0]}" if len(nb["ort_versions"]) == 1 else "ONNX Runtime"
+    status = nb["status"]
+    if status == "different":
+        head = (
+            f"NATIVE BUILDS DIFFER: same version, different native build ({version}). Context, not a verdict input:"
+            " the budget compares the shipped products"
+        )
+    elif status == "identical":
+        head = f"native builds: identical ({version}; every library loaded on both sides has the same SHA-256)"
+    elif status == UNAVAILABLE:
+        head = f"native builds: unavailable ({len(nb['unavailable'])} run(s) record no native library digests)"
+    else:
+        head = "native builds: no common library (nothing loaded on both sides to compare)"
+    lines = [f"- {head}"]
+    for e in nb["libraries"]:
+        lines.append(f"    {e['role']}: {_native_side(e, 'csharp')} | {_native_side(e, 'python')}: {e['status']}")
+    return lines
+
+
 def qualifying(profile: dict, rules: dict) -> list[str]:
     problems = []
     for name, result in rules.items():
@@ -428,6 +529,7 @@ def evaluate(
                 "rules": rules,
                 "problems": problems,
                 "qualifying": qualifying(profile, rules),
+                "native_builds": native_builds(profile),
             }
         )
     return out
@@ -444,6 +546,8 @@ def report(verdicts: list[dict]) -> str:
         lines.append(f"## {v['profile']}: {v['verdict'].upper()}" + (" (G5 evidence)" if g5 else ""))
         if v.get("comparison"):
             lines.append(f"comparison: {v['comparison']}")
+        if v.get("native_builds"):
+            lines.extend(native_builds_lines(v["native_builds"]))
         for key, rule in v["rules"].items():
             note = f"  # {rule['note']}" if rule.get("note") else ""
             lines.append(f"- {key} = {rule['budget']}: {rule['status']}{note}")

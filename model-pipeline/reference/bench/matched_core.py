@@ -193,6 +193,42 @@ def loaded_native_libraries(names: Iterable[str] = NATIVE_LIBRARIES) -> list[str
     return sorted(paths)
 
 
+ORT_LIBRARY = re.compile(r"^(lib)?onnxruntime[\w.-]*\.so(\.\d+)*$")
+
+
+def onnxruntime_library_paths(maps: str) -> list[str]:
+    """Distinct, sorted absolute paths of the ONNX Runtime and GenAI shared objects in a ``/proc/<pid>/maps`` listing
+    (``libonnxruntime.so[.1.30.0]``, ``libonnxruntime-genai.so``, ``libonnxruntime_providers_*.so``,
+    ``onnxruntime_pybind11_state.*.so``; not ``onnxruntime-genai.db-shm``)."""
+    paths = set()
+    for line in maps.splitlines():
+        fields = line.split(maxsplit=5)
+        if len(fields) == 6 and fields[5].startswith("/"):
+            path = fields[5].strip()
+            if ORT_LIBRARY.match(Path(path).name):
+                paths.add(path)
+    return sorted(paths)
+
+
+def file_sha256(path: str) -> str | None:
+    try:
+        return sha256_file(Path(path))
+    except OSError:
+        return None
+
+
+def native_library_digests() -> list[dict] | str:
+    """``environment.native_library_digests``: every ONNX Runtime and GenAI native library this process mapped, with
+    its SHA-256, read from ``/proc/self/maps`` (Linux); ``"unavailable"`` elsewhere. Two runs can report the same
+    ONNX Runtime version and load different native builds (pip against NuGet); the digests make that checkable."""
+    if sys.platform != "linux":
+        return "unavailable"
+    maps = _read("/proc/self/maps")
+    if maps is None:
+        return "unavailable"
+    return [{"path": p, "sha256": file_sha256(p)} for p in onnxruntime_library_paths(maps)]
+
+
 def gpu_identity() -> dict | None:
     visible = os.environ.get("CUDA_VISIBLE_DEVICES")
     if visible is None or not visible.strip().isdigit():
@@ -241,6 +277,7 @@ def environment(
             "session_providers": session_providers,
             "gpu": gpu_identity() if provider == "cuda" else None,
             "native_libraries": loaded_native_libraries(),
+            "native_library_digests": native_library_digests(),
             "cuda_visible_devices": os.environ.get("CUDA_VISIBLE_DEVICES"),
             "cuda_device_order": os.environ.get("CUDA_DEVICE_ORDER"),
             "cpu_governor": _read("/sys/devices/system/cpu/cpu0/cpufreq/scaling_governor"),
