@@ -1,0 +1,8 @@
+# G3 quality budget, maintainer-owned (plan 10, M2). Proposed 2026-10-15 in a protected-change pull request under the
+# maintainer's delegation (docs/kickoff.md), with the set release/video-retrieval-v1 (SOURCE.md there). Set from the
+# upstream reference's score on this exact set before any .NET run on it.
+profile: embeddinggemma-2/video-fp32-cuda
+retrieval:
+  # reference (sentence-transformers, PyTorch CPU fp32) ndcg@10 0.8126, mrr@10 0.7714; margins 0.015 / 0.020 (two adjacent top swaps over 50 queries)
+  dataset_sha256: c1573b0f0715d310875399c48510c2275fc92adb78b1bb618d785bf8af349ed9
+  minimum: {ndcg@10: 0.797, mrr@10: 0.751}

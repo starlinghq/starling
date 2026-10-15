@@ -1,0 +1,8 @@
+# G3 quality budget, maintainer-owned (plan 10, M2). Proposed 2026-10-15 in a protected-change pull request under the
+# maintainer's delegation (docs/kickoff.md), with the set release/image-retrieval-v1 (SOURCE.md there). Set from the
+# upstream reference's score on this exact set before any .NET run on it.
+profile: embeddinggemma-2/image-fp32-cuda
+retrieval:
+  # reference (sentence-transformers, PyTorch CPU fp32) ndcg@10 0.9222, mrr@10 0.9008; margins 0.006 / 0.007 (two adjacent top swaps over 149 queries)
+  dataset_sha256: 43b3a8d41907ce5fda042554eb8485378b5cacacfa4d994cfebd6bc2631f0607
+  minimum: {ndcg@10: 0.916, mrr@10: 0.893}
