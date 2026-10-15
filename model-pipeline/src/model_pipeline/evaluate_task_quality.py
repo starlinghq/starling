@@ -2,6 +2,7 @@
 
     model-pipeline evaluate <manifest> --g3 retrieval --dataset <dir> --results <embeddings.jsonl> --out <dir>
         [--baseline <fp32 embeddings.jsonl>]
+        (text queries against a text corpus, or against an image or video corpus of {"id", "file", "sha256"} rows)
     model-pipeline evaluate <manifest> --g3 ner --dataset <gold.jsonl> --results <predictions.jsonl> --out <dir>
     model-pipeline evaluate <manifest> --g3 generation --dataset <prompts.jsonl> --results <generations.jsonl | dir>
         --out <dir> [--baseline <reference generations.jsonl | dir>]
@@ -123,6 +124,10 @@ def dataset_digest(files: list[Path]) -> str:
     return h.hexdigest()
 
 
+MEDIA_MODALITIES = ("image", "video")
+SHA256_HEX = re.compile(r"^[0-9a-f]{64}$")
+
+
 @dataclass
 class RetrievalSet:
     queries: dict[str, str]
@@ -130,6 +135,40 @@ class RetrievalSet:
     qrels: dict[str, dict[str, int]]
     files: list[Path]
     metadata: dict[str, Any] | None
+    modality: str = "text"
+
+
+def _corpus_modality(path: Path, corpus: dict[str, dict[str, Any]], metadata: dict[str, Any] | None) -> str:
+    """ "text" when every document has text; "image" or "video" when every document is a media file pinned by digest.
+
+    A media document is `{"id", "file", "sha256"}`: the file stays outside the repository and the producer verifies
+    its SHA-256, so the dataset digest pins the media bytes. The modality comes from `dataset.json` (`"modality"`),
+    which a media corpus must have.
+    """
+    media = [name for name, row in corpus.items() if "text" not in row]
+    if not media:
+        for name, row in corpus.items():
+            if not isinstance(row.get("text"), str) or not row["text"]:
+                raise EvaluationError(f"{path}: {name!r} has no text")
+        return "text"
+    if len(media) != len(corpus):
+        raise EvaluationError(f"{path}: documents mix text and media files (first media document {media[0]!r})")
+    modality = (metadata or {}).get("modality")
+    if modality not in MEDIA_MODALITIES:
+        raise EvaluationError(
+            f"{path}: a media corpus needs dataset.json with modality {' or '.join(MEDIA_MODALITIES)}, got {modality!r}"
+        )
+    seen: set[str] = set()
+    for name, row in corpus.items():
+        file, digest = row.get("file"), row.get("sha256")
+        if not isinstance(file, str) or not file or Path(file).name != file or file.startswith("."):
+            raise EvaluationError(f"{path}: {name!r} needs a plain file name, got {file!r}")
+        if not isinstance(digest, str) or not SHA256_HEX.match(digest):
+            raise EvaluationError(f"{path}: {name!r} needs the lowercase hex sha256 of its file")
+        if file in seen:
+            raise EvaluationError(f"{path}: file {file!r} appears twice")
+        seen.add(file)
+    return modality
 
 
 def load_retrieval_set(directory: Path) -> RetrievalSet:
@@ -141,10 +180,12 @@ def load_retrieval_set(directory: Path) -> RetrievalSet:
             raise EvaluationError(f"{directory}: missing {f.name}")
     queries = _unique(_jsonl(files[0]), files[0])
     corpus = _unique(_jsonl(files[1]), files[1])
-    for path, rows in ((files[0], queries), (files[1], corpus)):
-        for name, row in rows.items():
-            if not isinstance(row.get("text"), str) or not row["text"]:
-                raise EvaluationError(f"{path}: {name!r} has no text")
+    for name, row in queries.items():
+        if not isinstance(row.get("text"), str) or not row["text"]:
+            raise EvaluationError(f"{files[0]}: {name!r} has no text")
+    meta_path = directory / "dataset.json"
+    metadata = json.loads(meta_path.read_text(encoding="utf-8")) if meta_path.is_file() else None
+    modality = _corpus_modality(files[1], corpus, metadata)
     qrels: dict[str, dict[str, int]] = {}
     for row in _jsonl(files[2]):
         q, d, rel = row.get("query_id"), row.get("doc_id"), row.get("relevance")
@@ -158,14 +199,10 @@ def load_retrieval_set(directory: Path) -> RetrievalSet:
     without = sorted(q for q in queries if not any(r > 0 for r in qrels.get(q, {}).values()))
     if without:
         raise EvaluationError(f"{files[2]}: queries without a relevant document (not evaluable): {without[:10]}")
-    meta_path = directory / "dataset.json"
-    metadata = None
-    if meta_path.is_file():
-        metadata = json.loads(meta_path.read_text(encoding="utf-8"))
+    if metadata is not None:
         files.append(meta_path)
-    return RetrievalSet(
-        {k: v["text"] for k, v in queries.items()}, {k: v["text"] for k, v in corpus.items()}, qrels, files, metadata
-    )
+    documents = {k: v["text"] if modality == "text" else v["file"] for k, v in corpus.items()}
+    return RetrievalSet({k: v["text"] for k, v in queries.items()}, documents, qrels, files, metadata, modality)
 
 
 @dataclass
@@ -576,6 +613,10 @@ def evaluate(
     extra: dict[str, Any] = {}
     if task == "retrieval":
         data = load_retrieval_set(dataset)
+        if data.modality != "text" and f"{data.modality}-embedding" not in man["behavior"]["tasks"]:
+            raise EvaluationError(
+                f"{man['id']}: an {data.modality} corpus needs the manifest task {data.modality}-embedding"
+            )
         digest = dataset_digest(data.files[:3])
         data_files = 3
         emb = load_embeddings(results_path, data)
@@ -590,6 +631,7 @@ def evaluate(
             metrics["top10_overlap_vs_baseline.min"] = overlap["top10_overlap_vs_baseline.min"]
             extra["top10_overlap"] = {"worst_query": overlap["worst_query"], "per_query": overlap["per_query"]}
         sizes = {
+            "modality": data.modality,
             "queries": len(data.queries),
             "documents": len(data.corpus),
             "judgments": sum(map(len, data.qrels.values())),

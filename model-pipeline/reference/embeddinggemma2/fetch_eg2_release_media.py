@@ -150,7 +150,7 @@ def main() -> int:
     manifests: dict[str, list[dict]] = {"images": [], "videos": []}
     licenses, rejected = [], []
     for kind in ("images", "videos"):
-        selected = media[kind]["selected"]
+        selected = media.get(kind, {}).get("selected", [])
         current = extmetadata([r["title"] for r in selected])
         for i, rec in enumerate(selected):
             name = f"commons-{kind[:-1]}-{i:02d}"

@@ -468,3 +468,73 @@ def test_generation_without_metadata_binds_the_data_form_only(tmp_path):
     assert ev.report["gates"]["G3"]["status"] == "passed", ev.report["gates"]
     assert ev.report["budget"]["matched_form"] == "data"
     assert ev.report["dataset"]["sha256_with_metadata"] is None
+
+
+# Image and video corpora ---------------------------------------------------------------------------
+
+
+def media_set(root: Path, modality: str | None = "image", rows: list[dict] | None = None) -> Path:
+    """Text queries against media documents pinned by digest (the files themselves are not needed)."""
+    root.mkdir(parents=True, exist_ok=True)
+    rows = rows or [
+        {"id": "m-a", "file": "m-a.jpg", "sha256": "a" * 64},
+        {"id": "m-b", "file": "m-b.jpg", "sha256": "b" * 64},
+    ]
+    (root / "queries.jsonl").write_text(
+        "".join(json.dumps({"id": f"q-{r['id']}", "text": f"query {r['id']}"}) + "\n" for r in rows), encoding="utf-8"
+    )
+    (root / "corpus.jsonl").write_text("".join(json.dumps(r) + "\n" for r in rows), encoding="utf-8")
+    (root / "qrels.jsonl").write_text(
+        "".join(json.dumps({"query_id": f"q-{r['id']}", "doc_id": r["id"], "relevance": 1}) + "\n" for r in rows),
+        encoding="utf-8",
+    )
+    if modality is not None:
+        (root / "dataset.json").write_text(json.dumps({"name": "media", "modality": modality}), encoding="utf-8")
+    return root
+
+
+@pytest.mark.parametrize("modality", ["image", "video"])
+def test_media_corpus_scores_with_the_retrieval_metrics(tmp_path, modality):
+    dataset = media_set(tmp_path / "set", modality)
+    data = tq.load_retrieval_set(dataset)
+    assert data.modality == modality
+    assert data.corpus == {"m-a": "m-a.jpg", "m-b": "m-b.jpg"}
+    repo = Repo(tmp_path / "repo", tasks=(f"{modality}-embedding",))
+    ev = repo.run("retrieval", dataset, perfect_embeddings(tmp_path / "e.jsonl", data))
+    assert ev.report["metrics"]["ndcg@10"] == pytest.approx(1.0)
+    assert ev.report["dataset"]["size"]["modality"] == modality
+    swapped = perfect_embeddings(tmp_path / "s.jsonl", data, swap={"q-m-a": "m-b"})
+    ev = repo.run("retrieval", dataset, swapped)
+    assert ev.report["metrics"]["mrr@10"] == pytest.approx(0.75)
+    # The digest covers corpus.jsonl, so it pins each media file's SHA-256.
+    other = media_set(tmp_path / "other", modality, [{"id": "m-a", "file": "m-a.jpg", "sha256": "c" * 64}])
+    assert tq.dataset_digest(tq.load_retrieval_set(other).files[:3]) != tq.dataset_digest(data.files[:3])
+
+
+def test_media_corpus_needs_the_manifest_task(tmp_path):
+    dataset = media_set(tmp_path / "set", "video")
+    data = tq.load_retrieval_set(dataset)
+    repo = Repo(tmp_path / "repo", tasks=("image-embedding",))
+    with pytest.raises(tq.EvaluationError, match="video-embedding"):
+        repo.run("retrieval", dataset, perfect_embeddings(tmp_path / "e.jsonl", data))
+
+
+@pytest.mark.parametrize(
+    ("modality", "rows", "message"),
+    [
+        (None, None, "needs dataset.json with modality"),
+        ("audio", None, "needs dataset.json with modality"),
+        ("image", [{"id": "m-a", "file": "m-a.jpg", "sha256": "a" * 64}, {"id": "t", "text": "x"}], "mix text"),
+        ("image", [{"id": "m-a", "file": "../m-a.jpg", "sha256": "a" * 64}], "plain file name"),
+        ("image", [{"id": "m-a", "file": "m-a.jpg", "sha256": "A" * 64}], "sha256"),
+        ("image", [{"id": "m-a", "file": "m-a.jpg"}], "sha256"),
+        (
+            "image",
+            [{"id": "m-a", "file": "m.jpg", "sha256": "a" * 64}, {"id": "m-b", "file": "m.jpg", "sha256": "b" * 64}],
+            "appears twice",
+        ),
+    ],
+)
+def test_media_corpus_rows_are_checked(tmp_path, modality, rows, message):
+    with pytest.raises(tq.EvaluationError, match=message):
+        tq.load_retrieval_set(media_set(tmp_path / "set", modality, rows))
