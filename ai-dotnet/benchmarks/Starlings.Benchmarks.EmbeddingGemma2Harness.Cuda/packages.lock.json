@@ -1,0 +1,87 @@
+{
+  "version": 2,
+  "dependencies": {
+    "net10.0": {
+      "Microsoft.ML.OnnxRuntime.Gpu.Linux": {
+        "type": "Direct",
+        "requested": "[1.30.0, 1.30.0]",
+        "resolved": "1.30.0",
+        "contentHash": "fjwyxVj3AlYkzIJcNYyi4H0N/mcsrREF3ArvEdyskifT6gKMBjPbM/2RxwyeQeQa3b7LzVjsVvCFbnpdVMfUOw==",
+        "dependencies": {
+          "Microsoft.ML.OnnxRuntime.Managed": "1.30.0"
+        }
+      },
+      "SkiaSharp.NativeAssets.macOS": {
+        "type": "Transitive",
+        "resolved": "4.153.1",
+        "contentHash": "YTojWeWIhnpF7uC8vpMxB5wRONKkDB2t3r/nNPA3DL2pgj9fqMXRevA/rIanYazWnco4jo1ufgp3HkXuh1Tz8A=="
+      },
+      "SkiaSharp.NativeAssets.Win32": {
+        "type": "Transitive",
+        "resolved": "4.153.1",
+        "contentHash": "Yqg6rChTVh0BUE8QQxtOA3uUBnihfgID4yex/AvDa0+os2bVcBjmI3Qj9tnOB+R1hd/Jry1Gwl8qw5JI9HZG8Q=="
+      },
+      "System.Numerics.Tensors": {
+        "type": "Transitive",
+        "resolved": "9.0.0",
+        "contentHash": "hyJB4UlpAi19Xr9AXzu2NuagKC4lPfHObNMEAA0HmqFz2rX7wKgzeYzO/jM/eBHDhnUGFFEjk5cOoJaxqg5J4A=="
+      },
+      "starlings.acquisition": {
+        "type": "Project"
+      },
+      "starlings.models.embeddinggemma2": {
+        "type": "Project",
+        "dependencies": {
+          "Starlings.Acquisition": "[0.1.0-preview.6, )",
+          "Starlings.Runtime.Onnx": "[0.1.0-preview.6, )",
+          "Starlings.Tokenizers": "[0.3.0-preview.1, 0.3.0-preview.1]"
+        }
+      },
+      "starlings.models.embeddinggemma2.imaging.skiasharp": {
+        "type": "Project",
+        "dependencies": {
+          "SkiaSharp": "[4.153.1, 4.153.1]",
+          "SkiaSharp.NativeAssets.Linux.NoDependencies": "[4.153.1, 4.153.1]",
+          "Starlings.Models.EmbeddingGemma2": "[0.1.0-preview.6, )"
+        }
+      },
+      "starlings.runtime.onnx": {
+        "type": "Project",
+        "dependencies": {
+          "Microsoft.ML.OnnxRuntime.Managed": "[1.30.0, 1.30.0]"
+        }
+      },
+      "Microsoft.ML.OnnxRuntime.Managed": {
+        "type": "CentralTransitive",
+        "requested": "[1.30.0, 1.30.0]",
+        "resolved": "1.30.0",
+        "contentHash": "KHW+vp+i4Mdf6RhIsMvurTVepafXHjg8/VQ0o6sa2wEK0KzV/4iEoRTUvsymcRP+XPAM/r6kZCaTADdV6Xn4RA==",
+        "dependencies": {
+          "System.Numerics.Tensors": "9.0.0"
+        }
+      },
+      "SkiaSharp": {
+        "type": "CentralTransitive",
+        "requested": "[4.153.1, 4.153.1]",
+        "resolved": "4.153.1",
+        "contentHash": "TghYLOUaP3q6rTjQw7U9uQaaXh8lEs9rfA1U7/VtmyAptVDtj/SmjtcWzFWmcC/VMWxe3QgbV9uyvqDL7ySFtQ==",
+        "dependencies": {
+          "SkiaSharp.NativeAssets.Win32": "4.153.1",
+          "SkiaSharp.NativeAssets.macOS": "4.153.1"
+        }
+      },
+      "SkiaSharp.NativeAssets.Linux.NoDependencies": {
+        "type": "CentralTransitive",
+        "requested": "[4.153.1, 4.153.1]",
+        "resolved": "4.153.1",
+        "contentHash": "NrnPjcxjcRau4GMOY0BTpUdMey+MnmLU3jC5AuExEFHPS2NkX1tdkXW0n/c5nQMMHBTAMpHnt7qEOpXs2FNfIQ=="
+      },
+      "Starlings.Tokenizers": {
+        "type": "CentralTransitive",
+        "requested": "[0.3.0-preview.1, 0.3.0-preview.1]",
+        "resolved": "0.3.0-preview.1",
+        "contentHash": "OE5QIlXWK9M/q/eeGuvw1yrun9nIHt9z/NXqyAPDAYS+qgZvxTt9DPuBCrzPOqUHptPEkKhGXrplXpUYZoI4Nw=="
+      }
+    }
+  }
+}

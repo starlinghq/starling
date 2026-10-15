@@ -7,7 +7,8 @@ using Starlings.TestSupport;
 namespace Starlings.Benchmarks;
 
 /// <summary>
-/// EmbeddingGemma 2 through the public API. Text path (<c>onnx-fp32-cpu</c>): <c>tokenize</c>
+/// EmbeddingGemma 2 through the public API (CPU profiles; the CUDA build: the <c>-cuda</c> profiles, judged against the
+/// same reference rows with their own binding tolerances). Text path (<c>onnx-fp32-cpu</c>): <c>tokenize</c>
 /// (<see cref="EmbeddingGemma2Tokenizer.Tokenize"/> with the row's prompt, per text) and <c>encode</c>
 /// (<see cref="EmbeddingGemma2Encoder.EmbedBatch(IReadOnlyList{EmbeddingGemma2Input}, CancellationToken)"/>: padding,
 /// the ORT run, pooling and normalization). Image path (<c>image-fp32-cpu</c>): <c>decode</c> (SkiaSharp adapter, from
@@ -23,7 +24,8 @@ internal sealed class EmbeddingGemma2Driver : IBenchDriver
 
     public string Model => "embeddinggemma-2";
 
-    public string Profile => "onnx-fp32-cpu+image-fp32-cpu";
+    public string Profile(HarnessContext context) =>
+        string.Join('+', new[] { ("text", "onnx-fp32"), ("image", "image-fp32") }.Where(p => Paths(context).Contains(p.Item1)).Select(p => context.ProfileOf(p.Item2)));
 
     public string Reference => $"{TextReference}; {ImageReference}";
 
@@ -48,13 +50,13 @@ internal sealed class EmbeddingGemma2Driver : IBenchDriver
         var fixtures = new List<string>
         {
             Path.Combine(EmbeddingGemma2TestAssets.FixtureDirectory, "embeddings.jsonl"),
-            Path.Combine(EmbeddingGemma2TestAssets.FixtureDirectory, "tolerances.yaml"),
+            Path.Combine(BenchPaths.RepositoryRoot, EmbeddingGemma2Tolerances.Load(context.ProfileOf("onnx-fp32")).Source),
         };
         if (paths.Contains("image"))
         {
             fixtures.Add(Path.Combine(EmbeddingGemma2ImageTestAssets.FixtureDirectory, "image-embeddings.jsonl"));
             fixtures.Add(Path.Combine(EmbeddingGemma2ImageTestAssets.FixtureDirectory, "images.json"));
-            fixtures.Add(Path.Combine(EmbeddingGemma2ImageTestAssets.FixtureDirectory, "tolerances.yaml"));
+            fixtures.Add(Path.Combine(BenchPaths.RepositoryRoot, EmbeddingGemma2Tolerances.Load(context.ProfileOf("image-fp32")).Source));
         }
 
         var artifacts = BenchEnvironment.Artifacts(
@@ -135,8 +137,8 @@ internal sealed class EmbeddingGemma2Run : IBenchRun
             _textRows[row.Key] = row;
         }
 
-        _textTolerances = EmbeddingGemma2Tolerances.Load("onnx-fp32-cpu");
-        _imageTolerances = EmbeddingGemma2Tolerances.Load("image-fp32-cpu");
+        _textTolerances = EmbeddingGemma2Tolerances.Load(context.ProfileOf("onnx-fp32"));
+        _imageTolerances = EmbeddingGemma2Tolerances.Load(context.ProfileOf("image-fp32"));
         if (paths.Contains("image"))
         {
             foreach (var row in EmbeddingGemma2ImageTestAssets.Rows)
@@ -179,7 +181,7 @@ internal sealed class EmbeddingGemma2Run : IBenchRun
     {
         get
         {
-            var settings = _context.SessionSettings();
+            var settings = _context.SessionSettings((_encoder?.Session ?? _multimodal?.VisionSession)?.Diagnostics.ProviderOptions);
             settings["pad_id"] = EmbeddingGemma2Encoder.PadTokenId;
             settings["dimension"] = EmbeddingGemma2Encoder.NativeDimension;
             settings["paths"] = new JsonArray(_paths.Order(StringComparer.Ordinal).Select(p => (JsonNode)p).ToArray());

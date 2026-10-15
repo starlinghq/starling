@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    CUDA build of the GLiNER2 workload harness (Linux x64), same sources as ../Starlings.Benchmarks.Gliner2Harness:
+    profile onnx-fp32-cuda (provider cuda). Local only: not in AI.slnx, so CI does not restore the GPU package. The
+    CUDA 13 runtime and cuDNN 9 are not in the package (run-g5-matched.sh loads those of the Python runner's nvidia-*
+    wheels); see docs/benchmarks/PROTOCOL.md.
+  -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <RootNamespace>Starlings.Benchmarks</RootNamespace>
+    <DefineConstants>$(DefineConstants);ORT_CUDA</DefineConstants>
+    <ServerGarbageCollection>false</ServerGarbageCollection>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.ML.OnnxRuntime.Gpu.Linux" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="../Starlings.Benchmarks.Gliner2Harness/*.cs" Link="%(Filename)%(Extension)" />
+    <Compile Include="../Core/*.cs" Link="Core/%(Filename)%(Extension)" />
+    <Compile Include="../../tests/Shared/Gliner2/Gliner2TestAssets.cs" Link="Shared/Gliner2TestAssets.cs" />
+    <Compile Include="../../tests/Shared/Gliner2/Gliner2ParityChecks.cs" Link="Shared/Gliner2ParityChecks.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../src/Starlings.Models.Gliner2/Starlings.Models.Gliner2.csproj" />
+  </ItemGroup>
+
+</Project>

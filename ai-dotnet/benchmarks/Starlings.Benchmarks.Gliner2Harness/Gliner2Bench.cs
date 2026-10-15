@@ -7,7 +7,8 @@ using Starlings.TestSupport;
 namespace Starlings.Benchmarks;
 
 /// <summary>
-/// GLiNER2 entity extraction (<c>gliner2-base-v1</c>, <c>onnx-fp32-cpu</c>) through the public API, with the three
+/// GLiNER2 entity extraction (<c>gliner2-base-v1</c>, <c>onnx-fp32-cpu</c>, and <c>onnx-fp32-cuda</c> in the CUDA build)
+/// through the public API, with the three
 /// stages timed separately: <c>prepare</c> (normalization, word splitting, tokenization, schema and index tensors:
 /// <see cref="Gliner2EntityExtractor.Prepare"/>), <c>inference</c> (padding and the ORT run:
 /// <see cref="Gliner2EntityExtractor.RunModel"/>) and <c>decode</c> (span decoding to entities:
@@ -21,7 +22,7 @@ internal sealed class Gliner2Driver : IBenchDriver
 
     public string Reference => ReferencePath;
 
-    public string Profile => "onnx-fp32-cpu";
+    public string Profile(HarnessContext context) => context.ProfileOf("onnx-fp32");
 
     public string HarnessName => "Starlings.Benchmarks.Gliner2Harness";
 
@@ -39,7 +40,7 @@ internal sealed class Gliner2Driver : IBenchDriver
             null,
             files.TokenizerPath,
             context.WorkloadPath,
-            BenchEnvironment.FileDigests(FixturePath(), Path.Combine(Gliner2TestAssets.ExtractionFixtureDirectory, "tolerances.yaml")),
+            BenchEnvironment.FileDigests(FixturePath(), Path.Combine(BenchPaths.RepositoryRoot, Gliner2Tolerances.Load(Profile(context)).Source)),
             HarnessHost.Packages(("Starlings.Models.Gliner2", BenchEnvironment.InformationalVersion(typeof(Gliner2EntityExtractor).Assembly))));
         artifacts["model_id"] = $"{Gliner2ModelAssets.Repository}@{Gliner2ModelAssets.Revision} ({Gliner2ModelAssets.ModelFile}, source {Gliner2ModelAssets.SourceRevision})";
         artifacts["expected_model_sha256"] = Gliner2ModelAssets.ModelSha256;
@@ -81,7 +82,8 @@ internal sealed class Gliner2Run : IBenchRun
         _context = context;
         long t0 = Stopwatch.GetTimestamp();
         _cases = Gliner2Fixtures.LoadCases(Gliner2Driver.FixturePath()).ToDictionary(c => c.Id, StringComparer.Ordinal);
-        _tolerances = Gliner2Tolerances.Load("onnx-fp32-cpu");
+        // The CUDA profile is judged against the same reference rows with its own binding tolerances.
+        _tolerances = Gliner2Tolerances.Load(context.ProfileOf("onnx-fp32"));
         _spec = WorkloadSpec.Load(context.WorkloadPath);
         double fixtureMs = MonotonicClock.ElapsedMs(t0);
         long t1 = Stopwatch.GetTimestamp();
@@ -102,7 +104,7 @@ internal sealed class Gliner2Run : IBenchRun
     {
         get
         {
-            var settings = _context.SessionSettings();
+            var settings = _context.SessionSettings(_extractor.Session.Diagnostics.ProviderOptions);
             settings["max_sequence_length"] = _extractor.Options.MaxSequenceLength;
             settings["max_batch_size"] = _extractor.Options.MaxBatchSize;
             settings["threshold"] = "per case (fixture)";
@@ -359,7 +361,8 @@ internal static class Gliner2InputDump
                 Path.GetFullPath(map.Get("workloads") ?? BenchPaths.Workload(driver.WorkloadFile)),
                 map.GetInt("threads"),
                 map.GetInt("inter-threads", 1),
-                HashModelAtLoad: false);
+                HashModelAtLoad: false,
+                HarnessHost.ParseProvider(map.Get("provider", HarnessHost.CudaBuild ? "cuda" : "cpu")!, driver.HarnessName));
             using var run = new Gliner2Run(context, Gliner2Driver.Files());
             int count = run.DumpInputs(output, driver.Artifacts(context));
             Console.Error.WriteLine($"wrote {count} requests to {output}");

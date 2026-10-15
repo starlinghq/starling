@@ -7,7 +7,8 @@ using Starlings.TestSupport;
 namespace Starlings.Benchmarks;
 
 /// <summary>
-/// Qwen3.5-0.8B greedy generation (<c>ortgenai-fp32x-cpu</c>) through <see cref="Qwen35ChatModel.GenerateStreaming(Qwen35Prompt, Qwen35ChatOptions?, CancellationToken)"/>.
+/// Qwen3.5-0.8B greedy generation (<c>ortgenai-fp32x-cpu</c>; the CUDA build: <c>ortgenai-fp32x-cuda</c> and, with
+/// <c>--variant fp16x</c>, <c>ortgenai-fp16x-cuda</c>) through <see cref="Qwen35ChatModel.GenerateStreaming(Qwen35Prompt, Qwen35ChatOptions?, CancellationToken)"/>.
 /// Stages: <c>template</c> (chat template and tokenizer, text path only; 0 on the ids path), <c>prefill</c> and
 /// <c>decode</c> (the generator's own timings: prompt append, then every generated token including the stop token).
 /// Metrics per sample: <c>ttft_ms</c> (call start to the first streamed update), token counts, prefill and decode
@@ -19,7 +20,7 @@ internal sealed class Qwen35Driver : IBenchDriver
 
     public string Model => "qwen3.5-0.8b";
 
-    public string Profile => "ortgenai-fp32x-cpu";
+    public string Profile(HarnessContext context) => context.ProfileOf($"ortgenai-{VariantName(context)}");
 
     public string Reference => ReferencePath;
 
@@ -29,30 +30,53 @@ internal sealed class Qwen35Driver : IBenchDriver
 
     public bool UsesManagedOrt => false;
 
-    public string Usage => $"  model: ${Qwen35TestAssets.SnapshotEnvironmentVariable} (snapshot layout) or $STARLING_MODELS; never downloads. --inter-threads is ignored (GenAI session).";
+    public string Usage => $"""
+          --variant fp32x|fp16x     the bundle (default fp32x; fp16x is built for CUDA, as Qwen35ChatModel.Load)
+          model: ${Qwen35TestAssets.SnapshotEnvironmentVariable} (snapshot layout) or $STARLING_MODELS; never downloads. --inter-threads is ignored (GenAI session).
+        """;
 
-    public IBenchRun Load(HarnessContext context) => new Qwen35Run(context, Files());
+    public IBenchRun Load(HarnessContext context) => new Qwen35Run(context, Files(Variant(context)), Path.Combine(BenchPaths.RepositoryRoot, TolerancePath(context)));
+
+    /// <summary>The bundle variant of <c>--variant</c>.</summary>
+    internal static Qwen35Variant Variant(HarnessContext context)
+    {
+        var variant = context.Args.Get("variant", "fp32x") switch
+        {
+            "fp32x" => Qwen35Variant.Fp32x,
+            "fp16x" => Qwen35Variant.Fp16x,
+            _ => throw new ArgumentException("--variant fp32x|fp16x."),
+        };
+        return variant == Qwen35Variant.Fp16x && !context.IsCuda
+            ? throw new ArgumentException("--variant fp16x is built for CUDA (as Qwen35ChatModel.Load); use the CUDA build.")
+            : variant;
+    }
+
+    internal static string VariantName(HarnessContext context) => Variant(context) == Qwen35Variant.Fp16x ? "fp16x" : "fp32x";
+
+    /// <summary>The profile's binding tolerances (its <c>discrete.greedy_ids</c> rule judges every generation).</summary>
+    internal static string TolerancePath(HarnessContext context) => $"model-pipeline/protected/qwen3.5-0.8b/{context.ProfileOf($"ortgenai-{VariantName(context)}")}/tolerances.yaml";
 
     public JsonObject Artifacts(HarnessContext context)
     {
-        var files = Files();
+        var variant = Variant(context);
+        var files = Files(variant);
         string graph = Path.Combine(files.ModelDirectory, "model.onnx");
         var artifacts = BenchEnvironment.Artifacts(
             graph,
             null,
             files.TokenizerPath,
             context.WorkloadPath,
-            BenchEnvironment.FileDigests(Fixture(), Path.Combine(BenchPaths.RepositoryRoot, "model-pipeline", "protected", "qwen3.5-0.8b", "ortgenai-fp32x-cpu", "tolerances.yaml")),
+            BenchEnvironment.FileDigests(Fixture(), Path.Combine(BenchPaths.RepositoryRoot, TolerancePath(context))),
             new JsonObject
             {
                 ["Microsoft.ML.OnnxRuntimeGenAI.Managed"] = GenAIRuntimeInfo.ManagedVersion,
                 ["GenAI native"] = GenAIRuntimeInfo.NativePackage,
-                ["Microsoft.ML.OnnxRuntime"] = BenchEnvironment.PackageVersion("Microsoft.ML.OnnxRuntime"),
+                [OrtNativePackage] = BenchEnvironment.PackageVersion(OrtNativePackage),
                 ["Starlings.Generation.OnnxGenAI"] = BenchEnvironment.InformationalVersion(typeof(TextGenerator).Assembly),
                 ["Starlings.Models.Qwen35"] = BenchEnvironment.InformationalVersion(typeof(Qwen35ChatModel).Assembly),
                 ["Starlings.Tokenizers"] = BenchEnvironment.TokenizerVersion,
             });
-        artifacts["model_id"] = $"{Qwen35ModelAssets.Repository}@{Qwen35ModelAssets.Revision} ({Qwen35ModelAssets.VariantDirectory(Qwen35Variant.Fp32x)}, builder {Qwen35ModelAssets.BuilderVersion} at {Qwen35ModelAssets.BuilderSourceCommit})";
+        artifacts["model_id"] = $"{Qwen35ModelAssets.Repository}@{Qwen35ModelAssets.Revision} ({Qwen35ModelAssets.VariantDirectory(variant)}, builder {Qwen35ModelAssets.BuilderVersion} at {Qwen35ModelAssets.BuilderSourceCommit})";
         artifacts["bundle_sha256"] = BenchEnvironment.FileDigests(
             Path.Combine(files.ModelDirectory, "model.onnx.data"),
             Path.Combine(files.ModelDirectory, "genai_config.json"),
@@ -62,10 +86,17 @@ internal sealed class Qwen35Driver : IBenchDriver
         return artifacts;
     }
 
-    internal static Qwen35ModelFiles Files()
+#if ORT_CUDA
+    /// <summary>The ONNX Runtime natives under the GenAI natives: Microsoft.ML.OnnxRuntimeGenAI.Cuda brings the GPU build.</summary>
+    private const string OrtNativePackage = "Microsoft.ML.OnnxRuntime.Gpu";
+#else
+    private const string OrtNativePackage = "Microsoft.ML.OnnxRuntime";
+#endif
+
+    internal static Qwen35ModelFiles Files(Qwen35Variant variant)
     {
-        var (files, reason) = Qwen35TestAssets.FindModel(Qwen35Variant.Fp32x);
-        return files ?? throw new BenchAssetsMissingException("Qwen3.5 fp32x bundle not found. " + reason);
+        var (files, reason) = Qwen35TestAssets.FindModel(variant);
+        return files ?? throw new BenchAssetsMissingException($"Qwen3.5 {Qwen35ModelAssets.VariantDirectory(variant)} bundle not found. " + reason);
     }
 
     internal static string Fixture() =>
@@ -83,16 +114,26 @@ internal sealed class Qwen35Run : IBenchRun
     private readonly Qwen35ChatModel _model;
     private readonly IReadOnlyDictionary<string, GenerationCase> _cases;
     private readonly WorkloadSpec _spec;
+    private readonly string _variant;
+    private readonly string _tolerancePath;
+    private readonly double? _nearTieMargin;
 
-    public Qwen35Run(HarnessContext context, Qwen35ModelFiles files)
+    public Qwen35Run(HarnessContext context, Qwen35ModelFiles files, string tolerancePath)
     {
         _context = context;
+        _variant = Qwen35Driver.VariantName(context);
+        _tolerancePath = BenchEnvironment.RepoRelative(tolerancePath);
+        _nearTieMargin = NearTieMargin(tolerancePath);
         long t = Stopwatch.GetTimestamp();
         _spec = WorkloadSpec.Load(context.WorkloadPath);
         _cases = Qwen35TestAssets.ReadJsonLines(Qwen35Driver.Fixture()).Select(GenerationCase.Parse).ToDictionary(c => c.Id, StringComparer.Ordinal);
         double fixtureMs = MonotonicClock.ElapsedMs(t);
         t = Stopwatch.GetTimestamp();
-        _model = Qwen35ChatModel.Load(files, new Qwen35ModelOptions { Provider = GenAIExecutionProvider.Cpu, IntraOpThreads = context.IntraOpThreads });
+        _model = Qwen35ChatModel.Load(files, new Qwen35ModelOptions
+        {
+            Provider = context.IsCuda ? GenAIExecutionProvider.Cuda : GenAIExecutionProvider.Cpu,
+            IntraOpThreads = context.IntraOpThreads,
+        });
         LoadStages = new JsonObject { ["fixture_read"] = fixtureMs, ["model_load"] = MonotonicClock.ElapsedMs(t) };
     }
 
@@ -100,7 +141,8 @@ internal sealed class Qwen35Run : IBenchRun
 
     public JsonObject Settings => new()
     {
-        ["provider"] = "cpu",
+        ["provider"] = _context.Provider,
+        ["variant"] = _variant,
         ["intra_op_num_threads"] = _context.IntraOpThreads,
         ["inter_op_num_threads"] = null,
         ["execution_mode"] = "onnxruntime-genai",
@@ -111,6 +153,9 @@ internal sealed class Qwen35Run : IBenchRun
         ["context_length"] = _model.Info.ContextLength,
         ["serializes_native_calls"] = _model.Info.SerializesNativeCalls,
         ["sampling"] = "greedy",
+        ["prefill_chunk_tokens"] = _context.IsCuda ? Qwen35ChatOptions.DefaultCudaPrefillChunkTokens : null,
+        ["greedy_ids_rule"] = GreedyRule,
+        ["tolerance_file"] = _tolerancePath,
     };
 
     public IReadOnlyList<string>? SessionProviders => null;
@@ -222,12 +267,41 @@ internal sealed class Qwen35Run : IBenchRun
         return new Qwen35Output(c, maxNewTokens, [.. prompt.TokenIds], result);
     }
 
+    private string GreedyRule => _nearTieMargin is double m
+        ? string.Create(System.Globalization.CultureInfo.InvariantCulture, $"greedy ids equal to the reference up to the first divergence, which must fall where the reference top-1 margin is below {m} (discrete.greedy_ids of {_tolerancePath})")
+        : "greedy ids equal to the reference up to max_new_tokens (exact)";
+
     /// <summary>
-    /// Generated ids (with the stop token) equal to the reference output up to max_new_tokens, and the prompt ids equal
-    /// to the reference prompt ids. Strict: a divergence at a near tie also fails, with its reference margin reported.
+    /// The margin of the profile's <c>discrete.greedy_ids: equal_until_first_divergence_at_margin_below_X</c> rule
+    /// (<c>ortgenai-fp16x-cuda</c>), or null for the exact rule of the fp32x profiles.
     /// </summary>
-    private static JsonObject Judge(IReadOnlyList<(int Request, object Output)> outputs)
+    internal static double? NearTieMargin(string tolerancePath)
     {
+        const string prefix = "equal_until_first_divergence_at_margin_below_";
+        foreach (string raw in File.ReadAllLines(tolerancePath))
+        {
+            string line = raw.Split('#')[0].Trim();
+            if (line.StartsWith("greedy_ids:", StringComparison.Ordinal))
+            {
+                string rule = line["greedy_ids:".Length..].Trim();
+                return rule.StartsWith(prefix, StringComparison.Ordinal)
+                    ? double.Parse(rule[prefix.Length..], System.Globalization.CultureInfo.InvariantCulture)
+                    : null;
+            }
+        }
+
+        throw new InvalidDataException($"{tolerancePath} has no discrete.greedy_ids rule.");
+    }
+
+    /// <summary>
+    /// Generated ids (with the stop token) against the reference output up to max_new_tokens, and the prompt ids equal
+    /// to the reference prompt ids. fp32x profiles: exact (a divergence at a near tie also fails, with its reference
+    /// margin reported). fp16x: the protected rule, equal up to the first divergence, which must fall where the
+    /// reference top-1 margin is below the profile's bound (as the CUDA tests' <c>GreedyIdsDivergeOnlyAtNearTies</c>).
+    /// </summary>
+    private JsonObject Judge(IReadOnlyList<(int Request, object Output)> outputs)
+    {
+        int nearTies = 0;
         int generations = 0, equal = 0;
         var failures = new JsonArray();
         foreach (var (_, o) in outputs)
@@ -250,15 +324,24 @@ internal sealed class Qwen35Run : IBenchRun
                 n++;
             }
 
+            if (promptEqual && _nearTieMargin is double bound && (n >= expected.Length || (n < c.StepMargin.Length && c.StepMargin[n] < bound)))
+            {
+                // Diverges only at a near tie (or runs past a reference that stopped): allowed by the fp16x rule.
+                equal++;
+                nearTies++;
+                continue;
+            }
+
             string margin = n < c.StepMargin.Length ? c.StepMargin[n].ToString("R", System.Globalization.CultureInfo.InvariantCulture) : "n/a";
             failures.Add((JsonNode)(promptEqual ? $"{c.Id}: diverges at step {n} (reference top-1 margin {margin})" : $"{c.Id}: prompt ids differ"));
         }
 
         return new JsonObject
         {
-            ["check"] = "greedy ids equal to the reference up to max_new_tokens (exact)",
+            ["check"] = GreedyRule,
             ["generations"] = generations,
             ["equal"] = equal,
+            ["diverged_at_near_tie"] = nearTies,
             ["failures"] = failures,
             ["pass"] = equal == generations,
         };

@@ -9,28 +9,43 @@ namespace Starlings.Benchmarks;
 internal sealed class BenchAssetsMissingException(string message) : Exception(message);
 
 /// <summary>Settings shared by every model harness, parsed by <see cref="HarnessHost"/>.</summary>
-internal sealed record HarnessContext(ArgMap Args, string WorkloadPath, int? IntraOpThreads, int? InterOpThreads, bool HashModelAtLoad)
+internal sealed record HarnessContext(ArgMap Args, string WorkloadPath, int? IntraOpThreads, int? InterOpThreads, bool HashModelAtLoad, string Provider = "cpu")
 {
-    /// <summary>ONNX Runtime session options for these settings (CPU; the SHA-256 at load only with --hash-model true).</summary>
+    /// <summary>True for <c>--provider cuda</c> (only in the <c>.Cuda</c> builds).</summary>
+    public bool IsCuda => Provider == "cuda";
+
+    /// <summary>
+    /// ONNX Runtime session options for these settings (the SHA-256 at load only with --hash-model true). CUDA: device 0
+    /// of <c>CUDA_VISIBLE_DEVICES</c>, TF32 off (<see cref="OnnxExecutionProvider.Cuda"/> sets <c>use_tf32=0</c> and checks it).
+    /// </summary>
     public OnnxSessionOptions SessionOptions() => new()
     {
-        Provider = OnnxExecutionProvider.Cpu,
+        Provider = IsCuda ? OnnxExecutionProvider.Cuda : OnnxExecutionProvider.Cpu,
+        CudaDeviceId = 0,
         IntraOpNumThreads = IntraOpThreads,
         InterOpNumThreads = InterOpThreads,
         ComputeModelSha256 = HashModelAtLoad,
     };
 
-    /// <summary>The session settings block every run records (ONNX Runtime CPU, sequential, all optimizations).</summary>
-    public JsonObject SessionSettings() => new()
+    /// <summary>
+    /// The session settings block every run records (sequential, all optimizations); <paramref name="providerOptions"/>
+    /// are the options the CUDA provider reports after configuration (the session diagnostics).
+    /// </summary>
+    public JsonObject SessionSettings(IReadOnlyDictionary<string, string>? providerOptions = null) => new()
     {
-        ["provider"] = "cpu",
+        ["provider"] = Provider,
         ["intra_op_num_threads"] = IntraOpThreads,
         ["inter_op_num_threads"] = InterOpThreads,
         ["execution_mode"] = "sequential",
         ["graph_optimization_level"] = "all",
-        ["provider_options"] = new JsonObject(),
+        ["provider_options"] = IsCuda && providerOptions is not null
+            ? new JsonObject { ["CUDAExecutionProvider"] = new JsonObject(providerOptions.Select(kv => KeyValuePair.Create(kv.Key, (JsonNode?)kv.Value))) }
+            : new JsonObject(),
         ["model_sha256_check_at_load"] = HashModelAtLoad,
     };
+
+    /// <summary>The registry profile of <paramref name="kind"/> (for example <c>onnx-fp32</c>) on this provider: <c>onnx-fp32-cpu</c> or <c>onnx-fp32-cuda</c>.</summary>
+    public string ProfileOf(string kind) => $"{kind}-{Provider}";
 }
 
 /// <summary>One model harness: loads the model and fixtures and describes its workloads.</summary>
@@ -39,8 +54,8 @@ internal interface IBenchDriver
     /// <summary>Registry model id, for example <c>gliner2-base-v1</c>.</summary>
     string Model { get; }
 
-    /// <summary>Registry profile, for example <c>onnx-fp32-cpu</c>.</summary>
-    string Profile { get; }
+    /// <summary>Registry profile on the context's provider, for example <c>onnx-fp32-cpu</c>.</summary>
+    string Profile(HarnessContext context);
 
     string HarnessName { get; }
 
@@ -120,7 +135,17 @@ internal sealed class BenchSeries
 /// </summary>
 internal static class HarnessHost
 {
+#if ORT_CUDA
+    /// <summary>True in the <c>.Cuda</c> builds, which reference the CUDA natives and run only <c>--provider cuda</c>.</summary>
+    public const bool CudaBuild = true;
+
+    private const string NativePackage = "Microsoft.ML.OnnxRuntime.Gpu.Linux";
+#else
+    /// <summary>True in the <c>.Cuda</c> builds, which reference the CUDA natives and run only <c>--provider cuda</c>.</summary>
+    public const bool CudaBuild = false;
+
     private const string NativePackage = "Microsoft.ML.OnnxRuntime";
+#endif
 
     private static readonly string[] s_notForwarded = ["out", "processes", "note"];
 
@@ -138,17 +163,14 @@ internal static class HarnessHost
         try
         {
             var map = ArgMap.Parse(args.Skip(1).ToArray(), usage);
-            if (map.Get("provider", "cpu") != "cpu")
-            {
-                throw new ArgumentException("Only --provider cpu is built: these harnesses reference the CPU native runtime; no CUDA build exists yet.");
-            }
-
+            string provider = ParseProvider(map.Get("provider", CudaBuild ? "cuda" : "cpu")!, driver.HarnessName);
             var context = new HarnessContext(
                 map,
                 Path.GetFullPath(map.Get("workloads") ?? BenchPaths.Workload(driver.WorkloadFile)),
                 map.GetInt("threads"),
                 map.GetInt("inter-threads", 1),
-                map.Get("hash-model", "false") == "true");
+                map.Get("hash-model", "false") == "true",
+                provider);
             if (args[0] is "warm" or "cold" && string.IsNullOrEmpty(map.Get("out")))
             {
                 throw new ArgumentException("--out <raw.jsonl> is required.");
@@ -174,8 +196,37 @@ internal static class HarnessHost
         }
     }
 
+    /// <summary>
+    /// <c>cpu</c> or <c>cuda</c>, matching this build's native package: a CPU result never comes from the GPU natives and
+    /// a CUDA run needs the <c>.Cuda</c> build and an explicit <c>CUDA_VISIBLE_DEVICES</c>.
+    /// </summary>
+    internal static string ParseProvider(string provider, string harnessName)
+    {
+        if (provider is not ("cpu" or "cuda"))
+        {
+            throw new ArgumentException("--provider cpu|cuda.");
+        }
+
+        if (provider == "cuda" && !CudaBuild)
+        {
+            throw new ArgumentException($"--provider cuda needs the CUDA build ({harnessName}.Cuda); this build references the CPU native runtime.");
+        }
+
+        if (provider == "cpu" && CudaBuild)
+        {
+            throw new ArgumentException($"This is the CUDA build; run CPU benchmarks with {harnessName} (the CPU native package).");
+        }
+
+        if (provider == "cuda" && string.IsNullOrEmpty(Environment.GetEnvironmentVariable("CUDA_VISIBLE_DEVICES")))
+        {
+            throw new ArgumentException("CUDA runs require an explicit device: set CUDA_DEVICE_ORDER=PCI_BUS_ID and CUDA_VISIBLE_DEVICES.");
+        }
+
+        return provider;
+    }
+
     private static string Usage(IBenchDriver driver) => $"""
-        usage: {driver.HarnessName} warm|cold --out <raw.jsonl> [options]
+        usage: {driver.HarnessName} warm|cold --out <raw.jsonl> [--provider cpu|cuda] [options]
           --threads N               intra_op_num_threads (default: ORT default)    --inter-threads N (default 1)
           --workloads <file>        default ai-dotnet/benchmarks/workloads/{driver.WorkloadFile}
           --only <names>            warm: only these workloads   --samples-scale F   warm: scale every sample count
@@ -183,7 +234,8 @@ internal static class HarnessHost
           --hash-model true|false   check the graph SHA-256 at load (default false)
           --note <text>             machine note recorded in the environment block
         {driver.Usage}
-        CPU only (--provider cpu). Exit codes: 0 pass, 1 quality failed (timings invalid), 2 usage, 3 assets missing.
+        --provider: cpu in this CPU build, cuda in the CUDA build ({driver.HarnessName}.Cuda; CUDA_DEVICE_ORDER=PCI_BUS_ID
+        and an explicit CUDA_VISIBLE_DEVICES; device 0 of it, TF32 off). Exit codes: 0 pass, 1 quality failed (timings invalid), 2 usage, 3 assets missing.
         """;
 
     private static int Warm(IBenchDriver driver, HarnessContext context)
@@ -215,9 +267,9 @@ internal static class HarnessHost
             Console.Error.WriteLine(string.Create(CultureInfo.InvariantCulture, $"{spec.Workload} {spec.Path} c={spec.Concurrency}: median {median:F3} ms (n={n}) quality pass={s["quality"]!["pass"]}"));
         }
 
-        var record = Header(driver, "warm", runId, started);
+        var record = Header(driver, context, "warm", runId, started);
         record["artifacts"] = driver.Artifacts(context);
-        record["environment"] = BenchEnvironment.Environment(false, run.SessionProviders, loadBefore, context.Args.Get("note"), driver.UsesManagedOrt);
+        record["environment"] = BenchEnvironment.Environment(context.IsCuda, run.SessionProviders, loadBefore, context.Args.Get("note"), driver.UsesManagedOrt);
         record["settings"] = run.Settings;
         record["load_ms"] = run.LoadStages.DeepClone();
         record["quality"] = quality;
@@ -305,9 +357,9 @@ internal static class HarnessHost
                 ["first_process"] = qualities[0].DeepClone(),
             },
         };
-        var record = Header(driver, "cold", runId, started);
+        var record = Header(driver, context, "cold", runId, started);
         record["artifacts"] = driver.Artifacts(context);
-        record["environment"] = BenchEnvironment.Environment(false, null, loadBefore, context.Args.Get("note"), driver.UsesManagedOrt);
+        record["environment"] = BenchEnvironment.Environment(context.IsCuda, null, loadBefore, context.Args.Get("note"), driver.UsesManagedOrt);
         record["settings"] = first["settings"]!.DeepClone();
         var quality = new JsonObject
         {
@@ -354,7 +406,7 @@ internal static class HarnessHost
         return 0;
     }
 
-    private static JsonObject Header(IBenchDriver driver, string mode, string runId, string started) => new()
+    private static JsonObject Header(IBenchDriver driver, HarnessContext context, string mode, string runId, string started) => new()
     {
         ["schema"] = BenchEnvironment.Schema,
         ["kind"] = "run",
@@ -362,7 +414,7 @@ internal static class HarnessHost
         ["started_utc"] = started,
         ["mode"] = mode,
         ["model"] = driver.Model,
-        ["profile"] = driver.Profile,
+        ["profile"] = driver.Profile(context),
         ["harness"] = new JsonObject
         {
             ["name"] = driver.HarnessName,

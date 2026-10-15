@@ -22,8 +22,10 @@ while the text ends in an incomplete UTF-8 sequence), `prompt_tokens`, `completi
 
 The text path renders `chat_template.jinja` with Jinja2 as transformers does (sandboxed, `trim_blocks`,
 `lstrip_blocks`) and tokenizes with Hugging Face `tokenizers`; the preliminary sweep checks the rendered text and ids
-against the reference. Quality on every series: generated ids (with the stop token) equal to the reference output up
-to max_new_tokens, prompt ids equal to the reference.
+against the reference. Quality on every series: generated ids (with the stop token) against the reference output up
+to max_new_tokens under the profile's `discrete.greedy_ids` rule (fp32x: exact; fp16x: equal up to the first
+divergence, which must fall where the reference top-1 margin is below the profile's bound), prompt ids equal to the
+reference.
 
 Usage:
     python bench_qwen35_matched.py warm --snapshot <snapshot> --provider cpu --threads 6 --out raw.jsonl
@@ -117,6 +119,8 @@ class QwenRun(core.LoadedRun):
         stages["tokenizer_load"] = core.ms_since(t)
         self.load_stages = stages
         self.chunk = args.prefill_chunk or (CUDA_PREFILL_CHUNK if args.provider == "cuda" else None)
+        self.tolerance_file = PROTECTED / f"ortgenai-{args.variant}-{args.provider}" / "tolerances.yaml"
+        self.near_tie = near_tie_margin(self.tolerance_file)
         self.settings = {
             "provider": args.provider,
             "intra_op_num_threads": args.threads,
@@ -129,7 +133,17 @@ class QwenRun(core.LoadedRun):
             "prefill_chunk_tokens": self.chunk,
             "sampling": "greedy",
             "variant": args.variant,
+            "greedy_ids_rule": self.greedy_rule(),
+            "tolerance_file": core.repo_relative(self.tolerance_file),
         }
+
+    def greedy_rule(self) -> str:
+        if self.near_tie is None:
+            return "greedy ids equal to the reference up to max_new_tokens (exact)"
+        return (
+            "greedy ids equal to the reference up to the first divergence, which must fall where the reference top-1 "
+            f"margin is below {self.near_tie} (discrete.greedy_ids of {core.repo_relative(self.tolerance_file)})"
+        )
 
     def render(self, case: dict) -> str:
         kwargs = case.get("chat_template_kwargs") or {}
@@ -190,9 +204,11 @@ class QwenRun(core.LoadedRun):
             metrics,
         )
 
-    @staticmethod
-    def judge(outputs) -> dict:
-        generations = equal = 0
+    def judge(self, outputs) -> dict:
+        """Generated ids (with the stop token) against the reference up to max_new_tokens, prompt ids equal. fp32x:
+        exact. fp16x: the profile's rule (`equal_until_first_divergence_at_margin_below_X`): equal up to the first
+        divergence, which must fall where the reference top-1 margin is below X (as the C# harness)."""
+        generations = equal = near_ties = 0
         failures = []
         for _, x in outputs:
             generations += 1
@@ -206,16 +222,26 @@ class QwenRun(core.LoadedRun):
             n = 0
             while n < min(len(expected), len(actual)) and expected[n] == actual[n]:
                 n += 1
-            margin = case["step_margin"][n] if n < len(case["step_margin"]) else "n/a"
+            margins = case["step_margin"]
+            if (
+                prompt_equal
+                and self.near_tie is not None
+                and (n >= len(expected) or (n < len(margins) and margins[n] < self.near_tie))
+            ):
+                equal += 1
+                near_ties += 1
+                continue
+            margin = margins[n] if n < len(margins) else "n/a"
             failures.append(
                 f"{case['id']}: diverges at step {n} (reference top-1 margin {margin})"
                 if prompt_equal
                 else f"{case['id']}: prompt ids differ"
             )
         return {
-            "check": "greedy ids equal to the reference up to max_new_tokens (exact)",
+            "check": self.greedy_rule(),
             "generations": generations,
             "equal": equal,
+            "diverged_at_near_tie": near_ties,
             "failures": failures,
             "pass": equal == generations,
         }
@@ -277,6 +303,18 @@ class QwenRun(core.LoadedRun):
             "template_exact": exact,
             "pass": bool(ids["pass"] and exact == len(template_cases)),
         }
+
+
+def near_tie_margin(tolerance_file: Path) -> float | None:
+    """X of the profile's `discrete.greedy_ids: equal_until_first_divergence_at_margin_below_X` (fp16x), or None for
+    the exact rule of the fp32x profiles."""
+    prefix = "equal_until_first_divergence_at_margin_below_"
+    for raw in tolerance_file.read_text(encoding="utf-8").splitlines():
+        line = raw.split("#")[0].strip()
+        if line.startswith("greedy_ids:"):
+            rule = line[len("greedy_ids:") :].strip()
+            return float(rule[len(prefix) :]) if rule.startswith(prefix) else None
+    raise SystemExit(f"{tolerance_file} has no discrete.greedy_ids rule")
 
 
 def tokenizer_path(snapshot: Path) -> Path:
