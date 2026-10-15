@@ -120,31 +120,66 @@ public class ResourceTests(ITestOutputHelper output)
     [Fact]
     public void CancellationStopsAtNodeBoundaryAndSessionStaysUsable()
     {
+        // What this checks: a cancellation requested while the run is in flight stops it at a node boundary (it
+        // returns long before the remaining nodes would have run), the exception carries the caller's token, and the
+        // session stays usable.
+        //
+        // How it is judged: an earlier version required the whole cancelled run to be shorter than one uncancelled
+        // run (about 50 ms). That depends on CancelAfter firing on time. On a loaded Windows runner a 10 ms timer
+        // fired at 50 ms, after the run had nearly finished (PR #30, first Windows run). Now each cycle records when
+        // the cancellation actually fired and judges only the time from then to the throw, against the work that was
+        // left. A cycle whose timer fired after half an uncancelled run cannot tell a node-boundary stop from a run to
+        // completion, so it is reported as inconclusive and repeated; the token and reuse checks still apply to it.
+        // Three conclusive cycles are still required.
+        const int N = 384; // about 3.4x the work of n = 256, so timer jitter is small against the run
+        const int ConclusiveCycles = 3;
+        const int MaxAttempts = 12;
         using var session = OnnxModelSession.Create(TestModels.Slow, SingleThread);
 
-        // Uncancelled reference duration for the same input.
-        var full = Stopwatch.StartNew();
-        RunSlow(session, 256, CancellationToken.None);
-        full.Stop();
+        // Uncancelled reference duration for the same input: the median of three runs (the first includes warm-up).
+        var runs = new double[3];
+        for (int i = 0; i < runs.Length; i++)
+        {
+            var w = Stopwatch.StartNew();
+            RunSlow(session, N, CancellationToken.None);
+            runs[i] = w.Elapsed.TotalMilliseconds;
+        }
 
-        for (int cycle = 0; cycle < 3; cycle++)
+        Array.Sort(runs);
+        double full = runs[1];
+        int conclusive = 0;
+        for (int attempt = 0; attempt < MaxAttempts && conclusive < ConclusiveCycles; attempt++)
         {
             using var cts = new CancellationTokenSource();
-            var sw = Stopwatch.StartNew();
-            cts.CancelAfter(TimeSpan.FromMilliseconds(Math.Max(10, full.Elapsed.TotalMilliseconds / 10)));
-            TimeSpan cancelledAt = TimeSpan.Zero;
-            cts.Token.Register(() => cancelledAt = sw.Elapsed);
+            long fired = 0;
+            using var registration = cts.Token.Register(() => Volatile.Write(ref fired, Stopwatch.GetTimestamp()));
+            long start = Stopwatch.GetTimestamp();
+            cts.CancelAfter(TimeSpan.FromMilliseconds(Math.Max(10, full / 10)));
 
-            var ex = Assert.ThrowsAny<OperationCanceledException>(() => RunSlow(session, 256, cts.Token));
-            var latency = sw.Elapsed - cancelledAt;
-            output.WriteLine($"cycle {cycle}: full run {full.Elapsed.TotalMilliseconds:F0} ms; cancelled at {cancelledAt.TotalMilliseconds:F0} ms; returned {latency.TotalMilliseconds:F2} ms later; inner: {ex.InnerException?.GetType().Name}: {ex.InnerException?.Message}");
+            var ex = Assert.ThrowsAny<OperationCanceledException>(() => RunSlow(session, N, cts.Token));
+            long returned = Stopwatch.GetTimestamp();
+            Assert.True(cts.IsCancellationRequested, "the run threw before it was cancelled");
             Assert.Equal(cts.Token, ex.CancellationToken);
-            Assert.True(sw.Elapsed < full.Elapsed, "cancelled run took as long as an uncancelled one");
+            long firedAt = Volatile.Read(ref fired);
+            double cancelledAt = Ms(start, firedAt);
+            double latency = Ms(firedAt, returned);
+            bool judged = cancelledAt < full / 2;
+            output.WriteLine($"attempt {attempt}: full run {full:F0} ms; cancelled at {cancelledAt:F0} ms; returned {latency:F2} ms later{(judged ? string.Empty : " (inconclusive: cancelled after half a run)")}; inner: {ex.InnerException?.GetType().Name}: {ex.InnerException?.Message}");
+            if (judged)
+            {
+                // Ignoring the cancellation would leave more than half a run (full - cancelledAt > full / 2).
+                Assert.True(latency < full / 4, $"returned {latency:F0} ms after the cancellation, not at a node boundary (an uncancelled run takes {full:F0} ms)");
+                conclusive++;
+            }
 
             // Reuse after cancellation: a fresh run completes and is correct.
             float[] small = RunSlow(session, 4, CancellationToken.None);
             Assert.All(small, v => Assert.True(float.IsFinite(v)));
         }
+
+        Assert.True(conclusive == ConclusiveCycles, $"only {conclusive} of {MaxAttempts} cancellations fired within the first half of a {full:F0} ms run");
+
+        static double Ms(long from, long to) => (to - from) * 1000.0 / Stopwatch.Frequency;
     }
 
     private static float[] RunSlow(OnnxModelSession session, int n, CancellationToken cancellationToken)
