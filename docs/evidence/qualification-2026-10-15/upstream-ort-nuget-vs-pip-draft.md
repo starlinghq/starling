@@ -61,7 +61,7 @@ A follow-up loaded the pip `libonnxruntime.so` into the C# process in place of t
 - At 22 tokens: 171.2, 204.4 and 151.0 ms.
 - Per-length minima were nearly equal in all three (22 tokens: 138.8, 138.1 and 137.9 ms).
 
-That machine was loaded (load average 6 to 10). A later run of the same C# binary had a pooled median of 296.7 ms, so the spread between runs was larger than the effect. Neither result settles the question; a quiet-machine run of the reproducer below is needed.
+The swapped library's digest was not recorded, and its build directory was not kept, so the swap is as reported, not independently verified. That machine was loaded (load average 6 to 10). A later run of the same C# binary had a pooled median of 296.7 ms, so the spread between runs was larger than the effect. Neither result settles the question; a quiet-machine run of the reproducer below is needed.
 
 ## Minimal reproducer (Python only; the builds swapped by file)
 

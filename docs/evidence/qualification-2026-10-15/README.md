@@ -71,6 +71,7 @@ Is the native build the cause? This is not established. A follow-up swapped the 
 - Pooled medians: 207.5 ms (NuGet build), 229.2 ms (pip build), 205.3 ms (Python).
 - At 22 tokens: 171.2, 204.4 and 151.0 ms.
 - Per-length minima were nearly equal across all three (22 tokens: 138.8, 138.1 and 137.9 ms).
+- The swapped library's digest was not recorded, because that run predates `native_library_digests`, and its build directory was not kept. The swap is therefore as the investigating run reported it, not independently verified.
 - Those rounds ran on a loaded machine (load average 6 to 10). A later C# run of the same binary had a pooled median of 296.7 ms, so the run-to-run spread there exceeds the effect.
 
 The build difference is a documented fact. Its effect on prefill is an open question.
