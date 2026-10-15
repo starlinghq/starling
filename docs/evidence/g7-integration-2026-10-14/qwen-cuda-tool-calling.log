@@ -1,0 +1,17 @@
+xUnit.net v3 In-Process Runner v4.0.1+8ed8aa354c (64-bit .NET 10.0.12)
+  Discovering: Starlings.Models.Qwen35.Tests.Cuda
+  Discovered:  Starlings.Models.Qwen35.Tests.Cuda
+  Starting:    Starlings.Models.Qwen35.Tests.Cuda
+    Starlings.Models.Qwen35.Tests.Cuda.Fp16xCudaChatClientTests.FunctionInvocationLoopCompletesOnCuda [OUTPUT] invoked: [Paris]
+    Starlings.Models.Qwen35.Tests.Cuda.Fp16xCudaChatClientTests.FunctionInvocationLoopCompletesOnCuda [OUTPUT] assistant: call get_weather(city=Paris)
+    Starlings.Models.Qwen35.Tests.Cuda.Fp16xCudaChatClientTests.FunctionInvocationLoopCompletesOnCuda [OUTPUT] tool: result 18 C and sunny in Paris.
+    Starlings.Models.Qwen35.Tests.Cuda.Fp16xCudaChatClientTests.FunctionInvocationLoopCompletesOnCuda [OUTPUT] assistant: text Today in Paris, the weather is 18 degrees Celsius and sunny.
+    Starlings.Models.Qwen35.Tests.Cuda.Fp16xCudaChatClientTests.ToolsPromptGivesTheReferenceCallAsFunctionCallContent [OUTPUT] qwen3.5-0.8b/ortgenai-fp16x on Cuda: 25 completion ids, equal to the reference: True
+    Starlings.Models.Qwen35.Tests.Cuda.Fp32xCudaChatClientTests.ToolsPromptGivesTheReferenceCallAsFunctionCallContent [OUTPUT] qwen3.5-0.8b/ortgenai-fp32x on Cuda: 25 completion ids, equal to the reference: True
+    Starlings.Models.Qwen35.Tests.Cuda.Fp32xCudaChatClientTests.FunctionInvocationLoopCompletesOnCuda [OUTPUT] invoked: [Paris]
+    Starlings.Models.Qwen35.Tests.Cuda.Fp32xCudaChatClientTests.FunctionInvocationLoopCompletesOnCuda [OUTPUT] assistant: call get_weather(city=Paris)
+    Starlings.Models.Qwen35.Tests.Cuda.Fp32xCudaChatClientTests.FunctionInvocationLoopCompletesOnCuda [OUTPUT] tool: result 18 C and sunny in Paris.
+    Starlings.Models.Qwen35.Tests.Cuda.Fp32xCudaChatClientTests.FunctionInvocationLoopCompletesOnCuda [OUTPUT] assistant: text Today in Paris, the weather is 18 degrees Celsius and sunny.
+  Finished:    Starlings.Models.Qwen35.Tests.Cuda (ID = '2f167791de8de9a5a67862ec92fe6ac9eba5d2e5fb035cde16af81e351788451')
+=== TEST EXECUTION SUMMARY ===
+   Starlings.Models.Qwen35.Tests.Cuda  Total: 4, Errors: 0, Failed: 0, Skipped: 0, Not Run: 0, Time: 9.793s

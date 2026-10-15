@@ -16,12 +16,6 @@ origin:
   weights:
     url: https://huggingface.co/google/embeddinggemma-2
     revision: "914f7f89142e33e77833254d9c9b90c3cef7303b"
-  code:
-    url: https://huggingface.co/google/embeddinggemma-2
-    revision: "914f7f89142e33e77833254d9c9b90c3cef7303b"
-  weights:
-    url: https://huggingface.co/google/embeddinggemma-2
-    revision: "914f7f89142e33e77833254d9c9b90c3cef7303b"
   files:
     - path: README.md
       sha256: "b677a0ee2818c36f091b65fd3d9b4baea9f04d53b02b49cae916c74bf9682037"
@@ -205,7 +199,7 @@ execution:
       - path: onnx/embeddinggemma2-text-fp32.onnx
         sha256: "02cc7ecccbfcb29d812eb104e4c6ea6c599bc87e94f01082606f6a11f0252d11"
         size: 1084327317
-        # Text-only inputs; the asset of embeddinggemma-2/onnx-fp32-cpu (release embeddinggemma-2-onnx-r1, placeholder).
+        # Text-only inputs; the asset of embeddinggemma-2/onnx-fp32-cpu (Starlinghq/embeddinggemma-2-onnx, public since 2026-10-14).
         source: https://huggingface.co/Starlinghq/embeddinggemma-2-onnx/resolve/92a02ae2887a91180e611776dd9c286dc5fa35da/embeddinggemma2-text-fp32.onnx
         source_status: public
         notice: model-pipeline/reference/embeddinggemma2/NOTICE-embeddinggemma2-onnx.txt
@@ -280,16 +274,14 @@ qualification:
   # G2 passed with --max-image-pixels 80000000 for commons-image-14 (10977x7200, 79 MP); the package default
   # (50,000,000) refuses that image (capability image_over_default_pixel_limit_with_option).
   gates:
-    G0: { status: checklist, evidence: docs/m0/embeddinggemma2-image-spike.md, date: 2026-10-11 }
+    G0: { status: passed, evidence: docs/evidence/g0-provenance-2026-10-14/README.md, date: 2026-10-14 }
     G1: { status: passed, evidence: docs/evidence/release-set-gates-2026-10-14/embeddinggemma2-image-fp32-cpu/README.md, date: 2026-10-14 }
     G2: { status: passed, evidence: docs/evidence/release-set-gates-2026-10-14/embeddinggemma2-image-fp32-cpu/README.md, date: 2026-10-14 }
     G3: { status: not-run }
     G4: { status: not-run }
     G5: { status: not-run }
-    # G6 checklist: the ai-0.1.0-preview.5 release drill (packed packages, clean consumer, offline sample run on a
-    # seeded graph). Acquisition of the hosted graph is not covered while its source is a placeholder or private.
-    G6: { status: checklist, evidence: docs/releases/ai-0.1.0-preview.5/rc-drill.log, date: 2026-10-12 }
-    G7: { status: not-run }
+    G6: { status: passed, evidence: docs/evidence/g6-distribution-2026-10-14/README.md, date: 2026-10-14 }
+    G7: { status: passed, evidence: docs/evidence/g7-integration-2026-10-14/README.md, date: 2026-10-14 }
 
 maintenance:
   owner: Mark

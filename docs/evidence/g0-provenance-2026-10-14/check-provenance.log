@@ -1,0 +1,27 @@
+ok:   embeddinggemma-2/image-fp32-cpu: 17/17 lock files served anonymously with the pinned SHA-256 and size
+ok:   embeddinggemma-2/image-fp32-cpu: rights: code Apache-2.0, weights Apache-2.0, tokenizer Apache-2.0, redistribution download
+ok:   embeddinggemma-2/image-fp32-cuda: 17/17 lock files served anonymously with the pinned SHA-256 and size
+ok:   embeddinggemma-2/image-fp32-cuda: rights: code Apache-2.0, weights Apache-2.0, tokenizer Apache-2.0, redistribution download
+ok:   embeddinggemma-2/onnx-fp32-cpu: 15/15 lock files served anonymously with the pinned SHA-256 and size
+ok:   embeddinggemma-2/onnx-fp32-cpu: rights: code Apache-2.0, weights Apache-2.0, tokenizer Apache-2.0, redistribution download
+ok:   embeddinggemma-2/onnx-fp32-cuda: 15/15 lock files served anonymously with the pinned SHA-256 and size
+ok:   embeddinggemma-2/onnx-fp32-cuda: rights: code Apache-2.0, weights Apache-2.0, tokenizer Apache-2.0, redistribution download
+ok:   embeddinggemma-2/video-fp32-cpu: 17/17 lock files served anonymously with the pinned SHA-256 and size
+ok:   embeddinggemma-2/video-fp32-cpu: rights: code Apache-2.0, weights Apache-2.0, tokenizer Apache-2.0, redistribution download
+ok:   embeddinggemma-2/video-fp32-cuda: 17/17 lock files served anonymously with the pinned SHA-256 and size
+ok:   embeddinggemma-2/video-fp32-cuda: rights: code Apache-2.0, weights Apache-2.0, tokenizer Apache-2.0, redistribution download
+ok:   gliner2-base-v1/onnx-fp32-cpu: 10/10 lock files served anonymously with the pinned SHA-256 and size
+ok:   gliner2-base-v1/onnx-fp32-cpu: rights: code Apache-2.0, weights Apache-2.0, tokenizer Apache-2.0, redistribution download
+ok:   gliner2-base-v1/onnx-fp32-cuda: 10/10 lock files served anonymously with the pinned SHA-256 and size
+ok:   gliner2-base-v1/onnx-fp32-cuda: rights: code Apache-2.0, weights Apache-2.0, tokenizer Apache-2.0, redistribution download
+ok:   multilingual-e5-small/onnx-fp32-cpu: 12/12 lock files served anonymously with the pinned SHA-256 and size
+ok:   multilingual-e5-small/onnx-fp32-cpu: rights: code MIT, weights MIT, tokenizer MIT, redistribution download
+ok:   multilingual-e5-small/onnx-fp32-cuda: 12/12 lock files served anonymously with the pinned SHA-256 and size
+ok:   multilingual-e5-small/onnx-fp32-cuda: rights: code MIT, weights MIT, tokenizer MIT, redistribution download
+ok:   qwen3.5-0.8b/ortgenai-fp16x-cuda: 9/9 lock files served anonymously with the pinned SHA-256 and size
+ok:   qwen3.5-0.8b/ortgenai-fp16x-cuda: rights: code MIT, weights Apache-2.0, tokenizer Apache-2.0, redistribution download
+ok:   qwen3.5-0.8b/ortgenai-fp32x-cpu: 9/9 lock files served anonymously with the pinned SHA-256 and size
+ok:   qwen3.5-0.8b/ortgenai-fp32x-cpu: rights: code MIT, weights Apache-2.0, tokenizer Apache-2.0, redistribution download
+ok:   qwen3.5-0.8b/ortgenai-fp32x-cuda: 9/9 lock files served anonymously with the pinned SHA-256 and size
+ok:   qwen3.5-0.8b/ortgenai-fp32x-cuda: rights: code MIT, weights Apache-2.0, tokenizer Apache-2.0, redistribution download
+PROVENANCE PASS

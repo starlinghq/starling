@@ -82,6 +82,14 @@ public sealed class Fp32xCudaChatClientTests(Fp32xCudaChatClientFixture fixture)
         await ChatClientModelChecks.ConcurrentResponsesEqualSequential(
             Client, Client.Model, [Case("zh"), Case("code-py"), Case("ja"), Case("en-math")], 32, rounds: 4, Ct);
     }
+
+    /// <summary>Capability <c>tool_calling</c> on CUDA: the reference call, completion ids equal to the fp32 reference.</summary>
+    [Fact]
+    public Task ToolsPromptGivesTheReferenceCallAsFunctionCallContent() =>
+        CudaToolCallingChecks.ToolsPromptGivesTheReferenceCall(Client, Case("tools"), requireReferenceIds: true, Ct);
+
+    [Fact]
+    public Task FunctionInvocationLoopCompletesOnCuda() => CudaToolCallingChecks.FunctionInvocationLoopCompletes(Client, Ct);
 }
 
 /// <summary>The fp16x graph on CUDA behind the IChatClient adapter, with 128-token prefill chunks.</summary>
@@ -207,4 +215,15 @@ public sealed class Fp16xCudaChatClientTests(Fp16xCudaChatClientFixture fixture)
             Assert.Equal(sequential, concurrent.Select(r => r.Text));
         }
     }
+
+    /// <summary>
+    /// Capability <c>tool_calling</c> on fp16x CUDA: the reference call; completion ids are reported, not required (the
+    /// profile's greedy rule allows divergence at near-ties).
+    /// </summary>
+    [Fact]
+    public Task ToolsPromptGivesTheReferenceCallAsFunctionCallContent() =>
+        CudaToolCallingChecks.ToolsPromptGivesTheReferenceCall(Client, Case("tools"), requireReferenceIds: false, Ct);
+
+    [Fact]
+    public Task FunctionInvocationLoopCompletesOnCuda() => CudaToolCallingChecks.FunctionInvocationLoopCompletes(Client, Ct);
 }
