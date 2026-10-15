@@ -136,13 +136,21 @@ case "$profile" in
         # The release set's embeddings.jsonl is kept outside Git, pinned by the digest in its protected reference.json
         # (#43). Regenerate it as SOURCE.md states, at the recorded torch_threads (6), and let the evaluator bind it
         # by digest (--reference-embeddings, #45). The reference was produced on an AVX2 CPU; the ISA is held there.
-        step reference-regeneration env OMP_NUM_THREADS=6 ATEN_CPU_CAPABILITY=avx2 ONEDNN_MAX_CPU_ISA=AVX2 \
-            MKL_ENABLE_INSTRUCTIONS=AVX2 MKL_CBWR=AVX2 PYTHONPATH=model-pipeline/reference/embeddinggemma2 \
+        # MKL and OpenMP may otherwise shrink the thread count on a runner with fewer cores.
+        step reference-regeneration env OMP_NUM_THREADS=6 MKL_NUM_THREADS=6 MKL_DYNAMIC=FALSE OMP_DYNAMIC=FALSE \
+            ATEN_CPU_CAPABILITY=avx2 ONEDNN_MAX_CPU_ISA=AVX2 MKL_ENABLE_INSTRUCTIONS=AVX2 MKL_CBWR=AVX2 \
+            PYTHONPATH=model-pipeline/reference/embeddinggemma2 \
             "$refpy" model-pipeline/reference/embeddinggemma2/run_embeddinggemma2.py --model-dir "$SNAP" \
             --revision 914f7f89142e33e77833254d9c9b90c3cef7303b \
             --corpus "$P/embeddinggemma-2/release/tokenizer-holdout/corpus.jsonl" --out "$work/reference" \
             --batch-ids massive-km-KH-9760,massive-ja-JP-2798,massive-ar-SA-15109,massive-th-TH-13186,humaneval-120,oasst1-06f21312-d9c1-4970-9d7a-b129e8069aba
-        python3 -I - "$work/reference" "$REL" <<'PY' | tee "$out/reference-digests.txt"
+        # The regenerated reference and its environment record go into the evidence (7 MB), so a digest mismatch
+        # can be measured against the reference CPU's copy.
+        mkdir -p "$out/reference"
+        cp "$work/reference/embeddings.jsonl" "$work/reference/environment.json" "$out/reference/" 2>/dev/null || true
+        python3 -I -c 'import json, sys; e = json.load(open(sys.argv[1]))["environment"]; print("reference run:", e.get("cpu"), "torch_threads", e.get("torch_threads"))' \
+            "$work/reference/environment.json" || true
+        python3 -I - "$work/reference" "$REL" <<'PY' >"$out/reference-digests.txt"
 import hashlib, json, pathlib, sys
 ref, rel = pathlib.Path(sys.argv[1]), pathlib.Path(sys.argv[2])
 def sha(p):
