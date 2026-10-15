@@ -102,7 +102,7 @@ internal abstract class SoakWorkload
 
     public static IReadOnlyList<SoakWorkload> All { get; } =
     [
-        new E5Workload(), new Gliner2Workload(), new EmbeddingGemma2TextWorkload(), new EmbeddingGemma2ImageWorkload(), new Qwen35Workload(),
+        new E5Workload(), new Gliner2Workload(), new EmbeddingGemma2TextWorkload(), new EmbeddingGemma2ImageWorkload(), new EmbeddingGemma2VideoWorkload(), new Qwen35Workload(),
     ];
 }
 
@@ -368,6 +368,101 @@ internal sealed class EmbeddingGemma2ImageWorkload : SoakWorkload
         }
 
         public void RunLong(CancellationToken cancellationToken) => embedder.EmbedBatch(LongBatch, cancellationToken);
+
+        public void Dispose() => embedder.Dispose();
+    }
+}
+
+internal sealed class EmbeddingGemma2VideoWorkload : SoakWorkload
+{
+    private EmbeddingGemma2ImageModelFiles? _files;
+
+    public override string Name => "embeddinggemma2-video";
+
+    // A CPU video request embeds 2 or 3 sampled frames at 140 soft tokens each (seconds per request on CPU); keep
+    // cycles short enough for load/unload.
+    public override int DefaultRequestsPerCycle => 4;
+
+    public override string Profile(SoakOptions options) => "embeddinggemma-2/" + (options.Cuda ? "video-fp32-cuda" : "video-fp32-cpu");
+
+    public override string? Locate(SoakOptions options)
+    {
+        try
+        {
+            // Videos run on the image path's graphs (vision and multimodal text); no video decoder is needed.
+            _files = Snapshot("STARLING_EMBEDDINGGEMMA2_SNAPSHOT") is { } dir
+                ? EmbeddingGemma2ModelAssets.OpenImageDirectory(dir)
+                : EmbeddingGemma2ModelAssets.OpenLocalImageAssets(Acquisition);
+            return null;
+        }
+        catch (ModelAcquisitionException ex)
+        {
+            return ex.Message;
+        }
+    }
+
+    public override JsonObject Artifacts() => Lock(EmbeddingGemma2ModelAssets.ImageLock);
+
+    public override ISoakInstance Load(SoakOptions options) =>
+        new Instance(EmbeddingGemma2MultimodalEmbedder.Create(_files!, new EmbeddingGemma2MultimodalOptions
+        {
+            Session = Session(options, computeSha: false),
+            VerifyModelSha256 = false,
+        }));
+
+    /// <summary>
+    /// One decoded frame of a deterministic synthetic clip (a gradient with a square moving across it and stripes that
+    /// depend on the clip), so consecutive frames differ.
+    /// </summary>
+    internal static EmbeddingGemma2Image Frame(int input, int index, int width, int height)
+    {
+        var rgb = new byte[width * height * 3];
+        int side = Math.Max(4, height / 4);
+        int x0 = index * 7 % Math.Max(1, width - side);
+        int y0 = ((index * 5) + (input * 3)) % Math.Max(1, height - side);
+        for (int y = 0; y < height; y++)
+        {
+            for (int x = 0; x < width; x++)
+            {
+                int o = ((y * width) + x) * 3;
+                bool square = x >= x0 && x < x0 + side && y >= y0 && y < y0 + side;
+                rgb[o] = square ? (byte)250 : (byte)((x * 255 / width) ^ (input * 17));
+                rgb[o + 1] = square ? (byte)250 : (byte)(y * 255 / height);
+                rgb[o + 2] = (byte)(((x / (4 + input)) + (y / 8) + index) % 2 == 0 ? 200 : 40);
+            }
+        }
+
+        return EmbeddingGemma2Image.FromRgb24(width, height, rgb);
+    }
+
+    /// <summary>
+    /// Every decoded frame of a synthetic clip with its timing, as a decoder returns it: <paramref name="seconds"/> s at
+    /// 4 frames per second, so the package samples one frame per second (upstream's sampling).
+    /// </summary>
+    internal static EmbeddingGemma2Video Clip(int input, int seconds)
+    {
+        const int fps = 4;
+        int width = 96 + (input * 37 % 160);
+        int height = 80 + (input * 53 % 144);
+        var frames = Enumerable.Range(0, fps * seconds).Select(i => Frame(input, i, width, height)).ToArray();
+        return EmbeddingGemma2Video.FromDecodedFrames(frames, fps, seconds);
+    }
+
+    private sealed class Instance(EmbeddingGemma2MultimodalEmbedder embedder) : ISoakInstance
+    {
+        // 2 or 3 sampled frames per request; the long request is a batch of two 6-frame clips.
+        private static readonly EmbeddingGemma2Video[] Videos = Enumerable.Range(0, SoakTexts.Short.Length).Select(i => Clip(i, 2 + (i % 2))).ToArray();
+        private static readonly EmbeddingGemma2MultimodalInput[] LongBatch = [EmbeddingGemma2MultimodalInput.FromVideo(Clip(3, 6)), EmbeddingGemma2MultimodalInput.FromVideo(Clip(4, 6))];
+
+        public IReadOnlyList<string> SessionProviders => embedder.VisionSession.Diagnostics.SessionProviders;
+
+        public SoakResult Run(int input, CancellationToken cancellationToken)
+        {
+            var v = embedder.Embed(Videos[input], cancellationToken);
+            return new SoakResult(SoakTexts.Discrete(v), v);
+        }
+
+        public void RunLong(CancellationToken cancellationToken) => embedder.EmbedBatch(LongBatch, EmbeddingGemma2Prompt.None, cancellationToken);
 
         public void Dispose() => embedder.Dispose();
     }

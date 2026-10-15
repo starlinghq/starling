@@ -563,8 +563,10 @@ On the M0 workstation the tests pass both with the system CUDA 13.3 runtime (`/o
 
 ```sh
 STARLING_MODELS=<cache> dotnet run --project ai-dotnet/tools/Starlings.Soak.Tool -c Release [-p:UseCuda=true] -- \
-  <e5|gliner2|embeddinggemma2|embeddinggemma2-image|qwen35|all> --out <dir> [--duration 1h] [--cuda] [--concurrency 2] [--threads n]
+  <e5|gliner2|embeddinggemma2|embeddinggemma2-image|embeddinggemma2-video|qwen35|all> --out <dir> [--duration 1h] [--cuda] [--concurrency 2] [--threads n]
 ```
+
+`embeddinggemma2-video` (profiles `video-fp32-cpu`, `-cuda`) serves synthetic clips as decoded frames with their timing (`EmbeddingGemma2Video.FromDecodedFrames`, 4 frames per second, 2 or 3 sampled frames per request; the long request is a batch of two 6-frame clips) on the image path's graphs, so it needs no video decoder; decoding is the FFmpeg adapter's tests.
 
 Diagnostics: `--malloc-trim` (trim after each unload and sample again), `--keep-loaded` (requests only, one load), and `MALLOC_*` variables in the environment, which each report records. On Linux with glibc, `MALLOC_MMAP_THRESHOLD_=65536` bounds the native memory kept between loads (`docs/evidence/gliner2-soak-growth/README.md`).
 
