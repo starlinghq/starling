@@ -236,8 +236,11 @@ public sealed class OnnxModelSession : IDisposable
 
             if (options.CapturePlacement)
             {
-                sessionOptions.EnableProfiling = true;
+                // The prefix first: the EnableProfiling setter passes the current prefix to native code, and ONNX
+                // Runtime's default writes to the working directory with a millisecond timestamp that concurrent
+                // sessions share.
                 sessionOptions.ProfileOutputPathPrefix = Path.Combine(Path.GetTempPath(), "starlings-ort-placement-" + Guid.NewGuid().ToString("N"));
+                sessionOptions.EnableProfiling = true;
             }
 
             var providerOptions = new Dictionary<string, string>(StringComparer.Ordinal);

@@ -151,6 +151,22 @@ public class SessionTests
         Assert.Same(placement, session.Placement);
     }
 
+    [Fact]
+    public void ConcurrentSessionsCapturePlacementFromTheirOwnProfileFiles()
+    {
+        // Each session's profile goes to its own temporary prefix, never ONNX Runtime's default name in the working
+        // directory: that name only has millisecond resolution, so sessions started together shared (and deleted) one file.
+        string[] before = Directory.GetFiles(Environment.CurrentDirectory, "onnxruntime_profile_*");
+        Parallel.For(0, 16, new ParallelOptions { MaxDegreeOfParallelism = 16 }, _ =>
+        {
+            using var session = OnnxModelSession.Create(TestModels.Add, new OnnxSessionOptions { CapturePlacement = true });
+            Run(session, 1);
+            Assert.NotNull(session.Placement);
+        });
+        Assert.Equal(before, Directory.GetFiles(Environment.CurrentDirectory, "onnxruntime_profile_*"));
+        Assert.Empty(Directory.GetFiles(Path.GetTempPath(), "starlings-ort-placement-*"));
+    }
+
     internal static void Run(OnnxModelSession session, float value)
     {
         float[] x = [value, value, value, value];
