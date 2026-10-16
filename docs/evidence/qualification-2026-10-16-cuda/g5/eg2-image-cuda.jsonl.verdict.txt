@@ -1,0 +1,17 @@
+## embeddinggemma-2/image-fp32-cuda: PASS (G5 evidence)
+comparison: python onnxruntime-gpu, same graphs
+- NATIVE BUILDS DIFFER: same version, different native build (ONNX Runtime 1.30.0). Context, not a verdict input: the budget compares the shipped products
+    onnxruntime: C# 292591ed61be (libonnxruntime.so) | Python 015ed43679bf (onnxruntime_pybind11_state.cpython-311-x86_64-linux-gnu.so): different
+    onnxruntime_providers_cuda: C# 32fb1e28e5ea (libonnxruntime_providers_cuda.so) | Python 9d7587acb137 (libonnxruntime_providers_cuda.so): different
+    onnxruntime_providers_shared: C# c6a125933960 (libonnxruntime_providers_shared.so) | Python 086ec1d5388f (libonnxruntime_providers_shared.so): different
+- preprocess_share_of_embed_max = 0.05: pass
+    warm/image/preprocess-only:photo-chelsea: 0.012 [0.012, 0.013] pass
+    warm/image/preprocess-only:photo-coffee: 0.013 [0.013, 0.014] pass
+    warm/image/preprocess-only:size-huge-4000x3000: 0.038 [0.034, 0.055] pass
+- warm_median_ratio_max = 1.1: pass
+    warm/image/huge-b1/c1: 0.785 [0.720, 0.799] pass
+    warm/image/photo-b1/c1: 0.991 [0.978, 1.007] pass
+    warm/image/photo-b4/c1: 1.014 [1.006, 1.020] pass
+    warm/image/tiny-b1/c1: 1.017 [0.979, 1.060] pass
+    warm/image/two-images-interleaved/c1: 1.029 [1.013, 1.037] pass
+- qualifying: yes (run counts and clean checkout)

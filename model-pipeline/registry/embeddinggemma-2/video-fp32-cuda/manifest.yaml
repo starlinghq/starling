@@ -322,8 +322,8 @@ qualification:
     # G3 passed 2026-10-15 on the video retrieval set release/video-retrieval-v1 (#57): nDCG@10 0.8126 >= 0.797,
     # MRR@10 0.7714 >= 0.751 (upstream reference 0.8126 / 0.7714).
     G3: { status: passed, evidence: docs/evidence/release-set-gates-2026-10-14/embeddinggemma2-video-fp32-cuda/README.md, date: 2026-10-15 }
-    G4: { status: failed, evidence: docs/evidence/qualification-2026-10-15/README.md, date: 2026-10-15 }
-    G5: { status: failed, evidence: docs/evidence/qualification-2026-10-15/README.md, date: 2026-10-15 }
+    G4: { status: passed, evidence: docs/evidence/qualification-2026-10-16-cuda/README.md, date: 2026-10-16 }
+    G5: { status: passed, evidence: docs/evidence/qualification-2026-10-16-cuda/README.md, date: 2026-10-16 }
     # G6 passed 2026-10-15 (docs/evidence/g6-distribution-2026-10-14/README.md, "Video, 2026-10-15"): the drill's CUDA
     # mode on GPU 0, GPU natives only; the 22 fixture videos through both packed adapters (frames exact, embeddings
     # within the protected bounds) and the sample's video search on CUDA, with version diagnostics.

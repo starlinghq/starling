@@ -1,0 +1,25 @@
+## gliner2-base-v1/onnx-fp32-cuda: PASS (G5 evidence)
+comparison: python onnxruntime-gpu on the same inputs (inference stage)
+- NATIVE BUILDS DIFFER: same version, different native build (ONNX Runtime 1.30.0). Context, not a verdict input: the budget compares the shipped products
+    onnxruntime: C# 292591ed61be (libonnxruntime.so) | Python 015ed43679bf (onnxruntime_pybind11_state.cpython-311-x86_64-linux-gnu.so): different
+    onnxruntime_providers_cuda: C# 32fb1e28e5ea (libonnxruntime_providers_cuda.so) | Python 9d7587acb137 (libonnxruntime_providers_cuda.so): different
+    onnxruntime_providers_shared: C# c6a125933960 (libonnxruntime_providers_shared.so) | Python 086ec1d5388f (libonnxruntime_providers_shared.so): different
+- prepare_plus_decode_share_of_inference_max = 0.05: pass
+    warm/text/short-l1/c1: 0.010 [0.010, 0.011] pass
+    warm/text/short-l12/c1: 0.006 [0.006, 0.006] pass
+    warm/text/short-l2-b8/c1: 0.007 [0.007, 0.008] pass
+    warm/text/short-l3/c1: 0.015 [0.014, 0.016] pass
+    warm/text/short-l5/c1: 0.009 [0.007, 0.010] pass
+    warm/text/words100-l3/c1: 0.012 [0.010, 0.013] pass
+    warm/text/words250-l3/c1: 0.015 [0.013, 0.016] pass
+    warm/text/words400-l3/c1: 0.012 [0.012, 0.012] pass
+- inference_ratio_max = 1.1: pass
+    warm/text/short-l1/c1: 0.974 [0.950, 1.004] pass
+    warm/text/short-l12/c1: 0.982 [0.930, 1.001] pass
+    warm/text/short-l2-b8/c1: 0.991 [0.986, 1.002] pass
+    warm/text/short-l3/c1: 0.959 [0.940, 1.000] pass
+    warm/text/short-l5/c1: 0.966 [0.936, 0.999] pass
+    warm/text/words100-l3/c1: 0.987 [0.980, 0.995] pass
+    warm/text/words250-l3/c1: 0.994 [0.987, 0.998] pass
+    warm/text/words400-l3/c1: 0.996 [0.988, 0.999] pass
+- qualifying: yes (run counts and clean checkout)

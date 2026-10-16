@@ -363,16 +363,16 @@
           "date": "2026-10-15"
         },
         "G4": {
-          "status": "failed",
-          "evidence": "docs/evidence/qualification-2026-10-15/README.md",
+          "status": "passed",
+          "evidence": "docs/evidence/qualification-2026-10-16-cuda/README.md",
           "evidence_found": true,
-          "date": "2026-10-15"
+          "date": "2026-10-16"
         },
         "G5": {
-          "status": "failed",
-          "evidence": "docs/evidence/qualification-2026-10-15/README.md",
+          "status": "passed",
+          "evidence": "docs/evidence/qualification-2026-10-16-cuda/README.md",
           "evidence_found": true,
-          "date": "2026-10-15"
+          "date": "2026-10-16"
         },
         "G6": {
           "status": "passed",
@@ -491,11 +491,8 @@
         }
       },
       "stable_readiness": {
-        "ready": false,
-        "gates_not_passed": [
-          "G4",
-          "G5"
-        ],
+        "ready": true,
+        "gates_not_passed": [],
         "untested_capabilities": []
       },
       "scheduled_regression": false
@@ -742,15 +739,15 @@
         },
         "G4": {
           "status": "passed",
-          "evidence": "docs/evidence/qualification-2026-10-15/README.md",
+          "evidence": "docs/evidence/qualification-2026-10-16-cuda/README.md",
           "evidence_found": true,
-          "date": "2026-10-15"
+          "date": "2026-10-16"
         },
         "G5": {
           "status": "passed",
-          "evidence": "docs/evidence/qualification-2026-10-15/README.md",
+          "evidence": "docs/evidence/qualification-2026-10-16-cuda/README.md",
           "evidence_found": true,
-          "date": "2026-10-15"
+          "date": "2026-10-16"
         },
         "G6": {
           "status": "passed",
@@ -1117,16 +1114,16 @@
           "date": "2026-10-15"
         },
         "G4": {
-          "status": "failed",
-          "evidence": "docs/evidence/qualification-2026-10-15/README.md",
+          "status": "passed",
+          "evidence": "docs/evidence/qualification-2026-10-16-cuda/README.md",
           "evidence_found": true,
-          "date": "2026-10-15"
+          "date": "2026-10-16"
         },
         "G5": {
-          "status": "failed",
-          "evidence": "docs/evidence/qualification-2026-10-15/README.md",
+          "status": "passed",
+          "evidence": "docs/evidence/qualification-2026-10-16-cuda/README.md",
           "evidence_found": true,
-          "date": "2026-10-15"
+          "date": "2026-10-16"
         },
         "G6": {
           "status": "passed",
@@ -1245,11 +1242,8 @@
         }
       },
       "stable_readiness": {
-        "ready": false,
-        "gates_not_passed": [
-          "G4",
-          "G5"
-        ],
+        "ready": true,
+        "gates_not_passed": [],
         "untested_capabilities": []
       },
       "scheduled_regression": false
@@ -1496,16 +1490,16 @@
           "date": "2026-10-14"
         },
         "G4": {
-          "status": "failed",
-          "evidence": "docs/evidence/qualification-2026-10-15/README.md",
+          "status": "passed",
+          "evidence": "docs/evidence/qualification-2026-10-16-cuda/README.md",
           "evidence_found": true,
-          "date": "2026-10-15"
+          "date": "2026-10-16"
         },
         "G5": {
-          "status": "failed",
-          "evidence": "docs/evidence/qualification-2026-10-15/README.md",
+          "status": "passed",
+          "evidence": "docs/evidence/qualification-2026-10-16-cuda/README.md",
           "evidence_found": true,
-          "date": "2026-10-15"
+          "date": "2026-10-16"
         },
         "G6": {
           "status": "passed",
@@ -1624,11 +1618,8 @@
         }
       },
       "stable_readiness": {
-        "ready": false,
-        "gates_not_passed": [
-          "G4",
-          "G5"
-        ],
+        "ready": true,
+        "gates_not_passed": [],
         "untested_capabilities": []
       },
       "scheduled_regression": false
@@ -1872,16 +1863,16 @@
           "date": "2026-10-14"
         },
         "G4": {
-          "status": "failed",
-          "evidence": "docs/evidence/qualification-2026-10-15/README.md",
+          "status": "passed",
+          "evidence": "docs/evidence/qualification-2026-10-16-cuda/README.md",
           "evidence_found": true,
-          "date": "2026-10-15"
+          "date": "2026-10-16"
         },
         "G5": {
           "status": "passed",
-          "evidence": "docs/evidence/qualification-2026-10-15/README.md",
+          "evidence": "docs/evidence/qualification-2026-10-16-cuda/README.md",
           "evidence_found": true,
-          "date": "2026-10-15"
+          "date": "2026-10-16"
         },
         "G6": {
           "status": "passed",
@@ -2000,10 +1991,8 @@
         }
       },
       "stable_readiness": {
-        "ready": false,
-        "gates_not_passed": [
-          "G4"
-        ],
+        "ready": true,
+        "gates_not_passed": [],
         "untested_capabilities": []
       },
       "scheduled_regression": false
@@ -2060,15 +2049,15 @@
         },
         "G4": {
           "status": "passed",
-          "evidence": "docs/evidence/qualification-2026-10-15/README.md",
+          "evidence": "docs/evidence/qualification-2026-10-16-cuda/README.md",
           "evidence_found": true,
-          "date": "2026-10-15"
+          "date": "2026-10-16"
         },
         "G5": {
           "status": "passed",
-          "evidence": "docs/evidence/qualification-2026-10-15/README.md",
+          "evidence": "docs/evidence/qualification-2026-10-16-cuda/README.md",
           "evidence_found": true,
-          "date": "2026-10-15"
+          "date": "2026-10-16"
         },
         "G6": {
           "status": "passed",
@@ -2430,15 +2419,15 @@
         },
         "G4": {
           "status": "passed",
-          "evidence": "docs/evidence/qualification-2026-10-15/README.md",
+          "evidence": "docs/evidence/qualification-2026-10-16-cuda/README.md",
           "evidence_found": true,
-          "date": "2026-10-15"
+          "date": "2026-10-16"
         },
         "G5": {
           "status": "passed",
-          "evidence": "docs/evidence/qualification-2026-10-15/README.md",
+          "evidence": "docs/evidence/qualification-2026-10-16-cuda/README.md",
           "evidence_found": true,
-          "date": "2026-10-15"
+          "date": "2026-10-16"
         },
         "G6": {
           "status": "passed",

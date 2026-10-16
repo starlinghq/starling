@@ -1,0 +1,8 @@
+2026-10-16T02:27:35+00:00 worker start starling-q-b2 at e404702fa0fdbf91fd506757f1a5c15522d023dc: soak:qwen35 bench:qwen35
+2026-10-16T02:27:36+00:00 soak start qwen35 cuda  (load 18.88 18.44 20.59)
+2026-10-16T03:27:52+00:00 soak end qwen35 exit 0 wall 3616s: [qwen35] PASS: every gating settled series plateaus after warmup; no wrong output or error; wrote /root/bout/starling-q-b2/soak-qwen35/qwen35-20261016T022736Z.json and .md
+2026-10-16T03:27:52+00:00 g5 prewarm qwen35
+2026-10-16T03:28:15+00:00 g5 start qwen35 cuda  (load 15.77 21.99 25.67)
+2026-10-16T03:38:17+00:00 g5 run end qwen35 cuda exit 0 wall 602s
+2026-10-16T03:38:18+00:00 repo dirty paths after run: 0
+2026-10-16T03:38:18+00:00 WORKER DONE

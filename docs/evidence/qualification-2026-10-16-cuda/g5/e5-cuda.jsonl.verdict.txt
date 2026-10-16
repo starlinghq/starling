@@ -1,0 +1,28 @@
+## multilingual-e5-small/onnx-fp32-cuda: PASS (G5 evidence)
+comparison: python onnxruntime-gpu, same graph (bench_e5_matched.py)
+- NATIVE BUILDS DIFFER: same version, different native build (ONNX Runtime 1.30.0). Context, not a verdict input: the budget compares the shipped products
+    onnxruntime: C# 292591ed61be (libonnxruntime.so) | Python 015ed43679bf (onnxruntime_pybind11_state.cpython-311-x86_64-linux-gnu.so): different
+    onnxruntime_providers_cuda: C# 32fb1e28e5ea (libonnxruntime_providers_cuda.so) | Python 9d7587acb137 (libonnxruntime_providers_cuda.so): different
+    onnxruntime_providers_shared: C# c6a125933960 (libonnxruntime_providers_shared.so) | Python 086ec1d5388f (libonnxruntime_providers_shared.so): different
+- warm_median_ratio_max = 1.05: pass
+    warm/ids/long512-b1/c1: 0.999 [0.995, 1.005] pass
+    warm/ids/long512-b1/c4: 0.994 [0.979, 1.009] pass
+    warm/ids/long512-b32/c1: 1.003 [0.996, 1.006] pass
+    warm/ids/long512-b8/c1: 1.001 [0.976, 1.016] pass
+    warm/ids/long512-b8/c4: 1.003 [0.993, 1.014] pass
+    warm/ids/short-b1/c1: 0.954 [0.904, 1.003] pass
+    warm/ids/short-b1/c4: 0.976 [0.858, 1.072] pass
+    warm/ids/short-b32/c1: 0.962 [0.939, 0.971] pass
+    warm/ids/short-b8/c1: 0.984 [0.911, 1.013] pass
+    warm/ids/short-b8/c4: 0.978 [0.926, 1.022] pass
+    warm/text/long512-b1/c1: 1.002 [0.994, 1.038] pass
+    warm/text/long512-b1/c4: 1.028 [0.997, 1.090] pass
+    warm/text/long512-b32/c1: 1.000 [0.968, 1.052] pass
+    warm/text/long512-b8/c1: 1.021 [1.002, 1.039] pass
+    warm/text/long512-b8/c4: 1.005 [0.968, 1.053] pass
+    warm/text/short-b1/c1: 0.962 [0.897, 1.044] pass
+    warm/text/short-b1/c4: 0.915 [0.742, 1.085] pass
+    warm/text/short-b32/c1: 0.935 [0.930, 0.940] pass
+    warm/text/short-b8/c1: 0.980 [0.912, 1.031] pass
+    warm/text/short-b8/c4: 1.001 [0.929, 1.095] pass
+- qualifying: yes (run counts and clean checkout)
