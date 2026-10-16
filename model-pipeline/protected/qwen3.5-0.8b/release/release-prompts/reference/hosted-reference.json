@@ -1,0 +1,142 @@
+{
+  "committed": false,
+  "source": {
+    "repository": "Starlinghq/starling-release-references",
+    "repo_type": "dataset",
+    "revision": "bde82d8012b97444ab5c175faadb2df0f31673c1",
+    "path": "qwen3.5-0.8b/release-prompts",
+    "url": "https://huggingface.co/datasets/Starlinghq/starling-release-references/resolve/bde82d8012b97444ab5c175faadb2df0f31673c1/qwen3.5-0.8b/release-prompts/"
+  },
+  "note": "The release prompts' full step-0 reference vectors for `--reference-tensors` (`step0/<id>.f32`, float32 log-softmax over the full vocabulary), the accepted bytes whose SHA-256 `environment.json` (`step0_full_vectors.sha256`) and `generation.jsonl` (`step0_sha256`) record. The evaluator checks each file against them.",
+  "recorded": "2026-10-15",
+  "files": {
+    "step0/oasst1-0514ed04.f32": {
+      "size": 993280,
+      "sha256": "4dc00148000b2632819f3b4f4508fffba1362adf882fee3654c33e64ce7b7edf"
+    },
+    "step0/oasst1-122116c5.f32": {
+      "size": 993280,
+      "sha256": "65176b1b295a8dda0f631793a57473189bd1e50d34d55a3f128a9c6c04731c82"
+    },
+    "step0/oasst1-1686dff3.f32": {
+      "size": 993280,
+      "sha256": "248295bb29a1675bb64add59f2b7cd75d73eb01180d8b82a06039b19285e0822"
+    },
+    "step0/oasst1-1f2eb40e.f32": {
+      "size": 993280,
+      "sha256": "29f76785d08127481408ec6417b4589e1b880dc76b4cb9b47c3a95445a3d855c"
+    },
+    "step0/oasst1-227890b8.f32": {
+      "size": 993280,
+      "sha256": "0bc4c3873cf01b6daf9103fcd0522413f9948161af07e87a1cd3882a386ddc21"
+    },
+    "step0/oasst1-242d95ac.f32": {
+      "size": 993280,
+      "sha256": "85169cf5d28845abde60261a7a36e562a93613b35b8c7a3b0da65da37abe9e08"
+    },
+    "step0/oasst1-26fe386a.f32": {
+      "size": 993280,
+      "sha256": "2a9d7577a60b8314ac37081b1e2281dd58fd9030f85aa67b8e06cdde7c550026"
+    },
+    "step0/oasst1-330fc1cf.f32": {
+      "size": 993280,
+      "sha256": "74646fecb1197dc009636d92aeeee89a683cccbc8b929874acc73473dff0f1e5"
+    },
+    "step0/oasst1-33f4b2f8.f32": {
+      "size": 993280,
+      "sha256": "b9343a7ec5ae1ddc83e7fdb67df57287f23c911c3005359467b27d33309e5a2d"
+    },
+    "step0/oasst1-3c5b52fd.f32": {
+      "size": 993280,
+      "sha256": "7771f3341efe98d12967175b192a5a9b79e55a2620edb85cbacda955a342e17e"
+    },
+    "step0/oasst1-42cc9fee.f32": {
+      "size": 993280,
+      "sha256": "a63f4eb0274193e44b192fec86293284ab467396b7878f1ca9c88acdc2dc2e9b"
+    },
+    "step0/oasst1-48d9d271.f32": {
+      "size": 993280,
+      "sha256": "b5c0263d53cedca7cf431b8c1151cee619ee08413f33ca4bfad347aaf9d8e58b"
+    },
+    "step0/oasst1-496a8740.f32": {
+      "size": 993280,
+      "sha256": "57847d4c9825bbb96f98f5de10b5b190aa68aa00c6684fcec752d6e25284d4a1"
+    },
+    "step0/oasst1-4bde8859.f32": {
+      "size": 993280,
+      "sha256": "be296064c3defeab12ad8134be0d35210fa40b92d0d6a5d7521e442dbe5c7383"
+    },
+    "step0/oasst1-52213740.f32": {
+      "size": 993280,
+      "sha256": "18fb8327a10bbfd5a44c8f11bec63faeebcdfe23444dd57d745f4b4f3e665d2e"
+    },
+    "step0/oasst1-53af5b24.f32": {
+      "size": 993280,
+      "sha256": "f3d778cb350e421a5f1d787188f2dab1140920b01d975c08d965690a91816ccc"
+    },
+    "step0/oasst1-63dd4769.f32": {
+      "size": 993280,
+      "sha256": "09b9774cc294df0c37350c30eb2a83d19d03909d3b270fbbf13ea8aa92dbdbd0"
+    },
+    "step0/oasst1-68a06244.f32": {
+      "size": 993280,
+      "sha256": "5b89fd9c187da5f826756228cb43cc1d5c76c62efdc8f139ee020decd4752e79"
+    },
+    "step0/oasst1-78aeda3c.f32": {
+      "size": 993280,
+      "sha256": "81a8ef1ed276e0e6b4e66e8ca0fed5a1ae91e5cb0d6f0eee1ac7ba80484b0d84"
+    },
+    "step0/oasst1-7c61baf1.f32": {
+      "size": 993280,
+      "sha256": "51b7a70aa966acc0fc7214cfbaeae69dcfdb393b959d0334e6138411595ac658"
+    },
+    "step0/oasst1-889c27c2.f32": {
+      "size": 993280,
+      "sha256": "a47eccee801f1659fe5a5e56c49276ba6f9b70e058e9159ecb0ac4af265b446e"
+    },
+    "step0/oasst1-a02d5c29.f32": {
+      "size": 993280,
+      "sha256": "79a19ffe7fe8c91ec85384749cc2f9e673f0bdcd8a68f4f488cc77f32c885c9a"
+    },
+    "step0/oasst1-a8efa903.f32": {
+      "size": 993280,
+      "sha256": "1267a5d74c3d138a2269ccbb6648fca65bd9e3b058666f06ab6fcce430527a09"
+    },
+    "step0/oasst1-b30fb622.f32": {
+      "size": 993280,
+      "sha256": "1313417e84e2971de862d0b9114bcf9499a953b03177c6b3511628324539e71b"
+    },
+    "step0/oasst1-b3321bbb.f32": {
+      "size": 993280,
+      "sha256": "b0f65ce32ac66c401cee898878793587206eed6b4b9595026221cf157d86d0ca"
+    },
+    "step0/oasst1-b426a32f.f32": {
+      "size": 993280,
+      "sha256": "30d59fc8b41073c30141625acd7d537333278d04fc1036fa5b166102195db7db"
+    },
+    "step0/oasst1-c264ed9b.f32": {
+      "size": 993280,
+      "sha256": "ae13ba6f895d80561fcde1616e85cb638fc22faf511fbee69353f258c1002f92"
+    },
+    "step0/oasst1-c2883e98.f32": {
+      "size": 993280,
+      "sha256": "8a71b00c5d432091e6eada9ffdbd5e067cde3669c6710fc962ef082778493827"
+    },
+    "step0/oasst1-caa0af31.f32": {
+      "size": 993280,
+      "sha256": "7df55a956ad936614cc968e6dfe30dd3533ae06b97176c1b5b9427c01061d3a6"
+    },
+    "step0/oasst1-db160030.f32": {
+      "size": 993280,
+      "sha256": "8945551ea9a2c396ac75f5abe2a01a2026c74a259a47f8c173d238255b3fdf65"
+    },
+    "step0/oasst1-e16db2f9.f32": {
+      "size": 993280,
+      "sha256": "088df15d046e75ccc06a8851a633069f3e342be315597d9a4ccb8706a280ae92"
+    },
+    "step0/oasst1-e4c5240b.f32": {
+      "size": 993280,
+      "sha256": "1bb1a7e7a36e67a3ceece73d0d0388807e279b4e0643459b1e2ea962a40b9405"
+    }
+  }
+}
