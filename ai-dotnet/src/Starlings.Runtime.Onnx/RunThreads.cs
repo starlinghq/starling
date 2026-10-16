@@ -74,7 +74,8 @@ internal static class RunThreads
                 // that was woken for an item another thread took first is still counted in s_waking.
                 s_threads++;
                 s_waking++;
-                new Thread(Loop) { IsBackground = true, Name = "starlings-onnx-run" }.Start();
+                // UnsafeStart: a thread that lives for the process must not capture the first caller's ExecutionContext.
+                new Thread(Loop) { IsBackground = true, Name = "starlings-onnx-run" }.UnsafeStart();
             }
         }
 
