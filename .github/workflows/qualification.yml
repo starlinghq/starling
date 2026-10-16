@@ -288,10 +288,13 @@ jobs:
   # and pinned reference environments of docs/evidence/release-set-gates-2026-10-14/. Bounds and budgets are the
   # protected ones, verified against Git; every gate must pass. EmbeddingGemma 2's text reference embeddings are
   # committed under protected/ (#60) and also checked against the digest its reference.json records.
-  # Not wired (so not Stable): EmbeddingGemma 2 image-fp32-cpu and video-fp32-cpu, and qwen3.5-0.8b ortgenai-fp32x-cpu.
-  # Their G2 needs reference tensors kept outside Git (image and video soft tokens and token embeddings; Qwen's full
-  # step-0 vectors) that regenerate byte-identical only in the recorded reference environment, the problem #60 solved
-  # for the text embeddings; a hosted rerun would be refused on digest.
+  # EmbeddingGemma 2 image and video and Qwen fp32x keep their G2 reference tensors outside Git (image and video soft
+  # tokens and token embeddings; Qwen's full step-0 vectors): they regenerate byte-identical only on the reference CPU,
+  # so a hosted regeneration would be refused on digest. The accepted bytes are hosted in the public dataset
+  # Starlinghq/starling-release-references; each release set's protected hosted-reference.json pins the commit and
+  # every file's SHA-256 (#71), tools/fetch-release-references.py downloads and verifies them, and the evaluator checks
+  # every array against the set's own tensors.json or environment.json. These three have no Python stage 2: their
+  # reference python only fetches the release media from Wikimedia Commons, and Qwen needs none.
   release-gates:
     name: release gates ${{ matrix.profile }}
     needs: assets
@@ -313,6 +316,13 @@ jobs:
           - profile: gliner2-base-v1/onnx-fp32-cpu
             reference: model-pipeline/reference/gliner2/requirements-export.txt
             hashes: --verify-hashes
+          - profile: embeddinggemma-2/image-fp32-cpu
+            reference: model-pipeline/reference/embeddinggemma2/requirements-video.txt
+            hashes: --require-hashes
+          - profile: embeddinggemma-2/video-fp32-cpu
+            reference: model-pipeline/reference/embeddinggemma2/requirements-video.txt
+            hashes: --require-hashes
+          - profile: qwen3.5-0.8b/ortgenai-fp32x-cpu
     env:
       PROFILE: ${{ matrix.profile }}
     steps:
@@ -330,7 +340,9 @@ jobs:
         run: echo "STARLING_MODELS=$GITHUB_WORKSPACE/.models" >>"$GITHUB_ENV"
       - name: Acquire and verify
         run: tools/acquire-models.sh "$RUNNER_TEMP/locks" "$PROFILE"
+      # Qwen fp32x has no Python step in its release gates, so it has no reference environment.
       - name: Reference environment
+        if: matrix.reference != ''
         env:
           REFERENCE: ${{ matrix.reference }}
           HASHES: ${{ matrix.hashes }}
@@ -345,13 +357,19 @@ jobs:
       - name: Machine
         run: |
           mkdir -p "$EVIDENCE/release-gates/${PROFILE//\//--}"
-          { lscpu; echo; free -g; echo; cat "$RUNNER_TEMP/reference-freeze.txt"; } \
+          { lscpu; echo; free -g; echo; cat "$RUNNER_TEMP/reference-freeze.txt" 2>/dev/null || echo "no reference environment"; } \
             >"$EVIDENCE/release-gates/${PROFILE//\//--}/machine.txt"
           grep -m1 'Model name' /proc/cpuinfo || true
       - name: G1, G2 and G3 on the release sets
+        env:
+          REFERENCE: ${{ matrix.reference }}
         run: |
+          refpy=()
+          if [[ -n "$REFERENCE" ]]; then
+            refpy=(--reference-python "$RUNNER_TEMP/venv-reference/bin/python")
+          fi
           tools/release-gates.sh "$PROFILE" --out "$EVIDENCE/release-gates/${PROFILE//\//--}" \
-            --work "$RUNNER_TEMP/release-gates" --reference-python "$RUNNER_TEMP/venv-reference/bin/python" --threads 4
+            --work "$RUNNER_TEMP/release-gates" "${refpy[@]}" --threads 4
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         if: always()
         with:
