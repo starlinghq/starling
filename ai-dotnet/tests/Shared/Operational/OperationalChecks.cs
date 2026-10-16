@@ -138,6 +138,7 @@ internal static class OperationalChecks
             // The deadline's time is read before Cancel(), on the cancelling thread, and read here after joining it. A
             // callback registered on the token would race the call: callbacks run newest first, so the call's own
             // cancellation callback (registered later) can stop the call before a recorder registered here has run.
+            var host = HostStall.Read();
             var canceller = CancelAfter(cts, deadline);
             OperationCanceledException ex;
             long now;
@@ -156,7 +157,7 @@ internal static class OperationalChecks
             Assert.Equal(cts.Token, ex.CancellationToken);
             latencies[r] = (now - fired) * 1000.0 / Stopwatch.Frequency;
             output.WriteLine(string.Create(CultureInfo.InvariantCulture,
-                $"deadline {deadline.TotalMilliseconds:F0} ms: threw after {sw.Elapsed.TotalMilliseconds:F0} ms, cancellation latency {latencies[r]:F2} ms"));
+                $"deadline {deadline.TotalMilliseconds:F0} ms: threw after {sw.Elapsed.TotalMilliseconds:F0} ms, cancellation latency {latencies[r]:F2} ms{HostStall.Since(host)}"));
             reuse();
         }
 
@@ -247,5 +248,56 @@ internal static class OperationalChecks
         Assert.Null(failure);
         Assert.True(sawDisposed, "the worker never observed the disposal");
         Assert.Throws<ObjectDisposedException>(afterDispose);
+    }
+
+    /// <summary>
+    /// Host stall counters on Linux, reported next to a cancellation latency so that a slow run can be told apart from
+    /// a slow library: the process's major page faults (pages read from disk or swap) and the kernel's pressure stall
+    /// totals (<c>/proc/pressure</c>, time some task waited for CPU, memory or I/O). Empty where unavailable.
+    /// </summary>
+    private readonly record struct HostStall(long MajorFaults, long CpuUs, long MemoryUs, long IoUs)
+    {
+        public static HostStall? Read()
+        {
+            try
+            {
+                // /proc/self/stat: the command name is in parentheses and may contain spaces; majflt is field 12.
+                string stat = File.ReadAllText("/proc/self/stat");
+                string[] fields = stat[(stat.LastIndexOf(')') + 2)..].Split(' ');
+                return new HostStall(long.Parse(fields[9], CultureInfo.InvariantCulture), Pressure("cpu"), Pressure("memory"), Pressure("io"));
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or FormatException or IndexOutOfRangeException)
+            {
+                return null;
+            }
+        }
+
+        public static string Since(HostStall? before)
+        {
+            if (before is not { } b || Read() is not { } a)
+            {
+                return string.Empty;
+            }
+
+            static string Ms(long us) => us < 0 ? "n/a" : (us / 1000.0).ToString("F0", CultureInfo.InvariantCulture);
+            return string.Create(CultureInfo.InvariantCulture,
+                $" (host during the call: {a.MajorFaults - b.MajorFaults} major faults; pressure stall ms cpu {Ms(Delta(a.CpuUs, b.CpuUs))}, memory {Ms(Delta(a.MemoryUs, b.MemoryUs))}, io {Ms(Delta(a.IoUs, b.IoUs))})");
+        }
+
+        private static long Delta(long after, long before) => after < 0 || before < 0 ? -1 : after - before;
+
+        // "some avg10=0.00 avg60=0.00 avg300=0.00 total=123": microseconds in which at least one task stalled.
+        private static long Pressure(string resource)
+        {
+            try
+            {
+                string line = File.ReadLines($"/proc/pressure/{resource}").First(l => l.StartsWith("some ", StringComparison.Ordinal));
+                return long.Parse(line[(line.IndexOf("total=", StringComparison.Ordinal) + 6)..], CultureInfo.InvariantCulture);
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or FormatException or InvalidOperationException)
+            {
+                return -1;
+            }
+        }
     }
 }
