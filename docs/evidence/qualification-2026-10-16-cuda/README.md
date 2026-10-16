@@ -64,20 +64,24 @@ EmbeddingGemma 2 text `long-b4` at 0.414 has a wide interval, [0.392, 0.954], an
 
 ## Interrupted first attempt (infrastructure, not a result)
 
-At about 02:10:47 UTC, every process running from the network volume stopped at the same moment on all four pods. Writes to the volume stopped persisting: new files were created with zero length, and `echo … >` returned 0. The interrupted jobs had no verdict and wrote no report:
+Between 02:10:47 and 02:11:14 UTC, every process running from the network volume stopped, on all four pods within the same minute, with nothing in its log. After that, writes to the volume no longer persisted: new files were created with zero length, and `echo … >` returned 0. These jobs were interrupted and have no final verdict:
 
-- the EmbeddingGemma 2 text soak (b1, cycle 269);
-- the Qwen fp32x soak (b2, cycle 220);
-- the video G5 run (b3, round 3 of 3);
-- the image G5 run (b4, round 3, cold starts).
+- **The EmbeddingGemma 2 text soak** (b1, cycle 269). Its last interim checkpoint, at 1,231 s of 3,600 s, reads "INCOMPLETE … PASS".
+- **The Qwen fp32x soak** (b2, cycle 220). Its last interim checkpoint, at 1,122 s of 3,600 s, reads "INCOMPLETE … FAIL: loaded rss_anon grows 41 MB (167 MB/h)".
+- **The video G5 run** (b3, round 3 of 3).
+- **The image G5 run** (b4, round 3, cold starts).
+- **The Qwen fp16x soak and G5 run** (b3). The worker started them during the outage, and both exited at once without output.
 
-The volume (50 GB) held about 42 GB at the time, including about 2.4 GB of CI cache written by the separate CI pods that share it. Its quota was the likely cause, but this was not established. The workers' `status.txt` for that attempt is in `pods/starling-q-b*-run1/`.
+The soak tool writes those interim checkpoints while it runs. Both are kept in [`interrupted/`](interrupted/), and neither is a one-hour result. The Qwen fp32x checkpoint covers less than 19 minutes, so most of it falls inside the warmup ramp. The completed one-hour Qwen fp32x run below passed, with loaded rss_anon fitted at 29.6 MiB (halves 22.3 and 7.5).
 
-Six jobs had finished before the interruption, with their reports complete, and they stand: the soaks of e5, GLiNER2, video and image, and the e5 and GLiNER2 G5 runs. Each interrupted job was then run once, from the start, with outputs on the pods' container disks (`pods/starling-q-b*-run2/`). Each interrupted job therefore has exactly one completed run, and that run is the one reported here. The Qwen fp16x soak and G5 run had not started before the interruption; they ran in the second attempt.
+The cause was not established. The volume (50 GB) held about 42 GB at the time: models 13 GB, uv cache 6 GB, this round's checkout and build 2.6 GB, the older checkout 2.4 GB, NuGet 2.4 GB, CI cache 2.4 GB, older builds 1.1 GB. Its quota is the likely cause. The workers' `status.txt` for that attempt is in `pods/starling-q-b*-run1/`.
+
+Six jobs had finished before the interruption, with their reports complete, and they stand: the soaks of e5, GLiNER2, video and image, and the e5 and GLiNER2 G5 runs. Each interrupted job was then run once more, from the start, with outputs on the pods' container disks (`pods/starling-q-b*-run2/`). Every job therefore has exactly one completed run, and that run is the one reported here.
 
 ## Files
 
 - `soak/`: the seven soak reports.
+- `interrupted/`: the last interim checkpoints of the two soaks the interruption stopped. They are not results.
 - `g5/`: the seven G5 raw files, verdicts and load logs. `gliner2-cuda.gliner2-inputs.jsonl` holds the exact tensors the C# `Prepare` built, which the Python inference-stage runner consumed.
 - `pods/<pod>-run<n>/env.txt`: commit, THP before and after, `/sys` mount, GPU, driver, CPU, glibc, load and top processes at worker start.
 - `pods/<pod>-run<n>/status.txt`: each job's start and end, exit code, wall time and load at start.
