@@ -65,6 +65,9 @@ public sealed record OnnxSessionDiagnostics
     /// <summary>Whether ONNX Runtime's CPU memory arena is on for this session (<see cref="OnnxSessionOptions.CpuMemoryArena"/>).</summary>
     public bool CpuMemoryArena { get; init; }
 
+    /// <summary>Whether runs execute on the package's dedicated run threads (<see cref="OnnxSessionOptions.DedicatedRunThreads"/>).</summary>
+    public bool DedicatedRunThreads { get; init; }
+
     /// <summary>Graph optimization level applied at session creation.</summary>
     public required string GraphOptimizationLevel { get; init; }
 

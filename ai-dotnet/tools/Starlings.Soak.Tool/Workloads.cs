@@ -86,7 +86,7 @@ internal abstract class SoakWorkload
     protected static ModelAcquisitionOptions Acquisition => new() { Verification = CacheVerification.Sha256 };
 
     internal static string Memory(OnnxSessionDiagnostics d) =>
-        $"cpu_memory_arena={(d.CpuMemoryArena ? "on" : "off")}, trim_native_heap_on_release={(d.TrimNativeHeapOnRelease ? "on" : "off")}";
+        $"cpu_memory_arena={(d.CpuMemoryArena ? "on" : "off")}, trim_native_heap_on_release={(d.TrimNativeHeapOnRelease ? "on" : "off")}, dedicated_run_threads={(d.DedicatedRunThreads ? "on" : "off")}";
 
     protected static OnnxSessionOptions Session(SoakOptions options, bool computeSha) => new()
     {
@@ -94,6 +94,7 @@ internal abstract class SoakWorkload
         IntraOpNumThreads = options.Threads,
         ComputeModelSha256 = computeSha,
         CpuMemoryArena = options.CpuArena,
+        DedicatedRunThreads = options.RunThreads,
     };
 
     protected static JsonObject Lock(ModelAssetLock assetLock) => new()

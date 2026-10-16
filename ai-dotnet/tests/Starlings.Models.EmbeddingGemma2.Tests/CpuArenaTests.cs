@@ -39,6 +39,36 @@ public class CpuArenaTests(ITestOutputHelper output)
     }
 
     [Fact]
+    public void TextEmbeddingsAreBitIdenticalOnDedicatedRunThreadsAndOnTheCaller()
+    {
+        // Dedicated run threads (this library's CPU default, docs/evidence/eg2-soak-reliability/) change which thread
+        // calls ONNX Runtime, not what it computes.
+        var (files, reason) = EmbeddingGemma2TestAssets.FindModel();
+        Assert.SkipWhen(files is null, reason);
+        var rows = EmbeddingGemma2Fixtures.LoadRows();
+        var inputs = rows.Take(8).Select(r => new EmbeddingGemma2Input(r.InputIds)).ToArray();
+
+        float[][] Embed(bool dedicated)
+        {
+            using var encoder = EmbeddingGemma2Encoder.Create(files!.ModelPath, new EmbeddingGemma2EncoderOptions
+            {
+                Session = new OnnxSessionOptions { ComputeModelSha256 = false, DedicatedRunThreads = dedicated },
+            });
+            Assert.Equal(dedicated, encoder.Session.Diagnostics.DedicatedRunThreads);
+            return inputs.Select(i => encoder.Embed(i, TestContext.Current.CancellationToken)).ToArray();
+        }
+
+        var on = Embed(true);
+        var off = Embed(false);
+        for (int i = 0; i < on.Length; i++)
+        {
+            Assert.Equal(on[i], off[i]);
+        }
+
+        output.WriteLine($"{on.Length} text rows bit-identical on dedicated run threads and on the calling thread");
+    }
+
+    [Fact]
     public void VideoEmbeddingsAreBitIdenticalWithAndWithoutTheArena()
     {
         var (files, reason) = EmbeddingGemma2ImageTestAssets.FindImageModel();

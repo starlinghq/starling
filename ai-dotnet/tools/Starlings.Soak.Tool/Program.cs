@@ -47,6 +47,10 @@
 //                             takes the settled samples without unloading (requests only, no load/unload churn). The
 //                             "unloaded" series is then a second settled sample with the model still loaded. Not a
 //                             qualification run (G4 needs the load/unload cycles); off by default.
+//   --cpu-arena, --no-cpu-arena   Diagnostic: ONNX Runtime's CPU arena on or off (OnnxSessionOptions.CpuMemoryArena);
+//                             default: the model library's choice.
+//   --run-threads, --no-run-threads   Diagnostic: runs on the runtime's dedicated run threads or on the calling thread
+//                             (OnnxSessionOptions.DedicatedRunThreads); default: the model library's choice.
 //
 // Reanalysis: `-- reanalyze <raw.json>...` recomputes the verdicts and the markdown report of existing raw results
 // with the current analysis (the run's warmup and growth-limit options), rewriting both files; the samples are unchanged.
@@ -138,6 +142,9 @@ internal sealed record SoakOptions
     /// <summary>Diagnostics: ONNX Runtime's CPU arena forced on or off; null keeps the model library's default.</summary>
     public bool? CpuArena { get; init; }
 
+    /// <summary>Diagnostics: runs on the runtime's dedicated run threads or on the caller; null keeps the model library's default.</summary>
+    public bool? RunThreads { get; init; }
+
     public bool NoHeapTrim { get; init; }
 
     public int? SmapsEvery { get; init; }
@@ -169,6 +176,8 @@ internal sealed record SoakOptions
                 "--keep-loaded" => o with { KeepLoaded = true },
                 "--cpu-arena" => o with { CpuArena = true },
                 "--no-cpu-arena" => o with { CpuArena = false },
+                "--run-threads" => o with { RunThreads = true },
+                "--no-run-threads" => o with { RunThreads = false },
                 "--no-heap-trim" => o with { NoHeapTrim = true },
                 "--smaps-every" => o with { SmapsEvery = Positive(Next(), "--smaps-every") },
                 _ => throw new ArgumentException($"unknown option '{args[i]}'"),
@@ -585,6 +594,7 @@ internal sealed class SoakRunner(SoakWorkload workload, SoakOptions options)
                 ["malloc_trim"] = options.MallocTrim,
                 ["keep_loaded"] = options.KeepLoaded,
                 ["cpu_arena"] = options.CpuArena,
+                ["run_threads"] = options.RunThreads,
                 ["native_heap_trim_disabled"] = options.NoHeapTrim,
                 ["gpu_sampling"] = MemoryProbe.GpuSamplingAvailable,
             },
