@@ -59,6 +59,8 @@ export PATH=$W/dotnet:$W/bin:$PATH
 export STARLING_MODELS=$W/models
 export CUDA_DEVICE_ORDER=PCI_BUS_ID CUDA_VISIBLE_DEVICES=0 NVIDIA_TF32_OVERRIDE=0
 export HF_HUB_DISABLE_TELEMETRY=1
+# The network volume refuses chown: extract archives (the FFmpeg builds) as the current user.
+export TAR_OPTIONS=--no-same-owner
 unset HF_TOKEN
 
 # ---------------------------------------------------------------------------------------------------------------------
@@ -141,9 +143,11 @@ echo "LD_LIBRARY_PATH=$LD_LIBRARY_PATH" >>"$OUT/environment.txt"
 log "builds"
 BUILD_OK=1
 build() {  # build <log name> <dotnet build args...>
-    if dotnet build "$@" -c Release -v q -nologo -p:RestoreLockedMode=true >"$OUT/build-$1.log" 2>&1; then :; else
+    local name=$1
+    shift
+    if dotnet build "$@" -c Release -v q -nologo -p:RestoreLockedMode=true >"$OUT/build-$name.log" 2>&1; then :; else
         BUILD_OK=0
-        log "build $1 failed (build-$1.log)"
+        log "build $name failed (build-$name.log)"
         return 1
     fi
 }
@@ -268,23 +272,26 @@ for j in $VENV_JOBS; do wait "$j" || true; done
 for v in encoder-cuda gliner2-cuda eg2-cuda eg2-video; do
     [[ -s "$OUT/venvs/$v.freeze.txt" ]] || record all "reference environment $v" "failed (venvs/$v.log)"
 done
-log "release inputs: preparing in the background (cache $CACHE)"
-prepare_qwen_ref &
-QWEN_REF_JOB=$!
-prepare_all &
-PREPARE_JOB=$!
 
 # ---------------------------------------------------------------------------------------------------------------------
+# The CUDA tests run before any background preparation: some time device work (cancellation drain) and must not share
+# the CPU with the reference regenerations.
 log "CUDA test projects"
 export STARLING_CUDA_TESTS=1
 for t in E5 Gliner2 EmbeddingGemma2 Qwen35; do
     proj=ai-dotnet/tests/Starlings.Models.$t.Tests.Cuda
     if dotnet test --project "$proj" -c Release --results-directory "$OUT/tests/$t" -- --report-xunit-trx \
         >"$OUT/tests-$t.log" 2>&1; then r=passed; else r=failed; fi
-    counts="$(grep -Eio 'total: [0-9]+, failed: [0-9]+, succeeded: [0-9]+, skipped: [0-9]+' "$OUT/tests-$t.log" | tail -1)"
+    counts="$(awk '/^Test run summary/ { s = 1 } s && /^ *(total|failed|succeeded|skipped):/ { gsub(/^ +/, ""); printf "%s%s", sep, $0; sep = ", " }' "$OUT/tests-$t.log")"
     record "Starlings.Models.$t.Tests.Cuda" "tests (${counts:-see tests-$t.log})" "$r"
 done
 unset STARLING_CUDA_TESTS
+
+log "release inputs: preparing in the background (cache $CACHE)"
+prepare_qwen_ref &
+QWEN_REF_JOB=$!
+prepare_all &
+PREPARE_JOB=$!
 
 # ---------------------------------------------------------------------------------------------------------------------
 # evaluate <profile> <name> <gates> <model-pipeline evaluate args...>: every named gate must be `passed` in report.json.
