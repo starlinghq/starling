@@ -46,6 +46,12 @@ on:
         description: "Soak duration per CUDA profile on the RunPod pod (job cuda; 10m screens, 1h is the G4 length)"
         type: string
         default: 10m
+      # A CPU-only dispatch skips the paid RunPod job (for example while the RunPod balance is low). Scheduled runs
+      # always include it.
+      skip_cuda:
+        description: "Skip the cuda (runpod) job: run the CPU jobs only"
+        type: boolean
+        default: false
       # Allocator diagnostics on the hosted runner (docs/evidence/scheduled-regression-fix/). The defaults leave the
       # qualification run unchanged.
       soak_only:
@@ -288,10 +294,13 @@ jobs:
   # and pinned reference environments of docs/evidence/release-set-gates-2026-10-14/. Bounds and budgets are the
   # protected ones, verified against Git; every gate must pass. EmbeddingGemma 2's text reference embeddings are
   # committed under protected/ (#60) and also checked against the digest its reference.json records.
-  # Not wired (so not Stable): EmbeddingGemma 2 image-fp32-cpu and video-fp32-cpu, and qwen3.5-0.8b ortgenai-fp32x-cpu.
-  # Their G2 needs reference tensors kept outside Git (image and video soft tokens and token embeddings; Qwen's full
-  # step-0 vectors) that regenerate byte-identical only in the recorded reference environment, the problem #60 solved
-  # for the text embeddings; a hosted rerun would be refused on digest.
+  # EmbeddingGemma 2 image and video and Qwen fp32x keep their G2 reference tensors outside Git (image and video soft
+  # tokens and token embeddings; Qwen's full step-0 vectors): they regenerate byte-identical only on the reference CPU,
+  # so a hosted regeneration would be refused on digest. The accepted bytes are hosted in the public dataset
+  # Starlinghq/starling-release-references; each release set's protected hosted-reference.json pins the commit and
+  # every file's SHA-256 (#71), tools/fetch-release-references.py downloads and verifies them, and the evaluator checks
+  # every array against the set's own tensors.json or environment.json. These three have no Python stage 2: their
+  # reference python only fetches the release media from Wikimedia Commons, and Qwen needs none.
   release-gates:
     name: release gates ${{ matrix.profile }}
     needs: assets
@@ -313,6 +322,17 @@ jobs:
           - profile: gliner2-base-v1/onnx-fp32-cpu
             reference: model-pipeline/reference/gliner2/requirements-export.txt
             hashes: --verify-hashes
+          - profile: embeddinggemma-2/image-fp32-cpu
+            reference: model-pipeline/reference/embeddinggemma2/requirements-video.txt
+            hashes: --require-hashes
+          # The release-set dump keeps every decoded frame of the array rows (a 2048x1024 clip among them) for both FFmpeg
+          # majors: about 20 GB peak resident on the workstation, above the hosted runner's 16 GB, so the job adds swap
+          # (the first dispatched run lost its runner there).
+          - profile: embeddinggemma-2/video-fp32-cpu
+            reference: model-pipeline/reference/embeddinggemma2/requirements-video.txt
+            hashes: --require-hashes
+            swap_gb: 24
+          - profile: qwen3.5-0.8b/ortgenai-fp32x-cpu
     env:
       PROFILE: ${{ matrix.profile }}
     steps:
@@ -328,9 +348,24 @@ jobs:
           global-json-file: global.json
       - name: Model cache
         run: echo "STARLING_MODELS=$GITHUB_WORKSPACE/.models" >>"$GITHUB_ENV"
+      - name: Swap
+        if: matrix.swap_gb != ''
+        env:
+          SWAP_GB: ${{ matrix.swap_gb }}
+        run: |
+          dir=/mnt
+          [[ -d "$dir" ]] || dir=/
+          sudo swapoff -a || true
+          sudo fallocate -l "${SWAP_GB}G" "$dir/starling.swap"
+          sudo chmod 600 "$dir/starling.swap"
+          sudo mkswap "$dir/starling.swap" >/dev/null
+          sudo swapon "$dir/starling.swap"
+          free -g
       - name: Acquire and verify
         run: tools/acquire-models.sh "$RUNNER_TEMP/locks" "$PROFILE"
+      # Qwen fp32x has no Python step in its release gates, so it has no reference environment.
       - name: Reference environment
+        if: matrix.reference != ''
         env:
           REFERENCE: ${{ matrix.reference }}
           HASHES: ${{ matrix.hashes }}
@@ -345,13 +380,19 @@ jobs:
       - name: Machine
         run: |
           mkdir -p "$EVIDENCE/release-gates/${PROFILE//\//--}"
-          { lscpu; echo; free -g; echo; cat "$RUNNER_TEMP/reference-freeze.txt"; } \
+          { lscpu; echo; free -g; echo; cat "$RUNNER_TEMP/reference-freeze.txt" 2>/dev/null || echo "no reference environment"; } \
             >"$EVIDENCE/release-gates/${PROFILE//\//--}/machine.txt"
           grep -m1 'Model name' /proc/cpuinfo || true
       - name: G1, G2 and G3 on the release sets
+        env:
+          REFERENCE: ${{ matrix.reference }}
         run: |
+          refpy=()
+          if [[ -n "$REFERENCE" ]]; then
+            refpy=(--reference-python "$RUNNER_TEMP/venv-reference/bin/python")
+          fi
           tools/release-gates.sh "$PROFILE" --out "$EVIDENCE/release-gates/${PROFILE//\//--}" \
-            --work "$RUNNER_TEMP/release-gates" --reference-python "$RUNNER_TEMP/venv-reference/bin/python" --threads 4
+            --work "$RUNNER_TEMP/release-gates" "${refpy[@]}" --threads 4
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         if: always()
         with:
@@ -541,7 +582,7 @@ jobs:
   # sweep of stale starling-q-ci-* pods before each run. Only pods named starling-q-ci-* are ever touched.
   cuda:
     name: cuda (runpod)
-    if: github.repository == 'starlinghq/starling' && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && !inputs.soak_only
+    if: github.repository == 'starlinghq/starling' && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && !inputs.soak_only && !inputs.skip_cuda
     runs-on: ubuntu-latest
     timeout-minutes: 230
     concurrency:

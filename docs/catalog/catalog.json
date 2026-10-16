@@ -2237,7 +2237,7 @@
           "date": "2026-10-14"
         },
         "G5": {
-          "status": "failed",
+          "status": "passed",
           "evidence": "docs/evidence/qualification-2026-10-15/README.md",
           "evidence_found": true,
           "date": "2026-10-15"
@@ -2359,10 +2359,8 @@
         }
       },
       "stable_readiness": {
-        "ready": false,
-        "gates_not_passed": [
-          "G5"
-        ],
+        "ready": true,
+        "gates_not_passed": [],
         "untested_capabilities": []
       },
       "scheduled_regression": true

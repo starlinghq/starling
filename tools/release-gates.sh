@@ -2,25 +2,31 @@
 # G1, G2 and G3 of one CPU profile on its accepted P-030 release sets (regression support for Stable profiles,
 # docs/support-policy.md; run weekly by .github/workflows/qualification.yml, job `release-gates`).
 #
-#   tools/release-gates.sh <profile> --out <dir> --work <dir> --reference-python <python> [--threads <n>]
+#   tools/release-gates.sh <profile> --out <dir> --work <dir> [--reference-python <python>] [--threads <n>]
 #
-# <profile>            multilingual-e5-small/onnx-fp32-cpu, embeddinggemma-2/onnx-fp32-cpu or gliner2-base-v1/onnx-fp32-cpu
+# <profile>            multilingual-e5-small/onnx-fp32-cpu, embeddinggemma-2/onnx-fp32-cpu, gliner2-base-v1/onnx-fp32-cpu,
+#                      embeddinggemma-2/image-fp32-cpu, embeddinggemma-2/video-fp32-cpu or qwen3.5-0.8b/ortgenai-fp32x-cpu
 # --out                reports (each `model-pipeline evaluate` report.json and report.md) and a summary.md
-# --work               candidate outputs and regenerated references; must be outside the repository (the evaluator
+# --work               candidate outputs, fetched media and references; must be outside the repository (the evaluator
 #                      refuses an outside-Git reference inside it)
-# --reference-python   python of the profile's reference environment (hash-locked requirements, with model-pipeline)
+# --reference-python   python of the profile's reference environment (hash-locked requirements, with model-pipeline);
+#                      required for every profile but qwen3.5-0.8b/ortgenai-fp32x-cpu (for EmbeddingGemma 2 image and
+#                      video it only fetches the release media, which needs PIL and numpy)
 # --threads            ONNX Runtime intra-op threads of the producers (default 4)
 #
 # The commands are the ones each evidence README records (docs/evidence/release-set-gates-2026-10-14/<profile>/):
-# the C# producers (Starlings.Fidelity.Tool), the pinned Python stage 2, and `model-pipeline evaluate` with the release
-# set addressed explicitly. Bounds and budgets come only from the profile's protected files; the evaluator verifies every
-# protected file against Git (--protected-base auto). The models must already be in $STARLING_MODELS (verified by the
-# acquisition tool). Exit 0 only if every gate of every evaluation passed; 1 otherwise, after all evaluations ran.
-# Nothing here writes to model-pipeline/protected/ or changes a manifest.
+# the C# producers (Starlings.Fidelity.Tool, Starlings.Qwen35.Fidelity), the pinned Python stage 2, and
+# `model-pipeline evaluate` with the release set addressed explicitly. Reference tensors that a release set keeps
+# outside Git are downloaded at the commit its protected hosted-reference.json records and verified file by file
+# (tools/fetch-release-references.py); the evaluator then checks every array it reads against the set's own digests.
+# Bounds and budgets come only from the profile's protected files; the evaluator verifies every protected file against
+# Git (--protected-base auto). The models must already be in $STARLING_MODELS (verified by the acquisition tool).
+# Exit 0 only if every gate of every evaluation passed; 1 otherwise, after all evaluations ran. Nothing here writes to
+# model-pipeline/protected/ or changes a manifest.
 set -euo pipefail
 
 usage() {
-    sed -n '2,20p' "$0" >&2
+    sed -n '2,25p' "$0" >&2
     exit 2
 }
 
@@ -40,7 +46,11 @@ while [[ $# -gt 0 ]]; do
         *) usage ;;
     esac
 done
-[[ -n "$out" && -n "$work" && -n "$refpy" ]] || usage
+[[ -n "$out" && -n "$work" ]] || usage
+case "$profile" in
+    qwen3.5-0.8b/ortgenai-fp32x-cpu) ;;
+    *) [[ -n "$refpy" ]] || usage ;;
+esac
 : "${STARLING_MODELS:?STARLING_MODELS must name the model cache}"
 
 repo="$(cd "$(dirname "$0")/.." && pwd)"
@@ -115,6 +125,40 @@ step() {
     cp "$work/$name.log" "$out/" 2>/dev/null || true
 }
 
+# fetch_refs <protected hosted-reference.json> <dir>: the release set's outside-Git reference files, downloaded at the
+# recorded commit and verified against the recorded size and SHA-256 (a mismatch fails the job). The verification
+# lines are kept in reference-digests.txt.
+fetch_refs() {
+    local rc=0
+    python3 -I tools/fetch-release-references.py "$1" "$2" >"$work/fetch-refs.log" 2>&1 || rc=$?
+    tail -n 1 "$work/fetch-refs.log" | tee -a "$out/reference-digests.txt"
+    cp "$work/fetch-refs.log" "$out/" 2>/dev/null || true
+    if [[ $rc -ne 0 ]]; then
+        grep FAIL "$work/fetch-refs.log" >&2 || true
+        results+=("| reference download | G2 | $(basename "$(dirname "$1")"): not verified (exit $rc) | - |")
+        failed=1
+    fi
+}
+
+# fetch_media <protected media list> <dir>: Wikimedia Commons files, each license re-checked and each file verified by
+# SHA-1, size and SHA-256 (model-pipeline/reference/embeddinggemma2/fetch_eg2_release_media.py).
+fetch_media() {
+    step "media-$(basename "$2")" "$refpy" -I model-pipeline/reference/embeddinggemma2/fetch_eg2_release_media.py \
+        --media "$1" --out "$2"
+}
+
+# fetch_ffmpeg <dir>: the pinned FFmpeg 8.1 LGPL shared build (fetch_eg2_ffmpeg.sh) and the FFmpeg 9.0 LGPL shared
+# build of the FFmpeg 9 adapter, each checked by SHA-256 (the same archives as tools/ci/runpod-cuda-pod.sh).
+fetch_ffmpeg() {
+    local a=ffmpeg-n9.0.2-28-g669f5ab083-linux64-lgpl-shared-9.0.tar.xz
+    step ffmpeg8 sh model-pipeline/reference/embeddinggemma2/fetch_eg2_ffmpeg.sh "$1/ffmpeg8"
+    # shellcheck disable=SC2016 # expanded by the inner sh
+    step ffmpeg9 sh -c 'set -eu; mkdir -p "$1"; cd "$1"
+        curl -fsSL --retry 3 -o "$2" "https://github.com/BtbN/FFmpeg-Builds/releases/download/autobuild-2026-10-15-13-03/$2"
+        echo "5838264a2cff06ddc6b7b2fc43edeb51358ead38fd56d82f83f49c270fe0f5ff  $2" | sha256sum -c -
+        tar xf "$2"' ffmpeg9 "$1/ffmpeg9" "$a"
+}
+
 case "$profile" in
     multilingual-e5-small/onnx-fp32-cpu)
         REL=$P/multilingual-e5-small/release/onnx-fp32-release
@@ -181,6 +225,65 @@ PY
         step g3-producer "${TOOL[@]}" ner --dataset "$DS" --out "$work/g3/predictions.jsonl" --snapshot "$SNAP" \
             --threads "$threads"
         evaluate g3-ner G3 --g3 ner --dataset "$DS" --results "$work/g3/predictions.jsonl"
+        ;;
+    embeddinggemma-2/image-fp32-cpu)
+        REL=$P/embeddinggemma-2/release/image-fp32-release
+        SET=$P/embeddinggemma-2/release/image-retrieval-v1
+        # The reference stage tensors are outside Git (hosted, #71): they regenerate byte-identical only on the
+        # reference CPU. Release media and retrieval media are fetched from Wikimedia Commons and verified by digest.
+        fetch_refs "$REL/hosted-reference.json" "$work/refs/image"
+        fetch_media "$P/embeddinggemma-2/release/media/media.json" "$work/media/release"
+        fetch_media "$SET/image-media.json" "$work/media/image-retrieval-v1"
+        # One accepted image (79 MP) exceeds the 50 MP default: the release evaluation raises the limit explicitly
+        # (capability image_over_default_pixel_limit_with_option, experimental).
+        step dotnet-stages "${TOOL[@]}" embeddinggemma2-images --out "$work/stages" --images "$work/media/release" \
+            --fixtures "$REL" --snapshot "$SNAP" --threads "$threads" --max-image-pixels 80000000
+        evaluate g1-g2-image-release G1,G2 --fixtures "$REL" --results "$work/stages" \
+            --reference-tensors "$work/refs/image" --require-gates G1,G2
+        step g3-producer "${TOOL[@]}" retrieval --model embeddinggemma2-image --dataset "$SET" \
+            --media "$work/media/image-retrieval-v1" --out "$work/g3/embeddings.jsonl" --snapshot "$SNAP" --threads "$threads"
+        evaluate g3-retrieval G3 --g3 retrieval --dataset "$SET" --results "$work/g3/embeddings.jsonl"
+        ;;
+    embeddinggemma-2/video-fp32-cpu)
+        REL=$P/embeddinggemma-2/release/video-fp32-release
+        SET=$P/embeddinggemma-2/release/video-retrieval-v1
+        fetch_refs "$REL/hosted-reference.json" "$work/refs/video"
+        fetch_media "$P/embeddinggemma-2/release/media/media.json" "$work/media/release"
+        fetch_media "$SET/video-media.json" "$work/media/video-retrieval-v1"
+        fetch_ffmpeg "$work/ffmpeg"
+        FF8=$work/ffmpeg/ffmpeg8/ffmpeg-n8.1.3-17-gc389840894-linux64-lgpl-shared-8.1/lib
+        FF9=$work/ffmpeg/ffmpeg9/ffmpeg-n9.0.2-28-g669f5ab083-linux64-lgpl-shared-9.0/lib
+        # FFmpeg 8 is the gated decoder major (decoded frames exact against torchcodec); --ffmpeg9 adds the FFmpeg 9
+        # adapter's decoded frames, gated by its own protected bound (#64).
+        step dotnet-stages "${TOOL[@]}" embeddinggemma2-videos --out "$work/stages" --videos "$work/media/release" \
+            --ffmpeg "$FF8" --ffmpeg9 "$FF9" --fixtures "$REL" --snapshot "$SNAP" --threads "$threads"
+        evaluate g1-g2-video-release G1,G2 --fixtures "$REL" --results "$work/stages" \
+            --reference-tensors "$work/refs/video" --require-gates G1,G2
+        step g3-producer "${TOOL[@]}" retrieval --model embeddinggemma2-video --dataset "$SET" \
+            --media "$work/media/video-retrieval-v1" --out "$work/g3/embeddings.jsonl" --ffmpeg "$FF8" --snapshot "$SNAP" \
+            --threads "$threads"
+        evaluate g3-retrieval G3 --g3 retrieval --dataset "$SET" --results "$work/g3/embeddings.jsonl"
+        ;;
+    qwen3.5-0.8b/ortgenai-fp32x-cpu)
+        TOK=$P/qwen3.5-0.8b/release/tokenizer-release/tokenizer.jsonl
+        RP=$P/qwen3.5-0.8b/release/release-prompts
+        DS=$P/qwen3.5-0.8b/release/task-quality/gsm8k-test-v1/prompts.jsonl
+        dotnet build ai-dotnet/tools/Starlings.Qwen35.Fidelity --configuration Release --nologo -v quiet
+        QWEN=(dotnet ai-dotnet/tools/Starlings.Qwen35.Fidelity/bin/Release/net10.0/Starlings.Qwen35.Fidelity.dll)
+        # The full step-0 reference vectors are outside Git (hosted, #71); the evaluator checks each against the
+        # fixture's step0_sha256.
+        fetch_refs "$RP/reference/hosted-reference.json" "$work/refs/qwen"
+        step g1-tokenizer-producer "${TOOL[@]}" tokenizer --model qwen35 \
+            --tokenizer "$SNAP/transformers-5.18.0/tokenizer.json" --fixtures "$TOK" --out "$work/g1-tokenizer"
+        evaluate g1-tokenizer-release G1 --tokenizer-fixtures "$TOK" --results "$work/g1-tokenizer"
+        step release-prompts "${QWEN[@]}" --bundle "$SNAP" --variant fp32x --device cpu \
+            --prompts "$RP/prompts-release-v1.jsonl" --reference "$RP/reference" --out "$work/run" \
+            --modes parity,fixture-semantics --threads "$threads"
+        evaluate g1-g2-release-prompts G1,G2 --fixtures "$RP/reference" --results "$work/run" \
+            --reference-tensors "$work/refs/qwen" --require-gates G1,G2
+        step g3-producer "${QWEN[@]}" generation --bundle "$SNAP" --prompts "$DS" --out "$work/g3" --variant fp32x \
+            --device cpu --threads "$threads"
+        evaluate g3-gsm8k G3 --g3 generation --dataset "$DS" --results "$work/g3"
         ;;
     *)
         echo "error: no release-set recipe for $profile" >&2
