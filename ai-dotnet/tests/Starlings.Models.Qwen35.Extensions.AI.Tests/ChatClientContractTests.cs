@@ -653,9 +653,9 @@ public sealed class ChatClientContractTests
     public void CapabilitiesReportTheAdapter()
     {
         var all = Qwen35Capabilities.All;
-        Assert.Equal(Qwen35CapabilityStatus.Experimental, all["extensions_ai.chat_client"]);
-        Assert.Equal(Qwen35CapabilityStatus.Experimental, all["extensions_ai.streaming"]);
-        Assert.Equal(Qwen35CapabilityStatus.Experimental, all["extensions_ai.cancellation"]);
+        Assert.Equal(Qwen35CapabilityStatus.Supported, all["extensions_ai.chat_client"]);
+        Assert.Equal(Qwen35CapabilityStatus.Supported, all["extensions_ai.streaming"]);
+        Assert.Equal(Qwen35CapabilityStatus.Supported, all["extensions_ai.cancellation"]);
         Assert.Equal(Qwen35CapabilityStatus.Experimental, all["extensions_ai.tools"]);
         Assert.Equal(Qwen35CapabilityStatus.Experimental, all["extensions_ai.function_invocation"]);
         Assert.Equal(Qwen35CapabilityStatus.Unsupported, all["extensions_ai.tool_mode.required"]);

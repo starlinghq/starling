@@ -7,7 +7,11 @@
 # fixtures (PR #42) and binding tolerances set on 2026-10-11 (qualification).
 schema_version: 1
 id: embeddinggemma-2/image-fp32-cpu
-maturity: experimental
+# Stable since 2026-10-16 (maintainer's delegated promotion; docs/kickoff.md, "Stable CPU profiles, third round"): every
+# gate G0 to G7 passed, the contract is the Starlings.Models.EmbeddingGemma2 README's "Stable contract: images", and
+# the scheduled qualification reruns G1 to G3 on the release sets (G2 on the hosted reference tensors pinned by the
+# protected hosted-reference.json, #71) and a one-hour soak weekly, green in run 38848321624.
+maturity: stable
 
 origin:
   code:
@@ -207,20 +211,22 @@ execution:
 
 capabilities:
   # Starlings.Models.EmbeddingGemma2 (EmbeddingGemma2MultimodalEmbedder); evidence in ai-dotnet/README.md and
-  # docs/evidence/embeddinggemma2-images/. Experimental means tested from decoded RGB (SkiaSharp, equal to PIL's) against
-  # the accepted image fixtures with the protected tolerances.
-  image: experimental
-  image_interleaved_text: experimental
-  image_multiple_per_input: experimental
-  image_prompts: experimental
-  image_budget_280: experimental
+  # docs/evidence/embeddinggemma2-images/. Statuses follow the Stable contract in the package README ("Stable contract:
+  # images"): supported where the accepted image fixtures and the P-030 image release set (G1, G2) with G3 to G7 cover it
+  # on Linux x64 CPU, experimental where only proposed rows or an opt-in deviation do, unsupported outside it.
+  # EmbeddingGemma2Capabilities.Profiles holds the same statuses (tested key for key).
+  image: supported
+  image_interleaved_text: supported
+  image_multiple_per_input: supported
+  image_prompts: supported
+  image_budget_280: supported
   # image_budget_other (capability closure 2026-10-14, docs/evidence/capability-closure-2026-10-14/README.md): six fixture images at 70, 140, 560 and
   # 1,120 soft tokens against sentence-transformers with the processor's max_soft_tokens set (proposed rows):
   # preprocessing and ids exact, embedding max abs 9.2e-6 (bound 1e-5). Proposed rows, protected bounds.
   image_budget_other: experimental
-  image_batch: experimental
-  image_matryoshka: experimental
-  image_decode_png_jpeg: experimental
+  image_batch: supported
+  image_matryoshka: supported
+  image_decode_png_jpeg: supported
   # image_decode_gif_bmp_webp (capability closure 2026-10-14): SkiaSharp decoded RGB equal to PIL's convert("RGB") on 12
   # GIF, BMP and WebP files written by Pillow from fixture images (proposed image-formats.json). A GIF with transparent
   # pixels is rejected (EmbeddingGemma2ImageRejection.GifTransparency): PIL keeps their palette colour, SkiaSharp does not.
@@ -234,29 +240,32 @@ capabilities:
   # caller raises the limit. With it raised (Fidelity tool --max-image-pixels 80000000), the 79 MP release image
   # commons-image-14 passes G1 and G2 on the P-030 image release set (docs/evidence/release-set-gates-2026-10-14/embeddinggemma2-image-fp32-cpu/).
   image_over_default_pixel_limit_with_option: experimental
-  text_only_inputs: experimental
-  batch: experimental
+  text_only_inputs: supported
+  batch: supported
   streaming: unsupported
-  cancellation: experimental
+  cancellation: supported
   persistence: unsupported
   training: unsupported
   # aot: Native AOT publish on Linux x64 CPU, no trim/AOT warnings, results equal to JIT bit for bit
   # (image and interleaved inputs from decoded RGB; docs/evidence/aot/README.md).
-  # The SkiaSharp decoder adapter under Native AOT is untested.
-  aot: experimental
-  extensions_ai: experimental
+  # The SkiaSharp decoder adapter under Native AOT is untested and outside the Stable contract.
+  aot: supported
+  extensions_ai: supported  # the multimodal generator, equal to the typed API (G7)
   mlnet: unsupported  # no image column in the ML.NET transform (text only)
-  concurrent_calls: experimental
+  concurrent_calls: supported
   input_over_8192_tokens: unsupported
   audio: unsupported
   video: unsupported
 
 compatibility:
+  # Linux x64 CPU: gates G0 to G7 (G1 to G5 on an Intel i7-5820K, AVX2, no AVX-512); the scheduled qualification
+  # reruns G1 to G3 (G2 on the hosted reference tensors, verified against the protected digests) and a one-hour soak on
+  # GitHub-hosted ubuntu-latest (4 logical CPUs; THP `madvise`).
   - os: linux
     arch: x64
     provider: cpu
-    status: experimental
-    verified: 2026-10-11
+    status: supported
+    verified: 2026-10-16
   - os: windows
     arch: x64
     provider: cpu
@@ -293,11 +302,17 @@ maintenance:
   review_date: 2027-01-05
   known_issues:
     - >-
-      The evaluator (model-pipeline evaluate) has no image task: the image package tests enforce the protected bounds
-      (docs/evidence/embeddinggemma2-images/). G1/G2 are not run for this profile.
+      The image release set's reference stage tensors regenerate byte-identical only on the reference CPU at 6 threads;
+      the accepted soft-token and token-embedding arrays are hosted at Starlinghq/starling-release-references (commit
+      and file digests in the protected hosted-reference.json, #71), and the evaluator checks every array against the
+      protected tensors.json, so the scheduled G2 needs no regeneration.
     - >-
-      The hosted graphs' download addresses are placeholders until the maintainer creates the GitHub release
-      embeddinggemma-2-vision-onnx-r1; acquisition of the image graphs is untested until then.
+      One accepted release image (79 MP) exceeds the default 50,000,000-pixel limit; G1 and G2 pass with the limit
+      raised for it (image_over_default_pixel_limit_with_option, experimental); the default stays a memory bound.
+    - >-
+      Linux memory: Starlings.Runtime.Onnx calls malloc_trim on session release (on by default); the qualification soak
+      runs with transparent huge pages `madvise`. No MALLOC_* setting is required on CPU; on `always` hosts resident
+      memory can look larger without any leak.
     - >-
       One CPU architecture (AVX2) produced the reference; PyTorch's generic uint8 kernel is expected to give the same
       resized bytes (same int16 weights), not verified. The C# resampler is integer arithmetic and machine-independent.

@@ -193,7 +193,7 @@ capabilities:
   stop_sequences: experimental
   max_new_tokens: experimental
   usage: experimental
-  concurrent_requests: "experimental"
+  concurrent_requests: experimental
   step0_logits: experimental
   chat_template_owned_text: experimental
   enable_thinking: experimental

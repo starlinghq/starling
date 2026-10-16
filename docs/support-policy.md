@@ -1,6 +1,6 @@
 # Support policy
 
-Status: **draft for maintainer review** (workstream R10, `docs/plan/production-readiness.md`). This document states what each maturity label commits the project to. It does not change any label; maturity changes only when the maintainer records gate results (M10). Since 2026-10-15 three profiles are Stable: `gliner2-base-v1/onnx-fp32-cpu` (`docs/kickoff.md`, "First Stable profile"), `multilingual-e5-small/onnx-fp32-cpu` and `embeddinggemma-2/onnx-fp32-cpu` ("Stable CPU profiles, second round"). Where this document proposes a number or a rule that the plan does not fix, it says so and lists it under [open questions](#open-questions).
+Status: **draft for maintainer review** (workstream R10, `docs/plan/production-readiness.md`). This document states what each maturity label commits the project to. It does not change any label; maturity changes only when the maintainer records gate results (M10). Five profiles are Stable. Since 2026-10-15: `gliner2-base-v1/onnx-fp32-cpu` (`docs/kickoff.md`, "First Stable profile"), `multilingual-e5-small/onnx-fp32-cpu` and `embeddinggemma-2/onnx-fp32-cpu` ("Stable CPU profiles, second round"). Since 2026-10-16: `embeddinggemma-2/image-fp32-cpu` and `qwen3.5-0.8b/ortgenai-fp32x-cpu` ("Stable CPU profiles, third round"). Where this document proposes a number or a rule that the plan does not fix, it says so and lists it under [open questions](#open-questions).
 
 Sources: plan sections 9, 10, 14 and 16 (`docs/plan/fast-faithful-ai-dotnet.md`), `.github/SUPPORT.md`, `.github/SECURITY.md`, `docs/kickoff.md`.
 
