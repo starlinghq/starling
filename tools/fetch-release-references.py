@@ -1,13 +1,15 @@
 #!/usr/bin/env python3
 """Download a release set's reference files kept outside Git, verified against its protected record.
 
-    python3 -I tools/fetch-release-references.py <protected hosted-reference.json> <out dir>
+    python3 -I tools/fetch-release-references.py [--prune] <protected hosted-reference.json> <out dir>
 
 The record (`model-pipeline/protected/<model>/release/<set>/hosted-reference.json`) names a Hugging Face dataset
 repository, a full commit SHA and, per file, its size and SHA-256. Every file is downloaded anonymously at that commit
 into <out dir> under its recorded relative path, and refused unless its size and SHA-256 equal the record. The evaluator
 then checks every array or vector it reads against the digests the release set itself records (`tensors.json`,
-`environment.json`), so this download check is a first gate, not the only one.
+`environment.json`), so this download check is a first gate, not the only one. A file already in <out dir> is kept
+only if it matches the record; otherwise it is deleted and downloaded again, so a stale copy cannot stay. --prune also
+deletes every other file under <out dir> (a cache directory that earlier held other references).
 
 Exit 0 when every file is present and verified, 1 on any mismatch or download failure, 2 on bad arguments.
 Nothing is written inside the repository: <out dir> must be outside it.
@@ -55,6 +57,9 @@ def download(url: str, dest: Path, attempts: int = 4) -> None:
 
 
 def main(argv: list[str]) -> int:
+    prune = bool(argv) and argv[0] == "--prune"
+    if prune:
+        argv = argv[1:]
     if len(argv) != 2:
         print(__doc__, file=sys.stderr)
         return 2
@@ -73,14 +78,24 @@ def main(argv: list[str]) -> int:
         return 2
     base = f"https://huggingface.co/datasets/{src['repository']}/resolve/{src['revision']}/{src['path']}"
     out.mkdir(parents=True, exist_ok=True)
-    bad = 0
-    for rel, want in record["files"].items():
+    for rel in record["files"]:
         if rel.startswith("/") or ".." in Path(rel).parts:
             print(f"error: unsafe path {rel!r} in the record", file=sys.stderr)
             return 2
+    if prune:
+        keep = {(out / rel).resolve() for rel in record["files"]}
+        for f in sorted(p for p in out.rglob("*") if p.is_file() or p.is_symlink()):
+            if f.resolve() not in keep:
+                print(f"pruned {f.relative_to(out)}")
+                f.unlink()
+    bad = 0
+    for rel, want in record["files"].items():
         dest = out / rel
         dest.parent.mkdir(parents=True, exist_ok=True)
         if not (dest.is_file() and dest.stat().st_size == want["size"] and sha256_file(dest) == want["sha256"]):
+            if dest.exists() or dest.is_symlink():
+                print(f"stale {rel}: does not match the record; deleted")
+                dest.unlink()
             try:
                 download(f"{base}/{urllib.parse.quote(rel)}", dest)
             except Exception as e:  # noqa: BLE001 - reported per file, the job fails below
@@ -95,7 +110,8 @@ def main(argv: list[str]) -> int:
             dest.unlink(missing_ok=True)
             bad += 1
     n = len(record["files"])
-    print(f"{n - bad}/{n} files verified against {record_path.relative_to(REPO_ROOT)} ({src['repository']}@{src['revision']})")
+    source = f"{src['repository']}@{src['revision']}"
+    print(f"{n - bad}/{n} files verified against {record_path.relative_to(REPO_ROOT)} ({source})")
     return 1 if bad else 0
 
 
