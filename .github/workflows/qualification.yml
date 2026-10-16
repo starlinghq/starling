@@ -69,7 +69,7 @@ on:
       soak_variants:
         description: >-
           Diagnostics: JSON array of soak variants, each '+'-joined from default, no-heap-trim (tool --no-heap-trim),
-          tool-trim (--malloc-trim), smaps (--smaps-every 25), thp-always (keep the image's THP setting), mmap64k (MALLOC_MMAP_THRESHOLD_=65536), arena2 (MALLOC_ARENA_MAX=2), no-env
+          tool-trim (--malloc-trim), smaps (--smaps-every 25), smaps5 (--smaps-every 5), keep-loaded (--keep-loaded), thp-always (keep the image's THP setting), mmap64k (MALLOC_MMAP_THRESHOLD_=65536), arena2 (MALLOC_ARENA_MAX=2), no-env
           (drop the profile's documented MALLOC_ setting)
         type: string
         default: '["default"]'
@@ -495,6 +495,8 @@ jobs:
               no-heap-trim) extra+=(--no-heap-trim) ;;
               tool-trim) extra+=(--malloc-trim) ;;
               smaps) extra+=(--smaps-every 25) ;;
+              smaps5) extra+=(--smaps-every 5) ;;
+              keep-loaded) extra+=(--keep-loaded) ;;
               mmap64k) export MALLOC_MMAP_THRESHOLD_=65536 ;;
               arena2) export MALLOC_ARENA_MAX=2 ;;
               no-env) MMAP_THRESHOLD="" ;;
@@ -507,6 +509,10 @@ jobs:
             echo "$thp" | sudo tee "$thp_file" >/dev/null
           fi
           echo "transparent_hugepage: $(cat "$thp_file" 2>/dev/null || echo n/a)"
+          # The precondition is checked, not assumed: a failed write fails the job instead of measuring under `always`.
+          if [[ -n "$thp" && -f "$thp_file" ]] && ! grep -q "\[$thp\]" "$thp_file"; then
+            echo "::error::transparent_hugepage is not [$thp] after the write"; exit 2
+          fi
           if [[ -n "$MMAP_THRESHOLD" ]]; then
             export MALLOC_MMAP_THRESHOLD_="$MMAP_THRESHOLD"
             note="$note, MALLOC_MMAP_THRESHOLD_=$MMAP_THRESHOLD"

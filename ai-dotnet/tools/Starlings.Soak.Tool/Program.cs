@@ -320,6 +320,11 @@ internal sealed class SoakRunner(SoakWorkload workload, SoakOptions options)
 
                 var (latencies, deadlines) = Serve(instance, reference, cycle, requestsPerCycle);
                 var loaded = MemoryProbe.Sample(clock.Elapsed.TotalSeconds, "loaded", cycle, settle: true);
+                if (options.SmapsEvery is int everyLoaded && cycle % everyLoaded == 0)
+                {
+                    MemoryProbe.AppendSmaps(basePath + ".smaps.jsonl", clock.Elapsed.TotalSeconds, cycle, "loaded");
+                }
+
                 sampler.SetPhase("unload", cycle);
                 t = Stopwatch.GetTimestamp();
                 if (kept is null)
@@ -337,7 +342,7 @@ internal sealed class SoakRunner(SoakWorkload workload, SoakOptions options)
 
                 if (options.SmapsEvery is int every && cycle % every == 0)
                 {
-                    MemoryProbe.AppendSmaps(basePath + ".smaps.jsonl", clock.Elapsed.TotalSeconds, cycle);
+                    MemoryProbe.AppendSmaps(basePath + ".smaps.jsonl", clock.Elapsed.TotalSeconds, cycle, "unloaded");
                 }
 
                 cycles.Add(new CycleRecord(
