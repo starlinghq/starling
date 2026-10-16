@@ -106,10 +106,11 @@ Starling depends only on the vendor-neutral `Microsoft.Extensions.AI.Abstraction
 
 ## Use it with your AI coding agent
 
-Starling includes two files written for coding agents such as Claude Code, Copilot, Cursor and Codex:
+Starling includes three files written for coding agents such as Claude Code, Copilot, Cursor and Codex:
 
 - [`llms.txt`](llms.txt) is a short map of the repository: what Starling is, the facts that matter when writing code, and links to the rest.
 - [`skills/starling-dotnet/SKILL.md`](skills/starling-dotnet/SKILL.md) is an [Agent Skill](https://agentskills.io) that teaches an agent to use the packages. It covers which package fits which task, the native runtime the app must add, offline loading, verified code for every model, CUDA, and the pitfalls (e5 prefixes, EmbeddingGemma 2 prompts, input limits).
+- [`skills/starling-add-model/SKILL.md`](skills/starling-add-model/SKILL.md) is for contributors. It walks an agent through adding a new model in a pull request: choosing the onboarding route, writing the candidate contract, running the `model-pipeline` comparison against a fresh Python reference, and opening a draft PR. It also says what only the maintainer may change.
 
 To give your agent context for a single task, paste this:
 

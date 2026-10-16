@@ -8,7 +8,7 @@
 - **Documentation contributors:** samples, model cards, migration notes.
 - **Hardware testers:** benchmark results on hardware we lack. Community results are labeled separately until reproduced under controlled conditions.
 
-New here? Issues labeled [`good first issue`](https://github.com/starlinghq/starling/labels/good%20first%20issue) are scoped to be finished without knowing the whole pipeline, and each one states what done looks like. Comment on one to claim it.
+New here? Issues labeled [`good first issue`](https://github.com/starlinghq/starling/labels/good%20first%20issue) are scoped to be finished without knowing the whole pipeline, and each one states what done looks like. Comment on one to claim it. To add a model, follow [`skills/starling-add-model/SKILL.md`](../skills/starling-add-model/SKILL.md). It is written so a coding agent can follow it too.
 
 ## Workflow
 
