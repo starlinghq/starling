@@ -614,6 +614,6 @@ public sealed class TransformContractTests : IDisposable
         Assert.Equal(EmbeddingGemma2CapabilityStatus.Unsupported, all["mlnet.persistence"]);
         Assert.Equal(EmbeddingGemma2CapabilityStatus.Unsupported, all["mlnet.cancellation"]);
         Assert.Equal(EmbeddingGemma2CapabilityStatus.Unsupported, all["mlnet.training"]);
-        Assert.Equal(EmbeddingGemma2CapabilityStatus.Experimental, all["mlnet.embedding_transform.cuda"]);
+        Assert.Equal(EmbeddingGemma2CapabilityStatus.Supported, all["mlnet.embedding_transform.cuda"]); // Stable CUDA text profile (RTX 3090)
     }
 }

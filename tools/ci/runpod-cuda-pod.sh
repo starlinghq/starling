@@ -82,7 +82,13 @@ log "pod run start: commit $SHA, soak $SOAK_DURATION"
     echo "backstop: $(pgrep -fa 'sleep [0-9]+' | head -3)"
 } >"$OUT/environment.txt" 2>&1
 driver="$(nvidia-smi --query-gpu=driver_version --format=csv,noheader | head -1)"
-log "GPU $(nvidia-smi --query-gpu=name --format=csv,noheader | head -1), driver $driver"
+gpu_name="$(nvidia-smi --query-gpu=name --format=csv,noheader | head -1)"
+log "GPU $gpu_name, driver $driver"
+# The CUDA contracts cover the RTX 3090 (Ampere) only; results from another GPU are never recorded as this run's.
+if [[ "$gpu_name" != "NVIDIA GeForce RTX 3090" ]]; then
+    record all gpu-is-rtx-3090 "failed ($gpu_name; the CUDA contracts cover only the NVIDIA GeForce RTX 3090)"
+    finish
+fi
 
 # Volume space: the earlier runs regenerated reference tensors into $W/ci-cache/refs on this CPU (wrong digests, and
 # about 1.5 GB). They are replaced by the hosted, digest-verified references below, so the directory goes, as do

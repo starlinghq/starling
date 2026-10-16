@@ -315,7 +315,7 @@
       "family": "embeddinggemma-2",
       "profile": "image-fp32-cuda",
       "manifest": "model-pipeline/registry/embeddinggemma-2/image-fp32-cuda/manifest.yaml",
-      "maturity": "experimental",
+      "maturity": "stable",
       "tasks": [
         "image-embedding"
       ],
@@ -323,8 +323,11 @@
       "review_date": "2027-01-05",
       "last_checked": "2026-10-11",
       "known_issues": [
-        "The evaluator (model-pipeline evaluate) has no image task: the image package tests enforce the protected bounds (docs/evidence/embeddinggemma2-images/). G1/G2 are not run for this profile.",
-        "The hosted graphs' download addresses are placeholders until the maintainer creates the GitHub release embeddinggemma-2-vision-onnx-r1; acquisition of the image graphs is untested until then.",
+        "Contract hardware: an NVIDIA GeForce RTX 3090 (Ampere, sm_86), driver 580, CUDA 13 runtime. The CUDA gates G1 to G5 (G4 and G5 in the binding 2026-10-16 round) ran on RTX 3090s, and the per-release GPU regression is pinned to the RTX 3090 and refuses any other GPU (tools/ci/runpod.py). Its first run, 38857860186, landed on an RTX 4090 (Ada) before the pin: every check of this profile passed there, but embeddinggemma-2/video-fp32-cuda failed G2 (docs/evidence/gpu-regression-2026-10-16/README.md). Other NVIDIA GPUs, including the RTX 4090, are untested and outside the contract.",
+        "Linux memory: MALLOC_MMAP_THRESHOLD_=65536 is recommended, not required (the Starlings.Models.EmbeddingGemma2 README, \"Memory on Linux\"); the G4 soak and the per-release soak smoke test ran without it.",
+        "Cancellation on CUDA completes the current vision or text run before throwing (#61), so its latency is one run.",
+        "The image release set's reference stage tensors regenerate byte-identical only on the reference CPU at 6 threads; the accepted soft-token and token-embedding arrays are hosted at Starlinghq/starling-release-references (commit and file digests in the protected hosted-reference.json, #71), and the evaluator checks every array against the protected tensors.json, so the per-release G2 needs no regeneration.",
+        "The multimodal IEmbeddingGenerator over CUDA (CudaAdapterTests.MultimodalGeneratorOverCudaMeetsTheProtectedImageAndVideoTolerances) needs the video fixture set as well, which the per-release GPU pod does not have, so that test is skipped there (run 38857860186); extensions_ai stays experimental on this profile until it runs per release (G7 evidence: 2026-10-14).",
         "One CPU architecture (AVX2) produced the reference; PyTorch's generic uint8 kernel is expected to give the same resized bytes (same int16 weights), not verified. The C# resampler is integer arithmetic and machine-independent.",
         "The 16-bit fixture image (mode-gray16) has a reference row that no C# path reproduces: upstream renders it white, this profile rejects it.",
         "GPU memory: one 2,520-patch image needs about 610 MB of attention buffer per vision layer on ONNX Runtime CUDA; a vision batch of two failed with about 5.5 GB free in the spike. EmbeddingGemma2MultimodalOptions.MaxVisionBatchSize defaults to 1; the three graphs take about 2.9 GB of GPU memory when text-only inputs are also embedded.",
@@ -389,9 +392,9 @@
         }
       },
       "capabilities": {
-        "batch": "experimental",
+        "batch": "supported",
         "streaming": "unsupported",
-        "cancellation": "experimental",
+        "cancellation": "supported",
         "persistence": "unsupported",
         "training": "unsupported",
         "aot": "experimental",
@@ -402,7 +405,7 @@
         "chat_template_owned_text": "unrecorded",
         "chunked_prefill": "unrecorded",
         "classification": "unrecorded",
-        "concurrent_calls": "experimental",
+        "concurrent_calls": "supported",
         "concurrent_calls_unserialized": "unrecorded",
         "concurrent_requests": "unrecorded",
         "conversation_state_reuse": "unrecorded",
@@ -412,21 +415,21 @@
         "enable_thinking": "unrecorded",
         "entity_extraction": "unrecorded",
         "greedy_generation": "unrecorded",
-        "image": "experimental",
+        "image": "supported",
         "image_16_bit": "unsupported",
         "image_alpha_compositing": "unsupported",
-        "image_batch": "experimental",
-        "image_budget_280": "experimental",
+        "image_batch": "supported",
+        "image_budget_280": "supported",
         "image_budget_other": "experimental",
         "image_decode_gif_bmp_webp": "experimental",
         "image_decode_gif_transparency": "unsupported",
-        "image_decode_png_jpeg": "experimental",
+        "image_decode_png_jpeg": "supported",
         "image_exif_orientation_opt_in": "experimental",
-        "image_interleaved_text": "experimental",
-        "image_matryoshka": "experimental",
-        "image_multiple_per_input": "experimental",
+        "image_interleaved_text": "supported",
+        "image_matryoshka": "supported",
+        "image_multiple_per_input": "supported",
         "image_over_default_pixel_limit_with_option": "experimental",
-        "image_prompts": "experimental",
+        "image_prompts": "supported",
         "input_2050_to_8192_tokens": "unrecorded",
         "input_over_512_tokens": "unrecorded",
         "input_over_8192_tokens": "unsupported",
@@ -449,7 +452,7 @@
         "stop_tokens": "unrecorded",
         "structured_extraction": "unrecorded",
         "structured_output": "unrecorded",
-        "text_only_inputs": "experimental",
+        "text_only_inputs": "supported",
         "tokenizer_owned": "unrecorded",
         "tool_calling": "unrecorded",
         "usage": "unrecorded",
@@ -481,8 +484,8 @@
           "status": "unrecorded"
         },
         "linux-x64 cuda": {
-          "status": "experimental",
-          "verified": "2026-10-11"
+          "status": "supported",
+          "verified": "2026-10-16"
         },
         "windows-x64 cpu": {
           "status": "unrecorded"
@@ -691,7 +694,7 @@
       "family": "embeddinggemma-2",
       "profile": "onnx-fp32-cuda",
       "manifest": "model-pipeline/registry/embeddinggemma-2/onnx-fp32-cuda/manifest.yaml",
-      "maturity": "experimental",
+      "maturity": "stable",
       "tasks": [
         "embedding"
       ],
@@ -699,6 +702,9 @@
       "review_date": "2027-01-05",
       "last_checked": "2026-10-10",
       "known_issues": [
+        "Contract hardware: an NVIDIA GeForce RTX 3090 (Ampere, sm_86), driver 580, CUDA 13 runtime. The CUDA gates G1 to G5 (G4 and G5 in the binding 2026-10-16 round) ran on RTX 3090s, and the per-release GPU regression is pinned to the RTX 3090 and refuses any other GPU (tools/ci/runpod.py). Its first run, 38857860186, landed on an RTX 4090 (Ada) before the pin: every check of this profile passed there, but embeddinggemma-2/video-fp32-cuda failed G2 (docs/evidence/gpu-regression-2026-10-16/README.md). Other NVIDIA GPUs, including the RTX 4090, are untested and outside the contract.",
+        "Linux memory: no MALLOC_* setting is required; the runtime calls malloc_trim on session release (on by default).",
+        "Cancellation on CUDA completes the current run before throwing (#61), so its latency is one chunk: up to about 1.2 s at the default 16 rows of 2,048 tokens; lower MaxBatchSize for faster cancellation (docs/evidence/gliner2-cuda-wrong-output/README.md).",
         "Evaluator run 2026-10-11 (docs/evidence/embeddinggemma2-dotnet/, CPU): G1 passed; G2 failed only on export.token_embeddings (Python ORT vs PyTorch): the tolerance file's |d| <= 1e-4 * max(1, |ref|) judged per value gives 1.7e-2, while the per-case max |d| / max(1, max |ref|) the bound was set from is 6.2e-6. Which reading binds is a maintainer decision; every .NET check passed.",
         "The hosted graph is public since 2026-10-14. The 0.1.0-preview.6 release drill downloaded it with no token into an empty cache, verified it and ran the sample offline (Linux x64, one machine); other platforms are untested.",
         "Accepted fixtures reach 1,750 tokens and batch-independence checks 2,049; 2,050 to 8,192 tokens is covered by the proposed long-input rows (not yet accepted). Long rows need GPU memory that grows with the square of the length in the full-attention layers.",
@@ -764,26 +770,26 @@
         }
       },
       "capabilities": {
-        "batch": "experimental",
+        "batch": "supported",
         "streaming": "unsupported",
-        "cancellation": "experimental",
+        "cancellation": "supported",
         "persistence": "unsupported",
         "training": "unsupported",
         "aot": "experimental",
-        "extensions_ai": "experimental",
-        "mlnet": "experimental",
+        "extensions_ai": "supported",
+        "mlnet": "supported",
         "audio": "unsupported",
         "cancellation_inside_a_step": "unrecorded",
         "chat_template_owned_text": "unrecorded",
         "chunked_prefill": "unrecorded",
         "classification": "unrecorded",
-        "concurrent_calls": "experimental",
+        "concurrent_calls": "supported",
         "concurrent_calls_unserialized": "unrecorded",
         "concurrent_requests": "unrecorded",
         "conversation_state_reuse": "unrecorded",
         "count_gate_closed": "unrecorded",
-        "embedding_pretokenized": "experimental",
-        "embedding_text": "experimental",
+        "embedding_pretokenized": "supported",
+        "embedding_text": "supported",
         "enable_thinking": "unrecorded",
         "entity_extraction": "unrecorded",
         "greedy_generation": "unrecorded",
@@ -805,16 +811,16 @@
         "input_2050_to_8192_tokens": "experimental",
         "input_over_512_tokens": "unrecorded",
         "input_over_8192_tokens": "unsupported",
-        "input_up_to_2049_tokens": "experimental",
+        "input_up_to_2049_tokens": "supported",
         "label_descriptions": "unrecorded",
         "long_context_1667_to_8192_tokens": "unrecorded",
         "long_context_over_8192_tokens": "unrecorded",
-        "matryoshka": "experimental",
+        "matryoshka": "supported",
         "max_new_tokens": "unrecorded",
         "mixed_label_sets_in_batch": "unrecorded",
         "offsets_original_text": "unrecorded",
         "plain_deduplicated_output": "unrecorded",
-        "prompts_query_document": "experimental",
+        "prompts_query_document": "supported",
         "prompts_task": "experimental",
         "reasoning_split": "unrecorded",
         "relation_extraction": "unrecorded",
@@ -825,7 +831,7 @@
         "structured_extraction": "unrecorded",
         "structured_output": "unrecorded",
         "text_only_inputs": "unrecorded",
-        "tokenizer_owned": "experimental",
+        "tokenizer_owned": "supported",
         "tool_calling": "unrecorded",
         "usage": "unrecorded",
         "video": "unsupported",
@@ -856,8 +862,8 @@
           "status": "unrecorded"
         },
         "linux-x64 cuda": {
-          "status": "experimental",
-          "verified": "2026-10-10"
+          "status": "supported",
+          "verified": "2026-10-16"
         },
         "windows-x64 cpu": {
           "status": "unrecorded"
@@ -1075,6 +1081,7 @@
       "review_date": "2027-01-05",
       "last_checked": "2026-10-11",
       "known_issues": [
+        "Not promoted to Stable (2026-10-16). The contract covers the NVIDIA GeForce RTX 3090 (Ampere) only; the RTX 4090 (Ada) is untested and out of contract. The first per-release GPU regression run, 38857860186 (commit 9a18b01), landed on an RTX 4090 (driver 580.159.03) and failed this profile's G2 on the video release set: embedding max abs 1.009e-5 against the protected 1e-5, token embeddings 3.34e-3 against 1e-3 row-relative (worst commons-video-04). G1, G3 and the soak smoke test passed there. On the RTX 3090 the same release set measured 2.77e-6 and 7.97e-4 (docs/evidence/release-set-gates-2026-10-14/embeddinggemma2-video-fp32-cuda/README.md). No tolerance was changed. The per-release run is now pinned to the RTX 3090; promotion waits for a green run there (docs/evidence/gpu-regression-2026-10-16/README.md).",
         "Sampled frames follow torchcodec's seek-based decoding, including the decoder state after a seek: on the Ogg Theora release video commons-video-02 the frame after torchcodec's seek differs from a sequential decode, and that frame depends on FFmpeg frame threading (upstream's num_ffmpeg_threads=0 is the adapter's DecoderThreads default; another thread count changes which frames differ, for upstream as well).",
         "Hosting: the vision and multimodal graphs are public at Starlinghq/embeddinggemma-2-vision-onnx (pinned commit above); the release drill downloaded them with no token on 2026-10-15 and ran the video search offline from that cache (docs/evidence/g6-distribution-2026-10-14/README.md).",
         "Synthetic fixture videos only (no camera footage); default settings only; no variable frame rate, interlaced or HDR video. One CPU architecture (AVX2) produced the reference and the decoder comparison: swscale's SIMD paths on other CPUs (ARM in particular) may differ by a level, for upstream as well.",
@@ -1420,8 +1427,8 @@
           "verified": "2026-10-15"
         },
         "linux-x64 cuda": {
-          "status": "experimental",
-          "verified": "2026-10-10"
+          "status": "supported",
+          "verified": "2026-10-16"
         },
         "windows-x64 cpu": {
           "status": "experimental",
@@ -1443,7 +1450,7 @@
       "family": "gliner2-base-v1",
       "profile": "onnx-fp32-cuda",
       "manifest": "model-pipeline/registry/gliner2-base-v1/onnx-fp32-cuda/manifest.yaml",
-      "maturity": "experimental",
+      "maturity": "stable",
       "tasks": [
         "extraction"
       ],
@@ -1451,6 +1458,9 @@
       "review_date": "2027-01-05",
       "last_checked": "2026-10-10",
       "known_issues": [
+        "Contract hardware: an NVIDIA GeForce RTX 3090 (Ampere, sm_86), driver 580, CUDA 13 runtime. The CUDA gates G1 to G5 (G4 and G5 in the binding 2026-10-16 round) ran on RTX 3090s, and the per-release GPU regression is pinned to the RTX 3090 and refuses any other GPU (tools/ci/runpod.py). Its first run, 38857860186, landed on an RTX 4090 (Ada) before the pin: every check of this profile passed there, but embeddinggemma-2/video-fp32-cuda failed G2 (docs/evidence/gpu-regression-2026-10-16/README.md). Other NVIDIA GPUs, including the RTX 4090, are untested and outside the contract.",
+        "Linux memory: start the process with MALLOC_MMAP_THRESHOLD_=65536 (the Starlings.Models.Gliner2 README, \"Memory on Linux\"); the G4 soak and the per-release soak smoke test run with it.",
+        "Cancellation on CUDA completes the current run before throwing (no mid-graph termination, #61), so its latency is one chunk: about 50 ms for 8 long texts (docs/evidence/gliner2-cuda-wrong-output/README.md).",
         "Results are ordered by confidence; most entity scores saturate to exactly 1.0 in fp32, so near-ties make the order sensitive to backend noise (ORT CUDA with TF32 reorders one 1,329-token case with the same entity set).",
         "Upstream span offsets index the normalized text: a span that includes the appended '.' ends one past the original text (seen at threshold 0.0). The C# package maps such spans onto the input (behavior.defaults).",
         "The hosted graph is public since 2026-10-14. The 0.1.0-preview.6 release drill downloaded it with no token into an empty cache, verified it and ran the sample offline (Linux x64, one machine); other platforms are untested.",
@@ -1517,9 +1527,9 @@
         }
       },
       "capabilities": {
-        "batch": "experimental",
+        "batch": "supported",
         "streaming": "unsupported",
-        "cancellation": "experimental",
+        "cancellation": "supported",
         "persistence": "unsupported",
         "training": "unsupported",
         "aot": "experimental",
@@ -1530,7 +1540,7 @@
         "chat_template_owned_text": "unrecorded",
         "chunked_prefill": "unrecorded",
         "classification": "unsupported",
-        "concurrent_calls": "experimental",
+        "concurrent_calls": "supported",
         "concurrent_calls_unserialized": "unsupported",
         "concurrent_requests": "unrecorded",
         "conversation_state_reuse": "unrecorded",
@@ -1538,7 +1548,7 @@
         "embedding_pretokenized": "unrecorded",
         "embedding_text": "unrecorded",
         "enable_thinking": "unrecorded",
-        "entity_extraction": "experimental",
+        "entity_extraction": "supported",
         "greedy_generation": "unrecorded",
         "image": "unrecorded",
         "image_16_bit": "unrecorded",
@@ -1565,7 +1575,7 @@
         "matryoshka": "unrecorded",
         "max_new_tokens": "unrecorded",
         "mixed_label_sets_in_batch": "unsupported",
-        "offsets_original_text": "experimental",
+        "offsets_original_text": "supported",
         "plain_deduplicated_output": "unsupported",
         "prompts_query_document": "unrecorded",
         "prompts_task": "unrecorded",
@@ -1609,8 +1619,8 @@
           "status": "unrecorded"
         },
         "linux-x64 cuda": {
-          "status": "experimental",
-          "verified": "2026-10-10"
+          "status": "supported",
+          "verified": "2026-10-16"
         },
         "windows-x64 cpu": {
           "status": "unrecorded"
@@ -1818,7 +1828,7 @@
       "family": "multilingual-e5-small",
       "profile": "onnx-fp32-cuda",
       "manifest": "model-pipeline/registry/multilingual-e5-small/onnx-fp32-cuda/manifest.yaml",
-      "maturity": "experimental",
+      "maturity": "stable",
       "tasks": [
         "embedding"
       ],
@@ -1826,6 +1836,9 @@
       "review_date": "2027-01-05",
       "last_checked": "2026-10-05",
       "known_issues": [
+        "Contract hardware: an NVIDIA GeForce RTX 3090 (Ampere, sm_86), driver 580, CUDA 13 runtime. The CUDA gates G1 to G5 (G4 and G5 in the binding 2026-10-16 round) ran on RTX 3090s, and the per-release GPU regression is pinned to the RTX 3090 and refuses any other GPU (tools/ci/runpod.py). Its first run, 38857860186, landed on an RTX 4090 (Ada) before the pin: every check of this profile passed there, but embeddinggemma-2/video-fp32-cuda failed G2 (docs/evidence/gpu-regression-2026-10-16/README.md). Other NVIDIA GPUs, including the RTX 4090, are untested and outside the contract.",
+        "Linux memory: no MALLOC_* setting is required; the runtime calls malloc_trim on session release (on by default).",
+        "Cancellation on CUDA completes the current run before throwing (#61), so its latency is one chunk: about 125 ms for 32 x 512 tokens (docs/evidence/gliner2-cuda-wrong-output/README.md).",
         "The pinned tokenizer.json emits a lone \"▁\" token before special-token literals and for trailing whitespace, where SentencePiece and transformers 5.18 emit none. The owned profile follows tokenizer.json; the difference is recorded, not fixed.",
         "tokenizer.json leaves decomposed Hangul jamo uncomposed, while SentencePiece composes them.",
         "Native runtime: Microsoft.ML.OnnxRuntime.Gpu 1.30.0 needs CUDA 13 runtime libraries and cuDNN 9 on the loader path; the package does not ship them. The schema has no field for native runtime, driver or GPU requirements, so they are recorded here and in docs/m0/e5-gpu.md.",
@@ -1890,14 +1903,14 @@
         }
       },
       "capabilities": {
-        "batch": "experimental",
+        "batch": "supported",
         "streaming": "unsupported",
-        "cancellation": "experimental",
+        "cancellation": "supported",
         "persistence": "unsupported",
         "training": "unsupported",
         "aot": "experimental",
-        "extensions_ai": "experimental",
-        "mlnet": "experimental",
+        "extensions_ai": "supported",
+        "mlnet": "supported",
         "audio": "unrecorded",
         "cancellation_inside_a_step": "unrecorded",
         "chat_template_owned_text": "unrecorded",
@@ -1982,8 +1995,8 @@
           "status": "unrecorded"
         },
         "linux-x64 cuda": {
-          "status": "experimental",
-          "verified": "2026-10-08"
+          "status": "supported",
+          "verified": "2026-10-16"
         },
         "windows-x64 cpu": {
           "status": "unrecorded"
@@ -2004,7 +2017,7 @@
       "family": "qwen3.5-0.8b",
       "profile": "ortgenai-fp16x-cuda",
       "manifest": "model-pipeline/registry/qwen3.5-0.8b/ortgenai-fp16x-cuda/manifest.yaml",
-      "maturity": "experimental",
+      "maturity": "stable",
       "tasks": [
         "generation"
       ],
@@ -2012,6 +2025,10 @@
       "review_date": "2027-01-05",
       "last_checked": "2026-10-10",
       "known_issues": [
+        "Contract hardware: an NVIDIA GeForce RTX 3090 (Ampere, sm_86), driver 580, CUDA 13 runtime. The CUDA gates G1 to G5 (G4 and G5 in the binding 2026-10-16 round) ran on RTX 3090s, and the per-release GPU regression is pinned to the RTX 3090 and refuses any other GPU (tools/ci/runpod.py). Its first run, 38857860186, landed on an RTX 4090 (Ada) before the pin: every check of this profile passed there, but embeddinggemma-2/video-fp32-cuda failed G2 (docs/evidence/gpu-regression-2026-10-16/README.md). Other NVIDIA GPUs, including the RTX 4090, are untested and outside the contract.",
+        "Concurrency on CUDA: requests are serialized step by step (concurrent ONNX Runtime GenAI 0.17.1 generators produced wrong tokens); concurrent_requests means that serialized mode.",
+        "Cancellation is checked between decode steps and, with chunked prefill (the CUDA default), between prefill chunks; never inside a native call.",
+        "Linux memory: no MALLOC_* setting is required; the G4 soak and the per-release soak smoke test ran with the defaults.",
         "The ONNX Runtime GenAI C# API is labeled preview upstream; Starlings.Generation.OnnxGenAI isolates it. The runtime version must equal the builder version that wrote the graph (0.17.1).",
         "fp16 differs from the fp32 reference at near ties (M0: 18 of 22 prompts identical, every divergence where the reference top-1 minus top-2 logit margin was below 0.015). P-016 run: docs/evidence/p016-qwen35/README.md.",
         "Native runtime: Microsoft.ML.OnnxRuntimeGenAI.Cuda 0.17.1 brings Microsoft.ML.OnnxRuntime.Gpu 1.30.0 and needs the CUDA 13 runtime and cuBLAS on the loader path (not shipped). The schema has no field for native runtime, driver or GPU requirements; they are recorded here and in docs/evidence/p016-qwen35/README.md."
@@ -2076,28 +2093,28 @@
       },
       "capabilities": {
         "batch": "unsupported",
-        "streaming": "experimental",
-        "cancellation": "experimental",
+        "streaming": "supported",
+        "cancellation": "supported",
         "persistence": "unsupported",
         "training": "unsupported",
         "aot": "experimental",
-        "extensions_ai": "experimental",
+        "extensions_ai": "supported",
         "mlnet": "unsupported",
         "audio": "unrecorded",
         "cancellation_inside_a_step": "unsupported",
-        "chat_template_owned_text": "experimental",
-        "chunked_prefill": "experimental",
+        "chat_template_owned_text": "supported",
+        "chunked_prefill": "supported",
         "classification": "unrecorded",
         "concurrent_calls": "unrecorded",
         "concurrent_calls_unserialized": "unrecorded",
-        "concurrent_requests": "experimental",
+        "concurrent_requests": "supported",
         "conversation_state_reuse": "unsupported",
         "count_gate_closed": "unrecorded",
         "embedding_pretokenized": "unrecorded",
         "embedding_text": "unrecorded",
         "enable_thinking": "experimental",
         "entity_extraction": "unrecorded",
-        "greedy_generation": "experimental",
+        "greedy_generation": "supported",
         "image": "unrecorded",
         "image_16_bit": "unrecorded",
         "image_alpha_compositing": "unrecorded",
@@ -2121,7 +2138,7 @@
         "long_context_1667_to_8192_tokens": "experimental",
         "long_context_over_8192_tokens": "unsupported",
         "matryoshka": "unrecorded",
-        "max_new_tokens": "experimental",
+        "max_new_tokens": "supported",
         "mixed_label_sets_in_batch": "unrecorded",
         "offsets_original_text": "unrecorded",
         "plain_deduplicated_output": "unrecorded",
@@ -2129,16 +2146,16 @@
         "prompts_task": "unrecorded",
         "reasoning_split": "unsupported",
         "relation_extraction": "unrecorded",
-        "sampling_seeded": "experimental",
-        "step0_logits": "experimental",
-        "stop_sequences": "experimental",
-        "stop_tokens": "experimental",
+        "sampling_seeded": "supported",
+        "step0_logits": "supported",
+        "stop_sequences": "supported",
+        "stop_tokens": "supported",
         "structured_extraction": "unrecorded",
         "structured_output": "unsupported",
         "text_only_inputs": "unrecorded",
-        "tokenizer_owned": "experimental",
+        "tokenizer_owned": "supported",
         "tool_calling": "experimental",
-        "usage": "experimental",
+        "usage": "supported",
         "video": "unrecorded",
         "video_audio_track": "unrecorded",
         "video_batch": "unrecorded",
@@ -2167,8 +2184,8 @@
           "status": "unrecorded"
         },
         "linux-x64 cuda": {
-          "status": "experimental",
-          "verified": "2026-10-10"
+          "status": "supported",
+          "verified": "2026-10-16"
         },
         "windows-x64 cpu": {
           "status": "unrecorded"
@@ -2375,7 +2392,7 @@
       "family": "qwen3.5-0.8b",
       "profile": "ortgenai-fp32x-cuda",
       "manifest": "model-pipeline/registry/qwen3.5-0.8b/ortgenai-fp32x-cuda/manifest.yaml",
-      "maturity": "experimental",
+      "maturity": "stable",
       "tasks": [
         "generation"
       ],
@@ -2383,6 +2400,10 @@
       "review_date": "2027-01-05",
       "last_checked": "2026-10-10",
       "known_issues": [
+        "Contract hardware: an NVIDIA GeForce RTX 3090 (Ampere, sm_86), driver 580, CUDA 13 runtime. The CUDA gates G1 to G5 (G4 and G5 in the binding 2026-10-16 round) ran on RTX 3090s, and the per-release GPU regression is pinned to the RTX 3090 and refuses any other GPU (tools/ci/runpod.py). Its first run, 38857860186, landed on an RTX 4090 (Ada) before the pin: every check of this profile passed there, but embeddinggemma-2/video-fp32-cuda failed G2 (docs/evidence/gpu-regression-2026-10-16/README.md). Other NVIDIA GPUs, including the RTX 4090, are untested and outside the contract.",
+        "Concurrency on CUDA: requests are serialized step by step (concurrent ONNX Runtime GenAI 0.17.1 generators produced wrong tokens); concurrent_requests means that serialized mode.",
+        "Cancellation is checked between decode steps and, with chunked prefill (the CUDA default), between prefill chunks; never inside a native call.",
+        "Linux memory: no MALLOC_* setting is required; the G4 soak and the per-release soak smoke test ran with the defaults.",
         "The ONNX Runtime GenAI C# API is labeled preview upstream; Starlings.Generation.OnnxGenAI isolates it. The runtime version must equal the builder version that wrote the graph (0.17.1).",
         "The fp32x graph was built for the CPU provider; on the CUDA provider it decodes far slower than fp16x (M0: about 22 tokens/s; node placement not inspected, so CPU fallback of the DeltaNet operators is possible). fp32 built for the CUDA provider fails (M0 failure 2).",
         "Native runtime: Microsoft.ML.OnnxRuntimeGenAI.Cuda 0.17.1 brings Microsoft.ML.OnnxRuntime.Gpu 1.30.0 and needs the CUDA 13 runtime and cuBLAS on the loader path (not shipped). The schema has no field for native runtime, driver or GPU requirements; they are recorded here and in docs/evidence/p016-qwen35/README.md."
@@ -2447,28 +2468,28 @@
       },
       "capabilities": {
         "batch": "unsupported",
-        "streaming": "experimental",
-        "cancellation": "experimental",
+        "streaming": "supported",
+        "cancellation": "supported",
         "persistence": "unsupported",
         "training": "unsupported",
         "aot": "experimental",
-        "extensions_ai": "experimental",
+        "extensions_ai": "supported",
         "mlnet": "unsupported",
         "audio": "unrecorded",
         "cancellation_inside_a_step": "unsupported",
-        "chat_template_owned_text": "experimental",
-        "chunked_prefill": "experimental",
+        "chat_template_owned_text": "supported",
+        "chunked_prefill": "supported",
         "classification": "unrecorded",
         "concurrent_calls": "unrecorded",
         "concurrent_calls_unserialized": "unrecorded",
-        "concurrent_requests": "experimental",
+        "concurrent_requests": "supported",
         "conversation_state_reuse": "unsupported",
         "count_gate_closed": "unrecorded",
         "embedding_pretokenized": "unrecorded",
         "embedding_text": "unrecorded",
         "enable_thinking": "experimental",
         "entity_extraction": "unrecorded",
-        "greedy_generation": "experimental",
+        "greedy_generation": "supported",
         "image": "unrecorded",
         "image_16_bit": "unrecorded",
         "image_alpha_compositing": "unrecorded",
@@ -2492,7 +2513,7 @@
         "long_context_1667_to_8192_tokens": "experimental",
         "long_context_over_8192_tokens": "unsupported",
         "matryoshka": "unrecorded",
-        "max_new_tokens": "experimental",
+        "max_new_tokens": "supported",
         "mixed_label_sets_in_batch": "unrecorded",
         "offsets_original_text": "unrecorded",
         "plain_deduplicated_output": "unrecorded",
@@ -2500,16 +2521,16 @@
         "prompts_task": "unrecorded",
         "reasoning_split": "unsupported",
         "relation_extraction": "unrecorded",
-        "sampling_seeded": "experimental",
-        "step0_logits": "experimental",
-        "stop_sequences": "experimental",
-        "stop_tokens": "experimental",
+        "sampling_seeded": "supported",
+        "step0_logits": "supported",
+        "stop_sequences": "supported",
+        "stop_tokens": "supported",
         "structured_extraction": "unrecorded",
         "structured_output": "unsupported",
         "text_only_inputs": "unrecorded",
-        "tokenizer_owned": "experimental",
+        "tokenizer_owned": "supported",
         "tool_calling": "experimental",
-        "usage": "experimental",
+        "usage": "supported",
         "video": "unrecorded",
         "video_audio_track": "unrecorded",
         "video_batch": "unrecorded",
@@ -2538,8 +2559,8 @@
           "status": "unrecorded"
         },
         "linux-x64 cuda": {
-          "status": "experimental",
-          "verified": "2026-10-10"
+          "status": "supported",
+          "verified": "2026-10-16"
         },
         "windows-x64 cpu": {
           "status": "unrecorded"

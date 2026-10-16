@@ -153,7 +153,7 @@ CPU is the default; CUDA is opt-in per model. Each model's options type has a `S
 - Compare embeddings with cosine similarity (`System.Numerics.Tensors.TensorPrimitives.CosineSimilarity`; the package comes in transitively).
 - Don't truncate input silently. The libraries reject over-long input with typed exceptions; catch them and chunk.
 - Don't add `Microsoft.ML.Tokenizers` or another tokenizer for these models. Tokenization is built in (`Starlings.Tokenizers`), and it matches upstream token for token.
-- Check maturity before promising support. Stable today: the CPU profiles of e5, EmbeddingGemma 2 text and image, GLiNER2 and Qwen fp32x, on linux-x64. CUDA profiles are experimental until their per-release GPU run. Windows CPU is experimental. macOS and ARM64 are untested. The current status is in the compatibility matrix linked below.
+- Check maturity before promising support. Stable today on linux-x64: the CPU profiles of e5, EmbeddingGemma 2 text and image, GLiNER2 and Qwen fp32x, and the CUDA profiles of e5, EmbeddingGemma 2 text and image, GLiNER2 and Qwen fp32x and fp16x, on an NVIDIA GeForce RTX 3090 only (other GPUs are untested). EmbeddingGemma 2 video is experimental on CPU and CUDA. GLiNER2 on Linux needs `MALLOC_MMAP_THRESHOLD_=65536` in the process environment (CPU and CUDA). Windows CPU is experimental. macOS and ARM64 are untested. The current status is in the compatibility matrix linked below.
 - Versions: `0.1.0-preview.6` is on nuget.org. Use `--prerelease` with `dotnet add package`, and keep every `Starlings.*` package at the same version.
 
 ## Where to look

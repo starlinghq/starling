@@ -8,7 +8,13 @@
 # accepted (PR #29) and binding tolerances set on 2026-10-10.
 schema_version: 1
 id: embeddinggemma-2/onnx-fp32-cuda
-maturity: experimental
+# Stable since 2026-10-16 (maintainer's delegated promotion; docs/kickoff.md, "Stable CUDA profiles, first round"):
+# every gate G0 to G7 passed (G4 and G5 in the binding RTX 3090 round, docs/evidence/qualification-2026-10-16-cuda/),
+# the contract is the Starlings.Models.EmbeddingGemma2 README's "Stable contract: CUDA" (text, Linux x64, RTX 3090),
+# and the per-release GPU regression (qualification workflow, job cuda (runpod), pinned to the RTX 3090) reruns the
+# CUDA tests, G1 to G3 on the release sets and a soak smoke test. Every check of this profile passed in its first run,
+# 38857860186 (on an RTX 4090, before the pin; docs/evidence/gpu-regression-2026-10-16/README.md).
+maturity: stable
 
 origin:
   code:
@@ -171,11 +177,15 @@ execution:
     use_tf32: 0
 
 capabilities:
-  # Starlings.Models.EmbeddingGemma2; per-capability evidence in ai-dotnet/README.md. Experimental means tested
-  # from fixture ids against the protected development fixtures with the protected tolerances.
-  batch: experimental
+  # Starlings.Models.EmbeddingGemma2; per-capability evidence in ai-dotnet/README.md. Statuses follow the README's
+  # "Stable contract: CUDA": supported where the release-set gates G1 to G3, G4 to G7 and the CUDA test project
+  # (ai-dotnet/tests/Starlings.Models.EmbeddingGemma2.Tests.Cuda, run by the per-release GPU regression) cover it on
+  # an RTX 3090; experimental where only proposed rows or a one-time local run (Native AOT with the CUDA natives) do;
+  # unsupported outside it (images and videos are other profiles). EmbeddingGemma2Capabilities.Profiles holds the same
+  # statuses (tested key for key).
+  batch: supported
   streaming: unsupported
-  cancellation: experimental
+  cancellation: supported
   persistence: unsupported
   training: unsupported
   # Capability closure 2026-10-14 (docs/evidence/capability-closure-2026-10-14/README.md):
@@ -185,35 +195,37 @@ capabilities:
   aot: experimental
   # extensions_ai and mlnet: EmbeddingGemma2.Tests.Cuda CudaAdapterTests, the generator (prompts none, query, document)
   # and the transform over a CUDA session, within this profile's protected tolerances (max abs 4.3e-7 and 3.3e-7).
-  extensions_ai: experimental
-  mlnet: experimental
-  embedding_pretokenized: experimental
-  embedding_text: experimental
-  tokenizer_owned: experimental
-  prompts_query_document: experimental
+  extensions_ai: supported
+  mlnet: supported
+  embedding_pretokenized: supported
+  embedding_text: supported
+  tokenizer_owned: supported
+  prompts_query_document: supported
   # prompts_task (capability closure 2026-10-14, docs/evidence/capability-closure-2026-10-14/README.md): all 20 prompt names on four public texts
   # (proposed task-prompt rows from sentence-transformers): ids exact, embedding max abs 2.8e-7 (CudaParityTests.TaskPromptParityWithTheOwnedTokenizer).
   # Proposed rows, protected bounds.
   prompts_task: experimental
-  matryoshka: experimental
-  input_up_to_2049_tokens: experimental
+  matryoshka: supported
+  input_up_to_2049_tokens: supported
   # input_2050_to_8192_tokens (capability closure 2026-10-14): the CUDA run in docs/evidence/capability-closure-2026-10-14/eg2-long-input-cuda/: 8 text rows of 2,600 to 8,192 tokens, embedding max abs 2.0e-7, ids exact, rejections over 8,192
   # exact, within the protected text bound. Proposed rows (not accepted), protected bounds.
   input_2050_to_8192_tokens: experimental
   input_over_8192_tokens: unsupported
-  concurrent_calls: experimental
+  concurrent_calls: supported
   image: unsupported
   audio: unsupported
   video: unsupported
 
 compatibility:
-  # One RTX 4060 Ti (sm_89), CUDA 13 runtime and cuDNN 9 from the nvidia-* wheels, shared with another process.
-  # One machine is not qualification.
+  # Linux x64 CUDA on an NVIDIA GeForce RTX 3090 (Ampere): G1 to G3 on the release sets, G4 one-hour soak and G5
+  # (binding round 2026-10-16, RunPod, driver 580.126.20). The per-release GPU regression (CUDA tests, G1 to G3, soak
+  # smoke test) is pinned to the RTX 3090; its first run, 38857860186, ran before the pin on an RTX 4090, and every
+  # check of this profile passed. Other GPUs, including the RTX 4090 (Ada): untested, outside the contract.
   - os: linux
     arch: x64
     provider: cuda
-    status: experimental
-    verified: 2026-10-10
+    status: supported
+    verified: 2026-10-16
   - os: windows
     arch: x64
     provider: cuda
@@ -248,6 +260,19 @@ maintenance:
   last_checked: 2026-10-10
   review_date: 2027-01-05
   known_issues:
+    - >-
+      Contract hardware: an NVIDIA GeForce RTX 3090 (Ampere, sm_86), driver 580, CUDA 13 runtime. The CUDA gates G1 to
+      G5 (G4 and G5 in the binding 2026-10-16 round) ran on RTX 3090s, and the per-release GPU regression is pinned to
+      the RTX 3090 and refuses any other GPU (tools/ci/runpod.py). Its first run, 38857860186, landed on an RTX 4090
+      (Ada) before the pin: every check of this profile passed there, but embeddinggemma-2/video-fp32-cuda failed G2
+      (docs/evidence/gpu-regression-2026-10-16/README.md). Other NVIDIA GPUs, including the RTX 4090, are untested and
+      outside the contract.
+    - >-
+      Linux memory: no MALLOC_* setting is required; the runtime calls malloc_trim on session release (on by default).
+    - >-
+      Cancellation on CUDA completes the current run before throwing (#61), so its latency is one chunk: up to about 1.2
+      s at the default 16 rows of 2,048 tokens; lower MaxBatchSize for faster cancellation
+      (docs/evidence/gliner2-cuda-wrong-output/README.md).
     - >-
       Evaluator run 2026-10-11 (docs/evidence/embeddinggemma2-dotnet/, CPU): G1 passed; G2 failed only on
       export.token_embeddings (Python ORT vs PyTorch): the tolerance file's |d| <= 1e-4 * max(1, |ref|) judged per value
