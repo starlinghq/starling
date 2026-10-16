@@ -319,9 +319,13 @@ jobs:
           - profile: embeddinggemma-2/image-fp32-cpu
             reference: model-pipeline/reference/embeddinggemma2/requirements-video.txt
             hashes: --require-hashes
+          # The release-set dump keeps every decoded frame of the array rows (a 2048x1024 clip among them) for both FFmpeg
+          # majors: about 20 GB peak resident on the workstation, above the hosted runner's 16 GB, so the job adds swap
+          # (the first dispatched run lost its runner there).
           - profile: embeddinggemma-2/video-fp32-cpu
             reference: model-pipeline/reference/embeddinggemma2/requirements-video.txt
             hashes: --require-hashes
+            swap_gb: 24
           - profile: qwen3.5-0.8b/ortgenai-fp32x-cpu
     env:
       PROFILE: ${{ matrix.profile }}
@@ -338,6 +342,19 @@ jobs:
           global-json-file: global.json
       - name: Model cache
         run: echo "STARLING_MODELS=$GITHUB_WORKSPACE/.models" >>"$GITHUB_ENV"
+      - name: Swap
+        if: matrix.swap_gb != ''
+        env:
+          SWAP_GB: ${{ matrix.swap_gb }}
+        run: |
+          dir=/mnt
+          [[ -d "$dir" ]] || dir=/
+          sudo swapoff -a || true
+          sudo fallocate -l "${SWAP_GB}G" "$dir/starling.swap"
+          sudo chmod 600 "$dir/starling.swap"
+          sudo mkswap "$dir/starling.swap" >/dev/null
+          sudo swapon "$dir/starling.swap"
+          free -g
       - name: Acquire and verify
         run: tools/acquire-models.sh "$RUNNER_TEMP/locks" "$PROFILE"
       # Qwen fp32x has no Python step in its release gates, so it has no reference environment.
