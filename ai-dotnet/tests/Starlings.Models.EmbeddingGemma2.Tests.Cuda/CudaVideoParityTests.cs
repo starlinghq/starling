@@ -27,6 +27,7 @@ public sealed class EmbeddingGemma2VideoCudaFixture() : EmbeddingGemma2VideoMode
 /// (<c>use_tf32=0</c>, forced by Runtime.Onnx) from adapter-decoded fixture videos, against the CPU PyTorch reference,
 /// with the profile's protected tolerances.yaml.
 /// </summary>
+[Collection("cuda")]
 public sealed class CudaVideoParityTests(EmbeddingGemma2VideoCudaFixture fixture, ITestOutputHelper output) : IClassFixture<EmbeddingGemma2VideoCudaFixture>
 {
     private static readonly EmbeddingGemma2Tolerances Tolerances = EmbeddingGemma2Tolerances.Load("video-fp32-cuda");

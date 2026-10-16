@@ -435,9 +435,31 @@ soak() {  # soak <profile> <workload> [VAR=value...]
     local note
     note="scheduled CUDA qualification on RunPod, $(nvidia-smi --query-gpu=name --format=csv,noheader | head -1), commit ${SHA:0:12}, CUDA libraries from the pinned eg2 requirements-cuda wheels${*:+, $*}"
     env "$@" "${SOAK[@]}" "$model" --cuda --duration "$SOAK_DURATION" --out "$OUT/soak/$model" --note "$note" >"$OUT/soak/$model.log" 2>&1 || rc=$?
-    local line
+    local line smoke
     line="$(grep -E '\] (PASS|FAIL)|^error:' "$OUT/soak/$model.log" | tail -1 | cut -c1-200)"
-    if [[ $rc == 0 ]]; then record "$profile" "soak $SOAK_DURATION${*:+ $*}" passed; else record "$profile" "soak $SOAK_DURATION${*:+ $*}" "failed (exit $rc: ${line:-see soak/$model.log})"; fi
+    # Smoke test: wrong outputs, errors and crashes fail the check. The tool's growth verdict (its rule is unchanged)
+    # is recorded but not binding here: a short run sits in the allocator's warm-up ramp (the binding one-hour Qwen fp32x
+    # CUDA soak ramps 18.4 then 10.5 MiB per half-hour, 27.8 MiB in all), so growth is judged by the one-hour G4 runs.
+    smoke="$(python3 -I - "$OUT/soak/$model" <<'PY'
+import glob, json, sys
+reports = sorted(glob.glob(sys.argv[1] + "/*.json"))
+if not reports:
+    print("failed: no soak report (crash or startup error)")
+    sys.exit(0)
+r = json.load(open(reports[-1], encoding="utf-8"))
+cycles = len(r.get("cycles") or [])
+if r.get("wrong_output_count", 1) or r.get("error_count", 1) or cycles == 0:
+    print(f"failed: {r.get('wrong_output_count')} wrong outputs, {r.get('error_count')} errors, {cycles} cycles")
+else:
+    print(f"passed: smoke ({cycles} cycles, no wrong output or error); growth verdict not binding: {r.get('verdict', '')[:120]}")
+PY
+)"
+    if [[ $smoke == passed* ]]; then
+        log "$profile soak: ${smoke#passed: }"
+        record "$profile" "soak $SOAK_DURATION smoke${*:+ $*}" passed
+    else
+        record "$profile" "soak $SOAK_DURATION smoke${*:+ $*}" "failed (exit $rc: ${smoke#failed: }; ${line:-see soak/$model.log})"
+    fi
 }
 soak multilingual-e5-small/onnx-fp32-cuda e5
 soak gliner2-base-v1/onnx-fp32-cuda gliner2 MALLOC_MMAP_THRESHOLD_=65536

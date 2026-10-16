@@ -3,6 +3,16 @@ using Starlings.TestSupport;
 
 namespace Starlings.Models.EmbeddingGemma2.Tests.Cuda;
 
+/// <summary>
+/// Every CUDA test class of this project runs in this one collection, one class at a time and never beside another
+/// collection. In parallel, the classes' sessions shared the GPU: the cancellation probe's device synchronization then
+/// timed other classes' kernels as work "left queued" (39 of 150 drains above 2 ms on an RTX 3090), and the 1,120-token
+/// image budget could not get its 1 GB attention buffer while the text, video and adapter fixtures held device memory.
+/// Each class fixture is disposed, and its device memory returned, before the next class starts.
+/// </summary>
+[CollectionDefinition("cuda", DisableParallelization = true)]
+public sealed class CudaTestGroup;
+
 internal static class CudaGate
 {
     public const string OptIn = "STARLING_CUDA_TESTS";
@@ -35,6 +45,7 @@ public sealed class EmbeddingGemma2CudaFixture() : EmbeddingGemma2ModelFixture(
 /// forced by Runtime.Onnx) against the CPU PyTorch reference fixtures, with the profile's protected tolerances.yaml.
 /// Small batches: the GPU is shared.
 /// </summary>
+[Collection("cuda")]
 public class CudaParityTests(EmbeddingGemma2CudaFixture fixture, ITestOutputHelper output) : IClassFixture<EmbeddingGemma2CudaFixture>
 {
     private static readonly EmbeddingGemma2Tolerances Tolerances = EmbeddingGemma2Tolerances.Load("onnx-fp32-cuda");
