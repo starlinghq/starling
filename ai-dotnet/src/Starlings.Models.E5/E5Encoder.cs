@@ -75,12 +75,25 @@ public sealed class E5Encoder : IDisposable
     /// <summary>The underlying session, for diagnostics and placement.</summary>
     public OnnxModelSession Session => _session;
 
+    /// <summary>
+    /// The library's session defaults: on CPU, runs execute on the runtime's dedicated run threads unless
+    /// <see cref="OnnxSessionOptions.DedicatedRunThreads"/> is set. Each run allocates and frees memory with
+    /// <c>malloc</c> on the thread that calls ONNX Runtime; glibc keeps freed memory resident at the top of that
+    /// thread's heap, and callers from a rotating thread pool spread it over more and more heaps (hosted one-hour soak:
+    /// 1 to 8 heaps holding 4 to 139 MiB after unloading, docs/evidence/e5-soak-reliability/). Outputs are unchanged.
+    /// ONNX Runtime's CPU arena keeps its default (on).
+    /// </summary>
+    internal static OnnxSessionOptions SessionDefaults(OnnxSessionOptions session) =>
+        session.Provider != OnnxExecutionProvider.Cpu
+            ? session
+            : session with { DedicatedRunThreads = session.DedicatedRunThreads ?? true };
+
     /// <summary>Loads <c>onnx/model.onnx</c> and owns the resulting session.</summary>
     public static E5Encoder Create(string modelPath, E5EncoderOptions? options = null)
     {
         options ??= new E5EncoderOptions();
         options.Validate();
-        var session = OnnxModelSession.Create(modelPath, options.Session);
+        var session = OnnxModelSession.Create(modelPath, SessionDefaults(options.Session));
         try
         {
             return new E5Encoder(session, options, ownsSession: true);
