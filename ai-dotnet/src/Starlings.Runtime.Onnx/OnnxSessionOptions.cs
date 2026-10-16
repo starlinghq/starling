@@ -69,6 +69,16 @@ public sealed record OnnxSessionOptions
     /// </summary>
     public bool ComputeModelSha256 { get; init; } = true;
 
+    /// <summary>
+    /// On Linux with glibc, call <c>malloc_trim(0)</c> when the session's native memory is released (after
+    /// <see cref="OnnxModelSession.Dispose"/> and the last in-flight run), so freed memory goes back to the operating
+    /// system instead of staying resident in glibc's heaps. Default <see langword="true"/>. It releases only free
+    /// memory and changes no allocator setting; it costs a few milliseconds per release. A no-op on other platforms
+    /// and when the process sets the <see cref="AppContext"/> switch
+    /// <c>Starlings.Runtime.Onnx.DisableNativeHeapTrim</c>. See the package README, "Memory on Linux".
+    /// </summary>
+    public bool TrimNativeHeapOnRelease { get; init; } = true;
+
     internal void Validate()
     {
         if (!Enum.IsDefined(Provider))

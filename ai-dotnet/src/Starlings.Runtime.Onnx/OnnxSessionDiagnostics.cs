@@ -56,6 +56,12 @@ public sealed record OnnxSessionDiagnostics
     /// <summary>Configured inter-op threads; <see langword="null"/> means the ONNX Runtime default.</summary>
     public int? InterOpNumThreads { get; init; }
 
+    /// <summary>
+    /// Whether releasing this session returns freed native heap memory to the operating system
+    /// (<see cref="OnnxSessionOptions.TrimNativeHeapOnRelease"/>, Linux with glibc, process switch not set).
+    /// </summary>
+    public bool TrimNativeHeapOnRelease { get; init; }
+
     /// <summary>Graph optimization level applied at session creation.</summary>
     public required string GraphOptimizationLevel { get; init; }
 

@@ -40,6 +40,25 @@ public class ResourceTests(ITestOutputHelper output)
     }
 
     [Fact]
+    public void NativeHeapTrimIsOnByDefaultOnLinuxGlibcAndCanBeTurnedOff()
+    {
+        // On by default where glibc exists (Linux in CI); a no-op, reported as off, elsewhere.
+        Assert.True(new OnnxSessionOptions().TrimNativeHeapOnRelease);
+        using (var session = OnnxModelSession.Create(TestModels.Add, SingleThread))
+        {
+            Assert.Equal(OperatingSystem.IsLinux() && NativeHeap.Enabled, session.Diagnostics.TrimNativeHeapOnRelease);
+            SessionTests.Run(session, 1);
+        }
+
+        // Releasing the session above ran the trim without error; a direct call reports whether it ran.
+        Assert.Equal(OperatingSystem.IsLinux() && NativeHeap.Enabled, NativeHeap.Trim());
+
+        using var off = OnnxModelSession.Create(TestModels.Add, SingleThread with { TrimNativeHeapOnRelease = false });
+        Assert.False(off.Diagnostics.TrimNativeHeapOnRelease);
+        SessionTests.Run(off, 1);
+    }
+
+    [Fact]
     public void DisposeIsIdempotentAndLaterCallsThrow()
     {
         var session = OnnxModelSession.Create(TestModels.Add, SingleThread);

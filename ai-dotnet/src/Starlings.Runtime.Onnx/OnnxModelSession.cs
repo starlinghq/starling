@@ -39,6 +39,7 @@ public sealed class OnnxModelSession : IDisposable
     private readonly InferenceSession _session;
     private readonly SessionOptions _sessionOptions;
     private readonly OrtCUDAProviderOptions? _cudaOptions;
+    private readonly bool _trimOnRelease;
     private readonly object _placementGate = new();
     private volatile bool _placementPending;
     private OnnxPlacementReport? _placement;
@@ -54,6 +55,7 @@ public sealed class OnnxModelSession : IDisposable
         OnnxSessionDiagnostics diagnostics,
         bool capturePlacement)
     {
+        _trimOnRelease = diagnostics.TrimNativeHeapOnRelease;
         _session = session;
         _sessionOptions = sessionOptions;
         _cudaOptions = cudaOptions;
@@ -281,6 +283,7 @@ public sealed class OnnxModelSession : IDisposable
                 ProviderOptions = providerOptions,
                 IntraOpNumThreads = intraOpThreads,
                 InterOpNumThreads = options.InterOpNumThreads,
+                TrimNativeHeapOnRelease = options.TrimNativeHeapOnRelease && NativeHeap.Enabled,
                 GraphOptimizationLevel = sessionOptions.GraphOptimizationLevel.ToString(),
                 ModelSource = source,
                 ModelSizeBytes = size,
@@ -480,6 +483,12 @@ public sealed class OnnxModelSession : IDisposable
             _session.Dispose();
             _cudaOptions?.Dispose();
             _sessionOptions.Dispose();
+
+            // glibc keeps the freed session memory resident; hand the free pages back (NativeHeap).
+            if (_trimOnRelease)
+            {
+                NativeHeap.Trim();
+            }
         }
     }
 }
