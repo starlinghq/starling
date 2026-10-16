@@ -84,25 +84,27 @@ log "pod run start: commit $SHA, soak $SOAK_DURATION"
 driver="$(nvidia-smi --query-gpu=driver_version --format=csv,noheader | head -1)"
 log "GPU $(nvidia-smi --query-gpu=name --format=csv,noheader | head -1), driver $driver"
 
-# Release-input cache: the volume when it has room, else the container disk (prepared again next run).
-CACHE=$W/ci-cache
-free_gb=$(df -BG --output=avail "$W" | tail -1 | tr -dc 0-9)
-if [[ ! -d $CACHE && ${free_gb:-0} -lt 8 ]]; then
-    CACHE=$CI/cache
-    log "volume has ${free_gb} GB free: release inputs cached on the container disk ($CACHE) for this run only"
-fi
-mkdir -p "$CACHE"
 # Volume space: the earlier runs regenerated reference tensors into $W/ci-cache/refs on this CPU (wrong digests, and
 # about 1.5 GB). They are replaced by the hosted, digest-verified references below, so the directory goes, as do
-# partial downloads. The sizes before and after are recorded; nothing outside ci-cache is deleted.
+# partial downloads and FFmpeg archives already extracted. The sizes before and after are recorded; nothing outside
+# ci-cache is deleted.
 {
     echo "== volume before cleanup"; df -h "$W"; du -sh "$W"/* "$W"/ci-cache/* 2>/dev/null
-    rm -rf "$W/ci-cache/refs" "$CACHE/refs"
+    rm -rf "$W/ci-cache/refs"
     find "$W/ci-cache" -maxdepth 3 \( -name '*.part' -o -name '*.tmp' \) -delete 2>/dev/null
     rm -f "$W"/ci-cache/ffmpeg8/*.tar.xz "$W"/ci-cache/ffmpeg9/*.tar.xz
     echo "== volume after cleanup"; df -h "$W"; du -sh "$W"/ci-cache/* 2>/dev/null
 } >"$OUT/volume-cleanup.txt" 2>&1
-log "volume: $(df -h --output=avail "$W" | tail -1 | tr -d ' ') free after removing stale ci-cache entries (volume-cleanup.txt)"
+# Release-input cache: the volume when it has room, else the container disk (prepared again next run, in minutes), so
+# a full volume can no longer make a check not-run.
+CACHE=$W/ci-cache
+free_gb=$(df -BG --output=avail "$W" | tail -1 | tr -dc 0-9)
+log "volume: ${free_gb} GB free after removing stale ci-cache entries (volume-cleanup.txt)"
+if [[ ${free_gb:-0} -lt 8 ]]; then
+    CACHE=$CI/cache
+    log "volume has ${free_gb} GB free: release inputs cached on the container disk ($CACHE) for this run only"
+fi
+mkdir -p "$CACHE"
 
 # ---------------------------------------------------------------------------------------------------------------------
 log "checkout"
