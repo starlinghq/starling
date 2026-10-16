@@ -13,6 +13,7 @@ Key facts for writing code against it:
 ## Docs
 
 - [Agent skill: how to use Starling in a .NET app](https://raw.githubusercontent.com/starlinghq/starling/main/skills/starling-dotnet/SKILL.md): packages, verified code for every model, CUDA, pitfalls
+- [Agent skill: add a new model in a pull request](https://raw.githubusercontent.com/starlinghq/starling/main/skills/starling-add-model/SKILL.md): onboarding routes, candidate contracts, running the reference comparison, what contributors may and may not change
 - [README](https://raw.githubusercontent.com/starlinghq/starling/main/README.md): quickstart, models, maturity, comparison
 - [Model catalog](https://github.com/starlinghq/starling/blob/main/docs/catalog/README.md): every profile, its maturity and the evidence for each release gate
 - [Compatibility matrix](https://github.com/starlinghq/starling/blob/main/docs/catalog/compatibility-matrix.md): OS, architecture and execution provider status per profile
