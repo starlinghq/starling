@@ -79,11 +79,15 @@ public sealed record OnnxSessionOptions
     /// </summary>
     public bool TrimNativeHeapOnRelease { get; init; } = true;
 
-    /// <summary>Diagnostics: ONNX Runtime's CPU memory arena (<c>EnableCpuMemArena</c>). Default <see langword="true"/>.</summary>
-    public bool EnableCpuMemoryArena { get; init; } = true;
-
-    /// <summary>Diagnostics: shrink the CPU arena after every run (<c>memory.enable_memory_arena_shrinkage</c>).</summary>
-    public bool ShrinkCpuArenaAfterRun { get; init; }
+    /// <summary>
+    /// ONNX Runtime's CPU memory arena (<c>enable_cpu_mem_arena</c>). <see langword="null"/> (the default) leaves the
+    /// choice to the model library, and ONNX Runtime's default (on) applies when the session is created directly. With
+    /// the arena on, ONNX Runtime keeps every CPU buffer a run needed in regions it never returns while the session
+    /// lives; their resident size climbs toward the region size as runs touch different parts of it. With it off, each
+    /// buffer is allocated and freed per run. Results are the same either way. See the package README,
+    /// "Memory on Linux".
+    /// </summary>
+    public bool? CpuMemoryArena { get; init; }
 
     internal void Validate()
     {

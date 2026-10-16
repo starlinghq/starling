@@ -111,12 +111,24 @@ public sealed class EmbeddingGemma2Encoder : IDisposable
     /// <summary>True for 768, 512, 256 and 128.</summary>
     public static bool IsSupportedDimension(int dimension) => dimension is 768 or 512 or 256 or 128;
 
+    /// <summary>
+    /// The library's session defaults: on CPU, ONNX Runtime's CPU memory arena is off unless
+    /// <see cref="OnnxSessionOptions.CpuMemoryArena"/> is set. With the arena, the resident memory of a loaded model
+    /// kept climbing for an hour on 4-CPU hosts (video: about 2.2 GB/h with one session kept loaded), and its regions of
+    /// up to 32 MiB, freed at unload, stayed resident in glibc's per-thread heaps (docs/evidence/eg2-hosted-soak/).
+    /// Outputs are unchanged.
+    /// </summary>
+    internal static OnnxSessionOptions SessionDefaults(OnnxSessionOptions session) =>
+        session.Provider == OnnxExecutionProvider.Cpu && session.CpuMemoryArena is null
+            ? session with { CpuMemoryArena = false }
+            : session;
+
     /// <summary>Loads the text-path graph and owns the resulting session.</summary>
     public static EmbeddingGemma2Encoder Create(string modelPath, EmbeddingGemma2EncoderOptions? options = null)
     {
         options ??= new EmbeddingGemma2EncoderOptions();
         options.Validate();
-        var session = OnnxModelSession.Create(modelPath, options.Session);
+        var session = OnnxModelSession.Create(modelPath, SessionDefaults(options.Session));
         try
         {
             return new EmbeddingGemma2Encoder(session, options, ownsSession: true);

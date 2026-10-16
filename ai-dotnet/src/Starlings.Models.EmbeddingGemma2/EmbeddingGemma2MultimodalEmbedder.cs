@@ -190,11 +190,11 @@ public sealed class EmbeddingGemma2MultimodalEmbedder : IDisposable
         OnnxModelSession? multimodal = null;
         try
         {
-            vision = OnnxModelSession.Create(files.VisionModelPath, options.Session with
+            vision = OnnxModelSession.Create(files.VisionModelPath, EmbeddingGemma2Encoder.SessionDefaults(options.Session) with
             {
                 ExpectedModelSha256 = verify ? EmbeddingGemma2ModelAssets.VisionModelSha256 : null,
             });
-            multimodal = OnnxModelSession.Create(files.MultimodalModelPath, options.Session with
+            multimodal = OnnxModelSession.Create(files.MultimodalModelPath, EmbeddingGemma2Encoder.SessionDefaults(options.Session) with
             {
                 ExpectedModelSha256 = verify ? EmbeddingGemma2ModelAssets.MultimodalModelSha256 : null,
             });

@@ -40,7 +40,6 @@ public sealed class OnnxModelSession : IDisposable
     private readonly SessionOptions _sessionOptions;
     private readonly OrtCUDAProviderOptions? _cudaOptions;
     private readonly bool _trimOnRelease;
-    private bool _shrinkCpuArena;
     private readonly object _placementGate = new();
     private volatile bool _placementPending;
     private OnnxPlacementReport? _placement;
@@ -211,7 +210,11 @@ public sealed class OnnxModelSession : IDisposable
             ExecutionMode = ExecutionMode.ORT_SEQUENTIAL,
             GraphOptimizationLevel = GraphOptimizationLevel.ORT_ENABLE_ALL,
         };
-        sessionOptions.EnableCpuMemArena = options.EnableCpuMemoryArena;
+        if (options.CpuMemoryArena is bool arena)
+        {
+            sessionOptions.EnableCpuMemArena = arena;
+        }
+
         OrtCUDAProviderOptions? cudaOptions = null;
         InferenceSession? session = null;
         try
@@ -286,6 +289,7 @@ public sealed class OnnxModelSession : IDisposable
                 IntraOpNumThreads = intraOpThreads,
                 InterOpNumThreads = options.InterOpNumThreads,
                 TrimNativeHeapOnRelease = options.TrimNativeHeapOnRelease && NativeHeap.Enabled,
+                CpuMemoryArena = sessionOptions.EnableCpuMemArena,
                 GraphOptimizationLevel = sessionOptions.GraphOptimizationLevel.ToString(),
                 ModelSource = source,
                 ModelSizeBytes = size,
@@ -294,7 +298,7 @@ public sealed class OnnxModelSession : IDisposable
                 Inputs = ReadTensorInfo(session.InputMetadata),
                 Outputs = ReadTensorInfo(session.OutputMetadata),
             };
-            return new OnnxModelSession(session, sessionOptions, cudaOptions, diagnostics, options.CapturePlacement) { _shrinkCpuArena = !cuda && options.ShrinkCpuArenaAfterRun };
+            return new OnnxModelSession(session, sessionOptions, cudaOptions, diagnostics, options.CapturePlacement);
         }
         catch
         {
@@ -385,11 +389,6 @@ public sealed class OnnxModelSession : IDisposable
         {
             RunOnceCuda(run, runOptions, cancellationToken);
             return;
-        }
-
-        if (_shrinkCpuArena)
-        {
-            runOptions.AddRunConfigEntry("memory.enable_memory_arena_shrinkage", "cpu:0");
         }
 
         using var registration = cancellationToken.CanBeCanceled

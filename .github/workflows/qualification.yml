@@ -69,7 +69,7 @@ on:
       soak_variants:
         description: >-
           Diagnostics: JSON array of soak variants, each '+'-joined from default, no-heap-trim (tool --no-heap-trim),
-          tool-trim (--malloc-trim), smaps (--smaps-every 25), smaps5 (--smaps-every 5), keep-loaded (--keep-loaded), thp-always (keep the image's THP setting), mmap64k (MALLOC_MMAP_THRESHOLD_=65536), arena2 (MALLOC_ARENA_MAX=2), no-env
+          tool-trim (--malloc-trim), smaps (--smaps-every 25), smaps5 (--smaps-every 5), keep-loaded (--keep-loaded), cpu-arena / no-arena (--cpu-arena, --no-cpu-arena), thp-always (keep the image's THP setting), mmap64k (MALLOC_MMAP_THRESHOLD_=65536), arena2 (MALLOC_ARENA_MAX=2), no-env
           (drop the profile's documented MALLOC_ setting)
         type: string
         default: '["default"]'
@@ -497,8 +497,8 @@ jobs:
               smaps) extra+=(--smaps-every 25) ;;
               smaps5) extra+=(--smaps-every 5) ;;
               keep-loaded) extra+=(--keep-loaded) ;;
+              cpu-arena) extra+=(--cpu-arena) ;;
               no-arena) extra+=(--no-cpu-arena) ;;
-              arena-shrink) extra+=(--arena-shrink) ;;
               mmap64k) export MALLOC_MMAP_THRESHOLD_=65536 ;;
               arena2) export MALLOC_ARENA_MAX=2 ;;
               no-env) MMAP_THRESHOLD="" ;;

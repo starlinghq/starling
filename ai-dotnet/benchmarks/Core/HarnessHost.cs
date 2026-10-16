@@ -25,6 +25,16 @@ internal sealed record HarnessContext(ArgMap Args, string WorkloadPath, int? Int
         IntraOpNumThreads = IntraOpThreads,
         InterOpNumThreads = InterOpThreads,
         ComputeModelSha256 = HashModelAtLoad,
+        CpuMemoryArena = CpuArena,
+    };
+
+    /// <summary>--cpu-arena on|off: ONNX Runtime's CPU memory arena forced on or off (A/B runs); absent, the library default.</summary>
+    public bool? CpuArena => Args.Get("cpu-arena", "") switch
+    {
+        "on" => true,
+        "off" => false,
+        "" => null,
+        var v => throw new ArgumentException($"--cpu-arena is on or off, not '{v}'."),
     };
 
     /// <summary>
@@ -42,6 +52,7 @@ internal sealed record HarnessContext(ArgMap Args, string WorkloadPath, int? Int
             ? new JsonObject { ["CUDAExecutionProvider"] = new JsonObject(providerOptions.Select(kv => KeyValuePair.Create(kv.Key, (JsonNode?)kv.Value))) }
             : new JsonObject(),
         ["model_sha256_check_at_load"] = HashModelAtLoad,
+        ["cpu_memory_arena"] = CpuArena switch { true => "on", false => "off", null => "library default" },
     };
 
     /// <summary>The registry profile of <paramref name="kind"/> (for example <c>onnx-fp32</c>) on this provider: <c>onnx-fp32-cpu</c> or <c>onnx-fp32-cuda</c>.</summary>
@@ -232,6 +243,7 @@ internal static class HarnessHost
           --only <names>            warm: only these workloads   --samples-scale F   warm: scale every sample count
           --processes N             cold: fresh processes (default 10)
           --hash-model true|false   check the graph SHA-256 at load (default false)
+          --cpu-arena on|off        force ONNX Runtime's CPU memory arena (A/B runs; default: the library's choice)
           --note <text>             machine note recorded in the environment block
         {driver.Usage}
         --provider: cpu in this CPU build, cuda in the CUDA build ({driver.HarnessName}.Cuda; CUDA_DEVICE_ORDER=PCI_BUS_ID

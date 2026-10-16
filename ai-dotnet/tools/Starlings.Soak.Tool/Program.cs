@@ -135,9 +135,8 @@ internal sealed record SoakOptions
 
     public bool KeepLoaded { get; init; }
 
-    public bool NoCpuArena { get; init; }
-
-    public bool ArenaShrink { get; init; }
+    /// <summary>Diagnostics: ONNX Runtime's CPU arena forced on or off; null keeps the model library's default.</summary>
+    public bool? CpuArena { get; init; }
 
     public bool NoHeapTrim { get; init; }
 
@@ -168,8 +167,8 @@ internal sealed record SoakOptions
                 "--checkpoint-interval" => o with { CheckpointInterval = ParseTime(Next()) },
                 "--malloc-trim" => o with { MallocTrim = true },
                 "--keep-loaded" => o with { KeepLoaded = true },
-                "--no-cpu-arena" => o with { NoCpuArena = true },
-                "--arena-shrink" => o with { ArenaShrink = true },
+                "--cpu-arena" => o with { CpuArena = true },
+                "--no-cpu-arena" => o with { CpuArena = false },
                 "--no-heap-trim" => o with { NoHeapTrim = true },
                 "--smaps-every" => o with { SmapsEvery = Positive(Next(), "--smaps-every") },
                 _ => throw new ArgumentException($"unknown option '{args[i]}'"),
@@ -318,6 +317,11 @@ internal sealed class SoakRunner(SoakWorkload workload, SoakOptions options)
                 }
 
                 providers = instance.SessionProviders;
+                if (_sessionMemory is null && instance.SessionMemory is { } memory)
+                {
+                    _sessionMemory = memory;
+                    Console.WriteLine($"[{workload.Name}] session memory settings: {memory}");
+                }
                 sampler.SetPhase("serve", cycle);
                 if (reference is null)
                 {
@@ -547,6 +551,8 @@ internal sealed class SoakRunner(SoakWorkload workload, SoakOptions options)
             : "PASS: every gating settled series plateaus after warmup; no wrong output or error" + note;
     }
 
+    private string? _sessionMemory;
+
     private JsonObject ToJson(JsonObject environment, IReadOnlyList<string> providers, int requestsPerCycle, MemorySample baseline,
         List<CycleRecord> cycles, List<MemorySample> samples, List<SeriesVerdict> verdicts, string verdict, double seconds)
     {
@@ -560,6 +566,7 @@ internal sealed class SoakRunner(SoakWorkload workload, SoakOptions options)
             ["verdict"] = verdict,
             ["artifacts"] = workload.Artifacts(),
             ["session_providers"] = new JsonArray(providers.Select(p => (JsonNode)p).ToArray()),
+            ["session_memory"] = _sessionMemory,
             ["environment"] = environment,
             ["options"] = new JsonObject
             {
@@ -577,8 +584,7 @@ internal sealed class SoakRunner(SoakWorkload workload, SoakOptions options)
                 ["seed"] = options.Seed,
                 ["malloc_trim"] = options.MallocTrim,
                 ["keep_loaded"] = options.KeepLoaded,
-                ["no_cpu_arena"] = options.NoCpuArena,
-                ["arena_shrink"] = options.ArenaShrink,
+                ["cpu_arena"] = options.CpuArena,
                 ["native_heap_trim_disabled"] = options.NoHeapTrim,
                 ["gpu_sampling"] = MemoryProbe.GpuSamplingAvailable,
             },
@@ -665,6 +671,11 @@ internal static class Report
         sb.AppendLine("| --- | --- |");
         sb.AppendLine(CultureInfo.InvariantCulture, $"| Model lock | {r["artifacts"]?["repository"]}@{r["artifacts"]?["revision"]} |");
         sb.AppendLine(CultureInfo.InvariantCulture, $"| Provider (session) | {o["provider"]} ({string.Join(", ", r["session_providers"]!.AsArray().Select(p => (string?)p))}) |");
+        if ((string?)r["session_memory"] is { } sessionMemory)
+        {
+            sb.AppendLine(CultureInfo.InvariantCulture, $"| Session memory settings | {sessionMemory} |");
+        }
+
         sb.AppendLine(CultureInfo.InvariantCulture, $"| Duration requested / elapsed | {F(o["duration_s"], "F0")} s / {F(o["elapsed_s"], "F0")} s |");
         sb.AppendLine(CultureInfo.InvariantCulture, $"| Load/unload cycles | {cycles.Count} |");
         if (o["keep_loaded"]?.GetValue<bool>() == true)
