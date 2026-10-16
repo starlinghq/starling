@@ -13,7 +13,7 @@ Maturity is per profile, generated from the registry manifests by `model-pipelin
 
 | Profile | Maturity | Platforms |
 | --- | --- | --- |
-| `multilingual-e5-small/onnx-fp32-cpu` | preview | linux-x64 cpu: experimental; windows-x64 cpu: experimental |
+| `multilingual-e5-small/onnx-fp32-cpu` | stable | linux-x64 cpu: supported; windows-x64 cpu: experimental |
 | `multilingual-e5-small/onnx-fp32-cuda` | experimental | linux-x64 cuda: experimental; windows-x64 cuda: untested |
 <!-- /catalog:maturity -->
 
@@ -50,11 +50,11 @@ e5 expects `"query: "` or `"passage: "` at the start of every text; nothing is a
 
 ## Status
 
-Profile `multilingual-e5-small/onnx-fp32-cpu` (Linux x64 CPU) has passed every qualification gate, G0 to G7; its maturity is in the table above. It is not promoted to Stable: **Blocked from Stable (2026-10-15): the weekly one-hour soak on a GitHub-hosted runner (AMD EPYC 9V45, 4 logical CPUs, 1,918 load/unload cycles) fails the unchanged growth rule: unloaded and loaded rss_anon grow about 50 MB/h (unloaded 210 to 363 MB; first half 33 MB, second half 21 MB, limit 32 MB), although the qualifying workstation hour plateaued (1,368 cycles, unloaded 450 to 490 MB). Until it is diagnosed (as GLiNER2's allocator retention was) or passes, the scheduled G4 screen gives no regression support.** Profile `multilingual-e5-small/onnx-fp32-cuda` (Linux x64 CUDA) is Experimental: its one-hour soak failed (memory growth, recorded in the catalog), and there are no scheduled GPU regression runs. Gate evidence: the [catalog](https://github.com/starlinghq/starling/blob/main/docs/catalog/README.md). Model license: MIT, stated only in the model card.
+Profile `multilingual-e5-small/onnx-fp32-cpu` (Linux x64 CPU) is Stable since 2026-10-15: it passed every qualification gate, G0 to G7, and the weekly qualification workflow reruns G1 to G3 on the release sets and a one-hour soak, green. The hosted soak that failed on 2026-10-15 (about 50 MB/h) did so because of glibc retention after unloading and transparent huge pages set to `always` on the runner image, not a leak ([evidence](https://github.com/starlinghq/starling/blob/main/docs/evidence/scheduled-regression-fix/README.md)). Profile `multilingual-e5-small/onnx-fp32-cuda` (Linux x64 CUDA) is Experimental: its one-hour soak failed (memory growth, recorded in the catalog), and there are no scheduled GPU regression runs. Gate evidence: the [catalog](https://github.com/starlinghq/starling/blob/main/docs/catalog/README.md). Model license: MIT, stated only in the model card.
 
 ## Stable contract
 
-This is the target contract of profile `multilingual-e5-small/onnx-fp32-cpu`, which a Stable label would commit to under the [support policy](https://github.com/starlinghq/starling/blob/main/docs/support-policy.md). **Blocked:** the weekly soak fails (see [Status](#status)), so the profile stays Preview and its capabilities experimental; "Supported" below is the target. The statuses in force are the registry manifest's and `E5Capabilities.Profiles`, which a test keeps equal key for key.
+This is the contract of profile `multilingual-e5-small/onnx-fp32-cpu`. Its Stable label (since 2026-10-15) commits to it under the [support policy](https://github.com/starlinghq/starling/blob/main/docs/support-policy.md). The statuses are the registry manifest's and `E5Capabilities.Profiles`, which a test keeps equal key for key.
 
 | Item | Contract |
 | --- | --- |
@@ -62,7 +62,8 @@ This is the target contract of profile `multilingual-e5-small/onnx-fp32-cpu`, wh
 | Model | `intfloat/multilingual-e5-small` at `614241f622f53c4eeff9890bdc4f31cfecc418b3`; `onnx/model.onnx` and `tokenizer.json` verified by SHA-256 (`E5ModelAssets.Lock`). |
 | Tokenizer | `Starlings.Tokenizers` `0.3.0-preview.1`, profile `xlmr-unigram-e5` (pinned `tokenizer.json`, not SentencePiece or transformers' rebuilt tokenizer). |
 | Runtime | ONNX Runtime 1.30.0 (`Microsoft.ML.OnnxRuntime.Managed`; the application adds `Microsoft.ML.OnnxRuntime` 1.30.0 CPU natives), fp32, .NET 10. |
-| Supported platform | Linux x64, CPU. Gates G1 to G5 ran on an Intel Core i7-5820K (Haswell-E, 6 cores and 12 threads, AVX2 and FMA, no AVX-512), .NET 10.0.12. The weekly qualification reruns G1 to G3 on the release sets and a short soak on GitHub-hosted `ubuntu-latest` x64. |
+| Supported platform | Linux x64, CPU (glibc). Gates G1 to G5 ran on an Intel Core i7-5820K (Haswell-E, 6 cores and 12 threads, AVX2 and FMA, no AVX-512), .NET 10.0.12. The weekly qualification reruns G1 to G3 on the release sets and a one-hour soak on GitHub-hosted `ubuntu-latest` x64 (4 logical CPUs; transparent huge pages `madvise`). No `MALLOC_*` environment setting is required. |
+| Memory on Linux | The runtime calls `malloc_trim(0)` when a session is released, on by default; see [Memory on Linux](#memory-on-linux). |
 | Input | Text, or token ids (`EncoderInput`). The caller adds `"query: "` or `"passage: "`; nothing is inserted. |
 | Output | 384-dimensional float32 vectors: mean pooling over the attention mask, then L2 normalization. Batches are right-padded; batch rows equal single calls within the protected tolerances. |
 | Numerical bound | The protected tolerances of the profile (embedding max abs 1e-5 against the PyTorch reference). Release set: 1.46e-7. |
@@ -71,7 +72,15 @@ This is the target contract of profile `multilingual-e5-small/onnx-fp32-cpu`, wh
 | Limits | 512 tokens including `<s>` and `</s>`. `E5Tokenizer` truncates on the right to 512 (the profile's `truncate-right`, as the reference); `E5Encoder` rejects id sequences longer than `MaxSequenceLength` and never truncates them. The model files (487 MB) are acquired explicitly; inference never downloads. |
 | Outside the Stable contract | Windows x64 CPU: experimental (CI builds, runs the weight-free tests and the clean-install drill without the model; no model run). The CUDA profile and the adapters over CUDA: experimental. macOS, ARM64, Windows CUDA: unsupported (no evidence). |
 | Unsupported | streaming, pair input, non-zero `token_type_ids`, encoder-side truncation, prefix insertion, TF32, fp16, quantized graphs, TensorRT, persistence (ML.NET save), training, ML.NET cancellation, the ML.NET adapter under Native AOT, Extensions.AI `Dimensions` truncation. |
-| Known issues | The pinned `tokenizer.json` emits a lone `▁` token before special-token literals and for trailing whitespace, where SentencePiece and transformers 5.18 emit none; the profile follows `tokenizer.json`. It also leaves decomposed Hangul jamo uncomposed, while SentencePiece composes them. Both are recorded, not fixed. |
+| Known issues | On hosts with transparent huge pages set to `always`, resident memory can grow over time with no leak behind it ([Memory on Linux](#memory-on-linux)). The pinned `tokenizer.json` emits a lone `▁` token before special-token literals and for trailing whitespace, where SentencePiece and transformers 5.18 emit none; the profile follows `tokenizer.json`. It also leaves decomposed Hangul jamo uncomposed, while SentencePiece composes them. Both are recorded, not fixed. |
+
+## Memory on Linux
+
+- **Heap trim on release (on by default).** When a session's native memory is released (after `Dispose` and the last in-flight run), `Starlings.Runtime.Onnx` calls glibc's `malloc_trim(0)`, so a process that loads and unloads the model returns the freed memory instead of keeping it resident. It never runs on the request path and changes no allocator setting. Opt out per session with `OnnxSessionOptions.TrimNativeHeapOnRelease = false`, or for the whole process with the `AppContext` switch `Starlings.Runtime.Onnx.DisableNativeHeapTrim` (details in the `Starlings.Runtime.Onnx` README).
+- **Transparent huge pages.** The qualification soaks ran with `/sys/kernel/mm/transparent_hugepage/enabled` set to `madvise` (the Ubuntu default). On hosts set to `always`, the kernel's khugepaged fills in partly used 2 MiB heap ranges, so resident memory can look larger and rise over time without any leak.
+- No `MALLOC_MMAP_THRESHOLD_` or other `MALLOC_*` setting is required for this profile.
+
+Evidence: [scheduled regression fix](https://github.com/starlinghq/starling/blob/main/docs/evidence/scheduled-regression-fix/README.md).
 
 ## Qualification evidence
 
@@ -79,4 +88,4 @@ This is the target contract of profile `multilingual-e5-small/onnx-fp32-cpu`, wh
 - G1, G2 and G3 on the P-030 release sets: [release-set gates](https://github.com/starlinghq/starling/blob/main/docs/evidence/release-set-gates-2026-10-14/e5-onnx-fp32-cpu/README.md).
 - G4 one-hour soak: [2026-10-14](https://github.com/starlinghq/starling/blob/main/docs/evidence/g4-soak-1h-2026-10-14/README.md). G5 matched benchmark: [2026-10-15](https://github.com/starlinghq/starling/blob/main/docs/evidence/qualification-2026-10-15/README.md).
 - G6 distribution and G7 integration: [G6](https://github.com/starlinghq/starling/blob/main/docs/evidence/g6-distribution-2026-10-14/README.md), [G7](https://github.com/starlinghq/starling/blob/main/docs/evidence/g7-integration-2026-10-14/README.md).
-- Regression support: the weekly [qualification workflow](https://github.com/starlinghq/starling/blob/main/.github/workflows/qualification.yml): G1 to G3 pass there (job `release-gates`); the one-hour soak fails the growth rule, which blocks Stable.
+- Regression support: the weekly [qualification workflow](https://github.com/starlinghq/starling/blob/main/.github/workflows/qualification.yml) (jobs `release-gates` and `soak`), green in [run 38822625245](https://github.com/starlinghq/starling/actions/runs/38822625245).

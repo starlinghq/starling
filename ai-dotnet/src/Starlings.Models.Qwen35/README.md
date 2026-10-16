@@ -110,6 +110,8 @@ This is the contract a Stable profile would commit to. Today every profile is **
 
 ## Path to Stable
 
+**Status 2026-10-15 (`ortgenai-fp32x-cpu`): not promoted.** G0 to G4, G6 and G7 are recorded passed on the release sets, and the weekly qualification workflow runs its one-hour soak (green). Two things block Stable: (1) the manifest still records G5 `failed`; the quiet-host rerun passed and qualifies ([evidence](https://github.com/starlinghq/starling/blob/main/docs/evidence/qualification-2026-10-15/README.md#qwen-cpu-time-to-first-token-diagnosis-on-a-quiet-host)), but recording that result is a separate maintainer change; (2) the weekly workflow does not rerun its release-set G1 to G3: G2 needs the full step-0 reference vectors, which are kept outside Git and regenerate byte-identical only in the recorded reference environment. The checklist below predates the release-set gates and is kept as history.
+
 The order of promotion (`docs/plan/production-readiness.md`) takes `ortgenai-fp32x-cpu` to Preview first. `ortgenai-fp16x-cuda` likely stays Preview, because of near-tie divergences (18 of 22 greedy cases exact). Gate evidence is in the [catalog](https://github.com/starlinghq/starling/blob/main/docs/catalog/README.md) once draft PR #4 lands. Agents produce evidence; only the maintainer records a gate or changes maturity.
 
 - [ ] G0 provenance: today a checklist ([P-016 evidence](https://github.com/starlinghq/starling/blob/main/docs/evidence/p016-qwen35/README.md)). The built files are publicly hosted since 2026-10-14 (M3 done); recording the gate result stays with the maintainer.

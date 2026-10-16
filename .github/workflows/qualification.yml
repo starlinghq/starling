@@ -285,6 +285,10 @@ jobs:
   # and pinned reference environments of docs/evidence/release-set-gates-2026-10-14/. Bounds and budgets are the
   # protected ones, verified against Git; every gate must pass. EmbeddingGemma 2's text reference embeddings are
   # committed under protected/ (#60) and also checked against the digest its reference.json records.
+  # Not wired (so not Stable): EmbeddingGemma 2 image-fp32-cpu and video-fp32-cpu, and qwen3.5-0.8b ortgenai-fp32x-cpu.
+  # Their G2 needs reference tensors kept outside Git (image and video soft tokens and token embeddings; Qwen's full
+  # step-0 vectors) that regenerate byte-identical only in the recorded reference environment, the problem #60 solved
+  # for the text embeddings; a hosted rerun would be refused on digest.
   release-gates:
     name: release gates ${{ matrix.profile }}
     needs: assets

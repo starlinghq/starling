@@ -34,17 +34,17 @@ public static class E5Capabilities
     /// </summary>
     public static IReadOnlyDictionary<string, CapabilityStatus> All { get; } = new Dictionary<string, CapabilityStatus>(StringComparer.Ordinal)
     {
-        // Linux x64 CPU passed every gate but stays experimental: the weekly hosted soak fails the growth rule (the
-        // README's Stable contract). Evidence: G1 and G2 on the P-030 release set (232 rows: ids exact, embeddings within 1.46e-7
+        // Linux x64 CPU, Stable since 2026-10-15 (the README's Stable contract): every gate passed, and the weekly
+        // qualification reruns G1 to G3 on the release sets and a one-hour soak, green. Evidence: G1 and G2 on the P-030 release set (232 rows: ids exact, embeddings within 1.46e-7
         // of the reference against 1e-5, every padded batch equal to single calls), G3 on MIRACL (nDCG@10 0.7978), G4
         // one-hour soak (concurrent callers and timed-out requests, 1,368 load/unload cycles, plateau), G6 anonymous
         // download into an empty cache and offline run, G7 adapter tests and drill consumers.
-        ["embedding.pretokenized.cpu"] = CapabilityStatus.Experimental,
+        ["embedding.pretokenized.cpu"] = CapabilityStatus.Supported,
         ["embedding.pretokenized.cuda"] = CapabilityStatus.Experimental,
-        ["embedding.text"] = CapabilityStatus.Experimental,
-        ["batch"] = CapabilityStatus.Experimental,
-        ["cancellation"] = CapabilityStatus.Experimental,
-        ["concurrent_calls"] = CapabilityStatus.Experimental,
+        ["embedding.text"] = CapabilityStatus.Supported,
+        ["batch"] = CapabilityStatus.Supported,
+        ["cancellation"] = CapabilityStatus.Supported,
+        ["concurrent_calls"] = CapabilityStatus.Supported,
         ["streaming"] = CapabilityStatus.Unsupported,
         ["pair_input"] = CapabilityStatus.Unsupported,
         ["token_type_ids_nonzero"] = CapabilityStatus.Unsupported,
@@ -56,11 +56,11 @@ public static class E5Capabilities
         ["tensorrt"] = CapabilityStatus.Unsupported,
         ["persistence"] = CapabilityStatus.Unsupported,
         ["training"] = CapabilityStatus.Unsupported,
-        ["asset_acquisition"] = CapabilityStatus.Experimental,
+        ["asset_acquisition"] = CapabilityStatus.Supported,
 
         // Microsoft.Extensions.AI IEmbeddingGenerator, in Starlings.Models.E5.Extensions.AI (P-011). Supported on the
         // CPU profile (G7), experimental over CUDA; the explicit input-type prefix option lives there, prefix_insertion stays unsupported here.
-        ["extensions_ai.embedding_generator"] = CapabilityStatus.Experimental,
+        ["extensions_ai.embedding_generator"] = CapabilityStatus.Supported,
         ["extensions_ai.embedding_generator.cuda"] = CapabilityStatus.Experimental,
         ["extensions_ai.dimensions_truncation"] = CapabilityStatus.Unsupported,
 
@@ -68,15 +68,15 @@ public static class E5Capabilities
         // composition (embedding_transform, CPU profile), save/load and portable asset packaging (persistence:
         // Save throws; the model is resolved from the asset lock at run time), training (none). Cursors have no
         // cancellation token.
-        ["mlnet.embedding_transform"] = CapabilityStatus.Experimental,
+        ["mlnet.embedding_transform"] = CapabilityStatus.Supported,
         ["mlnet.embedding_transform.cuda"] = CapabilityStatus.Experimental,
-        ["mlnet.batching"] = CapabilityStatus.Experimental,
+        ["mlnet.batching"] = CapabilityStatus.Supported,
         ["mlnet.persistence"] = CapabilityStatus.Unsupported,
         ["mlnet.cancellation"] = CapabilityStatus.Unsupported,
         ["mlnet.training"] = CapabilityStatus.Unsupported,
         // Native AOT on Linux x64 CPU from the packed packages, results equal to JIT bit for bit (typed API and
         // Extensions.AI generator; docs/evidence/aot/, the release drill's step 12); not the ML.NET adapter.
-        ["aot"] = CapabilityStatus.Experimental,
+        ["aot"] = CapabilityStatus.Supported,
         ["mlnet.aot"] = CapabilityStatus.Unsupported,
         // Windows x64: build, weight-free tests and the clean-install drill without the model in CI; no model run, so
         // outside the Stable contract.
@@ -92,14 +92,14 @@ public static class E5Capabilities
         {
             [StableProfile] = new Dictionary<string, CapabilityStatus>(StringComparer.Ordinal)
             {
-                ["batch"] = CapabilityStatus.Experimental,
+                ["batch"] = CapabilityStatus.Supported,
                 ["streaming"] = CapabilityStatus.Unsupported,
-                ["cancellation"] = CapabilityStatus.Experimental,
+                ["cancellation"] = CapabilityStatus.Supported,
                 ["persistence"] = CapabilityStatus.Unsupported,
                 ["training"] = CapabilityStatus.Unsupported,
-                ["aot"] = CapabilityStatus.Experimental,
-                ["extensions_ai"] = CapabilityStatus.Experimental,
-                ["mlnet"] = CapabilityStatus.Experimental,
+                ["aot"] = CapabilityStatus.Supported,
+                ["extensions_ai"] = CapabilityStatus.Supported,
+                ["mlnet"] = CapabilityStatus.Supported,
             },
         };
 }
