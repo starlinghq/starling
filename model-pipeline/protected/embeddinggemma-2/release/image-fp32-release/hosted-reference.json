@@ -1,0 +1,90 @@
+{
+  "committed": false,
+  "source": {
+    "repository": "Starlinghq/starling-release-references",
+    "repo_type": "dataset",
+    "revision": "bde82d8012b97444ab5c175faadb2df0f31673c1",
+    "path": "embeddinggemma-2/image-fp32-release/tensors",
+    "url": "https://huggingface.co/datasets/Starlinghq/starling-release-references/resolve/bde82d8012b97444ab5c175faadb2df0f31673c1/embeddinggemma-2/image-fp32-release/tensors/"
+  },
+  "note": "The image release set's reference stage tensors for `--reference-tensors`: the `image<k>_soft_tokens` and `token_embeddings` members of the accepted 6-thread reference run's `.npz` files, copied byte for byte into uncompressed archives (pixel and encoder arrays omitted, so no media is published). The evaluator checks every array it reads against `tensors.json`; the file digests below let a job refuse a wrong download first.",
+  "recorded": "2026-10-15",
+  "files": {
+    "commons-image-00.npz": {
+      "size": 1303042,
+      "sha256": "def803c7c4228f1facdcc234d8ad65989f83d3e4802bf262824ba27fec4e3c3b"
+    },
+    "commons-image-01.npz": {
+      "size": 1344002,
+      "sha256": "711313256837564a84d9fad0b56a4eccf4433fd0d3d4b81d4ffb5cd33578d355"
+    },
+    "commons-image-02.npz": {
+      "size": 1323522,
+      "sha256": "ddf145599c7a9e1432c807b2b4f9c93278dc71fb93a6fc2f3d774df8c74f6478"
+    },
+    "commons-image-03.npz": {
+      "size": 1303042,
+      "sha256": "d438adc18b9205db1e5f8c397f777f53c0dfaca97bcec4abe06baebe769006a8"
+    },
+    "commons-image-04.npz": {
+      "size": 1344002,
+      "sha256": "3bb548b9683eca6ff315536e6474ad3be37c4c2f5d2ace9b121f93c101446c72"
+    },
+    "commons-image-05.npz": {
+      "size": 1323522,
+      "sha256": "988303b2285db9f0a0577463c7e41aa964bbcd16761106f8a5256c3070c66227"
+    },
+    "commons-image-06.npz": {
+      "size": 1344002,
+      "sha256": "ff636998fa46c08eff420819306ade7844758c81e44733c511af564e7ee5e1a4"
+    },
+    "commons-image-07.npz": {
+      "size": 1323522,
+      "sha256": "67f2721c430ef2c3457ae881a49f1d7e1886eb2ba49c5d0ee6e12e5149f21da3"
+    },
+    "commons-image-08.npz": {
+      "size": 1344002,
+      "sha256": "bcc1495928e10bb06aea1c0e8d3a8b678139e7675305f11d52acf42bc1ae684e"
+    },
+    "commons-image-09.npz": {
+      "size": 1344002,
+      "sha256": "635db68afdf7b2d2915b2d2a5808ae65a83658b91d06195e06ecd23cde6496ff"
+    },
+    "commons-image-10.npz": {
+      "size": 1405442,
+      "sha256": "5164825992e0fd565bd9a0c380d7153ccb9108cab63db75d59e7c80c800fdbad"
+    },
+    "commons-image-11.npz": {
+      "size": 1374722,
+      "sha256": "00a0ada0c7298675031d4d9d072259393800354ccb4ef8d269b02edaed301c56"
+    },
+    "commons-image-12.npz": {
+      "size": 1344002,
+      "sha256": "43b0005db0b04a9e355d6b073c6b73f02c56792cba3bc97a97de3bf17d322991"
+    },
+    "commons-image-13.npz": {
+      "size": 1374722,
+      "sha256": "84d37504861e1b47e6306aac7ff137f3897697293d1129e6b77f67a9196500c1"
+    },
+    "commons-image-14.npz": {
+      "size": 1344002,
+      "sha256": "eba662e7c8e4712c58de2f6383b5c03d6adbc2c92cb798132f963262d032023e"
+    },
+    "commons-image-15.npz": {
+      "size": 1374722,
+      "sha256": "ab408ebadf2c198caac88cd15891a91b8e47ac620b76e3611cab0b7b27d4efa8"
+    },
+    "img-document-prompt.npz": {
+      "size": 1365506,
+      "sha256": "4ef11859a92fd7636cce2c04f223fd13ab43646af6fad2600d99c372df958c4d"
+    },
+    "img-query-prompt.npz": {
+      "size": 1327618,
+      "sha256": "ca76543b95f2f49a742afdf6f7396fc6af1e2a8b85973a3f107417cee277af26"
+    },
+    "mm-two-images.npz": {
+      "size": 2623226,
+      "sha256": "98ffdb2e2f06fa02d06a5d40cfea0b886b2bceec824888b998d5625e4cfe8b35"
+    }
+  }
+}

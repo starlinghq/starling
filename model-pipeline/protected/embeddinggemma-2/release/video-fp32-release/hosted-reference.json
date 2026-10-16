@@ -1,0 +1,58 @@
+{
+  "committed": false,
+  "source": {
+    "repository": "Starlinghq/starling-release-references",
+    "repo_type": "dataset",
+    "revision": "bde82d8012b97444ab5c175faadb2df0f31673c1",
+    "path": "embeddinggemma-2/video-fp32-release/tensors",
+    "url": "https://huggingface.co/datasets/Starlinghq/starling-release-references/resolve/bde82d8012b97444ab5c175faadb2df0f31673c1/embeddinggemma-2/video-fp32-release/tensors/"
+  },
+  "note": "The video release set's reference stage tensors for `--reference-tensors`: the `video<k>_soft_tokens` and `token_embeddings` members of the accepted 6-thread reference run's `.npz` files, copied byte for byte into uncompressed archives (frame and pixel arrays omitted, so no media is published). The evaluator checks every array it reads against `tensors.json`; the file digests below let a job refuse a wrong download first.",
+  "recorded": "2026-10-15",
+  "files": {
+    "commons-video-00.npz": {
+      "size": 7944706,
+      "sha256": "49900a4b615c473eb4dfe4d1ff3d2f927a0d4b9d9e3118f48c0fd2725640ede2"
+    },
+    "commons-video-02.npz": {
+      "size": 7395842,
+      "sha256": "9d12101105016d21f403446c1c8cec9815fe0c418a7e825bce857226f8ea1e9b"
+    },
+    "commons-video-04.npz": {
+      "size": 19864066,
+      "sha256": "82dd5e78f940ef1cc740964693a4719c7fc7ea1f9b7ae420b0e890dbbbec2530"
+    },
+    "commons-video-05.npz": {
+      "size": 9935362,
+      "sha256": "1199a017854959e60e4bf8d36b01de1855fe7e8169eb0cff85bbc9404b335681"
+    },
+    "mm-image-and-video.npz": {
+      "size": 8222210,
+      "sha256": "37cc9d57868464d827da6a2f5ba10a85f9cb3d79a65a4dd745e35b8a5eb89dfc"
+    },
+    "mm-two-videos.npz": {
+      "size": 17327866,
+      "sha256": "0e1f795c579acb8543732a335c53a9a085521e926435f0381c01dd4f41008520"
+    },
+    "vid-array-no-metadata.npz": {
+      "size": 19864066,
+      "sha256": "16902d13addd957686387a97bd83897404ab2ad70474a8df126a949e4af62236"
+    },
+    "vid-array-with-metadata.npz": {
+      "size": 9935362,
+      "sha256": "1199a017854959e60e4bf8d36b01de1855fe7e8169eb0cff85bbc9404b335681"
+    },
+    "vid-decoder-object.npz": {
+      "size": 9935362,
+      "sha256": "1199a017854959e60e4bf8d36b01de1855fe7e8169eb0cff85bbc9404b335681"
+    },
+    "vid-document-prompt.npz": {
+      "size": 9956866,
+      "sha256": "5fef40c9813e4844a62dca89fe8763c919c48589886545f0c55930579ceeaa48"
+    },
+    "vid-query-prompt.npz": {
+      "size": 7969282,
+      "sha256": "61ed5daafce9cdcba8656ba4a97533a2803aa7d04bbb2416553457ac70ac8947"
+    }
+  }
+}
