@@ -98,9 +98,10 @@ internal static class MemoryProbe
 
     /// <summary>
     /// Appends one JSON line: the anonymous mappings of <c>/proc/self/smaps</c> with more than 2 MiB resident (start,
-    /// end, permissions, name, Rss, Anonymous, AnonHugePages in KiB), and the totals over all mappings.
+    /// end, permissions, name, Rss, Anonymous, AnonHugePages in KiB), the totals over all mappings, and glibc's
+    /// <c>mallinfo2</c> totals over all arenas where it exists (bytes in use, free in the heaps, in mmapped chunks).
     /// </summary>
-    public static void AppendSmaps(string path, double seconds, int cycle)
+    public static void AppendSmaps(string path, double seconds, int cycle, string phase)
     {
         var maps = new System.Text.Json.Nodes.JsonArray();
         long rss = 0, anon = 0, huge = 0;
@@ -168,19 +169,74 @@ internal static class MemoryProbe
         {
             ["t_s"] = Math.Round(seconds, 1),
             ["cycle"] = cycle,
+            ["phase"] = phase,
             ["rss_kb"] = rss,
             ["anon_kb"] = anon,
             ["anon_huge_kb"] = huge,
             ["maps"] = maps,
         };
+        if (MallInfo() is { } mi)
+        {
+            row["mallinfo2_kb"] = new System.Text.Json.Nodes.JsonObject
+            {
+                ["arena"] = (ulong)mi.Arena / 1024,
+                ["hblkhd"] = (ulong)mi.Hblkhd / 1024,
+                ["hblks"] = (ulong)mi.Hblks,
+                ["uordblks"] = (ulong)mi.Uordblks / 1024,
+                ["fordblks"] = (ulong)mi.Fordblks / 1024,
+                ["keepcost"] = (ulong)mi.Keepcost / 1024,
+            };
+        }
+
         File.AppendAllText(path, row.ToJsonString() + "\n");
 
         static long KbOf(string line) =>
             long.Parse(line.Split(':', 2)[1].Trim().Split(' ')[0], CultureInfo.InvariantCulture);
     }
 
+    /// <summary>glibc's <c>mallinfo2()</c> (glibc 2.33 and later), or null where it does not exist.</summary>
+    private static MallInfo2? MallInfo()
+    {
+        if (!OperatingSystem.IsLinux())
+        {
+            return null;
+        }
+
+        try
+        {
+            return NativeMethods.mallinfo2();
+        }
+        catch (EntryPointNotFoundException)
+        {
+            return null;
+        }
+        catch (DllNotFoundException)
+        {
+            return null;
+        }
+    }
+
+    [System.Runtime.InteropServices.StructLayout(System.Runtime.InteropServices.LayoutKind.Sequential)]
+    internal struct MallInfo2
+    {
+        public nuint Arena;
+        public nuint Ordblks;
+        public nuint Smblks;
+        public nuint Hblks;
+        public nuint Hblkhd;
+        public nuint Usmblks;
+        public nuint Fsmblks;
+        public nuint Uordblks;
+        public nuint Fordblks;
+        public nuint Keepcost;
+    }
+
     private static class NativeMethods
     {
+        [System.Runtime.InteropServices.DllImport("libc", EntryPoint = "mallinfo2")]
+        [System.Runtime.InteropServices.DefaultDllImportSearchPaths(System.Runtime.InteropServices.DllImportSearchPath.SafeDirectories)]
+        internal static extern MallInfo2 mallinfo2();
+
         [System.Runtime.InteropServices.DllImport("libc", EntryPoint = "gnu_get_libc_version")]
         [System.Runtime.InteropServices.DefaultDllImportSearchPaths(System.Runtime.InteropServices.DllImportSearchPath.SafeDirectories)]
         internal static extern IntPtr gnu_get_libc_version();

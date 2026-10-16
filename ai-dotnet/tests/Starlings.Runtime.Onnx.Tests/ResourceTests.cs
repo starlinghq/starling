@@ -59,6 +59,23 @@ public class ResourceTests(ITestOutputHelper output)
     }
 
     [Fact]
+    public void CpuMemoryArenaFollowsTheOptionAndDefaultsToOnnxRuntimes()
+    {
+        Assert.Null(new OnnxSessionOptions().CpuMemoryArena);
+        using (var session = OnnxModelSession.Create(TestModels.Add, SingleThread))
+        {
+            Assert.True(session.Diagnostics.CpuMemoryArena);
+        }
+
+        foreach (bool arena in new[] { false, true })
+        {
+            using var session = OnnxModelSession.Create(TestModels.Add, SingleThread with { CpuMemoryArena = arena });
+            Assert.Equal(arena, session.Diagnostics.CpuMemoryArena);
+            SessionTests.Run(session, 1);
+        }
+    }
+
+    [Fact]
     public void DisposeIsIdempotentAndLaterCallsThrow()
     {
         var session = OnnxModelSession.Create(TestModels.Add, SingleThread);

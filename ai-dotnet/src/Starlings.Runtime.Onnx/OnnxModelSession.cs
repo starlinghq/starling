@@ -210,6 +210,11 @@ public sealed class OnnxModelSession : IDisposable
             ExecutionMode = ExecutionMode.ORT_SEQUENTIAL,
             GraphOptimizationLevel = GraphOptimizationLevel.ORT_ENABLE_ALL,
         };
+        if (options.CpuMemoryArena is bool arena)
+        {
+            sessionOptions.EnableCpuMemArena = arena;
+        }
+
         OrtCUDAProviderOptions? cudaOptions = null;
         InferenceSession? session = null;
         try
@@ -284,6 +289,7 @@ public sealed class OnnxModelSession : IDisposable
                 IntraOpNumThreads = intraOpThreads,
                 InterOpNumThreads = options.InterOpNumThreads,
                 TrimNativeHeapOnRelease = options.TrimNativeHeapOnRelease && NativeHeap.Enabled,
+                CpuMemoryArena = sessionOptions.EnableCpuMemArena,
                 GraphOptimizationLevel = sessionOptions.GraphOptimizationLevel.ToString(),
                 ModelSource = source,
                 ModelSizeBytes = size,

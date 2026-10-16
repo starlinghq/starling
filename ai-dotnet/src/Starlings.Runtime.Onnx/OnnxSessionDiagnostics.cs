@@ -62,6 +62,9 @@ public sealed record OnnxSessionDiagnostics
     /// </summary>
     public bool TrimNativeHeapOnRelease { get; init; }
 
+    /// <summary>Whether ONNX Runtime's CPU memory arena is on for this session (<see cref="OnnxSessionOptions.CpuMemoryArena"/>).</summary>
+    public bool CpuMemoryArena { get; init; }
+
     /// <summary>Graph optimization level applied at session creation.</summary>
     public required string GraphOptimizationLevel { get; init; }
 

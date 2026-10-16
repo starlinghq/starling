@@ -46,3 +46,27 @@ public class ModelMemoryTests(ITestOutputHelper output)
         Assert.True(samples[^1] - samples[1] < 400, "private memory grew across load/dispose cycles");
     }
 }
+
+/// <summary>The library's session defaults (docs/evidence/eg2-hosted-soak/): CPU sessions run without ONNX Runtime's CPU arena.</summary>
+public class SessionDefaultTests
+{
+    [Fact]
+    public void CpuSessionsTurnTheArenaOffUnlessTheCallerChose()
+    {
+        Assert.False(EmbeddingGemma2Encoder.SessionDefaults(new OnnxSessionOptions()).CpuMemoryArena);
+        Assert.True(EmbeddingGemma2Encoder.SessionDefaults(new OnnxSessionOptions { CpuMemoryArena = true }).CpuMemoryArena);
+        Assert.False(EmbeddingGemma2Encoder.SessionDefaults(new OnnxSessionOptions { CpuMemoryArena = false }).CpuMemoryArena);
+
+        // CUDA sessions keep ONNX Runtime's default.
+        Assert.Null(EmbeddingGemma2Encoder.SessionDefaults(new OnnxSessionOptions { Provider = OnnxExecutionProvider.Cuda }).CpuMemoryArena);
+    }
+
+    [Fact]
+    public void TheTextEncoderSessionReportsTheArenaOff()
+    {
+        var (files, reason) = EmbeddingGemma2TestAssets.FindModel();
+        Assert.SkipWhen(files is null, reason);
+        using var encoder = EmbeddingGemma2Encoder.Create(files!.ModelPath, new EmbeddingGemma2EncoderOptions { Session = new OnnxSessionOptions { ComputeModelSha256 = false } });
+        Assert.False(encoder.Session.Diagnostics.CpuMemoryArena);
+    }
+}

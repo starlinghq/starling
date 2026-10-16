@@ -56,6 +56,9 @@ internal interface ISoakInstance : IDisposable
 {
     IReadOnlyList<string> SessionProviders { get; }
 
+    /// <summary>The native memory settings in effect for the ONNX Runtime sessions (CPU arena, heap trim on release); null for other runtimes.</summary>
+    string? SessionMemory => null;
+
     SoakResult Run(int input, CancellationToken cancellationToken);
 
     /// <summary>A long request used for the timed-out (deadline) requests; its result is discarded.</summary>
@@ -82,11 +85,15 @@ internal abstract class SoakWorkload
 
     protected static ModelAcquisitionOptions Acquisition => new() { Verification = CacheVerification.Sha256 };
 
+    internal static string Memory(OnnxSessionDiagnostics d) =>
+        $"cpu_memory_arena={(d.CpuMemoryArena ? "on" : "off")}, trim_native_heap_on_release={(d.TrimNativeHeapOnRelease ? "on" : "off")}";
+
     protected static OnnxSessionOptions Session(SoakOptions options, bool computeSha) => new()
     {
         Provider = options.Cuda ? OnnxExecutionProvider.Cuda : OnnxExecutionProvider.Cpu,
         IntraOpNumThreads = options.Threads,
         ComputeModelSha256 = computeSha,
+        CpuMemoryArena = options.CpuArena,
     };
 
     protected static JsonObject Lock(ModelAssetLock assetLock) => new()
@@ -185,6 +192,8 @@ internal sealed class E5Workload : SoakWorkload
 
         public IReadOnlyList<string> SessionProviders => encoder.Session.Diagnostics.SessionProviders;
 
+        public string? SessionMemory => SoakWorkload.Memory(encoder.Session.Diagnostics);
+
         public SoakResult Run(int input, CancellationToken cancellationToken)
         {
             var v = embedder.Embed("query: " + SoakTexts.Short[input], cancellationToken);
@@ -236,6 +245,8 @@ internal sealed class Gliner2Workload : SoakWorkload
 
         public IReadOnlyList<string> SessionProviders => extractor.Session.Diagnostics.SessionProviders;
 
+        public string? SessionMemory => SoakWorkload.Memory(extractor.Session.Diagnostics);
+
         public SoakResult Run(int input, CancellationToken cancellationToken)
         {
             var result = extractor.Extract(SoakTexts.Short[input], Labels, cancellationToken: cancellationToken);
@@ -286,6 +297,8 @@ internal sealed class EmbeddingGemma2TextWorkload : SoakWorkload
         private static readonly string[] LongBatch = Enumerable.Repeat(SoakTexts.VeryLong, 4).ToArray();
 
         public IReadOnlyList<string> SessionProviders => encoder.Session.Diagnostics.SessionProviders;
+
+        public string? SessionMemory => SoakWorkload.Memory(encoder.Session.Diagnostics);
 
         public SoakResult Run(int input, CancellationToken cancellationToken)
         {
@@ -360,6 +373,8 @@ internal sealed class EmbeddingGemma2ImageWorkload : SoakWorkload
         private static readonly EmbeddingGemma2Image[] LongBatch = Enumerable.Range(0, 6).Select(i => Image(i + 3)).ToArray();
 
         public IReadOnlyList<string> SessionProviders => embedder.VisionSession.Diagnostics.SessionProviders;
+
+        public string? SessionMemory => $"vision: {SoakWorkload.Memory(embedder.VisionSession.Diagnostics)}; multimodal text: {SoakWorkload.Memory(embedder.MultimodalSession.Diagnostics)}";
 
         public SoakResult Run(int input, CancellationToken cancellationToken)
         {
@@ -455,6 +470,8 @@ internal sealed class EmbeddingGemma2VideoWorkload : SoakWorkload
         private static readonly EmbeddingGemma2MultimodalInput[] LongBatch = [EmbeddingGemma2MultimodalInput.FromVideo(Clip(3, 6)), EmbeddingGemma2MultimodalInput.FromVideo(Clip(4, 6))];
 
         public IReadOnlyList<string> SessionProviders => embedder.VisionSession.Diagnostics.SessionProviders;
+
+        public string? SessionMemory => $"vision: {SoakWorkload.Memory(embedder.VisionSession.Diagnostics)}; multimodal text: {SoakWorkload.Memory(embedder.MultimodalSession.Diagnostics)}";
 
         public SoakResult Run(int input, CancellationToken cancellationToken)
         {
