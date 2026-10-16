@@ -116,6 +116,16 @@ model-pipeline bench validate <file> && model-pipeline bench g5 <file> --json g5
 
 CUDA profiles run both sides like the CPU ones: `run-e5-matched.sh cuda ...` and `run-g5-matched.sh <model> cuda ...` (`qwen35-fp16x` for `ortgenai-fp16x-cuda`), with `CUDA_DEVICE_ORDER=PCI_BUS_ID CUDA_VISIBLE_DEVICES=<gpu>` and `BENCH_PYTHON` from the `-cuda` requirements. The script builds the `.Cuda` harness and puts the CUDA 13 and cuDNN 9 libraries of that environment's `nvidia-*` wheels on `LD_LIBRARY_PATH`, so both sides load the same CUDA libraries (`environment.native_libraries` records them). `BENCH_SIDES=python|csharp` runs one side; `BENCH_WARM_ARGS` passes extra warm options to both sides for development smokes (never for a qualifying run). The Python runners can also be run one command at a time; every runner takes `warm|cold --provider cpu|cuda --threads N --inter-threads 1 --out <file>` plus `--snapshot` (or its `STARLING_*_SNAPSHOT` variable), `--only`, `--samples-scale` and `--processes` as the C# harnesses.
 
+## Scheduled CUDA runs are not G5 runs
+
+The weekly `cuda (runpod)` job of `.github/workflows/qualification.yml` runs on a shared, on-demand RunPod GPU pod. The pod is an RTX 3090 or 4090 in secure cloud EU-CZ-1, with a CPU quota on a large host, files on a network volume, and a GPU model that can differ from run to run. Its timings therefore fail this protocol's controlled-machine conditions, and the job runs no matched benchmark. It provides regression evidence only:
+
+- the CUDA test projects;
+- G1, G2 and G3 of every CUDA profile on its release sets;
+- a short soak per CUDA profile.
+
+Each run's artifact `qualification-cuda` records the machine as this protocol asks: `environment.txt` holds the GPU, driver, CUDA version, CPU, cgroup quota and memory, and every soak report records its environment manifest. A G5 run on CUDA still needs a controlled machine (M6). A wall-clock figure from the job is never G5 evidence.
+
 ## Gaps
 
 - **Python same-backend comparison**: runners exist for every budgeted profile. They have not run on a controlled machine yet, so no profile has G5 evidence. GLiNER2's Python side covers the inference stage only (the budget's scope); prepare and decode stay C#-only. Qwen's Python TTFT uses Hugging Face `tokenizers` for the incremental detokenization (C#: the owned tokenizer).
