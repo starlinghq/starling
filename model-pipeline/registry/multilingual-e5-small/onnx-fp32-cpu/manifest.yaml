@@ -3,15 +3,15 @@
 # (preview.1, P-010: docs/releases/e5-0.1.0-preview.1.md).
 schema_version: 1
 id: multilingual-e5-small/onnx-fp32-cpu
-# Every gate G0 to G7 passed in full (qualification below), but capability and platform statuses stay experimental.
-# Blocked from Stable (2026-10-15): the weekly one-hour soak on a GitHub-hosted runner (AMD EPYC 9V45, 4 logical
-# CPUs, 1,918 load/unload cycles) fails the unchanged growth rule: unloaded and loaded rss_anon grow about 50 MB/h
-# (unloaded 210 to 363 MB; first half 33 MB, second half 21 MB, limit 32 MB), although the qualifying workstation
-# hour plateaued (1,368 cycles, unloaded 450 to 490 MB). Until it is diagnosed (as GLiNER2's allocator retention
-# was) or passes, the scheduled G4 screen gives no regression support.
+# Stable since 2026-10-15 (maintainer's promotion instruction; docs/kickoff.md, "Stable CPU profiles, second round"):
+# every gate G0 to G7 passed (qualification below), the contract is the Starlings.Models.E5 README's "Stable contract"
+# (Linux x64 CPU), and the scheduled qualification reruns G1 to G3 on the release sets and a one-hour soak weekly,
+# green in run 38822625245. The hosted soak failure of 2026-10-15 (about 50 MB/h) was glibc retention after unload plus
+# transparent huge pages set to `always` on the runner image (docs/evidence/scheduled-regression-fix/, #66): the
+# runtime now calls malloc_trim when a session is released, and the soak runs with THP `madvise`.
 # E5Capabilities.Profiles holds the same statuses (tested key for key). Regression support: the scheduled
 # qualification workflow (.github/workflows/qualification.yml, jobs release-gates and soak).
-maturity: preview
+maturity: stable
 
 origin:
   # The Hub repository holds both the sentence-transformers configuration and the weights.
@@ -141,27 +141,26 @@ capabilities:
   # row-wise output equal to E5TextEmbedder bit for bit on the 46 fixture texts (max abs 2.3e-7 vs protected), one
   # inference per row for any number of getters, schema errors, parallel cursor sets and look-ahead batching tested.
   # Saving the transformer is unsupported (persistence above); there is no cancellation in ML.NET cursors.
-  # Stable contract targets (package README) for Linux x64 CPU: batch, cancellation, aot, extensions_ai, mlnet; experimental
-  # while the profile is blocked (header).
-  batch: experimental
+  # Supported on Linux x64 CPU under the Stable contract (package README): batch, cancellation, aot, extensions_ai, mlnet.
+  batch: supported
   streaming: unsupported
-  cancellation: experimental
+  cancellation: supported
   persistence: unsupported
   training: unsupported
   # aot: Native AOT publish on Linux x64 CPU, no trim/AOT warnings, results equal to JIT bit for bit
   # (typed API and Extensions.AI generator; docs/evidence/aot/README.md).
   # The ML.NET adapter does not run under Native AOT (Microsoft.ML uses Reflection.Emit).
-  aot: experimental
-  extensions_ai: experimental
-  mlnet: experimental
+  aot: supported
+  extensions_ai: supported
+  mlnet: supported
 
 compatibility:
-  # Linux x64 CPU: gates G0 to G7 (G1 to G5 on an Intel i7-5820K, AVX2, no AVX-512; the scheduled qualification
-  # reruns G1 to G3 and a short soak on GitHub-hosted ubuntu-latest).
+  # Linux x64 CPU: gates G0 to G7 (G1 to G5 on an Intel i7-5820K, AVX2, no AVX-512); the scheduled qualification
+  # reruns G1 to G3 and a one-hour soak on GitHub-hosted ubuntu-latest (4 logical CPUs; THP `madvise`).
   - os: linux
     arch: x64
     provider: cpu
-    status: experimental
+    status: supported
     verified: 2026-10-15
   # Windows x64 CPU: the CI job ai-dotnet-windows builds, runs the weight-free tests and the clean-install drill without
   # the model on every change; no model runs there. Outside the Stable contract (the package README says so).
@@ -204,10 +203,11 @@ maintenance:
   review_date: 2027-01-05
   known_issues:
     - >-
-      Stable blocked (2026-10-15): the scheduled one-hour soak on a GitHub-hosted runner (AMD EPYC 9V45, 4 logical
-      CPUs, 1,918 cycles; qualification run 38793842060) fails the growth rule at about 50 MB/h (unloaded rss_anon
-      210 to 363 MB, halves 33 and 21 MB against a 32 MB limit); the workstation G4 hour plateaued. Not yet
-      diagnosed.
+      Linux memory: the hosted soak's growth of 2026-10-15 (about 50 MB/h, run 38793842060) was glibc retention
+      after unloading plus transparent huge pages set to `always` on the runner image, not a leak
+      (docs/evidence/scheduled-regression-fix/). Starlings.Runtime.Onnx calls malloc_trim on session release (on by
+      default; opt out per session or per process), and the qualification soak runs with THP `madvise`. On `always`
+      hosts resident memory can look larger without any leak.
     - >-
       The pinned tokenizer.json emits a lone "▁" token before special-token literals and for trailing
       whitespace, where SentencePiece and transformers 5.18 emit none. The owned profile follows

@@ -271,11 +271,11 @@ public class EncoderBehaviorTests
     {
         var all = E5Capabilities.All;
         Assert.All(all.Values, s => Assert.True(Enum.IsDefined(s)));
-        Assert.Equal(CapabilityStatus.Experimental, all["embedding.text"]);
+        Assert.Equal(CapabilityStatus.Supported, all["embedding.text"]);
         Assert.Equal(CapabilityStatus.Unsupported, all["tf32"]);
         Assert.Equal(CapabilityStatus.Unsupported, all["streaming"]);
         Assert.Equal(CapabilityStatus.Unsupported, all["truncation"]);
-        Assert.Equal(CapabilityStatus.Experimental, all["extensions_ai.embedding_generator"]);
+        Assert.Equal(CapabilityStatus.Supported, all["extensions_ai.embedding_generator"]);
         Assert.Equal(CapabilityStatus.Unsupported, all["extensions_ai.dimensions_truncation"]);
     }
 }

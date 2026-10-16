@@ -105,7 +105,13 @@ These cannot be done by an agent. Each row names what it unblocks.
 
 Each workstream PR updates this document's tables when it lands. The catalog (R3) becomes the source of truth for status once it exists.
 
-### Status 2026-10-15
+### Status 2026-10-15 (second promotion round)
+
+- **Stable: `multilingual-e5-small/onnx-fp32-cpu` and `embeddinggemma-2/onnx-fp32-cpu` (text).** Every gate passed, the validator agrees, and the weekly qualification workflow reruns their release-set G1 to G3 and a one-hour soak on hosted runners, green ([run 38822625245](https://github.com/starlinghq/starling/actions/runs/38822625245)). The blockers in the first-round entry below were resolved by #60 (EmbeddingGemma 2's text reference embeddings committed under `protected/`) and #66 (`malloc_trim` on session release; soak with transparent huge pages `madvise`). Contracts: the `Starlings.Models.E5` and `Starlings.Models.EmbeddingGemma2` READMEs. Single-owner exception as for GLiNER2 (M7 open).
+- **Not promoted, though every gate is recorded passed: EmbeddingGemma 2 `image-fp32-cpu` and `video-fp32-cpu`.** The weekly workflow runs their soaks (the video soak was wired in this round) but not their release-set gates: G2 needs reference tensors kept outside Git that regenerate byte-identical only on the reference CPU. A maintainer decision is needed on how G2 can rerun off that CPU.
+- **Not promoted: Qwen `ortgenai-fp32x-cpu`.** The manifest records G5 `failed`; the quiet-host rerun passed and qualifies (`docs/evidence/qualification-2026-10-15/`), but recording it is a maintainer change (M10). Its release-set gates are not in the weekly workflow either (full step-0 reference vectors outside Git).
+
+### Status 2026-10-15 (first promotion)
 
 - **First Stable profile: `gliner2-base-v1/onnx-fp32-cpu`** (#56 preconditions, then the maturity flip). Every gate passed; the weekly qualification workflow reruns its release-set G1 to G3 and a one-hour soak (with `MALLOC_MMAP_THRESHOLD_=65536`) on hosted runners, green. Single-owner exception recorded (M7 open).
 - **e5 `onnx-fp32-cpu` and EmbeddingGemma 2 text `onnx-fp32-cpu`: every gate passed, Stable blocked.** e5's hosted one-hour soak fails the growth rule (about 50 MB/h, undiagnosed; the workstation hour plateaued). EmbeddingGemma 2's G2 cannot rerun off the reference CPU (outside-Git reference embeddings; maintainer action: commit them under `protected/`, SOURCE.md decision 2); its hosted soak also fails (about 160 MB/h).

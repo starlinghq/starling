@@ -132,10 +132,10 @@ public class AssetAndCapabilityTests
     public void CapabilitiesAreExplicitAndMatchTheContract()
     {
         var all = EmbeddingGemma2Capabilities.All;
-        Assert.Equal(EmbeddingGemma2CapabilityStatus.Experimental, all["embedding.pretokenized.cpu"]);
+        Assert.Equal(EmbeddingGemma2CapabilityStatus.Supported, all["embedding.pretokenized.cpu"]);
         Assert.Equal(EmbeddingGemma2CapabilityStatus.Experimental, all["embedding.pretokenized.cuda"]);
-        Assert.Equal(EmbeddingGemma2CapabilityStatus.Experimental, all["embedding.text"]);
-        Assert.Equal(EmbeddingGemma2CapabilityStatus.Experimental, all["tokenizer.owned"]);
+        Assert.Equal(EmbeddingGemma2CapabilityStatus.Supported, all["embedding.text"]);
+        Assert.Equal(EmbeddingGemma2CapabilityStatus.Supported, all["tokenizer.owned"]);
         Assert.Equal(EmbeddingGemma2CapabilityStatus.Experimental, all["input.2050_to_8192_tokens"]);
         Assert.Equal(EmbeddingGemma2CapabilityStatus.Experimental, all["prompts.task"]);
         Assert.Equal(EmbeddingGemma2CapabilityStatus.Unsupported, all["image.decode.gif_transparency"]);

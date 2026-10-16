@@ -67,10 +67,11 @@ public class StableContractTests
         }
 
         var stable = Family.Single(m => m.Id == E5Capabilities.StableProfile);
-        // Every gate passed, but Stable is blocked (the weekly hosted soak fails, see the README): experimental.
-        Assert.Equal("experimental", stable.Compatibility["linux-x64 cpu"]);
+        Assert.Equal("stable", stable.Maturity);
+        Assert.Equal("supported", stable.Compatibility["linux-x64 cpu"]);
+        Assert.Equal(CapabilityStatus.Supported, E5Capabilities.All["embedding.pretokenized.cpu"]);
+        Assert.Equal(CapabilityStatus.Supported, E5Capabilities.All["embedding.text"]);
         Assert.Equal(stable.Compatibility["windows-x64 cpu"], Name(E5Capabilities.All["windows"]));
-        Assert.Equal(CapabilityStatus.Experimental, E5Capabilities.All["embedding.pretokenized.cpu"]);
         Assert.Equal(CapabilityStatus.Experimental, E5Capabilities.All["embedding.pretokenized.cuda"]);
         Assert.DoesNotContain(CapabilityStatus.Untested, E5Capabilities.All.Values);
     }

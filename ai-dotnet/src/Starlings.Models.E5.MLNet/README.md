@@ -9,7 +9,7 @@ Maturity is per profile, generated from the registry manifests by `model-pipelin
 
 | Profile | Maturity | Platforms |
 | --- | --- | --- |
-| `multilingual-e5-small/onnx-fp32-cpu` | preview | linux-x64 cpu: experimental; windows-x64 cpu: experimental |
+| `multilingual-e5-small/onnx-fp32-cpu` | stable | linux-x64 cpu: supported; windows-x64 cpu: experimental |
 | `multilingual-e5-small/onnx-fp32-cuda` | experimental | linux-x64 cuda: experimental; windows-x64 cuda: untested |
 <!-- /catalog:maturity -->
 
@@ -49,4 +49,4 @@ IDataView embedded = model.Transform(data);                  // lazy
 - **Persistence: unsupported.** `mlContext.Model.Save` throws `NotSupportedException` for this transformer, alone or in a chain. The model contract is the pinned asset lock (`E5ModelAssets.Lock`), resolved at run time: save the rest of the pipeline and append `ApplyE5Embedding(E5ModelAssets.OpenLocal(), ...)` with the same column names and options after loading it.
 - Microsoft.ML brings Microsoft.ML.CpuMath, Microsoft.ML.DataView, Newtonsoft.Json, System.CodeDom and the LdaNative/CpuMathNative native libraries; no tokenizer package.
 
-Status: pipeline composition (row-wise and look-ahead batching) experimental on the e5 `onnx-fp32-cpu` profile (Linux x64 CPU; G7 passed, Stable promotion blocked, see the `Starlings.Models.E5` README); over a CUDA session experimental; Native AOT unsupported (Microsoft.ML); persistence, cancellation and training unsupported. Listed in the [0.1.0-preview.6 release notes](https://github.com/starlinghq/starling/blob/main/docs/releases/ai-0.1.0-preview.6.md) (0.1.0-preview.3 to 0.1.0-preview.6 rebuild it unchanged); evidence in the [repository README](https://github.com/starlinghq/starling/blob/main/ai-dotnet/README.md#mlnet-embedding-transform-p-012).
+Status: pipeline composition (row-wise and look-ahead batching) supported on the Stable e5 `onnx-fp32-cpu` profile (Linux x64 CPU; G7 passed; the contract is in the `Starlings.Models.E5` README); over a CUDA session experimental; Native AOT unsupported (Microsoft.ML); persistence, cancellation and training unsupported. Listed in the [0.1.0-preview.6 release notes](https://github.com/starlinghq/starling/blob/main/docs/releases/ai-0.1.0-preview.6.md) (0.1.0-preview.3 to 0.1.0-preview.6 rebuild it unchanged); evidence in the [repository README](https://github.com/starlinghq/starling/blob/main/ai-dotnet/README.md#mlnet-embedding-transform-p-012).

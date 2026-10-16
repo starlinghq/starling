@@ -20,7 +20,7 @@ Maturity is per profile, generated from the registry manifests by `model-pipelin
 | --- | --- | --- |
 | `embeddinggemma-2/image-fp32-cpu` | experimental | linux-x64 cpu: experimental; windows-x64 cpu: untested |
 | `embeddinggemma-2/image-fp32-cuda` | experimental | linux-x64 cuda: experimental; windows-x64 cuda: untested |
-| `embeddinggemma-2/onnx-fp32-cpu` | experimental | linux-x64 cpu: experimental; windows-x64 cpu: experimental |
+| `embeddinggemma-2/onnx-fp32-cpu` | stable | linux-x64 cpu: supported; windows-x64 cpu: experimental |
 | `embeddinggemma-2/onnx-fp32-cuda` | experimental | linux-x64 cuda: experimental; windows-x64 cuda: untested |
 | `embeddinggemma-2/video-fp32-cpu` | experimental | linux-x64 cpu: experimental; windows-x64 cpu: untested |
 | `embeddinggemma-2/video-fp32-cuda` | experimental | linux-x64 cuda: experimental; windows-x64 cuda: untested |
@@ -110,7 +110,15 @@ float[] mixed = embedder.Embed(EmbeddingGemma2MultimodalInput.Create("The clip "
 - **Decoding.** FFmpeg's default conversion is what upstream embeds (10-bit and odd sizes included); other converters move the embedding by up to 1.7e-2. Use the FFmpeg adapter (exact against torchcodec on the fixtures) or an equivalent FFmpeg call (`ffmpeg -i in.mp4 -f rawvideo -pix_fmt rgb24 -` plus torchcodec-style metadata).
 - **Speed (indicative).** Vision about 2.7 s per frame on CPU (i7-5820K, 12 threads: a 32-frame video takes about 70 to 100 s) and about 0.07 s on CUDA (RTX 4060 Ti); prefer CUDA for video.
 
-## Memory on Linux (image and video on CUDA)
+## Memory on Linux
+
+These apply to every profile on Linux.
+
+- **Heap trim on release (on by default).** When a session's native memory is released (after `Dispose` and the last in-flight run), `Starlings.Runtime.Onnx` calls glibc's `malloc_trim(0)`, so a process that loads and unloads the model returns the freed memory instead of keeping it resident (text on the hosted runner: about 1,480 MiB after unloading without it, 400 to 500 MiB with it). It never runs on the request path and changes no allocator setting. Opt out per session with `OnnxSessionOptions.TrimNativeHeapOnRelease = false`, or for the whole process with the `AppContext` switch `Starlings.Runtime.Onnx.DisableNativeHeapTrim` (details in the `Starlings.Runtime.Onnx` README).
+- **Transparent huge pages.** The qualification soaks ran with `/sys/kernel/mm/transparent_hugepage/enabled` set to `madvise` (the Ubuntu default). On hosts set to `always`, the kernel's khugepaged fills in partly used 2 MiB heap ranges, so resident memory can look larger and rise over time without any leak. Evidence: [scheduled regression fix](https://github.com/starlinghq/starling/blob/main/docs/evidence/scheduled-regression-fix/README.md).
+- The Stable text profile `onnx-fp32-cpu` needs no `MALLOC_*` setting.
+
+### Image and video on CUDA
 
 **Deployment requirement for `embeddinggemma-2/video-fp32-cuda`: set `MALLOC_MMAP_THRESHOLD_=65536` in the environment of a Linux process that runs it.** It is recommended for `image-fp32-cuda` too.
 
@@ -120,7 +128,7 @@ In a container whose CPU quota is below the host's CPU count, the session now us
 
 ## Status
 
-Profile `embeddinggemma-2/onnx-fp32-cpu` (text, Linux x64 CPU) has passed every qualification gate, G0 to G7; its maturity is in the table above. It is not promoted to Stable: **Blocked from Stable (2026-10-15): the weekly qualification cannot rerun G2. The release set's reference embeddings are kept outside Git and bound by digest, and they regenerate byte-identical only on the reference CPU (i7-5820K): two hosted runs (Intel Xeon 8370C; AMD EPYC 7763 with threads held at 6 and the ISA at AVX2) gave other digests, within 8e-7 of the recorded file, so the evaluator refuses them. The fix is the open decision 2 of the set's SOURCE.md: commit embeddings.jsonl under model-pipeline/protected/ (a protected-change).** The other five profiles are Experimental: `onnx-fp32-cuda` passes every gate where recorded but has no scheduled GPU regression runs; the image and video profiles have gates still open (the catalog lists them). Gate evidence: the [catalog](https://github.com/starlinghq/starling/blob/main/docs/catalog/README.md).
+Profile `embeddinggemma-2/onnx-fp32-cpu` (text, Linux x64 CPU) is Stable since 2026-10-15: it passed every qualification gate, G0 to G7, and the weekly qualification workflow reruns G1 to G3 on the release sets (G2 on the reference embeddings committed under `model-pipeline/protected/`) and a one-hour soak, green. The other five profiles are Experimental. `image-fp32-cpu` and `video-fp32-cpu` have every gate G0 to G7 recorded passed, but the weekly workflow does not yet rerun their release-set gates: their G2 needs reference tensors that are kept outside Git (too large) and regenerate byte-identical only on the reference CPU, the problem the text profile solved by committing its embeddings. `onnx-fp32-cuda` passes every gate where recorded but has no scheduled GPU regression runs; `image-fp32-cuda` and `video-fp32-cuda` have failed gates (G4, G5; the catalog lists them). Gate evidence: the [catalog](https://github.com/starlinghq/starling/blob/main/docs/catalog/README.md).
 
 Text (`onnx-fp32-cpu`): release sets of 232 tokenizer rows (ids exact) and 696 embedding rows (no prompt, `query` and `document`; within 5.1e-7 of the PyTorch reference, binding bound 5e-6), MIRACL nDCG@10 0.8325; development fixtures of 138 rows up to 1,750 tokens (within 3.7e-7).
 
@@ -130,7 +138,7 @@ Videos (`video-fp32-cpu`, `video-fp32-cuda`), Linux x64, experimental, from deco
 
 ## Stable contract
 
-This is the target contract of profile `embeddinggemma-2/onnx-fp32-cpu` (text embeddings), which a Stable label would commit to under the [support policy](https://github.com/starlinghq/starling/blob/main/docs/support-policy.md). **Blocked:** G2 has no regression support yet (see [Status](#status)), so the profile and its capabilities stay experimental; "Supported" below is the target. The statuses in force are the registry manifest's and `EmbeddingGemma2Capabilities.Profiles`, which a test keeps equal key for key. Images and videos are other profiles, outside this contract.
+This is the contract of profile `embeddinggemma-2/onnx-fp32-cpu` (text embeddings). Its Stable label (since 2026-10-15) commits to it under the [support policy](https://github.com/starlinghq/starling/blob/main/docs/support-policy.md). The statuses are the registry manifest's and `EmbeddingGemma2Capabilities.Profiles`, which a test keeps equal key for key. Images and videos are other profiles, outside this contract.
 
 | Item | Contract |
 | --- | --- |
@@ -138,16 +146,17 @@ This is the target contract of profile `embeddinggemma-2/onnx-fp32-cpu` (text em
 | Model | `google/embeddinggemma-2` at `914f7f89142e33e77833254d9c9b90c3cef7303b`. The text graph is Starling's float32 export (`onnx/embeddinggemma2-text-fp32.onnx`, digest in `EmbeddingGemma2ModelAssets`), downloaded with no token from the public repository `Starlinghq/embeddinggemma-2-onnx` at `92a02ae2`. |
 | Tokenizer | `Starlings.Tokenizers` `0.3.0-preview.1`, profile `gemma-bpe-embeddinggemma2`. `<bos>` and `<eos>` are added, and text is never truncated. |
 | Runtime | ONNX Runtime 1.30.0 (the application adds `Microsoft.ML.OnnxRuntime` 1.30.0 CPU natives), fp32, .NET 10. |
-| Supported platform | Linux x64, CPU. Gates G1 to G5 ran on an Intel Core i7-5820K (Haswell-E, 6 cores and 12 threads, AVX2 and FMA, no AVX-512), .NET 10.0.12. The weekly qualification reruns G1 to G3 on the release sets and a short soak on GitHub-hosted `ubuntu-latest` x64. |
+| Supported platform | Linux x64, CPU. Gates G1 to G5 ran on an Intel Core i7-5820K (Haswell-E, 6 cores and 12 threads, AVX2 and FMA, no AVX-512), .NET 10.0.12. The weekly qualification reruns G1 to G3 on the release sets and a one-hour soak on GitHub-hosted `ubuntu-latest` x64 (4 logical CPUs; transparent huge pages `madvise`). No `MALLOC_*` environment setting is required for this profile. |
+| Memory on Linux | The runtime calls `malloc_trim(0)` when a session is released, on by default; see [Memory on Linux](#memory-on-linux). |
 | Input | Text or token ids. Prompts are explicit (`EmbeddingGemma2Prompt`: none, `query` or `document`) and never inserted. |
 | Output | 768-dimensional float32 unit vectors (mean pooling over every attended token, then L2), or a Matryoshka size of 512, 256 or 128 (truncate, then normalize again). Other sizes are rejected. |
-| Numerical bound | The protected tolerances of the profile (embedding max abs 5e-6, min cosine 0.9999999, against the PyTorch reference). Release set: 5.1e-7. The release set's reference embeddings are kept outside Git and bound by the SHA-256 in its protected `reference.json`; they regenerate byte-identical only on the reference CPU, so the weekly run's G2 is refused until the file is committed under `protected/`. |
+| Numerical bound | The protected tolerances of the profile (embedding max abs 5e-6, min cosine 0.9999999, against the PyTorch reference). Release set: 5.1e-7. The release set's reference embeddings are committed under `model-pipeline/protected/` with the SHA-256 its `reference.json` records, so the weekly run evaluates G2 against the same file on any CPU. |
 | Task quality | MIRACL dev, 8 languages: nDCG@10 at least 0.826 and MRR@10 at least 0.808 (budget); measured 0.8325 and 0.8136. |
 | Supported | Embedding from text and from token ids; the owned tokenizer; no prompt and the `query` and `document` prompts; Matryoshka 512, 256 and 128; inputs up to 2,049 tokens; batch; cancellation; concurrent calls; explicit acquisition and anonymous graph download; Native AOT for the typed API and the Extensions.AI generator; `Starlings.Models.EmbeddingGemma2.Extensions.AI` (text generator, Matryoshka dimensions); `Starlings.Models.EmbeddingGemma2.MLNet` (text, row-wise and look-ahead batching). |
 | Limits | 8,192 tokens, special and prompt tokens included; above that, `EmbeddingGemma2InputTooLongException` before inference. Inputs of 2,050 to 8,192 tokens run but are outside the Stable contract (below); temporary memory grows with the square of the length (one 8,192-token row took 80 s and a 5.9 GB process peak on the workstation). The text graph (1.08 GB) and `tokenizer.json` are acquired explicitly; inference never downloads. |
 | Outside the Stable contract | Inputs of 2,050 to 8,192 tokens and the 18 other named task prompts: experimental (proposed rows, not yet accepted fixtures). CUDA and the adapters over CUDA: experimental. Images and videos: the experimental `image-fp32-*` and `video-fp32-*` profiles. Windows x64 CPU: experimental (CI builds, runs the weight-free tests and the clean-install drill without the model; no model run). macOS and ARM64: unsupported (no evidence). |
 | Unsupported | inputs over 8,192 tokens, truncation, implicit prompt insertion, other Matryoshka sizes, audio, media placeholder tokens in text, pair input, ML.NET persistence and cancellation, the ML.NET adapter under Native AOT, streaming, TF32, bf16, fp16, quantized graphs, TensorRT, training. |
-| Known issues | The development tolerance file's `export.token_embeddings` bound (Python ONNX Runtime against PyTorch) reads differently judged per value (1.7e-2) and per case (6.2e-6, the reading the bound was set from); which reading binds is an open maintainer decision. Every .NET check passes either way, and the release set passed at 4.22e-6 relative. |
+| Known issues | On hosts with transparent huge pages set to `always`, resident memory can grow over time with no leak behind it ([Memory on Linux](#memory-on-linux)). The development tolerance file's `export.token_embeddings` bound (Python ONNX Runtime against PyTorch) reads differently judged per value (1.7e-2) and per case (6.2e-6, the reading the bound was set from); which reading binds is an open maintainer decision. Every .NET check passes either way, and the release set passed at 4.22e-6 relative. |
 
 ## Qualification evidence
 
@@ -155,7 +164,7 @@ This is the target contract of profile `embeddinggemma-2/onnx-fp32-cpu` (text em
 - G1, G2 and G3 on the P-030 release sets: [release-set gates](https://github.com/starlinghq/starling/blob/main/docs/evidence/release-set-gates-2026-10-14/embeddinggemma2-onnx-fp32-cpu/README.md).
 - G4 one-hour soak: [2026-10-14](https://github.com/starlinghq/starling/blob/main/docs/evidence/g4-soak-1h-2026-10-14/README.md). G5 matched benchmark: [2026-10-15](https://github.com/starlinghq/starling/blob/main/docs/evidence/qualification-2026-10-15/README.md).
 - G6 distribution and G7 integration: [G6](https://github.com/starlinghq/starling/blob/main/docs/evidence/g6-distribution-2026-10-14/README.md), [G7](https://github.com/starlinghq/starling/blob/main/docs/evidence/g7-integration-2026-10-14/README.md).
-- Regression support: the weekly [qualification workflow](https://github.com/starlinghq/starling/blob/main/.github/workflows/qualification.yml) (jobs `release-gates` and `soak`): G1, G3 and the soak run there; G2 is refused (reference digest), which blocks Stable.
+- Regression support: the weekly [qualification workflow](https://github.com/starlinghq/starling/blob/main/.github/workflows/qualification.yml) (jobs `release-gates` and `soak`), green in [run 38822625245](https://github.com/starlinghq/starling/actions/runs/38822625245).
 
 ## License and usage policy
 

@@ -505,7 +505,7 @@
       "family": "embeddinggemma-2",
       "profile": "onnx-fp32-cpu",
       "manifest": "model-pipeline/registry/embeddinggemma-2/onnx-fp32-cpu/manifest.yaml",
-      "maturity": "experimental",
+      "maturity": "stable",
       "tasks": [
         "embedding"
       ],
@@ -513,7 +513,7 @@
       "review_date": "2027-01-05",
       "last_checked": "2026-10-10",
       "known_issues": [
-        "Stable blocked (2026-10-15): the scheduled qualification cannot rerun G2. The text release set's embeddings.jsonl, kept outside the repository and bound by digest, regenerates byte-identical only on the reference CPU; on two hosted runners (Intel Xeon 8370C, AMD EPYC 7763; 6 threads, AVX2) it differed by up to 8e-7 and the evaluator refused it. Fix: SOURCE.md decision 2 (commit the file under protected/). The hosted one-hour soak also failed the growth rule (about 160 MB/h).",
+        "The text release set's reference embeddings.jsonl regenerates byte-identical only on the reference CPU (on two hosted runners it differed by up to 8e-7); it is committed under protected/ since #60, so the scheduled G2 reads that file. Linux memory: the hosted soak's earlier growth (about 160 MB/h) was glibc retention after unloading plus transparent huge pages `always` on the runner image, not a leak (docs/evidence/scheduled-regression-fix/); Starlings.Runtime.Onnx calls malloc_trim on session release (on by default; opt out per session or per process), and the qualification soak runs with THP `madvise`. On `always` hosts resident memory can look larger without any leak.",
         "Evaluator run 2026-10-11 (docs/evidence/embeddinggemma2-dotnet/, CPU): G1 passed; G2 failed only on export.token_embeddings (Python ORT vs PyTorch): the tolerance file's |d| <= 1e-4 * max(1, |ref|) judged per value gives 1.7e-2, while the per-case max |d| / max(1, max |ref|) the bound was set from is 6.2e-6. Which reading binds is a maintainer decision; every .NET check passed.",
         "The hosted graph is public since 2026-10-14. The 0.1.0-preview.6 release drill downloaded it with no token into an empty cache, verified it and ran the sample offline (Linux x64, one machine); other platforms are untested.",
         "Accepted fixtures reach 1,750 tokens and batch-independence checks 2,049; 2,050 to 8,192 tokens is covered by the proposed long-input rows (not yet accepted). One 8,192-token row took 80 s on the 12-thread workstation CPU (process peak working set 5.9 GB during the test run); temporary memory grows with the square of the length in the full-attention layers.",
@@ -578,26 +578,26 @@
         }
       },
       "capabilities": {
-        "batch": "experimental",
+        "batch": "supported",
         "streaming": "unsupported",
-        "cancellation": "experimental",
+        "cancellation": "supported",
         "persistence": "unsupported",
         "training": "unsupported",
-        "aot": "experimental",
-        "extensions_ai": "experimental",
-        "mlnet": "experimental",
+        "aot": "supported",
+        "extensions_ai": "supported",
+        "mlnet": "supported",
         "audio": "unsupported",
         "cancellation_inside_a_step": "unrecorded",
         "chat_template_owned_text": "unrecorded",
         "chunked_prefill": "unrecorded",
         "classification": "unrecorded",
-        "concurrent_calls": "experimental",
+        "concurrent_calls": "supported",
         "concurrent_calls_unserialized": "unrecorded",
         "concurrent_requests": "unrecorded",
         "conversation_state_reuse": "unrecorded",
         "count_gate_closed": "unrecorded",
-        "embedding_pretokenized": "experimental",
-        "embedding_text": "experimental",
+        "embedding_pretokenized": "supported",
+        "embedding_text": "supported",
         "enable_thinking": "unrecorded",
         "entity_extraction": "unrecorded",
         "greedy_generation": "unrecorded",
@@ -619,16 +619,16 @@
         "input_2050_to_8192_tokens": "experimental",
         "input_over_512_tokens": "unrecorded",
         "input_over_8192_tokens": "unsupported",
-        "input_up_to_2049_tokens": "experimental",
+        "input_up_to_2049_tokens": "supported",
         "label_descriptions": "unrecorded",
         "long_context_1667_to_8192_tokens": "unrecorded",
         "long_context_over_8192_tokens": "unrecorded",
-        "matryoshka": "experimental",
+        "matryoshka": "supported",
         "max_new_tokens": "unrecorded",
         "mixed_label_sets_in_batch": "unrecorded",
         "offsets_original_text": "unrecorded",
         "plain_deduplicated_output": "unrecorded",
-        "prompts_query_document": "experimental",
+        "prompts_query_document": "supported",
         "prompts_task": "experimental",
         "reasoning_split": "unrecorded",
         "relation_extraction": "unrecorded",
@@ -639,7 +639,7 @@
         "structured_extraction": "unrecorded",
         "structured_output": "unrecorded",
         "text_only_inputs": "unrecorded",
-        "tokenizer_owned": "experimental",
+        "tokenizer_owned": "supported",
         "tool_calling": "unrecorded",
         "usage": "unrecorded",
         "video": "unsupported",
@@ -667,7 +667,7 @@
       },
       "compatibility": {
         "linux-x64 cpu": {
-          "status": "experimental",
+          "status": "supported",
           "verified": "2026-10-15"
         },
         "linux-x64 cuda": {
@@ -1638,7 +1638,7 @@
       "family": "multilingual-e5-small",
       "profile": "onnx-fp32-cpu",
       "manifest": "model-pipeline/registry/multilingual-e5-small/onnx-fp32-cpu/manifest.yaml",
-      "maturity": "preview",
+      "maturity": "stable",
       "tasks": [
         "embedding"
       ],
@@ -1646,7 +1646,7 @@
       "review_date": "2027-01-05",
       "last_checked": "2026-10-09",
       "known_issues": [
-        "Stable blocked (2026-10-15): the scheduled one-hour soak on a GitHub-hosted runner (AMD EPYC 9V45, 4 logical CPUs, 1,918 cycles; qualification run 38793842060) fails the growth rule at about 50 MB/h (unloaded rss_anon 210 to 363 MB, halves 33 and 21 MB against a 32 MB limit); the workstation G4 hour plateaued. Not yet diagnosed.",
+        "Linux memory: the hosted soak's growth of 2026-10-15 (about 50 MB/h, run 38793842060) was glibc retention after unloading plus transparent huge pages set to `always` on the runner image, not a leak (docs/evidence/scheduled-regression-fix/). Starlings.Runtime.Onnx calls malloc_trim on session release (on by default; opt out per session or per process), and the qualification soak runs with THP `madvise`. On `always` hosts resident memory can look larger without any leak.",
         "The pinned tokenizer.json emits a lone \"▁\" token before special-token literals and for trailing whitespace, where SentencePiece and transformers 5.18 emit none. The owned profile follows tokenizer.json; the difference is recorded, not fixed.",
         "tokenizer.json leaves decomposed Hangul jamo uncomposed, while SentencePiece composes them.",
         "The ONNX file and model.safetensors come from the same revision; ONNX matches PyTorch to 2.1e-6 in hidden states on the M0 corpus."
@@ -1710,14 +1710,14 @@
         }
       },
       "capabilities": {
-        "batch": "experimental",
+        "batch": "supported",
         "streaming": "unsupported",
-        "cancellation": "experimental",
+        "cancellation": "supported",
         "persistence": "unsupported",
         "training": "unsupported",
-        "aot": "experimental",
-        "extensions_ai": "experimental",
-        "mlnet": "experimental",
+        "aot": "supported",
+        "extensions_ai": "supported",
+        "mlnet": "supported",
         "audio": "unrecorded",
         "cancellation_inside_a_step": "unrecorded",
         "chat_template_owned_text": "unrecorded",
@@ -1799,7 +1799,7 @@
       },
       "compatibility": {
         "linux-x64 cpu": {
-          "status": "experimental",
+          "status": "supported",
           "verified": "2026-10-15"
         },
         "linux-x64 cuda": {
