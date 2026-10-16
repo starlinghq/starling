@@ -9,6 +9,8 @@ This repository delivers .NET implementations of AI models with reproducible evi
 - `browser/`: the WebAssembly spike.
 - `.github/`: charter, contribution policy, templates, CI.
 
+Roost, the NVIDIA serving engine, lives in [starlinghq/roost](https://github.com/starlinghq/roost) and consumes this repository as its build plan's section 3.1 describes. No Roost code lands here; a change to the generation contract, the manifest schema or the evaluator lists its Roost impact in the PR description.
+
 The owned tokenizer is the published package `Starlings.Tokenizers` from [starlinghq/tokenizers](https://github.com/starlinghq/tokenizers), pinned exactly in `ai-dotnet/Directory.Packages.props`. Change tokenizer behavior there, release it, then raise the pin here (and the manifests' `processing.tokenizer.version`) in one change.
 
 Package and namespace prefix: `Starlings`. Target framework: `net10.0`. Package versions are central (`Directory.Packages.props` per product) and locked (`packages.lock.json`).

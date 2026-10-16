@@ -160,7 +160,7 @@ model-pipeline validate registry
 | [`.github/`](.github) | Charter, contribution and support policy, security reporting, issue templates, CI. |
 | [`tools/`](tools) | Repository checks and maintenance scripts. |
 
-The tokenizer is its own product, [`Starlings.Tokenizers`](https://www.nuget.org/packages/Starlings.Tokenizers) from [starlinghq/tokenizers](https://github.com/starlinghq/tokenizers). The execution plan is [`docs/plan/fast-faithful-ai-dotnet.md`](docs/plan/fast-faithful-ai-dotnet.md), and open decisions are in [`docs/kickoff.md`](docs/kickoff.md). An experimental [five-model CPU onboarding workflow](model-pipeline/FIVE_MODELS.md) covers additional Qwen and BERT models; its references are still proposals.
+The tokenizer is its own product, [`Starlings.Tokenizers`](https://www.nuget.org/packages/Starlings.Tokenizers) from [starlinghq/tokenizers](https://github.com/starlinghq/tokenizers). [Roost](https://github.com/starlinghq/roost), a serving engine for NVIDIA GPUs that consumes these packages and gates, is planned in its own repository. The execution plan is [`docs/plan/fast-faithful-ai-dotnet.md`](docs/plan/fast-faithful-ai-dotnet.md), and open decisions are in [`docs/kickoff.md`](docs/kickoff.md). An experimental [five-model CPU onboarding workflow](model-pipeline/FIVE_MODELS.md) covers additional Qwen and BERT models; its references are still proposals.
 
 ## License
 
