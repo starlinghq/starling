@@ -369,7 +369,8 @@ jobs:
           - { workload: gliner2, profile: gliner2-base-v1/onnx-fp32-cpu, malloc_mmap_threshold: "65536" }
           - { workload: embeddinggemma2, profile: embeddinggemma-2/onnx-fp32-cpu }
           - { workload: embeddinggemma2-image, profile: embeddinggemma-2/image-fp32-cpu }
-          - { workload: embeddinggemma2-video, profile: embeddinggemma-2/video-fp32-cpu, unwired: true }
+          # Synthetic decoded clips (EmbeddingGemma2Video.FromDecodedFrames), so the soak needs no FFmpeg.
+          - { workload: embeddinggemma2-video, profile: embeddinggemma-2/video-fp32-cpu }
           - { workload: qwen35, profile: qwen3.5-0.8b/ortgenai-fp32x-cpu }
     env:
       PROFILE: ${{ matrix.profile }}
