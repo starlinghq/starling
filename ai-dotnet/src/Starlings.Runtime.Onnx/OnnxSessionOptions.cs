@@ -79,6 +79,12 @@ public sealed record OnnxSessionOptions
     /// </summary>
     public bool TrimNativeHeapOnRelease { get; init; } = true;
 
+    /// <summary>Diagnostics: ONNX Runtime's CPU memory arena (<c>EnableCpuMemArena</c>). Default <see langword="true"/>.</summary>
+    public bool EnableCpuMemoryArena { get; init; } = true;
+
+    /// <summary>Diagnostics: shrink the CPU arena after every run (<c>memory.enable_memory_arena_shrinkage</c>).</summary>
+    public bool ShrinkCpuArenaAfterRun { get; init; }
+
     internal void Validate()
     {
         if (!Enum.IsDefined(Provider))

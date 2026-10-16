@@ -87,6 +87,8 @@ internal abstract class SoakWorkload
         Provider = options.Cuda ? OnnxExecutionProvider.Cuda : OnnxExecutionProvider.Cpu,
         IntraOpNumThreads = options.Threads,
         ComputeModelSha256 = computeSha,
+        EnableCpuMemoryArena = !options.NoCpuArena,
+        ShrinkCpuArenaAfterRun = options.ArenaShrink,
     };
 
     protected static JsonObject Lock(ModelAssetLock assetLock) => new()

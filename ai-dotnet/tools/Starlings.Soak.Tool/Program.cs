@@ -135,6 +135,10 @@ internal sealed record SoakOptions
 
     public bool KeepLoaded { get; init; }
 
+    public bool NoCpuArena { get; init; }
+
+    public bool ArenaShrink { get; init; }
+
     public bool NoHeapTrim { get; init; }
 
     public int? SmapsEvery { get; init; }
@@ -164,6 +168,8 @@ internal sealed record SoakOptions
                 "--checkpoint-interval" => o with { CheckpointInterval = ParseTime(Next()) },
                 "--malloc-trim" => o with { MallocTrim = true },
                 "--keep-loaded" => o with { KeepLoaded = true },
+                "--no-cpu-arena" => o with { NoCpuArena = true },
+                "--arena-shrink" => o with { ArenaShrink = true },
                 "--no-heap-trim" => o with { NoHeapTrim = true },
                 "--smaps-every" => o with { SmapsEvery = Positive(Next(), "--smaps-every") },
                 _ => throw new ArgumentException($"unknown option '{args[i]}'"),
@@ -571,6 +577,8 @@ internal sealed class SoakRunner(SoakWorkload workload, SoakOptions options)
                 ["seed"] = options.Seed,
                 ["malloc_trim"] = options.MallocTrim,
                 ["keep_loaded"] = options.KeepLoaded,
+                ["no_cpu_arena"] = options.NoCpuArena,
+                ["arena_shrink"] = options.ArenaShrink,
                 ["native_heap_trim_disabled"] = options.NoHeapTrim,
                 ["gpu_sampling"] = MemoryProbe.GpuSamplingAvailable,
             },
