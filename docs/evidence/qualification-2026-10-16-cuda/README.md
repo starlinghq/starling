@@ -2,6 +2,8 @@
 
 This is the binding CUDA round at the final code: binding commit `e404702fa0fdbf91fd506757f1a5c15522d023dc` (`origin/main` after #61, #63 and #66). It covers all seven CUDA profiles. The rule is the one fixed in [`../qualification-2026-10-15/README.md`](../qualification-2026-10-15/README.md): these results are binding, and nothing was rerun to chase a pass. The EmbeddingGemma 2 text and both Qwen CUDA soaks, and every CUDA G5 run, were repeated because #54, #55, #61, #63 and #66 changed the code they measure. Their 2026-10-15 results described older code.
 
+`main` moved during the round, to `ab93d52` (#67 to #71). Those changes touch CI scripts, documentation, tests, release-set reference files and the E5 and EmbeddingGemma 2 capability metadata (CPU Stable). They do not touch the CUDA runtime, session or model code these gates measure, so the binding commit stands.
+
 The rules were not changed for this round: the soak growth rule in `Starlings.Soak.Tool` (`Analysis.cs`), and the G5 budgets in `model-pipeline/protected/performance-budgets.yaml`, checked by `model-pipeline bench g5`.
 
 ## Environment (fixed before any run)
