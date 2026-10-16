@@ -56,7 +56,7 @@ public class AssetAndCapabilityTests
     {
         var all = Gliner2Capabilities.All;
         Assert.Equal(Gliner2CapabilityStatus.Supported, all["entity_extraction.cpu"]);
-        Assert.Equal(Gliner2CapabilityStatus.Experimental, all["entity_extraction.cuda"]);
+        Assert.Equal(Gliner2CapabilityStatus.Supported, all["entity_extraction.cuda"]);
         Assert.Equal(Gliner2CapabilityStatus.Experimental, all["label_descriptions"]);
         Assert.Equal(Gliner2CapabilityStatus.Unsupported, all["concurrent_calls.cuda.unserialized"]);
         foreach (var key in new[] { "classification", "relation_extraction", "structured_extraction", "plain_deduplicated_output", "input_over_512_tokens", "truncation", "tf32", "extensions_ai", "mlnet" })

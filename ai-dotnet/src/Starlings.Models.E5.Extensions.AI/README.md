@@ -10,7 +10,7 @@ Maturity is per profile, generated from the registry manifests by `model-pipelin
 | Profile | Maturity | Platforms |
 | --- | --- | --- |
 | `multilingual-e5-small/onnx-fp32-cpu` | stable | linux-x64 cpu: supported; windows-x64 cpu: experimental |
-| `multilingual-e5-small/onnx-fp32-cuda` | experimental | linux-x64 cuda: experimental; windows-x64 cuda: untested |
+| `multilingual-e5-small/onnx-fp32-cuda` | stable | linux-x64 cuda: supported; windows-x64 cuda: untested |
 <!-- /catalog:maturity -->
 
 ## Install
@@ -41,4 +41,4 @@ var embeddings = await generator.GenerateAsync(["how much protein should a femal
 - `GenerateAsync` runs synchronously on the calling thread and returns a completed task.
 - Unsupported options (`Dimensions` other than 384, another `ModelId`, unknown additional properties) fail with `NotSupportedException` instead of being ignored.
 
-Status: supported on the Stable e5 `onnx-fp32-cpu` profile (Linux x64 CPU; G7 passed; the contract is in the `Starlings.Models.E5` README); over a CUDA session experimental (46 protected texts within the CUDA profile's bound). See the [release notes](https://github.com/starlinghq/starling/blob/main/docs/releases/ai-0.1.0-preview.6.md).
+Status: supported on the Stable e5 `onnx-fp32-cpu` profile (Linux x64 CPU; G7 passed; the contract is in the `Starlings.Models.E5` README); supported over a CUDA session on the Stable `onnx-fp32-cuda` profile (Linux x64, RTX 3090; 46 protected texts within the CUDA profile's bound, rerun by the per-release GPU regression; the contract is the README's "Stable contract: CUDA"). See the [release notes](https://github.com/starlinghq/starling/blob/main/docs/releases/ai-0.1.0-preview.6.md).

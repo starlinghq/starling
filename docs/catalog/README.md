@@ -13,18 +13,18 @@ Gate cells link to the evidence the manifest records. The Stable readiness colum
 | Profile | Task | Maturity | Owner | Review date | G0 | G1 | G2 | G3 | G4 | G5 | G6 | G7 | Stable readiness |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | [embeddinggemma-2/image-fp32-cpu](../../model-pipeline/registry/embeddinggemma-2/image-fp32-cpu/manifest.yaml) | image-embedding | stable | Mark | 2027-01-05 | [passed](../evidence/g0-provenance-2026-10-14/README.md) | [passed](../evidence/release-set-gates-2026-10-14/embeddinggemma2-image-fp32-cpu/README.md) | [passed](../evidence/release-set-gates-2026-10-14/embeddinggemma2-image-fp32-cpu/README.md) | [passed](../evidence/release-set-gates-2026-10-14/embeddinggemma2-image-fp32-cpu/README.md) | [passed](../evidence/qualification-2026-10-15/README.md) | [passed](../evidence/qualification-2026-10-15/README.md) | [passed](../evidence/g6-distribution-2026-10-14/README.md) | [passed](../evidence/g7-integration-2026-10-14/README.md) | stable: meets the validator's Stable rules |
-| [embeddinggemma-2/image-fp32-cuda](../../model-pipeline/registry/embeddinggemma-2/image-fp32-cuda/manifest.yaml) | image-embedding | experimental | Mark | 2027-01-05 | [passed](../evidence/g0-provenance-2026-10-14/README.md) | [passed](../evidence/release-set-gates-2026-10-14/embeddinggemma2-image-fp32-cuda/README.md) | [passed](../evidence/release-set-gates-2026-10-14/embeddinggemma2-image-fp32-cuda/README.md) | [passed](../evidence/release-set-gates-2026-10-14/embeddinggemma2-image-fp32-cuda/README.md) | [passed](../evidence/qualification-2026-10-16-cuda/README.md) | [passed](../evidence/qualification-2026-10-16-cuda/README.md) | [passed](../evidence/g6-distribution-2026-10-14/README.md) | [passed](../evidence/g7-integration-2026-10-14/README.md) | all eight gates pass where recorded; promotion awaits a green per-release GPU regression run |
+| [embeddinggemma-2/image-fp32-cuda](../../model-pipeline/registry/embeddinggemma-2/image-fp32-cuda/manifest.yaml) | image-embedding | stable | Mark | 2027-01-05 | [passed](../evidence/g0-provenance-2026-10-14/README.md) | [passed](../evidence/release-set-gates-2026-10-14/embeddinggemma2-image-fp32-cuda/README.md) | [passed](../evidence/release-set-gates-2026-10-14/embeddinggemma2-image-fp32-cuda/README.md) | [passed](../evidence/release-set-gates-2026-10-14/embeddinggemma2-image-fp32-cuda/README.md) | [passed](../evidence/qualification-2026-10-16-cuda/README.md) | [passed](../evidence/qualification-2026-10-16-cuda/README.md) | [passed](../evidence/g6-distribution-2026-10-14/README.md) | [passed](../evidence/g7-integration-2026-10-14/README.md) | stable: meets the validator's Stable rules |
 | [embeddinggemma-2/onnx-fp32-cpu](../../model-pipeline/registry/embeddinggemma-2/onnx-fp32-cpu/manifest.yaml) | embedding | stable | Mark | 2027-01-05 | [passed](../evidence/g0-provenance-2026-10-14/README.md) | [passed](../evidence/release-set-gates-2026-10-14/embeddinggemma2-onnx-fp32-cpu/README.md) | [passed](../evidence/release-set-gates-2026-10-14/embeddinggemma2-onnx-fp32-cpu/README.md) | [passed](../evidence/release-set-gates-2026-10-14/embeddinggemma2-onnx-fp32-cpu/README.md) | [passed](../evidence/g4-soak-1h-2026-10-14/README.md) | [passed](../evidence/qualification-2026-10-15/README.md) | [passed](../evidence/g6-distribution-2026-10-14/README.md) | [passed](../evidence/g7-integration-2026-10-14/README.md) | stable: meets the validator's Stable rules |
-| [embeddinggemma-2/onnx-fp32-cuda](../../model-pipeline/registry/embeddinggemma-2/onnx-fp32-cuda/manifest.yaml) | embedding | experimental | Mark | 2027-01-05 | [passed](../evidence/g0-provenance-2026-10-14/README.md) | [passed](../evidence/release-set-gates-2026-10-14/embeddinggemma2-onnx-fp32-cuda/README.md) | [passed](../evidence/release-set-gates-2026-10-14/embeddinggemma2-onnx-fp32-cuda/README.md) | [passed](../evidence/release-set-gates-2026-10-14/embeddinggemma2-onnx-fp32-cuda/README.md) | [passed](../evidence/qualification-2026-10-16-cuda/README.md) | [passed](../evidence/qualification-2026-10-16-cuda/README.md) | [passed](../evidence/g6-distribution-2026-10-14/README.md) | [passed](../evidence/g7-integration-2026-10-14/README.md) | all eight gates pass where recorded; promotion awaits a green per-release GPU regression run |
+| [embeddinggemma-2/onnx-fp32-cuda](../../model-pipeline/registry/embeddinggemma-2/onnx-fp32-cuda/manifest.yaml) | embedding | stable | Mark | 2027-01-05 | [passed](../evidence/g0-provenance-2026-10-14/README.md) | [passed](../evidence/release-set-gates-2026-10-14/embeddinggemma2-onnx-fp32-cuda/README.md) | [passed](../evidence/release-set-gates-2026-10-14/embeddinggemma2-onnx-fp32-cuda/README.md) | [passed](../evidence/release-set-gates-2026-10-14/embeddinggemma2-onnx-fp32-cuda/README.md) | [passed](../evidence/qualification-2026-10-16-cuda/README.md) | [passed](../evidence/qualification-2026-10-16-cuda/README.md) | [passed](../evidence/g6-distribution-2026-10-14/README.md) | [passed](../evidence/g7-integration-2026-10-14/README.md) | stable: meets the validator's Stable rules |
 | [embeddinggemma-2/video-fp32-cpu](../../model-pipeline/registry/embeddinggemma-2/video-fp32-cpu/manifest.yaml) | video-embedding | experimental | Mark | 2027-01-05 | [passed](../evidence/g0-provenance-2026-10-14/README.md) | [passed](../evidence/release-set-gates-2026-10-14/embeddinggemma2-video-fp32-cpu/README.md) | [passed](../evidence/release-set-gates-2026-10-14/embeddinggemma2-video-fp32-cpu/README.md) | [passed](../evidence/release-set-gates-2026-10-14/embeddinggemma2-video-fp32-cpu/README.md) | [passed](../evidence/qualification-2026-10-15/README.md) | [passed](../evidence/qualification-2026-10-15/README.md) | [passed](../evidence/g6-distribution-2026-10-14/README.md) | [passed](../evidence/g7-integration-2026-10-14/README.md) | meets the validator's Stable rules |
 | [embeddinggemma-2/video-fp32-cuda](../../model-pipeline/registry/embeddinggemma-2/video-fp32-cuda/manifest.yaml) | video-embedding | experimental | Mark | 2027-01-05 | [passed](../evidence/g0-provenance-2026-10-14/README.md) | [passed](../evidence/release-set-gates-2026-10-14/embeddinggemma2-video-fp32-cuda/README.md) | [passed](../evidence/release-set-gates-2026-10-14/embeddinggemma2-video-fp32-cuda/README.md) | [passed](../evidence/release-set-gates-2026-10-14/embeddinggemma2-video-fp32-cuda/README.md) | [passed](../evidence/qualification-2026-10-16-cuda/README.md) | [passed](../evidence/qualification-2026-10-16-cuda/README.md) | [passed](../evidence/g6-distribution-2026-10-14/README.md) | [passed](../evidence/g7-integration-2026-10-14/README.md) | all eight gates pass where recorded; promotion awaits a green per-release GPU regression run |
 | [gliner2-base-v1/onnx-fp32-cpu](../../model-pipeline/registry/gliner2-base-v1/onnx-fp32-cpu/manifest.yaml) | extraction | stable | Mark | 2027-01-05 | [passed](../evidence/g0-provenance-2026-10-14/README.md) | [passed](../evidence/release-set-gates-2026-10-14/gliner2-onnx-fp32-cpu/README.md) | [passed](../evidence/release-set-gates-2026-10-14/gliner2-onnx-fp32-cpu/README.md) | [passed](../evidence/release-set-gates-2026-10-14/gliner2-onnx-fp32-cpu/README.md) | [passed](../evidence/qualification-2026-10-15/README.md) | [passed](../evidence/qualification-2026-10-15/README.md) | [passed](../evidence/g6-distribution-2026-10-14/README.md) | [passed](../evidence/g7-integration-2026-10-14/README.md) | stable: meets the validator's Stable rules |
-| [gliner2-base-v1/onnx-fp32-cuda](../../model-pipeline/registry/gliner2-base-v1/onnx-fp32-cuda/manifest.yaml) | extraction | experimental | Mark | 2027-01-05 | [passed](../evidence/g0-provenance-2026-10-14/README.md) | [passed](../evidence/release-set-gates-2026-10-14/gliner2-onnx-fp32-cuda/README.md) | [passed](../evidence/release-set-gates-2026-10-14/gliner2-onnx-fp32-cuda/README.md) | [passed](../evidence/release-set-gates-2026-10-14/gliner2-onnx-fp32-cuda/README.md) | [passed](../evidence/qualification-2026-10-16-cuda/README.md) | [passed](../evidence/qualification-2026-10-16-cuda/README.md) | [passed](../evidence/g6-distribution-2026-10-14/README.md) | [passed](../evidence/g7-integration-2026-10-14/README.md) | all eight gates pass where recorded; promotion awaits a green per-release GPU regression run |
+| [gliner2-base-v1/onnx-fp32-cuda](../../model-pipeline/registry/gliner2-base-v1/onnx-fp32-cuda/manifest.yaml) | extraction | stable | Mark | 2027-01-05 | [passed](../evidence/g0-provenance-2026-10-14/README.md) | [passed](../evidence/release-set-gates-2026-10-14/gliner2-onnx-fp32-cuda/README.md) | [passed](../evidence/release-set-gates-2026-10-14/gliner2-onnx-fp32-cuda/README.md) | [passed](../evidence/release-set-gates-2026-10-14/gliner2-onnx-fp32-cuda/README.md) | [passed](../evidence/qualification-2026-10-16-cuda/README.md) | [passed](../evidence/qualification-2026-10-16-cuda/README.md) | [passed](../evidence/g6-distribution-2026-10-14/README.md) | [passed](../evidence/g7-integration-2026-10-14/README.md) | stable: meets the validator's Stable rules |
 | [multilingual-e5-small/onnx-fp32-cpu](../../model-pipeline/registry/multilingual-e5-small/onnx-fp32-cpu/manifest.yaml) | embedding | stable | Mark | 2027-01-05 | [passed](../releases/e5-0.1.0-preview.1.md) | [passed](../evidence/release-set-gates-2026-10-14/e5-onnx-fp32-cpu/README.md) | [passed](../evidence/release-set-gates-2026-10-14/e5-onnx-fp32-cpu/README.md) | [passed](../evidence/release-set-gates-2026-10-14/e5-onnx-fp32-cpu/README.md) | [passed](../evidence/g4-soak-1h-2026-10-14/README.md) | [passed](../evidence/qualification-2026-10-15/README.md) | [passed](../evidence/g6-distribution-2026-10-14/README.md) | [passed](../evidence/g7-integration-2026-10-14/README.md) | stable: meets the validator's Stable rules |
-| [multilingual-e5-small/onnx-fp32-cuda](../../model-pipeline/registry/multilingual-e5-small/onnx-fp32-cuda/manifest.yaml) | embedding | experimental | Mark | 2027-01-05 | [passed](../evidence/g0-provenance-2026-10-14/README.md) | [passed](../evidence/release-set-gates-2026-10-14/e5-onnx-fp32-cuda/README.md) | [passed](../evidence/release-set-gates-2026-10-14/e5-onnx-fp32-cuda/README.md) | [passed](../evidence/release-set-gates-2026-10-14/e5-onnx-fp32-cuda/README.md) | [passed](../evidence/qualification-2026-10-16-cuda/README.md) | [passed](../evidence/qualification-2026-10-16-cuda/README.md) | [passed](../evidence/g6-distribution-2026-10-14/README.md) | [passed](../evidence/g7-integration-2026-10-14/README.md) | all eight gates pass where recorded; promotion awaits a green per-release GPU regression run |
-| [qwen3.5-0.8b/ortgenai-fp16x-cuda](../../model-pipeline/registry/qwen3.5-0.8b/ortgenai-fp16x-cuda/manifest.yaml) | generation | experimental | Mark | 2027-01-05 | [passed](../evidence/g0-provenance-2026-10-14/README.md) | [passed](../evidence/release-set-gates-2026-10-14/qwen35-ortgenai-fp16x-cuda/README.md) | [passed](../evidence/release-set-gates-2026-10-14/qwen35-ortgenai-fp16x-cuda/README.md) | [passed](../evidence/release-set-gates-2026-10-14/qwen35-ortgenai-fp16x-cuda/README.md) | [passed](../evidence/qualification-2026-10-16-cuda/README.md) | [passed](../evidence/qualification-2026-10-16-cuda/README.md) | [passed](../evidence/g6-distribution-2026-10-14/README.md) | [passed](../evidence/g7-integration-2026-10-14/README.md) | all eight gates pass where recorded; promotion awaits a green per-release GPU regression run |
+| [multilingual-e5-small/onnx-fp32-cuda](../../model-pipeline/registry/multilingual-e5-small/onnx-fp32-cuda/manifest.yaml) | embedding | stable | Mark | 2027-01-05 | [passed](../evidence/g0-provenance-2026-10-14/README.md) | [passed](../evidence/release-set-gates-2026-10-14/e5-onnx-fp32-cuda/README.md) | [passed](../evidence/release-set-gates-2026-10-14/e5-onnx-fp32-cuda/README.md) | [passed](../evidence/release-set-gates-2026-10-14/e5-onnx-fp32-cuda/README.md) | [passed](../evidence/qualification-2026-10-16-cuda/README.md) | [passed](../evidence/qualification-2026-10-16-cuda/README.md) | [passed](../evidence/g6-distribution-2026-10-14/README.md) | [passed](../evidence/g7-integration-2026-10-14/README.md) | stable: meets the validator's Stable rules |
+| [qwen3.5-0.8b/ortgenai-fp16x-cuda](../../model-pipeline/registry/qwen3.5-0.8b/ortgenai-fp16x-cuda/manifest.yaml) | generation | stable | Mark | 2027-01-05 | [passed](../evidence/g0-provenance-2026-10-14/README.md) | [passed](../evidence/release-set-gates-2026-10-14/qwen35-ortgenai-fp16x-cuda/README.md) | [passed](../evidence/release-set-gates-2026-10-14/qwen35-ortgenai-fp16x-cuda/README.md) | [passed](../evidence/release-set-gates-2026-10-14/qwen35-ortgenai-fp16x-cuda/README.md) | [passed](../evidence/qualification-2026-10-16-cuda/README.md) | [passed](../evidence/qualification-2026-10-16-cuda/README.md) | [passed](../evidence/g6-distribution-2026-10-14/README.md) | [passed](../evidence/g7-integration-2026-10-14/README.md) | stable: meets the validator's Stable rules |
 | [qwen3.5-0.8b/ortgenai-fp32x-cpu](../../model-pipeline/registry/qwen3.5-0.8b/ortgenai-fp32x-cpu/manifest.yaml) | generation | stable | Mark | 2027-01-05 | [passed](../evidence/g0-provenance-2026-10-14/README.md) | [passed](../evidence/release-set-gates-2026-10-14/qwen35-ortgenai-fp32x-cpu/README.md) | [passed](../evidence/release-set-gates-2026-10-14/qwen35-ortgenai-fp32x-cpu/README.md) | [passed](../evidence/release-set-gates-2026-10-14/qwen35-ortgenai-fp32x-cpu/README.md) | [passed](../evidence/g4-soak-1h-2026-10-14/README.md) | [passed](../evidence/qualification-2026-10-15/README.md) | [passed](../evidence/g6-distribution-2026-10-14/README.md) | [passed](../evidence/g7-integration-2026-10-14/README.md) | stable: meets the validator's Stable rules |
-| [qwen3.5-0.8b/ortgenai-fp32x-cuda](../../model-pipeline/registry/qwen3.5-0.8b/ortgenai-fp32x-cuda/manifest.yaml) | generation | experimental | Mark | 2027-01-05 | [passed](../evidence/g0-provenance-2026-10-14/README.md) | [passed](../evidence/release-set-gates-2026-10-14/qwen35-ortgenai-fp32x-cuda/README.md) | [passed](../evidence/release-set-gates-2026-10-14/qwen35-ortgenai-fp32x-cuda/README.md) | [passed](../evidence/release-set-gates-2026-10-14/qwen35-ortgenai-fp32x-cuda/README.md) | [passed](../evidence/qualification-2026-10-16-cuda/README.md) | [passed](../evidence/qualification-2026-10-16-cuda/README.md) | [passed](../evidence/g6-distribution-2026-10-14/README.md) | [passed](../evidence/g7-integration-2026-10-14/README.md) | all eight gates pass where recorded; promotion awaits a green per-release GPU regression run |
+| [qwen3.5-0.8b/ortgenai-fp32x-cuda](../../model-pipeline/registry/qwen3.5-0.8b/ortgenai-fp32x-cuda/manifest.yaml) | generation | stable | Mark | 2027-01-05 | [passed](../evidence/g0-provenance-2026-10-14/README.md) | [passed](../evidence/release-set-gates-2026-10-14/qwen35-ortgenai-fp32x-cuda/README.md) | [passed](../evidence/release-set-gates-2026-10-14/qwen35-ortgenai-fp32x-cuda/README.md) | [passed](../evidence/release-set-gates-2026-10-14/qwen35-ortgenai-fp32x-cuda/README.md) | [passed](../evidence/qualification-2026-10-16-cuda/README.md) | [passed](../evidence/qualification-2026-10-16-cuda/README.md) | [passed](../evidence/g6-distribution-2026-10-14/README.md) | [passed](../evidence/g7-integration-2026-10-14/README.md) | stable: meets the validator's Stable rules |
 
 ## Execution
 
@@ -52,41 +52,41 @@ One table per family, one column per profile. Rows are every capability any prof
 
 | Capability | image-fp32-cpu | image-fp32-cuda | onnx-fp32-cpu | onnx-fp32-cuda | video-fp32-cpu | video-fp32-cuda |
 | --- | --- | --- | --- | --- | --- | --- |
-| batch | supported | experimental | supported | experimental | experimental | experimental |
+| batch | supported | supported | supported | supported | experimental | experimental |
 | streaming | unsupported | unsupported | unsupported | unsupported | unsupported | unsupported |
-| cancellation | supported | experimental | supported | experimental | experimental | experimental |
+| cancellation | supported | supported | supported | supported | experimental | experimental |
 | persistence | unsupported | unsupported | unsupported | unsupported | unsupported | unsupported |
 | training | unsupported | unsupported | unsupported | unsupported | unsupported | unsupported |
 | aot | supported | experimental | supported | experimental | experimental | experimental |
-| extensions_ai | supported | experimental | supported | experimental | experimental | experimental |
-| mlnet | unsupported | unsupported | supported | experimental | unsupported | unsupported |
+| extensions_ai | supported | experimental | supported | supported | experimental | experimental |
+| mlnet | unsupported | unsupported | supported | supported | unsupported | unsupported |
 | audio | unsupported | unsupported | unsupported | unsupported | unsupported | unsupported |
-| concurrent_calls | supported | experimental | supported | experimental | experimental | experimental |
-| embedding_pretokenized | unrecorded | unrecorded | supported | experimental | unrecorded | unrecorded |
-| embedding_text | unrecorded | unrecorded | supported | experimental | unrecorded | unrecorded |
-| image | supported | experimental | unsupported | unsupported | experimental | experimental |
+| concurrent_calls | supported | supported | supported | supported | experimental | experimental |
+| embedding_pretokenized | unrecorded | unrecorded | supported | supported | unrecorded | unrecorded |
+| embedding_text | unrecorded | unrecorded | supported | supported | unrecorded | unrecorded |
+| image | supported | supported | unsupported | unsupported | experimental | experimental |
 | image_16_bit | unsupported | unsupported | unrecorded | unrecorded | unrecorded | unrecorded |
 | image_alpha_compositing | unsupported | unsupported | unrecorded | unrecorded | unrecorded | unrecorded |
-| image_batch | supported | experimental | unrecorded | unrecorded | unrecorded | unrecorded |
-| image_budget_280 | supported | experimental | unrecorded | unrecorded | unrecorded | unrecorded |
+| image_batch | supported | supported | unrecorded | unrecorded | unrecorded | unrecorded |
+| image_budget_280 | supported | supported | unrecorded | unrecorded | unrecorded | unrecorded |
 | image_budget_other | experimental | experimental | unrecorded | unrecorded | unrecorded | unrecorded |
 | image_decode_gif_bmp_webp | experimental | experimental | unrecorded | unrecorded | unrecorded | unrecorded |
 | image_decode_gif_transparency | unsupported | unsupported | unrecorded | unrecorded | unrecorded | unrecorded |
-| image_decode_png_jpeg | supported | experimental | unrecorded | unrecorded | unrecorded | unrecorded |
+| image_decode_png_jpeg | supported | supported | unrecorded | unrecorded | unrecorded | unrecorded |
 | image_exif_orientation_opt_in | experimental | experimental | unrecorded | unrecorded | unrecorded | unrecorded |
-| image_interleaved_text | supported | experimental | unrecorded | unrecorded | unrecorded | unrecorded |
-| image_matryoshka | supported | experimental | unrecorded | unrecorded | unrecorded | unrecorded |
-| image_multiple_per_input | supported | experimental | unrecorded | unrecorded | unrecorded | unrecorded |
+| image_interleaved_text | supported | supported | unrecorded | unrecorded | unrecorded | unrecorded |
+| image_matryoshka | supported | supported | unrecorded | unrecorded | unrecorded | unrecorded |
+| image_multiple_per_input | supported | supported | unrecorded | unrecorded | unrecorded | unrecorded |
 | image_over_default_pixel_limit_with_option | experimental | experimental | unrecorded | unrecorded | unrecorded | unrecorded |
-| image_prompts | supported | experimental | unrecorded | unrecorded | unrecorded | unrecorded |
+| image_prompts | supported | supported | unrecorded | unrecorded | unrecorded | unrecorded |
 | input_2050_to_8192_tokens | unrecorded | unrecorded | experimental | experimental | unrecorded | unrecorded |
 | input_over_8192_tokens | unsupported | unsupported | unsupported | unsupported | unsupported | unsupported |
-| input_up_to_2049_tokens | unrecorded | unrecorded | supported | experimental | unrecorded | unrecorded |
-| matryoshka | unrecorded | unrecorded | supported | experimental | unrecorded | unrecorded |
-| prompts_query_document | unrecorded | unrecorded | supported | experimental | unrecorded | unrecorded |
+| input_up_to_2049_tokens | unrecorded | unrecorded | supported | supported | unrecorded | unrecorded |
+| matryoshka | unrecorded | unrecorded | supported | supported | unrecorded | unrecorded |
+| prompts_query_document | unrecorded | unrecorded | supported | supported | unrecorded | unrecorded |
 | prompts_task | unrecorded | unrecorded | experimental | experimental | unrecorded | unrecorded |
-| text_only_inputs | supported | experimental | unrecorded | unrecorded | experimental | experimental |
-| tokenizer_owned | unrecorded | unrecorded | supported | experimental | unrecorded | unrecorded |
+| text_only_inputs | supported | supported | unrecorded | unrecorded | experimental | experimental |
+| tokenizer_owned | unrecorded | unrecorded | supported | supported | unrecorded | unrecorded |
 | video | unsupported | unsupported | unsupported | unsupported | experimental | experimental |
 | video_audio_track | unrecorded | unrecorded | unrecorded | unrecorded | unsupported | unsupported |
 | video_batch | unrecorded | unrecorded | unrecorded | unrecorded | experimental | experimental |
@@ -113,23 +113,23 @@ One table per family, one column per profile. Rows are every capability any prof
 
 | Capability | onnx-fp32-cpu | onnx-fp32-cuda |
 | --- | --- | --- |
-| batch | supported | experimental |
+| batch | supported | supported |
 | streaming | unsupported | unsupported |
-| cancellation | supported | experimental |
+| cancellation | supported | supported |
 | persistence | unsupported | unsupported |
 | training | unsupported | unsupported |
 | aot | supported | experimental |
 | extensions_ai | unsupported | unsupported |
 | mlnet | unsupported | unsupported |
 | classification | unsupported | unsupported |
-| concurrent_calls | supported | experimental |
+| concurrent_calls | supported | supported |
 | concurrent_calls_unserialized | unrecorded | unsupported |
 | count_gate_closed | experimental | experimental |
-| entity_extraction | supported | experimental |
+| entity_extraction | supported | supported |
 | input_over_512_tokens | unsupported | unsupported |
 | label_descriptions | experimental | experimental |
 | mixed_label_sets_in_batch | unsupported | unsupported |
-| offsets_original_text | supported | experimental |
+| offsets_original_text | supported | supported |
 | plain_deduplicated_output | unsupported | unsupported |
 | relation_extraction | unsupported | unsupported |
 | structured_extraction | unsupported | unsupported |
@@ -138,46 +138,46 @@ One table per family, one column per profile. Rows are every capability any prof
 
 | Capability | onnx-fp32-cpu | onnx-fp32-cuda |
 | --- | --- | --- |
-| batch | supported | experimental |
+| batch | supported | supported |
 | streaming | unsupported | unsupported |
-| cancellation | supported | experimental |
+| cancellation | supported | supported |
 | persistence | unsupported | unsupported |
 | training | unsupported | unsupported |
 | aot | supported | experimental |
-| extensions_ai | supported | experimental |
-| mlnet | supported | experimental |
+| extensions_ai | supported | supported |
+| mlnet | supported | supported |
 
 ### qwen3.5-0.8b
 
 | Capability | ortgenai-fp16x-cuda | ortgenai-fp32x-cpu | ortgenai-fp32x-cuda |
 | --- | --- | --- | --- |
 | batch | unsupported | unsupported | unsupported |
-| streaming | experimental | supported | experimental |
-| cancellation | experimental | supported | experimental |
+| streaming | supported | supported | supported |
+| cancellation | supported | supported | supported |
 | persistence | unsupported | unsupported | unsupported |
 | training | unsupported | unsupported | unsupported |
 | aot | experimental | supported | experimental |
-| extensions_ai | experimental | supported | experimental |
+| extensions_ai | supported | supported | supported |
 | mlnet | unsupported | unsupported | unsupported |
 | cancellation_inside_a_step | unsupported | unsupported | unsupported |
-| chat_template_owned_text | experimental | supported | experimental |
-| chunked_prefill | experimental | supported | experimental |
-| concurrent_requests | experimental | supported | experimental |
+| chat_template_owned_text | supported | supported | supported |
+| chunked_prefill | supported | supported | supported |
+| concurrent_requests | supported | supported | supported |
 | conversation_state_reuse | unsupported | unsupported | unsupported |
 | enable_thinking | experimental | experimental | experimental |
-| greedy_generation | experimental | supported | experimental |
+| greedy_generation | supported | supported | supported |
 | long_context_1667_to_8192_tokens | experimental | experimental | experimental |
 | long_context_over_8192_tokens | unsupported | unsupported | unsupported |
-| max_new_tokens | experimental | supported | experimental |
+| max_new_tokens | supported | supported | supported |
 | reasoning_split | unsupported | unsupported | unsupported |
-| sampling_seeded | experimental | supported | experimental |
-| step0_logits | experimental | supported | experimental |
-| stop_sequences | experimental | supported | experimental |
-| stop_tokens | experimental | supported | experimental |
+| sampling_seeded | supported | supported | supported |
+| step0_logits | supported | supported | supported |
+| stop_sequences | supported | supported | supported |
+| stop_tokens | supported | supported | supported |
 | structured_output | unsupported | unsupported | unsupported |
-| tokenizer_owned | experimental | supported | experimental |
+| tokenizer_owned | supported | supported | supported |
 | tool_calling | experimental | experimental | experimental |
-| usage | experimental | supported | experimental |
+| usage | supported | supported | supported |
 | vision | unsupported | unsupported | unsupported |
 
 ## Known issues
@@ -187,8 +187,11 @@ One table per family, one column per profile. Rows are every capability any prof
 - `embeddinggemma-2/image-fp32-cpu`: Linux memory: Starlings.Runtime.Onnx calls malloc_trim on session release (on by default); the qualification soak runs with transparent huge pages `madvise`. No MALLOC_* setting is required on CPU; on `always` hosts resident memory can look larger without any leak.
 - `embeddinggemma-2/image-fp32-cpu`: One CPU architecture (AVX2) produced the reference; PyTorch's generic uint8 kernel is expected to give the same resized bytes (same int16 weights), not verified. The C# resampler is integer arithmetic and machine-independent.
 - `embeddinggemma-2/image-fp32-cpu`: The 16-bit fixture image (mode-gray16) has a reference row that no C# path reproduces: upstream renders it white, this profile rejects it.
-- `embeddinggemma-2/image-fp32-cuda`: The evaluator (model-pipeline evaluate) has no image task: the image package tests enforce the protected bounds (docs/evidence/embeddinggemma2-images/). G1/G2 are not run for this profile.
-- `embeddinggemma-2/image-fp32-cuda`: The hosted graphs' download addresses are placeholders until the maintainer creates the GitHub release embeddinggemma-2-vision-onnx-r1; acquisition of the image graphs is untested until then.
+- `embeddinggemma-2/image-fp32-cuda`: Contract hardware: an NVIDIA GeForce RTX 3090 (Ampere, sm_86), driver 580, CUDA 13 runtime. The CUDA gates G1 to G5 (G4 and G5 in the binding 2026-10-16 round) ran on RTX 3090s, and the per-release GPU regression is pinned to the RTX 3090 and refuses any other GPU (tools/ci/runpod.py). Its first run, 38857860186, landed on an RTX 4090 (Ada) before the pin: every check of this profile passed there, but embeddinggemma-2/video-fp32-cuda failed G2 (docs/evidence/gpu-regression-2026-10-16/README.md). Other NVIDIA GPUs, including the RTX 4090, are untested and outside the contract.
+- `embeddinggemma-2/image-fp32-cuda`: Linux memory: MALLOC_MMAP_THRESHOLD_=65536 is recommended, not required (the Starlings.Models.EmbeddingGemma2 README, "Memory on Linux"); the G4 soak and the per-release soak smoke test ran without it.
+- `embeddinggemma-2/image-fp32-cuda`: Cancellation on CUDA completes the current vision or text run before throwing (#61), so its latency is one run.
+- `embeddinggemma-2/image-fp32-cuda`: The image release set's reference stage tensors regenerate byte-identical only on the reference CPU at 6 threads; the accepted soft-token and token-embedding arrays are hosted at Starlinghq/starling-release-references (commit and file digests in the protected hosted-reference.json, #71), and the evaluator checks every array against the protected tensors.json, so the per-release G2 needs no regeneration.
+- `embeddinggemma-2/image-fp32-cuda`: The multimodal IEmbeddingGenerator over CUDA (CudaAdapterTests.MultimodalGeneratorOverCudaMeetsTheProtectedImageAndVideoTolerances) needs the video fixture set as well, which the per-release GPU pod does not have, so that test is skipped there (run 38857860186); extensions_ai stays experimental on this profile until it runs per release (G7 evidence: 2026-10-14).
 - `embeddinggemma-2/image-fp32-cuda`: One CPU architecture (AVX2) produced the reference; PyTorch's generic uint8 kernel is expected to give the same resized bytes (same int16 weights), not verified. The C# resampler is integer arithmetic and machine-independent.
 - `embeddinggemma-2/image-fp32-cuda`: The 16-bit fixture image (mode-gray16) has a reference row that no C# path reproduces: upstream renders it white, this profile rejects it.
 - `embeddinggemma-2/image-fp32-cuda`: GPU memory: one 2,520-patch image needs about 610 MB of attention buffer per vision layer on ONNX Runtime CUDA; a vision batch of two failed with about 5.5 GB free in the spike. EmbeddingGemma2MultimodalOptions.MaxVisionBatchSize defaults to 1; the three graphs take about 2.9 GB of GPU memory when text-only inputs are also embedded.
@@ -198,6 +201,9 @@ One table per family, one column per profile. Rows are every capability any prof
 - `embeddinggemma-2/onnx-fp32-cpu`: The hosted graph is public since 2026-10-14. The 0.1.0-preview.6 release drill downloaded it with no token into an empty cache, verified it and ran the sample offline (Linux x64, one machine); other platforms are untested.
 - `embeddinggemma-2/onnx-fp32-cpu`: Accepted fixtures reach 1,750 tokens and batch-independence checks 2,049; 2,050 to 8,192 tokens is covered by the proposed long-input rows (not yet accepted). One 8,192-token row took 80 s on the 12-thread workstation CPU (process peak working set 5.9 GB during the test run); temporary memory grows with the square of the length in the full-attention layers.
 - `embeddinggemma-2/onnx-fp32-cpu`: The accepted fixtures cover the none, query and document prompts only; the other 18 names are covered by the proposed task-prompt rows (model-pipeline/proposed/embeddinggemma-2/task-prompts, not yet accepted). Matryoshka sizes are checked against the reference sliced and renormalized (the fixtures hold no truncated rows; the spike probe showed sentence-transformers truncate_dim equals that within 6e-8).
+- `embeddinggemma-2/onnx-fp32-cuda`: Contract hardware: an NVIDIA GeForce RTX 3090 (Ampere, sm_86), driver 580, CUDA 13 runtime. The CUDA gates G1 to G5 (G4 and G5 in the binding 2026-10-16 round) ran on RTX 3090s, and the per-release GPU regression is pinned to the RTX 3090 and refuses any other GPU (tools/ci/runpod.py). Its first run, 38857860186, landed on an RTX 4090 (Ada) before the pin: every check of this profile passed there, but embeddinggemma-2/video-fp32-cuda failed G2 (docs/evidence/gpu-regression-2026-10-16/README.md). Other NVIDIA GPUs, including the RTX 4090, are untested and outside the contract.
+- `embeddinggemma-2/onnx-fp32-cuda`: Linux memory: no MALLOC_* setting is required; the runtime calls malloc_trim on session release (on by default).
+- `embeddinggemma-2/onnx-fp32-cuda`: Cancellation on CUDA completes the current run before throwing (#61), so its latency is one chunk: up to about 1.2 s at the default 16 rows of 2,048 tokens; lower MaxBatchSize for faster cancellation (docs/evidence/gliner2-cuda-wrong-output/README.md).
 - `embeddinggemma-2/onnx-fp32-cuda`: Evaluator run 2026-10-11 (docs/evidence/embeddinggemma2-dotnet/, CPU): G1 passed; G2 failed only on export.token_embeddings (Python ORT vs PyTorch): the tolerance file's \|d\| <= 1e-4 * max(1, \|ref\|) judged per value gives 1.7e-2, while the per-case max \|d\| / max(1, max \|ref\|) the bound was set from is 6.2e-6. Which reading binds is a maintainer decision; every .NET check passed.
 - `embeddinggemma-2/onnx-fp32-cuda`: The hosted graph is public since 2026-10-14. The 0.1.0-preview.6 release drill downloaded it with no token into an empty cache, verified it and ran the sample offline (Linux x64, one machine); other platforms are untested.
 - `embeddinggemma-2/onnx-fp32-cuda`: Accepted fixtures reach 1,750 tokens and batch-independence checks 2,049; 2,050 to 8,192 tokens is covered by the proposed long-input rows (not yet accepted). Long rows need GPU memory that grows with the square of the length in the full-attention layers.
@@ -210,6 +216,7 @@ One table per family, one column per profile. Rows are every capability any prof
 - `embeddinggemma-2/video-fp32-cpu`: Synthetic fixture videos only (no camera footage); default settings only; no variable frame rate, interlaced or HDR video. One CPU architecture (AVX2) produced the reference and the decoder comparison: swscale's SIMD paths on other CPUs (ARM in particular) may differ by a level, for upstream as well.
 - `embeddinggemma-2/video-fp32-cpu`: One decoder profile per FFmpeg adapter: decoder_ffmpeg (FFmpeg 8, libavcodec.so.62) and decoder_ffmpeg9 (FFmpeg 9, libavcodec.so.63) are both protected, and G1 checks both. The FFmpeg 9 evidence covers FFmpeg 9.0.1 (a GPL distribution build, every frame of the fixture videos, loaded with AllowNonLgplBuild) and the BtbN LGPL build n9.0.2-28-g669f5ab083 (every frame of the fixture videos, the sampled frames of the release videos); other 9.x point releases are untested.
 - `embeddinggemma-2/video-fp32-cpu`: CPU video embedding is slow: the vision tower dominates (about 2.7 s per 1,260-patch frame on an i7-5820K), so a 32-frame video takes about 100 s; prefer CUDA for video.
+- `embeddinggemma-2/video-fp32-cuda`: Not promoted to Stable (2026-10-16). The contract covers the NVIDIA GeForce RTX 3090 (Ampere) only; the RTX 4090 (Ada) is untested and out of contract. The first per-release GPU regression run, 38857860186 (commit 9a18b01), landed on an RTX 4090 (driver 580.159.03) and failed this profile's G2 on the video release set: embedding max abs 1.009e-5 against the protected 1e-5, token embeddings 3.34e-3 against 1e-3 row-relative (worst commons-video-04). G1, G3 and the soak smoke test passed there. On the RTX 3090 the same release set measured 2.77e-6 and 7.97e-4 (docs/evidence/release-set-gates-2026-10-14/embeddinggemma2-video-fp32-cuda/README.md). No tolerance was changed. The per-release run is now pinned to the RTX 3090; promotion waits for a green run there (docs/evidence/gpu-regression-2026-10-16/README.md).
 - `embeddinggemma-2/video-fp32-cuda`: Sampled frames follow torchcodec's seek-based decoding, including the decoder state after a seek: on the Ogg Theora release video commons-video-02 the frame after torchcodec's seek differs from a sequential decode, and that frame depends on FFmpeg frame threading (upstream's num_ffmpeg_threads=0 is the adapter's DecoderThreads default; another thread count changes which frames differ, for upstream as well).
 - `embeddinggemma-2/video-fp32-cuda`: Hosting: the vision and multimodal graphs are public at Starlinghq/embeddinggemma-2-vision-onnx (pinned commit above); the release drill downloaded them with no token on 2026-10-15 and ran the video search offline from that cache (docs/evidence/g6-distribution-2026-10-14/README.md).
 - `embeddinggemma-2/video-fp32-cuda`: Synthetic fixture videos only (no camera footage); default settings only; no variable frame rate, interlaced or HDR video. One CPU architecture (AVX2) produced the reference and the decoder comparison: swscale's SIMD paths on other CPUs (ARM in particular) may differ by a level, for upstream as well.
@@ -220,6 +227,9 @@ One table per family, one column per profile. Rows are every capability any prof
 - `gliner2-base-v1/onnx-fp32-cpu`: Upstream span offsets index the normalized text: a span that includes the appended '.' ends one past the original text (seen at threshold 0.0). The C# package maps such spans onto the input (behavior.defaults).
 - `gliner2-base-v1/onnx-fp32-cpu`: The hosted graph is public since 2026-10-14. The 0.1.0-preview.6 release drill downloaded it with no token into an empty cache, verified it and ran the sample offline (Linux x64, one machine); other platforms are untested.
 - `gliner2-base-v1/onnx-fp32-cpu`: The count gate (count_pred argmax 0 gives an empty result) never closed on the development corpus. The proposed capability cases (model-pipeline/proposed/gliner2-base-v1/capability-cases) add 12 public-text cases where it closes; they are not yet accepted fixtures.
+- `gliner2-base-v1/onnx-fp32-cuda`: Contract hardware: an NVIDIA GeForce RTX 3090 (Ampere, sm_86), driver 580, CUDA 13 runtime. The CUDA gates G1 to G5 (G4 and G5 in the binding 2026-10-16 round) ran on RTX 3090s, and the per-release GPU regression is pinned to the RTX 3090 and refuses any other GPU (tools/ci/runpod.py). Its first run, 38857860186, landed on an RTX 4090 (Ada) before the pin: every check of this profile passed there, but embeddinggemma-2/video-fp32-cuda failed G2 (docs/evidence/gpu-regression-2026-10-16/README.md). Other NVIDIA GPUs, including the RTX 4090, are untested and outside the contract.
+- `gliner2-base-v1/onnx-fp32-cuda`: Linux memory: start the process with MALLOC_MMAP_THRESHOLD_=65536 (the Starlings.Models.Gliner2 README, "Memory on Linux"); the G4 soak and the per-release soak smoke test run with it.
+- `gliner2-base-v1/onnx-fp32-cuda`: Cancellation on CUDA completes the current run before throwing (no mid-graph termination, #61), so its latency is one chunk: about 50 ms for 8 long texts (docs/evidence/gliner2-cuda-wrong-output/README.md).
 - `gliner2-base-v1/onnx-fp32-cuda`: Results are ordered by confidence; most entity scores saturate to exactly 1.0 in fp32, so near-ties make the order sensitive to backend noise (ORT CUDA with TF32 reorders one 1,329-token case with the same entity set).
 - `gliner2-base-v1/onnx-fp32-cuda`: Upstream span offsets index the normalized text: a span that includes the appended '.' ends one past the original text (seen at threshold 0.0). The C# package maps such spans onto the input (behavior.defaults).
 - `gliner2-base-v1/onnx-fp32-cuda`: The hosted graph is public since 2026-10-14. The 0.1.0-preview.6 release drill downloaded it with no token into an empty cache, verified it and ran the sample offline (Linux x64, one machine); other platforms are untested.
@@ -230,10 +240,17 @@ One table per family, one column per profile. Rows are every capability any prof
 - `multilingual-e5-small/onnx-fp32-cpu`: The pinned tokenizer.json emits a lone "▁" token before special-token literals and for trailing whitespace, where SentencePiece and transformers 5.18 emit none. The owned profile follows tokenizer.json; the difference is recorded, not fixed.
 - `multilingual-e5-small/onnx-fp32-cpu`: tokenizer.json leaves decomposed Hangul jamo uncomposed, while SentencePiece composes them.
 - `multilingual-e5-small/onnx-fp32-cpu`: The ONNX file and model.safetensors come from the same revision; ONNX matches PyTorch to 2.1e-6 in hidden states on the M0 corpus.
+- `multilingual-e5-small/onnx-fp32-cuda`: Contract hardware: an NVIDIA GeForce RTX 3090 (Ampere, sm_86), driver 580, CUDA 13 runtime. The CUDA gates G1 to G5 (G4 and G5 in the binding 2026-10-16 round) ran on RTX 3090s, and the per-release GPU regression is pinned to the RTX 3090 and refuses any other GPU (tools/ci/runpod.py). Its first run, 38857860186, landed on an RTX 4090 (Ada) before the pin: every check of this profile passed there, but embeddinggemma-2/video-fp32-cuda failed G2 (docs/evidence/gpu-regression-2026-10-16/README.md). Other NVIDIA GPUs, including the RTX 4090, are untested and outside the contract.
+- `multilingual-e5-small/onnx-fp32-cuda`: Linux memory: no MALLOC_* setting is required; the runtime calls malloc_trim on session release (on by default).
+- `multilingual-e5-small/onnx-fp32-cuda`: Cancellation on CUDA completes the current run before throwing (#61), so its latency is one chunk: about 125 ms for 32 x 512 tokens (docs/evidence/gliner2-cuda-wrong-output/README.md).
 - `multilingual-e5-small/onnx-fp32-cuda`: The pinned tokenizer.json emits a lone "▁" token before special-token literals and for trailing whitespace, where SentencePiece and transformers 5.18 emit none. The owned profile follows tokenizer.json; the difference is recorded, not fixed.
 - `multilingual-e5-small/onnx-fp32-cuda`: tokenizer.json leaves decomposed Hangul jamo uncomposed, while SentencePiece composes them.
 - `multilingual-e5-small/onnx-fp32-cuda`: Native runtime: Microsoft.ML.OnnxRuntime.Gpu 1.30.0 needs CUDA 13 runtime libraries and cuDNN 9 on the loader path; the package does not ship them. The schema has no field for native runtime, driver or GPU requirements, so they are recorded here and in docs/m0/e5-gpu.md.
 - `multilingual-e5-small/onnx-fp32-cuda`: With use_tf32 0, ORT CUDA matches the PyTorch fp32 CPU hidden states to 2.1e-6 and the protected embeddings to 1.9e-7 on the M0 corpus; C# and Python ORT CUDA hidden states are bit-identical.
+- `qwen3.5-0.8b/ortgenai-fp16x-cuda`: Contract hardware: an NVIDIA GeForce RTX 3090 (Ampere, sm_86), driver 580, CUDA 13 runtime. The CUDA gates G1 to G5 (G4 and G5 in the binding 2026-10-16 round) ran on RTX 3090s, and the per-release GPU regression is pinned to the RTX 3090 and refuses any other GPU (tools/ci/runpod.py). Its first run, 38857860186, landed on an RTX 4090 (Ada) before the pin: every check of this profile passed there, but embeddinggemma-2/video-fp32-cuda failed G2 (docs/evidence/gpu-regression-2026-10-16/README.md). Other NVIDIA GPUs, including the RTX 4090, are untested and outside the contract.
+- `qwen3.5-0.8b/ortgenai-fp16x-cuda`: Concurrency on CUDA: requests are serialized step by step (concurrent ONNX Runtime GenAI 0.17.1 generators produced wrong tokens); concurrent_requests means that serialized mode.
+- `qwen3.5-0.8b/ortgenai-fp16x-cuda`: Cancellation is checked between decode steps and, with chunked prefill (the CUDA default), between prefill chunks; never inside a native call.
+- `qwen3.5-0.8b/ortgenai-fp16x-cuda`: Linux memory: no MALLOC_* setting is required; the G4 soak and the per-release soak smoke test ran with the defaults.
 - `qwen3.5-0.8b/ortgenai-fp16x-cuda`: The ONNX Runtime GenAI C# API is labeled preview upstream; Starlings.Generation.OnnxGenAI isolates it. The runtime version must equal the builder version that wrote the graph (0.17.1).
 - `qwen3.5-0.8b/ortgenai-fp16x-cuda`: fp16 differs from the fp32 reference at near ties (M0: 18 of 22 prompts identical, every divergence where the reference top-1 minus top-2 logit margin was below 0.015). P-016 run: docs/evidence/p016-qwen35/README.md.
 - `qwen3.5-0.8b/ortgenai-fp16x-cuda`: Native runtime: Microsoft.ML.OnnxRuntimeGenAI.Cuda 0.17.1 brings Microsoft.ML.OnnxRuntime.Gpu 1.30.0 and needs the CUDA 13 runtime and cuBLAS on the loader path (not shipped). The schema has no field for native runtime, driver or GPU requirements; they are recorded here and in docs/evidence/p016-qwen35/README.md.
@@ -241,6 +258,10 @@ One table per family, one column per profile. Rows are every capability any prof
 - `qwen3.5-0.8b/ortgenai-fp32x-cpu`: G5: C# and Python load different ONNX Runtime 1.30.0 native builds (NuGet against pip); recorded as context, not a verdict input. The first matched run failed on time to first token under host load; the qualifying quiet-host rerun passed (docs/evidence/qualification-2026-10-15/README.md).
 - `qwen3.5-0.8b/ortgenai-fp32x-cpu`: Linux memory: no MALLOC_* setting is required; the qualification soak runs with transparent huge pages `madvise`, and on `always` hosts resident memory can look larger without any leak.
 - `qwen3.5-0.8b/ortgenai-fp32x-cpu`: The ONNX Runtime GenAI C# API is labeled preview upstream; Starlings.Generation.OnnxGenAI isolates it. The runtime version must equal the builder version that wrote the graph (0.17.1).
+- `qwen3.5-0.8b/ortgenai-fp32x-cuda`: Contract hardware: an NVIDIA GeForce RTX 3090 (Ampere, sm_86), driver 580, CUDA 13 runtime. The CUDA gates G1 to G5 (G4 and G5 in the binding 2026-10-16 round) ran on RTX 3090s, and the per-release GPU regression is pinned to the RTX 3090 and refuses any other GPU (tools/ci/runpod.py). Its first run, 38857860186, landed on an RTX 4090 (Ada) before the pin: every check of this profile passed there, but embeddinggemma-2/video-fp32-cuda failed G2 (docs/evidence/gpu-regression-2026-10-16/README.md). Other NVIDIA GPUs, including the RTX 4090, are untested and outside the contract.
+- `qwen3.5-0.8b/ortgenai-fp32x-cuda`: Concurrency on CUDA: requests are serialized step by step (concurrent ONNX Runtime GenAI 0.17.1 generators produced wrong tokens); concurrent_requests means that serialized mode.
+- `qwen3.5-0.8b/ortgenai-fp32x-cuda`: Cancellation is checked between decode steps and, with chunked prefill (the CUDA default), between prefill chunks; never inside a native call.
+- `qwen3.5-0.8b/ortgenai-fp32x-cuda`: Linux memory: no MALLOC_* setting is required; the G4 soak and the per-release soak smoke test ran with the defaults.
 - `qwen3.5-0.8b/ortgenai-fp32x-cuda`: The ONNX Runtime GenAI C# API is labeled preview upstream; Starlings.Generation.OnnxGenAI isolates it. The runtime version must equal the builder version that wrote the graph (0.17.1).
 - `qwen3.5-0.8b/ortgenai-fp32x-cuda`: The fp32x graph was built for the CPU provider; on the CUDA provider it decodes far slower than fp16x (M0: about 22 tokens/s; node placement not inspected, so CPU fallback of the DeltaNet operators is possible). fp32 built for the CUDA provider fails (M0 failure 2).
 - `qwen3.5-0.8b/ortgenai-fp32x-cuda`: Native runtime: Microsoft.ML.OnnxRuntimeGenAI.Cuda 0.17.1 brings Microsoft.ML.OnnxRuntime.Gpu 1.30.0 and needs the CUDA 13 runtime and cuBLAS on the loader path (not shipped). The schema has no field for native runtime, driver or GPU requirements; they are recorded here and in docs/evidence/p016-qwen35/README.md.

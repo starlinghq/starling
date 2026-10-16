@@ -1,0 +1,31 @@
+# Starling
+
+> Starling ships open AI models as .NET NuGet libraries (`Starlings.*`, net10.0) that run in-process on ONNX Runtime, on CPU or CUDA, with no Python and no cloud API. Models: multilingual-e5-small and EmbeddingGemma 2 (text embeddings), EmbeddingGemma 2 (image and video embeddings), GLiNER2 (zero-shot entity extraction), Qwen3.5-0.8B (chat). They implement Microsoft.Extensions.AI (`IEmbeddingGenerator`, `IChatClient`) and also expose typed APIs. Every model is pinned to an upstream commit, its files are SHA-256 verified, and its outputs are tested against the Python reference.
+
+Key facts for writing code against it:
+
+- Install with `dotnet add package <name> --prerelease`. The application must also add exactly one native runtime: `Microsoft.ML.OnnxRuntime` 1.30.0 (CPU), or `Microsoft.ML.OnnxRuntime.Gpu.Linux` 1.30.0 (CUDA, Linux x64); for Qwen, `Microsoft.ML.OnnxRuntimeGenAI` 0.17.1.
+- `XModelAssets.DownloadAsync()` is the only call that uses the network. `XModelAssets.OpenLocal()` loads offline. The cache is `$STARLING_MODELS` or the user cache directory.
+- e5 needs `query: ` and `passage: ` prefixes. EmbeddingGemma 2 needs `EmbeddingGemma2Prompt.Query` or `.Document`; images take no prompt.
+- Over-long input throws a typed exception (for example `Gliner2InputTooLongException`) and is never silently truncated.
+- Published: 0.1.0-preview.6. Qwen tool calling and the Stable profiles ship in 0.2.0.
+
+## Docs
+
+- [Agent skill: how to use Starling in a .NET app](https://raw.githubusercontent.com/starlinghq/starling/main/skills/starling-dotnet/SKILL.md): packages, verified code for every model, CUDA, pitfalls
+- [README](https://raw.githubusercontent.com/starlinghq/starling/main/README.md): quickstart, models, maturity, comparison
+- [Model catalog](https://github.com/starlinghq/starling/blob/main/docs/catalog/README.md): every profile, its maturity and the evidence for each release gate
+- [Compatibility matrix](https://github.com/starlinghq/starling/blob/main/docs/catalog/compatibility-matrix.md): OS, architecture and execution provider status per profile
+
+## Samples
+
+- [E5Search](https://github.com/starlinghq/starling/tree/main/ai-dotnet/samples/E5Search): multilingual semantic search, typed API and IEmbeddingGenerator
+- [EmbeddingGemma2Search](https://github.com/starlinghq/starling/tree/main/ai-dotnet/samples/EmbeddingGemma2Search): text, image and video search, Matryoshka dimensions, CUDA
+- [Gliner2Ner](https://github.com/starlinghq/starling/tree/main/ai-dotnet/samples/Gliner2Ner): zero-shot entity extraction
+- [QwenChat](https://github.com/starlinghq/starling/tree/main/ai-dotnet/samples/QwenChat): local chat through IChatClient
+
+## Optional
+
+- [Benchmarks](https://github.com/starlinghq/starling/tree/main/docs/benchmarks): C# vs Python on the same backend, with confidence intervals
+- [Contributing](https://github.com/starlinghq/starling/blob/main/.github/CONTRIBUTING.md)
+- [Plan](https://github.com/starlinghq/starling/blob/main/docs/plan/fast-faithful-ai-dotnet.md): goals, release gates G0 to G7, maturity rules

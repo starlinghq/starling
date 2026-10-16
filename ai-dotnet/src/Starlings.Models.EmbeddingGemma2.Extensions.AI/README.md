@@ -10,9 +10,9 @@ Maturity is per profile, generated from the registry manifests by `model-pipelin
 | Profile | Maturity | Platforms |
 | --- | --- | --- |
 | `embeddinggemma-2/image-fp32-cpu` | stable | linux-x64 cpu: supported; windows-x64 cpu: untested |
-| `embeddinggemma-2/image-fp32-cuda` | experimental | linux-x64 cuda: experimental; windows-x64 cuda: untested |
+| `embeddinggemma-2/image-fp32-cuda` | stable | linux-x64 cuda: supported; windows-x64 cuda: untested |
 | `embeddinggemma-2/onnx-fp32-cpu` | stable | linux-x64 cpu: supported; windows-x64 cpu: experimental |
-| `embeddinggemma-2/onnx-fp32-cuda` | experimental | linux-x64 cuda: experimental; windows-x64 cuda: untested |
+| `embeddinggemma-2/onnx-fp32-cuda` | stable | linux-x64 cuda: supported; windows-x64 cuda: untested |
 | `embeddinggemma-2/video-fp32-cpu` | experimental | linux-x64 cpu: experimental; windows-x64 cpu: untested |
 | `embeddinggemma-2/video-fp32-cuda` | experimental | linux-x64 cuda: experimental; windows-x64 cuda: untested |
 <!-- /catalog:maturity -->
@@ -47,7 +47,7 @@ var embeddings = await generator.GenerateAsync(["how much protein should a femal
 - `GenerateAsync` runs synchronously on the calling thread and returns a completed task.
 - Unsupported options (another `ModelId`, `RawRepresentationFactory`, unknown additional properties) fail with `NotSupportedException` instead of being ignored.
 
-Status: the text generator passed G7 on the `embeddinggemma-2/onnx-fp32-cpu` profile (Linux x64 CPU), including Matryoshka dimensions, and is supported there under that profile's Stable contract (`Starlings.Models.EmbeddingGemma2` README); the image and video generators and everything over CUDA sessions are experimental (within each profile's bound).
+Status: the text generator passed G7 on the `embeddinggemma-2/onnx-fp32-cpu` profile (Linux x64 CPU), including Matryoshka dimensions, and is supported there and over CUDA sessions on the Stable `onnx-fp32-cuda` profile (Linux x64, RTX 3090) under those profiles' Stable contracts (`Starlings.Models.EmbeddingGemma2` README). The multimodal generator is supported for images on the Stable `image-fp32-cpu` profile; over CUDA sessions it is experimental (its CUDA test is skipped by the per-release GPU run), and so are videos (within each profile's bound).
 
 ## Images and videos
 

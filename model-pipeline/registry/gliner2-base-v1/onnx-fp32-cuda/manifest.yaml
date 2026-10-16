@@ -9,7 +9,14 @@
 # digest. Development fixtures accepted (PR #19) and binding tolerances set (PR #21) on 2026-10-10.
 schema_version: 1
 id: gliner2-base-v1/onnx-fp32-cuda
-maturity: experimental
+# Stable since 2026-10-16 (maintainer's delegated promotion; docs/kickoff.md, "Stable CUDA profiles, first round"):
+# every gate G0 to G7 passed (G4 and G5 in the binding RTX 3090 round, docs/evidence/qualification-2026-10-16-cuda/),
+# the contract is the Starlings.Models.Gliner2 README's "Stable contract: CUDA" (Linux x64, RTX 3090,
+# MALLOC_MMAP_THRESHOLD_=65536), and the per-release GPU regression (qualification workflow, job cuda (runpod), pinned
+# to the RTX 3090) reruns the CUDA tests, G1 to G3 on the release sets and a soak smoke test. Every check of this
+# profile passed in its first run, 38857860186 (on an RTX 4090, before the pin;
+# docs/evidence/gpu-regression-2026-10-16/README.md).
+maturity: stable
 
 origin:
   code:
@@ -166,14 +173,16 @@ execution:
     use_tf32: 0
 
 capabilities:
-  # Starlings.Models.Gliner2 (P-015) over a CUDA session: ai-dotnet/tests/Starlings.Models.Gliner2.Tests.Cuda
-  # (local only, opt-in) checks the session (CUDA first, use_tf32 0, graph digest), the 54 in-contract development
-  # cases single and in padded batches against the PyTorch fp32 CPU reference with this profile's protected
-  # tolerances, rejection of the cases over 512 tokens, and placement. No result of it is committed as evidence yet.
-  # Capability closure 2026-10-14 (docs/evidence/capability-closure-2026-10-14/README.md): cancellation, concurrency, the capability cases and AOT over CUDA.
-  batch: experimental
+  # Starlings.Models.Gliner2 (P-015) over a CUDA session (use_tf32 0). Statuses follow the README's "Stable contract:
+  # CUDA": supported where the release-set gates G1 to G3, G4 to G7 and the CUDA test project
+  # (ai-dotnet/tests/Starlings.Models.Gliner2.Tests.Cuda, run by the per-release GPU regression) cover it on an RTX
+  # 3090; experimental where only proposed cases or a one-time local run (Native AOT with the CUDA natives) do;
+  # unsupported outside it. Gliner2Capabilities.Profiles holds the same statuses (tested key for key). Capability
+  # closure 2026-10-14 (docs/evidence/capability-closure-2026-10-14/README.md): cancellation, concurrency, the
+  # capability cases and AOT over CUDA.
+  batch: supported
   streaming: unsupported
-  cancellation: experimental  # CudaParityTests: a 4,096-text batch cancelled after 50 ms threw at 53 ms; reuse gives the reference
+  cancellation: supported  # CudaParityTests: a 4,096-text batch cancelled after 50 ms threw at 53 ms; reuse gives the reference
   persistence: unsupported
   training: unsupported
   # aot: Native AOT publish on Linux x64 against Microsoft.ML.OnnxRuntime.Gpu.Linux 1.30.0, no trim/AOT warnings,
@@ -181,12 +190,12 @@ capabilities:
   aot: experimental
   extensions_ai: unsupported
   mlnet: unsupported  # no ML.NET adapter package exists for GLiNER2
-  entity_extraction: experimental
-  offsets_original_text: experimental
+  entity_extraction: supported
+  offsets_original_text: supported
   # concurrent_calls: serialized on CUDA (Gliner2ExtractorOptions.SerializeNativeCalls, the CUDA default). Unserialized
   # concurrent runs on one CUDA session returned wrong entities in 6 of 8 runs (four threads); that mode is unsupported.
   # Serialized: 8 of 8 runs equal to the sequential results.
-  concurrent_calls: experimental
+  concurrent_calls: supported
   concurrent_calls_unserialized: unsupported
   # label_descriptions and count_gate_closed (capability closure 2026-10-14, docs/evidence/capability-closure-2026-10-14/README.md): 22 proposed
   # cases on public-domain text run by the pinned GLiNER2 (model-pipeline/proposed/gliner2-base-v1/capability-cases;
@@ -202,13 +211,15 @@ capabilities:
   structured_extraction: unsupported
 
 compatibility:
-  # One RTX 4060 Ti (sm_89), driver 610.57.04, CUDA 13 runtime and cuDNN 9.24 from the nvidia-* wheels, GPU shared
-  # with another process (environment.json). One machine is not qualification.
+  # Linux x64 CUDA on an NVIDIA GeForce RTX 3090 (Ampere): G1 to G3 on the release sets, G4 one-hour soak and G5
+  # (binding round 2026-10-16, RunPod, driver 580.126.20). The per-release GPU regression (CUDA tests, G1 to G3, soak
+  # smoke test) is pinned to the RTX 3090; its first run, 38857860186, ran before the pin on an RTX 4090, and every
+  # check of this profile passed. Other GPUs, including the RTX 4090 (Ada): untested, outside the contract.
   - os: linux
     arch: x64
     provider: cuda
-    status: experimental
-    verified: 2026-10-10
+    status: supported
+    verified: 2026-10-16
   - os: windows
     arch: x64
     provider: cuda
@@ -241,6 +252,19 @@ maintenance:
   last_checked: 2026-10-10
   review_date: 2027-01-05
   known_issues:
+    - >-
+      Contract hardware: an NVIDIA GeForce RTX 3090 (Ampere, sm_86), driver 580, CUDA 13 runtime. The CUDA gates G1 to
+      G5 (G4 and G5 in the binding 2026-10-16 round) ran on RTX 3090s, and the per-release GPU regression is pinned to
+      the RTX 3090 and refuses any other GPU (tools/ci/runpod.py). Its first run, 38857860186, landed on an RTX 4090
+      (Ada) before the pin: every check of this profile passed there, but embeddinggemma-2/video-fp32-cuda failed G2
+      (docs/evidence/gpu-regression-2026-10-16/README.md). Other NVIDIA GPUs, including the RTX 4090, are untested and
+      outside the contract.
+    - >-
+      Linux memory: start the process with MALLOC_MMAP_THRESHOLD_=65536 (the Starlings.Models.Gliner2 README, "Memory on
+      Linux"); the G4 soak and the per-release soak smoke test run with it.
+    - >-
+      Cancellation on CUDA completes the current run before throwing (no mid-graph termination, #61), so its latency is
+      one chunk: about 50 ms for 8 long texts (docs/evidence/gliner2-cuda-wrong-output/README.md).
     - >-
       Results are ordered by confidence; most entity scores saturate to exactly 1.0 in fp32, so near-ties make the
       order sensitive to backend noise (ORT CUDA with TF32 reorders one 1,329-token case with the same entity set).

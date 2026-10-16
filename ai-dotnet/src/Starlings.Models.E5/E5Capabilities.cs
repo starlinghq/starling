@@ -18,15 +18,18 @@ public enum CapabilityStatus
 
 /// <summary>Capability descriptor for this package version.</summary>
 /// <remarks>
-/// <see cref="All"/> is package-wide. Keys without a provider suffix give the status on the Stable-contract profile
-/// <see cref="StableProfile"/> (Linux x64 CPU); keys ending in <c>.cuda</c> give the status on the experimental CUDA
-/// profile <c>multilingual-e5-small/onnx-fp32-cuda</c>. <see cref="Profiles"/> repeats the Stable-contract profile's
-/// statuses keyed exactly as its registry manifest's <c>capabilities</c>, and a test keeps the two equal key for key.
+/// <see cref="All"/> is package-wide. Keys without a provider suffix give the status on the Stable CPU profile
+/// <see cref="StableProfile"/> (Linux x64 CPU); keys ending in <c>.cuda</c> give the status on the Stable CUDA profile
+/// <see cref="StableCudaProfile"/> (Linux x64, RTX 3090). <see cref="Profiles"/> repeats each Stable profile's statuses
+/// keyed exactly as its registry manifest's <c>capabilities</c>, and a test keeps the two equal key for key.
 /// </remarks>
 public static class E5Capabilities
 {
     /// <summary>The profile of this package's Stable contract (the README's "Stable contract" section).</summary>
     public const string StableProfile = "multilingual-e5-small/onnx-fp32-cpu";
+
+    /// <summary>The CUDA profile of this package's Stable contract (the README's "Stable contract: CUDA" section).</summary>
+    public const string StableCudaProfile = "multilingual-e5-small/onnx-fp32-cuda";
 
     /// <summary>
     /// Status per capability. Evidence for each entry is listed in <c>ai-dotnet/README.md</c> and, for
@@ -40,7 +43,10 @@ public static class E5Capabilities
         // one-hour soak (concurrent callers and timed-out requests, 1,368 load/unload cycles, plateau), G6 anonymous
         // download into an empty cache and offline run, G7 adapter tests and drill consumers.
         ["embedding.pretokenized.cpu"] = CapabilityStatus.Supported,
-        ["embedding.pretokenized.cuda"] = CapabilityStatus.Experimental,
+        // CUDA (use_tf32 0) on an RTX 3090, Stable since 2026-10-16 (the README's "Stable contract: CUDA"): G1 to G3 on the
+        // release sets, G4 one-hour soak and G5 (binding round), G6, G7; the per-release GPU regression reruns the CUDA
+        // tests (adapters included), G1 to G3 and a soak smoke test (every check green in run 38857860186).
+        ["embedding.pretokenized.cuda"] = CapabilityStatus.Supported,
         ["embedding.text"] = CapabilityStatus.Supported,
         ["batch"] = CapabilityStatus.Supported,
         ["cancellation"] = CapabilityStatus.Supported,
@@ -59,9 +65,9 @@ public static class E5Capabilities
         ["asset_acquisition"] = CapabilityStatus.Supported,
 
         // Microsoft.Extensions.AI IEmbeddingGenerator, in Starlings.Models.E5.Extensions.AI (P-011). Supported on the
-        // CPU profile (G7), experimental over CUDA; the explicit input-type prefix option lives there, prefix_insertion stays unsupported here.
+        // CPU profile (G7) and over CUDA (CudaAdapterTests, per release); the explicit input-type prefix option lives there, prefix_insertion stays unsupported here.
         ["extensions_ai.embedding_generator"] = CapabilityStatus.Supported,
-        ["extensions_ai.embedding_generator.cuda"] = CapabilityStatus.Experimental,
+        ["extensions_ai.embedding_generator.cuda"] = CapabilityStatus.Supported,
         ["extensions_ai.dimensions_truncation"] = CapabilityStatus.Unsupported,
 
         // ML.NET estimator/transformer, in Starlings.Models.E5.MLNet (P-012). Plan 15.2 badges: pipeline
@@ -69,7 +75,7 @@ public static class E5Capabilities
         // Save throws; the model is resolved from the asset lock at run time), training (none). Cursors have no
         // cancellation token.
         ["mlnet.embedding_transform"] = CapabilityStatus.Supported,
-        ["mlnet.embedding_transform.cuda"] = CapabilityStatus.Experimental,
+        ["mlnet.embedding_transform.cuda"] = CapabilityStatus.Supported,
         ["mlnet.batching"] = CapabilityStatus.Supported,
         ["mlnet.persistence"] = CapabilityStatus.Unsupported,
         ["mlnet.cancellation"] = CapabilityStatus.Unsupported,
@@ -77,6 +83,8 @@ public static class E5Capabilities
         // Native AOT on Linux x64 CPU from the packed packages, results equal to JIT bit for bit (typed API and
         // Extensions.AI generator; docs/evidence/aot/, the release drill's step 12); not the ML.NET adapter.
         ["aot"] = CapabilityStatus.Supported,
+        // Native AOT with the CUDA natives (tools/aot-check-ai.sh --cuda): one local run, no per-release regression.
+        ["aot.cuda"] = CapabilityStatus.Experimental,
         ["mlnet.aot"] = CapabilityStatus.Unsupported,
         // Windows x64: build, weight-free tests and the clean-install drill without the model in CI; no model run, so
         // outside the Stable contract.
@@ -98,6 +106,18 @@ public static class E5Capabilities
                 ["persistence"] = CapabilityStatus.Unsupported,
                 ["training"] = CapabilityStatus.Unsupported,
                 ["aot"] = CapabilityStatus.Supported,
+                ["extensions_ai"] = CapabilityStatus.Supported,
+                ["mlnet"] = CapabilityStatus.Supported,
+            },
+            [StableCudaProfile] = new Dictionary<string, CapabilityStatus>(StringComparer.Ordinal)
+            {
+                ["batch"] = CapabilityStatus.Supported,
+                ["streaming"] = CapabilityStatus.Unsupported,
+                ["cancellation"] = CapabilityStatus.Supported,
+                ["persistence"] = CapabilityStatus.Unsupported,
+                ["training"] = CapabilityStatus.Unsupported,
+                // One local run with the CUDA natives; not in the per-release GPU regression.
+                ["aot"] = CapabilityStatus.Experimental,
                 ["extensions_ai"] = CapabilityStatus.Supported,
                 ["mlnet"] = CapabilityStatus.Supported,
             },

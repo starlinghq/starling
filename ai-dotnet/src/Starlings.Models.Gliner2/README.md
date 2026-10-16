@@ -13,8 +13,8 @@ Maturity is per profile, generated from the registry manifests by `model-pipelin
 
 | Profile | Maturity | Platforms |
 | --- | --- | --- |
-| `gliner2-base-v1/onnx-fp32-cpu` | stable | linux-x64 cpu: supported; linux-x64 cuda: experimental; windows-x64 cpu: experimental |
-| `gliner2-base-v1/onnx-fp32-cuda` | experimental | linux-x64 cuda: experimental; windows-x64 cuda: untested |
+| `gliner2-base-v1/onnx-fp32-cpu` | stable | linux-x64 cpu: supported; linux-x64 cuda: supported; windows-x64 cpu: experimental |
+| `gliner2-base-v1/onnx-fp32-cuda` | stable | linux-x64 cuda: supported; windows-x64 cuda: untested |
 <!-- /catalog:maturity -->
 
 ## Install
@@ -61,13 +61,33 @@ This is the contract of profile `gliner2-base-v1/onnx-fp32-cpu`. Its Stable labe
 | Task quality | WNUT-17 test, 300 sentences: exact micro F1 at least 0.352 and partial micro F1 at least 0.403 (budget); measured 0.3626 and 0.4134, equal to the PyTorch reference. |
 | Supported | Entity extraction with labels and threshold, the staged API, original-text offsets, batch, cancellation, concurrent calls, offline asset resolution and explicit download, Native AOT (CPU natives). |
 | Limits | At most 512 tokens, schema prefix included; longer texts throw `Gliner2InputTooLongException`, and nothing is truncated. Spans up to 8 words. The model files (838 MB) are acquired explicitly; inference never downloads. |
-| Outside the Stable contract | Label descriptions and the closed count gate: experimental (proposed capability cases, not yet accepted fixtures). CUDA (`gliner2-base-v1/onnx-fp32-cuda`, `use_tf32=0`, calls serialized by default): experimental. Windows x64 CPU: experimental (CI builds, runs the weight-free tests and the clean-install drill without the model; no model run). macOS and ARM64: unsupported (no evidence). |
+| Outside the Stable contract | Label descriptions and the closed count gate: experimental (proposed capability cases, not yet accepted fixtures). CUDA is the separate profile `gliner2-base-v1/onnx-fp32-cuda`, with its own contract ([Stable contract: CUDA](#stable-contract-cuda)). Windows x64 CPU: experimental (CI builds, runs the weight-free tests and the clean-install drill without the model; no model run). macOS and ARM64: unsupported (no evidence). |
 | Unsupported | inputs over 512 tokens, unserialized concurrent calls on CUDA (wrong entities in 6 of 8 test runs), truncation, the `max_len` word cap, `extract_long`, GLiNER2's plain de-duplicated output, mixed label sets in one batch, classification, relation extraction, structured (JSON) extraction, per-label thresholds, overlap policies, the character splitter, non-English text, TF32, fp16, quantized graphs, streaming, persistence, training, Microsoft.Extensions.AI, ML.NET (no adapter exists). |
 | Known issues | Most entity scores saturate to exactly 1.0 in fp32, so near-ties make the order sensitive to backend noise. Upstream span offsets index the normalized text: a span that includes the appended `.` ends one past the original text (seen at threshold 0.0); the package maps such spans onto the input. With default glibc settings, memory retained by the allocator trips the soak's growth rule (below). |
 
+## Stable contract: CUDA
+
+This is the contract of profile `gliner2-base-v1/onnx-fp32-cuda` (Stable since 2026-10-16). It is the CPU contract above, with these differences. The statuses are the registry manifest's and `Gliner2Capabilities.Profiles`, which a test keeps equal key for key.
+
+| Item | Contract |
+| --- | --- |
+| Profile | `gliner2-base-v1/onnx-fp32-cuda` (registry manifest `model-pipeline/registry/gliner2-base-v1/onnx-fp32-cuda/manifest.yaml`). The same model, graph and tokenizer as the CPU profile. |
+| Runtime | ONNX Runtime 1.30.0 with the CUDA execution provider (the application adds `Microsoft.ML.OnnxRuntime.Gpu.Linux` 1.30.0 instead of the CPU natives), `use_tf32=0`, fp32. The CUDA 13 runtime and cuDNN 9 must be on the loader path; the package does not ship them. |
+| Supported platform | Linux x64 with an **NVIDIA GeForce RTX 3090** (Ampere), driver 580 or later. G1 to G3 on the release sets, the binding G4 one-hour soak and G5 ran on RTX 3090s. **Regression:** the per-release GPU run (the qualification workflow's `cuda (runpod)` job, for every `ai-v*` tag and on demand) reruns the CUDA tests, G1 to G3 on the release sets and a soak smoke test, on an RTX 3090 only; the job refuses any other GPU. Other GPUs, including the RTX 4090 (Ada), are untested and outside the contract. |
+| Linux deployment requirement | Start the process with `MALLOC_MMAP_THRESHOLD_=65536`, as on CPU ([Memory on Linux](#memory-on-linux)). The G4 soak and the per-release soak smoke test run with it. |
+| Concurrency | Calls on one extractor are serialized on CUDA (`Gliner2ExtractorOptions.SerializeNativeCalls`, the CUDA default). Unserialized concurrent calls on one CUDA session are unsupported (wrong entities in 6 of 8 test runs). |
+| Cancellation | A CUDA run is never terminated mid-graph: it completes, then the call throws `OperationCanceledException` (#61). Latency is one chunk, **about 50 ms** for 8 long texts; a 4,096-text batch cancelled after 50 ms threw at 52 to 53 ms. |
+| Numerical bound | The CUDA profile's protected tolerances (span logits relative 1e-4; order and threshold ties within 2e-5). Release set: span logits 1.4e-5 relative, entities 30/30 from inputs and from text. |
+| Task quality | WNUT-17: exact micro F1 0.3626, partial micro F1 0.4134 (budget 0.352 and 0.403). |
+| Performance | G5 on an RTX 3090: inference 0.959 to 0.996 of the Python ONNX Runtime CUDA run; prepare and decode 0.6 to 1.5% of inference (budget 5%). |
+| Supported | Entity extraction with labels and threshold, the staged API, original-text offsets, batch, cancellation, serialized concurrent calls, offline asset resolution and explicit download. |
+| Outside the Stable contract | Native AOT with the CUDA natives: experimental (one local run, `tools/aot-check-ai.sh --cuda`, not in the per-release run). Label descriptions and the closed count gate: experimental, as on CPU. Windows x64 CUDA: untested. |
+
+Evidence: [binding CUDA G4 and G5 round](https://github.com/starlinghq/starling/blob/main/docs/evidence/qualification-2026-10-16-cuda/README.md), [per-release GPU regression, run 38857860186](https://github.com/starlinghq/starling/blob/main/docs/evidence/gpu-regression-2026-10-16/README.md), [release-set gates](https://github.com/starlinghq/starling/blob/main/docs/evidence/release-set-gates-2026-10-14/gliner2-onnx-fp32-cuda/README.md), [CUDA cancellation](https://github.com/starlinghq/starling/blob/main/docs/evidence/gliner2-cuda-wrong-output/README.md).
+
 ## Memory on Linux
 
-**Deployment requirement: set `MALLOC_MMAP_THRESHOLD_=65536` in the environment of a Linux process that runs this profile.**
+**Deployment requirement: set `MALLOC_MMAP_THRESHOLD_=65536` in the environment of a Linux process that runs this profile (CPU or CUDA).**
 
 With default glibc settings, a process that loads and unloads the extractor repeatedly keeps freed native memory resident: about 1.2 to 1.5 GiB between loads, rising by about 65 to 90 MiB over the first half hour of cycling and then holding. This is allocator retention (glibc malloc's resident high-water mark and fragmentation), not a leak: with the threshold set, every unload returns what the load and its requests allocated. But the soak's growth rule, which is not changed for this, judges the default run: the one-hour default soak fit 81 to 82 MiB/h over the whole run and failed the rule, although the curve flattens after about 30 minutes. With `MALLOC_MMAP_THRESHOLD_=65536` the footprint after unloading held at about 76 MiB, the loaded footprint was about 740 MiB lower, and the one-hour G4 soak passed.
 
@@ -75,7 +95,7 @@ Evidence: [GLiNER2 soak growth](https://github.com/starlinghq/starling/blob/main
 
 ## Status
 
-Profile `gliner2-base-v1/onnx-fp32-cpu` (Linux x64 CPU) has passed every qualification gate, G0 to G7; its maturity is in the table above. Profile `gliner2-base-v1/onnx-fp32-cuda` is Experimental (its G4 soak has not run and its G5 benchmark failed). GPU regression runs for every release and on demand (the qualification workflow's `cuda (runpod)` job); CPU regression runs weekly. Evidence and reproduction: [ai-dotnet/README.md](https://github.com/starlinghq/starling/blob/main/ai-dotnet/README.md#gliner2-entity-extraction-p-015) and the [catalog](https://github.com/starlinghq/starling/blob/main/docs/catalog/README.md). License of the weights and the converted graph: Apache-2.0 (model card); GLiNER2 by Fastino AI, backbone initialised from `microsoft/deberta-v3-base` (MIT).
+Profiles `gliner2-base-v1/onnx-fp32-cpu` (Linux x64 CPU) and `gliner2-base-v1/onnx-fp32-cuda` (Linux x64, RTX 3090, Stable since 2026-10-16) have passed every qualification gate, G0 to G7; their maturity is in the table above. GPU regression runs for every release and on demand, on an RTX 3090 only (the qualification workflow's `cuda (runpod)` job); CPU regression runs weekly. Evidence and reproduction: [ai-dotnet/README.md](https://github.com/starlinghq/starling/blob/main/ai-dotnet/README.md#gliner2-entity-extraction-p-015) and the [catalog](https://github.com/starlinghq/starling/blob/main/docs/catalog/README.md). License of the weights and the converted graph: Apache-2.0 (model card); GLiNER2 by Fastino AI, backbone initialised from `microsoft/deberta-v3-base` (MIT).
 
 ## Qualification evidence
 
@@ -83,4 +103,5 @@ Profile `gliner2-base-v1/onnx-fp32-cpu` (Linux x64 CPU) has passed every qualifi
 - G1, G2 and G3 on the P-030 release sets: [release-set gates](https://github.com/starlinghq/starling/blob/main/docs/evidence/release-set-gates-2026-10-14/gliner2-onnx-fp32-cpu/README.md).
 - G4 one-hour soak with `MALLOC_MMAP_THRESHOLD_=65536` and G5 matched benchmark: [2026-10-15](https://github.com/starlinghq/starling/blob/main/docs/evidence/qualification-2026-10-15/README.md).
 - G6 distribution and G7 integration: [G6](https://github.com/starlinghq/starling/blob/main/docs/evidence/g6-distribution-2026-10-14/README.md), [G7](https://github.com/starlinghq/starling/blob/main/docs/evidence/g7-integration-2026-10-14/README.md).
-- Regression support: the weekly [qualification workflow](https://github.com/starlinghq/starling/blob/main/.github/workflows/qualification.yml) (jobs `release-gates` and `soak`).
+- CUDA: G4 and G5 in the [binding CUDA round](https://github.com/starlinghq/starling/blob/main/docs/evidence/qualification-2026-10-16-cuda/README.md); per-release GPU regression [run 38857860186](https://github.com/starlinghq/starling/blob/main/docs/evidence/gpu-regression-2026-10-16/README.md).
+- Regression support: the weekly [qualification workflow](https://github.com/starlinghq/starling/blob/main/.github/workflows/qualification.yml) (jobs `release-gates` and `soak`), and its per-release `cuda (runpod)` job for CUDA.

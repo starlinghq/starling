@@ -579,7 +579,7 @@ jobs:
           if-no-files-found: warn
 
   # CUDA regression support (plan 13.1: NVIDIA CUDA on Linux x64) on a RunPod GPU pod, for every release (a push of an
-  # ai-v* tag) and on manual dispatch; not on the weekly schedule, never on pull_request and never in a fork. Each run creates one on-demand pod (RTX 3090 or 4090, secure cloud
+  # ai-v* tag) and on manual dispatch; not on the weekly schedule, never on pull_request and never in a fork. Each run creates one on-demand pod (RTX 3090 only, secure cloud
   # EU-CZ-1) named starling-q-ci-<run id>, with the network volume starling-q-vol attached (the .NET SDK, uv, the pinned
   # nvidia wheels and the verified models). The pod checks out exactly ${{ github.sha }} and runs
   # tools/ci/runpod-cuda-pod.sh: the CUDA test projects, G1, G2 and G3 of every CUDA profile on its accepted P-030
@@ -591,7 +591,10 @@ jobs:
   # Only tools/ci/runpod.py, on this runner, uses the repository secret RUNPOD_API_KEY (to read the balance, create,
   # inspect and terminate the pod). The secret is never echoed and never passed to the pod. The pod's SSH key is
   # generated per run and discarded with the runner. The volume pins the datacenter, so pod creation waits up to 30
-  # minutes for an RTX 3090 or 4090 to be in stock there. Cost guard: no pod starts below a $5 balance. Caps: the job
+  # minutes for an RTX 3090 to be in stock there. The CUDA support contracts cover the RTX 3090 (Ampere), where every CUDA
+  # gate ran; no other GPU is a fallback (run 38857860186 landed on an RTX 4090, where embeddinggemma-2/video-fp32-cuda
+  # failed G2: docs/evidence/gpu-regression-2026-10-16/). Without a 3090 in stock, or on a pod that reports another GPU, the
+  # job fails before any test runs. Cost guard: no pod starts below a $5 balance. Caps: the job
   # timeout; a pod-side self-removal, armed by the pod's start command, as the backstop if the runner is lost; and a
   # sweep of stale starling-q-ci-* pods before each run. Only pods named starling-q-ci-* are ever touched.
   cuda:
@@ -650,6 +653,12 @@ jobs:
             sleep 15
           done
           ssh "${opts[@]}" -p "$PORT" "root@$IP" 'nvidia-smi --query-gpu=name,driver_version,memory.total --format=csv,noheader; nvidia-smi | grep -o "CUDA Version: [0-9.]*"'
+          # The contracts cover the RTX 3090 only: refuse any other GPU before the pod run starts.
+          gpu_name="$(ssh "${opts[@]}" -p "$PORT" "root@$IP" 'nvidia-smi --query-gpu=name --format=csv,noheader | head -1')"
+          if [[ "$gpu_name" != "NVIDIA GeForce RTX 3090" ]]; then
+            echo "::error title=Wrong GPU::the pod has '$gpu_name', not the NVIDIA GeForce RTX 3090 the CUDA contracts cover; no run on another GPU"
+            exit 1
+          fi
           driver="$(ssh "${opts[@]}" -p "$PORT" "root@$IP" 'nvidia-smi --query-gpu=driver_version --format=csv,noheader | head -1')"
           if (( ${driver%%.*} < 580 )); then echo "::error::driver $driver is older than CUDA 13 needs (580)"; exit 1; fi
           # The pod-side backstop: confirm that the start command armed it, else arm it over SSH.

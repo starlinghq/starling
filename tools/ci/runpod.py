@@ -13,7 +13,9 @@ inspects or terminates pods whose name starts with PREFIX; every other pod of th
   runpod.py check                              exit 1 if any PREFIX pod exists (prints names and ids)
 
 The pod is created with the network volume that holds the .NET SDK, uv, the venvs and the verified models
-(starling-q-vol, EU-CZ-1), on the image the volume was prepared for, on demand (secure cloud), RTX 3090 or 4090.
+(starling-q-vol, EU-CZ-1), on the image the volume was prepared for, on demand (secure cloud), on an RTX 3090 only.
+The CUDA support contracts cover the RTX 3090 (Ampere), where every CUDA gate ran. No other GPU is ever a fallback:
+when no RTX 3090 is in stock the job fails, and a pod that reports another GPU is terminated and fails the job.
 """
 
 from __future__ import annotations
@@ -30,7 +32,10 @@ PREFIX = "starling-q-ci-"
 VOLUME_ID = "mlav90o7cc"  # starling-q-vol
 DATACENTER = "EU-CZ-1"
 IMAGE = "runpod/pytorch:1.4.0-cu1300-torch291-ubuntu2404"
-GPUS = ["NVIDIA GeForce RTX 3090", "NVIDIA GeForce RTX 4090"]
+# The only GPU type the CUDA contracts cover. Run 38857860186 landed on an RTX 4090, where
+# embeddinggemma-2/video-fp32-cuda failed G2 (docs/evidence/gpu-regression-2026-10-16/README.md). Never add a fallback.
+GPU = "NVIDIA GeForce RTX 3090"
+GPUS = [GPU]
 CONTAINER_DISK_GB = 120
 
 
@@ -173,7 +178,7 @@ def cmd_create(a: argparse.Namespace) -> int:
         except RuntimeError as e:
             msg = str(e)
             if "no instances currently available" in msg and time.time() < end:
-                print(f"{time.strftime('%H:%M:%S')} no RTX 3090/4090 available in {DATACENTER}; retrying in 60 s", flush=True)
+                print(f"{time.strftime('%H:%M:%S')} no RTX 3090 available in {DATACENTER}; retrying in 60 s", flush=True)
                 time.sleep(60)
                 continue
             if "HTTP 4" in msg and "dockerStartCmd" in body:
@@ -182,7 +187,10 @@ def cmd_create(a: argparse.Namespace) -> int:
                 del body["dockerStartCmd"]
                 continue
             if "no instances currently available" in msg:
-                print(f"::error title=No GPU in stock::no RTX 3090 or 4090 in {DATACENTER} for {a.stock_wait_minutes} min")
+                print(
+                    f"::error title=No RTX 3090 in stock::no RTX 3090 in {DATACENTER} for {a.stock_wait_minutes} min. "
+                    "The CUDA contracts cover only the RTX 3090, so no other GPU is used; rerun the job later."
+                )
             raise
     pod_id = p.get("id")
     if not pod_id:
@@ -192,7 +200,25 @@ def cmd_create(a: argparse.Namespace) -> int:
     output("created_at", str(int(time.time())))
     gpu = ((p.get("machine") or {}).get("gpuDisplayName")) or (p.get("gpu") or {}).get("displayName") or "?"
     print(f"pod {a.name} id {pod_id}, GPU {gpu}, ${float(p.get('costPerHr') or 0):.3f}/h, backstop {a.backstop_minutes} min")
+    if gpu != "?" and not is_required_gpu(gpu):
+        wrong_gpu(gpu)
+        delete({"name": a.name, "id": pod_id})
+        print(f"pod {a.name} terminated: {'confirmed gone' if confirm_gone(pod_id) else 'STILL LISTED'}")
+        return 1
     return 0
+
+
+def is_required_gpu(name: str) -> bool:
+    """True for the RTX 3090, whichever of RunPod's names for it is reported ("RTX 3090", "NVIDIA GeForce RTX 3090")."""
+    return name.strip().removeprefix("NVIDIA ").removeprefix("GeForce ") == GPU.removeprefix("NVIDIA GeForce ")
+
+
+def wrong_gpu(name: str, file=sys.stdout) -> None:
+    print(
+        f"::error title=Wrong GPU::the pod reports {name}, not the {GPU} the CUDA contracts cover; "
+        "the run is refused rather than gathered on another GPU",
+        file=file,
+    )
 
 
 def _pod(name: str) -> dict | None:
@@ -215,6 +241,10 @@ def cmd_ssh(a: argparse.Namespace) -> int:
             if port["privatePort"] == 22 and port["isIpPublic"]:
                 gpu = (d.get("machine") or {}).get("gpuDisplayName", "?")
                 print(f"pod {a.name} id {p['id']} on {gpu}, ${float(d.get('costPerHr') or 0):.3f}/h", file=sys.stderr)
+                if not is_required_gpu(gpu):
+                    # The workflow's terminate step (always run) removes the pod.
+                    wrong_gpu(gpu, file=sys.stderr)  # stdout carries the endpoint
+                    return 1
                 output("gpu", gpu)
                 output("cost_per_hr", str(d.get("costPerHr") or 0))
                 print(port["ip"], port["publicPort"])
