@@ -16,7 +16,7 @@ Maturity is per profile, generated from the registry manifests by `model-pipelin
 | Profile | Maturity | Platforms |
 | --- | --- | --- |
 | `qwen3.5-0.8b/ortgenai-fp16x-cuda` | experimental | linux-x64 cuda: experimental; windows-x64 cuda: untested |
-| `qwen3.5-0.8b/ortgenai-fp32x-cpu` | experimental | linux-x64 cpu: experimental; windows-x64 cpu: untested |
+| `qwen3.5-0.8b/ortgenai-fp32x-cpu` | stable | linux-x64 cpu: supported; windows-x64 cpu: untested |
 | `qwen3.5-0.8b/ortgenai-fp32x-cuda` | experimental | linux-x64 cuda: experimental; windows-x64 cuda: untested |
 <!-- /catalog:maturity -->
 

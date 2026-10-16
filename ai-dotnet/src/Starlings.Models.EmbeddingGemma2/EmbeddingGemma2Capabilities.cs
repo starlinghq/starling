@@ -21,16 +21,19 @@ public enum EmbeddingGemma2CapabilityStatus
 /// <c>embeddinggemma-2/onnx-fp32-cuda</c>; image and video profiles <c>image-fp32-*</c> and <c>video-fp32-*</c>).
 /// </summary>
 /// <remarks>
-/// <see cref="All"/> is package-wide. The text keys without a provider suffix give the status on the Stable-contract
-/// profile <see cref="StableProfile"/> (text on Linux x64 CPU); keys with <c>.cuda</c> give the experimental CUDA
-/// profile's; image and video keys belong to the experimental image and video profiles. <see cref="Profiles"/> repeats
-/// the Stable-contract profile's statuses keyed exactly as its registry manifest's <c>capabilities</c>, and a test keeps
-/// the two equal key for key.
+/// <see cref="All"/> is package-wide. Keys without a provider suffix give the status on the Stable CPU profiles: text
+/// keys on <see cref="StableProfile"/> and <c>image.*</c> keys on <see cref="StableImageProfile"/> (Linux x64 CPU);
+/// keys with <c>.cuda</c> give the experimental CUDA profiles', and <c>video.*</c> keys the experimental video profiles'.
+/// <see cref="Profiles"/> repeats each Stable profile's statuses keyed exactly as its registry manifest's
+/// <c>capabilities</c>, and a test keeps the two equal key for key.
 /// </remarks>
 public static class EmbeddingGemma2Capabilities
 {
-    /// <summary>The profile of this package's Stable contract (the README's "Stable contract" section).</summary>
+    /// <summary>The text profile of this package's Stable contract (the README's "Stable contract" section).</summary>
     public const string StableProfile = "embeddinggemma-2/onnx-fp32-cpu";
+
+    /// <summary>The image profile of this package's Stable contract (the README's "Stable contract: images" section).</summary>
+    public const string StableImageProfile = "embeddinggemma-2/image-fp32-cpu";
 
     /// <summary>
     /// Status per capability. Evidence for each entry is listed in <c>ai-dotnet/README.md</c> and, for
@@ -84,19 +87,21 @@ public static class EmbeddingGemma2Capabilities
         // (G6, docs/evidence/g6-distribution-2026-10-14/).
         ["asset_acquisition.graph_download"] = EmbeddingGemma2CapabilityStatus.Supported,
 
-        // Images (contract of 2026-10-11, EmbeddingGemma2MultimodalEmbedder; profiles image-fp32-cpu and image-fp32-cuda).
-        // From decoded RGB: 42 protected rows (28 images alone, 6 interleaved or prompted, 8 text queries) within the
-        // binding bounds; preprocessing bit-exact on the 28 supported fixture images; rendered ids exact on all 43 rows.
-        ["image"] = EmbeddingGemma2CapabilityStatus.Experimental,
-        ["image.cpu"] = EmbeddingGemma2CapabilityStatus.Experimental,
+        // Images (EmbeddingGemma2MultimodalEmbedder). Keys without .cuda: the Stable profile image-fp32-cpu (the README's
+        // "Stable contract: images", since 2026-10-16); .cuda: the experimental image-fp32-cuda. From decoded RGB: 42
+        // protected rows (28 images alone, 6 interleaved or prompted, 8 text queries) within the binding bounds;
+        // preprocessing bit-exact on the 28 supported fixture images; rendered ids exact on all 43 rows. The P-030 image
+        // release set (19 rows) passes G1 and G2, image retrieval passes G3, and G4 to G7 passed.
+        ["image"] = EmbeddingGemma2CapabilityStatus.Supported,
+        ["image.cpu"] = EmbeddingGemma2CapabilityStatus.Supported,
         ["image.cuda"] = EmbeddingGemma2CapabilityStatus.Experimental,
-        ["image.interleaved_text"] = EmbeddingGemma2CapabilityStatus.Experimental,
-        ["image.multiple_per_input"] = EmbeddingGemma2CapabilityStatus.Experimental,
-        ["image.prompts"] = EmbeddingGemma2CapabilityStatus.Experimental, // rendered as upstream; the card recommends none
-        ["image.budget_280"] = EmbeddingGemma2CapabilityStatus.Experimental,
+        ["image.interleaved_text"] = EmbeddingGemma2CapabilityStatus.Supported,
+        ["image.multiple_per_input"] = EmbeddingGemma2CapabilityStatus.Supported,
+        ["image.prompts"] = EmbeddingGemma2CapabilityStatus.Supported, // rendered as upstream; the card recommends none
+        ["image.budget_280"] = EmbeddingGemma2CapabilityStatus.Supported,
         ["image.budget_other"] = EmbeddingGemma2CapabilityStatus.Experimental, // 70, 140, 560, 1,120: proposed rows, within the protected bounds
-        ["image.batch"] = EmbeddingGemma2CapabilityStatus.Experimental,
-        ["image.matryoshka"] = EmbeddingGemma2CapabilityStatus.Experimental,
+        ["image.batch"] = EmbeddingGemma2CapabilityStatus.Supported,
+        ["image.matryoshka"] = EmbeddingGemma2CapabilityStatus.Supported,
         ["image.over_8192_tokens"] = EmbeddingGemma2CapabilityStatus.Unsupported, // rejected before inference
         ["image.over_50_megapixels"] = EmbeddingGemma2CapabilityStatus.Unsupported, // default limit, configurable
         ["image.alpha_compositing"] = EmbeddingGemma2CapabilityStatus.Unsupported, // alpha is dropped, as upstream
@@ -104,16 +109,18 @@ public static class EmbeddingGemma2Capabilities
         // Decoding is in Starlings.Models.EmbeddingGemma2.Imaging.SkiaSharp: PNG and JPEG decoded RGB equal to PIL
         // on the fixture images, GIF, BMP and WebP on 12 files written from them; a GIF with transparent pixels is
         // rejected (PIL keeps their palette colour); EXIF orientation ignored unless opted in.
-        ["image.decode.png_jpeg"] = EmbeddingGemma2CapabilityStatus.Experimental,
+        ["image.decode.png_jpeg"] = EmbeddingGemma2CapabilityStatus.Supported,
         ["image.decode.gif_bmp_webp"] = EmbeddingGemma2CapabilityStatus.Experimental,
         ["image.decode.gif_transparency"] = EmbeddingGemma2CapabilityStatus.Unsupported, // EmbeddingGemma2ImageRejection.GifTransparency
         ["image.decode.other_formats"] = EmbeddingGemma2CapabilityStatus.Unsupported,
         ["image.exif_orientation_opt_in"] = EmbeddingGemma2CapabilityStatus.Experimental, // deviation from upstream
-        ["image.graph_download"] = EmbeddingGemma2CapabilityStatus.Untested, // release embeddinggemma-2-vision-onnx-r1 not published
-        ["extensions_ai.image_embedding_generator"] = EmbeddingGemma2CapabilityStatus.Experimental,
+        ["image.graph_download"] = EmbeddingGemma2CapabilityStatus.Supported, // public ImageHostingRepository: anonymous download, offline run (G6)
+        ["extensions_ai.image_embedding_generator"] = EmbeddingGemma2CapabilityStatus.Supported,
         ["mlnet.image_column"] = EmbeddingGemma2CapabilityStatus.Unsupported,
 
-        // Videos (contract of 2026-10-11, EmbeddingGemma2MultimodalEmbedder; profiles video-fp32-cpu and video-fp32-cuda).
+        // Videos (EmbeddingGemma2MultimodalEmbedder; profiles video-fp32-cpu and video-fp32-cuda, both experimental: the
+        // CPU profile's hosted one-hour soak fails the growth rule, see its manifest). The P-030 video release set
+        // (11 rows) passes G1 (FFmpeg 8.1 and 9.0 frames exact) and G2, video retrieval passes G3.
         // Checkpoint settings only: 1 frame per second, at most 32 frames, 140 soft tokens per frame, no timestamps. From
         // decoded RGB frames: 35 protected rows (22 videos alone, 6 interleaved or prompted, 2 input forms, 5 text
         // queries) within the binding bounds; sampling exact on 20,849 upstream cases; per-frame preprocessing bit-exact
@@ -145,12 +152,15 @@ public static class EmbeddingGemma2Capabilities
         // metadata, sampled indices and the RGB of every frame equal torchcodec's on the 22 fixture videos (H.264 8/10-bit,
         // HEVC, VP9, AV1; rotation 90; odd sizes) with FFmpeg 8.1 on x86-64.
         ["video.decode.ffmpeg8"] = EmbeddingGemma2CapabilityStatus.Experimental,
-        ["video.decode.ffmpeg9"] = EmbeddingGemma2CapabilityStatus.Unsupported, // other ABI; rejected with a typed error
+        ["video.decode.ffmpeg9"] = EmbeddingGemma2CapabilityStatus.Unsupported, // the FFmpeg 8 adapter on FFmpeg 9: other ABI, typed error
+        // Starlings.Models.EmbeddingGemma2.Video.FFmpeg9 on the user's FFmpeg 9.0: every frame of the 22 fixture videos and
+        // the release set's sampled frames equal torchcodec's (protected decoder_ffmpeg9 bound, #64; G1 on the release set).
+        ["video.decode.ffmpeg9_adapter"] = EmbeddingGemma2CapabilityStatus.Experimental,
         ["video.decode.rotation_90"] = EmbeddingGemma2CapabilityStatus.Experimental,
         ["video.decode.rotation_other"] = EmbeddingGemma2CapabilityStatus.Experimental, // -90, 180: equal to torchcodec on the edge-case videos
         ["video.decode.streams"] = EmbeddingGemma2CapabilityStatus.Experimental, // seekable streams and memory, equal to files
         ["video.decode.arm64_or_non_avx2"] = EmbeddingGemma2CapabilityStatus.Untested, // swscale SIMD paths may differ by a level
-        ["video.graph_download"] = EmbeddingGemma2CapabilityStatus.Untested, // same graphs as images; release not published
+        ["video.graph_download"] = EmbeddingGemma2CapabilityStatus.Supported, // the same public graphs as images (G6)
         ["extensions_ai.video_embedding_generator"] = EmbeddingGemma2CapabilityStatus.Experimental,
         ["mlnet.video_column"] = EmbeddingGemma2CapabilityStatus.Unsupported,
 
@@ -222,6 +232,41 @@ public static class EmbeddingGemma2Capabilities
                 // The text profile; images and videos are the image-fp32-* and video-fp32-* profiles.
                 ["image"] = EmbeddingGemma2CapabilityStatus.Unsupported,
                 ["audio"] = EmbeddingGemma2CapabilityStatus.Unsupported,
+                ["video"] = EmbeddingGemma2CapabilityStatus.Unsupported,
+            },
+            [StableImageProfile] = new Dictionary<string, EmbeddingGemma2CapabilityStatus>(StringComparer.Ordinal)
+            {
+                ["image"] = EmbeddingGemma2CapabilityStatus.Supported,
+                ["image_interleaved_text"] = EmbeddingGemma2CapabilityStatus.Supported,
+                ["image_multiple_per_input"] = EmbeddingGemma2CapabilityStatus.Supported,
+                ["image_prompts"] = EmbeddingGemma2CapabilityStatus.Supported,
+                ["image_budget_280"] = EmbeddingGemma2CapabilityStatus.Supported,
+                // 70, 140, 560 and 1,120 soft tokens: proposed rows, protected bounds.
+                ["image_budget_other"] = EmbeddingGemma2CapabilityStatus.Experimental,
+                ["image_batch"] = EmbeddingGemma2CapabilityStatus.Supported,
+                ["image_matryoshka"] = EmbeddingGemma2CapabilityStatus.Supported,
+                ["image_decode_png_jpeg"] = EmbeddingGemma2CapabilityStatus.Supported,
+                // Proposed image-formats rows.
+                ["image_decode_gif_bmp_webp"] = EmbeddingGemma2CapabilityStatus.Experimental,
+                ["image_decode_gif_transparency"] = EmbeddingGemma2CapabilityStatus.Unsupported,
+                ["image_exif_orientation_opt_in"] = EmbeddingGemma2CapabilityStatus.Experimental,
+                ["image_16_bit"] = EmbeddingGemma2CapabilityStatus.Unsupported,
+                ["image_alpha_compositing"] = EmbeddingGemma2CapabilityStatus.Unsupported,
+                // Above the default 50 MP only with the limit raised by the caller.
+                ["image_over_default_pixel_limit_with_option"] = EmbeddingGemma2CapabilityStatus.Experimental,
+                ["text_only_inputs"] = EmbeddingGemma2CapabilityStatus.Supported,
+                ["batch"] = EmbeddingGemma2CapabilityStatus.Supported,
+                ["streaming"] = EmbeddingGemma2CapabilityStatus.Unsupported,
+                ["cancellation"] = EmbeddingGemma2CapabilityStatus.Supported,
+                ["persistence"] = EmbeddingGemma2CapabilityStatus.Unsupported,
+                ["training"] = EmbeddingGemma2CapabilityStatus.Unsupported,
+                ["aot"] = EmbeddingGemma2CapabilityStatus.Supported,
+                ["extensions_ai"] = EmbeddingGemma2CapabilityStatus.Supported,
+                ["mlnet"] = EmbeddingGemma2CapabilityStatus.Unsupported,
+                ["concurrent_calls"] = EmbeddingGemma2CapabilityStatus.Supported,
+                ["input_over_8192_tokens"] = EmbeddingGemma2CapabilityStatus.Unsupported,
+                ["audio"] = EmbeddingGemma2CapabilityStatus.Unsupported,
+                // The image profile; videos are the video-fp32-* profiles.
                 ["video"] = EmbeddingGemma2CapabilityStatus.Unsupported,
             },
         };

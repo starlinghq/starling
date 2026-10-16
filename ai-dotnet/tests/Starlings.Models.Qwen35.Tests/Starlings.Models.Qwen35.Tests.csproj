@@ -13,6 +13,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Include="../Shared/Registry/*.cs" Link="Shared/Registry/%(Filename)%(Extension)" />
     <Compile Include="../Shared/Qwen35/*.cs" Link="Shared/Qwen35/%(Filename)%(Extension)" />
     <Compile Include="../Shared/Operational/*.cs" Link="Shared/Operational/%(Filename)%(Extension)" />
     <!-- Staged copy of the proposed fixture model-pipeline/protected/qwen3.5-0.8b/reference/ (read when that directory is absent). -->

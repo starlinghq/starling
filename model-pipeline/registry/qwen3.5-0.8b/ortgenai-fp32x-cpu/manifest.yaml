@@ -6,7 +6,12 @@
 # and tolerances are proposed separately; nothing here is qualified.
 schema_version: 1
 id: qwen3.5-0.8b/ortgenai-fp32x-cpu
-maturity: experimental
+# Stable since 2026-10-16 (maintainer's delegated promotion; docs/kickoff.md, "Stable CPU profiles, third round"): every
+# gate G0 to G7 passed (G5 on the quiet-host rerun, below), the contract is the Starlings.Models.Qwen35 README's "Stable
+# contract" (fp32x, Linux x64 CPU), and the scheduled qualification reruns G1 to G3 on the release sets (G2 on the
+# hosted full step-0 reference vectors pinned by the protected hosted-reference.json, #71) and a one-hour soak weekly,
+# green in run 38848321624.
+maturity: stable
 
 origin:
   code:
@@ -169,32 +174,35 @@ execution:
       - { name: logits, type: float32, shape: [batch, sequence, 248320] }
 
 capabilities:
-  # Starlings.Models.Qwen35 (Qwen35Capabilities); evidence in docs/evidence/p016-qwen35/README.md. Experimental means
-  # tested against the transformers fp32 reference on prompts-v1 and by the decode-loop unit tests, not qualified.
+  # Starlings.Models.Qwen35 (Qwen35Capabilities); evidence in docs/evidence/p016-qwen35/README.md and the release-set
+  # gates. Statuses follow the Stable contract in the package README: supported where the P-030 release sets (G1, G2,
+  # G3), the accepted development fixtures and G4 to G7 cover it on Linux x64 CPU; experimental where only proposed rows
+  # (P-029 template corpus, long context) or a single real-model run (tool calling) do; unsupported outside it.
+  # Qwen35Capabilities.Profiles holds the same statuses (tested key for key).
   batch: unsupported
-  streaming: experimental
-  cancellation: experimental
+  streaming: supported
+  cancellation: supported
   persistence: unsupported
   training: unsupported
   # aot: Native AOT publish on Linux x64 CPU, no trim/AOT warnings, results equal to JIT bit for bit
   # (typed API and IChatClient; docs/evidence/aot/README.md).
   # GenAI version diagnostics read the .deps.json, which a Native AOT binary lacks: reported unknown.
-  aot: experimental
-  extensions_ai: experimental  # IChatClient (Starlings.Models.Qwen35.Extensions.AI, P-017): 21 text prompts, streaming = non-streamed = reference, cancellation, concurrency
+  aot: supported
+  extensions_ai: supported  # IChatClient (Starlings.Models.Qwen35.Extensions.AI, P-017): 21 text prompts, streaming = non-streamed = reference, cancellation, concurrency
   mlnet: unsupported
-  greedy_generation: experimental
-  sampling_seeded: experimental
-  stop_tokens: experimental
-  stop_sequences: experimental
-  max_new_tokens: experimental
-  usage: experimental
-  concurrent_requests: "experimental"
-  step0_logits: experimental
-  chat_template_owned_text: experimental
-  enable_thinking: experimental
-  tokenizer_owned: experimental
+  greedy_generation: supported
+  sampling_seeded: supported
+  stop_tokens: supported
+  stop_sequences: supported
+  max_new_tokens: supported
+  usage: supported
+  concurrent_requests: supported  # CPU: parallel
+  step0_logits: supported
+  chat_template_owned_text: supported
+  enable_thinking: experimental  # one accepted development prompt; the P-029 rows are proposed
+  tokenizer_owned: supported
   cancellation_inside_a_step: unsupported
-  chunked_prefill: experimental
+  chunked_prefill: supported
   conversation_state_reuse: unsupported
   # tool_calling: the template's tools block, tool calls and tool messages equal the upstream rendering on the 41
   # tool cases of the proposed P-029 corpus (40 renderings with prompt ids, 1 error); parser and IChatClient mapping tested with
@@ -214,11 +222,14 @@ capabilities:
   long_context_over_8192_tokens: unsupported
 
 compatibility:
+  # Linux x64 CPU: gates G0 to G7 (G1 to G4 on an Intel i7-5820K; G5 on a quiet RunPod host, both sides pinned to the
+  # same cores); the scheduled qualification reruns G1 to G3 (G2 on the hosted step-0 reference vectors, verified
+  # against the protected digests) and a one-hour soak on GitHub-hosted ubuntu-latest (4 logical CPUs; THP `madvise`).
   - os: linux
     arch: x64
     provider: cpu
-    status: experimental
-    verified: 2026-10-10
+    status: supported
+    verified: 2026-10-16
   - os: windows
     arch: x64
     provider: cpu
@@ -265,6 +276,18 @@ maintenance:
   last_checked: 2026-10-10
   review_date: 2027-01-05
   known_issues:
+    - >-
+      The release prompts' full step-0 reference vectors regenerate byte-identical only in the recorded reference
+      environment (torch 2.14.1+cpu, 6 threads); the accepted vectors are hosted at
+      Starlinghq/starling-release-references (commit and file digests in the protected hosted-reference.json, #71), and
+      the evaluator checks each against the fixture's step0_sha256, so the scheduled G2 needs no regeneration.
+    - >-
+      G5: C# and Python load different ONNX Runtime 1.30.0 native builds (NuGet against pip); recorded as context, not
+      a verdict input. The first matched run failed on time to first token under host load; the qualifying quiet-host
+      rerun passed (docs/evidence/qualification-2026-10-15/README.md).
+    - >-
+      Linux memory: no MALLOC_* setting is required; the qualification soak runs with transparent huge pages
+      `madvise`, and on `always` hosts resident memory can look larger without any leak.
     - >-
       The ONNX Runtime GenAI C# API is labeled preview upstream; Starlings.Generation.OnnxGenAI isolates it.
       The runtime version must equal the builder version that wrote the graph (0.17.1).

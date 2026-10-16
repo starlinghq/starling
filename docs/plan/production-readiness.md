@@ -105,6 +105,11 @@ These cannot be done by an agent. Each row names what it unblocks.
 
 Each workstream PR updates this document's tables when it lands. The catalog (R3) becomes the source of truth for status once it exists.
 
+### Status 2026-10-16 (third promotion round)
+
+- **Stable: EmbeddingGemma 2 `image-fp32-cpu` and Qwen `ortgenai-fp32x-cpu`.** Every gate passed and the validator agrees. The weekly qualification workflow now reruns their release-set G1 to G3 and the one-hour soak on hosted runners, green ([run 38848321624](https://github.com/starlinghq/starling/actions/runs/38848321624)). G2 reads the accepted reference tensors from `Starlinghq/starling-release-references`, pinned by the protected `hosted-reference.json` of each release set (#71). Qwen CPU G5 is recorded `passed` from the planned quiet-host rerun. Contracts: the `Starlings.Models.EmbeddingGemma2` README (images) and the `Starlings.Models.Qwen35` README. Same single-owner exception (M7 open).
+- **Not promoted: EmbeddingGemma 2 `video-fp32-cpu`.** Its release-set G1 and G2 now pass weekly, but its hosted one-hour soak fails the growth rule in every run (about 280 MB/h). **Regression report:** the Stable text profile `embeddinggemma-2/onnx-fp32-cpu` failed its hosted soak in runs 38837950614 and 38841680114 (about 130 MB/h) and passed in 38831355609 and 38848321624 (intermittent).
+
 ### Status 2026-10-15 (second promotion round)
 
 - **Stable: `multilingual-e5-small/onnx-fp32-cpu` and `embeddinggemma-2/onnx-fp32-cpu` (text).** Every gate passed, the validator agrees, and the weekly qualification workflow reruns their release-set G1 to G3 and a one-hour soak on hosted runners, green ([run 38822625245](https://github.com/starlinghq/starling/actions/runs/38822625245)). The blockers in the first-round entry below were resolved by #60 (EmbeddingGemma 2's text reference embeddings committed under `protected/`) and #66 (`malloc_trim` on session release; soak with transparent huge pages `madvise`). Contracts: the `Starlings.Models.E5` and `Starlings.Models.EmbeddingGemma2` READMEs. Single-owner exception as for GLiNER2 (M7 open).
