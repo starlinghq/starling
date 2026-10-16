@@ -69,7 +69,7 @@ on:
       soak_variants:
         description: >-
           Diagnostics: JSON array of soak variants, each '+'-joined from default, no-heap-trim (tool --no-heap-trim),
-          tool-trim (--malloc-trim), smaps (--smaps-every 25), smaps5 (--smaps-every 5), keep-loaded (--keep-loaded), cpu-arena / no-arena (--cpu-arena, --no-cpu-arena), run-threads / no-run-threads (--run-threads, --no-run-threads), thp-always (keep the image's THP setting), mmap64k (MALLOC_MMAP_THRESHOLD_=65536), arena2 (MALLOC_ARENA_MAX=2), no-env
+          tool-trim (--malloc-trim), smaps (--smaps-every 25), smaps5 (--smaps-every 5), keep-loaded (--keep-loaded), load-trim (--trim-after-load), cpu-arena / no-arena (--cpu-arena, --no-cpu-arena), run-threads / no-run-threads (--run-threads, --no-run-threads), thp-always (keep the image's THP setting), mmap64k (MALLOC_MMAP_THRESHOLD_=65536), arena2 (MALLOC_ARENA_MAX=2), no-env
           (drop the profile's documented MALLOC_ setting)
         type: string
         default: '["default"]'
@@ -497,6 +497,7 @@ jobs:
               smaps) extra+=(--smaps-every 25) ;;
               smaps5) extra+=(--smaps-every 5) ;;
               keep-loaded) extra+=(--keep-loaded) ;;
+              load-trim) extra+=(--trim-after-load) ;;
               cpu-arena) extra+=(--cpu-arena) ;;
               no-arena) extra+=(--no-cpu-arena) ;;
               run-threads) extra+=(--run-threads) ;;

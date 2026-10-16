@@ -99,7 +99,8 @@ internal static class MemoryProbe
     /// <summary>
     /// Appends one JSON line: the anonymous mappings of <c>/proc/self/smaps</c> with more than 2 MiB resident (start,
     /// end, permissions, name, Rss, Anonymous, AnonHugePages in KiB), the totals over all mappings, and glibc's
-    /// <c>mallinfo2</c> totals over all arenas where it exists (bytes in use, free in the heaps, in mmapped chunks).
+    /// <c>mallinfo2</c> totals over all arenas where it exists (bytes in use, free in the heaps, in mmapped chunks),
+    /// <c>malloc_info</c> per arena, and the GC's committed bytes and fragmentation.
     /// </summary>
     public static void AppendSmaps(string path, double seconds, int cycle, string phase)
     {
@@ -188,10 +189,89 @@ internal static class MemoryProbe
             };
         }
 
+        // The managed heap's committed memory (the GC keeps freed regions committed for reuse) and fragmentation.
+        var gc = GC.GetGCMemoryInfo(GCKind.Any);
+        var generations = new System.Text.Json.Nodes.JsonArray();
+        foreach (var g in gc.GenerationInfo)
+        {
+            generations.Add(new System.Text.Json.Nodes.JsonObject
+            {
+                ["size_after"] = g.SizeAfterBytes / 1024,
+                ["fragmentation_after"] = g.FragmentationAfterBytes / 1024,
+            });
+        }
+
+        row["gc_kb"] = new System.Text.Json.Nodes.JsonObject
+        {
+            ["committed"] = gc.TotalCommittedBytes / 1024,
+            ["heap_size"] = gc.HeapSizeBytes / 1024,
+            ["fragmented"] = gc.FragmentedBytes / 1024,
+            ["generations"] = generations,
+        };
+        if (MallocInfoXml() is { } xml)
+        {
+            row["malloc_info"] = xml;
+        }
+
         File.AppendAllText(path, row.ToJsonString() + "\n");
 
         static long KbOf(string line) =>
             long.Parse(line.Split(':', 2)[1].Trim().Split(' ')[0], CultureInfo.InvariantCulture);
+    }
+
+    /// <summary>
+    /// glibc's <c>malloc_info(0, fp)</c> XML: per arena (the main heap and each thread arena), the free chunks by size,
+    /// the top chunk and the memory obtained from the system. Null where it does not exist.
+    /// </summary>
+    private static string? MallocInfoXml()
+    {
+        if (!OperatingSystem.IsLinux())
+        {
+            return null;
+        }
+
+        string file = Path.Combine(Path.GetTempPath(), $"starlings-soak-malloc-info-{Environment.ProcessId}.xml");
+        try
+        {
+            IntPtr fp = NativeMethods.fopen(file, "w");
+            if (fp == IntPtr.Zero)
+            {
+                return null;
+            }
+
+            try
+            {
+                _ = NativeMethods.malloc_info(0, fp);
+            }
+            finally
+            {
+                _ = NativeMethods.fclose(fp);
+            }
+
+            return File.ReadAllText(file);
+        }
+        catch (EntryPointNotFoundException)
+        {
+            return null;
+        }
+        catch (DllNotFoundException)
+        {
+            return null;
+        }
+        catch (IOException)
+        {
+            return null;
+        }
+        finally
+        {
+            try
+            {
+                File.Delete(file);
+            }
+            catch (IOException)
+            {
+            }
+        }
     }
 
     /// <summary>glibc's <c>mallinfo2()</c> (glibc 2.33 and later), or null where it does not exist.</summary>
@@ -240,6 +320,18 @@ internal static class MemoryProbe
         [System.Runtime.InteropServices.DllImport("libc", EntryPoint = "gnu_get_libc_version")]
         [System.Runtime.InteropServices.DefaultDllImportSearchPaths(System.Runtime.InteropServices.DllImportSearchPath.SafeDirectories)]
         internal static extern IntPtr gnu_get_libc_version();
+
+        [System.Runtime.InteropServices.DllImport("libc", EntryPoint = "malloc_info")]
+        [System.Runtime.InteropServices.DefaultDllImportSearchPaths(System.Runtime.InteropServices.DllImportSearchPath.SafeDirectories)]
+        internal static extern int malloc_info(int options, IntPtr fp);
+
+        [System.Runtime.InteropServices.DllImport("libc", EntryPoint = "fopen", CharSet = System.Runtime.InteropServices.CharSet.Ansi, BestFitMapping = false, ThrowOnUnmappableChar = true)]
+        [System.Runtime.InteropServices.DefaultDllImportSearchPaths(System.Runtime.InteropServices.DllImportSearchPath.SafeDirectories)]
+        internal static extern IntPtr fopen(string path, string mode);
+
+        [System.Runtime.InteropServices.DllImport("libc", EntryPoint = "fclose")]
+        [System.Runtime.InteropServices.DefaultDllImportSearchPaths(System.Runtime.InteropServices.DllImportSearchPath.SafeDirectories)]
+        internal static extern int fclose(IntPtr fp);
 
         [System.Runtime.InteropServices.DllImport("libc", EntryPoint = "malloc_trim")]
         [System.Runtime.InteropServices.DefaultDllImportSearchPaths(System.Runtime.InteropServices.DllImportSearchPath.SafeDirectories)]
