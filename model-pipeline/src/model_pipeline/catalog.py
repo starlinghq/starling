@@ -52,7 +52,7 @@ VOCABULARY = (
 # regression support exists only for profiles with a compatibility row on one of them. The self-hosted GPU job runs only
 # on manual dispatch, so a CUDA-only profile has no scheduled regression runs.
 SCHEDULED_REGRESSION_PROVIDERS = ("cpu",)
-GPU_PROMOTION_NOTE = "promotion awaits scheduled GPU regression runs"
+GPU_PROMOTION_NOTE = "promotion awaits a green per-release GPU regression run"
 
 # Package README maturity blocks.
 PACKAGE_READMES = "ai-dotnet/src/*/README.md"
@@ -236,7 +236,7 @@ def stable_readiness_text(
     if readiness["untested_capabilities"]:
         parts.append("untested: " + ", ".join(readiness["untested_capabilities"]))
     if not scheduled_regression:
-        parts.append("promotion also awaits scheduled GPU regression runs")
+        parts.append("promotion also awaits a green per-release GPU regression run")
     return "; ".join(parts)
 
 
@@ -256,8 +256,9 @@ def _render_readme(catalog: dict[str, Any], out: Path, repo_root: Path) -> str:
         "",
         "Gate cells link to the evidence the manifest records. The Stable readiness column applies the validator's "
         "Stable rules (every gate G0 to G7 `passed`, no capability `untested`) and lists exactly what fails them. "
-        "Stable also needs regression support: the scheduled qualification workflow runs CPU profiles only, so a "
-        "CUDA profile is not promoted until scheduled GPU regression runs exist.",
+        "Stable also needs regression support: CPU regression runs weekly on hosted runners, and GPU regression "
+        "runs for every release (and on demand) on a RunPod GPU pod, so a CUDA profile is not promoted until that "
+        "per-release GPU run is green for it.",
         "",
     ]
     header = ["Profile", "Task", "Maturity", "Owner", "Review date", *GATES, "Stable readiness"]

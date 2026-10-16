@@ -160,13 +160,13 @@ def test_gpu_only_profile_awaits_scheduled_regression(repo):
     ready, failed = profile(cat, "fam/cuda"), profile(cat, "fam/cuda-g4")
     assert not ready["scheduled_regression"]
     assert catalog.stable_readiness_text(ready["stable_readiness"], scheduled_regression=False) == (
-        "all eight gates pass where recorded; promotion awaits scheduled GPU regression runs"
+        "all eight gates pass where recorded; promotion awaits a green per-release GPU regression run"
     )
     assert catalog.stable_readiness_text(failed["stable_readiness"], scheduled_regression=False) == (
-        "gates not passed: G4; promotion also awaits scheduled GPU regression runs"
+        "gates not passed: G4; promotion also awaits a green per-release GPU regression run"
     )
     readme = catalog.render(cat, repo / "docs" / "catalog", repo)["README.md"]
-    assert "promotion awaits scheduled GPU regression runs" in readme
+    assert "promotion awaits a green per-release GPU regression run" in readme
 
 
 def test_package_readme_maturity_blocks_are_generated_and_checked(repo):

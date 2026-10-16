@@ -1,8 +1,8 @@
 name: qualification
 
 # Scheduled qualification (plan section 13.1 "trusted model qualification" and "periodic maintenance"; backlog P-018,
-# workstream R6 of docs/plan/production-readiness.md). Weekly and on manual dispatch only: never on pull_request, so no
-# fork code runs here, and no job can reach release credentials (the `release` environment is used only by
+# workstream R6 of docs/plan/production-readiness.md). Weekly, on release tags (ai-v*) and on manual dispatch only: never
+# on pull_request, so no fork code runs here, and no job can reach release credentials (the `release` environment is used only by
 # release.yml). Every job uses the read-only workflow token, and every job but `cuda` uses no secret: only publicly
 # hosted, pinned model assets are acquired, anonymously. Every registered graph is public since 2026-10-14 (maintainer action M3). A profile whose
 # manifest records a `source_status` of `placeholder` or `private` is skipped with a "hosting private" notice;
@@ -10,8 +10,9 @@ name: qualification
 #
 # This workflow is the regression support of the Stable profiles (docs/support-policy.md, "Regression support"): the
 # release-gates job reruns G1, G2 and G3 of each Stable CPU profile on its accepted P-030 release sets, and the soak job
-# screens each for growth. The cuda job does the same for every CUDA profile on a RunPod GPU pod. A failure there is
-# handled like a regression report.
+# screens each for growth: CPU regression runs weekly (and on every release tag). The cuda job does the same for every
+# CUDA profile on a RunPod GPU pod, for every release (an ai-v* tag push) and on manual dispatch, not weekly. A failure
+# there is handled like a regression report.
 #
 # Jobs:
 #   assets         the lock of every public CPU profile (tools/qualification.py), uploaded as evidence. Each job that
@@ -28,14 +29,17 @@ name: qualification
 #   upstream       upstream change detection (P-020): fails when a pinned Hub repository has a revision newer than the
 #                  manifest's latest_known_upstream_revision, so the maintainer is notified by the failed run
 #   cuda           regression support of the CUDA profiles on a RunPod GPU pod (tools/ci/runpod.py, runpod-cuda-pod.sh):
-#                  the CUDA test projects, release-set G1, G2 and G3 of every CUDA profile, and a short soak per CUDA
-#                  profile. The only job with a secret (RUNPOD_API_KEY, used on the runner only, never on the pod)
+#                  the CUDA test projects, release-set G1, G2 and G3 of every CUDA profile, and a short soak smoke test
+#                  per CUDA profile. Per release (ai-v* tags) and on dispatch, not on the schedule. The only job with a secret (RUNPOD_API_KEY, used on the runner only, never on the pod)
 #
 # Evidence from every job is uploaded as an artifact, also when a step fails. Nothing here changes a manifest, a gate
 # or a maturity: the maintainer records results (M10).
 on:
   schedule:
-    - cron: "23 4 * * 1" # Mondays 04:23 UTC
+    - cron: "23 4 * * 1" # Mondays 04:23 UTC: the CPU jobs (the cuda job does not run on the schedule)
+  # GPU regression per release: a release tag runs every job, the cuda job included.
+  push:
+    tags: ["ai-v*"]
   workflow_dispatch:
     inputs:
       soak_duration:
@@ -566,13 +570,15 @@ jobs:
           path: artifacts/qualification/upstream/
           if-no-files-found: warn
 
-  # CUDA regression support (plan 13.1: NVIDIA CUDA on Linux x64) on a RunPod GPU pod, weekly and on manual dispatch:
-  # never on pull_request and never in a fork. Each run creates one on-demand pod (RTX 3090 or 4090, secure cloud
+  # CUDA regression support (plan 13.1: NVIDIA CUDA on Linux x64) on a RunPod GPU pod, for every release (a push of an
+  # ai-v* tag) and on manual dispatch; not on the weekly schedule, never on pull_request and never in a fork. Each run creates one on-demand pod (RTX 3090 or 4090, secure cloud
   # EU-CZ-1) named starling-q-ci-<run id>, with the network volume starling-q-vol attached (the .NET SDK, uv, the pinned
   # nvidia wheels and the verified models). The pod checks out exactly ${{ github.sha }} and runs
   # tools/ci/runpod-cuda-pod.sh: the CUDA test projects, G1, G2 and G3 of every CUDA profile on its accepted P-030
-  # release sets (bounds and budgets only from protected/), and a short soak per CUDA profile under its contract
-  # environment. The results come back as the artifact qualification-cuda.
+  # release sets (bounds and budgets only from protected/; the G2 references are the hosted, digest-verified ones), and a
+  # short soak per CUDA profile under its contract environment. The short soak is a smoke test: wrong outputs, errors and
+  # crashes fail it; its growth verdict (the tool's unchanged rule) is recorded but not binding, because a short run sits
+  # in the allocator's warm-up ramp. Growth is judged by the binding one-hour G4 soaks. The results come back as the artifact qualification-cuda.
   #
   # Only tools/ci/runpod.py, on this runner, uses the repository secret RUNPOD_API_KEY (to read the balance, create,
   # inspect and terminate the pod). The secret is never echoed and never passed to the pod. The pod's SSH key is
@@ -582,7 +588,7 @@ jobs:
   # sweep of stale starling-q-ci-* pods before each run. Only pods named starling-q-ci-* are ever touched.
   cuda:
     name: cuda (runpod)
-    if: github.repository == 'starlinghq/starling' && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && !inputs.soak_only && !inputs.skip_cuda
+    if: github.repository == 'starlinghq/starling' && (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/ai-v') || github.event_name == 'workflow_dispatch' && !inputs.soak_only && !inputs.skip_cuda)
     runs-on: ubuntu-latest
     timeout-minutes: 230
     concurrency:
