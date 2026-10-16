@@ -1,0 +1,6 @@
+model name	: AMD EPYC 7763 64-Core Processor
+fma avx2 
+4
+Thread(s) per core:                      2
+Core(s) per socket:                      2
+Socket(s):                               1

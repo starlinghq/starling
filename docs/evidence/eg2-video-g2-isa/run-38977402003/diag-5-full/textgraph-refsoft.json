@@ -1,0 +1,79 @@
+{
+ "commons-video-00": {
+  "row_relative": 7.4211029972927386e-06,
+  "max_abs": 0.02545166015625,
+  "ref_max_abs": 3429.633056640625,
+  "worst_token": 1551,
+  "worst_dim": 115,
+  "tokens_over_1e-3": 0,
+  "mean_abs": 5.770384540383303e-05,
+  "out_sha256": "9d94183b253e0146",
+  "seconds": 2.0
+ },
+ "commons-video-02": {
+  "row_relative": 1.4514876208952808e-06,
+  "max_abs": 0.004547119140625,
+  "ref_max_abs": 3132.730224609375,
+  "worst_token": 339,
+  "worst_dim": 115,
+  "tokens_over_1e-3": 0,
+  "mean_abs": 5.766612804521594e-05,
+  "out_sha256": "4bc28bb4161ac9e4",
+  "seconds": 1.7
+ },
+ "commons-video-04": {
+  "row_relative": 2.801587375480799e-05,
+  "max_abs": 0.1219482421875,
+  "ref_max_abs": 4352.82666015625,
+  "worst_token": 349,
+  "worst_dim": 115,
+  "tokens_over_1e-3": 0,
+  "mean_abs": 8.720008770103084e-05,
+  "out_sha256": "2588b0c6a1b1e362",
+  "seconds": 8.4
+ },
+ "commons-video-05": {
+  "row_relative": 8.986146181264558e-07,
+  "max_abs": 0.00318145751953125,
+  "ref_max_abs": 3540.402587890625,
+  "worst_token": 1803,
+  "worst_dim": 46,
+  "tokens_over_1e-3": 0,
+  "mean_abs": 4.8617132686221154e-05,
+  "out_sha256": "c8d15a5ef579dd33",
+  "seconds": 2.6
+ },
+ "vid-query-prompt": {
+  "row_relative": 3.955965596118947e-06,
+  "max_abs": 0.01446533203125,
+  "ref_max_abs": 3656.5869140625,
+  "worst_token": 1555,
+  "worst_dim": 29,
+  "tokens_over_1e-3": 0,
+  "mean_abs": 6.392170390965799e-05,
+  "out_sha256": "f9c55f48e37236b2",
+  "seconds": 1.9
+ },
+ "vid-document-prompt": {
+  "row_relative": 2.433577946175033e-06,
+  "max_abs": 0.00820159912109375,
+  "ref_max_abs": 3370.181396484375,
+  "worst_token": 365,
+  "worst_dim": 189,
+  "tokens_over_1e-3": 0,
+  "mean_abs": 5.6951141753576803e-05,
+  "out_sha256": "59c9985c1ddcda0e",
+  "seconds": 2.7
+ },
+ "mm-two-videos": {
+  "row_relative": 7.0690299139978615e-06,
+  "max_abs": 0.02423095703125,
+  "ref_max_abs": 3427.7626953125,
+  "worst_token": 2665,
+  "worst_dim": 115,
+  "tokens_over_1e-3": 0,
+  "mean_abs": 7.31847041607382e-05,
+  "out_sha256": "b32c97d409eba573",
+  "seconds": 6.5
+ }
+}
