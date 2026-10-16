@@ -1,0 +1,30 @@
+model name	: AMD EPYC 7763 64-Core Processor
+CpuArenaTests.VideoEmbeddingsAreBitIdenticalWithAndWithoutTheArena
+2 video embeddings bit-identical with the arena on and off
+CpuArenaTests.TextEmbeddingsAreBitIdenticalWithAndWithoutTheArena
+8 text rows bit-identical with the arena on and off
+model name	: AMD EPYC 9V45 96-Core Processor
+CpuArenaTests.VideoEmbeddingsAreBitIdenticalWithAndWithoutTheArena
+2 video embeddings bit-identical with the arena on and off
+CpuArenaTests.TextEmbeddingsAreBitIdenticalWithAndWithoutTheArena
+8 text rows bit-identical with the arena on and off
+model name	: AMD EPYC 7763 64-Core Processor
+CpuArenaTests.VideoEmbeddingsAreBitIdenticalWithAndWithoutTheArena
+2 video embeddings bit-identical with the arena on and off
+CpuArenaTests.TextEmbeddingsAreBitIdenticalWithAndWithoutTheArena
+8 text rows bit-identical with the arena on and off
+model name	: AMD EPYC 9V45 96-Core Processor
+CpuArenaTests.VideoEmbeddingsAreBitIdenticalWithAndWithoutTheArena
+2 video embeddings bit-identical with the arena on and off
+CpuArenaTests.TextEmbeddingsAreBitIdenticalWithAndWithoutTheArena
+8 text rows bit-identical with the arena on and off
+model name	: AMD EPYC 7763 64-Core Processor
+CpuArenaTests.VideoEmbeddingsAreBitIdenticalWithAndWithoutTheArena
+2 video embeddings bit-identical with the arena on and off
+CpuArenaTests.TextEmbeddingsAreBitIdenticalWithAndWithoutTheArena
+8 text rows bit-identical with the arena on and off
+model name	: INTEL(R) XEON(R) PLATINUM 8573C
+CpuArenaTests.VideoEmbeddingsAreBitIdenticalWithAndWithoutTheArena
+2 video embeddings bit-identical with the arena on and off
+CpuArenaTests.TextEmbeddingsAreBitIdenticalWithAndWithoutTheArena
+8 text rows bit-identical with the arena on and off
