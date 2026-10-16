@@ -535,14 +535,15 @@ jobs:
   #
   # Only tools/ci/runpod.py, on this runner, uses the repository secret RUNPOD_API_KEY (to read the balance, create,
   # inspect and terminate the pod). The secret is never echoed and never passed to the pod. The pod's SSH key is
-  # generated per run and discarded with the runner. Cost guard: no pod starts below a $5 balance. Caps: the job
+  # generated per run and discarded with the runner. The volume pins the datacenter, so pod creation waits up to 30
+  # minutes for an RTX 3090 or 4090 to be in stock there. Cost guard: no pod starts below a $5 balance. Caps: the job
   # timeout; a pod-side self-removal, armed by the pod's start command, as the backstop if the runner is lost; and a
   # sweep of stale starling-q-ci-* pods before each run. Only pods named starling-q-ci-* are ever touched.
   cuda:
     name: cuda (runpod)
     if: github.repository == 'starlinghq/starling' && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && !inputs.soak_only
     runs-on: ubuntu-latest
-    timeout-minutes: 200
+    timeout-minutes: 230
     concurrency:
       group: qualification-cuda-runpod
       cancel-in-progress: false
@@ -569,7 +570,7 @@ jobs:
           RUNPOD_API_KEY: ${{ secrets.RUNPOD_API_KEY }}
         run: |
           python3 -I tools/ci/runpod.py create --name "$POD_NAME" --public-key "$RUNNER_TEMP/pod_key.pub" \
-            --backstop-minutes "$BACKSTOP_MINUTES"
+            --backstop-minutes "$BACKSTOP_MINUTES" --stock-wait-minutes 30
       - name: Wait for SSH
         id: ssh
         env:

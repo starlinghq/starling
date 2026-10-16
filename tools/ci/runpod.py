@@ -164,15 +164,26 @@ def cmd_create(a: argparse.Namespace) -> int:
         "allowedCudaVersions": ["13.0"],
         "dockerStartCmd": ["bash", "-c", backstop + " exec /start.sh"],
     }
-    try:
-        p = rest("POST", "/pods", body)
-    except RuntimeError as e:
-        if "HTTP 4" not in str(e):
+    # The volume pins the datacenter, so a GPU may be out of stock there for a while: retry until --stock-wait-minutes.
+    end = time.time() + a.stock_wait_minutes * 60
+    while True:
+        try:
+            p = rest("POST", "/pods", body)
+            break
+        except RuntimeError as e:
+            msg = str(e)
+            if "no instances currently available" in msg and time.time() < end:
+                print(f"{time.strftime('%H:%M:%S')} no RTX 3090/4090 available in {DATACENTER}; retrying in 60 s", flush=True)
+                time.sleep(60)
+                continue
+            if "HTTP 4" in msg and "dockerStartCmd" in body:
+                # The workflow arms the same backstop over SSH when the start command is not accepted.
+                print(f"::warning title=RunPod start command refused::{msg[:300]}; creating without it")
+                del body["dockerStartCmd"]
+                continue
+            if "no instances currently available" in msg:
+                print(f"::error title=No GPU in stock::no RTX 3090 or 4090 in {DATACENTER} for {a.stock_wait_minutes} min")
             raise
-        # The workflow arms the same backstop over SSH when the start command is not accepted.
-        print(f"::warning title=RunPod start command refused::{str(e)[:300]}; creating without it")
-        del body["dockerStartCmd"]
-        p = rest("POST", "/pods", body)
     pod_id = p.get("id")
     if not pod_id:
         print("error: create returned no id: " + json.dumps({k: p.get(k) for k in ("name", "desiredStatus")}))
@@ -257,6 +268,7 @@ def main() -> int:
     s.add_argument("--name", required=True)
     s.add_argument("--public-key", required=True)
     s.add_argument("--backstop-minutes", type=int, required=True)
+    s.add_argument("--stock-wait-minutes", type=float, default=0)
     s = sub.add_parser("ssh")
     s.add_argument("--name", required=True)
     s.add_argument("--wait-minutes", type=float, default=15)
