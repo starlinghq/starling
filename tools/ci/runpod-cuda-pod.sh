@@ -14,10 +14,13 @@
 # model cache (/workspace/models, re-verified here), the soak's development fixtures (/workspace/fixtures) and the
 # eg2-cuda venv's pinned nvidia wheels (CUDA 13 runtime, cuDNN 9) for LD_LIBRARY_PATH. Never uses /workspace/shim (it
 # turns `dotnet build` into a no-op) and never changes /workspace/starling. Release inputs that are not in Git (media
-# from Wikimedia Commons, the pinned FFmpeg builds, reference tensors regenerated at the recorded thread count) are
-# cached under /workspace/ci-cache after their first successful preparation; the producers and the evaluator verify
-# every one of them against the SHA-256 digests in Git, so a cached file can make a check fail, never pass. Delete a
-# cache directory to have the next run regenerate it. Nothing here writes to model-pipeline/protected/.
+# from Wikimedia Commons, the pinned FFmpeg builds) are cached under /workspace/ci-cache after their first successful
+# preparation; the producers and the evaluator verify every one of them against the SHA-256 digests in Git, so a cached
+# file can make a check fail, never pass. Delete a cache directory to have the next run prepare it again. The G2
+# reference tensors that release sets keep outside Git are never regenerated here (they reproduce byte-identically only
+# on the reference CPU): they are downloaded to the container disk from the commit each protected hosted-reference.json
+# pins and verified file by file (tools/fetch-release-references.py). Stale copies under /workspace/ci-cache/refs (the
+# earlier regenerations) are deleted. Nothing here writes to model-pipeline/protected/.
 set -uo pipefail
 
 SHA="${1:?commit sha}"
@@ -81,10 +84,23 @@ log "pod run start: commit $SHA, soak $SOAK_DURATION"
 driver="$(nvidia-smi --query-gpu=driver_version --format=csv,noheader | head -1)"
 log "GPU $(nvidia-smi --query-gpu=name --format=csv,noheader | head -1), driver $driver"
 
-# Release-input cache: the volume when it has room, else the container disk (prepared again next run).
+# Volume space: the earlier runs regenerated reference tensors into $W/ci-cache/refs on this CPU (wrong digests, and
+# about 1.5 GB). They are replaced by the hosted, digest-verified references below, so the directory goes, as do
+# partial downloads and FFmpeg archives already extracted. The sizes before and after are recorded; nothing outside
+# ci-cache is deleted.
+{
+    echo "== volume before cleanup"; df -h "$W"; du -sh "$W"/* "$W"/ci-cache/* 2>/dev/null
+    rm -rf "$W/ci-cache/refs"
+    find "$W/ci-cache" -maxdepth 3 \( -name '*.part' -o -name '*.tmp' \) -delete 2>/dev/null
+    rm -f "$W"/ci-cache/ffmpeg8/*.tar.xz "$W"/ci-cache/ffmpeg9/*.tar.xz
+    echo "== volume after cleanup"; df -h "$W"; du -sh "$W"/ci-cache/* 2>/dev/null
+} >"$OUT/volume-cleanup.txt" 2>&1
+# Release-input cache: the volume when it has room, else the container disk (prepared again next run, in minutes), so
+# a full volume can no longer make a check not-run.
 CACHE=$W/ci-cache
 free_gb=$(df -BG --output=avail "$W" | tail -1 | tr -dc 0-9)
-if [[ ! -d $CACHE && ${free_gb:-0} -lt 8 ]]; then
+log "volume: ${free_gb} GB free after removing stale ci-cache entries (volume-cleanup.txt)"
+if [[ ${free_gb:-0} -lt 8 ]]; then
     CACHE=$CI/cache
     log "volume has ${free_gb} GB free: release inputs cached on the container disk ($CACHE) for this run only"
 fi
@@ -193,9 +209,10 @@ FF9=$CACHE/ffmpeg9/ffmpeg-n9.0.2-28-g669f5ab083-linux64-lgpl-shared-9.0/lib
 MEDIA_REL=$CACHE/media/release
 MEDIA_IMG=$CACHE/media/image-retrieval-v1
 MEDIA_VID=$CACHE/media/video-retrieval-v1
-REF_IMG=$CACHE/refs/eg2-image-release-t6
-REF_VID=$CACHE/refs/eg2-video-release-t6
-REF_QW=$CACHE/refs/qwen35-release-prompts-t6
+# Hosted G2 references (protected hosted-reference.json), on the container disk: about 190 MB, downloaded every run.
+REF_IMG=$CI/refs/eg2-image-release
+REF_VID=$CI/refs/eg2-video-release
+REF_QW=$CI/refs/qwen35-release-prompts
 mkdir -p "$OUT/prepare"
 ready() { [[ -f "$1/.complete" ]]; }
 prepare_ffmpeg() {
@@ -216,54 +233,18 @@ fetch_media() {  # fetch_media <media list> <dir>
     ready "$2" || { rm -rf "$2" && "$V/eg2-video/bin/python" -I model-pipeline/reference/embeddinggemma2/fetch_eg2_release_media.py \
         --media "$1" --out "$2" && touch "$2/.complete"; }
 }
-media_view() {  # media_view <protected manifest images.json|videos.json> <dir>: the release set's own manifest plus links
-    local manifest=$1 dir=$2
-    rm -rf "$dir" && mkdir -p "$dir" && cp "$manifest" "$dir/" &&
-        python3 -I - "$manifest" "$MEDIA_REL" "$dir" <<'PY'
-import json, os, sys
-m = json.load(open(sys.argv[1], encoding="utf-8"))
-for e in m.get("images", []) + m.get("videos", []):
-    os.symlink(os.path.join(sys.argv[2], e["file"]), os.path.join(sys.argv[3], e["file"]))
-PY
+fetch_ref() {  # fetch_ref <protected hosted-reference.json> <dir> <log name>: download, verify, prune
+    rm -f "$2/.complete"
+    python3 -I tools/fetch-release-references.py --prune "$1" "$2" >"$OUT/prepare/$3.log" 2>&1 && touch "$2/.complete"
 }
-prepare_refs() {  # after the release media: regenerate the image and video reference tensors at the recorded 6 threads
-    local img=$CI/media-view/images vid=$CI/media-view/videos
-    media_view "$P/embeddinggemma-2/release/image-fp32-release/images.json" "$img" || return 1
-    media_view "$P/embeddinggemma-2/release/video-fp32-release/videos.json" "$vid" || return 1
-    ready "$REF_IMG" || { rm -rf "$REF_IMG" && env OMP_NUM_THREADS=6 CUDA_VISIBLE_DEVICES= PYTHONPATH=model-pipeline/reference/embeddinggemma2 \
-        "$V/eg2-video/bin/python" model-pipeline/reference/embeddinggemma2/run_embeddinggemma2_image.py --model-dir "$EG2_SNAP" \
-        --revision 914f7f89142e33e77833254d9c9b90c3cef7303b --images "$img" \
-        --cases "$P/embeddinggemma-2/release/image-fp32-release/image-cases.json" --out "$REF_IMG/out" --tensors "$REF_IMG/tensors" \
-        >"$OUT/prepare/ref-image.log" 2>&1 && touch "$REF_IMG/.complete"; } &
-    ready "$REF_VID" || { rm -rf "$REF_VID" && env OMP_NUM_THREADS=6 CUDA_VISIBLE_DEVICES= EG2_TORCHCODEC_FFMPEG_MAJOR=8 LD_LIBRARY_PATH="$FF8" \
-        PYTHONPATH=model-pipeline/reference/embeddinggemma2 \
-        "$V/eg2-video/bin/python" model-pipeline/reference/embeddinggemma2/run_embeddinggemma2_video.py --model-dir "$EG2_SNAP" \
-        --revision 914f7f89142e33e77833254d9c9b90c3cef7303b --videos "$vid" \
-        --cases "$P/embeddinggemma-2/release/video-fp32-release/video-cases.json" --out "$REF_VID/out" --tensors "$REF_VID/tensors" \
-        >"$OUT/prepare/ref-video.log" 2>&1 && touch "$REF_VID/.complete"; } &
-    wait
-}
-prepare_qwen_ref() {  # the full step-0 vectors of the release prompts, in the environment the fixture records (CPU, 6 threads)
-    ready "$REF_QW" && return 0
-    local v=$V/gen-cpu md=$CI/qwen-hf
-    {
-        uv venv -q --python 3.11 --python-preference only-managed "$v" &&
-            uv pip install -q --python "$v/bin/python" --index-url https://download.pytorch.org/whl/cpu --extra-index-url https://pypi.org/simple \
-                --index-strategy unsafe-best-match torch==2.14.1+cpu transformers==5.18.0 tokenizers==0.23.2 numpy==2.4.6 safetensors==0.8.0 jinja2 &&
-            uv pip freeze --python "$v/bin/python" &&
-            "$v/bin/python" -I -c "import sys; from huggingface_hub import snapshot_download as d; d('Qwen/Qwen3.5-0.8B', revision='2fc06364715b967f1860aea9cf38778875588b17', local_dir=sys.argv[1], allow_patterns=['*.json', '*.jinja', '*.txt'])" "$md" &&
-            ln -sf "$QW_SNAP/model.safetensors-00001-of-00001.safetensors" "$md/" &&
-            rm -rf "$REF_QW" &&
-            env CUDA_VISIBLE_DEVICES= "$v/bin/python" model-pipeline/reference/generation/run_reference.py --model-dir "$md" \
-                --revision 2fc06364715b967f1860aea9cf38778875588b17 \
-                --prompts "$P/qwen3.5-0.8b/release/release-prompts/prompts-release-v1.jsonl" --out "$REF_QW" --device cpu --threads 6 &&
-            touch "$REF_QW/.complete"
-    } >"$OUT/prepare/ref-qwen.log" 2>&1
+prepare_refs() {  # the accepted image, video and Qwen G2 references, verified against the recorded SHA-256
+    fetch_ref "$P/embeddinggemma-2/release/image-fp32-release/hosted-reference.json" "$REF_IMG" ref-image
+    fetch_ref "$P/embeddinggemma-2/release/video-fp32-release/hosted-reference.json" "$REF_VID" ref-video
+    fetch_ref "$P/qwen3.5-0.8b/release/release-prompts/reference/hosted-reference.json" "$REF_QW" ref-qwen
 }
 prepare_all() {
     prepare_ffmpeg >"$OUT/prepare/ffmpeg.log" 2>&1
     fetch_media "$P/embeddinggemma-2/release/media/media.json" "$MEDIA_REL" >"$OUT/prepare/media-release.log" 2>&1
-    prepare_refs &
     fetch_media "$P/embeddinggemma-2/release/image-retrieval-v1/image-media.json" "$MEDIA_IMG" >"$OUT/prepare/media-image-retrieval.log" 2>&1
     fetch_media "$P/embeddinggemma-2/release/video-retrieval-v1/video-media.json" "$MEDIA_VID" >"$OUT/prepare/media-video-retrieval.log" 2>&1
     wait
@@ -288,8 +269,7 @@ done
 unset STARLING_CUDA_TESTS
 
 log "release inputs: preparing in the background (cache $CACHE)"
-prepare_qwen_ref &
-QWEN_REF_JOB=$!
+prepare_refs
 prepare_all &
 PREPARE_JOB=$!
 
@@ -389,7 +369,7 @@ gates_eg2_image() {
         # One accepted image (79 MP) exceeds the 50 MP default: the release evaluation uses the option (experimental capability).
         step $pr dotnet-stages "${TOOL[@]}" embeddinggemma2-images --out "$w/stages" --images "$MEDIA_REL" --fixtures "$REL" \
             --threads 4 --max-image-pixels 80000000 --device cuda:0
-        evaluate $pr g1-g2-image-release G1,G2 --fixtures "$REL" --results "$w/stages" --reference-tensors "$REF_IMG/tensors" --require-gates G1,G2
+        evaluate $pr g1-g2-image-release G1,G2 --fixtures "$REL" --results "$w/stages" --reference-tensors "$REF_IMG" --require-gates G1,G2
     fi
     if need $pr "g3-retrieval G3" "$MEDIA_IMG"; then
         step $pr g3-producer "${TOOL[@]}" retrieval --model embeddinggemma2-image --dataset "$SET" --media "$MEDIA_IMG" \
@@ -404,7 +384,7 @@ gates_eg2_video() {
     if need $pr "g1-g2-video-release G1,G2" "$CACHE/ffmpeg9" && need $pr "g1-g2-video-release G1,G2" "$REF_VID"; then
         step $pr dotnet-stages "${TOOL[@]}" embeddinggemma2-videos --out "$w/stages" --videos "$MEDIA_REL" --ffmpeg "$FF8" --ffmpeg9 "$FF9" \
             --fixtures "$REL" --threads 4 --device cuda:0
-        evaluate $pr g1-g2-video-release G1,G2 --fixtures "$REL" --results "$w/stages" --reference-tensors "$REF_VID/tensors" --require-gates G1,G2
+        evaluate $pr g1-g2-video-release G1,G2 --fixtures "$REL" --results "$w/stages" --reference-tensors "$REF_VID" --require-gates G1,G2
     fi
     if need $pr "g3-retrieval G3" "$MEDIA_VID" && need $pr "g3-retrieval G3" "$CACHE/ffmpeg8"; then
         step $pr g3-producer "${TOOL[@]}" retrieval --model embeddinggemma2-video --dataset "$SET" --media "$MEDIA_VID" \
@@ -431,11 +411,10 @@ log "release gates: e5, GLiNER2, EmbeddingGemma 2 text"
 gates_e5
 gates_gliner2
 gates_eg2_text
-log "release gates: Qwen3.5 (waiting for the step-0 reference vectors)"
-wait "$QWEN_REF_JOB"
+log "release gates: Qwen3.5"
 gates_qwen fp32x
 gates_qwen fp16x
-log "release gates: EmbeddingGemma 2 image and video (waiting for media and reference tensors)"
+log "release gates: EmbeddingGemma 2 image and video (waiting for media)"
 wait "$PREPARE_JOB"
 gates_eg2_image
 gates_eg2_video
@@ -456,9 +435,31 @@ soak() {  # soak <profile> <workload> [VAR=value...]
     local note
     note="scheduled CUDA qualification on RunPod, $(nvidia-smi --query-gpu=name --format=csv,noheader | head -1), commit ${SHA:0:12}, CUDA libraries from the pinned eg2 requirements-cuda wheels${*:+, $*}"
     env "$@" "${SOAK[@]}" "$model" --cuda --duration "$SOAK_DURATION" --out "$OUT/soak/$model" --note "$note" >"$OUT/soak/$model.log" 2>&1 || rc=$?
-    local line
+    local line smoke
     line="$(grep -E '\] (PASS|FAIL)|^error:' "$OUT/soak/$model.log" | tail -1 | cut -c1-200)"
-    if [[ $rc == 0 ]]; then record "$profile" "soak $SOAK_DURATION${*:+ $*}" passed; else record "$profile" "soak $SOAK_DURATION${*:+ $*}" "failed (exit $rc: ${line:-see soak/$model.log})"; fi
+    # Smoke test: wrong outputs, errors and crashes fail the check. The tool's growth verdict (its rule is unchanged)
+    # is recorded but not binding here: a short run sits in the allocator's warm-up ramp (the binding one-hour Qwen fp32x
+    # CUDA soak ramps 18.4 then 10.5 MiB per half-hour, 27.8 MiB in all), so growth is judged by the one-hour G4 runs.
+    smoke="$(python3 -I - "$OUT/soak/$model" <<'PY'
+import glob, json, sys
+reports = sorted(glob.glob(sys.argv[1] + "/*.json"))
+if not reports:
+    print("failed: no soak report (crash or startup error)")
+    sys.exit(0)
+r = json.load(open(reports[-1], encoding="utf-8"))
+cycles = len(r.get("cycles") or [])
+if r.get("wrong_output_count", 1) or r.get("error_count", 1) or cycles == 0:
+    print(f"failed: {r.get('wrong_output_count')} wrong outputs, {r.get('error_count')} errors, {cycles} cycles")
+else:
+    print(f"passed: smoke ({cycles} cycles, no wrong output or error); growth verdict not binding: {r.get('verdict', '')[:120]}")
+PY
+)"
+    if [[ $smoke == passed* ]]; then
+        log "$profile soak: ${smoke#passed: }"
+        record "$profile" "soak $SOAK_DURATION smoke${*:+ $*}" passed
+    else
+        record "$profile" "soak $SOAK_DURATION smoke${*:+ $*}" "failed (exit $rc: ${smoke#failed: }; ${line:-see soak/$model.log})"
+    fi
 }
 soak multilingual-e5-small/onnx-fp32-cuda e5
 soak gliner2-base-v1/onnx-fp32-cuda gliner2 MALLOC_MMAP_THRESHOLD_=65536

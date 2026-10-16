@@ -30,6 +30,7 @@ public sealed class CudaAdapterEmbedding
 /// each created from the verified files with CUDA sessions (<c>use_tf32=0</c>), against the protected references with
 /// each profile's protected tolerances. Opt-in like the other CUDA tests.
 /// </summary>
+[Collection("cuda")]
 public class CudaAdapterTests(ITestOutputHelper output)
 {
     private static CancellationToken Ct => TestContext.Current.CancellationToken;

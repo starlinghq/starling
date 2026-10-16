@@ -75,7 +75,7 @@ Evidence: [GLiNER2 soak growth](https://github.com/starlinghq/starling/blob/main
 
 ## Status
 
-Profile `gliner2-base-v1/onnx-fp32-cpu` (Linux x64 CPU) has passed every qualification gate, G0 to G7; its maturity is in the table above. Profile `gliner2-base-v1/onnx-fp32-cuda` is Experimental (its G4 soak has not run and its G5 benchmark failed; no scheduled GPU regression runs). Evidence and reproduction: [ai-dotnet/README.md](https://github.com/starlinghq/starling/blob/main/ai-dotnet/README.md#gliner2-entity-extraction-p-015) and the [catalog](https://github.com/starlinghq/starling/blob/main/docs/catalog/README.md). License of the weights and the converted graph: Apache-2.0 (model card); GLiNER2 by Fastino AI, backbone initialised from `microsoft/deberta-v3-base` (MIT).
+Profile `gliner2-base-v1/onnx-fp32-cpu` (Linux x64 CPU) has passed every qualification gate, G0 to G7; its maturity is in the table above. Profile `gliner2-base-v1/onnx-fp32-cuda` is Experimental (its G4 soak has not run and its G5 benchmark failed). GPU regression runs for every release and on demand (the qualification workflow's `cuda (runpod)` job); CPU regression runs weekly. Evidence and reproduction: [ai-dotnet/README.md](https://github.com/starlinghq/starling/blob/main/ai-dotnet/README.md#gliner2-entity-extraction-p-015) and the [catalog](https://github.com/starlinghq/starling/blob/main/docs/catalog/README.md). License of the weights and the converted graph: Apache-2.0 (model card); GLiNER2 by Fastino AI, backbone initialised from `microsoft/deberta-v3-base` (MIT).
 
 ## Qualification evidence
 

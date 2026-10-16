@@ -271,7 +271,16 @@ internal static class EmbeddingGemma2ImageParityChecks
     public static void OtherBudgets(EmbeddingGemma2ImageModelFixture fixture, EmbeddingGemma2Tolerances tolerances, ITestOutputHelper output)
     {
         _ = fixture.Embedder; // skips when the model or the image set is absent
-        var files = fixture.Files!;
+        OtherBudgets(fixture.Files!, fixture.SessionOptions, tolerances, output);
+    }
+
+    /// <summary>
+    /// The same check with only one embedder loaded at a time (one per budget), for a caller that holds no fixture
+    /// sessions: on CUDA the 1,120-token budget needs several GB of attention buffers for one image, more than fits next
+    /// to a fixture's sessions.
+    /// </summary>
+    public static void OtherBudgets(EmbeddingGemma2ImageModelFiles files, OnnxSessionOptions sessionOptions, EmbeddingGemma2Tolerances tolerances, ITestOutputHelper output)
+    {
         var tokenizer = EmbeddingGemma2TestAssets.Tokenizer;
         var ct = TestContext.Current.CancellationToken;
         var rows = EmbeddingGemma2ImageTestAssets.LoadBudgetRows();
@@ -279,7 +288,7 @@ internal static class EmbeddingGemma2ImageParityChecks
         var all = new EmbeddingGemma2ErrorStats();
         foreach (var group in rows.GroupBy(r => r.Budget))
         {
-            var options = new EmbeddingGemma2MultimodalOptions { Session = fixture.SessionOptions, MaxImageSoftTokens = group.Key, VerifyModelSha256 = false };
+            var options = new EmbeddingGemma2MultimodalOptions { Session = sessionOptions, MaxImageSoftTokens = group.Key, VerifyModelSha256 = false };
             using var embedder = EmbeddingGemma2MultimodalEmbedder.Create(files, options);
             var stats = new EmbeddingGemma2ErrorStats();
             foreach (var (budget, row) in group)

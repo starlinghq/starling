@@ -12,6 +12,7 @@ public sealed class EmbeddingGemma2ImageCudaFixture() : EmbeddingGemma2ImageMode
 /// (<c>use_tf32=0</c>, forced by Runtime.Onnx) from SkiaSharp-decoded fixture images, against the CPU PyTorch reference,
 /// with the profile's protected tolerances.yaml. The GPU is shared: one image per vision call (the default).
 /// </summary>
+[Collection("cuda")]
 public sealed class CudaImageParityTests(EmbeddingGemma2ImageCudaFixture fixture, ITestOutputHelper output) : IClassFixture<EmbeddingGemma2ImageCudaFixture>
 {
     private static readonly EmbeddingGemma2Tolerances Tolerances = EmbeddingGemma2Tolerances.Load("image-fp32-cuda");
@@ -36,13 +37,32 @@ public sealed class CudaImageParityTests(EmbeddingGemma2ImageCudaFixture fixture
     public void BatchesMatchSingleRows() =>
         EmbeddingGemma2ImageParityChecks.BatchesAgainstSingles(fixture, new EmbeddingGemma2MultimodalOptions { MaxBatchSize = 4 }, Tolerances, output, "vision batch 1 (GPU default), text batch 4");
 
-    /// <summary>Capability <c>image_budget_other</c> (proposed rows, protected bounds of this profile).</summary>
-    [Fact]
-    public void OtherBudgetsMatchTheReference() => EmbeddingGemma2ImageParityChecks.OtherBudgets(fixture, Tolerances, output);
-
     [Fact]
     public void QueriesRetrieveTheirImages() => EmbeddingGemma2ImageParityChecks.RetrievalSanity(fixture, output);
 
     [Fact]
     public void TextOnlyInputsUseTheReleasedTextGraph() => EmbeddingGemma2ImageParityChecks.TextOnlyEqualsTheTextEmbedder(fixture);
+}
+
+/// <summary>
+/// Capability <c>image_budget_other</c> on CUDA (proposed rows, protected bounds of <c>image-fp32-cuda</c>), in a class of
+/// its own with no class fixture: the 1,120-token budget (10,080 patches) needs about 4.6 GB for one attention buffer,
+/// which ONNX Runtime's CUDA arena could not get next to the image fixture's sessions. In the serial "cuda" collection no
+/// other class's sessions are loaded either, and one embedder per budget is loaded at a time.
+/// </summary>
+[Collection("cuda")]
+public sealed class CudaImageBudgetTests(ITestOutputHelper output)
+{
+    private static readonly EmbeddingGemma2Tolerances Tolerances = EmbeddingGemma2Tolerances.Load("image-fp32-cuda");
+
+    [Fact]
+    public void OtherBudgetsMatchTheReference()
+    {
+        string? gate = CudaGate.Check();
+        Assert.SkipWhen(gate is not null, gate ?? string.Empty);
+        Assert.SkipWhen(EmbeddingGemma2ImageTestAssets.ImagesSkipReason is not null, EmbeddingGemma2ImageTestAssets.ImagesSkipReason ?? string.Empty);
+        var (files, reason) = EmbeddingGemma2ImageTestAssets.FindImageModel();
+        Assert.SkipWhen(files is null, reason);
+        EmbeddingGemma2ImageParityChecks.OtherBudgets(files!, new OnnxSessionOptions { Provider = OnnxExecutionProvider.Cuda, CudaDeviceId = 0 }, Tolerances, output);
+    }
 }
