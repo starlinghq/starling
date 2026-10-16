@@ -40,6 +40,7 @@ public sealed class OnnxModelSession : IDisposable
     private readonly SessionOptions _sessionOptions;
     private readonly OrtCUDAProviderOptions? _cudaOptions;
     private readonly bool _trimOnRelease;
+    private readonly bool _dedicatedRunThreads;
     private readonly object _placementGate = new();
     private volatile bool _placementPending;
     private OnnxPlacementReport? _placement;
@@ -56,6 +57,7 @@ public sealed class OnnxModelSession : IDisposable
         bool capturePlacement)
     {
         _trimOnRelease = diagnostics.TrimNativeHeapOnRelease;
+        _dedicatedRunThreads = diagnostics.DedicatedRunThreads;
         _session = session;
         _sessionOptions = sessionOptions;
         _cudaOptions = cudaOptions;
@@ -290,6 +292,7 @@ public sealed class OnnxModelSession : IDisposable
                 InterOpNumThreads = options.InterOpNumThreads,
                 TrimNativeHeapOnRelease = options.TrimNativeHeapOnRelease && NativeHeap.Enabled,
                 CpuMemoryArena = sessionOptions.EnableCpuMemArena,
+                DedicatedRunThreads = options.DedicatedRunThreads ?? false,
                 GraphOptimizationLevel = sessionOptions.GraphOptimizationLevel.ToString(),
                 ModelSource = source,
                 ModelSizeBytes = size,
@@ -396,11 +399,24 @@ public sealed class OnnxModelSession : IDisposable
             : default;
         try
         {
-            run(runOptions);
+            Invoke(run, runOptions);
         }
         catch (OnnxRuntimeException ex) when (cancellationToken.IsCancellationRequested)
         {
             throw new OperationCanceledException("The ONNX Runtime run was cancelled at a node boundary.", ex, cancellationToken);
+        }
+    }
+
+    /// <summary>Calls ONNX Runtime, on a dedicated run thread when the session uses them (<see cref="RunThreads"/>).</summary>
+    private void Invoke(Action<RunOptions> run, RunOptions runOptions)
+    {
+        if (_dedicatedRunThreads)
+        {
+            RunThreads.Invoke(() => run(runOptions));
+        }
+        else
+        {
+            run(runOptions);
         }
     }
 
@@ -415,7 +431,7 @@ public sealed class OnnxModelSession : IDisposable
     {
         try
         {
-            run(runOptions);
+            Invoke(run, runOptions);
         }
         catch (OnnxRuntimeException)
         {

@@ -89,6 +89,18 @@ public sealed record OnnxSessionOptions
     /// </summary>
     public bool? CpuMemoryArena { get; init; }
 
+    /// <summary>
+    /// Execute runs on a small process-wide set of long-lived threads owned by this package instead of the calling
+    /// thread; the caller blocks until its run completes. <see langword="null"/> (the default) leaves the choice to the
+    /// model library, and runs execute on the calling thread when the session is created directly. On Linux with glibc,
+    /// a CPU run without ONNX Runtime's arena allocates its buffers in the calling thread's malloc arena, which keeps up
+    /// to 64 MiB of freed memory resident; callers drawn from a rotating thread pool then leave that memory in more and
+    /// more arenas. On these threads the same few arenas are reused. At most <see cref="Environment.ProcessorCount"/>
+    /// threads are created (only when all are busy); further concurrent runs wait for one. Results are the same either
+    /// way. See the package README, "Memory on Linux".
+    /// </summary>
+    public bool? DedicatedRunThreads { get; init; }
+
     internal void Validate()
     {
         if (!Enum.IsDefined(Provider))

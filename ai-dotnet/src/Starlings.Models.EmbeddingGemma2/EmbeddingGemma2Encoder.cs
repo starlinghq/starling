@@ -116,12 +116,19 @@ public sealed class EmbeddingGemma2Encoder : IDisposable
     /// <see cref="OnnxSessionOptions.CpuMemoryArena"/> is set. With the arena, the resident memory of a loaded model
     /// kept climbing for an hour on 4-CPU hosts (video: about 2.2 GB/h with one session kept loaded), and its regions of
     /// up to 32 MiB, freed at unload, stayed resident in glibc's per-thread heaps (docs/evidence/eg2-hosted-soak/).
-    /// Outputs are unchanged.
+    /// Outputs are unchanged. Runs execute on the runtime's dedicated run threads unless
+    /// <see cref="OnnxSessionOptions.DedicatedRunThreads"/> is set: without the arena, each run's buffers are freed into
+    /// the calling thread's glibc heap, which keeps them resident, and callers from a rotating thread pool spread that
+    /// memory over more and more heaps (docs/evidence/eg2-soak-reliability/).
     /// </summary>
     internal static OnnxSessionOptions SessionDefaults(OnnxSessionOptions session) =>
-        session.Provider == OnnxExecutionProvider.Cpu && session.CpuMemoryArena is null
-            ? session with { CpuMemoryArena = false }
-            : session;
+        session.Provider != OnnxExecutionProvider.Cpu
+            ? session
+            : session with
+            {
+                CpuMemoryArena = session.CpuMemoryArena ?? false,
+                DedicatedRunThreads = session.DedicatedRunThreads ?? true,
+            };
 
     /// <summary>Loads the text-path graph and owns the resulting session.</summary>
     public static EmbeddingGemma2Encoder Create(string modelPath, EmbeddingGemma2EncoderOptions? options = null)

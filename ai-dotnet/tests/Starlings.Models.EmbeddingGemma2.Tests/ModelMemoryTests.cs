@@ -47,7 +47,10 @@ public class ModelMemoryTests(ITestOutputHelper output)
     }
 }
 
-/// <summary>The library's session defaults (docs/evidence/eg2-hosted-soak/): CPU sessions run without ONNX Runtime's CPU arena.</summary>
+/// <summary>
+/// The library's session defaults (docs/evidence/eg2-hosted-soak/, docs/evidence/eg2-soak-reliability/): CPU sessions run
+/// without ONNX Runtime's CPU arena, on the runtime's dedicated run threads.
+/// </summary>
 public class SessionDefaultTests
 {
     [Fact]
@@ -62,11 +65,28 @@ public class SessionDefaultTests
     }
 
     [Fact]
+    public void CpuSessionsUseDedicatedRunThreadsUnlessTheCallerChose()
+    {
+        Assert.True(EmbeddingGemma2Encoder.SessionDefaults(new OnnxSessionOptions()).DedicatedRunThreads);
+        Assert.False(EmbeddingGemma2Encoder.SessionDefaults(new OnnxSessionOptions { DedicatedRunThreads = false }).DedicatedRunThreads);
+        Assert.True(EmbeddingGemma2Encoder.SessionDefaults(new OnnxSessionOptions { DedicatedRunThreads = true }).DedicatedRunThreads);
+
+        // The caller's arena choice is kept alongside.
+        var both = EmbeddingGemma2Encoder.SessionDefaults(new OnnxSessionOptions { CpuMemoryArena = true });
+        Assert.True(both.CpuMemoryArena);
+        Assert.True(both.DedicatedRunThreads);
+
+        // CUDA sessions run on the calling thread.
+        Assert.Null(EmbeddingGemma2Encoder.SessionDefaults(new OnnxSessionOptions { Provider = OnnxExecutionProvider.Cuda }).DedicatedRunThreads);
+    }
+
+    [Fact]
     public void TheTextEncoderSessionReportsTheArenaOff()
     {
         var (files, reason) = EmbeddingGemma2TestAssets.FindModel();
         Assert.SkipWhen(files is null, reason);
         using var encoder = EmbeddingGemma2Encoder.Create(files!.ModelPath, new EmbeddingGemma2EncoderOptions { Session = new OnnxSessionOptions { ComputeModelSha256 = false } });
         Assert.False(encoder.Session.Diagnostics.CpuMemoryArena);
+        Assert.True(encoder.Session.Diagnostics.DedicatedRunThreads);
     }
 }
