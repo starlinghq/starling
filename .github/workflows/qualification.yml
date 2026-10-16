@@ -46,6 +46,12 @@ on:
         description: "Soak duration per CUDA profile on the RunPod pod (job cuda; 10m screens, 1h is the G4 length)"
         type: string
         default: 10m
+      # A CPU-only dispatch skips the paid RunPod job (for example while the RunPod balance is low). Scheduled runs
+      # always include it.
+      skip_cuda:
+        description: "Skip the cuda (runpod) job: run the CPU jobs only"
+        type: boolean
+        default: false
       # Allocator diagnostics on the hosted runner (docs/evidence/scheduled-regression-fix/). The defaults leave the
       # qualification run unchanged.
       soak_only:
@@ -576,7 +582,7 @@ jobs:
   # sweep of stale starling-q-ci-* pods before each run. Only pods named starling-q-ci-* are ever touched.
   cuda:
     name: cuda (runpod)
-    if: github.repository == 'starlinghq/starling' && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && !inputs.soak_only
+    if: github.repository == 'starlinghq/starling' && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && !inputs.soak_only && !inputs.skip_cuda
     runs-on: ubuntu-latest
     timeout-minutes: 230
     concurrency:
