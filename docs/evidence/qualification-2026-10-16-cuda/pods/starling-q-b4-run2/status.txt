@@ -1,0 +1,11 @@
+2026-10-16T02:27:43+00:00 worker start starling-q-b4 at e404702fa0fdbf91fd506757f1a5c15522d023dc: bench:eg2-image soak:qwen35-fp16x bench:qwen35-fp16x
+2026-10-16T02:27:43+00:00 g5 prewarm eg2-image
+2026-10-16T02:29:38+00:00 g5 start eg2-image cuda  (load 7.61 7.70 8.84)
+2026-10-16T02:54:25+00:00 g5 run end eg2-image cuda exit 0 wall 1487s
+2026-10-16T02:54:26+00:00 soak start qwen35-fp16x cuda  (load 23.28 31.44 21.79)
+2026-10-16T03:54:32+00:00 soak end qwen35-fp16x exit 0 wall 3606s: [qwen35-fp16x] PASS: every gating settled series plateaus after warmup; no wrong output or error; wrote /root/bout/starling-q-b4/soak-qwen35-fp16x/qwen35-fp16x-20261016T025426Z.json and .md
+2026-10-16T03:54:32+00:00 g5 prewarm qwen35-fp16x
+2026-10-16T03:54:56+00:00 g5 start qwen35-fp16x cuda  (load 13.01 11.90 10.81)
+2026-10-16T04:01:49+00:00 g5 run end qwen35-fp16x cuda exit 0 wall 413s
+2026-10-16T04:01:50+00:00 repo dirty paths after run: 0
+2026-10-16T04:01:50+00:00 WORKER DONE

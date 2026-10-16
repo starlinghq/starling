@@ -1,0 +1,7 @@
+2026-10-16T00:44:57+00:00 worker start starling-q-b2 at e404702fa0fdbf91fd506757f1a5c15522d023dc: soak:gliner2:MALLOC_MMAP_THRESHOLD_=65536 bench:gliner2:MALLOC_MMAP_THRESHOLD_=65536 soak:qwen35 bench:qwen35
+2026-10-16T00:44:58+00:00 soak start gliner2 cuda MALLOC_MMAP_THRESHOLD_=65536 (load 26.63 32.93 31.73)
+2026-10-16T01:45:02+00:00 soak end gliner2 exit 0 wall 3604s: [gliner2] PASS: every gating settled series plateaus after warmup; no wrong output or error; wrote /workspace/b/out/starling-q-b2/soak-gliner2/gliner2-20261016T004458Z.json and .md
+2026-10-16T01:45:02+00:00 g5 prewarm gliner2
+2026-10-16T01:45:24+00:00 g5 start gliner2 cuda MALLOC_MMAP_THRESHOLD_=65536 (load 31.40 24.37 23.12)
+2026-10-16T01:51:47+00:00 g5 run end gliner2 cuda exit 0 wall 383s
+2026-10-16T01:51:47+00:00 soak start qwen35 cuda  (load 19.04 23.34 23.40)

@@ -1,0 +1,5 @@
+2026-10-16T00:51:43+00:00 worker start starling-q-b4 at e404702fa0fdbf91fd506757f1a5c15522d023dc: soak:embeddinggemma2-image bench:eg2-image
+2026-10-16T00:51:44+00:00 soak start embeddinggemma2-image cuda  (load 13.09 14.99 13.36)
+2026-10-16T01:51:58+00:00 soak end embeddinggemma2-image exit 0 wall 3614s: [embeddinggemma2-image] PASS: every gating settled series plateaus after warmup; no wrong output or error (note: unloaded private (address space, report-only) grows 226 MB; loaded private (address space, report-only) grows 138 MB); wrote /workspace/b/out/starling-q-b4/soak-embeddinggemma2-image/embeddinggemma2-image-20261016T005144Z.json and .md
+2026-10-16T01:51:58+00:00 g5 prewarm eg2-image
+2026-10-16T01:54:09+00:00 g5 start eg2-image cuda  (load 6.33 8.93 9.82)

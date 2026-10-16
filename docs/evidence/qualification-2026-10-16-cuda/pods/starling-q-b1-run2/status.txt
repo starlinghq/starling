@@ -1,0 +1,8 @@
+2026-10-16T02:27:30+00:00 worker start starling-q-b1 at e404702fa0fdbf91fd506757f1a5c15522d023dc: soak:embeddinggemma2 bench:eg2-text
+2026-10-16T02:27:31+00:00 soak start embeddinggemma2 cuda  (load 18.34 24.81 30.94)
+2026-10-16T03:27:34+00:00 soak end embeddinggemma2 exit 0 wall 3603s: [embeddinggemma2] PASS: every gating settled series plateaus after warmup; no wrong output or error; wrote /root/bout/starling-q-b1/soak-embeddinggemma2/embeddinggemma2-20261016T022731Z.json and .md
+2026-10-16T03:27:34+00:00 g5 prewarm eg2-text
+2026-10-16T03:28:03+00:00 g5 start eg2-text cuda  (load 12.36 17.52 15.48)
+2026-10-16T03:35:19+00:00 g5 run end eg2-text cuda exit 0 wall 436s
+2026-10-16T03:35:20+00:00 repo dirty paths after run: 0
+2026-10-16T03:35:20+00:00 WORKER DONE

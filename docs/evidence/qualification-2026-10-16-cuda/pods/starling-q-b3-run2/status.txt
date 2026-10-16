@@ -1,0 +1,6 @@
+2026-10-16T02:27:38+00:00 worker start starling-q-b3 at e404702fa0fdbf91fd506757f1a5c15522d023dc: bench:eg2-video:MALLOC_MMAP_THRESHOLD_=65536
+2026-10-16T02:27:38+00:00 g5 prewarm eg2-video
+2026-10-16T02:29:37+00:00 g5 start eg2-video cuda MALLOC_MMAP_THRESHOLD_=65536 (load 46.46 42.50 48.50)
+2026-10-16T02:54:28+00:00 g5 run end eg2-video cuda exit 0 wall 1491s
+2026-10-16T02:54:29+00:00 repo dirty paths after run: 0
+2026-10-16T02:54:29+00:00 WORKER DONE

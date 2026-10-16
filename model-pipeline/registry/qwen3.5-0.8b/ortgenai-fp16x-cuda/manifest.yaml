@@ -247,8 +247,8 @@ qualification:
     G3: { status: passed, evidence: docs/evidence/release-set-gates-2026-10-14/qwen35-ortgenai-fp16x-cuda/README.md, date: 2026-10-14 }
     # G4 checklist: plan 10.1 LLM semantics (max tokens, stop, EOS, cache, chunked prefill, cancellation, isolation,
     # seeded sampling) in section 4; CUDA concurrency defect and serialization in section 5. No soak (plan 10.2).
-    G4: { status: passed, evidence: docs/evidence/qualification-2026-10-15/README.md, date: 2026-10-15 }
-    G5: { status: passed, evidence: docs/evidence/qualification-2026-10-15/README.md, date: 2026-10-15 }
+    G4: { status: passed, evidence: docs/evidence/qualification-2026-10-16-cuda/README.md, date: 2026-10-16 }
+    G5: { status: passed, evidence: docs/evidence/qualification-2026-10-16-cuda/README.md, date: 2026-10-16 }
     G6: { status: passed, evidence: docs/evidence/g6-distribution-2026-10-14/README.md, date: 2026-10-14 }
     G7: { status: passed, evidence: docs/evidence/g7-integration-2026-10-14/README.md, date: 2026-10-14 }
 

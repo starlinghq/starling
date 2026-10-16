@@ -1,0 +1,19 @@
+## qwen3.5-0.8b/ortgenai-fp32x-cuda: PASS (G5 evidence)
+comparison: python onnxruntime-genai (CUDA), same bundle
+- NATIVE BUILDS DIFFER: same version, different native build (ONNX Runtime 1.30.0). Context, not a verdict input: the budget compares the shipped products
+    onnxruntime: C# 292591ed61be (libonnxruntime.so) | Python 015ed43679bf, 5a140dc17c8b (libonnxruntime.so.1.30.0, onnxruntime_pybind11_state.cpython-311-x86_64-linux-gnu.so): different
+    onnxruntime-genai: C# 284e1b1fe512 (libonnxruntime-genai.so) | Python 284e1b1fe512 (libonnxruntime-genai.so): identical
+    onnxruntime-genai-cuda: C# 07678b8c19b0 (libonnxruntime-genai-cuda.so) | Python 07678b8c19b0 (libonnxruntime-genai-cuda.so): identical
+    onnxruntime_providers_cuda: C# 32fb1e28e5ea (libonnxruntime_providers_cuda.so) | Python 9d7587acb137 (libonnxruntime_providers_cuda.so): different
+    onnxruntime_providers_shared: C# c6a125933960 (libonnxruntime_providers_shared.so) | Python 086ec1d5388f (libonnxruntime_providers_shared.so): different
+- decode_tokens_per_second_ratio_min = 0.95: pass
+    warm/ids/long-prefill/c1: 0.989 [0.838, 1.036] pass
+    warm/ids/short-decode64/c1: 0.975 [0.943, 1.005] pass
+    warm/ids/tools-decode32/c1: 1.023 [0.908, 1.064] pass
+    warm/text/short-decode64-text/c1: 1.007 [0.952, 1.060] pass
+- time_to_first_token_ratio_max = 1.1: pass
+    warm/ids/long-prefill/c1: 0.994 [0.979, 1.063] pass
+    warm/ids/short-decode64/c1: 1.012 [0.823, 1.231] pass
+    warm/ids/tools-decode32/c1: 0.997 [0.963, 1.056] pass
+    warm/text/short-decode64-text/c1: 0.981 [0.752, 1.296] pass
+- qualifying: yes (run counts and clean checkout)
