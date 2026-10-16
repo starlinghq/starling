@@ -3,7 +3,13 @@
 # model-pipeline/protected/multilingual-e5-small/onnx-fp32-cuda/. Not reviewed by the maintainer.
 schema_version: 1
 id: multilingual-e5-small/onnx-fp32-cuda
-maturity: experimental
+# Stable since 2026-10-16 (maintainer's delegated promotion; docs/kickoff.md, "Stable CUDA profiles, first round"):
+# every gate G0 to G7 passed (G4 and G5 in the binding RTX 3090 round, docs/evidence/qualification-2026-10-16-cuda/),
+# the contract is the Starlings.Models.E5 README's "Stable contract: CUDA" (Linux x64, RTX 3090), and the per-release
+# GPU regression (qualification workflow, job cuda (runpod), pinned to the RTX 3090) reruns the CUDA tests, G1 to G3
+# on the release sets and a soak smoke test. Every check of this profile passed in its first run, 38857860186 (on an
+# RTX 4090, before the pin; docs/evidence/gpu-regression-2026-10-16/README.md).
+maturity: stable
 
 origin:
   # The Hub repository holds both the sentence-transformers configuration and the weights.
@@ -132,11 +138,15 @@ execution:
     use_tf32: 0
 
 capabilities:
-  # batch and cancellation: C# Starlings.Models.E5 (P-005/P-006) on fixture ids with the CUDA EP
-  # (Microsoft.ML.OnnxRuntime.Gpu.Linux 1.30.0, use_tf32=0); see ai-dotnet/README.md.
-  batch: experimental
+  # Statuses follow the Starlings.Models.E5 README's "Stable contract: CUDA": supported where the release-set gates G1
+  # to G3, G4 to G7 and the CUDA test project (ai-dotnet/tests/Starlings.Models.E5.Tests.Cuda, including
+  # CudaAdapterTests for the generator and the ML.NET transform, run by the per-release GPU regression) cover it on an
+  # RTX 3090; experimental where only a one-time local run (Native AOT with the CUDA natives) does; unsupported
+  # outside it. E5Capabilities.Profiles holds the same statuses (tested key for key). C# Starlings.Models.E5
+  # (P-005/P-006) with the CUDA EP (Microsoft.ML.OnnxRuntime.Gpu.Linux 1.30.0, use_tf32=0); see ai-dotnet/README.md.
+  batch: supported
   streaming: unsupported
-  cancellation: experimental
+  cancellation: supported
   persistence: unsupported
   training: unsupported
   # Capability closure 2026-10-14 (docs/evidence/capability-closure-2026-10-14/README.md):
@@ -146,17 +156,19 @@ capabilities:
   aot: experimental
   # extensions_ai and mlnet: E5.Tests.Cuda CudaAdapterTests, the generator and the transform over a CUDA session on the
   # 46 protected texts, within this profile's protected tolerance (max abs 1.7e-7).
-  extensions_ai: experimental
-  mlnet: experimental
+  extensions_ai: supported
+  mlnet: supported
 
 compatibility:
-  # Linux x64 CUDA: Python and C# ORT runs on one RTX 4060 Ti (sm_89), driver 610.57.04, CUDA 13.0 runtime,
-  # cuDNN 9.24 from the nvidia-* wheels. One machine is not qualification.
+  # Linux x64 CUDA on an NVIDIA GeForce RTX 3090 (Ampere): G1 to G3 on the release sets, G4 one-hour soak and G5
+  # (binding round 2026-10-16, RunPod, driver 580.126.20). The per-release GPU regression (CUDA tests, G1 to G3, soak
+  # smoke test) is pinned to the RTX 3090; its first run, 38857860186, ran before the pin on an RTX 4090, and every
+  # check of this profile passed. Other GPUs, including the RTX 4090 (Ada): untested, outside the contract.
   - os: linux
     arch: x64
     provider: cuda
-    status: experimental
-    verified: 2026-10-08
+    status: supported
+    verified: 2026-10-16
   - os: windows
     arch: x64
     provider: cuda
@@ -189,6 +201,18 @@ maintenance:
   last_checked: 2026-10-05
   review_date: 2027-01-05
   known_issues:
+    - >-
+      Contract hardware: an NVIDIA GeForce RTX 3090 (Ampere, sm_86), driver 580, CUDA 13 runtime. The CUDA gates G1 to
+      G5 (G4 and G5 in the binding 2026-10-16 round) ran on RTX 3090s, and the per-release GPU regression is pinned to
+      the RTX 3090 and refuses any other GPU (tools/ci/runpod.py). Its first run, 38857860186, landed on an RTX 4090
+      (Ada) before the pin: every check of this profile passed there, but embeddinggemma-2/video-fp32-cuda failed G2
+      (docs/evidence/gpu-regression-2026-10-16/README.md). Other NVIDIA GPUs, including the RTX 4090, are untested and
+      outside the contract.
+    - >-
+      Linux memory: no MALLOC_* setting is required; the runtime calls malloc_trim on session release (on by default).
+    - >-
+      Cancellation on CUDA completes the current run before throwing (#61), so its latency is one chunk: about 125 ms
+      for 32 x 512 tokens (docs/evidence/gliner2-cuda-wrong-output/README.md).
     - >-
       The pinned tokenizer.json emits a lone "▁" token before special-token literals and for trailing
       whitespace, where SentencePiece and transformers 5.18 emit none. The owned profile follows

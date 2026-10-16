@@ -8,7 +8,13 @@
 # fixtures (PR #42) and binding tolerances set on 2026-10-11 (qualification).
 schema_version: 1
 id: embeddinggemma-2/image-fp32-cuda
-maturity: experimental
+# Stable since 2026-10-16 (maintainer's delegated promotion; docs/kickoff.md, "Stable CUDA profiles, first round"):
+# every gate G0 to G7 passed (G4 and G5 in the binding RTX 3090 round, docs/evidence/qualification-2026-10-16-cuda/),
+# the contract is the Starlings.Models.EmbeddingGemma2 README's "Stable contract: CUDA" (images, Linux x64, RTX 3090),
+# and the per-release GPU regression (qualification workflow, job cuda (runpod), pinned to the RTX 3090) reruns the
+# CUDA tests, G1 to G3 on the release sets and a soak smoke test. Every check of this profile passed in its first run,
+# 38857860186 (on an RTX 4090, before the pin; docs/evidence/gpu-regression-2026-10-16/README.md).
+maturity: stable
 
 origin:
   code:
@@ -212,21 +218,25 @@ execution:
     use_tf32: 0
 
 capabilities:
-  # Starlings.Models.EmbeddingGemma2 (EmbeddingGemma2MultimodalEmbedder); evidence in ai-dotnet/README.md and
-  # docs/evidence/embeddinggemma2-images/. Experimental means tested from decoded RGB (SkiaSharp, equal to PIL's) against
-  # the accepted image fixtures with the protected tolerances.
-  image: experimental
-  image_interleaved_text: experimental
-  image_multiple_per_input: experimental
-  image_prompts: experimental
-  image_budget_280: experimental
+  # Starlings.Models.EmbeddingGemma2 (EmbeddingGemma2MultimodalEmbedder) over CUDA sessions (use_tf32 0); evidence in
+  # ai-dotnet/README.md and docs/evidence/embeddinggemma2-images/. Statuses follow the README's "Stable contract:
+  # CUDA": supported where the accepted image fixtures, the P-030 image release set (G1, G2), G3 to G7 and the CUDA
+  # image tests (run by the per-release GPU regression) cover it on an RTX 3090; experimental where only proposed
+  # rows, an opt-in deviation, a one-time local run (Native AOT with the CUDA natives) or a test the per-release run
+  # skips (the multimodal generator) do; unsupported outside it. EmbeddingGemma2Capabilities.Profiles holds the same
+  # statuses (tested key for key).
+  image: supported
+  image_interleaved_text: supported
+  image_multiple_per_input: supported
+  image_prompts: supported
+  image_budget_280: supported
   # image_budget_other (capability closure 2026-10-14, docs/evidence/capability-closure-2026-10-14/README.md): six fixture images at 70, 140, 560 and
   # 1,120 soft tokens against sentence-transformers with the processor's max_soft_tokens set (proposed rows):
   # preprocessing and ids exact, embedding max abs 5.7e-6 (bound 1e-5). Proposed rows, protected bounds.
   image_budget_other: experimental
-  image_batch: experimental
-  image_matryoshka: experimental
-  image_decode_png_jpeg: experimental
+  image_batch: supported
+  image_matryoshka: supported
+  image_decode_png_jpeg: supported
   # image_decode_gif_bmp_webp (capability closure 2026-10-14): SkiaSharp decoded RGB equal to PIL's convert("RGB") on 12
   # GIF, BMP and WebP files written by Pillow from fixture images (proposed image-formats.json). A GIF with transparent
   # pixels is rejected (EmbeddingGemma2ImageRejection.GifTransparency): PIL keeps their palette colour, SkiaSharp does not.
@@ -240,10 +250,10 @@ capabilities:
   # caller raises the limit. With it raised (Fidelity tool --max-image-pixels 80000000), the 79 MP release image
   # commons-image-14 passes G1 and G2 on the P-030 image release set (docs/evidence/release-set-gates-2026-10-14/embeddinggemma2-image-fp32-cuda/).
   image_over_default_pixel_limit_with_option: experimental
-  text_only_inputs: experimental
-  batch: experimental
+  text_only_inputs: supported
+  batch: supported
   streaming: unsupported
-  cancellation: experimental
+  cancellation: supported
   persistence: unsupported
   training: unsupported
   # aot: Native AOT publish on Linux x64 against Microsoft.ML.OnnxRuntime.Gpu.Linux 1.30.0, no trim/AOT warnings, image
@@ -252,19 +262,21 @@ capabilities:
   # extensions_ai: CudaAdapterTests, the multimodal generator over CUDA sessions on the 28 image rows, max abs 3.8e-6.
   extensions_ai: experimental
   mlnet: unsupported  # no image column in the ML.NET transform (text only)
-  concurrent_calls: experimental
+  concurrent_calls: supported
   input_over_8192_tokens: unsupported
   audio: unsupported
   video: unsupported
 
 compatibility:
-  # One RTX 4060 Ti (sm_89), CUDA 13 runtime and cuDNN 9 from the nvidia-* wheels (the vision graph needs cuDNN: its
-  # ReduceMax runs through cuDNN), GPU shared with another process. One machine is not qualification.
+  # Linux x64 CUDA on an NVIDIA GeForce RTX 3090 (Ampere): G1 to G3 on the release sets, G4 one-hour soak and G5
+  # (binding round 2026-10-16, RunPod, driver 580.126.20). The per-release GPU regression (CUDA tests, G1 to G3, soak
+  # smoke test) is pinned to the RTX 3090; its first run, 38857860186, ran before the pin on an RTX 4090, and every
+  # check of this profile passed. Other GPUs, including the RTX 4090 (Ada): untested, outside the contract.
   - os: linux
     arch: x64
     provider: cuda
-    status: experimental
-    verified: 2026-10-11
+    status: supported
+    verified: 2026-10-16
   - os: windows
     arch: x64
     provider: cuda
@@ -299,11 +311,27 @@ maintenance:
   review_date: 2027-01-05
   known_issues:
     - >-
-      The evaluator (model-pipeline evaluate) has no image task: the image package tests enforce the protected bounds
-      (docs/evidence/embeddinggemma2-images/). G1/G2 are not run for this profile.
+      Contract hardware: an NVIDIA GeForce RTX 3090 (Ampere, sm_86), driver 580, CUDA 13 runtime. The CUDA gates G1 to
+      G5 (G4 and G5 in the binding 2026-10-16 round) ran on RTX 3090s, and the per-release GPU regression is pinned to
+      the RTX 3090 and refuses any other GPU (tools/ci/runpod.py). Its first run, 38857860186, landed on an RTX 4090
+      (Ada) before the pin: every check of this profile passed there, but embeddinggemma-2/video-fp32-cuda failed G2
+      (docs/evidence/gpu-regression-2026-10-16/README.md). Other NVIDIA GPUs, including the RTX 4090, are untested and
+      outside the contract.
     - >-
-      The hosted graphs' download addresses are placeholders until the maintainer creates the GitHub release
-      embeddinggemma-2-vision-onnx-r1; acquisition of the image graphs is untested until then.
+      Linux memory: MALLOC_MMAP_THRESHOLD_=65536 is recommended, not required (the Starlings.Models.EmbeddingGemma2
+      README, "Memory on Linux"); the G4 soak and the per-release soak smoke test ran without it.
+    - >-
+      Cancellation on CUDA completes the current vision or text run before throwing (#61), so its latency is one run.
+    - >-
+      The image release set's reference stage tensors regenerate byte-identical only on the reference CPU at 6 threads;
+      the accepted soft-token and token-embedding arrays are hosted at Starlinghq/starling-release-references (commit
+      and file digests in the protected hosted-reference.json, #71), and the evaluator checks every array against the
+      protected tensors.json, so the per-release G2 needs no regeneration.
+    - >-
+      The multimodal IEmbeddingGenerator over CUDA
+      (CudaAdapterTests.MultimodalGeneratorOverCudaMeetsTheProtectedImageAndVideoTolerances) needs the video fixture set
+      as well, which the per-release GPU pod does not have, so that test is skipped there (run 38857860186);
+      extensions_ai stays experimental on this profile until it runs per release (G7 evidence: 2026-10-14).
     - >-
       One CPU architecture (AVX2) produced the reference; PyTorch's generic uint8 kernel is expected to give the same
       resized bytes (same int16 weights), not verified. The C# resampler is integer arithmetic and machine-independent.

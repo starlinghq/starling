@@ -22,10 +22,12 @@ public enum EmbeddingGemma2CapabilityStatus
 /// </summary>
 /// <remarks>
 /// <see cref="All"/> is package-wide. Keys without a provider suffix give the status on the Stable CPU profiles: text
-/// keys on <see cref="StableProfile"/> and <c>image.*</c> keys on <see cref="StableImageProfile"/> (Linux x64 CPU);
-/// keys with <c>.cuda</c> give the experimental CUDA profiles', and <c>video.*</c> keys the experimental video profiles'.
-/// <see cref="Profiles"/> repeats each Stable profile's statuses keyed exactly as its registry manifest's
-/// <c>capabilities</c>, and a test keeps the two equal key for key.
+/// keys on <see cref="StableProfile"/> and <c>image.*</c> keys on <see cref="StableImageProfile"/> (Linux x64 CPU).
+/// Keys with <c>.cuda</c> give the CUDA profiles': the Stable <see cref="StableCudaProfile"/> and
+/// <see cref="StableCudaImageProfile"/> (Linux x64, RTX 3090), and the experimental <c>video-fp32-cuda</c> for
+/// <c>video.cuda</c>. <c>video.*</c> keys give the experimental video profiles'. <see cref="Profiles"/> repeats each
+/// Stable profile's statuses keyed exactly as its registry manifest's <c>capabilities</c>, and a test keeps the two equal
+/// key for key.
 /// </remarks>
 public static class EmbeddingGemma2Capabilities
 {
@@ -34,6 +36,12 @@ public static class EmbeddingGemma2Capabilities
 
     /// <summary>The image profile of this package's Stable contract (the README's "Stable contract: images" section).</summary>
     public const string StableImageProfile = "embeddinggemma-2/image-fp32-cpu";
+
+    /// <summary>The CUDA text profile of this package's Stable contract (the README's "Stable contract: CUDA" section).</summary>
+    public const string StableCudaProfile = "embeddinggemma-2/onnx-fp32-cuda";
+
+    /// <summary>The CUDA image profile of this package's Stable contract (the README's "Stable contract: CUDA" section).</summary>
+    public const string StableCudaImageProfile = "embeddinggemma-2/image-fp32-cuda";
 
     /// <summary>
     /// Status per capability. Evidence for each entry is listed in <c>ai-dotnet/README.md</c> and, for
@@ -49,7 +57,10 @@ public static class EmbeddingGemma2Capabilities
         // independence to 2,049), G3 on MIRACL (nDCG@10 0.8325), G4 one-hour soak (concurrent callers, timed-out
         // requests, plateau), G6 anonymous graph download and offline run, G7 adapter tests and drill consumers.
         ["embedding.pretokenized.cpu"] = EmbeddingGemma2CapabilityStatus.Supported,
-        ["embedding.pretokenized.cuda"] = EmbeddingGemma2CapabilityStatus.Experimental,
+        // CUDA (use_tf32 0) on an RTX 3090, text and images Stable since 2026-10-16 (the README's "Stable contract: CUDA"):
+        // G1 to G3 on the release sets, G4 one-hour soak and G5 (binding round), G6, G7; the per-release GPU regression
+        // reruns the CUDA tests, G1 to G3 and a soak smoke test (every check green in run 38857860186).
+        ["embedding.pretokenized.cuda"] = EmbeddingGemma2CapabilityStatus.Supported,
 
         // Text through EmbeddingGemma2Tokenizer (owned profile gemma-bpe-embeddinggemma2, Starlings.Tokenizers 0.3.0-preview.1).
         ["embedding.text"] = EmbeddingGemma2CapabilityStatus.Supported,
@@ -88,13 +99,13 @@ public static class EmbeddingGemma2Capabilities
         ["asset_acquisition.graph_download"] = EmbeddingGemma2CapabilityStatus.Supported,
 
         // Images (EmbeddingGemma2MultimodalEmbedder). Keys without .cuda: the Stable profile image-fp32-cpu (the README's
-        // "Stable contract: images", since 2026-10-16); .cuda: the experimental image-fp32-cuda. From decoded RGB: 42
+        // "Stable contract: images", since 2026-10-16); .cuda: the Stable image-fp32-cuda ("Stable contract: CUDA"). From decoded RGB: 42
         // protected rows (28 images alone, 6 interleaved or prompted, 8 text queries) within the binding bounds;
         // preprocessing bit-exact on the 28 supported fixture images; rendered ids exact on all 43 rows. The P-030 image
         // release set (19 rows) passes G1 and G2, image retrieval passes G3, and G4 to G7 passed.
         ["image"] = EmbeddingGemma2CapabilityStatus.Supported,
         ["image.cpu"] = EmbeddingGemma2CapabilityStatus.Supported,
-        ["image.cuda"] = EmbeddingGemma2CapabilityStatus.Experimental,
+        ["image.cuda"] = EmbeddingGemma2CapabilityStatus.Supported,
         ["image.interleaved_text"] = EmbeddingGemma2CapabilityStatus.Supported,
         ["image.multiple_per_input"] = EmbeddingGemma2CapabilityStatus.Supported,
         ["image.prompts"] = EmbeddingGemma2CapabilityStatus.Supported, // rendered as upstream; the card recommends none
@@ -116,6 +127,8 @@ public static class EmbeddingGemma2Capabilities
         ["image.exif_orientation_opt_in"] = EmbeddingGemma2CapabilityStatus.Experimental, // deviation from upstream
         ["image.graph_download"] = EmbeddingGemma2CapabilityStatus.Supported, // public ImageHostingRepository: anonymous download, offline run (G6)
         ["extensions_ai.image_embedding_generator"] = EmbeddingGemma2CapabilityStatus.Supported,
+        // Over CUDA: CudaAdapterTests needs the video set too, which the per-release GPU pod lacks, so it is skipped there.
+        ["extensions_ai.image_embedding_generator.cuda"] = EmbeddingGemma2CapabilityStatus.Experimental,
         ["mlnet.image_column"] = EmbeddingGemma2CapabilityStatus.Unsupported,
 
         // Videos (EmbeddingGemma2MultimodalEmbedder; profiles video-fp32-cpu and video-fp32-cuda, both experimental: the
@@ -177,15 +190,15 @@ public static class EmbeddingGemma2Capabilities
         ["training"] = EmbeddingGemma2CapabilityStatus.Unsupported,
 
         // Microsoft.Extensions.AI IEmbeddingGenerator, in Starlings.Models.EmbeddingGemma2.Extensions.AI. Supported on
-        // the CPU text profile (G7), experimental over CUDA sessions (EmbeddingGemma2.Tests.Cuda).
+        // the CPU text profile (G7) and over CUDA sessions (EmbeddingGemma2.Tests.Cuda CudaAdapterTests, per release).
         ["extensions_ai.embedding_generator"] = EmbeddingGemma2CapabilityStatus.Supported,
-        ["extensions_ai.embedding_generator.cuda"] = EmbeddingGemma2CapabilityStatus.Experimental,
+        ["extensions_ai.embedding_generator.cuda"] = EmbeddingGemma2CapabilityStatus.Supported,
         ["extensions_ai.dimensions_matryoshka"] = EmbeddingGemma2CapabilityStatus.Supported,
 
         // ML.NET estimator/transformer, in Starlings.Models.EmbeddingGemma2.MLNet (G7 on the CPU text profile).
         // Persistence: Save throws.
         ["mlnet.embedding_transform"] = EmbeddingGemma2CapabilityStatus.Supported,
-        ["mlnet.embedding_transform.cuda"] = EmbeddingGemma2CapabilityStatus.Experimental,
+        ["mlnet.embedding_transform.cuda"] = EmbeddingGemma2CapabilityStatus.Supported,
         ["mlnet.batching"] = EmbeddingGemma2CapabilityStatus.Supported,
         ["mlnet.persistence"] = EmbeddingGemma2CapabilityStatus.Unsupported,
         ["mlnet.cancellation"] = EmbeddingGemma2CapabilityStatus.Unsupported,
@@ -194,6 +207,8 @@ public static class EmbeddingGemma2Capabilities
         // Native AOT on Linux x64 CPU from the packed packages: no trim/AOT warnings, equal to JIT bit for bit (typed text
         // API and Extensions.AI generator; docs/evidence/aot/). The ML.NET adapter does not run under Native AOT.
         ["aot"] = EmbeddingGemma2CapabilityStatus.Supported,
+        // Native AOT with the CUDA natives (tools/aot-check-ai.sh --cuda): one local run, no per-release regression.
+        ["aot.cuda"] = EmbeddingGemma2CapabilityStatus.Experimental,
         ["mlnet.aot"] = EmbeddingGemma2CapabilityStatus.Unsupported,
         // Windows x64: build, weight-free tests and the clean-install drill without the model in CI (ci.yml,
         // ai-dotnet-windows); no model run, so outside the Stable contract. macOS and ARM64: no evidence and no CI job.
@@ -209,65 +224,95 @@ public static class EmbeddingGemma2Capabilities
     public static IReadOnlyDictionary<string, IReadOnlyDictionary<string, EmbeddingGemma2CapabilityStatus>> Profiles { get; } =
         new Dictionary<string, IReadOnlyDictionary<string, EmbeddingGemma2CapabilityStatus>>(StringComparer.Ordinal)
         {
-            [StableProfile] = new Dictionary<string, EmbeddingGemma2CapabilityStatus>(StringComparer.Ordinal)
-            {
-                ["batch"] = EmbeddingGemma2CapabilityStatus.Supported,
-                ["streaming"] = EmbeddingGemma2CapabilityStatus.Unsupported,
-                ["cancellation"] = EmbeddingGemma2CapabilityStatus.Supported,
-                ["persistence"] = EmbeddingGemma2CapabilityStatus.Unsupported,
-                ["training"] = EmbeddingGemma2CapabilityStatus.Unsupported,
-                ["aot"] = EmbeddingGemma2CapabilityStatus.Supported,
-                ["extensions_ai"] = EmbeddingGemma2CapabilityStatus.Supported,
-                ["mlnet"] = EmbeddingGemma2CapabilityStatus.Supported,
-                ["embedding_pretokenized"] = EmbeddingGemma2CapabilityStatus.Supported,
-                ["embedding_text"] = EmbeddingGemma2CapabilityStatus.Supported,
-                ["tokenizer_owned"] = EmbeddingGemma2CapabilityStatus.Supported,
-                ["prompts_query_document"] = EmbeddingGemma2CapabilityStatus.Supported,
-                ["prompts_task"] = EmbeddingGemma2CapabilityStatus.Experimental,
-                ["matryoshka"] = EmbeddingGemma2CapabilityStatus.Supported,
-                ["input_up_to_2049_tokens"] = EmbeddingGemma2CapabilityStatus.Supported,
-                ["input_2050_to_8192_tokens"] = EmbeddingGemma2CapabilityStatus.Experimental,
-                ["input_over_8192_tokens"] = EmbeddingGemma2CapabilityStatus.Unsupported,
-                ["concurrent_calls"] = EmbeddingGemma2CapabilityStatus.Supported,
-                // The text profile; images and videos are the image-fp32-* and video-fp32-* profiles.
-                ["image"] = EmbeddingGemma2CapabilityStatus.Unsupported,
-                ["audio"] = EmbeddingGemma2CapabilityStatus.Unsupported,
-                ["video"] = EmbeddingGemma2CapabilityStatus.Unsupported,
-            },
-            [StableImageProfile] = new Dictionary<string, EmbeddingGemma2CapabilityStatus>(StringComparer.Ordinal)
-            {
-                ["image"] = EmbeddingGemma2CapabilityStatus.Supported,
-                ["image_interleaved_text"] = EmbeddingGemma2CapabilityStatus.Supported,
-                ["image_multiple_per_input"] = EmbeddingGemma2CapabilityStatus.Supported,
-                ["image_prompts"] = EmbeddingGemma2CapabilityStatus.Supported,
-                ["image_budget_280"] = EmbeddingGemma2CapabilityStatus.Supported,
-                // 70, 140, 560 and 1,120 soft tokens: proposed rows, protected bounds.
-                ["image_budget_other"] = EmbeddingGemma2CapabilityStatus.Experimental,
-                ["image_batch"] = EmbeddingGemma2CapabilityStatus.Supported,
-                ["image_matryoshka"] = EmbeddingGemma2CapabilityStatus.Supported,
-                ["image_decode_png_jpeg"] = EmbeddingGemma2CapabilityStatus.Supported,
-                // Proposed image-formats rows.
-                ["image_decode_gif_bmp_webp"] = EmbeddingGemma2CapabilityStatus.Experimental,
-                ["image_decode_gif_transparency"] = EmbeddingGemma2CapabilityStatus.Unsupported,
-                ["image_exif_orientation_opt_in"] = EmbeddingGemma2CapabilityStatus.Experimental,
-                ["image_16_bit"] = EmbeddingGemma2CapabilityStatus.Unsupported,
-                ["image_alpha_compositing"] = EmbeddingGemma2CapabilityStatus.Unsupported,
-                // Above the default 50 MP only with the limit raised by the caller.
-                ["image_over_default_pixel_limit_with_option"] = EmbeddingGemma2CapabilityStatus.Experimental,
-                ["text_only_inputs"] = EmbeddingGemma2CapabilityStatus.Supported,
-                ["batch"] = EmbeddingGemma2CapabilityStatus.Supported,
-                ["streaming"] = EmbeddingGemma2CapabilityStatus.Unsupported,
-                ["cancellation"] = EmbeddingGemma2CapabilityStatus.Supported,
-                ["persistence"] = EmbeddingGemma2CapabilityStatus.Unsupported,
-                ["training"] = EmbeddingGemma2CapabilityStatus.Unsupported,
-                ["aot"] = EmbeddingGemma2CapabilityStatus.Supported,
-                ["extensions_ai"] = EmbeddingGemma2CapabilityStatus.Supported,
-                ["mlnet"] = EmbeddingGemma2CapabilityStatus.Unsupported,
-                ["concurrent_calls"] = EmbeddingGemma2CapabilityStatus.Supported,
-                ["input_over_8192_tokens"] = EmbeddingGemma2CapabilityStatus.Unsupported,
-                ["audio"] = EmbeddingGemma2CapabilityStatus.Unsupported,
-                // The image profile; videos are the video-fp32-* profiles.
-                ["video"] = EmbeddingGemma2CapabilityStatus.Unsupported,
-            },
+            [StableProfile] = TextProfile,
+            [StableImageProfile] = ImageProfile,
+            // The CUDA profiles keep the CPU profiles' keys and statuses, except Native AOT with the CUDA natives (one
+            // local run) and, for images, the multimodal generator (skipped by the per-release GPU run).
+            [StableCudaProfile] = With(TextProfile, ("aot", EmbeddingGemma2CapabilityStatus.Experimental)),
+            [StableCudaImageProfile] = With(
+                ImageProfile,
+                ("aot", EmbeddingGemma2CapabilityStatus.Experimental),
+                ("extensions_ai", EmbeddingGemma2CapabilityStatus.Experimental)),
         };
+
+    private static Dictionary<string, EmbeddingGemma2CapabilityStatus> TextProfile =>
+        new(StringComparer.Ordinal)
+        {
+            ["batch"] = EmbeddingGemma2CapabilityStatus.Supported,
+            ["streaming"] = EmbeddingGemma2CapabilityStatus.Unsupported,
+            ["cancellation"] = EmbeddingGemma2CapabilityStatus.Supported,
+            ["persistence"] = EmbeddingGemma2CapabilityStatus.Unsupported,
+            ["training"] = EmbeddingGemma2CapabilityStatus.Unsupported,
+            ["aot"] = EmbeddingGemma2CapabilityStatus.Supported,
+            ["extensions_ai"] = EmbeddingGemma2CapabilityStatus.Supported,
+            ["mlnet"] = EmbeddingGemma2CapabilityStatus.Supported,
+            ["embedding_pretokenized"] = EmbeddingGemma2CapabilityStatus.Supported,
+            ["embedding_text"] = EmbeddingGemma2CapabilityStatus.Supported,
+            ["tokenizer_owned"] = EmbeddingGemma2CapabilityStatus.Supported,
+            ["prompts_query_document"] = EmbeddingGemma2CapabilityStatus.Supported,
+            ["prompts_task"] = EmbeddingGemma2CapabilityStatus.Experimental,
+            ["matryoshka"] = EmbeddingGemma2CapabilityStatus.Supported,
+            ["input_up_to_2049_tokens"] = EmbeddingGemma2CapabilityStatus.Supported,
+            ["input_2050_to_8192_tokens"] = EmbeddingGemma2CapabilityStatus.Experimental,
+            ["input_over_8192_tokens"] = EmbeddingGemma2CapabilityStatus.Unsupported,
+            ["concurrent_calls"] = EmbeddingGemma2CapabilityStatus.Supported,
+            // The text profile; images and videos are the image-fp32-* and video-fp32-* profiles.
+            ["image"] = EmbeddingGemma2CapabilityStatus.Unsupported,
+            ["audio"] = EmbeddingGemma2CapabilityStatus.Unsupported,
+            ["video"] = EmbeddingGemma2CapabilityStatus.Unsupported,
+        };
+
+    private static Dictionary<string, EmbeddingGemma2CapabilityStatus> ImageProfile =>
+        new(StringComparer.Ordinal)
+        {
+            ["image"] = EmbeddingGemma2CapabilityStatus.Supported,
+            ["image_interleaved_text"] = EmbeddingGemma2CapabilityStatus.Supported,
+            ["image_multiple_per_input"] = EmbeddingGemma2CapabilityStatus.Supported,
+            ["image_prompts"] = EmbeddingGemma2CapabilityStatus.Supported,
+            ["image_budget_280"] = EmbeddingGemma2CapabilityStatus.Supported,
+            // 70, 140, 560 and 1,120 soft tokens: proposed rows, protected bounds.
+            ["image_budget_other"] = EmbeddingGemma2CapabilityStatus.Experimental,
+            ["image_batch"] = EmbeddingGemma2CapabilityStatus.Supported,
+            ["image_matryoshka"] = EmbeddingGemma2CapabilityStatus.Supported,
+            ["image_decode_png_jpeg"] = EmbeddingGemma2CapabilityStatus.Supported,
+            // Proposed image-formats rows.
+            ["image_decode_gif_bmp_webp"] = EmbeddingGemma2CapabilityStatus.Experimental,
+            ["image_decode_gif_transparency"] = EmbeddingGemma2CapabilityStatus.Unsupported,
+            ["image_exif_orientation_opt_in"] = EmbeddingGemma2CapabilityStatus.Experimental,
+            ["image_16_bit"] = EmbeddingGemma2CapabilityStatus.Unsupported,
+            ["image_alpha_compositing"] = EmbeddingGemma2CapabilityStatus.Unsupported,
+            // Above the default 50 MP only with the limit raised by the caller.
+            ["image_over_default_pixel_limit_with_option"] = EmbeddingGemma2CapabilityStatus.Experimental,
+            ["text_only_inputs"] = EmbeddingGemma2CapabilityStatus.Supported,
+            ["batch"] = EmbeddingGemma2CapabilityStatus.Supported,
+            ["streaming"] = EmbeddingGemma2CapabilityStatus.Unsupported,
+            ["cancellation"] = EmbeddingGemma2CapabilityStatus.Supported,
+            ["persistence"] = EmbeddingGemma2CapabilityStatus.Unsupported,
+            ["training"] = EmbeddingGemma2CapabilityStatus.Unsupported,
+            ["aot"] = EmbeddingGemma2CapabilityStatus.Supported,
+            ["extensions_ai"] = EmbeddingGemma2CapabilityStatus.Supported,
+            ["mlnet"] = EmbeddingGemma2CapabilityStatus.Unsupported,
+            ["concurrent_calls"] = EmbeddingGemma2CapabilityStatus.Supported,
+            ["input_over_8192_tokens"] = EmbeddingGemma2CapabilityStatus.Unsupported,
+            ["audio"] = EmbeddingGemma2CapabilityStatus.Unsupported,
+            // The image profile; videos are the video-fp32-* profiles.
+            ["video"] = EmbeddingGemma2CapabilityStatus.Unsupported,
+        };
+
+    private static Dictionary<string, EmbeddingGemma2CapabilityStatus> With(
+        Dictionary<string, EmbeddingGemma2CapabilityStatus> table, params (string Key, EmbeddingGemma2CapabilityStatus Status)[] overrides)
+    {
+        var copy = new Dictionary<string, EmbeddingGemma2CapabilityStatus>(table, StringComparer.Ordinal);
+        foreach (var (key, status) in overrides)
+        {
+            if (!copy.ContainsKey(key))
+            {
+                throw new InvalidOperationException($"unknown capability {key}");
+            }
+
+            copy[key] = status;
+        }
+
+        return copy;
+    }
 }

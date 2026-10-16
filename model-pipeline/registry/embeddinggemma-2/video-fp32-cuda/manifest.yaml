@@ -287,8 +287,13 @@ capabilities:
   audio: unsupported
 
 compatibility:
-  # One RTX 4060 Ti (sm_89, GPU 1 only), CUDA 13 runtime and cuDNN 9 from the nvidia-* wheels, GPU shared with another
-  # process. One machine is not qualification.
+  # Contract hardware: an NVIDIA GeForce RTX 3090 (Ampere, sm_86). The release-set G1 to G3 and the binding G4 and G5
+  # (2026-10-16) ran on RTX 3090s. The RTX 4090 (Ada) and every other GPU are untested and outside the contract: in the
+  # per-release GPU run 38857860186 (RTX 4090, driver 580.159.03, commit 9a18b01) G2 failed, embedding max abs 1.009e-5
+  # against 1e-5 and token embeddings 3.34e-3 against 1e-3 row-relative (worst commons-video-04), where the RTX 3090
+  # measured 2.77e-6 and 7.97e-4 (docs/evidence/gpu-regression-2026-10-16/README.md). The per-release run is now pinned
+  # to the RTX 3090; the profile stays experimental until a run there is green for it. The schema has no GPU field, so
+  # this entry stays experimental for Linux x64 CUDA as a whole.
   - os: linux
     arch: x64
     provider: cuda
@@ -340,6 +345,15 @@ maintenance:
   last_checked: 2026-10-11
   review_date: 2027-01-05
   known_issues:
+    - >-
+      Not promoted to Stable (2026-10-16). The contract covers the NVIDIA GeForce RTX 3090 (Ampere) only; the RTX 4090
+      (Ada) is untested and out of contract. The first per-release GPU regression run, 38857860186 (commit 9a18b01),
+      landed on an RTX 4090 (driver 580.159.03) and failed this profile's G2 on the video release set: embedding max abs
+      1.009e-5 against the protected 1e-5, token embeddings 3.34e-3 against 1e-3 row-relative (worst commons-video-04).
+      G1, G3 and the soak smoke test passed there. On the RTX 3090 the same release set measured 2.77e-6 and 7.97e-4
+      (docs/evidence/release-set-gates-2026-10-14/embeddinggemma2-video-fp32-cuda/README.md). No tolerance was changed.
+      The per-release run is now pinned to the RTX 3090; promotion waits for a green run there
+      (docs/evidence/gpu-regression-2026-10-16/README.md).
     - >-
       Sampled frames follow torchcodec's seek-based decoding, including the decoder state after a seek: on the Ogg
       Theora release video commons-video-02 the frame after torchcodec's seek differs from a sequential decode, and that

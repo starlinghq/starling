@@ -133,7 +133,7 @@ public class AssetAndCapabilityTests
     {
         var all = EmbeddingGemma2Capabilities.All;
         Assert.Equal(EmbeddingGemma2CapabilityStatus.Supported, all["embedding.pretokenized.cpu"]);
-        Assert.Equal(EmbeddingGemma2CapabilityStatus.Experimental, all["embedding.pretokenized.cuda"]);
+        Assert.Equal(EmbeddingGemma2CapabilityStatus.Supported, all["embedding.pretokenized.cuda"]);
         Assert.Equal(EmbeddingGemma2CapabilityStatus.Supported, all["embedding.text"]);
         Assert.Equal(EmbeddingGemma2CapabilityStatus.Supported, all["tokenizer.owned"]);
         Assert.Equal(EmbeddingGemma2CapabilityStatus.Experimental, all["input.2050_to_8192_tokens"]);
@@ -149,12 +149,12 @@ public class AssetAndCapabilityTests
         string cpu = Manifest("onnx-fp32-cpu");
         Assert.Contains("    version: 0.3.0-preview.1\n    profile_id: gemma-bpe-embeddinggemma2\n", cpu, StringComparison.Ordinal);
         Assert.Equal(EmbeddingGemma2CapabilityStatus.Supported, all["image"]);
-        Assert.Equal(EmbeddingGemma2CapabilityStatus.Experimental, all["image.cuda"]);
+        Assert.Equal(EmbeddingGemma2CapabilityStatus.Supported, all["image.cuda"]);
         Assert.Equal(EmbeddingGemma2CapabilityStatus.Experimental, all["image.budget_other"]);
         string image = Manifest("image-fp32-cpu");
         Assert.Contains("maturity: stable", image, StringComparison.Ordinal);
         Assert.Contains("  image: supported", image, StringComparison.Ordinal);
-        Assert.Contains("maturity: experimental", Manifest("image-fp32-cuda"), StringComparison.Ordinal);
+        Assert.Contains("maturity: stable", Manifest("image-fp32-cuda"), StringComparison.Ordinal); // RTX 3090 contract
         Assert.Contains("provider_options:\n    use_tf32: 0", Manifest("image-fp32-cuda"), StringComparison.Ordinal);
         foreach (var key in new[] { "video", "video.cpu", "video.cuda", "video.decoded_frames_with_timing", "video.pre_sampled_frames", "video.frames_without_timing.upstream_opt_in", "video.interleaved_text", "video.interleaved_image", "video.decode.ffmpeg8", "video.decode.ffmpeg9_adapter", "extensions_ai.video_embedding_generator" })
         {

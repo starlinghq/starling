@@ -9,9 +9,9 @@ Maturity is per profile, generated from the registry manifests by `model-pipelin
 
 | Profile | Maturity | Platforms |
 | --- | --- | --- |
-| `qwen3.5-0.8b/ortgenai-fp16x-cuda` | experimental | linux-x64 cuda: experimental; windows-x64 cuda: untested |
+| `qwen3.5-0.8b/ortgenai-fp16x-cuda` | stable | linux-x64 cuda: supported; windows-x64 cuda: untested |
 | `qwen3.5-0.8b/ortgenai-fp32x-cpu` | stable | linux-x64 cpu: supported; windows-x64 cpu: untested |
-| `qwen3.5-0.8b/ortgenai-fp32x-cuda` | experimental | linux-x64 cuda: experimental; windows-x64 cuda: untested |
+| `qwen3.5-0.8b/ortgenai-fp32x-cuda` | stable | linux-x64 cuda: supported; windows-x64 cuda: untested |
 <!-- /catalog:maturity -->
 
 ## Install
@@ -65,4 +65,4 @@ Console.WriteLine(answer.Text);   // on the 0.8B model, greedy: "Today in Paris,
 - Streaming updates are complete-character text deltas; they concatenate to the non-streamed text, and the last update carries the finish reason (`Stop`, `Length` or `ToolCalls`) and usage (stop token excluded).
 - Each request runs on a dedicated background thread (ONNX Runtime GenAI steps are blocking native calls). Cancellation takes effect between prefill chunks and decode steps.
 
-Status: Linux x64 CPU and CUDA experimental. See the [documentation and evidence](https://github.com/starlinghq/starling/blob/main/ai-dotnet/README.md#microsoftextensionsai-chat-client-p-017).
+Status: supported on the Stable profiles `qwen3.5-0.8b/ortgenai-fp32x-cpu` (Linux x64 CPU) and `ortgenai-fp32x-cuda` and `ortgenai-fp16x-cuda` (Linux x64, RTX 3090), under the contracts in the `Starlings.Models.Qwen35` README; tool calling (`ChatOptions.Tools`, function invocation) is experimental. See the [documentation and evidence](https://github.com/starlinghq/starling/blob/main/ai-dotnet/README.md#microsoftextensionsai-chat-client-p-017).

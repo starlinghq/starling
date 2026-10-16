@@ -14,7 +14,7 @@ Maturity is per profile, generated from the registry manifests by `model-pipelin
 | Profile | Maturity | Platforms |
 | --- | --- | --- |
 | `multilingual-e5-small/onnx-fp32-cpu` | stable | linux-x64 cpu: supported; windows-x64 cpu: experimental |
-| `multilingual-e5-small/onnx-fp32-cuda` | experimental | linux-x64 cuda: experimental; windows-x64 cuda: untested |
+| `multilingual-e5-small/onnx-fp32-cuda` | stable | linux-x64 cuda: supported; windows-x64 cuda: untested |
 <!-- /catalog:maturity -->
 
 ## Install
@@ -50,7 +50,7 @@ e5 expects `"query: "` or `"passage: "` at the start of every text; nothing is a
 
 ## Status
 
-Profile `multilingual-e5-small/onnx-fp32-cpu` (Linux x64 CPU) is Stable since 2026-10-15: it passed every qualification gate, G0 to G7, and the weekly qualification workflow reruns G1 to G3 on the release sets and a one-hour soak, green. The hosted soak that failed on 2026-10-15 (about 50 MB/h) did so because of glibc retention after unloading and transparent huge pages set to `always` on the runner image, not a leak ([evidence](https://github.com/starlinghq/starling/blob/main/docs/evidence/scheduled-regression-fix/README.md)). Profile `multilingual-e5-small/onnx-fp32-cuda` (Linux x64 CUDA) is Experimental: its one-hour soak failed (memory growth, recorded in the catalog). GPU regression runs for every release and on demand (the qualification workflow's `cuda (runpod)` job); CPU regression runs weekly. Gate evidence: the [catalog](https://github.com/starlinghq/starling/blob/main/docs/catalog/README.md). Model license: MIT, stated only in the model card.
+Profile `multilingual-e5-small/onnx-fp32-cpu` (Linux x64 CPU) is Stable since 2026-10-15: it passed every qualification gate, G0 to G7, and the weekly qualification workflow reruns G1 to G3 on the release sets and a one-hour soak, green. The hosted soak that failed on 2026-10-15 (about 50 MB/h) did so because of glibc retention after unloading and transparent huge pages set to `always` on the runner image, not a leak ([evidence](https://github.com/starlinghq/starling/blob/main/docs/evidence/scheduled-regression-fix/README.md)). Profile `multilingual-e5-small/onnx-fp32-cuda` (Linux x64, NVIDIA GeForce RTX 3090) is Stable since 2026-10-16 ([Stable contract: CUDA](#stable-contract-cuda)): every gate passed, and the per-release GPU regression run was green for it. GPU regression runs for every release and on demand, on an RTX 3090 only (the qualification workflow's `cuda (runpod)` job); CPU regression runs weekly. Gate evidence: the [catalog](https://github.com/starlinghq/starling/blob/main/docs/catalog/README.md). Model license: MIT, stated only in the model card.
 
 ## Stable contract
 
@@ -70,9 +70,28 @@ This is the contract of profile `multilingual-e5-small/onnx-fp32-cpu`. Its Stabl
 | Task quality | MIRACL dev, 8 languages: nDCG@10 at least 0.792 and MRR@10 at least 0.765 (budget); measured 0.7978 and 0.7717. |
 | Supported | Embedding from text and from token ids; batch; cancellation (at ONNX Runtime node boundaries on CPU, after the current run on CUDA); concurrent calls; explicit acquisition (download, verify, offline reuse); Native AOT for the typed API and the Extensions.AI generator; `Starlings.Models.E5.Extensions.AI` (`IEmbeddingGenerator`); `Starlings.Models.E5.MLNet` (pipeline composition, row-wise and look-ahead batching). |
 | Limits | 512 tokens including `<s>` and `</s>`. `E5Tokenizer` truncates on the right to 512 (the profile's `truncate-right`, as the reference); `E5Encoder` rejects id sequences longer than `MaxSequenceLength` and never truncates them. The model files (487 MB) are acquired explicitly; inference never downloads. |
-| Outside the Stable contract | Windows x64 CPU: experimental (CI builds, runs the weight-free tests and the clean-install drill without the model; no model run). The CUDA profile and the adapters over CUDA: experimental. macOS, ARM64, Windows CUDA: unsupported (no evidence). |
+| Outside the Stable contract | Windows x64 CPU: experimental (CI builds, runs the weight-free tests and the clean-install drill without the model; no model run). CUDA is the separate profile `onnx-fp32-cuda` with its own contract ([Stable contract: CUDA](#stable-contract-cuda)). macOS, ARM64, Windows CUDA: unsupported (no evidence). |
 | Unsupported | streaming, pair input, non-zero `token_type_ids`, encoder-side truncation, prefix insertion, TF32, fp16, quantized graphs, TensorRT, persistence (ML.NET save), training, ML.NET cancellation, the ML.NET adapter under Native AOT, Extensions.AI `Dimensions` truncation. |
 | Known issues | On hosts with transparent huge pages set to `always`, resident memory can grow over time with no leak behind it ([Memory on Linux](#memory-on-linux)). The pinned `tokenizer.json` emits a lone `▁` token before special-token literals and for trailing whitespace, where SentencePiece and transformers 5.18 emit none; the profile follows `tokenizer.json`. It also leaves decomposed Hangul jamo uncomposed, while SentencePiece composes them. Both are recorded, not fixed. |
+
+## Stable contract: CUDA
+
+This is the contract of profile `multilingual-e5-small/onnx-fp32-cuda` (Stable since 2026-10-16). It is the CPU contract above, with these differences. The statuses are the registry manifest's and `E5Capabilities.Profiles`, which a test keeps equal key for key.
+
+| Item | Contract |
+| --- | --- |
+| Profile | `multilingual-e5-small/onnx-fp32-cuda` (registry manifest `model-pipeline/registry/multilingual-e5-small/onnx-fp32-cuda/manifest.yaml`). The same model and tokenizer as the CPU profile. |
+| Runtime | ONNX Runtime 1.30.0 with the CUDA execution provider (the application adds `Microsoft.ML.OnnxRuntime.Gpu.Linux` 1.30.0 instead of the CPU natives), `use_tf32=0`, fp32. The CUDA 13 runtime and cuDNN 9 must be on the loader path; the package does not ship them. |
+| Supported platform | Linux x64 with an **NVIDIA GeForce RTX 3090** (Ampere), driver 580 or later. G1 to G3 on the release sets, the binding G4 one-hour soak and G5 ran on RTX 3090s. **Regression:** the per-release GPU run (the qualification workflow's `cuda (runpod)` job, for every `ai-v*` tag and on demand) reruns the CUDA tests (the adapters over CUDA included), G1 to G3 on the release sets and a soak smoke test, on an RTX 3090 only; the job refuses any other GPU. Other GPUs, including the RTX 4090 (Ada), are untested and outside the contract. |
+| Memory on Linux | No `MALLOC_*` setting is required; heap trim on release as on CPU. |
+| Cancellation | A CUDA run is never terminated mid-graph: it completes, then the call throws `OperationCanceledException` (#61). Latency is one chunk, **about 125 ms** for 32 x 512 tokens. |
+| Numerical bound | The CUDA profile's protected tolerances (embedding max abs 1e-5 against the PyTorch reference). Release set: 1.21e-7; C# against Python ONNX Runtime CUDA 8e-8. |
+| Task quality | MIRACL: nDCG@10 0.7978, MRR@10 0.7717 (budget 0.792 and 0.765). |
+| Performance | G5 on an RTX 3090: warm latency 0.915 to 1.028 of the Python ONNX Runtime CUDA run (budget 1.05). |
+| Supported | Embedding from text and from token ids; batch; cancellation; concurrent calls; explicit acquisition; `Starlings.Models.E5.Extensions.AI` and `Starlings.Models.E5.MLNet` over a CUDA session. |
+| Outside the Stable contract | Native AOT with the CUDA natives: experimental (one local run, `tools/aot-check-ai.sh --cuda`, not in the per-release run). Windows x64 CUDA: untested. |
+
+Evidence: [binding CUDA G4 and G5 round](https://github.com/starlinghq/starling/blob/main/docs/evidence/qualification-2026-10-16-cuda/README.md), [per-release GPU regression, run 38857860186](https://github.com/starlinghq/starling/blob/main/docs/evidence/gpu-regression-2026-10-16/README.md), [release-set gates](https://github.com/starlinghq/starling/blob/main/docs/evidence/release-set-gates-2026-10-14/e5-onnx-fp32-cuda/README.md), [CUDA cancellation](https://github.com/starlinghq/starling/blob/main/docs/evidence/gliner2-cuda-wrong-output/README.md).
 
 ## Memory on Linux
 

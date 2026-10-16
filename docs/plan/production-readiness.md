@@ -105,6 +105,11 @@ These cannot be done by an agent. Each row names what it unblocks.
 
 Each workstream PR updates this document's tables when it lands. The catalog (R3) becomes the source of truth for status once it exists.
 
+### Status 2026-10-16 (first CUDA promotion round)
+
+- **Stable on Linux x64 CUDA, NVIDIA GeForce RTX 3090:** `gliner2-base-v1/onnx-fp32-cuda`, `multilingual-e5-small/onnx-fp32-cuda`, `embeddinggemma-2/onnx-fp32-cuda`, `embeddinggemma-2/image-fp32-cuda`, `qwen3.5-0.8b/ortgenai-fp32x-cuda` and `qwen3.5-0.8b/ortgenai-fp16x-cuda`. Every gate passed (G4 and G5 in the binding RTX 3090 round, #74), and the first per-release GPU regression run, [38857860186](https://github.com/starlinghq/starling/actions/runs/38857860186), passed every check of these six ([evidence](../evidence/gpu-regression-2026-10-16/README.md)). Contracts: the "Stable contract: CUDA" sections of the GLiNER2, e5, EmbeddingGemma 2 and Qwen3.5 package READMEs. Same single-owner exception (M7 open).
+- **Not promoted: EmbeddingGemma 2 `video-fp32-cuda`.** The run landed on an RTX 4090, and video G2 failed there (embedding 1.009e-5 against 1e-5; token embeddings 3.34e-3 against 1e-3), while the RTX 3090 measured 2.77e-6. The RTX 4090 is untested and outside every CUDA contract. The `cuda (runpod)` job is now pinned to the RTX 3090 and fails rather than fall back. **Open:** a confirming per-release run on an RTX 3090 for video CUDA, which needs RunPod credit (the job refuses to start below a $5 balance).
+
 ### Status 2026-10-16 (third promotion round)
 
 - **Stable: EmbeddingGemma 2 `image-fp32-cpu` and Qwen `ortgenai-fp32x-cpu`.** Every gate passed and the validator agrees. The weekly qualification workflow now reruns their release-set G1 to G3 and the one-hour soak on hosted runners, green ([run 38848321624](https://github.com/starlinghq/starling/actions/runs/38848321624)). G2 reads the accepted reference tensors from `Starlinghq/starling-release-references`, pinned by the protected `hosted-reference.json` of each release set (#71). Qwen CPU G5 is recorded `passed` from the planned quiet-host rerun. Contracts: the `Starlings.Models.EmbeddingGemma2` README (images) and the `Starlings.Models.Qwen35` README. Same single-owner exception (M7 open).

@@ -6,7 +6,14 @@
 # and tolerances are proposed separately; nothing here is qualified.
 schema_version: 1
 id: qwen3.5-0.8b/ortgenai-fp16x-cuda
-maturity: experimental
+# Stable since 2026-10-16 (maintainer's delegated promotion; docs/kickoff.md, "Stable CUDA profiles, first round"):
+# every gate G0 to G7 passed (G4 and G5 in the binding RTX 3090 round, docs/evidence/qualification-2026-10-16-cuda/),
+# the contract is the Starlings.Models.Qwen35 README's "Stable contract: CUDA" (fp32x and fp16x, Linux x64, RTX 3090;
+# fp16x under its protected near-tie rule), and the per-release GPU regression (qualification workflow, job cuda
+# (runpod), pinned to the RTX 3090) reruns the CUDA tests, G1 to G3 on the release sets and a soak smoke test. Every
+# check of this profile passed in its first run, 38857860186 (on an RTX 4090, before the pin;
+# docs/evidence/gpu-regression-2026-10-16/README.md).
+maturity: stable
 
 origin:
   code:
@@ -174,11 +181,16 @@ execution:
     device_id: 0
 
 capabilities:
-  # Starlings.Models.Qwen35 (Qwen35Capabilities); evidence in docs/evidence/p016-qwen35/README.md. Experimental means
-  # tested against the transformers fp32 reference on prompts-v1 and by the decode-loop unit tests, not qualified.
+  # Starlings.Models.Qwen35 (Qwen35Capabilities); evidence in docs/evidence/p016-qwen35/README.md and the release-set
+  # gates. Statuses follow the README's "Stable contract: CUDA": supported where the P-030 release sets (G1, G2 under
+  # the protected near-tie rule, G3), the accepted development fixtures, G4 to G7 and the CUDA test project
+  # (Fp16xCudaTests, Fp16xCudaChatClientTests, run by the per-release GPU regression) cover it on an RTX 3090;
+  # experimental where only proposed rows (P-029 template corpus, long context), a single real-model run (tool
+  # calling) or a one-time local run (Native AOT with the CUDA natives) do; unsupported outside it.
+  # Qwen35Capabilities.Profiles holds the same statuses (tested key for key).
   batch: unsupported
-  streaming: experimental
-  cancellation: experimental
+  streaming: supported
+  cancellation: supported
   persistence: unsupported
   training: unsupported
   # aot: Native AOT publish on Linux x64 against Microsoft.ML.OnnxRuntimeGenAI.Cuda 0.17.1, no trim/AOT warnings, typed
@@ -187,21 +199,21 @@ capabilities:
   # extensions_ai: Fp16xCudaChatClientTests (capability closure 2026-10-14): on all 21 text prompts the IChatClient
   # response and streamed updates equal the typed fp16x model exactly, with usage and finish reason; cancellation and
   # serialized concurrent requests. The typed API is held to the profile's near-tie rule by the model tests.
-  extensions_ai: experimental
+  extensions_ai: supported
   mlnet: unsupported
-  greedy_generation: experimental
-  sampling_seeded: experimental
-  stop_tokens: experimental
-  stop_sequences: experimental
-  max_new_tokens: experimental
-  usage: experimental
-  concurrent_requests: experimental
-  step0_logits: experimental
-  chat_template_owned_text: experimental
+  greedy_generation: supported
+  sampling_seeded: supported
+  stop_tokens: supported
+  stop_sequences: supported
+  max_new_tokens: supported
+  usage: supported
+  concurrent_requests: supported
+  step0_logits: supported
+  chat_template_owned_text: supported
   enable_thinking: experimental
-  tokenizer_owned: experimental
+  tokenizer_owned: supported
   cancellation_inside_a_step: unsupported
-  chunked_prefill: experimental
+  chunked_prefill: supported
   conversation_state_reuse: unsupported
   # tool_calling: template, parser and IChatClient mapping are provider-independent and tested (corpus and scripted
   # sequences; docs/evidence/qwen35-tool-calling/README.md). On this profile (2026-10-14, CudaChatClientTests): the
@@ -219,11 +231,15 @@ capabilities:
   long_context_over_8192_tokens: unsupported
 
 compatibility:
+  # Linux x64 CUDA on an NVIDIA GeForce RTX 3090 (Ampere): G1 to G3 on the release sets, G4 one-hour soak and G5
+  # (binding round 2026-10-16, RunPod, driver 580.126.20). The per-release GPU regression (CUDA tests, G1 to G3, soak
+  # smoke test) is pinned to the RTX 3090; its first run, 38857860186, ran before the pin on an RTX 4090, and every
+  # check of this profile passed. Other GPUs, including the RTX 4090 (Ada): untested, outside the contract.
   - os: linux
     arch: x64
     provider: cuda
-    status: experimental
-    verified: 2026-10-10
+    status: supported
+    verified: 2026-10-16
   - os: windows
     arch: x64
     provider: cuda
@@ -259,6 +275,22 @@ maintenance:
   last_checked: 2026-10-10
   review_date: 2027-01-05
   known_issues:
+    - >-
+      Contract hardware: an NVIDIA GeForce RTX 3090 (Ampere, sm_86), driver 580, CUDA 13 runtime. The CUDA gates G1 to
+      G5 (G4 and G5 in the binding 2026-10-16 round) ran on RTX 3090s, and the per-release GPU regression is pinned to
+      the RTX 3090 and refuses any other GPU (tools/ci/runpod.py). Its first run, 38857860186, landed on an RTX 4090
+      (Ada) before the pin: every check of this profile passed there, but embeddinggemma-2/video-fp32-cuda failed G2
+      (docs/evidence/gpu-regression-2026-10-16/README.md). Other NVIDIA GPUs, including the RTX 4090, are untested and
+      outside the contract.
+    - >-
+      Concurrency on CUDA: requests are serialized step by step (concurrent ONNX Runtime GenAI 0.17.1 generators
+      produced wrong tokens); concurrent_requests means that serialized mode.
+    - >-
+      Cancellation is checked between decode steps and, with chunked prefill (the CUDA default), between prefill chunks;
+      never inside a native call.
+    - >-
+      Linux memory: no MALLOC_* setting is required; the G4 soak and the per-release soak smoke test ran with the
+      defaults.
     - >-
       The ONNX Runtime GenAI C# API is labeled preview upstream; Starlings.Generation.OnnxGenAI isolates it.
       The runtime version must equal the builder version that wrote the graph (0.17.1).

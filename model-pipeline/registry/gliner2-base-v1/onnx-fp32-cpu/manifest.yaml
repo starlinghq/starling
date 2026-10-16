@@ -195,12 +195,13 @@ compatibility:
     provider: cpu
     status: supported
     verified: 2026-10-15
-  # CUDA is the separate, experimental profile gliner2-base-v1/onnx-fp32-cuda; outside this profile's Stable contract.
+  # CUDA is the separate profile gliner2-base-v1/onnx-fp32-cuda, Stable since 2026-10-16 on the RTX 3090 (its own
+  # contract, the README's "Stable contract: CUDA"); this row mirrors that profile's Linux x64 CUDA status.
   - os: linux
     arch: x64
     provider: cuda
-    status: experimental
-    verified: 2026-10-10
+    status: supported
+    verified: 2026-10-16
   # Windows x64 CPU: the CI job ai-dotnet-windows builds, runs the weight-free tests and the clean-install drill without
   # the model on every change; no model runs there. Outside the Stable contract (the package README says so).
   - os: windows
