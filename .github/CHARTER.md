@@ -36,7 +36,7 @@ Status: proposal for the maintainer's review under [CONTRIBUTING.md](CONTRIBUTIN
 - Loading formats Starling does not lock (for example GGUF).
 - AutoRound weight formats and 2-bit KV quantization, until a Starling profile needs them.
 
-**Unchanged by the amendment.** Roost's model profiles pass the gates of this repository, and their manifests, fixtures and tolerances live in this repository's registry and `protected/` directory under its protected-evidence workflow. No Roost code lands in this repository. No throughput claim is published for a Roost profile before it passes the fidelity gates.
+**Unchanged by the amendment.** Roost's model profiles pass the gates of this repository. It is proposed that their manifests, fixtures and tolerances live in this repository's registry and `protected/` directory under its protected-evidence workflow; that is plan decision 4, which is still open, and nothing here settles it. No Roost code lands in this repository. No throughput claim is published for a Roost profile before it passes the fidelity gates.
 
 | Item | Value |
 | --- | --- |
