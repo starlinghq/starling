@@ -1,0 +1,3 @@
+loaded in 6.5s, threads 8, new tokens 32
+timing [en-list 22] + [en-list 22], 32 new tokens, min of 2: sequential 13.68s, concurrent x2 9.59s, batch 2 (left pad) 8.92s
+timing [en-list 22] + [en-math 40], 32 new tokens, min of 2: sequential 23.98s, concurrent x2 15.87s, batch 2 (left pad) 13.97s
