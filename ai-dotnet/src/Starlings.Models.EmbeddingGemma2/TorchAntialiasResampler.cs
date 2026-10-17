@@ -47,38 +47,51 @@ internal static class TorchAntialiasResampler
     /// <summary>
     /// Resize with an explicit path: <paramref name="vectorized"/> (AVX2, ignored without it) and the largest thread
     /// count. <paramref name="memory"/> is <paramref name="rgb"/> as memory, or empty when only the span exists (then
-    /// the horizontal pass runs on the calling thread).
+    /// the horizontal pass runs on the calling thread). With <paramref name="pool"/>, the result and every intermediate
+    /// buffer come from it: the result can then be longer than <c>targetWidth * targetHeight * 3</c> (the bytes past
+    /// that are not part of it) and belongs to the caller, who returns it to the pool.
     /// </summary>
     internal static byte[] Resize(
-        ReadOnlySpan<byte> rgb, ReadOnlyMemory<byte> memory, int width, int height, int targetWidth, int targetHeight, bool vectorized, int maxThreads)
+        ReadOnlySpan<byte> rgb, ReadOnlyMemory<byte> memory, int width, int height, int targetWidth, int targetHeight, bool vectorized, int maxThreads,
+        EmbeddingGemma2BufferPool? pool = null)
     {
         if (targetWidth == width && targetHeight == height)
         {
-            return rgb.ToArray();
+            if (pool is null)
+            {
+                return rgb.ToArray();
+            }
+
+            byte[] copy = pool.Rent<byte>(rgb.Length);
+            rgb.CopyTo(copy);
+            return copy;
         }
 
         vectorized &= Avx2.IsSupported;
         byte[]? horizontal = null;
         bool rented = false;
+        Weights? c = null;
+        Weights? v = null;
         try
         {
             ReadOnlySpan<byte> source = rgb;
             ReadOnlyMemory<byte> sourceMemory = memory;
             if (targetWidth != width)
             {
-                var c = ComputeWeights(width, targetWidth);
+                c = ComputeWeights(width, targetWidth, pool);
                 int bytes = checked(targetWidth * height * 3);
                 rented = targetHeight != height;
-                horizontal = rented ? ArrayPool<byte>.Shared.Rent(bytes) : new byte[bytes];
+                horizontal = pool is not null ? pool.Rent<byte>(bytes) : rented ? ArrayPool<byte>.Shared.Rent(bytes) : new byte[bytes];
+                Weights hc = c;
                 byte[] h = horizontal;
                 long work = (long)targetWidth * c.MaxSize * 3;
                 if (memory.Length == rgb.Length && !memory.IsEmpty)
                 {
-                    For(height, work, maxThreads, (y0, y1) => Horizontal(memory.Span, width, targetWidth, c, h, y0, y1, vectorized));
+                    For(height, work, maxThreads, (y0, y1) => Horizontal(memory.Span, width, targetWidth, hc, h, y0, y1, vectorized));
                 }
                 else
                 {
-                    Horizontal(rgb, width, targetWidth, c, h, 0, height, vectorized);
+                    Horizontal(rgb, width, targetWidth, hc, h, 0, height, vectorized);
                 }
 
                 source = horizontal.AsSpan(0, bytes);
@@ -87,26 +100,37 @@ internal static class TorchAntialiasResampler
 
             if (targetHeight == height)
             {
-                return horizontal!;
+                // The horizontal pass is the result; the caller owns it from here.
+                byte[] only = horizontal!;
+                horizontal = null;
+                return only;
             }
 
-            var v = ComputeWeights(height, targetHeight);
-            var result = new byte[checked(targetWidth * targetHeight * 3)];
+            v = ComputeWeights(height, targetHeight, pool);
+            Weights vc = v;
+            int resultBytes = checked(targetWidth * targetHeight * 3);
+            var result = pool is not null ? pool.Rent<byte>(resultBytes) : new byte[resultBytes];
             long rowWork = (long)targetWidth * 3 * v.MaxSize;
             if (!sourceMemory.IsEmpty && sourceMemory.Length == source.Length)
             {
-                For(targetHeight, rowWork, maxThreads, (y0, y1) => Vertical(sourceMemory.Span, targetWidth, v, result, y0, y1, vectorized));
+                For(targetHeight, rowWork, maxThreads, (y0, y1) => Vertical(sourceMemory.Span, targetWidth, vc, result, y0, y1, vectorized));
             }
             else
             {
-                Vertical(source, targetWidth, v, result, 0, targetHeight, vectorized);
+                Vertical(source, targetWidth, vc, result, 0, targetHeight, vectorized);
             }
 
             return result;
         }
         finally
         {
-            if (rented)
+            if (pool is not null)
+            {
+                pool.Return(horizontal);
+                c?.ReturnTo(pool);
+                v?.ReturnTo(pool);
+            }
+            else if (rented)
             {
                 ArrayPool<byte>.Shared.Return(horizontal!);
             }
@@ -131,13 +155,25 @@ internal static class TorchAntialiasResampler
         return 0.0;
     }
 
-    internal static Weights ComputeWeights(int inSize, int outSize)
+    /// <summary>
+    /// The weight tables for one pass. With <paramref name="pool"/>, the coefficient and pair tables (above the large
+    /// object heap threshold for strong downscales) come from it; <see cref="Weights.ReturnTo"/> gives them back.
+    /// </summary>
+    internal static Weights ComputeWeights(int inSize, int outSize, EmbeddingGemma2BufferPool? pool = null)
     {
         double scale = (double)inSize / outSize;
         double support = scale >= 1.0 ? 2.0 * scale : 2.0;
         double invScale = scale >= 1.0 ? 1.0 / scale : 1.0;
         int maxSize = (int)Math.Ceiling(support) * 2 + 1;
-        var w = new double[outSize * maxSize];
+        int cellCount = outSize * maxSize;
+
+        // Taps past each output's size stay 0 (the AVX2 path reads whole pairs), so pooled tables are cleared.
+        double[] w = pool is not null ? pool.Rent<double>(cellCount) : new double[cellCount];
+        if (pool is not null)
+        {
+            Array.Clear(w, 0, cellCount);
+        }
+
         var min = new int[outSize];
         var size = new int[outSize];
         double wMax = 0.0;
@@ -183,17 +219,25 @@ internal static class TorchAntialiasResampler
             }
         }
 
-        var q = new int[w.Length];
+        int[] q = pool is not null ? pool.Rent<int>(cellCount) : new int[cellCount];
         double factor = 1 << precision;
-        for (int k = 0; k < w.Length; k++)
+        for (int k = 0; k < cellCount; k++)
         {
             double v = w[k] * factor;
             q[k] = v < 0 ? (int)(-0.5 + v) : (int)(0.5 + v);
         }
 
+        pool?.Return(w);
+
         // Pairs of consecutive weights as two int16 halves of one int32 (low: tap 2k, high: tap 2k + 1, 0 past the end).
         int maxPairs = (maxSize + 1) / 2;
-        var pairs = new int[outSize * maxPairs];
+        int pairCount = outSize * maxPairs;
+        int[] pairs = pool is not null ? pool.Rent<int>(pairCount) : new int[pairCount];
+        if (pool is not null)
+        {
+            Array.Clear(pairs, 0, pairCount);
+        }
+
         for (int i = 0; i < outSize; i++)
         {
             for (int k = 0; 2 * k < size[i]; k++)
@@ -509,5 +553,13 @@ internal static class TorchAntialiasResampler
     /// Per output index: first input index, tap count, int16-range weights (row stride <c>MaxSize</c>), precision, and
     /// the weights as packed int16 pairs (row stride <c>MaxPairs</c>).
     /// </summary>
-    internal sealed record Weights(int[] Min, int[] Size, int[] Coefficients, int MaxSize, int Precision, int[] Pairs, int MaxPairs);
+    internal sealed record Weights(int[] Min, int[] Size, int[] Coefficients, int MaxSize, int Precision, int[] Pairs, int MaxPairs)
+    {
+        /// <summary>Gives the pooled tables back (<see cref="ComputeWeights"/> with a pool); the weights are unusable afterwards.</summary>
+        internal void ReturnTo(EmbeddingGemma2BufferPool pool)
+        {
+            pool.Return(Coefficients);
+            pool.Return(Pairs);
+        }
+    }
 }

@@ -41,6 +41,7 @@ public sealed class OnnxModelSession : IDisposable
     private readonly OrtCUDAProviderOptions? _cudaOptions;
     private readonly bool _trimOnRelease;
     private readonly bool _dedicatedRunThreads;
+    private readonly bool _trimAfterRun;
     private readonly object _placementGate = new();
     private volatile bool _placementPending;
     private OnnxPlacementReport? _placement;
@@ -58,6 +59,7 @@ public sealed class OnnxModelSession : IDisposable
     {
         _trimOnRelease = diagnostics.TrimNativeHeapOnRelease;
         _dedicatedRunThreads = diagnostics.DedicatedRunThreads;
+        _trimAfterRun = diagnostics.TrimNativeHeapAfterRun;
         _session = session;
         _sessionOptions = sessionOptions;
         _cudaOptions = cudaOptions;
@@ -281,6 +283,9 @@ public sealed class OnnxModelSession : IDisposable
                 throw CudaUnavailable(ex);
             }
 
+            // Session creation frees much of what it allocates (graph transformation, initializer copies); on the
+            // creating thread's glibc heap that memory stays resident for the life of the session unless trimmed.
+            bool trimmedAfterLoad = options.TrimNativeHeapAfterLoad == true && NativeHeap.Trim();
             var diagnostics = new OnnxSessionDiagnostics
             {
                 OrtVersion = env.GetVersionString(),
@@ -294,6 +299,8 @@ public sealed class OnnxModelSession : IDisposable
                 IntraOpNumThreads = intraOpThreads,
                 InterOpNumThreads = options.InterOpNumThreads,
                 TrimNativeHeapOnRelease = options.TrimNativeHeapOnRelease && NativeHeap.Enabled,
+                TrimNativeHeapAfterLoad = trimmedAfterLoad,
+                TrimNativeHeapAfterRun = options.TrimNativeHeapAfterRun == true && NativeHeap.Enabled,
                 CpuMemoryArena = sessionOptions.EnableCpuMemArena,
                 DedicatedRunThreads = options.DedicatedRunThreads ?? false,
                 GraphOptimizationLevel = sessionOptions.GraphOptimizationLevel.ToString(),
@@ -415,11 +422,30 @@ public sealed class OnnxModelSession : IDisposable
     {
         if (_dedicatedRunThreads)
         {
-            RunThreads.Invoke(() => run(runOptions));
+            RunThreads.Invoke(() => RunAndTrim(run, runOptions));
         }
         else
         {
+            RunAndTrim(run, runOptions);
+        }
+    }
+
+    /// <summary>
+    /// Runs, then (<see cref="OnnxSessionOptions.TrimNativeHeapAfterRun"/>) returns the run's freed buffers, which
+    /// glibc keeps as free chunks in this thread's heap, to the operating system.
+    /// </summary>
+    private void RunAndTrim(Action<RunOptions> run, RunOptions runOptions)
+    {
+        try
+        {
             run(runOptions);
+        }
+        finally
+        {
+            if (_trimAfterRun)
+            {
+                _ = NativeHeap.Trim();
+            }
         }
     }
 

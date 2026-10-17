@@ -105,6 +105,7 @@ public sealed class EmbeddingGemma2MultimodalEmbedder : IDisposable
     private readonly OnnxModelSession _multimodal;
     private readonly Lazy<EmbeddingGemma2Encoder>? _textEncoder;
     private readonly bool _ownsSessions;
+    private readonly EmbeddingGemma2BufferPool _buffers;
     private readonly EmbeddingGemma2MultimodalOptions _options;
     private int _disposed;
 
@@ -157,6 +158,7 @@ public sealed class EmbeddingGemma2MultimodalEmbedder : IDisposable
         _textEncoder = textEncoder;
         _options = options;
         _ownsSessions = ownsSessions;
+        _buffers = new EmbeddingGemma2BufferPool(options.PoolBuffers);
     }
 
     /// <summary>Output dimension (<see cref="EmbeddingGemma2MultimodalOptions.Dimension"/>).</summary>
@@ -190,13 +192,24 @@ public sealed class EmbeddingGemma2MultimodalEmbedder : IDisposable
         OnnxModelSession? multimodal = null;
         try
         {
+            // On CPU, unless the caller chose: return the memory that creating each graph's session freed (about
+            // 400 MiB of free chunks in the main glibc heap, varying from load to load) and, after each run, the
+            // run's freed buffers (100 to 190 MiB of free chunks per run thread's heap, rising in steps over an
+            // hour). Both otherwise stayed resident while loaded (docs/evidence/eg2-image-loaded-soak/).
+            bool cpu = options.Session.Provider == OnnxExecutionProvider.Cpu;
+            bool trimAfterLoad = options.Session.TrimNativeHeapAfterLoad ?? cpu;
+            bool trimAfterRun = options.Session.TrimNativeHeapAfterRun ?? cpu;
             vision = OnnxModelSession.Create(files.VisionModelPath, EmbeddingGemma2Encoder.SessionDefaults(options.Session) with
             {
                 ExpectedModelSha256 = verify ? EmbeddingGemma2ModelAssets.VisionModelSha256 : null,
+                TrimNativeHeapAfterLoad = trimAfterLoad,
+                TrimNativeHeapAfterRun = trimAfterRun,
             });
             multimodal = OnnxModelSession.Create(files.MultimodalModelPath, EmbeddingGemma2Encoder.SessionDefaults(options.Session) with
             {
                 ExpectedModelSha256 = verify ? EmbeddingGemma2ModelAssets.MultimodalModelSha256 : null,
+                TrimNativeHeapAfterLoad = trimAfterLoad,
+                TrimNativeHeapAfterRun = trimAfterRun,
             });
             string textPath = files.Text.ModelPath;
             var textOptions = options.ToTextEncoderOptions(verify ? EmbeddingGemma2ModelAssets.ModelSha256 : null);
@@ -289,10 +302,19 @@ public sealed class EmbeddingGemma2MultimodalEmbedder : IDisposable
         return Prepare(input, prompt ?? EmbeddingGemma2Prompt.None, 0).Tokens;
     }
 
-    /// <summary>Disposes the sessions and the text encoder if this instance owns them. Idempotent.</summary>
+    /// <summary>
+    /// Disposes the sessions and the text encoder if this instance owns them, and releases the embedder's reusable request
+    /// buffers. Idempotent.
+    /// </summary>
     public void Dispose()
     {
-        if (Interlocked.Exchange(ref _disposed, 1) == 0 && _ownsSessions)
+        if (Interlocked.Exchange(ref _disposed, 1) != 0)
+        {
+            return;
+        }
+
+        _buffers.Dispose();
+        if (_ownsSessions)
         {
             _multimodal.Dispose();
             _vision.Dispose();
@@ -566,21 +588,7 @@ public sealed class EmbeddingGemma2MultimodalEmbedder : IDisposable
             }
         }
 
-        var soft = new float[images.Count][];
-        if (images.Count > 0)
-        {
-            RunVision(images.Select(x => x.Image).ToArray(), _options.MaxImageSoftTokens, _options.MaxVisionBatchSize, _options.MaxVisionBatchSize, soft, cancellationToken);
-        }
-
-        if (diagnostics is not null)
-        {
-            for (int i = 0; i < images.Count; i++)
-            {
-                diagnostics.OnSoftTokens(chunk[images[i].Row].Index, images[i].Index, soft[i]);
-            }
-        }
-
-        // Video frames of the chunk (all videos, row order), then each row's video soft tokens concatenated in order.
+        // Video frames of the chunk (all videos, row order).
         var frames = new List<EmbeddingGemma2Image>();
         foreach (var p in chunk)
         {
@@ -590,41 +598,112 @@ public sealed class EmbeddingGemma2MultimodalEmbedder : IDisposable
             }
         }
 
-        var frameSoft = new float[frames.Count][];
-        if (frames.Count > 0)
-        {
-            RunVision(frames.ToArray(), VideoFrameSoftTokens, _options.MaxVideoFramesPerVisionCall, VideoFramesPreprocessedAhead, frameSoft, cancellationToken);
-        }
-
-        var rowVideoSoft = new float[rows][];
-        int frameIndex = 0;
-        for (int r = 0; r < rows; r++)
-        {
-            var parts = new List<float>();
-            for (int v = 0; v < chunk[r].Videos.Count; v++)
-            {
-                var video = chunk[r].Videos[v];
-                var videoSoft = new float[video.Frames.Length * video.SoftTokensPerFrame * SoftTokenDimension];
-                for (int f = 0; f < video.Frames.Length; f++)
-                {
-                    frameSoft[frameIndex + f].CopyTo(videoSoft, f * video.SoftTokensPerFrame * SoftTokenDimension);
-                }
-
-                frameIndex += video.Frames.Length;
-                diagnostics?.OnVideoSoftTokens(chunk[r].Index, v, videoSoft);
-                parts.AddRange(videoSoft);
-            }
-
-            rowVideoSoft[r] = [.. parts];
-        }
-
-        long[] ids = ArrayPool<long>.Shared.Rent(cells);
-        long[] mask = ArrayPool<long>.Shared.Rent(cells);
-        bool[] mmMask = ArrayPool<bool>.Shared.Rent(cells);
-        float[] mmEmbeds = ArrayPool<float>.Shared.Rent(checked(cells * SoftTokenDimension));
-        float[] tokens = ArrayPool<float>.Shared.Rent(checked(cells * EmbeddingGemma2Encoder.NativeDimension));
+        // Every large buffer of the request comes from the embedder's pool and goes back to it (EmbeddingGemma2BufferPool).
+        float[]? imageSoft = null;
+        float[]? frameSoft = null;
+        var assembled = new List<float[]>();
+        long[]? ids = null;
+        long[]? mask = null;
+        bool[]? mmMask = null;
+        float[]? mmEmbeds = null;
+        float[]? tokens = null;
         try
         {
+            int[] imageOffsets = [];
+            if (images.Count > 0)
+            {
+                imageSoft = RunVision(images.Select(x => x.Image).ToArray(), _options.MaxImageSoftTokens, _options.MaxVisionBatchSize, _options.MaxVisionBatchSize, out imageOffsets, out _, cancellationToken);
+            }
+
+            if (diagnostics is not null)
+            {
+                for (int i = 0; i < images.Count; i++)
+                {
+                    diagnostics.OnSoftTokens(chunk[images[i].Row].Index, images[i].Index, imageSoft.AsSpan(imageOffsets[i], images[i].Count * SoftTokenDimension).ToArray());
+                }
+            }
+
+            int[] frameOffsets = [];
+            int[] frameCounts = [];
+            if (frames.Count > 0)
+            {
+                frameSoft = RunVision(frames.ToArray(), VideoFrameSoftTokens, _options.MaxVideoFramesPerVisionCall, VideoFramesPreprocessedAhead, out frameOffsets, out frameCounts, cancellationToken);
+            }
+
+            // Each row's video soft tokens: its videos in order, each frame at a stride of SoftTokensPerFrame tokens. The
+            // frames are contiguous in frameSoft in that order, so the row's region is a slice of it when every frame has
+            // SoftTokensPerFrame tokens (always, for frames of one size); otherwise it is assembled with zero padding.
+            var rowVideoSoft = new ReadOnlyMemory<float>[rows];
+            int frameIndex = 0;
+            for (int r = 0; r < rows; r++)
+            {
+                int firstFrame = frameIndex;
+                int rowFloats = 0;
+                bool contiguous = true;
+                foreach (var video in chunk[r].Videos)
+                {
+                    for (int f = 0; f < video.Frames.Length; f++)
+                    {
+                        contiguous &= frameCounts[frameIndex + f] == video.SoftTokensPerFrame;
+                    }
+
+                    rowFloats += video.Frames.Length * video.SoftTokensPerFrame * SoftTokenDimension;
+                    frameIndex += video.Frames.Length;
+                }
+
+                if (rowFloats == 0)
+                {
+                    continue;
+                }
+
+                if (contiguous)
+                {
+                    rowVideoSoft[r] = frameSoft.AsMemory(frameOffsets[firstFrame], rowFloats);
+                }
+                else
+                {
+                    float[] buffer = _buffers.Rent<float>(rowFloats);
+                    assembled.Add(buffer);
+                    Array.Clear(buffer, 0, rowFloats);
+                    int at = 0;
+                    int fi = firstFrame;
+                    foreach (var video in chunk[r].Videos)
+                    {
+                        for (int f = 0; f < video.Frames.Length; f++, fi++)
+                        {
+                            if (frameCounts[fi] > video.SoftTokensPerFrame)
+                            {
+                                throw new InvalidOperationException($"A video frame produced {frameCounts[fi]} soft tokens; {video.SoftTokensPerFrame} expected.");
+                            }
+
+                            frameSoft.AsSpan(frameOffsets[fi], frameCounts[fi] * SoftTokenDimension)
+                                .CopyTo(buffer.AsSpan(at + (f * video.SoftTokensPerFrame * SoftTokenDimension)));
+                        }
+
+                        at += video.Frames.Length * video.SoftTokensPerFrame * SoftTokenDimension;
+                    }
+
+                    rowVideoSoft[r] = buffer.AsMemory(0, rowFloats);
+                }
+
+                if (diagnostics is not null)
+                {
+                    int at = 0;
+                    for (int v = 0; v < chunk[r].Videos.Count; v++)
+                    {
+                        var video = chunk[r].Videos[v];
+                        int videoFloats = video.Frames.Length * video.SoftTokensPerFrame * SoftTokenDimension;
+                        diagnostics.OnVideoSoftTokens(chunk[r].Index, v, rowVideoSoft[r].Slice(at, videoFloats).ToArray());
+                        at += videoFloats;
+                    }
+                }
+            }
+
+            ids = _buffers.Rent<long>(cells);
+            mask = _buffers.Rent<long>(cells);
+            mmMask = _buffers.Rent<bool>(cells);
+            mmEmbeds = _buffers.Rent<float>(checked(cells * SoftTokenDimension));
+            tokens = _buffers.Rent<float>(checked(cells * EmbeddingGemma2Encoder.NativeDimension));
             EmbeddingGemma2Encoder.PackRightPadded(chunk.Select(p => p.Tokens).ToArray(), 0, rows, width, ids, mask);
             Array.Clear(mmMask, 0, cells);
             Array.Clear(mmEmbeds, 0, cells * SoftTokenDimension);
@@ -640,7 +719,7 @@ public sealed class EmbeddingGemma2MultimodalEmbedder : IDisposable
                     if (rowIds[t] == VideoTokenId)
                     {
                         // Video soft tokens fill the <|video|> positions in order (upstream's masked_scatter).
-                        rowVideoSoft[r].AsSpan(videoOffset * SoftTokenDimension, SoftTokenDimension)
+                        rowVideoSoft[r].Span.Slice(videoOffset * SoftTokenDimension, SoftTokenDimension)
                             .CopyTo(mmEmbeds.AsSpan((r * width + t) * SoftTokenDimension, SoftTokenDimension));
                         mmMask[r * width + t] = true;
                         videoOffset++;
@@ -659,7 +738,7 @@ public sealed class EmbeddingGemma2MultimodalEmbedder : IDisposable
                         imageIndex++;
                     }
 
-                    soft[imageIndex - 1].AsSpan(offset * SoftTokenDimension, SoftTokenDimension)
+                    imageSoft.AsSpan(imageOffsets[imageIndex - 1] + (offset * SoftTokenDimension), SoftTokenDimension)
                         .CopyTo(mmEmbeds.AsSpan((r * width + t) * SoftTokenDimension, SoftTokenDimension));
                     mmMask[r * width + t] = true;
                     offset++;
@@ -681,68 +760,97 @@ public sealed class EmbeddingGemma2MultimodalEmbedder : IDisposable
         }
         finally
         {
-            ArrayPool<float>.Shared.Return(tokens);
-            ArrayPool<float>.Shared.Return(mmEmbeds);
-            ArrayPool<bool>.Shared.Return(mmMask);
-            ArrayPool<long>.Shared.Return(mask);
-            ArrayPool<long>.Shared.Return(ids);
+            _buffers.Return(tokens);
+            _buffers.Return(mmEmbeds);
+            _buffers.Return(mmMask);
+            _buffers.Return(mask);
+            _buffers.Return(ids);
+            foreach (var buffer in assembled)
+            {
+                _buffers.Return(buffer);
+            }
+
+            _buffers.Return(frameSoft);
+            _buffers.Return(imageSoft);
         }
     }
 
     /// <summary>
     /// Preprocesses images (or video frames) at <paramref name="budget"/> soft tokens and runs them through the vision graph
-    /// in planned calls of at most <paramref name="maxPerCall"/>; writes each one's valid soft tokens.
+    /// in planned calls of at most <paramref name="maxPerCall"/>. Returns one pooled buffer (the caller returns it) with
+    /// each image's valid soft tokens at <paramref name="offsets"/> (in floats), <paramref name="counts"/> tokens each, in order.
     /// </summary>
-    private void RunVision(EmbeddingGemma2Image[] images, int budget, int maxPerCall, int preprocessAhead, float[][] soft, CancellationToken cancellationToken)
+    private float[] RunVision(EmbeddingGemma2Image[] images, int budget, int maxPerCall, int preprocessAhead, out int[] offsets, out int[] counts, CancellationToken cancellationToken)
     {
         int maxPatches = EmbeddingGemma2ImageProcessor.MaxPatches(budget);
         var patchCounts = new int[images.Length];
+        offsets = new int[images.Length];
+        counts = new int[images.Length];
+        int total = 0;
         for (int i = 0; i < images.Length; i++)
         {
-            if (_options.PadImagesToMaxPatches)
-            {
-                patchCounts[i] = maxPatches;
-            }
-            else
-            {
-                var (tw, th) = EmbeddingGemma2ImageProcessor.GetTargetSize(images[i].Width, images[i].Height, budget);
-                patchCounts[i] = (tw / EmbeddingGemma2ImageProcessor.PatchSize) * (th / EmbeddingGemma2ImageProcessor.PatchSize);
-            }
+            var (tw, th) = EmbeddingGemma2ImageProcessor.GetTargetSize(images[i].Width, images[i].Height, budget);
+            int patches = (tw / EmbeddingGemma2ImageProcessor.PatchSize) * (th / EmbeddingGemma2ImageProcessor.PatchSize);
+            patchCounts[i] = _options.PadImagesToMaxPatches ? maxPatches : patches;
+            counts[i] = patches / (EmbeddingGemma2ImageProcessor.PoolingKernelSize * EmbeddingGemma2ImageProcessor.PoolingKernelSize);
+            offsets[i] = total;
+            total = checked(total + (counts[i] * SoftTokenDimension));
         }
+
+        float[] soft = _buffers.Rent<float>(total);
 
         // Images are preprocessed in parallel ahead of their vision calls, at least preprocessAhead at a time (video
         // frames: VideoFramesPreprocessedAhead; images: one call's worth), which bounds the preprocessed memory held.
         int start = 0;
         int ready = 0;
-        var preprocessed = new EmbeddingGemma2ImagePatches[images.Length];
-        foreach (int count in PlanVisionCalls(patchCounts, maxPerCall, _options.MaxVisionBatchPatches))
+        var preprocessed = new EmbeddingGemma2ImagePatches?[images.Length];
+        try
         {
-            cancellationToken.ThrowIfCancellationRequested();
-            if (ready < start + count)
+            foreach (int count in PlanVisionCalls(patchCounts, maxPerCall, _options.MaxVisionBatchPatches))
             {
-                int take = Math.Min(images.Length - ready, Math.Max(start + count - ready, preprocessAhead));
-                EmbeddingGemma2ImageProcessor.Preprocess(new ArraySegment<EmbeddingGemma2Image>(images, ready, take), budget).CopyTo(preprocessed, ready);
-                ready += take;
+                cancellationToken.ThrowIfCancellationRequested();
+                if (ready < start + count)
+                {
+                    int take = Math.Min(images.Length - ready, Math.Max(start + count - ready, preprocessAhead));
+                    EmbeddingGemma2ImageProcessor.Preprocess(new ArraySegment<EmbeddingGemma2Image>(images, ready, take), budget, _buffers).CopyTo(preprocessed, ready);
+                    ready += take;
+                }
+
+                var batch = preprocessed.AsSpan(start, count).ToArray()!;
+                int rows = _options.PadImagesToMaxPatches ? maxPatches : batch.Max(p => p!.PatchCount);
+                RunVisionCall(batch!, rows, soft, offsets.AsSpan(start, count), cancellationToken);
+                foreach (var p in batch)
+                {
+                    p!.ReturnTo(_buffers);
+                }
+
+                preprocessed.AsSpan(start, count).Clear();
+                start += count;
             }
 
-            var batch = preprocessed.AsSpan(start, count).ToArray();
-            preprocessed.AsSpan(start, count).Clear();
+            return soft;
+        }
+        catch
+        {
+            foreach (var p in preprocessed)
+            {
+                p?.ReturnTo(_buffers);
+            }
 
-            int rows = _options.PadImagesToMaxPatches ? maxPatches : batch.Max(p => p.PatchCount);
-            RunVisionCall(batch, rows, soft.AsSpan(start, count), cancellationToken);
-            start += count;
+            _buffers.Return(soft);
+            throw;
         }
     }
 
-    private void RunVisionCall(EmbeddingGemma2ImagePatches[] batch, int rows, Span<float[]> soft, CancellationToken cancellationToken)
+    private void RunVisionCall(EmbeddingGemma2ImagePatches[] batch, int rows, float[] soft, ReadOnlySpan<int> offsets, CancellationToken cancellationToken)
     {
         int count = batch.Length;
         int slots = rows / 9;
         int pixelCells = checked(count * rows * EmbeddingGemma2ImageProcessor.PatchValues);
-        float[] pixels = ArrayPool<float>.Shared.Rent(pixelCells);
-        long[] positions = ArrayPool<long>.Shared.Rent(count * rows * 2);
-        float[] softOut = ArrayPool<float>.Shared.Rent(checked(count * slots * SoftTokenDimension));
-        bool[] maskOut = ArrayPool<bool>.Shared.Rent(count * slots);
+        float[] pixels = _buffers.Rent<float>(pixelCells);
+        long[] positions = _buffers.Rent<long>(count * rows * 2);
+        float[] softOut = _buffers.Rent<float>(checked(count * slots * SoftTokenDimension));
+        bool[] maskOut = _buffers.Rent<bool>(count * slots);
         try
         {
             for (int b = 0; b < count; b++)
@@ -777,15 +885,15 @@ public sealed class EmbeddingGemma2MultimodalEmbedder : IDisposable
                     }
                 }
 
-                soft[b] = softOut.AsSpan(b * slots * SoftTokenDimension, n * SoftTokenDimension).ToArray();
+                softOut.AsSpan(b * slots * SoftTokenDimension, n * SoftTokenDimension).CopyTo(soft.AsSpan(offsets[b]));
             }
         }
         finally
         {
-            ArrayPool<bool>.Shared.Return(maskOut);
-            ArrayPool<float>.Shared.Return(softOut);
-            ArrayPool<long>.Shared.Return(positions);
-            ArrayPool<float>.Shared.Return(pixels);
+            _buffers.Return(maskOut);
+            _buffers.Return(softOut);
+            _buffers.Return(positions);
+            _buffers.Return(pixels);
         }
     }
 
