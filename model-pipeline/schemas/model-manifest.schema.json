@@ -149,7 +149,7 @@
           "additionalProperties": false,
           "required": ["name", "version"],
           "properties": {
-            "name": { "enum": ["onnxruntime", "onnxruntime-genai", "llama.cpp", "torchsharp", "managed"] },
+            "name": { "enum": ["onnxruntime", "onnxruntime-genai", "llama.cpp", "torchsharp", "managed", "roost"] },
             "version": { "type": "string", "minLength": 1 },
             "binding": { "type": "string" },
             "binding_version": { "type": "string" }
@@ -168,8 +168,17 @@
             "outputs": { "type": "array" }
           }
         },
-        "provider_options": { "type": "object" }
-      }
+        "provider_options": { "type": "object" },
+        "roost": { "$ref": "#/$defs/roostProfile" }
+      },
+      "allOf": [
+        {
+          "description": "A Roost profile records the fields below; every other backend must not carry them (R-012).",
+          "if": { "properties": { "backend": { "properties": { "name": { "const": "roost" } } } } },
+          "then": { "required": ["roost"] },
+          "else": { "not": { "required": ["roost"] } }
+        }
+      ]
     },
 
     "capabilities": {
@@ -279,6 +288,80 @@
         "size": { "type": "integer", "minimum": 0 }
       }
     },
+    "roostProfile": {
+      "description": "Roost profile fields (plan R-012). Required fields identify the build the evidence was produced on; optional fields record selections and evidence-chosen choices.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kernel_manifest", "tf32_policy", "kv_dtype", "attention_backend", "sm", "min_driver", "min_toolkit"],
+      "properties": {
+        "kernel_manifest": {
+          "description": "Kernel manifest revision the profile was qualified against.",
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["revision"],
+          "properties": {
+            "revision": { "$ref": "#/$defs/gitSha" },
+            "sha256": { "$ref": "#/$defs/sha256" }
+          }
+        },
+        "tf32_policy": { "description": "TF32 use in Gemm and attention, pinned so comparisons use the same policy.", "enum": ["disabled", "enabled"] },
+        "kv_dtype": { "$ref": "#/$defs/roostDtype" },
+        "attention_backend": { "type": "string", "minLength": 1 },
+        "sm": {
+          "description": "Compute capabilities the profile was qualified on, for example sm_86.",
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "type": "string", "pattern": "^sm_\\d+[af]?$" }
+        },
+        "gpu": { "description": "GPU models used for the evidence.", "type": "array", "items": { "type": "string", "minLength": 1 } },
+        "min_driver": { "description": "Minimum NVIDIA driver version, a quoted string in YAML.", "type": "string", "pattern": "^\\d+(\\.\\d+){1,2}$" },
+        "min_toolkit": { "description": "Minimum CUDA toolkit version, a quoted string in YAML (13.0 unquoted parses as a float).", "type": "string", "pattern": "^\\d+\\.\\d+(\\.\\d+)?$" },
+        "kernel_variants": {
+          "description": "Kernel variants the selector chose for this profile, by digest (optional).",
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["op", "variant", "digest"],
+            "properties": {
+              "op": { "type": "string", "minLength": 1 },
+              "variant": { "type": "string", "minLength": 1 },
+              "digest": { "$ref": "#/$defs/sha256" }
+            }
+          }
+        },
+        "mesh": {
+          "description": "Device mesh descriptor (contract C9). Absent means a single rank (optional).",
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["ranks"],
+          "properties": {
+            "ranks": { "type": "integer", "minimum": 1 },
+            "tp": { "type": "integer", "minimum": 1 },
+            "pp": { "type": "integer", "minimum": 1 },
+            "dp": { "type": "integer", "minimum": 1 },
+            "ep": { "type": "integer", "minimum": 1 }
+          }
+        },
+        "layer_precision": {
+          "description": "Per-layer precision chosen from calibration evidence (R-079) (optional).",
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["layer", "weight_dtype"],
+            "properties": {
+              "layer": { "type": "integer", "minimum": 0 },
+              "weight_dtype": { "$ref": "#/$defs/roostDtype" },
+              "kv_dtype": { "$ref": "#/$defs/roostDtype" },
+              "evidence": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    "roostDtype": { "enum": ["fp32", "fp16", "bf16", "fp8_e4m3", "fp8_e5m2", "int8", "int4"] },
     "gate": {
       "type": "object",
       "additionalProperties": false,

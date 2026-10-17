@@ -75,3 +75,61 @@ def test_registry_manifests_record_every_gate(path):
             assert entry.get("evidence"), gate
             assert entry.get("date"), gate
             assert (REGISTRY.parents[1] / entry["evidence"]).exists(), entry["evidence"]
+
+
+ROOST = {
+    "kernel_manifest": {"revision": "a" * 40},
+    "tf32_policy": "disabled",
+    "kv_dtype": "bf16",
+    "attention_backend": "flashinfer",
+    "sm": ["sm_86"],
+    "min_driver": "580.65",
+    "min_toolkit": "13.0",
+}
+
+
+def make_roost(m, **extra):
+    m["execution"]["backend"].update(name="roost", version="0.1.0")
+    m["execution"]["roost"] = {**ROOST, **extra}
+
+
+def test_roost_profile_is_valid(tmp_path):
+    assert validate_file(write_variant(tmp_path, make_roost)) == []
+
+
+def test_roost_optional_fields_are_valid(tmp_path):
+    def edit(m):
+        make_roost(
+            m,
+            kernel_variants=[{"op": "gemm", "variant": "cublaslt", "digest": "b" * 64}],
+            mesh={"ranks": 2, "tp": 2},
+            layer_precision=[{"layer": 0, "weight_dtype": "int4", "kv_dtype": "fp8_e4m3", "evidence": "calib.json"}],
+        )
+
+    assert validate_file(write_variant(tmp_path, edit)) == []
+
+
+def test_roost_backend_requires_roost_block(tmp_path):
+    path = write_variant(tmp_path, lambda m: m["execution"]["backend"].update(name="roost", version="0.1.0"))
+    assert validate_file(path)
+
+
+def test_roost_block_rejected_for_other_backends(tmp_path):
+    path = write_variant(tmp_path, lambda m: m["execution"].update(roost=dict(ROOST)))
+    assert validate_file(path)
+
+
+@pytest.mark.parametrize(
+    "field,value",
+    [("tf32_policy", "maybe"), ("kv_dtype", "fp4"), ("sm", ["86"]), ("min_driver", "latest"), ("mesh", {"tp": 2})],
+)
+def test_roost_bad_values_are_rejected(tmp_path, field, value):
+    assert validate_file(write_variant(tmp_path, lambda m: make_roost(m, **{field: value})))
+
+
+def test_roost_required_field_is_enforced(tmp_path):
+    def edit(m):
+        make_roost(m)
+        del m["execution"]["roost"]["kv_dtype"]
+
+    assert validate_file(write_variant(tmp_path, edit))
