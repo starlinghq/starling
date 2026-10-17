@@ -232,7 +232,8 @@ public sealed class BatchedRowsTests
 
     /// <summary>
     /// The default cached sequential path against uncached rows, one by one and batched, on CPU (opt-in: set <see cref="BenchmarkEnvironmentVariable"/>
-    /// to an output path). States of 64, 512 and 2,048 tokens, 16 questions of mixed widths (noul, choice, long options).
+    /// to an output path). States of 32, 128 and 512 tokens, 8 questions of mixed widths (noul, choice, score, long
+    /// options); the session is warmed by <see cref="KevDecisionModel.Run"/> on each record first, then each variant runs twice.
     /// </summary>
     [Theory]
     [InlineData(KevModel.Kev08B)]
@@ -242,11 +243,11 @@ public sealed class BatchedRowsTests
         Assert.SkipWhen(string.IsNullOrEmpty(output), $"{BenchmarkEnvironmentVariable} is not set");
         var (kev, reason) = ModelParityTests.Load(model);
         Assert.SkipWhen(kev is null, reason);
-        const int reps = 3;
+        const int reps = 2;
         var results = new List<Dictionary<string, object>>();
-        foreach (int stateTokens in new[] { 64, 512, 2048 })
+        foreach (int stateTokens in new[] { 32, 128, 512 })
         {
-            var record = BenchRecord(kev!, stateTokens, 16);
+            var record = BenchRecord(kev!, stateTokens, 8);
             var encoding = kev!.Encode(record);
             var widths = encoding.Rows.Select(r => r.Ids.Length).ToArray();
             var reference = kev.Run(encoding, Ct);
@@ -256,17 +257,17 @@ public sealed class BatchedRowsTests
                 ("uncached sequential (RunUncached)", () => kev.RunUncached(encoding, Ct)),
                 ("uncached batched b4 sorted", () => kev.RunUncachedBatched(encoding, new KevBatchOptions { MaxRows = 4, MaxTokens = null, SortByLength = true }, Ct)),
                 ("uncached batched b8 sorted", () => kev.RunUncachedBatched(encoding, new KevBatchOptions { MaxRows = 8, MaxTokens = null, SortByLength = true }, Ct)),
-                ("uncached batched b16", () => kev.RunUncachedBatched(encoding, new KevBatchOptions { MaxRows = 16, MaxTokens = null }, Ct)),
             };
             foreach (var (name, run) in variants)
             {
-                double maxAbs = MaxAbs(run(), reference); // warm-up and parity
+                double maxAbs = 0;
                 var ms = new List<double>();
                 for (int i = 0; i < reps; i++)
                 {
                     var sw = Stopwatch.StartNew();
-                    run();
+                    var probs = run();
                     ms.Add(sw.Elapsed.TotalMilliseconds);
+                    maxAbs = Math.Max(maxAbs, MaxAbs(probs, reference));
                 }
 
                 ms.Sort();
@@ -274,10 +275,10 @@ public sealed class BatchedRowsTests
                 {
                     ["state_tokens"] = encoding.StateIds.Length, ["questions"] = widths.Length,
                     ["branch_tokens_min"] = widths.Min(), ["branch_tokens_max"] = widths.Max(), ["branch_tokens_sum"] = widths.Sum(),
-                    ["variant"] = name, ["median_ms"] = Math.Round(ms[reps / 2], 1), ["min_ms"] = Math.Round(ms[0], 1),
+                    ["variant"] = name, ["min_ms"] = Math.Round(ms[0], 1), ["max_ms"] = Math.Round(ms[^1], 1),
                     ["max_abs_vs_sequential"] = maxAbs,
                 });
-                Log(string.Create(CultureInfo.InvariantCulture, $"state {encoding.StateIds.Length} {name}: median {ms[reps / 2]:F0} ms, max abs {maxAbs:G3}"));
+                Log(string.Create(CultureInfo.InvariantCulture, $"state {encoding.StateIds.Length} {name}: min {ms[0]:F0} ms, max abs {maxAbs:G3}"));
             }
         }
 
