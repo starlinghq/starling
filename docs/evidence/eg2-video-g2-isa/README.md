@@ -110,6 +110,14 @@ exact, and a host without AVX-512 (EPYC 7763). This fits the mechanism above: CU
 graph's fp32 reductions differently from Ampere, and channel 115 amplifies the difference. The run kept no tensor
 sidecars, so the token-level localization was not repeated for CUDA.
 
+The two pods had the same kind of host and different GPUs. The 4090 pod's `environment.txt` in artifact
+`qualification-cuda` of run 38857860186 records an AMD EPYC 7763 whose flags include no `avx512`. The per-release run
+on main, [38977347513](https://github.com/starlinghq/starling/actions/runs/38977347513) (commit `9a5c143`), landed on an
+**RTX 3090 with an AMD EPYC 7H12 host** (Zen 2, AVX2). There, `video-fp32-cuda` G1 and G2 **passed**: embedding 2.77e-6,
+soft tokens 2.50e-4, token embeddings 7.97e-4 (bound 1e-3; the same value as the local RTX 3090). Both hosts are AVX2
+and both have stage 1 exact. The GPU is what changes between the pass and the failure. The same run's CPU release gate
+for `video-fp32-cpu` ran on an EPYC 7763 and passed (token embeddings 3.81e-4).
+
 ## Files
 
 | Path | Contents |
