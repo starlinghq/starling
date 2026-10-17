@@ -16,7 +16,7 @@ Maturity is per profile, generated from the registry manifests by `model-pipelin
 ## Install
 
 ```sh
-dotnet add package Starlings.Models.E5.MLNet --prerelease
+dotnet add package Starlings.Models.E5.MLNet
 dotnet add package Microsoft.ML.OnnxRuntime --version 1.30.0          # or Microsoft.ML.OnnxRuntime.Gpu.Linux; exactly one
 ```
 

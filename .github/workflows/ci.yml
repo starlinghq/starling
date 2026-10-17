@@ -75,6 +75,8 @@ jobs:
       - run: dotnet build ai-dotnet/AI.slnx --configuration Release
       - name: Build E5VectorStore from published packages
         run: dotnet build ai-dotnet/samples/E5VectorStore --configuration Release -p:RestoreLockedMode=true
+      - name: Build LocalRag from published packages
+        run: dotnet build ai-dotnet/samples/LocalRag --configuration Release -p:RestoreLockedMode=true
       - run: dotnet test --solution ai-dotnet/AI.slnx --configuration Release --no-build
       - name: Library dependency boundaries
         shell: bash
