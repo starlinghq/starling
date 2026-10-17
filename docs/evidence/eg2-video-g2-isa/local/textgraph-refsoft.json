@@ -1,0 +1,24 @@
+{
+ "commons-video-04": {
+  "row_relative": 2.629818379736856e-05,
+  "max_abs": 0.114471435546875,
+  "ref_max_abs": 4352.82666015625,
+  "worst_token": 642,
+  "worst_dim": 115,
+  "tokens_over_1e-3": 0,
+  "mean_abs": 8.634361096620414e-05,
+  "out_sha256": "2f4d704a51826bac",
+  "seconds": 14.3
+ },
+ "commons-video-00": {
+  "row_relative": 1.2813415247124154e-05,
+  "max_abs": 0.0439453125,
+  "ref_max_abs": 3429.633056640625,
+  "worst_token": 1551,
+  "worst_dim": 115,
+  "tokens_over_1e-3": 0,
+  "mean_abs": 6.030844684881256e-05,
+  "out_sha256": "c8fe1f085cc534c1",
+  "seconds": 2.9
+ }
+}

@@ -1,0 +1,1888 @@
+[
+{
+"node": "node_Shape_2",
+"op": "Shape",
+"output": "val_2",
+"sha256": "7c9fa136d4413fa6",
+"dtype": "int64",
+"shape": [
+1
+]
+},
+{
+"node": "node_Shape_4",
+"op": "Shape",
+"output": "val_4",
+"sha256": "5ff1541d25eef598",
+"dtype": "int64",
+"shape": [
+1
+]
+},
+{
+"node": "node_sym_size_int",
+"op": "Squeeze",
+"output": "sym_size_int",
+"sha256": "5ff1541d25eef598",
+"dtype": "int64",
+"shape": []
+},
+{
+"node": "node_eq_3",
+"op": "Equal",
+"output": "eq_3",
+"sha256": "e4dd51ca230fc083",
+"dtype": "bool",
+"shape": [
+1,
+1260,
+2
+]
+},
+{
+"node": "node_floordiv",
+"op": "Div",
+"output": "floordiv",
+"sha256": "d362bd4149a9c237",
+"dtype": "int64",
+"shape": []
+},
+{
+"node": "node_Cast_11",
+"op": "Cast",
+"output": "val_11",
+"sha256": "13877be3386b36bf",
+"dtype": "int64",
+"shape": [
+1,
+1260,
+2
+]
+},
+{
+"node": "node_ReduceMin_14",
+"op": "ReduceMin",
+"output": "val_14",
+"sha256": "bba0e7170e97783f",
+"dtype": "int64",
+"shape": [
+1,
+1260
+]
+},
+{
+"node": "node_all_1",
+"op": "Cast",
+"output": "all_1",
+"sha256": "5ad29c7a069524a0",
+"dtype": "bool",
+"shape": [
+1,
+1260
+]
+},
+{
+"node": "node_sub_4",
+"op": "Sub",
+"output": "sub_4",
+"sha256": "f91e7e24ed02021c",
+"dtype": "float32",
+"shape": [
+1,
+1260,
+768
+]
+},
+{
+"node": "node_mul_8",
+"op": "Mul",
+"output": "mul_8",
+"sha256": "5135baf43be15296",
+"dtype": "float32",
+"shape": [
+1,
+1260,
+768
+]
+},
+{
+"node": "node_linear",
+"op": "MatMul",
+"output": "linear",
+"sha256": "339d7ad6915fc04e",
+"dtype": "float32",
+"shape": [
+1,
+1260,
+768
+]
+},
+{
+"node": "node_clamp",
+"op": "Clip",
+"output": "clamp",
+"sha256": "8b7c98b0f147747e",
+"dtype": "int64",
+"shape": [
+1,
+1260,
+2
+]
+},
+{
+"node": "node_select",
+"op": "Gather",
+"output": "select",
+"sha256": "9144094784b29bf1",
+"dtype": "int64",
+"shape": [
+1,
+1260
+]
+},
+{
+"node": "node_select_1",
+"op": "Gather",
+"output": "select_1",
+"sha256": "20988eee49263885",
+"dtype": "float32",
+"shape": [
+10240,
+768
+]
+},
+{
+"node": "node_embedding",
+"op": "Gather",
+"output": "embedding",
+"sha256": "4a050689b3de9ca3",
+"dtype": "float32",
+"shape": [
+1,
+1260,
+768
+]
+},
+{
+"node": "node_select_2",
+"op": "Gather",
+"output": "select_2",
+"sha256": "9cee586a3133179b",
+"dtype": "int64",
+"shape": [
+1,
+1260
+]
+},
+{
+"node": "node_select_3",
+"op": "Gather",
+"output": "select_3",
+"sha256": "8ce21040ede0d28c",
+"dtype": "float32",
+"shape": [
+10240,
+768
+]
+},
+{
+"node": "node_embedding_1",
+"op": "Gather",
+"output": "embedding_1",
+"sha256": "094d54e6f9b18504",
+"dtype": "float32",
+"shape": [
+1,
+1260,
+768
+]
+},
+{
+"node": "node_add_37",
+"op": "Add",
+"output": "add_37",
+"sha256": "0b554498d7279f7e",
+"dtype": "float32",
+"shape": [
+1,
+1260,
+768
+]
+},
+{
+"node": "node_unsqueeze",
+"op": "Unsqueeze",
+"output": "unsqueeze",
+"sha256": "5ad29c7a069524a0",
+"dtype": "bool",
+"shape": [
+1,
+1260,
+1
+]
+},
+{
+"node": "node_where",
+"op": "Where",
+"output": "where",
+"sha256": "d2c0b9345b33e940",
+"dtype": "float32",
+"shape": [
+1,
+1260,
+768
+]
+},
+{
+"node": "node_add_50",
+"op": "Add",
+"output": "add_50",
+"sha256": "4dd19e133c59f29c",
+"dtype": "float32",
+"shape": [
+1,
+1260,
+768
+]
+},
+{
+"node": "node_logical_not",
+"op": "Not",
+"output": "logical_not",
+"sha256": "de1c9c806cbcf805",
+"dtype": "bool",
+"shape": [
+1,
+1260
+]
+},
+{
+"node": "node_Unsqueeze_3575",
+"op": "Unsqueeze",
+"output": "unsqueeze_2",
+"sha256": "de1c9c806cbcf805",
+"dtype": "bool",
+"shape": [
+1,
+1,
+1,
+1260
+]
+},
+{
+"node": "node_where_1",
+"op": "Where",
+"output": "where_1",
+"sha256": "2512def70fe8a150",
+"dtype": "float32",
+"shape": [
+1,
+1,
+1,
+1260
+]
+},
+{
+"node": "node_Concat_45",
+"op": "Concat",
+"output": "val_45",
+"sha256": "ef571790abb03770",
+"dtype": "int64",
+"shape": [
+4
+]
+},
+{
+"node": "node_expand",
+"op": "Expand",
+"output": "expand",
+"sha256": "a1c1dc728105cae3",
+"dtype": "float32",
+"shape": [
+1,
+1,
+1260,
+1260
+]
+},
+{
+"node": "node_unsqueeze_3",
+"op": "Unsqueeze",
+"output": "unsqueeze_3",
+"sha256": "496d16c4d2948d04",
+"dtype": "int64",
+"shape": [
+1,
+1260,
+2,
+1
+]
+},
+{
+"node": "node__to_copy",
+"op": "Cast",
+"output": "_to_copy",
+"sha256": "4c08b24c5232e446",
+"dtype": "float32",
+"shape": [
+1,
+1260,
+2,
+1
+]
+},
+{
+"node": "node_mul_61",
+"op": "Mul",
+"output": "mul_61",
+"sha256": "eee488ce8747440e",
+"dtype": "float32",
+"shape": [
+1,
+1260,
+2,
+16
+]
+},
+{
+"node": "node_cos",
+"op": "Cos",
+"output": "cos",
+"sha256": "8970075c4e3ddd01",
+"dtype": "float32",
+"shape": [
+1,
+1260,
+2,
+16
+]
+},
+{
+"node": "node_sin",
+"op": "Sin",
+"output": "sin",
+"sha256": "3a87a15f89f09026",
+"dtype": "float32",
+"shape": [
+1,
+1260,
+2,
+16
+]
+},
+{
+"node": "node_select_4",
+"op": "Gather",
+"output": "select_4",
+"sha256": "02ef66283ca26449",
+"dtype": "float32",
+"shape": [
+1,
+1260,
+16
+]
+},
+{
+"node": "node_select_5",
+"op": "Gather",
+"output": "select_5",
+"sha256": "9c753b8077284854",
+"dtype": "float32",
+"shape": [
+1,
+1260,
+16
+]
+},
+{
+"node": "node_cat",
+"op": "Concat",
+"output": "cat",
+"sha256": "d0f95ab8d7941e34",
+"dtype": "float32",
+"shape": [
+1,
+1260,
+64
+]
+},
+{
+"node": "node_select_6",
+"op": "Gather",
+"output": "select_6",
+"sha256": "fd8c01c6e39b061d",
+"dtype": "float32",
+"shape": [
+1,
+1260,
+16
+]
+},
+{
+"node": "node_select_7",
+"op": "Gather",
+"output": "select_7",
+"sha256": "17d3d73d2418e5eb",
+"dtype": "float32",
+"shape": [
+1,
+1260,
+16
+]
+},
+{
+"node": "node_cat_1",
+"op": "Concat",
+"output": "cat_1",
+"sha256": "3df70a307a8d7df2",
+"dtype": "float32",
+"shape": [
+1,
+1260,
+64
+]
+},
+{
+"node": "node_pow_1",
+"op": "Pow",
+"output": "pow_1",
+"sha256": "be88ee220df6d09c",
+"dtype": "float32",
+"shape": [
+1,
+1260,
+768
+]
+},
+{
+"node": "node_mean",
+"op": "ReduceMean",
+"output": "mean",
+"sha256": "697945cdd4964932",
+"dtype": "float32",
+"shape": [
+1,
+1260,
+1
+]
+},
+{
+"node": "node_add_167",
+"op": "Add",
+"output": "add_167",
+"sha256": "5ff2112e3cf695ae",
+"dtype": "float32",
+"shape": [
+1,
+1260,
+1
+]
+},
+{
+"node": "node_pow_2",
+"op": "Pow",
+"output": "pow_2",
+"sha256": "24dd512c2040413a",
+"dtype": "float32",
+"shape": [
+1,
+1260,
+1
+]
+},
+{
+"node": "node_mul_118",
+"op": "Mul",
+"output": "mul_118",
+"sha256": "2e13d47116631037",
+"dtype": "float32",
+"shape": [
+1,
+1260,
+768
+]
+},
+{
+"node": "node_mul_122",
+"op": "Mul",
+"output": "mul_122",
+"sha256": "a084bbef3f74c085",
+"dtype": "float32",
+"shape": [
+1,
+1260,
+768
+]
+},
+{
+"node": "node_linear_1",
+"op": "MatMul",
+"output": "linear_1",
+"sha256": "4d8c65df58562c58",
+"dtype": "float32",
+"shape": [
+1,
+1260,
+768
+]
+},
+{
+"node": "node_Concat_99",
+"op": "Concat",
+"output": "val_99",
+"sha256": "105748d312e970d0",
+"dtype": "int64",
+"shape": [
+4
+]
+},
+{
+"node": "node_view",
+"op": "Reshape",
+"output": "view",
+"sha256": "4d8c65df58562c58",
+"dtype": "float32",
+"shape": [
+1,
+1260,
+12,
+64
+]
+},
+{
+"node": "node_pow_3",
+"op": "Pow",
+"output": "pow_3",
+"sha256": "001474c8cd311bd2",
+"dtype": "float32",
+"shape": [
+1,
+1260,
+12,
+64
+]
+},
+{
+"node": "node_mean_1",
+"op": "ReduceMean",
+"output": "mean_1",
+"sha256": "11525799c3ffb201",
+"dtype": "float32",
+"shape": [
+1,
+1260,
+12,
+1
+]
+},
+{
+"node": "node_add_207",
+"op": "Add",
+"output": "add_207",
+"sha256": "38ea3d2ae316593a",
+"dtype": "float32",
+"shape": [
+1,
+1260,
+12,
+1
+]
+},
+{
+"node": "node_pow_4",
+"op": "Pow",
+"output": "pow_4",
+"sha256": "4476559bd25ea875",
+"dtype": "float32",
+"shape": [
+1,
+1260,
+12,
+1
+]
+},
+{
+"node": "node_mul_147",
+"op": "Mul",
+"output": "mul_147",
+"sha256": "6bb17739597ce417",
+"dtype": "float32",
+"shape": [
+1,
+1260,
+12,
+64
+]
+},
+{
+"node": "node_mul_151",
+"op": "Mul",
+"output": "mul_151",
+"sha256": "21861f8067e636e2",
+"dtype": "float32",
+"shape": [
+1,
+1260,
+12,
+64
+]
+},
+{
+"node": "node_Split_2671",
+"op": "Split",
+"output": "split_with_sizes_split_0",
+"sha256": "808452dbe65f8c31",
+"dtype": "float32",
+"shape": [
+1,
+1260,
+12,
+32
+]
+},
+{
+"node": "node_Split_2671",
+"op": "Split",
+"output": "split_with_sizes_split_1",
+"sha256": "06b694c3a92ba767",
+"dtype": "float32",
+"shape": [
+1,
+1260,
+12,
+32
+]
+},
+{
+"node": "node_Split_2675",
+"op": "Split",
+"output": "split_with_sizes_1_split_0",
+"sha256": "66e44d9abfc485e3",
+"dtype": "float32",
+"shape": [
+1,
+1260,
+32
+]
+},
+{
+"node": "node_Split_2675",
+"op": "Split",
+"output": "split_with_sizes_1_split_1",
+"sha256": "c74266c62d03d5ca",
+"dtype": "float32",
+"shape": [
+1,
+1260,
+32
+]
+},
+{
+"node": "node_Split_2679",
+"op": "Split",
+"output": "split_with_sizes_2_split_0",
+"sha256": "b44cba60c821c682",
+"dtype": "float32",
+"shape": [
+1,
+1260,
+32
+]
+},
+{
+"node": "node_Split_2679",
+"op": "Split",
+"output": "split_with_sizes_2_split_1",
+"sha256": "0a2542599ea31270",
+"dtype": "float32",
+"shape": [
+1,
+1260,
+32
+]
+},
+{
+"node": "node_unsqueeze_4",
+"op": "Unsqueeze",
+"output": "unsqueeze_4",
+"sha256": "66e44d9abfc485e3",
+"dtype": "float32",
+"shape": [
+1,
+1260,
+1,
+32
+]
+},
+{
+"node": "node_unsqueeze_5",
+"op": "Unsqueeze",
+"output": "unsqueeze_5",
+"sha256": "b44cba60c821c682",
+"dtype": "float32",
+"shape": [
+1,
+1260,
+1,
+32
+]
+},
+{
+"node": "node_mul_182",
+"op": "Mul",
+"output": "mul_182",
+"sha256": "ecfd08289868bd08",
+"dtype": "float32",
+"shape": [
+1,
+1260,
+12,
+32
+]
+},
+{
+"node": "node_slice_6",
+"op": "Slice",
+"output": "slice_6",
+"sha256": "18cf5556635e8689",
+"dtype": "float32",
+"shape": [
+1,
+1260,
+12,
+16
+]
+},
+{
+"node": "node_slice_7",
+"op": "Slice",
+"output": "slice_7",
+"sha256": "d7246f9fac9dc365",
+"dtype": "float32",
+"shape": [
+1,
+1260,
+12,
+16
+]
+},
+{
+"node": "node_neg",
+"op": "Neg",
+"output": "neg",
+"sha256": "26f8e9ae0735ea8e",
+"dtype": "float32",
+"shape": [
+1,
+1260,
+12,
+16
+]
+},
+{
+"node": "node_cat_2",
+"op": "Concat",
+"output": "cat_2",
+"sha256": "35b1277cd01cfe75",
+"dtype": "float32",
+"shape": [
+1,
+1260,
+12,
+32
+]
+},
+{
+"node": "node_mul_198",
+"op": "Mul",
+"output": "mul_198",
+"sha256": "e5413808d193c65c",
+"dtype": "float32",
+"shape": [
+1,
+1260,
+12,
+32
+]
+},
+{
+"node": "node_add_299",
+"op": "Add",
+"output": "add_299",
+"sha256": "c96cf5232bfcccc0",
+"dtype": "float32",
+"shape": [
+1,
+1260,
+12,
+32
+]
+},
+{
+"node": "node_unsqueeze_6",
+"op": "Unsqueeze",
+"output": "unsqueeze_6",
+"sha256": "c74266c62d03d5ca",
+"dtype": "float32",
+"shape": [
+1,
+1260,
+1,
+32
+]
+},
+{
+"node": "node_unsqueeze_7",
+"op": "Unsqueeze",
+"output": "unsqueeze_7",
+"sha256": "0a2542599ea31270",
+"dtype": "float32",
+"shape": [
+1,
+1260,
+1,
+32
+]
+},
+{
+"node": "node_mul_211",
+"op": "Mul",
+"output": "mul_211",
+"sha256": "56e42067bc2e6b37",
+"dtype": "float32",
+"shape": [
+1,
+1260,
+12,
+32
+]
+},
+{
+"node": "node_slice_8",
+"op": "Slice",
+"output": "slice_8",
+"sha256": "deaf14f00916c8b2",
+"dtype": "float32",
+"shape": [
+1,
+1260,
+12,
+16
+]
+},
+{
+"node": "node_slice_9",
+"op": "Slice",
+"output": "slice_9",
+"sha256": "175d50557705a7b6",
+"dtype": "float32",
+"shape": [
+1,
+1260,
+12,
+16
+]
+},
+{
+"node": "node_neg_1",
+"op": "Neg",
+"output": "neg_1",
+"sha256": "1a1d09fba1a980a2",
+"dtype": "float32",
+"shape": [
+1,
+1260,
+12,
+16
+]
+},
+{
+"node": "node_cat_3",
+"op": "Concat",
+"output": "cat_3",
+"sha256": "3e33c13c21185eb4",
+"dtype": "float32",
+"shape": [
+1,
+1260,
+12,
+32
+]
+},
+{
+"node": "node_mul_227",
+"op": "Mul",
+"output": "mul_227",
+"sha256": "2d0dca0ab5b3e28c",
+"dtype": "float32",
+"shape": [
+1,
+1260,
+12,
+32
+]
+},
+{
+"node": "node_add_345",
+"op": "Add",
+"output": "add_345",
+"sha256": "2ffb42bc1c22e717",
+"dtype": "float32",
+"shape": [
+1,
+1260,
+12,
+32
+]
+},
+{
+"node": "node_cat_4",
+"op": "Concat",
+"output": "cat_4",
+"sha256": "84cbf83bc4f42d0e",
+"dtype": "float32",
+"shape": [
+1,
+1260,
+12,
+64
+]
+},
+{
+"node": "node_transpose",
+"op": "Transpose",
+"output": "transpose",
+"sha256": "6ec03b407e047499",
+"dtype": "float32",
+"shape": [
+1,
+12,
+1260,
+64
+]
+},
+{
+"node": "node_linear_2",
+"op": "MatMul",
+"output": "linear_2",
+"sha256": "1ba399d7700ba7c6",
+"dtype": "float32",
+"shape": [
+1,
+1260,
+768
+]
+},
+{
+"node": "node_view_1",
+"op": "Reshape",
+"output": "view_1",
+"sha256": "1ba399d7700ba7c6",
+"dtype": "float32",
+"shape": [
+1,
+1260,
+12,
+64
+]
+},
+{
+"node": "node_pow_5",
+"op": "Pow",
+"output": "pow_5",
+"sha256": "dcbab7ba5d566914",
+"dtype": "float32",
+"shape": [
+1,
+1260,
+12,
+64
+]
+},
+{
+"node": "node_mean_2",
+"op": "ReduceMean",
+"output": "mean_2",
+"sha256": "e4e3add2735afd89",
+"dtype": "float32",
+"shape": [
+1,
+1260,
+12,
+1
+]
+},
+{
+"node": "node_add_380",
+"op": "Add",
+"output": "add_380",
+"sha256": "2aba40470675c741",
+"dtype": "float32",
+"shape": [
+1,
+1260,
+12,
+1
+]
+},
+{
+"node": "node_pow_6",
+"op": "Pow",
+"output": "pow_6",
+"sha256": "3c71393703c56d22",
+"dtype": "float32",
+"shape": [
+1,
+1260,
+12,
+1
+]
+},
+{
+"node": "node_mul_258",
+"op": "Mul",
+"output": "mul_258",
+"sha256": "84883b773bd3655b",
+"dtype": "float32",
+"shape": [
+1,
+1260,
+12,
+64
+]
+},
+{
+"node": "node_mul_262",
+"op": "Mul",
+"output": "mul_262",
+"sha256": "95cfda7da67d8382",
+"dtype": "float32",
+"shape": [
+1,
+1260,
+12,
+64
+]
+},
+{
+"node": "node_Split_2696",
+"op": "Split",
+"output": "split_with_sizes_3_split_0",
+"sha256": "c4c3f85a61a69fc7",
+"dtype": "float32",
+"shape": [
+1,
+1260,
+12,
+32
+]
+},
+{
+"node": "node_Split_2696",
+"op": "Split",
+"output": "split_with_sizes_3_split_1",
+"sha256": "88aa17d859c65d73",
+"dtype": "float32",
+"shape": [
+1,
+1260,
+12,
+32
+]
+},
+{
+"node": "node_mul_293",
+"op": "Mul",
+"output": "mul_293",
+"sha256": "038d6e750d20784d",
+"dtype": "float32",
+"shape": [
+1,
+1260,
+12,
+32
+]
+},
+{
+"node": "node_slice_10",
+"op": "Slice",
+"output": "slice_10",
+"sha256": "58c91322c05679c1",
+"dtype": "float32",
+"shape": [
+1,
+1260,
+12,
+16
+]
+},
+{
+"node": "node_slice_11",
+"op": "Slice",
+"output": "slice_11",
+"sha256": "1ed502d318db6e86",
+"dtype": "float32",
+"shape": [
+1,
+1260,
+12,
+16
+]
+},
+{
+"node": "node_neg_2",
+"op": "Neg",
+"output": "neg_2",
+"sha256": "fe9d0248c1e2dfbd",
+"dtype": "float32",
+"shape": [
+1,
+1260,
+12,
+16
+]
+},
+{
+"node": "node_cat_5",
+"op": "Concat",
+"output": "cat_5",
+"sha256": "7f1376fd403c3f05",
+"dtype": "float32",
+"shape": [
+1,
+1260,
+12,
+32
+]
+},
+{
+"node": "node_mul_309",
+"op": "Mul",
+"output": "mul_309",
+"sha256": "1b1000623a93cee2",
+"dtype": "float32",
+"shape": [
+1,
+1260,
+12,
+32
+]
+},
+{
+"node": "node_add_472",
+"op": "Add",
+"output": "add_472",
+"sha256": "30e4529e968a3154",
+"dtype": "float32",
+"shape": [
+1,
+1260,
+12,
+32
+]
+},
+{
+"node": "node_mul_322",
+"op": "Mul",
+"output": "mul_322",
+"sha256": "ad8e07e2777611c2",
+"dtype": "float32",
+"shape": [
+1,
+1260,
+12,
+32
+]
+},
+{
+"node": "node_slice_12",
+"op": "Slice",
+"output": "slice_12",
+"sha256": "8aca87651564afaa",
+"dtype": "float32",
+"shape": [
+1,
+1260,
+12,
+16
+]
+},
+{
+"node": "node_slice_13",
+"op": "Slice",
+"output": "slice_13",
+"sha256": "930354ba35430ab0",
+"dtype": "float32",
+"shape": [
+1,
+1260,
+12,
+16
+]
+},
+{
+"node": "node_neg_3",
+"op": "Neg",
+"output": "neg_3",
+"sha256": "3069cba315488bbe",
+"dtype": "float32",
+"shape": [
+1,
+1260,
+12,
+16
+]
+},
+{
+"node": "node_cat_6",
+"op": "Concat",
+"output": "cat_6",
+"sha256": "607b8d8e0acfebdf",
+"dtype": "float32",
+"shape": [
+1,
+1260,
+12,
+32
+]
+},
+{
+"node": "node_mul_338",
+"op": "Mul",
+"output": "mul_338",
+"sha256": "f959a8771d29ce9b",
+"dtype": "float32",
+"shape": [
+1,
+1260,
+12,
+32
+]
+},
+{
+"node": "node_add_518",
+"op": "Add",
+"output": "add_518",
+"sha256": "21c24f073890ba15",
+"dtype": "float32",
+"shape": [
+1,
+1260,
+12,
+32
+]
+},
+{
+"node": "node_cat_7",
+"op": "Concat",
+"output": "cat_7",
+"sha256": "13a7f36726797dc0",
+"dtype": "float32",
+"shape": [
+1,
+1260,
+12,
+64
+]
+},
+{
+"node": "node_transpose_1",
+"op": "Transpose",
+"output": "transpose_1",
+"sha256": "c482b44d9b02b5d8",
+"dtype": "float32",
+"shape": [
+1,
+12,
+1260,
+64
+]
+},
+{
+"node": "node_linear_3",
+"op": "MatMul",
+"output": "linear_3",
+"sha256": "8961888bfbd08e87",
+"dtype": "float32",
+"shape": [
+1,
+1260,
+768
+]
+},
+{
+"node": "node_view_2",
+"op": "Reshape",
+"output": "view_2",
+"sha256": "8961888bfbd08e87",
+"dtype": "float32",
+"shape": [
+1,
+1260,
+12,
+64
+]
+},
+{
+"node": "node_pow_7",
+"op": "Pow",
+"output": "pow_7",
+"sha256": "3face92efac3e4bf",
+"dtype": "float32",
+"shape": [
+1,
+1260,
+12,
+64
+]
+},
+{
+"node": "node_mean_3",
+"op": "ReduceMean",
+"output": "mean_3",
+"sha256": "3602603e2b001a50",
+"dtype": "float32",
+"shape": [
+1,
+1260,
+12,
+1
+]
+},
+{
+"node": "node_add_553",
+"op": "Add",
+"output": "add_553",
+"sha256": "2c586d1c53a7f3f0",
+"dtype": "float32",
+"shape": [
+1,
+1260,
+12,
+1
+]
+},
+{
+"node": "node_pow_8",
+"op": "Pow",
+"output": "pow_8",
+"sha256": "8620f00cfaf50ab2",
+"dtype": "float32",
+"shape": [
+1,
+1260,
+12,
+1
+]
+},
+{
+"node": "node_mul_369",
+"op": "Mul",
+"output": "mul_369",
+"sha256": "bfb1fa8fa919c49e",
+"dtype": "float32",
+"shape": [
+1,
+1260,
+12,
+64
+]
+},
+{
+"node": "node_transpose_2",
+"op": "Transpose",
+"output": "transpose_2",
+"sha256": "a6490fbcb6a2620f",
+"dtype": "float32",
+"shape": [
+1,
+12,
+1260,
+64
+]
+},
+{
+"node": "node_Shape_210",
+"op": "Shape",
+"output": "val_210",
+"sha256": "9a1640c2aa1dec3a",
+"dtype": "int64",
+"shape": [
+4
+]
+},
+{
+"node": "node_Slice_212",
+"op": "Slice",
+"output": "val_212",
+"sha256": "a06f129fc52abf60",
+"dtype": "int64",
+"shape": [
+1
+]
+},
+{
+"node": "node_Slice_214",
+"op": "Slice",
+"output": "val_214",
+"sha256": "5ff1541d25eef598",
+"dtype": "int64",
+"shape": [
+1
+]
+},
+{
+"node": "node_Slice_216",
+"op": "Slice",
+"output": "val_216",
+"sha256": "171e954b61a7a72e",
+"dtype": "int64",
+"shape": [
+2
+]
+},
+{
+"node": "node_Concat_218",
+"op": "Concat",
+"output": "val_218",
+"sha256": "7a3071d332fe3828",
+"dtype": "int64",
+"shape": [
+3
+]
+},
+{
+"node": "node_Reshape_219",
+"op": "Reshape",
+"output": "val_219",
+"sha256": "c482b44d9b02b5d8",
+"dtype": "float32",
+"shape": [
+12,
+1260,
+64
+]
+},
+{
+"node": "node_Transpose_220",
+"op": "Transpose",
+"output": "val_220",
+"sha256": "6f88edf2116763b3",
+"dtype": "float32",
+"shape": [
+12,
+64,
+1260
+]
+},
+{
+"node": "node_Concat_221",
+"op": "Concat",
+"output": "val_221",
+"sha256": "6e0c0cdbe2a3bbd0",
+"dtype": "int64",
+"shape": [
+4
+]
+},
+{
+"node": "node_Reshape_222",
+"op": "Reshape",
+"output": "val_222",
+"sha256": "6f88edf2116763b3",
+"dtype": "float32",
+"shape": [
+1,
+12,
+64,
+1260
+]
+},
+{
+"node": "node_MatMul_227",
+"op": "MatMul",
+"output": "val_227",
+"sha256": "c96ce069b3e95917",
+"dtype": "float32",
+"shape": [
+1,
+12,
+1260,
+1260
+]
+},
+{
+"node": "node_Add_228",
+"op": "Add",
+"output": "val_228",
+"sha256": "6a6543e787e421e6",
+"dtype": "float32",
+"shape": [
+1,
+12,
+1260,
+1260
+]
+},
+{
+"node": "node_Softmax_229",
+"op": "Softmax",
+"output": "val_229",
+"sha256": "8e6cd19354f4ea5d",
+"dtype": "float32",
+"shape": [
+1,
+12,
+1260,
+1260
+]
+},
+{
+"node": "node_scaled_dot_product_attention",
+"op": "MatMul",
+"output": "scaled_dot_product_attention",
+"sha256": "004b2728d174768f",
+"dtype": "float32",
+"shape": [
+1,
+12,
+1260,
+64
+]
+},
+{
+"node": "node_transpose_3",
+"op": "Transpose",
+"output": "transpose_3",
+"sha256": "a4720b1e0922fc5f",
+"dtype": "float32",
+"shape": [
+1,
+1260,
+12,
+64
+]
+},
+{
+"node": "node_Concat_234",
+"op": "Concat",
+"output": "val_234",
+"sha256": "6a3a746f735edbcb",
+"dtype": "int64",
+"shape": [
+3
+]
+},
+{
+"node": "node_view_3",
+"op": "Reshape",
+"output": "view_3",
+"sha256": "a4720b1e0922fc5f",
+"dtype": "float32",
+"shape": [
+1,
+1260,
+768
+]
+},
+{
+"node": "node_linear_4",
+"op": "MatMul",
+"output": "linear_4",
+"sha256": "8d5951aff23823f9",
+"dtype": "float32",
+"shape": [
+1,
+1260,
+768
+]
+},
+{
+"node": "node_pow_9",
+"op": "Pow",
+"output": "pow_9",
+"sha256": "2750d45addb20b3a",
+"dtype": "float32",
+"shape": [
+1,
+1260,
+768
+]
+},
+{
+"node": "node_mean_4",
+"op": "ReduceMean",
+"output": "mean_4",
+"sha256": "860c361148f83776",
+"dtype": "float32",
+"shape": [
+1,
+1260,
+1
+]
+},
+{
+"node": "node_add_605",
+"op": "Add",
+"output": "add_605",
+"sha256": "059dd5a223bff538",
+"dtype": "float32",
+"shape": [
+1,
+1260,
+1
+]
+},
+{
+"node": "node_pow_10",
+"op": "Pow",
+"output": "pow_10",
+"sha256": "02155b60d6ee373d",
+"dtype": "float32",
+"shape": [
+1,
+1260,
+1
+]
+},
+{
+"node": "node_mul_407",
+"op": "Mul",
+"output": "mul_407",
+"sha256": "76215423c78f8a44",
+"dtype": "float32",
+"shape": [
+1,
+1260,
+768
+]
+},
+{
+"node": "node_mul_411",
+"op": "Mul",
+"output": "mul_411",
+"sha256": "bcd5d93b86e60ef2",
+"dtype": "float32",
+"shape": [
+1,
+1260,
+768
+]
+},
+{
+"node": "node_add_626",
+"op": "Add",
+"output": "add_626",
+"sha256": "ec7cf4fab9429b9e",
+"dtype": "float32",
+"shape": [
+1,
+1260,
+768
+]
+},
+{
+"node": "node_pow_11",
+"op": "Pow",
+"output": "pow_11",
+"sha256": "f53a5a57de90b451",
+"dtype": "float32",
+"shape": [
+1,
+1260,
+768
+]
+},
+{
+"node": "node_mean_5",
+"op": "ReduceMean",
+"output": "mean_5",
+"sha256": "2e2512ba6ba6868f",
+"dtype": "float32",
+"shape": [
+1,
+1260,
+1
+]
+},
+{
+"node": "node_add_639",
+"op": "Add",
+"output": "add_639",
+"sha256": "d0195cedc0b0e048",
+"dtype": "float32",
+"shape": [
+1,
+1260,
+1
+]
+},
+{
+"node": "node_pow_12",
+"op": "Pow",
+"output": "pow_12",
+"sha256": "8b8494e5433e6c90",
+"dtype": "float32",
+"shape": [
+1,
+1260,
+1
+]
+},
+{
+"node": "node_mul_430",
+"op": "Mul",
+"output": "mul_430",
+"sha256": "68a53a6b62fa14ab",
+"dtype": "float32",
+"shape": [
+1,
+1260,
+768
+]
+},
+{
+"node": "node_mul_434",
+"op": "Mul",
+"output": "mul_434",
+"sha256": "e424ff404506a577",
+"dtype": "float32",
+"shape": [
+1,
+1260,
+768
+]
+},
+{
+"node": "node_linear_5",
+"op": "MatMul",
+"output": "linear_5",
+"sha256": "4400ddfd873ea4e9",
+"dtype": "float32",
+"shape": [
+1,
+1260,
+3072
+]
+},
+{
+"node": "node_gelu",
+"op": "Gelu",
+"output": "gelu",
+"sha256": "406072f897bfde0a",
+"dtype": "float32",
+"shape": [
+1,
+1260,
+3072
+]
+},
+{
+"node": "node_linear_6",
+"op": "MatMul",
+"output": "linear_6",
+"sha256": "e2696d6536f8e082",
+"dtype": "float32",
+"shape": [
+1,
+1260,
+3072
+]
+},
+{
+"node": "node_mul_450",
+"op": "Mul",
+"output": "mul_450",
+"sha256": "910b6ef60be66b5c",
+"dtype": "float32",
+"shape": [
+1,
+1260,
+3072
+]
+},
+{
+"node": "node_linear_7",
+"op": "MatMul",
+"output": "linear_7",
+"sha256": "434922f1d0f69410",
+"dtype": "float32",
+"shape": [
+1,
+1260,
+768
+]
+},
+{
+"node": "node_pow_13",
+"op": "Pow",
+"output": "pow_13",
+"sha256": "ebb8c536586ae802",
+"dtype": "float32",
+"shape": [
+1,
+1260,
+768
+]
+},
+{
+"node": "node_mean_6",
+"op": "ReduceMean",
+"output": "mean_6",
+"sha256": "b4f880a23b624352",
+"dtype": "float32",
+"shape": [
+1,
+1260,
+1
+]
+},
+{
+"node": "node_add_688",
+"op": "Add",
+"output": "add_688",
+"sha256": "a821de01b217db0c",
+"dtype": "float32",
+"shape": [
+1,
+1260,
+1
+]
+},
+{
+"node": "node_pow_14",
+"op": "Pow",
+"output": "pow_14",
+"sha256": "68ab237b7d717fa5",
+"dtype": "float32",
+"shape": [
+1,
+1260,
+1
+]
+},
+{
+"node": "node_mul_466",
+"op": "Mul",
+"output": "mul_466",
+"sha256": "5b32e51ca02a1d6b",
+"dtype": "float32",
+"shape": [
+1,
+1260,
+768
+]
+},
+{
+"node": "node_mul_470",
+"op": "Mul",
+"output": "mul_470",
+"sha256": "b7674758e2b863f3",
+"dtype": "float32",
+"shape": [
+1,
+1260,
+768
+]
+}
+]
