@@ -126,7 +126,9 @@ CUDA, 2026-10-17, local RTX 3090 (24 GB, driver 610.57, system CUDA 13.3 runtime
 | Cancelled calls: device work left queued | 0 of 10 (drain at most 0.014 ms) | 0 of 10 (at most 0.019 ms) |
 | One 8-question request (`many-questions`) | 105 ms | 299 ms |
 
-Not yet run on CUDA: the onboarding corpus through the `dotnet` and `evaluate` stages, upstream's development partitions, a soak, the matched benchmark and the per-release regression on the qualification GPU.
+The onboarding corpus with the `onnx` and `dotnet` stages on CUDA, through the route's decision evaluator: passed for both sizes, every path within 6.6e-5 of PyTorch (0.8B 2.85e-5, 4B 6.57e-5), .NET against Python ONNX Runtime on CUDA within 1.6e-7, no flip, identical accuracy and token ids ([evidence](../../../docs/evidence/kev-cuda-2026-10-17/README.md)).
+
+Not yet run on CUDA: upstream's development partitions, a one-hour soak, the matched benchmark and the per-release regression on the qualification GPU.
 <!-- /kev:evidence -->
 
 ## Tests

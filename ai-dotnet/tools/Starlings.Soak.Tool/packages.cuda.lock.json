@@ -69,6 +69,14 @@
           "Starlings.Tokenizers": "[0.3.0-preview.1, 0.3.0-preview.1]"
         }
       },
+      "starlings.models.kev": {
+        "type": "Project",
+        "dependencies": {
+          "Starlings.Acquisition": "[0.1.0-preview.6, )",
+          "Starlings.Runtime.Onnx": "[0.1.0-preview.6, )",
+          "Starlings.Tokenizers": "[0.3.0-preview.1, 0.3.0-preview.1]"
+        }
+      },
       "starlings.models.qwen35": {
         "type": "Project",
         "dependencies": {

@@ -5,6 +5,7 @@ using Starlings.Generation.OnnxGenAI;
 using Starlings.Models.E5;
 using Starlings.Models.EmbeddingGemma2;
 using Starlings.Models.Gliner2;
+using Starlings.Models.Kev;
 using Starlings.Models.Qwen35;
 using Starlings.Runtime.Onnx;
 
@@ -113,6 +114,7 @@ internal abstract class SoakWorkload
     public static IReadOnlyList<SoakWorkload> All { get; } =
     [
         new E5Workload(), new Gliner2Workload(), new EmbeddingGemma2TextWorkload(), new EmbeddingGemma2ImageWorkload(), new EmbeddingGemma2VideoWorkload(), new Qwen35Workload(), new Qwen35Workload(Qwen35Variant.Fp16x),
+        new KevWorkload(KevModel.Kev08B), new KevWorkload(KevModel.Kev4B),
     ];
 }
 
@@ -260,6 +262,82 @@ internal sealed class Gliner2Workload : SoakWorkload
         public void RunLong(CancellationToken cancellationToken) => extractor.ExtractBatch(LongBatch, Labels, cancellationToken: cancellationToken);
 
         public void Dispose() => extractor.Dispose();
+    }
+}
+
+/// <summary>
+/// Kev decisions (profiles <c>kev-*/onnx-fp32-cpu</c> and <c>onnx-fp32-cuda</c>): each request asks a noul, a choice
+/// and a score question about one short text; the discrete part is each question's argmax, the values its probabilities.
+/// The bundle is a directory (<c>$STARLING_KEV_08B_BUNDLE</c>, <c>$STARLING_KEV_4B_BUNDLE</c>): the graphs are not hosted.
+/// </summary>
+internal sealed class KevWorkload(KevModel model) : SoakWorkload
+{
+    private static readonly KevQuestion[] Questions =
+    [
+        KevQuestion.Noul("Does the text name a person?"),
+        KevQuestion.Choice("What is the text mainly about?", "people", "places", "events", "science", "something else"),
+        KevQuestion.Score("How formal is the text?", "casual", "neutral", "formal"),
+    ];
+
+    private KevModelFiles? _files;
+
+    private string Variable => model == KevModel.Kev08B ? "STARLING_KEV_08B_BUNDLE" : "STARLING_KEV_4B_BUNDLE";
+
+    public override string Name => KevModelProfile.For(model).Id.Split('/')[0];
+
+    public override int DefaultRequestsPerCycle => model == KevModel.Kev08B ? 60 : 20;
+
+    public override string Profile(SoakOptions options) => options.Cuda ? KevModelProfile.For(model).CudaId : KevModelProfile.For(model).Id;
+
+    public override string? Locate(SoakOptions options)
+    {
+        if (Snapshot(Variable) is not { } dir)
+        {
+            return $"{Variable} is not set: point it at a {KevModelProfile.For(model).Id} bundle directory.";
+        }
+
+        try
+        {
+            _files = KevModelAssets.OpenDirectory(model, dir);
+            return null;
+        }
+        catch (ModelAcquisitionException ex)
+        {
+            return ex.Message;
+        }
+    }
+
+    public override JsonObject Artifacts() => Lock(KevModelAssets.Lock(model));
+
+    public override ISoakInstance Load(SoakOptions options)
+    {
+        // The startup check verified every file's SHA-256; skip re-hashing the graph on every cycle.
+        var session = Session(options, computeSha: false) with { ExpectedModelSha256 = null };
+        return new Instance(KevDecisionModel.Create(
+            _files!.Profile, _files.ModelPath, _files.HeadPath, _files.HeadMetadataPath, _files.TokenizerPath, new KevOptions { Session = session }));
+    }
+
+    private sealed class Instance(KevDecisionModel kev) : ISoakInstance
+    {
+        private static readonly KevRequest LongRequest = new(
+            SoakTexts.Long,
+            [.. Enumerable.Range(0, 8).Select(i => KeyValuePair.Create($"q{i}", Questions[i % Questions.Length]))]);
+
+        public IReadOnlyList<string> SessionProviders => kev.Session.Diagnostics.SessionProviders;
+
+        public string? SessionMemory => SoakWorkload.Memory(kev.Session.Diagnostics);
+
+        public SoakResult Run(int input, CancellationToken cancellationToken)
+        {
+            var request = new KevRequest(SoakTexts.Short[input], [.. Questions.Select((q, i) => KeyValuePair.Create($"q{i}", q))]);
+            var decision = kev.Decide(request, cancellationToken);
+            string choices = string.Join(";", decision.Answers.Select(a => a.Choice));
+            return new SoakResult(choices, [.. decision.Answers.SelectMany(a => a.ProbabilityList)]);
+        }
+
+        public void RunLong(CancellationToken cancellationToken) => kev.Decide(LongRequest, cancellationToken);
+
+        public void Dispose() => kev.Dispose();
     }
 }
 

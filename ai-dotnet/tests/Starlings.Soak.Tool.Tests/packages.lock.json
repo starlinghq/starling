@@ -168,6 +168,14 @@
           "Starlings.Tokenizers": "[0.3.0-preview.1, 0.3.0-preview.1]"
         }
       },
+      "starlings.models.kev": {
+        "type": "Project",
+        "dependencies": {
+          "Starlings.Acquisition": "[0.1.0-preview.6, )",
+          "Starlings.Runtime.Onnx": "[0.1.0-preview.6, )",
+          "Starlings.Tokenizers": "[0.3.0-preview.1, 0.3.0-preview.1]"
+        }
+      },
       "starlings.models.qwen35": {
         "type": "Project",
         "dependencies": {
@@ -189,6 +197,7 @@
           "Starlings.Models.E5": "[0.1.0-preview.6, )",
           "Starlings.Models.EmbeddingGemma2": "[0.1.0-preview.6, )",
           "Starlings.Models.Gliner2": "[0.1.0-preview.6, )",
+          "Starlings.Models.Kev": "[0.1.0-preview.6, )",
           "Starlings.Models.Qwen35": "[0.1.0-preview.6, )"
         }
       },
