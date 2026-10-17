@@ -21,6 +21,7 @@
   <ItemGroup>
     <Compile Include="../Starlings.Benchmarks.EmbeddingGemma2Harness/*.cs" Link="%(Filename)%(Extension)" />
     <Compile Include="../Core/*.cs" Link="Core/%(Filename)%(Extension)" />
+    <Compile Include="../Core/Batching/SweepTargets.cs" Link="Core/Batching/SweepTargets.cs" />
     <Compile Include="../../tests/Shared/EmbeddingGemma2/EmbeddingGemma2TestAssets.cs" Link="Shared/EmbeddingGemma2TestAssets.cs" />
     <Compile Include="../../tests/Shared/EmbeddingGemma2Images/EmbeddingGemma2ImageTestAssets.cs" Link="Shared/EmbeddingGemma2ImageTestAssets.cs" />
   </ItemGroup>
@@ -28,6 +29,7 @@
   <ItemGroup>
     <ProjectReference Include="../../src/Starlings.Models.EmbeddingGemma2/Starlings.Models.EmbeddingGemma2.csproj" />
     <ProjectReference Include="../../src/Starlings.Models.EmbeddingGemma2.Imaging.SkiaSharp/Starlings.Models.EmbeddingGemma2.Imaging.SkiaSharp.csproj" />
+    <ProjectReference Include="../../src/Starlings.Models.EmbeddingGemma2.Extensions.AI/Starlings.Models.EmbeddingGemma2.Extensions.AI.csproj" />
   </ItemGroup>
 
   <ItemGroup>

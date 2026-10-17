@@ -52,7 +52,7 @@ internal sealed class EmbeddingGemma2Driver : IBenchDriver, ISweepDriver
     public IBenchRun Load(HarnessContext context) => new EmbeddingGemma2Run(context, Paths(context));
 
     /// <summary>--max-batch-tokens maps to the existing <see cref="EmbeddingGemma2EncoderOptions.MaxBatchTokens"/>.</summary>
-    public IReadOnlyCollection<string> WiredSweepHooks => ["max-batch-tokens"];
+    public IReadOnlyCollection<string> WiredSweepHooks => SweepOptions.AllHooks;
 
     /// <summary>The text path only (image and video are outside the batching investigation).</summary>
     public ISweepTarget LoadSweep(HarnessContext context, SweepOptions options) => new EmbeddingGemma2SweepTarget(context, options);

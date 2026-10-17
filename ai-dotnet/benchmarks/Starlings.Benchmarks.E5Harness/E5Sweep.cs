@@ -1,6 +1,9 @@
 using System.Diagnostics;
 using System.Text.Json.Nodes;
+using Microsoft.Extensions.AI;
 using Starlings.Models.E5;
+using Starlings.Models.E5.Extensions.AI;
+using Starlings.Runtime.Onnx.Batching;
 
 namespace Starlings.Benchmarks;
 
@@ -9,15 +12,20 @@ namespace Starlings.Benchmarks;
 /// prefix of its kind (<c>query: </c> or <c>passage: </c>; stage <c>tokenize</c>), then one
 /// <see cref="E5Encoder.EmbedBatch(IReadOnlyList{EncoderInput}, CancellationToken)"/> (stage <c>encode</c>). Outputs are
 /// compared with the same text embedded alone (<c>float.padded_batch_vs_single_embedding_max_abs</c>).
+/// With micro-batching (<see cref="SweepOptions.MicroBatching"/>) each text of a call is one
+/// <see cref="E5EmbeddingGenerator.GenerateAsync"/> call with one value on a generator with
+/// <see cref="E5EmbeddingGeneratorOptions.MicroBatching"/> set (stage <c>call</c>: tokenize, queue and run).
 /// </summary>
 internal sealed class E5SweepTarget : ISweepTarget
 {
     private static readonly string[] s_stages = ["tokenize", "encode"];
+    private static readonly string[] s_microStages = ["call"];
     private readonly HarnessContext _context;
     private readonly E5ModelFiles _files;
     private readonly E5Tokenizer _tokenizer;
     private readonly E5Tokenizer _counter;
     private readonly E5Encoder _encoder;
+    private readonly E5EmbeddingGenerator? _generator;
     private readonly Starlings.TestSupport.E5Tolerances _tolerances;
 
     public E5SweepTarget(HarnessContext context, SweepOptions options)
@@ -34,7 +42,22 @@ internal sealed class E5SweepTarget : ISweepTarget
         {
             Session = context.SessionOptions(),
             MaxBatchSize = options.MaxBatchSize ?? defaults.MaxBatchSize,
+            MaxBatchTokens = options.MaxBatchTokens ?? defaults.MaxBatchTokens,
+            SortByLength = options.SortByLength,
         });
+        if (options.MicroBatching)
+        {
+            _generator = new E5EmbeddingGenerator(new E5TextEmbedder(_tokenizer, _encoder), new E5EmbeddingGeneratorOptions
+            {
+                MicroBatching = new MicroBatchingOptions
+                {
+                    MaxWait = TimeSpan.FromMilliseconds(options.MicroBatchWaitMs ?? 0),
+                    MaxRows = options.MicroBatchRows,
+                    MaxTokens = options.MicroBatchMaxTokens,
+                },
+            });
+        }
+
         LoadStages = new JsonObject { ["tokenizer_load"] = tokenizerMs, ["session_create"] = MonotonicClock.ElapsedMs(t1) };
         _tolerances = Starlings.TestSupport.E5Tolerances.Load(BenchFixtures.FixtureDirectory(_encoder.Options.Session.Provider));
     }
@@ -51,11 +74,11 @@ internal sealed class E5SweepTarget : ISweepTarget
 
     public int MaxBatchSize => _encoder.Options.MaxBatchSize;
 
-    public int? MaxBatchTokens => null;
+    public int? MaxBatchTokens => _encoder.Options.MaxBatchTokens;
 
     public int MaxTokens => _encoder.Options.MaxSequenceLength;
 
-    public string[] Stages => s_stages;
+    public string[] Stages => _generator is null ? s_stages : s_microStages;
 
     public JsonObject LoadStages { get; }
 
@@ -65,6 +88,9 @@ internal sealed class E5SweepTarget : ISweepTarget
         {
             var settings = _context.SessionSettings(_encoder.Session.Diagnostics.ProviderOptions);
             settings["max_batch_size"] = _encoder.Options.MaxBatchSize;
+            settings["max_batch_tokens"] = _encoder.Options.MaxBatchTokens;
+            settings["sort_by_length"] = _encoder.Options.SortByLength;
+            settings["micro_batching"] = SweepTargets.MicroBatching(_generator?.Options.MicroBatching);
             settings["max_sequence_length"] = _encoder.Options.MaxSequenceLength;
             settings["pad_id"] = _encoder.Options.PadTokenId;
             settings["prefixes"] = "query: (queries), passage: (passages)";
@@ -120,6 +146,24 @@ internal sealed class E5SweepTarget : ISweepTarget
     public object Call(SweepItem[] items, double[] stages)
     {
         long t = Stopwatch.GetTimestamp();
+        if (_generator is not null)
+        {
+            var calls = new Task<GeneratedEmbeddings<Embedding<float>>>[items.Length];
+            for (int i = 0; i < items.Length; i++)
+            {
+                calls[i] = _generator.GenerateAsync([Text(items[i])]);
+            }
+
+            var vectors = new float[items.Length][];
+            for (int i = 0; i < items.Length; i++)
+            {
+                vectors[i] = calls[i].GetAwaiter().GetResult()[0].Vector.ToArray();
+            }
+
+            stages[0] = MonotonicClock.ElapsedMs(t);
+            return vectors;
+        }
+
         var inputs = new EncoderInput[items.Length];
         for (int i = 0; i < items.Length; i++)
         {
@@ -135,12 +179,19 @@ internal sealed class E5SweepTarget : ISweepTarget
 
     public object Single(SweepItem item, object output) => ((float[][])output)[0];
 
-    public IEnumerable<int> PlanChunks(IReadOnlyList<int> lengths) => SweepMath.FixedChunks(lengths.Count, _encoder.Options.MaxBatchSize);
+    public (long Cells, int Runs) Padding(IReadOnlyList<int> lengths) =>
+        SweepMath.Plan(lengths, _encoder.Options.MaxBatchSize, _encoder.Options.MaxBatchTokens, _encoder.Options.SortByLength);
+
+    public SweepBatcherStats? BatcherStatistics => SweepTargets.Stats(_generator?.MicroBatchingStatistics);
 
     public SweepCheck Compare(SweepItem[] items, object output, IReadOnlyDictionary<string, object> singles) =>
         SweepCheck.Embeddings(items, (float[][])output, singles);
 
-    public void Dispose() => _encoder.Dispose();
+    public void Dispose()
+    {
+        _generator?.Dispose();
+        _encoder.Dispose();
+    }
 
     private static string Text(SweepItem item) => (item.Kind == "query" ? "query: " : "passage: ") + item.Text;
 }

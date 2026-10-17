@@ -4,8 +4,9 @@ The ``sweep`` command of the e5, EmbeddingGemma 2 and GLiNER2 harnesses (ai-dotn
 sweep") writes one ``run`` record per process, one ``cell`` record per (workload set, batch, concurrency) with raw
 per-call timings, token and padding counts, memory and a quality check against single calls, and an ``end`` record.
 This module validates those files (``model-pipeline/schemas/benchmark-sweep.schema.json``) and writes one markdown
-table per model x provider x configuration (intra-op threads, the library's rows per run, the machine), plus an
-intra-op thread comparison when the files hold several thread counts.
+table per model x provider x configuration (batching configuration, intra-op threads, the library's rows per run, the
+machine), plus an intra-op thread comparison when the files hold several thread counts and a batching-configuration
+comparison (baseline, sorted, token budget, micro-batched) when they hold several configurations.
 
 Cells whose quality check failed, and every cell of a run whose fixture sweep failed, are listed but never ranked.
 Repeated cells (same configuration in several runs) are reported as the median over runs, with the run count.
@@ -92,11 +93,17 @@ def _machine(run: dict) -> str:
     return f"{env.get('cpu_model')} ({env.get('logical_cpus')} logical CPUs)"
 
 
+def _batching(run: dict) -> str:
+    """The batching configuration label (sweep.config); files written before it existed are the baseline."""
+    return str(run["sweep"].get("config") or "baseline")
+
+
 def _config(run: dict) -> tuple:
     s = run["settings"]
     return (
         run["model"],
         s["provider"],
+        _batching(run),
         s.get("intra_op_num_threads"),
         run["sweep"]["max_batch_size"],
         s.get("max_batch_tokens"),
@@ -135,6 +142,7 @@ def summarize(results: SweepResults) -> dict:
                         stages[stage].append(statistics.median(values))
             vram = [c["vram"]["peak_mib"] for c in use if c.get("vram") and c["vram"].get("peak_mib") is not None]
             p95 = [c["latency_p95_ms"] for c in use if c.get("latency_p95_ms") is not None]
+            micro = [c["micro_batching"] for c in use if isinstance(c.get("micro_batching"), dict)]
             rows.append(
                 {
                     "set": set_name,
@@ -153,17 +161,20 @@ def summarize(results: SweepResults) -> dict:
                     "max_diff": max(c["quality"]["max_diff"] for c in members),
                     "mismatches": sum(c["quality"]["mismatches"] for c in members),
                     "tolerance": members[0]["quality"]["tolerance"],
+                    "micro_mean_rows": _median([m["mean_rows"] for m in micro]) if micro else None,
+                    "micro_queue_ms": _median([m["queue_ms_per_item"] for m in micro]) if micro else None,
                     "failed": [
                         c["run_id"] for c in members if not c["quality"]["pass"] or c["run_id"] in preliminary_failed
                     ],
                 }
             )
         rows.sort(key=lambda r: (r["set"], r["batch"], r["concurrency"]))
-        model, provider, threads, max_batch_size, max_batch_tokens, machine = config
+        model, provider, batching, threads, max_batch_size, max_batch_tokens, machine = config
         configs.append(
             {
                 "model": model,
                 "provider": provider,
+                "config": batching,
                 "intra_op_num_threads": threads,
                 "max_batch_size": max_batch_size,
                 "max_batch_tokens": max_batch_tokens,
@@ -188,7 +199,56 @@ def summarize(results: SweepResults) -> dict:
         "preliminary_failed_runs": sorted(preliminary_failed),
         "configs": configs,
         "threads": _thread_table(configs),
+        "comparison": _comparison(configs),
     }
+
+
+def _comparison(configs: list[dict]) -> list[dict]:
+    """Per (model, provider, intra-op threads, machine, set): each batching configuration's best valid cell and its
+    single-item callers (batch 1) at each concurrency, so micro-batching can be read against plain concurrency."""
+    table: dict[tuple, dict[str, dict]] = defaultdict(dict)
+    for cfg in configs:
+        for set_name in sorted({r["set"] for r in cfg["rows"]}):
+            rows = [r for r in cfg["rows"] if r["set"] == set_name and r["valid"]]
+            if not rows:
+                continue
+            key = (cfg["model"], cfg["provider"], cfg["intra_op_num_threads"], cfg["machine"], set_name)
+            label = cfg["config"]
+            if cfg["max_batch_size"] and not str(cfg["max_batch_size"]).startswith("call"):
+                label += f" (max_batch_size {cfg['max_batch_size']})"
+            best = max(rows, key=lambda r: r["items_per_s"])
+            entry = table[key].setdefault(label, {"best": best, "single": {}})
+            if best["items_per_s"] > entry["best"]["items_per_s"]:
+                entry["best"] = best
+            for r in rows:
+                if r["batch"] == 1:
+                    entry["single"][r["concurrency"]] = r
+    out = []
+    for key, by_config in sorted(table.items(), key=lambda kv: tuple(str(x) for x in kv[0])):
+        if len(by_config) < 2:
+            continue
+        model, provider, threads, machine, set_name = key
+        out.append(
+            {
+                "model": model,
+                "provider": provider,
+                "intra_op_num_threads": threads,
+                "machine": machine,
+                "set": set_name,
+                "configs": {
+                    label: {
+                        "best_items_per_s": e["best"]["items_per_s"],
+                        "best_batch": e["best"]["batch"],
+                        "best_concurrency": e["best"]["concurrency"],
+                        "best_padding_efficiency": e["best"]["padding_efficiency"],
+                        "best_latency_p50_ms": e["best"]["latency_p50_ms"],
+                        "b1_items_per_s": {str(c): r["items_per_s"] for c, r in sorted(e["single"].items())},
+                    }
+                    for label, e in sorted(by_config.items())
+                },
+            }
+        )
+    return out
 
 
 def _thread_table(configs: list[dict]) -> list[dict]:
@@ -201,6 +261,7 @@ def _thread_table(configs: list[dict]) -> list[dict]:
             key = (
                 cfg["model"],
                 cfg["provider"],
+                cfg["config"],
                 cfg["max_batch_size"],
                 cfg["machine"],
                 row["set"],
@@ -212,11 +273,12 @@ def _thread_table(configs: list[dict]) -> list[dict]:
     for key, by_threads in sorted(table.items(), key=lambda kv: tuple(str(x) for x in kv[0])):
         if len(by_threads) < 2:
             continue
-        model, provider, mbs, machine, set_name, batch, concurrency = key
+        model, provider, batching, mbs, machine, set_name, batch, concurrency = key
         out.append(
             {
                 "model": model,
                 "provider": provider,
+                "config": batching,
                 "max_batch_size": mbs,
                 "machine": machine,
                 "set": set_name,
@@ -236,13 +298,16 @@ def _fmt(value: float | None, digits: int = 1) -> str:
 
 _DETAIL_HEADER = (
     "| batch | conc | runs | calls | items/s | p50 ms | p95 ms | padding eff | stage p50 ms | peak RSS MiB "
-    "| peak VRAM MiB | max diff (tol) | mismatches | quality |"
+    "| peak VRAM MiB | micro rows / queue ms | max diff (tol) | mismatches | quality |"
 )
-_DETAIL_RULE = "| ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- | ---: | ---: | --- | ---: | --- |"
+_DETAIL_RULE = "| ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- | ---: | ---: | --- | --- | ---: | --- |"
 _LEGEND = (
     "Items/s = items completed / cell wall time (all callers). Latency is per call. Padding efficiency = real "
     "tokens / padded cells (rows x longest row per ORT run, as the library chunks). Quality: every output vs the "
-    "same item run alone, worst difference against the profile's padded-batch tolerance."
+    "same item run alone, worst difference against the profile's padded-batch tolerance. Micro-batched configurations "
+    "(micro-wW-rR: MaxWait W ms, MaxRows R) issue every item as its own call through the library's batcher; their "
+    "padding is the dispatched batches', and 'micro rows / queue ms' is the mean rows per dispatched batch and the "
+    "mean time an item waited in the queue."
 )
 
 
@@ -250,6 +315,7 @@ def _heading(cfg: dict) -> str:
     parts = [
         cfg["model"],
         cfg["provider"],
+        cfg.get("config", "baseline"),
         f"intra-op {cfg['intra_op_num_threads'] or 'ORT default'}",
         f"max_batch_size {cfg['max_batch_size']}",
     ]
@@ -290,6 +356,7 @@ def _detail(r: dict) -> str:
         stages,
         _fmt(r["peak_rss_mib"], 0),
         _fmt(r["peak_vram_mib"], 0),
+        "" if r.get("micro_mean_rows") is None else f"{_fmt(r['micro_mean_rows'], 2)} / {_fmt(r['micro_queue_ms'], 2)}",
         f"{r['max_diff']:.2e} ({r['tolerance']:.0e})",
         r["mismatches"],
         "pass" if r["valid"] else "FAILED",
@@ -334,6 +401,37 @@ def _thread_lines(threads: list[dict]) -> list[str]:
     return lines + [""]
 
 
+def _comparison_lines(comparison: list[dict]) -> list[str]:
+    lines = [
+        "## Batching configurations (items/s)",
+        "",
+        "Best valid cell of each configuration, and single-item callers (batch 1) at each concurrency. A micro-batched "
+        "configuration is adopted only if its batch-1 rows beat the baseline's batch-1 rows at concurrency 4 and 16.",
+        "",
+    ]
+    for entry in comparison:
+        conc = sorted({c for v in entry["configs"].values() for c in v["b1_items_per_s"]}, key=int)
+        lines.append(
+            f"### {entry['model']} · {entry['provider']} · intra-op {entry['intra_op_num_threads'] or 'ORT default'}"
+            f" · {entry['machine']} · {entry['set']}"
+        )
+        lines.append("")
+        lines.append(
+            "| config | best items/s | at (batch, conc) | padding eff | p50 ms | "
+            + " | ".join(f"b1 c={c}" for c in conc)
+            + " |"
+        )
+        lines.append("| --- | ---: | --- | ---: | ---: |" + " ---: |" * len(conc))
+        for label, v in entry["configs"].items():
+            b1 = " | ".join(_fmt(v["b1_items_per_s"].get(c)) if c in v["b1_items_per_s"] else "" for c in conc)
+            lines.append(
+                f"| {label} | {_fmt(v['best_items_per_s'])} | ({v['best_batch']}, {v['best_concurrency']}) "
+                f"| {_fmt(v['best_padding_efficiency'], 3)} | {_fmt(v['best_latency_p50_ms'], 2)} | {b1} |"
+            )
+        lines.append("")
+    return lines
+
+
 def markdown(summary: dict) -> str:
     lines = ["# Batching sweep summary", "", f"{summary['runs']} run(s), {summary['cells']} cell(s)."]
     if summary["incomplete_runs"]:
@@ -348,6 +446,8 @@ def markdown(summary: dict) -> str:
         lines += ["", _heading(cfg), ""]
         for set_name in sorted({r["set"] for r in cfg["rows"]}):
             lines += _set_tables(set_name, [r for r in cfg["rows"] if r["set"] == set_name])
+    if summary.get("comparison"):
+        lines += ["", *_comparison_lines(summary["comparison"])]
     if summary["threads"]:
         lines += _thread_lines(summary["threads"])
     return "\n".join(lines).rstrip() + "\n"

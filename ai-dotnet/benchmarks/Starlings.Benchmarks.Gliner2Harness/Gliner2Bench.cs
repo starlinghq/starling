@@ -32,6 +32,8 @@ internal sealed class Gliner2Driver : IBenchDriver, ISweepDriver
 
     public IBenchRun Load(HarnessContext context) => new Gliner2Run(context, Files());
 
+    public IReadOnlyCollection<string> WiredSweepHooks => SweepOptions.AllHooks;
+
     public ISweepTarget LoadSweep(HarnessContext context, SweepOptions options) => new Gliner2SweepTarget(context, options);
 
     public JsonObject Artifacts(HarnessContext context)

@@ -27,7 +27,42 @@ internal static class SweepMath
         return (cells, runs);
     }
 
-    /// <summary>Consecutive chunks of at most <paramref name="maxRows"/> rows (e5 and GLiNER2 RunModel).</summary>
+    /// <summary>
+    /// Padded cells and runs of the libraries' explicit-batch chunk plan (Starlings.Batching.BatchPlan, internal to each
+    /// model assembly; mirrored here): rows in input order, or by ascending length (stable) with
+    /// <paramref name="sortByLength"/>, grouped greedily while a chunk has fewer than <paramref name="maxRows"/> rows and,
+    /// with a budget, rows x longest row stays within <paramref name="maxCells"/>. Every chunk has at least one row.
+    /// </summary>
+    internal static (long Cells, int Runs) Plan(IReadOnlyList<int> lengths, int maxRows, int? maxCells, bool sortByLength)
+    {
+        IEnumerable<int> ordered = sortByLength ? lengths.Order() : lengths;
+        long cells = 0;
+        int runs = 0, count = 0, width = 0;
+        foreach (int length in ordered)
+        {
+            int newWidth = Math.Max(width, length);
+            if (count > 0 && (count >= maxRows || (maxCells is int budget && (long)(count + 1) * newWidth > budget)))
+            {
+                cells += (long)count * width;
+                runs++;
+                count = 0;
+                newWidth = length;
+            }
+
+            count++;
+            width = newWidth;
+        }
+
+        if (count > 0)
+        {
+            cells += (long)count * width;
+            runs++;
+        }
+
+        return (cells, runs);
+    }
+
+    /// <summary>Consecutive chunks of at most <paramref name="maxRows"/> rows (the plan without sorting or a budget).</summary>
     internal static IEnumerable<int> FixedChunks(int count, int maxRows)
     {
         for (int start = 0; start < count; start += maxRows)
@@ -67,20 +102,81 @@ internal sealed record SweepOptions
 
     public bool Vram { get; init; } = true;
 
-    /// <summary>--max-batch-tokens, for a target whose option exists (EmbeddingGemma 2); null when absent.</summary>
+    /// <summary>--max-batch-tokens: the library's padded-cell budget per ORT run (MaxBatchTokens); null for its default.</summary>
     public int? MaxBatchTokens { get; init; }
+
+    /// <summary>--sort-by-length: the library's SortByLength (length-sorted chunking within one call).</summary>
+    public bool SortByLength { get; init; }
+
+    /// <summary>--microbatch-wait-ms: MicroBatchingOptions.MaxWait in milliseconds; any micro-batch flag turns micro-batching on.</summary>
+    public double? MicroBatchWaitMs { get; init; }
+
+    /// <summary>--microbatch-max-rows: MicroBatchingOptions.MaxRows.</summary>
+    public int? MicroBatchMaxRows { get; init; }
+
+    /// <summary>--microbatch-max-tokens: MicroBatchingOptions.MaxTokens (padded cells per dispatched batch).</summary>
+    public int? MicroBatchMaxTokens { get; init; }
+
+    /// <summary>
+    /// Rows per dispatched micro-batch when --microbatch-max-rows is absent: MicroBatchingOptions.MaxRows's default,
+    /// mirrored so the harness core does not depend on Starlings.Runtime.Onnx (the targets pass this value explicitly).
+    /// </summary>
+    public const int DefaultMicroBatchMaxRows = 8;
+
+    /// <summary>
+    /// Micro-batching on: each call's items are issued as one-item calls through the product's micro-batched entry
+    /// point (e5 and EmbeddingGemma 2 IEmbeddingGenerator.GenerateAsync with one value, GLiNER2 ExtractAsync), so the
+    /// library's batcher, not the caller, forms the batches. Compare with batch 1 at the same concurrency without it.
+    /// </summary>
+    public bool MicroBatching => MicroBatchWaitMs is not null || MicroBatchMaxRows is not null || MicroBatchMaxTokens is not null;
+
+    /// <summary>Rows per dispatched micro-batch in effect.</summary>
+    public int MicroBatchRows => MicroBatchMaxRows ?? DefaultMicroBatchMaxRows;
+
+    /// <summary>The batching configuration's label (summary tables are grouped by it): baseline, sorted, tokens2048, micro-w0-r8, ...</summary>
+    public string Config
+    {
+        get
+        {
+            var parts = new List<string>();
+            if (SortByLength)
+            {
+                parts.Add("sorted");
+            }
+
+            if (MaxBatchTokens is int t)
+            {
+                parts.Add(string.Create(CultureInfo.InvariantCulture, $"tokens{t}"));
+            }
+
+            if (MicroBatching)
+            {
+                string micro = string.Create(CultureInfo.InvariantCulture, $"micro-w{MicroBatchWaitMs ?? 0:0.##}-r{MicroBatchRows}");
+                parts.Add(MicroBatchMaxTokens is int mt ? string.Create(CultureInfo.InvariantCulture, $"{micro}-t{mt}") : micro);
+            }
+
+            return parts.Count == 0 ? "baseline" : string.Join('+', parts);
+        }
+    }
 
     /// <summary>--max-inflight-items: cells with batch x concurrency above this are skipped (recorded in the end record).</summary>
     public int? MaxInflightItems { get; init; }
 
-    /// <summary>The option-contract hooks that are parsed but not wired yet (rejected by <see cref="Parse"/>).</summary>
+    /// <summary>
+    /// The option-contract hooks. A driver lists the ones it maps to library options (ISweepDriver.WiredSweepHooks);
+    /// <see cref="Parse"/> rejects the others.
+    /// </summary>
     public static readonly (string Flag, string Contract)[] Hooks =
     [
         ("sort-by-length", "SortByLength (E5EncoderOptions, Gliner2ExtractorOptions, EmbeddingGemma2EncoderOptions)"),
-        ("max-batch-tokens", "MaxBatchTokens (E5EncoderOptions, Gliner2ExtractorOptions)"),
+        ("max-batch-tokens", "MaxBatchTokens (E5EncoderOptions, Gliner2ExtractorOptions, EmbeddingGemma2EncoderOptions)"),
         ("microbatch-wait-ms", "MicroBatching.MaxWait (Starlings.Runtime.Onnx.Batching.MicroBatchingOptions)"),
         ("microbatch-max-rows", "MicroBatching.MaxRows (Starlings.Runtime.Onnx.Batching.MicroBatchingOptions)"),
+        ("microbatch-max-tokens", "MicroBatching.MaxTokens (Starlings.Runtime.Onnx.Batching.MicroBatchingOptions)"),
     ];
+
+    /// <summary>Every hook flag: the drivers that map all of them (e5, GLiNER2, EmbeddingGemma 2) return this.</summary>
+    public static IReadOnlyCollection<string> AllHooks { get; } = Hooks.Select(h => h.Flag).ToArray();
 
     /// <summary>
     /// Parses the sweep options. <paramref name="wiredHooks"/> names the hook flags this target already maps to an
@@ -107,11 +203,30 @@ internal sealed record SweepOptions
             throw new ArgumentException("--batches and --concurrency take positive integers.");
         }
 
+        int? microRows = map.GetInt("microbatch-max-rows");
+        int? microTokens = map.GetInt("microbatch-max-tokens");
+        string? waitText = map.Get("microbatch-wait-ms");
+        double? wait = waitText is null ? null : double.Parse(waitText, NumberStyles.Float, CultureInfo.InvariantCulture);
+        if (microRows is < 1 || microTokens is < 1 || wait is < 0 || (wait is double w && !double.IsFinite(w)))
+        {
+            throw new ArgumentException("--microbatch-max-rows and --microbatch-max-tokens take positive integers, --microbatch-wait-ms a number >= 0.");
+        }
+
+        bool micro = wait is not null || microRows is not null || microTokens is not null;
+        string sort = map.Get("sort-by-length", "false")!;
+        if (sort is not ("true" or "false"))
+        {
+            throw new ArgumentException("--sort-by-length true|false.");
+        }
+
+        // "call": one ORT run per call or, with micro-batching, one ORT run per dispatched batch (whose rows can exceed
+        // the caller's batch).
         string mbs = map.Get("max-batch-size", "call");
+        int callRows = micro ? Math.Max(batches.Max(), microRows ?? DefaultMicroBatchMaxRows) : batches.Max();
         int? maxBatch = mbs switch
         {
             "default" => null,
-            "call" => batches.Max(),
+            "call" => callRows,
             _ => int.TryParse(mbs, NumberStyles.None, CultureInfo.InvariantCulture, out int v) && v > 0 ? v : throw new ArgumentException("--max-batch-size default|call|N."),
         };
         string? output = map.Get("out");
@@ -138,13 +253,27 @@ internal sealed record SweepOptions
             Warmup = map.GetInt("warmup", quick ? 2 : 3)!.Value,
             Pool = map.GetInt("pool", quick ? 32 : null),
             MaxBatchSize = maxBatch,
-            MaxBatchSizeLabel = mbs == "call" ? $"call ({batches.Max()})" : mbs,
+            MaxBatchSizeLabel = mbs == "call" ? $"call ({callRows})" : mbs,
             Preliminary = map.Get("preliminary", "true") != "false",
             Vram = map.Get("vram", "auto") != "off",
             MaxBatchTokens = tokens,
+            SortByLength = sort == "true",
+            MicroBatchWaitMs = wait,
+            MicroBatchMaxRows = microRows,
+            MicroBatchMaxTokens = microTokens,
             MaxInflightItems = map.GetInt("max-inflight-items"),
         };
     }
+}
+
+/// <summary>
+/// Counters of the library's micro-batcher (Starlings.Runtime.Onnx.Batching.MicroBatcherStatistics, copied by each target
+/// so the harness core does not depend on the runtime package).
+/// </summary>
+internal readonly record struct SweepBatcherStats(long Batches, long Items, long TokenCells, long Tokens, double QueueMs, double RunMs)
+{
+    public SweepBatcherStats Since(SweepBatcherStats b) =>
+        new(Batches - b.Batches, Items - b.Items, TokenCells - b.TokenCells, Tokens - b.Tokens, QueueMs - b.QueueMs, RunMs - b.RunMs);
 }
 
 /// <summary>Result of comparing outputs with single-call references: worst difference, finiteness, discrete mismatches.</summary>

@@ -1,6 +1,9 @@
 using System.Diagnostics;
 using System.Text.Json.Nodes;
+using Microsoft.Extensions.AI;
 using Starlings.Models.EmbeddingGemma2;
+using Starlings.Models.EmbeddingGemma2.Extensions.AI;
+using Starlings.Runtime.Onnx.Batching;
 using Starlings.TestSupport;
 
 namespace Starlings.Benchmarks;
@@ -11,14 +14,19 @@ namespace Starlings.Benchmarks;
 /// <see cref="EmbeddingGemma2Prompt.Document"/>; stage <c>tokenize</c>), then one
 /// <see cref="EmbeddingGemma2Encoder.EmbedBatch(IReadOnlyList{EmbeddingGemma2Input}, CancellationToken)"/> (stage
 /// <c>encode</c>). The encoder's chunk plan (rows and padded cells per run) is mirrored for the padding figures.
-/// Outputs against the same text embedded alone (<c>float.padded_batch_vs_single_embedding_max_abs</c>).
+/// Outputs against the same text embedded alone (<c>float.padded_batch_vs_single_embedding_max_abs</c>). With
+/// micro-batching (<see cref="SweepOptions.MicroBatching"/>) each text of a call is one
+/// <see cref="EmbeddingGemma2EmbeddingGenerator.GenerateAsync"/> call with one value (prompt already applied, generator
+/// prompt none) on a generator with <see cref="EmbeddingGemma2EmbeddingGeneratorOptions.MicroBatching"/> set (stage <c>call</c>).
 /// </summary>
 internal sealed class EmbeddingGemma2SweepTarget : ISweepTarget
 {
     private static readonly string[] s_stages = ["tokenize", "encode"];
+    private static readonly string[] s_microStages = ["call"];
     private readonly HarnessContext _context;
     private readonly EmbeddingGemma2Tokenizer _tokenizer;
     private readonly EmbeddingGemma2Encoder _encoder;
+    private readonly EmbeddingGemma2EmbeddingGenerator? _generator;
     private readonly EmbeddingGemma2Tolerances _tolerances;
 
     public EmbeddingGemma2SweepTarget(HarnessContext context, SweepOptions options)
@@ -36,7 +44,21 @@ internal sealed class EmbeddingGemma2SweepTarget : ISweepTarget
             Session = context.SessionOptions(),
             MaxBatchSize = options.MaxBatchSize ?? defaults.MaxBatchSize,
             MaxBatchTokens = options.MaxBatchTokens ?? defaults.MaxBatchTokens,
+            SortByLength = options.SortByLength,
         });
+        if (options.MicroBatching)
+        {
+            _generator = new EmbeddingGemma2EmbeddingGenerator(new EmbeddingGemma2TextEmbedder(_tokenizer, _encoder), new EmbeddingGemma2EmbeddingGeneratorOptions
+            {
+                MicroBatching = new MicroBatchingOptions
+                {
+                    MaxWait = TimeSpan.FromMilliseconds(options.MicroBatchWaitMs ?? 0),
+                    MaxRows = options.MicroBatchRows,
+                    MaxTokens = options.MicroBatchMaxTokens,
+                },
+            });
+        }
+
         LoadStages = new JsonObject { ["tokenizer_load"] = tokenizerMs, ["session_create"] = MonotonicClock.ElapsedMs(t1) };
         ModelPath = files.ModelPath;
         TokenizerPath = files.TokenizerPath;
@@ -62,7 +84,7 @@ internal sealed class EmbeddingGemma2SweepTarget : ISweepTarget
 
     public int MaxTokens => _encoder.Options.MaxSequenceLength;
 
-    public string[] Stages => s_stages;
+    public string[] Stages => _generator is null ? s_stages : s_microStages;
 
     public JsonObject LoadStages { get; }
 
@@ -73,6 +95,8 @@ internal sealed class EmbeddingGemma2SweepTarget : ISweepTarget
             var settings = _context.SessionSettings(_encoder.Session.Diagnostics.ProviderOptions);
             settings["max_batch_size"] = _encoder.Options.MaxBatchSize;
             settings["max_batch_tokens"] = _encoder.Options.MaxBatchTokens;
+            settings["sort_by_length"] = _encoder.Options.SortByLength;
+            settings["micro_batching"] = SweepTargets.MicroBatching(_generator?.Options.MicroBatching);
             settings["max_sequence_length"] = _encoder.Options.MaxSequenceLength;
             settings["dimension"] = _encoder.Options.Dimension;
             settings["pad_id"] = EmbeddingGemma2Encoder.PadTokenId;
@@ -123,6 +147,24 @@ internal sealed class EmbeddingGemma2SweepTarget : ISweepTarget
     public object Call(SweepItem[] items, double[] stages)
     {
         long t = Stopwatch.GetTimestamp();
+        if (_generator is not null)
+        {
+            var calls = new Task<GeneratedEmbeddings<Embedding<float>>>[items.Length];
+            for (int i = 0; i < items.Length; i++)
+            {
+                calls[i] = _generator.GenerateAsync([Text(items[i])]);
+            }
+
+            var vectors = new float[items.Length][];
+            for (int i = 0; i < items.Length; i++)
+            {
+                vectors[i] = calls[i].GetAwaiter().GetResult()[0].Vector.ToArray();
+            }
+
+            stages[0] = MonotonicClock.ElapsedMs(t);
+            return vectors;
+        }
+
         var inputs = new EmbeddingGemma2Input[items.Length];
         for (int i = 0; i < items.Length; i++)
         {
@@ -138,38 +180,20 @@ internal sealed class EmbeddingGemma2SweepTarget : ISweepTarget
 
     public object Single(SweepItem item, object output) => ((float[][])output)[0];
 
-    /// <summary>
-    /// The encoder's plan (EmbeddingGemma2Encoder.PlanChunks, internal): a chunk grows while it has fewer than
-    /// MaxBatchSize rows and rows x longest row stays within MaxBatchTokens.
-    /// </summary>
-    public IEnumerable<int> PlanChunks(IReadOnlyList<int> lengths)
-    {
-        int maxRows = _encoder.Options.MaxBatchSize, maxCells = _encoder.Options.MaxBatchTokens;
-        int count = 0, width = 0;
-        foreach (int length in lengths)
-        {
-            int newWidth = Math.Max(width, length);
-            if (count > 0 && (count >= maxRows || (long)(count + 1) * newWidth > maxCells))
-            {
-                yield return count;
-                count = 0;
-                newWidth = length;
-            }
-
-            count++;
-            width = newWidth;
-        }
-
-        if (count > 0)
-        {
-            yield return count;
-        }
-    }
+    /// <summary>The encoder's chunk plan (BatchPlan, internal): rows, padded-cell budget and length sorting as configured.</summary>
+    public (long Cells, int Runs) Padding(IReadOnlyList<int> lengths) =>
+        SweepMath.Plan(lengths, _encoder.Options.MaxBatchSize, _encoder.Options.MaxBatchTokens, _encoder.Options.SortByLength);
 
     public SweepCheck Compare(SweepItem[] items, object output, IReadOnlyDictionary<string, object> singles) =>
         SweepCheck.Embeddings(items, (float[][])output, singles);
 
-    public void Dispose() => _encoder.Dispose();
+    public SweepBatcherStats? BatcherStatistics => SweepTargets.Stats(_generator?.MicroBatchingStatistics);
+
+    public void Dispose()
+    {
+        _generator?.Dispose();
+        _encoder.Dispose();
+    }
 
     private static string Text(SweepItem item) => (item.Kind == "query" ? EmbeddingGemma2Prompt.Query : EmbeddingGemma2Prompt.Document).Apply(item.Text);
 }

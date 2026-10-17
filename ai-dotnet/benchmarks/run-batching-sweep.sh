@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 # Batching sweep (Phase 0 of the batching investigation; README "Batching sweep"): the `sweep` command of the e5,
 # GLiNER2 and EmbeddingGemma 2 (text) harnesses on one provider, then on CPU an intra-op thread sweep and the library's
-# default rows per run, then one markdown summary (model-pipeline bench sweep).
+# default rows per run, then the batching configurations of the option contract (length-sorted chunking, a token
+# budget, both, and cross-request micro-batching with single-item callers at concurrency 4 and 16 against plain
+# concurrency), then one markdown summary (model-pipeline bench sweep).
 #
 #   ai-dotnet/benchmarks/run-batching-sweep.sh cpu|cuda <out dir> [--quick]
 #
@@ -16,6 +18,12 @@
 #   SWEEP_THREADS        intra_op_num_threads of the main sweep (default: cpu 6, cuda 4)
 #   SWEEP_THREAD_LIST    CPU thread sweep values (default "1 2 4 6"; set empty to skip)
 #   SWEEP_MAX_INFLIGHT   --max-inflight-items on CPU (default 256: batch x concurrency above it is skipped and listed)
+#   SWEEP_CONFIGS        batching configurations after the baseline (default "sorted tokens sorted-tokens micro";
+#                        --quick: "sorted tokens micro"; set empty to skip): sorted = --sort-by-length true, tokens =
+#                        --max-batch-tokens SWEEP_BATCH_TOKENS, micro = single-item callers through the library's
+#                        micro-batcher (MaxWait 0 ms, MaxRows 8; the full grid adds MaxWait 2 ms, MaxRows 16) next to a
+#                        baseline run of single-item callers at the same concurrency
+#   SWEEP_BATCH_TOKENS   padded-cell budget of the tokens configurations (default 4096)
 #   SWEEP_ARGS           extra sweep arguments for every run (development smokes, for example "--pool 16")
 #   SWEEP_NOTE           machine note recorded in every run
 #   SWEEP_BUILD          1 (default) builds the harnesses first (Release); 0 uses the existing binaries
@@ -47,10 +55,21 @@ inflight="${SWEEP_MAX_INFLIGHT:-256}"
 grid=()
 thread_grid=(--sets mixed --batches "1,8,32" --concurrency "1,4,16" --preliminary false)
 default_grid=(--sets "mixed,long" --batches "8,16,32,64" --concurrency 1 --preliminary false --max-batch-size default)
+configs="${SWEEP_CONFIGS-sorted tokens sorted-tokens micro}"
+batch_tokens="${SWEEP_BATCH_TOKENS:-4096}"
+# Explicit-batch configurations: mixed and long lengths, where sorting and a budget change the padding.
+config_grid=(--sets "mixed,long" --batches "8,16,32,64" --concurrency "1,4,16" --preliminary false)
+# Micro-batching: single-item callers (batch 1); the baseline run of the same grid is plain concurrency.
+micro_grid=(--sets "short,mixed,long" --batches 1 --concurrency "1,4,16" --preliminary false)
+micro_variants=("w0-r8:--microbatch-wait-ms 0 --microbatch-max-rows 8" "w2-r16:--microbatch-wait-ms 2 --microbatch-max-rows 16")
 if [[ $quick == --quick ]]; then
     grid=(--quick true)
     thread_grid=(--sets mixed --batches "1,8" --concurrency "1,4" --quick true --preliminary false)
     default_grid=(--sets mixed --batches 32 --concurrency 1 --quick true --preliminary false --max-batch-size default)
+    configs="${SWEEP_CONFIGS-sorted tokens micro}"
+    config_grid=(--sets mixed --batches "8,32" --concurrency "1,4" --quick true --preliminary false)
+    micro_grid=(--sets "short,mixed" --batches 1 --concurrency "4,16" --quick true --preliminary false)
+    micro_variants=("w0-r8:--microbatch-wait-ms 0 --microbatch-max-rows 8")
 fi
 
 project() {
@@ -96,6 +115,31 @@ sweep() {
     log "$m $provider $label: exit $rc, $((SECONDS - s)) s"
 }
 
+# configs <model> <threads> [guard args...]: the batching configurations of SWEEP_CONFIGS.
+run_configs() {
+    local m=$1 t=$2 c v name
+    shift 2
+    for c in $configs; do
+        case $c in
+            sorted) sweep "$m" "sorted-t$t" "$t" "${config_grid[@]}" --sort-by-length true "$@" ;;
+            tokens) sweep "$m" "tokens$batch_tokens-t$t" "$t" "${config_grid[@]}" --max-batch-tokens "$batch_tokens" "$@" ;;
+            sorted-tokens)
+                sweep "$m" "sorted-tokens$batch_tokens-t$t" "$t" "${config_grid[@]}" --sort-by-length true \
+                    --max-batch-tokens "$batch_tokens" "$@"
+                ;;
+            micro)
+                sweep "$m" "b1-baseline-t$t" "$t" "${micro_grid[@]}" "$@"
+                for v in "${micro_variants[@]}"; do
+                    name=${v%%:*}
+                    read -r -a margs <<<"${v#*:}"
+                    sweep "$m" "micro-$name-t$t" "$t" "${micro_grid[@]}" "${margs[@]}" "$@"
+                done
+                ;;
+            *) log "unknown batching configuration $c (sorted, tokens, sorted-tokens, micro)"; status=1 ;;
+        esac
+    done
+}
+
 for m in $models; do
     grep -q "^$m/$provider	build	" "$out/sweep-status.tsv" && continue
     if [[ $provider == cpu ]]; then
@@ -105,9 +149,11 @@ for m in $models; do
             sweep "$m" "threads-t$t" "$t" "${thread_grid[@]}" --max-inflight-items "$inflight"
         done
         sweep "$m" "default-mbs-t$threads" "$threads" "${default_grid[@]}"
+        run_configs "$m" "$threads" --max-inflight-items "$inflight"
     else
         sweep "$m" "t$threads" "$threads" "${grid[@]}"
         sweep "$m" "default-mbs-t$threads" "$threads" "${default_grid[@]}"
+        run_configs "$m" "$threads"
     fi
 done
 

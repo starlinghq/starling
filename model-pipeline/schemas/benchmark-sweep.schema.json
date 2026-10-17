@@ -47,7 +47,11 @@
             "sets": { "type": "array", "items": { "type": "string" }, "minItems": 1 },
             "batches": { "type": "array", "items": { "type": "integer", "minimum": 1 }, "minItems": 1 },
             "concurrency": { "type": "array", "items": { "type": "integer", "minimum": 1 }, "minItems": 1 },
-            "tolerance": { "type": "number", "minimum": 0 }
+            "tolerance": { "type": "number", "minimum": 0 },
+            "config": { "type": "string", "description": "Batching configuration label: baseline, sorted, tokensN, micro-wW-rR[-tT], joined with '+'. Absent in files written before it existed (baseline)." },
+            "sort_by_length": { "type": "boolean" },
+            "max_batch_tokens": { "type": ["integer", "null"] },
+            "micro_batching": { "oneOf": [{ "type": "null" }, { "type": "object", "required": ["max_wait_ms", "max_rows"], "properties": { "max_wait_ms": { "type": "number", "minimum": 0 }, "max_rows": { "type": "integer", "minimum": 1 }, "max_tokens": { "type": ["integer", "null"] } } }] }
           }
         },
         "quality": {
@@ -74,6 +78,7 @@
         "intra_op_num_threads": { "type": ["integer", "null"] },
         "max_batch_size": { "type": "integer", "minimum": 1 },
         "max_batch_tokens": { "type": ["integer", "null"] },
+        "config": { "type": "string" },
         "n": { "type": "integer", "minimum": 0 },
         "items": { "type": "integer", "minimum": 0 },
         "wall_ms": { "type": "number", "minimum": 0 },
@@ -92,6 +97,27 @@
           "type": "object",
           "required": ["before_bytes", "peak_bytes"],
           "properties": { "before_bytes": { "type": "integer" }, "peak_bytes": { "type": "integer" } }
+        },
+        "micro_batching": {
+          "description": "Micro-batched configurations: the library batcher's counters over the cell's timed calls (padding_efficiency of the cell is then the dispatched batches').",
+          "oneOf": [
+            { "type": "null" },
+            {
+              "type": "object",
+              "required": ["batches", "items", "mean_rows", "queue_ms_per_item", "run_ms_per_batch"],
+              "properties": {
+                "batches": { "type": "integer", "minimum": 0 },
+                "items": { "type": "integer", "minimum": 0 },
+                "mean_rows": { "type": "number", "minimum": 0 },
+                "tokens": { "type": "integer", "minimum": 0 },
+                "padded_cells": { "type": "integer", "minimum": 0 },
+                "padding_efficiency": { "type": ["number", "null"] },
+                "queue_ms_per_item": { "type": "number", "minimum": 0 },
+                "run_ms_per_batch": { "type": "number", "minimum": 0 },
+                "run_ms_total": { "type": "number", "minimum": 0 }
+              }
+            }
+          ]
         },
         "vram": {
           "oneOf": [

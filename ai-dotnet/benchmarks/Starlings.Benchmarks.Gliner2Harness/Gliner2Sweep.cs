@@ -3,6 +3,7 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 using Starlings.Models.Gliner2;
 using Starlings.Runtime.Onnx;
+using Starlings.Runtime.Onnx.Batching;
 using Starlings.TestSupport;
 
 namespace Starlings.Benchmarks;
@@ -12,15 +13,20 @@ namespace Starlings.Benchmarks;
 /// GLiNER2 call runs one label set). Stages as the warm harness: <c>prepare</c>, <c>inference</c>
 /// (<see cref="Gliner2EntityExtractor.RunModel"/>: padding and the ORT runs, including any wait on the CUDA run gate),
 /// <c>decode</c>. Each output against the same text run alone: valid span logits within
-/// <c>float.padded_batch_vs_single_span_logits_relative</c> and entities identical.
+/// <c>float.padded_batch_vs_single_span_logits_relative</c> and entities identical. With micro-batching
+/// (<see cref="SweepOptions.MicroBatching"/>) each text of a call is one <see cref="Gliner2EntityExtractor.ExtractAsync(string, IReadOnlyList{string}, float?, CancellationToken)"/>
+/// on an extractor with <see cref="Gliner2ExtractorOptions.MicroBatching"/> set (stage <c>call</c>); the public API returns
+/// entities only, so the check is entities identical and confidence max abs within <c>float.confidence_max_abs</c>.
 /// </summary>
 internal sealed class Gliner2SweepTarget : ISweepTarget
 {
     private static readonly string[] s_stages = ["prepare", "inference", "decode"];
+    private static readonly string[] s_microStages = ["call"];
     private readonly HarnessContext _context;
     private readonly Gliner2EntityExtractor _extractor;
     private readonly Gliner2Tolerances _tolerances;
     private readonly string[] _labels;
+    private readonly bool _micro;
 
     public Gliner2SweepTarget(HarnessContext context, SweepOptions options)
     {
@@ -36,7 +42,18 @@ internal sealed class Gliner2SweepTarget : ISweepTarget
         _extractor = Gliner2EntityExtractor.Create(session, files.TokenizerPath, defaults with
         {
             MaxBatchSize = options.MaxBatchSize ?? defaults.MaxBatchSize,
+            MaxBatchTokens = options.MaxBatchTokens ?? defaults.MaxBatchTokens,
+            SortByLength = options.SortByLength,
+            MicroBatching = options.MicroBatching
+                ? new MicroBatchingOptions
+                {
+                    MaxWait = TimeSpan.FromMilliseconds(options.MicroBatchWaitMs ?? 0),
+                    MaxRows = options.MicroBatchRows,
+                    MaxTokens = options.MicroBatchMaxTokens,
+                }
+                : null,
         }, ownsSession: true);
+        _micro = options.MicroBatching;
         LoadStages = new JsonObject { ["session_create"] = sessionMs, ["tokenizer_load"] = MonotonicClock.ElapsedMs(t1) };
     }
 
@@ -52,11 +69,11 @@ internal sealed class Gliner2SweepTarget : ISweepTarget
 
     public int MaxBatchSize => _extractor.Options.MaxBatchSize;
 
-    public int? MaxBatchTokens => null;
+    public int? MaxBatchTokens => _extractor.Options.MaxBatchTokens;
 
     public int MaxTokens => _extractor.Options.MaxSequenceLength;
 
-    public string[] Stages => s_stages;
+    public string[] Stages => _micro ? s_microStages : s_stages;
 
     public JsonObject LoadStages { get; }
 
@@ -66,6 +83,9 @@ internal sealed class Gliner2SweepTarget : ISweepTarget
         {
             var settings = _context.SessionSettings(_extractor.Session.Diagnostics.ProviderOptions);
             settings["max_batch_size"] = _extractor.Options.MaxBatchSize;
+            settings["max_batch_tokens"] = _extractor.Options.MaxBatchTokens;
+            settings["sort_by_length"] = _extractor.Options.SortByLength;
+            settings["micro_batching"] = SweepTargets.MicroBatching(_extractor.Options.MicroBatching);
             settings["max_sequence_length"] = _extractor.Options.MaxSequenceLength;
             settings["threshold"] = _extractor.Options.Threshold;
             settings["serializes_native_calls"] = _extractor.SerializesNativeCalls;
@@ -76,9 +96,11 @@ internal sealed class Gliner2SweepTarget : ISweepTarget
 
     public IReadOnlyList<string>? SessionProviders => _extractor.Session.Diagnostics.SessionProviders;
 
-    public string QualityCheck => "valid span logits relative difference |a-e|/max(1,|e|) vs the same text run alone (float.padded_batch_vs_single_span_logits_relative); entities identical (mismatches)";
+    public string QualityCheck => _micro
+        ? "micro-batched ExtractAsync: entity confidence max abs vs the same text run alone (float.confidence_max_abs; span logits are not exposed by the public API); entities identical (mismatches)"
+        : "valid span logits relative difference |a-e|/max(1,|e|) vs the same text run alone (float.padded_batch_vs_single_span_logits_relative); entities identical (mismatches)";
 
-    public double Tolerance => _tolerances.PaddedBatchVsSingleRelative;
+    public double Tolerance => _micro ? _tolerances.ConfidenceMaxAbs : _tolerances.PaddedBatchVsSingleRelative;
 
     public string ToleranceFile => _tolerances.Source;
 
@@ -129,6 +151,24 @@ internal sealed class Gliner2SweepTarget : ISweepTarget
     public object Call(SweepItem[] items, double[] stages)
     {
         long t = Stopwatch.GetTimestamp();
+        if (_micro)
+        {
+            var calls = new Task<Gliner2ExtractionResult>[items.Length];
+            for (int i = 0; i < items.Length; i++)
+            {
+                calls[i] = _extractor.ExtractAsync(items[i].Text, _labels);
+            }
+
+            var results = new Gliner2ExtractionResult[items.Length];
+            for (int i = 0; i < items.Length; i++)
+            {
+                results[i] = calls[i].GetAwaiter().GetResult();
+            }
+
+            stages[0] = MonotonicClock.ElapsedMs(t);
+            return results;
+        }
+
         var inputs = new Gliner2ModelInput[items.Length];
         for (int i = 0; i < items.Length; i++)
         {
@@ -150,12 +190,20 @@ internal sealed class Gliner2SweepTarget : ISweepTarget
         return result;
     }
 
-    public object Single(SweepItem item, object output) => ((Gliner2SweepOutput[])output)[0];
+    public object Single(SweepItem item, object output) => ((Array)output).GetValue(0)!;
 
-    public IEnumerable<int> PlanChunks(IReadOnlyList<int> lengths) => SweepMath.FixedChunks(lengths.Count, _extractor.Options.MaxBatchSize);
+    public (long Cells, int Runs) Padding(IReadOnlyList<int> lengths) =>
+        SweepMath.Plan(lengths, _extractor.Options.MaxBatchSize, _extractor.Options.MaxBatchTokens, _extractor.Options.SortByLength);
+
+    public SweepBatcherStats? BatcherStatistics => SweepTargets.Stats(_extractor.MicroBatchingStatistics);
 
     public SweepCheck Compare(SweepItem[] items, object output, IReadOnlyDictionary<string, object> singles)
     {
+        if (_micro)
+        {
+            return CompareEntities(items, (Gliner2ExtractionResult[])output, singles);
+        }
+
         var outputs = (Gliner2SweepOutput[])output;
         var check = SweepCheck.Empty;
         for (int i = 0; i < items.Length; i++)
@@ -163,9 +211,7 @@ internal sealed class Gliner2SweepTarget : ISweepTarget
             var single = (Gliner2SweepOutput)singles[items[i].Id];
             var errors = new Gliner2Errors();
             errors.Add(outputs[i].Output.GetValidSpanLogits(), single.Output.GetValidSpanLogits(), items[i].Id);
-            var a = outputs[i].Result.Entities;
-            var e = single.Result.Entities;
-            bool same = a.Count == e.Count && a.Zip(e).All(p => p.First.Label == p.Second.Label && p.First.ScalarStart == p.Second.ScalarStart && p.First.ScalarEnd == p.Second.ScalarEnd);
+            bool same = SameSpans(outputs[i].Result.Entities, single.Result.Entities);
             check = check.Merge(new SweepCheck(1, errors.MaxRelative, !errors.NonFinite, same ? 0 : 1, items[i].Id));
         }
 
@@ -173,6 +219,34 @@ internal sealed class Gliner2SweepTarget : ISweepTarget
     }
 
     public void Dispose() => _extractor.Dispose();
+
+    private static bool SameSpans(IReadOnlyList<Gliner2Entity> a, IReadOnlyList<Gliner2Entity> e) =>
+        a.Count == e.Count && a.Zip(e).All(p => p.First.Label == p.Second.Label && p.First.ScalarStart == p.Second.ScalarStart && p.First.ScalarEnd == p.Second.ScalarEnd);
+
+    private static SweepCheck CompareEntities(SweepItem[] items, Gliner2ExtractionResult[] outputs, IReadOnlyDictionary<string, object> singles)
+    {
+        var check = SweepCheck.Empty;
+        for (int i = 0; i < items.Length; i++)
+        {
+            var a = outputs[i].Entities;
+            var e = ((Gliner2ExtractionResult)singles[items[i].Id]).Entities;
+            bool same = SameSpans(a, e);
+            double max = 0;
+            bool finite = true;
+            if (same)
+            {
+                for (int k = 0; k < a.Count; k++)
+                {
+                    finite &= float.IsFinite(a[k].Confidence);
+                    max = Math.Max(max, Math.Abs((double)a[k].Confidence - e[k].Confidence));
+                }
+            }
+
+            check = check.Merge(new SweepCheck(1, max, finite, same ? 0 : 1, items[i].Id));
+        }
+
+        return check;
+    }
 
     /// <summary>The label set of the NER source (every WNUT-17 row has the same labels; checked).</summary>
     private static string[] Labels(SweepWorkloadFile file)

@@ -31,9 +31,13 @@ internal static class BatchSweep
           --max-inflight-items N        skip cells whose batch x concurrency exceeds N (memory guard; listed as skipped)
           --threads N                   intra_op_num_threads (sweep it with separate processes; see run-batching-sweep.sh)
           --workloads <file>            default ai-dotnet/benchmarks/workloads/batching-sweep-v1.json
-        Hooks of the option contract, rejected until the integrate step wires them (exit 2):
-          --sort-by-length true|false   --max-batch-tokens N (wired for EmbeddingGemma 2, whose option exists)
-          --microbatch-wait-ms N        --microbatch-max-rows N
+        Batching configuration (the option contract; recorded as sweep.config, e.g. baseline, sorted, tokens2048, micro-w0-r8):
+          --sort-by-length true|false   the library's SortByLength (length-sorted chunking within one call)
+          --max-batch-tokens N          the library's MaxBatchTokens (padded cells per ORT run)
+          --microbatch-wait-ms MS       micro-batching on (MicroBatchingOptions.MaxWait); each item of a call is issued as
+          --microbatch-max-rows N       a one-item call through the micro-batched entry point (e5 / EmbeddingGemma 2
+          --microbatch-max-tokens N     GenerateAsync, GLiNER2 ExtractAsync); MaxRows (default 8) and MaxTokens
+                                        compare with --batches 1 at the same concurrency without micro-batching
         """;
 
     /// <summary>
@@ -126,6 +130,12 @@ internal static class BatchSweep
                 ["max_calls"] = o.MaxCalls,
                 ["warmup_calls"] = o.Warmup,
                 ["max_batch_size"] = o.MaxBatchSizeLabel,
+                ["config"] = o.Config,
+                ["sort_by_length"] = o.SortByLength,
+                ["max_batch_tokens"] = o.MaxBatchTokens,
+                ["micro_batching"] = o.MicroBatching
+                    ? new JsonObject { ["max_wait_ms"] = o.MicroBatchWaitMs ?? 0, ["max_rows"] = o.MicroBatchRows, ["max_tokens"] = o.MicroBatchMaxTokens }
+                    : null,
                 ["seed"] = file.Seed,
                 ["pools"] = pools.Describe(),
                 ["pool_build_ms"] = poolMs,
@@ -133,7 +143,9 @@ internal static class BatchSweep
                 ["quality_check"] = target.QualityCheck,
                 ["tolerance"] = target.Tolerance,
                 ["tolerance_file"] = target.ToleranceFile,
-                ["queue_time"] = "not separable: no scheduler in the library yet (stage 'queue' appears once micro-batching is wired)",
+                ["queue_time"] = o.MicroBatching
+                    ? "cell.micro_batching: the batcher's queue time (queued until dispatched) and run time per item and per batch; per-call stages hold the whole call"
+                    : "none: without micro-batching a call runs on its caller's thread (GLiNER2 on CUDA includes the wait on its run gate in 'inference')",
                 ["rss"] = "VmHWM of /proc/self/status after resetting it through /proc/self/clear_refs before each cell's warmup; includes managed heap, native arenas and everything the process mapped (ORT arenas do not shrink, so a cell's peak can carry an earlier cell's high-water mark)",
                 ["vram"] = context.IsCuda ? "device memory.used (whole GPU, all processes) sampled by nvidia-smi -lms 100; the CUDA arena does not shrink, so peaks are cumulative in cell order" : "n/a (CPU)",
             },
@@ -221,6 +233,8 @@ internal static class BatchSweep
             target.Call(Request(i), scratch);
         }
 
+        var batcherBefore = target.BatcherStatistics;
+
         int capacity = o.MaxCalls;
         var latency = new double[capacity];
         var offset = new double[capacity];
@@ -267,7 +281,7 @@ internal static class BatchSweep
                     real += lengths[k];
                 }
 
-                var (cells, chunkCount) = SweepMath.Padding(lengths, target.PlanChunks(lengths));
+                var (cells, chunkCount) = target.Padding(lengths);
                 realTokens[i] = real;
                 paddedCells[i] = cells;
                 runs[i] = chunkCount;
@@ -295,6 +309,7 @@ internal static class BatchSweep
         }
 
         double wall = MonotonicClock.ElapsedMs(start);
+        var batcher = target.BatcherStatistics is { } after && batcherBefore is { } before ? after.Since(before) : (SweepBatcherStats?)null;
         // A worker can stop on the time limit while another, which drew a later index a moment earlier, still runs:
         // keep the calls that ran, in index order.
         var ran = Enumerable.Range(0, capacity).Where(i => completed[i]).ToArray();
@@ -309,6 +324,14 @@ internal static class BatchSweep
         double? vramPeak = gpu?.Peak();
         long items = (long)n * batch;
         long sumReal = realTokens.Take(n).Sum(), sumPadded = paddedCells.Take(n).Sum();
+        if (batcher is { TokenCells: > 0 } b)
+        {
+            // Micro-batching: the batcher, not the call, forms the ORT batches; padding is the dispatched batches'.
+            // (Includes the batches of calls that started before a worker stopped; the per-call arrays are per item.)
+            sumReal = b.Tokens;
+            sumPadded = b.TokenCells;
+        }
+
         var sorted = latency.Take(n).Order().ToArray();
         var stageJson = new JsonObject();
         for (int s = 0; s < target.Stages.Length; s++)
@@ -329,6 +352,7 @@ internal static class BatchSweep
             ["intra_op_num_threads"] = target.IntraOpThreads,
             ["max_batch_size"] = target.MaxBatchSize,
             ["max_batch_tokens"] = target.MaxBatchTokens,
+            ["config"] = o.Config,
             ["warmup_calls"] = o.Warmup,
             ["n"] = n,
             ["items"] = items,
@@ -349,6 +373,18 @@ internal static class BatchSweep
             ["call_runs"] = Json(runs.Take(n)),
             ["rss"] = new JsonObject { ["before_bytes"] = rssBefore, ["peak_bytes"] = rssPeak },
             ["vram"] = gpu is null ? null : new JsonObject { ["before_mib"] = vramBefore, ["peak_mib"] = vramPeak },
+            ["micro_batching"] = batcher is not { } m ? null : new JsonObject
+            {
+                ["batches"] = m.Batches,
+                ["items"] = m.Items,
+                ["mean_rows"] = m.Batches == 0 ? 0 : (double)m.Items / m.Batches,
+                ["tokens"] = m.Tokens,
+                ["padded_cells"] = m.TokenCells,
+                ["padding_efficiency"] = m.TokenCells == 0 ? null : (double)m.Tokens / m.TokenCells,
+                ["queue_ms_per_item"] = m.Items == 0 ? 0 : m.QueueMs / m.Items,
+                ["run_ms_per_batch"] = m.Batches == 0 ? 0 : m.RunMs / m.Batches,
+                ["run_ms_total"] = m.RunMs,
+            },
             ["quality"] = new JsonObject
             {
                 ["check"] = target.QualityCheck,
@@ -369,7 +405,7 @@ internal static class BatchSweep
 /// <summary>A model harness driver with a sweep mode (<c>sweep</c> command of <see cref="HarnessHost"/>).</summary>
 internal interface ISweepDriver
 {
-    /// <summary>Hook flags of <see cref="SweepOptions.Hooks"/> this driver maps to an option that already exists.</summary>
+    /// <summary>Hook flags of <see cref="SweepOptions.Hooks"/> this driver maps to library options (the others are rejected).</summary>
     IReadOnlyCollection<string> WiredSweepHooks => [];
 
     /// <summary>Loads the model for the sweep; throws <see cref="BenchAssetsMissingException"/> when an asset is absent.</summary>
@@ -426,10 +462,12 @@ internal interface ISweepTarget : IDisposable
     /// <summary>The per-item reference kept from a call on <paramref name="item"/> alone.</summary>
     object Single(SweepItem item, object output);
 
-    /// <summary>Rows per ORT run, in order, for a call with these token lengths (the library's chunk plan).</summary>
-    IEnumerable<int> PlanChunks(IReadOnlyList<int> lengths);
+    /// <summary>Padded cells and ORT runs of a call with these token lengths (the library's chunk plan).</summary>
+    (long Cells, int Runs) Padding(IReadOnlyList<int> lengths);
+
+    /// <summary>The micro-batcher's counters since load, or null when micro-batching is off.</summary>
+    SweepBatcherStats? BatcherStatistics => null;
 
     /// <summary>Every output of <paramref name="output"/> against the item's single-call reference.</summary>
     SweepCheck Compare(SweepItem[] items, object output, IReadOnlyDictionary<string, object> singles);
 }
-

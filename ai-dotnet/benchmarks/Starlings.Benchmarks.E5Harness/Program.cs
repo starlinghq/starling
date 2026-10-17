@@ -27,7 +27,7 @@ int ToolBody()
 #else
         const bool cudaBuild = false;
 #endif
-        return BatchSweep.Command(args[1..], "Starlings.Benchmarks.E5Harness", cudaBuild, (context, sweep) => new E5SweepTarget(context, sweep));
+        return BatchSweep.Command(args[1..], "Starlings.Benchmarks.E5Harness", cudaBuild, (context, sweep) => new E5SweepTarget(context, sweep), SweepOptions.AllHooks);
     }
 
     try
