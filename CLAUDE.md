@@ -8,6 +8,7 @@ This repository delivers .NET implementations of AI models with reproducible evi
 - `model-pipeline/`: Python manifest schema, registry, reference runners, evaluation.
 - `browser/`: the WebAssembly spike.
 - `.github/`: charter, contribution policy, templates, CI.
+- [starlinghq/roost](https://github.com/starlinghq/roost): the Roost serving engine for NVIDIA GPUs, a separate repository that consumes this one as its [build plan](https://github.com/starlinghq/roost/blob/ff072f8d745abb58c226a43d99ae79334cd78cdb/docs/plan/build-plan.md) section 3.1 describes. No Roost code lands here; a change to the generation contract, the manifest schema or the evaluator lists its Roost impact in the PR description.
 
 The owned tokenizer is the published package `Starlings.Tokenizers` from [starlinghq/tokenizers](https://github.com/starlinghq/tokenizers), pinned exactly in `ai-dotnet/Directory.Packages.props`. Change tokenizer behavior there, release it, then raise the pin here (and the manifests' `processing.tokenizer.version`) in one change.
 
