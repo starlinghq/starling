@@ -93,7 +93,7 @@ cpu_quota() {
             return
         fi
     done
-    echo " none"
+    echo "none no-readable-cpu-quota"
 }
 cpu_throttled() {
     local f
@@ -110,6 +110,7 @@ cpu_throttled() {
     echo "n/a"
 }
 read -r QUOTA_CPUS QUOTA_SOURCE <<<"$(cpu_quota)"
+[[ $QUOTA_CPUS =~ ^[1-9][0-9]*$ ]] || QUOTA_CPUS="" # "none": no quota, so the CPU_CAP fallback below applies
 AFFINITY_CPUS="$(nproc)"
 CPU_CAP=16 # no quota readable: a fixed cap, never the host's core count
 if [[ -n $QUOTA_CPUS ]]; then

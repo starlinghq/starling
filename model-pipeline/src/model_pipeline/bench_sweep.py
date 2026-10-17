@@ -251,6 +251,14 @@ def _comparison(configs: list[dict]) -> list[dict]:
     return out
 
 
+def _thread_mbs(max_batch_size: object) -> object:
+    """The max batch size as the thread table keys it: "call (N)" (N = the largest swept batch, so every call is one
+    run) is the same configuration whatever N is, so runs over different batch grids compare."""
+    if isinstance(max_batch_size, str) and max_batch_size.startswith("call"):
+        return "call"
+    return max_batch_size
+
+
 def _thread_table(configs: list[dict]) -> list[dict]:
     """Items/s by intra-op thread count, per (model, provider, max batch size, machine, set, batch, concurrency)."""
     table: dict[tuple, dict] = defaultdict(dict)
@@ -262,7 +270,7 @@ def _thread_table(configs: list[dict]) -> list[dict]:
                 cfg["model"],
                 cfg["provider"],
                 cfg["config"],
-                cfg["max_batch_size"],
+                _thread_mbs(cfg["max_batch_size"]),
                 cfg["machine"],
                 row["set"],
                 row["batch"],

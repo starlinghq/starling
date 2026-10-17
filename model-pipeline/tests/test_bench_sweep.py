@@ -148,6 +148,31 @@ def test_thread_counts_get_their_own_table(tmp_path: Path) -> None:
     assert "## Intra-op threads (items/s)" in bench_sweep.markdown(summary)
 
 
+def test_thread_table_joins_call_sized_runs_over_different_batch_grids(tmp_path: Path) -> None:
+    # The main run sweeps batches up to 64 ("call (64)"), the thread sweep up to 32 ("call (32)"): both run one call
+    # per batch, so the shared cells compare.
+    a = [_run("t2", threads=2), _cell("t2", 8, 1, 50.0), _end("t2")]
+    b = [_run("t6", threads=6), _cell("t6", 8, 1, 120.0), _end("t6")]
+    a[0]["sweep"]["max_batch_size"] = "call (32)"
+    b[1]["intra_op_num_threads"] = 6
+    results, problems = bench_sweep.load([_write(tmp_path / "a.jsonl", a), _write(tmp_path / "b.jsonl", b)])
+    assert problems == []
+    summary = bench_sweep.summarize(results)
+    assert len(summary["threads"]) == 1
+    assert summary["threads"][0]["max_batch_size"] == "call"
+    assert summary["threads"][0]["items_per_s"] == {"2": 50.0, "6": 120.0}
+
+
+def test_thread_table_keeps_capped_max_batch_sizes_apart(tmp_path: Path) -> None:
+    a = [_run("t2", threads=2), _cell("t2", 8, 1, 50.0), _end("t2")]
+    b = [_run("t6", threads=6), _cell("t6", 8, 1, 120.0), _end("t6")]
+    a[0]["sweep"]["max_batch_size"] = 8
+    b[1]["intra_op_num_threads"] = 6
+    results, problems = bench_sweep.load([_write(tmp_path / "a.jsonl", a), _write(tmp_path / "b.jsonl", b)])
+    assert problems == []
+    assert bench_sweep.summarize(results)["threads"] == []
+
+
 def test_repeated_cells_take_the_median_over_runs(tmp_path: Path) -> None:
     records = []
     for rid, value in (("x", 100.0), ("y", 140.0), ("z", 120.0)):
