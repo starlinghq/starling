@@ -21,8 +21,8 @@
 | `embeddinggemma-2/image-fp32-cuda` | **Stable** (RTX 3090) | 2026-10-16 (#82) |
 | `qwen3.5-0.8b/ortgenai-fp32x-cuda` | **Stable** (RTX 3090) | 2026-10-16 (#82) |
 | `qwen3.5-0.8b/ortgenai-fp16x-cuda` | **Stable** (RTX 3090) | 2026-10-16 (#82) |
-| `embeddinggemma-2/video-fp32-cpu` | Experimental | not promoted: hosted G2 on the video release set failed in the stable-flakes qualification run 38967975211 (first divergence `dotnet-ids`), undiagnosed |
-| `embeddinggemma-2/video-fp32-cuda` | Experimental | not promoted: waits for a green per-release GPU run on the RTX 3090 for this profile |
+| `embeddinggemma-2/video-fp32-cpu` | Experimental | not promoted: the release-set G2 is marginal on hosted runners. It passed in the qualification run on `main` (38977347513) and failed once in a branch run (38967975211): token embeddings 1.83e-3 against the protected 1e-3, worst `commons-video-04`. Undiagnosed |
+| `embeddinggemma-2/video-fp32-cuda` | Experimental | not promoted in this release: the RTX 3090 per-release run on `main` (38977347513) passed every check of this profile (CUDA tests, G1 to G3 on the release sets, soak smoke test), the blocker its manifest records. Its token embeddings on `commons-video-04` sit at 7.97e-4 against 1e-3 on the RTX 3090, the video that fails the bound on the RTX 4090 and on some hosted CPUs, so the promotion and its capability statuses are left to a separate change |
 
 Stable on CUDA means Linux x64 with an RTX 3090; other GPUs are untested. Windows CPU is experimental; macOS and ARM64 are untested. The [catalog](../catalog/README.md) links every gate to its evidence, and the [compatibility matrix](../catalog/compatibility-matrix.md) lists each platform and provider.
 
@@ -35,21 +35,21 @@ All packages target `net10.0`, are licensed MIT OR Apache-2.0 and have SourceLin
 | Package | Version | Change since 0.1.0-preview.6 |
 | --- | --- | --- |
 | `Starlings.Tokenizers` | 0.3.0 | dependency, released from starlinghq/tokenizers; same code as 0.3.0-preview.1 |
-| `Starlings.Runtime.Onnx` | 0.2.0 | a CUDA run is never terminated mid-graph (#61, GLiNER2 CUDA wrong output); heap trim on session release (#66); container-aware intra-op threads (#63); dedicated run threads (#86, #87) |
-| `Starlings.Acquisition` | 0.2.0 | version only |
-| `Starlings.Models.E5` | 0.2.0 | Stable CPU and CUDA profiles; dedicated run threads by default on CPU (#87) |
-| `Starlings.Models.E5.Extensions.AI` | 0.2.0 | version only |
-| `Starlings.Models.E5.MLNet` | 0.2.0 | version only |
-| `Starlings.Models.Gliner2` | 0.2.0 | Stable CPU and CUDA profiles; per-token id memoization (#54) |
-| `Starlings.Generation.OnnxGenAI` | 0.2.0 | version only |
-| `Starlings.Models.Qwen35` | 0.2.0 | **tool calling**, experimental (#17): template rendering of tools and a parser for the tool-call format; Stable fp32x CPU, fp32x CUDA and fp16x CUDA profiles |
-| `Starlings.Models.Qwen35.Extensions.AI` | 0.2.0 | `IChatClient` tool calling (`AIFunction` tools, `FunctionCallContent`, `FunctionResultContent`, `UseFunctionInvocation`) |
-| `Starlings.Models.EmbeddingGemma2` | 0.2.0 | Stable text and image profiles (CPU and CUDA); video decoded as torchcodec does (#41); AVX2, row- and frame-parallel image preprocessing (#55); CPU sessions without ONNX Runtime's CPU arena (#83) |
-| `Starlings.Models.EmbeddingGemma2.Extensions.AI` | 0.2.0 | version only |
-| `Starlings.Models.EmbeddingGemma2.MLNet` | 0.2.0 | version only |
-| `Starlings.Models.EmbeddingGemma2.Imaging.SkiaSharp` | 0.2.0 | version only |
-| `Starlings.Models.EmbeddingGemma2.Video.FFmpeg` | 0.2.0 | **first publish** (D2 cleared, #48): FFmpeg 8 adapter, seeking as torchcodec does |
-| `Starlings.Models.EmbeddingGemma2.Video.FFmpeg9` | 0.2.0 | **first publish** (D2 cleared, #48): FFmpeg 9 adapter, bindings verified against the pinned n9.0.1 headers (#47) |
+| `Starlings.Runtime.Onnx` | 0.2.0 | a CUDA run is never terminated mid-graph: it completes, then the call throws `OperationCanceledException` (#61, GLiNER2 CUDA wrong output); heap trim on session release (#66); container-aware intra-op thread defaults (#63); placement capture fix (#84); EmbeddingGemma 2 CPU sessions without ONNX Runtime's CPU arena and dedicated run threads (#83, #86) |
+| `Starlings.Acquisition` | 0.2.0 | description and README: per-profile maturity table instead of the Preview label (#56) |
+| `Starlings.Models.E5` | 0.2.0 | Stable CPU and CUDA profiles, capability statuses and contract (#56, #82); CUDA cancellation (#61); dedicated run threads by default on CPU (#87) |
+| `Starlings.Models.E5.Extensions.AI` | 0.2.0 | CUDA cancellation follows `Runtime.Onnx` (#61); maturity table (#56) |
+| `Starlings.Models.E5.MLNet` | 0.2.0 | maturity table (#56) |
+| `Starlings.Models.Gliner2` | 0.2.0 | Stable CPU and CUDA profiles (#56, #59, #82); per-token id memoization (#54); capability closure (#19); CUDA cancellation (#61) |
+| `Starlings.Generation.OnnxGenAI` | 0.2.0 | container-aware intra-op thread defaults (#63); maturity table (#56) |
+| `Starlings.Models.Qwen35` | 0.2.0 | **tool calling**, experimental (#17): tools rendered by the C# chat template and a parser for the tool-call format; capability closure (#19); Stable fp32x CPU, fp32x CUDA and fp16x CUDA profiles |
+| `Starlings.Models.Qwen35.Extensions.AI` | 0.2.0 | `IChatClient` tool calling (`AIFunction` tools, `FunctionCallContent`, `FunctionResultContent`, `UseFunctionInvocation`) (#17) |
+| `Starlings.Models.EmbeddingGemma2` | 0.2.0 | Stable text and image profiles, CPU and CUDA (#56, #68, #75, #82); AVX2, row- and frame-parallel image preprocessing (#55); CPU sessions without ONNX Runtime's CPU arena and dedicated run threads (#83, #86); capability closure (#19); CUDA cancellation (#61) |
+| `Starlings.Models.EmbeddingGemma2.Extensions.AI` | 0.2.0 | CUDA cancellation follows `Runtime.Onnx` (#61); maturity table (#56) |
+| `Starlings.Models.EmbeddingGemma2.MLNet` | 0.2.0 | maturity table (#56) |
+| `Starlings.Models.EmbeddingGemma2.Imaging.SkiaSharp` | 0.2.0 | decoder capability closure (#19); maturity table (#56) |
+| `Starlings.Models.EmbeddingGemma2.Video.FFmpeg` | 0.2.0 | **first publish** (D2 cleared, #48): FFmpeg 8 adapter, decoding as torchcodec does, seeking where it seeks (#41) |
+| `Starlings.Models.EmbeddingGemma2.Video.FFmpeg9` | 0.2.0 | **first publish** (D2 cleared, #48): FFmpeg 9 adapter, bindings verified against the pinned n9.0.1 headers (#47, #65) |
 
 **Publishable set (15 packages):** every row at 0.2.0. Nothing is held (`HELD` is empty in `.github/workflows/release.yml`).
 
