@@ -41,4 +41,15 @@ var embeddings = await generator.GenerateAsync(["how much protein should a femal
 - `GenerateAsync` runs synchronously on the calling thread and returns a completed task.
 - Unsupported options (`Dimensions` other than 384, another `ModelId`, unknown additional properties) fail with `NotSupportedException` instead of being ignored.
 
+## Micro-batching (experimental, opt-in)
+
+```csharp
+var generator = E5EmbeddingGenerator.Create(files, new E5EmbeddingGeneratorOptions
+{
+    MicroBatching = new() { MaxRows = 8, MaxWait = TimeSpan.FromMilliseconds(2) },   // null (default): off
+});
+```
+
+With `MicroBatching` set, a `GenerateAsync` call with exactly one value is tokenized and validated on the calling thread (an invalid value fails only its own call), then queued; one dispatcher thread embeds the queued values of concurrent callers in padded batches of at most `MaxRows` values and `MaxTokens` padded token cells, dispatched when full or when the oldest has waited `MaxWait` (default zero: no added latency, a batch holds what queued while the previous one ran). Outputs then depend on the concurrent traffic: equal to a single call within the profile's padded-batch tolerance, not bit for bit reproducible. Calls with several values run as one explicit batch, as without the option. Cancelling a queued call removes it; cancelling a dispatched one cancels only that caller's task (the batch keeps running for the others). A full queue (`QueueCapacity`) makes callers wait for a slot. `Dispose` faults queued calls with `ObjectDisposedException` and waits for a running batch. `MicroBatchingStatistics` reports batches, items, padding and queue and run time. Status: experimental (capability `extensions_ai.micro_batching`): weight-free tests and one real-model test within the padded-batch tolerance on Linux x64 CPU; no benchmark adoption decision, no CUDA run and no soak yet.
+
 Status: supported on the Stable e5 `onnx-fp32-cpu` profile (Linux x64 CPU; G7 passed; the contract is in the `Starlings.Models.E5` README); supported over a CUDA session on the Stable `onnx-fp32-cuda` profile (Linux x64, RTX 3090; 46 protected texts within the CUDA profile's bound, rerun by the per-release GPU regression; the contract is the README's "Stable contract: CUDA"). See the [release notes](https://github.com/starlinghq/starling/blob/main/docs/releases/ai-0.1.0-preview.6.md).

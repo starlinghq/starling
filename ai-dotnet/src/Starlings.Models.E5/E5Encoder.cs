@@ -155,6 +155,14 @@ public sealed class E5Encoder : IDisposable
         }
     }
 
+    /// <summary>
+    /// Checks one input as <see cref="EmbedBatch(IReadOnlyList{EncoderInput}, Span{float}, CancellationToken)"/> does
+    /// before any inference, and throws what a one-input call would throw (the message names it input 0). Lets a caller
+    /// reject an invalid input on its own before queueing it next to others (micro-batching).
+    /// </summary>
+    /// <exception cref="ArgumentException">The input is empty, too long, or has an invalid mask or id.</exception>
+    public void Validate(EncoderInput input) => Validate(input, 0);
+
     /// <summary>Disposes the session if this encoder owns it. Idempotent.</summary>
     public void Dispose()
     {

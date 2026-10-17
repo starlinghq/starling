@@ -1,3 +1,5 @@
+using Starlings.Runtime.Onnx.Batching;
+
 namespace Starlings.Models.EmbeddingGemma2.Extensions.AI;
 
 /// <summary>Immutable configuration of an <see cref="EmbeddingGemma2EmbeddingGenerator"/>.</summary>
@@ -38,6 +40,19 @@ public sealed record EmbeddingGemma2EmbeddingGeneratorOptions
     /// </summary>
     public EmbeddingGemma2EncoderOptions Encoder { get; init; } = new();
 
+    /// <summary>
+    /// Cross-request micro-batching (Experimental, capability <c>extensions_ai.micro_batching</c>), or null (default):
+    /// off, every call runs on the calling thread exactly as without this option. When set, a call with exactly one
+    /// value is tokenized (prompt applied) and validated on the calling thread, then queued; one dispatcher thread embeds
+    /// the queued values of concurrent callers in padded batches (<see cref="MicroBatcher{TItem, TResult}"/>; the
+    /// encoder's own row and padded-cell limits still split each batch), and the call's task completes when its batch
+    /// has run. Values with different prompts or dimensions may share a batch: the prompt is part of the tokens and the
+    /// Matryoshka truncation is applied per call afterwards. Calls with several values still run as one explicit batch
+    /// on the calling thread. A queued value's embedding then depends on the other values in its batch: equal to a
+    /// single call within the profile's padded-batch tolerance, not bit for bit reproducible.
+    /// </summary>
+    public MicroBatchingOptions? MicroBatching { get; init; }
+
     internal void Validate()
     {
         ArgumentNullException.ThrowIfNull(Prompt);
@@ -48,5 +63,6 @@ public sealed record EmbeddingGemma2EmbeddingGeneratorOptions
 
         ArgumentException.ThrowIfNullOrWhiteSpace(ModelId);
         ArgumentNullException.ThrowIfNull(Encoder);
+        MicroBatching?.Validate();
     }
 }
