@@ -15,7 +15,10 @@ discrete:
 float:
   # Row-relative: per row, max|d| / max|ref row| <= bound.
   soft_tokens_row_relative: 1.0e-3
-  token_embeddings_row_relative: 1.0e-3
+  # Recalibrated by Mark on 2026-10-16 from 1.0e-3: the PyTorch reference's own rerun spread on commons-video-04
+  # (same metric) is up to 2.09e-3 (EPYC 7763); rule: max reference-vs-reference spread x 1.5, rounded up to one
+  # significant figure. docs/evidence/eg2-video-g2-isa/README.md (PR #89).
+  token_embeddings_row_relative: 4.0e-3
   embedding_max_abs: 1.0e-5
   min_cosine: 0.9999995
   padded_batch_vs_single_embedding_max_abs: 1.0e-5
