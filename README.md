@@ -20,7 +20,7 @@ Requires the [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0). M
 
 ```sh
 dotnet new console -o search && cd search
-dotnet add package Starlings.Models.E5.Extensions.AI --prerelease
+dotnet add package Starlings.Models.E5.Extensions.AI
 dotnet add package Microsoft.ML.OnnxRuntime --version 1.30.0
 ```
 
@@ -62,7 +62,7 @@ The first run downloads the model (about 470 MB) into your user cache; later run
 ### Local chat through `IChatClient`
 
 ```sh
-dotnet add package Starlings.Models.Qwen35.Extensions.AI --prerelease
+dotnet add package Starlings.Models.Qwen35.Extensions.AI
 dotnet add package Microsoft.ML.OnnxRuntimeGenAI --version 0.17.1
 ```
 
@@ -91,7 +91,7 @@ More complete programs, including entity extraction and image search, are in [`a
 
 **Stable** means every release gate passed: provenance, numerical parity and task quality against the Python reference, a one-hour leak soak, benchmarks, a clean install from the packages, and integration. It also means regression runs continue: weekly on CPU, and on a GPU before every release for CUDA. Stable on CUDA means Linux x64 with an NVIDIA GeForce RTX 3090, where every CUDA gate and the per-release GPU run take place; other GPUs are untested. EmbeddingGemma 2 video on CUDA stays Experimental until a per-release run on an RTX 3090 is green for it. The [model catalog](docs/catalog/README.md) links each gate to its evidence, and the [compatibility matrix](docs/catalog/compatibility-matrix.md) lists each platform and provider.
 
-**Release status:** `0.1.0-preview.6` is published on nuget.org. The Stable profiles above, Qwen tool calling and the FFmpeg video adapters are on `main` and ship in `0.2.0`, the first release with Stable profiles.
+**Release status:** `0.2.0` is the first release with Stable profiles: the Stable profiles above, Qwen tool calling and the FFmpeg video adapters ([release record](docs/releases/ai-0.2.0.md)). It depends on `Starlings.Tokenizers` `0.3.0`.
 
 ## Why Starling
 

@@ -33,7 +33,7 @@ Text goes through the owned tokenizer `Starlings.Tokenizers` (profile `gemma-bpe
 ## Install
 
 ```sh
-dotnet add package Starlings.Models.EmbeddingGemma2 --prerelease
+dotnet add package Starlings.Models.EmbeddingGemma2
 dotnet add package Microsoft.ML.OnnxRuntime --version 1.30.0          # CPU natives
 # or, for CUDA on Linux x64: Microsoft.ML.OnnxRuntime.Gpu.Linux 1.30.0 (reference exactly one)
 # optional, to decode image files: Starlings.Models.EmbeddingGemma2.Imaging.SkiaSharp
@@ -146,7 +146,7 @@ This is the contract of profile `embeddinggemma-2/onnx-fp32-cpu` (text embedding
 | --- | --- |
 | Profile | `embeddinggemma-2/onnx-fp32-cpu` (registry manifest `model-pipeline/registry/embeddinggemma-2/onnx-fp32-cpu/manifest.yaml`). |
 | Model | `google/embeddinggemma-2` at `914f7f89142e33e77833254d9c9b90c3cef7303b`. The text graph is Starling's float32 export (`onnx/embeddinggemma2-text-fp32.onnx`, digest in `EmbeddingGemma2ModelAssets`), downloaded with no token from the public repository `Starlinghq/embeddinggemma-2-onnx` at `92a02ae2`. |
-| Tokenizer | `Starlings.Tokenizers` `0.3.0-preview.1`, profile `gemma-bpe-embeddinggemma2`. `<bos>` and `<eos>` are added, and text is never truncated. |
+| Tokenizer | `Starlings.Tokenizers` `0.3.0`, profile `gemma-bpe-embeddinggemma2`. `<bos>` and `<eos>` are added, and text is never truncated. |
 | Runtime | ONNX Runtime 1.30.0 (the application adds `Microsoft.ML.OnnxRuntime` 1.30.0 CPU natives), fp32, .NET 10. |
 | Supported platform | Linux x64, CPU. Gates G1 to G5 ran on an Intel Core i7-5820K (Haswell-E, 6 cores and 12 threads, AVX2 and FMA, no AVX-512), .NET 10.0.12. The weekly qualification reruns G1 to G3 on the release sets and a one-hour soak on GitHub-hosted `ubuntu-latest` x64 (4 logical CPUs; transparent huge pages `madvise`). No `MALLOC_*` environment setting is required for this profile. |
 | Memory on Linux | The runtime calls `malloc_trim(0)` when a session is released, on by default. CPU sessions run without ONNX Runtime's CPU memory arena unless `OnnxSessionOptions.CpuMemoryArena` is set, and on the runtime's dedicated run threads unless `OnnxSessionOptions.DedicatedRunThreads` is set; outputs are the same. See [Memory on Linux](#memory-on-linux). |
@@ -168,7 +168,7 @@ This is the contract of profile `embeddinggemma-2/image-fp32-cpu` (image and int
 | --- | --- |
 | Profile | `embeddinggemma-2/image-fp32-cpu` (registry manifest `model-pipeline/registry/embeddinggemma-2/image-fp32-cpu/manifest.yaml`). |
 | Model | `google/embeddinggemma-2` at `914f7f89142e33e77833254d9c9b90c3cef7303b`. The vision graph and the multimodal text graph are Starling's float32 exports (digests in `EmbeddingGemma2ModelAssets.ImageLock`), downloaded with no token from the public repository `Starlinghq/embeddinggemma-2-vision-onnx`. Text-only inputs run on the text graph of the text contract. |
-| Tokenizer | `Starlings.Tokenizers` `0.3.0-preview.1`, profile `gemma-bpe-embeddinggemma2`; each image is expanded to `<|image>` + 280 x `<|image|>` + `<image|>` at its position. |
+| Tokenizer | `Starlings.Tokenizers` `0.3.0`, profile `gemma-bpe-embeddinggemma2`; each image is expanded to `<|image>` + 280 x `<|image|>` + `<image|>` at its position. |
 | Runtime | ONNX Runtime 1.30.0 CPU natives, fp32, .NET 10. |
 | Supported platform | Linux x64, CPU. Gates G1 to G5 ran on an Intel Core i7-5820K (Haswell-E, 6 cores and 12 threads, AVX2 and FMA, no AVX-512), .NET 10.0.12. The weekly qualification reruns G1 to G3 on the release sets and a one-hour soak on GitHub-hosted `ubuntu-latest` x64 (4 logical CPUs; transparent huge pages `madvise`). No `MALLOC_*` environment setting is required for this profile. |
 | Memory on Linux | The runtime calls `malloc_trim(0)` when a session is released, on by default. CPU sessions run without ONNX Runtime's CPU memory arena unless `OnnxSessionOptions.CpuMemoryArena` is set, and on the runtime's dedicated run threads unless `OnnxSessionOptions.DedicatedRunThreads` is set; outputs are the same. See [Memory on Linux](#memory-on-linux). One full-budget image uses about 610 MB of attention buffer per vision layer; `MaxVisionBatchSize` is 1 by default. |

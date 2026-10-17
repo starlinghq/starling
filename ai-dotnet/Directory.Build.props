@@ -9,8 +9,7 @@
       honest, and maturity (Experimental, Preview, Stable) is per model profile in each README, not a package label. The next
       version is 0.2.0, set by its release-candidate change. A published version is immutable. The tokenizer keeps its own version and cadence; Directory.Packages.props pins it exactly.
     -->
-    <VersionPrefix>0.1.0</VersionPrefix>
-    <VersionSuffix>preview.6</VersionSuffix>
-    <PackageReleaseNotes>https://github.com/starlinghq/starling/blob/main/docs/releases/ai-0.1.0-preview.5.md</PackageReleaseNotes>
+    <VersionPrefix>0.2.0</VersionPrefix>
+    <PackageReleaseNotes>https://github.com/starlinghq/starling/blob/main/docs/releases/ai-0.2.0.md</PackageReleaseNotes>
   </PropertyGroup>
 </Project>

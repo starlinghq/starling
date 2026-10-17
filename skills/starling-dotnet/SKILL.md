@@ -9,7 +9,7 @@ Starling ships open models as NuGet libraries that run in-process on ONNX Runtim
 
 ## Pick the package
 
-| Task | Model | Package (add `--prerelease`) | Native runtime the app must add |
+| Task | Model | Package | Native runtime the app must add |
 | --- | --- | --- | --- |
 | Text embeddings, multilingual, small (384 dims) | multilingual-e5-small | `Starlings.Models.E5.Extensions.AI` | `Microsoft.ML.OnnxRuntime` 1.30.0 |
 | Text embeddings, higher quality (768 dims, Matryoshka) | EmbeddingGemma 2 | `Starlings.Models.EmbeddingGemma2.Extensions.AI` | `Microsoft.ML.OnnxRuntime` 1.30.0 |
@@ -134,7 +134,7 @@ await foreach (var update in chat.GetStreamingResponseAsync("In one sentence, wh
     Console.Write(update.Text);
 ```
 
-`Qwen35Variant.Fp16x` is CUDA-only and an approximate variant; prefer `Fp32x` unless you measured that Fp16x is good enough. Tool calling (`ChatOptions.Tools`) is on `main` and ships in 0.2.0; it is not in 0.1.0-preview.6.
+`Qwen35Variant.Fp16x` is CUDA-only and an approximate variant; prefer `Fp32x` unless you measured that Fp16x is good enough. Tool calling (`ChatOptions.Tools`) needs 0.2.0 or later; it is not in 0.1.0-preview.6.
 
 ### CUDA
 
@@ -154,7 +154,7 @@ CPU is the default; CUDA is opt-in per model. Each model's options type has a `S
 - Don't truncate input silently. The libraries reject over-long input with typed exceptions; catch them and chunk.
 - Don't add `Microsoft.ML.Tokenizers` or another tokenizer for these models. Tokenization is built in (`Starlings.Tokenizers`), and it matches upstream token for token.
 - Check maturity before promising support. Stable today on linux-x64: the CPU profiles of e5, EmbeddingGemma 2 text and image, GLiNER2 and Qwen fp32x, and the CUDA profiles of e5, EmbeddingGemma 2 text and image, GLiNER2 and Qwen fp32x and fp16x, on an NVIDIA GeForce RTX 3090 only (other GPUs are untested). EmbeddingGemma 2 video is experimental on CPU and CUDA. GLiNER2 on Linux needs `MALLOC_MMAP_THRESHOLD_=65536` in the process environment (CPU and CUDA). Windows CPU is experimental. macOS and ARM64 are untested. The current status is in the compatibility matrix linked below.
-- Versions: `0.1.0-preview.6` is on nuget.org. Use `--prerelease` with `dotnet add package`, and keep every `Starlings.*` package at the same version.
+- Versions: use `0.2.0` (the first release with Stable profiles), and keep every `Starlings.*` package at the same version.
 
 ## Where to look
 
