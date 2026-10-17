@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import importlib
+import inspect
 from pathlib import Path
 
 from model_pipeline.onboarding_runner import PipelineError
@@ -11,6 +12,7 @@ PLUGINS = {
     "e5-onnx-cpu-v1": "model_pipeline.onboarding_e5",
     "bert-onnx-cpu-v1": "model_pipeline.onboarding_bert",
     "qwen-genai-cpu-v1": "model_pipeline.onboarding_generation",
+    "kev-onnx-cpu-v1": "model_pipeline.onboarding_kev",
 }
 
 
@@ -33,6 +35,8 @@ def get_plugin(recipe: dict):
 def build_stages(recipe: dict, *, recipe_path: Path | None = None, plugin=None, **options):
     """Compose optional distribution without changing expensive plugin identities."""
     plugin = plugin or get_plugin(recipe)
+    if "base_snapshot" in options and "base_snapshot" not in inspect.signature(plugin.build_stages).parameters:
+        raise PipelineError("this onboarding plugin takes no base snapshot")
     candidate_distribution = options.get("distribution", False) and uses_shared_distribution(plugin)
     stages = plugin.build_stages(recipe, **{**options, "distribution": False} if candidate_distribution else options)
     if candidate_distribution:

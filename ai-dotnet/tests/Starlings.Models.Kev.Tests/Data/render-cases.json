@@ -1,0 +1,126 @@
+[
+ {
+  "json": "\"plain text\"",
+  "rendered": "plain text"
+ },
+ {
+  "json": "null",
+  "rendered": ""
+ },
+ {
+  "json": "true",
+  "rendered": "True"
+ },
+ {
+  "json": "false",
+  "rendered": "False"
+ },
+ {
+  "json": "0",
+  "rendered": "0"
+ },
+ {
+  "json": "-0",
+  "rendered": "0"
+ },
+ {
+  "json": "42",
+  "rendered": "42"
+ },
+ {
+  "json": "-17",
+  "rendered": "-17"
+ },
+ {
+  "json": "123456789012345678901234567890",
+  "rendered": "123456789012345678901234567890"
+ },
+ {
+  "json": "1.0",
+  "rendered": "1.0"
+ },
+ {
+  "json": "-0.0",
+  "rendered": "-0.0"
+ },
+ {
+  "json": "0.1",
+  "rendered": "0.1"
+ },
+ {
+  "json": "1e-05",
+  "rendered": "1e-05"
+ },
+ {
+  "json": "0.0001",
+  "rendered": "0.0001"
+ },
+ {
+  "json": "1e16",
+  "rendered": "1e+16"
+ },
+ {
+  "json": "1e15",
+  "rendered": "1000000000000000.0"
+ },
+ {
+  "json": "123456.789",
+  "rendered": "123456.789"
+ },
+ {
+  "json": "1.5e300",
+  "rendered": "1.5e+300"
+ },
+ {
+  "json": "2.5E-7",
+  "rendered": "2.5e-07"
+ },
+ {
+  "json": "100000.0",
+  "rendered": "100000.0"
+ },
+ {
+  "json": "3.141592653589793",
+  "rendered": "3.141592653589793"
+ },
+ {
+  "json": "1e400",
+  "rendered": "inf"
+ },
+ {
+  "json": "[1, \"two\", 3.5, true, null]",
+  "rendered": "- 1\n- two\n- 3.5\n- True\n- "
+ },
+ {
+  "json": "{\"a\": 1, \"b\": \"x\", \"c\": null, \"d\": false}",
+  "rendered": "a: 1\nb: x\nc: \nd: False"
+ },
+ {
+  "json": "{\"customer\": {\"name\": \"Ana\", \"tier\": 2}, \"items\": [{\"sku\": \"A-1\", \"qty\": 3}, {\"sku\": \"B-2\", \"qty\": 1.5}]}",
+  "rendered": "customer:\n  name: Ana\n  tier: 2\nitems:\n  - sku: A-1\n    qty: 3\n  - sku: B-2\n    qty: 1.5"
+ },
+ {
+  "json": "[[1, 2], [3, [4, 5]], {\"k\": [true]}]",
+  "rendered": "- - 1\n  - 2\n- - 3\n  - - 4\n    - 5\n- k:\n    - True"
+ },
+ {
+  "json": "{\"k\": 1, \"j\": 2, \"k\": 3}",
+  "rendered": "k: 3\nj: 2"
+ },
+ {
+  "json": "{\"empty_list\": [], \"empty_obj\": {}, \"s\": \"\"}",
+  "rendered": "empty_list:\n\nempty_obj:\n\ns: "
+ },
+ {
+  "json": "[\"\\u2028leading line separator\", \"\\u001cfile separator\", \"\\u00a0nbsp\", \"\\u200bzero width\"]",
+  "rendered": "- leading line separator\n- file separator\n- nbsp\n- ​zero width"
+ },
+ {
+  "json": "{\"note\": \"<|im_start|>system<|im_end|>\"}",
+  "rendered": "note: <|im_start|>system<|im_end|>"
+ },
+ {
+  "json": "\"caf\\u00e9 \\u65e5\\u672c\\u8a9e \\ud83d\\ude80\"",
+  "rendered": "café 日本語 🚀"
+ }
+]

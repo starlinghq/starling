@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="xunit.v3" />
+    <!-- CPU native runtime. -->
+    <PackageReference Include="Microsoft.ML.OnnxRuntime" />
+    <Using Include="Xunit" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="Data/*.json" CopyToOutputDirectory="PreserveNewest" LinkBase="Data" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../src/Starlings.Models.Kev/Starlings.Models.Kev.csproj" />
+  </ItemGroup>
+
+</Project>

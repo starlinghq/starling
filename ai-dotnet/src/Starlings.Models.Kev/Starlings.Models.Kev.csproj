@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <IsPackable>true</IsPackable>
+    <IsAotCompatible>true</IsAotCompatible>
+    <Description>Kev decision models (jaredpalmer/kev-0.8b and jaredpalmer/kev-4b, Kev 1.0) on ONNX Runtime: one state and typed questions (noul, choice, score) in, a calibrated probability per option out, in one prefill pass without generating text. Kev's request rendering and delimiter escaping in C#, token ids from the owned tokenizer (Starlings.Tokenizers profile qwen2-bpe-kev: no Microsoft.ML.Tokenizers), the Qwen3.5 backbone as an fp32 ONNX graph (the LoRA merged; ONNX Runtime GenAI builder without the LM head), the state run once and every question as its own row on the cached state, and Kev's pointer head. Ships the asset locks, not the weights. Profiles kev-0.8b/onnx-fp32-cpu and kev-4b/onnx-fp32-cpu, Experimental. The application adds the ONNX Runtime native package.</Description>
+    <PackageTags>kev;decision;classification;calibration;qwen3.5;onnxruntime</PackageTags>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../Starlings.Runtime.Onnx/Starlings.Runtime.Onnx.csproj" />
+    <PackageReference Include="Starlings.Tokenizers" />
+    <!-- Asset lock and verification of the pinned files (P-009). BCL only. -->
+    <ProjectReference Include="../Starlings.Acquisition/Starlings.Acquisition.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Starlings.Models.Kev.Tests" />
+    <InternalsVisibleTo Include="Starlings.Kev.Fidelity.Tool" />
+  </ItemGroup>
+
+</Project>

@@ -9,6 +9,7 @@
     <Project Path="src/Starlings.Models.EmbeddingGemma2.Video.FFmpeg/Starlings.Models.EmbeddingGemma2.Video.FFmpeg.csproj" />
     <Project Path="src/Starlings.Models.EmbeddingGemma2.Video.FFmpeg9/Starlings.Models.EmbeddingGemma2.Video.FFmpeg9.csproj" />
     <Project Path="src/Starlings.Models.Gliner2/Starlings.Models.Gliner2.csproj" />
+    <Project Path="src/Starlings.Models.Kev/Starlings.Models.Kev.csproj" />
     <Project Path="src/Starlings.Runtime.Onnx/Starlings.Runtime.Onnx.csproj" />
     <Project Path="src/Starlings.Models.E5.Extensions.AI/Starlings.Models.E5.Extensions.AI.csproj" />
     <Project Path="src/Starlings.Models.E5.MLNet/Starlings.Models.E5.MLNet.csproj" />
@@ -34,6 +35,7 @@
     <Project Path="tests/Starlings.Models.EmbeddingGemma2.Video.FFmpeg.Tests/Starlings.Models.EmbeddingGemma2.Video.FFmpeg.Tests.csproj" />
     <Project Path="tests/Starlings.Models.EmbeddingGemma2.Video.FFmpeg9.Tests/Starlings.Models.EmbeddingGemma2.Video.FFmpeg9.Tests.csproj" />
     <Project Path="tests/Starlings.Models.Gliner2.Tests/Starlings.Models.Gliner2.Tests.csproj" />
+    <Project Path="tests/Starlings.Models.Kev.Tests/Starlings.Models.Kev.Tests.csproj" />
     <Project Path="tests/Starlings.Generation.OnnxGenAI.Tests/Starlings.Generation.OnnxGenAI.Tests.csproj" />
     <Project Path="tests/Starlings.Models.Qwen35.Tests/Starlings.Models.Qwen35.Tests.csproj" />
     <Project Path="tests/Starlings.Models.Qwen35.Extensions.AI.Tests/Starlings.Models.Qwen35.Extensions.AI.Tests.csproj" />
@@ -48,6 +50,7 @@
   </Folder>
   <Folder Name="/tools/">
     <Project Path="tools/Starlings.Bert.Fidelity.Tool/Starlings.Bert.Fidelity.Tool.csproj" />
+    <Project Path="tools/Starlings.Kev.Fidelity.Tool/Starlings.Kev.Fidelity.Tool.csproj" />
     <Project Path="tools/Starlings.Generation.Fidelity/Starlings.Generation.Fidelity.csproj" />
     <Project Path="tools/Starlings.Acquisition.Tool/Starlings.Acquisition.Tool.csproj" />
     <Project Path="tools/Starlings.Fidelity.Tool/Starlings.Fidelity.Tool.csproj" />

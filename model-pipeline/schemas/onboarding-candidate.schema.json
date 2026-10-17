@@ -6,23 +6,31 @@
   "properties": {
     "format_version": {"const": 1},
     "id": {"type": "string", "minLength": 1},
-    "task": {"enum": ["embeddings", "reranking", "generation"]},
+    "task": {"enum": ["embeddings", "reranking", "generation", "decision"]},
     "origin": {
       "type": "object", "additionalProperties": false,
       "required": ["repo", "revision", "files"],
       "properties": {
-        "repo": {"type": "string", "pattern": "^[^/]+/[^/]+$"},
-        "revision": {"type": "string", "pattern": "^[a-f0-9]{40}$"},
-        "files": {
-          "type": "array", "minItems": 2,
-          "items": {
-            "type": "object", "additionalProperties": false,
-            "required": ["path", "size", "sha256"],
-            "properties": {
-              "path": {"type": "string", "minLength": 1},
-              "size": {"type": "integer", "minimum": 0},
-              "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
-            }
+        "repo": {"$ref": "#/$defs/repo"},
+        "revision": {"$ref": "#/$defs/revision"},
+        "files": {"$ref": "#/$defs/files"},
+        "base": {
+          "description": "A second pinned repository the model is built on (an adapter's base checkpoint).",
+          "type": "object", "additionalProperties": false,
+          "required": ["repo", "revision", "files"],
+          "properties": {
+            "repo": {"$ref": "#/$defs/repo"},
+            "revision": {"$ref": "#/$defs/revision"},
+            "files": {"$ref": "#/$defs/files"}
+          }
+        },
+        "code": {
+          "description": "Upstream inference code the reference runs, pinned by full commit SHA.",
+          "type": "object", "additionalProperties": false,
+          "required": ["repository", "revision"],
+          "properties": {
+            "repository": {"type": "string", "pattern": "^https://[^\\s]+$"},
+            "revision": {"$ref": "#/$defs/revision"}
           }
         }
       }
@@ -42,6 +50,22 @@
       "type": "object", "additionalProperties": false,
       "required": ["status", "policy"],
       "properties": {"status": {"const": "proposed"}, "policy": {"type": "object", "minProperties": 1}}
+    }
+  },
+  "$defs": {
+    "repo": {"type": "string", "pattern": "^[^/]+/[^/]+$"},
+    "revision": {"type": "string", "pattern": "^[a-f0-9]{40}$"},
+    "files": {
+      "type": "array", "minItems": 2,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["path", "size", "sha256"],
+        "properties": {
+          "path": {"type": "string", "minLength": 1},
+          "size": {"type": "integer", "minimum": 0},
+          "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+        }
+      }
     }
   }
 }
