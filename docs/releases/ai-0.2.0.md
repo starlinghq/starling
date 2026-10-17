@@ -1,6 +1,6 @@
 # ai-dotnet release 0.2.0
 
-**The first release with Stable profiles**, and the first ai-dotnet version without a preview suffix (`docs/kickoff.md`, "ai-dotnet package versions and maturity", 2026-10-15). It follows `0.1.0-preview.6` (published 2026-10-14) and carries the qualification work merged since (#16 to #87).
+**The first release with Stable profiles**, and the first ai-dotnet version without a preview suffix (`docs/kickoff.md`, "ai-dotnet package versions and maturity", 2026-10-15). It follows `0.1.0-preview.6` (published 2026-10-14) and carries the qualification work merged since (#16 to #97).
 
 **Publishing.** The `release` workflow publishes this release from the tag `ai-v0.2.0` on `main`, after a maintainer approves the `release` environment: the 15 packages of the publishable set below, through NuGet trusted publishing, plus a GitHub release with this record as notes.
 
@@ -21,10 +21,10 @@
 | `embeddinggemma-2/image-fp32-cuda` | **Stable** (RTX 3090) | 2026-10-16 (#82) |
 | `qwen3.5-0.8b/ortgenai-fp32x-cuda` | **Stable** (RTX 3090) | 2026-10-16 (#82) |
 | `qwen3.5-0.8b/ortgenai-fp16x-cuda` | **Stable** (RTX 3090) | 2026-10-16 (#82) |
-| `embeddinggemma-2/video-fp32-cpu` | Experimental | not promoted: the release-set G2 is marginal on hosted runners. It passed in the qualification run on `main` (38977347513) and failed once in a branch run (38967975211): token embeddings 1.83e-3 against the protected 1e-3, worst `commons-video-04`. Undiagnosed |
-| `embeddinggemma-2/video-fp32-cuda` | Experimental | not promoted in this release: the RTX 3090 per-release run on `main` (38977347513) passed every check of this profile (CUDA tests, G1 to G3 on the release sets, soak smoke test), the blocker its manifest records. Its token embeddings on `commons-video-04` sit at 7.97e-4 against 1e-3 on the RTX 3090, the video that fails the bound on the RTX 4090 and on some hosted CPUs, so the promotion and its capability statuses are left to a separate change |
+| `embeddinggemma-2/video-fp32-cpu` | **Stable** | 2026-10-17 (#95): hosted soak closed (#83, #86, #93); release-set G2 on AVX-512 hosts diagnosed (#89) and the token-embedding bound set from the reference's cross-CPU spread, 4e-3 (#90, maintainer) |
+| `embeddinggemma-2/video-fp32-cuda` | **Stable** (RTX 3090) | 2026-10-17 (#95): green per-release runs on the RTX 3090 (39012176735, 39023915026) |
 
-Stable on CUDA means Linux x64 with an RTX 3090; other GPUs are untested. Windows CPU is experimental; macOS and ARM64 are untested. The [catalog](../catalog/README.md) links every gate to its evidence, and the [compatibility matrix](../catalog/compatibility-matrix.md) lists each platform and provider.
+Every registry profile is Stable. Stable on CUDA means Linux x64 with an RTX 3090; other GPUs are untested (EmbeddingGemma 2 video fails its bound on the RTX 4090). Windows CPU is experimental; macOS and ARM64 are untested. The [catalog](../catalog/README.md) links every gate to its evidence, and the [compatibility matrix](../catalog/compatibility-matrix.md) lists each platform and provider.
 
 **Single release owner.** Stable promotions carry the recorded single-owner exception (`docs/support-policy.md`, M7): a second release owner is still open.
 
@@ -44,7 +44,7 @@ All packages target `net10.0`, are licensed MIT OR Apache-2.0 and have SourceLin
 | `Starlings.Generation.OnnxGenAI` | 0.2.0 | container-aware intra-op thread defaults (#63); maturity table (#56) |
 | `Starlings.Models.Qwen35` | 0.2.0 | **tool calling**, experimental (#17): tools rendered by the C# chat template and a parser for the tool-call format; capability closure (#19); Stable fp32x CPU, fp32x CUDA and fp16x CUDA profiles |
 | `Starlings.Models.Qwen35.Extensions.AI` | 0.2.0 | `IChatClient` tool calling (`AIFunction` tools, `FunctionCallContent`, `FunctionResultContent`, `UseFunctionInvocation`) (#17) |
-| `Starlings.Models.EmbeddingGemma2` | 0.2.0 | Stable text and image profiles, CPU and CUDA (#56, #68, #75, #82); AVX2, row- and frame-parallel image preprocessing (#55); CPU sessions without ONNX Runtime's CPU arena and dedicated run threads (#83, #86); capability closure (#19); CUDA cancellation (#61) |
+| `Starlings.Models.EmbeddingGemma2` | 0.2.0 | Stable text, image and video profiles, CPU and CUDA (#56, #68, #75, #82, #95); image and video soaks: native heap trims and reused request buffers (#93); AVX2, row- and frame-parallel image preprocessing (#55); CPU sessions without ONNX Runtime's CPU arena and dedicated run threads (#83, #86); capability closure (#19); CUDA cancellation (#61) |
 | `Starlings.Models.EmbeddingGemma2.Extensions.AI` | 0.2.0 | CUDA cancellation follows `Runtime.Onnx` (#61); maturity table (#56) |
 | `Starlings.Models.EmbeddingGemma2.MLNet` | 0.2.0 | maturity table (#56) |
 | `Starlings.Models.EmbeddingGemma2.Imaging.SkiaSharp` | 0.2.0 | decoder capability closure (#19); maturity table (#56) |
@@ -52,6 +52,8 @@ All packages target `net10.0`, are licensed MIT OR Apache-2.0 and have SourceLin
 | `Starlings.Models.EmbeddingGemma2.Video.FFmpeg9` | 0.2.0 | **first publish** (D2 cleared, #48): FFmpeg 9 adapter, bindings verified against the pinned n9.0.1 headers (#47, #65) |
 
 **Publishable set (15 packages):** every row at 0.2.0. Nothing is held (`HELD` is empty in `.github/workflows/release.yml`).
+
+**Not published:** `Starlings.Models.Kev` (Kev-0.8B and Kev-4B decision models, Experimental, #91) is built and tested on `main` but is not in the release drill's package set and has no registry profile yet, so it is not part of 0.2.0. `Starlings.Models.Bert` and `Starlings.Models.QwenChat` are not published either.
 
 ML.NET under Native AOT is unsupported (Microsoft.ML emits code at run time); every other package publishes and runs under Native AOT (`docs/evidence/aot/`).
 

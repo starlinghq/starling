@@ -1,0 +1,4 @@
+2026-10-17T10:13:36Z CPU: quota 31 (cgroup-v1-/sys/fs/cgroup/cpu,cpuacct/cpu.cfs_quota_us(3112500/100000)), affinity 256, online 0-255; Python reference stages: 31 threads (quota from cgroup-v1-/sys/fs/cgroup/cpu,cpuacct/cpu.cfs_quota_us(3112500/100000), affinity 256)
+2026-10-17T10:25:30Z multilingual-e5-small/onnx-fp32-cuda python-stage2: exit 0, 33 s (CPU quota 31, OMP_NUM_THREADS 31; throttled 5 periods, 0 s; loadavg 27.39 35.50 37.41)
+2026-10-17T10:26:53Z gliner2-base-v1/onnx-fp32-cuda python-stage2: exit 0, 32 s (CPU quota 31, OMP_NUM_THREADS 4; throttled 0 periods, 0 s; loadavg 51.12 41.39 39.32)
+2026-10-17T10:30:29Z embeddinggemma-2/onnx-fp32-cuda python-stage2: exit 0, 163 s (CPU quota 31, OMP_NUM_THREADS 31; throttled 131 periods, 31 s; loadavg 58.20 51.04 43.55)

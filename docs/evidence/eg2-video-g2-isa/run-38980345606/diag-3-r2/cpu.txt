@@ -1,0 +1,6 @@
+model name	: AMD EPYC 9V45 96-Core Processor
+fma avx2 avx512f avx512dq avx512ifma avx512cd avx512bw avx512vl avx_vnni avx512_bf16 avx512vbmi avx512_vbmi2 avx512_vnni avx512_bitalg avx512_vpopcntdq avx512_vp2intersect 
+4
+Thread(s) per core:                      2
+Core(s) per socket:                      2
+Socket(s):                               1

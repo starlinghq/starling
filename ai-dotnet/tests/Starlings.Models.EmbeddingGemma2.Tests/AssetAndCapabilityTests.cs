@@ -156,16 +156,20 @@ public class AssetAndCapabilityTests
         Assert.Contains("  image: supported", image, StringComparison.Ordinal);
         Assert.Contains("maturity: stable", Manifest("image-fp32-cuda"), StringComparison.Ordinal); // RTX 3090 contract
         Assert.Contains("provider_options:\n    use_tf32: 0", Manifest("image-fp32-cuda"), StringComparison.Ordinal);
-        foreach (var key in new[] { "video", "video.cpu", "video.cuda", "video.decoded_frames_with_timing", "video.pre_sampled_frames", "video.frames_without_timing.upstream_opt_in", "video.interleaved_text", "video.interleaved_image", "video.decode.ffmpeg8", "video.decode.ffmpeg9_adapter", "extensions_ai.video_embedding_generator" })
+        foreach (var key in new[] { "video", "video.cpu", "video.cuda", "video.decoded_frames_with_timing", "video.interleaved_text", "video.interleaved_image", "video.decode.ffmpeg8", "video.decode.ffmpeg9_adapter", "extensions_ai.video_embedding_generator" })
+        {
+            Assert.Equal(EmbeddingGemma2CapabilityStatus.Supported, all[key]);
+        }
+
+        foreach (var key in new[] { "video.pre_sampled_frames", "video.frames_without_timing.upstream_opt_in", "video.variable_frame_rate", "video.interlaced", "video.hdr", "video.decode.rotation_other", "extensions_ai.video_embedding_generator.cuda" })
         {
             Assert.Equal(EmbeddingGemma2CapabilityStatus.Experimental, all[key]);
         }
 
-        Assert.Equal(EmbeddingGemma2CapabilityStatus.Experimental, all["video.variable_frame_rate"]);
         string video = Manifest("video-fp32-cpu");
-        Assert.Contains("maturity: experimental", video, StringComparison.Ordinal);
-        Assert.Contains("  video: experimental", video, StringComparison.Ordinal);
-        Assert.Contains("maturity: experimental", Manifest("video-fp32-cuda"), StringComparison.Ordinal);
+        Assert.Contains("maturity: stable", video, StringComparison.Ordinal);
+        Assert.Contains("  video: supported", video, StringComparison.Ordinal);
+        Assert.Contains("maturity: stable", Manifest("video-fp32-cuda"), StringComparison.Ordinal); // RTX 3090 contract
         Assert.Contains("  video_frames_without_timing: unsupported", video, StringComparison.Ordinal);
         Assert.Contains("provider_options:\n    use_tf32: 0", Manifest("video-fp32-cuda"), StringComparison.Ordinal);
         Assert.Contains("  video: unsupported", Manifest("image-fp32-cpu"), StringComparison.Ordinal); // the image profile; video is the video-fp32-* profiles

@@ -63,6 +63,7 @@ def test_plan_cli_uses_shipped_recipe_and_makes_no_release_claim(capsys: pytest.
         ("multilingual-e5-small-cpu.yaml", "e5-onnx-cpu-v1"),
         ("minilm-cpu.yaml", "bert-onnx-cpu-v1"),
         ("qwen3-cpu.yaml", "qwen-genai-cpu-v1"),
+        ("kev-0.8b-cpu.yaml", "kev-onnx-cpu-v1"),
     ],
 )
 def test_plan_cli_lists_distribution_once_for_every_plugin(

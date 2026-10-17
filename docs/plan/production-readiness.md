@@ -105,10 +105,15 @@ These cannot be done by an agent. Each row names what it unblocks.
 
 Each workstream PR updates this document's tables when it lands. The catalog (R3) becomes the source of truth for status once it exists.
 
+### Status 2026-10-17 (video promotion)
+
+- **Stable: EmbeddingGemma 2 `video-fp32-cpu` (Linux x64 CPU, AVX2 and AVX-512) and `video-fp32-cuda` (Linux x64 CUDA, NVIDIA GeForce RTX 3090, `MALLOC_MMAP_THRESHOLD_=65536`).** Every gate passed and the validator agrees. Both blockers are closed. The hosted one-hour CPU video soak is green since #83, #86 and #93. The AVX-512 token-embedding failure was diagnosed in #89, and the maintainer recalibrated that one bound to 4e-3 in #90; the final-embedding bound is unchanged. Qualification run [39023915026](https://github.com/starlinghq/starling/actions/runs/39023915026) passed every job, the video CPU release gates and soak on hosted runners and every video CUDA check on the RTX 3090 ([evidence](../evidence/video-promotion-2026-10-17/README.md)). Contracts: the `Starlings.Models.EmbeddingGemma2` README ("Stable contract: videos" and "Stable contract: CUDA"). The RTX 4090 stays outside the contract (final embedding 1.009e-5 against 1e-5). Every registered profile is now Stable. Same single-owner exception (M7 open).
+- **CI:** the pod's Python reference stages now run with the container's CPU quota as their thread count (#94); run 39012176735 had timed out because a 128-thread PyTorch reference was throttled on a 31-CPU quota.
+
 ### Status 2026-10-16 (first CUDA promotion round)
 
 - **Stable on Linux x64 CUDA, NVIDIA GeForce RTX 3090:** `gliner2-base-v1/onnx-fp32-cuda`, `multilingual-e5-small/onnx-fp32-cuda`, `embeddinggemma-2/onnx-fp32-cuda`, `embeddinggemma-2/image-fp32-cuda`, `qwen3.5-0.8b/ortgenai-fp32x-cuda` and `qwen3.5-0.8b/ortgenai-fp16x-cuda`. Every gate passed (G4 and G5 in the binding RTX 3090 round, #74), and the first per-release GPU regression run, [38857860186](https://github.com/starlinghq/starling/actions/runs/38857860186), passed every check of these six ([evidence](../evidence/gpu-regression-2026-10-16/README.md)). Contracts: the "Stable contract: CUDA" sections of the GLiNER2, e5, EmbeddingGemma 2 and Qwen3.5 package READMEs. Same single-owner exception (M7 open).
-- **Not promoted: EmbeddingGemma 2 `video-fp32-cuda`.** The run landed on an RTX 4090, and video G2 failed there (embedding 1.009e-5 against 1e-5; token embeddings 3.34e-3 against 1e-3), while the RTX 3090 measured 2.77e-6. The RTX 4090 is untested and outside every CUDA contract. The `cuda (runpod)` job is now pinned to the RTX 3090 and fails rather than fall back. **Open:** a confirming per-release run on an RTX 3090 for video CUDA, which needs RunPod credit (the job refuses to start below a $5 balance).
+- **Not promoted: EmbeddingGemma 2 `video-fp32-cuda`.** The run landed on an RTX 4090, and video G2 failed there (embedding 1.009e-5 against 1e-5; token embeddings 3.34e-3 against 1e-3), while the RTX 3090 measured 2.77e-6. The RTX 4090 is untested and outside every CUDA contract. The `cuda (runpod)` job is now pinned to the RTX 3090 and fails rather than fall back. **Closed 2026-10-17:** green on the RTX 3090 in runs 39012176735 and 39023915026; promoted (above).
 
 ### Status 2026-10-16 (third promotion round)
 

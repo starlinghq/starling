@@ -1,0 +1,13 @@
+{
+ "commons-video-04": {
+  "row_relative": 3.605045616797364e-05,
+  "max_abs": 0.15692138671875,
+  "ref_max_abs": 4352.82666015625,
+  "worst_token": 349,
+  "worst_dim": 115,
+  "tokens_over_1e-3": 0,
+  "mean_abs": 9.32253936100137e-05,
+  "out_sha256": "f02c762df468f3fe",
+  "seconds": 7.9
+ }
+}

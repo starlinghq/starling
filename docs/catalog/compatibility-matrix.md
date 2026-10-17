@@ -12,8 +12,8 @@ Platform (OS, architecture) by runtime and execution provider by profile. A cell
 | embeddinggemma-2/image-fp32-cuda | 1.30.0 | stable | unrecorded | supported (2026-10-16) | unrecorded | untested |
 | embeddinggemma-2/onnx-fp32-cpu | 1.30.0 | stable | supported (2026-10-15) | unrecorded | experimental (2026-10-15) | unrecorded |
 | embeddinggemma-2/onnx-fp32-cuda | 1.30.0 | stable | unrecorded | supported (2026-10-16) | unrecorded | untested |
-| embeddinggemma-2/video-fp32-cpu | 1.30.0 | experimental | experimental (2026-10-11) | unrecorded | untested | unrecorded |
-| embeddinggemma-2/video-fp32-cuda | 1.30.0 | experimental | unrecorded | experimental (2026-10-11) | unrecorded | untested |
+| embeddinggemma-2/video-fp32-cpu | 1.30.0 | stable | supported (2026-10-17) | unrecorded | untested | unrecorded |
+| embeddinggemma-2/video-fp32-cuda | 1.30.0 | stable | unrecorded | supported (2026-10-17) | unrecorded | untested |
 | gliner2-base-v1/onnx-fp32-cpu | 1.30.0 | stable | supported (2026-10-15) | supported (2026-10-16) | experimental (2026-10-15) | unrecorded |
 | gliner2-base-v1/onnx-fp32-cuda | 1.30.0 | stable | unrecorded | supported (2026-10-16) | unrecorded | untested |
 | multilingual-e5-small/onnx-fp32-cpu | 1.30.0 | stable | supported (2026-10-15) | unrecorded | experimental (2026-10-15) | unrecorded |

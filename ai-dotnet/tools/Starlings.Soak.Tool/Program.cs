@@ -43,6 +43,9 @@
 //   --smaps-every <n>         Diagnostic (Linux): after the unloaded sample of every n-th cycle (and cycle 0), append the
 //                             anonymous mappings of /proc/self/smaps above 2 MiB resident (range, name, Rss, Anonymous,
 //                             AnonHugePages) to <model>-<utc>.smaps.jsonl. Off by default.
+//   --trim-after-load         Diagnostic (glibc only): call malloc_trim(0) right after each load, before the requests.
+//                             Memory freed during session creation and kept by the allocator then leaves the loaded
+//                             series. Off by default.
 //   --keep-loaded             Diagnostic: load the model once and keep it loaded; each cycle serves its requests and
 //                             takes the settled samples without unloading (requests only, no load/unload churn). The
 //                             "unloaded" series is then a second settled sample with the model still loaded. Not a
@@ -51,6 +54,10 @@
 //                             default: the model library's choice.
 //   --run-threads, --no-run-threads   Diagnostic: runs on the runtime's dedicated run threads or on the calling thread
 //                             (OnnxSessionOptions.DedicatedRunThreads); default: the model library's choice.
+//   --load-trim, --no-load-trim   Diagnostic: malloc_trim(0) after each session is created, or not
+//                             (OnnxSessionOptions.TrimNativeHeapAfterLoad); default: the model library's choice.
+//   --run-trim, --no-run-trim Diagnostic: malloc_trim(0) after each run, or not (OnnxSessionOptions.TrimNativeHeapAfterRun);
+//                             default: the model library's choice.
 //
 // Reanalysis: `-- reanalyze <raw.json>...` recomputes the verdicts and the markdown report of existing raw results
 // with the current analysis (the run's warmup and growth-limit options), rewriting both files; the samples are unchanged.
@@ -139,11 +146,17 @@ internal sealed record SoakOptions
 
     public bool KeepLoaded { get; init; }
 
+    public bool TrimAfterLoad { get; init; }
+
     /// <summary>Diagnostics: ONNX Runtime's CPU arena forced on or off; null keeps the model library's default.</summary>
     public bool? CpuArena { get; init; }
 
     /// <summary>Diagnostics: runs on the runtime's dedicated run threads or on the caller; null keeps the model library's default.</summary>
     public bool? RunThreads { get; init; }
+
+    public bool? LoadTrim { get; init; }
+
+    public bool? RunTrim { get; init; }
 
     public bool NoHeapTrim { get; init; }
 
@@ -174,10 +187,15 @@ internal sealed record SoakOptions
                 "--checkpoint-interval" => o with { CheckpointInterval = ParseTime(Next()) },
                 "--malloc-trim" => o with { MallocTrim = true },
                 "--keep-loaded" => o with { KeepLoaded = true },
+                "--trim-after-load" => o with { TrimAfterLoad = true },
                 "--cpu-arena" => o with { CpuArena = true },
                 "--no-cpu-arena" => o with { CpuArena = false },
                 "--run-threads" => o with { RunThreads = true },
                 "--no-run-threads" => o with { RunThreads = false },
+                "--load-trim" => o with { LoadTrim = true },
+                "--no-load-trim" => o with { LoadTrim = false },
+                "--run-trim" => o with { RunTrim = true },
+                "--no-run-trim" => o with { RunTrim = false },
                 "--no-heap-trim" => o with { NoHeapTrim = true },
                 "--smaps-every" => o with { SmapsEvery = Positive(Next(), "--smaps-every") },
                 _ => throw new ArgumentException($"unknown option '{args[i]}'"),
@@ -320,6 +338,11 @@ internal sealed class SoakRunner(SoakWorkload workload, SoakOptions options)
                 }
 
                 double loadMs = Stopwatch.GetElapsedTime(t).TotalMilliseconds;
+                if (options.TrimAfterLoad && kept is null)
+                {
+                    _ = MemoryProbe.MallocTrim();
+                }
+
                 if (options.KeepLoaded)
                 {
                     kept = instance;
@@ -593,8 +616,11 @@ internal sealed class SoakRunner(SoakWorkload workload, SoakOptions options)
                 ["seed"] = options.Seed,
                 ["malloc_trim"] = options.MallocTrim,
                 ["keep_loaded"] = options.KeepLoaded,
+                ["trim_after_load"] = options.TrimAfterLoad,
                 ["cpu_arena"] = options.CpuArena,
                 ["run_threads"] = options.RunThreads,
+                ["load_trim"] = options.LoadTrim,
+                ["run_trim"] = options.RunTrim,
                 ["native_heap_trim_disabled"] = options.NoHeapTrim,
                 ["gpu_sampling"] = MemoryProbe.GpuSamplingAvailable,
             },

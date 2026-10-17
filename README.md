@@ -82,14 +82,16 @@ More complete programs, including entity extraction and image search, are in [`a
 
 ## Models
 
+Choosing a text embedder? See [choosing an embedding model](docs/guides/choosing-an-embedding-model.md).
+
 | Model | What it does | Package | CPU | CUDA |
 | --- | --- | --- | --- | --- |
 | [multilingual-e5-small](https://huggingface.co/intfloat/multilingual-e5-small) | Text embeddings, 100 languages | `Starlings.Models.E5` (+ `.Extensions.AI`, `.MLNet`) | Stable | Stable |
-| [EmbeddingGemma 2](https://huggingface.co/google/embeddinggemma-2) | Text, image and video embeddings in one space | `Starlings.Models.EmbeddingGemma2` (+ `.Extensions.AI`, `.MLNet`, `.Imaging.SkiaSharp`, `.Video.FFmpeg`) | text, image Stable; video Experimental | text, image Stable; video Experimental |
+| [EmbeddingGemma 2](https://huggingface.co/google/embeddinggemma-2) | Text, image and video embeddings in one space | `Starlings.Models.EmbeddingGemma2` (+ `.Extensions.AI`, `.MLNet`, `.Imaging.SkiaSharp`, `.Video.FFmpeg`) | Stable (text, image, video) | Stable (text, image, video) |
 | [GLiNER2](https://huggingface.co/fastino/gliner2-base-v1) | Zero-shot entity extraction with any labels | `Starlings.Models.Gliner2` | Stable | Stable |
 | [Qwen3.5-0.8B](https://huggingface.co/Qwen/Qwen3.5-0.8B) | Chat and text generation | `Starlings.Models.Qwen35` (+ `.Extensions.AI`) | Stable | Stable (fp32x and fp16x) |
 
-**Stable** means every release gate passed: provenance, numerical parity and task quality against the Python reference, a one-hour leak soak, benchmarks, a clean install from the packages, and integration. It also means regression runs continue: weekly on CPU, and on a GPU before every release for CUDA. Stable on CUDA means Linux x64 with an NVIDIA GeForce RTX 3090, where every CUDA gate and the per-release GPU run take place; other GPUs are untested. EmbeddingGemma 2 video on CUDA stays Experimental until a per-release run on an RTX 3090 is green for it. The [model catalog](docs/catalog/README.md) links each gate to its evidence, and the [compatibility matrix](docs/catalog/compatibility-matrix.md) lists each platform and provider.
+**Stable** means every release gate passed: provenance, numerical parity and task quality against the Python reference, a one-hour leak soak, benchmarks, a clean install from the packages, and integration. It also means regression runs continue: weekly on CPU, and on a GPU before every release for CUDA. Stable on CUDA means Linux x64 with an NVIDIA GeForce RTX 3090, where every CUDA gate and the per-release GPU run take place; other GPUs are untested. EmbeddingGemma 2 video on CUDA also needs `MALLOC_MMAP_THRESHOLD_=65536` in the process environment on Linux. The [model catalog](docs/catalog/README.md) links each gate to its evidence, and the [compatibility matrix](docs/catalog/compatibility-matrix.md) lists each platform and provider.
 
 **Release status:** `0.2.0` is the first release with Stable profiles: the Stable profiles above, Qwen tool calling and the FFmpeg video adapters ([release record](docs/releases/ai-0.2.0.md)). It depends on `Starlings.Tokenizers` `0.3.0`.
 

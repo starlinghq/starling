@@ -262,7 +262,7 @@ def test_distribution_rejects_incomplete_plans(tmp_path):
         distribution.append_distribution([], recipe={}, repo_root=tmp_path, snapshot=tmp_path, threads=2, timeout=10)
 
 
-@pytest.mark.parametrize("plugin_name", ["bert-onnx-cpu-v1", "qwen-genai-cpu-v1", "e5-onnx-cpu-v1"])
+@pytest.mark.parametrize("plugin_name", ["bert-onnx-cpu-v1", "qwen-genai-cpu-v1", "e5-onnx-cpu-v1", "kev-onnx-cpu-v1"])
 def test_plugin_wiring_keeps_expensive_stage_builds_separate(tmp_path, monkeypatch, plugin_name):
     from model_pipeline import onboarding_plugins
 
@@ -430,6 +430,11 @@ def test_every_registered_plugin_declares_its_distribution_source():
         name: onboarding_plugins.uses_shared_distribution(onboarding_plugins.get_plugin({"plugin": name}))
         for name in onboarding_plugins.PLUGINS
     }
-    assert declared == {"e5-onnx-cpu-v1": False, "bert-onnx-cpu-v1": True, "qwen-genai-cpu-v1": True}
+    assert declared == {
+        "e5-onnx-cpu-v1": False,
+        "bert-onnx-cpu-v1": True,
+        "qwen-genai-cpu-v1": True,
+        "kev-onnx-cpu-v1": True,
+    }
     with pytest.raises(PipelineError, match="SHARED_DISTRIBUTION"):
         onboarding_plugins.uses_shared_distribution(SimpleNamespace(SHARED_DISTRIBUTION="yes"))

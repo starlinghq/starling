@@ -101,6 +101,29 @@ public sealed record OnnxSessionOptions
     /// </summary>
     public bool? DedicatedRunThreads { get; init; }
 
+    /// <summary>
+    /// On Linux with glibc, call <c>malloc_trim(0)</c> once the session is created, so memory that session creation
+    /// allocated and freed again (graph transformation and initializer copies) goes back to the operating system instead
+    /// of staying resident in glibc's heaps while the session lives. <see langword="null"/> (the default) leaves the
+    /// choice to the model library, and no trim is made when the session is created directly. It releases only free
+    /// memory and changes no allocator setting; it costs milliseconds per load, never a request. A no-op on other
+    /// platforms and when the process sets the <see cref="AppContext"/> switch
+    /// <c>Starlings.Runtime.Onnx.DisableNativeHeapTrim</c>. See the package README, "Memory on Linux".
+    /// </summary>
+    public bool? TrimNativeHeapAfterLoad { get; init; }
+
+    /// <summary>
+    /// On Linux with glibc, call <c>malloc_trim(0)</c> on the thread that ran, after each run returns, so the run's
+    /// freed buffers go back to the operating system instead of staying resident as free chunks in that thread's glibc
+    /// heap. <see langword="null"/> (the default) leaves the choice to the model library, and no trim is made when the
+    /// session is created directly. It releases only free memory and changes no allocator setting; it adds the trim
+    /// (milliseconds) to each run and the next run faults the returned pages in again, so it suits runs that take
+    /// seconds and allocate hundreds of MiB, not short ones. A no-op on other platforms and when the process sets the
+    /// <see cref="AppContext"/> switch <c>Starlings.Runtime.Onnx.DisableNativeHeapTrim</c>. See the package README,
+    /// "Memory on Linux".
+    /// </summary>
+    public bool? TrimNativeHeapAfterRun { get; init; }
+
     internal void Validate()
     {
         if (!Enum.IsDefined(Provider))

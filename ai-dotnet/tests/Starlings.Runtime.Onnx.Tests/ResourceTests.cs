@@ -59,6 +59,34 @@ public class ResourceTests(ITestOutputHelper output)
     }
 
     [Fact]
+    public void TrimsAfterLoadAndRunAreOffByDefaultAndFollowTheOptions()
+    {
+        // Off for sessions created directly; a model library opts in (EmbeddingGemma 2's image path on CPU).
+        Assert.Null(new OnnxSessionOptions().TrimNativeHeapAfterLoad);
+        Assert.Null(new OnnxSessionOptions().TrimNativeHeapAfterRun);
+        using (var session = OnnxModelSession.Create(TestModels.Add, SingleThread))
+        {
+            Assert.False(session.Diagnostics.TrimNativeHeapAfterLoad);
+            Assert.False(session.Diagnostics.TrimNativeHeapAfterRun);
+        }
+
+        bool trims = OperatingSystem.IsLinux() && NativeHeap.Enabled;
+        foreach (bool dedicated in new[] { false, true })
+        {
+            using var session = OnnxModelSession.Create(TestModels.Add, SingleThread with
+            {
+                TrimNativeHeapAfterLoad = true,
+                TrimNativeHeapAfterRun = true,
+                DedicatedRunThreads = dedicated,
+            });
+            Assert.Equal(trims, session.Diagnostics.TrimNativeHeapAfterLoad);
+            Assert.Equal(trims, session.Diagnostics.TrimNativeHeapAfterRun);
+            SessionTests.Run(session, 1);
+            SessionTests.Run(session, 2);
+        }
+    }
+
+    [Fact]
     public void CpuMemoryArenaFollowsTheOptionAndDefaultsToOnnxRuntimes()
     {
         Assert.Null(new OnnxSessionOptions().CpuMemoryArena);

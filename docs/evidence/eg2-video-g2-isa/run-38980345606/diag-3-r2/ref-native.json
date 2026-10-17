@@ -1,0 +1,14 @@
+{
+ "row": "commons-video-04",
+ "torch_threads": 2,
+ "ids_equal": true,
+ "soft_shape": [
+  3840,
+  512
+ ],
+ "soft_tokens_row_relative": 2.6644096485427806e-05,
+ "token_embeddings_row_relative": 0.0019499216396852395,
+ "embedding_max_abs": 5.660578608512878e-06,
+ "soft_bit_identical": false,
+ "te_bit_identical": false
+}
