@@ -177,6 +177,16 @@ The GLiNER2 stage 1 and 2 producer is `reference/gliner2/stage_gliner2.py` (see 
 | `dotnet-ids`, generation from the fixture prompt ids | greedy ids (`discrete.greedy_ids`: `exact`, `exact_except_listed_margin_below_<m>` or `equal_until_first_divergence_at_margin_below_<m>`; a divergence is allowed only where the fixture `step_margin` at the first differing step is below `m`, and each one is listed); `discrete.finish_reason` (`equal` or `equal_when_ids_equal`); `discrete.step0_argmax`; `float.step0_top5_logprob_max_abs` (reference top 5 from the fixture); `float.step0_logprob_max_abs` (full vocabulary); `float.nan_or_inf`; `discrete.streaming_reassembly`; `discrete.usage`; `provider_options` against `environment.json` | G2 |
 | `dotnet-text`, runtime semantics | `float.cached_vs_uncached_logprob_max_abs`, `float.chunked_vs_one_call_prefill_logprob_max_abs` (chunk runs whose one-call prefill failed are listed, not measured), `discrete.concurrent_requests` (`equal_to_sequential`) from `semantics.json` | G2 |
 
+**Stage results format version 3 (R-010).** `--results` also accepts a directory of stage results version 3 (`task: generation`, schema `schemas/stage-results.schema.json`, `src/model_pipeline/generation_results.py`): `template.results.json` (per case `rendered`, `render_error`, `prompt_ids` of the owned tokenizer; G1) and `dotnet.results.json` (per case the fed `prompt_ids`, `output_ids`, `finish_reason`, `step0_top`, the three `stream_*` flags and `usage`; the sections `cached_vs_uncached`, `chunked_prefill`, `concurrency`; the tensor `step0_logprobs` in the sidecar `step0.f32`; G2). Both files are required. The evaluator turns them into the same rows as a runner directory, so the checks, the tolerances and the report are identical (a test compares the two); without the sidecar only the candidate's five best step-0 pairs are checked and `float.step0_logprob_max_abs` stays not-run. A `threshold`-like key is refused (exit 3). Converters:
+
+```sh
+model-pipeline convert-generation --runner <run> --profile qwen3.5-0.8b/ortgenai-fp32x-cpu --out <v3 dir>
+model-pipeline convert-generation --fixture model-pipeline/protected/qwen3.5-0.8b/reference/generation.jsonl \
+  --profile qwen3.5-0.8b/ortgenai-fp32x-cpu --out <reference v3 dir>
+```
+
+The fixture conversion writes the reference side from what the fixture records; the streaming flags are runner observations and are not invented, so a converted fixture does not pass `discrete.streaming_reassembly`. The `chunked_vs_one_call`, `cached_vs_uncached` and `concurrency` sections are the ones the engine gates (R-039) will fill.
+
 The full reference step-0 vectors (22 x 248,320 float32) are not in Git; the fixture keeps the top 64 per case and each vector's SHA-256. Pass `--reference-tensors <dir>` with `step0/<id>.f32` from `run_reference.py`; every file is checked against the fixture digest. Without them `float.step0_logprob_max_abs` is measured on the 64 reference ids only: above the bound it fails (the full maximum can only be larger), otherwise it is not-run and G2 cannot pass. A missing `semantics.json` or `environment.json` leaves its checks not-run.
 
 ```sh

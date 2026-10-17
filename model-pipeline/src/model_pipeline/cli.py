@@ -247,6 +247,24 @@ def _bench_g5(args: argparse.Namespace) -> int:
     return 0 if ok else 1
 
 
+def _convert_generation(args: argparse.Namespace) -> int:
+    from model_pipeline import generation_results
+
+    try:
+        if args.runner:
+            written = generation_results.convert_runner_directory(
+                Path(args.runner), Path(args.out), args.profile, args.vocab
+            )
+        else:
+            written = generation_results.convert_fixture(Path(args.fixture), Path(args.out), args.profile)
+    except (OSError, ValueError) as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 2
+    for path in written:
+        print(path)
+    return 0
+
+
 def _upstream(args: argparse.Namespace) -> int:
     from model_pipeline import upstream
 
@@ -287,8 +305,9 @@ def main(argv: list[str] | None = None) -> int:
     ev.add_argument(
         "--results",
         required=True,
-        help="directory with *.results.json files, one per stage (task generation: the output directory of "
-        "Starlings.Qwen35.Fidelity; --g3: the candidate's embeddings, predictions or generations JSONL file; "
+        help="directory with *.results.json files, one per stage (task generation: version 3 files or the output "
+        "directory of Starlings.Qwen35.Fidelity; --g3: the candidate's embeddings, predictions or generations "
+        "JSONL file; "
         "--g3 generation also takes the output directory of Starlings.Qwen35.Fidelity)",
     )
     ev.add_argument("--out", required=True, help="directory for report.json and report.md")
@@ -394,6 +413,20 @@ def main(argv: list[str] | None = None) -> int:
     bench_g5.add_argument("--seed", type=int, default=1)
     bench_g5.add_argument("--json", help="also write the verdicts as JSON to this path")
     bench_g5.set_defaults(func=_bench_g5)
+
+    cg = sub.add_parser(
+        "convert-generation",
+        help="write stage results format version 3 (task generation) from a runner directory or a generation fixture",
+        description="Writes template.results.json, dotnet.results.json and (from a runner directory with step-0 "
+        "vectors) step0.f32 into --out. Exit codes: 0 written; 2 bad input.",
+    )
+    source = cg.add_mutually_exclusive_group(required=True)
+    source.add_argument("--runner", help="output directory of ai-dotnet/tools/Starlings.Qwen35.Fidelity")
+    source.add_argument("--fixture", help="generation.jsonl of the starlings.generation-fixture format, version 1")
+    cg.add_argument("--profile", required=True, help="<family>/<profile> the results are for")
+    cg.add_argument("--out", required=True, help="directory for the version 3 files")
+    cg.add_argument("--vocab", type=int, help="step-0 vector length (default: read from the first vector file)")
+    cg.set_defaults(func=_convert_generation)
 
     up = sub.add_parser(
         "upstream",

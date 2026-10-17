@@ -27,6 +27,12 @@ vector). Pass `--reference-tensors <dir>` holding `step0/<id>.f32` from `run_ref
 against the fixture digest. Without them `float.step0_logprob_max_abs` is measured on the 64 reference ids only: a
 value above the bound fails (the full maximum can only be larger), otherwise the check is not-run and G2 cannot pass.
 
+`--results` may also hold stage results format version 3 (`template.results.json`, `dotnet.results.json` and the
+`step0.f32` sidecar; `generation_results.py`, `schemas/stage-results.schema.json`). They are read into the same rows, so
+the checks, the protected tolerances and the report are identical; `model-pipeline convert-generation` writes them from
+a runner directory or from the generation fixture. Without the step-0 sidecar only the candidate's five best step-0
+pairs are checked (argmax, top 5) and the full-vocabulary bound stays not-run.
+
 Reuses the readers of `evaluate_generation_candidate.py` (rows, ids, float32 sidecars).
 """
 
@@ -39,7 +45,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from model_pipeline import fixtures, results
+from model_pipeline import fixtures, generation_results, results
 from model_pipeline.evaluate import Check, EvaluationError, _bound, flatten, substage_status
 from model_pipeline.evaluate_generation_candidate import read_float32, read_rows, valid_ids
 from model_pipeline.onboarding_runner import PipelineError
@@ -122,6 +128,9 @@ class RunnerResults:
     semantics: dict | None
     environment: dict | None
     files: list[Path]
+    # Format version 3: the whole step-0 vectors read from the sidecar (None: read `step0/<id>.f32` from `directory`).
+    step0: dict[str, list[float]] | None = None
+    stage_results: bool = False
 
     def describe(self, rel) -> dict[str, Any]:
         return {f.name: {"path": rel(f), "sha256": fixtures.sha256_file(f)} for f in self.files if f.is_file()} | {
@@ -143,12 +152,45 @@ def _json(path: Path) -> dict | None:
     return data
 
 
-def load_results(directory: Path) -> RunnerResults:
+def load_stage_results(directory: Path, vocab: int) -> RunnerResults:
+    """Stage results format version 3 (task generation): the `template` and `dotnet` files and the step-0 sidecar."""
+    try:
+        stages = generation_results.load_stage_files(directory)
+        profiles = {stage.profile for stage in stages.values()}
+        if len(profiles) != 1:
+            raise generation_results.ConversionError(f"{directory}: the stage files name different profiles {profiles}")
+        step0 = generation_results.read_step0(stages["dotnet"], vocab)
+    except results.ToleranceOverrideError:
+        raise
+    except (generation_results.ConversionError, results.ResultsError) as exc:
+        raise EvaluationError(str(exc)) from exc
+    dotnet = stages["dotnet"]
+    environment = {**dotnet.environment, "profile": dotnet.profile}
+    environment.setdefault("runner", dotnet.producer.get("name"))
+    environment.setdefault("source_revision", dotnet.producer.get("repository_commit"))
+    semantics = dict(dotnet.sections) or None
+    return RunnerResults(
+        directory,
+        generation_results.merge_rows(stages),
+        semantics,
+        environment,
+        generation_results.describe_files(stages),
+        step0=step0,
+        stage_results=True,
+    )
+
+
+def load_results(directory: Path, vocab: int | None = None) -> RunnerResults:
+    """A runner output directory (`results.jsonl`) or a directory of stage results version 3 (`*.results.json`)."""
+    if generation_results.has_stage_results(directory):
+        if vocab is None:
+            raise EvaluationError("the vocabulary size is needed to read stage results version 3")
+        return load_stage_results(directory, vocab)
     path = directory / "results.jsonl"
     if not path.is_file():
         raise EvaluationError(
             f"{directory}: no results.jsonl; the generation task reads the output directory of "
-            "Starlings.Qwen35.Fidelity (--modes parity,semantics)"
+            "Starlings.Qwen35.Fidelity (--modes parity,semantics) or *.results.json files (stage results version 3)"
         )
     try:
         rows = read_rows(path)
@@ -220,12 +262,28 @@ class GenerationEvaluator:
         return sorted(set(self.fx.cases) - set(self.run.rows))
 
     def _candidate_step0(self, name: str) -> list[float] | None:
+        if self.run.step0 is not None:
+            return self.run.step0.get(name)
         if name not in self._step0:
             try:
                 self._step0[name] = list(read_float32(self.run.directory, f"step0/{name}.f32", self.vocab))
             except PipelineError:
                 self._step0[name] = None
         return self._step0[name]
+
+    def _candidate_pairs(self, name: str) -> list[tuple[int, float]] | None:
+        """The candidate's `step0_top` [token, log-probability] pairs of a case, or None when absent or malformed."""
+        pairs = self.run.rows[name].get("step0_top")
+        if not isinstance(pairs, list) or not pairs:
+            return None
+        out = []
+        for item in pairs:
+            if not (isinstance(item, list) and len(item) == 2 and type(item[0]) is int):
+                return None
+            if not isinstance(item[1], int | float) or isinstance(item[1], bool):
+                return None
+            out.append((item[0], float(item[1])))
+        return out
 
     def _reference_step0(self, name: str) -> list[float] | None:
         if self.reference_tensors is None:
@@ -397,18 +455,37 @@ class GenerationEvaluator:
             "Step-0 log-probability, full vocabulary",
             "float.step0_logprob_max_abs",
         )
-        no_vector, non_finite, argmax_bad = [], [], []
+        no_vector, top_only, non_finite, argmax_bad = [], [], [], []
         top5_max = top64_max = full_max = 0.0
         top5_worst = full_worst = None
         for name in present:
             vec = self._candidate_step0(name)
+            top = self.fx.cases[name]["step0_top"]
             if vec is None:
-                no_vector.append(name)
+                # No whole vector (stage results version 3 without the sidecar): the candidate's best pairs only.
+                pairs = self._candidate_pairs(name)
+                if pairs is None:
+                    no_vector.append(name)
+                    continue
+                if not all(math.isfinite(lp) for _, lp in pairs):
+                    non_finite.append(name)
+                    continue
+                got = dict(pairs)
+                if max(pairs, key=lambda p: p[1])[0] != top[0][0]:
+                    argmax_bad.append(name)
+                if any(token not in got for token, _ in top[:5]):
+                    no_vector.append(name)
+                    continue
+                top_only.append(name)
+                for token, lp in top[:5]:
+                    d = abs(got[token] - lp)
+                    if d > top5_max:
+                        top5_max, top5_worst = d, name
+                    top64_max = max(top64_max, d)
                 continue
             if not all(math.isfinite(v) for v in vec):
                 non_finite.append(name)
                 continue
-            top = self.fx.cases[name]["step0_top"]
             best = max(range(len(vec)), key=vec.__getitem__)
             if best != top[0][0]:
                 argmax_bad.append(name)
@@ -461,6 +538,8 @@ class GenerationEvaluator:
             elif full_max > b or lacking or non_finite:
                 full.status = "failed"
                 full.detail = f"max {full_max:.3g} ({full_worst}) > {b:g}" if full_max > b else lacking_detail
+            elif top_only:
+                full.detail = f"no whole step-0 vector for {top_only}: only the candidate's best pairs were compared"
             else:
                 full.status = "passed"
 

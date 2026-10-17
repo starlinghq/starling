@@ -1140,9 +1140,11 @@ def evaluate(
     if task == "generation":
         from model_pipeline import evaluate_generation as ge
 
-        # The generation task reads the C# runner's output directory, not stage results files.
+        # The generation task reads the C# runner's output directory or stage results version 3 (generation_results.py).
         stages = {}
-        run = ge.load_results(results_dir)
+        probe = ge.load_fixtures(fixtures_dir)
+        vocab = man["behavior"].get("vocab_size") or next(iter(probe.cases.values()))["step0_vocab"]
+        run = ge.load_results(results_dir, vocab)
     else:
         stages = results.load_directory(results_dir)
         if not stages:
@@ -1153,7 +1155,7 @@ def evaluate(
 
     generation = None
     if task == "generation":
-        fx = ge.load_fixtures(fixtures_dir)
+        fx = probe
         verification = protection.verify_unchanged(root, [tol_path, *fx.files], protected_base)
         generation = ge.GenerationEvaluator(man, fx, tol, run, reference_tensors)
         checks = generation.run_checks()

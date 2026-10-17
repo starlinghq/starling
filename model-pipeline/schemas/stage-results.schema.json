@@ -2,21 +2,21 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/starlinghq/starling/model-pipeline/schemas/stage-results.schema.json",
   "title": "Stage results",
-  "description": "Candidate outputs of one fidelity stage for one profile (backlog P-007, P-015). Outputs only: thresholds come from the profile's protected tolerances file and are rejected here. Version 1: numeric outputs, task embedding (implicit). Version 2: adds a required task and typed outputs (strings, string lists, entity results) for extraction. See src/model_pipeline/results.py.",
+  "description": "Candidate outputs of one fidelity stage for one profile (backlog P-007, P-015). Outputs only: thresholds come from the profile's protected tolerances file and are rejected here. Version 1: numeric outputs, task embedding (implicit). Version 2: adds a required task and typed outputs (strings, string lists, entity results) for extraction. Version 3: task generation only, stages template and dotnet, free-form per-case outputs and a sections object (cached_vs_uncached, chunked_prefill, concurrency, selection). See src/model_pipeline/results.py.",
   "type": "object",
   "additionalProperties": false,
   "required": ["format", "format_version", "profile", "stage", "candidate", "producer", "cases"],
   "properties": {
     "format": { "const": "starlings.stage-results" },
-    "format_version": { "enum": [1, 2] },
+    "format_version": { "enum": [1, 2, 3] },
     "task": {
-      "description": "Version 2 only (required there). The evaluator task the outputs belong to; must match the manifest's behavior.tasks (entity-extraction for a manifest task 'extraction').",
-      "enum": ["embedding", "entity-extraction", "image-embedding", "video-embedding"]
+      "description": "Versions 2 and 3 (required there). The evaluator task the outputs belong to; must match the manifest's behavior.tasks (entity-extraction for a manifest task 'extraction'). Version 3 is generation only.",
+      "enum": ["embedding", "entity-extraction", "image-embedding", "video-embedding", "generation"]
     },
     "profile": { "type": "string", "pattern": "^[a-z0-9][a-z0-9.-]*/[a-z0-9][a-z0-9.-]*$" },
     "stage": {
-      "description": "tokenizer: owned tokenizer outputs (for extraction: the processor, i.e. normalization, word splitting, schema prefix, subword ids and routing positions). export: Python backend on the exported artifact against the framework reference. dotnet: the C# implementation.",
-      "enum": ["tokenizer", "export", "dotnet"]
+      "description": "tokenizer: owned tokenizer outputs (for extraction: the processor, i.e. normalization, word splitting, schema prefix, subword ids and routing positions). export: Python backend on the exported artifact against the framework reference. dotnet: the C# implementation. Version 3 (generation) uses template: the owned chat template rendering and tokenizer ids, and dotnet: greedy generation, streaming, usage and runtime semantics.",
+      "enum": ["tokenizer", "export", "dotnet", "template"]
     },
     "candidate": { "type": "string", "minLength": 1 },
     "producer": {
@@ -52,7 +52,7 @@
       "type": "object",
       "additionalProperties": {
         "type": "object",
-        "additionalProperties": { "$ref": "#/$defs/output" }
+        "additionalProperties": true
       }
     },
     "batches": {
@@ -64,9 +64,14 @@
         "properties": {
           "output": { "type": "string", "description": "The per-case output these rows are the batched form of." },
           "case_ids": { "type": "array", "items": { "type": "string" } },
-          "values": { "type": "array", "items": { "$ref": "#/$defs/output" } }
+          "values": { "type": "array" }
         }
       }
+    },
+    "sections": {
+      "description": "Version 3 only. Whole-run measurements that are not per case: cached_vs_uncached, chunked_prefill, concurrency and selection, in the shapes written by Starlings.Qwen35.Fidelity semantics.json (stage dotnet).",
+      "type": "object",
+      "additionalProperties": { "type": "object" }
     },
     "tensors": {
       "type": "object",
@@ -98,8 +103,9 @@
     {
       "if": { "properties": { "format_version": { "const": 1 } } },
       "then": {
-        "not": { "required": ["task"] },
+        "not": { "anyOf": [{ "required": ["task"] }, { "required": ["sections"] }] },
         "properties": {
+          "stage": { "enum": ["tokenizer", "export", "dotnet"] },
           "cases": { "additionalProperties": { "additionalProperties": { "$ref": "#/$defs/numbers" } } },
           "batches": { "additionalProperties": { "properties": { "values": { "items": { "$ref": "#/$defs/numbers" } } } } }
         }
@@ -107,13 +113,34 @@
     },
     {
       "if": { "properties": { "format_version": { "const": 2 } } },
-      "then": { "required": ["task"] }
+      "then": {
+        "required": ["task"],
+        "not": { "required": ["sections"] },
+        "properties": {
+          "task": { "enum": ["embedding", "entity-extraction", "image-embedding", "video-embedding"] },
+          "stage": { "enum": ["tokenizer", "export", "dotnet"] },
+          "cases": { "additionalProperties": { "additionalProperties": { "$ref": "#/$defs/output" } } },
+          "batches": { "additionalProperties": { "properties": { "values": { "items": { "$ref": "#/$defs/output" } } } } }
+        }
+      }
+    },
+    {
+      "if": { "properties": { "format_version": { "const": 3 } } },
+      "then": {
+        "required": ["task"],
+        "properties": {
+          "task": { "const": "generation" },
+          "stage": { "enum": ["template", "dotnet"] },
+          "cases": { "additionalProperties": { "additionalProperties": true } },
+          "batches": { "maxProperties": 0 }
+        }
+      }
     }
   ],
   "$defs": {
     "numbers": { "type": "array", "items": { "type": "number" } },
     "output": {
-      "description": "Version 1 allows numbers only (enforced above). Version 2 also allows a string, a list of strings, or an entity result.",
+      "description": "Version 2 outputs (version 1 allows numbers only; version 3 is free-form): numbers, a string, a list of strings, or an entity result.",
       "anyOf": [
         { "$ref": "#/$defs/numbers" },
         { "type": "string" },

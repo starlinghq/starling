@@ -1,4 +1,4 @@
-"""Stage results format, versions 1 and 2 (backlog P-007, P-015).
+"""Stage results format, versions 1 to 3 (backlog P-007, P-015, R-010).
 
 Every runner that produces candidate outputs for the staged fidelity evaluator writes one JSON
 file per stage in this format: the owned tokenizer (stage `tokenizer`), Python ONNX Runtime
@@ -41,6 +41,12 @@ write version 1. In version 2 a case output or batch row is one of:
                    "start": n, "end": n,    offsets in the profile's offsets unit, exclusive end
                    "confidence": x}]}
 
+Version 3 (task `generation`, backlog R-010) has the stages `template` and `dotnet` (`GENERATION_STAGES`), free-form
+per-case outputs (`GENERATION_OUTPUTS`) and a `sections` object for the whole-run measurements. The full step-0
+log-probability vectors are a float32 sidecar named by `tensors.step0_logprobs`. `generation_results.py` converts the
+output directory of `Starlings.Qwen35.Fidelity` and the `starlings.generation-fixture` v1 file into this format, and
+`evaluate_generation.py` reads it.
+
 Output names per stage for task `entity-extraction` are in `ENTITY_EXTRACTION_OUTPUTS`;
 `evaluate_extraction.py` documents what each is compared with.
 """
@@ -59,9 +65,29 @@ from typing import Any
 
 FORMAT = "starlings.stage-results"
 FORMAT_VERSION = 1  # written when no task is given (embedding producers), so their files do not change
-FORMAT_VERSIONS = (1, 2)
-TASKS = ("embedding", "entity-extraction", "image-embedding", "video-embedding")
+FORMAT_VERSIONS = (1, 2, 3)
+TASKS = ("embedding", "entity-extraction", "image-embedding", "video-embedding", "generation")
 STAGES = ("tokenizer", "export", "dotnet")
+GENERATION_STAGES = ("template", "dotnet")
+# Per-case outputs of task `generation` (format version 3), by stage. `template`: the owned renderer and tokenizer
+# (G1); `dotnet`: greedy generation from the fixture prompt ids, streaming and usage (G2). `step0_top` is the
+# candidate's five best step-0 [token, log-probability] pairs; the whole vector is the `step0_logprobs` sidecar.
+GENERATION_OUTPUTS = {
+    "template": ("rendered", "render_error", "prompt_ids"),
+    "dotnet": (
+        "prompt_ids",
+        "output_ids",
+        "finish_reason",
+        "step0_top",
+        "stream_text_equals_result",
+        "stream_ids_equal_result",
+        "stream_text_equals_decode",
+        "usage",
+    ),
+}
+# Whole-run sections of the generation `dotnet` stage.
+GENERATION_SECTIONS = ("cached_vs_uncached", "chunked_prefill", "concurrency", "selection")
+STEP0_TENSOR = "step0_logprobs"
 
 # Per-case outputs of task `entity-extraction`, by stage. Stage 1 is the processor (GLiNER2: normalization,
 # word splitting, schema prefix, subword encoding, routing positions); the others run the graph on the fixture
@@ -112,12 +138,13 @@ class StageResults:
     producer: dict[str, Any]
     environment: dict[str, Any]
     assets: list[dict[str, str]]
-    cases: dict[str, dict[str, list[float] | list[int]]]
+    cases: dict[str, dict[str, Any]]
     batches: dict[str, dict[str, Any]]
     tensor_specs: dict[str, dict[str, Any]] = field(default_factory=dict)
     sha256: str = ""
     task: str = "embedding"
     format_version: int = 1
+    sections: dict[str, Any] = field(default_factory=dict)
 
     def tensor(self, name: str) -> Tensor:
         spec = self.tensor_specs[name]
@@ -186,6 +213,7 @@ def load(path: Path) -> StageResults:
         sha256=hashlib.sha256(raw_bytes).hexdigest(),
         task=raw.get("task", "embedding"),
         format_version=raw["format_version"],
+        sections=raw.get("sections", {}),
     )
 
 
@@ -256,15 +284,15 @@ def new_results(
     assets: list[dict[str, str]],
     task: str | None = None,
 ) -> dict[str, Any]:
-    """A results skeleton: version 1 without `task` (embedding), version 2 with one."""
-    if stage not in STAGES:
+    """A results skeleton: version 1 without `task` (embedding), version 2 with one, version 3 for `generation`."""
+    if stage not in (GENERATION_STAGES if task == "generation" else STAGES):
         raise ValueError(f"unknown stage {stage!r}")
     if task is not None and task not in TASKS:
         raise ValueError(f"unknown task {task!r}")
     head: dict[str, Any] = {"format": FORMAT, "format_version": FORMAT_VERSION}
     if task is not None:
-        head = {"format": FORMAT, "format_version": 2, "task": task}
-    return {
+        head = {"format": FORMAT, "format_version": 3 if task == "generation" else 2, "task": task}
+    skeleton: dict[str, Any] = {
         **head,
         "profile": profile,
         "stage": stage,
@@ -276,3 +304,6 @@ def new_results(
         "batches": {},
         "tensors": {},
     }
+    if task == "generation":
+        skeleton["sections"] = {}
+    return skeleton
