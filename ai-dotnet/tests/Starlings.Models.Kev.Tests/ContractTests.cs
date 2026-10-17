@@ -66,9 +66,25 @@ public sealed class ContractTests
     }
 
     [Fact]
+    public void CudaProfilesShareTheBundleAndKeepTf32Off()
+    {
+        foreach (var profile in KevModelProfile.All)
+        {
+            Assert.Equal(profile.Id.Replace("-cpu", "-cuda", StringComparison.Ordinal), profile.CudaId);
+        }
+
+        Assert.Equal(KevCapabilityStatus.Experimental, KevCapabilities.All["cuda"]);
+        Assert.Equal(KevCapabilityStatus.Experimental, KevCapabilities.All["concurrent_calls.cuda.serialized"]);
+        Assert.Equal(KevCapabilityStatus.Untested, KevCapabilities.All["concurrent_calls.cuda.unserialized"]);
+        Assert.Equal(KevCapabilityStatus.Unsupported, KevCapabilities.All["tf32"]);
+        Assert.Null(new KevOptions().SerializeNativeCalls); // provider default: serialized on CUDA only
+    }
+
+    [Fact]
     public void OptionsRejectOutOfContractSettings()
     {
-        Assert.Throws<NotSupportedException>(() => new KevOptions { Session = new() { Provider = Starlings.Runtime.Onnx.OnnxExecutionProvider.Cuda } }.Validate());
+        new KevOptions { Session = new() { Provider = Starlings.Runtime.Onnx.OnnxExecutionProvider.Cuda } }.Validate();
+        Assert.Throws<NotSupportedException>(() => new KevOptions { Session = new() { Provider = (Starlings.Runtime.Onnx.OnnxExecutionProvider)99 } }.Validate());
         Assert.Throws<ArgumentOutOfRangeException>(() => new KevOptions { MaxStateTokens = KevModelProfile.MaxStateTokens + 1 }.Validate());
         Assert.Throws<ArgumentOutOfRangeException>(() => new KevOptions { MaxRowTokens = KevModelProfile.MaxRowTokens + 1 }.Validate());
         new KevOptions().Validate();

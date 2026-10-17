@@ -10,12 +10,15 @@ Kev 1.0 decision models in-process on ONNX Runtime: one document (the *state*) a
 - The request is rendered and escaped as Kev's `kev/api.py` and `kev/model.py` do at `6b719c3c` (tag `kev-1.0`): System One `noul`, `choice` and `score` questions, JSON states rendered with Python's `str()` of numbers and booleans, `<|…|>` in user text rewritten so it can never become a delimiter. Token ids come from the owned tokenizer `Starlings.Tokenizers` (profile `qwen2-bpe-kev`; both checkpoints ship the same `tokenizer.json`): no Microsoft.ML.Tokenizers, no Python.
 - The Qwen3.5 backbone (Gated DeltaNet and full attention) runs as one fp32 ONNX graph. The state runs once; every question then runs as its own causal row continuing from the state's cache, so questions cannot influence one another. Kev's pointer head scores each option's `</opt>` against the question's `<decide>`, divided by the calibrated temperature.
 - The package ships the asset locks (sizes and SHA-256), not the model files.
+- On the CUDA provider the same bundles run as the profiles `kev-0.8b/onnx-fp32-cuda` and `kev-4b/onnx-fp32-cuda` (Experimental, `use_tf32=0`; see [CUDA](#cuda)).
 
 ## Install
 
 ```sh
 dotnet add package Starlings.Models.Kev --prerelease
 dotnet add package Microsoft.ML.OnnxRuntime --version 1.30.0     # CPU natives (contrib ops LinearAttention, CausalConvWithState, ...)
+# or, for CUDA (Linux x64; the CUDA 13 runtime and cuDNN 9 are not in the package):
+dotnet add package Microsoft.ML.OnnxRuntime.Gpu.Linux --version 1.30.0
 ```
 
 ## Use
@@ -50,6 +53,24 @@ var fromJson = kev.Decide(KevRequest.ParseSystemOne(File.ReadAllText("request.js
 - States over 8,192 tokens (the validated context, `<state>` included) and question rows over 8,192 tokens (state plus branch) throw `KevInputTooLongException`. Nothing is truncated.
 - Staged API for evidence: `Encode(record)` gives Kev's row form (`KevEncoding`), `Run(encoding)` the cached path, `RunUncached(encoding)` upstream's `forward()` layout.
 - Memory: about 3.5 GB resident for 0.8B and 18 GB for 4B, plus the state cache.
+- Concurrent `Decide` calls on one model are independent (`concurrent_calls`, Experimental). On CUDA each request's graph calls run one request at a time by default (`KevOptions.SerializeNativeCalls`).
+
+## CUDA
+
+```csharp
+using Starlings.Runtime.Onnx;
+
+using var kev = KevDecisionModel.Create(files, new KevOptions
+{
+    Session = new OnnxSessionOptions { Provider = OnnxExecutionProvider.Cuda, CudaDeviceId = 0 },
+});
+// kev.ProfileId == "kev-4b/onnx-fp32-cuda"; kev.SerializesNativeCalls == true
+```
+
+- The CUDA profiles use the qualified bundle and lock unchanged: the builder's CPU export on the CUDA execution provider, with TF32 off (`use_tf32=0`, forced by `Starlings.Runtime.Onnx`; there is no TF32 option, and TF32 fails every fp32 bound). ONNX Runtime keeps the graph's `GroupQueryAttention` nodes on the CPU provider inside the CUDA session, and the state cache passes through host memory between rows; the builder's own CUDA graph (`-e cuda -p fp32`) is faster but did not load unpatched with ONNX Runtime GenAI 0.17.1 ([admission](../../../model-pipeline/admissions/kev.md), "GPU results"), so it is not a profile.
+- Device memory: the 4B weights take about 17 GB, so Kev-4B needs a 24 GB card; 0.8B about 3.5 GB.
+- Requests are serialized on CUDA by default: concurrent runs on one CUDA session returned wrong outputs for GLiNER2 and Qwen3.5 on ONNX Runtime 1.30, and unserialized Kev runs were not tried (`concurrent_calls.cuda.unserialized`: Untested). A cancelled CUDA call completes its current graph run before it throws, as for every Runtime.Onnx CUDA session.
+- Evidence so far is local (an RTX 3090 workstation); the per-release GPU regression and the gates are not run yet. Other GPUs: untested.
 
 ## The bundle
 
@@ -67,7 +88,7 @@ python -m onnxruntime_genai.models.builder -i merged -o onnx -p fp32 -e cpu \
 
 ## Status
 
-Every capability has an explicit status in `KevCapabilities.All`. Experimental: noul, choice and score decisions, calibrated and raw temperature, delimiter escaping, question isolation, the state cache within a request, JSON state rendering, cancellation, offline verification. Untested: concurrent calls, CUDA, Windows, Native AOT. Unsupported: states over 8,192 tokens, truncation, downloads, state reuse across requests, batched rows, upstream's 4-decimal rounding and `usage.output_tokens`, `KEV_DATE_FACTS`, option isolation, the HTTP server, bf16, fp16 and quantized graphs, training and calibration fitting, Kev-9B and Kev-27B.
+Every capability has an explicit status in `KevCapabilities.All`. Experimental: noul, choice and score decisions, calibrated and raw temperature, delimiter escaping, question isolation, the state cache within a request, JSON state rendering, cancellation, offline verification, concurrent calls (on CUDA serialized), CUDA. Untested: unserialized concurrent calls on CUDA, Windows, Native AOT. Unsupported: states over 8,192 tokens, truncation, downloads, state reuse across requests, batched rows, upstream's 4-decimal rounding and `usage.output_tokens`, `KEV_DATE_FACTS`, option isolation, the HTTP server, TF32, bf16, fp16 and quantized graphs, training and calibration fitting, Kev-9B and Kev-27B.
 
 ## Evidence
 
@@ -94,7 +115,32 @@ Kev-4B, upstream's development partitions through Python ONNX Runtime against Ke
 One transfer-v4 question exceeds the 0.8B bound of 2e-4 by 2.5% (no flip, identical accuracy). Kev-4B has 24 Gated DeltaNet layers against 18, and the spike attributed most of the 0.8B error to the CPU `LinearAttention` kernel; the binding bound for 4B is the maintainer's decision. The full decision-v7 development run for 4B (1,468 questions) was started and stopped for memory before it finished; it is not reported.
 
 C# tests (`tests/Starlings.Models.Kev.Tests`): 109 tests, all passing with both bundles; rendering of 31 JSON values and the record and token ids of 9 System One requests equal upstream's output exactly.
+
+CUDA, 2026-10-17, local RTX 3090 (24 GB, driver 610.57, system CUDA 13.3 runtime, cuDNN 9 from the `nvidia-cudnn` wheel), ONNX Runtime 1.30.0 (`Microsoft.ML.OnnxRuntime.Gpu.Linux`), `use_tf32=0`; `tests/Starlings.Models.Kev.Tests.Cuda`, 12 tests passing, against the same Kev PyTorch fp32 probabilities and bounds as on CPU:
+
+| Check (bound) | Kev-0.8B | Kev-4B |
+| --- | --- | --- |
+| 9 request goldens vs PyTorch fp32 (2e-4), argmax | 1.33e-5, no flip | 4.17e-5, no flip |
+| Cached vs uncached rows (1e-5) | 7.8e-7 | 7.2e-7 |
+| 4 callers x 2 rounds of the goldens (serialized) | 72 of 72 bit-identical to sequential | 72 of 72 |
+| Cancelled calls: device work left queued | 0 of 10 (drain at most 0.014 ms) | 0 of 10 (at most 0.019 ms) |
+| One 8-question request (`many-questions`) | 105 ms | 299 ms |
+
+Not yet run on CUDA: the onboarding corpus through the `dotnet` and `evaluate` stages, upstream's development partitions, a soak, the matched benchmark and the per-release regression on the qualification GPU.
 <!-- /kev:evidence -->
+
+## Tests
+
+`tests/Starlings.Models.Kev.Tests` (in `AI.slnx`; rendering, contracts and answer mapping run in CI, encoding tests need the pinned `tokenizer.json`, model tests need `STARLING_KEV_08B_BUNDLE` / `STARLING_KEV_4B_BUNDLE`) and the local-only `tests/Starlings.Models.Kev.Tests.Cuda` (not in `AI.slnx`; references the GPU natives):
+
+```sh
+export STARLING_CUDA_TESTS=1 CUDA_DEVICE_ORDER=PCI_BUS_ID CUDA_VISIBLE_DEVICES=0   # the GPU to use
+export STARLING_KEV_08B_BUNDLE=/models/kev-0.8b STARLING_KEV_4B_BUNDLE=/models/kev-4b
+# If the CUDA 13 runtime is not in the ldconfig cache, add it (and cuDNN 9) to LD_LIBRARY_PATH.
+dotnet test --project ai-dotnet/tests/Starlings.Models.Kev.Tests.Cuda
+```
+
+The CUDA tests load one size at a time (Kev-4B needs about 17 GB of device memory). The fidelity tool runs the onboarding route's `dotnet` stage on CUDA with `--device cuda[:N]` from its `-p:UseCuda=true` build.
 
 ## License
 

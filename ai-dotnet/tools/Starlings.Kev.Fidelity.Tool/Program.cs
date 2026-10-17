@@ -15,10 +15,10 @@ int ToolBody()
     var options = new Dictionary<string, string>(StringComparer.Ordinal);
     for (int i = 0; i < args.Length; i += 2)
     {
-        if (i + 1 >= args.Length || args[i] is not ("--profile" or "--snapshot" or "--reference" or "--out" or "--threads")
+        if (i + 1 >= args.Length || args[i] is not ("--profile" or "--snapshot" or "--reference" or "--out" or "--threads" or "--device")
             || !options.TryAdd(args[i], args[i + 1]))
         {
-            Console.Error.WriteLine("usage: --profile <candidate.json> --snapshot <bundle dir> --reference <reference.json> --out <dir> [--threads 2]");
+            Console.Error.WriteLine("usage: --profile <candidate.json> --snapshot <bundle dir> --reference <reference.json> --out <dir> [--threads 2] [--device cpu|cuda[:N]]");
             return 2;
         }
     }
@@ -58,7 +58,20 @@ int ToolBody()
 
     string snapshot = Path.GetFullPath(options["--snapshot"]);
     string Bundle(string file) => Path.Combine(snapshot, file);
+    // --device cuda[:N] runs the same bundle as the profile's onnx-fp32-cuda sibling (use_tf32=0, forced by Runtime.Onnx);
+    // only the -p:UseCuda=true build has the CUDA provider, and session creation says so otherwise.
+    string device = options.TryGetValue("--device", out var rawDevice) ? rawDevice : "cpu";
     var sessionOptions = new OnnxSessionOptions { IntraOpNumThreads = threads, InterOpNumThreads = 1 };
+    if (device == "cuda" || device.StartsWith("cuda:", StringComparison.Ordinal))
+    {
+        int deviceId = device == "cuda" ? 0 : int.Parse(device[5..], CultureInfo.InvariantCulture);
+        sessionOptions = sessionOptions with { Provider = OnnxExecutionProvider.Cuda, CudaDeviceId = deviceId };
+    }
+    else if (device != "cpu")
+    {
+        Console.Error.WriteLine($"unknown --device {device}: cpu, cuda or cuda:N");
+        return 2;
+    }
     using var model = KevDecisionModel.Create(
         profile, Bundle(KevModelAssets.ModelFile), Bundle(KevModelAssets.HeadFile), Bundle(KevModelAssets.HeadMetadataFile),
         Bundle(KevModelAssets.TokenizerFile), new KevOptions { Session = sessionOptions });
@@ -108,7 +121,9 @@ int ToolBody()
         ["environment"] = new
         {
             machine = Environment.MachineName, dotnet = RuntimeInformation.FrameworkDescription, onnxruntime = diagnostics.OrtVersion,
-            provider = "CPUExecutionProvider", threads, inter_op_threads = 1,
+            provider = diagnostics.SessionProviders[0], profile_run = model.ProfileId, threads, inter_op_threads = 1,
+            provider_options = diagnostics.ProviderOptions,
+            cuda_visible_devices = Environment.GetEnvironmentVariable("CUDA_VISIBLE_DEVICES"),
             model_sha256 = new[] { KevModelAssets.ModelFile, KevModelAssets.ModelDataFile, KevModelAssets.HeadFile, KevModelAssets.HeadMetadataFile, KevModelAssets.TokenizerFile }
                 .ToDictionary(f => f, f => Sha256(Bundle(f))),
         },
