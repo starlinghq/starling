@@ -63,7 +63,7 @@ python -m onnxruntime_genai.models.builder -i merged -o onnx -p fp32 -e cpu \
 # bundle: onnx/model.onnx, onnx/model.onnx.data, merged/head.safetensors, merged/head.json, the Kev repo's tokenizer.json
 ```
 
-`kev_merge.py` merges the LoRA in fp32 with Kev's own loader and writes the pointer head as `head.safetensors` plus `head.json`, so nothing at runtime unpickles `head.pt`. The builder's weights file is not byte-reproducible across runs (same size, different bytes; recorded for 0.8B in `model-pipeline/admissions/kev.md`), so the lock pins the bundle that was qualified; a rebuilt bundle needs `KevDecisionModel.Create(profile, paths…)` with its own digests and its own evidence. The graphs are not hosted yet: hosting under the `Starlinghq` Hugging Face organization is the maintainer's step, after which `KevModelAssets` gains download sources.
+`kev_merge.py` merges the LoRA in fp32 with Kev's own loader and writes the pointer head as `head.safetensors` plus `head.json`, so nothing at runtime unpickles `head.pt`. `model.onnx.data` is not byte-reproducible across builds: two Kev-4B builds differ in 33 of 452 tensors, 1 to 4 floats each (at most 1.9e-9 absolute), all of them LoRA-merged projections (`attn.k/v/o_proj`, `linear_attn.out_proj`); `model.onnx`, embeddings, norms and every unadapted weight are identical. The export is deterministic; the fp32 LoRA merge is not (reduction order, consistent with the different thread counts of the two builds). The lock pins the bundle that was qualified; a rebuilt bundle needs `KevDecisionModel.Create(profile, paths…)` with its own digests and its own evidence. The graphs are not hosted yet: hosting under the `Starlinghq` Hugging Face organization is the maintainer's step, after which `KevModelAssets` gains download sources.
 
 ## Status
 
@@ -91,7 +91,7 @@ Kev-4B, upstream's development partitions through Python ONNX Runtime against Ke
 | decision-v7, 24 fixture records (forward and cached layouts) | 28 | 8.3e-5 (7.3e-6, 7.3e-5) | 0 | n/a |
 | transfer-v4 development | 764 | **2.05e-4** (1.2e-5, 9.7e-5) | 0 | 0.8171 (n = 656) |
 
-One transfer-v4 question exceeds the 0.8B bound of 2e-4 by 2.5% (no flip, identical accuracy). Kev-4B has 24 Gated DeltaNet layers against 18, and the spike attributed most of the 0.8B error to the CPU `LinearAttention` kernel; the binding bound for 4B is the maintainer's decision. decision-v7 development (1,468 questions) was not run for 4B.
+One transfer-v4 question exceeds the 0.8B bound of 2e-4 by 2.5% (no flip, identical accuracy). Kev-4B has 24 Gated DeltaNet layers against 18, and the spike attributed most of the 0.8B error to the CPU `LinearAttention` kernel; the binding bound for 4B is the maintainer's decision. The full decision-v7 development run for 4B (1,468 questions) was started and stopped for memory before it finished; it is not reported.
 
 C# tests (`tests/Starlings.Models.Kev.Tests`): 109 tests, all passing with both bundles; rendering of 31 JSON values and the record and token ids of 9 System One requests equal upstream's output exactly.
 <!-- /kev:evidence -->

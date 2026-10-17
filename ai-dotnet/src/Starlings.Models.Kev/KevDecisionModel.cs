@@ -59,7 +59,8 @@ public sealed record KevOptions
 /// are rejected (<see cref="KevInputTooLongException"/>). Rows run one at a time. See <see cref="KevCapabilities"/>.
 /// </para>
 /// <para>
-/// <b>Threading and lifetime.</b> Methods are synchronous and safe to call concurrently. Cancellation is checked before
+/// <b>Threading and lifetime.</b> Methods are synchronous and hold no per-call state on the model, so they are meant to
+/// be callable concurrently; that is untested (<see cref="KevCapabilities"/>, <c>concurrent_calls</c>). Cancellation is checked before
 /// each graph run and inside a run (between graph nodes); a cancelled call throws <see cref="OperationCanceledException"/>
 /// and the model stays usable.
 /// </para>
