@@ -65,7 +65,7 @@ public sealed record KevOptions
 /// and the model stays usable.
 /// </para>
 /// </remarks>
-public sealed class KevDecisionModel : IDisposable
+public sealed partial class KevDecisionModel : IDisposable
 {
     /// <summary>Graph output: final hidden states, float [batch, sequence, hidden].</summary>
     public const string HiddenStatesName = "hidden_states";

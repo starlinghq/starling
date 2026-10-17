@@ -19,7 +19,7 @@ public sealed class ModelParityTests
 
     private static readonly ConcurrentDictionary<KevModel, Lazy<(KevDecisionModel? Model, string Reason)>> Models = new();
 
-    private static (KevDecisionModel? Model, string Reason) Load(KevModel model) => Models.GetOrAdd(model, m => new(() =>
+    internal static (KevDecisionModel? Model, string Reason) Load(KevModel model) => Models.GetOrAdd(model, m => new(() =>
     {
         var (files, reason) = KevTestAssets.FindBundle(m);
         if (files is null)

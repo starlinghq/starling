@@ -48,6 +48,7 @@ public static class KevCapabilities
         // Not offered.
         ["asset_acquisition.download"] = KevCapabilityStatus.Unsupported,
         ["state_prefix_reuse_across_requests"] = KevCapabilityStatus.Unsupported,
+        // batched_rows: CPU spike evidence in docs/evidence/kev-batched-rows (internal API only; maintainer decision).
         ["batched_rows"] = KevCapabilityStatus.Unsupported,
         ["probability_rounding"] = KevCapabilityStatus.Unsupported,
         ["usage_output_tokens"] = KevCapabilityStatus.Unsupported,
