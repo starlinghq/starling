@@ -1,8 +1,8 @@
-# EmbeddingGemma 2 image soak: what the loaded series holds, two native heap trims, and the managed residue
+# EmbeddingGemma 2 image and video soaks: what the loaded series holds, native heap trims, reused request buffers
 
 After #86 (dedicated run threads), the one-hour hosted soak of `embeddinggemma-2/image-fp32-cpu` (Stable) still had a noisy **loaded** series. Run [38967975211](https://github.com/starlinghq/starling/actions/runs/38967975211) (Xeon 8573C) failed: loaded `rss_anon` growth 66.1 MiB against a limit of 53.9, halves 51.1 and 42.1. Passing runs had wide halves too (38975054175: 38.3/53.6, halves 10.7 and 67.4; 38933567784: 52.6/55.1, halves 78.5 and -4.0).
 
-**Status: not resolved.** Two library changes remove the native heap components of the noise, verified in the dumps. A managed component (GC committed memory, large object heap fragmentation) remains. With the two changes the image soak passed 4 times out of 4, but one pass was 37.3 against a limit of 41.3, both halves positive. In the same run one video soak failed. Details in sections 4 and 5.
+**Status: resolved.** The noise had three sources, verified in the dumps, and each has a library-level fix. The main glibc heap gets a trim after session creation, the run-thread arenas get a trim after each run, and the managed large object heap gets per-embedder reuse of the large request buffers. In three consecutive full qualification runs, all 12 image and video soaks passed (at most 71% of the limit), and so did every other soak (section 6).
 
 ## 1. What the loaded series measures
 
@@ -75,11 +75,62 @@ Components with both trims (`decompose.py`, loaded): the main heap is flat at 1,
 
 In the failed video soak, LOH fragmentation rises from 50 to 131 MiB over the hour and GC committed from 340 to 424 MiB. Its unloaded series grows by the same amount, so this is managed memory that stays across loads.
 
-## 5. Left open
+## 5. Managed side: reused request buffers (per-embedder pool)
 
-- **Managed LOH fragmentation in the image and video paths.** This is the remaining source. It is not new: the pre-#86 video dumps (`../eg2-soak-reliability/verification-38924489084/embeddinggemma2-video-smaps5`) show the same drift in the class that holds the GC regions (loaded +21.4 [14.3, 33.4], unloaded +26.1 [20.1, 33.7]). What changed is the limit. The limit is `max(32, 2% of the loaded median)`, and the trims lowered the median by about 600 MiB, so the image limit fell from about 54 to 41 MiB and video's from about 55 to 43. The managed swing stayed the same size, so it now uses most of the margin. Two possible fixes for a maintainer to choose between: per-embedder reuse of the large per-request buffers (pixel values, resampler output, soft-token copies, video soft tokens), or accepting the managed swing. Both change the core model path, so neither was attempted here (two repair attempts made: section 3).
-- **Run-thread top chunks.** Up to about 65 MiB per run-thread arena stays resident as the top chunk. `malloc_trim` does not release a non-main arena's top.
-- Not run: the three full qualification runs (`skip_cuda=true`) that the goal asks for. They cannot meet it while video `default+smaps5` fails and image passes by 4 MiB.
+After the trims, the GC's committed memory and large-object-heap (LOH) fragmentation were the remaining source. The LOH is not compacted. Every image request allocated and freed arrays above the 85 KB threshold:
+
+- the resized pixels: the resampler's result, its horizontal pass, the copy made when no resize is needed, and the weight tables of strong downscales;
+- the patch values and positions;
+- one `ToArray` copy of each image's soft tokens;
+- for videos, one soft-token copy per frame, the `videoSoft` concatenation and a `List<float>` copy of it per row.
+
+The vision and multimodal graph buffers came from `ArrayPool<T>.Shared`, which drops idle arrays on gen-2 collections, so the soak's full GCs moved that memory too.
+
+`Starlings.Models.EmbeddingGemma2`: new internal `EmbeddingGemma2BufferPool`, owned by each `EmbeddingGemma2MultimodalEmbedder` and dropped on `Dispose`.
+
+- **No shared buffers.** A request rents each buffer for its own use and returns it when done, so concurrent callers never share one. The pool holds only buffers that no request is using. A lock guards the free lists.
+- **Bounded size.** A rent takes the smallest free buffer of its element type that fits. If none fits, it allocates a new one at a quarter-octave size class (at most 25% over the request) and drops the largest free buffer that was too small. At most `max(16, 4 x processors)` free buffers are kept per element type. What the pool holds is therefore bounded by what concurrent requests used at the same time.
+- **Fewer buffers per request.** The soft tokens of all images, or all frames, of a request now go into one pooled buffer by offset instead of one array each. A video's soft tokens are a slice of that buffer, so the per-video and per-row copies are gone. A fallback assembles them, as before, if a frame's soft-token count ever differs from the video's.
+- **Public API unchanged.** `EmbeddingGemma2ImageProcessor.Preprocess` still returns fresh arrays to its callers. The embedder uses an internal pooled overload.
+
+Measurements (local, one caller, the 8 inputs of `MeasurementInputs`: images that resize up, strongly down, horizontally only or not at all, an image with text, two images in one input, two videos; `RequestMeasurementTests`, public API only, run on 9cb3516 and on 0357079):
+
+| | Before (9cb3516) | After (0357079) |
+| --- | --- | --- |
+| Output digest (SHA-256 of all 8 embeddings) | `ae521bb9...0602` | `ae521bb9...0602` (identical) |
+| Managed allocation per pass of 8 requests (after the first) | 92.2 MiB | 2.8 MiB |
+| Peak RSS during requests (peak reset after load) | 3,099 MiB | 2,871 MiB |
+| RSS after the requests and a full GC | 2,222 MiB | 1,978 MiB |
+| Request latency | same or lower on every input (busy shared workstation, not a benchmark) | |
+
+`BufferPoolTests`: the pool's reuse, exclusive ownership under 8 parallel callers, size bound, size classes and `Dispose`. Also image and video embeddings bit-identical with and without the pool, single (twice, so the second pass reuses buffers), batched, and 8 concurrent requests on 4 callers. The whole `Starlings.Models.EmbeddingGemma2.Tests` project passes (176 tests), including the image and video parity checks against the reference.
+
+## 6. Verification: three full qualification runs
+
+Full qualification workflow, `skip_cuda=true`, `soak_variants=["default","smaps5"]` (every soak twice), code at 0357079. Later commits change documentation and evidence only. Format: loaded `rss_anon` growth / limit [halves], MiB. Dumps: `verification-<run>/`. Before the fix, the failing run 38967975211 had image loaded growth of 66.1 / 53.9 [51.1, 42.1].
+
+| Run | Image | Image `smaps5` | Video | Video `smaps5` |
+| --- | --- | --- | --- | --- |
+| [38996280821](https://github.com/starlinghq/starling/actions/runs/38996280821) | 6.5 / 40.2 [8.5, -5.6] EPYC 9V45 | 28.5 / 40.4 [9.3, 10.6] EPYC 7763 | 14.1 / 42.2 [13.7, 11.9] Xeon 8573C | 3.5 / 42.3 [-2.5, 0.4] EPYC 9V45 |
+| [39001130485](https://github.com/starlinghq/starling/actions/runs/39001130485) | 1.9 / 40.1 [5.3, 14.0] EPYC 7763 | 20.7 / 40.4 [12.0, 29.1] EPYC 7763 | 24.4 / 42.4 [17.7, 9.5] EPYC 7763 | 12.2 / 42.0 [21.9, 15.7] EPYC 9V45 |
+| [39006453578](https://github.com/starlinghq/starling/actions/runs/39006453578) | -0.6 / 40.5 [0.9, 2.9] EPYC 7763 | 10.1 / 40.4 [10.8, -6.0] EPYC 7763 | 19.4 / 42.3 [11.6, 10.8] EPYC 7763 | 5.0 / 42.8 [3.4, 2.9] EPYC 7763 |
+
+All 12 image and video soaks pass, and so do the other 24 (e5, GLiNER2, text, Qwen 3.5, twice each per run); no series reports growth. One Qwen 3.5 unloaded series reports `retention`, which does not gate; Qwen 3.5 does not use this code. The largest image growth is 28.5 against 40.4 (71% of the limit), and the largest video growth is 24.4 against 42.4 (58%). Runs 38996280821 and 39001130485 passed every job. Run 39006453578 failed one job, the release gate of `embeddinggemma-2/video-fp32-cpu`. That is the known AVX-512 G2 deviation of the Experimental video profile on an EPYC 9V45 runner (`dotnet-ids.token_embeddings` row-relative 1.83e-3 against 1e-3; the EmbeddingGemma 2 README describes it). It is not related to this change: the embeddings are bit-identical to before (section 5).
+
+Components in the `smaps5` dumps (`decompose.py loaded`):
+
+- The main heap stays at 1,192 MiB.
+- GC committed memory moves within 290 to 331 MiB (images) and 344 to 386 MiB (videos), against 280 to 442 before. LOH fragmentation is 2 to 3 MiB, against 7 to 131 before.
+- The run-thread arenas hold 10 to 87 MiB.
+
+What remains are single-cycle spikes of 40 to 90 MiB in the per-cycle loaded series, for example image `smaps5` in 38996280821: 2,081 to 2,110 MiB in 7 of 88 cycles, otherwise 2,000 to 2,048. Their size matches one run thread's top chunk, which `malloc_trim` cannot release. They do not persist: the next cycle is back at the base.
+
+Request latency (median request p50 over cycles, same CPU model): image on EPYC 7763 was 17.97 to 18.13 s, against 18.0 to 18.3 s before any of these changes. Video on EPYC 7763 was 13.0 to 13.2 s, against 13.0 s with the trims alone. Load median on EPYC 7763 was 3.08 to 3.15 s, against 2.93 to 3.12 s.
+
+## 7. Left open
+
+- **Run-thread top chunks.** Each run-thread arena can keep up to about 64 MiB resident as its top chunk. `malloc_trim` never releases a non-main arena's top, and `free` releases it only above glibc's dynamic trim threshold. This is the source of the single-cycle spikes above. It is bounded and does not accumulate. Removing it would need an allocator setting, which is out of scope.
+- **Margin.** The limit is `max(32, 2% of the loaded median)`. The trims lowered the median from about 2.7 GB to about 2.0 GB, so the image limit is now about 40 MiB instead of 54, and video's is about 42 instead of 55. In the three runs the worst growth is 71% (image) and 58% (video) of the new limit. The limits and the growth rule are unchanged.
 
 ## Reproduce
 
@@ -87,6 +138,7 @@ In the failed video soak, LOH fragmentation rises from 50 to 131 MiB over the ho
 gh workflow run qualification.yml --ref <branch> -f soak_only=true -f skip_cuda=true -f soak_duration=1h \
   -f "soak_workloads=embeddinggemma2-image embeddinggemma2-video" \
   -f 'soak_variants=["default","smaps5","default+smaps5","no-run-trim+smaps5"]'
+gh workflow run qualification.yml --ref <branch> -f skip_cuda=true -f soak_duration=1h -f 'soak_variants=["default","smaps5"]'
 python3 -I docs/evidence/eg2-image-loaded-soak/analysis/dumps.py <x.smaps.jsonl.gz> loaded
 python3 -I docs/evidence/eg2-image-loaded-soak/analysis/decompose.py loaded <x.smaps.jsonl.gz>...
 ```
