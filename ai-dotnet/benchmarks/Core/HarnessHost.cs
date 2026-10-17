@@ -171,6 +171,13 @@ internal static class HarnessHost
             return args.Length == 0 ? 2 : 0;
         }
 
+        if (args[0] == "sweep")
+        {
+            return driver is ISweepDriver sweep
+                ? BatchSweep.Command(args[1..], driver.HarnessName, CudaBuild, sweep.LoadSweep, sweep.WiredSweepHooks)
+                : Fail($"{driver.HarnessName} has no sweep mode.");
+        }
+
         try
         {
             var map = ArgMap.Parse(args.Skip(1).ToArray(), usage);
@@ -207,6 +214,12 @@ internal static class HarnessHost
         }
     }
 
+    private static int Fail(string message)
+    {
+        Console.Error.WriteLine(message);
+        return 2;
+    }
+
     /// <summary>
     /// <c>cpu</c> or <c>cuda</c>, matching this build's native package: a CPU result never comes from the GPU natives and
     /// a CUDA run needs the <c>.Cuda</c> build and an explicit <c>CUDA_VISIBLE_DEVICES</c>.
@@ -238,6 +251,7 @@ internal static class HarnessHost
 
     private static string Usage(IBenchDriver driver) => $"""
         usage: {driver.HarnessName} warm|cold --out <raw.jsonl> [--provider cpu|cuda] [options]
+               {driver.HarnessName} sweep --out <sweep.jsonl> [options]   (batching sweep, where the driver has one; sweep --help)
           --threads N               intra_op_num_threads (default: ORT default)    --inter-threads N (default 1)
           --workloads <file>        default ai-dotnet/benchmarks/workloads/{driver.WorkloadFile}
           --only <names>            warm: only these workloads   --samples-scale F   warm: scale every sample count
