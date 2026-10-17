@@ -72,6 +72,28 @@ Every capability has an explicit status in `KevCapabilities.All`. Experimental: 
 ## Evidence
 
 <!-- kev:evidence -->
+Development evidence, 2026-10-16, Linux x64 CPU, ONNX Runtime 1.30.0, references proposed (not adopted into `model-pipeline/protected/`). Bounds: `model-pipeline/protected/kev-0.8b/onnx-fp32/tolerances.yaml` for 0.8B; the same values proposed for 4B.
+
+Onboarding route `kev-onnx-cpu-v1` on the Starling-written corpus `model-pipeline/reference/corpus/kev-decisions-v1.jsonl` (30 records, 58 questions, 44 labelled; states up to 1,531 tokens):
+
+| Check (bound) | Kev-0.8B | Kev-4B |
+| --- | --- | --- |
+| Python ONNX Runtime vs PyTorch fp32 (2e-4) | 2.95e-5 | 6.49e-5 |
+| .NET from reference ids, cached and uncached, and from text, vs PyTorch (2e-4) | 2.96e-5 | 6.49e-5 |
+| Cached vs uncached rows (1e-5) | .NET 2.7e-7 | .NET 2.5e-7 |
+| .NET vs Python ONNX Runtime (1e-6) | 1.24e-7 | 1.81e-7 |
+| Argmax flips, accuracy, token ids | none, identical, identical | none, identical (0.909 on 44), identical |
+
+Kev-4B, upstream's development partitions through Python ONNX Runtime against Kev's own `kev.benchmark` on CPU fp32:
+
+| Partition | Questions | Max abs (mean, p99) | Flips | Accuracy (both) |
+| --- | ---: | --- | ---: | --- |
+| decision-v7, 24 fixture records (forward and cached layouts) | 28 | 8.3e-5 (7.3e-6, 7.3e-5) | 0 | n/a |
+| transfer-v4 development | 764 | **2.05e-4** (1.2e-5, 9.7e-5) | 0 | 0.8171 (n = 656) |
+
+One transfer-v4 question exceeds the 0.8B bound of 2e-4 by 2.5% (no flip, identical accuracy). Kev-4B has 24 Gated DeltaNet layers against 18, and the spike attributed most of the 0.8B error to the CPU `LinearAttention` kernel; the binding bound for 4B is the maintainer's decision. decision-v7 development (1,468 questions) was not run for 4B.
+
+C# tests (`tests/Starlings.Models.Kev.Tests`): 109 tests, all passing with both bundles; rendering of 31 JSON values and the record and token ids of 9 System One requests equal upstream's output exactly.
 <!-- /kev:evidence -->
 
 ## License
