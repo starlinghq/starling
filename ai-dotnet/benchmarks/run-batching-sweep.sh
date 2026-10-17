@@ -18,9 +18,14 @@
 #   SWEEP_THREADS        intra_op_num_threads of the main sweep (default: cpu 6, cuda 4)
 #   SWEEP_THREAD_LIST    CPU thread sweep values (default "1 2 4 6"; set empty to skip)
 #   SWEEP_MAX_INFLIGHT   --max-inflight-items on CPU (default 256: batch x concurrency above it is skipped and listed)
+#   SWEEP_MAX_INFLIGHT_GLINER2  the same for GLiNER2 on CPU (default 32: long b32 c1 peaked at 10.2 GB RSS and long
+#                        b32 c4 was killed for memory on a 16 GB budget)
 #   SWEEP_CONFIGS        batching configurations after the baseline (default "sorted tokens sorted-tokens micro";
-#                        --quick: "sorted tokens micro"; set empty to skip): sorted = --sort-by-length true, tokens =
-#                        --max-batch-tokens SWEEP_BATCH_TOKENS, micro = single-item callers through the library's
+#                        --quick: "sorted tokens micro"; set empty to skip): sorted = --sort-by-length true with
+#                        8 rows per ORT run (calls of 16 to 64 items split into runs, as the library default does)
+#                        next to the same grid unsorted, tokens = --max-batch-tokens SWEEP_BATCH_TOKENS with one
+#                        run per call otherwise (compared with the baseline grid), sorted-tokens = both, micro =
+#                        single-item callers through the library's
 #                        micro-batcher (MaxWait 0 ms, MaxRows 8; the full grid adds MaxWait 2 ms, MaxRows 16) next to a
 #                        baseline run of single-item callers at the same concurrency
 #   SWEEP_BATCH_TOKENS   padded-cell budget of the tokens configurations (default 4096)
@@ -57,8 +62,11 @@ thread_grid=(--sets mixed --batches "1,8,32" --concurrency "1,4,16" --preliminar
 default_grid=(--sets "mixed,long" --batches "8,16,32,64" --concurrency 1 --preliminary false --max-batch-size default)
 configs="${SWEEP_CONFIGS-sorted tokens sorted-tokens micro}"
 batch_tokens="${SWEEP_BATCH_TOKENS:-4096}"
-# Explicit-batch configurations: mixed and long lengths, where sorting and a budget change the padding.
+# Explicit-batch configurations: mixed and long lengths, where sorting and a budget change the padding. Sorting only
+# matters when a call is split into several ORT runs, so the sorted grid caps runs at 8 rows (its unsorted twin runs
+# first); the token budget itself decides the split.
 config_grid=(--sets "mixed,long" --batches "8,16,32,64" --concurrency "1,4,16" --preliminary false)
+sorted_grid=(--sets "mixed,long" --batches "16,32,64" --concurrency "1,4,16" --preliminary false --max-batch-size 8)
 # Micro-batching: single-item callers (batch 1); the baseline run of the same grid is plain concurrency.
 micro_grid=(--sets "short,mixed,long" --batches 1 --concurrency "1,4,16" --preliminary false)
 micro_variants=("w0-r8:--microbatch-wait-ms 0 --microbatch-max-rows 8" "w2-r16:--microbatch-wait-ms 2 --microbatch-max-rows 16")
@@ -68,6 +76,7 @@ if [[ $quick == --quick ]]; then
     default_grid=(--sets mixed --batches 32 --concurrency 1 --quick true --preliminary false --max-batch-size default)
     configs="${SWEEP_CONFIGS-sorted tokens micro}"
     config_grid=(--sets mixed --batches "8,32" --concurrency "1,4" --quick true --preliminary false)
+    sorted_grid=(--sets mixed --batches 32 --concurrency "1,4" --quick true --preliminary false --max-batch-size 8)
     micro_grid=(--sets "short,mixed" --batches 1 --concurrency "4,16" --quick true --preliminary false)
     micro_variants=("w0-r8:--microbatch-wait-ms 0 --microbatch-max-rows 8")
 fi
@@ -121,7 +130,10 @@ run_configs() {
     shift 2
     for c in $configs; do
         case $c in
-            sorted) sweep "$m" "sorted-t$t" "$t" "${config_grid[@]}" --sort-by-length true "$@" ;;
+            sorted)
+                sweep "$m" "mbs8-t$t" "$t" "${sorted_grid[@]}" "$@"
+                sweep "$m" "sorted-mbs8-t$t" "$t" "${sorted_grid[@]}" --sort-by-length true "$@"
+                ;;
             tokens) sweep "$m" "tokens$batch_tokens-t$t" "$t" "${config_grid[@]}" --max-batch-tokens "$batch_tokens" "$@" ;;
             sorted-tokens)
                 sweep "$m" "sorted-tokens$batch_tokens-t$t" "$t" "${config_grid[@]}" --sort-by-length true \
@@ -142,6 +154,8 @@ run_configs() {
 
 for m in $models; do
     grep -q "^$m/$provider	build	" "$out/sweep-status.tsv" && continue
+    inflight="${SWEEP_MAX_INFLIGHT:-256}"
+    [[ $m == gliner2 ]] && inflight="${SWEEP_MAX_INFLIGHT_GLINER2:-32}"
     if [[ $provider == cpu ]]; then
         sweep "$m" "t$threads" "$threads" "${grid[@]}" --max-inflight-items "$inflight"
         for t in $thread_list; do

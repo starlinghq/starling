@@ -11,7 +11,8 @@
 # summaries. --quick runs the reduced grid (a smoke test of the pod path, minutes instead of hours).
 #
 # Each provider runs the baseline grid and then the batching configurations of the option contract (run-batching-sweep.sh,
-# SWEEP_CONFIGS): sorted (--sort-by-length true), tokens (--max-batch-tokens, SWEEP_BATCH_TOKENS, default 4096),
+# SWEEP_CONFIGS): sorted (--sort-by-length true at 8 rows per ORT run, beside the same grid unsorted), tokens
+# (--max-batch-tokens, SWEEP_BATCH_TOKENS, default 4096),
 # sorted-tokens (full grid only) and micro: single-item callers at concurrency 1/4/16 (--quick: 4/16) through the
 # library's micro-batcher (MaxWait 0 ms / MaxRows 8; the full grid adds 2 ms / 16) next to a baseline run of
 # single-item callers on the same grid. SWEEP_CONFIGS and SWEEP_BATCH_TOKENS pass through from this script's environment.
