@@ -170,7 +170,7 @@ processing:
     # tokenizer.json (the tokenizer Kev builds at runtime: transformers 5.17.0 Qwen2Tokenizer from the base, equal to
     # this file in every field), not the base file base/tokenizer.json (admissions/kev.md, "Tokenizer profile").
     package: Starlings.Tokenizers
-    version: 0.3.0-preview.1
+    version: 0.3.0
     profile_id: qwen2-bpe-kev
     algorithm: byte-level-bpe
     assets:
