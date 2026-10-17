@@ -268,7 +268,8 @@ internal sealed class Gliner2Workload : SoakWorkload
 /// <summary>
 /// Kev decisions (profiles <c>kev-*/onnx-fp32-cpu</c> and <c>onnx-fp32-cuda</c>): each request asks a noul, a choice
 /// and a score question about one short text; the discrete part is each question's argmax, the values its probabilities.
-/// The bundle is a directory (<c>$STARLING_KEV_08B_BUNDLE</c>, <c>$STARLING_KEV_4B_BUNDLE</c>): the graphs are not hosted.
+/// The bundle is a directory (<c>$STARLING_KEV_08B_BUNDLE</c>, <c>$STARLING_KEV_4B_BUNDLE</c>), else the acquisition
+/// cache (<see cref="KevModelAssets.DownloadAsync"/>).
 /// </summary>
 internal sealed class KevWorkload(KevModel model) : SoakWorkload
 {
@@ -291,14 +292,9 @@ internal sealed class KevWorkload(KevModel model) : SoakWorkload
 
     public override string? Locate(SoakOptions options)
     {
-        if (Snapshot(Variable) is not { } dir)
-        {
-            return $"{Variable} is not set: point it at a {KevModelProfile.For(model).Id} bundle directory.";
-        }
-
         try
         {
-            _files = KevModelAssets.OpenDirectory(model, dir);
+            _files = Snapshot(Variable) is { } dir ? KevModelAssets.OpenDirectory(model, dir) : KevModelAssets.OpenLocal(model, Acquisition);
             return null;
         }
         catch (ModelAcquisitionException ex)

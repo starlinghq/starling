@@ -154,7 +154,7 @@ One table per family, one column per profile. Rows are every capability any prof
 | aot | untested | untested |
 | extensions_ai | unsupported | unsupported |
 | mlnet | unsupported | unsupported |
-| asset_acquisition_download | unsupported | unsupported |
+| asset_acquisition_download | experimental | experimental |
 | asset_verification_offline | experimental | experimental |
 | bf16 | unsupported | unsupported |
 | calibrated_temperature | experimental | experimental |
@@ -194,7 +194,7 @@ One table per family, one column per profile. Rows are every capability any prof
 | aot | untested | untested |
 | extensions_ai | unsupported | unsupported |
 | mlnet | unsupported | unsupported |
-| asset_acquisition_download | unsupported | unsupported |
+| asset_acquisition_download | experimental | experimental |
 | asset_verification_offline | experimental | experimental |
 | bf16 | unsupported | unsupported |
 | calibrated_temperature | experimental | experimental |
@@ -329,13 +329,11 @@ One table per family, one column per profile. Rows are every capability any prof
 - `gliner2-base-v1/onnx-fp32-cuda`: The count gate (count_pred argmax 0 gives an empty result) never closed on the development corpus. The proposed capability cases (model-pipeline/proposed/gliner2-base-v1/capability-cases) add 12 public-text cases where it closes; they are not yet accepted fixtures.
 - `gliner2-base-v1/onnx-fp32-cuda`: CUDA parity evidence (PROPOSED.md) left out the two cases over 600 tokens from the padded-batch check because the GPU was shared; single-row parity covers all 58 cases (span logits max abs 4.0e-3, scores 2.5e-6).
 - `gliner2-base-v1/onnx-fp32-cuda`: Native runtime: Microsoft.ML.OnnxRuntime.Gpu.Linux 1.30.0 needs the CUDA 13 runtime and cuDNN 9 on the loader path; the package does not ship them.
-- `kev-0.8b/onnx-fp32-cpu`: Not hosted and no redistribution decision (P-009 open): there is no download. Build the bundle with model-pipeline/reference/kev/run_kev.py build (or receive it) and open it with KevModelAssets.OpenDirectory, which checks every file's size and SHA-256.
 - `kev-0.8b/onnx-fp32-cpu`: model.onnx.data is not byte-reproducible across builds: the fp32 LoRA merge differs in a few floats of the LoRA-merged projections between runs (reduction order). The lock pins the measured bundle; a rebuilt bundle needs its own digests and its own evidence (KevDecisionModel.Create with explicit paths).
 - `kev-0.8b/onnx-fp32-cpu`: The references are proposed, not adopted into protected/, and no gate has run; every capability is at most experimental.
 - `kev-0.8b/onnx-fp32-cpu`: Most of the error against PyTorch comes from ONNX Runtime's CPU LinearAttention kernel (admissions/kev.md, GPU results); the bound is 2e-4 in probability.
 - `kev-0.8b/onnx-fp32-cpu`: Upstream lists Kev-0.8B weaknesses that carry over: below-chance When2Call tool routing, date arithmetic and knowledge questions.
 - `kev-0.8b/onnx-fp32-cpu`: Memory: about 3.5 GB resident, plus the state cache.
-- `kev-0.8b/onnx-fp32-cuda`: Not hosted and no redistribution decision (P-009 open): there is no download. Build the bundle with model-pipeline/reference/kev/run_kev.py build (or receive it) and open it with KevModelAssets.OpenDirectory, which checks every file's size and SHA-256.
 - `kev-0.8b/onnx-fp32-cuda`: model.onnx.data is not byte-reproducible across builds: the fp32 LoRA merge differs in a few floats of the LoRA-merged projections between runs (reduction order). The lock pins the measured bundle; a rebuilt bundle needs its own digests and its own evidence (KevDecisionModel.Create with explicit paths).
 - `kev-0.8b/onnx-fp32-cuda`: The references are proposed, not adopted into protected/, and no gate has run; every capability is at most experimental.
 - `kev-0.8b/onnx-fp32-cuda`: Evidence is local: one RTX 3090 workstation. The per-release GPU regression and the gates have not run for this profile; other NVIDIA GPUs are untested.
@@ -345,7 +343,6 @@ One table per family, one column per profile. Rows are every capability any prof
 - `kev-0.8b/onnx-fp32-cuda`: Device memory: about 3.5 GB.
 - `kev-0.8b/onnx-fp32-cuda`: Native runtime: Microsoft.ML.OnnxRuntime.Gpu.Linux 1.30.0 needs the CUDA 13 runtime and cuDNN 9 on the loader path; the package does not ship them.
 - `kev-4b/onnx-fp32-cpu`: No binding tolerance for Kev-4B: the protected file binds Kev-0.8B, and one transfer-v4 development question (2.05e-4) exceeds its 2e-4 probability bound by 2.5% (no flip, identical accuracy). The binding bound for 4B is the maintainer's decision.
-- `kev-4b/onnx-fp32-cpu`: Not hosted and no redistribution decision (P-009 open): there is no download. Build the bundle (about 17 GB) with model-pipeline/reference/kev/run_kev.py build (or receive it) and open it with KevModelAssets.OpenDirectory, which checks every file's size and SHA-256 (hashing the weights takes about a minute).
 - `kev-4b/onnx-fp32-cpu`: model.onnx.data is not byte-reproducible across builds (the fp32 LoRA merge; see execution.graph). The lock pins the measured bundle; a rebuilt bundle needs its own digests and its own evidence (KevDecisionModel.Create with explicit paths).
 - `kev-4b/onnx-fp32-cpu`: The references are proposed, not adopted into protected/, and no gate has run; every capability is at most experimental. The full decision-v7 development run for 4B (1,468 questions) was stopped for memory before it finished and is not reported.
 - `kev-4b/onnx-fp32-cpu`: Memory: about 18 GB resident, plus the state cache.
@@ -354,7 +351,6 @@ One table per family, one column per profile. Rows are every capability any prof
 - `kev-4b/onnx-fp32-cuda`: ONNX Runtime keeps the graph's GroupQueryAttention nodes on the CPU provider inside the CUDA session, and the state cache passes through host memory between rows.
 - `kev-4b/onnx-fp32-cuda`: Cancellation on CUDA completes the current graph run before throwing (no mid-graph termination).
 - `kev-4b/onnx-fp32-cuda`: Native runtime: Microsoft.ML.OnnxRuntime.Gpu.Linux 1.30.0 needs the CUDA 13 runtime and cuDNN 9 on the loader path; the package does not ship them.
-- `kev-4b/onnx-fp32-cuda`: Not hosted and no redistribution decision (P-009 open): there is no download. Build the bundle (about 17 GB) with model-pipeline/reference/kev/run_kev.py build (or receive it) and open it with KevModelAssets.OpenDirectory, which checks every file's size and SHA-256 (hashing the weights takes about a minute).
 - `kev-4b/onnx-fp32-cuda`: model.onnx.data is not byte-reproducible across builds (the fp32 LoRA merge; see execution.graph). The lock pins the measured bundle; a rebuilt bundle needs its own digests and its own evidence (KevDecisionModel.Create with explicit paths).
 - `kev-4b/onnx-fp32-cuda`: The references are proposed, not adopted into protected/, and no gate has run; every capability is at most experimental. The full decision-v7 development run for 4B (1,468 questions) was stopped for memory before it finished and is not reported.
 - `kev-4b/onnx-fp32-cuda`: Device memory: the weights take about 17 GB, so Kev-4B needs a 24 GB card.

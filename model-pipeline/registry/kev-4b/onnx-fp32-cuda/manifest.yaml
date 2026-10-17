@@ -9,7 +9,7 @@
 # kev-onnx-cpu-v1). No Hub repository ships an fp32 ONNX graph of Kev 1.0 (midudev/kev-4b-ONNX is int4 for the browser,
 # onnx-community/kev-4b-ONNX the previous Qwen3 generation): the bundle is Starling's build from the pinned sources
 # (route A: kev_merge.py fp32 LoRA merge, then the ONNX Runtime GenAI 0.17.1 builder -p fp32 -e cpu --extra_options
-# exclude_lm_head=true exclude_mtp=true), listed in origin.files with its digests. The graphs are not hosted,
+# exclude_lm_head=true exclude_mtp=true), listed in origin.files with its digests. The bundle is hosted publicly (Starlinghq/kev-4b-onnx, r1),
 # references are proposed, no protected tolerances exist for this checkpoint, and no gate has run.
 schema_version: 1
 id: kev-4b/onnx-fp32-cuda
@@ -112,18 +112,17 @@ rights:
   code_license: Apache-2.0
   weights_license: Apache-2.0
   tokenizer_terms: Apache-2.0
-  # No public bundle exists: the graphs are not hosted, and whether Starling redistributes the merged weights or users
-  # build them from the Hub at the pinned revisions is undecided (P-009, open). "blocked" is the schema's value for "no
-  # public bundle"; it records that state, not a license obstacle.
-  redistribution: blocked
+  # The qualified bundle is hosted publicly with the license and attribution (README, NOTICE, LICENSE,
+  # SHA256SUMS) in Starlinghq/kev-4b-onnx (execution.graph.hosting), since 2026-10-17 (P-009: redistribute).
+  redistribution: download
   notes: >-
     Code: Apache-2.0 (LICENSE at the pinned Kev commit; pyproject.toml license = "Apache-2.0"); no source is copied, the
     C# package reimplements the rendering, encoder and head. Kev adapter and head: Apache-2.0 in the model card
     metadata (package README, "License"). Base weights and tokenizer: Apache-2.0 (LICENSE file of Qwen/Qwen3.5-4B-Base
     at the pinned commit, base/LICENSE above, the same bytes as the 0.8B base's). Apache-2.0 permits redistributing the
-    merged fp32 graph with the license and attribution, but the redistribution decision (P-009) is open and nothing is
-    hosted: there is no download, and users build the bundle (or receive it) and open it with
-    KevModelAssets.OpenDirectory. Kev's training and evaluation datasets carry their own terms (some forbid public
+    merged fp32 graph with the license and attribution, and the qualified bundle is
+    hosted publicly in the Hugging Face repository Starlinghq/kev-4b-onnx (KevModelAssets.DownloadAsync, no token
+    needed); a locally built bundle opens with KevModelAssets.OpenDirectory or explicit paths. Kev's training and evaluation datasets carry their own terms (some forbid public
     redistribution); no suite record is in this repository.
 
 behavior:
@@ -176,7 +175,6 @@ behavior:
     - unserialized concurrent calls on one CUDA session (untested)
     - training, fine-tuning and calibration fitting
     - text generation (the graph has no LM head)
-    - downloading the bundle (nothing is hosted)
     - Kev-9B and Kev-27B
 
 processing:
@@ -220,10 +218,12 @@ execution:
         sha256: "e8abebf694f97fde5c7ebc70391c38a15bb9bf2bc07f49449f786faf3863a063"
         size: 16890920960
     hosting:
-      # Not hosted: no repository, no address, no download (KevModelAssets has no download source). "placeholder" is
-      # the registry's value for hosting that does not exist yet (tools/qualification.py treats it as not public).
-      # Hosting under the Starlinghq organization is the maintainer's step, after P-009.
-      source_status: placeholder
+      # Download location of every file in the lock (KevModelAssets): <source_base><path>. Public repository since
+      # 2026-10-17 (tag r1); the digests, not the address, pin the bytes. The CPU and CUDA profiles share it.
+      repository: https://huggingface.co/Starlinghq/kev-4b-onnx
+      revision: "8179da507de7de4bddfdbfa44894ff24b1dcd959"
+      source_base: https://huggingface.co/Starlinghq/kev-4b-onnx/resolve/8179da507de7de4bddfdbfa44894ff24b1dcd959/
+      source_status: public
       produced_by:
         - model-pipeline/reference/kev/run_kev.py build (kev_merge.py, then the ONNX Runtime GenAI 0.17.1 builder)
     inputs:
@@ -273,7 +273,9 @@ capabilities:
   concurrent_calls_unserialized: untested
   asset_verification_offline: experimental
   state_over_8192_tokens: unsupported  # refused, never truncated
-  asset_acquisition_download: unsupported
+  # KevModelAssets.DownloadAsync from the public hosting repository; anonymous download and offline reuse tested
+  # (HostingDownloadTests, STARLING_NETWORK_TESTS=1). No G6 drill yet.
+  asset_acquisition_download: experimental
   state_prefix_reuse_across_requests: unsupported
   probability_rounding: unsupported
   usage_output_tokens: unsupported
@@ -348,10 +350,6 @@ maintenance:
     - >-
       Native runtime: Microsoft.ML.OnnxRuntime.Gpu.Linux 1.30.0 needs the CUDA 13 runtime and cuDNN 9 on the loader
       path; the package does not ship them.
-    - >-
-      Not hosted and no redistribution decision (P-009 open): there is no download. Build the bundle (about 17 GB) with
-      model-pipeline/reference/kev/run_kev.py build (or receive it) and open it with KevModelAssets.OpenDirectory,
-      which checks every file's size and SHA-256 (hashing the weights takes about a minute).
     - >-
       model.onnx.data is not byte-reproducible across builds (the fp32 LoRA merge; see execution.graph). The lock pins
       the measured bundle; a rebuilt bundle needs its own digests and its own evidence (KevDecisionModel.Create with

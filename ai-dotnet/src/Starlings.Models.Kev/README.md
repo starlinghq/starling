@@ -2,14 +2,14 @@
 
 Kev 1.0 decision models in-process on ONNX Runtime: one document (the *state*) and typed questions about it in, a calibrated probability per option out, in one prefill pass without generating text. Two checkpoints, both **Experimental**:
 
-| Profile | Checkpoint | Base | Bundle |
+| Profile | Checkpoint | Base | Bundle (hosted) |
 | --- | --- | --- | --- |
-| `kev-0.8b/onnx-fp32-cpu` | [`jaredpalmer/kev-0.8b`](https://huggingface.co/jaredpalmer/kev-0.8b) at `9a45d25eb2ab761841196625383fa1dff0e56c1e` | `Qwen/Qwen3.5-0.8B-Base` at `dc7cdfe2…` | 3.1 GB |
-| `kev-4b/onnx-fp32-cpu` | [`jaredpalmer/kev-4b`](https://huggingface.co/jaredpalmer/kev-4b) at `139fdd94f1b6a6ad80cc15e08fcb99cac885a101` (weights identical to `main` at `6cfce5c2`) | `Qwen/Qwen3.5-4B-Base` at `1001bb4d…` | 16.9 GB |
+| `kev-0.8b/onnx-fp32-cpu` | [`jaredpalmer/kev-0.8b`](https://huggingface.co/jaredpalmer/kev-0.8b) at `9a45d25eb2ab761841196625383fa1dff0e56c1e` | `Qwen/Qwen3.5-0.8B-Base` at `dc7cdfe2…` | 3.1 GB, [`Starlinghq/kev-0.8b-onnx`](https://huggingface.co/Starlinghq/kev-0.8b-onnx) at `8a9fe017…` |
+| `kev-4b/onnx-fp32-cpu` | [`jaredpalmer/kev-4b`](https://huggingface.co/jaredpalmer/kev-4b) at `139fdd94f1b6a6ad80cc15e08fcb99cac885a101` (weights identical to `main` at `6cfce5c2`) | `Qwen/Qwen3.5-4B-Base` at `1001bb4d…` | 16.9 GB, [`Starlinghq/kev-4b-onnx`](https://huggingface.co/Starlinghq/kev-4b-onnx) at `8179da50…` |
 
 - The request is rendered and escaped as Kev's `kev/api.py` and `kev/model.py` do at `6b719c3c` (tag `kev-1.0`): System One `noul`, `choice` and `score` questions, JSON states rendered with Python's `str()` of numbers and booleans, `<|…|>` in user text rewritten so it can never become a delimiter. Token ids come from the owned tokenizer `Starlings.Tokenizers` (profile `qwen2-bpe-kev`; both checkpoints ship the same `tokenizer.json`): no Microsoft.ML.Tokenizers, no Python.
 - The Qwen3.5 backbone (Gated DeltaNet and full attention) runs as one fp32 ONNX graph. The state runs once; every question then runs as its own causal row continuing from the state's cache, so questions cannot influence one another. Kev's pointer head scores each option's `</opt>` against the question's `<decide>`, divided by the calibrated temperature.
-- The package ships the asset locks (sizes and SHA-256), not the model files.
+- The package ships the asset locks (sizes and SHA-256), not the model files. The qualified bundles are hosted publicly on the `Starlinghq` Hugging Face organization (no token needed); `KevModelAssets.DownloadAsync` fetches and verifies them.
 - On the CUDA provider the same bundles run as the profiles `kev-0.8b/onnx-fp32-cuda` and `kev-4b/onnx-fp32-cuda` (Experimental, `use_tf32=0`; see [CUDA](#cuda)).
 
 ## Maturity
@@ -41,7 +41,11 @@ dotnet add package Microsoft.ML.OnnxRuntime.Gpu.Linux --version 1.30.0
 ```csharp
 using Starlings.Models.Kev;
 
-KevModelFiles files = KevModelAssets.OpenDirectory(KevModel.Kev4B, "/models/kev-4b");   // verifies every file, never downloads
+// Setup, once: download the bundle into the acquisition cache and verify every file (3.1 GB for 0.8B, 16.9 GB for 4B).
+await KevModelAssets.DownloadAsync(KevModel.Kev4B);
+
+// Startup, offline: verify the cached files and load. OpenDirectory(model, dir) opens a bundle in any directory.
+KevModelFiles files = KevModelAssets.OpenLocal(KevModel.Kev4B);
 using var kev = KevDecisionModel.Create(files);
 
 var decision = kev.Decide(new KevRequest(
@@ -99,11 +103,11 @@ python -m onnxruntime_genai.models.builder -i merged -o onnx -p fp32 -e cpu \
 # bundle: onnx/model.onnx, onnx/model.onnx.data, merged/head.safetensors, merged/head.json, the Kev repo's tokenizer.json
 ```
 
-`kev_merge.py` merges the LoRA in fp32 with Kev's own loader and writes the pointer head as `head.safetensors` plus `head.json`, so nothing at runtime unpickles `head.pt`. `model.onnx.data` is not byte-reproducible across builds: two Kev-4B builds differ in 33 of 452 tensors, 1 to 4 floats each (at most 1.9e-9 absolute), all of them LoRA-merged projections (`attn.k/v/o_proj`, `linear_attn.out_proj`); `model.onnx`, embeddings, norms and every unadapted weight are identical. The export is deterministic; the fp32 LoRA merge is not (reduction order, consistent with the different thread counts of the two builds). The lock pins the bundle that was qualified; a rebuilt bundle needs `KevDecisionModel.Create(profile, paths…)` with its own digests and its own evidence. The graphs are not hosted yet: hosting under the `Starlinghq` Hugging Face organization is the maintainer's step, after which `KevModelAssets` gains download sources.
+`kev_merge.py` merges the LoRA in fp32 with Kev's own loader and writes the pointer head as `head.safetensors` plus `head.json`, so nothing at runtime unpickles `head.pt`. `model.onnx.data` is not byte-reproducible across builds: two Kev-4B builds differ in 33 of 452 tensors, 1 to 4 floats each (at most 1.9e-9 absolute), all of them LoRA-merged projections (`attn.k/v/o_proj`, `linear_attn.out_proj`); `model.onnx`, embeddings, norms and every unadapted weight are identical. The export is deterministic; the fp32 LoRA merge is not (reduction order, consistent with the different thread counts of the two builds). The lock pins the bundle that was qualified, and that bundle is the one hosted: [`Starlinghq/kev-0.8b-onnx`](https://huggingface.co/Starlinghq/kev-0.8b-onnx) at `8a9fe0175d294a89c6fa963a2245eb32e3fa1505` and [`Starlinghq/kev-4b-onnx`](https://huggingface.co/Starlinghq/kev-4b-onnx) at `8179da507de7de4bddfdbfa44894ff24b1dcd959` (tag `r1`; the five files plus README, NOTICE, LICENSE and SHA256SUMS). A rebuilt bundle needs `KevDecisionModel.Create(profile, paths…)` with its own digests and its own evidence.
 
 ## Status
 
-Every capability has an explicit status in `KevCapabilities.All`; `KevCapabilities.Profiles` repeats each profile's statuses keyed as its registry manifest (`model-pipeline/registry/kev-*`), and a test keeps the two equal. Experimental: noul, choice and score decisions, calibrated and raw temperature, delimiter escaping, question isolation, the state cache within a request, JSON state rendering, cancellation, offline verification, concurrent calls (on CUDA serialized), CUDA. Untested: unserialized concurrent calls on CUDA, Windows, Native AOT. Unsupported: states over 8,192 tokens, truncation, downloads, state reuse across requests, batched rows, upstream's 4-decimal rounding and `usage.output_tokens`, `KEV_DATE_FACTS`, option isolation, the HTTP server, TF32, bf16, fp16 and quantized graphs, training and calibration fitting, Kev-9B and Kev-27B.
+Every capability has an explicit status in `KevCapabilities.All`; `KevCapabilities.Profiles` repeats each profile's statuses keyed as its registry manifest (`model-pipeline/registry/kev-*`), and a test keeps the two equal. Experimental: noul, choice and score decisions, calibrated and raw temperature, delimiter escaping, question isolation, the state cache within a request, JSON state rendering, cancellation, offline verification, downloads from the hosting repositories, concurrent calls (on CUDA serialized), CUDA. Untested: unserialized concurrent calls on CUDA, Windows, Native AOT. Unsupported: states over 8,192 tokens, truncation, state reuse across requests, batched rows, upstream's 4-decimal rounding and `usage.output_tokens`, `KEV_DATE_FACTS`, option isolation, the HTTP server, TF32, bf16, fp16 and quantized graphs, training and calibration fitting, Kev-9B and Kev-27B.
 
 ## Evidence
 

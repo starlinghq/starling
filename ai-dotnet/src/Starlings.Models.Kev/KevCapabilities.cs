@@ -67,8 +67,12 @@ public static class KevCapabilities
         ["state_over_8192_tokens"] = KevCapabilityStatus.Unsupported,
         ["truncation"] = KevCapabilityStatus.Unsupported,
 
+        // KevModelAssets.DownloadAsync from the public hosting repositories (Starlinghq/kev-0.8b-onnx, kev-4b-onnx at
+        // their r1 commits), verified against the lock; anonymous download and offline reuse tested with
+        // STARLING_NETWORK_TESTS=1 (HostingDownloadTests). Experimental until the G6 distribution drill.
+        ["asset_acquisition.download"] = KevCapabilityStatus.Experimental,
+
         // Not offered.
-        ["asset_acquisition.download"] = KevCapabilityStatus.Unsupported,
         ["state_prefix_reuse_across_requests"] = KevCapabilityStatus.Unsupported,
         ["batched_rows"] = KevCapabilityStatus.Unsupported,
         ["probability_rounding"] = KevCapabilityStatus.Unsupported,
@@ -136,7 +140,7 @@ public static class KevCapabilities
         ["concurrent_calls"] = KevCapabilityStatus.Experimental,
         ["asset_verification_offline"] = KevCapabilityStatus.Experimental,
         ["state_over_8192_tokens"] = KevCapabilityStatus.Unsupported,
-        ["asset_acquisition_download"] = KevCapabilityStatus.Unsupported,
+        ["asset_acquisition_download"] = KevCapabilityStatus.Experimental,
         ["state_prefix_reuse_across_requests"] = KevCapabilityStatus.Unsupported,
         ["probability_rounding"] = KevCapabilityStatus.Unsupported,
         ["usage_output_tokens"] = KevCapabilityStatus.Unsupported,

@@ -1879,7 +1879,6 @@
       "review_date": "2027-01-05",
       "last_checked": "2026-10-05",
       "known_issues": [
-        "Not hosted and no redistribution decision (P-009 open): there is no download. Build the bundle with model-pipeline/reference/kev/run_kev.py build (or receive it) and open it with KevModelAssets.OpenDirectory, which checks every file's size and SHA-256.",
         "model.onnx.data is not byte-reproducible across builds: the fp32 LoRA merge differs in a few floats of the LoRA-merged projections between runs (reduction order). The lock pins the measured bundle; a rebuilt bundle needs its own digests and its own evidence (KevDecisionModel.Create with explicit paths).",
         "The references are proposed, not adopted into protected/, and no gate has run; every capability is at most experimental.",
         "Most of the error against PyTorch comes from ONNX Runtime's CPU LinearAttention kernel (admissions/kev.md, GPU results); the bound is 2e-4 in probability.",
@@ -1929,7 +1928,7 @@
         "aot": "untested",
         "extensions_ai": "unsupported",
         "mlnet": "unsupported",
-        "asset_acquisition_download": "unsupported",
+        "asset_acquisition_download": "experimental",
         "asset_verification_offline": "experimental",
         "audio": "unrecorded",
         "bf16": "unsupported",
@@ -2080,7 +2079,6 @@
       "review_date": "2027-01-05",
       "last_checked": "2026-10-05",
       "known_issues": [
-        "Not hosted and no redistribution decision (P-009 open): there is no download. Build the bundle with model-pipeline/reference/kev/run_kev.py build (or receive it) and open it with KevModelAssets.OpenDirectory, which checks every file's size and SHA-256.",
         "model.onnx.data is not byte-reproducible across builds: the fp32 LoRA merge differs in a few floats of the LoRA-merged projections between runs (reduction order). The lock pins the measured bundle; a rebuilt bundle needs its own digests and its own evidence (KevDecisionModel.Create with explicit paths).",
         "The references are proposed, not adopted into protected/, and no gate has run; every capability is at most experimental.",
         "Evidence is local: one RTX 3090 workstation. The per-release GPU regression and the gates have not run for this profile; other NVIDIA GPUs are untested.",
@@ -2133,7 +2131,7 @@
         "aot": "untested",
         "extensions_ai": "unsupported",
         "mlnet": "unsupported",
-        "asset_acquisition_download": "unsupported",
+        "asset_acquisition_download": "experimental",
         "asset_verification_offline": "experimental",
         "audio": "unrecorded",
         "bf16": "unsupported",
@@ -2285,7 +2283,6 @@
       "last_checked": null,
       "known_issues": [
         "No binding tolerance for Kev-4B: the protected file binds Kev-0.8B, and one transfer-v4 development question (2.05e-4) exceeds its 2e-4 probability bound by 2.5% (no flip, identical accuracy). The binding bound for 4B is the maintainer's decision.",
-        "Not hosted and no redistribution decision (P-009 open): there is no download. Build the bundle (about 17 GB) with model-pipeline/reference/kev/run_kev.py build (or receive it) and open it with KevModelAssets.OpenDirectory, which checks every file's size and SHA-256 (hashing the weights takes about a minute).",
         "model.onnx.data is not byte-reproducible across builds (the fp32 LoRA merge; see execution.graph). The lock pins the measured bundle; a rebuilt bundle needs its own digests and its own evidence (KevDecisionModel.Create with explicit paths).",
         "The references are proposed, not adopted into protected/, and no gate has run; every capability is at most experimental. The full decision-v7 development run for 4B (1,468 questions) was stopped for memory before it finished and is not reported.",
         "Memory: about 18 GB resident, plus the state cache."
@@ -2333,7 +2330,7 @@
         "aot": "untested",
         "extensions_ai": "unsupported",
         "mlnet": "unsupported",
-        "asset_acquisition_download": "unsupported",
+        "asset_acquisition_download": "experimental",
         "asset_verification_offline": "experimental",
         "audio": "unrecorded",
         "bf16": "unsupported",
@@ -2489,7 +2486,6 @@
         "ONNX Runtime keeps the graph's GroupQueryAttention nodes on the CPU provider inside the CUDA session, and the state cache passes through host memory between rows.",
         "Cancellation on CUDA completes the current graph run before throwing (no mid-graph termination).",
         "Native runtime: Microsoft.ML.OnnxRuntime.Gpu.Linux 1.30.0 needs the CUDA 13 runtime and cuDNN 9 on the loader path; the package does not ship them.",
-        "Not hosted and no redistribution decision (P-009 open): there is no download. Build the bundle (about 17 GB) with model-pipeline/reference/kev/run_kev.py build (or receive it) and open it with KevModelAssets.OpenDirectory, which checks every file's size and SHA-256 (hashing the weights takes about a minute).",
         "model.onnx.data is not byte-reproducible across builds (the fp32 LoRA merge; see execution.graph). The lock pins the measured bundle; a rebuilt bundle needs its own digests and its own evidence (KevDecisionModel.Create with explicit paths).",
         "The references are proposed, not adopted into protected/, and no gate has run; every capability is at most experimental. The full decision-v7 development run for 4B (1,468 questions) was stopped for memory before it finished and is not reported.",
         "Device memory: the weights take about 17 GB, so Kev-4B needs a 24 GB card."
@@ -2537,7 +2533,7 @@
         "aot": "untested",
         "extensions_ai": "unsupported",
         "mlnet": "unsupported",
-        "asset_acquisition_download": "unsupported",
+        "asset_acquisition_download": "experimental",
         "asset_verification_offline": "experimental",
         "audio": "unrecorded",
         "bf16": "unsupported",
