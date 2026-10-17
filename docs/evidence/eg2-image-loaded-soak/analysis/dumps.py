@@ -56,7 +56,7 @@ def main(path, phase=None):
         if "malloc_info" in r:
             a, (n, sz) = arenas(r["malloc_info"])
             main_ = next(x for x in a if x[0] == 0)
-            line += f" {sz / M:5.0f}({n}) | {main_[1] / M:9.0f} {main_[2] / M:5.0f} |"
+            line += f" {sz / M:5.0f}({n}) | {main_[1] / M:5.0f} {main_[2] / M:5.0f} |"
             line += " " + " ".join(f"{s / M:.0f}/{f / M:.0f}" for nr, s, f in a if nr != 0 and s > 4 * M)
         print(line)
 
