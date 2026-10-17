@@ -17,7 +17,7 @@ The program recursively reads `.md` and `.txt` files, splits on blank lines, and
 Actual stdout on Linux x64 CPU, .NET SDK 10.0.100, runtime 10.0.12 and Starlings 0.1.0-preview.6, on 2026-10-17, using the included documents and an existing cache:
 
 ```sh
-dotnet run -c Release --no-build -- ask --docs docs --cache /home/mark/.cache/starling-models "When is the Willow Bookshop open?"
+dotnet run -c Release --no-build -- ask --docs docs --cache ~/.cache/starling-models "When is the Willow Bookshop open?"
 ```
 
 ```text
