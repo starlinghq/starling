@@ -31,4 +31,9 @@
     <InternalsVisibleTo Include="Starlings.Benchmarks.Gliner2Harness.Cuda" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- Length-aware chunk planning shared by the explicit-batch encoders (internal). -->
+    <Compile Include="../Shared/Batching/*.cs" Link="Shared/%(Filename)%(Extension)" />
+  </ItemGroup>
+
 </Project>

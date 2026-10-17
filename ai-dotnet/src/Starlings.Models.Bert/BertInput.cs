@@ -21,6 +21,10 @@ public static class BertCapabilities
     public const string Text = "experimental";
     /// <summary>Explicit padded batches are experimental.</summary>
     public const string Batch = "experimental";
+    /// <summary>The optional token budget per batch call (<c>maxBatchTokens</c>) is experimental.</summary>
+    public const string BatchTokenBudget = "experimental";
+    /// <summary>Length-sorted chunking with results in input order (<c>sortByLength</c>) is experimental.</summary>
+    public const string BatchSortByLength = "experimental";
     /// <summary>Cancellation is experimental, at native graph-node and batch-chunk boundaries.</summary>
     public const string Cancellation = "experimental";
     /// <summary>No incremental output contract.</summary>

@@ -48,6 +48,18 @@ float[][] passages = embedder.EmbedBatch([E5TextEmbedder.PassagePrefix + "As a g
 
 e5 expects `"query: "` or `"passage: "` at the start of every text; nothing is added for you. Vectors are normalized, so cosine similarity is the dot product.
 
+## Batching options
+
+`EmbedBatch` splits a batch into ONNX Runtime calls, each right-padded to its longest row. `E5EncoderOptions` controls the split:
+
+| Option | Default | Effect |
+| --- | --- | --- |
+| `MaxBatchSize` | 32 | Rows per call at most. Chunks are consecutive rows in input order. |
+| `MaxBatchTokens` | `null` (no budget) | Padded cells (rows x longest row) per call at most. A chunk closes before it would exceed the budget; a row longer than the budget runs alone. Bounds memory and attention work for long inputs. Experimental (`batch.token_budget`). |
+| `SortByLength` | `false` | Chunks rows in ascending token length (ties in input order) so each call pads less, and writes each result back to its input position. Experimental (`batch.sort_by_length`). |
+
+The defaults are the qualified behavior and give the same outputs as before these options existed, bit for bit. With `SortByLength`, which rows share a call depends on the whole batch, so a row's embedding can differ from the default by up to the profile's padded-batch-vs-single bound (`padded_batch_vs_single_embedding_max_abs`; on ONNX Runtime CPU the tests saw no difference). If a call is cancelled, the `Span<float>` overload may already hold the rows of the chunks that completed: a prefix of the rows by default, the shortest rows with `SortByLength`.
+
 ## Status
 
 Profile `multilingual-e5-small/onnx-fp32-cpu` (Linux x64 CPU) is Stable since 2026-10-15: it passed every qualification gate, G0 to G7, and the weekly qualification workflow reruns G1 to G3 on the release sets and a one-hour soak, green. The hosted soak that failed on 2026-10-15 (about 50 MB/h) did so because of glibc retention after unloading and transparent huge pages set to `always` on the runner image, not a leak ([evidence](https://github.com/starlinghq/starling/blob/main/docs/evidence/scheduled-regression-fix/README.md)). On 2026-10-16 one hosted soak in six failed again (58 MiB of unloaded growth against 32): requests from rotating thread-pool threads left freed memory resident in more and more glibc heaps. With dedicated run threads on CPU (below), those heaps stay at 14 to 62 MiB after unloading ([evidence](https://github.com/starlinghq/starling/blob/main/docs/evidence/e5-soak-reliability/README.md)). Profile `multilingual-e5-small/onnx-fp32-cuda` (Linux x64, NVIDIA GeForce RTX 3090) is Stable since 2026-10-16 ([Stable contract: CUDA](#stable-contract-cuda)): every gate passed, and the per-release GPU regression run was green for it. GPU regression runs for every release and on demand, on an RTX 3090 only (the qualification workflow's `cuda (runpod)` job); CPU regression runs weekly. Gate evidence: the [catalog](https://github.com/starlinghq/starling/blob/main/docs/catalog/README.md). Model license: MIT, stated only in the model card.

@@ -49,6 +49,11 @@ public static class E5Capabilities
         ["embedding.pretokenized.cuda"] = CapabilityStatus.Supported,
         ["embedding.text"] = CapabilityStatus.Supported,
         ["batch"] = CapabilityStatus.Supported,
+        // Opt-in explicit-batch chunking, E5EncoderOptions.MaxBatchTokens and SortByLength: off by default, and the
+        // defaults keep the qualified outputs bit for bit. With sort_by_length, outputs stay within the
+        // padded-batch-vs-single bound in the CPU tests; no qualification run yet.
+        ["batch.token_budget"] = CapabilityStatus.Experimental,
+        ["batch.sort_by_length"] = CapabilityStatus.Experimental,
         ["cancellation"] = CapabilityStatus.Supported,
         ["concurrent_calls"] = CapabilityStatus.Supported,
         ["streaming"] = CapabilityStatus.Unsupported,

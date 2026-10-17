@@ -28,10 +28,28 @@ public sealed record Gliner2ExtractorOptions
     public int MaxSequenceLength { get; init; } = ProfileMaxSequenceLength;
 
     /// <summary>
-    /// Texts per ONNX Runtime call. Larger batches run as consecutive padded chunks of this size. Default 8,
+    /// Texts per ONNX Runtime call at most. Larger batches run as consecutive padded chunks of this size (see also
+    /// <see cref="MaxBatchTokens"/> and <see cref="SortByLength"/>). Default 8,
     /// GLiNER2's default <c>batch_size</c>.
     /// </summary>
     public int MaxBatchSize { get; init; } = 8;
+
+    /// <summary>
+    /// Padded token cells (texts x longest text, schema prefix included) per ONNX Runtime call at most, or
+    /// <see langword="null"/> (default) for no token budget. A chunk closes before it would exceed the budget; a single
+    /// text longer than the budget runs alone. Chunks are never larger than <see cref="MaxBatchSize"/> texts.
+    /// Experimental (capability <c>batch.token_budget</c>).
+    /// </summary>
+    public int? MaxBatchTokens { get; init; }
+
+    /// <summary>
+    /// When <see langword="true"/>, texts are ordered by ascending token count (ties in input order) before they are
+    /// chunked, so each call pads less, and results are returned in input order. Logits then depend on which texts
+    /// share a call and differ from the default within the profile's padded-batch-vs-single bound, not bit for bit.
+    /// Default <see langword="false"/>: chunks are consecutive texts in input order, as qualified. Experimental
+    /// (capability <c>batch.sort_by_length</c>).
+    /// </summary>
+    public bool SortByLength { get; init; }
 
     /// <summary>
     /// Whether graph calls from concurrent requests run one at a time. Null (default) serializes them on CUDA, where
@@ -47,6 +65,10 @@ public sealed record Gliner2ExtractorOptions
         ArgumentOutOfRangeException.ThrowIfLessThan(MaxSequenceLength, 1);
         ArgumentOutOfRangeException.ThrowIfGreaterThan(MaxSequenceLength, ProfileMaxSequenceLength);
         ArgumentOutOfRangeException.ThrowIfLessThan(MaxBatchSize, 1);
+        if (MaxBatchTokens is { } maxBatchTokens)
+        {
+            ArgumentOutOfRangeException.ThrowIfLessThan(maxBatchTokens, 1, nameof(MaxBatchTokens));
+        }
     }
 
     internal static void ValidateThreshold(float threshold, string name)

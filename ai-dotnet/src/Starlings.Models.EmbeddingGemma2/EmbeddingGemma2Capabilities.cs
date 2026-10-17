@@ -95,6 +95,10 @@ public static class EmbeddingGemma2Capabilities
         ["truncation"] = EmbeddingGemma2CapabilityStatus.Unsupported,
 
         ["batch"] = EmbeddingGemma2CapabilityStatus.Supported,
+        // Opt-in length-sorted chunking, EmbeddingGemma2EncoderOptions.SortByLength (text path): off by default, and the
+        // defaults keep the qualified outputs bit for bit. With it, outputs stay within the padded-batch-vs-single
+        // bound in the CPU tests; no qualification run yet.
+        ["batch.sort_by_length"] = EmbeddingGemma2CapabilityStatus.Experimental,
         ["cancellation"] = EmbeddingGemma2CapabilityStatus.Supported,
         ["concurrent_calls"] = EmbeddingGemma2CapabilityStatus.Supported,
         ["asset_acquisition"] = EmbeddingGemma2CapabilityStatus.Supported,

@@ -218,6 +218,46 @@ internal static class Gliner2ModelParity
         return errors;
     }
 
+    /// <summary>
+    /// The in-contract cases of each label count in random orders (mixed neighbours), run in one call per order by
+    /// <paramref name="extractor"/> (typically with <see cref="Gliner2ExtractorOptions.SortByLength"/> or
+    /// <see cref="Gliner2ExtractorOptions.MaxBatchTokens"/>): every output comes back at its input position, span logits
+    /// within the protected padded-batch-vs-single bound of the same case run alone, entities identical.
+    /// </summary>
+    public static Gliner2Errors ShuffledBatches(Gliner2EntityExtractor extractor, IReadOnlyList<Gliner2Case> cases, int[] seeds, Gliner2Tolerances tolerances, ITestOutputHelper output)
+    {
+        var ct = TestContext.Current.CancellationToken;
+        var errors = new Gliner2Errors();
+        int rows = 0;
+        foreach (var group in cases.Where(c => c.OutOfContract is null).GroupBy(c => c.Labels.Count))
+        {
+            var list = group.ToList();
+            var inputs = list.Select(c => extractor.Prepare(c.Text, c.LabelsRequested, c.Descriptions)).ToList();
+            var singles = inputs.Select(i => extractor.RunModel([i], ct)[0]).ToList();
+            foreach (int seed in seeds)
+            {
+                var order = Enumerable.Range(0, list.Count).ToArray();
+                new Random(seed).Shuffle(order);
+                var batched = extractor.RunModel(order.Select(i => inputs[i]).ToList(), ct);
+                for (int k = 0; k < order.Length; k++)
+                {
+                    int i = order[k];
+                    errors.Add(batched[k].GetValidSpanLogits(), singles[i].GetValidSpanLogits(), list[i].Id);
+                    var a = Gliner2ParityChecks.UpstreamEntities(inputs[i], batched[k], list[i].Threshold).Select(e => e.Key);
+                    var b = Gliner2ParityChecks.UpstreamEntities(inputs[i], singles[i], list[i].Threshold).Select(e => e.Key);
+                    Assert.Equal(b, a);
+                    rows++;
+                }
+            }
+        }
+
+        var o = extractor.Options;
+        output.WriteLine($"{rows} rows in random orders (MaxBatchSize {o.MaxBatchSize}, MaxBatchTokens {o.MaxBatchTokens?.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? "none"}, SortByLength {o.SortByLength}) vs single runs: span logits {errors}; entities identical");
+        Assert.False(errors.NonFinite);
+        Assert.True(errors.MaxRelative <= tolerances.PaddedBatchVsSingleRelative, $"shuffled batches vs single relative {errors.MaxRelative:E2}");
+        return errors;
+    }
+
     /// <summary>Texts above 512 tokens are rejected with the typed exception, before any inference.</summary>
     public static void LongInputsAreRejected(Gliner2EntityExtractor extractor, IReadOnlyList<Gliner2Case> cases, ITestOutputHelper output)
     {
