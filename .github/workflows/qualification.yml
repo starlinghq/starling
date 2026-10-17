@@ -608,17 +608,21 @@ jobs:
     name: cuda (runpod)
     if: github.repository == 'starlinghq/starling' && (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/ai-v') || github.event_name == 'workflow_dispatch' && !inputs.soak_only && !inputs.skip_cuda)
     runs-on: ubuntu-latest
-    timeout-minutes: 230
+    # Up to 30 min stock wait + 20 min SSH wait + POD_RUN_MINUTES + copy-back and termination, with margin.
+    timeout-minutes: 290
     concurrency:
       group: qualification-cuda-runpod
       cancel-in-progress: false
     env:
       POD_NAME: starling-q-ci-${{ github.run_id }}
       SOAK_DURATION: ${{ inputs.cuda_soak_duration || '10m' }}
-      # The pod removes itself this long after its creation, whatever happens to this runner.
-      BACKSTOP_MINUTES: "210"
+      # The pod removes itself this long after its creation, whatever happens to this runner. It must exceed the SSH
+      # wait (20 min) plus POD_RUN_MINUTES, also in the SSH-armed fallback (BACKSTOP_MINUTES - 15): 20 + 195 < 225.
+      BACKSTOP_MINUTES: "240"
       # The pod-side run must finish within this many minutes of its start; the results are copied back either way.
-      POD_RUN_MINUTES: "165"
+      # A green run takes about 107 min (38977347513); run 39012176735 needed about 180 (a CPU reference stage
+      # oversubscribed the pod's CPU quota) and was cut off at the former 165 in its last soak.
+      POD_RUN_MINUTES: "195"
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
       - name: Balance and stale pods

@@ -66,12 +66,67 @@ export HF_HUB_DISABLE_TELEMETRY=1
 export TAR_OPTIONS=--no-same-owner
 unset HF_TOKEN
 
+# The container's CPU quota. The pods show 256 CPUs (lscpu, nproc) but run under a CFS quota of about 31 CPUs
+# (docs/evidence/cuda-soak-growth/), set through cgroup v1 (/sys/fs/cgroup/cpu.max is absent there). PyTorch and
+# OpenMP size their pools from the host (torch_threads 128 in the reports), so a CPU reference stage ran 128 threads
+# against a 31-CPU quota and was throttled every scheduling period: run 39012176735 spent 3058 s in the EmbeddingGemma
+# 2 text python-stage2 (428 s the run before on the same host type) and 279 s in e5's (58 s). The reference stages run
+# with REF_THREADS (the quota, rounded down; cgroup v2, else v1, else a fixed cap) instead.
+cpu_quota() {  # prints "<cpus> <source>"; <cpus> is empty when no quota is set or readable
+    local q p d
+    if read -r q p 2>/dev/null </sys/fs/cgroup/cpu.max && [[ $q =~ ^[0-9]+$ && $p =~ ^[0-9]+$ && $p -gt 0 ]]; then
+        echo "$((q / p > 0 ? q / p : 1)) cgroup-v2-cpu.max($q/$p)"
+        return
+    fi
+    for d in /sys/fs/cgroup/cpu,cpuacct /sys/fs/cgroup/cpu /sys/fs/cgroup/cpuacct,cpu; do
+        q="$(cat "$d/cpu.cfs_quota_us" 2>/dev/null)" p="$(cat "$d/cpu.cfs_period_us" 2>/dev/null)"
+        if [[ $q =~ ^[0-9]+$ && $p =~ ^[0-9]+$ && $p -gt 0 ]]; then
+            echo "$((q / p > 0 ? q / p : 1)) cgroup-v1-$d/cpu.cfs_quota_us($q/$p)"
+            return
+        fi
+    done
+    echo " none"
+}
+read -r QUOTA_CPUS QUOTA_SOURCE <<<"$(cpu_quota)"
+AFFINITY_CPUS="$(nproc)"
+REF_THREADS_CAP=16 # when no quota is readable: a fixed cap, never the host's 128 cores
+if [[ -n $QUOTA_CPUS ]]; then
+    REF_THREADS=$((QUOTA_CPUS < AFFINITY_CPUS ? QUOTA_CPUS : AFFINITY_CPUS))
+    REF_THREADS_SOURCE="quota from $QUOTA_SOURCE, affinity $AFFINITY_CPUS"
+else
+    REF_THREADS=$((REF_THREADS_CAP < AFFINITY_CPUS ? REF_THREADS_CAP : AFFINITY_CPUS))
+    REF_THREADS_SOURCE="no CPU quota readable: fixed cap $REF_THREADS_CAP, affinity $AFFINITY_CPUS"
+fi
+# For the Python reference stages: PyTorch's intra-op pool follows OMP_NUM_THREADS; MKL and OpenBLAS have their own.
+REF_ENV=(OMP_NUM_THREADS="$REF_THREADS" MKL_NUM_THREADS="$REF_THREADS" OPENBLAS_NUM_THREADS="$REF_THREADS")
+cpu_throttled() {  # cumulative CFS throttling of this container: "<periods throttled> <seconds throttled>", or "n/a"
+    local f
+    if [[ -r /sys/fs/cgroup/cpu.stat ]] && grep -q '^throttled_usec' /sys/fs/cgroup/cpu.stat; then
+        awk '/^nr_throttled/ { n = $2 } /^throttled_usec/ { t = $2 / 1e6 } END { printf "%d %.0f", n, t }' /sys/fs/cgroup/cpu.stat
+        return
+    fi
+    for f in /sys/fs/cgroup/cpu,cpuacct/cpu.stat /sys/fs/cgroup/cpu/cpu.stat /sys/fs/cgroup/cpuacct,cpu/cpu.stat; do
+        if [[ -r $f ]]; then
+            awk '/^nr_throttled/ { n = $2 } /^throttled_time/ { t = $2 / 1e9 } END { printf "%d %.0f", n, t }' "$f"
+            return
+        fi
+    done
+    echo "n/a"
+}
+
 # ---------------------------------------------------------------------------------------------------------------------
 log "pod run start: commit $SHA, soak $SOAK_DURATION"
+log "CPU: quota ${QUOTA_CPUS:-none} ($QUOTA_SOURCE), affinity $AFFINITY_CPUS, online $(cat /sys/devices/system/cpu/online 2>/dev/null); Python reference stages: $REF_THREADS threads ($REF_THREADS_SOURCE)"
 {
     echo "== GPU"; nvidia-smi; nvidia-smi --query-gpu=index,name,driver_version,memory.total,pci.bus_id --format=csv
     echo "== CPU"; lscpu | grep -E '^(Model name|CPU\(s\)|Thread|Core|Socket)'
     echo "cgroup cpu.max: $(cat /sys/fs/cgroup/cpu.max 2>/dev/null)  memory.max: $(cat /sys/fs/cgroup/memory.max 2>/dev/null)"
+    for d in /sys/fs/cgroup/cpu,cpuacct /sys/fs/cgroup/cpu /sys/fs/cgroup/cpuacct,cpu; do
+        [[ -r $d/cpu.cfs_quota_us ]] && echo "cgroup v1 $d: cfs_quota_us $(cat "$d/cpu.cfs_quota_us") cfs_period_us $(cat "$d/cpu.cfs_period_us" 2>/dev/null)"
+    done
+    echo "cgroup: $(stat -fc %T /sys/fs/cgroup 2>/dev/null); /proc/self/cgroup: $(paste -sd' ' /proc/self/cgroup 2>/dev/null)"
+    echo "nproc: $AFFINITY_CPUS; CPU quota: ${QUOTA_CPUS:-none} ($QUOTA_SOURCE); Python reference threads: $REF_THREADS ($REF_THREADS_SOURCE)"
+    echo "loadavg: $(cat /proc/loadavg); CFS throttled (periods, s): $(cpu_throttled)"
     free -g; uname -a
     echo "== disk"; df -h / "$W"
     echo "== volume"; ls -la "$W"; ls "$W/venvs" "$W/models" "$W/fixtures" "$W/ci-cache" 2>&1
@@ -306,11 +361,20 @@ PY
 }
 # step <profile> <log name> <command...>: a producer; on failure the evaluation that needs it fails on missing results.
 step() {
-    local profile=$1 name=$2 rc=0 s=$SECONDS
+    local profile=$1 name=$2 rc=0 s=$SECONDS t0 t1 threads=""
     shift 2
     local logf="$OUT/gates/${profile//\//--}/$name.log"
+    [[ " $* " =~ \ OMP_NUM_THREADS=([0-9]+)\  ]] && threads=", OMP_NUM_THREADS ${BASH_REMATCH[1]}"
+    t0="$(cpu_throttled)"
     "$@" >"$logf" 2>&1 || rc=$?
-    log "$profile $name: exit $rc, $((SECONDS - s)) s"
+    t1="$(cpu_throttled)"
+    # Diagnosis of slow stages: the container's quota, CFS throttling during the stage, and the load the host shows.
+    if [[ $t0 != n/a && $t1 != n/a ]]; then
+        t1="throttled $(($(cut -d' ' -f1 <<<"$t1") - $(cut -d' ' -f1 <<<"$t0"))) periods, $(($(cut -d' ' -f2 <<<"$t1") - $(cut -d' ' -f2 <<<"$t0"))) s"
+    else
+        t1="throttling n/a"
+    fi
+    log "$profile $name: exit $rc, $((SECONDS - s)) s (CPU quota ${QUOTA_CPUS:-none}$threads; $t1; loadavg $(cut -d' ' -f1-3 /proc/loadavg))"
     [[ $rc == 0 ]] || record "$profile" "$name" "failed (exit $rc)"
 }
 need() {  # need <profile> <check> <ready dir>: record not-run when a prepared input is missing
@@ -331,7 +395,7 @@ gates_e5() {
     step $pr g1-holdout-producer "${TOOL[@]}" tokenizer --model e5 --tokenizer "$E5_SNAP/tokenizer.json" --fixtures "$REL/tokenizer.jsonl" --out "$w/g1-holdout"
     evaluate $pr g1-tokenizer-holdout G1 --tokenizer-fixtures "$REL/tokenizer.jsonl" --results "$w/g1-holdout"
     step $pr dotnet-stages "${TOOL[@]}" e5 --out "$w/stages" --fixtures "$REL" --snapshot "$E5_SNAP" --hidden --threads 4 --device cuda:0
-    step $pr python-stage2 "$V/encoder-cuda/bin/python" model-pipeline/reference/encoder/stage_e5_export.py --model-dir "$E5_SNAP" \
+    step $pr python-stage2 env "${REF_ENV[@]}" "$V/encoder-cuda/bin/python" model-pipeline/reference/encoder/stage_e5_export.py --model-dir "$E5_SNAP" \
         --fixtures "$REL" --profile $pr --out "$w/stages" --intra-op-threads 4 --provider cuda
     evaluate $pr g1-g2-staged G1,G2 --fixtures "$REL" --results "$w/stages" --require-gates G1,G2
     step $pr g3-producer "${TOOL[@]}" retrieval --model e5 --dataset "$DS" --out "$w/g3/embeddings.jsonl" --snapshot "$E5_SNAP" --threads 4 --device cuda:0
@@ -359,7 +423,7 @@ gates_eg2_text() {
     step $pr g1-holdout-producer "${TOOL[@]}" tokenizer --model embeddinggemma2 --tokenizer "$EG2_SNAP/tokenizer.json" --fixtures "$REL/tokenizer.jsonl" --out "$w/g1-holdout"
     evaluate $pr g1-tokenizer-holdout G1 --tokenizer-fixtures "$REL/tokenizer.jsonl" --results "$w/g1-holdout"
     step $pr dotnet-stages "${TOOL[@]}" embeddinggemma2 --out "$w/stages" --fixtures "$REL" --snapshot "$EG2_SNAP" --threads 6 --device cuda:0
-    step $pr python-stage2 env PYTHONPATH=model-pipeline/reference/embeddinggemma2 "$V/eg2-cuda/bin/python" \
+    step $pr python-stage2 env "${REF_ENV[@]}" PYTHONPATH=model-pipeline/reference/embeddinggemma2 "$V/eg2-cuda/bin/python" \
         model-pipeline/reference/embeddinggemma2/stage_embeddinggemma2_export.py --model-dir "$EG2_SNAP" \
         --graph "$EG2_SNAP/onnx/embeddinggemma2-text-fp32.onnx" --fixtures "$REL" --profile $pr --out "$w/stages" \
         --intra-op-threads 6 --provider cuda
