@@ -27,10 +27,10 @@ Maturity is per profile, generated from the registry manifests by `model-pipelin
 
 ## Install
 
-Starlings.Models.Kev is not on nuget.org yet: it ships with the next preview release of the Starlings packages. Until then, reference `ai-dotnet/src/Starlings.Models.Kev` from a checkout.
+Starlings.Models.Kev is not on nuget.org yet: it was not part of 0.2.0 and ships with the next release of the Starlings packages. Until then, reference `ai-dotnet/src/Starlings.Models.Kev` from a checkout.
 
 ```sh
-dotnet add package Starlings.Models.Kev --prerelease   # from the next preview release
+dotnet add package Starlings.Models.Kev   # from the next release
 dotnet add package Microsoft.ML.OnnxRuntime --version 1.30.0     # CPU natives (contrib ops LinearAttention, CausalConvWithState, ...)
 # or, for CUDA (Linux x64; the CUDA 13 runtime and cuDNN 9 are not in the package):
 dotnet add package Microsoft.ML.OnnxRuntime.Gpu.Linux --version 1.30.0
