@@ -22,8 +22,24 @@ public enum KevCapabilityStatus
 /// Rows follow the feature contract of <c>model-pipeline/admissions/kev.md</c>; both sizes have the same statuses. Keys
 /// without a provider suffix give the CPU status; keys with <c>.cuda</c> the CUDA status.
 /// </summary>
+/// <remarks>
+/// <see cref="All"/> is package-wide. <see cref="Profiles"/> repeats each profile's statuses keyed exactly as its
+/// registry manifest's <c>capabilities</c>, and a test keeps the two equal key for key.
+/// </remarks>
 public static class KevCapabilities
 {
+    /// <summary>Kev-0.8B on the CPU provider.</summary>
+    public const string Kev08BCpuProfile = "kev-0.8b/onnx-fp32-cpu";
+
+    /// <summary>Kev-0.8B on the CUDA provider (the same bundle, <c>use_tf32=0</c>).</summary>
+    public const string Kev08BCudaProfile = "kev-0.8b/onnx-fp32-cuda";
+
+    /// <summary>Kev-4B on the CPU provider.</summary>
+    public const string Kev4BCpuProfile = "kev-4b/onnx-fp32-cpu";
+
+    /// <summary>Kev-4B on the CUDA provider (the same bundle, <c>use_tf32=0</c>).</summary>
+    public const string Kev4BCudaProfile = "kev-4b/onnx-fp32-cuda";
+
     /// <summary>Status per capability (both profiles, Linux x64 CPU).</summary>
     public static IReadOnlyDictionary<string, KevCapabilityStatus> All { get; } = new Dictionary<string, KevCapabilityStatus>(StringComparer.Ordinal)
     {
@@ -83,4 +99,66 @@ public static class KevCapabilities
         ["kev_9b"] = KevCapabilityStatus.Unsupported,
         ["kev_27b"] = KevCapabilityStatus.Unsupported,
     };
+
+    /// <summary>
+    /// Status per capability of each profile this package version has a contract for, keyed exactly as the profile's
+    /// registry manifest (<c>model-pipeline/registry/&lt;profile&gt;/manifest.yaml</c>, <c>capabilities</c>). Both sizes
+    /// have the same statuses on the same provider.
+    /// </summary>
+    public static IReadOnlyDictionary<string, IReadOnlyDictionary<string, KevCapabilityStatus>> Profiles { get; } =
+        new Dictionary<string, IReadOnlyDictionary<string, KevCapabilityStatus>>(StringComparer.Ordinal)
+        {
+            [Kev08BCpuProfile] = CpuProfile(),
+            [Kev08BCudaProfile] = CudaProfile(),
+            [Kev4BCpuProfile] = CpuProfile(),
+            [Kev4BCudaProfile] = CudaProfile(),
+        };
+
+    private static Dictionary<string, KevCapabilityStatus> CpuProfile() => new(StringComparer.Ordinal)
+    {
+        ["batch"] = KevCapabilityStatus.Unsupported,
+        ["streaming"] = KevCapabilityStatus.Unsupported,
+        ["cancellation"] = KevCapabilityStatus.Experimental,
+        ["persistence"] = KevCapabilityStatus.Unsupported,
+        ["training"] = KevCapabilityStatus.Unsupported,
+        ["aot"] = KevCapabilityStatus.Untested,
+        ["extensions_ai"] = KevCapabilityStatus.Unsupported,
+        ["mlnet"] = KevCapabilityStatus.Unsupported,
+        ["decision_noul"] = KevCapabilityStatus.Experimental,
+        ["decision_choice"] = KevCapabilityStatus.Experimental,
+        ["decision_score"] = KevCapabilityStatus.Experimental,
+        ["calibrated_temperature"] = KevCapabilityStatus.Experimental,
+        ["raw_probabilities"] = KevCapabilityStatus.Experimental,
+        ["delimiter_escaping"] = KevCapabilityStatus.Experimental,
+        ["question_isolation"] = KevCapabilityStatus.Experimental,
+        ["state_cache_within_request"] = KevCapabilityStatus.Experimental,
+        ["state_json_rendering"] = KevCapabilityStatus.Experimental,
+        ["concurrent_calls"] = KevCapabilityStatus.Experimental,
+        ["asset_verification_offline"] = KevCapabilityStatus.Experimental,
+        ["state_over_8192_tokens"] = KevCapabilityStatus.Unsupported,
+        ["asset_acquisition_download"] = KevCapabilityStatus.Unsupported,
+        ["state_prefix_reuse_across_requests"] = KevCapabilityStatus.Unsupported,
+        ["probability_rounding"] = KevCapabilityStatus.Unsupported,
+        ["usage_output_tokens"] = KevCapabilityStatus.Unsupported,
+        ["date_facts"] = KevCapabilityStatus.Unsupported,
+        ["option_isolation"] = KevCapabilityStatus.Unsupported,
+        ["http_server"] = KevCapabilityStatus.Unsupported,
+        ["bf16"] = KevCapabilityStatus.Unsupported,
+        ["fp16"] = KevCapabilityStatus.Unsupported,
+        ["quantized"] = KevCapabilityStatus.Unsupported,
+        ["calibration_fitting"] = KevCapabilityStatus.Unsupported,
+        ["generation"] = KevCapabilityStatus.Unsupported,
+        ["non_english"] = KevCapabilityStatus.Unsupported,
+    };
+
+    private static Dictionary<string, KevCapabilityStatus> CudaProfile()
+    {
+        var table = CpuProfile();
+        // Serialized on CUDA (KevOptions.SerializeNativeCalls, the CUDA default); unserialized runs were not tried.
+        table["concurrent_calls"] = KevCapabilityStatus.Experimental;
+        table["concurrent_calls_unserialized"] = KevCapabilityStatus.Untested;
+        // Runtime.Onnx forces use_tf32=0; TF32 fails every fp32 bound.
+        table["tf32"] = KevCapabilityStatus.Unsupported;
+        return table;
+    }
 }
