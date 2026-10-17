@@ -82,6 +82,8 @@ More complete programs, including entity extraction and image search, are in [`a
 
 ## Models
 
+Choosing a text embedder? See [choosing an embedding model](docs/guides/choosing-an-embedding-model.md).
+
 | Model | What it does | Package | CPU | CUDA |
 | --- | --- | --- | --- | --- |
 | [multilingual-e5-small](https://huggingface.co/intfloat/multilingual-e5-small) | Text embeddings, 100 languages | `Starlings.Models.E5` (+ `.Extensions.AI`, `.MLNet`) | Stable | Stable |
