@@ -56,6 +56,8 @@
 //                             (OnnxSessionOptions.DedicatedRunThreads); default: the model library's choice.
 //   --load-trim, --no-load-trim   Diagnostic: malloc_trim(0) after each session is created, or not
 //                             (OnnxSessionOptions.TrimNativeHeapAfterLoad); default: the model library's choice.
+//   --run-trim, --no-run-trim Diagnostic: malloc_trim(0) after each run, or not (OnnxSessionOptions.TrimNativeHeapAfterRun);
+//                             default: the model library's choice.
 //
 // Reanalysis: `-- reanalyze <raw.json>...` recomputes the verdicts and the markdown report of existing raw results
 // with the current analysis (the run's warmup and growth-limit options), rewriting both files; the samples are unchanged.
@@ -154,6 +156,8 @@ internal sealed record SoakOptions
 
     public bool? LoadTrim { get; init; }
 
+    public bool? RunTrim { get; init; }
+
     public bool NoHeapTrim { get; init; }
 
     public int? SmapsEvery { get; init; }
@@ -190,6 +194,8 @@ internal sealed record SoakOptions
                 "--no-run-threads" => o with { RunThreads = false },
                 "--load-trim" => o with { LoadTrim = true },
                 "--no-load-trim" => o with { LoadTrim = false },
+                "--run-trim" => o with { RunTrim = true },
+                "--no-run-trim" => o with { RunTrim = false },
                 "--no-heap-trim" => o with { NoHeapTrim = true },
                 "--smaps-every" => o with { SmapsEvery = Positive(Next(), "--smaps-every") },
                 _ => throw new ArgumentException($"unknown option '{args[i]}'"),
@@ -614,6 +620,7 @@ internal sealed class SoakRunner(SoakWorkload workload, SoakOptions options)
                 ["cpu_arena"] = options.CpuArena,
                 ["run_threads"] = options.RunThreads,
                 ["load_trim"] = options.LoadTrim,
+                ["run_trim"] = options.RunTrim,
                 ["native_heap_trim_disabled"] = options.NoHeapTrim,
                 ["gpu_sampling"] = MemoryProbe.GpuSamplingAvailable,
             },
