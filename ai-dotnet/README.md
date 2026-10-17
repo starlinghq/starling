@@ -21,6 +21,7 @@ dotnet test --solution ai-dotnet/AI.slnx
 | `Starlings.Models.Qwen35.Extensions.AI` | Microsoft.Extensions.AI `IChatClient` over `Qwen35ChatModel`: text roles, tool calling (`AIFunction` tools, `FunctionCallContent`, `FunctionResultContent`, `UseFunctionInvocation`), streaming text deltas that reassemble the response, finish reasons and usage, seeded sampling, strict option rejection, dedicated-thread execution, DI registration. Depends on `Models.Qwen35`, `Microsoft.Extensions.AI.Abstractions` and `Microsoft.Extensions.DependencyInjection.Abstractions` only. | 0.1.0-preview.6 candidate, P-017 |
 | `Starlings.Models.E5.MLNet` | ML.NET estimator and transformer over `E5TextEmbedder`: text column to `Vector<Single, 384>` (and an optional token-count column), one inference per row, optional look-ahead batching. Pipeline composition only; saving is unsupported. Depends on `Microsoft.ML` only. | 0.1.0-preview.6 candidate, P-012 |
 | `Starlings.Models.Gliner2` | GLiNER2 (`fastino/gliner2-base-v1`) English entity extraction with labels and threshold: Python-compatible text handling, owned tokenizer, one ONNX graph, GLiNER2's span decoding, offsets into the original text. Ships the asset lock (`Gliner2ModelAssets`). | 0.1.0-preview.6 candidate, P-015 |
+| `Starlings.Models.Kev` | Kev 1.0 decision models (`jaredpalmer/kev-0.8b`, `jaredpalmer/kev-4b`): one state and typed questions (noul, choice, score) in, calibrated probabilities out; Kev's rendering and escaping, owned tokenizer, the Qwen3.5 backbone as one fp32 ONNX graph run as Kev's row form, Kev's pointer head. Ships the asset locks (`KevModelAssets`). Experimental. | 0.1.0-preview.6 candidate |
 | `Starlings.Generation.OnnxGenAI` | ONNX Runtime GenAI 0.17.1 behind an adapter (provider selection without fallback, TF32 off, config overlays, reference-counted disposal) and the owned decode loop over pre-tokenized ids: greedy or seeded sampling, stop ids and strings, chunked prefill, UTF-8-safe streaming through the owned tokenizer, cancellation between steps, usage. References only `Microsoft.ML.OnnxRuntimeGenAI.Managed`. | 0.1.0-preview.6 candidate, P-016 |
 | `Starlings.Models.Qwen35` | Pilot LLM `Qwen/Qwen3.5-0.8B` chat: the pinned chat template rendered in C# (text and tool-calling subset), a parser for the template's tool-call format, owned tokenizer, model defaults, asset locks (`Qwen35ModelAssets`), capability descriptor. | 0.1.0-preview.6 candidate, P-016 |
 | `Starlings.Models.EmbeddingGemma2` | EmbeddingGemma 2 (`google/embeddinggemma-2`) embeddings, **experimental**: text from the owned tokenizer (`EmbeddingGemma2Tokenizer`) or token ids, explicit named prompts, mean pooling with prompt tokens, L2 normalization, Matryoshka 768/512/256/128, inputs above 8,192 tokens rejected; images and interleaved text and images from decoded RGB (`EmbeddingGemma2MultimodalEmbedder`, no native dependency); videos and interleaved text, images and videos from decoded RGB frames (`EmbeddingGemma2Video`, upstream sampling at 1 fps up to 32 frames, 140 tokens per frame). Ships the asset locks (`EmbeddingGemma2ModelAssets.Lock` and `ImageLock`: Starling's graphs, release assets `embeddinggemma-2-onnx-r1` and `embeddinggemma-2-vision-onnx-r1`, placeholders until published). | 0.1.0-preview.6 candidate |
@@ -247,6 +248,17 @@ dotnet run --project ai-dotnet/tools/Starlings.Fidelity.Tool -c Release -- gline
 ```
 
 It writes `tokenizer.results.json` (the owned C# processor) and `dotnet.results.json` (stage 3 from the fixture inputs: ids, positions, count logits, valid span logits, entities; stage 4 from text: `text_entities`; padded batches of both). Entity offsets are Unicode scalars of the normalized text. The four cases outside the contract are produced through internal paths of the package (the word cap; no length limit) so the report covers every protected case, and are listed in `environment.cases_outside_contract`.
+
+## Kev decision models
+
+`Starlings.Models.Kev` implements the profiles `kev-0.8b/onnx-fp32-cpu` and `kev-4b/onnx-fp32-cpu` (design: route A of [`model-pipeline/admissions/kev.md`](../model-pipeline/admissions/kev.md); onboarding route `kev-onnx-cpu-v1`, candidates `model-pipeline/candidates/kev-0.8b`, `kev-4b`). Both are Experimental. See the [package README](src/Starlings.Models.Kev/README.md) for the API, the bundle build and the status of every capability.
+
+```csharp
+using var kev = KevDecisionModel.Create(KevModelAssets.OpenDirectory(KevModel.Kev4B, "/models/kev-4b"));
+KevDecision d = kev.Decide(new KevRequest(state, [new("urgent", KevQuestion.Noul("Does this need a reply today?"))]));
+```
+
+Tests: `tests/Starlings.Models.Kev.Tests` (in `AI.slnx`). Rendering, contracts and answer mapping run in CI; the encoding tests need the pinned `tokenizer.json` (`tools/fetch-tokenizer-assets.sh`); the model tests need a bundle in `$STARLING_KEV_08B_BUNDLE` or `$STARLING_KEV_4B_BUNDLE` and compare with Kev's PyTorch fp32 probabilities (`Data/probs-*.json`). Pipeline stage tool: `tools/Starlings.Kev.Fidelity.Tool`.
 
 ## Generation backend and pilot LLM (P-016)
 

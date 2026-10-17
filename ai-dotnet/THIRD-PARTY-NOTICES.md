@@ -51,6 +51,10 @@ POSSIBILITY OF SUCH DAMAGE.
 
 The full PyTorch notice (including the Caffe2 contributors) is the `LICENSE` file at that commit.
 
+## Kev (reimplemented source)
+
+`Starlings.Models.Kev` (`KevText.cs`, `KevRequest.cs`, `KevEncoder.cs`, `KevPointerHead.cs`, `KevResults.cs`) reimplements in C# the request rendering, delimiter escaping, row-form encoding, pointer head and System One answer mapping of Kev (https://github.com/jaredpalmer/kev, `kev/api.py` and `kev/model.py` at commit `6b719c3c3f367295f6ef336f4f751cf5ff970abc`, tag `kev-1.0`), by Jared Palmer, licensed under the Apache License, Version 2.0. No upstream file is copied. The Kev adapter and pointer head weights (`jaredpalmer/kev-0.8b`, `jaredpalmer/kev-4b`) are Apache-2.0 per their model cards; the `Qwen/Qwen3.5-0.8B-Base` and `Qwen/Qwen3.5-4B-Base` weights and tokenizer, Copyright 2026 Alibaba Cloud, are Apache-2.0. Neither is redistributed by the package. The Apache License 2.0 text is at https://www.apache.org/licenses/LICENSE-2.0.
+
 ## Qwen3.5-0.8B chat template and transformers (ported source)
 
 `Starlings.Models.Qwen35` (`Qwen35ChatTemplate.cs`) is a C# port of the `chat_template.jinja` of `Qwen/Qwen3.5-0.8B` at commit `2fc06364715b967f1860aea9cf38778875588b17`, Copyright 2026 Alibaba Cloud, licensed under the Apache License, Version 2.0. The tool-calling instructions are reproduced verbatim. `Qwen35ToolCallParser.cs` ports the tool-call argument casting of transformers (`src/transformers/utils/chat_parsing/response_parser.py`, `_coerce` and `_schema_types`, commit `a906d3c4b65095f2308b6a6a193e934d03b8eb5d`, tag v5.18.0), Copyright 2026 The HuggingFace Team, licensed under the Apache License, Version 2.0. Both files carry a modification notice. The Apache License 2.0 text is at https://www.apache.org/licenses/LICENSE-2.0.

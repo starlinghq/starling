@@ -1,0 +1,6 @@
+recipe_version: 1
+id: kev-0.8b-cpu
+plugin: kev-onnx-cpu-v1
+manifest: model-pipeline/candidates/kev-0.8b/profile.json
+reference_corpus: model-pipeline/reference/corpus/kev-decisions-v1.jsonl
+reference_environment: model-pipeline/reference/kev/requirements.txt

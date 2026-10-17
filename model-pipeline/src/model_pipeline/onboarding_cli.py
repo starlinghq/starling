@@ -109,14 +109,18 @@ def _run(args: argparse.Namespace) -> int:
         root,
         inputs=(
             snapshot,
+            *((Path(args.base_snapshot).absolute(),) if args.base_snapshot else ()),
             Path(args.recipe),
             Path(args.reference_python),
             *(root / recipe[key] for key in ("manifest", "reference_corpus", "reference_environment")),
         ),
     )
+    # A second pinned source (an adapter's base checkpoint) only for routes that declare one.
+    base_snapshot = {"base_snapshot": Path(args.base_snapshot).absolute()} if args.base_snapshot else {}
     stages = build_stages(
         recipe,
         recipe_path=Path(args.recipe),
+        **base_snapshot,
         repo_root=root,
         snapshot=snapshot,
         reference_python=Path(args.reference_python).absolute(),
@@ -253,6 +257,9 @@ def register(subparsers: argparse._SubParsersAction) -> None:
     run.add_argument("recipe")
     run.add_argument("--repo-root")
     run.add_argument("--snapshot", required=True, help="existing immutable local source snapshot")
+    run.add_argument(
+        "--base-snapshot", help="existing immutable base snapshot, for routes whose model is built on a pinned base"
+    )
     run.add_argument(
         "--reference-python", required=True, help="Python interpreter with the recipe's reference dependencies"
     )
