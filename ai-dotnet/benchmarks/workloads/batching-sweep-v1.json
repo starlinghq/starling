@@ -1,0 +1,22 @@
+{
+  "version": 1,
+  "description": "Batching sweep workloads (Phase 0 of the batching investigation; ai-dotnet/benchmarks/README.md, 'Batching sweep'). Built at load from text already in the repository, deterministically (System.Random with 'seed'): no file outside Git, no download. Embedding models (e5, EmbeddingGemma 2 text) draw from the MIRACL retrieval set: 'short' are real search queries (8 languages), 'medium' single Wikipedia passages, 'long' a passage and the passages after it in corpus order, same language, joined with a space while the joined text stays within 'long_tokens' model tokens (prompt or prefix included), starting from passages in seeded order; a joined text below 'long_min_fraction' of the target is dropped. GLiNER2 draws from the WNUT-17 test sentences (social media text, one label set for every item, as one GLiNER2 call requires): 'short' one sentence, 'medium' 2 to 4 consecutive sentences, 'long' consecutive sentences up to 'long_tokens' (schema prefix included). 'mixed' draws each item's category with the 'mixed' probabilities (a retrieval or extraction service sees mostly short and medium inputs with a long tail), then the next unused item of that category in shuffled order. Every item longer than the model's per-sequence limit is dropped. Pools are the first 'pool' items of each category after a seeded shuffle (only those are tokenized); a call of batch b takes b consecutive pool items starting at call_index x b (wrapping), whichever worker runs it. Quality: every item's output in every timed call is compared with the same item run alone at load (profile tolerance padded_batch_vs_single_*).",
+  "seed": 20261017,
+  "pool": 128,
+  "sources": {
+    "retrieval": {
+      "queries": "model-pipeline/protected/release-shared/retrieval/miracl-dev-hn-8lang-v1/queries.jsonl",
+      "corpus": "model-pipeline/protected/release-shared/retrieval/miracl-dev-hn-8lang-v1/corpus.jsonl"
+    },
+    "ner": {
+      "texts": "model-pipeline/protected/gliner2-base-v1/release/ner/wnut17-test-v1/gold.jsonl"
+    }
+  },
+  "models": {
+    "multilingual-e5-small": { "source": "retrieval", "long_tokens": 512, "long_min_fraction": 0.75 },
+    "embeddinggemma-2": { "source": "retrieval", "long_tokens": 512, "long_min_fraction": 0.75 },
+    "gliner2-base-v1": { "source": "ner", "long_tokens": 480, "long_min_fraction": 0.75, "medium_sentences": [2, 4] }
+  },
+  "mixed": { "short": 0.40, "medium": 0.45, "long": 0.15 },
+  "sets": ["short", "long", "mixed"]
+}

@@ -8,7 +8,7 @@ import os
 import sys
 from pathlib import Path
 
-from model_pipeline import benchmarks, g5
+from model_pipeline import bench_sweep, benchmarks, g5
 from model_pipeline.manifest import find_manifests, validate_file
 
 # Options a caller might use to supply thresholds. They exist only to be refused with a clear reason.
@@ -231,6 +231,23 @@ def _bench_summarize(args: argparse.Namespace) -> int:
     return 0
 
 
+def _bench_sweep(args: argparse.Namespace) -> int:
+    results, problems = bench_sweep.load([Path(p) for p in args.paths])
+    if problems:
+        for problem in problems:
+            print(problem, file=sys.stderr)
+        return 1
+    summary = bench_sweep.summarize(results)
+    if args.json:
+        Path(args.json).write_text(json.dumps(summary, indent=1) + "\n", encoding="utf-8")
+    text = bench_sweep.markdown(summary)
+    if args.out:
+        Path(args.out).write_text(text, encoding="utf-8")
+    else:
+        sys.stdout.write(text)
+    return 0
+
+
 def _bench_g5(args: argparse.Namespace) -> int:
     results, problems = benchmarks.load([Path(p) for p in args.paths])
     if problems:
@@ -382,6 +399,13 @@ def main(argv: list[str] | None = None) -> int:
     bench_summarize.add_argument("--seed", type=int, default=1)
     bench_summarize.add_argument("--json", help="also write the summary as JSON to this path")
     bench_summarize.set_defaults(func=_bench_summarize)
+    bench_sweep_parser = bench_sub.add_parser(
+        "sweep", help="batching-sweep files (starlings-bench-sweep/1): validate and write markdown tables"
+    )
+    bench_sweep_parser.add_argument("paths", nargs="+")
+    bench_sweep_parser.add_argument("--out", help="write the markdown summary to this path (default stdout)")
+    bench_sweep_parser.add_argument("--json", help="also write the summary as JSON to this path")
+    bench_sweep_parser.set_defaults(func=_bench_sweep)
     bench_g5 = bench_sub.add_parser(
         "g5", help="check C# and Python same-backend raw results against the G5 budgets (performance-budgets.yaml)"
     )

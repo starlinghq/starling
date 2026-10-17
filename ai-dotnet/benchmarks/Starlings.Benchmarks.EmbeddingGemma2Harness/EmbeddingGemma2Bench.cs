@@ -20,7 +20,7 @@ namespace Starlings.Benchmarks;
 /// <see cref="EmbeddingGemma2MultimodalOptions.MaxVideoFramesPerVisionCall"/> frames, the multimodal text graph);
 /// <c>video-preprocess-only</c> times the per-frame preprocessing alone.
 /// </summary>
-internal sealed class EmbeddingGemma2Driver : IBenchDriver
+internal sealed class EmbeddingGemma2Driver : IBenchDriver, ISweepDriver
 {
     public const string TextReference = "model-pipeline/protected/embeddinggemma-2/onnx-fp32-cpu/embeddings.jsonl";
 
@@ -50,6 +50,12 @@ internal sealed class EmbeddingGemma2Driver : IBenchDriver
         """;
 
     public IBenchRun Load(HarnessContext context) => new EmbeddingGemma2Run(context, Paths(context));
+
+    /// <summary>--max-batch-tokens maps to the existing <see cref="EmbeddingGemma2EncoderOptions.MaxBatchTokens"/>.</summary>
+    public IReadOnlyCollection<string> WiredSweepHooks => ["max-batch-tokens"];
+
+    /// <summary>The text path only (image and video are outside the batching investigation).</summary>
+    public ISweepTarget LoadSweep(HarnessContext context, SweepOptions options) => new EmbeddingGemma2SweepTarget(context, options);
 
     public JsonObject Artifacts(HarnessContext context)
     {
