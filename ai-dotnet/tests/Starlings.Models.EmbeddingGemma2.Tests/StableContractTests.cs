@@ -10,8 +10,9 @@ public class StableContractTests
 {
     // Per Stable profile: manifest capability -> the package-wide keys (EmbeddingGemma2Capabilities.All) that carry the
     // same status on that profile (keys without a provider suffix: the CPU profiles; .cuda: the CUDA profiles). An empty list means the package table has no key with that profile's status: the
-    // text profile records image and video unsupported, while in the package table they are the image and video
-    // profiles' capabilities (and the reverse for text-only rows or features shared by the profiles).
+    // text profile records image and video unsupported, and the image profile video unsupported, while in the package
+    // table they are the image and video profiles' capabilities (and the reverse for text-only rows or features shared
+    // by the profiles).
     private static readonly Dictionary<string, Dictionary<string, string[]>> PackageKeys = new(StringComparer.Ordinal)
     {
         [EmbeddingGemma2Capabilities.StableProfile] = new(StringComparer.Ordinal)
@@ -69,6 +70,43 @@ public class StableContractTests
             ["audio"] = ["audio"],
             ["video"] = [],
         },
+        [EmbeddingGemma2Capabilities.StableVideoProfile] = new(StringComparer.Ordinal)
+        {
+            ["video"] = ["video", "video.cpu"],
+            ["video_decoded_frames_with_timing"] = ["video.decoded_frames_with_timing"],
+            ["video_pre_sampled_frames"] = ["video.pre_sampled_frames"],
+            ["video_frames_without_timing"] = ["video.frames_without_timing"],
+            ["video_frames_without_timing_opt_in"] = ["video.frames_without_timing.upstream_opt_in"],
+            ["video_interleaved_text"] = ["video.interleaved_text"],
+            ["video_interleaved_image"] = ["video.interleaved_image"],
+            ["video_multiple_per_input"] = ["video.multiple_per_input"],
+            ["video_prompts"] = ["video.prompts"],
+            ["video_batch"] = ["video.batch"],
+            ["video_matryoshka"] = ["video.matryoshka"],
+            ["video_timestamps"] = ["video.timestamps", "video.other_fps_max_frames_or_budget"],
+            ["video_variable_frame_rate"] = ["video.variable_frame_rate"],
+            ["video_interlaced"] = ["video.interlaced"],
+            ["video_hdr"] = ["video.hdr"],
+            ["video_audio_track"] = ["video.audio_track"],
+            ["video_decode_ffmpeg8"] = ["video.decode.ffmpeg8"],
+            ["video_decode_ffmpeg9"] = ["video.decode.ffmpeg9_adapter"],
+            ["video_decode_rotation_90"] = ["video.decode.rotation_90"],
+            ["video_decode_rotation_other"] = ["video.decode.rotation_other"],
+            ["video_decode_streams"] = ["video.decode.streams"],
+            ["image"] = ["image", "image.cpu"],
+            ["text_only_inputs"] = ["embedding.text"],
+            ["batch"] = ["batch", "video.batch"],
+            ["streaming"] = ["streaming"],
+            ["cancellation"] = ["cancellation"],
+            ["persistence"] = ["mlnet.persistence"],
+            ["training"] = ["training"],
+            ["aot"] = ["aot"],
+            ["extensions_ai"] = ["extensions_ai.video_embedding_generator"],
+            ["mlnet"] = ["mlnet.video_column"],
+            ["concurrent_calls"] = ["concurrent_calls"],
+            ["input_over_8192_tokens"] = ["video.over_8192_tokens"],
+            ["audio"] = ["audio"],
+        },
         [EmbeddingGemma2Capabilities.StableCudaProfile] = new(StringComparer.Ordinal)
         {
             ["batch"] = ["batch"],
@@ -124,6 +162,43 @@ public class StableContractTests
             ["audio"] = ["audio"],
             ["video"] = [],
         },
+        [EmbeddingGemma2Capabilities.StableCudaVideoProfile] = new(StringComparer.Ordinal)
+        {
+            ["video"] = ["video", "video.cuda"],
+            ["video_decoded_frames_with_timing"] = ["video.decoded_frames_with_timing"],
+            ["video_pre_sampled_frames"] = ["video.pre_sampled_frames"],
+            ["video_frames_without_timing"] = ["video.frames_without_timing"],
+            ["video_frames_without_timing_opt_in"] = ["video.frames_without_timing.upstream_opt_in"],
+            ["video_interleaved_text"] = ["video.interleaved_text"],
+            ["video_interleaved_image"] = ["video.interleaved_image"],
+            ["video_multiple_per_input"] = ["video.multiple_per_input"],
+            ["video_prompts"] = ["video.prompts"],
+            ["video_batch"] = ["video.batch"],
+            ["video_matryoshka"] = ["video.matryoshka"],
+            ["video_timestamps"] = ["video.timestamps", "video.other_fps_max_frames_or_budget"],
+            ["video_variable_frame_rate"] = ["video.variable_frame_rate"],
+            ["video_interlaced"] = ["video.interlaced"],
+            ["video_hdr"] = ["video.hdr"],
+            ["video_audio_track"] = ["video.audio_track"],
+            ["video_decode_ffmpeg8"] = ["video.decode.ffmpeg8"],
+            ["video_decode_ffmpeg9"] = ["video.decode.ffmpeg9_adapter"],
+            ["video_decode_rotation_90"] = ["video.decode.rotation_90"],
+            ["video_decode_rotation_other"] = ["video.decode.rotation_other"],
+            ["video_decode_streams"] = ["video.decode.streams"],
+            ["image"] = ["image", "image.cuda"],
+            ["text_only_inputs"] = ["embedding.text"],
+            ["batch"] = ["batch", "video.batch"],
+            ["streaming"] = ["streaming"],
+            ["cancellation"] = ["cancellation"],
+            ["persistence"] = ["mlnet.persistence"],
+            ["training"] = ["training"],
+            ["aot"] = ["aot.cuda"],
+            ["extensions_ai"] = ["extensions_ai.video_embedding_generator.cuda"],
+            ["mlnet"] = ["mlnet.video_column"],
+            ["concurrent_calls"] = ["concurrent_calls"],
+            ["input_over_8192_tokens"] = ["video.over_8192_tokens"],
+            ["audio"] = ["audio"],
+        },
     };
 
     private static IReadOnlyList<RegistryManifest> Family { get; } = RegistryManifest.Family(EmbeddingGemma2TestAssets.RepositoryRoot, "embeddinggemma-2");
@@ -144,6 +219,8 @@ public class StableContractTests
                 EmbeddingGemma2Capabilities.StableCudaImageProfile,
                 EmbeddingGemma2Capabilities.StableProfile,
                 EmbeddingGemma2Capabilities.StableCudaProfile,
+                EmbeddingGemma2Capabilities.StableVideoProfile,
+                EmbeddingGemma2Capabilities.StableCudaVideoProfile,
             ],
             EmbeddingGemma2Capabilities.Profiles.Keys.Order(StringComparer.Ordinal));
         Assert.Equal(
@@ -193,16 +270,18 @@ public class StableContractTests
         Assert.Equal(EmbeddingGemma2CapabilityStatus.Supported, EmbeddingGemma2Capabilities.All["embedding.pretokenized.cpu"]);
         Assert.Equal(EmbeddingGemma2CapabilityStatus.Supported, EmbeddingGemma2Capabilities.All["embedding.text"]);
         Assert.Equal(EmbeddingGemma2CapabilityStatus.Supported, EmbeddingGemma2Capabilities.All["image.cpu"]);
-        Assert.Equal(EmbeddingGemma2CapabilityStatus.Experimental, EmbeddingGemma2Capabilities.All["video.cpu"]);
-        // Outside the contracts: proposed rows and opt-in deviations (experimental), the video profiles (not Stable).
+        Assert.Equal(EmbeddingGemma2CapabilityStatus.Supported, EmbeddingGemma2Capabilities.All["video.cpu"]);
+        // Outside the contracts: proposed rows and opt-in deviations (experimental).
         Assert.Equal(EmbeddingGemma2CapabilityStatus.Experimental, EmbeddingGemma2Capabilities.All["input.2050_to_8192_tokens"]);
         Assert.Equal(EmbeddingGemma2CapabilityStatus.Experimental, EmbeddingGemma2Capabilities.All["prompts.task"]);
         Assert.Equal(EmbeddingGemma2CapabilityStatus.Experimental, EmbeddingGemma2Capabilities.All["image.budget_other"]);
         Assert.Equal(EmbeddingGemma2CapabilityStatus.Experimental, EmbeddingGemma2Capabilities.All["video.hdr"]);
         Assert.Equal(EmbeddingGemma2CapabilityStatus.Supported, EmbeddingGemma2Capabilities.All["image.cuda"]);
-        Assert.Equal(EmbeddingGemma2CapabilityStatus.Experimental, EmbeddingGemma2Capabilities.All["video.cuda"]);
+        Assert.Equal(EmbeddingGemma2CapabilityStatus.Experimental, EmbeddingGemma2Capabilities.All["video.frames_without_timing.upstream_opt_in"]);
+        Assert.Equal(EmbeddingGemma2CapabilityStatus.Supported, EmbeddingGemma2Capabilities.All["video.cuda"]);
         Assert.Equal(EmbeddingGemma2CapabilityStatus.Supported, EmbeddingGemma2Capabilities.All["embedding.pretokenized.cuda"]);
-        Assert.Equal("experimental", Family.Single(m => m.Id == "embeddinggemma-2/video-fp32-cuda").Maturity);
+        // ARM64 and x86-64 without AVX2 stay outside the video contracts (swscale SIMD paths are unmeasured there).
+        Assert.Equal(EmbeddingGemma2CapabilityStatus.Untested, EmbeddingGemma2Capabilities.All["video.decode.arm64_or_non_avx2"]);
         Assert.Equal(stable.Compatibility["windows-x64 cpu"], Name(EmbeddingGemma2Capabilities.All["windows"]));
     }
 }

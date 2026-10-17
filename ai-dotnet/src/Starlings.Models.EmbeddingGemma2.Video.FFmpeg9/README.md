@@ -26,8 +26,8 @@ Maturity is per profile, generated from the registry manifests by `model-pipelin
 
 | Profile | Maturity | Platforms |
 | --- | --- | --- |
-| `embeddinggemma-2/video-fp32-cpu` | experimental | linux-x64 cpu: experimental; windows-x64 cpu: untested |
-| `embeddinggemma-2/video-fp32-cuda` | experimental | linux-x64 cuda: experimental; windows-x64 cuda: untested |
+| `embeddinggemma-2/video-fp32-cpu` | stable | linux-x64 cpu: supported; windows-x64 cpu: untested |
+| `embeddinggemma-2/video-fp32-cuda` | stable | linux-x64 cuda: supported; windows-x64 cuda: untested |
 <!-- /catalog:maturity -->
 
 ## Installing FFmpeg 9
@@ -50,11 +50,11 @@ As the FFmpeg 8 package (its README has the full table): torchcodec 0.17.0's pac
 
 | Check (2026-10-13, x86-64, FFmpeg n9.0.1, libavcodec 63.1.101) | Result | Status |
 | --- | --- | --- |
-| Metadata and sampled indices, 22 fixture videos | equal to torchcodec 0.17.0 on FFmpeg 9.0.1 | experimental |
-| Decoded RGB of every frame, 22 videos (5,367 frames; H.264 High and High 10, HEVC, VP9, AV1; BT.601, BT.709, full range, untagged; rotation 90; odd 321x179) | exact against torchcodec 0.17.0 on FFmpeg 9.0.1 | experimental |
+| Metadata and sampled indices, 22 fixture videos | equal to torchcodec 0.17.0 on FFmpeg 9.0.1 | supported (Stable `video-fp32-*` contracts) |
+| Decoded RGB of every frame, 22 videos (5,367 frames; H.264 High and High 10, HEVC, VP9, AV1; BT.601, BT.709, full range, untagged; rotation 90; odd 321x179) | exact against torchcodec 0.17.0 on FFmpeg 9.0.1 | supported (Stable `video-fp32-*` contracts) |
 | Seekable stream and in-memory input vs file | identical metadata and frames | experimental |
-| Loader: missing directory, other major, license classification, GPL build refused without `AllowNonLgplBuild` | typed errors | experimental |
-| LGPL FFmpeg 9 build | the BtbN LGPL shared build n9.0.2-28-g669f5ab083 (2026-10-15): every frame of the 22 fixture videos equal to torchcodec's digests (adapter tests: 26 passed, the edge-case and FFmpeg-8-only release tests skipped), and the sampled frames of the 4 release videos (G1) | experimental |
+| Loader: missing directory, other major, license classification, GPL build refused without `AllowNonLgplBuild` | typed errors | supported (Stable `video-fp32-*` contracts) |
+| LGPL FFmpeg 9 build | the BtbN LGPL shared build n9.0.2-28-g669f5ab083 (2026-10-15): every frame of the 22 fixture videos equal to torchcodec's digests (adapter tests: 26 passed, the edge-case and FFmpeg-8-only release tests skipped), and the sampled frames of the 4 release videos (G1, on AVX2 and AVX-512 hosts) | supported (Stable `video-fp32-*` contracts) |
 | Rotation -90 and 180, variable frame rate, interlaced, HDR | every frame of the generated edge-case videos equal to torchcodec's digests on FFmpeg 9.0.1 | experimental |
 | Other CPUs | as for FFmpeg 8 | untested |
 

@@ -24,8 +24,8 @@ Maturity is per profile, generated from the registry manifests by `model-pipelin
 
 | Profile | Maturity | Platforms |
 | --- | --- | --- |
-| `embeddinggemma-2/video-fp32-cpu` | experimental | linux-x64 cpu: experimental; windows-x64 cpu: untested |
-| `embeddinggemma-2/video-fp32-cuda` | experimental | linux-x64 cuda: experimental; windows-x64 cuda: untested |
+| `embeddinggemma-2/video-fp32-cpu` | stable | linux-x64 cpu: supported; windows-x64 cpu: untested |
+| `embeddinggemma-2/video-fp32-cuda` | stable | linux-x64 cuda: supported; windows-x64 cuda: untested |
 <!-- /catalog:maturity -->
 
 ## Installing FFmpeg 8
@@ -46,14 +46,14 @@ Errors are typed (`EmbeddingGemma2FFmpegException` and subclasses), checked when
 
 | Step | Behaviour (torchcodec 0.17.0, CPU, `seek_mode="exact"`) | Status |
 | --- | --- | --- |
-| Metadata (`Probe`) | Packet scan of the best video stream: frame count = packets (discard-flagged skipped), duration = max(pts + duration) - min(pts) in seconds, average rate = frames / duration, rotation from the display matrix; width and height after rotation | experimental: equal on the 22 fixture videos |
-| Sampling (`DecodeFile`, `Decode(Stream)`, `Decode(ReadOnlyMemory<byte>)`) | `EmbeddingGemma2VideoSampling.SampleIndices` on that metadata (upstream's 1 fps, at most 32, one frame under 2 s); torchcodec's `get_frames_at` on the scanning demuxer: frames reached by decoding on or by seeking to the scanned keyframe (`avformat_seek_file`, `avcodec_flush_buffers`) with torchcodec's seek-avoidance rule; only the sampled frames are kept. The frame after a seek is upstream's even where it differs from a sequential decode (the Ogg Theora video `commons-video-02` of the release set, frame 24) | experimental: sampled frames equal torchcodec's on the 22 fixture videos, the edge-case videos and the 4 release videos |
-| RGB conversion | Width a multiple of 32 and no rotation: one `sws_scale` to RGB24, flags 0, coefficients of the frame's colourspace (BT.601 when untagged), source range from the frame. Otherwise a filter graph `buffer` -> `copy` (or `format=rgb24,transpose=cclock`, `transpose=clock`, `hflip,vflip`) -> `buffersink` rgb24. FFmpeg's default 10-bit conversion is kept (upstream quirk, for parity) | experimental: every frame of the 22 fixture videos equal to torchcodec's (H.264 High and High 10, HEVC, VP9, AV1; BT.709, full range, untagged; odd 321x179; rotation 90) |
+| Metadata (`Probe`) | Packet scan of the best video stream: frame count = packets (discard-flagged skipped), duration = max(pts + duration) - min(pts) in seconds, average rate = frames / duration, rotation from the display matrix; width and height after rotation | supported (Stable `video-fp32-*` contracts): equal on the 22 fixture videos and the 4 release videos (G1) |
+| Sampling (`DecodeFile`, `Decode(Stream)`, `Decode(ReadOnlyMemory<byte>)`) | `EmbeddingGemma2VideoSampling.SampleIndices` on that metadata (upstream's 1 fps, at most 32, one frame under 2 s); torchcodec's `get_frames_at` on the scanning demuxer: frames reached by decoding on or by seeking to the scanned keyframe (`avformat_seek_file`, `avcodec_flush_buffers`) with torchcodec's seek-avoidance rule; only the sampled frames are kept. The frame after a seek is upstream's even where it differs from a sequential decode (the Ogg Theora video `commons-video-02` of the release set, frame 24) | supported (Stable `video-fp32-*` contracts): sampled frames equal torchcodec's on the 22 fixture videos and the 4 release videos (G1, AVX2 and AVX-512 hosts); the edge-case videos too (experimental rows) |
+| RGB conversion | Width a multiple of 32 and no rotation: one `sws_scale` to RGB24, flags 0, coefficients of the frame's colourspace (BT.601 when untagged), source range from the frame. Otherwise a filter graph `buffer` -> `copy` (or `format=rgb24,transpose=cclock`, `transpose=clock`, `hflip,vflip`) -> `buffersink` rgb24. FFmpeg's default 10-bit conversion is kept (upstream quirk, for parity) | supported (Stable `video-fp32-*` contracts): every frame of the 22 fixture videos equal to torchcodec's (H.264 High and High 10, HEVC, VP9, AV1; BT.709, full range, untagged; odd 321x179; rotation 90) |
 | Rotation -90 and 180 | torchcodec's transforms | experimental: every frame of the generated edge-case videos equal to torchcodec's (proposed `video-edge`) |
 | All frames (`DecodeAllFrames`), frames by index (`DecodeFramesAt`) | Every frame (with timing: the package then samples like the file), or `get_frames_at` indices | experimental |
 | Streams and memory | Seekable streams through a custom AVIO context; equal to the file on the fixtures | experimental |
-| FFmpeg 9 | Other ABI; not loadable by this package (typed error naming `libavcodec.so.63`). Use `Starlings.Models.EmbeddingGemma2.Video.FFmpeg9`: the same code with bindings generated from the FFmpeg 9.0.1 headers, exact against torchcodec on FFmpeg 9.0.1 (every frame of the 22 fixture videos) | unsupported here; experimental in the FFmpeg 9 package |
-| Other CPUs (ARM64, non-AVX2) | swscale's SIMD paths may differ by a level (for upstream as well) | untested |
+| FFmpeg 9 | Other ABI; not loadable by this package (typed error naming `libavcodec.so.63`). Use `Starlings.Models.EmbeddingGemma2.Video.FFmpeg9`: the same code with bindings generated from the FFmpeg 9.0.1 headers, exact against torchcodec on FFmpeg 9.0.1 (every frame of the 22 fixture videos) | unsupported here; supported in the FFmpeg 9 package |
+| Other CPUs (ARM64, x86-64 without AVX2) | swscale's SIMD paths may differ by a level (for upstream as well); AVX2 and AVX-512 x86-64 are measured (G1 exact on both) | untested |
 | Variable frame rate, interlaced, HDR (PQ, HLG) | As upstream: index-based sampling from the average rate, no deinterlacing, no tone mapping | experimental: every frame, metadata and sampled indices of the generated edge-case videos equal to torchcodec's |
 | Audio | Ignored, as upstream | unsupported |
 
