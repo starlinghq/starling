@@ -7,7 +7,13 @@
 # FFmpeg 8.x; none shipped). Accepted fixtures (PR #47) and binding tolerances set on 2026-10-11 (qualification).
 schema_version: 1
 id: embeddinggemma-2/video-fp32-cuda
-maturity: experimental
+# Stable since 2026-10-17 (maintainer's delegated promotion; docs/kickoff.md, "Stable video profiles"): every gate G0 to
+# G7 passed (G4 and G5 in the binding RTX 3090 round, docs/evidence/qualification-2026-10-16-cuda/), the contract is the
+# Starlings.Models.EmbeddingGemma2 README's "Stable contract: CUDA" (videos, Linux x64, RTX 3090,
+# MALLOC_MMAP_THRESHOLD_=65536), and the per-release GPU regression (qualification workflow, job cuda (runpod), pinned
+# to the RTX 3090) reruns the CUDA tests, G1 to G3 on the release sets and a soak smoke test. Every check of this
+# profile passed on an RTX 3090 in runs 39012176735 and 39023915026 (docs/evidence/video-promotion-2026-10-17/README.md).
+maturity: stable
 
 origin:
   code:
@@ -236,20 +242,24 @@ execution:
     use_tf32: 0
 
 capabilities:
-  # Starlings.Models.EmbeddingGemma2 (EmbeddingGemma2MultimodalEmbedder, EmbeddingGemma2Video) and the FFmpeg
-  # adapter; evidence in ai-dotnet/README.md and docs/evidence/embeddinggemma2-video/. Experimental means tested from
-  # adapter-decoded frames (equal to torchcodec's) against the accepted video fixtures with the protected tolerances.
-  video: experimental
-  video_decoded_frames_with_timing: experimental
-  video_pre_sampled_frames: experimental
+  # Starlings.Models.EmbeddingGemma2 (EmbeddingGemma2MultimodalEmbedder, EmbeddingGemma2Video) over CUDA sessions
+  # (use_tf32 0) and the FFmpeg adapters; evidence in ai-dotnet/README.md and docs/evidence/embeddinggemma2-video/.
+  # Statuses follow the README's "Stable contract: CUDA": supported where the accepted video fixtures, the P-030 video
+  # release set (G1 with both FFmpeg decoder checks, G2), G3 to G7 and the per-release GPU regression cover it on an
+  # RTX 3090; experimental where only proposed rows, an opt-in deviation, adapter tests alone, a one-time local run
+  # (Native AOT with the CUDA natives) or a test the per-release run skips (the multimodal generator) do; unsupported
+  # outside it. EmbeddingGemma2Capabilities.Profiles holds the same statuses (tested key for key).
+  video: supported
+  video_decoded_frames_with_timing: supported
+  video_pre_sampled_frames: experimental  # the caller's frames, used as given: equal to the file only for upstream's frames
   video_frames_without_timing: unsupported  # rejected by default
   video_frames_without_timing_opt_in: experimental  # upstream's behaviour; differs from the file
-  video_interleaved_text: experimental
-  video_interleaved_image: experimental
-  video_multiple_per_input: experimental
-  video_prompts: experimental
-  video_batch: experimental
-  video_matryoshka: experimental
+  video_interleaved_text: supported
+  video_interleaved_image: supported
+  video_multiple_per_input: supported
+  video_prompts: supported
+  video_batch: supported
+  video_matryoshka: supported
   video_timestamps: unsupported
   # Capability closure 2026-10-14 (docs/evidence/capability-closure-2026-10-14/README.md): nine generated edge-case videos (proposed
   # model-pipeline/proposed/embeddinggemma-2/video-edge): metadata, sampled indices and every decoded frame equal to
@@ -259,20 +269,20 @@ capabilities:
   video_interlaced: experimental  # H.264 interlaced, top and bottom field first
   video_hdr: experimental  # HEVC Main 10 BT.2020 PQ (with HDR10 SEI) and HLG; signalling only, synthetic content
   video_audio_track: unsupported
-  video_decode_ffmpeg8: experimental
+  video_decode_ffmpeg8: supported
   # Starlings.Models.EmbeddingGemma2.Video.FFmpeg9: exact against torchcodec on FFmpeg 9.0.1 (every frame of the 22
   # fixture videos, ai-dotnet adapter tests and the evaluator's decoder check). The decoder_ffmpeg9 bound is protected
   # (#64, model-pipeline/protected/embeddinggemma-2/decoder-ffmpeg9/); on the LGPL FFmpeg 9.0.2 BtbN build every frame of
   # the 22 fixture videos (adapter tests) and the release set's sampled frames (G1) are exact too.
-  video_decode_ffmpeg9: experimental
-  video_decode_rotation_90: experimental
+  video_decode_ffmpeg9: supported
+  video_decode_rotation_90: supported
   video_decode_rotation_other: experimental  # display rotation -90 and 180 (edge-case videos), equal to torchcodec
-  video_decode_streams: experimental
-  image: experimental
-  text_only_inputs: experimental
-  batch: experimental
+  video_decode_streams: experimental  # seekable streams and memory: adapter tests (equal to the file), no release row
+  image: supported
+  text_only_inputs: supported
+  batch: supported
   streaming: unsupported
-  cancellation: experimental
+  cancellation: supported
   persistence: unsupported
   training: unsupported
   # aot: Native AOT publish on Linux x64 against Microsoft.ML.OnnxRuntime.Gpu.Linux 1.30.0, no trim/AOT warnings, video
@@ -282,23 +292,23 @@ capabilities:
   # the decoder), max abs 2.7e-7.
   extensions_ai: experimental
   mlnet: unsupported  # no video column in the ML.NET transform (text only)
-  concurrent_calls: experimental
+  concurrent_calls: supported
   input_over_8192_tokens: unsupported
   audio: unsupported
 
 compatibility:
-  # Contract hardware: an NVIDIA GeForce RTX 3090 (Ampere, sm_86). The release-set G1 to G3 and the binding G4 and G5
-  # (2026-10-16) ran on RTX 3090s. The RTX 4090 (Ada) and every other GPU are untested and outside the contract: in the
-  # per-release GPU run 38857860186 (RTX 4090, driver 580.159.03, commit 9a18b01) G2 failed, embedding max abs 1.009e-5
-  # against 1e-5 and token embeddings 3.34e-3 against 1e-3 row-relative (worst commons-video-04), where the RTX 3090
-  # measured 2.77e-6 and 7.97e-4 (docs/evidence/gpu-regression-2026-10-16/README.md). The per-release run is now pinned
-  # to the RTX 3090; the profile stays experimental until a run there is green for it. The schema has no GPU field, so
-  # this entry stays experimental for Linux x64 CUDA as a whole.
+  # Linux x64 CUDA on an NVIDIA GeForce RTX 3090 (Ampere, sm_86): G1 to G3 on the release sets, G4 one-hour soak and G5
+  # (binding round 2026-10-16, RunPod), and the per-release GPU regression (CUDA tests, G1 to G3, soak smoke test with
+  # MALLOC_MMAP_THRESHOLD_=65536) green on RTX 3090s in runs 39012176735 and 39023915026 (embedding max abs 2.77e-6, soft tokens 2.50e-4, token
+  # embeddings 7.97e-4 row-relative; nDCG@10 0.8126).
+  # Other GPUs, including the RTX 4090 (Ada): untested, outside the contract. In run 38857860186 (RTX 4090, before the
+  # pin) G2 failed on the final embedding, 1.009e-5 against the unchanged 1e-5 (its token embeddings, 3.34e-3, are within
+  # the 4e-3 bound of #90; docs/evidence/gpu-regression-2026-10-16/README.md).
   - os: linux
     arch: x64
     provider: cuda
-    status: experimental
-    verified: 2026-10-11
+    status: supported
+    verified: 2026-10-17
   - os: windows
     arch: x64
     provider: cuda
@@ -346,14 +356,27 @@ maintenance:
   review_date: 2027-01-05
   known_issues:
     - >-
-      Not promoted to Stable (2026-10-16). The contract covers the NVIDIA GeForce RTX 3090 (Ampere) only; the RTX 4090
-      (Ada) is untested and out of contract. The first per-release GPU regression run, 38857860186 (commit 9a18b01),
-      landed on an RTX 4090 (driver 580.159.03) and failed this profile's G2 on the video release set: embedding max abs
-      1.009e-5 against the protected 1e-5, token embeddings 3.34e-3 against 1e-3 row-relative (worst commons-video-04).
-      G1, G3 and the soak smoke test passed there. On the RTX 3090 the same release set measured 2.77e-6 and 7.97e-4
-      (docs/evidence/release-set-gates-2026-10-14/embeddinggemma2-video-fp32-cuda/README.md). No tolerance was changed.
-      The per-release run is now pinned to the RTX 3090; promotion waits for a green run there
-      (docs/evidence/gpu-regression-2026-10-16/README.md).
+      Contract hardware: an NVIDIA GeForce RTX 3090 (Ampere, sm_86), driver 580, CUDA 13 runtime. The CUDA gates G1 to
+      G5 (G4 and G5 in the binding 2026-10-16 round) ran on RTX 3090s, and the per-release GPU regression is pinned to
+      the RTX 3090 and refuses any other GPU (tools/ci/runpod.py). The RTX 4090 (Ada) is outside the contract: in run
+      38857860186, before the pin, this profile's G2 failed there on the final embedding (max abs 1.009e-5 against the
+      unchanged 1e-5, commons-video-04). Other NVIDIA GPUs are untested.
+    - >-
+      Linux memory: MALLOC_MMAP_THRESHOLD_=65536 is a deployment requirement (the Starlings.Models.EmbeddingGemma2
+      README, "Image and video on CUDA"); the binding G4 soak and the per-release soak smoke test ran with it.
+    - >-
+      Cancellation on CUDA completes the current vision or text run before throwing (#61), so its latency is one run.
+    - >-
+      Per-release coverage: the CUDA video parity tests (CudaVideoParityTests, on the development fixtures) and the
+      multimodal IEmbeddingGenerator over CUDA (CudaAdapterTests) need the video fixture set, which the per-release GPU
+      pod does not have, so they are skipped there; the per-release regression of this profile is release-set G1 (both
+      FFmpeg decoder checks) and G2, G3 on video-retrieval-v1 and the soak smoke test. extensions_ai stays experimental
+      until its test runs per release (G7 evidence: 2026-10-14 and 2026-10-15).
+    - >-
+      The video release set's reference stage tensors regenerate byte-identical only on the reference CPU; the accepted
+      arrays are hosted at Starlinghq/starling-release-references (commit and file digests in the protected
+      hosted-reference.json, #71), and the evaluator checks every array against the protected tensors.json, so the
+      per-release G2 needs no regeneration.
     - >-
       Sampled frames follow torchcodec's seek-based decoding, including the decoder state after a seek: on the Ogg
       Theora release video commons-video-02 the frame after torchcodec's seek differs from a sequential decode, and that
@@ -364,9 +387,11 @@ maintenance:
       above); the release drill downloaded them with no token on 2026-10-15 and ran the video search offline from that
       cache (docs/evidence/g6-distribution-2026-10-14/README.md).
     - >-
-      Synthetic fixture videos only (no camera footage); default settings only; no variable frame rate, interlaced or
-      HDR video. One CPU architecture (AVX2) produced the reference and the decoder comparison: swscale's SIMD paths on
-      other CPUs (ARM in particular) may differ by a level, for upstream as well.
+      Synthetic fixture videos only in the development set (the release set has four Commons videos); default settings
+      only; variable frame rate, interlaced and HDR video only in the proposed edge-case set (experimental). One CPU
+      (AVX2) produced the reference; the decoder checks are exact on AVX2 and AVX-512 x86-64 hosts (G1 on the hosted
+      runners, #89). swscale's SIMD paths on ARM64 and on x86-64 CPUs without AVX2 are untested and may differ by a
+      level, for upstream as well.
     - >-
       One decoder profile per FFmpeg adapter: decoder_ffmpeg (FFmpeg 8, libavcodec.so.62) and decoder_ffmpeg9 (FFmpeg 9,
       libavcodec.so.63) are both protected, and G1 checks both. The FFmpeg 9 evidence covers FFmpeg 9.0.1 (a GPL
