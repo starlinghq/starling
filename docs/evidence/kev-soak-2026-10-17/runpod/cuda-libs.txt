@@ -1,0 +1,4 @@
+	libcudnn.so.9 (libc6,x86-64) => /lib/x86_64-linux-gnu/libcudnn.so.9
+	libcudart.so.13 (libc6,x86-64) => /usr/local/cuda/targets/x86_64-linux/lib/libcudart.so.13
+/root/nv/lib/python3.12/site-packages/nvidia/cu13/lib/libcudart.so.13
+/root/nv/lib/python3.12/site-packages/nvidia/cudnn/lib/libcudnn.so.9

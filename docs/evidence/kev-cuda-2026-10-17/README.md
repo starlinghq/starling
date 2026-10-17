@@ -61,5 +61,5 @@ sequential for each size (59 s for 0.8B, 405 s for 4B on 12 threads).
 - Upstream's development partitions (decision-v7, transfer-v4) on CUDA, and any release set (none is accepted for Kev).
 - The per-release GPU regression (`tools/ci/runpod-cuda-pod.sh` has no Kev steps yet; the bundles are hosted since
   2026-10-17, so it can acquire them).
-- A one-hour G4 soak and the G5 matched benchmark (no Kev budget exists).
+- The G5 matched benchmark (no Kev budget exists). Soaks and a RunPod RTX 3090 run: [kev-soak-2026-10-17](../kev-soak-2026-10-17/README.md).
 - The builder's own CUDA graph (`-e cuda`), fp16, bf16 and TF32: not these profiles (admission, "GPU results").

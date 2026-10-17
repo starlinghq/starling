@@ -72,6 +72,7 @@ var fromJson = kev.Decide(KevRequest.ParseSystemOne(File.ReadAllText("request.js
 - States over 8,192 tokens (the validated context, `<state>` included) and question rows over 8,192 tokens (state plus branch) throw `KevInputTooLongException`. Nothing is truncated.
 - Staged API for evidence: `Encode(record)` gives Kev's row form (`KevEncoding`), `Run(encoding)` the cached path, `RunUncached(encoding)` upstream's `forward()` layout.
 - Memory: about 3.5 GB resident for 0.8B and 18 GB for 4B, plus the state cache.
+- **On Linux, start a long-running process with `MALLOC_MMAP_THRESHOLD_=65536`** (as for GLiNER2). Without it, a one-hour Kev-0.8B CUDA soak's loaded memory grew 64 MB/h (glibc arena retention, outputs correct throughout); with it, every Kev soak plateaued ([evidence](../../../docs/evidence/kev-soak-2026-10-17/README.md)).
 - Concurrent `Decide` calls on one model are independent (`concurrent_calls`, Experimental). On CUDA each request's graph calls run one request at a time by default (`KevOptions.SerializeNativeCalls`).
 
 ## CUDA
@@ -147,7 +148,9 @@ CUDA, 2026-10-17, local RTX 3090 (24 GB, driver 610.57, system CUDA 13.3 runtime
 
 The onboarding corpus with the `onnx` and `dotnet` stages on CUDA, through the route's decision evaluator: passed for both sizes, every path within 6.6e-5 of PyTorch (0.8B 2.85e-5, 4B 6.57e-5), .NET against Python ONNX Runtime on CUDA within 1.6e-7, no flip, identical accuracy and token ids ([evidence](../../../docs/evidence/kev-cuda-2026-10-17/README.md)).
 
-Not yet run on CUDA: upstream's development partitions, a one-hour soak, the matched benchmark and the per-release regression on the qualification GPU.
+Soaks, 2026-10-17 ([evidence](../../../docs/evidence/kev-soak-2026-10-17/README.md)): one-hour soaks of all four profiles pass with `MALLOC_MMAP_THRESHOLD_=65536` (Kev-4B CUDA also at the default allocator; Kev-0.8B CUDA at the default allocator grew 64 MB/h, with every output correct). On a RunPod RTX 3090 (driver 580.159.03) with the bundles downloaded anonymously from the hosting repositories, the 12 CUDA tests pass (goldens within 4.2e-5) and 10-minute soak smokes of both sizes pass.
+
+Not yet run on CUDA: upstream's development partitions, the matched benchmark, and the per-release regression in the qualification workflow.
 <!-- /kev:evidence -->
 
 ## Tests
