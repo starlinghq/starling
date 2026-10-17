@@ -102,6 +102,12 @@ public sealed record EmbeddingGemma2MultimodalOptions
         MaxBatchTokens = MaxBatchTokens,
     };
 
+    /// <summary>
+    /// Reuse the large per-request buffers across requests (the default). False allocates them per request and keeps
+    /// none; tests compare the two.
+    /// </summary>
+    internal bool PoolBuffers { get; init; } = true;
+
     internal void Validate()
     {
         ArgumentNullException.ThrowIfNull(Session);

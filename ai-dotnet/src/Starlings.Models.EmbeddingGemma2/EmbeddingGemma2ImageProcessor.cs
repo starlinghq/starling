@@ -144,7 +144,14 @@ public static class EmbeddingGemma2ImageProcessor
     /// shared out among them); each result equals the single-image call. Every target size is checked before any work.
     /// </summary>
     /// <exception cref="ArgumentException">An image is null or resizes to nothing at this budget.</exception>
-    public static EmbeddingGemma2ImagePatches[] Preprocess(IReadOnlyList<EmbeddingGemma2Image> images, int maxSoftTokens = DefaultMaxSoftTokens)
+    public static EmbeddingGemma2ImagePatches[] Preprocess(IReadOnlyList<EmbeddingGemma2Image> images, int maxSoftTokens = DefaultMaxSoftTokens) =>
+        Preprocess(images, maxSoftTokens, null);
+
+    /// <summary>
+    /// <see cref="Preprocess(IReadOnlyList{EmbeddingGemma2Image}, int)"/> with every buffer from <paramref name="pool"/>
+    /// when set: the caller returns each result's buffers with <see cref="EmbeddingGemma2ImagePatches.ReturnTo"/>.
+    /// </summary>
+    internal static EmbeddingGemma2ImagePatches[] Preprocess(IReadOnlyList<EmbeddingGemma2Image> images, int maxSoftTokens, EmbeddingGemma2BufferPool? pool)
     {
         ArgumentNullException.ThrowIfNull(images);
         var targets = new (int Width, int Height)[images.Count];
@@ -160,32 +167,48 @@ public static class EmbeddingGemma2ImageProcessor
         {
             for (int i = 0; i < targets.Length; i++)
             {
-                result[i] = Preprocess(images[i], targets[i].Width, targets[i].Height, Environment.ProcessorCount);
+                result[i] = Preprocess(images[i], targets[i].Width, targets[i].Height, Environment.ProcessorCount, pool);
             }
 
             return result;
         }
 
         int inner = Math.Max(1, Environment.ProcessorCount / degree);
-        Parallel.For(0, targets.Length, new ParallelOptions { MaxDegreeOfParallelism = degree }, i =>
-            result[i] = Preprocess(images[i], targets[i].Width, targets[i].Height, inner));
+        try
+        {
+            Parallel.For(0, targets.Length, new ParallelOptions { MaxDegreeOfParallelism = degree }, i =>
+                result[i] = Preprocess(images[i], targets[i].Width, targets[i].Height, inner, pool));
+        }
+        catch when (pool is not null)
+        {
+            foreach (var r in result)
+            {
+                r?.ReturnTo(pool);
+            }
+
+            throw;
+        }
+
         return result;
     }
 
-    private static EmbeddingGemma2ImagePatches Preprocess(EmbeddingGemma2Image image, int tw, int th, int maxThreads)
+    private static EmbeddingGemma2ImagePatches Preprocess(EmbeddingGemma2Image image, int tw, int th, int maxThreads, EmbeddingGemma2BufferPool? pool = null)
     {
-        byte[] resized = tw == image.Width && th == image.Height
+        int resizedBytes = tw * th * 3;
+        byte[] resized = tw == image.Width && th == image.Height && pool is null
             ? image.Pixels.ToArray()
-            : TorchAntialiasResampler.Resize(image.Pixels.Span, image.Pixels, image.Width, image.Height, tw, th, vectorized: true, maxThreads);
+            : TorchAntialiasResampler.Resize(image.Pixels.Span, image.Pixels, image.Width, image.Height, tw, th, vectorized: true, maxThreads, pool);
         int patches = (tw / PatchSize) * (th / PatchSize);
 
-        // Every value is written below, so the array need not be zeroed first.
-        var pixelValues = GC.AllocateUninitializedArray<float>(patches * PatchValues);
-        var positions = new long[patches * 2];
+        // Every value is written below, so the arrays need not be zeroed first.
+        var pixelValues = pool is not null ? pool.Rent<float>(patches * PatchValues) : GC.AllocateUninitializedArray<float>(patches * PatchValues);
+        var positions = pool is not null ? pool.Rent<long>(patches * 2) : new long[patches * 2];
         int pw = tw / PatchSize;
         TorchAntialiasResampler.For(th / PatchSize, (long)pw * PatchValues, maxThreads, (py0, py1) =>
             WritePatchRows(resized, tw, pixelValues, positions, py0, py1, vectorized: true));
-        return new EmbeddingGemma2ImagePatches(tw, th, resized, pixelValues, positions);
+        return pool is null
+            ? new EmbeddingGemma2ImagePatches(tw, th, resized, pixelValues, positions)
+            : new EmbeddingGemma2ImagePatches(tw, th, resized, resizedBytes, pixelValues, patches * PatchValues, positions, patches * 2);
     }
 
     /// <summary>
@@ -254,6 +277,10 @@ public static class EmbeddingGemma2ImageProcessor
 /// <summary>One preprocessed image: the resized bytes and the vision graph's unpadded inputs.</summary>
 public sealed class EmbeddingGemma2ImagePatches
 {
+    private byte[]? _pooledPixels;
+    private float[]? _pooledValues;
+    private long[]? _pooledPositions;
+
     internal EmbeddingGemma2ImagePatches(int resizedWidth, int resizedHeight, byte[] resizedPixels, float[] pixelValues, long[] positions)
     {
         ResizedWidth = resizedWidth;
@@ -261,6 +288,28 @@ public sealed class EmbeddingGemma2ImagePatches
         ResizedPixels = resizedPixels;
         PixelValues = pixelValues;
         Positions = positions;
+    }
+
+    /// <summary>Over pooled buffers that can be longer than the values (<see cref="ReturnTo"/> gives them back).</summary>
+    internal EmbeddingGemma2ImagePatches(
+        int resizedWidth, int resizedHeight, byte[] resizedPixels, int pixelBytes, float[] pixelValues, int valueCount, long[] positions, int positionCount)
+    {
+        ResizedWidth = resizedWidth;
+        ResizedHeight = resizedHeight;
+        ResizedPixels = resizedPixels.AsMemory(0, pixelBytes);
+        PixelValues = pixelValues.AsMemory(0, valueCount);
+        Positions = positions.AsMemory(0, positionCount);
+        _pooledPixels = resizedPixels;
+        _pooledValues = pixelValues;
+        _pooledPositions = positions;
+    }
+
+    /// <summary>Gives pooled buffers back; this instance must not be read afterwards. A no-op when it was not pooled.</summary>
+    internal void ReturnTo(EmbeddingGemma2BufferPool pool)
+    {
+        pool.Return(Interlocked.Exchange(ref _pooledPixels, null));
+        pool.Return(Interlocked.Exchange(ref _pooledValues, null));
+        pool.Return(Interlocked.Exchange(ref _pooledPositions, null));
     }
 
     /// <summary>Width after resizing (a multiple of 48).</summary>
