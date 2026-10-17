@@ -20,7 +20,7 @@ Maturity is per profile, generated from the registry manifests by `model-pipelin
 ## Install
 
 ```sh
-dotnet add package Starlings.Models.EmbeddingGemma2.Extensions.AI --prerelease
+dotnet add package Starlings.Models.EmbeddingGemma2.Extensions.AI
 dotnet add package Microsoft.ML.OnnxRuntime --version 1.30.0          # or Microsoft.ML.OnnxRuntime.Gpu.Linux; exactly one
 ```
 
