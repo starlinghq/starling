@@ -206,6 +206,12 @@ public static class EmbeddingGemma2Capabilities
         ["extensions_ai.embedding_generator"] = EmbeddingGemma2CapabilityStatus.Supported,
         ["extensions_ai.embedding_generator.cuda"] = EmbeddingGemma2CapabilityStatus.Supported,
         ["extensions_ai.dimensions_matryoshka"] = EmbeddingGemma2CapabilityStatus.Supported,
+        // Cross-request micro-batching (opt-in EmbeddingGemma2EmbeddingGeneratorOptions.MicroBatching, text generator): concurrent single requests share padded batches on one
+        // dispatcher thread. Weight-free tests (coalescing, ordering, per-caller cancellation, backpressure, grouping,
+        // disposal, failure isolation) and one weight-dependent test against direct calls within the padded-batch
+        // tolerance; no benchmark adoption decision and no soak yet. Outputs depend on the concurrent traffic (within
+        // tolerance, not bit for bit reproducible). Not part of any Stable profile's contract.
+        ["extensions_ai.micro_batching"] = EmbeddingGemma2CapabilityStatus.Experimental,
 
         // ML.NET estimator/transformer, in Starlings.Models.EmbeddingGemma2.MLNet (G7 on the CPU text profile).
         // Persistence: Save throws.

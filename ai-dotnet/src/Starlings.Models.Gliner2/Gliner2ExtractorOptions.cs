@@ -1,4 +1,5 @@
 using Starlings.Runtime.Onnx;
+using Starlings.Runtime.Onnx.Batching;
 
 namespace Starlings.Models.Gliner2;
 
@@ -58,6 +59,19 @@ public sealed record Gliner2ExtractorOptions
     /// </summary>
     public bool? SerializeNativeCalls { get; init; }
 
+    /// <summary>
+    /// Cross-request micro-batching for <see cref="Gliner2EntityExtractor.ExtractAsync(string, IReadOnlyList{string}, IReadOnlyDictionary{string, string}?, float?, CancellationToken)"/>
+    /// (Experimental, capability <c>micro_batching</c>), or null (default): off, <c>ExtractAsync</c> runs on the calling
+    /// thread like <see cref="Gliner2EntityExtractor.Extract"/>. When set, <c>ExtractAsync</c> prepares and validates the
+    /// text on the calling thread, then queues it; one dispatcher thread runs the queued texts of concurrent callers
+    /// that share a schema (the same labels in the same order and the same descriptions) in padded batches
+    /// (<see cref="MicroBatcher{TItem, TResult}"/>; <see cref="MaxBatchSize"/> still splits each batch into graph
+    /// calls), and each caller decodes its own spans with its own threshold. The synchronous methods never queue. A
+    /// queued text's logits then depend on the other texts in its batch: equal to a single call within the profile's
+    /// padded-batch tolerance, not bit for bit reproducible.
+    /// </summary>
+    public MicroBatchingOptions? MicroBatching { get; init; }
+
     internal void Validate()
     {
         ArgumentNullException.ThrowIfNull(Session);
@@ -69,6 +83,8 @@ public sealed record Gliner2ExtractorOptions
         {
             ArgumentOutOfRangeException.ThrowIfLessThan(maxBatchTokens, 1, nameof(MaxBatchTokens));
         }
+
+        MicroBatching?.Validate();
     }
 
     internal static void ValidateThreshold(float threshold, string name)

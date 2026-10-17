@@ -233,6 +233,15 @@ public sealed class EmbeddingGemma2Encoder : IDisposable
         }
     }
 
+    /// <summary>
+    /// Checks one input as <see cref="EmbedBatch(IReadOnlyList{EmbeddingGemma2Input}, Span{float}, CancellationToken)"/>
+    /// does before any inference, and throws what a one-input call would throw (the input index is 0). Lets a caller
+    /// reject an invalid input on its own before queueing it next to others (micro-batching).
+    /// </summary>
+    /// <exception cref="EmbeddingGemma2InputTooLongException">The input has more tokens than <see cref="EmbeddingGemma2EncoderOptions.MaxSequenceLength"/>.</exception>
+    /// <exception cref="ArgumentException">The input is empty, has an invalid mask, or an out-of-range or media token id.</exception>
+    public void Validate(EmbeddingGemma2Input input) => Validate(input, 0);
+
     /// <summary>Disposes the session if this encoder owns it. Idempotent.</summary>
     public void Dispose()
     {
