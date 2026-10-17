@@ -55,9 +55,9 @@
       "starlings.models.embeddinggemma2": {
         "type": "Project",
         "dependencies": {
-          "Starlings.Acquisition": "[0.1.0-preview.6, )",
-          "Starlings.Runtime.Onnx": "[0.1.0-preview.6, )",
-          "Starlings.Tokenizers": "[0.3.0-preview.1, 0.3.0-preview.1]"
+          "Starlings.Acquisition": "[0.2.0, )",
+          "Starlings.Runtime.Onnx": "[0.2.0, )",
+          "Starlings.Tokenizers": "[0.3.0, 0.3.0]"
         }
       },
       "starlings.runtime.onnx": {
@@ -77,9 +77,9 @@
       },
       "Starlings.Tokenizers": {
         "type": "CentralTransitive",
-        "requested": "[0.3.0-preview.1, 0.3.0-preview.1]",
-        "resolved": "0.3.0-preview.1",
-        "contentHash": "OE5QIlXWK9M/q/eeGuvw1yrun9nIHt9z/NXqyAPDAYS+qgZvxTt9DPuBCrzPOqUHptPEkKhGXrplXpUYZoI4Nw=="
+        "requested": "[0.3.0, 0.3.0]",
+        "resolved": "0.3.0",
+        "contentHash": "5VQxvrls4G1GQBsnJaHuMsgzGWGVDlUCQ4p3Z5/lAiMhTG4FZPZ4RbvGxegOtzqM/8kBVTMD8zvicspZyYlnTg=="
       }
     }
   }
