@@ -1,0 +1,33 @@
+loaded in 18.4s, threads 8, new tokens 32
+== same prompt twice: [en-list 22] + [en-list 22], width 22, left padding
+   row 0 en-list: batched 32 ids, single 32 ids, identical True, agreeing prefix 32; vs reference: batched 32, single 32; step-0 logits max abs 0.00E+000
+   row 1 en-list: batched 32 ids, single 32 ids, identical True, agreeing prefix 32; vs reference: batched 32, single 32; step-0 logits max abs 0.00E+000
+   time: batch 16.37s, singles 12.48s + 12.48s = 24.96s (sequential)
+== equal length, different prompts: [en-short 24] + [special-endoftext 24], width 24, left padding
+   row 0 en-short: batched 8 ids, single 8 ids, identical True, agreeing prefix 8; vs reference: batched 8, single 8; step-0 logits max abs 0.00E+000
+   row 1 special-endoftext: batched 32 ids, single 32 ids, identical True, agreeing prefix 32; vs reference: batched 32, single 32; step-0 logits max abs 0.00E+000
+   time: batch 14.44s, singles 2.38s + 11.51s = 13.89s (sequential)
+== unequal (22 vs 40), left padding: [en-list 22] + [en-math 40], width 40, left padding
+   row 0 en-list: batched 32 ids, single 32 ids, identical False, agreeing prefix 0; vs reference: batched 0, single 32; step-0 logits max abs 1.73E+001
+      single : 8160 513 2250 14542 10104 364 4237 2708 10597 9417 25 271 16 13 220 2972
+      batched: 16 13 2972 9947 264 12594 5759 332 198 256 471 18053 264 2708 20454 318
+   row 1 en-math: batched 32 ids, single 32 ids, identical True, agreeing prefix 32; vs reference: batched 32, single 32; step-0 logits max abs 0.00E+000
+   time: batch 18.47s, singles 12.48s + 21.40s = 33.88s (sequential)
+== unequal (22 vs 40), right padding: [en-list 22] + [en-math 40], width 40, right padding
+   row 0 en-list: batched 2 ids, single 32 ids, identical False, agreeing prefix 1; vs reference: batched 1, single 32; step-0 logits max abs 2.14E+001
+      single : 8160 513 2250 14542 10104 364 4237 2708 10597 9417 25 271 16 13 220 2972
+      batched: 8160 248046
+   row 1 en-math: batched 32 ids, single 32 ids, identical True, agreeing prefix 32; vs reference: batched 32, single 32; step-0 logits max abs 0.00E+000
+   time: batch 19.79s, singles 12.48s + 21.40s = 33.88s (sequential)
+== unequal (24 vs 80), left padding: [en-short 24] + [code-cs 80], width 80, left padding
+   row 0 en-short: batched 12 ids, single 8 ids, identical False, agreeing prefix 0; vs reference: batched 0, single 8; step-0 logits max abs 1.68E+001
+      single : 760 6511 314 9338 369 11751 13 248046
+      batched: 248068 271 248069 271 760 6511 314 9338 369 11751 13 248046
+   row 1 code-cs: batched 32 ids, single 32 ids, identical True, agreeing prefix 32; vs reference: batched 32, single 32; step-0 logits max abs 0.00E+000
+   time: batch 17.52s, singles 2.38s + 21.03s = 23.42s (sequential)
+== unequal (24 vs 80), right padding: [en-short 24] + [code-cs 80], width 80, right padding
+   row 0 en-short: batched 2 ids, single 8 ids, identical False, agreeing prefix 1; vs reference: batched 1, single 8; step-0 logits max abs 1.56E+001
+      single : 760 6511 314 9338 369 11751 13 248046
+      batched: 760 248046
+   row 1 code-cs: batched 32 ids, single 32 ids, identical True, agreeing prefix 32; vs reference: batched 32, single 32; step-0 logits max abs 0.00E+000
+   time: batch 20.49s, singles 2.38s + 21.03s = 23.42s (sequential)
