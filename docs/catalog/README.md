@@ -20,6 +20,10 @@ Gate cells link to the evidence the manifest records. The Stable readiness colum
 | [embeddinggemma-2/video-fp32-cuda](../../model-pipeline/registry/embeddinggemma-2/video-fp32-cuda/manifest.yaml) | video-embedding | stable | Mark | 2027-01-05 | [passed](../evidence/g0-provenance-2026-10-14/README.md) | [passed](../evidence/release-set-gates-2026-10-14/embeddinggemma2-video-fp32-cuda/README.md) | [passed](../evidence/release-set-gates-2026-10-14/embeddinggemma2-video-fp32-cuda/README.md) | [passed](../evidence/release-set-gates-2026-10-14/embeddinggemma2-video-fp32-cuda/README.md) | [passed](../evidence/qualification-2026-10-16-cuda/README.md) | [passed](../evidence/qualification-2026-10-16-cuda/README.md) | [passed](../evidence/g6-distribution-2026-10-14/README.md) | [passed](../evidence/g7-integration-2026-10-14/README.md) | stable: meets the validator's Stable rules |
 | [gliner2-base-v1/onnx-fp32-cpu](../../model-pipeline/registry/gliner2-base-v1/onnx-fp32-cpu/manifest.yaml) | extraction | stable | Mark | 2027-01-05 | [passed](../evidence/g0-provenance-2026-10-14/README.md) | [passed](../evidence/release-set-gates-2026-10-14/gliner2-onnx-fp32-cpu/README.md) | [passed](../evidence/release-set-gates-2026-10-14/gliner2-onnx-fp32-cpu/README.md) | [passed](../evidence/release-set-gates-2026-10-14/gliner2-onnx-fp32-cpu/README.md) | [passed](../evidence/qualification-2026-10-15/README.md) | [passed](../evidence/qualification-2026-10-15/README.md) | [passed](../evidence/g6-distribution-2026-10-14/README.md) | [passed](../evidence/g7-integration-2026-10-14/README.md) | stable: meets the validator's Stable rules |
 | [gliner2-base-v1/onnx-fp32-cuda](../../model-pipeline/registry/gliner2-base-v1/onnx-fp32-cuda/manifest.yaml) | extraction | stable | Mark | 2027-01-05 | [passed](../evidence/g0-provenance-2026-10-14/README.md) | [passed](../evidence/release-set-gates-2026-10-14/gliner2-onnx-fp32-cuda/README.md) | [passed](../evidence/release-set-gates-2026-10-14/gliner2-onnx-fp32-cuda/README.md) | [passed](../evidence/release-set-gates-2026-10-14/gliner2-onnx-fp32-cuda/README.md) | [passed](../evidence/qualification-2026-10-16-cuda/README.md) | [passed](../evidence/qualification-2026-10-16-cuda/README.md) | [passed](../evidence/g6-distribution-2026-10-14/README.md) | [passed](../evidence/g7-integration-2026-10-14/README.md) | stable: meets the validator's Stable rules |
+| [kev-0.8b/onnx-fp32-cpu](../../model-pipeline/registry/kev-0.8b/onnx-fp32-cpu/manifest.yaml) | decision | experimental | Mark | 2027-01-05 | not-run | not-run | not-run | not-run | not-run | not-run | not-run | not-run | gates not passed: G0, G1, G2, G3, G4, G5, G6, G7; untested: aot |
+| [kev-0.8b/onnx-fp32-cuda](../../model-pipeline/registry/kev-0.8b/onnx-fp32-cuda/manifest.yaml) | decision | experimental | Mark | 2027-01-05 | not-run | not-run | not-run | not-run | not-run | not-run | not-run | not-run | gates not passed: G0, G1, G2, G3, G4, G5, G6, G7; untested: aot, concurrent_calls_unserialized; promotion also awaits a green per-release GPU regression run |
+| [kev-4b/onnx-fp32-cpu](../../model-pipeline/registry/kev-4b/onnx-fp32-cpu/manifest.yaml) | decision | experimental | Mark | 2027-01-05 | not-run | not-run | not-run | not-run | not-run | not-run | not-run | not-run | gates not passed: G0, G1, G2, G3, G4, G5, G6, G7; untested: aot |
+| [kev-4b/onnx-fp32-cuda](../../model-pipeline/registry/kev-4b/onnx-fp32-cuda/manifest.yaml) | decision | experimental | Mark | 2027-01-05 | not-run | not-run | not-run | not-run | not-run | not-run | not-run | not-run | gates not passed: G0, G1, G2, G3, G4, G5, G6, G7; untested: aot, concurrent_calls_unserialized; promotion also awaits a green per-release GPU regression run |
 | [multilingual-e5-small/onnx-fp32-cpu](../../model-pipeline/registry/multilingual-e5-small/onnx-fp32-cpu/manifest.yaml) | embedding | stable | Mark | 2027-01-05 | [passed](../releases/e5-0.1.0-preview.1.md) | [passed](../evidence/release-set-gates-2026-10-14/e5-onnx-fp32-cpu/README.md) | [passed](../evidence/release-set-gates-2026-10-14/e5-onnx-fp32-cpu/README.md) | [passed](../evidence/release-set-gates-2026-10-14/e5-onnx-fp32-cpu/README.md) | [passed](../evidence/g4-soak-1h-2026-10-14/README.md) | [passed](../evidence/qualification-2026-10-15/README.md) | [passed](../evidence/g6-distribution-2026-10-14/README.md) | [passed](../evidence/g7-integration-2026-10-14/README.md) | stable: meets the validator's Stable rules |
 | [multilingual-e5-small/onnx-fp32-cuda](../../model-pipeline/registry/multilingual-e5-small/onnx-fp32-cuda/manifest.yaml) | embedding | stable | Mark | 2027-01-05 | [passed](../evidence/g0-provenance-2026-10-14/README.md) | [passed](../evidence/release-set-gates-2026-10-14/e5-onnx-fp32-cuda/README.md) | [passed](../evidence/release-set-gates-2026-10-14/e5-onnx-fp32-cuda/README.md) | [passed](../evidence/release-set-gates-2026-10-14/e5-onnx-fp32-cuda/README.md) | [passed](../evidence/qualification-2026-10-16-cuda/README.md) | [passed](../evidence/qualification-2026-10-16-cuda/README.md) | [passed](../evidence/g6-distribution-2026-10-14/README.md) | [passed](../evidence/g7-integration-2026-10-14/README.md) | stable: meets the validator's Stable rules |
 | [qwen3.5-0.8b/ortgenai-fp16x-cuda](../../model-pipeline/registry/qwen3.5-0.8b/ortgenai-fp16x-cuda/manifest.yaml) | generation | stable | Mark | 2027-01-05 | [passed](../evidence/g0-provenance-2026-10-14/README.md) | [passed](../evidence/release-set-gates-2026-10-14/qwen35-ortgenai-fp16x-cuda/README.md) | [passed](../evidence/release-set-gates-2026-10-14/qwen35-ortgenai-fp16x-cuda/README.md) | [passed](../evidence/release-set-gates-2026-10-14/qwen35-ortgenai-fp16x-cuda/README.md) | [passed](../evidence/qualification-2026-10-16-cuda/README.md) | [passed](../evidence/qualification-2026-10-16-cuda/README.md) | [passed](../evidence/g6-distribution-2026-10-14/README.md) | [passed](../evidence/g7-integration-2026-10-14/README.md) | stable: meets the validator's Stable rules |
@@ -38,6 +42,10 @@ Gate cells link to the evidence the manifest records. The Stable readiness colum
 | embeddinggemma-2/video-fp32-cuda | onnxruntime 1.30.0 | Microsoft.ML.OnnxRuntime.Gpu.Linux 1.30.0 | fp32 | reference |
 | gliner2-base-v1/onnx-fp32-cpu | onnxruntime 1.30.0 | Microsoft.ML.OnnxRuntime | fp32 | reference |
 | gliner2-base-v1/onnx-fp32-cuda | onnxruntime 1.30.0 | Microsoft.ML.OnnxRuntime.Gpu.Linux 1.30.0 | fp32 | reference |
+| kev-0.8b/onnx-fp32-cpu | onnxruntime 1.30.0 | Microsoft.ML.OnnxRuntime | fp32 | reference |
+| kev-0.8b/onnx-fp32-cuda | onnxruntime 1.30.0 | Microsoft.ML.OnnxRuntime.Gpu.Linux 1.30.0 | fp32 | reference |
+| kev-4b/onnx-fp32-cpu | onnxruntime 1.30.0 | Microsoft.ML.OnnxRuntime | fp32 | reference |
+| kev-4b/onnx-fp32-cuda | onnxruntime 1.30.0 | Microsoft.ML.OnnxRuntime.Gpu.Linux 1.30.0 | fp32 | reference |
 | multilingual-e5-small/onnx-fp32-cpu | onnxruntime 1.30.0 | Microsoft.ML.OnnxRuntime | fp32 | reference |
 | multilingual-e5-small/onnx-fp32-cuda | onnxruntime 1.30.0 | Microsoft.ML.OnnxRuntime.Gpu 1.30.0 | fp32 | reference |
 | qwen3.5-0.8b/ortgenai-fp16x-cuda | onnxruntime-genai 0.17.1 | Microsoft.ML.OnnxRuntimeGenAI.Cuda 0.17.1 | fp16 | reference |
@@ -133,6 +141,86 @@ One table per family, one column per profile. Rows are every capability any prof
 | plain_deduplicated_output | unsupported | unsupported |
 | relation_extraction | unsupported | unsupported |
 | structured_extraction | unsupported | unsupported |
+
+### kev-0.8b
+
+| Capability | onnx-fp32-cpu | onnx-fp32-cuda |
+| --- | --- | --- |
+| batch | unsupported | unsupported |
+| streaming | unsupported | unsupported |
+| cancellation | experimental | experimental |
+| persistence | unsupported | unsupported |
+| training | unsupported | unsupported |
+| aot | untested | untested |
+| extensions_ai | unsupported | unsupported |
+| mlnet | unsupported | unsupported |
+| asset_acquisition_download | unsupported | unsupported |
+| asset_verification_offline | experimental | experimental |
+| bf16 | unsupported | unsupported |
+| calibrated_temperature | experimental | experimental |
+| calibration_fitting | unsupported | unsupported |
+| concurrent_calls | experimental | experimental |
+| concurrent_calls_unserialized | unrecorded | untested |
+| date_facts | unsupported | unsupported |
+| decision_choice | experimental | experimental |
+| decision_noul | experimental | experimental |
+| decision_score | experimental | experimental |
+| delimiter_escaping | experimental | experimental |
+| fp16 | unsupported | unsupported |
+| generation | unsupported | unsupported |
+| http_server | unsupported | unsupported |
+| non_english | unsupported | unsupported |
+| option_isolation | unsupported | unsupported |
+| probability_rounding | unsupported | unsupported |
+| quantized | unsupported | unsupported |
+| question_isolation | experimental | experimental |
+| raw_probabilities | experimental | experimental |
+| state_cache_within_request | experimental | experimental |
+| state_json_rendering | experimental | experimental |
+| state_over_8192_tokens | unsupported | unsupported |
+| state_prefix_reuse_across_requests | unsupported | unsupported |
+| tf32 | unrecorded | unsupported |
+| usage_output_tokens | unsupported | unsupported |
+
+### kev-4b
+
+| Capability | onnx-fp32-cpu | onnx-fp32-cuda |
+| --- | --- | --- |
+| batch | unsupported | unsupported |
+| streaming | unsupported | unsupported |
+| cancellation | experimental | experimental |
+| persistence | unsupported | unsupported |
+| training | unsupported | unsupported |
+| aot | untested | untested |
+| extensions_ai | unsupported | unsupported |
+| mlnet | unsupported | unsupported |
+| asset_acquisition_download | unsupported | unsupported |
+| asset_verification_offline | experimental | experimental |
+| bf16 | unsupported | unsupported |
+| calibrated_temperature | experimental | experimental |
+| calibration_fitting | unsupported | unsupported |
+| concurrent_calls | experimental | experimental |
+| concurrent_calls_unserialized | unrecorded | untested |
+| date_facts | unsupported | unsupported |
+| decision_choice | experimental | experimental |
+| decision_noul | experimental | experimental |
+| decision_score | experimental | experimental |
+| delimiter_escaping | experimental | experimental |
+| fp16 | unsupported | unsupported |
+| generation | unsupported | unsupported |
+| http_server | unsupported | unsupported |
+| non_english | unsupported | unsupported |
+| option_isolation | unsupported | unsupported |
+| probability_rounding | unsupported | unsupported |
+| quantized | unsupported | unsupported |
+| question_isolation | experimental | experimental |
+| raw_probabilities | experimental | experimental |
+| state_cache_within_request | experimental | experimental |
+| state_json_rendering | experimental | experimental |
+| state_over_8192_tokens | unsupported | unsupported |
+| state_prefix_reuse_across_requests | unsupported | unsupported |
+| tf32 | unrecorded | unsupported |
+| usage_output_tokens | unsupported | unsupported |
 
 ### multilingual-e5-small
 
@@ -241,6 +329,35 @@ One table per family, one column per profile. Rows are every capability any prof
 - `gliner2-base-v1/onnx-fp32-cuda`: The count gate (count_pred argmax 0 gives an empty result) never closed on the development corpus. The proposed capability cases (model-pipeline/proposed/gliner2-base-v1/capability-cases) add 12 public-text cases where it closes; they are not yet accepted fixtures.
 - `gliner2-base-v1/onnx-fp32-cuda`: CUDA parity evidence (PROPOSED.md) left out the two cases over 600 tokens from the padded-batch check because the GPU was shared; single-row parity covers all 58 cases (span logits max abs 4.0e-3, scores 2.5e-6).
 - `gliner2-base-v1/onnx-fp32-cuda`: Native runtime: Microsoft.ML.OnnxRuntime.Gpu.Linux 1.30.0 needs the CUDA 13 runtime and cuDNN 9 on the loader path; the package does not ship them.
+- `kev-0.8b/onnx-fp32-cpu`: Not hosted and no redistribution decision (P-009 open): there is no download. Build the bundle with model-pipeline/reference/kev/run_kev.py build (or receive it) and open it with KevModelAssets.OpenDirectory, which checks every file's size and SHA-256.
+- `kev-0.8b/onnx-fp32-cpu`: model.onnx.data is not byte-reproducible across builds: the fp32 LoRA merge differs in a few floats of the LoRA-merged projections between runs (reduction order). The lock pins the measured bundle; a rebuilt bundle needs its own digests and its own evidence (KevDecisionModel.Create with explicit paths).
+- `kev-0.8b/onnx-fp32-cpu`: The references are proposed, not adopted into protected/, and no gate has run; every capability is at most experimental.
+- `kev-0.8b/onnx-fp32-cpu`: Most of the error against PyTorch comes from ONNX Runtime's CPU LinearAttention kernel (admissions/kev.md, GPU results); the bound is 2e-4 in probability.
+- `kev-0.8b/onnx-fp32-cpu`: Upstream lists Kev-0.8B weaknesses that carry over: below-chance When2Call tool routing, date arithmetic and knowledge questions.
+- `kev-0.8b/onnx-fp32-cpu`: Memory: about 3.5 GB resident, plus the state cache.
+- `kev-0.8b/onnx-fp32-cuda`: Not hosted and no redistribution decision (P-009 open): there is no download. Build the bundle with model-pipeline/reference/kev/run_kev.py build (or receive it) and open it with KevModelAssets.OpenDirectory, which checks every file's size and SHA-256.
+- `kev-0.8b/onnx-fp32-cuda`: model.onnx.data is not byte-reproducible across builds: the fp32 LoRA merge differs in a few floats of the LoRA-merged projections between runs (reduction order). The lock pins the measured bundle; a rebuilt bundle needs its own digests and its own evidence (KevDecisionModel.Create with explicit paths).
+- `kev-0.8b/onnx-fp32-cuda`: The references are proposed, not adopted into protected/, and no gate has run; every capability is at most experimental.
+- `kev-0.8b/onnx-fp32-cuda`: Evidence is local: one RTX 3090 workstation. The per-release GPU regression and the gates have not run for this profile; other NVIDIA GPUs are untested.
+- `kev-0.8b/onnx-fp32-cuda`: ONNX Runtime keeps the graph's GroupQueryAttention nodes on the CPU provider inside the CUDA session, and the state cache passes through host memory between rows. The builder's own CUDA graph is faster but did not load unpatched with ONNX Runtime GenAI 0.17.1, so it is not a profile.
+- `kev-0.8b/onnx-fp32-cuda`: Cancellation on CUDA completes the current graph run before throwing (no mid-graph termination).
+- `kev-0.8b/onnx-fp32-cuda`: Upstream lists Kev-0.8B weaknesses that carry over: below-chance When2Call tool routing, date arithmetic and knowledge questions.
+- `kev-0.8b/onnx-fp32-cuda`: Device memory: about 3.5 GB.
+- `kev-0.8b/onnx-fp32-cuda`: Native runtime: Microsoft.ML.OnnxRuntime.Gpu.Linux 1.30.0 needs the CUDA 13 runtime and cuDNN 9 on the loader path; the package does not ship them.
+- `kev-4b/onnx-fp32-cpu`: No binding tolerance for Kev-4B: the protected file binds Kev-0.8B, and one transfer-v4 development question (2.05e-4) exceeds its 2e-4 probability bound by 2.5% (no flip, identical accuracy). The binding bound for 4B is the maintainer's decision.
+- `kev-4b/onnx-fp32-cpu`: Not hosted and no redistribution decision (P-009 open): there is no download. Build the bundle (about 17 GB) with model-pipeline/reference/kev/run_kev.py build (or receive it) and open it with KevModelAssets.OpenDirectory, which checks every file's size and SHA-256 (hashing the weights takes about a minute).
+- `kev-4b/onnx-fp32-cpu`: model.onnx.data is not byte-reproducible across builds (the fp32 LoRA merge; see execution.graph). The lock pins the measured bundle; a rebuilt bundle needs its own digests and its own evidence (KevDecisionModel.Create with explicit paths).
+- `kev-4b/onnx-fp32-cpu`: The references are proposed, not adopted into protected/, and no gate has run; every capability is at most experimental. The full decision-v7 development run for 4B (1,468 questions) was stopped for memory before it finished and is not reported.
+- `kev-4b/onnx-fp32-cpu`: Memory: about 18 GB resident, plus the state cache.
+- `kev-4b/onnx-fp32-cuda`: No binding tolerance for Kev-4B: the protected file binds Kev-0.8B, and on CPU one transfer-v4 development question (2.05e-4) exceeds its 2e-4 probability bound by 2.5% (no flip, identical accuracy). The binding bound for 4B is the maintainer's decision.
+- `kev-4b/onnx-fp32-cuda`: Evidence is local: one RTX 3090 workstation. The per-release GPU regression and the gates have not run for this profile; other NVIDIA GPUs are untested.
+- `kev-4b/onnx-fp32-cuda`: ONNX Runtime keeps the graph's GroupQueryAttention nodes on the CPU provider inside the CUDA session, and the state cache passes through host memory between rows.
+- `kev-4b/onnx-fp32-cuda`: Cancellation on CUDA completes the current graph run before throwing (no mid-graph termination).
+- `kev-4b/onnx-fp32-cuda`: Native runtime: Microsoft.ML.OnnxRuntime.Gpu.Linux 1.30.0 needs the CUDA 13 runtime and cuDNN 9 on the loader path; the package does not ship them.
+- `kev-4b/onnx-fp32-cuda`: Not hosted and no redistribution decision (P-009 open): there is no download. Build the bundle (about 17 GB) with model-pipeline/reference/kev/run_kev.py build (or receive it) and open it with KevModelAssets.OpenDirectory, which checks every file's size and SHA-256 (hashing the weights takes about a minute).
+- `kev-4b/onnx-fp32-cuda`: model.onnx.data is not byte-reproducible across builds (the fp32 LoRA merge; see execution.graph). The lock pins the measured bundle; a rebuilt bundle needs its own digests and its own evidence (KevDecisionModel.Create with explicit paths).
+- `kev-4b/onnx-fp32-cuda`: The references are proposed, not adopted into protected/, and no gate has run; every capability is at most experimental. The full decision-v7 development run for 4B (1,468 questions) was stopped for memory before it finished and is not reported.
+- `kev-4b/onnx-fp32-cuda`: Device memory: the weights take about 17 GB, so Kev-4B needs a 24 GB card.
 - `multilingual-e5-small/onnx-fp32-cpu`: Linux memory: the hosted soak's growth of 2026-10-15 (about 50 MB/h, run 38793842060) was glibc retention after unloading plus transparent huge pages set to `always` on the runner image, not a leak (docs/evidence/scheduled-regression-fix/). Starlings.Runtime.Onnx calls malloc_trim on session release (on by default; opt out per session or per process), and the qualification soak runs with THP `madvise`. On `always` hosts resident memory can look larger without any leak.
 - `multilingual-e5-small/onnx-fp32-cpu`: The pinned tokenizer.json emits a lone "▁" token before special-token literals and for trailing whitespace, where SentencePiece and transformers 5.18 emit none. The owned profile follows tokenizer.json; the difference is recorded, not fixed.
 - `multilingual-e5-small/onnx-fp32-cpu`: tokenizer.json leaves decomposed Hangul jamo uncomposed, while SentencePiece composes them.

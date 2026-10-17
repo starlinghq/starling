@@ -12,10 +12,25 @@ Kev 1.0 decision models in-process on ONNX Runtime: one document (the *state*) a
 - The package ships the asset locks (sizes and SHA-256), not the model files.
 - On the CUDA provider the same bundles run as the profiles `kev-0.8b/onnx-fp32-cuda` and `kev-4b/onnx-fp32-cuda` (Experimental, `use_tf32=0`; see [CUDA](#cuda)).
 
+## Maturity
+
+<!-- catalog:maturity profiles=kev-0.8b/*,kev-4b/* -->
+Maturity is per profile, generated from the registry manifests by `model-pipeline catalog` (do not edit this table by hand). Gates, evidence and capabilities per profile: the [model catalog](https://github.com/starlinghq/starling/blob/main/docs/catalog/README.md).
+
+| Profile | Maturity | Platforms |
+| --- | --- | --- |
+| `kev-0.8b/onnx-fp32-cpu` | experimental | linux-x64 cpu: experimental; linux-x64 cuda: experimental; windows-x64 cpu: untested |
+| `kev-0.8b/onnx-fp32-cuda` | experimental | linux-x64 cuda: experimental; windows-x64 cuda: untested |
+| `kev-4b/onnx-fp32-cpu` | experimental | linux-x64 cpu: experimental; linux-x64 cuda: experimental; windows-x64 cpu: untested |
+| `kev-4b/onnx-fp32-cuda` | experimental | linux-x64 cuda: experimental; windows-x64 cuda: untested |
+<!-- /catalog:maturity -->
+
 ## Install
 
+Starlings.Models.Kev is not on nuget.org yet: it ships with the next preview release of the Starlings packages. Until then, reference `ai-dotnet/src/Starlings.Models.Kev` from a checkout.
+
 ```sh
-dotnet add package Starlings.Models.Kev --prerelease
+dotnet add package Starlings.Models.Kev --prerelease   # from the next preview release
 dotnet add package Microsoft.ML.OnnxRuntime --version 1.30.0     # CPU natives (contrib ops LinearAttention, CausalConvWithState, ...)
 # or, for CUDA (Linux x64; the CUDA 13 runtime and cuDNN 9 are not in the package):
 dotnet add package Microsoft.ML.OnnxRuntime.Gpu.Linux --version 1.30.0
@@ -88,7 +103,7 @@ python -m onnxruntime_genai.models.builder -i merged -o onnx -p fp32 -e cpu \
 
 ## Status
 
-Every capability has an explicit status in `KevCapabilities.All`. Experimental: noul, choice and score decisions, calibrated and raw temperature, delimiter escaping, question isolation, the state cache within a request, JSON state rendering, cancellation, offline verification, concurrent calls (on CUDA serialized), CUDA. Untested: unserialized concurrent calls on CUDA, Windows, Native AOT. Unsupported: states over 8,192 tokens, truncation, downloads, state reuse across requests, batched rows, upstream's 4-decimal rounding and `usage.output_tokens`, `KEV_DATE_FACTS`, option isolation, the HTTP server, TF32, bf16, fp16 and quantized graphs, training and calibration fitting, Kev-9B and Kev-27B.
+Every capability has an explicit status in `KevCapabilities.All`; `KevCapabilities.Profiles` repeats each profile's statuses keyed as its registry manifest (`model-pipeline/registry/kev-*`), and a test keeps the two equal. Experimental: noul, choice and score decisions, calibrated and raw temperature, delimiter escaping, question isolation, the state cache within a request, JSON state rendering, cancellation, offline verification, concurrent calls (on CUDA serialized), CUDA. Untested: unserialized concurrent calls on CUDA, Windows, Native AOT. Unsupported: states over 8,192 tokens, truncation, downloads, state reuse across requests, batched rows, upstream's 4-decimal rounding and `usage.output_tokens`, `KEV_DATE_FACTS`, option isolation, the HTTP server, TF32, bf16, fp16 and quantized graphs, training and calibration fitting, Kev-9B and Kev-27B.
 
 ## Evidence
 
