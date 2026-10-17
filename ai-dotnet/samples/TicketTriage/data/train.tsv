@@ -1,0 +1,81 @@
+Queue	Language	Text
+billing	en	I was charged twice for my subscription this month.
+billing	en	My invoice INV-20931 shows the wrong VAT number, please reissue it.
+billing	en	Why did my monthly plan price go up from 9.99 to 12.99?
+billing	en	The payment failed but the money still left my bank account.
+billing	en	Can I get a refund for the annual plan I renewed by accident yesterday?
+billing	en	Please update the credit card on file, the old one has expired.
+billing	en	I need a copy of all invoices from 2025 for my accountant.
+billing	en	There is an unknown charge of 49 dollars on my statement from you.
+billing	en	How do I switch from monthly billing to yearly billing?
+billing	en	The discount code SPRING20 was not applied to my last payment.
+billing	en	You billed me after I cancelled my subscription on March 3.
+billing	en	Do you accept PayPal or only credit cards?
+billing	en	My company needs invoices addressed to our head office instead of my name.
+billing	en	I was promised a pro-rated credit when I downgraded but never received it.
+billing	en	The checkout keeps declining my Visa card even though it works elsewhere.
+billing	en	Please explain the extra service fee on my latest bill.
+shipping	en	My order 58213 still has not arrived after two weeks.
+shipping	en	The tracking number you sent me does not work on the courier website.
+shipping	en	Can you deliver to a parcel locker instead of my home address?
+shipping	en	The package was marked as delivered but nothing was at my door.
+shipping	en	How long does express shipping to Canada take?
+shipping	en	I need to change the delivery address for order 77140 before it ships.
+shipping	en	The courier left my parcel with a neighbour I do not know.
+shipping	en	Do you ship to Norway and what are the customs fees?
+shipping	en	My order was split into two shipments and only one has arrived.
+shipping	en	The delivery date keeps moving, first Monday, now next Friday.
+shipping	en	Is it possible to pick up my order from your warehouse?
+shipping	en	The box arrived crushed and soaking wet.
+shipping	en	Why is shipping more expensive than the product itself?
+shipping	en	I was not home when the driver came, how do I rearrange delivery?
+shipping	en	My order has been stuck in customs for ten days.
+shipping	en	Can you combine my two open orders into one shipment?
+technical	en	The app crashes every time I open the settings page.
+technical	en	I cannot connect the SmartHub 2 to my Wi-Fi network.
+technical	en	The firmware update failed and now the device will not turn on.
+technical	en	Sync between my phone and laptop stopped working after the last update.
+technical	en	The website shows error 500 when I try to upload a file.
+technical	en	Notifications are not arriving on my Android phone.
+technical	en	The battery of my tracker drains in a few hours instead of days.
+technical	en	The camera feed is black in the desktop app but works on mobile.
+technical	en	Exporting a report to PDF produces an empty document.
+technical	en	The Bluetooth pairing code is rejected by my headphones.
+technical	en	The dashboard is extremely slow and takes a minute to load.
+technical	en	After installing version 4.2 the printer driver no longer works.
+technical	en	The API returns a timeout for every request since this morning.
+technical	en	The touchscreen does not respond in the bottom left corner.
+technical	en	Dark mode makes some buttons invisible in the editor.
+technical	en	The voice assistant does not understand any commands anymore.
+account	en	I forgot my password and the reset email never arrives.
+account	en	Please delete my account and all my personal data.
+account	en	How do I change the email address on my profile?
+account	en	My account was locked after too many login attempts.
+account	en	I think someone else logged into my account from another country.
+account	en	How do I enable two-factor authentication?
+account	en	I want to merge my two accounts into one.
+account	en	Can I transfer my account to my colleague who is taking over my job?
+account	en	The verification code by SMS is never delivered to my phone.
+account	en	How can I download a copy of all the data you store about me?
+account	en	I cannot log in with my Google account anymore.
+account	en	Please change the name on my profile, it was misspelled at sign-up.
+account	en	How do I add another user to our team account?
+account	en	My username was changed without my permission.
+account	en	I lost access to my authenticator app, how do I get back in?
+account	en	Why does the site keep logging me out every few minutes?
+returns	en	I would like to return the jacket I bought, it is too small.
+returns	en	How do I get a return label for order 33018?
+returns	en	The blender I received is defective, I want a replacement.
+returns	en	Can I exchange the blue shoes for the same model in black?
+returns	en	I sent the item back three weeks ago and have not been refunded.
+returns	en	Is the return free or do I have to pay for postage?
+returns	en	The headphones stopped working after a month, is this covered by warranty?
+returns	en	I received the wrong size, please send the correct one.
+returns	en	How many days do I have to return an unopened product?
+returns	en	The return portal says my order is not eligible for return.
+returns	en	I want to return only one item from a bundle.
+returns	en	The coffee machine leaks water, I would like my money back.
+returns	en	Can I return a gift without the receipt?
+returns	en	You sent me two lamps but I only ordered one, how do I send one back?
+returns	en	The color of the sofa is completely different from the photos, I want to return it.
+returns	en	My return was rejected because of missing packaging, but I still have it.
