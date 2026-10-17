@@ -17,7 +17,11 @@ instruction; `Embed(text)` embeds text as supplied. Passages never acquire a que
 Reranking returns logits with identity activation, not calibrated probabilities. Input pairs
 are truncated with the pinned tokenizer's longest-first policy, including special tokens.
 
-Batches are chunked and right-padded with mask 0. Threads default to two intra-op and one
+Batches are chunked and right-padded with mask 0: `maxBatchSize` rows per call (default 32).
+`Create` also takes two experimental options, both off by default (outputs then unchanged):
+`maxBatchTokens` caps padded cells (rows x longest row) per call, and a row longer than the
+cap runs alone; `sortByLength` chunks rows in ascending token length and returns results in
+input order, so a row's output can differ from the default within padded-batch tolerance. Threads default to two intra-op and one
 inter-op worker. Calls are synchronous; cancellation follows ONNX Runtime graph-node
 boundaries. Dispose an instance after outstanding calls complete. Streaming, training,
 persistence, AOT, GPU providers, and unlisted model contracts are unsupported or untested.

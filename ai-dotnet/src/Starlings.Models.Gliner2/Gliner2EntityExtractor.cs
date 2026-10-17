@@ -1,3 +1,4 @@
+using Starlings.Batching;
 using Starlings.Runtime.Onnx;
 using Microsoft.ML.OnnxRuntime;
 
@@ -25,9 +26,10 @@ namespace Starlings.Models.Gliner2;
 /// </para>
 /// <para>
 /// <b>Threading and lifetime.</b> Methods are synchronous and safe to call concurrently. Cancellation follows E5 and
-/// <see cref="OnnxModelSession"/>: checked while preparing each text, before each chunk of
-/// <see cref="Gliner2ExtractorOptions.MaxBatchSize"/> texts and inside a run (between graph nodes on CPU; on CUDA when
-/// the run completes). A cancelled call
+/// <see cref="OnnxModelSession"/>: checked while preparing each text, before each chunk (at most
+/// <see cref="Gliner2ExtractorOptions.MaxBatchSize"/> texts and, when set,
+/// <see cref="Gliner2ExtractorOptions.MaxBatchTokens"/> padded tokens) and inside a run (between graph nodes on CPU;
+/// on CUDA when the run completes). A cancelled call
 /// throws <see cref="OperationCanceledException"/> and returns nothing; the extractor stays usable.
 /// </para>
 /// </remarks>
@@ -209,7 +211,9 @@ public sealed class Gliner2EntityExtractor : IDisposable
 
     /// <summary>
     /// Stage 2: runs the graph on prepared inputs in right-padded batches of <see cref="Gliner2ExtractorOptions.MaxBatchSize"/>
-    /// (ids and mask padded with 0, word positions padded with 0). All inputs must share one label count.
+    /// (ids and mask padded with 0, word positions padded with 0). All inputs must share one label count. Outputs are in
+    /// input order; <see cref="Gliner2ExtractorOptions.MaxBatchTokens"/> and
+    /// <see cref="Gliner2ExtractorOptions.SortByLength"/> change only how inputs are grouped into calls.
     /// </summary>
     /// <exception cref="Gliner2InputTooLongException">An input exceeds <see cref="Gliner2ExtractorOptions.MaxSequenceLength"/>.</exception>
     /// <exception cref="ArgumentException">Inputs with different label counts.</exception>
@@ -254,14 +258,26 @@ public sealed class Gliner2EntityExtractor : IDisposable
         }
 
         var outputs = new Gliner2ModelOutput[inputs.Count];
-        for (int start = 0; start < inputs.Count; start += _options.MaxBatchSize)
+        var plan = Plan(inputs, _options);
+        foreach (var chunk in plan.Chunks)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            int count = Math.Min(_options.MaxBatchSize, inputs.Count - start);
-            RunChunk(inputs, start, count, outputs, cancellationToken);
+            RunChunk(inputs, plan.Rows(chunk).ToArray(), outputs, cancellationToken);
         }
 
         return outputs;
+    }
+
+    /// <summary>The chunk plan <see cref="RunModel"/> runs, over token counts (schema prefix included).</summary>
+    internal static BatchPlan Plan(IReadOnlyList<Gliner2ModelInput> inputs, Gliner2ExtractorOptions options)
+    {
+        var lengths = new int[inputs.Count];
+        for (int i = 0; i < lengths.Length; i++)
+        {
+            lengths[i] = inputs[i].TokenCount;
+        }
+
+        return BatchPlan.Create(lengths, options.MaxBatchSize, options.MaxBatchTokens, options.SortByLength);
     }
 
     /// <summary>Stage 3: GLiNER2's span decoding of one input's graph outputs, mapped onto the input text.</summary>
@@ -335,15 +351,17 @@ public sealed class Gliner2EntityExtractor : IDisposable
         }
     }
 
-    private void RunChunk(IReadOnlyList<Gliner2ModelInput> inputs, int start, int count, Gliner2ModelOutput[] outputs, CancellationToken cancellationToken)
+    /// <summary>Runs the inputs at <paramref name="rows"/> as one padded call; writes <c>outputs[rows[r]]</c>.</summary>
+    private void RunChunk(IReadOnlyList<Gliner2ModelInput> inputs, int[] rows, Gliner2ModelOutput[] outputs, CancellationToken cancellationToken)
     {
+        int count = rows.Length;
         int sequence = 0;
         int words = 0;
-        int slots = inputs[start].SchemaIndex.Length;
+        int slots = inputs[rows[0]].SchemaIndex.Length;
         for (int r = 0; r < count; r++)
         {
-            sequence = Math.Max(sequence, inputs[start + r].TokenCount);
-            words = Math.Max(words, inputs[start + r].WordCount);
+            sequence = Math.Max(sequence, inputs[rows[r]].TokenCount);
+            words = Math.Max(words, inputs[rows[r]].WordCount);
         }
 
         var ids = new long[count * sequence];
@@ -352,7 +370,7 @@ public sealed class Gliner2EntityExtractor : IDisposable
         var schemaIndex = new long[count * slots];
         for (int r = 0; r < count; r++)
         {
-            var input = inputs[start + r];
+            var input = inputs[rows[r]];
             input.InputIds.CopyTo(ids.AsSpan(r * sequence));
             mask.AsSpan(r * sequence, input.TokenCount).Fill(1);
             input.WordIndex.CopyTo(wordIndex.AsSpan(r * words));
@@ -368,7 +386,7 @@ public sealed class Gliner2EntityExtractor : IDisposable
         _runGate?.Wait(cancellationToken);
         try
         {
-            ReadOutputs(inputs, start, count, outputs, words, slots, idsValue, maskValue, wordValue, schemaValue, cancellationToken);
+            ReadOutputs(inputs, rows, outputs, words, slots, idsValue, maskValue, wordValue, schemaValue, cancellationToken);
         }
         finally
         {
@@ -377,9 +395,10 @@ public sealed class Gliner2EntityExtractor : IDisposable
     }
 
     private void ReadOutputs(
-        IReadOnlyList<Gliner2ModelInput> inputs, int start, int count, Gliner2ModelOutput[] outputs, int words, int slots,
+        IReadOnlyList<Gliner2ModelInput> inputs, int[] rows, Gliner2ModelOutput[] outputs, int words, int slots,
         OrtValue idsValue, OrtValue maskValue, OrtValue wordValue, OrtValue schemaValue, CancellationToken cancellationToken)
     {
+        int count = rows.Length;
         using var results = _session.Run(InputNames, [idsValue, maskValue, wordValue, schemaValue], OutputNames, cancellationToken);
 
         var countShape = results[0].GetTensorTypeAndShape().Shape;
@@ -397,7 +416,7 @@ public sealed class Gliner2EntityExtractor : IDisposable
         var spanData = results[1].GetTensorDataAsSpan<float>();
         for (int r = 0; r < count; r++)
         {
-            var input = inputs[start + r];
+            var input = inputs[rows[r]];
             int n = input.WordCount;
             var countLogits = countData.Slice(r * countWidth, countWidth).ToArray();
             var spans = new float[labels * n * maxWidth];
@@ -407,7 +426,7 @@ public sealed class Gliner2EntityExtractor : IDisposable
                 source.CopyTo(spans.AsSpan(label * n * maxWidth));
             }
 
-            outputs[start + r] = new Gliner2ModelOutput(countLogits, spans, labels, n, maxWidth);
+            outputs[rows[r]] = new Gliner2ModelOutput(countLogits, spans, labels, n, maxWidth);
         }
     }
 }

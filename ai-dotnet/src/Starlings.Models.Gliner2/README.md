@@ -43,6 +43,18 @@ foreach (var e in result.Entities)
 }
 ```
 
+## Batching options
+
+`ExtractBatch` and `RunModel` split a batch (one label set) into ONNX Runtime calls, each right-padded to its longest text. `Gliner2ExtractorOptions` controls the split:
+
+| Option | Default | Effect |
+| --- | --- | --- |
+| `MaxBatchSize` | 8 | Texts per call at most (GLiNER2's default `batch_size`). Chunks are consecutive texts in input order. |
+| `MaxBatchTokens` | `null` (no budget) | Padded tokens (texts x longest text, schema prefix included) per call at most. A chunk closes before it would exceed the budget; a text longer than the budget runs alone. Experimental (`batch.token_budget`). |
+| `SortByLength` | `false` | Chunks texts in ascending token count (ties in input order) so each call pads less; results stay in input order. Experimental (`batch.sort_by_length`). |
+
+The defaults are the qualified behavior, with outputs unchanged bit for bit. With `SortByLength`, which texts share a call depends on the whole batch, so span logits can differ from the default by up to the profile's padded-batch-vs-single bound (`padded_batch_vs_single_span_logits_relative`); the CPU tests saw no difference and identical entities on the 54 in-contract fixture cases in random orders. On CUDA, calls stay serialized (`SerializeNativeCalls`); the options only change how one request is chunked.
+
 ## Stable contract
 
 This is the contract of profile `gliner2-base-v1/onnx-fp32-cpu`. Its Stable label commits to it under the [support policy](https://github.com/starlinghq/starling/blob/main/docs/support-policy.md). The statuses are the registry manifest's and `Gliner2Capabilities.Profiles`, which a test keeps equal key for key.

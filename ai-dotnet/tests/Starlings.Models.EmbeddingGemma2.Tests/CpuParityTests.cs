@@ -37,6 +37,40 @@ public class CpuParityTests(EmbeddingGemma2CpuFixture fixture, ITestOutputHelper
         EmbeddingGemma2ParityChecks.Matryoshka(encoder, fixture.Rows, Tolerances, singles, output);
     }
 
+    /// <summary>
+    /// <see cref="EmbeddingGemma2EncoderOptions.SortByLength"/> (experimental) against the binding bounds: 46 fixture rows
+    /// (every 3rd row, 2 to 1,743 tokens) in random orders, so short and long rows are neighbours in the input; each row
+    /// comes back at its input position, within the padded-batch-vs-single bound of its own single call.
+    /// </summary>
+    [Fact]
+    public void SortedBatchesStayWithinThePaddedBatchBound()
+    {
+        var encoder = fixture.Encoder;
+        var ct = TestContext.Current.CancellationToken;
+        var rows = fixture.Rows.Where((_, i) => i % 3 == 0).ToList();
+        var singles = rows.Select(r => encoder.Embed(new EmbeddingGemma2Input(r.InputIds), ct)).ToList();
+        using var sorted = new EmbeddingGemma2Encoder(encoder.Session, new EmbeddingGemma2EncoderOptions { SortByLength = true });
+        var vsSingle = new EmbeddingGemma2ErrorStats();
+        var vsProtected = new EmbeddingGemma2ErrorStats();
+        foreach (int seed in new[] { 1, 2 })
+        {
+            var order = Enumerable.Range(0, rows.Count).ToArray();
+            new Random(seed).Shuffle(order);
+            var batch = sorted.EmbedBatch(order.Select(i => new EmbeddingGemma2Input(rows[i].InputIds)).ToList(), ct);
+            for (int k = 0; k < order.Length; k++)
+            {
+                vsSingle.Add(rows[order[k]].Key, batch[k], singles[order[k]]);
+                vsProtected.Add(rows[order[k]].Key, batch[k], rows[order[k]].Embedding);
+            }
+        }
+
+        output.WriteLine($"{rows.Count} rows (lengths {rows.Min(r => r.InputIds.Length)} to {rows.Max(r => r.InputIds.Length)}) x 2 random orders, SortByLength, default budget, vs own single rows: {vsSingle}");
+        output.WriteLine($"  vs protected: {vsProtected}");
+        Assert.False(vsSingle.NonFinite);
+        Assert.True(vsSingle.Max <= Tolerances.PaddedBatchVsSingleMaxAbs, $"sorted batches vs single {vsSingle.Max:E3} > {Tolerances.PaddedBatchVsSingleMaxAbs:E1}");
+        Assert.True(vsProtected.Max <= Tolerances.EmbeddingMaxAbs, $"sorted batches vs protected {vsProtected.Max:E3}");
+    }
+
     [Fact]
     public void BatchIndependenceAcrossTheSlidingWindow() =>
         EmbeddingGemma2ParityChecks.SlidingWindowBatchIndependence(fixture.Encoder, fixture.Rows, Tolerances, output);

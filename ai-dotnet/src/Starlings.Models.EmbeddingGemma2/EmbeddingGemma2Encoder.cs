@@ -1,4 +1,5 @@
 using System.Buffers;
+using Starlings.Batching;
 using Starlings.Runtime.Onnx;
 using Microsoft.ML.OnnxRuntime;
 
@@ -28,7 +29,8 @@ namespace Starlings.Models.EmbeddingGemma2;
 /// checked before each chunk and inside a run (between graph nodes on CPU; on CUDA when the run completes). A
 /// cancelled call throws
 /// <see cref="OperationCanceledException"/> and returns nothing; the <see cref="Span{T}"/> overload may already have
-/// written the chunks that completed before cancellation.
+/// written the rows of the chunks that completed before cancellation (a prefix of the rows by default; with
+/// <see cref="EmbeddingGemma2EncoderOptions.SortByLength"/>, the shortest rows, wherever they are in the input).
 /// </para>
 /// </remarks>
 public sealed class EmbeddingGemma2Encoder : IDisposable
@@ -223,12 +225,11 @@ public sealed class EmbeddingGemma2Encoder : IDisposable
             Validate(inputs[i], i);
         }
 
-        int start = 0;
-        foreach (int count in PlanChunks(inputs, _options.MaxBatchSize, _options.MaxBatchTokens))
+        var plan = Plan(inputs, _options.MaxBatchSize, _options.MaxBatchTokens, _options.SortByLength);
+        foreach (var chunk in plan.Chunks)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            EmbedChunk(inputs, start, count, destination.Slice(start * Dimension, count * Dimension), cancellationToken);
-            start += count;
+            EmbedChunk(inputs, plan.Rows(chunk), chunk.Width, destination, cancellationToken);
         }
     }
 
@@ -245,31 +246,22 @@ public sealed class EmbeddingGemma2Encoder : IDisposable
     /// Consecutive chunk sizes in input order: a chunk grows while it has fewer than <paramref name="maxRows"/> rows and
     /// its padded size (rows x longest row) stays within <paramref name="maxCells"/>; every chunk has at least one row.
     /// </summary>
-    internal static List<int> PlanChunks(IReadOnlyList<EmbeddingGemma2Input> inputs, int maxRows, int maxCells)
+    internal static List<int> PlanChunks(IReadOnlyList<EmbeddingGemma2Input> inputs, int maxRows, int maxCells) =>
+        Plan(inputs, maxRows, maxCells, sortByLength: false).Chunks.Select(c => c.Count).ToList();
+
+    /// <summary>
+    /// The chunk plan of a batch: <see cref="PlanChunks"/>, over rows in ascending length order (ties in input order)
+    /// when <paramref name="sortByLength"/> is set.
+    /// </summary>
+    internal static BatchPlan Plan(IReadOnlyList<EmbeddingGemma2Input> inputs, int maxRows, int maxCells, bool sortByLength)
     {
-        var chunks = new List<int>();
-        int count = 0, width = 0;
-        for (int i = 0; i < inputs.Count; i++)
+        Span<int> lengths = inputs.Count <= 256 ? stackalloc int[inputs.Count] : new int[inputs.Count];
+        for (int i = 0; i < lengths.Length; i++)
         {
-            int length = inputs[i].Length;
-            int newWidth = Math.Max(width, length);
-            if (count > 0 && (count >= maxRows || (long)(count + 1) * newWidth > maxCells))
-            {
-                chunks.Add(count);
-                count = 0;
-                newWidth = length;
-            }
-
-            count++;
-            width = newWidth;
+            lengths[i] = inputs[i].Length;
         }
 
-        if (count > 0)
-        {
-            chunks.Add(count);
-        }
-
-        return chunks;
+        return BatchPlan.Create(lengths, maxRows, maxCells, sortByLength);
     }
 
     /// <summary>
@@ -319,9 +311,24 @@ public sealed class EmbeddingGemma2Encoder : IDisposable
     /// </summary>
     internal static void PackRightPadded(IReadOnlyList<EmbeddingGemma2Input> inputs, int start, int count, int width, Span<long> ids, Span<long> mask)
     {
+        Span<int> rows = count <= 256 ? stackalloc int[count] : new int[count];
         for (int r = 0; r < count; r++)
         {
-            var input = inputs[start + r];
+            rows[r] = start + r;
+        }
+
+        PackRightPadded(inputs, rows, width, ids, mask);
+    }
+
+    /// <summary>
+    /// Writes the inputs at <paramref name="rows"/>, in that order, into row-major <c>[rows.Length, width]</c> id and
+    /// mask buffers, right-padding each row with <see cref="PadTokenId"/> and mask 0.
+    /// </summary>
+    internal static void PackRightPadded(IReadOnlyList<EmbeddingGemma2Input> inputs, ReadOnlySpan<int> rows, int width, Span<long> ids, Span<long> mask)
+    {
+        for (int r = 0; r < rows.Length; r++)
+        {
+            var input = inputs[rows[r]];
             var idRow = ids.Slice(r * width, width);
             var maskRow = mask.Slice(r * width, width);
             input.InputIds.Span.CopyTo(idRow);
@@ -419,14 +426,13 @@ public sealed class EmbeddingGemma2Encoder : IDisposable
 
     private static bool IsMediaToken(long id) => id is 255_999 or 256_000 or (>= 258_880 and <= 258_884);
 
-    private void EmbedChunk(IReadOnlyList<EmbeddingGemma2Input> inputs, int start, int count, Span<float> destination, CancellationToken cancellationToken)
+    /// <summary>
+    /// Runs the inputs at <paramref name="rows"/> as one call padded to <paramref name="width"/> and writes row
+    /// <c>rows[r]</c>'s embedding at <c>destination[rows[r] * Dimension]</c>.
+    /// </summary>
+    private void EmbedChunk(IReadOnlyList<EmbeddingGemma2Input> inputs, ReadOnlySpan<int> rows, int width, Span<float> destination, CancellationToken cancellationToken)
     {
-        int width = 0;
-        for (int r = 0; r < count; r++)
-        {
-            width = Math.Max(width, inputs[start + r].Length);
-        }
-
+        int count = rows.Length;
         int cells = count * width;
         int tokenCells = checked(cells * NativeDimension);
         long[] ids = ArrayPool<long>.Shared.Rent(cells);
@@ -434,7 +440,7 @@ public sealed class EmbeddingGemma2Encoder : IDisposable
         float[] tokens = ArrayPool<float>.Shared.Rent(tokenCells);
         try
         {
-            PackRightPadded(inputs, start, count, width, ids, mask);
+            PackRightPadded(inputs, rows, width, ids, mask);
             RunGraph(ids, mask, tokens, count, width, cancellationToken);
             for (int r = 0; r < count; r++)
             {
@@ -443,7 +449,7 @@ public sealed class EmbeddingGemma2Encoder : IDisposable
                     mask.AsSpan(r * width, width),
                     NativeDimension,
                     Dimension,
-                    destination.Slice(r * Dimension, Dimension));
+                    destination.Slice(rows[r] * Dimension, Dimension));
             }
         }
         finally

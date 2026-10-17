@@ -1,4 +1,5 @@
 using Starlings.Acquisition;
+using Starlings.Batching;
 using Starlings.Runtime.Onnx;
 using Starlings.Tokenizers;
 using Microsoft.ML.OnnxRuntime;
@@ -9,17 +10,20 @@ internal sealed class BertSession : IDisposable
 {
     private readonly Tokenizer _tokenizer;
     private readonly int _maxBatchSize;
+    private readonly int? _maxBatchTokens;
+    private readonly bool _sortByLength;
     private int _disposed;
 
-    public BertSession(BertModelProfile profile, string snapshot, int threads, int maxBatchSize)
+    public BertSession(BertModelProfile profile, string snapshot, int threads, int maxBatchSize, int? maxBatchTokens = null, bool sortByLength = false)
     {
         ArgumentNullException.ThrowIfNull(profile);
         ArgumentOutOfRangeException.ThrowIfLessThan(threads, 1);
         ArgumentOutOfRangeException.ThrowIfGreaterThan(threads, 64);
-        ArgumentOutOfRangeException.ThrowIfLessThan(maxBatchSize, 1);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(maxBatchSize, 128);
+        ValidateBatching(maxBatchSize, maxBatchTokens);
         Profile = profile;
         _maxBatchSize = maxBatchSize;
+        _maxBatchTokens = maxBatchTokens;
+        _sortByLength = sortByLength;
         var files = ModelAssetStore.VerifyDirectory(profile.RuntimeLock, snapshot, CacheVerification.Sha256);
         _tokenizer = Tokenizer.FromFile(files.GetFilePath(BertModelProfile.TokenizerFile))
             .WithPadding(null).WithTruncation(new TruncationOptions(profile.MaxTokens));
@@ -61,23 +65,72 @@ internal sealed class BertSession : IDisposable
             ValidateInput(input, Profile.MaxTokens);
         }
 
-        var predictions = new float[inputs.Count][];
-        for (int start = 0; start < inputs.Count; start += _maxBatchSize)
+        return RunPlanned(inputs, Plan(inputs, _maxBatchSize, _maxBatchTokens, _sortByLength), (chunk, width) =>
         {
-            cancellationToken.ThrowIfCancellationRequested();
-            int count = Math.Min(_maxBatchSize, inputs.Count - start);
-            var chunk = inputs.Skip(start).Take(count).ToArray();
-            int width = chunk.Max(i => i.Length);
             float[] raw = Run(chunk, cancellationToken);
-            for (int row = 0; row < count; row++)
+            var rows = new float[chunk.Length][];
+            for (int row = 0; row < chunk.Length; row++)
             {
-                predictions[start + row] = Profile.Task == BertTask.Reranking ? [raw[row]]
+                rows[row] = Profile.Task == BertTask.Reranking ? [raw[row]]
                     : Pool(raw.AsSpan(row * width * BertModelProfile.HiddenSize, width * BertModelProfile.HiddenSize),
                         PadMask(chunk[row], width), Profile.Pooling);
             }
+
+            return rows;
+        }, cancellationToken);
+    }
+
+    /// <summary>
+    /// Runs <paramref name="plan"/>'s chunks in order with <paramref name="runChunk"/> (the chunk's inputs in call order
+    /// and its padded width; one result per input) and returns the results in input order. Cancellation is checked
+    /// before each chunk.
+    /// </summary>
+    internal static T[] RunPlanned<T>(IReadOnlyList<BertInput> inputs, BatchPlan plan, Func<BertInput[], int, T[]> runChunk, CancellationToken cancellationToken)
+    {
+        var results = new T[inputs.Count];
+        foreach (var batch in plan.Chunks)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            var rows = plan.Rows(batch);
+            var chunk = new BertInput[rows.Length];
+            for (int r = 0; r < rows.Length; r++)
+            {
+                chunk[r] = inputs[rows[r]];
+            }
+
+            var output = runChunk(chunk, batch.Width);
+            for (int r = 0; r < rows.Length; r++)
+            {
+                results[rows[r]] = output[r];
+            }
         }
 
-        return predictions;
+        return results;
+    }
+
+    /// <summary>
+    /// The chunk plan of a batch: at most <paramref name="maxRows"/> rows and, when set, <paramref name="maxCells"/>
+    /// padded cells per call, over rows in ascending length order when <paramref name="sortByLength"/> is set.
+    /// </summary>
+    internal static BatchPlan Plan(IReadOnlyList<BertInput> inputs, int maxRows, int? maxCells, bool sortByLength)
+    {
+        var lengths = new int[inputs.Count];
+        for (int i = 0; i < lengths.Length; i++)
+        {
+            lengths[i] = inputs[i].Length;
+        }
+
+        return BatchPlan.Create(lengths, maxRows, maxCells, sortByLength);
+    }
+
+    internal static void ValidateBatching(int maxBatchSize, int? maxBatchTokens)
+    {
+        ArgumentOutOfRangeException.ThrowIfLessThan(maxBatchSize, 1);
+        ArgumentOutOfRangeException.ThrowIfGreaterThan(maxBatchSize, 128);
+        if (maxBatchTokens is { } tokens)
+        {
+            ArgumentOutOfRangeException.ThrowIfLessThan(tokens, 1, nameof(maxBatchTokens));
+        }
     }
 
     private static long[] PadMask(BertInput input, int width)

@@ -1,4 +1,5 @@
 using System.Buffers;
+using Starlings.Batching;
 using Starlings.Runtime.Onnx;
 using Microsoft.ML.OnnxRuntime;
 
@@ -17,11 +18,19 @@ namespace Starlings.Models.E5;
 /// </para>
 /// <para>
 /// <b>Threading and lifetime.</b> Methods are synchronous and safe to call concurrently; each call uses its own pooled
-/// buffers. Cancellation follows <see cref="OnnxModelSession"/>: checked before each chunk of
-/// <see cref="E5EncoderOptions.MaxBatchSize"/> rows and inside a run (between graph nodes on CPU; on CUDA when the run
-/// completes). A cancelled call throws
+/// buffers. Cancellation follows <see cref="OnnxModelSession"/>: checked before each chunk (at most
+/// <see cref="E5EncoderOptions.MaxBatchSize"/> rows and, when set, <see cref="E5EncoderOptions.MaxBatchTokens"/> padded
+/// cells) and inside a run (between graph nodes on CPU; on CUDA when the run completes). A cancelled call throws
 /// <see cref="OperationCanceledException"/> and returns nothing; the <see cref="Span{T}"/> overload may already have
-/// written the chunks that completed before cancellation.
+/// written the rows of the chunks that completed before cancellation (a prefix of the rows by default; with
+/// <see cref="E5EncoderOptions.SortByLength"/>, the shortest rows, wherever they are in the input).
+/// </para>
+/// <para>
+/// <b>Chunking.</b> By default a batch runs as consecutive chunks of <see cref="E5EncoderOptions.MaxBatchSize"/> rows
+/// in input order, which is the qualified behavior. <see cref="E5EncoderOptions.MaxBatchTokens"/> also closes a chunk
+/// before its padded size (rows x longest row) would exceed the budget, and
+/// <see cref="E5EncoderOptions.SortByLength"/> chunks rows in ascending length order and writes each result back to
+/// its input position (both experimental).
 /// </para>
 /// </remarks>
 public sealed class E5Encoder : IDisposable
@@ -147,12 +156,24 @@ public sealed class E5Encoder : IDisposable
             Validate(inputs[i], i);
         }
 
-        for (int start = 0; start < inputs.Count; start += _options.MaxBatchSize)
+        var plan = Plan(inputs, _options);
+        foreach (var chunk in plan.Chunks)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            int count = Math.Min(_options.MaxBatchSize, inputs.Count - start);
-            EmbedChunk(inputs, start, count, destination.Slice(start * Dimension, count * Dimension), cancellationToken);
+            EmbedChunk(inputs, plan.Rows(chunk), chunk.Width, destination, cancellationToken);
         }
+    }
+
+    /// <summary>The chunk plan <see cref="EmbedBatch(IReadOnlyList{EncoderInput}, Span{float}, CancellationToken)"/> runs.</summary>
+    internal static BatchPlan Plan(IReadOnlyList<EncoderInput> inputs, E5EncoderOptions options)
+    {
+        Span<int> lengths = inputs.Count <= 256 ? stackalloc int[inputs.Count] : new int[inputs.Count];
+        for (int i = 0; i < lengths.Length; i++)
+        {
+            lengths[i] = inputs[i].Length;
+        }
+
+        return BatchPlan.Create(lengths, options.MaxBatchSize, options.MaxBatchTokens, options.SortByLength);
     }
 
     /// <summary>Disposes the session if this encoder owns it. Idempotent.</summary>
@@ -209,9 +230,24 @@ public sealed class E5Encoder : IDisposable
     /// </summary>
     internal static void PackRightPadded(IReadOnlyList<EncoderInput> inputs, int start, int count, int width, long padId, Span<long> ids, Span<long> mask)
     {
+        Span<int> rows = count <= 256 ? stackalloc int[count] : new int[count];
         for (int r = 0; r < count; r++)
         {
-            var input = inputs[start + r];
+            rows[r] = start + r;
+        }
+
+        PackRightPadded(inputs, rows, width, padId, ids, mask);
+    }
+
+    /// <summary>
+    /// Writes the inputs at <paramref name="rows"/>, in that order, into row-major <c>[rows.Length, width]</c> id and
+    /// mask buffers, right-padding each row with <paramref name="padId"/> and mask 0.
+    /// </summary>
+    internal static void PackRightPadded(IReadOnlyList<EncoderInput> inputs, ReadOnlySpan<int> rows, int width, long padId, Span<long> ids, Span<long> mask)
+    {
+        for (int r = 0; r < rows.Length; r++)
+        {
+            var input = inputs[rows[r]];
             var idRow = ids.Slice(r * width, width);
             var maskRow = mask.Slice(r * width, width);
             input.InputIds.Span.CopyTo(idRow);
@@ -310,14 +346,13 @@ public sealed class E5Encoder : IDisposable
         }
     }
 
-    private void EmbedChunk(IReadOnlyList<EncoderInput> inputs, int start, int count, Span<float> destination, CancellationToken cancellationToken)
+    /// <summary>
+    /// Runs the inputs at <paramref name="rows"/> as one call padded to <paramref name="width"/> and writes row
+    /// <c>rows[r]</c>'s embedding at <c>destination[rows[r] * Dimension]</c>.
+    /// </summary>
+    private void EmbedChunk(IReadOnlyList<EncoderInput> inputs, ReadOnlySpan<int> rows, int width, Span<float> destination, CancellationToken cancellationToken)
     {
-        int width = 0;
-        for (int r = 0; r < count; r++)
-        {
-            width = Math.Max(width, inputs[start + r].Length);
-        }
-
+        int count = rows.Length;
         int cells = count * width;
         int hiddenCells = checked(cells * Dimension);
         long[] ids = ArrayPool<long>.Shared.Rent(cells);
@@ -326,7 +361,7 @@ public sealed class E5Encoder : IDisposable
         float[] hidden = ArrayPool<float>.Shared.Rent(hiddenCells);
         try
         {
-            PackRightPadded(inputs, start, count, width, _options.PadTokenId, ids, mask);
+            PackRightPadded(inputs, rows, width, _options.PadTokenId, ids, mask);
             if (types is not null)
             {
                 Array.Clear(types, 0, cells);
@@ -340,7 +375,7 @@ public sealed class E5Encoder : IDisposable
                     hidden.AsSpan(r * width * Dimension, width * Dimension),
                     mask.AsSpan(r * width, width),
                     Dimension,
-                    destination.Slice(r * Dimension, Dimension));
+                    destination.Slice(rows[r] * Dimension, Dimension));
             }
         }
         finally

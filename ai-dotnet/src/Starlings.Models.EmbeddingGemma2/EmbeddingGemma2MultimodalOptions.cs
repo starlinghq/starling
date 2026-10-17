@@ -40,6 +40,16 @@ public sealed record EmbeddingGemma2MultimodalOptions
     public int MaxBatchTokens { get; init; } = 8_192;
 
     /// <summary>
+    /// For text-only inputs (the released text graph): order rows by ascending token length before chunking and
+    /// scatter results back to input order, as <see cref="EmbeddingGemma2EncoderOptions.SortByLength"/>. Inputs with
+    /// images or videos keep input order. Applies to the text encoder that
+    /// <see cref="EmbeddingGemma2MultimodalEmbedder.Create(EmbeddingGemma2ImageModelFiles, EmbeddingGemma2MultimodalOptions?)"/>
+    /// creates; an encoder passed to the constructor keeps its own options. Default <see langword="false"/>.
+    /// Experimental (capability <c>batch.sort_by_length</c>).
+    /// </summary>
+    public bool SortByLength { get; init; }
+
+    /// <summary>
     /// Soft tokens per image at most (upstream <c>max_soft_tokens</c>): 280 is the checkpoint's default; 70, 140, 560 and
     /// 1,120 are accepted by upstream and experimental here (proposed rows, within the protected bounds). Default 280.
     /// </summary>
@@ -100,6 +110,7 @@ public sealed record EmbeddingGemma2MultimodalOptions
         MaxSequenceLength = MaxSequenceLength,
         MaxBatchSize = MaxBatchSize,
         MaxBatchTokens = MaxBatchTokens,
+        SortByLength = SortByLength,
     };
 
     /// <summary>

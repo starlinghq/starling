@@ -51,6 +51,11 @@ public static class Gliner2Capabilities
         ["threshold"] = Gliner2CapabilityStatus.Supported,
         ["offsets.original_text"] = Gliner2CapabilityStatus.Supported,
         ["batch"] = Gliner2CapabilityStatus.Supported,
+        // Opt-in explicit-batch chunking, Gliner2ExtractorOptions.MaxBatchTokens and SortByLength: off by default, and
+        // the defaults keep the qualified outputs bit for bit. With sort_by_length, outputs stay within the
+        // padded-batch-vs-single bound in the CPU tests; no qualification run yet.
+        ["batch.token_budget"] = Gliner2CapabilityStatus.Experimental,
+        ["batch.sort_by_length"] = Gliner2CapabilityStatus.Experimental,
         ["cancellation"] = Gliner2CapabilityStatus.Supported,
         ["concurrent_calls"] = Gliner2CapabilityStatus.Supported,
         // On CUDA, concurrent runs on one session returned wrong entities (6 of 8 test runs); calls are serialized
