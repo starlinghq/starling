@@ -97,6 +97,52 @@ public class CpuArenaTests(ITestOutputHelper output)
         output.WriteLine($"{on.Length} video embeddings bit-identical with the arena on and off");
     }
 
+    [Fact]
+    public void ImageEmbeddingsAreBitIdenticalWithAndWithoutTheTrimAfterLoad()
+    {
+        // The trim after session creation (this library's CPU default for the image path,
+        // docs/evidence/eg2-image-loaded-soak/) returns free heap memory only; it does not change what is computed.
+        var (files, reason) = EmbeddingGemma2ImageTestAssets.FindImageModel();
+        Assert.SkipWhen(files is null, reason);
+        var images = Enumerable.Range(0, 3).Select(i => Clip(i, 1).Frames[0]).ToArray();
+
+        float[][] Embed(bool trim)
+        {
+            using var embedder = EmbeddingGemma2MultimodalEmbedder.Create(files!, new EmbeddingGemma2MultimodalOptions
+            {
+                Session = new OnnxSessionOptions { ComputeModelSha256 = false, TrimNativeHeapAfterLoad = trim },
+                VerifyModelSha256 = false,
+            });
+            bool expected = trim && OperatingSystem.IsLinux();
+            Assert.Equal(expected, embedder.VisionSession.Diagnostics.TrimNativeHeapAfterLoad);
+            Assert.Equal(expected, embedder.MultimodalSession.Diagnostics.TrimNativeHeapAfterLoad);
+            return images.Select(v => embedder.Embed(v, TestContext.Current.CancellationToken)).ToArray();
+        }
+
+        var on = Embed(true);
+        var off = Embed(false);
+        for (int i = 0; i < on.Length; i++)
+        {
+            Assert.Equal(on[i], off[i]);
+        }
+
+        output.WriteLine($"{on.Length} image embeddings bit-identical with and without the trim after load");
+    }
+
+    [Fact]
+    public void TheImagePathTrimsAfterLoadOnCpuUnlessTheCallerChose()
+    {
+        var (files, reason) = EmbeddingGemma2ImageTestAssets.FindImageModel();
+        Assert.SkipWhen(files is null, reason);
+        using var embedder = EmbeddingGemma2MultimodalEmbedder.Create(files!, new EmbeddingGemma2MultimodalOptions
+        {
+            Session = new OnnxSessionOptions { ComputeModelSha256 = false },
+            VerifyModelSha256 = false,
+        });
+        Assert.Equal(OperatingSystem.IsLinux(), embedder.VisionSession.Diagnostics.TrimNativeHeapAfterLoad);
+        Assert.Equal(OperatingSystem.IsLinux(), embedder.MultimodalSession.Diagnostics.TrimNativeHeapAfterLoad);
+    }
+
     /// <summary>A synthetic decoded clip (gradients and a moving square) at 4 frames per second.</summary>
     private static EmbeddingGemma2Video Clip(int input, int seconds)
     {

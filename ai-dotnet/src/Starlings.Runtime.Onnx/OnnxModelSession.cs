@@ -281,6 +281,9 @@ public sealed class OnnxModelSession : IDisposable
                 throw CudaUnavailable(ex);
             }
 
+            // Session creation frees much of what it allocates (graph transformation, initializer copies); on the
+            // creating thread's glibc heap that memory stays resident for the life of the session unless trimmed.
+            bool trimmedAfterLoad = options.TrimNativeHeapAfterLoad == true && NativeHeap.Trim();
             var diagnostics = new OnnxSessionDiagnostics
             {
                 OrtVersion = env.GetVersionString(),
@@ -294,6 +297,7 @@ public sealed class OnnxModelSession : IDisposable
                 IntraOpNumThreads = intraOpThreads,
                 InterOpNumThreads = options.InterOpNumThreads,
                 TrimNativeHeapOnRelease = options.TrimNativeHeapOnRelease && NativeHeap.Enabled,
+                TrimNativeHeapAfterLoad = trimmedAfterLoad,
                 CpuMemoryArena = sessionOptions.EnableCpuMemArena,
                 DedicatedRunThreads = options.DedicatedRunThreads ?? false,
                 GraphOptimizationLevel = sessionOptions.GraphOptimizationLevel.ToString(),

@@ -62,6 +62,12 @@ public sealed record OnnxSessionDiagnostics
     /// </summary>
     public bool TrimNativeHeapOnRelease { get; init; }
 
+    /// <summary>
+    /// Whether freed native heap memory was returned to the operating system after this session was created
+    /// (<see cref="OnnxSessionOptions.TrimNativeHeapAfterLoad"/>, Linux with glibc, process switch not set).
+    /// </summary>
+    public bool TrimNativeHeapAfterLoad { get; init; }
+
     /// <summary>Whether ONNX Runtime's CPU memory arena is on for this session (<see cref="OnnxSessionOptions.CpuMemoryArena"/>).</summary>
     public bool CpuMemoryArena { get; init; }
 

@@ -54,6 +54,8 @@
 //                             default: the model library's choice.
 //   --run-threads, --no-run-threads   Diagnostic: runs on the runtime's dedicated run threads or on the calling thread
 //                             (OnnxSessionOptions.DedicatedRunThreads); default: the model library's choice.
+//   --load-trim, --no-load-trim   Diagnostic: malloc_trim(0) after each session is created, or not
+//                             (OnnxSessionOptions.TrimNativeHeapAfterLoad); default: the model library's choice.
 //
 // Reanalysis: `-- reanalyze <raw.json>...` recomputes the verdicts and the markdown report of existing raw results
 // with the current analysis (the run's warmup and growth-limit options), rewriting both files; the samples are unchanged.
@@ -150,6 +152,8 @@ internal sealed record SoakOptions
     /// <summary>Diagnostics: runs on the runtime's dedicated run threads or on the caller; null keeps the model library's default.</summary>
     public bool? RunThreads { get; init; }
 
+    public bool? LoadTrim { get; init; }
+
     public bool NoHeapTrim { get; init; }
 
     public int? SmapsEvery { get; init; }
@@ -184,6 +188,8 @@ internal sealed record SoakOptions
                 "--no-cpu-arena" => o with { CpuArena = false },
                 "--run-threads" => o with { RunThreads = true },
                 "--no-run-threads" => o with { RunThreads = false },
+                "--load-trim" => o with { LoadTrim = true },
+                "--no-load-trim" => o with { LoadTrim = false },
                 "--no-heap-trim" => o with { NoHeapTrim = true },
                 "--smaps-every" => o with { SmapsEvery = Positive(Next(), "--smaps-every") },
                 _ => throw new ArgumentException($"unknown option '{args[i]}'"),
@@ -607,6 +613,7 @@ internal sealed class SoakRunner(SoakWorkload workload, SoakOptions options)
                 ["trim_after_load"] = options.TrimAfterLoad,
                 ["cpu_arena"] = options.CpuArena,
                 ["run_threads"] = options.RunThreads,
+                ["load_trim"] = options.LoadTrim,
                 ["native_heap_trim_disabled"] = options.NoHeapTrim,
                 ["gpu_sampling"] = MemoryProbe.GpuSamplingAvailable,
             },

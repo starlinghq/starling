@@ -101,6 +101,17 @@ public sealed record OnnxSessionOptions
     /// </summary>
     public bool? DedicatedRunThreads { get; init; }
 
+    /// <summary>
+    /// On Linux with glibc, call <c>malloc_trim(0)</c> once the session is created, so memory that session creation
+    /// allocated and freed again (graph transformation and initializer copies) goes back to the operating system instead
+    /// of staying resident in glibc's heaps while the session lives. <see langword="null"/> (the default) leaves the
+    /// choice to the model library, and no trim is made when the session is created directly. It releases only free
+    /// memory and changes no allocator setting; it costs milliseconds per load, never a request. A no-op on other
+    /// platforms and when the process sets the <see cref="AppContext"/> switch
+    /// <c>Starlings.Runtime.Onnx.DisableNativeHeapTrim</c>. See the package README, "Memory on Linux".
+    /// </summary>
+    public bool? TrimNativeHeapAfterLoad { get; init; }
+
     internal void Validate()
     {
         if (!Enum.IsDefined(Provider))

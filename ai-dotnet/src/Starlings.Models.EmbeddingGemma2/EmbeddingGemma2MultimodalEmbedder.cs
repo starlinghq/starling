@@ -190,13 +190,19 @@ public sealed class EmbeddingGemma2MultimodalEmbedder : IDisposable
         OnnxModelSession? multimodal = null;
         try
         {
+            // On CPU, return the memory that creating each graph's session freed (main glibc heap) unless the caller
+            // chose: about 460 MiB of free chunks otherwise stayed resident while loaded, varying from load to load
+            // (docs/evidence/eg2-image-loaded-soak/).
+            bool trimAfterLoad = options.Session.TrimNativeHeapAfterLoad ?? options.Session.Provider == OnnxExecutionProvider.Cpu;
             vision = OnnxModelSession.Create(files.VisionModelPath, EmbeddingGemma2Encoder.SessionDefaults(options.Session) with
             {
                 ExpectedModelSha256 = verify ? EmbeddingGemma2ModelAssets.VisionModelSha256 : null,
+                TrimNativeHeapAfterLoad = trimAfterLoad,
             });
             multimodal = OnnxModelSession.Create(files.MultimodalModelPath, EmbeddingGemma2Encoder.SessionDefaults(options.Session) with
             {
                 ExpectedModelSha256 = verify ? EmbeddingGemma2ModelAssets.MultimodalModelSha256 : null,
+                TrimNativeHeapAfterLoad = trimAfterLoad,
             });
             string textPath = files.Text.ModelPath;
             var textOptions = options.ToTextEncoderOptions(verify ? EmbeddingGemma2ModelAssets.ModelSha256 : null);
