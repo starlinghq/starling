@@ -43,7 +43,10 @@ def candidate(repo="sentence-transformers/all-MiniLM-L6-v2"):
             "pooling": pooling,
             "normalize": normalize,
             "output_name": "last_hidden_state" if task == "embeddings" else "logits",
-            "prompts": {"none": "", **({"query": bert.QUERY} if repo == "BAAI/bge-small-en-v1.5" else {})},
+            "prompts": {
+                "none": "",
+                **({"query": bert.QUERY} if repo in {"BAAI/bge-small-en-v1.5", "BAAI/bge-base-en-v1.5"} else {}),
+            },
             **({"score_activation": "identity"} if task == "reranking" else {}),
         },
         "evaluation": {"status": "proposed", "policy": copy.deepcopy(bert.POLICY)},
