@@ -1,9 +1,10 @@
 # BERT embeddings and reranking
 
-Experimental CPU fp32 implementations for three explicitly pinned candidate contracts:
+Experimental CPU fp32 implementations for four explicitly pinned candidate contracts:
 `sentence-transformers/all-MiniLM-L6-v2` (mean/L2, 256 tokens), `BAAI/bge-small-en-v1.5`
-(CLS/L2, 512 tokens), and `cross-encoder/ms-marco-MiniLM-L6-v2` (paired inputs, raw scalar
-logits, 512 tokens). Candidate parity is development evidence; protected release
+(CLS/L2, 512 tokens), `cross-encoder/ms-marco-MiniLM-L6-v2` (paired inputs, raw scalar
+logits, 512 tokens), and `nomic-ai/nomic-embed-text-v1.5` (mean/L2, 8192 tokens, 768-wide
+outputs). Candidate parity is development evidence; protected release
 qualification requires independent fixture adoption.
 
 Load a reviewed candidate profile with `BertModelProfile.Load`. `BertTextEmbedder.Create`

@@ -17,13 +17,15 @@ from model_pipeline import fixtures
 from model_pipeline.onboarding_bert import validate_candidate_behavior
 
 
-def pooled(hidden: np.ndarray, mask: np.ndarray, mode: str) -> np.ndarray:
+def pooled(hidden: np.ndarray, mask: np.ndarray, mode: str, normalize: str) -> np.ndarray:
     if mode == "cls":
         values = hidden[:, 0]
     else:
         expanded = mask[..., None].astype(np.float32)
         values = (hidden * expanded).sum(axis=1) / np.clip(expanded.sum(axis=1), 1e-9, None)
-    return values / np.clip(np.linalg.norm(values, axis=1, keepdims=True), 1e-12, None)
+    if normalize == "l2":
+        values = values / np.clip(np.linalg.norm(values, axis=1, keepdims=True), 1e-12, None)
+    return values
 
 
 def load_cases(path: Path, candidate: dict, tokenizer: Tokenizer) -> list[dict]:
@@ -137,7 +139,9 @@ def main() -> int:
         if session is not None:
             raw = session.run([behavior["output_name"]], feeds)[0]
             output = (
-                pooled(raw, feeds["attention_mask"], behavior["pooling"]) if candidate["task"] == "embeddings" else raw
+                pooled(raw, feeds["attention_mask"], behavior["pooling"], behavior["normalize"])
+                if candidate["task"] == "embeddings"
+                else raw
             )
             hidden = raw if candidate["task"] == "embeddings" else None
         else:
@@ -148,11 +152,12 @@ def main() -> int:
                     output, hidden = result["sentence_embedding"].numpy(), result["token_embeddings"].numpy()
                 else:
                     output, hidden = model.model(**tensors).logits.numpy(), None
-        expected_shape = (len(rows), 384 if candidate["task"] == "embeddings" else 1)
+        expected_shape = (len(rows), candidate["behavior"]["hidden_size"] if candidate["task"] == "embeddings" else 1)
         if output.shape != expected_shape or not np.isfinite(output).all():
             raise ValueError(f"invalid output shape or non-finite values: {output.shape}, expected {expected_shape}")
         if hidden is not None and (
-            hidden.shape != (len(rows), feeds["input_ids"].shape[1], 384) or not np.isfinite(hidden).all()
+            hidden.shape != (len(rows), feeds["input_ids"].shape[1], candidate["behavior"]["hidden_size"])
+            or not np.isfinite(hidden).all()
         ):
             raise ValueError("invalid hidden-state shape or non-finite values")
         return output.astype(np.float32), hidden
