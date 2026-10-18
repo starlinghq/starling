@@ -35,17 +35,48 @@ POLICY = {
     "required_paths": ["reference", "python-onnx", "dotnet-ids", "dotnet-text"],
 }
 CONTRACTS = {
-    "sentence-transformers/all-MiniLM-L6-v2": ("embeddings", 256, "mean"),
-    "BAAI/bge-small-en-v1.5": ("embeddings", 512, "cls"),
-    "cross-encoder/ms-marco-MiniLM-L6-v2": ("reranking", 512, "none"),
+    "sentence-transformers/all-MiniLM-L6-v2": ("embeddings", 256, "mean", 384, "l2"),
+    "BAAI/bge-small-en-v1.5": ("embeddings", 512, "cls", 384, "l2"),
+    "cross-encoder/ms-marco-MiniLM-L6-v2": ("reranking", 512, "none", 384, "none"),
+    "nomic-ai/nomic-embed-text-v1.5": ("embeddings", 8192, "mean", 768, "none"),
 }
+
+
+# Correctness bounds and exact token checks are fixed for every model; a loosened reference
+# bound cannot hide a defect because the same-backend comparison and token checks stay tight.
+# Per-model export-fidelity bounds may be raised only up to these caps, which remain orders of
+# magnitude below any real implementation error (defects are ~1e-1..1e0).
+FIXED_POLICY_KEYS = {
+    "token_ids": "exact",
+    "attention_mask": "exact",
+    "token_type_ids": "exact",
+    "same_backend_max_abs": 1e-5,
+    "padded_batch_max_abs": 1e-5,
+    "non_finite": "fail",
+    "required_paths": ["reference", "python-onnx", "dotnet-ids", "dotnet-text"],
+}
+FIDELITY_CAPS = {"hidden_max_abs": 1e-3, "embedding_max_abs": 1e-3, "score_max_abs": 1e-3}
+
+
+def _validate_policy(policy: dict) -> None:
+    if set(policy) != set(POLICY):
+        raise PipelineError("unsupported BERT evaluation policy: unknown or missing policy fields")
+    if {key: policy.get(key) for key in FIXED_POLICY_KEYS} != FIXED_POLICY_KEYS:
+        raise PipelineError(
+            "unsupported BERT evaluation policy: token checks, same-backend, padded-batch, "
+            "non-finite and required-path fields are fixed and must match the predeclared template"
+        )
+    for key, cap in FIDELITY_CAPS.items():
+        value = policy.get(key)
+        if not isinstance(value, (int, float)) or isinstance(value, bool) or not 0 < value <= cap:
+            raise PipelineError(f"unsupported BERT evaluation policy: {key} must be a number in (0, {cap}]")
 
 
 def validate_candidate_behavior(candidate: dict) -> None:
     """Refuse schema-valid contracts that the fixed model implementation does not implement."""
     try:
         repo = candidate["origin"]["repo"]
-        task, length, pooling = CONTRACTS[repo]
+        task, length, pooling, hidden_size, normalize = CONTRACTS[repo]
         expected = {
             "architecture": "bert",
             "graph_file": "onnx/model.onnx",
@@ -54,11 +85,11 @@ def validate_candidate_behavior(candidate: dict) -> None:
             "padding_side": "right",
             "pad_token_id": 0,
             "vocabulary_size": 30522,
-            "hidden_size": 384,
+            "hidden_size": hidden_size,
             "truncation": "longest_first",
             "tokenizer_profile": "bert-wordpiece-uncased",
             "pooling": pooling,
-            "normalize": "l2" if task == "embeddings" else "none",
+            "normalize": normalize,
             "output_name": "last_hidden_state" if task == "embeddings" else "logits",
             "prompts": {"none": "", **({"query": QUERY} if repo == "BAAI/bge-small-en-v1.5" else {})},
         }
@@ -75,8 +106,9 @@ def validate_candidate_behavior(candidate: dict) -> None:
             "precision": "fp32",
         }:
             raise PipelineError("unsupported BERT runtime: only ONNX 1.30.0 CPU fp32 is implemented")
-        if candidate["evaluation"]["status"] != "proposed" or candidate["evaluation"]["policy"] != POLICY:
-            raise PipelineError("unsupported BERT evaluation policy: use the predeclared proposed development policy")
+        if candidate["evaluation"]["status"] != "proposed":
+            raise PipelineError("unsupported BERT evaluation status: use proposed")
+        _validate_policy(candidate["evaluation"]["policy"])
     except (KeyError, TypeError) as exc:
         raise PipelineError(f"unsupported or incomplete BERT contract: {exc}") from exc
 
@@ -112,7 +144,7 @@ def _document(path: Path, candidate: dict, digest: str, stage: str) -> tuple[dic
         if not isinstance(records, list) or len(records) < 2:
             raise PipelineError(f"{stage}: missing required case rows")
         cases = {}
-        dimension = 384 if candidate["task"] == "embeddings" else 1
+        dimension = candidate["behavior"]["hidden_size"] if candidate["task"] == "embeddings" else 1
         for row in records:
             identifier = row["id"]
             if not isinstance(identifier, str) or not identifier or identifier in cases:
@@ -166,7 +198,7 @@ def _difference(actual: list, expected: list, bound: float, where: str) -> dict:
     }
 
 
-def _hidden(path: Path, document: dict, cases: dict[str, dict]) -> dict[str, list[float]]:
+def _hidden(path: Path, document: dict, cases: dict[str, dict], hidden_size: int) -> dict[str, list[float]]:
     try:
         specification = document["hidden"]
         relative = Path(specification["file"])
@@ -190,7 +222,7 @@ def _hidden(path: Path, document: dict, cases: dict[str, dict]) -> dict[str, lis
             if (
                 identifier not in cases
                 or identifier in output
-                or row["shape"] != [len(cases[identifier]["input_ids"]), 384]
+                or row["shape"] != [len(cases[identifier]["input_ids"]), hidden_size]
                 or row["offset"] != position
             ):
                 raise PipelineError("hidden-state cases have wrong ids, shape, offset, or duplicate rows")
@@ -263,7 +295,7 @@ def evaluate_development(
                     [row["original_score"]], row["output"], bound, f"reference/{identifier}/cross_encoder_public"
                 )
             )
-        else:
+        elif candidate["behavior"]["normalize"] == "l2":
             for stage, values in (
                 ("reference", row["output"]),
                 ("onnx", python_cases[identifier]["output"]),
@@ -279,8 +311,9 @@ def evaluate_development(
                     )
                 )
     if candidate["task"] == "embeddings":
+        hidden_size = candidate["behavior"]["hidden_size"]
         tensors = [
-            _hidden(path, document, cases)
+            _hidden(path, document, cases, hidden_size)
             for path, document, cases in (
                 (reference_path, reference, expected),
                 (onnx_path, onnx, python_cases),

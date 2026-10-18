@@ -30,6 +30,7 @@ assets=(
     "sentence-transformers/all-MiniLM-L6-v2|1110a243fdf4706b3f48f1d95db1a4f5529b4d41|tokenizer.json|be50c3628f2bf5bb5e3a7f17b1f74611b2561a3a27eeab05e5aa30f411572037"
     "BAAI/bge-small-en-v1.5|5c38ec7c405ec4b44b94cc5a9bb96e735b38267a|tokenizer.json|d241a60d5e8f04cc1b2b3e9ef7a4921b27bf526d9f6050ab90f9267a1f9e5c66"
     "cross-encoder/ms-marco-MiniLM-L6-v2|233902d25c440f23af6f7d6e94d2946bac0bee0a|tokenizer.json|d241a60d5e8f04cc1b2b3e9ef7a4921b27bf526d9f6050ab90f9267a1f9e5c66"
+    "nomic-ai/nomic-embed-text-v1.5|e9b6763023c676ca8431644204f50c2b100d9aab|tokenizer.json|d241a60d5e8f04cc1b2b3e9ef7a4921b27bf526d9f6050ab90f9267a1f9e5c66"
 )
 
 # target repo|commit|path|sha256 <- source repo|commit|path (the source must be in assets above)
