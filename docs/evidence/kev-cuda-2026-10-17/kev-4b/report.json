@@ -1,0 +1,342 @@
+{
+  "format": "starlings.kev-development-parity",
+  "format_version": 1,
+  "profile": "kev-4b/onnx-fp32-cpu",
+  "task": "decision",
+  "status": "passed",
+  "failures": [],
+  "checks": [
+    {
+      "id": "python-onnx-cached/vs_reference",
+      "metric": "probability_max_abs",
+      "bound": 0.0002,
+      "status": "passed",
+      "n": 58,
+      "max_abs": 6.365776062011719e-05,
+      "mean_abs": 7.576032156317399e-06,
+      "p99_abs": 4.668742418289184e-05,
+      "worst_question": "noul-meeting/described",
+      "population": "per-question maximum absolute probability difference"
+    },
+    {
+      "id": "python-onnx-uncached/vs_reference",
+      "metric": "probability_max_abs",
+      "bound": 0.0002,
+      "status": "passed",
+      "n": 58,
+      "max_abs": 6.556510925292969e-05,
+      "mean_abs": 7.625841856773557e-06,
+      "p99_abs": 4.760950803756713e-05,
+      "worst_question": "noul-meeting/described",
+      "population": "per-question maximum absolute probability difference"
+    },
+    {
+      "id": "dotnet-ids-cached/vs_reference",
+      "metric": "probability_max_abs",
+      "bound": 0.0002,
+      "status": "passed",
+      "n": 58,
+      "max_abs": 6.366075347896683e-05,
+      "mean_abs": 7.571981198717927e-06,
+      "p99_abs": 4.668622536389998e-05,
+      "worst_question": "noul-meeting/described",
+      "population": "per-question maximum absolute probability difference"
+    },
+    {
+      "id": "dotnet-ids-uncached/vs_reference",
+      "metric": "probability_max_abs",
+      "bound": 0.0002,
+      "status": "passed",
+      "n": 58,
+      "max_abs": 6.568075347901381e-05,
+      "mean_abs": 7.6224480494744005e-06,
+      "p99_abs": 4.7623225363915824e-05,
+      "worst_question": "noul-meeting/described",
+      "population": "per-question maximum absolute probability difference"
+    },
+    {
+      "id": "dotnet-text/vs_reference",
+      "metric": "probability_max_abs",
+      "bound": 0.0002,
+      "status": "passed",
+      "n": 58,
+      "max_abs": 6.366075347896683e-05,
+      "mean_abs": 7.571981198717927e-06,
+      "p99_abs": 4.668622536389998e-05,
+      "worst_question": "noul-meeting/described",
+      "population": "per-question maximum absolute probability difference"
+    },
+    {
+      "id": "python-onnx/cached_vs_uncached",
+      "metric": "cached_vs_uncached_probability_max_abs",
+      "bound": 1e-05,
+      "status": "passed",
+      "n": 58,
+      "max_abs": 1.9371509552001953e-06,
+      "mean_abs": 2.8742942959070206e-07,
+      "p99_abs": 1.3425946235656735e-06,
+      "worst_question": "noul-meeting/described",
+      "population": "per-question maximum absolute probability difference"
+    },
+    {
+      "id": "dotnet/cached_vs_uncached",
+      "metric": "cached_vs_uncached_probability_max_abs",
+      "bound": 1e-05,
+      "status": "passed",
+      "n": 58,
+      "max_abs": 2.0300000000417207e-06,
+      "mean_abs": 2.7705517241532453e-07,
+      "p99_abs": 1.402999999960408e-06,
+      "worst_question": "noul-meeting/described",
+      "population": "per-question maximum absolute probability difference"
+    },
+    {
+      "id": "python-onnx/padded_batch_vs_single",
+      "metric": "padded_batch_vs_single_probability_max_abs",
+      "bound": 1e-05,
+      "status": "passed",
+      "n": 44,
+      "max_abs": 2.5033950805664062e-06,
+      "mean_abs": 3.550164613195441e-07,
+      "p99_abs": 2.195835113525391e-06,
+      "worst_question": "noul-meeting/described",
+      "population": "per-question maximum absolute probability difference"
+    },
+    {
+      "id": "dotnet-ids-cached/vs_python-onnx-cached",
+      "metric": "csharp_vs_python_probability_max_abs",
+      "bound": 1e-06,
+      "status": "passed",
+      "n": 58,
+      "max_abs": 1.4519805913160155e-07,
+      "mean_abs": 4.590323531583546e-08,
+      "p99_abs": 1.450369812139307e-07,
+      "worst_question": "multi-six/remote",
+      "population": "per-question maximum absolute probability difference"
+    },
+    {
+      "id": "dotnet-ids-uncached/vs_python-onnx-uncached",
+      "metric": "csharp_vs_python_probability_max_abs",
+      "bound": 1e-06,
+      "status": "passed",
+      "n": 58,
+      "max_abs": 1.4850311280678596e-07,
+      "mean_abs": 5.598133891919201e-08,
+      "p99_abs": 1.4778513335089727e-07,
+      "worst_question": "multi-six/seniority",
+      "population": "per-question maximum absolute probability difference"
+    },
+    {
+      "id": "dotnet-text/vs_python-onnx-cached",
+      "metric": "csharp_vs_python_probability_max_abs",
+      "bound": 1e-06,
+      "status": "passed",
+      "n": 58,
+      "max_abs": 1.4519805913160155e-07,
+      "mean_abs": 4.590323531583546e-08,
+      "p99_abs": 1.450369812139307e-07,
+      "worst_question": "multi-six/remote",
+      "population": "per-question maximum absolute probability difference"
+    }
+  ],
+  "argmax_flips": {
+    "python-onnx-cached": {
+      "outside_margin": [],
+      "listed_near_ties": []
+    },
+    "python-onnx-uncached": {
+      "outside_margin": [],
+      "listed_near_ties": []
+    },
+    "dotnet-ids-cached": {
+      "outside_margin": [],
+      "listed_near_ties": []
+    },
+    "dotnet-ids-uncached": {
+      "outside_margin": [],
+      "listed_near_ties": []
+    },
+    "dotnet-text": {
+      "outside_margin": [],
+      "listed_near_ties": []
+    },
+    "python-onnx-padded-batch": {
+      "outside_margin": [],
+      "listed_near_ties": []
+    }
+  },
+  "report_only": {
+    "csharp_vs_python_argmax_flips": {
+      "dotnet-ids-cached/vs_python-onnx-cached": [],
+      "dotnet-ids-uncached/vs_python-onnx-uncached": [],
+      "dotnet-text/vs_python-onnx-cached": []
+    }
+  },
+  "accuracy": {
+    "status": "identical",
+    "labelled_questions": 44,
+    "paths": {
+      "reference": {
+        "n": 44,
+        "correct": 40,
+        "accuracy": 0.9090909090909091
+      },
+      "python-onnx-cached": {
+        "n": 44,
+        "correct": 40,
+        "accuracy": 0.9090909090909091
+      },
+      "python-onnx-uncached": {
+        "n": 44,
+        "correct": 40,
+        "accuracy": 0.9090909090909091
+      },
+      "dotnet-ids-cached": {
+        "n": 44,
+        "correct": 40,
+        "accuracy": 0.9090909090909091
+      },
+      "dotnet-ids-uncached": {
+        "n": 44,
+        "correct": 40,
+        "accuracy": 0.9090909090909091
+      },
+      "dotnet-text": {
+        "n": 44,
+        "correct": 40,
+        "accuracy": 0.9090909090909091
+      }
+    }
+  },
+  "nan_or_inf": [],
+  "token_ids": {
+    "status": "identical",
+    "mismatches": []
+  },
+  "case_count": 30,
+  "question_count": 58,
+  "padded_batches": 16,
+  "policy": {
+    "accuracy": "identical",
+    "argmax_flip_margin_exception": 0.0001,
+    "argmax_flips": 0,
+    "cached_vs_uncached_probability_max_abs": 1e-05,
+    "csharp_vs_python_probability_max_abs": 1e-06,
+    "nan_or_inf": "fail",
+    "padded_batch_vs_single_probability_max_abs": 1e-05,
+    "probability_max_abs": 0.0002,
+    "report_only": [
+      "mean_abs",
+      "p99_abs"
+    ],
+    "required_paths": [
+      "reference",
+      "python-onnx-cached",
+      "python-onnx-uncached",
+      "python-onnx-padded-batch",
+      "dotnet-ids-cached",
+      "dotnet-ids-uncached",
+      "dotnet-text"
+    ],
+    "token_ids": "exact"
+  },
+  "evaluation_status": "proposed",
+  "protected_release_qualification": {
+    "status": "unapproved",
+    "G1": "not-run",
+    "G2": "not-run"
+  },
+  "environments": {
+    "onnx": {
+      "machine": "omarchy",
+      "onnxruntime": "1.30.0",
+      "provider": "CUDAExecutionProvider",
+      "provider_options": {
+        "sdpa_kernel": "0",
+        "use_tf32": "0",
+        "fuse_conv_bias": "0",
+        "prefer_nhwc": "0",
+        "tunable_op_max_tuning_duration_ms": "0",
+        "tunable_op_enable": "0",
+        "tunable_op_tuning_enable": "0",
+        "enable_cudnn": "1",
+        "use_ep_level_unified_stream": "0",
+        "device_id": "0",
+        "has_user_compute_stream": "0",
+        "gpu_external_empty_cache": "0",
+        "cudnn_conv_algo_search": "EXHAUSTIVE",
+        "cudnn_conv1d_pad_to_nc1d": "0",
+        "gpu_mem_limit": "18446744073709551615",
+        "gpu_external_alloc": "0",
+        "gpu_external_free": "0",
+        "arena_extend_strategy": "kNextPowerOfTwo",
+        "do_copy_in_default_stream": "1",
+        "enable_cuda_graph": "0",
+        "user_compute_stream": "0",
+        "cudnn_conv_use_max_workspace": "1"
+      },
+      "cuda_visible_devices": "0",
+      "threads": 4,
+      "python": "3.12.14",
+      "model_sha256": {
+        "model.onnx": "364540ffdadd6b7514c7a25d63e21cc3db61784a9a540835cd1458f8023b1cb5",
+        "model.onnx.data": "158ebdd01c89cef1607ce04f796b6c1e75eb6fff5f30af8cc37ea1b02ba337b9",
+        "head.safetensors": "65698f2568fc1b6ebb60a1c2a24c7bb6622dcc23e1c6d9efe8d3274ad918a9a7",
+        "head.json": "df59ee369457425287e772462db515eae3060a8638c8b768bff2ead6f5d83097",
+        "tokenizer.json": "06b9509352d2af50381ab2247e083b80d32d5c0aba91c272ca9ff729b6a0e523"
+      },
+      "seconds": 95.86127878801199
+    },
+    "dotnet": {
+      "machine": "omarchy",
+      "dotnet": ".NET 10.0.12",
+      "onnxruntime": "1.30.0",
+      "provider": "CUDAExecutionProvider",
+      "profile_run": "kev-4b/onnx-fp32-cuda",
+      "threads": 4,
+      "inter_op_threads": 1,
+      "provider_options": {
+        "sdpa_kernel": "0",
+        "use_tf32": "0",
+        "fuse_conv_bias": "0",
+        "prefer_nhwc": "0",
+        "use_ep_level_unified_stream": "0",
+        "device_id": "0",
+        "tunable_op_max_tuning_duration_ms": "0",
+        "has_user_compute_stream": "0",
+        "cudnn_conv_algo_search": "EXHAUSTIVE",
+        "cudnn_conv1d_pad_to_nc1d": "0",
+        "gpu_mem_limit": "18446744073709551615",
+        "arena_extend_strategy": "kNextPowerOfTwo",
+        "do_copy_in_default_stream": "1",
+        "user_compute_stream": "0",
+        "cudnn_conv_use_max_workspace": "1",
+        "tunable_op_enable": "0",
+        "enable_cudnn": "1",
+        "tunable_op_tuning_enable": "0"
+      },
+      "cuda_visible_devices": "0",
+      "model_sha256": {
+        "model.onnx": "364540ffdadd6b7514c7a25d63e21cc3db61784a9a540835cd1458f8023b1cb5",
+        "model.onnx.data": "158ebdd01c89cef1607ce04f796b6c1e75eb6fff5f30af8cc37ea1b02ba337b9",
+        "head.safetensors": "65698f2568fc1b6ebb60a1c2a24c7bb6622dcc23e1c6d9efe8d3274ad918a9a7",
+        "head.json": "df59ee369457425287e772462db515eae3060a8638c8b768bff2ead6f5d83097",
+        "tokenizer.json": "06b9509352d2af50381ab2247e083b80d32d5c0aba91c272ca9ff729b6a0e523"
+      }
+    }
+  },
+  "inputs": {
+    "candidate_sha256": "dac5b295f8219013fc395c570f07c7d72d974d30fe15a158c259341317947bb1",
+    "reference_sha256": "ee2974f378288f6489bdd1824b8ddb40cf9e0f5eda95a792631b02f64aceac27",
+    "build_sha256": "379949d36e2ddb10393d57594ed95bbc1ef179558a9de49ac8caf736fb047be4",
+    "onnx_sha256": "3059e8f8b03abedb907da74e41bcea43f9d3dd85ed99be6d8ca9668635df708c",
+    "dotnet_sha256": "3b8924410bb2bd0d2e3f59e142e33c8a87bdadf46930e5e017a5bad5d60d5810",
+    "bundle_sha256": {
+      "model.onnx": "364540ffdadd6b7514c7a25d63e21cc3db61784a9a540835cd1458f8023b1cb5",
+      "model.onnx.data": "158ebdd01c89cef1607ce04f796b6c1e75eb6fff5f30af8cc37ea1b02ba337b9",
+      "head.safetensors": "65698f2568fc1b6ebb60a1c2a24c7bb6622dcc23e1c6d9efe8d3274ad918a9a7",
+      "head.json": "df59ee369457425287e772462db515eae3060a8638c8b768bff2ead6f5d83097",
+      "tokenizer.json": "06b9509352d2af50381ab2247e083b80d32d5c0aba91c272ca9ff729b6a0e523"
+    }
+  }
+}

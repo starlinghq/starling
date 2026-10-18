@@ -51,6 +51,14 @@
           "Starlings.Tokenizers": "[0.3.0, 0.3.0]"
         }
       },
+      "starlings.models.kev": {
+        "type": "Project",
+        "dependencies": {
+          "Starlings.Acquisition": "[0.2.0, )",
+          "Starlings.Runtime.Onnx": "[0.2.0, )",
+          "Starlings.Tokenizers": "[0.3.0, 0.3.0]"
+        }
+      },
       "starlings.models.qwen35": {
         "type": "Project",
         "dependencies": {

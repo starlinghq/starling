@@ -1,0 +1,368 @@
+# Kev decision model (P-027): jaredpalmer/kev-4b (Kev 1.0, a LoRA adapter and pointer head on Qwen/Qwen3.5-4B-Base)
+# on ONNX Runtime 1.30.0, CUDA provider with use_tf32 0, through ai-dotnet/src/Starlings.Models.Kev
+# (KevModelProfile.Kev4B.CudaId). Same bundle, lock and reference as kev-4b/onnx-fp32-cpu: the builder's CPU export run
+# on the CUDA execution provider; the builder's own CUDA graph (-e cuda -p fp32) did not load unpatched with ONNX
+# Runtime GenAI 0.17.1 (admissions/kev.md, "GPU results", on Kev-0.8B) and is not this profile.
+# (KevModelAssets.Kev4BLock pins the bundle files; KevModelProfile.Kev4B the revisions and dimensions.) Admission:
+# model-pipeline/admissions/kev.md (family admitted at Experimental, Mark, 2026-10-08, PR #4; Kev-4B is listed there as
+# a Kev 1.0 checkpoint). Candidate contract: model-pipeline/candidates/kev-4b/profile.json (onboarding route
+# kev-onnx-cpu-v1). No Hub repository ships an fp32 ONNX graph of Kev 1.0 (midudev/kev-4b-ONNX is int4 for the browser,
+# onnx-community/kev-4b-ONNX the previous Qwen3 generation): the bundle is Starling's build from the pinned sources
+# (route A: kev_merge.py fp32 LoRA merge, then the ONNX Runtime GenAI 0.17.1 builder -p fp32 -e cpu --extra_options
+# exclude_lm_head=true exclude_mtp=true), listed in origin.files with its digests. The bundle is hosted publicly (Starlinghq/kev-4b-onnx, r1),
+# references are proposed, no protected tolerances exist for this checkpoint, and no gate has run.
+schema_version: 1
+id: kev-4b/onnx-fp32-cuda
+# Experimental (package README, "CUDA"): local development evidence on one RTX 3090 only, no per-release GPU
+# regression, no gate ran, the bundle is hosted publicly (Starlinghq/kev-4b-onnx, r1), and the binding bound for Kev-4B is not set.
+maturity: experimental
+
+origin:
+  code:
+    # Kev source at tag kev-1.0 (lightweight): the encoding, pointer head and answer mapping the C# package follows.
+    url: https://github.com/jaredpalmer/kev
+    revision: "6b719c3c3f367295f6ef336f4f751cf5ff970abc"
+  weights:
+    # The released weights (runs/release/kev-1.0.json upstream); the Hub tag v1.0 and main are 6cfce5c2, with weights
+    # identical to this commit (admissions/kev.md, "Upstream inventory"; package README).
+    url: https://huggingface.co/jaredpalmer/kev-4b
+    revision: "139fdd94f1b6a6ad80cc15e08fcb99cac885a101"
+  files:
+    # jaredpalmer/kev-4b at the pinned commit (candidates/kev-4b/profile.json, origin.files).
+    - path: README.md
+      sha256: "3eac08b65ac314e0ee1b4ae7ddda9440e39310effa5da3a2cdcb56a9f1249e76"
+      size: 24999
+    - path: adapter_config.json
+      sha256: "8a05dfd6c5e7f61a62e6db5d8de8093a8dbbd105aa7ee7b5e7b73f6249f45617"
+      size: 1271
+    - path: adapter_model.safetensors
+      sha256: "90e817356246e7f18bfa7ca3d31794cd4fbeb3332a66a84cb51d9ceae925f2b2"
+      size: 129924032
+    - path: head.pt
+      sha256: "dd633435998ecc751ac538717a3742e32149500fabf7d7276287dbf0693f347c"
+      size: 5249791
+    - path: provenance.json
+      sha256: "7aa999a629f25d93713950d6fb39d0b4c37fe8a9f43d2673a79c4c455d42b26a"
+      size: 4265
+    - path: tokenizer.json
+      sha256: "06b9509352d2af50381ab2247e083b80d32d5c0aba91c272ca9ff729b6a0e523"
+      size: 19989325
+    - path: tokenizer_config.json
+      sha256: "8671bed7c852ce9e661be94f179a7b4ffd091c2a65aea0363e5501c20318ee45"
+      size: 1128
+    # base/: the frozen base the merge reads, Qwen/Qwen3.5-4B-Base at "1001bb4d826a52d1f399e183466143f4da7b741b"
+    # (candidates/kev-4b/profile.json, origin.base). Not in the weights repository; the schema has one weights source.
+    - path: base/LICENSE
+      sha256: "50cbab8a892c5f2993b8c7351a99182507472def3b1374558308605d99b86b32"
+      size: 11343
+    - path: base/README.md
+      sha256: "76ead24ea3de5a52610c755ffa0b6e7cb51e3c413f124a3776bc6f16b694474e"
+      size: 3722
+    - path: base/config.json
+      sha256: "ddc63e1c717afa86c865bb5e01313d89d72bb53b97ad4a8a03ba8510c0621670"
+      size: 3161
+    - path: base/merges.txt
+      sha256: "a9d356d7bdf1ef4949e3e748e95b8e10ad9d4e2e838eddc38a0a7b6b94d1db8d"
+      size: 3353259
+    - path: base/model.safetensors-00001-of-00002.safetensors
+      sha256: "df547074dce70532a0493e5433152bd17a65efb89088cfabc2e7e2371a93d712"
+      size: 5329398712
+    - path: base/model.safetensors-00002-of-00002.safetensors
+      sha256: "590fbaac095dd31db886c322d9d2f7df47777966391acf306ddddc3e4e3a15ef"
+      size: 3990429344
+    - path: base/model.safetensors.index.json
+      sha256: "eae340074abb0a5f31a6621f7ae8e8248a7c1790df04a722c4e4b70c2a6d1dbb"
+      size: 76196
+    - path: base/preprocessor_config.json
+      sha256: "27225450ac9c6529872ee1924fcb0962ff5634834f817040f444118116f4e516"
+      size: 390
+    - path: base/tokenizer.json
+      sha256: "fe000e3ed39ed12b8d2481d527d44f93c65d37e87645d2dcc80d1bf9d50d2927"
+      size: 12807196
+    - path: base/tokenizer_config.json
+      sha256: "3891e840d7dc5fca0af33d3a25083a735e36fe06214e3f707024820cb6b9f89c"
+      size: 16713
+    - path: base/video_preprocessor_config.json
+      sha256: "d039cd7d88b3502a99edd455496b75b44ecf7dd3b3669748bafac37e6cecc085"
+      size: 386
+    - path: base/vocab.json
+      sha256: "ce99b4cb2983d118806ce0a8b777a35b093e2000a503ebde25853284c9dfa003"
+      size: 6722759
+    # Upstream ships no fp32 ONNX graph: Starling's build of the sources above, hosted at Starlinghq/kev-4b-onnx (r1), the bundle KevModelAssets.Kev4BLock pins (with
+    # tokenizer.json above). head.safetensors and head.json are head.pt converted by kev_merge.py, so nothing at runtime
+    # unpickles head.pt; head.json records head.pt's and the adapter's SHA-256.
+    - path: model.onnx
+      sha256: "364540ffdadd6b7514c7a25d63e21cc3db61784a9a540835cd1458f8023b1cb5"
+      size: 410133
+    - path: model.onnx.data
+      sha256: "e8abebf694f97fde5c7ebc70391c38a15bb9bf2bc07f49449f786faf3863a063"
+      size: 16890920960
+    - path: head.safetensors
+      sha256: "65698f2568fc1b6ebb60a1c2a24c7bb6622dcc23e1c6d9efe8d3274ad918a9a7"
+      size: 5245232
+    - path: head.json
+      sha256: "df59ee369457425287e772462db515eae3060a8638c8b768bff2ead6f5d83097"
+      size: 392
+  attribution: >-
+    Kev 1.0 decision model (jaredpalmer/kev-4b; code github.com/jaredpalmer/kev, Apache-2.0), a LoRA adapter and pointer
+    head on Qwen3.5-4B-Base by the Qwen team, Alibaba Cloud (Qwen/Qwen3.5-4B-Base, Apache-2.0). ONNX Runtime GenAI
+    model builder by Microsoft (MIT).
+
+rights:
+  code_license: Apache-2.0
+  weights_license: Apache-2.0
+  tokenizer_terms: Apache-2.0
+  # The qualified bundle is hosted publicly with the license and attribution (README, NOTICE, LICENSE,
+  # SHA256SUMS) in Starlinghq/kev-4b-onnx (execution.graph.hosting), since 2026-10-17 (P-009: redistribute).
+  redistribution: download
+  notes: >-
+    Code: Apache-2.0 (LICENSE at the pinned Kev commit; pyproject.toml license = "Apache-2.0"); no source is copied, the
+    C# package reimplements the rendering, encoder and head. Kev adapter and head: Apache-2.0 in the model card
+    metadata (package README, "License"). Base weights and tokenizer: Apache-2.0 (LICENSE file of Qwen/Qwen3.5-4B-Base
+    at the pinned commit, base/LICENSE above, the same bytes as the 0.8B base's). Apache-2.0 permits redistributing the
+    merged fp32 graph with the license and attribution, and the qualified bundle is
+    hosted publicly in the Hugging Face repository Starlinghq/kev-4b-onnx (KevModelAssets.DownloadAsync, no token
+    needed); a locally built bundle opens with KevModelAssets.OpenDirectory or explicit paths. Kev's training and evaluation datasets carry their own terms (some forbid public
+    redistribution); no suite record is in this repository.
+
+behavior:
+  tasks: [decision]
+  # Validated context (model cards, "Long documents"): states of at most 8,192 tokens, <state> included, and rows
+  # (state plus one question's branch) of at most 8,192 tokens (upstream SERVE_MAX_BRANCH_8K). Longer inputs throw
+  # KevInputTooLongException; nothing is truncated. Upstream serves up to 65,536 with accuracy loss above 8,192.
+  max_input_tokens: 8192
+  offsets_unit: none
+  truncation: error
+  defaults:
+    temperature: >-
+      2.406050072164233, the calibration temperature stored in head.pt (KevOptions.Temperature null). 1.0 gives the raw
+      probabilities (upstream KEV_TEMPERATURE=1.0).
+    question_types: noul (probability of yes), choice (1 to 255 options), score (1 to 255 levels)
+    answers: >-
+      unrounded probabilities. Choice is the first most likely key; Confidence is System One's (p_max - 1/K) / (1 - 1/K)
+      (the score formula for score questions); ExpectedScore is sum(i * p_i).
+    request_rendering: >-
+      as kev/api.py and kev/model.py at 6b719c3c: JSON states rendered with Python str() of numbers and booleans, each
+      segment tokenized alone without special tokens, and any <|name|> in user text rewritten to <¦name¦> so it can
+      never become a delimiter.
+    question_isolation: >-
+      the state runs once; every question then runs as its own causal row continuing from the state's cache, so
+      questions cannot influence one another (the cache lives for one request).
+    delimiters: >-
+      state 248060 <|fim_prefix|>, question 248061 <|fim_middle|>, option 248049 <|box_start|>, option end 248050
+      <|box_end|> (the option key), decide 248062 <|fim_suffix|> (the question query), pad 248044 <|endoftext|>.
+    pointer_head: >-
+      projection width 256; each option's </opt> hidden state scored against the question's <decide>, divided by the
+      temperature.
+    concurrency: >-
+      serialized: on CUDA each request's graph calls run one request at a time by default
+      (KevOptions.SerializeNativeCalls); four callers x two rounds of the goldens were bit-identical to sequential calls
+      (CudaParityTests). Concurrent runs on one CUDA session gave wrong outputs for GLiNER2 and Qwen3.5 on ONNX Runtime
+      1.30; unserialized Kev runs were not tried (untested).
+    cancellation: >-
+      a cancelled CUDA call completes its current graph run before it throws; 0 of 10 cancelled calls left device work
+      queued (CudaParityTests).
+  unsupported:
+    - states over 8,192 tokens and rows over 8,192 tokens (rejected, not truncated; KEV_TRUNCATE_STATES)
+    - state prefix reuse across requests (upstream PrefixCache)
+    - batching several requests or rows in one call
+    - upstream's 4-decimal probability rounding and usage.output_tokens
+    - KEV_DATE_FACTS date preprocessing
+    - option isolation mode
+    - the HTTP server and its endpoints (/v1/systemone/*, /v1/models, bearer auth)
+    - bf16, fp16 and quantized graphs (midudev/kev-4b-ONNX, int4, included)
+    - TF32 math (ORT CUDA EP use_tf32 1, the ORT default)
+    - unserialized concurrent calls on one CUDA session (untested)
+    - training, fine-tuning and calibration fitting
+    - text generation (the graph has no LM head)
+    - Kev-9B and Kev-27B
+
+processing:
+  tokenizer:
+    # The owned tokenizer pinned in ai-dotnet/Directory.Packages.props. Profile qwen2-bpe-kev is the Kev repositories'
+    # tokenizer.json (the same bytes for both sizes), not the base file base/tokenizer.json (admissions/kev.md,
+    # "Tokenizer profile").
+    package: Starlings.Tokenizers
+    version: 0.3.0
+    profile_id: qwen2-bpe-kev
+    algorithm: byte-level-bpe
+    assets:
+      - path: tokenizer.json
+        sha256: "06b9509352d2af50381ab2247e083b80d32d5c0aba91c272ca9ff729b6a0e523"
+        size: 19989325
+    # Token ids come from the owned tokenizer; ONNX Runtime receives ids only.
+    backend_tokenizer_dependency: false
+  decoding:
+    reference: Kev's PyTorch fp32 path (Checkpoint.load on CPU, default LoadOptions) at code 6b719c3c
+    readout: hidden_states at each </opt> and <decide> position; the pointer head runs in C# from head.safetensors
+
+execution:
+  backend:
+    name: onnxruntime
+    version: 1.30.0
+    binding: Microsoft.ML.OnnxRuntime.Gpu.Linux
+    binding_version: 1.30.0
+  precision: fp32
+  variant: reference
+  graph:
+    # onnxruntime-genai 0.17.1 builder (-p fp32 -e cpu --extra_options exclude_lm_head=true exclude_mtp=true) on the
+    # fp32 merge written by model-pipeline/reference/kev/kev_merge.py (config.json set to float32). The export is
+    # deterministic; the fp32 LoRA merge is not: two Kev-4B builds differ in 33 of 452 tensors, 1 to 4 floats each (at
+    # most 1.9e-9 absolute), all LoRA-merged projections (package README, "The bundle"). The lock pins the bundle that
+    # was measured.
+    assets:
+      - path: model.onnx
+        sha256: "364540ffdadd6b7514c7a25d63e21cc3db61784a9a540835cd1458f8023b1cb5"
+        size: 410133
+      - path: model.onnx.data
+        sha256: "e8abebf694f97fde5c7ebc70391c38a15bb9bf2bc07f49449f786faf3863a063"
+        size: 16890920960
+    hosting:
+      # Download location of every file in the lock (KevModelAssets): <source_base><path>. Public repository since
+      # 2026-10-17 (tag r1); the digests, not the address, pin the bytes. The CPU and CUDA profiles share it.
+      repository: https://huggingface.co/Starlinghq/kev-4b-onnx
+      revision: "8179da507de7de4bddfdbfa44894ff24b1dcd959"
+      source_base: https://huggingface.co/Starlinghq/kev-4b-onnx/resolve/8179da507de7de4bddfdbfa44894ff24b1dcd959/
+      source_status: public
+      produced_by:
+        - model-pipeline/reference/kev/run_kev.py build (kev_merge.py, then the ONNX Runtime GenAI 0.17.1 builder)
+    inputs:
+      - { name: input_ids, type: int64, shape: [batch, sequence] }
+      - { name: attention_mask, type: int64, shape: [batch, total_sequence] }
+      - { name: position_ids, type: int64, shape: [3, batch, sequence] }
+      - { name: "past_key_values.%d.key/value", type: kv-cache, shape: "8 full-attention layers (3, 7, ..., 31)" }
+      - { name: "past.%d.conv/recurrent", type: recurrent-state, shape: "24 Gated DeltaNet layers" }
+    outputs:
+      - { name: hidden_states, type: float32, shape: [batch, sequence, 2560] }
+      - { name: "present.%d.*", type: cache, shape: "the matching state after the input" }
+  # CUDAExecutionProvider options. use_tf32 must be 0: ORT 1.30.0 defaults it to 1, and TF32 fails every fp32 bound
+  # (measured on Kev-0.8B, admissions/kev.md, "Goal 2"); Starlings.Runtime.Onnx always sets it and offers no TF32
+  # option. ONNX Runtime keeps the graph's GroupQueryAttention nodes on CPUExecutionProvider inside the CUDA session
+  # (package README, "CUDA"). The schema has no field for the execution provider name or the allowed fallback set.
+  provider_options:
+    use_tf32: 0
+
+capabilities:
+  # Starlings.Models.Kev (KevCapabilities) over a CUDA session (use_tf32 0); evidence in the package README ("CUDA",
+  # "Evidence"). Statuses follow KevCapabilities.All for the CUDA provider (the .cuda keys where they exist; both sizes
+  # have the same statuses): experimental where the CUDA tests (ai-dotnet/tests/Starlings.Models.Kev.Tests.Cuda, local
+  # RTX 3090) compared the package with Kev's PyTorch fp32 probabilities within the proposed bounds, unsupported where
+  # the package refuses or does not offer it, untested where no evidence exists. KevCapabilities.Profiles holds the same
+  # statuses (tested key for key).
+  batch: unsupported  # one request per call; rows are not batched
+  streaming: unsupported  # one probability vector per question, nothing to stream
+  cancellation: experimental
+  persistence: unsupported  # the state cache lives for one request
+  training: unsupported
+  aot: untested
+  extensions_ai: unsupported
+  mlnet: unsupported
+  decision_noul: experimental
+  decision_choice: experimental
+  decision_score: experimental
+  calibrated_temperature: experimental
+  raw_probabilities: experimental
+  delimiter_escaping: experimental
+  question_isolation: experimental
+  state_cache_within_request: experimental
+  state_json_rendering: experimental
+  # concurrent_calls: serialized on CUDA (KevOptions.SerializeNativeCalls, the CUDA default): four callers x two rounds
+  # of the goldens, 72 of 72 bit-identical to sequential calls (CudaParityTests). Unserialized concurrent runs on one
+  # CUDA session gave wrong outputs for GLiNER2 and Qwen3.5 on ONNX Runtime 1.30; not tried for Kev.
+  concurrent_calls: experimental
+  concurrent_calls_unserialized: untested
+  asset_verification_offline: experimental
+  state_over_8192_tokens: unsupported  # refused, never truncated
+  # KevModelAssets.DownloadAsync from the public hosting repository; anonymous download and offline reuse tested
+  # (HostingDownloadTests, STARLING_NETWORK_TESTS=1). No G6 drill yet.
+  asset_acquisition_download: experimental
+  state_prefix_reuse_across_requests: unsupported
+  probability_rounding: unsupported
+  usage_output_tokens: unsupported
+  date_facts: unsupported
+  option_isolation: unsupported
+  http_server: unsupported
+  bf16: unsupported
+  fp16: unsupported
+  quantized: unsupported
+  calibration_fitting: unsupported
+  generation: unsupported
+  non_english: unsupported
+  tf32: unsupported  # use_tf32 is forced to 0; TF32 fails every fp32 bound
+
+compatibility:
+  # Linux deployment requirement: start the process with MALLOC_MMAP_THRESHOLD_=65536 (package README). Without it a
+  # one-hour Kev-0.8B CUDA soak's loaded memory grew 64 MB/h (glibc arena retention, outputs correct); with it every
+  # Kev soak plateaued (docs/evidence/kev-soak-2026-10-17/).
+  # Linux x64 CUDA: local development evidence 2026-10-17 on one NVIDIA GeForce RTX 3090 (24 GB, driver 610.57, CUDA
+  # 13.3 runtime, cuDNN 9), ai-dotnet/tests/Starlings.Models.Kev.Tests.Cuda (package README, "Evidence"). No gate, no
+  # per-release GPU regression. Other GPUs: untested; Kev-4B needs a 24 GB card.
+  - os: linux
+    arch: x64
+    provider: cuda
+    status: experimental
+    verified: 2026-10-17
+  - os: windows
+    arch: x64
+    provider: cuda
+    status: untested
+
+qualification:
+  reference_runner: model-pipeline/reference/kev/run_kev.py
+  # No protected fixtures exist for Kev. The reference is proposed, not adopted into protected/: Kev's PyTorch fp32
+  # path on the Starling-written corpus below (30 records, 58 questions, 44 labelled; states up to 1,531 tokens) and
+  # upstream's development partitions, run through the onboarding route kev-onnx-cpu-v1 (recipes/kev-4b-cpu.yaml).
+  fixtures: model-pipeline/reference/corpus/kev-decisions-v1.jsonl
+  # The reference is shared with kev-4b/onnx-fp32-cpu (same bundle; CPU PyTorch fp32). No protected tolerances exist
+  # for Kev-4B. The CUDA evidence was judged against the Kev-0.8B values, applied here as PROPOSED values only: the file
+  # below binds kev-0.8b (weights 9a45d25e), not this checkpoint, and the binding bound for Kev-4B is the maintainer's
+  # decision. CUDA development evidence (2026-10-17, RTX 3090): 9 request goldens vs PyTorch fp32 4.17e-5 (2e-4), no
+  # flip; cached vs uncached 7.2e-7 (1e-5). onboarding corpus with the onnx and dotnet stages on CUDA through the decision evaluator: passed, 6.57e-5
+  # vs PyTorch, .NET vs Python ORT 1.5e-7, no flip (docs/evidence/kev-cuda-2026-10-17/). One-hour soak passed
+  # (default allocator; 435 cycles); RunPod RTX 3090: CUDA tests 12/12 and a 10-minute soak smoke
+  # (docs/evidence/kev-soak-2026-10-17/). Not yet run on CUDA: upstream's development partitions and the matched
+  # benchmark. Proposed reference: no gate.
+  tolerances: model-pipeline/protected/kev-0.8b/onnx-fp32/tolerances.yaml
+  gates:
+    G0: { status: not-run }
+    G1: { status: not-run }
+    G2: { status: not-run }
+    G3: { status: not-run }
+    G4: { status: not-run }
+    G5: { status: not-run }
+    G6: { status: not-run }
+    G7: { status: not-run }
+
+maintenance:
+  owner: Mark
+  # main (also the Hub tag v1.0) is 6cfce5c2, with weights identical to the pinned commit (admissions/kev.md, "Upstream
+  # inventory"; package README).
+  latest_known_upstream_revision: "6cfce5c2fa4b4bd64026336ab649c5ca78857d52"
+  latest_verified_upstream_revision: "139fdd94f1b6a6ad80cc15e08fcb99cac885a101"
+  review_date: 2027-01-05
+  known_issues:
+    - >-
+      No binding tolerance for Kev-4B: the protected file binds Kev-0.8B, and on CPU one transfer-v4 development
+      question (2.05e-4) exceeds its 2e-4 probability bound by 2.5% (no flip, identical accuracy). The binding bound for
+      4B is the maintainer's decision.
+    - >-
+      Evidence is local: one RTX 3090 workstation. The per-release GPU regression and the gates have not run for this
+      profile; other NVIDIA GPUs are untested.
+    - >-
+      ONNX Runtime keeps the graph's GroupQueryAttention nodes on the CPU provider inside the CUDA session, and the
+      state cache passes through host memory between rows.
+    - >-
+      Cancellation on CUDA completes the current graph run before throwing (no mid-graph termination).
+    - >-
+      Native runtime: Microsoft.ML.OnnxRuntime.Gpu.Linux 1.30.0 needs the CUDA 13 runtime and cuDNN 9 on the loader
+      path; the package does not ship them.
+    - >-
+      model.onnx.data is not byte-reproducible across builds (the fp32 LoRA merge; see execution.graph). The lock pins
+      the measured bundle; a rebuilt bundle needs its own digests and its own evidence (KevDecisionModel.Create with
+      explicit paths).
+    - >-
+      The references are proposed, not adopted into protected/, and no gate has run; every capability is at most
+      experimental. The full decision-v7 development run for 4B (1,468 questions) was stopped for memory before it
+      finished and is not reported.
+    - >-
+      Device memory: the weights take about 17 GB, so Kev-4B needs a 24 GB card.

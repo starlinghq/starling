@@ -1,0 +1,5 @@
+model.onnx: OK
+model.onnx.data: OK
+head.safetensors: OK
+head.json: OK
+tokenizer.json: OK

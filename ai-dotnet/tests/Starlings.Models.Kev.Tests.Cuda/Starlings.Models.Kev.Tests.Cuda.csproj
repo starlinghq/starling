@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Local-only Kev CUDA tests (Linux x64). Not part of AI.slnx, so CI does not restore the GPU package.
+    Opt in with STARLING_CUDA_TESTS=1, CUDA_DEVICE_ORDER=PCI_BUS_ID and an explicit CUDA_VISIBLE_DEVICES, plus
+    STARLING_KEV_08B_BUNDLE / STARLING_KEV_4B_BUNDLE; see the Kev package README.
+  -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="xunit.v3" />
+    <!-- CUDA native runtime (includes the CPU provider). The CUDA 13 runtime and cuDNN 9 are not in the package. -->
+    <PackageReference Include="Microsoft.ML.OnnxRuntime.Gpu.Linux" />
+    <Using Include="Xunit" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="../Starlings.Models.Kev.Tests/Data/*.json" CopyToOutputDirectory="PreserveNewest" LinkBase="Data" />
+    <Compile Include="../Shared/Kev/*.cs" Link="Shared/Kev/%(Filename)%(Extension)" />
+    <Compile Include="../Shared/Cuda/*.cs" Link="Shared/Cuda/%(Filename)%(Extension)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../src/Starlings.Models.Kev/Starlings.Models.Kev.csproj" />
+  </ItemGroup>
+
+</Project>

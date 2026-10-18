@@ -590,8 +590,10 @@ On the M0 workstation the tests pass both with the system CUDA 13.3 runtime (`/o
 
 ```sh
 STARLING_MODELS=<cache> dotnet run --project ai-dotnet/tools/Starlings.Soak.Tool -c Release [-p:UseCuda=true] -- \
-  <e5|gliner2|embeddinggemma2|embeddinggemma2-image|embeddinggemma2-video|qwen35|all> --out <dir> [--duration 1h] [--cuda] [--concurrency 2] [--threads n]
+  <e5|gliner2|embeddinggemma2|embeddinggemma2-image|embeddinggemma2-video|qwen35|kev-0.8b|kev-4b|all> --out <dir> [--duration 1h] [--cuda] [--concurrency 2] [--threads n]
 ```
+
+`kev-0.8b` and `kev-4b` (profiles `onnx-fp32-cpu`, `-cuda`) read the bundle directory from `STARLING_KEV_08B_BUNDLE` / `STARLING_KEV_4B_BUNDLE`, else the acquisition cache (`KevModelAssets.DownloadAsync`), and ask a noul, a choice and a score question about each short text; the long request is the long text with eight questions.
 
 `embeddinggemma2-video` (profiles `video-fp32-cpu`, `-cuda`) serves synthetic clips as decoded frames with their timing (`EmbeddingGemma2Video.FromDecodedFrames`, 4 frames per second, 2 or 3 sampled frames per request; the long request is a batch of two 6-frame clips) on the image path's graphs, so it needs no video decoder; decoding is the FFmpeg adapter's tests.
 

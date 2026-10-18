@@ -12,9 +12,6 @@ namespace Starlings.Models.Kev.Tests;
 /// </summary>
 public sealed class ModelParityTests
 {
-    private const double ProbabilityBound = 2.0e-4;
-    private const double CachedBound = 1.0e-5;
-
     private static CancellationToken Ct => TestContext.Current.CancellationToken;
 
     private static readonly ConcurrentDictionary<KevModel, Lazy<(KevDecisionModel? Model, string Reason)>> Models = new();
@@ -51,28 +48,9 @@ public sealed class ModelParityTests
     {
         var (kev, reason) = Load(model);
         Assert.SkipWhen(kev is null, reason);
-        string probsFile = $"probs-{KevModelProfile.For(model).Id.Split('/')[0]}.json";
-        Assert.SkipUnless(File.Exists(Path.Combine(KevTestAssets.DataDirectory, probsFile)), $"{probsFile} not generated");
-        var request = KevTestAssets.ReadData("requests.json").EnumerateArray().Single(c => c.GetProperty("id").GetString() == id);
-        var expected = KevTestAssets.ReadData(probsFile).GetProperty("cases").EnumerateArray()
-            .Single(c => c.GetProperty("id").GetString() == id).GetProperty("probs").EnumerateArray()
-            .Select(q => q.EnumerateArray().Select(p => p.GetDouble()).ToArray()).ToArray();
-
-        var decision = kev!.Decide(KevRequest.ParseSystemOne(request.GetProperty("request").GetString()!), Ct);
-        Assert.Equal(expected.Length, decision.Answers.Count);
-        for (int q = 0; q < expected.Length; q++)
-        {
-            var actual = decision.Answers[q].ProbabilityList;
-            Assert.Equal(expected[q].Length, actual.Count);
-            double max = expected[q].Zip(actual, (a, b) => Math.Abs(a - b)).Max();
-            Assert.True(max <= ProbabilityBound, $"{id} question {q}: max abs {max:G3} > {ProbabilityBound:G3}");
-            int refArg = Array.IndexOf(expected[q], expected[q].Max());
-            var sorted = expected[q].OrderDescending().ToArray();
-            if (sorted.Length < 2 || sorted[0] - sorted[1] >= 1e-4)
-            {
-                Assert.Equal(refArg, actual.ToList().IndexOf(actual.Max()));
-            }
-        }
+        string? missing = KevParity.MissingReference(model);
+        Assert.SkipWhen(missing is not null, missing ?? string.Empty);
+        KevParity.AssertMatchesReference(kev!, id, Ct);
     }
 
     [Theory]
@@ -82,14 +60,20 @@ public sealed class ModelParityTests
     {
         var (kev, reason) = Load(model);
         Assert.SkipWhen(kev is null, reason);
-        var request = KevTestAssets.ReadData("requests.json").EnumerateArray().Single(c => c.GetProperty("id").GetString() == "many-questions");
-        var encoding = kev!.Encode(KevRequest.ParseSystemOne(request.GetProperty("request").GetString()!).ToRecord());
-        var cached = kev.Run(encoding, Ct);
-        var uncached = kev.RunUncached(encoding, Ct);
-        double max = cached.Zip(uncached, (a, b) => a.Zip(b, (x, y) => Math.Abs(x - y)).Max()).Max();
-        Assert.True(max <= CachedBound, $"cached vs uncached {max:G3} > {CachedBound:G3}");
-        // The cache is read, never written: running again from the same encoding gives the same bits.
-        Assert.Equal(cached.SelectMany(p => p), kev.Run(encoding, Ct).SelectMany(p => p));
+        KevParity.AssertCachedEqualsUncached(kev!, Ct);
+    }
+
+    /// <summary>Capability <c>concurrent_calls</c> on CPU (not serialized): four callers, bit-identical to sequential.</summary>
+    [Theory]
+    [InlineData(KevModel.Kev08B)]
+    [InlineData(KevModel.Kev4B)]
+    public void ConcurrentCallsEqualSequential(KevModel model)
+    {
+        var (kev, reason) = Load(model);
+        Assert.SkipWhen(kev is null, reason);
+        Assert.False(kev!.SerializesNativeCalls);
+        Assert.Equal(KevModelProfile.For(model).Id, kev.ProfileId);
+        KevParity.AssertConcurrentEqualsSequential(kev, callers: 4, rounds: 2, Ct);
     }
 
     [Theory]
