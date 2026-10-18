@@ -1,6 +1,17 @@
 # Experimental Qwen text chat
 
-Experimental. This package is not published to nuget.org: it is not part of the 0.2.0 release (`docs/releases/ai-0.2.0.md`, "Not published"). Build it from this repository, for example with a `ProjectReference` to `ai-dotnet/src/Starlings.Models.QwenChat/Starlings.Models.QwenChat.csproj`. The API may still change. For the published, Stable Qwen3.5-0.8B chat model, use `Starlings.Models.Qwen35`.
+Experimental. The package is in the release set from the release after 0.2.0 (it was not part of 0.2.0). The API may still change. For the Stable Qwen3.5-0.8B chat model, use `Starlings.Models.Qwen35`.
+
+## Maturity
+
+<!-- catalog:maturity profiles=qwen3-0.6b/*,qwen2.5-0.5b-instruct/* -->
+Maturity is per profile, generated from the registry manifests by `model-pipeline catalog` (do not edit this table by hand). Gates, evidence and capabilities per profile: the [model catalog](https://github.com/starlinghq/starling/blob/main/docs/catalog/README.md).
+
+| Profile | Maturity | Platforms |
+| --- | --- | --- |
+| `qwen2.5-0.5b-instruct/ortgenai-fp32-cpu` | experimental | linux-x64 cpu: experimental; windows-x64 cpu: untested |
+| `qwen3-0.6b/ortgenai-fp32-cpu` | experimental | linux-x64 cpu: experimental; windows-x64 cpu: untested |
+<!-- /catalog:maturity -->
 
 The admitted profiles are `Qwen/Qwen3-0.6B@c1899de289a04d12100db370d81485cdf75e47ca` and `Qwen/Qwen2.5-0.5B-Instruct@7ae557604adf67be50417f59c2c2f167def9a775`. Both run CPU fp32 with ONNX Runtime GenAI 0.17.1 and the owned tokenizer. Add `Microsoft.ML.OnnxRuntimeGenAI` 0.17.1 to the application for the native runtime.
 
@@ -12,7 +23,7 @@ var result = model.Generate([new(QwenChatRole.User, "Explain gravity briefly.")]
 Console.WriteLine(result.Text);
 ```
 
-Build the hash-verified original snapshot with `model-pipeline/reference/qwen-chat/build_bundle.py`. The loader validates the admitted original tokenizer and template, architecture, vocabulary, EOS ids and proposed graph lock. It never downloads weights. Graph hashes are observed candidate evidence, not a published independently adopted asset lock.
+Build the bundle from the hash-verified original snapshot with `model-pipeline/reference/qwen-chat/build_bundle.py` (see "Bundle"). The loader checks every bundle file against the profile's pinned digests (`QwenChatProfile.BundleFiles`), as well as the tokenizer and template identities, the architecture, the vocabulary and the EOS ids. It never downloads anything. Starling hosts no bundle.
 
 These are experimental text-only profiles. Qwen3 explicitly uses `enable_thinking=false`, which differs from its upstream default. Qwen2.5 inserts the upstream default system instruction when the first message is not a system message. Tools, tool messages, multimodal input, sampling and Qwen3 thinking mode are unsupported. Each request has its own disposable generator/cache; continuing chat requires resending the whole conversation. CPU native threads are bounded to two. Cancellation is checked before prefill and between decode steps; a running native operation is not interruptible.
 
@@ -22,7 +33,9 @@ Fresh reference and parity reports remain proposals. They do not award protected
 
 ## Bundle
 
-`build_bundle.py --candidate <profile.json> --snapshot <original snapshot> --out <bundle>` needs the `onnxruntime-genai` 0.17.1 builder; the candidate contracts are `model-pipeline/candidates/qwen3/profile.json` and `model-pipeline/candidates/qwen25/profile.json`. `Load` requires exactly these files in the bundle directory, each matching the size and SHA-256 in `bundle-lock.json`: `genai_config.json`, `model.onnx`, `model.onnx.data`, `tokenizer.json`, `tokenizer_config.json` and `chat_template.jinja`. The lock must name the profile, the original repository and revision, builder 0.17.1, fp32 and `CPUExecutionProvider`. A mismatch throws `InvalidDataException`.
+`build_bundle.py --candidate <profile.json> --snapshot <original snapshot> --out <bundle>` needs the `onnxruntime-genai` 0.17.1 builder; the candidate contracts are `model-pipeline/candidates/qwen3/profile.json` and `model-pipeline/candidates/qwen25/profile.json`. `Load` requires exactly these files in the bundle directory: `genai_config.json`, `model.onnx`, `model.onnx.data`, `tokenizer.json`, `tokenizer_config.json` and `chat_template.jinja`. Each file's size and SHA-256 must equal the profile's pin (`QwenChatProfile.BundleFiles`, the same digests as the registry manifest's `execution.graph.assets`), both as recorded in `bundle-lock.json` and as hashed on disk. The lock must also name the profile, the original repository and revision, builder 0.17.1 at source commit `83de55a1`, fp32 and `CPUExecutionProvider`. A mismatch throws `InvalidDataException`.
+
+The build is reproducible: on 2026-10-18 two builds from the pinned originals with the hash-locked builder (`model-pipeline/reference/generation/requirements.txt`) gave the pinned digests byte for byte, for both profiles. A builder wheel or platform outside that lock was not tested, and a bundle with other digests is refused.
 
 ## API
 

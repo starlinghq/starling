@@ -194,7 +194,7 @@ try {
         'Starlings.Models.EmbeddingGemma2.Extensions.AI', 'Starlings.Models.EmbeddingGemma2.MLNet',
         'Starlings.Models.EmbeddingGemma2.Imaging.SkiaSharp', 'Starlings.Models.EmbeddingGemma2.Video.FFmpeg',
         'Starlings.Generation.OnnxGenAI', 'Starlings.Models.Qwen35', 'Starlings.Models.Qwen35.Extensions.AI',
-        'Starlings.Models.Kev')
+        'Starlings.Models.Kev', 'Starlings.Models.QwenChat')
     $env:CI = 'true'
     Push-Location $src
     foreach ($id in $projects) {
@@ -221,6 +221,7 @@ try {
         'Starlings.Models.Qwen35'                            = @("Starlings.Acquisition [$aiVersion]", "Starlings.Generation.OnnxGenAI [$aiVersion]", "Starlings.Tokenizers [$tokVersion]")
         'Starlings.Models.Qwen35.Extensions.AI'              = @("Starlings.Models.Qwen35 [$aiVersion]", 'Microsoft.Extensions.AI.Abstractions 10.10.1', 'Microsoft.Extensions.DependencyInjection.Abstractions 10.0.12')
         'Starlings.Models.Kev'                               = @("Starlings.Acquisition [$aiVersion]", "Starlings.Runtime.Onnx [$aiVersion]", "Starlings.Tokenizers [$tokVersion]")
+        'Starlings.Models.QwenChat'                          = @("Starlings.Generation.OnnxGenAI [$aiVersion]", "Starlings.Tokenizers [$tokVersion]")
     }
     Add-Type -AssemblyName System.IO.Compression.FileSystem
     function Read-Entry([string]$Zip, [string]$Name) {

@@ -28,7 +28,7 @@ public sealed class QwenChatModel : IDisposable
     /// <summary>Loaded identity and explicit experimental capabilities.</summary>
     public QwenChatModelInfo Info { get; }
 
-    /// <summary>Verify a proposed bundle lock and load CPU fp32. No implicit download occurs.</summary>
+    /// <summary>Verify the bundle against the profile's pinned lock and load CPU fp32. No implicit download occurs.</summary>
     public static QwenChatModel Load(QwenChatProfile profile, string bundleDirectory, QwenChatModelOptions? options = null)
     {
         ArgumentNullException.ThrowIfNull(profile);
@@ -110,7 +110,7 @@ public sealed class QwenChatModel : IDisposable
             root.GetProperty("builder").GetProperty("source_commit").GetString() != "83de55a1f3886cddbb32a5517e26adb3f9d65159" ||
             root.GetProperty("precision").GetString() != "fp32" || root.GetProperty("provider").GetString() != "CPUExecutionProvider")
         {
-            throw new InvalidDataException("Proposed bundle identity differs from the admitted original or pinned builder.");
+            throw new InvalidDataException("Bundle identity differs from the admitted original or pinned builder.");
         }
 
         var files = new HashSet<string>(StringComparer.Ordinal);
@@ -122,10 +122,17 @@ public sealed class QwenChatModel : IDisposable
                 throw new InvalidDataException("Unsafe or duplicate bundle path.");
             }
 
-            string path = Path.Combine(directory, name);
-            if (new FileInfo(path).Length != file.GetProperty("size").GetInt64() || Sha256(path) != file.GetProperty("sha256").GetString())
+            QwenChatBundleFile pinned = profile.BundleFiles.FirstOrDefault(f => f.Path == name)
+                ?? throw new InvalidDataException($"Bundle file not in the profile's lock: {name}.");
+            if (file.GetProperty("size").GetInt64() != pinned.Size || file.GetProperty("sha256").GetString() != pinned.Sha256)
             {
-                throw new InvalidDataException($"Proposed bundle asset mismatch: {name}.");
+                throw new InvalidDataException($"Bundle lock differs from the profile's pinned digest: {name}.");
+            }
+
+            string path = Path.Combine(directory, name);
+            if (new FileInfo(path).Length != pinned.Size || Sha256(path) != pinned.Sha256)
+            {
+                throw new InvalidDataException($"Bundle asset mismatch: {name}.");
             }
         }
 

@@ -1,7 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <IsPackable>true</IsPackable>
-    <Description>Experimental text-only Qwen3-0.6B and Qwen2.5-0.5B-Instruct CPU fp32 generation with owned templates and tokenization. Fresh evidence is proposed; protected release qualification remains unapproved.</Description>
+    <Description>Qwen/Qwen3-0.6B (revision c1899de2, thinking disabled) and Qwen/Qwen2.5-0.5B-Instruct (revision 7ae55760) text chat generation in-process on ONNX Runtime GenAI 0.17.1: the pinned chat templates rendered in C# for system, user and assistant messages (tools and multimodal input rejected), prompt ids from the owned tokenizer (Starlings.Tokenizers: no Microsoft.ML.Tokenizers, no GenAI tokenizer), and Starling's decode loop (greedy, stop tokens and strings, streaming, cancellation between steps, usage). Ships no weights: the bundle is built locally from the pinned originals and verified against the profile's digests. Profiles qwen3-0.6b/ortgenai-fp32-cpu and qwen2.5-0.5b-instruct/ortgenai-fp32-cpu, Linux x64. The application adds Microsoft.ML.OnnxRuntimeGenAI. Maturity is per model profile (Stable, Preview or Experimental): see the README, generated from the model registry.</Description>
+    <PackageTags>llm;chat;qwen;qwen3;qwen2.5;text-generation;onnxruntime-genai;streaming</PackageTags>
     <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
   <ItemGroup>
