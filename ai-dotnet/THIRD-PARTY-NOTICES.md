@@ -59,6 +59,14 @@ The full PyTorch notice (including the Caffe2 contributors) is the `LICENSE` fil
 
 `Starlings.Models.Qwen35` (`Qwen35ChatTemplate.cs`) is a C# port of the `chat_template.jinja` of `Qwen/Qwen3.5-0.8B` at commit `2fc06364715b967f1860aea9cf38778875588b17`, Copyright 2026 Alibaba Cloud, licensed under the Apache License, Version 2.0. The tool-calling instructions are reproduced verbatim. `Qwen35ToolCallParser.cs` ports the tool-call argument casting of transformers (`src/transformers/utils/chat_parsing/response_parser.py`, `_coerce` and `_schema_types`, commit `a906d3c4b65095f2308b6a6a193e934d03b8eb5d`, tag v5.18.0), Copyright 2026 The HuggingFace Team, licensed under the Apache License, Version 2.0. Both files carry a modification notice. The Apache License 2.0 text is at https://www.apache.org/licenses/LICENSE-2.0.
 
+## Qwen3 and Qwen2.5 chat templates (adapted source)
+
+`Starlings.Models.QwenChat` (`QwenChatTemplate.cs`; experimental, not published to nuget.org) adapts to C# the `chat_template` strings of `tokenizer_config.json` in `Qwen/Qwen3-0.6B` at commit `c1899de289a04d12100db370d81485cdf75e47ca` and `Qwen/Qwen2.5-0.5B-Instruct` at commit `7ae557604adf67be50417f59c2c2f167def9a775`, Copyright 2024 Alibaba Cloud, licensed under the Apache License, Version 2.0. Rendering is restricted to text system, user and assistant messages, with Qwen3 thinking disabled. The package carries the attribution and modification notice in its own `THIRD-PARTY-NOTICES.md` and the full license in `LICENSE.Qwen.txt`.
+
+## GLiNER2 (restated behaviour)
+
+`Starlings.Models.Gliner2` (`Gliner2Text.cs`, `Gliner2Preprocessor.cs`, `Gliner2Decoder.cs`) restates the text normalization, word splitter, schema input building and span decoding of GLiNER2 2.0.0 (https://github.com/fastino-ai/GLiNER2, commit `55656fbfa01d3d4a77485e1a1eeeaf682990ccdf`), licensed under the Apache License, Version 2.0. No upstream file is copied. The `fastino/gliner2-base-v1` weights are Apache-2.0 per the model card and are not redistributed by the package; the converted graph's notice is `model-pipeline/reference/gliner2/NOTICE-gliner2-onnx.txt`. The Apache License 2.0 text is at https://www.apache.org/licenses/LICENSE-2.0.
+
 ## transformers and Pillow (restated arithmetic)
 
 `EmbeddingGemma2ImageProcessor.GetTargetSize` and the patch order restate `get_aspect_ratio_preserving_size` and `convert_image_to_patches` of transformers (Apache-2.0, commit `c4c4605f961877852b89b97478536bb3a26b6fd1`, tag v5.19.0). `EmbeddingGemma2ImageDecoder.ApplyOrientation` follows the orientation table of Pillow's `ImageOps.exif_transpose` (MIT-CMU, commit `bb1d8e8ab8d29048624d96e3ee53cecf7c13d13d`, tag 12.3.0). No source text was copied.

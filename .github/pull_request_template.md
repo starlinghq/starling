@@ -9,7 +9,8 @@
 ## Checklist
 
 - [ ] Checks for the touched directories pass locally.
-- [ ] No protected fixture, tolerance, or release evaluation set changed. If one did, the PR explains why and carries only that change.
-- [ ] No production tokenizer project references Microsoft.ML.Tokenizers.
+- [ ] No protected fixture, tolerance, or release evaluation set changed. If one did, the PR carries the `protected-change` label, explains why, and carries only that change.
+- [ ] No library under `ai-dotnet/src/` references Microsoft.ML.Tokenizers or another tokenizer, directly or transitively.
+- [ ] Changed package references come with the updated `packages.lock.json` files.
 - [ ] Unsupported features are listed as unsupported, not omitted.
 - [ ] No model weights or large assets committed.

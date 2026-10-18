@@ -1,6 +1,6 @@
 # Third-party notices: model-pipeline
 
-The release evaluation sets under `protected/*/release/` and `protected/release-shared/` contain excerpts of the public datasets below, selected by the pinned scripts in `reference/stable/` (each set's `SOURCE.md` names the exact revision, digest and selection). They are evaluation data, not part of any shipped package. Each keeps its own license; where that differs from this repository's MIT OR Apache-2.0, the directory says so in its `LICENSE` file.
+The release evaluation sets under `protected/*/release/` and `protected/release-shared/` contain excerpts of the public datasets below, selected by pinned procedures (each set's `SOURCE.md` names the exact revision, digest and selection script; the `reference/stable/` scripts it names are not in this tree). They are evaluation data, not part of any shipped package. Each keeps its own license; where that differs from this repository's MIT OR Apache-2.0, the directory says so in its `LICENSE` file.
 
 | Dataset | Rights holder | License | Used in |
 | --- | --- | --- | --- |

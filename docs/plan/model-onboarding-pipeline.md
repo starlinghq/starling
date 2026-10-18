@@ -1,5 +1,7 @@
 # Executable model onboarding pipeline
 
+Status (2026-10-18): delivered. The CLI commands `inspect`, `plan`, `run`, `workflow` and `propose` are in `model-pipeline` (`model-pipeline/src/model_pipeline/onboarding_cli.py`), and the E5 recipe is `model-pipeline/recipes/multilingual-e5-small-cpu.yaml`. Later plugins added BERT, Qwen chat and Kev recipes (`docs/plan/five-model-onboarding.md`, #91).
+
 ## Objective and scope
 
 Deliver a tested, recipe-driven CLI that takes the existing pinned E5 CPU profile from asset verification through reference execution, Python ONNX execution, .NET fidelity, and a review bundle. Demonstrate a successful real-model run, a verified resume, and failure/invalidation behavior. Open a draft PR with evidence and passing required checks.

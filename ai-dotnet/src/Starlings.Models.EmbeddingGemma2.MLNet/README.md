@@ -37,6 +37,7 @@ IDataView embedded = transformer.Transform(data);
 ```
 
 - One inference per row, on the first output getter call; rows never read are never embedded.
+- `TokenCountColumnName` (default none) adds an `int` column with each row's token count (special tokens and prompt included).
 - Prompts are explicit (`Prompt`, default none). The dimension comes from `Encoder.Dimension` (768, 512, 256 or 128).
 - `BatchSize` above 1 batches sequential, unshuffled cursors with a look-ahead cursor; row ids are checked.
 - Saving the transformer throws (`mlnet.persistence: unsupported`); cursors take no cancellation token.

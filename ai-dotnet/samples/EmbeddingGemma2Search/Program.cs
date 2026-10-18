@@ -87,7 +87,7 @@ async Task<int> ToolBody()
     if (args[0] == "download")
     {
         // 1. Explicit acquisition of the pinned lock: tokenizer.json and config_sentence_transformers.json from the Hub
-        //    repository at the pinned commit, the text-path graph from its GitHub release. Cached files are verified.
+        //    repository at the pinned commit, the text-path graph from the Starlinghq/embeddinggemma-2-onnx Hub repository. Cached files are verified.
         Console.WriteLine($"lock:  {EmbeddingGemma2ModelAssets.Lock}");
         Console.WriteLine($"cache: {acquisition.ResolveCacheDirectory()}");
         var progress = new FileProgress();

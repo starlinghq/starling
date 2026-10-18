@@ -23,6 +23,8 @@ What is not finished:
 - Input between 2,049 and 8,192 tokens is untested (admission record, feature contract).
 - The browser (WebAssembly) target has eight open decisions (`docs/m0/browser-wasm-spike.md` section 10).
 
+Status (2026-10-18): most of the list above is closed. All six EmbeddingGemma 2 profiles are Stable (text CPU #68, image CPU #75, text and image CUDA #82, video CPU and CUDA #95; `docs/catalog/README.md`), so W7 is done and G1 and G2 ran on CUDA. The packages, including both FFmpeg adapters (`Starlings.Models.EmbeddingGemma2.Video.FFmpeg` and `.FFmpeg9`, D2 cleared in #48), are published on nuget.org in ai-dotnet `0.2.0` (2026-10-17, `docs/releases/ai-0.2.0.md`). W2 and W4 are done (status lines in section 2). `input_2050_to_8192_tokens` is `experimental` for the text CPU profile after the 2026-10-14 capability closure (#19). Still open: W1 (protocol and script only, `docs/evidence/embeddinggemma2-video/frame-calls-protocol.md`; D7 waits on it) and W6 (no browser registry profile exists).
+
 ## 1. Maintainer decisions
 
 All seven were approved by Mark on 2026-10-12 as recommended, and recorded in `docs/kickoff.md`. Mark added one rule: every adapter is a voluntary addition. Users choose to reference it, so they decide how deep to go. That covers SkiaSharp imaging, each FFmpeg-major video adapter, the browser's WebGPU support, and any future adapter. No core package may reference an adapter, directly or transitively.

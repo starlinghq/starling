@@ -2,6 +2,8 @@
 
 Status: **design, for maintainer review.** It covers backlog P-020 ("Add upstream change detection and scoped revalidation") and P-022 ("Execute first maintained update and rollback drill"), part of milestone M3 (plan section 17: "One upstream change end to end ..."). It was written in workstream R10 (`docs/plan/production-readiness.md`). This document only designs the drills; none has been run. Only the detector in section 3 exists, as code.
 
+Status (2026-10-18): the drills are still not run. The detector now runs weekly as job `upstream` of `.github/workflows/qualification.yml`; it differs from the proposed schedule in section 3: the workflow token is read-only and cannot open an issue, so a newer upstream revision fails the job, and the failed run is the notification. Packages are now published: ai-dotnet `0.2.0` is on nuget.org (2026-10-17, `docs/releases/ai-0.2.0.md`), so the rollback drill's deprecation step (section 7) can act on a real feed.
+
 Exit criteria from the backlog:
 
 - **P-020:** model and tokenizer changes create useful proposals and rerun all affected gates. Upstream PR status cannot block an owned release.
