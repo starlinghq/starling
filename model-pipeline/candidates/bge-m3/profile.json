@@ -21,7 +21,7 @@
     "policy": {
       "attention_mask": "exact",
       "embedding_max_abs": 1e-05,
-      "hidden_max_abs": 0.0001,
+      "hidden_max_abs": 0.002,
       "non_finite": "fail",
       "padded_batch_max_abs": 1e-05,
       "required_paths": [

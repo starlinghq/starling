@@ -141,7 +141,7 @@
         "type": "Project",
         "dependencies": {
           "Microsoft.ML.OnnxRuntimeGenAI.Managed": "[0.17.1, 0.17.1]",
-          "Starlings.Tokenizers": "[0.3.0, 0.3.0]"
+          "Starlings.Tokenizers": "[0.3.1-preview.1, 0.3.1-preview.1]"
         }
       },
       "starlings.models.e5": {
@@ -149,7 +149,7 @@
         "dependencies": {
           "Starlings.Acquisition": "[0.2.0, )",
           "Starlings.Runtime.Onnx": "[0.2.0, )",
-          "Starlings.Tokenizers": "[0.3.0, 0.3.0]"
+          "Starlings.Tokenizers": "[0.3.1-preview.1, 0.3.1-preview.1]"
         }
       },
       "starlings.models.embeddinggemma2": {
@@ -157,7 +157,7 @@
         "dependencies": {
           "Starlings.Acquisition": "[0.2.0, )",
           "Starlings.Runtime.Onnx": "[0.2.0, )",
-          "Starlings.Tokenizers": "[0.3.0, 0.3.0]"
+          "Starlings.Tokenizers": "[0.3.1-preview.1, 0.3.1-preview.1]"
         }
       },
       "starlings.models.gliner2": {
@@ -165,7 +165,7 @@
         "dependencies": {
           "Starlings.Acquisition": "[0.2.0, )",
           "Starlings.Runtime.Onnx": "[0.2.0, )",
-          "Starlings.Tokenizers": "[0.3.0, 0.3.0]"
+          "Starlings.Tokenizers": "[0.3.1-preview.1, 0.3.1-preview.1]"
         }
       },
       "starlings.models.kev": {
@@ -181,7 +181,7 @@
         "dependencies": {
           "Starlings.Acquisition": "[0.2.0, )",
           "Starlings.Generation.OnnxGenAI": "[0.2.0, )",
-          "Starlings.Tokenizers": "[0.3.0, 0.3.0]"
+          "Starlings.Tokenizers": "[0.3.1-preview.1, 0.3.1-preview.1]"
         }
       },
       "starlings.runtime.onnx": {
@@ -246,9 +246,9 @@
       },
       "Starlings.Tokenizers": {
         "type": "CentralTransitive",
-        "requested": "[0.3.0, 0.3.0]",
-        "resolved": "0.3.0",
-        "contentHash": "5VQxvrls4G1GQBsnJaHuMsgzGWGVDlUCQ4p3Z5/lAiMhTG4FZPZ4RbvGxegOtzqM/8kBVTMD8zvicspZyYlnTg=="
+        "requested": "[0.3.1-preview.1, 0.3.1-preview.1]",
+        "resolved": "0.3.1-preview.1",
+        "contentHash": "SI2/ddJ3SObRLBP0nHxUcq7Tw5zhbYHrTxHzH1wzZZy8+02JMEVigqY6LXJcx8rDHq/phODqB9NBjX+jvrNcwA=="
       }
     }
   }

@@ -4,9 +4,9 @@
     "net10.0": {
       "Starlings.Tokenizers": {
         "type": "Direct",
-        "requested": "[0.3.0, 0.3.0]",
-        "resolved": "0.3.0",
-        "contentHash": "5VQxvrls4G1GQBsnJaHuMsgzGWGVDlUCQ4p3Z5/lAiMhTG4FZPZ4RbvGxegOtzqM/8kBVTMD8zvicspZyYlnTg=="
+        "requested": "[0.3.1-preview.1, 0.3.1-preview.1]",
+        "resolved": "0.3.1-preview.1",
+        "contentHash": "SI2/ddJ3SObRLBP0nHxUcq7Tw5zhbYHrTxHzH1wzZZy8+02JMEVigqY6LXJcx8rDHq/phODqB9NBjX+jvrNcwA=="
       },
       "System.Numerics.Tensors": {
         "type": "Transitive",

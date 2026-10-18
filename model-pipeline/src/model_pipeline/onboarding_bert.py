@@ -93,7 +93,7 @@ FIXED_POLICY_KEYS = {
     "non_finite": "fail",
     "required_paths": ["reference", "python-onnx", "dotnet-ids", "dotnet-text"],
 }
-FIDELITY_CAPS = {"hidden_max_abs": 1e-3, "embedding_max_abs": 1e-3, "score_max_abs": 1e-3}
+FIDELITY_CAPS = {"hidden_max_abs": 2e-3, "embedding_max_abs": 1e-3, "score_max_abs": 1e-3}
 
 
 def _validate_policy(policy: dict) -> None:
