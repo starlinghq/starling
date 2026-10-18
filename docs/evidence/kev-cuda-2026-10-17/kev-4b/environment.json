@@ -1,0 +1,79 @@
+{
+  "onnx": {
+    "machine": "omarchy",
+    "onnxruntime": "1.30.0",
+    "provider": "CUDAExecutionProvider",
+    "provider_options": {
+      "sdpa_kernel": "0",
+      "use_tf32": "0",
+      "fuse_conv_bias": "0",
+      "prefer_nhwc": "0",
+      "tunable_op_max_tuning_duration_ms": "0",
+      "tunable_op_enable": "0",
+      "tunable_op_tuning_enable": "0",
+      "enable_cudnn": "1",
+      "use_ep_level_unified_stream": "0",
+      "device_id": "0",
+      "has_user_compute_stream": "0",
+      "gpu_external_empty_cache": "0",
+      "cudnn_conv_algo_search": "EXHAUSTIVE",
+      "cudnn_conv1d_pad_to_nc1d": "0",
+      "gpu_mem_limit": "18446744073709551615",
+      "gpu_external_alloc": "0",
+      "gpu_external_free": "0",
+      "arena_extend_strategy": "kNextPowerOfTwo",
+      "do_copy_in_default_stream": "1",
+      "enable_cuda_graph": "0",
+      "user_compute_stream": "0",
+      "cudnn_conv_use_max_workspace": "1"
+    },
+    "cuda_visible_devices": "0",
+    "threads": 4,
+    "python": "3.12.14",
+    "model_sha256": {
+      "model.onnx": "364540ffdadd6b7514c7a25d63e21cc3db61784a9a540835cd1458f8023b1cb5",
+      "model.onnx.data": "158ebdd01c89cef1607ce04f796b6c1e75eb6fff5f30af8cc37ea1b02ba337b9",
+      "head.safetensors": "65698f2568fc1b6ebb60a1c2a24c7bb6622dcc23e1c6d9efe8d3274ad918a9a7",
+      "head.json": "df59ee369457425287e772462db515eae3060a8638c8b768bff2ead6f5d83097",
+      "tokenizer.json": "06b9509352d2af50381ab2247e083b80d32d5c0aba91c272ca9ff729b6a0e523"
+    },
+    "seconds": 95.86127878801199
+  },
+  "dotnet": {
+    "machine": "omarchy",
+    "dotnet": ".NET 10.0.12",
+    "onnxruntime": "1.30.0",
+    "provider": "CUDAExecutionProvider",
+    "profile_run": "kev-4b/onnx-fp32-cuda",
+    "threads": 4,
+    "inter_op_threads": 1,
+    "provider_options": {
+      "sdpa_kernel": "0",
+      "use_tf32": "0",
+      "fuse_conv_bias": "0",
+      "prefer_nhwc": "0",
+      "use_ep_level_unified_stream": "0",
+      "device_id": "0",
+      "tunable_op_max_tuning_duration_ms": "0",
+      "has_user_compute_stream": "0",
+      "cudnn_conv_algo_search": "EXHAUSTIVE",
+      "cudnn_conv1d_pad_to_nc1d": "0",
+      "gpu_mem_limit": "18446744073709551615",
+      "arena_extend_strategy": "kNextPowerOfTwo",
+      "do_copy_in_default_stream": "1",
+      "user_compute_stream": "0",
+      "cudnn_conv_use_max_workspace": "1",
+      "tunable_op_enable": "0",
+      "enable_cudnn": "1",
+      "tunable_op_tuning_enable": "0"
+    },
+    "cuda_visible_devices": "0",
+    "model_sha256": {
+      "model.onnx": "364540ffdadd6b7514c7a25d63e21cc3db61784a9a540835cd1458f8023b1cb5",
+      "model.onnx.data": "158ebdd01c89cef1607ce04f796b6c1e75eb6fff5f30af8cc37ea1b02ba337b9",
+      "head.safetensors": "65698f2568fc1b6ebb60a1c2a24c7bb6622dcc23e1c6d9efe8d3274ad918a9a7",
+      "head.json": "df59ee369457425287e772462db515eae3060a8638c8b768bff2ead6f5d83097",
+      "tokenizer.json": "06b9509352d2af50381ab2247e083b80d32d5c0aba91c272ca9ff729b6a0e523"
+    }
+  }
+}

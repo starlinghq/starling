@@ -37,6 +37,7 @@ POLICY = {
 CONTRACTS = {
     "sentence-transformers/all-MiniLM-L6-v2": ("embeddings", 256, "mean", 384, "l2"),
     "BAAI/bge-small-en-v1.5": ("embeddings", 512, "cls", 384, "l2"),
+    "BAAI/bge-base-en-v1.5": ("embeddings", 512, "cls", 768, "l2"),
     "cross-encoder/ms-marco-MiniLM-L6-v2": ("reranking", 512, "none", 384, "none"),
     "nomic-ai/nomic-embed-text-v1.5": ("embeddings", 8192, "mean", 768, "none"),
 }
@@ -91,7 +92,10 @@ def validate_candidate_behavior(candidate: dict) -> None:
             "pooling": pooling,
             "normalize": normalize,
             "output_name": "last_hidden_state" if task == "embeddings" else "logits",
-            "prompts": {"none": "", **({"query": QUERY} if repo == "BAAI/bge-small-en-v1.5" else {})},
+            "prompts": {
+                "none": "",
+                **({"query": QUERY} if repo in {"BAAI/bge-small-en-v1.5", "BAAI/bge-base-en-v1.5"} else {}),
+            },
         }
         if task == "reranking":
             expected["score_activation"] = "identity"

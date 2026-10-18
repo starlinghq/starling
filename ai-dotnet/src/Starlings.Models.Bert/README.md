@@ -4,12 +4,12 @@ Experimental. This package is not published to nuget.org: it is not part of the 
 (`docs/releases/ai-0.2.0.md`, "Not published"). Build it from this repository, for example with a
 `ProjectReference` to `ai-dotnet/src/Starlings.Models.Bert/Starlings.Models.Bert.csproj`. The API may still change.
 
-Experimental CPU fp32 implementations for four explicitly pinned candidate contracts:
+Experimental CPU fp32 implementations for five explicitly pinned candidate contracts:
 `sentence-transformers/all-MiniLM-L6-v2` (mean/L2, 256 tokens), `BAAI/bge-small-en-v1.5`
-(CLS/L2, 512 tokens), `cross-encoder/ms-marco-MiniLM-L6-v2` (paired inputs, raw scalar
-logits, 512 tokens), and `nomic-ai/nomic-embed-text-v1.5` (mean pooling without
-normalization, 8192 tokens, 768-wide outputs). Candidate parity is development evidence; protected release
-qualification requires independent fixture adoption.
+(CLS/L2, 512 tokens), `BAAI/bge-base-en-v1.5` (CLS/L2, 512 tokens, 768-wide),
+`cross-encoder/ms-marco-MiniLM-L6-v2` (paired inputs, raw scalar logits, 512 tokens), and
+`nomic-ai/nomic-embed-text-v1.5` (mean pooling without normalization, 8192 tokens, 768-wide). Candidate parity is
+development evidence; protected release qualification requires independent fixture adoption.
 
 Load a reviewed candidate profile with `BertModelProfile.Load`. `BertTextEmbedder.Create`
 provides embeddings; `BertReranker.Create` provides scores and document ranking. Both
@@ -30,7 +30,7 @@ persistence, AOT, GPU providers, and unlisted model contracts are unsupported or
 ## Profiles
 
 The candidate contracts live in the repository, not in the package:
-`model-pipeline/candidates/<name>/profile.json`. `BertModelProfile.Parse` accepts only these four
+`model-pipeline/candidates/<name>/profile.json`. `BertModelProfile.Parse` accepts only these five
 repositories, ONNX Runtime 1.30.0 on `CPUExecutionProvider` in fp32, and the exact values below; anything
 else throws `NotSupportedException`.
 
@@ -38,6 +38,7 @@ else throws `NotSupportedException`.
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | `minilm` | `all-minilm-l6-v2/onnx-fp32-cpu` | embeddings | 256 | mean | 384 | l2 | `none` |
 | `bge-small` | `bge-small-en-v1.5/onnx-fp32-cpu` | embeddings | 512 | cls | 384 | l2 | `none`, `query` |
+| `bge-base` | `bge-base-en-v1.5/onnx-fp32-cpu` | embeddings | 512 | cls | 768 | l2 | `none`, `query` |
 | `ms-marco` | `ms-marco-minilm-l6-v2/onnx-fp32-cpu` | reranking | 512 | none | 384 (one logit out) | none | `none` |
 | `nomic-embed` | `nomic-embed-text-v1.5/onnx-fp32-cpu` | embeddings | 8192 | mean | 768 | none | `none` |
 

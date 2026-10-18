@@ -3,10 +3,10 @@ namespace Starlings.Models.Kev;
 /// <summary>A Kev 1.0 checkpoint this package has a contract for.</summary>
 public enum KevModel
 {
-    /// <summary><c>jaredpalmer/kev-0.8b</c> on <c>Qwen/Qwen3.5-0.8B-Base</c> (profile <c>kev-0.8b/onnx-fp32-cpu</c>).</summary>
+    /// <summary><c>jaredpalmer/kev-0.8b</c> on <c>Qwen/Qwen3.5-0.8B-Base</c> (profiles <c>kev-0.8b/onnx-fp32-cpu</c> and <c>onnx-fp32-cuda</c>).</summary>
     Kev08B,
 
-    /// <summary><c>jaredpalmer/kev-4b</c> on <c>Qwen/Qwen3.5-4B-Base</c> (profile <c>kev-4b/onnx-fp32-cpu</c>).</summary>
+    /// <summary><c>jaredpalmer/kev-4b</c> on <c>Qwen/Qwen3.5-4B-Base</c> (profiles <c>kev-4b/onnx-fp32-cpu</c> and <c>onnx-fp32-cuda</c>).</summary>
     Kev4B,
 }
 
@@ -63,6 +63,7 @@ public sealed record KevModelProfile
     {
         Model = KevModel.Kev08B,
         Id = "kev-0.8b/onnx-fp32-cpu",
+        CudaId = "kev-0.8b/onnx-fp32-cuda",
         Repository = "jaredpalmer/kev-0.8b",
         Revision = "9a45d25eb2ab761841196625383fa1dff0e56c1e",
         BaseRepository = "Qwen/Qwen3.5-0.8B-Base",
@@ -82,6 +83,7 @@ public sealed record KevModelProfile
     {
         Model = KevModel.Kev4B,
         Id = "kev-4b/onnx-fp32-cpu",
+        CudaId = "kev-4b/onnx-fp32-cuda",
         Repository = "jaredpalmer/kev-4b",
         Revision = "139fdd94f1b6a6ad80cc15e08fcb99cac885a101",
         BaseRepository = "Qwen/Qwen3.5-4B-Base",
@@ -114,8 +116,11 @@ public sealed record KevModelProfile
     /// <summary>The checkpoint.</summary>
     public required KevModel Model { get; init; }
 
-    /// <summary>Registry profile id.</summary>
+    /// <summary>Registry profile id on the CPU provider.</summary>
     public required string Id { get; init; }
+
+    /// <summary>Registry profile id on the CUDA provider (the same bundle and lock, <c>use_tf32=0</c>).</summary>
+    public required string CudaId { get; init; }
 
     /// <summary>Hub repository of the adapter, head and tokenizer.</summary>
     public required string Repository { get; init; }

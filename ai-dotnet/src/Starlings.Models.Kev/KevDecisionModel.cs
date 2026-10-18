@@ -7,8 +7,19 @@ namespace Starlings.Models.Kev;
 /// <summary>Immutable model configuration. Defaults are the profile values.</summary>
 public sealed record KevOptions
 {
-    /// <summary>Session settings (threads, digest check). The profiles are CPU only; CUDA is untested.</summary>
+    /// <summary>
+    /// Session settings (provider, threads, digest check). <see cref="OnnxExecutionProvider.Cpu"/> runs the
+    /// <c>onnx-fp32-cpu</c> profiles, <see cref="OnnxExecutionProvider.Cuda"/> (<c>use_tf32=0</c>, forced by
+    /// Runtime.Onnx) the <c>onnx-fp32-cuda</c> profiles on the same bundle (<see cref="KevCapabilities"/>).
+    /// </summary>
     public OnnxSessionOptions Session { get; init; } = new();
+
+    /// <summary>
+    /// Whether requests run their graph calls one request at a time. Null (default) serializes on CUDA and not on CPU:
+    /// concurrent runs on one CUDA session returned wrong outputs for GLiNER2 and Qwen3.5 on ONNX Runtime 1.30, and the
+    /// serialized mode is the CUDA profiles' contract. A call waiting for the gate stays cancellable.
+    /// </summary>
+    public bool? SerializeNativeCalls { get; init; }
 
     /// <summary>
     /// Calibration temperature. Null (default) uses the checkpoint's calibrated temperature (<c>head.pt</c>); 1.0 gives
@@ -29,9 +40,9 @@ public sealed record KevOptions
     internal void Validate()
     {
         ArgumentNullException.ThrowIfNull(Session);
-        if (Session.Provider != OnnxExecutionProvider.Cpu)
+        if (Session.Provider is not (OnnxExecutionProvider.Cpu or OnnxExecutionProvider.Cuda))
         {
-            throw new NotSupportedException("The Kev profiles are CPU only (capability 'cuda': untested).");
+            throw new NotSupportedException($"The Kev profiles run on the CPU or the CUDA provider, not {Session.Provider}.");
         }
 
         ArgumentOutOfRangeException.ThrowIfLessThan(MaxStateTokens, 2);
@@ -55,12 +66,19 @@ public sealed record KevOptions
 /// the question's <c>&lt;decide&gt;</c>.
 /// </para>
 /// <para>
+/// <b>Providers.</b> The CPU provider runs the <c>onnx-fp32-cpu</c> profiles; the CUDA provider runs the same bundle as
+/// the <c>onnx-fp32-cuda</c> profiles (<see cref="ProfileId"/>, <c>use_tf32=0</c>). The graph is the builder's CPU
+/// export: inside a CUDA session ONNX Runtime keeps some of its nodes on the CPU provider, and the state cache passes
+/// through host memory between rows.
+/// </para>
+/// <para>
 /// <b>Limits.</b> States above <see cref="KevOptions.MaxStateTokens"/> and rows above <see cref="KevOptions.MaxRowTokens"/>
 /// are rejected (<see cref="KevInputTooLongException"/>). Rows run one at a time. See <see cref="KevCapabilities"/>.
 /// </para>
 /// <para>
 /// <b>Threading and lifetime.</b> Methods are synchronous and hold no per-call state on the model, so they are meant to
-/// be callable concurrently; that is untested (<see cref="KevCapabilities"/>, <c>concurrent_calls</c>). Cancellation is checked before
+/// be callable concurrently (<see cref="KevCapabilities"/>, <c>concurrent_calls</c>). On CUDA requests run their graph
+/// calls one request at a time by default (<see cref="SerializesNativeCalls"/>). Cancellation is checked before
 /// each graph run and inside a run (between graph nodes); a cancelled call throws <see cref="OperationCanceledException"/>
 /// and the model stays usable.
 /// </para>
@@ -84,6 +102,8 @@ public sealed class KevDecisionModel : IDisposable
     private readonly string[] _pastNames;
     private readonly string[] _presentNames;
     private readonly OrtValue[] _emptyPast;
+    private readonly SemaphoreSlim? _runGate;
+    private readonly bool _onCuda;
     private int _disposed;
 
     private KevDecisionModel(KevModelProfile profile, OnnxModelSession session, bool ownsSession, KevEncoder encoder, KevPointerHead head, KevOptions options)
@@ -95,6 +115,8 @@ public sealed class KevDecisionModel : IDisposable
         _head = head;
         _options = options;
         (_pastNames, _presentNames, _emptyPast) = ValidateSignature(profile, session);
+        _onCuda = session.Diagnostics.SessionProviders[0] == OnnxRuntimeInfo.CudaProviderName;
+        _runGate = (options.SerializeNativeCalls ?? _onCuda) ? new SemaphoreSlim(1, 1) : null;
     }
 
     /// <summary>The profile.</summary>
@@ -102,6 +124,15 @@ public sealed class KevDecisionModel : IDisposable
 
     /// <summary>Options in effect.</summary>
     public KevOptions Options => _options;
+
+    /// <summary>The registry profile this model runs: <see cref="KevModelProfile.Id"/> on CPU, <see cref="KevModelProfile.CudaId"/> on CUDA.</summary>
+    public string ProfileId => _onCuda ? Profile.CudaId : Profile.Id;
+
+    /// <summary>
+    /// True when this model runs one request's graph calls at a time (<see cref="KevOptions.SerializeNativeCalls"/>; the
+    /// default on CUDA).
+    /// </summary>
+    public bool SerializesNativeCalls => _runGate is not null;
 
     /// <summary>The calibration temperature in effect.</summary>
     public double Temperature => _head.Temperature;
@@ -193,6 +224,20 @@ public sealed class KevDecisionModel : IDisposable
     public IReadOnlyList<float[]> Run(KevEncoding encoding, CancellationToken cancellationToken = default)
     {
         CheckEncoding(encoding);
+        // With the gate (the CUDA default), a request's state pass and rows run as one unit.
+        _runGate?.Wait(cancellationToken);
+        try
+        {
+            return RunCached(encoding, cancellationToken);
+        }
+        finally
+        {
+            _runGate?.Release();
+        }
+    }
+
+    private float[][] RunCached(KevEncoding encoding, CancellationToken cancellationToken)
+    {
         int stateLength = encoding.StateIds.Length;
         using var cache = RunGraph([.. encoding.StateIds], Positions(0, stateLength), 0, _emptyPast, _presentNames, cancellationToken);
         var past = cache.ToArray();
@@ -214,6 +259,19 @@ public sealed class KevDecisionModel : IDisposable
     public IReadOnlyList<float[]> RunUncached(KevEncoding encoding, CancellationToken cancellationToken = default)
     {
         CheckEncoding(encoding);
+        _runGate?.Wait(cancellationToken);
+        try
+        {
+            return RunFullRows(encoding, cancellationToken);
+        }
+        finally
+        {
+            _runGate?.Release();
+        }
+    }
+
+    private float[][] RunFullRows(KevEncoding encoding, CancellationToken cancellationToken)
+    {
         int stateLength = encoding.StateIds.Length;
         var result = new float[encoding.Rows.Count][];
         for (int k = 0; k < result.Length; k++)
@@ -244,6 +302,8 @@ public sealed class KevDecisionModel : IDisposable
         {
             _session.Dispose();
         }
+
+        _runGate?.Dispose();
     }
 
     private static int[] Positions(int start, int count) => [.. Enumerable.Range(start, count)];
