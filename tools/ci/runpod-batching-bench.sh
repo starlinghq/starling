@@ -15,7 +15,9 @@
 # (--max-batch-tokens, SWEEP_BATCH_TOKENS, default 4096),
 # sorted-tokens (full grid only) and micro: single-item callers at concurrency 1/4/16 (--quick: 4/16) through the
 # library's micro-batcher (MaxWait 0 ms / MaxRows 8; the full grid adds 2 ms / 16) next to a baseline run of
-# single-item callers on the same grid. SWEEP_CONFIGS and SWEEP_BATCH_TOKENS pass through from this script's environment.
+# single-item callers on the same grid. SWEEP_CONFIGS, SWEEP_BATCH_TOKENS, SWEEP_MODELS and SWEEP_MAX_INFLIGHT_CUDA_EG2
+# pass through from this script's environment; SWEEP_PROVIDERS (default "cuda cpu") selects the providers, for example
+# SWEEP_PROVIDERS=cuda SWEEP_MODELS=eg2 SWEEP_CONFIGS= to repeat one model's CUDA baseline.
 #
 # Writes into <out>: status.txt (progress), environment.txt (inventory), checkout.log, build-*.log, acquire.log,
 # cuda/ and cpu/ (raw sweep-*.jsonl, per-run logs, sweep-status.tsv, summary-<provider>.md and .json), summary.md (both
@@ -220,10 +222,15 @@ bench() {  # bench <provider> [env assignments...]
         record "all/$provider" sweep "failed (exit $rc; sweep-$provider.log)"
     fi
 }
-log "sweep: CUDA"
-bench cuda SWEEP_THREADS=4
-log "sweep: CPU ($CPU_THREADS threads; thread sweep:$THREAD_LIST)"
-bench cpu SWEEP_THREADS="$CPU_THREADS" SWEEP_THREAD_LIST="$THREAD_LIST" CUDA_VISIBLE_DEVICES=
+providers=" ${SWEEP_PROVIDERS:-cuda cpu} "
+if [[ $providers == *" cuda "* ]]; then
+    log "sweep: CUDA"
+    bench cuda SWEEP_THREADS=4
+fi
+if [[ $providers == *" cpu "* ]]; then
+    log "sweep: CPU ($CPU_THREADS threads; thread sweep:$THREAD_LIST)"
+    bench cpu SWEEP_THREADS="$CPU_THREADS" SWEEP_THREAD_LIST="$THREAD_LIST" CUDA_VISIBLE_DEVICES=
+fi
 
 log "repository dirty paths after the run: $(git status --porcelain | wc -l)"
 finish

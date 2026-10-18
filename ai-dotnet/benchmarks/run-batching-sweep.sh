@@ -20,6 +20,9 @@
 #   SWEEP_MAX_INFLIGHT   --max-inflight-items on CPU (default 256: batch x concurrency above it is skipped and listed)
 #   SWEEP_MAX_INFLIGHT_GLINER2  the same for GLiNER2 on CPU (default 32: long b32 c1 peaked at 10.2 GB RSS and long
 #                        b32 c4 was killed for memory on a 16 GB budget)
+#   SWEEP_MAX_INFLIGHT_CUDA_EG2  --max-inflight-items for EmbeddingGemma 2 on CUDA (default 256: long b32 c16, 512
+#                        rows of 512 tokens in 16 concurrent runs, exhausted the RTX 3090's 24 GB in the ORT CUDA arena
+#                        and aborted the process; set empty for no guard). e5 and GLiNER2 on CUDA have no guard.
 #   SWEEP_CONFIGS        batching configurations after the baseline (default "sorted tokens sorted-tokens micro";
 #                        --quick: "sorted tokens micro"; set empty to skip): sorted = --sort-by-length true with
 #                        8 rows per ORT run (calls of 16 to 64 items split into runs, as the library default does)
@@ -165,7 +168,9 @@ for m in $models; do
         sweep "$m" "default-mbs-t$threads" "$threads" "${default_grid[@]}"
         run_configs "$m" "$threads" --max-inflight-items "$inflight"
     else
-        sweep "$m" "t$threads" "$threads" "${grid[@]}"
+        guard=()
+        [[ $m == eg2 && -n ${SWEEP_MAX_INFLIGHT_CUDA_EG2-256} ]] && guard=(--max-inflight-items "${SWEEP_MAX_INFLIGHT_CUDA_EG2-256}")
+        sweep "$m" "t$threads" "$threads" "${grid[@]}" "${guard[@]}"
         sweep "$m" "default-mbs-t$threads" "$threads" "${default_grid[@]}"
         run_configs "$m" "$threads"
     fi
