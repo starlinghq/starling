@@ -66,6 +66,8 @@ using var media = new EmbeddingGemma2MultimodalEmbeddingGenerator(embedder, new 
 });
 ```
 
+`EmbeddingGemma2MultimodalEmbeddingGenerator.Create(imageFiles, options)` loads the embedder itself (embedder settings in `options.Embedder`), and `services.AddEmbeddingGemma2MultimodalEmbeddingGenerator(imageFiles, options)` registers it for both interfaces with DI.
+
 Values with no matching decoder, other media types (audio, documents), `UriContent` and other content types fail with `NotSupportedException`; text containing media placeholders fails with `ArgumentException`; decoded frames without timing fail with `EmbeddingGemma2VideoTimingRequiredException` unless the embedder allows them. Usage counts every media token.
 
 ## License and usage policy

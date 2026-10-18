@@ -42,6 +42,8 @@ Errors are typed (`EmbeddingGemma2FFmpegException` and subclasses), checked when
 | File does not open, no video stream, decode failure, unsupported rotation | `EmbeddingGemma2VideoDecodeException` |
 | Frame above `MaxFramePixels` (50 MP) | `EmbeddingGemma2ImageTooLargeException` |
 
+Other `EmbeddingGemma2FFmpegOptions`: `MaxAllFrames` (default 3,600) bounds `DecodeAllFrames`, which keeps every frame in memory; sampled decoding keeps at most 32 frames. `DecoderThreads` (default 0) lets FFmpeg choose, as torchcodec does.
+
 ## What it reproduces
 
 | Step | Behaviour (torchcodec 0.17.0, CPU, `seek_mode="exact"`) | Status |
@@ -67,6 +69,6 @@ The package is MIT OR Apache-2.0. Its FFmpeg bindings are generated from FFmpeg'
 
 **Codec patents (information, not legal advice).** H.264/AVC and H.265/HEVC are covered by patent licensing pools (Via LA; Access Advance for HEVC). VP9 and AV1 are offered royalty-free by their developers (the AOMedia patent license for AV1), though third parties assert claims. FFmpeg's decoders come with no patent license. Because this package ships no codec, codec licensing is the deployer's responsibility; seek legal advice for your distribution.
 
-**Publishable.** The legal review of the FFmpeg adapters (decision D2) was cleared on 2026-10-15. This package is publishable from the next release; it is not on nuget.org yet.
+**Published.** The legal review of the FFmpeg adapters (decision D2) was cleared on 2026-10-15. This package was first published to nuget.org in release 0.2.0 (2026-10-17).
 
 Deployments of the model must adhere to the [Gemma Prohibited Use Policy](https://ai.google.dev/gemma/prohibited_use_policy) (model card).

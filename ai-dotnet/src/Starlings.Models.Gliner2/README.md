@@ -30,6 +30,7 @@ dotnet add package Microsoft.ML.OnnxRuntime --version 1.30.0          # CPU nati
 ```csharp
 using Starlings.Models.Gliner2;
 
+await Gliner2ModelAssets.DownloadAsync();                   // once, explicit, needs the network; verifies SHA-256
 Gliner2ModelFiles files = Gliner2ModelAssets.OpenLocal();   // offline, verified, never downloads
 using var extractor = Gliner2EntityExtractor.Create(files);
 

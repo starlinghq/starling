@@ -2,7 +2,7 @@
 
   <!--
     Browser feasibility spike (docs/m0/browser-wasm-spike.md). Standalone Blazor WebAssembly app: the owned tokenizer
-    (project reference) runs the protected conformance fixtures in the browser, and e5-small runs through
+    (the Starlings.Tokenizers package) runs the protected conformance fixtures in the browser, and e5-small runs through
     onnxruntime-web over JS interop. Served by ../harness/serve.py, which also serves the fixtures, the pinned
     tokenizer.json assets, the graphs and onnxruntime-web from outside the published app.
 

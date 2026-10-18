@@ -10,6 +10,8 @@
 
 > **Repository note (added 2026-10-05):** This repository (`starlinghq/starling`) holds the four planned repositories as top-level directories (`.github/`, `ai-dotnet/`, `model-pipeline/`, `tokenizers-dotnet/`) until each one justifies a split. The package prefix is `Starlings` in place of the illustrative `Org.AI`. Open kickoff decisions are tracked in [`docs/kickoff.md`](../kickoff.md).
 
+> **Status (2026-10-18):** The plan text below is unchanged; this note records where execution stands. The tokenizer is now its own repository and package: `Starlings.Tokenizers` `0.3.0` is released from `starlinghq/tokenizers`, and `tokenizers-dotnet/` is not in this repository. ai-dotnet `0.2.0`, the first release with Stable profiles, was published to nuget.org on 2026-10-17 from tag `ai-v0.2.0` (15 packages; [`docs/releases/ai-0.2.0.md`](../releases/ai-0.2.0.md)). 13 registry profiles are Stable (e5, GLiNER2, EmbeddingGemma 2 text, image and video, and Qwen3.5-0.8B, CPU and CUDA on an RTX 3090): see [`docs/catalog/README.md`](../catalog/README.md) and the tracking entries in [`production-readiness.md`](production-readiness.md). Kev-0.8B and Kev-4B (`Starlings.Models.Kev`, Experimental, #91; four Experimental registry profiles, CPU and CUDA, in #116), `Starlings.Models.Bert` and `Starlings.Models.QwenChat` are on `main` as source only and are not published.
+
 ## 1. The mission and the evidence needed to earn it
 
 Make .NET a dependable place to use modern AI: straightforward installation, faithful model behavior, responsive execution, current model support, and transparent maintenance.
@@ -654,8 +656,8 @@ These choices allow useful work to begin without a long requirements phase:
 - `tokenizer.json` pipeline interpreter as the tokenizer library's first deliverable (ADR-15).
 - M1 encoder release labeled Preview; Stable promotion at M3.
 - Jev limited to a labeled API client; Kev admission and execution-route spike in M0.
-- Pilot LLM default candidate: a Qwen3.5 chat model in the 0.8B class, pending the M0 backend check.
-- Encoder model ID and revision: open. Fix both by day 2 and record them in the next revision of this plan.
+- Pilot LLM default candidate: a Qwen3.5 chat model in the 0.8B class, pending the M0 backend check. (Settled: `Qwen/Qwen3.5-0.8B` at `2fc06364`, approved 2026-10-08; `docs/kickoff.md`.)
+- Encoder model ID and revision: open. Fix both by day 2 and record them in the next revision of this plan. (Settled: `intfloat/multilingual-e5-small` at `614241f6`, approved 2026-10-08; `docs/kickoff.md`.)
 
 The decisions remaining at implementation kickoff are concrete: organization identity, exact model revisions, available hardware, real weekly review capacity, and a compute budget. None needs to change the architecture recommended here.
 

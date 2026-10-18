@@ -12,7 +12,7 @@ dotnet run -c Release --no-build -- triage
 dotnet run -c Release --no-build -- triage "Mon colis est arrivé ouvert et il manque un article."
 ```
 
-`download` acquires and verifies the e5 (about 470 MB) and GLiNER2 (about 800 MB) assets. It is the only command that uses the network. `train` and `triage` load verified local files and fail rather than download. All commands accept `--cache <dir>`; otherwise they use `$STARLING_MODELS` or the user cache (`~/.cache/starlings/models` on Linux). `train` and `triage` accept `--model <zip>` (default `triage-model.zip` in the current directory). `StarlingsVersion` pins the published packages, and `packages.lock.json` records the dependency graph; verify it with `dotnet restore --locked-mode`.
+`download` acquires and verifies the e5 (about 487 MB) and GLiNER2 (about 840 MB) assets. It is the only command that uses the network. `train` and `triage` load verified local files and fail rather than download. All commands accept `--cache <dir>`; otherwise they use `$STARLING_MODELS` or the user cache (`~/.cache/starlings/models` on Linux). `train` and `triage` accept `--model <zip>` (default `triage-model.zip` in the current directory). `StarlingsVersion` pins the published packages, and `packages.lock.json` records the dependency graph; verify it with `dotnet restore --locked-mode`. The sample uses `PackageReference`s only (`Starlings.Models.E5.MLNet` and `Starlings.Models.Gliner2` 0.2.0, `Microsoft.ML.OnnxRuntime` 1.30.0), no project references, and runs on CPU as written; it has no CUDA option.
 
 ## The pipeline
 

@@ -9,11 +9,14 @@ The delivery system: model registry, manifest schema, admission records, referen
 | `schemas/model-manifest.schema.json` | Manifest schema (draft). | P-002 |
 | `schemas/stage-results.schema.json` | Stage results format (versions 1 and 2): candidate outputs the evaluator compares. | P-007, P-015 |
 | `schemas/benchmark-raw.schema.json` | Raw benchmark result records (`starlings-bench-raw/1`), written by the C# and Python harnesses. | P-008 |
+| `schemas/onboarding-recipe.schema.json`, `schemas/onboarding-candidate.schema.json` | Onboarding recipe and candidate contract formats. | |
+| `recipes/`, `candidates/`, `corpora/`, `workflows/` | Onboarding recipes, proposed candidate contracts, development corpora and multi-model workflows. See `recipes/README.md`, `candidates/README.md`, [ONBOARDING.md](ONBOARDING.md) and [FIVE_MODELS.md](FIVE_MODELS.md). | |
 | `registry/` | One `manifest.yaml` per model profile. | P-002, P-021 |
 | `admissions/` | Admission records; start from `TEMPLATE.md`. | P-027, stage 1 |
 | `protected/` | Reference fixtures and tolerances. Maintainer review only. | P-003, P-007 |
+| `proposed/` | Fixtures proposed for `protected/` and not accepted yet. See `proposed/README.md`. | |
 | `reference/` | Reference runners with pinned requirements, and the tokenizer conformance corpus. See `reference/README.md`. | P-003, P-004, P-027 |
-| `src/model_pipeline/` | CLI and stage implementations: `manifest.py` (validation), `fixtures.py` (fixture format), `results.py` (stage results format), `evaluate.py` (staged fidelity evaluator; per task `evaluate_*.py`), `evaluate_task_quality.py` (G3 task metrics), `evaluate_tokenizer_fixtures.py` (G1 on a tokenizer fixture file), `protection.py` (protected evidence rules). | P-002 onward |
+| `src/model_pipeline/` | CLI and stage implementations: `manifest.py` (validation), `fixtures.py` (fixture format), `results.py` (stage results format), `evaluate.py` (staged fidelity evaluator; per task `evaluate_*.py`), `evaluate_task_quality.py` (G3 task metrics), `evaluate_tokenizer_fixtures.py` (G1 on a tokenizer fixture file), `protection.py` (protected evidence rules), `evaluate_decision.py` (Kev development parity for the `kev-onnx-cpu-v1` route), `onboarding_*.py` (recipes, runner, plugins, workflows), `benchmarks.py` and `g5.py` (raw benchmark summaries and G5 budgets), `upstream.py` (upstream change detection). | P-002 onward |
 | `tests/` | Pipeline tests with synthetic fixtures. | |
 | `src/model_pipeline/catalog.py` | Generates `docs/catalog/` (README, compatibility matrix, `catalog.json`) from the registry; `model-pipeline catalog --check` runs in CI. | P-021 |
 
@@ -28,14 +31,24 @@ Qwen text generation with proposed development comparisons.
 pip install -e '.[dev]'
 model-pipeline validate registry
 model-pipeline catalog [--check]            # P-021: regenerate docs/catalog (or fail if stale)
+model-pipeline bench validate <raw.jsonl>    # P-008: check raw files against schemas/benchmark-raw.schema.json
 model-pipeline bench summarize <raw.jsonl>   # P-008: medians, p5-p95, bootstrap CIs, C# vs Python
-pytest
+model-pipeline bench g5 <raw files of both sides> [--profile <id>] [--budgets <file>]   # G5 budgets
+model-pipeline upstream [registry] [--json <file>] [--responses <file>]   # P-020: newer upstream revisions
+model-pipeline check-protected [--base <ref>] [--head <ref>] [--labels-json <json>] [--files <paths>]
+python3 -m pytest
 ruff check . && ruff format --check .
 ```
 
+`bench g5` checks C# and Python same-backend raw results against `protected/performance-budgets.yaml` (the default `--budgets`); its rules and verdicts are described in `docs/benchmarks/PROTOCOL.md`. Exit code 0 only when every profile in the files passes and qualifies.
+
+`upstream` compares each manifest's pinned Hugging Face revisions (`origin.code`, `origin.weights`) with the Hub's current default-branch revision and with `maintenance.latest_known_upstream_revision`, classifies changed files, and proposes the gates a revalidation must rerun. It only reads: it never edits a manifest or moves a pin. `--responses` uses recorded Hub API responses instead of the network; `--date` sets the recorded check date. Exit codes: 0 nothing new, 1 a newer upstream revision, 2 bad input or a failed fetch. The scheduled `qualification` workflow runs it (`.github/workflows/qualification.yml`, job `upstream`). The update procedure is `docs/plan/maintained-update-drill.md`.
+
+`check-protected` is described under [Protected thresholds](#protected-thresholds).
+
 The onboarding runner orchestrates model-specific reference/backend/.NET tools with resumable stages,
 and workflows aggregate independent per-model records. The reference implementations in `reference/`
-remain model-specific. Additional model routes and upstream change detection (P-020) remain follow-on work.
+remain model-specific. Routes exist for E5 (`e5-onnx-cpu-v1`), BERT embeddings and reranking (`bert-onnx-cpu-v1`), Qwen text generation (`qwen-genai-cpu-v1`) and Kev decisions (`kev-onnx-cpu-v1`); the plugin registry is `src/model_pipeline/onboarding_plugins.py`. Other models need their own route.
 Acquisition and verified loading (P-009) is the C# `Starlings.Acquisition` library and tool in `ai-dotnet/`.
 
 ## Staged fidelity evaluator (P-007)
@@ -79,7 +92,7 @@ These make an unreviewed threshold change fail visibly. They do not replace code
 
 Evidence for the e5 CPU profile on real model output: `docs/evidence/p007-e5-onnx-fp32-cpu/`.
 
-Implemented for the `embedding` task, the `entity-extraction` task (manifest task `extraction`, below), the `image-embedding` task (EmbeddingGemma 2 images, below), the `video-embedding` task (EmbeddingGemma 2 videos, below) and the `generation` task (Qwen3.5, below). Task-quality metrics (G3) are `--g3`, below. The Kev tolerances (`protected/kev-0.8b/onnx-fp32/`) use other keys (probabilities, argmax flips, cached vs uncached) and have no registry manifest yet; the evaluator rejects tasks it has no checks for.
+Implemented for the `embedding` task, the `entity-extraction` task (manifest task `extraction`, below), the `image-embedding` task (EmbeddingGemma 2 images, below), the `video-embedding` task (EmbeddingGemma 2 videos, below) and the `generation` task (Qwen3.5, below). Task-quality metrics (G3) are `--g3`, below. The Kev manifests (task `decision`, `registry/kev-0.8b/`, `registry/kev-4b/`) point to the Kev tolerances (`protected/kev-0.8b/onnx-fp32/`), which use other keys (probabilities, argmax flips, cached vs uncached); the evaluator has no checks for the `decision` task and rejects it. The `kev-onnx-cpu-v1` onboarding route reads that file through its own development evaluator, `src/model_pipeline/evaluate_decision.py`.
 
 A profile whose manifest names a tolerances path that does not exist yet (the path must still lie inside `model-pipeline/protected/`, in an existing directory) is measured, never qualified: every check that needs a bound is `not-run`, both gates are `not-run` (or `failed` if a structural or identity check fails), the report lists `expected_tolerance_keys`, and the exit code is 4. Deleting an existing tolerances file is a protected change (exit 3). A tolerances file placed anywhere else, for example in the results directory, is never read.
 
@@ -109,7 +122,7 @@ The row `vid-array-no-metadata` (frames without timing metadata) is excluded by 
 
 ### Entity extraction (P-015)
 
-`src/model_pipeline/evaluate_extraction.py`, for span extractors with a count gate (GLiNER2). Fixtures: `extraction.jsonl` in the profile's protected directory (proposed in PR #19 for `gliner2-base-v1/onnx-fp32-cpu`). Results use stage results format version 2 with `"task": "entity-extraction"`.
+`src/model_pipeline/evaluate_extraction.py`, for span extractors with a count gate (GLiNER2). Fixtures: `extraction.jsonl` in the profile's protected directory (accepted as development fixtures for `gliner2-base-v1/onnx-fp32-cpu` on 2026-10-10, PR #19; `protected/gliner2-base-v1/onnx-fp32-cpu/PROPOSED.md`). Results use stage results format version 2 with `"task": "entity-extraction"`.
 
 | Stage | Results file | Per-case outputs | Compared with | Gate |
 | --- | --- | --- | --- | --- |
@@ -202,9 +215,9 @@ model-pipeline evaluate registry/<family>/<profile>/manifest.yaml \
 
 ## Task quality (G3, workstream R5)
 
-`src/model_pipeline/evaluate_task_quality.py`: held-out task metrics for plan section 10 G3, through `model-pipeline evaluate --g3 retrieval|ner|generation`. It computes metrics on a dataset and compares them with a quality budget read only from the maintainer-owned file `task-quality.yaml` in the profile's protected directory (the directory of the manifest's `qualification.tolerances`, for example `protected/multilingual-e5-small/onnx-fp32-cpu/task-quality.yaml`). **No such file exists yet.** Without it, without an entry for the task, or when the dataset digest is not the one the entry names, the report says "no budget: not a gate result", G3 is `not-run`, and the exit code is 4. With a budget, every listed metric must meet its minimum (exit 0) or G3 fails (exit 1); a changed or untracked budget file is exit 3, as for tolerances.
+`src/model_pipeline/evaluate_task_quality.py`: held-out task metrics for plan section 10 G3, through `model-pipeline evaluate --g3 retrieval|ner|generation`. It computes metrics on a dataset and compares them with a quality budget read only from the maintainer-owned file `task-quality.yaml` in the profile's protected directory (the directory of the manifest's `qualification.tolerances`, for example `protected/multilingual-e5-small/onnx-fp32-cpu/task-quality.yaml`). Every registry profile has one, as do the e5 browser profiles (`onnx-fp32-wasm`, `-webgpu`, `onnx-int8embed-wasm`, `-webgpu`). Without it, without an entry for the task, or when the dataset digest is not the one the entry names, the report says "no budget: not a gate result", G3 is `not-run`, and the exit code is 4. With a budget, every listed metric must meet its minimum (exit 0) or G3 fails (exit 1); a changed or untracked budget file is exit 3, as for tolerances.
 
-**Choosing the real G3 datasets (licensed, held out) and the budgets is a maintainer decision: M1/M2 in `docs/plan/production-readiness.md`.** This repository supplies only the formats, the metrics, and a SMOKE example under `model-pipeline/tests/fixtures/g3-smoke/` (hand-written, labeled `SMOKE` in each `dataset.json`, never gate evidence). Agents do not author the sets or the budget file.
+**Choosing the real G3 datasets (licensed, held out) and the budgets is a maintainer decision: M1/M2 in `docs/plan/production-readiness.md`.** The accepted sets are under `protected/*/release/` and `protected/release-shared/` (sources and licenses: `THIRD-PARTY-NOTICES.md` and each set's `SOURCE.md`). This repository's code supplies the formats, the metrics, and a SMOKE example under `model-pipeline/tests/fixtures/g3-smoke/` (hand-written, labeled `SMOKE` in each `dataset.json`, never gate evidence). Agents do not author the sets or the budget file.
 
 Budget file (every value is a minimum; metric names as in the report):
 
