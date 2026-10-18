@@ -63,16 +63,23 @@ Byte-level BPE from each repository's `tokenizer.json` through `Starlings.Tokeni
 
 ## Hardware and compute estimate
 
-CPU only, one or two native threads (the package bounds them). Qwen3-0.6B bundle: about 3 GB of fp32 weights; Qwen2.5-0.5B: about 2.5 GB. The onboarding route runs in under an hour per profile on a desktop CPU.
+CPU only, one or two native threads (the package bounds them). Bundle sizes: Qwen3-0.6B `model.onnx.data` 2,405,171,200 bytes (fp32, tied embeddings); Qwen2.5-0.5B 1,984,561,152 bytes. On an Intel i7-5820K the onboarding route took 9 minutes for Qwen3 and 11 for Qwen2.5, plus 5 to 6 minutes each for the clean-consumer drill. The bundle build takes about 1 minute.
 
 ## Evidence
 
-EVIDENCE_PLACEHOLDER
+`docs/evidence/qwenchat-onboarding-2026-10-18/README.md` (2026-10-18, development evidence, no gate):
+
+| Profile | Rows | Prompt and greedy ids | Step-0 logits, worst max / mean (bound 5e-3 / 5e-4) | .NET vs Python GenAI | Clean consumer (offline) |
+| --- | --- | --- | --- | --- | --- |
+| `qwen3-0.6b/ortgenai-fp32-cpu` | 14 | exact | 1.28e-4 / 3.67e-5 | identical | passed |
+| `qwen2.5-0.5b-instruct/ortgenai-fp32-cpu` | 14 | exact | 7.02e-5 / 1.15e-5 | identical | passed |
+
+On every row, streaming, chunked prefill, repeated-request isolation, usage, cancellation, stop ids and stop strings were checked against the non-streamed result. All passed. Kev was admitted at Experimental with "no gate has run". These profiles have the same status, plus passing development parity and a clean-consumer drill from the packages.
 
 ## Open risks
 
-- **Asset lock.** ASSET_LOCK_PLACEHOLDER
-- **Hosting.** Starling hosts no QwenChat bundle. Users install `onnxruntime-genai` 0.17.1 and run `build_bundle.py`, so this package is harder to adopt than Kev or Qwen3.5. Public hosting would need its own decision, as P-009 was for Kev.
+- **Asset lock.** The lock is pinned in code (`QwenChatProfile.BundleFiles`) and in the registry manifests: six files per profile. `Load` refuses any bundle whose `bundle-lock.json` or files differ from the pin. The pin works without hosting because the build is reproducible: two builds per profile from the verified originals with the hash-locked builder were byte-identical. This was shown on one machine. Another builder wheel or platform could produce other bytes, and such a bundle would be refused rather than loaded.
+- **Hosting.** Starling hosts no QwenChat bundle. Users install `onnxruntime-genai` 0.17.1 and run `build_bundle.py`, so this package is harder to adopt than Kev or Qwen3.5. Public hosting would need its own decision, as P-009 was for Kev. It also blocks G0: `tools/check-provenance.py` fetches every lock file from where the package gets it. The nine pinned originals per profile pass anonymously, but the four built files aren't served anywhere. G0 therefore needs either hosting or a local-build route added to the check.
 - **References are proposed.** The transformers references and the comparison policy (exact prompt and greedy ids, step-0 logits within 0.005 max and 0.0005 mean) are not adopted into `protected/`, and no gate (G0 to G7) has run.
 - **`MaxNewTokens` defaults to 16**, the corpus setting. Applications must set it.
 - **Naming.** `ai-dotnet/samples/QwenChat` is the Qwen3.5 sample, not this package's.
@@ -84,6 +91,6 @@ Plan section 14: "declared scope passes meaningful tests".
 1. Adopt the references and tolerances into `protected/` in a separate protected-change PR, then run G1 and G2 on them.
 2. Add model-level C# tests that load a bundle: generation, streaming equal to non-streaming, cancellation, concurrent requests, and disposal. Today the package has only seven template tests.
 3. G4: a soak with bounded memory, and repeated load and unload.
-4. G6: a clean-consumer drill from the packages (`model-pipeline run --distribution`).
+4. G6 as a gate. The development clean-consumer drill passed (see "Evidence"); the release drill (`tools/release-drill-ai.sh`) packs and inspects QwenChat but doesn't yet run it, because it has no seeded bundle.
 5. A larger corpus: longer completions than 16 tokens, multi-turn conversations, long prompts near the stated context, and non-English text.
 6. Decide whether to keep a local-build-only route or host bundles.

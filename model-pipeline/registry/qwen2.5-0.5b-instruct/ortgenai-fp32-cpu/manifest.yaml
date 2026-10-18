@@ -241,4 +241,8 @@ maintenance:
       Starling hosts no bundle: users need Python with onnxruntime-genai 0.17.1 to build one
       (model-pipeline/reference/qwen-chat/build_bundle.py).
     - >-
+      G0's accessible-reference check (tools/check-provenance.py) fails for the built files (genai_config.json,
+      model.onnx, model.onnx.data, chat_template.jinja): they are not served anywhere, by design. The pinned originals
+      are served anonymously with their digests. G0 needs hosting or a local-build route in the check.
+    - >-
       QwenChatOptions.MaxNewTokens defaults to 16, the corpus setting.
