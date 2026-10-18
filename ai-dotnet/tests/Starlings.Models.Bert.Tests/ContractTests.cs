@@ -8,6 +8,7 @@ public sealed class ContractTests
     [Theory]
     [InlineData("sentence-transformers/all-MiniLM-L6-v2", 256, "mean", BertTask.Embeddings, 384)]
     [InlineData("BAAI/bge-small-en-v1.5", 512, "cls", BertTask.Embeddings, 384)]
+    [InlineData("BAAI/bge-base-en-v1.5", 512, "cls", BertTask.Embeddings, 768)]
     [InlineData("cross-encoder/ms-marco-MiniLM-L6-v2", 512, "none", BertTask.Reranking, 384)]
     [InlineData("nomic-ai/nomic-embed-text-v1.5", 8192, "mean", BertTask.Embeddings, 768)]
     public void ParsesOnlyDeclaredTaskContracts(string repository, int maxTokens, string pooling, BertTask task, int hiddenSize)
@@ -19,7 +20,7 @@ public sealed class ContractTests
         Assert.Equal(hiddenSize, profile.HiddenSize);
         Assert.Equal(2, profile.RuntimeLock.Files.Count);
         Assert.Equal(new string('a', 40), profile.RuntimeLock.Revision);
-        Assert.Equal(repository == "BAAI/bge-small-en-v1.5" ? 2 : 1, profile.Prompts.Count);
+        Assert.Equal(repository is "BAAI/bge-small-en-v1.5" or "BAAI/bge-base-en-v1.5" ? 2 : 1, profile.Prompts.Count);
     }
 
     [Theory]
@@ -96,13 +97,13 @@ public sealed class ContractTests
     private static Dictionary<string, object> ProfileData(string repository)
     {
         bool reranking = repository.StartsWith("cross-encoder/", StringComparison.Ordinal);
-        bool bge = repository == "BAAI/bge-small-en-v1.5";
+        bool bge = repository is "BAAI/bge-small-en-v1.5" or "BAAI/bge-base-en-v1.5";
         bool nomic = repository == "nomic-ai/nomic-embed-text-v1.5";
         var behavior = new Dictionary<string, object>
         {
             ["architecture"] = "bert", ["graph_file"] = "onnx/model.onnx", ["tokenizer_file"] = "tokenizer.json",
             ["max_tokens"] = nomic ? 8192 : reranking || bge ? 512 : 256, ["padding_side"] = "right", ["pad_token_id"] = 0,
-            ["vocabulary_size"] = 30522, ["hidden_size"] = nomic ? 768 : 384, ["truncation"] = "longest_first",
+            ["vocabulary_size"] = 30522, ["hidden_size"] = nomic || repository == "BAAI/bge-base-en-v1.5" ? 768 : 384, ["truncation"] = "longest_first",
             ["tokenizer_profile"] = "bert-wordpiece-uncased", ["pooling"] = reranking ? "none" : bge ? "cls" : "mean",
             ["normalize"] = reranking || nomic ? "none" : "l2", ["output_name"] = reranking ? "logits" : "last_hidden_state",
             ["prompts"] = bge ? new Dictionary<string, string> { ["none"] = "", ["query"] = BertModelProfile.BgeQueryInstruction }

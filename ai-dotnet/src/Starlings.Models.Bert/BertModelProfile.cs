@@ -82,6 +82,7 @@ public sealed class BertModelProfile
         {
             "sentence-transformers/all-MiniLM-L6-v2" => (BertTask.Embeddings, 256, "mean", 384, "l2"),
             "BAAI/bge-small-en-v1.5" => (BertTask.Embeddings, 512, "cls", 384, "l2"),
+            "BAAI/bge-base-en-v1.5" => (BertTask.Embeddings, 512, "cls", 768, "l2"),
             "cross-encoder/ms-marco-MiniLM-L6-v2" => (BertTask.Reranking, 512, "none", 384, "none"),
             "nomic-ai/nomic-embed-text-v1.5" => (BertTask.Embeddings, 8192, "mean", 768, "none"),
             _ => throw new NotSupportedException($"Unsupported BERT repository '{repository}'."),
@@ -113,7 +114,7 @@ public sealed class BertModelProfile
 
         var prompts = behavior.GetProperty("prompts").EnumerateObject()
             .ToDictionary(p => p.Name, p => p.Value.GetString()!, StringComparer.Ordinal);
-        int expectedCount = repository == "BAAI/bge-small-en-v1.5" ? 2 : 1;
+        int expectedCount = repository is "BAAI/bge-small-en-v1.5" or "BAAI/bge-base-en-v1.5" ? 2 : 1;
         if (prompts.Count != expectedCount || !prompts.TryGetValue("none", out var none) || none != ""
             || (expectedCount == 2 && (!prompts.TryGetValue("query", out var query) || query != BgeQueryInstruction)))
         {
