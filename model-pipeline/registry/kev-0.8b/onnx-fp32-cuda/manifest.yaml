@@ -13,7 +13,7 @@
 schema_version: 1
 id: kev-0.8b/onnx-fp32-cuda
 # Experimental (package README, "CUDA"): local development evidence on one RTX 3090 only, no per-release GPU
-# regression, no gate ran, nothing is hosted.
+# regression, no gate ran, the bundle is hosted publicly (Starlinghq/kev-0.8b-onnx, r1).
 maturity: experimental
 
 origin:
@@ -84,7 +84,7 @@ origin:
     - path: base/vocab.json
       sha256: "ce99b4cb2983d118806ce0a8b777a35b093e2000a503ebde25853284c9dfa003"
       size: 6722759
-    # Not in any Hub repository: Starling's build of the sources above, the bundle KevModelAssets.Kev08BLock pins
+    # Upstream ships no fp32 ONNX graph: Starling's build of the sources above, hosted at Starlinghq/kev-0.8b-onnx (r1), the bundle KevModelAssets.Kev08BLock pins
     # (with tokenizer.json above). head.safetensors and head.json are head.pt converted by kev_merge.py, so nothing at
     # runtime unpickles head.pt; head.json records head.pt's and the adapter's SHA-256.
     - path: model.onnx
@@ -290,6 +290,9 @@ capabilities:
   tf32: unsupported  # use_tf32 is forced to 0; TF32 fails every fp32 bound
 
 compatibility:
+  # Linux deployment requirement: start the process with MALLOC_MMAP_THRESHOLD_=65536 (package README). Without it a
+  # one-hour Kev-0.8B CUDA soak's loaded memory grew 64 MB/h (glibc arena retention, outputs correct); with it every
+  # Kev soak plateaued (docs/evidence/kev-soak-2026-10-17/).
   # Linux x64 CUDA: local development evidence 2026-10-17 on one NVIDIA GeForce RTX 3090 (24 GB, driver 610.57, CUDA
   # 13.3 runtime, cuDNN 9), ai-dotnet/tests/Starlings.Models.Kev.Tests.Cuda (package README, "Evidence"). No gate, no
   # per-release GPU regression. Other GPUs: untested.
@@ -312,8 +315,11 @@ qualification:
   # The reference is shared with kev-0.8b/onnx-fp32-cpu (same bundle; CPU PyTorch fp32). Binding tolerances set by Mark
   # on 2026-10-08 (PR #4); the file states that it applies to ONNX Runtime fp32 on the CUDA EP with use_tf32=0. CUDA
   # development evidence (2026-10-17, RTX 3090): 9 request goldens vs PyTorch fp32 1.33e-5 (2e-4), no flip; cached vs
-  # uncached 7.8e-7 (1e-5). Not yet run on CUDA: the onboarding corpus through the dotnet and evaluate stages, upstream's
-  # development partitions, a soak and the matched benchmark. The 2026-10-05 spike (RTX 4060 Ti, Python ORT, this CPU
+  # uncached 7.8e-7 (1e-5). onboarding corpus with the onnx and dotnet stages on CUDA through the decision evaluator: passed, 2.85e-5
+  # vs PyTorch, .NET vs Python ORT 1.6e-7, no flip (docs/evidence/kev-cuda-2026-10-17/). One-hour soak with
+  # MALLOC_MMAP_THRESHOLD_=65536 passed (691 cycles); RunPod RTX 3090: CUDA tests 12/12 and a 10-minute soak smoke
+  # (docs/evidence/kev-soak-2026-10-17/). Not yet run on CUDA: upstream's development partitions and the matched
+  # benchmark. The 2026-10-05 spike (RTX 4060 Ti, Python ORT, this CPU
   # graph on the CUDA EP) gave 8.08e-5 on decision-v7 and 5.69e-5 on transfer-v4 development, 0 flips, identical
   # accuracy (admissions/kev.md, "Goal 2"). Proposed reference: no gate.
   tolerances: model-pipeline/protected/kev-0.8b/onnx-fp32/tolerances.yaml

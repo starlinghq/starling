@@ -10,7 +10,7 @@
 # references are proposed, no protected tolerances exist for this checkpoint, and no gate has run.
 schema_version: 1
 id: kev-4b/onnx-fp32-cpu
-# Experimental (package README): evidence is development evidence only, no gate ran, nothing is hosted, and the
+# Experimental (package README): evidence is development evidence only, no gate ran, the bundle is hosted publicly (Starlinghq/kev-4b-onnx, r1), and the
 # binding bound for Kev-4B is not set.
 maturity: experimental
 
@@ -85,7 +85,7 @@ origin:
     - path: base/vocab.json
       sha256: "ce99b4cb2983d118806ce0a8b777a35b093e2000a503ebde25853284c9dfa003"
       size: 6722759
-    # Not in any Hub repository: Starling's build of the sources above, the bundle KevModelAssets.Kev4BLock pins (with
+    # Upstream ships no fp32 ONNX graph: Starling's build of the sources above, hosted at Starlinghq/kev-4b-onnx (r1), the bundle KevModelAssets.Kev4BLock pins (with
     # tokenizer.json above). head.safetensors and head.json are head.pt converted by kev_merge.py, so nothing at runtime
     # unpickles head.pt; head.json records head.pt's and the adapter's SHA-256.
     - path: model.onnx
@@ -269,6 +269,9 @@ capabilities:
   non_english: unsupported
 
 compatibility:
+  # Linux deployment requirement: start the process with MALLOC_MMAP_THRESHOLD_=65536 (package README). Without it a
+  # one-hour Kev-0.8B CUDA soak's loaded memory grew 64 MB/h (glibc arena retention, outputs correct); with it every
+  # Kev soak plateaued (docs/evidence/kev-soak-2026-10-17/).
   # Linux x64 CPU: development evidence 2026-10-16 (package README, "Evidence"): onboarding route kev-onnx-cpu-v1 on
   # the Starling-written corpus, upstream's decision-v7 fixture records and transfer-v4 development partition through
   # Python ONNX Runtime, and the C# tests with the bundle. No gate.
