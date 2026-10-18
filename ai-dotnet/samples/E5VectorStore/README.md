@@ -10,7 +10,7 @@ dotnet run -c Release --no-build -- download
 dotnet run -c Release --no-build -- search "Which river flows through Cologne?"
 ```
 
-`download` explicitly acquires and verifies the pinned model (about 487 MB). `search` verifies the local cache and runs offline. Both accept `--cache <dir>`; otherwise they use `$STARLING_MODELS` or the user cache (`~/.cache/starlings/models` on Linux). A missing or corrupt cache fails rather than downloading during search. `StarlingsVersion` pins the published package version; `packages.lock.json` records the dependency graph. To verify it, use `dotnet restore --locked-mode`.
+`download` explicitly acquires and verifies the pinned model (about 487 MB). `search` verifies the local cache and runs offline. Both accept `--cache <dir>`; otherwise they use `$STARLING_MODELS` or the user cache (`~/.cache/starlings/models` on Linux). A missing or corrupt cache fails rather than downloading during search. `StarlingsVersion` pins the published package version; it is `0.1.0-preview.6`, the version this sample was written and run with, not the current `0.2.0`. The sample uses `PackageReference`s only, no project references, and needs `Microsoft.ML.OnnxRuntime` 1.30.0 (CPU). `packages.lock.json` records the dependency graph. To verify it, use `dotnet restore --locked-mode`.
 
 `E5EmbeddingGenerator` is the collection's embedding generator. The record's string-valued `[VectorStoreVector(384)]` property provides `passage: ` text; upsert automatically embeds it. `SearchAsync` receives a `query: ` prefixed question and automatically embeds that too. Neither step computes vectors manually. The generator's default input type leaves these explicit prefixes alone. Cosine similarity ranks the results, with larger scores first.
 

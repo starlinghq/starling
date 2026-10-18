@@ -1,20 +1,26 @@
 # EmbeddingGemma2Search sample
 
-Multilingual semantic search, text-to-image and text-to-video search, with `google/embeddinggemma-2`, using only the published packages (`Starlings.Models.EmbeddingGemma2.Extensions.AI`, which brings `Models.EmbeddingGemma2`, `Runtime.Onnx`, `Acquisition` and `Tokenizers`; `Starlings.Models.EmbeddingGemma2.Imaging.SkiaSharp` to decode image files; `Starlings.Models.EmbeddingGemma2.Video.FFmpeg` to decode video files on your own FFmpeg 8.x) and the ONNX Runtime CPU natives. **Preview**, **experimental** packages.
+Multilingual semantic search, text-to-image and text-to-video search, with `google/embeddinggemma-2`, using only the published packages (`Starlings.Models.EmbeddingGemma2.Extensions.AI`, which brings `Models.EmbeddingGemma2`, `Runtime.Onnx`, `Acquisition` and `Tokenizers`; `Starlings.Models.EmbeddingGemma2.Imaging.SkiaSharp` to decode image files; `Starlings.Models.EmbeddingGemma2.Video.FFmpeg` to decode video files on your own FFmpeg 8.x) and the ONNX Runtime CPU natives (`Microsoft.ML.OnnxRuntime` 1.30.0). Requires the .NET 10 SDK. The model's text, image and video profiles (`onnx`, `image` and `video`, each `fp32-cpu` and `fp32-cuda`) are Stable; maturity is per profile (the `Starlings.Models.EmbeddingGemma2` README). Both FFmpeg adapters were first published in 0.2.0.
 
 1. `download`: explicit acquisition of the pinned text files: `tokenizer.json` and `config_sentence_transformers.json` from the Hub repository at the pinned commit, and Starling's text-path ONNX graph from its explicit source. Uses the network.
 2. `search`: offline. Verifies the files, embeds documents with the `document` prompt and queries with the `query` prompt (both explicit), ranks by cosine, repeats the queries through `IEmbeddingGenerator` (same numbers) and with a Matryoshka size of 256, and shows that an input above 8,192 tokens is rejected.
 3. `download-images`: explicit acquisition of the image lock: the text files plus the vision graph and the multimodal text graph (release `embeddinggemma-2-vision-onnx-r1`). Uses the network.
 4. `images --images <dir>`: offline. Decodes the PNG and JPEG files of `<dir>` with SkiaSharp (PIL's RGB), embeds each image alone with no prompt (the model card: no prefix for images), embeds the text queries with the `query` prompt, ranks the images per query, embeds one caption-plus-image input, and repeats the images through `IEmbeddingGenerator<DataContent, Embedding<float>>` (same numbers).
-5. `videos --videos <dir> [--ffmpeg <dir>]`: offline. Loads **your own** FFmpeg 8.x shared libraries (an LGPL build; `--ffmpeg <lib dir>`, else `$STARLING_FFMPEG_DIR`, else the system library path; nothing is shipped), decodes the videos of `<dir>` as upstream does (torchcodec's metadata, 1 frame per second up to 32 frames, torchcodec's RGB), embeds each video alone with no prompt, ranks them for the text queries, repeats the shortest video through `IEmbeddingGenerator<DataContent, Embedding<float>>` (same numbers) and shows that decoded frames without timing are rejected. Uses the image lock files (no new graph).
+5. `videos --videos <dir> [--ffmpeg <dir>] [--cuda]`: offline. Loads **your own** FFmpeg 8.x shared libraries (an LGPL build; `--ffmpeg <lib dir>`, else `$STARLING_FFMPEG_DIR`, else the system library path; nothing is shipped; libraries that cannot be loaded, or a GPL build, end the command with exit code 3), decodes the MP4, WebM, MKV and MOV files of `<dir>` as upstream does (torchcodec's metadata, 1 frame per second up to 32 frames, torchcodec's RGB), embeds each video alone with no prompt, ranks them for the text queries, repeats the shortest video through `IEmbeddingGenerator<DataContent, Embedding<float>>` (same numbers) and shows that decoded frames without timing are rejected. Uses the image lock files (no new graph).
 
 ```sh
-dotnet run -- download [--cache <dir>]
+dotnet run -- download [--cache <dir>]           # about 1.1 GB
 dotnet run -- search [--cache <dir> | --snapshot <dir>] ["your query" ...]
-dotnet run -- download-images [--cache <dir>]
+dotnet run -- download-images [--cache <dir>]    # about 1.8 GB more (2.9 GB in all)
 dotnet run -- images [--cache <dir> | --snapshot <dir>] --images <dir> ["your query" ...]
-dotnet run -- videos [--cache <dir> | --snapshot <dir>] --videos <dir> [--ffmpeg <dir>] ["your query" ...]
+dotnet run -- videos [--cache <dir> | --snapshot <dir>] --videos <dir> [--ffmpeg <dir>] [--cuda] ["your query" ...]
 ```
+
+Without `--cache` the files go to `$STARLING_MODELS` or the user cache directory (`~/.cache/starlings/models` on Linux). `images` and `videos` each need at least two decodable files in their directory.
+
+The sample uses `PackageReference`s only, no project references: `Starlings.*` 0.2.0 (the `StarlingsVersion` property) restores from nuget.org. `tools/release-drill-ai.sh` also builds it from a local feed, with a variant on `Starlings.Models.EmbeddingGemma2.Video.FFmpeg9` (FFmpeg 9) and, when given a CUDA device, a variant with the CUDA natives.
+
+`--cuda` (the `videos` command only) runs the model on CUDA device 0. It needs `Microsoft.ML.OnnxRuntime.Gpu.Linux` 1.30.0 in place of `Microsoft.ML.OnnxRuntime` in `EmbeddingGemma2Search.csproj` (reference exactly one), Linux x64 and the CUDA 13 runtime on the loader path. A Linux process that runs the video profile on CUDA in deployment needs `MALLOC_MMAP_THRESHOLD_=65536` in its environment (the `Starlings.Models.EmbeddingGemma2` README). `search` and `images` run on CPU.
 
 The graphs download from the public Hugging Face repositories `Starlinghq/embeddinggemma-2-onnx` and `Starlinghq/embeddinggemma-2-vision-onnx` (releases `embeddinggemma-2-onnx-r1` and `embeddinggemma-2-vision-onnx-r1`) at their pinned commits; no token is needed. To work offline, place them in the snapshot directory (`<cache>/google/embeddinggemma-2/914f7f89142e33e77833254d9c9b90c3cef7303b/onnx/`), or use `--snapshot <dir>`. The graphs are produced by `model-pipeline/reference/embeddinggemma2/release_embeddinggemma2_onnx.py` and `release_embeddinggemma2_vision_onnx.py`; the locks check their SHA-256.
 

@@ -2,6 +2,8 @@
 
 Both models run locally through `IEmbeddingGenerator<string, Embedding<float>>`. Start with the input you need to represent and the download you can afford; measure retrieval quality on your own documents before choosing. Switching models requires re-embedding your documents: their vector spaces are not interchangeable.
 
+This guide covers the two published embedding families. The experimental BERT embedders in `Starlings.Models.Bert` (all-MiniLM-L6-v2, bge-small-en-v1.5, nomic-embed-text-v1.5) are source only, not on nuget.org, have only proposed evidence, and are not compared here ([BERT API](../../ai-dotnet/src/Starlings.Models.Bert/README.md)).
+
 | Property | multilingual-e5-small | EmbeddingGemma 2 |
 | --- | --- | --- |
 | Output dimensions | [384](../../ai-dotnet/src/Starlings.Models.E5/README.md) | [768, with Matryoshka sizes 512, 256 or 128](../../ai-dotnet/src/Starlings.Models.EmbeddingGemma2/README.md); truncate and normalize again. These are the [model card's supported sizes](../m0/embeddinggemma2-spike.md#2-card-and-configuration-facts). |

@@ -1,6 +1,6 @@
 # Starlings.Models.Qwen35
 
-Chat generation with [`Qwen/Qwen3.5-0.8B`](https://huggingface.co/Qwen/Qwen3.5-0.8B) at revision `2fc06364715b967f1860aea9cf38778875588b17`, in-process on ONNX Runtime GenAI 0.17.1, offline after an explicit acquisition. The API and the supported platforms may still change. The registry profiles are Experimental; see [Path to Stable](#path-to-stable).
+Chat generation with [`Qwen/Qwen3.5-0.8B`](https://huggingface.co/Qwen/Qwen3.5-0.8B) at revision `2fc06364715b967f1860aea9cf38778875588b17`, in-process on ONNX Runtime GenAI 0.17.1, offline after an explicit acquisition. The API and the supported platforms may still change. The three registry profiles are Stable since 2026-10-16: `ortgenai-fp32x-cpu` on Linux x64 CPU, and `ortgenai-fp32x-cuda` and `ortgenai-fp16x-cuda` on Linux x64 with an RTX 3090 (see [Stable contract](#stable-contract) and [Stable contract: CUDA](#stable-contract-cuda)).
 
 - The pinned chat template is rendered in C# for text and tool-calling conversations (system, user, assistant and tool messages, tool definitions, assistant tool calls, `enable_thinking`); images are rejected. Prompt ids come from the owned tokenizer `Starlings.Tokenizers` (profile `qwen35-bpe-chat`): no Microsoft.ML.Tokenizers, no GenAI tokenizer, no Python.
 - Starling's decode loop (`Starlings.Generation.OnnxGenAI`): greedy or seeded sampling, stop at `<|im_end|>` / `<|endoftext|>` and at stop strings, streaming, cancellation between decode steps, usage.
@@ -45,6 +45,8 @@ foreach (var update in model.GenerateStreaming(messages, new Qwen35ChatOptions {
 }
 ```
 
+On CUDA, pass `new Qwen35ModelOptions { Provider = GenAIExecutionProvider.Cuda }` (namespace `Starlings.Generation.OnnxGenAI`) to `Load`; `CudaDeviceId` selects the device. CUDA runs `Qwen35Variant.Fp32x` (TF32 off) or `Qwen35Variant.Fp16x`; CPU runs only `Fp32x`, and loading `Fp16x` on CPU throws `NotSupportedException`. A provider that cannot be used fails the load; there is no fallback.
+
 The built graphs are not on the Hub: Starling builds them reproducibly from the pinned checkpoint (`model-pipeline/reference/generation/build_ortgenai_bundle.py`, digests in `Qwen35ModelAssets`) and hosts every file of the locks (with `chat_template.jinja`) in the Hugging Face repository `Starlinghq/qwen3.5-0.8b-ortgenai`, pinned by commit. That repository is public: `Qwen35ModelAssets.DownloadAsync(variant)` needs no token. Alternatively build the files into the snapshot directory or call `Qwen35ModelAssets.OpenDirectory(dir, variant)`.
 
 For Microsoft.Extensions.AI's `IChatClient` (middleware, DI, asynchronous streaming, function invocation), add `Starlings.Models.Qwen35.Extensions.AI` and wrap the model in `Qwen35ChatClient`.
@@ -87,11 +89,12 @@ result = model.Generate(conversation, options);                        // the an
 
 - `MaxNewTokens` bounds the completion tokens; a stop token id is never part of the text, the ids or the usage count. A stop string ends generation and is cut from the text; its tokens stay in the ids and the count.
 - Streaming updates concatenate to the final text and ids; the last update carries the finish reason (`Stop`, `StopSequence`, `Length`) and usage. Cancellation throws `OperationCanceledException` at the next prefill chunk or decode step; a running chunk or step is not interrupted. Prompts are prefilled in 512-token chunks on CUDA and in one call on CPU (`PrefillChunkTokens`).
+- A conversation the template cannot render (for example no messages, a system message after the first, no user query, or invalid tool data) throws `Qwen35TemplateException` before any native call.
 - Each request renders and prefills its whole conversation; requests share no state. On CUDA concurrent requests are serialized step by step, because concurrent ONNX Runtime GenAI 0.17.1 generators on the CUDA provider produced wrong tokens; on CPU they run in parallel. Conversation state reuse, batching, forced tool calls (requiring a tool) and reasoning extraction are unsupported in this version.
 
 ## Stable contract
 
-This is the contract of profile `qwen3.5-0.8b/ortgenai-fp32x-cpu` (fp32x on Linux x64 CPU). Its Stable label (since 2026-10-16) commits to it under the [support policy](https://github.com/starlinghq/starling/blob/main/docs/support-policy.md). The statuses are the registry manifest's and `Qwen35Capabilities.Profiles`, which a test keeps equal key for key. `Qwen35Capabilities.All` also lists the experimental CUDA profiles' keys (`.cuda`, `fp16x`).
+This is the contract of profile `qwen3.5-0.8b/ortgenai-fp32x-cpu` (fp32x on Linux x64 CPU). Its Stable label (since 2026-10-16) commits to it under the [support policy](https://github.com/starlinghq/starling/blob/main/docs/support-policy.md). The statuses are the registry manifest's and `Qwen35Capabilities.Profiles`, which a test keeps equal key for key. `Qwen35Capabilities.All` also lists the Stable CUDA profiles' keys (`.cuda`, `fp16x`).
 
 | Item | Contract |
 | --- | --- |

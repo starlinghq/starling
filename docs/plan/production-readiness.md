@@ -44,6 +44,8 @@ Other wave 1 results:
 
 ### Blockers common to all models
 
+Status 2026-10-18: blockers 1 to 5 are closed (see the dated status entries under Tracking), and 0.2.0 is published (blocker 6; `docs/releases/ai-0.2.0.md`). Branch protection and the `Starlings` prefix reservation are tracked in `docs/kickoff.md`. The list below is the 2026-10-13 audit.
+
 1. **No protected release sets (P-030).** Every G1/G2 pass so far is on development fixtures. No model has a held-out task metric (G3). Only the maintainer may author these sets.
 2. **Hosting.** The GLiNER2, EmbeddingGemma 2 and Qwen graphs sit in private Hugging Face repositories (`source_status: placeholder`), so no clean install can acquire them (G0, G6).
 3. **No qualification CI (P-018).** CI is `ubuntu-latest` only, model tests skip there, there is no Windows job, and nothing runs on a schedule. That means no compatibility matrix evidence beyond Linux x64, and no regression support.
@@ -68,21 +70,21 @@ Each workstream is one draft PR. Agents never edit `model-pipeline/protected/` o
 
 | ID | Workstream | Gates | Deliverables | Status |
 | --- | --- | --- | --- | --- |
-| R1 | Operational qualification harness | G4 | One soak tool for all four models (repeated requests, load/unload cycles, working-set/native/VRAM sampling, plateau report; one-hour default, short mode for CI). Missing plan 10.2 tests per model: queue saturation, timed-out requests, failed init, malformed lock or manifest, unsupported provider, cancellation then reuse, disposal during shutdown, cancellation latency. | open |
-| R2 | Benchmark harnesses | G5 | GLiNER2, EmbeddingGemma 2 (text/image/video) and Qwen generation harnesses modeled on `Starlings.Benchmarks.E5Harness`: raw results, environment manifest, warm/cold split, stage timing. Protocol doc. | draft PR #7 |
-| R3 | Catalog and compatibility matrix | P-021, section 14 | Generator in `model-pipeline` producing the public catalog and a compatibility matrix from the manifests (no hand-kept list), checked in CI for staleness. | draft PR #4 |
-| R4 | Manifest hygiene and gate records | G0 to G7 | G3 to G7 entries (`not-run` or `checklist`, with evidence links) in every manifest. Stale text fixed (EmbeddingGemma 2 FFmpeg.AutoGen references, Qwen hosting text). GLiNER2 `mlnet` corrected to `unsupported`. GLiNER2 `onnx-fp32-cuda` manifest drafted. G1/G2 rerun at tokenizer `0.3.0-preview.1` on the development fixtures, with evidence. | draft PR #6 |
-| R5 | Task-quality evaluators | G3 | Evaluator tasks in `model-pipeline evaluate`: retrieval (nDCG@10 and recall@k; e5 and EmbeddingGemma 2; the int8 top-10 overlap metric for browser profiles), NER span F1 (GLiNER2), and a generation task with the template stage machine-checked against the protected tolerances (Qwen). Dataset paths come from the maintainer's P-030 sets; the agent supplies only the format, a public smoke example, and tests. | draft PR #5 |
+| R1 | Operational qualification harness | G4 | One soak tool for all four models (repeated requests, load/unload cycles, working-set/native/VRAM sampling, plateau report; one-hour default, short mode for CI). Missing plan 10.2 tests per model: queue saturation, timed-out requests, failed init, malformed lock or manifest, unsupported provider, cancellation then reuse, disposal during shutdown, cancellation latency. | merged (#9) |
+| R2 | Benchmark harnesses | G5 | GLiNER2, EmbeddingGemma 2 (text/image/video) and Qwen generation harnesses modeled on `Starlings.Benchmarks.E5Harness`: raw results, environment manifest, warm/cold split, stage timing. Protocol doc. | merged (#7) |
+| R3 | Catalog and compatibility matrix | P-021, section 14 | Generator in `model-pipeline` producing the public catalog and a compatibility matrix from the manifests (no hand-kept list), checked in CI for staleness. | merged (#4) |
+| R4 | Manifest hygiene and gate records | G0 to G7 | G3 to G7 entries (`not-run` or `checklist`, with evidence links) in every manifest. Stale text fixed (EmbeddingGemma 2 FFmpeg.AutoGen references, Qwen hosting text). GLiNER2 `mlnet` corrected to `unsupported`. GLiNER2 `onnx-fp32-cuda` manifest drafted. G1/G2 rerun at tokenizer `0.3.0-preview.1` on the development fixtures, with evidence. | merged (#6) |
+| R5 | Task-quality evaluators | G3 | Evaluator tasks in `model-pipeline evaluate`: retrieval (nDCG@10 and recall@k; e5 and EmbeddingGemma 2; the int8 top-10 overlap metric for browser profiles), NER span F1 (GLiNER2), and a generation task with the template stage machine-checked against the protected tolerances (Qwen). Dataset paths come from the maintainer's P-030 sets; the agent supplies only the format, a public smoke example, and tests. | merged (#5) |
 
 ### Wave 2 (after wave 1 merges)
 
 | ID | Workstream | Gates | Deliverables | Status |
 | --- | --- | --- | --- | --- |
-| R6 | Qualification CI (P-018) | all | A Windows x64 CPU job. A scheduled qualification workflow that restores pinned models from a cache, runs the model tests, the protected evaluator and a short soak, and uploads evidence. Release credentials stay out of PR jobs. Maintainer approves `.github/` changes. | open |
-| R7 | EmbeddingGemma 2 follow-up | G1, G2, G4 | W2 (CUDA mode for the fidelity tool), W1 (frame-call measurement, GPU), W3 (long-input fixture proposal, 2,049 to 8,192 tokens), W4 (FFmpeg 9 adapter). | open |
-| R8 | Qwen template and LLM gaps | G1, G3, G4 | P-029 template corpus beyond the 21 prompts. Long-context tests above 1,666 tokens, or a narrowed claim. A drafted upstream report for the concurrent CUDA generator defect (the maintainer files it). | open |
-| R9 | Distribution | G6 | AOT check for every core package (to `supported` or `unsupported`). A Windows clean-install drill. The ML.NET package run in the release drill. A download-from-public-hosting drill step, enabled once hosting is public. | open |
-| R10 | Stable contract docs | section 14 | A support policy, a per-model Stable contract (the README "Stable waits for P-018" text replaced), and the M3 maintained-update and rollback drill (P-020, P-022). | draft PR (branch `r10-stable-contracts`) |
+| R6 | Qualification CI (P-018) | all | A Windows x64 CPU job. A scheduled qualification workflow that restores pinned models from a cache, runs the model tests, the protected evaluator and a short soak, and uploads evidence. Release credentials stay out of PR jobs. Maintainer approves `.github/` changes. | merged (#11) |
+| R7 | EmbeddingGemma 2 follow-up | G1, G2, G4 | W2 (CUDA mode for the fidelity tool), W1 (frame-call measurement, GPU), W3 (long-input fixture proposal, 2,049 to 8,192 tokens), W4 (FFmpeg 9 adapter). | merged (#14) |
+| R8 | Qwen template and LLM gaps | G1, G3, G4 | P-029 template corpus beyond the 21 prompts. Long-context tests above 1,666 tokens, or a narrowed claim. A drafted upstream report for the concurrent CUDA generator defect (the maintainer files it). | merged (#12) |
+| R9 | Distribution | G6 | AOT check for every core package (to `supported` or `unsupported`). A Windows clean-install drill. The ML.NET package run in the release drill. A download-from-public-hosting drill step, enabled once hosting is public. | merged (#10) |
+| R10 | Stable contract docs | section 14 | A support policy, a per-model Stable contract (the README "Stable waits for P-018" text replaced), and the M3 maintained-update and rollback drill (P-020, P-022). | merged (#8) |
 
 ## Maintainer decisions and actions
 
@@ -104,6 +106,13 @@ These cannot be done by an agent. Each row names what it unblocks.
 ## Tracking
 
 Each workstream PR updates this document's tables when it lands. The catalog (R3) becomes the source of truth for status once it exists.
+
+### Status 2026-10-18 (0.2.0 published)
+
+- **Released:** ai-dotnet `0.2.0`, published to nuget.org on 2026-10-17 from tag `ai-v0.2.0` through the `release` workflow (NuGet trusted publishing; record: `docs/releases/ai-0.2.0.md`). It is the first release with Stable profiles: 15 packages at `0.2.0`, including both FFmpeg video adapters (nothing held), on `Starlings.Tokenizers` `0.3.0`.
+- **Every registry profile is Stable (13):** see the 2026-10-15 to 2026-10-17 entries below and `docs/catalog/README.md`. Stable on CUDA means Linux x64 with an RTX 3090; other GPUs are untested.
+- **Not published (source only):** `Starlings.Models.Kev` (Kev-0.8B and Kev-4B, Experimental, merged in #91, no registry profile on `main`), `Starlings.Models.Bert` (nomic-embed-text-v1.5 admitted to the BERT route in #120) and `Starlings.Models.QwenChat`.
+- **Still open:** M7 (a second release owner); Stable promotions carry the single-owner exception.
 
 ### Status 2026-10-17 (video promotion)
 

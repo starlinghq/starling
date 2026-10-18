@@ -78,7 +78,7 @@ await foreach (var update in chat.GetStreamingResponseAsync("In one sentence, wh
     Console.Write(update.Text);
 ```
 
-More complete programs, including entity extraction and image search, are in [`ai-dotnet/samples/`](ai-dotnet/samples).
+Seven complete programs are in [`ai-dotnet/samples/`](ai-dotnet/samples): semantic search with e5 (`E5Search`) and with an in-memory `Microsoft.Extensions.VectorData` collection (`E5VectorStore`), text, image and video search with EmbeddingGemma 2 (`EmbeddingGemma2Search`), entity extraction with GLiNER2 (`Gliner2Ner`), streaming chat with Qwen3.5 (`QwenChat`), local question answering over your own files (`LocalRag`), and multilingual ticket triage in an ML.NET pipeline (`TicketTriage`).
 
 ## Models
 
@@ -87,9 +87,19 @@ Choosing a text embedder? See [choosing an embedding model](docs/guides/choosing
 | Model | What it does | Package | CPU | CUDA |
 | --- | --- | --- | --- | --- |
 | [multilingual-e5-small](https://huggingface.co/intfloat/multilingual-e5-small) | Text embeddings, 100 languages | `Starlings.Models.E5` (+ `.Extensions.AI`, `.MLNet`) | Stable | Stable |
-| [EmbeddingGemma 2](https://huggingface.co/google/embeddinggemma-2) | Text, image and video embeddings in one space | `Starlings.Models.EmbeddingGemma2` (+ `.Extensions.AI`, `.MLNet`, `.Imaging.SkiaSharp`, `.Video.FFmpeg`) | Stable (text, image, video) | Stable (text, image, video) |
+| [EmbeddingGemma 2](https://huggingface.co/google/embeddinggemma-2) | Text, image and video embeddings in one space | `Starlings.Models.EmbeddingGemma2` (+ `.Extensions.AI`, `.MLNet`, `.Imaging.SkiaSharp`, `.Video.FFmpeg`, `.Video.FFmpeg9`) | Stable (text, image, video) | Stable (text, image, video) |
 | [GLiNER2](https://huggingface.co/fastino/gliner2-base-v1) | Zero-shot entity extraction with any labels | `Starlings.Models.Gliner2` | Stable | Stable |
 | [Qwen3.5-0.8B](https://huggingface.co/Qwen/Qwen3.5-0.8B) | Chat and text generation | `Starlings.Models.Qwen35` (+ `.Extensions.AI`) | Stable | Stable (fp32x and fp16x) |
+
+**Experimental, source only (not on nuget.org):** three more libraries build and test on `main` but are not in the release drill's package set, have no Stable profile, and were not published with 0.2.0 ([release record](docs/releases/ai-0.2.0.md#packages)). Build them from this repository.
+
+| Model | What it does | Project | Status |
+| --- | --- | --- | --- |
+| [Kev-0.8B, Kev-4B](https://huggingface.co/jaredpalmer/kev-0.8b) | Decision models: a calibrated probability per option, no generated text | [`Starlings.Models.Kev`](ai-dotnet/src/Starlings.Models.Kev) | Experimental, CPU fp32; no registry profile yet |
+| [all-MiniLM-L6-v2](https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2), [bge-small-en-v1.5](https://huggingface.co/BAAI/bge-small-en-v1.5), [nomic-embed-text-v1.5](https://huggingface.co/nomic-ai/nomic-embed-text-v1.5), [ms-marco-MiniLM-L6-v2](https://huggingface.co/cross-encoder/ms-marco-MiniLM-L6-v2) | BERT text embeddings and reranking | [`Starlings.Models.Bert`](ai-dotnet/src/Starlings.Models.Bert) | Experimental, CPU fp32; proposed evidence only |
+| [Qwen3-0.6B](https://huggingface.co/Qwen/Qwen3-0.6B), [Qwen2.5-0.5B-Instruct](https://huggingface.co/Qwen/Qwen2.5-0.5B-Instruct) | Text-only chat | [`Starlings.Models.QwenChat`](ai-dotnet/src/Starlings.Models.QwenChat) | Experimental, CPU fp32; proposed evidence only |
+
+Their candidate contracts are in [`model-pipeline/candidates/`](model-pipeline/candidates) and the BERT and Qwen chat onboarding workflow is in [`model-pipeline/FIVE_MODELS.md`](model-pipeline/FIVE_MODELS.md). The `QwenChat` sample uses the published Qwen3.5 packages, not `Starlings.Models.QwenChat`.
 
 **Stable** means every release gate passed: provenance, numerical parity and task quality against the Python reference, a one-hour leak soak, benchmarks, a clean install from the packages, and integration. It also means regression runs continue: weekly on CPU, and on a GPU before every release for CUDA. Stable on CUDA means Linux x64 with an NVIDIA GeForce RTX 3090, where every CUDA gate and the per-release GPU run take place; other GPUs are untested. EmbeddingGemma 2 video on CUDA also needs `MALLOC_MMAP_THRESHOLD_=65536` in the process environment on Linux. The [model catalog](docs/catalog/README.md) links each gate to its evidence, and the [compatibility matrix](docs/catalog/compatibility-matrix.md) lists each platform and provider.
 
@@ -148,6 +158,7 @@ cd model-pipeline
 pip install -e '.[dev]'
 python3 -m pytest
 ruff check .
+ruff format --check .
 model-pipeline validate registry
 ```
 
@@ -156,13 +167,14 @@ model-pipeline validate registry
 | Directory | Contents |
 | --- | --- |
 | [`ai-dotnet/`](ai-dotnet) | .NET libraries, backend adapters, model implementations, samples, benchmarks. |
-| [`model-pipeline/`](model-pipeline) | Manifest schema, model registry, reference runners, evaluation, protected fixtures. |
-| [`browser/`](browser) | The WebAssembly spike (e5 in the browser). |
-| [`docs/`](docs) | Plan, catalog, benchmarks, evidence and release records. |
+| [`model-pipeline/`](model-pipeline) | Manifest schema, model registry, admissions, candidate contracts and onboarding recipes, reference runners, evaluation, protected fixtures. |
+| [`browser/`](browser) | The WebAssembly feasibility spike for e5 in the browser (`browser/spike/`); no browser package yet. |
+| [`docs/`](docs) | Plan, generated catalog, guides, benchmarks, evidence and release records ([index](docs/README.md)). |
+| [`skills/`](skills) | Agent Skills for using Starling and for adding a model. |
 | [`.github/`](.github) | Charter, contribution and support policy, security reporting, issue templates, CI. |
-| [`tools/`](tools) | Repository checks and maintenance scripts. |
+| [`tools/`](tools) | Repository checks (boundary, provenance), model acquisition, release drills, release gates, qualification and the CUDA CI pod scripts (`tools/ci/`). |
 
-The tokenizer is its own product, [`Starlings.Tokenizers`](https://www.nuget.org/packages/Starlings.Tokenizers) from [starlinghq/tokenizers](https://github.com/starlinghq/tokenizers). The execution plan is [`docs/plan/fast-faithful-ai-dotnet.md`](docs/plan/fast-faithful-ai-dotnet.md), and open decisions are in [`docs/kickoff.md`](docs/kickoff.md). An experimental [five-model CPU onboarding workflow](model-pipeline/FIVE_MODELS.md) covers additional Qwen and BERT models; its references are still proposals.
+The tokenizer is its own product, [`Starlings.Tokenizers`](https://www.nuget.org/packages/Starlings.Tokenizers) from [starlinghq/tokenizers](https://github.com/starlinghq/tokenizers). The execution plan is [`docs/plan/fast-faithful-ai-dotnet.md`](docs/plan/fast-faithful-ai-dotnet.md), and open decisions are in [`docs/kickoff.md`](docs/kickoff.md). An experimental [five-model CPU onboarding workflow](model-pipeline/FIVE_MODELS.md) covers additional Qwen and BERT models; its references are still proposals. nomic-embed-text-v1.5 joined the BERT route afterwards (#120).
 
 ## License
 

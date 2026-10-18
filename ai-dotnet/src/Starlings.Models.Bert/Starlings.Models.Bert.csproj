@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <IsPackable>true</IsPackable>
-    <Description>Experimental pinned BERT text embeddings and paired-input reranking on ONNX Runtime CPU, with owned WordPiece tokenization. MiniLM masked mean pooling, BGE CLS pooling, and MS MARCO scalar logits have separate typed APIs. No model weights are bundled.</Description>
+    <Description>Experimental pinned BERT text embeddings and paired-input reranking on ONNX Runtime CPU, with owned WordPiece tokenization. MiniLM masked mean pooling, BGE CLS pooling, nomic-embed-text-v1.5 mean pooling (768 wide, not normalized), and MS MARCO scalar logits have separate typed APIs. No model weights are bundled.</Description>
     <PackageTags>bert;embeddings;reranking;onnxruntime;wordpiece</PackageTags>
     <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>

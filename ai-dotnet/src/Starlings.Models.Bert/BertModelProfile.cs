@@ -63,7 +63,7 @@ public sealed class BertModelProfile
     /// <summary>Reads a portable candidate JSON contract; never executes or downloads source.</summary>
     public static BertModelProfile Load(string path) => Parse(File.ReadAllText(path));
 
-    /// <summary>Parses and rejects contracts that differ from the three implemented task profiles.</summary>
+    /// <summary>Parses and rejects contracts that differ from the four implemented task profiles.</summary>
     public static BertModelProfile Parse(string json)
     {
         ArgumentNullException.ThrowIfNull(json);

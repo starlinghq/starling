@@ -4,11 +4,12 @@
 
 Key facts for writing code against it:
 
-- Install with `dotnet add package <name>`. The application must also add exactly one native runtime: `Microsoft.ML.OnnxRuntime` 1.30.0 (CPU), or `Microsoft.ML.OnnxRuntime.Gpu.Linux` 1.30.0 (CUDA, Linux x64); for Qwen, `Microsoft.ML.OnnxRuntimeGenAI` 0.17.1.
+- Install with `dotnet add package <name>`. The application must also add exactly one native runtime: `Microsoft.ML.OnnxRuntime` 1.30.0 (CPU), or `Microsoft.ML.OnnxRuntime.Gpu.Linux` 1.30.0 (CUDA, Linux x64); for Qwen3.5, `Microsoft.ML.OnnxRuntimeGenAI` 0.17.1 (CPU) or `Microsoft.ML.OnnxRuntimeGenAI.Cuda` 0.17.1.
 - `XModelAssets.DownloadAsync()` is the only call that uses the network. `XModelAssets.OpenLocal()` loads offline. The cache is `$STARLING_MODELS` or the user cache directory.
 - e5 needs `query: ` and `passage: ` prefixes. EmbeddingGemma 2 needs `EmbeddingGemma2Prompt.Query` or `.Document`; images take no prompt.
-- Over-long input throws a typed exception (for example `Gliner2InputTooLongException`) and is never silently truncated.
-- Current release: 0.2.0, the first with Stable profiles and Qwen tool calling. Keep every `Starlings.*` package at the same version.
+- Over-long input throws a typed exception (for example `Gliner2InputTooLongException`, `EmbeddingGemma2InputTooLongException`) and is never silently truncated. The exception is e5: like the reference, its tokenizer truncates text to 512 tokens.
+- Current release: 0.2.0 (nuget.org, 2026-10-17), the first with Stable profiles and Qwen tool calling; it depends on `Starlings.Tokenizers` 0.3.0. Keep every `Starlings.*` package at the same version.
+- Not on nuget.org: `Starlings.Models.Kev`, `Starlings.Models.Bert` and `Starlings.Models.QwenChat` are experimental and source only; build them from this repository.
 
 ## Docs
 
@@ -21,9 +22,12 @@ Key facts for writing code against it:
 ## Samples
 
 - [E5Search](https://github.com/starlinghq/starling/tree/main/ai-dotnet/samples/E5Search): multilingual semantic search, typed API and IEmbeddingGenerator
+- [E5VectorStore](https://github.com/starlinghq/starling/tree/main/ai-dotnet/samples/E5VectorStore): e5 with an in-memory Microsoft.Extensions.VectorData collection
 - [EmbeddingGemma2Search](https://github.com/starlinghq/starling/tree/main/ai-dotnet/samples/EmbeddingGemma2Search): text, image and video search, Matryoshka dimensions, CUDA
 - [Gliner2Ner](https://github.com/starlinghq/starling/tree/main/ai-dotnet/samples/Gliner2Ner): zero-shot entity extraction
-- [QwenChat](https://github.com/starlinghq/starling/tree/main/ai-dotnet/samples/QwenChat): local chat through IChatClient
+- [LocalRag](https://github.com/starlinghq/starling/tree/main/ai-dotnet/samples/LocalRag): local paragraph retrieval with EmbeddingGemma 2 and answers from Qwen3.5
+- [QwenChat](https://github.com/starlinghq/starling/tree/main/ai-dotnet/samples/QwenChat): local Qwen3.5 chat through IChatClient
+- [TicketTriage](https://github.com/starlinghq/starling/tree/main/ai-dotnet/samples/TicketTriage): multilingual ticket triage in an ML.NET pipeline (e5 features, GLiNER2 extraction)
 
 ## Optional
 

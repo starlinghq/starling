@@ -6,7 +6,7 @@
 #   STARLING_MODELS=/data/models tools/fetch-tokenizer-assets.sh
 #
 # Layout: $STARLING_MODELS/<hub repo>/<full commit SHA>/<file>. Revisions and digests come from
-# docs/m0/hub-pins.md and model-pipeline/candidates/*/profile.json, matching TestAssets.cs.
+# docs/m0/hub-pins.md and model-pipeline/candidates/*/profile.json, matching the tests' *TestAssets.cs files.
 # A file already present with the right digest is not downloaded again.
 #
 # Derived assets are runtime pipelines that no Hub file holds. The qwen35-bpe-chat profile's

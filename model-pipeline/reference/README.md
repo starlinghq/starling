@@ -25,10 +25,14 @@ Shared helpers live in `src/model_pipeline/fixtures.py` (pure Python, tested in 
 | `qwen-bpe/run_qwen_bpe_tokenizer.py` | profile `qwen2-bpe-kev`: `Qwen/Qwen3.5-0.8B-Base` at `dc7cdfe2` loaded as Kev does, asset `jaredpalmer/kev-0.8b@9a45d25e` `tokenizer.json`; profile `qwen35-bpe-chat`: `Qwen/Qwen3.5-0.8B` at `2fc06364`, asset = the serialized transformers 5.18.0 pipeline | `qwen-bpe/requirements-kev.txt` (transformers 5.17.0, tokenizers 0.23.2) and `qwen-bpe/requirements-chat.txt` (transformers 5.18.0, tokenizers 0.23.2); no torch | proposed `protected/qwen-bpe/{kev,chat}/tokenizer/` (the tokenizer's copies are in starlinghq/tokenizers); optional randomized differential dumps and the regex class probe |
 | `gemma-bpe/run_gemma_bpe_tokenizer.py` | profile `gemma-bpe-embeddinggemma2`: asset `google/embeddinggemma-2@914f7f89` `tokenizer.json` (fixtures are the accepted `protected/embeddinggemma-2/onnx-fp32-cpu/tokenizer*`) | `gemma-bpe/requirements.txt` (tokenizers 0.23.3, the fixtures' version); no torch, no transformers | randomized differential dumps (committed one in `tests/Starlings.Tokenizers.Tests/TestData/gemma-bpe/differential.jsonl.gz` in starlinghq/tokenizers, large ones outside Git) and the synthetic component reference `TestData/gemma-bpe/components.json`; not fixtures |
 | `kev/` | `jaredpalmer/kev-0.8b` P-027 spike | upstream Kev `uv.lock` with torch 2.8.0 CPU build; `kev/requirements-cuda.txt` for the CUDA runs | spike evidence, not fixtures (`model-pipeline/admissions/kev.md`, "Spike results" and "GPU results") |
+| `kev/run_kev.py` (with `kev_merge.py`, `kev_ort.py`) | `jaredpalmer/kev-0.8b` and `kev-4b` on their pinned Qwen3.5 bases, Kev code at `6b719c3c` | `kev/requirements.txt` (Python 3.12; Kev's `uv.lock` with torch 2.8.0 CPU build, transformers 5.17.0, onnxruntime 1.30.0, plus the ONNX Runtime GenAI builder), Kev installed with `--no-deps` from a checkout at the pinned commit | stages of the `kev-onnx-cpu-v1` onboarding route (`src/model_pipeline/onboarding_kev.py`): PyTorch reference, bundle build, Python ONNX Runtime; proposals, not fixtures |
+| `corpus/kev-decisions-v1.jsonl` | none: Starling-written decision records | | input to the Kev route |
+| `bert/run_bert.py` | the BERT-route candidates (`model-pipeline/candidates/{minilm,bge-small,ms-marco,nomic-embed}/`) | `encoder/requirements.txt` | original-framework reference and Python ONNX Runtime stages of the `bert-onnx-cpu-v1` route (`src/model_pipeline/onboarding_bert.py`); proposals, not fixtures |
+| `qwen-chat/run_reference.py`, `build_bundle.py`, `run_genai.py`, `common.py` | `Qwen/Qwen3-0.6B`, `Qwen/Qwen2.5-0.5B-Instruct` (`model-pipeline/candidates/{qwen3,qwen25}/`) | `generation/requirements.txt` | transformers fp32 CPU reference, ONNX Runtime GenAI bundle build and Python GenAI path of the `qwen-genai-cpu-v1` route (`src/model_pipeline/onboarding_generation.py`); proposals, not fixtures |
 | `generation/` | `Qwen/Qwen3.5-0.8B` at `2fc06364`, M0 generation-backend check | `generation/requirements.txt` (transformers 5.18.0 reference); C# runners under `generation/dotnet/` (ONNX Runtime GenAI 0.17.1, LLamaSharp 0.27.0) | backend comparison evidence, not fixtures (`docs/m0/generation-backend-check.md`) |
 | `generation/make_template_corpus.py`, `generation/make_long_prompts.py` | the same checkpoint, backlog P-029 and R8 | `generation/requirements.txt` | proposed fixtures in `model-pipeline/proposed/qwen3.5-0.8b/` (`template/`: chat-template corpus; `long-context/`: `prompts-long-v1.jsonl` through `run_reference.py` and `make_generation_fixture.py`) |
 
-Model snapshots are downloaded by commit SHA into `.models/` (ignored by Git) and hashed; see `docs/m0/hub-pins.md`. The acquisition command (P-009) does not exist yet.
+Model snapshots are downloaded by commit SHA into `.models/` (ignored by Git) and hashed; see `docs/m0/hub-pins.md`. For runtime assets, the acquisition command (P-009) is `ai-dotnet/tools/Starlings.Acquisition.Tool` (library `Starlings.Acquisition`).
 
 ## Running
 
@@ -87,8 +91,9 @@ $P export_gliner2_onnx.py --model-dir $M --out ../../../.models/g2-onnx --routes
 $P parity_gliner2_ort.py --onnx-dir ../../../.models/g2-onnx --reference ../../../.models/g2-ref --out ../../../.models/g2-parity-cpu.json
 # Stage results for `model-pipeline evaluate` (task entity-extraction): stage 1 re-runs GLiNER2's Python processor,
 # stage 2 runs Python ONNX Runtime on the route A graph with the fixture inputs and recomputes PyTorch hidden states.
-# --graph-asset-prefix must match the path the manifest's origin.files pins the graph under (none is pinned yet).
-F=../../protected/gliner2-base-v1/onnx-fp32-cpu   # extraction.jsonl (proposed in PR #19)
+# --graph-asset-prefix (the path without ".onnx") must match the path the manifest's origin.files pins the graph under;
+# the manifest pins onnx/gliner2-entities-fp32.onnx, and the default prefix onnx/gliner2-entity-route-a does not match it.
+F=../../protected/gliner2-base-v1/onnx-fp32-cpu   # extraction.jsonl (accepted 2026-10-10, PR #19)
 $P stage_gliner2.py tokenizer --model-dir $M --fixtures $F --profile gliner2-base-v1/onnx-fp32-cpu --out ../../../.models/g2-stage
 $P stage_gliner2.py export --model-dir $M --graph ../../../.models/g2-onnx/gliner2-A-dynamo.onnx --fixtures $F \
   --profile gliner2-base-v1/onnx-fp32-cpu --out ../../../.models/g2-stage --threads 1

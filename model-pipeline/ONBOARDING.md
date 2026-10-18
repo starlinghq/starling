@@ -1,6 +1,6 @@
 # Recipe-driven model onboarding
 
-The onboarding CLI runs a versioned recipe, records exact inputs and outputs, resumes verified stages, and exports evidence for review. The first execution plugin wraps the existing **multilingual-e5-small / ONNX fp32 CPU** tools. Additional experimental BERT and Qwen plugins run the [five-model CPU workflow](FIVE_MODELS.md) with proposed development comparisons. These routes support Linux CPU execution; other models still need their own execution plugin and independent qualification contract.
+The onboarding CLI runs a versioned recipe, records exact inputs and outputs, resumes verified stages, and exports evidence for review. The first execution plugin wraps the existing **multilingual-e5-small / ONNX fp32 CPU** tools. Additional experimental BERT and Qwen plugins run the [five-model CPU workflow](FIVE_MODELS.md) with proposed development comparisons; the BERT plugin also runs the `nomic-embed-text-v1.5` recipe outside that workflow. The experimental Kev plugin runs the two Kev decision checkpoints ([Kev route](#kev-route)). The registered plugins are listed in `src/model_pipeline/onboarding_plugins.py`; recipes and candidates are described in [`recipes/README.md`](recipes/README.md) and [`candidates/README.md`](candidates/README.md). These routes support Linux CPU execution; other models still need their own execution plugin and independent qualification contract.
 
 This is the implementation of the first operational increment in [the work plan](../docs/plan/model-onboarding-pipeline.md). Python coordinates development/reference work; delivered .NET inference still has no Python dependency.
 
@@ -46,7 +46,9 @@ Recipes contain a plugin ID and repository-relative paths to the existing manife
   --threads 2 --timeout 1800
 ```
 
-Stages:
+`--repo-root` sets the repository root that recipe paths resolve against (on `plan`, `run` and `workflow`; default: the repository found above the recipe or workflow file). `--base-snapshot` is only for routes whose model is built on a pinned base (Kev); other plugins refuse it.
+
+E5 stages:
 
 | Stage | Evidence |
 | --- | --- |
@@ -92,10 +94,30 @@ The destination must be new. Before copying artifacts, the exporter verifies the
 
 Exit codes: `0` means the requested operation completed; `1` means a pipeline stage failed; `2` means invalid arguments, inputs, or a refused operation. Existing `evaluate` and `check-protected` exit codes are unchanged.
 
+## Kev route
+
+The `kev-onnx-cpu-v1` plugin (`src/model_pipeline/onboarding_kev.py`) runs `recipes/kev-0.8b-cpu.yaml` and `recipes/kev-4b-cpu.yaml`. It accepts only the two pinned Kev checkpoints, their pinned Qwen3.5 base and the pinned Kev code commit (`candidates/kev-0.8b/`, `candidates/kev-4b/`). Stages: `assets`, `environment`, `reference`, `build`, `onnx`, `dotnet`, `evaluate`, `review`.
+
+```sh
+.venv/bin/model-pipeline run model-pipeline/recipes/kev-0.8b-cpu.yaml \
+  --snapshot /path/to/kev-0.8b-snapshot \
+  --base-snapshot /path/to/hf-cache/models--Qwen--Qwen3.5-0.8B-Base/snapshots/<revision> \
+  --reference-python /path/to/kev-venv/bin/python \
+  --out artifacts/onboarding/kev-0.8b --threads 2 --timeout 1800
+```
+
+- `--base-snapshot` is a snapshot directory in Hugging Face cache layout (`<cache>/models--<org>--<name>/snapshots/<revision>`), because Kev loads its base and tokenizer through transformers from that cache, offline.
+- The reference environment is `reference/kev/requirements.txt` (Python 3.12, torch 2.8.0 CPU build), plus Kev installed with `--no-deps` from a clean Git checkout at the pinned commit. The `environment` stage refuses a checkout at another commit or with local changes.
+- For Kev-0.8B the `evaluate` stage reads its bounds from `protected/kev-0.8b/onnx-fp32/tolerances.yaml` (`src/model_pipeline/evaluate_decision.py`). Kev-4B has no binding tolerances yet; the Kev-0.8B bounds are proposed unchanged.
+- `--distribution` is refused: this plugin implements no distribution stage.
+- The workflow command takes no base snapshot, so Kev runs only through `run`.
+
+References and fixtures stay proposals. Kev has no registry manifest on main.
+
 ## Add another execution plugin
 
 1. Specify the upstream behavior contract and exact source assets in a reviewed registry manifest or proposed candidate contract. Reuse existing tokenizer/runtime components only where their supported parameters match.
-2. Implement `describe_plan` and `build_stages` using `Stage(name, dependencies, inputs, parameters, execute)`. Register the plugin in recipe validation and CLI dispatch. The first plugin deliberately rejects non-E5 or different-precision profiles.
+2. Implement `describe_plan` and `build_stages` using `Stage(name, dependencies, inputs, parameters, execute)`, and declare `SHARED_DISTRIBUTION`. Register the plugin in `PLUGINS` in `src/model_pipeline/onboarding_plugins.py`; recipe validation and CLI dispatch both read that table. The first plugin deliberately rejects non-E5 or different-precision profiles.
 3. Declare file inputs, dependency outputs, algorithm/configuration parameters, relevant source/build files, and toolchain identity. Do not include unrelated Markdown or a blanket Git HEAD in expensive-stage keys. Include the committed candidate identity for distribution and review.
 4. Produce the evidence format required by the route's independent evaluator. Protected routes use the existing stage-results format; proposed candidates use their task-specific development reports. New tasks such as generation need their own checks for templates, logits, caching, stopping, isolation, and streaming; an embedding evaluator cannot qualify them.
 5. Add cheap orchestration/failure tests, then qualify an actual model and retain a small evidence summary. A fixture-generating implementation cannot approve its own goldens or loosen thresholds.

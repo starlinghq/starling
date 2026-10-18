@@ -8,6 +8,27 @@ Text generation on [ONNX Runtime GenAI](https://github.com/microsoft/onnxruntime
 
 Most applications use it through a model package such as `Starlings.Models.Qwen35`.
 
+## Use
+
+```csharp
+using Starlings.Generation.OnnxGenAI;
+using Starlings.Tokenizers;
+
+using var model = GenAIModel.Load(modelDirectory, new GenAIModelOptions { Provider = GenAIExecutionProvider.Cpu });
+var tokenizer = Tokenizer.FromFile(tokenizerPath);
+var generator = new TextGenerator(model, tokenizer);
+var promptIds = tokenizer.Encode(promptText, addSpecialTokens: false).Ids;   // the model package renders the template
+GenerationResult result = generator.Generate(promptIds, new GenerationOptions { MaxNewTokens = 256 });
+Console.WriteLine($"{result.Text} ({result.FinishReason}, {result.Usage.CompletionTokens} tokens)");
+```
+
+- `GenAIModelOptions`: `Provider` (default `Cpu`), `CudaDeviceId` (default 0), `UseTf32` (default false), `IntraOpThreads` (null: the CPU quota or affinity count in a constrained container, else the GenAI default), `PadTokenId` (null keeps the model's), `ConfigOverlays` (advanced JSON overlays on `genai_config.json`), `SerializeNativeCalls` (null: serialized on CUDA, concurrent on CPU). The loaded `GenAIModel` reports `ModelType`, `ContextLength`, `VocabularySize`, `EosTokenIds`, `PadTokenId`, `AppliedOverlays`, `ProviderOptions` and `SerializesNativeCalls`.
+- `GenerationOptions`: `MaxNewTokens` (default 512, at least 1), `StopSequences` (non-empty strings), `AdditionalStopTokenIds`, `Sampling` (null: greedy), `PrefillChunkTokens` (null: one prefill).
+- `SamplingOptions`: `Temperature` (default 1.0, greater than 0), `TopK` (default 50), `TopP` (default 1.0, in (0, 1]), `Seed` (required, non-negative). The same seed, prompt, settings, model and device reproduce the same tokens.
+- `GenerationResult`: `Text`, `TokenIds`, `FinishReason` (`Stop`, `StopSequence` or `Length`; cancellation throws instead), `StopTokenId`, `StopSequence`, `Usage` (`PromptTokens`, `CompletionTokens`, `TotalTokens`), `Timings` (`Prefill`, `Decode`). `GenerateStreaming` yields `GenerationUpdate`s (`Text`, `TokenIds`); the last has `IsFinal` and `Result`.
+- `GenAIRuntimeInfo`: `PinnedVersion` (`0.17.1`), and `ManagedVersion` and `NativePackage` read from the application's `.deps.json` (null in single-file or AOT hosts).
+- Exceptions: `GenAIRuntimeUnavailableException` (no native library, or packages other than 0.17.1), `GenAIProviderUnavailableException` (the provider cannot be used; no fallback), `GenAIModelException` (GenAI rejected the directory, its configuration or a step), `GenerationContextLengthException` (prompt plus `MaxNewTokens` exceed the context length; `PromptTokens`, `MaxNewTokens`, `ContextLength`).
+
 ## Maturity
 
 <!-- catalog:maturity profiles=qwen3.5-0.8b/* -->

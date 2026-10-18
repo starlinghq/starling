@@ -26,7 +26,7 @@ Maturity is per profile, generated from the registry manifests by `model-pipelin
 
 | Input | Behaviour | Status |
 | --- | --- | --- |
-| PNG (RGB, grayscale, RGBA, gray+alpha, palette, palette with transparency, 1-bit), JPEG (baseline, progressive, 4:2:0, 4:4:4, CMYK) | Decoded RGB equal to PIL 12.3.0's on the 28 supported fixture images | experimental |
+| PNG (RGB, grayscale, RGBA, gray+alpha, palette, palette with transparency, 1-bit), JPEG (baseline, progressive, 4:2:0, 4:4:4, CMYK) | Decoded RGB equal to PIL 12.3.0's on the 28 supported fixture images | supported (Stable `image-fp32-cpu` and `image-fp32-cuda` contracts) |
 | GIF (palette, grayscale; first frame of an animation), BMP (24-bit, 32-bit with alpha, 8-bit palette and grayscale, 1-bit), WebP (lossless, lossy, with and without alpha) | Decoded RGB equal to PIL 12.3.0's on 12 files written by Pillow from fixture images (proposed `model-pipeline/proposed/embeddinggemma-2/image-extra/`) | experimental |
 | GIF with transparent pixels | Rejected: `EmbeddingGemma2UnsupportedImageException` with `Reason = GifTransparency`. PIL keeps the palette colour of transparent pixels; SkiaSharp zeroes them, so the embedding would differ | unsupported |
 | Alpha | Dropped, never composited (a transparent pixel keeps its stored colour), as upstream | as upstream |

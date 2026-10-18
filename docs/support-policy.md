@@ -33,7 +33,7 @@ Maturity belongs to profiles, not packages (`docs/kickoff.md`, "ai-dotnet packag
 
 ### Promotion and demotion
 
-- **Promotion** happens only when the maintainer records gate results in the manifest (M10). Agents produce evidence and tooling; they never set a gate to `passed` or raise maturity. The manifest validator refuses `stable` while any gate is not `passed` or any capability is `untested` (`model-pipeline/src/model_pipeline/manifest.py`). The catalog's Stable readiness column lists what still fails, and notes that CUDA profiles also await scheduled GPU regression runs (the workflow's `cuda (runpod)` job, below, provides them). The first promotion (GLiNER2 CPU, 2026-10-15) was made on the maintainer's instruction; the agent change set `maturity: stable` only where every gate was recorded passed and the scheduled regression runs were green.
+- **Promotion** happens only when the maintainer records gate results in the manifest (M10). Agents produce evidence and tooling; they never set a gate to `passed` or raise maturity. The manifest validator refuses `stable` while any gate is not `passed` or any capability is `untested` (`model-pipeline/src/model_pipeline/manifest.py`). The catalog's Stable readiness column lists what still fails, and notes that a CUDA profile is not promoted until the per-release GPU run (the workflow's `cuda (runpod)` job, below) is green for it. The first promotion (GLiNER2 CPU, 2026-10-15) was made on the maintainer's instruction; the agent change set `maturity: stable` only where every gate was recorded passed and the scheduled regression runs were green.
 - **Demotion** from Stable to Preview or Experimental needs a release note and a visible catalog change. It never rewrites what an earlier release promised: the earlier release record stays as published.
 
 ## Security and correctness issues
@@ -59,16 +59,16 @@ Fixed by the plan (section 14):
 
 | Option | What runs | Cost | Risk |
 | --- | --- | --- | --- |
-| A. Rerun model G1/G2 | `model-pipeline evaluate --require-gates G1,G2` for every profile on the new tokenizer (what R4, draft PR #6, did at `0.3.0-preview.1`: every CPU profile passed on the development fixtures). | One evaluator run per profile. CUDA profiles need GPU time (M6). | Low. Catches interactions the conformance suite does not exercise (offsets, batching, prompt prefixes). |
+| A. Rerun model G1/G2 | `model-pipeline evaluate --require-gates G1,G2` for every profile on the new tokenizer (what R4, PR #6, did at `0.3.0-preview.1`: every CPU profile passed on the development fixtures). | One evaluator run per profile. CUDA profiles need GPU time (M6). | Low. Catches interactions the conformance suite does not exercise (offsets, batching, prompt prefixes). |
 | B. Accept the tokenizer conformance suite | The tokenizer repository's conformance fixtures for the profile's `profile_id` pass unchanged, and the release notes say which profiles they cover. | None in this repository. | A component the profile uses could change in a way the fixtures do not cover. This is acceptable only if the suite covers every component the profile's `tokenizer.json` uses. |
 
-A middle path is possible: B for patch releases whose diff does not touch a component the profile uses, A otherwise. Until the maintainer decides, this document makes no rule. The repository's practice so far is a tokenizer-suite check at each bump, plus one model rerun (R4) at `0.3.0-preview.1`.
+A middle path is possible: B for patch releases whose diff does not touch a component the profile uses, A otherwise. Until the maintainer decides, this document makes no rule. The repository's practice so far is a tokenizer-suite check at each bump, plus one model rerun (R4) at `0.3.0-preview.1`. `0.3.0`, pinned by `0.2.0`, is the same code without the preview suffix; its conformance fixtures pass unchanged (`docs/releases/ai-0.2.0.md`).
 
 ## Compatibility matrix
 
-The compatibility matrix is generated, never hand-kept: `model-pipeline catalog` writes `docs/catalog/compatibility-matrix.md`, `docs/catalog/README.md` and `docs/catalog/catalog.json` from the manifests' `compatibility`, `capabilities`, `execution` and `qualification` fields (P-021, draft PR #4). CI fails when the committed output is stale. A Stable support claim covers exactly the matrix rows with status `supported` for that profile. `unrecorded` and `untested` cells are not claims. Since 2026-10-15 Linux x64 CPU is `supported` for `gliner2-base-v1/onnx-fp32-cpu`; its Windows x64 CPU row is `experimental` (CI weight-free evidence only). `multilingual-e5-small/onnx-fp32-cpu` and `embeddinggemma-2/onnx-fp32-cpu` passed every gate but stay `experimental`: the weekly hosted soak of e5 fails the growth rule, and the weekly run cannot rerun EmbeddingGemma 2's G2 (the outside-Git reference regenerates byte-identical only on the reference CPU). Every other row is `experimental`, `untested` or `unrecorded`.
+The compatibility matrix is generated, never hand-kept: `model-pipeline catalog` writes `docs/catalog/compatibility-matrix.md`, `docs/catalog/README.md` and `docs/catalog/catalog.json` from the manifests' `compatibility`, `capabilities`, `execution` and `qualification` fields (P-021, #4). CI fails when the committed output is stale. A Stable support claim covers exactly the matrix rows with status `supported` for that profile. `unrecorded` and `untested` cells are not claims. Linux x64 CPU is `supported` for every Stable CPU profile, and Linux x64 CUDA for every Stable CUDA profile (on the RTX 3090; other GPUs are untested). The Windows x64 CPU rows of `gliner2-base-v1/onnx-fp32-cpu`, `multilingual-e5-small/onnx-fp32-cpu` and `embeddinggemma-2/onnx-fp32-cpu` are `experimental` (CI weight-free evidence only). Every other row is `untested` or `unrecorded`; macOS and ARM64 are untested.
 
-Matrix rows beyond Linux x64 need qualification CI (P-018, workstream R6), with a Windows x64 job and scheduled runs.
+Matrix rows beyond Linux x64 need qualification runs on that platform (P-018, workstream R6). CI has a Windows x64 build, weight-free test and clean-install job (`ai-dotnet (windows x64)`), but the scheduled qualification runs on Linux x64 only.
 
 ## Regression support
 
@@ -112,7 +112,7 @@ Commitments:
 | Second release owner | **open** | M7. Plan 16 requires a second trusted human release owner before broad support is promised. Protected branches and the `release` environment must not let an implementation agent approve its own change. |
 | First named consumer | **open** | M7, P-028. Needed for G7 (representative downstream use). |
 
-The single-owner gap is a Stable blocker in `docs/plan/production-readiness.md` (M7). Until a second release owner is named, any Stable promotion carries a bus factor of one. The maintainer decides whether that blocks the first Stable label (see open questions).
+The single-owner gap is a Stable blocker in `docs/plan/production-readiness.md` (M7). Until a second release owner is named, any Stable promotion carries a bus factor of one. The maintainer chose not to block the Stable labels on it: every promotion records a single-owner exception (`docs/kickoff.md`).
 
 ## Open questions
 
@@ -121,6 +121,6 @@ These are for the maintainer. None is settled by this document.
 1. **M8, tokenizer bumps:** option A, B or the middle path (see [Tokenizer bumps](#tokenizer-bumps)).
 2. **Support windows:** confirm or change the proposed figures: 6 months for the previous Stable minor, at least 6 months for Maintenance and Deprecated, the 5-working-day regression triage target, and a weekly scheduled qualification.
 3. **Stable and 1.0:** settled 2026-10-15: a `0.x` package can carry a Stable profile; maturity is per profile and the next version is `0.2.0` (`docs/kickoff.md`).
-4. **Second release owner (M7):** the first Stable promotion (GLiNER2 `onnx-fp32-cpu`, 2026-10-15) ships with a recorded single-owner exception (`docs/kickoff.md`); M7 stays open.
+4. **Second release owner (M7):** the first Stable promotion (GLiNER2 `onnx-fp32-cpu`, 2026-10-15) ships with a recorded single-owner exception (`docs/kickoff.md`); every later promotion and the `0.2.0` release (`docs/releases/ai-0.2.0.md`) carry the same exception. M7 stays open.
 5. **Advisory records:** use GitHub advisories only, or also `docs/advisories/` records that the catalog links? Should the manifest schema gain a field for affected version ranges?
 6. **Old and new profile identities** after an upstream update: see `docs/plan/maintained-update-drill.md`, open questions.

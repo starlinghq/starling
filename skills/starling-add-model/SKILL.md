@@ -38,8 +38,8 @@ Download the model snapshot **at a pinned revision** outside the repository (or 
 
 ```sh
 curl -s https://huggingface.co/api/models/<org>/<model> | python3 -c "import json,sys; print(json.load(sys.stdin)['sha'])"  # current full SHA
-# Download only the files the route pins (the BERT set shown, same as candidates/minilm/profile.json);
-# a full repository can be five times larger.
+# Download only the files the route pins (the BERT set shown, same as candidates/minilm/profile.json;
+# pin the files your repository has: nomic-embed has no data_config.json). A full repository can be five times larger.
 uvx --from huggingface_hub hf download <org>/<model> \
   1_Pooling/config.json README.md config.json config_sentence_transformers.json data_config.json \
   model.safetensors modules.json onnx/model.onnx sentence_bert_config.json special_tokens_map.json \
@@ -52,8 +52,9 @@ uvx --from huggingface_hub hf download <org>/<model> \
 
 | Route (plugin) | Fits when the model is... | Code to extend |
 | --- | --- | --- |
-| `bert-onnx-cpu-v1` | A BERT encoder, uncased WordPiece (vocab 30,522), hidden size 384, right padding, whose Hub repo ships `onnx/model.onnx`; embeddings (mean or CLS pooling, L2-normalized) or a cross-encoder reranker | `model-pipeline/src/model_pipeline/onboarding_bert.py`, `ai-dotnet/src/Starlings.Models.Bert/` |
+| `bert-onnx-cpu-v1` | A BERT encoder, uncased WordPiece (vocab 30,522), right padding, ONNX Runtime 1.30.0 CPU fp32, whose Hub repo ships `onnx/model.onnx`; embeddings (mean or CLS pooling, L2 or no normalization) or a cross-encoder reranker. Hidden size, `max_tokens`, pooling and normalization are set per model (admitted so far: 384 or 768 wide, 256 to 8,192 tokens) | `model-pipeline/src/model_pipeline/onboarding_bert.py`, `ai-dotnet/src/Starlings.Models.Bert/` |
 | `qwen-genai-cpu-v1` | A Qwen-family decoder for ONNX Runtime GenAI 0.17.1, CPU fp32 | `model-pipeline/src/model_pipeline/onboarding_generation.py`, `ai-dotnet/src/Starlings.Models.QwenChat/` |
+| `kev-onnx-cpu-v1` | Exactly the pinned Kev-0.8B or Kev-4B decision checkpoint on its pinned Qwen3.5 base (run with `--base-snapshot`; see "Kev route" in `model-pipeline/ONBOARDING.md`) | `model-pipeline/src/model_pipeline/onboarding_kev.py`, `ai-dotnet/src/Starlings.Models.Kev/` |
 | `e5-onnx-cpu-v1` | Exactly the pinned multilingual-e5-small (the registry route) | none; it refuses other models by design |
 | none | Anything else: a different architecture, hidden size, tokenizer, runtime or precision | a new plugin (step 6) |
 
@@ -67,15 +68,15 @@ Use the existing MiniLM files as templates. To find every place they are registe
    - Set `id`, `origin.repo` and `origin.revision` (full SHA).
    - Set `origin.files`: path, size and SHA-256 for the same file set the template pins, taken from your pinned snapshot (`sha256sum`, `stat -c %s`). The `assets` stage verifies each one.
    - Set `task` and `behavior` (`max_tokens`, `pooling`, `prompts`, …). For `max_tokens`, use `max_seq_length` from `sentence_bert_config.json`. It is what the reference runner enforces, even when the model card says something else.
-   - Keep `evaluation.status: "proposed"` and the existing `evaluation.policy` bounds. Do not loosen them.
+   - Keep `evaluation.status: "proposed"` and start from the template's `evaluation.policy`. The token checks, `same_backend_max_abs`, `padded_batch_max_abs`, `non_finite` and `required_paths` are fixed; the route refuses any other value. Only the export-fidelity bounds `hidden_max_abs`, `embedding_max_abs` and `score_max_abs` may differ per model, and only up to 1e-3 (`FIDELITY_CAPS` in `onboarding_bert.py`; nomic-embed uses `hidden_max_abs` 1e-3 and `embedding_max_abs` 5e-5). Do not raise a bound to make a failing run pass.
 
    The candidate has no license fields. State the code license, weights license and tokenizer terms in the issue and in the PR description.
 2. **`model-pipeline/recipes/<name>-cpu.yaml`**: copy `recipes/minilm-cpu.yaml` and point `manifest` at your candidate. Reuse the shared corpus unless the task needs another one.
-3. **`model-pipeline/src/model_pipeline/onboarding_bert.py`**: add the repo to `CONTRACTS` as `(task, max_tokens, pooling)`. If it needs a prompt, extend the `prompts` rule.
-4. **`ai-dotnet/src/Starlings.Models.Bert/BertModelProfile.cs`**: add the same repo to the `repository switch`, with identical values. Python and C# must agree exactly.
+3. **`model-pipeline/src/model_pipeline/onboarding_bert.py`**: add the repo to `CONTRACTS` as `(task, max_tokens, pooling, hidden_size, normalize)`. If it needs a prompt, extend the `prompts` rule.
+4. **`ai-dotnet/src/Starlings.Models.Bert/BertModelProfile.cs`**: add the same repo to the `repository switch`, with the same five values. Python and C# must agree exactly.
 5. **Tests:**
    - `model-pipeline/tests/test_onboarding_bert.py`: accept the new contract and refuse a near-miss, for example a wrong pooling.
-   - `ai-dotnet/tests/Starlings.Models.Bert.Tests/ContractTests.cs`: add an `InlineData` row and a near-miss case. Also update the `ProfileData` helper, which builds each test profile's `max_tokens`, `pooling` and `prompts` per repository.
+   - `ai-dotnet/tests/Starlings.Models.Bert.Tests/ContractTests.cs`: add an `InlineData` row and a near-miss case. Also update the `ProfileData` helper, which builds each test profile's `max_tokens`, `hidden_size`, `pooling`, `normalize` and `prompts` per repository.
 6. **`tools/fetch-tokenizer-assets.sh`**: add `"<repo>|<sha>|tokenizer.json|<sha256>"`, so the pinned asset list stays complete, the same as the existing BERT entries.
 7. **`ai-dotnet/src/Starlings.Models.Bert/README.md`**: list the model, its status and anything it doesn't support.
 8. **Optionally, `model-pipeline/workflows/*.json`**: add the model to a workflow only if it belongs to that group.
@@ -84,7 +85,7 @@ For the Qwen route, the pattern is the same with `onboarding_generation.py` and 
 
 ## 4. Run the onboarding pipeline
 
-Create the reference environment (hash-locked; the encoder route shown; use `reference/generation/requirements.txt` with Python 3.12 for generation):
+Create the reference environment (hash-locked; the encoder route shown; use `reference/generation/requirements.txt` with Python 3.12 for generation, and `reference/kev/requirements.txt` with Python 3.12 plus a Kev checkout for Kev):
 
 ```sh
 uv venv --python 3.11 .models/venv-reference
@@ -123,7 +124,7 @@ When it passes, export it for review and summarize the comparison:
 .venv/bin/python skills/starling-add-model/summarize_report.py artifacts/onboarding/<name>
 ```
 
-The summary is a Markdown table with the largest difference against each bound, for every comparison: reference, Python ONNX, and .NET from token ids and from text. The full per-case evidence is in `stages/evaluate/<hash>/output/report.json`, and the review verdict is in `stages/review/<hash>/output/review.md`. A clean BERT run passes every check, with differences around 1e-7 against bounds of 1e-5.
+The summary is a Markdown table with the largest difference against each bound, for every comparison: reference, Python ONNX, and .NET from token ids and from text. The full per-case evidence is in `stages/evaluate/<hash>/output/report.json`, and the review verdict is in `stages/review/<hash>/output/review.md`. A clean BERT run passes every check, with differences far below the candidate's policy bounds (around 1e-7 against the template's 1e-5 for the small models).
 
 Package-only consumer evidence (`--distribution`, described in `model-pipeline/FIVE_MODELS.md`) is optional and needs everything committed first. Skip it in a first PR unless the maintainer asks for it.
 
@@ -142,7 +143,7 @@ cd model-pipeline
 cd ..
 ```
 
-Tests that need model weights are skipped when the weights are absent; that's expected. If you changed a package reference, run `dotnet restore` and commit the updated `packages.lock.json`. A model added to an existing route only reuses that route's code, so it needs no `THIRD-PARTY-NOTICES.md` entry. Ported or adapted source does need one.
+Tests that need model weights are skipped when the weights are absent; that's expected. If you changed a package reference, run `dotnet restore` and commit the updated `packages.lock.json`. `.github/CODEOWNERS` names `Directory.Packages.props`, `packages.lock.json`, `global.json` and `.github/` as release and CI authority, and `model-pipeline/protected/` and `tolerances.*` as protected evidence, all owned by the maintainer. A model added to an existing route only reuses that route's code, so it needs no `THIRD-PARTY-NOTICES.md` entry. Ported or adapted source does need one.
 
 The PR (template `.github/pull_request_template.md`) contains:
 - the candidate, the recipe, and the route code with its tests in Python and C#;
@@ -158,7 +159,7 @@ It must **not** contain weights, artifacts, protected files, tolerance changes, 
 Open a design proposal first. Then follow "Add another execution plugin" in `model-pipeline/ONBOARDING.md`. In short:
 - specify the upstream behavior contract and the exact source assets;
 - implement `describe_plan` and `build_stages` with `Stage(name, dependencies, inputs, parameters, execute)`;
-- register the plugin in recipe validation and CLI dispatch;
+- register the plugin in `PLUGINS` in `model-pipeline/src/model_pipeline/onboarding_plugins.py` (recipe validation and CLI dispatch read it);
 - declare every input that affects a stage's result;
 - emit evidence in the evaluator's format;
 - add cheap orchestration and failure tests, then qualify a real model.

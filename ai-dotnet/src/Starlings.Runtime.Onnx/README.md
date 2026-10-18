@@ -21,6 +21,27 @@ Maturity is per profile, generated from the registry manifests by `model-pipelin
 | `multilingual-e5-small/onnx-fp32-cuda` | stable | linux-x64 cuda: supported; windows-x64 cuda: untested |
 <!-- /catalog:maturity -->
 
+## API
+
+```csharp
+using Microsoft.ML.OnnxRuntime;
+using Starlings.Runtime.Onnx;
+
+using var session = OnnxModelSession.Create("model.onnx", new OnnxSessionOptions
+{
+    Provider = OnnxExecutionProvider.Cpu,          // or Cuda; no fallback either way
+    ExpectedModelSha256 = "<lowercase hex sha256>", // optional; mismatch throws OnnxModelIntegrityException
+});
+Console.WriteLine(session.Diagnostics.OrtVersion);
+using var outputs = session.Run(inputNames, inputValues, outputNames, cancellationToken);
+```
+
+- `OnnxModelSession.Create(modelPath | byte[] model, options)` loads once; `Run` is safe to call concurrently. One `Run` overload returns outputs the caller owns and disposes (before the session); the other writes into caller-allocated `OrtValue`s. Input values stay caller-owned. `Inputs`, `Outputs`, `Diagnostics`, `Placement` and `IsDisposed` describe the session. `Dispose` is idempotent; runs already executing complete first.
+- `OnnxSessionOptions` (immutable record): `Provider` (default `Cpu`), `CudaDeviceId` (default 0), `IntraOpNumThreads` and `InterOpNumThreads` (null: defaults, below), `ExpectedModelSha256`, `ComputeModelSha256` (default true), `CapturePlacement` (default false; when true, profiles the first run and publishes `Placement`, an `OnnxPlacementReport` of nodes per provider), and the memory settings under "Memory on Linux".
+- `OnnxSessionDiagnostics`: native and managed versions, available and session providers, provider options, thread counts, memory settings, graph optimization level, model source, size, SHA-256, metadata, and input and output signatures (`OnnxTensorInfo`).
+- `OnnxRuntimeInfo`: `NativeVersion`, `ManagedVersion`, `AvailableProviders`, `CpuProviderName`, `CudaProviderName`.
+- Exceptions: `OnnxRuntimeUnavailableException` (native library missing or of another version), `OnnxProviderUnavailableException` (the requested provider cannot be used; never followed by a fallback), `OnnxModelIntegrityException` (SHA-256 mismatch). A cancelled run throws `OperationCanceledException`; the session stays usable.
+
 ## Native runtime
 
 The package references only `Microsoft.ML.OnnxRuntime.Managed` (exactly 1.30.0). The application references exactly one native package of the same version:
@@ -28,7 +49,7 @@ The package references only `Microsoft.ML.OnnxRuntime.Managed` (exactly 1.30.0).
 | Deployment | Package |
 | --- | --- |
 | CPU | `Microsoft.ML.OnnxRuntime` 1.30.0 |
-| CUDA, Linux x64 | `Microsoft.ML.OnnxRuntime.Gpu.Linux` 1.30.0 (needs the CUDA 13 runtime on the loader path; not shipped) |
+| CUDA, Linux x64 | `Microsoft.ML.OnnxRuntime.Gpu.Linux` 1.30.0 (needs the CUDA 13 runtime, cuBLAS and cuDNN 9 on the loader path; not shipped) |
 
 Both ship `libonnxruntime` under the same file name. Without a native package, or with a different version, session creation fails with `OnnxRuntimeUnavailableException` naming the package to add.
 

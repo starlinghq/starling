@@ -38,7 +38,7 @@ var embeddings = await generator.GenerateAsync(["how much protein should a femal
 ```
 
 - Prefixes are explicit: `E5InputType.Query` or `Passage` per generator, or per request with `AdditionalProperties["e5_input_type"]`.
-- `GenerateAsync` runs synchronously on the calling thread and returns a completed task.
-- Unsupported options (`Dimensions` other than 384, another `ModelId`, unknown additional properties) fail with `NotSupportedException` instead of being ignored.
+- `GenerateAsync` runs synchronously on the calling thread and returns a completed task; failures and cancellation are reported through that task, never thrown synchronously.
+- Unsupported options (`Dimensions` other than 384, another `ModelId`, a `RawRepresentationFactory`, unknown additional properties) fail with `NotSupportedException` instead of being ignored.
 
-Status: supported on the Stable e5 `onnx-fp32-cpu` profile (Linux x64 CPU; G7 passed; the contract is in the `Starlings.Models.E5` README); supported over a CUDA session on the Stable `onnx-fp32-cuda` profile (Linux x64, RTX 3090; 46 protected texts within the CUDA profile's bound, rerun by the per-release GPU regression; the contract is the README's "Stable contract: CUDA"). See the [release notes](https://github.com/starlinghq/starling/blob/main/docs/releases/ai-0.1.0-preview.6.md).
+Status: supported on the Stable e5 `onnx-fp32-cpu` profile (Linux x64 CPU; G7 passed; the contract is in the `Starlings.Models.E5` README); supported over a CUDA session on the Stable `onnx-fp32-cuda` profile (Linux x64, RTX 3090; 46 protected texts within the CUDA profile's bound, rerun by the per-release GPU regression; the contract is the README's "Stable contract: CUDA"). See the [0.2.0 release notes](https://github.com/starlinghq/starling/blob/main/docs/releases/ai-0.2.0.md).
