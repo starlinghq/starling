@@ -14,7 +14,7 @@ from sentence_transformers import CrossEncoder, SentenceTransformer
 from tokenizers import Tokenizer
 
 from model_pipeline import fixtures
-from model_pipeline.onboarding_bert import validate_candidate_behavior
+from model_pipeline.onboarding_bert import CONTRACTS, validate_candidate_behavior
 
 
 def pooled(hidden: np.ndarray, mask: np.ndarray, mode: str, normalize: str) -> np.ndarray:
@@ -60,12 +60,10 @@ def load_cases(path: Path, candidate: dict, tokenizer: Tokenizer) -> list[dict]:
     return out
 
 
-def padded(rows: list[dict]) -> dict[str, np.ndarray]:
+def padded(rows: list[dict], token_type_ids: bool = True) -> dict[str, np.ndarray]:
     width = max(len(row["input_ids"]) for row in rows)
-    return {
-        key: np.array([row[key] + [0] * (width - len(row[key])) for row in rows], dtype=np.int64)
-        for key in ("input_ids", "attention_mask", "token_type_ids")
-    }
+    keys = ("input_ids", "attention_mask", "token_type_ids") if token_type_ids else ("input_ids", "attention_mask")
+    return {key: np.array([row[key] + [0] * (width - len(row[key])) for row in rows], dtype=np.int64) for key in keys}
 
 
 def main() -> int:
@@ -89,6 +87,7 @@ def main() -> int:
     args.out.mkdir(parents=True, exist_ok=True)
     profile_hash = fixtures.sha256_file(args.profile)
     behavior = candidate["behavior"]
+    uses_token_type_ids = CONTRACTS[candidate["origin"]["repo"]].get("token_type_ids", True)
     tokenizer = Tokenizer.from_file(str(args.snapshot / behavior["tokenizer_file"]))
     tokenizer.enable_truncation(behavior["max_tokens"], strategy="longest_first", direction="right")
     tokenizer.no_padding()
@@ -130,12 +129,16 @@ def main() -> int:
         session = ort.InferenceSession(
             str(args.snapshot / behavior["graph_file"]), options, providers=["CPUExecutionProvider"]
         )
-        expected_inputs = {"input_ids", "attention_mask", "token_type_ids"}
+        expected_inputs = (
+            {"input_ids", "attention_mask", "token_type_ids"}
+            if uses_token_type_ids
+            else {"input_ids", "attention_mask"}
+        )
         if {value.name for value in session.get_inputs()} != expected_inputs:
             raise ValueError("unsupported ONNX graph input signature")
 
     def run(rows: list[dict]) -> tuple[np.ndarray, np.ndarray | None]:
-        feeds = padded(rows)
+        feeds = padded(rows, uses_token_type_ids)
         if session is not None:
             raw = session.run([behavior["output_name"]], feeds)[0]
             output = (

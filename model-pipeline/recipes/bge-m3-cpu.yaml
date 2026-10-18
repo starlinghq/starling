@@ -1,0 +1,6 @@
+recipe_version: 1
+id: bge-m3-cpu
+plugin: bert-onnx-cpu-v1
+manifest: model-pipeline/candidates/bge-m3/profile.json
+reference_corpus: model-pipeline/corpora/five-models/embeddings.jsonl
+reference_environment: model-pipeline/reference/encoder/requirements.txt

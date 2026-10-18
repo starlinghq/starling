@@ -15,7 +15,8 @@ from model_pipeline.onboarding_runner import PipelineError, Stage
 
 
 def candidate(repo="sentence-transformers/all-MiniLM-L6-v2"):
-    task, length, pooling, hidden_size, normalize = bert.CONTRACTS[repo]
+    spec = bert.CONTRACTS[repo]
+    task = spec["task"]
     return {
         "format_version": 1,
         "id": "test-bert-cpu",
@@ -33,20 +34,17 @@ def candidate(repo="sentence-transformers/all-MiniLM-L6-v2"):
             "architecture": "bert",
             "graph_file": "onnx/model.onnx",
             "tokenizer_file": "tokenizer.json",
-            "max_tokens": length,
+            "max_tokens": spec["max_tokens"],
             "padding_side": "right",
-            "pad_token_id": 0,
-            "vocabulary_size": 30522,
-            "hidden_size": hidden_size,
+            "pad_token_id": spec["pad_token_id"],
+            "vocabulary_size": spec["vocabulary_size"],
+            "hidden_size": spec["hidden_size"],
             "truncation": "longest_first",
-            "tokenizer_profile": "bert-wordpiece-uncased",
-            "pooling": pooling,
-            "normalize": normalize,
-            "output_name": "last_hidden_state" if task == "embeddings" else "logits",
-            "prompts": {
-                "none": "",
-                **({"query": bert.QUERY} if repo in {"BAAI/bge-small-en-v1.5", "BAAI/bge-base-en-v1.5"} else {}),
-            },
+            "tokenizer_profile": spec["tokenizer_profile"],
+            "pooling": spec["pooling"],
+            "normalize": spec["normalize"],
+            "output_name": spec["output_name"],
+            "prompts": spec["prompts"],
             **({"score_activation": "identity"} if task == "reranking" else {}),
         },
         "evaluation": {"status": "proposed", "policy": copy.deepcopy(bert.POLICY)},
@@ -63,6 +61,8 @@ def evidence(tmp_path, repo="sentence-transformers/all-MiniLM-L6-v2"):
     write(profile, contract)
     embedding = contract["task"] == "embeddings"
     width = contract["behavior"]["hidden_size"]
+    cls_id = bert.CONTRACTS[repo]["cls_token_id"]
+    sep_id = bert.CONTRACTS[repo]["sep_token_id"]
     output = [1.0] + [0.0] * (width - 1) if embedding else [3.25]
     rows = [
         {
@@ -70,7 +70,7 @@ def evidence(tmp_path, repo="sentence-transformers/all-MiniLM-L6-v2"):
             "text": "",
             "pair": "" if not embedding else None,
             "prompt": "none",
-            "input_ids": [101, 102],
+            "input_ids": [cls_id, sep_id],
             "attention_mask": [1, 1],
             "token_type_ids": [0, 0],
             "output": output,
@@ -80,7 +80,7 @@ def evidence(tmp_path, repo="sentence-transformers/all-MiniLM-L6-v2"):
             "text": "hello",
             "pair": "world" if not embedding else None,
             "prompt": "none",
-            "input_ids": [101, 200, 102],
+            "input_ids": [cls_id, 200, sep_id],
             "attention_mask": [1, 1, 1],
             "token_type_ids": [0, 0, 0],
             "output": output,

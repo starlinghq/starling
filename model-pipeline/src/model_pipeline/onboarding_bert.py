@@ -34,12 +34,49 @@ POLICY = {
     "non_finite": "fail",
     "required_paths": ["reference", "python-onnx", "dotnet-ids", "dotnet-text"],
 }
+
+
+def _bert(task, max_tokens, pooling, hidden_size, normalize, **overrides):
+    """Common BERT/WordPiece geometry; pass overrides for other tokenizers or geometries."""
+    spec = {
+        "task": task,
+        "max_tokens": max_tokens,
+        "pooling": pooling,
+        "hidden_size": hidden_size,
+        "normalize": normalize,
+        "vocabulary_size": 30522,
+        "cls_token_id": 101,
+        "sep_token_id": 102,
+        "pad_token_id": 0,
+        "output_name": "last_hidden_state" if task == "embeddings" else "logits",
+        "tokenizer_profile": "bert-wordpiece-uncased",
+        "token_type_ids": True,
+        "prompts": {"none": ""},
+    }
+    spec.update(overrides)
+    return spec
+
+
 CONTRACTS = {
-    "sentence-transformers/all-MiniLM-L6-v2": ("embeddings", 256, "mean", 384, "l2"),
-    "BAAI/bge-small-en-v1.5": ("embeddings", 512, "cls", 384, "l2"),
-    "BAAI/bge-base-en-v1.5": ("embeddings", 512, "cls", 768, "l2"),
-    "cross-encoder/ms-marco-MiniLM-L6-v2": ("reranking", 512, "none", 384, "none"),
-    "nomic-ai/nomic-embed-text-v1.5": ("embeddings", 8192, "mean", 768, "none"),
+    "sentence-transformers/all-MiniLM-L6-v2": _bert("embeddings", 256, "mean", 384, "l2"),
+    "BAAI/bge-small-en-v1.5": _bert("embeddings", 512, "cls", 384, "l2", prompts={"none": "", "query": QUERY}),
+    "BAAI/bge-base-en-v1.5": _bert("embeddings", 512, "cls", 768, "l2", prompts={"none": "", "query": QUERY}),
+    "cross-encoder/ms-marco-MiniLM-L6-v2": _bert("reranking", 512, "none", 384, "none"),
+    "nomic-ai/nomic-embed-text-v1.5": _bert("embeddings", 8192, "mean", 768, "none"),
+    "BAAI/bge-m3": _bert(
+        "embeddings",
+        8192,
+        "cls",
+        1024,
+        "l2",
+        vocabulary_size=250002,
+        cls_token_id=0,
+        sep_token_id=2,
+        pad_token_id=1,
+        output_name="token_embeddings",
+        tokenizer_profile="xlmr-unigram",
+        token_type_ids=False,
+    ),
 }
 
 
@@ -77,25 +114,23 @@ def validate_candidate_behavior(candidate: dict) -> None:
     """Refuse schema-valid contracts that the fixed model implementation does not implement."""
     try:
         repo = candidate["origin"]["repo"]
-        task, length, pooling, hidden_size, normalize = CONTRACTS[repo]
+        spec = CONTRACTS[repo]
+        task, pooling, length = spec["task"], spec["pooling"], spec["max_tokens"]
         expected = {
             "architecture": "bert",
             "graph_file": "onnx/model.onnx",
             "tokenizer_file": "tokenizer.json",
-            "max_tokens": length,
+            "max_tokens": spec["max_tokens"],
             "padding_side": "right",
-            "pad_token_id": 0,
-            "vocabulary_size": 30522,
-            "hidden_size": hidden_size,
+            "pad_token_id": spec["pad_token_id"],
+            "vocabulary_size": spec["vocabulary_size"],
+            "hidden_size": spec["hidden_size"],
             "truncation": "longest_first",
-            "tokenizer_profile": "bert-wordpiece-uncased",
-            "pooling": pooling,
-            "normalize": normalize,
-            "output_name": "last_hidden_state" if task == "embeddings" else "logits",
-            "prompts": {
-                "none": "",
-                **({"query": QUERY} if repo in {"BAAI/bge-small-en-v1.5", "BAAI/bge-base-en-v1.5"} else {}),
-            },
+            "tokenizer_profile": spec["tokenizer_profile"],
+            "pooling": spec["pooling"],
+            "normalize": spec["normalize"],
+            "output_name": spec["output_name"],
+            "prompts": spec["prompts"],
         }
         if task == "reranking":
             expected["score_activation"] = "identity"
@@ -149,6 +184,9 @@ def _document(path: Path, candidate: dict, digest: str, stage: str) -> tuple[dic
             raise PipelineError(f"{stage}: missing required case rows")
         cases = {}
         dimension = candidate["behavior"]["hidden_size"] if candidate["task"] == "embeddings" else 1
+        vocab = candidate["behavior"]["vocabulary_size"]
+        cls_id = CONTRACTS[candidate["origin"]["repo"]]["cls_token_id"]
+        sep_id = CONTRACTS[candidate["origin"]["repo"]]["sep_token_id"]
         for row in records:
             identifier = row["id"]
             if not isinstance(identifier, str) or not identifier or identifier in cases:
@@ -169,11 +207,11 @@ def _document(path: Path, candidate: dict, digest: str, stage: str) -> tuple[dic
                 or not 2 <= len(ids) <= candidate["behavior"]["max_tokens"]
                 or len(mask) != len(ids)
                 or len(types) != len(ids)
-                or any(type(value) is not int or not 0 <= value < 30522 for value in ids)
+                or any(type(value) is not int or not 0 <= value < vocab for value in ids)
                 or any(type(value) is not int or value != 1 for value in mask)
                 or any(type(value) is not int or value not in (0, 1) for value in types)
-                or ids[0] != 101
-                or ids[-1] != 102
+                or ids[0] != cls_id
+                or ids[-1] != sep_id
             ):
                 raise PipelineError(f"{stage}/{identifier}: invalid unpadded token inputs")
             cases[identifier] = row

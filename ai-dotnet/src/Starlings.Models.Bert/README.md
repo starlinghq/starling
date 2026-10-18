@@ -4,11 +4,12 @@ Experimental. This package is not published to nuget.org: it is not part of the 
 (`docs/releases/ai-0.2.0.md`, "Not published"). Build it from this repository, for example with a
 `ProjectReference` to `ai-dotnet/src/Starlings.Models.Bert/Starlings.Models.Bert.csproj`. The API may still change.
 
-Experimental CPU fp32 implementations for five explicitly pinned candidate contracts:
+Experimental CPU fp32 implementations for six explicitly pinned candidate contracts:
 `sentence-transformers/all-MiniLM-L6-v2` (mean/L2, 256 tokens), `BAAI/bge-small-en-v1.5`
 (CLS/L2, 512 tokens), `BAAI/bge-base-en-v1.5` (CLS/L2, 512 tokens, 768-wide),
-`cross-encoder/ms-marco-MiniLM-L6-v2` (paired inputs, raw scalar logits, 512 tokens), and
-`nomic-ai/nomic-embed-text-v1.5` (mean pooling without normalization, 8192 tokens, 768-wide). Candidate parity is
+`BAAI/bge-m3` (CLS/L2, 8192 tokens, 1024-wide, XLM-R), `cross-encoder/ms-marco-MiniLM-L6-v2`
+(paired inputs, raw scalar logits, 512 tokens), and `nomic-ai/nomic-embed-text-v1.5`
+(mean, no L2, 8192 tokens, 768-wide). Candidate parity is
 development evidence; protected release qualification requires independent fixture adoption.
 
 Load a reviewed candidate profile with `BertModelProfile.Load`. `BertTextEmbedder.Create`
