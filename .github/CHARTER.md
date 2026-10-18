@@ -18,7 +18,18 @@ Out of scope until a separate use case, owner, and budget exist: general-purpose
 
 Status: proposal for the maintainer's review under [CONTRIBUTING.md](CONTRIBUTING.md#agent-contributions). Nothing here is adopted until the maintainer approves the pull request. Entries marked *for the maintainer* are deliberately blank.
 
-**Goal (build plan decision 18, set by the maintainer on 2026-10-17).** Roost is a full replacement for vLLM on NVIDIA GPUs: every serving capability in the parity matrix (plan section 13.1), at or above vLLM on a published scorecard (plan section 14.3), with fidelity evidence vLLM does not publish and a fault model vLLM does not have. Multi-LoRA and user control over the kernels that run a model are first-class goals. The plan is [`docs/plan/build-plan.md`](https://github.com/starlinghq/roost/blob/ff072f8d745abb58c226a43d99ae79334cd78cdb/docs/plan/build-plan.md) in `starlinghq/roost` at commit `ff072f8d745abb58c226a43d99ae79334cd78cdb`.
+**Goal (build plan decision 18, set by the maintainer on 2026-10-17, confirmed 2026-10-18).** Roost is a whole and complete replacement for vLLM, without compromises: every vLLM serving capability on NVIDIA GPUs in the parity matrix (plan section 13.1), at or above vLLM on a published scorecard (plan section 14.3), with fidelity evidence vLLM does not publish and a fault model vLLM does not have. Multi-LoRA and user control over the kernels that run a model are first-class goals. The plan is [`docs/plan/build-plan.md`](https://github.com/starlinghq/roost/blob/42b431385fbfb88920af3926c000f524a73436cf/docs/plan/build-plan.md) in `starlinghq/roost` at commit `42b431385fbfb88920af3926c000f524a73436cf` (roost PR #7).
+
+**Where Roost aims to be faster or better than vLLM.** These are targets, not claims: each is published only when the scorecard (plan section 14.3) measures it against a pinned vLLM release, and each speed target is dropped if it meets its kill criterion (plan section 14.2).
+
+- Low-batch decode latency, through persistent decode kernels specialised per profile.
+- Exact prefix caching and state forks for hybrid models such as the Qwen3.5 family.
+- Decision serving for Kev: one prefill per request, no decode.
+- MoE models on consumer cards, through dynamic CPU and GPU expert placement.
+- Precision chosen per layer from this repository's fidelity evidence.
+- Embedding and extraction models scheduled into gaps between decode steps on the same GPU.
+- Cold start with nothing compiled at start, and recovery from GPU worker faults that keeps in-flight requests.
+- Published fidelity evidence for every profile, and a batch-invariant mode on consumer GPUs.
 
 **In scope for Roost, and only in its repository:**
 
@@ -26,15 +37,11 @@ Status: proposal for the maintainer's review under [CONTRIBUTING.md](CONTRIBUTIN
 - Bespoke GPU kernels: CUDA C++ kernels written and maintained by Roost (fused and persistent kernels, collectives), alongside vendored upstream kernels pinned by full commit SHA. Built kernel binaries are release assets, never committed.
 - A server with OpenAI-compatible and related routes, and an in-process API for `Starlings.Generation`.
 
-**Excluded (build plan section 13.2):**
+**Scope (build plan section 13.2).** Nothing vLLM serves on NVIDIA GPUs is excluded.
 
-- Non-NVIDIA backends (ROCm, TPU, Gaudi, Neuron, XPU) and CPU serving.
-- Training and fine-tuning. In-place weight update for reinforcement-learning loops is in scope.
-- Audio input and output, until Starling admits an audio model.
-- Ray orchestration.
-- Python extension points of vLLM.
-- Loading formats Starling does not lock (for example GGUF).
-- AutoRound weight formats and 2-bit KV quantization, until a Starling profile needs them.
+- vLLM's Python plugin and custom-op APIs are covered by Roost model definitions and kernel libraries, and Ray by Roost's .NET launcher, because Roost has no Python at runtime.
+- Training and fine-tuning are not vLLM capabilities and are not part of the amendment. In-place weight update for reinforcement-learning loops is in scope.
+- Backends beyond NVIDIA (ROCm, TPU, Gaudi, Neuron, XPU, CPU serving) are open: build plan decision 29, for the maintainer.
 
 **Unchanged by the amendment.** Roost's model profiles pass the gates of this repository. It is proposed that their manifests, fixtures and tolerances live in this repository's registry and `protected/` directory under its protected-evidence workflow; that is plan decision 4, which is still open, and nothing here settles it. No Roost code lands in this repository. No throughput claim is published for a Roost profile before it passes the fidelity gates.
 

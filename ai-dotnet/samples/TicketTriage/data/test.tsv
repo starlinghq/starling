@@ -1,0 +1,51 @@
+Queue	Language	Text
+billing	en	I see the same payment of 29 euros taken from my card three times.
+billing	en	Please send me a corrected invoice with my company address.
+shipping	en	Where is my parcel? The tracking page has not changed since Tuesday.
+shipping	en	Can I upgrade my order to next-day delivery?
+technical	en	The device keeps restarting by itself every few minutes.
+technical	en	I get a blank white screen when I open the app on my tablet.
+account	en	I no longer receive the login code by email.
+account	en	How do I change the phone number linked to my account?
+returns	en	The kettle arrived broken and I want to send it back.
+returns	en	How long does it take to get my money back after a return?
+billing	de	Mir wurde das Abonnement diesen Monat doppelt abgebucht.
+billing	de	Auf meiner Rechnung steht ein falscher Betrag, bitte korrigieren Sie sie.
+shipping	de	Meine Bestellung 40917 ist nach zehn Tagen immer noch nicht angekommen.
+shipping	de	Das Paket wurde als zugestellt markiert, aber ich habe nichts erhalten.
+technical	de	Die App stürzt jedes Mal ab, wenn ich ein Foto hochlade.
+technical	de	Nach dem Update verbindet sich das Gerät nicht mehr mit dem WLAN.
+account	de	Ich habe mein Passwort vergessen und bekomme keine E-Mail zum Zurücksetzen.
+account	de	Bitte löschen Sie mein Konto und alle meine Daten.
+returns	de	Ich möchte die Schuhe zurückschicken, sie sind zu groß.
+returns	de	Der Staubsauger ist defekt, ich möchte mein Geld zurück.
+billing	es	Me han cobrado dos veces la suscripción este mes.
+billing	es	¿Por qué ha subido el precio de mi plan mensual?
+shipping	es	Mi pedido todavía no ha llegado y el número de seguimiento no funciona.
+shipping	es	¿Pueden cambiar la dirección de entrega de mi pedido?
+technical	es	La aplicación se cierra sola cuando abro la configuración.
+technical	es	La impresora dejó de funcionar después de instalar la nueva versión.
+account	es	Mi cuenta está bloqueada después de varios intentos de inicio de sesión.
+account	es	¿Cómo activo la verificación en dos pasos?
+returns	es	Quiero devolver la chaqueta porque la talla es pequeña.
+returns	es	Envié el producto de vuelta hace un mes y no me han reembolsado.
+billing	fr	On m'a facturé deux fois pour le même abonnement.
+billing	fr	Ma carte bancaire a expiré, comment mettre à jour mon moyen de paiement ?
+shipping	fr	Ma commande 66402 est bloquée en douane depuis une semaine.
+shipping	fr	Le livreur a laissé mon colis chez un voisin inconnu.
+technical	fr	L'écran tactile ne répond plus après la mise à jour.
+technical	fr	Le site affiche une erreur quand j'essaie de télécharger mon rapport.
+account	fr	Je n'arrive plus à me connecter à mon compte.
+account	fr	Comment changer l'adresse e-mail de mon profil ?
+returns	fr	Le mixeur reçu est cassé, je voudrais un remplacement.
+returns	fr	Comment obtenir une étiquette de retour pour ma commande ?
+billing	ja	今月のサブスクリプション料金が二重に請求されています。
+billing	ja	請求書の金額が間違っているので再発行してください。
+shipping	ja	注文した商品が二週間経ってもまだ届きません。
+shipping	ja	配送先の住所を変更したいです。
+technical	ja	アップデート後にアプリが起動しなくなりました。
+technical	ja	デバイスがWi-Fiに接続できません。
+account	ja	パスワードを忘れてしまい、ログインできません。
+account	ja	アカウントと個人データを削除してください。
+returns	ja	サイズが合わないので商品を返品したいです。
+returns	ja	届いた商品が壊れていたので返金してほしいです。

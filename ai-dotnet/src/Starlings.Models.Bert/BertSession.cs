@@ -31,7 +31,7 @@ internal sealed class BertSession : IDisposable
         });
         try
         {
-            ValidateSignature(Session.Inputs, Session.Outputs, profile.Task);
+            ValidateSignature(Session.Inputs, Session.Outputs, profile.Task, profile.HiddenSize);
         }
         catch
         {
@@ -72,8 +72,8 @@ internal sealed class BertSession : IDisposable
             for (int row = 0; row < count; row++)
             {
                 predictions[start + row] = Profile.Task == BertTask.Reranking ? [raw[row]]
-                    : Pool(raw.AsSpan(row * width * BertModelProfile.HiddenSize, width * BertModelProfile.HiddenSize),
-                        PadMask(chunk[row], width), Profile.Pooling);
+                    : Pool(raw.AsSpan(row * width * Profile.HiddenSize, width * Profile.HiddenSize),
+                        PadMask(chunk[row], width), Profile.Pooling, Profile.HiddenSize, Profile.Normalize);
             }
         }
 
@@ -107,9 +107,9 @@ internal sealed class BertSession : IDisposable
         using var idsValue = OrtValue.CreateTensorValueFromMemory(ids, shape);
         using var maskValue = OrtValue.CreateTensorValueFromMemory(mask, shape);
         using var typesValue = OrtValue.CreateTensorValueFromMemory(types, shape);
-        int length = Profile.Task == BertTask.Embeddings ? checked(cells * BertModelProfile.HiddenSize) : count;
+        int length = Profile.Task == BertTask.Embeddings ? checked(cells * Profile.HiddenSize) : count;
         var values = new float[length];
-        long[] outputShape = Profile.Task == BertTask.Embeddings ? [count, width, BertModelProfile.HiddenSize] : [count, 1];
+        long[] outputShape = Profile.Task == BertTask.Embeddings ? [count, width, Profile.HiddenSize] : [count, 1];
         using var output = OrtValue.CreateTensorValueFromMemory(values, outputShape);
         Session.Run(["input_ids", "attention_mask", "token_type_ids"], [idsValue, maskValue, typesValue],
             [Profile.Task == BertTask.Embeddings ? "last_hidden_state" : "logits"], [output], cancellationToken);
@@ -121,7 +121,7 @@ internal sealed class BertSession : IDisposable
         return values;
     }
 
-    internal static void ValidateSignature(IReadOnlyList<OnnxTensorInfo> inputs, IReadOnlyList<OnnxTensorInfo> outputs, BertTask task)
+    internal static void ValidateSignature(IReadOnlyList<OnnxTensorInfo> inputs, IReadOnlyList<OnnxTensorInfo> outputs, BertTask task, int hiddenSize)
     {
         string[] names = ["input_ids", "attention_mask", "token_type_ids"];
         if (inputs.Count != names.Length || inputs.Select(i => i.Name).Distinct(StringComparer.Ordinal).Count() != names.Length
@@ -134,7 +134,7 @@ internal sealed class BertSession : IDisposable
         string outputName = task == BertTask.Embeddings ? "last_hidden_state" : "logits";
         var output = outputs.SingleOrDefault(o => o.Name == outputName);
         int rank = task == BertTask.Embeddings ? 3 : 2;
-        int last = task == BertTask.Embeddings ? BertModelProfile.HiddenSize : 1;
+        int last = task == BertTask.Embeddings ? hiddenSize : 1;
         if (output is null || output.ElementType != "Float" || output.Dimensions.Count != rank || output.Dimensions[^1] != last)
         {
             throw new NotSupportedException($"BERT graph output {outputName} must be float rank {rank} with final dimension {last}.");
@@ -171,9 +171,8 @@ internal sealed class BertSession : IDisposable
         }
     }
 
-    internal static float[] Pool(ReadOnlySpan<float> hidden, ReadOnlySpan<long> mask, string pooling)
+    internal static float[] Pool(ReadOnlySpan<float> hidden, ReadOnlySpan<long> mask, string pooling, int width, string normalize)
     {
-        const int width = BertModelProfile.HiddenSize;
         if (hidden.Length != mask.Length * width || mask.IsEmpty || pooling is not ("mean" or "cls"))
         {
             throw new ArgumentException("Invalid BERT pooling shape or mode.", nameof(hidden));
@@ -216,17 +215,31 @@ internal sealed class BertSession : IDisposable
             }
         }
 
-        double norm = 0;
-        for (int d = 0; d < width; d++)
+        var result = new float[width];
+        if (normalize == "l2")
         {
-            norm += values[d] * values[d];
+            double norm = 0;
+            for (int d = 0; d < width; d++)
+            {
+                norm += values[d] * values[d];
+            }
+
+            norm = Math.Max(Math.Sqrt(norm), 1e-12);
+            for (int d = 0; d < width; d++)
+            {
+                result[d] = (float)(values[d] / norm);
+            }
+        }
+        else
+        {
+            for (int d = 0; d < width; d++)
+            {
+                result[d] = (float)values[d];
+            }
         }
 
-        norm = Math.Max(Math.Sqrt(norm), 1e-12);
-        var result = new float[width];
         for (int d = 0; d < width; d++)
         {
-            result[d] = (float)(values[d] / norm);
             if (!float.IsFinite(result[d]))
             {
                 throw new InvalidDataException("Pooling returned a non-finite value.");
