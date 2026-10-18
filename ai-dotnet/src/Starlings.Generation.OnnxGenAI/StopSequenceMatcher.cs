@@ -5,22 +5,43 @@ namespace Starlings.Generation.OnnxGenAI;
 /// <summary>
 /// Finds stop sequences in streamed text (ordinal comparison). Text that could still become the start of a stop
 /// sequence is held back until it either completes a match or cannot, so no streamed piece ever contains part of a
-/// stop sequence. Not thread-safe; one instance per request.
+/// stop sequence. This is the matcher <see cref="TextGenerator"/> applies to
+/// <see cref="GenerationOptions.StopSequences"/>: push each detokenized piece (for example from
+/// <see cref="IncrementalDetokenizer"/>), emit what it returns, end the request when it reports a match, and emit
+/// <see cref="Flush"/> when generation ends without one.
 /// </summary>
-internal sealed class StopSequenceMatcher
+/// <remarks>
+/// A match is reported as soon as any stop sequence is complete in the text pushed so far; among the matches in that
+/// text the earliest wins, and at the same start the longest. Not thread-safe; one instance per request.
+/// </remarks>
+public sealed class StopSequenceMatcher
 {
-    private readonly IReadOnlyList<string> _stops;
+    private readonly string[] _stops;
     private readonly StringBuilder _pending = new();
 
+    /// <summary>Creates a matcher for the stop sequences (copied; an empty list passes all text through).</summary>
+    /// <param name="stops">Non-empty stop strings.</param>
+    /// <exception cref="ArgumentNullException"><paramref name="stops"/> is null.</exception>
+    /// <exception cref="ArgumentException">A stop sequence is null or empty.</exception>
     public StopSequenceMatcher(IReadOnlyList<string> stops)
     {
-        _stops = stops;
+        ArgumentNullException.ThrowIfNull(stops);
+        _stops = [.. stops];
+        foreach (string? stop in _stops)
+        {
+            if (string.IsNullOrEmpty(stop))
+            {
+                throw new ArgumentException("Stop sequences must be non-empty strings.", nameof(stops));
+            }
+        }
     }
 
     /// <summary>Adds text; returns the text safe to emit and the stop sequence matched, if any (text after it is dropped).</summary>
+    /// <exception cref="ArgumentNullException"><paramref name="text"/> is null.</exception>
     public (string Emit, string? Matched) Push(string text)
     {
-        if (_stops.Count == 0)
+        ArgumentNullException.ThrowIfNull(text);
+        if (_stops.Length == 0)
         {
             return (text, null);
         }

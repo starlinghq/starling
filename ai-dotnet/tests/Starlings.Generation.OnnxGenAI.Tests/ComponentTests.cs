@@ -48,6 +48,28 @@ public sealed class StopSequenceMatcherTests
         var m = new StopSequenceMatcher(["ab", "abc"]);
         Assert.Equal(("x", "abc"), m.Push("xabc"));
     }
+
+    [Fact]
+    public void RejectsNullAndEmptyStops()
+    {
+        Assert.Throws<ArgumentNullException>(() => new StopSequenceMatcher(null!));
+        Assert.Throws<ArgumentException>(() => new StopSequenceMatcher(["ok", string.Empty]));
+        Assert.Throws<ArgumentException>(() => new StopSequenceMatcher(["ok", null!]));
+        Assert.Throws<ArgumentNullException>(() => new StopSequenceMatcher(["ok"]).Push(null!));
+    }
+
+    [Fact]
+    public void CopiesTheStops()
+    {
+        var stops = new List<string> { "STOP" };
+        var m = new StopSequenceMatcher(stops);
+        stops[0] = "x";
+        Assert.Equal(("ax", (string?)null), m.Push("ax"));
+        Assert.Equal(("a", (string?)"STOP"), m.Push("aSTOP"));
+    }
+
+    [Fact]
+    public void IsPublic() => Assert.True(typeof(StopSequenceMatcher).IsPublic);
 }
 
 public sealed class OptionsAndLoadTests
