@@ -57,7 +57,7 @@ dotnet run
 0.688  passage: 富士山は日本一高い山です。
 ```
 
-The first run downloads the model (about 470 MB) into your user cache; later runs work offline. The application chooses the ONNX Runtime native package: `Microsoft.ML.OnnxRuntime` for CPU, or `Microsoft.ML.OnnxRuntime.Gpu.Linux` for CUDA on Linux x64.
+The first run downloads the model (about 487 MB) into your user cache; later runs work offline. The application chooses the ONNX Runtime native package: `Microsoft.ML.OnnxRuntime` for CPU, or `Microsoft.ML.OnnxRuntime.Gpu.Linux` for CUDA on Linux x64.
 
 ### Local chat through `IChatClient`
 
@@ -101,7 +101,7 @@ Choosing a text embedder? See [choosing an embedding model](docs/guides/choosing
 
 Their candidate contracts are in [`model-pipeline/candidates/`](model-pipeline/candidates) and the BERT and Qwen chat onboarding workflow is in [`model-pipeline/FIVE_MODELS.md`](model-pipeline/FIVE_MODELS.md). The `QwenChat` sample uses the published Qwen3.5 packages, not `Starlings.Models.QwenChat`.
 
-**Stable** means every release gate passed: provenance, numerical parity and task quality against the Python reference, a one-hour leak soak, benchmarks, a clean install from the packages, and integration. It also means regression runs continue: weekly on CPU, and on a GPU before every release for CUDA. Stable on CUDA means Linux x64 with an NVIDIA GeForce RTX 3090, where every CUDA gate and the per-release GPU run take place; other GPUs are untested. EmbeddingGemma 2 video on CUDA also needs `MALLOC_MMAP_THRESHOLD_=65536` in the process environment on Linux. The [model catalog](docs/catalog/README.md) links each gate to its evidence, and the [compatibility matrix](docs/catalog/compatibility-matrix.md) lists each platform and provider.
+**Stable** means every release gate passed: provenance, numerical parity and task quality against the Python reference, a one-hour leak soak, benchmarks, a clean install from the packages, and integration. It also means regression runs continue: weekly on CPU, and on a GPU before every release for CUDA. Stable on CUDA means Linux x64 with an NVIDIA GeForce RTX 3090, where every CUDA gate and the per-release GPU run take place; other GPUs are untested. On Linux, GLiNER2 (CPU and CUDA) and EmbeddingGemma 2 video on CUDA also need `MALLOC_MMAP_THRESHOLD_=65536` in the process environment; see each package README. The [model catalog](docs/catalog/README.md) links each gate to its evidence, and the [compatibility matrix](docs/catalog/compatibility-matrix.md) lists each platform and provider.
 
 **Release status:** `0.2.0`, published on [nuget.org](https://www.nuget.org/packages?q=Starlings.Models) on 2026-10-17 ([GitHub release](https://github.com/starlinghq/starling/releases/tag/ai-v0.2.0)), is the first release with Stable profiles: the Stable profiles above, Qwen tool calling and the FFmpeg video adapters ([release record](docs/releases/ai-0.2.0.md)). It depends on `Starlings.Tokenizers` `0.3.0`.
 

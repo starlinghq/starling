@@ -9,7 +9,7 @@ Include the affected package and version, the model bundle identity if relevant,
 | Version | Security fixes |
 | --- | --- |
 | `0.2.0` (ai-dotnet `Starlings.*`, current release, 2026-10-17) | Yes |
-| Earlier versions (`0.1.0-preview.*`) | No; upgrade to `0.2.0` (preview versions get no fixes, [support policy](../docs/support-policy.md#maturity-levels-in-practice)) |
+| Earlier versions (`0.1.0-preview.*`) | No patches: a preview's fixes ship in the next version, not in the preview itself ([support policy](../docs/support-policy.md#maturity-levels-in-practice), Preview row). Upgrade to `0.2.0`. |
 
 A fix ships as a new package version; published versions are never replaced, and affected versions are deprecated on nuget.org, not deleted ([support policy](../docs/support-policy.md#security-and-correctness-issues)). `Starlings.Tokenizers` (`0.3.0` with 0.2.0) is released from [starlinghq/tokenizers](https://github.com/starlinghq/tokenizers).
 
