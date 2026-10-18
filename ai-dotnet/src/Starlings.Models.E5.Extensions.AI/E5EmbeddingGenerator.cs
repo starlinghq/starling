@@ -198,7 +198,10 @@ public sealed class E5EmbeddingGenerator : IEmbeddingGenerator<string, Embedding
         }
     }
 
-    /// <summary>Statistics of the micro-batcher (batches, items, padding, queue and run time), or null when micro-batching is off.</summary>
+    /// <summary>
+    /// Statistics of the micro-batcher (batches, items, padding, queue and run time), or null when micro-batching is off.
+    /// Experimental.
+    /// </summary>
     public MicroBatcherStatistics? MicroBatchingStatistics => _batcher?.GetStatistics();
 
     private List<string> Prepare(IEnumerable<string> values, EmbeddingGenerationOptions? options, CancellationToken cancellationToken)

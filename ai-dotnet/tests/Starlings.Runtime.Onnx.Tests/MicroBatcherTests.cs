@@ -202,6 +202,30 @@ public class MicroBatcherTests
     }
 
     [Fact]
+    public async Task AGroupKeyWhoseEqualsThrowsRunsAloneAndTheDispatcherSurvives()
+    {
+        var recorder = new Recorder("hold");
+        using var batcher = Create(recorder, key: x => x.StartsWith('t') ? new ThrowingKey() : x[0]);
+        var hold = batcher.EnqueueAsync("hold", Ct);
+        await Within(recorder.Entered);
+        string[] items = ["a1", "t1", "a2", "t2"];
+        var tasks = items.Select(x => batcher.EnqueueAsync(x, Ct)).ToArray();
+        recorder.Release();
+
+        Assert.Equal(items.Select(x => "r:" + x), await Within(Task.WhenAll(tasks)));
+        await Within(hold);
+        Assert.Equal([["hold"], ["a1", "a2"], ["t1"], ["t2"]], recorder.Batches);
+        Assert.Equal("r:a3", await Within(batcher.EnqueueAsync("a3", Ct)));
+    }
+
+    private sealed class ThrowingKey
+    {
+        public override bool Equals(object? obj) => throw new InvalidOperationException("Equals failed");
+
+        public override int GetHashCode() => 0;
+    }
+
+    [Fact]
     public async Task CancellingAQueuedItemRemovesItAndLeavesTheOthers()
     {
         var recorder = new Recorder("hold");

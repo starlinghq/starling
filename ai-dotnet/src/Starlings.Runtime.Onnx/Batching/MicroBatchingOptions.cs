@@ -5,9 +5,10 @@ namespace Starlings.Runtime.Onnx.Batching;
 /// many rows and padded tokens one dispatched batch may hold, and how many items may wait in the queue.
 /// </summary>
 /// <remarks>
-/// Experimental (capability <c>micro_batching</c> of each model package). With micro-batching, one caller's request
-/// runs in a padded batch with other callers' requests, so its output depends on the concurrent traffic: equal to a
-/// single call within the profile's padded-batch tolerance, not bit for bit reproducible.
+/// Experimental (capability <c>extensions_ai.micro_batching</c> of the e5 and EmbeddingGemma 2 packages,
+/// <c>micro_batching</c> of GLiNER2). With micro-batching, one caller's request runs in a padded batch with other
+/// callers' requests, so its output depends on the concurrent traffic: equal to a single call within the profile's
+/// padded-batch tolerance, not bit for bit reproducible.
 /// </remarks>
 public sealed record MicroBatchingOptions
 {

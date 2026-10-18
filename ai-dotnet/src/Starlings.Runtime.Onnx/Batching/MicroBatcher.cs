@@ -346,7 +346,9 @@ public sealed class MicroBatcher<TItem, TResult> : IDisposable, IAsyncDisposable
                         }
 
                         batch.Clear();
-                        Monitor.Wait(_gate, Stopwatch.GetElapsedTime(0, wait));
+                        // Monitor.Wait truncates to whole milliseconds; round up so a sub-millisecond remainder sleeps
+                        // instead of spinning on the lock.
+                        Monitor.Wait(_gate, (int)Math.Max(1, Math.Ceiling(Stopwatch.GetElapsedTime(0, wait).TotalMilliseconds)));
                     }
 
                     long now = Stopwatch.GetTimestamp();
@@ -377,6 +379,22 @@ public sealed class MicroBatcher<TItem, TResult> : IDisposable, IAsyncDisposable
     }
 
     /// <summary>
+    /// Group-key equality that never throws on the dispatcher thread: a key whose <see cref="object.Equals(object)"/>
+    /// throws is treated as unequal, so its item runs in a batch it leads (alone).
+    /// </summary>
+    private static bool SameKey(object? a, object? b)
+    {
+        try
+        {
+            return Equals(a, b);
+        }
+        catch (Exception)
+        {
+            return false;
+        }
+    }
+
+    /// <summary>
     /// Fills <paramref name="batch"/> from the queue (under the lock) and returns 0 when it should be dispatched now, or
     /// the Stopwatch ticks until the oldest item's wait expires.
     /// </summary>
@@ -391,7 +409,7 @@ public sealed class MicroBatcher<TItem, TResult> : IDisposable, IAsyncDisposable
         for (var node = _queue.First; node is not null; node = node.Next)
         {
             var entry = node.Value;
-            if (batch.Count > 0 && !Equals(entry.Key, key))
+            if (batch.Count > 0 && !SameKey(entry.Key, key))
             {
                 continue;
             }
