@@ -110,8 +110,8 @@ Each workstream PR updates this document's tables when it lands. The catalog (R3
 ### Status 2026-10-18 (0.2.0 published)
 
 - **Released:** ai-dotnet `0.2.0`, published to nuget.org on 2026-10-17 from tag `ai-v0.2.0` through the `release` workflow (NuGet trusted publishing; record: `docs/releases/ai-0.2.0.md`). It is the first release with Stable profiles: 15 packages at `0.2.0`, including both FFmpeg video adapters (nothing held), on `Starlings.Tokenizers` `0.3.0`.
-- **Every registry profile is Stable (13):** see the 2026-10-15 to 2026-10-17 entries below and `docs/catalog/README.md`. Stable on CUDA means Linux x64 with an RTX 3090; other GPUs are untested.
-- **Not published (source only):** `Starlings.Models.Kev` (Kev-0.8B and Kev-4B, Experimental, merged in #91, no registry profile on `main`), `Starlings.Models.Bert` (nomic-embed-text-v1.5 admitted to the BERT route in #120) and `Starlings.Models.QwenChat`.
+- **13 Stable registry profiles:** every profile except Kev's; see the 2026-10-15 to 2026-10-17 entries below and `docs/catalog/README.md`. Stable on CUDA means Linux x64 with an RTX 3090; other GPUs are untested. The four Kev profiles (`kev-0.8b`, `kev-4b`: `onnx-fp32-cpu`, `onnx-fp32-cuda`; #116) are Experimental, with every gate `not-run`.
+- **Not published (source only):** `Starlings.Models.Kev` (Kev-0.8B and Kev-4B, Experimental, merged in #91; CUDA profiles, registry manifests, public bundle hosting and the release drill's pack list in #116, so it ships with the next release), `Starlings.Models.Bert` (nomic-embed-text-v1.5 admitted to the BERT route in #120, bge-base-en-v1.5 in #121) and `Starlings.Models.QwenChat`.
 - **Still open:** M7 (a second release owner); Stable promotions carry the single-owner exception.
 
 ### Status 2026-10-17 (video promotion)

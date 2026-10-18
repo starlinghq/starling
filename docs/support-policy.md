@@ -88,9 +88,9 @@ Commitments:
 
    **CUDA profiles** (e5, GLiNER2, EmbeddingGemma 2 text, image and video, Qwen3.5 fp32x and fp16x) get the same detection from the workflow's `cuda (runpod)` job. **GPU regression runs for every release** (a push of an `ai-v*` release tag) **and on demand** (manual dispatch), not weekly; never on pull requests or in forks. It creates one on-demand RunPod GPU pod (an RTX 3090 only, secure cloud EU-CZ-1; the CUDA contracts cover the RTX 3090, so the job fails rather than run on another GPU) with the network volume that holds the .NET SDK, uv, the pinned CUDA 13 and cuDNN 9 wheels and the verified models. The pod checks out the exact commit and runs `tools/ci/runpod-cuda-pod.sh`:
 
-   - the four CUDA test projects (`ai-dotnet/tests/*.Cuda`);
-   - G1, G2 and G3 of every CUDA profile on its accepted release sets, with bounds and budgets only from `protected/`, the commands of `docs/evidence/release-set-gates-2026-10-14/`, and TF32 off;
-   - a short soak smoke test per CUDA profile (10 minutes by default), under the profile's contract environment: `LD_LIBRARY_PATH` from the pinned nvidia wheels, and `MALLOC_MMAP_THRESHOLD_=65536` where the profile states it as a Linux deployment requirement (GLiNER2, EmbeddingGemma 2 video).
+   - the CUDA test projects of e5, GLiNER2, EmbeddingGemma 2 and Qwen3.5 (`ai-dotnet/tests/Starlings.Models.*.Tests.Cuda`; the pod does not run Kev's);
+   - G1, G2 and G3 of every Stable CUDA profile on its accepted release sets, with bounds and budgets only from `protected/`, the commands of `docs/evidence/release-set-gates-2026-10-14/`, and TF32 off;
+   - a short soak smoke test per Stable CUDA profile (10 minutes by default), under the profile's contract environment: `LD_LIBRARY_PATH` from the pinned nvidia wheels, and `MALLOC_MMAP_THRESHOLD_=65536` where the profile states it as a Linux deployment requirement (GLiNER2, EmbeddingGemma 2 video).
 
    The results are uploaded as the artifact `qualification-cuda`. Each run logs the pod id, GPU and cost, and it ends by terminating the pod and confirming through the RunPod API that no `starling-q-ci-*` pod remains. A run refuses to start below a $5 account balance; a typical run costs about $1 to $2.
 

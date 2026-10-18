@@ -1,6 +1,6 @@
 # Candidate contracts
 
-Each subdirectory holds one `profile.json`: a proposed contract for a model that is onboarded through a recipe ([`../recipes/README.md`](../recipes/README.md)) but has no registry manifest. A candidate pins the exact source files, the runtime, the behavior the route implements and the development comparison policy. It is not a support claim and grants no gate or maturity. Registry profiles are under [`../registry/`](../registry/README.md).
+Each subdirectory holds one `profile.json`: a proposed contract for a model that is onboarded through a recipe ([`../recipes/README.md`](../recipes/README.md)). Only the Kev candidates also have registry manifests (`../registry/kev-0.8b/`, `../registry/kev-4b/`, Experimental); the others have none. A candidate pins the exact source files, the runtime, the behavior the route implements and the development comparison policy. It is not a support claim and grants no gate or maturity. Registry profiles are under [`../registry/`](../registry/README.md).
 
 Format: [`../schemas/onboarding-candidate.schema.json`](../schemas/onboarding-candidate.schema.json).
 
@@ -22,6 +22,7 @@ The schema is only the first check. Each plugin compares the whole contract fiel
 | --- | --- | --- | --- | --- |
 | `minilm/` | `all-minilm-l6-v2/onnx-fp32-cpu` | `sentence-transformers/all-MiniLM-L6-v2` (`1110a243`) | embeddings: 384 dimensions, mean pooling, L2, 256 tokens | `bert-onnx-cpu-v1` |
 | `bge-small/` | `bge-small-en-v1.5/onnx-fp32-cpu` | `BAAI/bge-small-en-v1.5` (`5c38ec7c`) | embeddings: 384 dimensions, CLS pooling, L2, 512 tokens, `query` prompt | `bert-onnx-cpu-v1` |
+| `bge-base/` | `bge-base-en-v1.5/onnx-fp32-cpu` | `BAAI/bge-base-en-v1.5` (`a5beb1e3`) | embeddings: 768 dimensions, CLS pooling, L2, 512 tokens, `query` prompt | `bert-onnx-cpu-v1` |
 | `ms-marco/` | `ms-marco-minilm-l6-v2/onnx-fp32-cpu` | `cross-encoder/ms-marco-MiniLM-L6-v2` (`233902d2`) | reranking: raw scalar logits, 512 tokens | `bert-onnx-cpu-v1` |
 | `nomic-embed/` | `nomic-embed-text-v1.5/onnx-fp32-cpu` | `nomic-ai/nomic-embed-text-v1.5` (`e9b67630`) | embeddings: 768 dimensions, mean pooling, no normalization, 8,192 tokens | `bert-onnx-cpu-v1` |
 | `qwen3/` | `qwen3-0.6b/ortgenai-fp32-cpu` | `Qwen/Qwen3-0.6B` (`c1899de2`) | generation: greedy text chat, thinking disabled | `qwen-genai-cpu-v1` |

@@ -112,7 +112,7 @@ The `kev-onnx-cpu-v1` plugin (`src/model_pipeline/onboarding_kev.py`) runs `reci
 - `--distribution` is refused: this plugin implements no distribution stage.
 - The workflow command takes no base snapshot, so Kev runs only through `run`.
 
-References and fixtures stay proposals. Kev has no registry manifest on main.
+References and fixtures stay proposals. The Kev registry manifests (`registry/kev-0.8b/`, `registry/kev-4b/`, CPU and CUDA) are Experimental with every gate `not-run`; this route's reports do not change them.
 
 ## Add another execution plugin
 

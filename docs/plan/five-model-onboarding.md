@@ -1,6 +1,6 @@
 # Five-model onboarding workflow
 
-Status (2026-10-18): the five profiles are on `main`, Experimental and source only (not published to nuget.org; `docs/releases/ai-0.2.0.md`, "Not published"). The three BERT profiles are in `Starlings.Models.Bert` (with recipes `minilm-cpu`, `bge-small-cpu` and `ms-marco-cpu` under `model-pipeline/recipes/`); #120 later parameterized the BERT route and admitted a sixth candidate, `nomic-ai/nomic-embed-text-v1.5` (`nomic-embed-cpu`). The two Qwen profiles are in `Starlings.Models.QwenChat` (`qwen3-cpu`, `qwen25-cpu`). None has a registry profile.
+Status (2026-10-18): the five profiles are on `main`, Experimental and source only (not published to nuget.org; `docs/releases/ai-0.2.0.md`, "Not published"). The three BERT profiles are in `Starlings.Models.Bert` (with recipes `minilm-cpu`, `bge-small-cpu` and `ms-marco-cpu` under `model-pipeline/recipes/`); #120 later parameterized the BERT route and admitted a sixth candidate, `nomic-ai/nomic-embed-text-v1.5` (`nomic-embed-cpu`), and #121 a seventh, `BAAI/bge-base-en-v1.5` (`bge-base-cpu`). The two Qwen profiles are in `Starlings.Models.QwenChat` (`qwen3-cpu`, `qwen25-cpu`). None has a registry profile.
 
 ## Objective and selection
 

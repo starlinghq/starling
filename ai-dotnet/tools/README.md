@@ -92,10 +92,10 @@ The .NET stage of the `qwen-genai-cpu-v1` onboarding route (`model-pipeline/src/
 ## Starlings.Kev.Fidelity.Tool
 
 ```sh
-Starlings.Kev.Fidelity.Tool --profile <candidate.json> --snapshot <bundle dir> --reference <reference.json> --out <dir> [--threads 2]
+Starlings.Kev.Fidelity.Tool --profile <candidate.json> --snapshot <bundle dir> --reference <reference.json> --out <dir> [--threads 2] [--device cpu|cuda[:N]]
 ```
 
-The .NET stage of the `kev-onnx-cpu-v1` onboarding route (`model-pipeline/src/model_pipeline/onboarding_kev.py`). It reads the reference stage's `reference.json`, runs every case through `Starlings.Models.Kev` from the reference ids (cached and uncached) and from the record text, and writes `dotnet.json` for the decision evaluator (`model_pipeline/evaluate_decision.py`). Exit 2 on a usage error. See [Kev decision models](../README.md#kev-decision-models).
+The .NET stage of the `kev-onnx-cpu-v1` onboarding route (`model-pipeline/src/model_pipeline/onboarding_kev.py`). It reads the reference stage's `reference.json`, runs every case through `Starlings.Models.Kev` from the reference ids (cached and uncached) and from the record text, and writes `dotnet.json` for the decision evaluator (`model_pipeline/evaluate_decision.py`). `--device cuda[:N]` runs the same bundle as the `onnx-fp32-cuda` profile (`use_tf32=0`) and needs the `-p:UseCuda=true` build, which swaps in `Microsoft.ML.OnnxRuntime.Gpu.Linux` with its own lock file (`packages.cuda.lock.json`). Exit 2 on a usage error. See [Kev decision models](../README.md#kev-decision-models).
 
 ## Starlings.Soak.Tool
 

@@ -20,6 +20,7 @@ Paths are repository-relative. Absolute paths, backslashes, `.` or `..` segments
 | `multilingual-e5-small-cpu.yaml` | `e5-onnx-cpu-v1` | `registry/multilingual-e5-small/onnx-fp32-cpu/manifest.yaml` | `reference/corpus/tokenizer-corpus-v1.jsonl` | `reference/encoder/requirements.txt` |
 | `minilm-cpu.yaml` | `bert-onnx-cpu-v1` | `candidates/minilm/profile.json` | `corpora/five-models/embeddings.jsonl` | `reference/encoder/requirements.txt` |
 | `bge-small-cpu.yaml` | `bert-onnx-cpu-v1` | `candidates/bge-small/profile.json` | `corpora/five-models/bge.jsonl` | `reference/encoder/requirements.txt` |
+| `bge-base-cpu.yaml` | `bert-onnx-cpu-v1` | `candidates/bge-base/profile.json` | `corpora/five-models/embeddings.jsonl` | `reference/encoder/requirements.txt` |
 | `ms-marco-cpu.yaml` | `bert-onnx-cpu-v1` | `candidates/ms-marco/profile.json` | `corpora/five-models/reranking.jsonl` | `reference/encoder/requirements.txt` |
 | `nomic-embed-cpu.yaml` | `bert-onnx-cpu-v1` | `candidates/nomic-embed/profile.json` | `corpora/five-models/embeddings.jsonl` | `reference/encoder/requirements.txt` |
 | `qwen3-cpu.yaml` | `qwen-genai-cpu-v1` | `candidates/qwen3/profile.json` | `corpora/five-models/chat.jsonl` | `reference/generation/requirements.txt` |
@@ -29,7 +30,7 @@ Paths are repository-relative. Absolute paths, backslashes, `.` or `..` segments
 
 Contract, corpus and environment paths in the table are relative to `model-pipeline/`; in the recipe files they start with `model-pipeline/`.
 
-The five-model workflow (`../workflows/five-popular-models-cpu.json`, [FIVE_MODELS.md](../FIVE_MODELS.md)) runs the MiniLM, BGE, MS MARCO, Qwen3 and Qwen2.5 recipes. The E5, nomic-embed and Kev recipes run on their own with `model-pipeline run`. The Kev recipes also need `--base-snapshot` ("Kev route" in [ONBOARDING.md](../ONBOARDING.md)).
+The five-model workflow (`../workflows/five-popular-models-cpu.json`, [FIVE_MODELS.md](../FIVE_MODELS.md)) runs the MiniLM, BGE, MS MARCO, Qwen3 and Qwen2.5 recipes. The E5, bge-base, nomic-embed and Kev recipes run on their own with `model-pipeline run`. The Kev recipes also need `--base-snapshot` ("Kev route" in [ONBOARDING.md](../ONBOARDING.md)).
 
 ```sh
 .venv/bin/model-pipeline plan model-pipeline/recipes/<recipe>.yaml

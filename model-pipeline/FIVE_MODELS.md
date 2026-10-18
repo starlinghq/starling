@@ -4,9 +4,11 @@ The [workflow definition](workflows/five-popular-models-cpu.json) runs five inde
 sequentially. Each verifies the original snapshot, produces a fresh framework reference, executes
 the backend and owned .NET implementation, and checks its predeclared development policy.
 EmbeddingGemma 2 is excluded from this workflow and is handled separately. The BERT-route
-recipe [`nomic-embed-cpu.yaml`](recipes/nomic-embed-cpu.yaml) (`nomic-ai/nomic-embed-text-v1.5`,
-768 dimensions, mean pooling, no normalization, 8,192 tokens) and the Kev recipes are not in this
-workflow; run them with `model-pipeline run` ([ONBOARDING.md](ONBOARDING.md)).
+recipes [`nomic-embed-cpu.yaml`](recipes/nomic-embed-cpu.yaml) (`nomic-ai/nomic-embed-text-v1.5`,
+768 dimensions, mean pooling, no normalization, 8,192 tokens) and
+[`bge-base-cpu.yaml`](recipes/bge-base-cpu.yaml) (`BAAI/bge-base-en-v1.5`, 768 dimensions, CLS/L2,
+512 tokens) and the Kev recipes are not in this workflow; run them with `model-pipeline run`
+([ONBOARDING.md](ONBOARDING.md)).
 
 All five profiles are experimental. A completed workflow means its requested checks passed;
 it does not adopt references, award protected G1/G2 qualification, change support status, approve
@@ -165,7 +167,7 @@ STARLING_REQUIRE_ASSETS=1 dotnet test --solution ai-dotnet/AI.slnx
 ```
 
 The fetch script downloads only pinned tokenizer assets, including the `tokenizer.json` of all
-four BERT-route models (the three here and nomic-embed-text-v1.5), and verifies SHA-256 against
+five BERT-route models (the three here, nomic-embed-text-v1.5 and bge-base-en-v1.5), and verifies SHA-256 against
 the pins in `docs/m0/hub-pins.md` and `candidates/*/profile.json`. Its default layout is
 `.models/<Hub repo>/<full commit>/tokenizer.json`; set `STARLING_MODELS` consistently for fetching
 and tests to use another asset root. Existing correct files are reused. Missing assets fail
