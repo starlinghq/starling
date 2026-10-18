@@ -80,7 +80,7 @@ int ToolBody()
                 float[] hidden = Hidden(session, supplied[i]);
                 hiddenLayouts.Add(new Dictionary<string, object>
                 {
-                    ["id"] = id, ["offset"] = hiddenFile.Position / sizeof(float), ["shape"] = new[] { supplied[i].Length, BertModelProfile.HiddenSize },
+                    ["id"] = id, ["offset"] = hiddenFile.Position / sizeof(float), ["shape"] = new[] { supplied[i].Length, profile.HiddenSize },
                 });
                 if (!BitConverter.IsLittleEndian)
                 {
