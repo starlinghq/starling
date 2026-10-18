@@ -139,9 +139,9 @@ behavior:
 
 processing:
   tokenizer:
-    # 0.3.0-preview.1 is the published tokenizer (starlinghq/tokenizers): the qualified 0.1.0-preview.4 behavior plus BERT WordPiece components this profile does not use; every conformance fixture passes unchanged.
+    # 0.3.0 (the code of 0.3.0-preview.1, released without a preview suffix) is the published tokenizer (starlinghq/tokenizers): the qualified 0.1.0-preview.4 behavior plus BERT WordPiece components this profile does not use; every conformance fixture passes unchanged.
     package: Starlings.Tokenizers
-    version: 0.3.0-preview.1
+    version: 0.3.0
     profile_id: gemma-bpe-embeddinggemma2
     algorithm: bpe
     assets:

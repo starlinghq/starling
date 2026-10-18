@@ -173,7 +173,9 @@ try {
     Write-Host "ai-dotnet packages:   $aiVersion"
     # Version scheme (docs/kickoff.md): 0.MINOR.PATCH, or 0.MINOR.PATCH-preview.N before it; maturity is per profile.
     if ($aiVersion -notmatch '^0\.[0-9]+\.[0-9]+(-preview\.[0-9]+)?$') { Fail "ai-dotnet version $aiVersion is not 0.MINOR.PATCH or 0.MINOR.PATCH-preview.N" }
-    if ($tokVersion -notlike '*-preview.*') { Fail 'the tokenizer release candidate is labeled preview' }
+    if ($tokVersion -notmatch '^0\.\d+\.\d+(-preview\.\d+)?$') { Fail "tokenizer version $tokVersion is not 0.MINOR.PATCH or 0.MINOR.PATCH-preview.N" }
+    # NuGet refuses a stable package with a prerelease dependency (NU5104).
+    if ($aiVersion -notlike '*-preview.*' -and $tokVersion -like '*-preview.*') { Fail "ai-dotnet $aiVersion is a release but pins the prerelease tokenizer $tokVersion" }
     foreach ($sample in 'E5Search', 'Gliner2Ner', 'EmbeddingGemma2Search', 'QwenChat') {
         $csproj = Get-Content (Join-Path $src "ai-dotnet/samples/$sample/$sample.csproj") -Raw
         if ($csproj -notmatch '<StarlingsVersion>(.*)</StarlingsVersion>' -or $Matches[1] -ne $aiVersion) { Fail "$sample references another version than $aiVersion" }
@@ -191,7 +193,8 @@ try {
         'Starlings.Models.E5.MLNet', 'Starlings.Models.Gliner2', 'Starlings.Models.EmbeddingGemma2',
         'Starlings.Models.EmbeddingGemma2.Extensions.AI', 'Starlings.Models.EmbeddingGemma2.MLNet',
         'Starlings.Models.EmbeddingGemma2.Imaging.SkiaSharp', 'Starlings.Models.EmbeddingGemma2.Video.FFmpeg',
-        'Starlings.Generation.OnnxGenAI', 'Starlings.Models.Qwen35', 'Starlings.Models.Qwen35.Extensions.AI')
+        'Starlings.Generation.OnnxGenAI', 'Starlings.Models.Qwen35', 'Starlings.Models.Qwen35.Extensions.AI',
+        'Starlings.Models.Kev')
     $env:CI = 'true'
     Push-Location $src
     foreach ($id in $projects) {
@@ -217,6 +220,7 @@ try {
         'Starlings.Generation.OnnxGenAI'                     = @("Starlings.Tokenizers [$tokVersion]", "Microsoft.ML.OnnxRuntimeGenAI.Managed [$genaiVersion]")
         'Starlings.Models.Qwen35'                            = @("Starlings.Acquisition [$aiVersion]", "Starlings.Generation.OnnxGenAI [$aiVersion]", "Starlings.Tokenizers [$tokVersion]")
         'Starlings.Models.Qwen35.Extensions.AI'              = @("Starlings.Models.Qwen35 [$aiVersion]", 'Microsoft.Extensions.AI.Abstractions 10.10.1', 'Microsoft.Extensions.DependencyInjection.Abstractions 10.0.12')
+        'Starlings.Models.Kev'                               = @("Starlings.Acquisition [$aiVersion]", "Starlings.Runtime.Onnx [$aiVersion]", "Starlings.Tokenizers [$tokVersion]")
     }
     Add-Type -AssemblyName System.IO.Compression.FileSystem
     function Read-Entry([string]$Zip, [string]$Name) {

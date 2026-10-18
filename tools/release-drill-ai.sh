@@ -9,7 +9,7 @@
 #      Models.E5, Models.E5.Extensions.AI, Models.E5.MLNet, Models.Gliner2, Generation.OnnxGenAI, Models.Qwen35,
 #      Models.EmbeddingGemma2, Models.EmbeddingGemma2.Extensions.AI, Models.EmbeddingGemma2.MLNet,
 #      Models.EmbeddingGemma2.Imaging.SkiaSharp, Models.EmbeddingGemma2.Video.FFmpeg, Models.EmbeddingGemma2.Video.FFmpeg9,
-#      Models.Qwen35.Extensions.AI), locked restore, empty private NuGet cache,
+#      Models.Qwen35.Extensions.AI, Models.Kev), locked restore, empty private NuGet cache,
 #   2. inspects every nuspec (version, MIT OR Apache-2.0, readme, repository commit, exact dependency list: no native ONNX Runtime or
 #      ONNX Runtime GenAI, no Microsoft.ML.Tokenizers, no FFmpeg bindings package), the packed files (no
 #      model assets, no FFmpeg library) and the symbol packages
@@ -281,10 +281,15 @@ echo "Starlings.Tokenizers: $tok_version"
 echo "ai-dotnet packages:            $ai_version"
 # Version scheme (docs/kickoff.md, "ai-dotnet package versions and maturity"): 0.MINOR.PATCH, or 0.MINOR.PATCH-preview.N
 # for a candidate before it; maturity is per profile (README maturity block), not a package label. The tokenizer keeps
-# its own scheme.
+# its own scheme, the same shape since 0.3.0 (starlinghq/tokenizers docs/releasing.md).
 [[ "$ai_version" =~ ^0\.[0-9]+\.[0-9]+(-preview\.[0-9]+)?$ ]] \
     || fail "ai-dotnet version $ai_version is not 0.MINOR.PATCH or 0.MINOR.PATCH-preview.N"
-[[ "$tok_version" == *-preview.* ]] || fail "the tokenizer release candidate is labeled preview"
+[[ "$tok_version" =~ ^0\.[0-9]+\.[0-9]+(-preview\.[0-9]+)?$ ]] \
+    || fail "tokenizer version $tok_version is not 0.MINOR.PATCH or 0.MINOR.PATCH-preview.N"
+# NuGet refuses a stable package with a prerelease dependency (NU5104): a release without a suffix needs a tokenizer without one.
+if [[ "$ai_version" != *-preview.* && "$tok_version" == *-preview.* ]]; then
+    fail "ai-dotnet $ai_version is a release but pins the prerelease tokenizer $tok_version"
+fi
 sample_version="$(sed -n 's:.*<StarlingsVersion>\(.*\)</StarlingsVersion>.*:\1:p' "$src/ai-dotnet/samples/E5Search/E5Search.csproj")"
 [[ "$sample_version" == "$ai_version" ]] || fail "sample references $sample_version, the packages are $ai_version"
 gliner2_sample_version="$(sed -n 's:.*<StarlingsVersion>\(.*\)</StarlingsVersion>.*:\1:p' "$src/ai-dotnet/samples/Gliner2Ner/Gliner2Ner.csproj")"
@@ -325,6 +330,7 @@ projects=(
     ai-dotnet/src/Starlings.Generation.OnnxGenAI
     ai-dotnet/src/Starlings.Models.Qwen35
     ai-dotnet/src/Starlings.Models.Qwen35.Extensions.AI
+    ai-dotnet/src/Starlings.Models.Kev
 )
 pack_sha="$sha"
 if [[ -z "$packages_from" ]]; then
@@ -400,6 +406,10 @@ expect_deps() {
             echo "Starlings.Models.Qwen35 [$ai_version]"
             echo "Microsoft.Extensions.AI.Abstractions 10.10.1"
             echo "Microsoft.Extensions.DependencyInjection.Abstractions 10.0.12" ;;
+        Starlings.Models.Kev)
+            echo "Starlings.Acquisition [$ai_version]"
+            echo "Starlings.Runtime.Onnx [$ai_version]"
+            echo "Starlings.Tokenizers [$tok_version]" ;;
     esac
 }
 for proj in "${projects[@]}"; do
@@ -444,8 +454,8 @@ $expected"
     pdb="$(unzip -p "${nupkg%.nupkg}.snupkg" "lib/net10.0/$id.pdb" | grep -a -o "raw.githubusercontent.com/starlinghq/starling/$pack_sha/\*" | head -1 || true)"
     [[ -n "$pdb" ]] || fail "$id: symbols lack SourceLink to $pack_sha"
     label="per-profile maturity in README and description"
-    # The tokenizer is released on its own (P-025); its preview status is its version suffix and its README.
-    [[ "$id" == Starlings.Tokenizers ]] && label="README, preview version"
+    # The tokenizer is released on its own (P-025), with its own README and version.
+    [[ "$id" == Starlings.Tokenizers ]] && label="README, own version"
     echo "ok:   $id $version: MIT OR Apache-2.0, $label, repository commit, SourceLink to the commit; dependencies: ${expected:-none}" | tr '\n' ' '
     echo
     echo "      sha256 $(sha256sum "$nupkg" | cut -d' ' -f1)"

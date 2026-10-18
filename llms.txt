@@ -4,11 +4,11 @@
 
 Key facts for writing code against it:
 
-- Install with `dotnet add package <name> --prerelease`. The application must also add exactly one native runtime: `Microsoft.ML.OnnxRuntime` 1.30.0 (CPU), or `Microsoft.ML.OnnxRuntime.Gpu.Linux` 1.30.0 (CUDA, Linux x64); for Qwen, `Microsoft.ML.OnnxRuntimeGenAI` 0.17.1.
+- Install with `dotnet add package <name>`. The application must also add exactly one native runtime: `Microsoft.ML.OnnxRuntime` 1.30.0 (CPU), or `Microsoft.ML.OnnxRuntime.Gpu.Linux` 1.30.0 (CUDA, Linux x64); for Qwen, `Microsoft.ML.OnnxRuntimeGenAI` 0.17.1.
 - `XModelAssets.DownloadAsync()` is the only call that uses the network. `XModelAssets.OpenLocal()` loads offline. The cache is `$STARLING_MODELS` or the user cache directory.
 - e5 needs `query: ` and `passage: ` prefixes. EmbeddingGemma 2 needs `EmbeddingGemma2Prompt.Query` or `.Document`; images take no prompt.
 - Over-long input throws a typed exception (for example `Gliner2InputTooLongException`) and is never silently truncated.
-- Published: 0.1.0-preview.6. Qwen tool calling and the Stable profiles ship in 0.2.0.
+- Current release: 0.2.0, the first with Stable profiles and Qwen tool calling. Keep every `Starlings.*` package at the same version.
 
 ## Docs
 

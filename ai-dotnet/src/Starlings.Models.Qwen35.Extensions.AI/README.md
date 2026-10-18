@@ -17,7 +17,7 @@ Maturity is per profile, generated from the registry manifests by `model-pipelin
 ## Install
 
 ```sh
-dotnet add package Starlings.Models.Qwen35.Extensions.AI --prerelease
+dotnet add package Starlings.Models.Qwen35.Extensions.AI
 dotnet add package Microsoft.ML.OnnxRuntimeGenAI --version 0.17.1        # CPU natives; or Microsoft.ML.OnnxRuntimeGenAI.Cuda (exactly one)
 ```
 

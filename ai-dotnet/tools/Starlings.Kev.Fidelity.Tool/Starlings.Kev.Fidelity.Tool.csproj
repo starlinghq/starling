@@ -1,7 +1,22 @@
 <Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup><OutputType>Exe</OutputType><GenerateDocumentationFile>false</GenerateDocumentationFile></PropertyGroup>
-  <ItemGroup>
+
+  <!--
+    The dotnet stage of the kev-onnx-cpu-v1 route. -p:UseCuda=true swaps the CPU native package for the CUDA one
+    (both ship libonnxruntime under the same file name) for CUDA runs (device option cuda); that variant has its own lock file
+    and is built locally only. CI builds the CPU variant (AI.slnx).
+  -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <NuGetLockFilePath Condition="'$(UseCuda)' == 'true'">packages.cuda.lock.json</NuGetLockFilePath>
+  </PropertyGroup>
+  <ItemGroup Condition="'$(UseCuda)' != 'true'">
     <PackageReference Include="Microsoft.ML.OnnxRuntime" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(UseCuda)' == 'true'">
+    <PackageReference Include="Microsoft.ML.OnnxRuntime.Gpu.Linux" />
+  </ItemGroup>
+  <ItemGroup>
     <ProjectReference Include="../../src/Starlings.Models.Kev/Starlings.Models.Kev.csproj" />
   </ItemGroup>
   <ItemGroup>

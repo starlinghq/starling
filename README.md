@@ -2,7 +2,7 @@
 
 **Run real AI models inside your .NET app, with no Python sidecar and no cloud API, and with published evidence that they give the same answers as the upstream reference.**
 
-[![NuGet](https://img.shields.io/nuget/vpre/Starlings.Models.E5.Extensions.AI?label=nuget&color=004880)](https://www.nuget.org/packages?q=Starlings.Models)
+[![NuGet](https://img.shields.io/nuget/v/Starlings.Models.E5.Extensions.AI?label=nuget&color=004880)](https://www.nuget.org/packages?q=Starlings.Models)
 [![CI](https://github.com/starlinghq/starling/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/starlinghq/starling/actions/workflows/ci.yml)
 [![.NET 10](https://img.shields.io/badge/.NET-10-512BD4)](https://dotnet.microsoft.com/download/dotnet/10.0)
 [![License: MIT OR Apache-2.0](https://img.shields.io/badge/license-MIT%20OR%20Apache--2.0-blue)](#license)
@@ -20,7 +20,7 @@ Requires the [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0). M
 
 ```sh
 dotnet new console -o search && cd search
-dotnet add package Starlings.Models.E5.Extensions.AI --prerelease
+dotnet add package Starlings.Models.E5.Extensions.AI
 dotnet add package Microsoft.ML.OnnxRuntime --version 1.30.0
 ```
 
@@ -62,7 +62,7 @@ The first run downloads the model (about 470 MB) into your user cache; later run
 ### Local chat through `IChatClient`
 
 ```sh
-dotnet add package Starlings.Models.Qwen35.Extensions.AI --prerelease
+dotnet add package Starlings.Models.Qwen35.Extensions.AI
 dotnet add package Microsoft.ML.OnnxRuntimeGenAI --version 0.17.1
 ```
 
@@ -93,7 +93,7 @@ Choosing a text embedder? See [choosing an embedding model](docs/guides/choosing
 
 **Stable** means every release gate passed: provenance, numerical parity and task quality against the Python reference, a one-hour leak soak, benchmarks, a clean install from the packages, and integration. It also means regression runs continue: weekly on CPU, and on a GPU before every release for CUDA. Stable on CUDA means Linux x64 with an NVIDIA GeForce RTX 3090, where every CUDA gate and the per-release GPU run take place; other GPUs are untested. EmbeddingGemma 2 video on CUDA also needs `MALLOC_MMAP_THRESHOLD_=65536` in the process environment on Linux. The [model catalog](docs/catalog/README.md) links each gate to its evidence, and the [compatibility matrix](docs/catalog/compatibility-matrix.md) lists each platform and provider.
 
-**Release status:** `0.1.0-preview.6` is published on nuget.org. The Stable profiles above, Qwen tool calling and the FFmpeg video adapters are on `main` and ship in `0.2.0`, the first release with Stable profiles.
+**Release status:** `0.2.0`, published on [nuget.org](https://www.nuget.org/packages?q=Starlings.Models) on 2026-10-17 ([GitHub release](https://github.com/starlinghq/starling/releases/tag/ai-v0.2.0)), is the first release with Stable profiles: the Stable profiles above, Qwen tool calling and the FFmpeg video adapters ([release record](docs/releases/ai-0.2.0.md)). It depends on `Starlings.Tokenizers` `0.3.0`.
 
 ## Why Starling
 

@@ -399,7 +399,11 @@ def cmd_onnx(args) -> None:
     reference = json.loads(args.reference.read_text(encoding="utf-8"))
     if reference["profile"] != profile["id"] or reference["candidate_sha256"] != profile_digest:
         fail("reference.json names another candidate")
-    backbone = Backbone(args.bundle / "model.onnx", args.threads, kv_dim=behavior["head_dim"], provider="cpu")
+    # --provider cuda runs the same CPU-built graph on the CUDA EP with TF32 off (the onnx-fp32-cuda profiles).
+    backbone = Backbone(args.bundle / "model.onnx", args.threads, kv_dim=behavior["head_dim"], provider=args.provider)
+    session_providers = backbone.session.get_providers()
+    if args.provider == "cuda" and session_providers[0] != "CUDAExecutionProvider":
+        fail(f"CUDA requested but the session runs on {session_providers}")
     head = Head(args.bundle)
     if float(head.temperature) != np.float32(behavior["temperature"]):
         fail("head.json temperature differs from the contract")
@@ -466,7 +470,9 @@ def cmd_onnx(args) -> None:
             "environment": {
                 "machine": platform.node(),
                 "onnxruntime": ort.__version__,
-                "provider": "CPUExecutionProvider",
+                "provider": session_providers[0],
+                "provider_options": backbone.session.get_provider_options().get(session_providers[0], {}),
+                "cuda_visible_devices": os.environ.get("CUDA_VISIBLE_DEVICES"),
                 "threads": args.threads,
                 "python": platform.python_version(),
                 "model_sha256": {name: entry["sha256"] for name, entry in build["bundle"].items()},
@@ -488,6 +494,7 @@ def main() -> int:
     parser.add_argument("--bundle", type=Path)
     parser.add_argument("--build", type=Path, help="build.json of the bundle")
     parser.add_argument("--threads", type=int, default=2)
+    parser.add_argument("--provider", choices=["cpu", "cuda"], default="cpu", help="onnx: execution provider")
     parser.add_argument("--out", type=Path, required=True)
     args = parser.parse_args()
     if not 1 <= args.threads <= 4:

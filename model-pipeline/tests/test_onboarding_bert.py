@@ -15,7 +15,7 @@ from model_pipeline.onboarding_runner import PipelineError, Stage
 
 
 def candidate(repo="sentence-transformers/all-MiniLM-L6-v2"):
-    task, length, pooling = bert.CONTRACTS[repo]
+    task, length, pooling, hidden_size, normalize = bert.CONTRACTS[repo]
     return {
         "format_version": 1,
         "id": "test-bert-cpu",
@@ -37,13 +37,16 @@ def candidate(repo="sentence-transformers/all-MiniLM-L6-v2"):
             "padding_side": "right",
             "pad_token_id": 0,
             "vocabulary_size": 30522,
-            "hidden_size": 384,
+            "hidden_size": hidden_size,
             "truncation": "longest_first",
             "tokenizer_profile": "bert-wordpiece-uncased",
             "pooling": pooling,
-            "normalize": "l2" if task == "embeddings" else "none",
+            "normalize": normalize,
             "output_name": "last_hidden_state" if task == "embeddings" else "logits",
-            "prompts": {"none": "", **({"query": bert.QUERY} if repo == "BAAI/bge-small-en-v1.5" else {})},
+            "prompts": {
+                "none": "",
+                **({"query": bert.QUERY} if repo in {"BAAI/bge-small-en-v1.5", "BAAI/bge-base-en-v1.5"} else {}),
+            },
             **({"score_activation": "identity"} if task == "reranking" else {}),
         },
         "evaluation": {"status": "proposed", "policy": copy.deepcopy(bert.POLICY)},
@@ -59,7 +62,8 @@ def evidence(tmp_path, repo="sentence-transformers/all-MiniLM-L6-v2"):
     profile = tmp_path / "candidate.json"
     write(profile, contract)
     embedding = contract["task"] == "embeddings"
-    output = [1.0] + [0.0] * 383 if embedding else [3.25]
+    width = contract["behavior"]["hidden_size"]
+    output = [1.0] + [0.0] * (width - 1) if embedding else [3.25]
     rows = [
         {
             "id": "short",
@@ -127,8 +131,8 @@ def evidence(tmp_path, repo="sentence-transformers/all-MiniLM-L6-v2"):
                 "file": "hidden.f32",
                 "sha256": fixtures.sha256_file(hidden_file),
                 "cases": [
-                    {"id": "short", "offset": 0, "shape": [2, 384]},
-                    {"id": "longer", "offset": 768, "shape": [3, 384]},
+                    {"id": "short", "offset": 0, "shape": [2, width]},
+                    {"id": "longer", "offset": 2 * width, "shape": [3, width]},
                 ],
             }
         if stage != "reference":
@@ -230,9 +234,37 @@ def test_incompatible_behavior_cannot_use_fixed_tools(key, value):
         bert.validate_candidate_behavior(contract)
 
 
+def test_nomic_requires_its_hidden_size():
+    contract = candidate("nomic-ai/nomic-embed-text-v1.5")
+    contract["behavior"]["hidden_size"] = 384
+    with pytest.raises(PipelineError, match="unsupported BERT behavior"):
+        bert.validate_candidate_behavior(contract)
+
+
 def test_policies_cannot_be_raised_after_reference_execution():
     contract = candidate()
     contract["evaluation"]["policy"]["embedding_max_abs"] = 0.1
+    with pytest.raises(PipelineError, match="evaluation policy"):
+        bert.validate_candidate_behavior(contract)
+
+
+def test_per_model_fidelity_bounds_may_be_loosened_within_caps():
+    contract = candidate("nomic-ai/nomic-embed-text-v1.5")
+    contract["evaluation"]["policy"]["embedding_max_abs"] = 5e-5
+    contract["evaluation"]["policy"]["hidden_max_abs"] = 1e-3
+    bert.validate_candidate_behavior(contract)
+
+
+def test_fidelity_bounds_cannot_be_loosened_beyond_caps():
+    contract = candidate()
+    contract["evaluation"]["policy"]["hidden_max_abs"] = 1.0
+    with pytest.raises(PipelineError, match="evaluation policy"):
+        bert.validate_candidate_behavior(contract)
+
+
+def test_correctness_bounds_cannot_be_loosened():
+    contract = candidate()
+    contract["evaluation"]["policy"]["same_backend_max_abs"] = 1e-3
     with pytest.raises(PipelineError, match="evaluation policy"):
         bert.validate_candidate_behavior(contract)
 

@@ -28,8 +28,10 @@ public sealed record KevModelFiles(
 }
 
 /// <summary>
-/// The immutable asset locks of the profiles <c>kev-0.8b/onnx-fp32-cpu</c> and <c>kev-4b/onnx-fp32-cpu</c>, and
-/// verification of a local bundle against them. Nothing here downloads.
+/// The immutable asset locks of the Kev profiles (<c>kev-0.8b/onnx-fp32-cpu</c>, <c>kev-4b/onnx-fp32-cpu</c> and their
+/// <c>onnx-fp32-cuda</c> siblings, which share the bundles), and explicit acquisition of those files. The model never
+/// downloads; call <see cref="DownloadAsync"/> once (setup step), then <see cref="OpenLocal"/> or
+/// <see cref="OpenDirectory"/> at startup.
 /// </summary>
 /// <remarks>
 /// <para>
@@ -41,8 +43,11 @@ public sealed record KevModelFiles(
 /// repository's file at the pinned commit (the same bytes for both sizes).
 /// </para>
 /// <para>
-/// The graphs are not hosted yet, so there is no download: build the bundle (or receive it) into a directory and open
-/// it with <see cref="OpenDirectory"/>, which checks every file's size and SHA-256.
+/// The qualified bundles are hosted publicly, one Hugging Face repository per size (<see cref="HostingRepository"/>) at
+/// a pinned commit (<see cref="HostingRevision"/>), in the bundle layout; downloading needs no token. The digests in the
+/// lock, not the address, pin the bytes. Because the fp32 LoRA merge is not bit-reproducible, a locally rebuilt bundle
+/// does not match the lock; open it with <see cref="KevDecisionModel.Create(KevModelProfile, string, string, string, string, KevOptions?)"/>
+/// instead. A bundle in any directory with the five files opens with <see cref="OpenDirectory"/>.
 /// </para>
 /// </remarks>
 public static class KevModelAssets
@@ -68,6 +73,23 @@ public static class KevModelAssets
     /// <summary>Size of <see cref="TokenizerFile"/> in bytes.</summary>
     public const long TokenizerSize = 19_989_325;
 
+    /// <summary>Hugging Face repository hosting the Kev-0.8B bundle (public, Starling build r1).</summary>
+    public const string Kev08BHostingRepository = "Starlinghq/kev-0.8b-onnx";
+
+    /// <summary>Pinned commit of <see cref="Kev08BHostingRepository"/> (tag <c>r1</c>).</summary>
+    public const string Kev08BHostingRevision = "8a9fe0175d294a89c6fa963a2245eb32e3fa1505";
+
+    /// <summary>Hugging Face repository hosting the Kev-4B bundle (public, Starling build r1).</summary>
+    public const string Kev4BHostingRepository = "Starlinghq/kev-4b-onnx";
+
+    /// <summary>Pinned commit of <see cref="Kev4BHostingRepository"/> (tag <c>r1</c>).</summary>
+    public const string Kev4BHostingRevision = "8179da507de7de4bddfdbfa44894ff24b1dcd959";
+
+    /// <summary>
+    /// False: the hosting repositories are public (2026-10-17), so <see cref="DownloadAsync"/> needs no Hugging Face token.
+    /// </summary>
+    public const bool HostingIsPrivate = false;
+
     /// <summary>The Kev-0.8B bundle (about 3.1 GB).</summary>
     public static ModelAssetLock Kev08BLock { get; } = Bundle(
         KevModelProfile.Kev08B,
@@ -92,6 +114,46 @@ public static class KevModelAssets
         _ => throw new ArgumentOutOfRangeException(nameof(model), model, "Unknown Kev model."),
     };
 
+    /// <summary>Hugging Face repository hosting a model's bundle.</summary>
+    public static string HostingRepository(KevModel model) => model switch
+    {
+        KevModel.Kev08B => Kev08BHostingRepository,
+        KevModel.Kev4B => Kev4BHostingRepository,
+        _ => throw new ArgumentOutOfRangeException(nameof(model), model, "Unknown Kev model."),
+    };
+
+    /// <summary>Pinned commit of a model's <see cref="HostingRepository"/>.</summary>
+    public static string HostingRevision(KevModel model) => model switch
+    {
+        KevModel.Kev08B => Kev08BHostingRevision,
+        KevModel.Kev4B => Kev4BHostingRevision,
+        _ => throw new ArgumentOutOfRangeException(nameof(model), model, "Unknown Kev model."),
+    };
+
+    /// <summary>Base address of a model's files: <c>resolve</c> at its <see cref="HostingRevision"/>; a file's source is this plus its path.</summary>
+    public static string HostingBaseUrl(KevModel model) =>
+        "https://huggingface.co/" + HostingRepository(model) + "/resolve/" + HostingRevision(model) + "/";
+
+    /// <summary>
+    /// Explicitly downloads (or verifies already cached) a model's bundle from its hosting repository (3.1 GB for 0.8B,
+    /// 16.9 GB for 4B). See <see cref="ModelAssetStore.DownloadAsync"/>.
+    /// </summary>
+    public static async Task<KevModelFiles> DownloadAsync(
+        KevModel model, ModelAcquisitionOptions? options = null, IProgress<ModelAssetProgress>? progress = null, CancellationToken cancellationToken = default)
+    {
+        using var store = new ModelAssetStore(options);
+        return KevModelFiles.From(KevModelProfile.For(model), await store.DownloadAsync(Lock(model), progress, cancellationToken).ConfigureAwait(false));
+    }
+
+    /// <summary>Offline: a model's cached bundle, verified per <see cref="ModelAcquisitionOptions.Verification"/>. Never downloads.</summary>
+    /// <exception cref="ModelAssetMissingException">Not acquired yet; the message says how to download.</exception>
+    /// <exception cref="ModelAssetIntegrityException">A cached file is corrupt.</exception>
+    public static KevModelFiles OpenLocal(KevModel model, ModelAcquisitionOptions? options = null)
+    {
+        using var store = new ModelAssetStore(options);
+        return KevModelFiles.From(KevModelProfile.For(model), store.OpenLocal(Lock(model)));
+    }
+
     /// <summary>SHA-256 of a profile's <see cref="ModelFile"/>; usable as <c>OnnxSessionOptions.ExpectedModelSha256</c>.</summary>
     public static string ModelSha256(KevModel model) => Lock(model).GetFile(ModelFile).Sha256;
 
@@ -110,15 +172,20 @@ public static class KevModelAssets
         long modelSize, string modelSha256,
         long dataSize, string dataSha256,
         long headSize, string headSha256,
-        long headMetadataSize, string headMetadataSha256) => new(
-        profile.Id.Split('/')[0],
-        profile.Repository,
-        profile.Revision,
-        [
-            new ModelAssetFile(ModelFile, modelSize, modelSha256),
-            new ModelAssetFile(ModelDataFile, dataSize, dataSha256),
-            new ModelAssetFile(HeadFile, headSize, headSha256),
-            new ModelAssetFile(HeadMetadataFile, headMetadataSize, headMetadataSha256),
-            new ModelAssetFile(TokenizerFile, TokenizerSize, TokenizerSha256),
-        ]);
+        long headMetadataSize, string headMetadataSha256)
+    {
+        string baseUrl = HostingBaseUrl(profile.Model);
+        Uri Source(string path) => new(baseUrl + path);
+        return new(
+            profile.Id.Split('/')[0],
+            profile.Repository,
+            profile.Revision,
+            [
+                new ModelAssetFile(ModelFile, modelSize, modelSha256, Source(ModelFile)),
+                new ModelAssetFile(ModelDataFile, dataSize, dataSha256, Source(ModelDataFile)),
+                new ModelAssetFile(HeadFile, headSize, headSha256, Source(HeadFile)),
+                new ModelAssetFile(HeadMetadataFile, headMetadataSize, headMetadataSha256, Source(HeadMetadataFile)),
+                new ModelAssetFile(TokenizerFile, TokenizerSize, TokenizerSha256, Source(TokenizerFile)),
+            ]);
+    }
 }

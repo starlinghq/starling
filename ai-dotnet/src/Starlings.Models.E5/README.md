@@ -20,7 +20,7 @@ Maturity is per profile, generated from the registry manifests by `model-pipelin
 ## Install
 
 ```sh
-dotnet add package Starlings.Models.E5 --prerelease
+dotnet add package Starlings.Models.E5
 dotnet add package Microsoft.ML.OnnxRuntime --version 1.30.0          # CPU natives
 # or, for CUDA on Linux x64: Microsoft.ML.OnnxRuntime.Gpu.Linux 1.30.0 (reference exactly one)
 ```
@@ -72,7 +72,7 @@ This is the contract of profile `multilingual-e5-small/onnx-fp32-cpu`. Its Stabl
 | --- | --- |
 | Profile | `multilingual-e5-small/onnx-fp32-cpu` (registry manifest `model-pipeline/registry/multilingual-e5-small/onnx-fp32-cpu/manifest.yaml`). |
 | Model | `intfloat/multilingual-e5-small` at `614241f622f53c4eeff9890bdc4f31cfecc418b3`; `onnx/model.onnx` and `tokenizer.json` verified by SHA-256 (`E5ModelAssets.Lock`). |
-| Tokenizer | `Starlings.Tokenizers` `0.3.0-preview.1`, profile `xlmr-unigram-e5` (pinned `tokenizer.json`, not SentencePiece or transformers' rebuilt tokenizer). |
+| Tokenizer | `Starlings.Tokenizers` `0.3.0`, profile `xlmr-unigram-e5` (pinned `tokenizer.json`, not SentencePiece or transformers' rebuilt tokenizer). |
 | Runtime | ONNX Runtime 1.30.0 (`Microsoft.ML.OnnxRuntime.Managed`; the application adds `Microsoft.ML.OnnxRuntime` 1.30.0 CPU natives), fp32, .NET 10. |
 | Supported platform | Linux x64, CPU. Gates G1 to G5 ran on an Intel Core i7-5820K (Haswell-E, 6 cores and 12 threads, AVX2 and FMA, no AVX-512), .NET 10.0.12. The weekly qualification reruns G1 to G3 on the release sets and a one-hour soak on GitHub-hosted `ubuntu-latest` x64 (4 logical CPUs; transparent huge pages `madvise`). No `MALLOC_*` environment setting is required. |
 | Memory on Linux | The runtime calls `malloc_trim(0)` when a session is released, on by default. CPU sessions run on the runtime's dedicated run threads unless `OnnxSessionOptions.DedicatedRunThreads` is set; outputs are the same. See [Memory on Linux](#memory-on-linux). |
