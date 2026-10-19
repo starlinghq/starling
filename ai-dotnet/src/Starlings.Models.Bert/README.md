@@ -4,11 +4,12 @@ Experimental. This package is not published to nuget.org: it is not part of the 
 (`docs/releases/ai-0.2.0.md`, "Not published"). Build it from this repository, for example with a
 `ProjectReference` to `ai-dotnet/src/Starlings.Models.Bert/Starlings.Models.Bert.csproj`. The API may still change.
 
-Experimental CPU fp32 implementations for five explicitly pinned candidate contracts:
+Experimental CPU fp32 implementations for six explicitly pinned candidate contracts:
 `sentence-transformers/all-MiniLM-L6-v2` (mean/L2, 256 tokens), `BAAI/bge-small-en-v1.5`
 (CLS/L2, 512 tokens), `BAAI/bge-base-en-v1.5` (CLS/L2, 512 tokens, 768-wide),
-`cross-encoder/ms-marco-MiniLM-L6-v2` (paired inputs, raw scalar logits, 512 tokens), and
-`nomic-ai/nomic-embed-text-v1.5` (mean pooling without normalization, 8192 tokens, 768-wide). Candidate parity is
+`BAAI/bge-m3` (CLS/L2, 8192 tokens, 1024-wide, XLM-R), `cross-encoder/ms-marco-MiniLM-L6-v2`
+(paired inputs, raw scalar logits, 512 tokens), and `nomic-ai/nomic-embed-text-v1.5`
+(mean, no L2, 8192 tokens, 768-wide). Candidate parity is
 development evidence; protected release qualification requires independent fixture adoption.
 
 Load a reviewed candidate profile with `BertModelProfile.Load`. `BertTextEmbedder.Create`
@@ -43,6 +44,7 @@ else throws `NotSupportedException`.
 | `minilm` | `all-minilm-l6-v2/onnx-fp32-cpu` | embeddings | 256 | mean | 384 | l2 | `none` |
 | `bge-small` | `bge-small-en-v1.5/onnx-fp32-cpu` | embeddings | 512 | cls | 384 | l2 | `none`, `query` |
 | `bge-base` | `bge-base-en-v1.5/onnx-fp32-cpu` | embeddings | 512 | cls | 768 | l2 | `none`, `query` |
+| `bge-m3` | `bge-m3/onnx-fp32-cpu` | embeddings | 8192 | cls | 1024 | l2 | `none` |
 | `ms-marco` | `ms-marco-minilm-l6-v2/onnx-fp32-cpu` | reranking | 512 | none | 384 (one logit out) | none | `none` |
 | `nomic-embed` | `nomic-embed-text-v1.5/onnx-fp32-cpu` | embeddings | 8192 | mean | 768 | none | `none` |
 
@@ -73,8 +75,8 @@ directory by size and SHA-256 (`ModelAssetStore.VerifyDirectory`) and never down
 
 - `BertModelProfile`: `Load(path)`, `Parse(json)`, `Id`, `Task` (`BertTask.Embeddings` or `BertTask.Reranking`),
   `MaxTokens` (including special tokens and the prompt), `Pooling`, `HiddenSize`, `Normalize`, `Prompts`,
-  `SourceLock`, `RuntimeLock`, and the constants `BgeQueryInstruction`, `GraphFile`, `TokenizerFile`,
-  `PadTokenId` (0) and `VocabularySize` (30522).
+  `VocabularySize`, `ClsTokenId`, `SepTokenId`, `PadTokenId`, `OutputName`, `TokenizerProfile`, `TokenTypeIds`,
+  `SourceLock`, `RuntimeLock`, and the constants `BgeQueryInstruction`, `GraphFile`, `TokenizerFile`.
 - `BertTextEmbedder.Create(profile, snapshot, threads = 2, maxBatchSize = 32)`: `Embed`, `EmbedBatch`
   (input order), `EmbedTokens`, `Tokenize`, `Dimension`, `Profile`, `Diagnostics`, and the owned
   `Session` (advanced).
@@ -82,7 +84,7 @@ directory by size and SHA-256 (`ModelAssetStore.VerifyDirectory`) and never down
   `ScoreTokens`, `Tokenize`, and `Rank(query, documents)`, which returns `BertRankedDocument(Index, Document, Score)`
   by descending score, ties in original order.
 - `BertInput(InputIds, AttentionMask, TokenTypeIds)` for pre-tokenized rows: equal lengths from 2 to `MaxTokens`,
-  CLS (101) first and SEP (102) as the last visible token, right padding with id 0 and mask 0.
+  the profile's CLS id first and SEP id as the last visible token, right padding with the profile's pad id and mask 0.
 - `BertCapabilities`: text, batch and cancellation `experimental`; streaming, persistence and training
   `unsupported`; AOT `untested`.
 

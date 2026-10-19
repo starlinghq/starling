@@ -10,7 +10,7 @@
     profile was qualified with (processing.tokenizer.version), and a newer tokenizer is not automatically certified.
   -->
   <ItemGroup>
-    <PackageVersion Include="Starlings.Tokenizers" Version="[0.3.0]" />
+    <PackageVersion Include="Starlings.Tokenizers" Version="[0.3.1]" />
   </ItemGroup>
 
 

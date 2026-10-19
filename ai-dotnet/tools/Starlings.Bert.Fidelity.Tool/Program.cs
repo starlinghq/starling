@@ -77,7 +77,7 @@ int ToolBody()
             }
             if (hiddenFile is not null)
             {
-                float[] hidden = Hidden(session, supplied[i]);
+                float[] hidden = Hidden(session, supplied[i], profile);
                 hiddenLayouts.Add(new Dictionary<string, object>
                 {
                     ["id"] = id, ["offset"] = hiddenFile.Position / sizeof(float), ["shape"] = new[] { supplied[i].Length, profile.HiddenSize },
@@ -183,13 +183,15 @@ int ToolBody()
         return Convert.ToHexStringLower(SHA256.HashData(stream));
     }
 
-    static float[] Hidden(OnnxModelSession session, BertInput input)
+    static float[] Hidden(OnnxModelSession session, BertInput input, BertModelProfile profile)
     {
         long[] shape = [1, input.Length];
         using var ids = OrtValue.CreateTensorValueFromMemory(input.InputIds.ToArray(), shape);
         using var mask = OrtValue.CreateTensorValueFromMemory(input.AttentionMask.ToArray(), shape);
         using var types = OrtValue.CreateTensorValueFromMemory(input.TokenTypeIds.ToArray(), shape);
-        using var outputs = session.Run(["input_ids", "attention_mask", "token_type_ids"], [ids, mask, types], ["last_hidden_state"]);
+        using var outputs = profile.TokenTypeIds
+            ? session.Run(["input_ids", "attention_mask", "token_type_ids"], [ids, mask, types], [profile.OutputName])
+            : session.Run(["input_ids", "attention_mask"], [ids, mask], [profile.OutputName]);
         return outputs[0].GetTensorDataAsSpan<float>().ToArray();
     }
 }

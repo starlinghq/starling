@@ -11,7 +11,7 @@ public sealed class BertTextEmbedder : IDisposable
     /// <summary>Profile and immutable source/runtime asset identities.</summary>
     public BertModelProfile Profile => _model.Profile;
     /// <summary>Embedding dimension.</summary>
-    public int Dimension => (int)_model.Session.Outputs.Single(output => output.Name == "last_hidden_state").Dimensions[2];
+    public int Dimension => Profile.HiddenSize;
     /// <summary>Loaded model and native runtime diagnostics.</summary>
     public OnnxSessionDiagnostics Diagnostics => _model.Session.Diagnostics;
     /// <summary>Advanced backend API for intermediate diagnostics. Owned by this embedder.</summary>

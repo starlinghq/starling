@@ -35,7 +35,8 @@ internal sealed class BertSession : IDisposable
         });
         try
         {
-            ValidateSignature(Session.Inputs, Session.Outputs, profile.Task, profile.HiddenSize);
+            ValidateSignature(Session.Inputs, Session.Outputs, profile.Task, profile.HiddenSize,
+                profile.OutputName, profile.TokenTypeIds);
         }
         catch
         {
@@ -62,7 +63,8 @@ internal sealed class BertSession : IDisposable
         ArgumentNullException.ThrowIfNull(inputs);
         foreach (var input in inputs)
         {
-            ValidateInput(input, Profile.MaxTokens);
+            ValidateInput(input, Profile.MaxTokens, Profile.VocabularySize, Profile.PadTokenId,
+                Profile.ClsTokenId, Profile.SepTokenId);
         }
 
         return RunPlanned(inputs, Plan(inputs, _maxBatchSize, _maxBatchTokens, _sortByLength), (chunk, width) =>
@@ -164,8 +166,16 @@ internal sealed class BertSession : IDisposable
         var values = new float[length];
         long[] outputShape = Profile.Task == BertTask.Embeddings ? [count, width, Profile.HiddenSize] : [count, 1];
         using var output = OrtValue.CreateTensorValueFromMemory(values, outputShape);
-        Session.Run(["input_ids", "attention_mask", "token_type_ids"], [idsValue, maskValue, typesValue],
-            [Profile.Task == BertTask.Embeddings ? "last_hidden_state" : "logits"], [output], cancellationToken);
+        if (Profile.TokenTypeIds)
+        {
+            Session.Run(["input_ids", "attention_mask", "token_type_ids"], [idsValue, maskValue, typesValue],
+                [Profile.OutputName], [output], cancellationToken);
+        }
+        else
+        {
+            Session.Run(["input_ids", "attention_mask"], [idsValue, maskValue],
+                [Profile.OutputName], [output], cancellationToken);
+        }
         if (values.Any(v => !float.IsFinite(v)))
         {
             throw new InvalidDataException("BERT graph returned a NaN or infinite value.");
@@ -174,17 +184,17 @@ internal sealed class BertSession : IDisposable
         return values;
     }
 
-    internal static void ValidateSignature(IReadOnlyList<OnnxTensorInfo> inputs, IReadOnlyList<OnnxTensorInfo> outputs, BertTask task, int hiddenSize)
+    internal static void ValidateSignature(IReadOnlyList<OnnxTensorInfo> inputs, IReadOnlyList<OnnxTensorInfo> outputs,
+        BertTask task, int hiddenSize, string outputName, bool tokenTypeIds)
     {
-        string[] names = ["input_ids", "attention_mask", "token_type_ids"];
+        string[] names = tokenTypeIds ? ["input_ids", "attention_mask", "token_type_ids"] : ["input_ids", "attention_mask"];
         if (inputs.Count != names.Length || inputs.Select(i => i.Name).Distinct(StringComparer.Ordinal).Count() != names.Length
             || inputs.Any(i => !names.Contains(i.Name, StringComparer.Ordinal)
             || i.ElementType != "Int64" || i.Dimensions.Count != 2))
         {
-            throw new NotSupportedException("BERT graph requires exactly input_ids, attention_mask, token_type_ids (int64 rank 2).");
+            throw new NotSupportedException($"BERT graph requires exactly {string.Join(", ", names)} (int64 rank 2).");
         }
 
-        string outputName = task == BertTask.Embeddings ? "last_hidden_state" : "logits";
         var output = outputs.SingleOrDefault(o => o.Name == outputName);
         int rank = task == BertTask.Embeddings ? 3 : 2;
         int last = task == BertTask.Embeddings ? hiddenSize : 1;
@@ -194,7 +204,8 @@ internal sealed class BertSession : IDisposable
         }
     }
 
-    internal static void ValidateInput(BertInput input, int maxTokens)
+    internal static void ValidateInput(BertInput input, int maxTokens, int vocabularySize, int padTokenId,
+        int clsTokenId, int sepTokenId)
     {
         ArgumentNullException.ThrowIfNull(input);
         if (input.Length < 2 || input.Length > maxTokens || input.AttentionMask.Length != input.Length
@@ -208,8 +219,8 @@ internal sealed class BertSession : IDisposable
         for (int i = 0; i < input.Length; i++)
         {
             long id = input.InputIds.Span[i], mask = input.AttentionMask.Span[i], type = input.TokenTypeIds.Span[i];
-            if (id < 0 || id >= BertModelProfile.VocabularySize || mask is not (0 or 1) || type is not (0 or 1)
-                || (mask == 1 && padding) || (mask == 0 && (id != BertModelProfile.PadTokenId || type != 0)))
+            if (id < 0 || id >= vocabularySize || mask is not (0 or 1) || type is not (0 or 1)
+                || (mask == 1 && padding) || (mask == 0 && (id != padTokenId || type != 0)))
             {
                 throw new ArgumentException("Invalid BERT token id, segment id, mask, or right padding.", nameof(input));
             }
@@ -218,7 +229,7 @@ internal sealed class BertSession : IDisposable
             visible += (int)mask;
         }
 
-        if (visible < 2 || input.InputIds.Span[0] != 101 || input.InputIds.Span[visible - 1] != 102)
+        if (visible < 2 || input.InputIds.Span[0] != clsTokenId || input.InputIds.Span[visible - 1] != sepTokenId)
         {
             throw new ArgumentException("BERT rows must contain CLS first and SEP as the last visible token.", nameof(input));
         }

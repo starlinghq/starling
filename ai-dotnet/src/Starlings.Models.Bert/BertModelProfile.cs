@@ -16,16 +16,39 @@ public enum BertTask
 /// <summary>Pinned source identity and exact processing semantics of one experimental candidate.</summary>
 public sealed class BertModelProfile
 {
-    private BertModelProfile(string id, ModelAssetLock sourceLock, BertTask task, int maxTokens,
-        string pooling, int hiddenSize, string normalize, IReadOnlyDictionary<string, string> prompts)
+    /// <summary>Per-repository BERT processing semantics.</summary>
+    private readonly record struct BertSpec(
+        BertTask Task, int MaxTokens, string Pooling, int HiddenSize, string Normalize,
+        int VocabularySize, int ClsTokenId, int SepTokenId, int PadTokenId,
+        string OutputName, string TokenizerProfile, bool TokenTypeIds);
+
+    /// <summary>Common BERT/WordPiece geometry; pass overrides for other tokenizers or geometries.</summary>
+    private static BertSpec Bert(BertTask task, int maxTokens, string pooling, int hiddenSize, string normalize,
+        int vocabularySize = 30522, int clsTokenId = 101, int sepTokenId = 102, int padTokenId = 0,
+        string? outputName = null, string tokenizerProfile = "bert-wordpiece-uncased", bool tokenTypeIds = true)
+    {
+        outputName ??= task == BertTask.Embeddings ? "last_hidden_state" : "logits";
+        return new BertSpec(task, maxTokens, pooling, hiddenSize, normalize,
+            vocabularySize, clsTokenId, sepTokenId, padTokenId, outputName, tokenizerProfile, tokenTypeIds);
+    }
+
+    private BertModelProfile(string id, ModelAssetLock sourceLock, BertSpec spec,
+        IReadOnlyDictionary<string, string> prompts)
     {
         Id = id;
         SourceLock = sourceLock;
-        Task = task;
-        MaxTokens = maxTokens;
-        Pooling = pooling;
-        HiddenSize = hiddenSize;
-        Normalize = normalize;
+        Task = spec.Task;
+        MaxTokens = spec.MaxTokens;
+        Pooling = spec.Pooling;
+        HiddenSize = spec.HiddenSize;
+        Normalize = spec.Normalize;
+        VocabularySize = spec.VocabularySize;
+        ClsTokenId = spec.ClsTokenId;
+        SepTokenId = spec.SepTokenId;
+        PadTokenId = spec.PadTokenId;
+        OutputName = spec.OutputName;
+        TokenizerProfile = spec.TokenizerProfile;
+        TokenTypeIds = spec.TokenTypeIds;
         Prompts = new ReadOnlyDictionary<string, string>(new Dictionary<string, string>(prompts));
         RuntimeLock = new ModelAssetLock(id, sourceLock.Repository, sourceLock.Revision,
             [sourceLock.GetFile(GraphFile), sourceLock.GetFile(TokenizerFile)]);
@@ -49,10 +72,20 @@ public sealed class BertModelProfile
     public int HiddenSize { get; }
     /// <summary>Embedding normalization (l2 or none, per-repository).</summary>
     public string Normalize { get; }
-    /// <summary>Right-padding id of the admitted uncased BERT tokenizer.</summary>
-    public const int PadTokenId = 0;
+    /// <summary>Right-padding id of the tokenizer.</summary>
+    public int PadTokenId { get; }
     /// <summary>Exclusive token id upper bound.</summary>
-    public const int VocabularySize = 30522;
+    public int VocabularySize { get; }
+    /// <summary>Classification (first) token id.</summary>
+    public int ClsTokenId { get; }
+    /// <summary>Separator (last) token id.</summary>
+    public int SepTokenId { get; }
+    /// <summary>Graph output name to pool (token-level for embeddings, scalar for reranking).</summary>
+    public string OutputName { get; }
+    /// <summary>Declared tokenizer profile.</summary>
+    public string TokenizerProfile { get; }
+    /// <summary>Whether the graph takes token_type_ids (BERT segment ids); false for XLM-R/ModernBERT.</summary>
+    public bool TokenTypeIds { get; }
     /// <summary>Graph path inside the pinned snapshot.</summary>
     public const string GraphFile = "onnx/model.onnx";
     /// <summary>Owned tokenizer asset path.</summary>
@@ -78,16 +111,19 @@ public sealed class BertModelProfile
         ArgumentException.ThrowIfNullOrWhiteSpace(id);
         var origin = root.GetProperty("origin");
         string repository = origin.GetProperty("repo").GetString()!;
-        var (task, maxTokens, pooling, hiddenSize, normalize) = repository switch
+        var spec = repository switch
         {
-            "sentence-transformers/all-MiniLM-L6-v2" => (BertTask.Embeddings, 256, "mean", 384, "l2"),
-            "BAAI/bge-small-en-v1.5" => (BertTask.Embeddings, 512, "cls", 384, "l2"),
-            "BAAI/bge-base-en-v1.5" => (BertTask.Embeddings, 512, "cls", 768, "l2"),
-            "cross-encoder/ms-marco-MiniLM-L6-v2" => (BertTask.Reranking, 512, "none", 384, "none"),
-            "nomic-ai/nomic-embed-text-v1.5" => (BertTask.Embeddings, 8192, "mean", 768, "none"),
+            "sentence-transformers/all-MiniLM-L6-v2" => Bert(BertTask.Embeddings, 256, "mean", 384, "l2"),
+            "BAAI/bge-small-en-v1.5" => Bert(BertTask.Embeddings, 512, "cls", 384, "l2"),
+            "BAAI/bge-base-en-v1.5" => Bert(BertTask.Embeddings, 512, "cls", 768, "l2"),
+            "cross-encoder/ms-marco-MiniLM-L6-v2" => Bert(BertTask.Reranking, 512, "none", 384, "none"),
+            "nomic-ai/nomic-embed-text-v1.5" => Bert(BertTask.Embeddings, 8192, "mean", 768, "none"),
+            "BAAI/bge-m3" => Bert(BertTask.Embeddings, 8192, "cls", 1024, "l2",
+                vocabularySize: 250002, clsTokenId: 0, sepTokenId: 2, padTokenId: 1,
+                outputName: "token_embeddings", tokenizerProfile: "xlmr-unigram", tokenTypeIds: false),
             _ => throw new NotSupportedException($"Unsupported BERT repository '{repository}'."),
         };
-        Require(root, "task", task == BertTask.Embeddings ? "embeddings" : "reranking");
+        Require(root, "task", spec.Task == BertTask.Embeddings ? "embeddings" : "reranking");
         var runtime = root.GetProperty("runtime");
         Require(runtime, "backend", "onnx");
         Require(runtime, "version", "1.30.0");
@@ -99,15 +135,15 @@ public sealed class BertModelProfile
         Require(behavior, "tokenizer_file", TokenizerFile);
         Require(behavior, "padding_side", "right");
         Require(behavior, "truncation", "longest_first");
-        Require(behavior, "tokenizer_profile", "bert-wordpiece-uncased");
-        Require(behavior, "pooling", pooling);
-        Require(behavior, "normalize", normalize);
-        Require(behavior, "output_name", task == BertTask.Embeddings ? "last_hidden_state" : "logits");
-        Require(behavior, "max_tokens", maxTokens);
-        Require(behavior, "hidden_size", hiddenSize);
-        Require(behavior, "pad_token_id", PadTokenId);
-        Require(behavior, "vocabulary_size", VocabularySize);
-        if (task == BertTask.Reranking)
+        Require(behavior, "tokenizer_profile", spec.TokenizerProfile);
+        Require(behavior, "pooling", spec.Pooling);
+        Require(behavior, "normalize", spec.Normalize);
+        Require(behavior, "output_name", spec.OutputName);
+        Require(behavior, "max_tokens", spec.MaxTokens);
+        Require(behavior, "hidden_size", spec.HiddenSize);
+        Require(behavior, "pad_token_id", spec.PadTokenId);
+        Require(behavior, "vocabulary_size", spec.VocabularySize);
+        if (spec.Task == BertTask.Reranking)
         {
             Require(behavior, "score_activation", "identity");
         }
@@ -124,7 +160,7 @@ public sealed class BertModelProfile
         var assetLock = new ModelAssetLock(id, repository, origin.GetProperty("revision").GetString()!,
             origin.GetProperty("files").EnumerateArray().Select(f => new ModelAssetFile(
                 f.GetProperty("path").GetString()!, f.GetProperty("size").GetInt64(), f.GetProperty("sha256").GetString()!)));
-        return new BertModelProfile(id, assetLock, task, maxTokens, pooling, hiddenSize, normalize, prompts);
+        return new BertModelProfile(id, assetLock, spec, prompts);
     }
 
     private static void Require(JsonElement parent, string key, string expected)
