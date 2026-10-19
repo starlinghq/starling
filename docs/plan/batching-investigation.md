@@ -1,6 +1,6 @@
 # Batching investigation
 
-Status: integrated on branch `worktree-batching-investigation`, 2026-10-17. Not pushed. Everything new is opt-in: with default options every model's outputs are unchanged bit for bit, no capability status was raised, no profile maturity changed, and nothing under `model-pipeline/protected/` or in a tolerances file was edited. CUDA has not been measured yet; that is the next step (section 5).
+Status: merged through PR #126, with the RunPod measurement of 2026-10-18 in section 5 (`docs/evidence/batching-sweep-2026-10-18/`). Everything new is opt-in: with default options every model's outputs are unchanged bit for bit. No capability status was raised, no profile maturity changed, and nothing under `model-pipeline/protected/` or in a tolerances file was edited.
 
 ## 1. The plan
 
@@ -81,8 +81,8 @@ Five branches were merged with merge commits: `batching/qwen-note`, `batching/ke
 - A shared internal chunk planner (`ai-dotnet/src/Shared/Batching/BatchPlan.cs`), compiled into E5, BERT, GLiNER2 and EmbeddingGemma 2. It sorts rows by length (stable) when asked and packs chunks greedily within `MaxBatchSize` rows and an optional padded-cell budget. Results are scattered back to input order. Without sorting or a budget, the chunks are the same as before.
 - `E5EncoderOptions.MaxBatchTokens` / `SortByLength`, `Gliner2ExtractorOptions.MaxBatchTokens` / `SortByLength`, `EmbeddingGemma2EncoderOptions.SortByLength` (and `EmbeddingGemma2MultimodalOptions.SortByLength` for the text encoder it builds).
 - BERT: `BertTextEmbedder.Create` and `BertReranker.Create` take `maxBatchTokens` and `sortByLength`. This is source-compatible but changes the binary signature.
-- New capabilities, all Experimental: `batch.token_budget` (E5, GLiNER2) and `batch.sort_by_length` (E5, GLiNER2, EmbeddingGemma 2).
-- Not applied: the CPU default change for e5 (`MaxBatchSize` 32 to 8). It is proposed only and waits for the RunPod sweep.
+- New capabilities, all Experimental: `batch.token_budget` (E5, GLiNER2) and `batch.sort_by_length` (E5, GLiNER2, EmbeddingGemma 2), and for BERT `BertCapabilities.BatchTokenBudget` and `BatchSortByLength`.
+- Not applied: the CPU default change for e5 (`MaxBatchSize` 32 to 8). The RunPod sweep did not support it (section 5).
 - Not done: the CUDA plumbing (IO binding, attention fusion, arena / `gpu_mem_limit`). It is still to be evaluated on the pod.
 
 ### Phase 2: cross-request micro-batching (`batching/scheduler`)
@@ -204,32 +204,46 @@ On CPU, micro-batching loses clearly to plain concurrency, as the e5 evidence pr
 | GLiNER2 | 2.0 | 0.518 |
 | EmbeddingGemma 2 | 0.4 | 0.226 |
 
-## 5. Pending RunPod measurement
+## 5. RunPod measurement (2026-10-18)
 
-Run `tools/ci/runpod-batching-bench.sh <sha> <out> --quick` first, then the full grid, on an RTX 3090 pod. The pod checks the commit out from origin, so the branch has to be pushed first. The run must answer:
+One RTX 3090 pod in EU-CZ-1, CPU quota 31 on an AMD EPYC 7H12, commit `16b02ef`. Raw records, summaries, environment and caveats are in `docs/evidence/batching-sweep-2026-10-18/`. Every measured cell, on CUDA and CPU and in every configuration, stayed within the profile's padded-batch tolerance against the same item run alone. Figures are items/s; "plain concurrency" means single-item calls from 1, 4 or 16 concurrent callers with no batching.
 
-1. **Phase 0 baseline on CUDA and on the pod's CPU:**
-   - batch × concurrency for e5, EmbeddingGemma 2 text and GLiNER2 on short, long and mixed workloads;
-   - peak VRAM and RSS;
-   - the CPU intra-op thread sweep sized to the container's CPU quota.
-   This also exercises the CUDA path for the first time (nvidia-smi VRAM sampler, `.Cuda` sweep runs, CUDA libraries from the eg2-cuda wheels).
-2. **Per-provider defaults:** whether e5's CPU `MaxBatchSize` should drop from 32 to about 8, and whether CUDA keeps a larger value. Decide from the `default-mbs` runs and the baseline grid.
-3. **SortByLength and MaxBatchTokens on CUDA**, against the baseline on mixed and long workloads.
-   - Every cell must stay within the padded-batch tolerance. On CUDA, padded batches are not bit-identical to single calls, so this is the first real check of the sorted and budgeted bound there.
-   - Then decide whether either option should become a default per provider. That is a maintainer decision; the options stay Experimental until then.
-4. **Micro-batching adoption gate:** compare `micro-w0-r8` and `micro-w2-r16` (single-item callers) with `b1-baseline` (plain concurrency) at c = 4 and 16 on CUDA and CPU.
-   - Adopt only if micro-batching clearly beats plain concurrency at both levels.
-   - Even then it stays Experimental until a G4 soak with micro-batching passes.
-   - For GLiNER2 on CUDA, whose calls are serialized today, this is the main expected win.
-   - Also check the micro-batched quality on CUDA within the tolerances. The cells record it.
-5. **Kev on CUDA:** whether GroupQueryAttention has the same batch limit, and how uncached batched compares with cached sequential. Run it with `tests/Starlings.Models.Kev.Tests` (`STARLING_KEV_BATCH_BENCH`); it is not part of the sweep.
-6. **Qwen3.5 on CUDA:**
-   - serialized concurrency at 1, 4 and 16 for fp32x and fp16x;
-   - the batch experiment with the CUDA natives (`docs/evidence/qwen35-batched-generation/batch-experiment`).
-   This is not part of the sweep either.
-7. **CUDA plumbing from Phase 1:** IO binding, attention fusion, and arena / `gpu_mem_limit`, with `use_tf32=0` kept. Evaluate only once the sweep shows where the time goes.
+### CUDA (RTX 3090, intra-op 4)
 
-Also still open:
+| Workload | e5 | GLiNER2 | EmbeddingGemma 2 |
+| --- | --- | --- | --- |
+| short, best explicit batch vs best plain concurrency | 8,507 (b64 c4) vs 1,938: 4.4× | 603 (b64 c4) vs 227: 2.7× | 1,279 (b64 c4) vs 203: 6.3× |
+| mixed, unsorted 8-row runs vs **sorted** 8-row runs | 482 vs **986** | 110 vs **214** | 84 vs **175** |
+| mixed, best plain concurrency | 858 (c16) | 147 (c1) | 142 (c16) |
+| long, best batch vs best plain concurrency | 364 sorted vs 351 | 76 vs 61 | 80 sorted vs 69 |
+| micro-batching vs plain concurrency, short c4 / c16 | 786 vs 1,319 / 3,902 vs 1,938 | **373 vs 129 / 568 vs 130** | 167 vs 173 / 576 vs 203 |
+| micro-batching vs plain concurrency, mixed c4 / c16 | 428 vs 731 / 399 vs 858 | 139 vs 105 / 98 vs 106 | 78 vs 131 / 67 vs 142 |
+| micro-batching vs plain concurrency, long c4 / c16 | 262 vs 316 / 298 vs 349 | **69 vs 60 / 74 vs 59** | 59 vs 67 / 65 vs 69 |
 
-- **EmbeddingGemma 2 image and video tests:** the integrated branch passed the full `Starlings.Models.EmbeddingGemma2.Tests` project on CPU with `--parallel none` (164 passed, 0 failed, 19 skipped). The 19 skipped tests are the image and video parity, preprocessing and sampling tests, whose assets are not in the local cache. Run them where the assets are present, such as the pod.
-- **Scheduling choices pending the benchmark:** the micro-batcher runs one batch at a time on one dispatcher thread, and its defaults (MaxRows 8, MaxWait 0) are provisional.
+### CPU (31-CPU quota, intra-op 16, shared host: ratios only)
+
+| Workload | e5 | GLiNER2 | EmbeddingGemma 2 |
+| --- | --- | --- | --- |
+| short, best batch vs best plain concurrency | 1,141 (b16 c16) vs 776: 1.5× | plain concurrency best (97 at c16) | 150 (b8 c16) vs 92: 1.6× |
+| mixed, best batch vs best plain concurrency | 101 sorted+tokens vs **109** | 12 sorted vs **25** | 8.5 vs **14.6** |
+| long, best batch vs best plain concurrency | 58 sorted+tokens vs 36 | 6.5 tokens vs **8.1** | 9.5 vs 6.9 |
+| micro-batching vs plain concurrency, c16 | slower: 5.3× short, 3.6× mixed, 1.5× long | slower: 4× short, 5.3× mixed, 2× long | not measured (run cap) |
+
+Intra-op threads against concurrency (e5 mixed, single-item callers): with 16 callers, 8 threads gave 140 items/s, 16 threads 109 and 31 threads 63 (oversubscribed). With one caller, 31 threads were best (42). GLiNER2 shows the same shape.
+
+### What the evidence supports
+
+1. **`SortByLength` is the effective explicit-batch technique for mixed-length traffic on CUDA.** It doubles throughput over unsorted chunking for all three models, and with large calls it beats plain concurrency (e5 1.15×, GLiNER2 1.45×, EmbeddingGemma 2 1.23×). The cost is latency, because the gain needs large calls: p50 of 0.25 s to 5.8 s at b64. Recommendation: keep it opt-in (Experimental) and document it for offline and bulk embedding on CUDA. Whether it becomes a default is a maintainer decision; this run is its first CUDA quality check (all cells within tolerance).
+2. **`MaxBatchTokens` alone does not pay.** It was neutral everywhere, and with sorting it was slightly worse than sorting alone (except GLiNER2 mixed). Keep it as a memory bound, not a throughput tool.
+3. **Micro-batching passes the adoption gate (beat plain concurrency at both c4 and c16) only for GLiNER2 on CUDA, on short (2.9× / 4.4×) and long (1.15× / 1.25×) inputs.** GLiNER2's CUDA calls are serialized today, and micro-batching turns that queue into batches. On mixed lengths it wins at c4 and loses narrowly at c16. For e5 and EmbeddingGemma 2 it helps short inputs at c16 only, and it loses on mixed lengths (about 0.5×) and on every CPU workload. Recommendation: keep `MicroBatching` opt-in and Experimental; document GLiNER2-on-CUDA as the use case; run a G4 soak with it before any status change.
+4. **Why micro-batching loses on mixed lengths:** it queues in arrival order, so a batch pads to its longest item (padding efficiency about 0.6). Its single dispatcher also serializes work that concurrent callers otherwise overlap. The next iteration is length-aware queueing (sort or bucket the pending queue) and more than one batch in flight.
+5. **e5 CPU default `MaxBatchSize` stays 32.** With one caller on this host, 32 matched or beat 8 (long b32 26.9 vs 19.5; mixed 27.6 vs 28.8). The earlier i7 figure (b32 25% below b1) did not reproduce, so the change is not justified.
+6. **CPU: concurrency, not batching, for mixed traffic.** Size intra-op threads × concurrent callers to the cores: 16 callers at 8 threads beat 16 at 16 threads on a 31-CPU quota.
+7. **GPU memory has no admission control.** EmbeddingGemma 2's long b32 c16 cell (16 concurrent runs of 32 rows × 512 tokens) exhausted the 3090's 24 GB in the ORT CUDA arena and aborted the process. The library throws `OnnxRuntimeException`; the harness crashed because the exception escaped a worker thread. An arena limit (`gpu_mem_limit`) or a token-cell admission bound per session (the plan's Phase 1 CUDA plumbing) is the follow-up. The sweep now guards these cells (`SWEEP_MAX_INFLIGHT_CUDA_EG2`), and the EmbeddingGemma 2 CUDA baseline was rerun with the guard (`eg2-cuda-rerun/`, commit `8c9b816`). Every cell passed, and the results agree with the first run: short b64 c4 1,274 vs 221 for plain concurrency (5.8×), long b8 c4 75 vs 70, mixed best with plain concurrency at c16 (144). Only the guarded b32 and b64 cells at c16 were skipped.
+
+### Still open
+
+- **Micro-batcher iteration:** length-aware queueing and more than one batch in flight, then re-measure. Also a G4 soak with micro-batching for GLiNER2 on CUDA.
+- **CUDA memory admission:** `gpu_mem_limit` or token-cell admission, measured against the long-input cells that failed.
+- **Not measured on the pod:** Kev on CUDA (whether GroupQueryAttention has the same batch limit), Qwen3.5 serialized concurrency and the batch experiment on CUDA, EmbeddingGemma 2 CPU thread sweep and CPU configurations (run cap), and the Phase 1 CUDA plumbing (IO binding, attention fusion).
+- **EmbeddingGemma 2 image and video:** the tests skipped locally because their assets are absent; run them where the assets are present.
