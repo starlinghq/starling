@@ -105,6 +105,12 @@ Their candidate contracts are in [`model-pipeline/candidates/`](model-pipeline/c
 
 **Release status:** `0.2.0`, published on [nuget.org](https://www.nuget.org/packages?q=Starlings.Models) on 2026-10-17 ([GitHub release](https://github.com/starlinghq/starling/releases/tag/ai-v0.2.0)), is the first release with Stable profiles: the Stable profiles above, Qwen tool calling and the FFmpeg video adapters ([release record](docs/releases/ai-0.2.0.md)). It depends on `Starlings.Tokenizers` `0.3.0`.
 
+## How a model becomes a package
+
+[![Machine view of the model delivery pipeline: twelve stations on a conveyor, from discovering an upstream model to publishing a package that runs offline in your app](docs/assets/machine-view.svg)](docs/assets/machine-view.svg)
+
+Every model goes through the same twelve stages of the [delivery pipeline](docs/plan/fast-faithful-ai-dotnet.md#8-the-repeatable-model-delivery-pipeline), drawn here as a production line. The original Python implementation runs once, from pinned code and weights, to cut a golden master: protected fixtures and tolerances that only the maintainer can change. Later stages are measured against it: the tokenizer, the exported graph in Python ONNX Runtime, then the same graph from C#. `model-pipeline evaluate` names the first stage that diverges. Gates G0 to G7 decide whether a profile is Stable, a maintainer approves each release, and the packages carry asset locks rather than weights. Your app downloads the weights once, verifies their hashes and then runs offline. Open the image for the full-size animated view.
+
 ## Why Starling
 
 | If you would otherwise... | The trade-off | With Starling |
