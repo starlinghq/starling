@@ -91,7 +91,7 @@ Choosing a text embedder? See [choosing an embedding model](docs/guides/choosing
 | [GLiNER2](https://huggingface.co/fastino/gliner2-base-v1) | Zero-shot entity extraction with any labels | `Starlings.Models.Gliner2` | Stable | Stable |
 | [Qwen3.5-0.8B](https://huggingface.co/Qwen/Qwen3.5-0.8B) | Chat and text generation | `Starlings.Models.Qwen35` (+ `.Extensions.AI`) | Stable | Stable (fp32x and fp16x) |
 
-**Experimental, source only (not on nuget.org):** three more libraries build and test on `main` but have no Stable profile and were not published with 0.2.0 ([release record](docs/releases/ai-0.2.0.md#packages)). Build them from this repository. The release drill packs `Starlings.Models.Kev`, which ships with the next release; `Starlings.Models.Bert` and `Starlings.Models.QwenChat` are not in the drill's package set.
+**Experimental, on nuget.org from 0.3.0:** `Starlings.Models.Kev` (Kev-0.8B and Kev-4B decision models, CPU and CUDA) and `Starlings.Models.QwenChat` (Qwen3-0.6B and Qwen2.5-0.5B-Instruct text chat, CPU) have no Stable profile; their model files download from public hosting ([release record](docs/releases/ai-0.3.0.md#packages)). `Starlings.Models.Bert` builds and tests on `main` but is not published; build it from this repository.
 
 | Model | What it does | Project | Status |
 | --- | --- | --- | --- |
@@ -103,7 +103,7 @@ Their candidate contracts are in [`model-pipeline/candidates/`](model-pipeline/c
 
 **Stable** means every release gate passed: provenance, numerical parity and task quality against the Python reference, a one-hour leak soak, benchmarks, a clean install from the packages, and integration. It also means regression runs continue: weekly on CPU, and on a GPU before every release for CUDA. Stable on CUDA means Linux x64 with an NVIDIA GeForce RTX 3090, where every CUDA gate and the per-release GPU run take place; other GPUs are untested. On Linux, GLiNER2 (CPU and CUDA) and EmbeddingGemma 2 video on CUDA also need `MALLOC_MMAP_THRESHOLD_=65536` in the process environment; see each package README. The [model catalog](docs/catalog/README.md) links each gate to its evidence, and the [compatibility matrix](docs/catalog/compatibility-matrix.md) lists each platform and provider.
 
-**Release status:** `0.2.0`, published on [nuget.org](https://www.nuget.org/packages?q=Starlings.Models) on 2026-10-17 ([GitHub release](https://github.com/starlinghq/starling/releases/tag/ai-v0.2.0)), is the first release with Stable profiles: the Stable profiles above, Qwen tool calling and the FFmpeg video adapters ([release record](docs/releases/ai-0.2.0.md)). It depends on `Starlings.Tokenizers` `0.3.0`.
+**Release status:** `0.3.0`, published on [nuget.org](https://www.nuget.org/packages?q=Starlings.Models) on 2026-10-19 ([GitHub release](https://github.com/starlinghq/starling/releases/tag/ai-v0.3.0)), adds the Experimental Kev and QwenChat packages, opt-in batching and the public stop-string matcher; every Stable profile of 0.2.0 is unchanged ([release record](docs/releases/ai-0.3.0.md)). It depends on `Starlings.Tokenizers` `0.3.0`.
 
 ## How a model becomes a package
 
