@@ -412,6 +412,7 @@ expect_deps() {
             echo "Starlings.Runtime.Onnx [$ai_version]"
             echo "Starlings.Tokenizers [$tok_version]" ;;
         Starlings.Models.QwenChat)
+            echo "Starlings.Acquisition [$ai_version]"
             echo "Starlings.Generation.OnnxGenAI [$ai_version]"
             echo "Starlings.Tokenizers [$tok_version]" ;;
     esac
