@@ -85,6 +85,38 @@ public class RealModelTests(EmbeddingGemma2GeneratorFixture fixture, ITestOutput
         Assert.True(stats.MinCosine >= Tolerances.MinCosine);
     }
 
+    [Fact]
+    public async Task MicroBatchedSingleCallsMeetThePaddedBatchTolerance()
+    {
+        // Experimental micro-batching over the fixture's encoder: query rows as concurrent one-value calls, coalesced into
+        // mixed-length padded batches of up to 8 rows. Each must equal a single call within the protected
+        // padded_batch_vs_single bound and the protected embedding within embedding_max_abs.
+        var embedder = fixture.Generator.Embedder;
+        using var generator = new EmbeddingGemma2EmbeddingGenerator(embedder, new EmbeddingGemma2EmbeddingGeneratorOptions
+        {
+            Prompt = EmbeddingGemma2Prompt.Query,
+            MicroBatching = new() { MaxRows = 8, MaxWait = TimeSpan.FromMilliseconds(20) },
+        });
+        var rows = fixture.Rows.Where(r => r.Prompt == "query" && r.InputIds.Length < 400).Take(24).ToList();
+        var calls = rows.Select(r => Task.Run(() => generator.GenerateVectorAsync(r.Text, cancellationToken: Ct), Ct)).ToArray();
+        var vectors = await Task.WhenAll(calls);
+
+        var vsSingle = new EmbeddingGemma2ErrorStats();
+        var vsProtected = new EmbeddingGemma2ErrorStats();
+        for (int i = 0; i < rows.Count; i++)
+        {
+            vsSingle.Add(rows[i].Key, vectors[i].Span, embedder.Embed(rows[i].Text, EmbeddingGemma2Prompt.Query, Ct));
+            vsProtected.Add(rows[i].Key, vectors[i].Span, rows[i].Embedding);
+        }
+
+        var stats = generator.MicroBatchingStatistics!.Value;
+        output.WriteLine($"micro-batched, {rows.Count} concurrent calls in {stats.Batches} batches (padding efficiency {(double)stats.Tokens / stats.TokenCells:P1}); vs single: {vsSingle}; vs protected: {vsProtected}");
+        Assert.Equal(rows.Count, stats.Items);
+        Assert.False(vsSingle.NonFinite);
+        Assert.True(vsSingle.Max <= Tolerances.PaddedBatchVsSingleMaxAbs, $"micro-batched vs single {vsSingle.Max:E3}");
+        Assert.True(vsProtected.Max <= Tolerances.EmbeddingMaxAbs, $"micro-batched vs protected {vsProtected.Max:E3}");
+    }
+
     [Theory]
     [InlineData(512)]
     [InlineData(256)]

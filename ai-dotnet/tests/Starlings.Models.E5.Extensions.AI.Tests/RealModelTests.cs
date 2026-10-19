@@ -103,6 +103,38 @@ public class RealModelTests(E5GeneratorFixture fixture, ITestOutputHelper output
     }
 
     [Fact]
+    public async Task MicroBatchedSingleCallsMeetThePaddedBatchTolerance()
+    {
+        // Experimental micro-batching over the fixture's encoder: the 46 fixture texts as concurrent one-value calls,
+        // coalesced into mixed-length padded batches of up to 8 rows. Each must equal a single call within the protected
+        // padded_batch_vs_single bound and the protected embedding within embedding_max_abs.
+        var embedder = fixture.Generator.Embedder;
+        using var generator = new E5EmbeddingGenerator(embedder, new E5EmbeddingGeneratorOptions
+        {
+            MicroBatching = new() { MaxRows = 8, MaxWait = TimeSpan.FromMilliseconds(20) },
+        });
+        var cases = E5Fixtures.Cases;
+        var texts = cases.Select(c => E5Fixtures.Texts[c.Id]).ToList();
+        var calls = texts.Select(t => Task.Run(() => generator.GenerateVectorAsync(t, cancellationToken: Ct), Ct)).ToArray();
+        var vectors = await Task.WhenAll(calls);
+
+        var vsSingle = new ErrorStats();
+        var vsProtected = new ErrorStats();
+        for (int i = 0; i < cases.Count; i++)
+        {
+            vsSingle.Add(vectors[i].Span, embedder.Embed(texts[i], Ct));
+            vsProtected.Add(vectors[i].Span, cases[i].Embedding);
+        }
+
+        var stats = generator.MicroBatchingStatistics!.Value;
+        output.WriteLine($"micro-batched, {cases.Count} concurrent calls in {stats.Batches} batches (padding efficiency {(double)stats.Tokens / stats.TokenCells:P1}); vs single: {vsSingle}; vs protected: {vsProtected}");
+        Assert.Equal(cases.Count, stats.Items);
+        Assert.False(vsSingle.NonFinite);
+        Assert.True(vsSingle.Max <= Tolerances.PaddedBatchVsSingleMaxAbs, $"micro-batched vs single {vsSingle.Max:E3}");
+        Assert.True(vsProtected.Max <= Tolerances.EmbeddingMaxAbs, $"micro-batched vs protected {vsProtected.Max:E3}");
+    }
+
+    [Fact]
     public async Task CancellationInterruptsARunAndTheGeneratorStaysUsable()
     {
         var generator = fixture.Generator;

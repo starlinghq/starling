@@ -340,6 +340,9 @@ def test_consumer_runs_after_clone_and_isolated_package_caches_are_removed(tmp_p
     program = root / distribution.TOOLS["onnx"]
     program.parent.mkdir(parents=True)
     program.write_text("committed consumer program")
+    tool_main = root / distribution.TOOL_MAIN
+    tool_main.parent.mkdir(parents=True)
+    tool_main.write_text("committed tool entry point")
     monkeypatch.setattr(distribution, "load_candidate", lambda path: candidate)
     monkeypatch.setattr(distribution, "code_inputs", lambda *args, **kwargs: {"source": root / "source.txt"})
     monkeypatch.setattr(distribution, "_head", lambda *args: "a" * 40)
@@ -381,6 +384,7 @@ def test_consumer_runs_after_clone_and_isolated_package_caches_are_removed(tmp_p
         assert not Path(env["NUGET_PACKAGES"]).exists()
         assert not Path(env["NUGET_HTTP_CACHE_PATH"]).exists()
         assert (cwd / "Program.cs").read_text() == "committed consumer program"
+        assert (cwd / "ToolMain.cs").read_text() == "committed tool entry point"
         assert not list(ET.parse(cwd / "Consumer.csproj").iter("ProjectReference"))
         evidence = Path(argv[argv.index("--out") + 1])
         (evidence / "dotnet.json").write_text(

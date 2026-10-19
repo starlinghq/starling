@@ -24,16 +24,38 @@ public sealed record E5EncoderOptions
     public long VocabularySize { get; init; } = 250_037;
 
     /// <summary>
-    /// Rows per ONNX Runtime call. Larger batches run as consecutive chunks of this size, each padded to its own
-    /// longest row. Bounds temporary memory: hidden states take rows x width x 384 x 4 bytes. Default 32.
+    /// Rows per ONNX Runtime call at most. Larger batches run as consecutive chunks of this size (see also
+    /// <see cref="MaxBatchTokens"/> and <see cref="SortByLength"/>), each padded to its own longest row.
+    /// Bounds temporary memory: hidden states take rows x width x 384 x 4 bytes. Default 32.
     /// </summary>
     public int MaxBatchSize { get; init; } = 32;
+
+    /// <summary>
+    /// Padded cells (rows x longest row) per ONNX Runtime call at most, or <see langword="null"/> (default) for no
+    /// token budget. A chunk closes before it would exceed the budget; a single row longer than the budget runs alone.
+    /// Bounds temporary memory and attention work for long inputs. Chunks are never larger than
+    /// <see cref="MaxBatchSize"/> rows. Experimental (capability <c>batch.token_budget</c>).
+    /// </summary>
+    public int? MaxBatchTokens { get; init; }
+
+    /// <summary>
+    /// When <see langword="true"/>, rows are ordered by ascending token length (ties in input order) before they are
+    /// chunked, so each call pads less, and results are scattered back to input order. Outputs then depend on which
+    /// rows share a call and differ from the default within the profile's padded-batch-vs-single bound, not bit for
+    /// bit. Default <see langword="false"/>: chunks are consecutive rows in input order, as qualified. Experimental
+    /// (capability <c>batch.sort_by_length</c>).
+    /// </summary>
+    public bool SortByLength { get; init; }
 
     internal void Validate()
     {
         ArgumentNullException.ThrowIfNull(Session);
         ArgumentOutOfRangeException.ThrowIfLessThan(MaxSequenceLength, 1);
         ArgumentOutOfRangeException.ThrowIfLessThan(MaxBatchSize, 1);
+        if (MaxBatchTokens is { } maxBatchTokens)
+        {
+            ArgumentOutOfRangeException.ThrowIfLessThan(maxBatchTokens, 1, nameof(MaxBatchTokens));
+        }
         ArgumentOutOfRangeException.ThrowIfNegative(PadTokenId);
         ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(VocabularySize, PadTokenId);
     }

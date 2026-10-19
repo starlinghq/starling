@@ -9,7 +9,7 @@
       honest, and maturity (Experimental, Preview, Stable) is per model profile in each README, not a package label. The current
       version is 0.2.0 (published 2026-10-17 from tag ai-v0.2.0); the next is set by its release-candidate change. A published version is immutable. The tokenizer keeps its own version and cadence; Directory.Packages.props pins it exactly.
     -->
-    <VersionPrefix>0.2.0</VersionPrefix>
-    <PackageReleaseNotes>https://github.com/starlinghq/starling/blob/main/docs/releases/ai-0.2.0.md</PackageReleaseNotes>
+    <VersionPrefix>0.3.0</VersionPrefix>
+    <PackageReleaseNotes>https://github.com/starlinghq/starling/blob/main/docs/releases/ai-0.3.0.md</PackageReleaseNotes>
   </PropertyGroup>
 </Project>

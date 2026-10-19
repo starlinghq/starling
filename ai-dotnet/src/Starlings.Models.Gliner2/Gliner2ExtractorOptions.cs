@@ -1,4 +1,5 @@
 using Starlings.Runtime.Onnx;
+using Starlings.Runtime.Onnx.Batching;
 
 namespace Starlings.Models.Gliner2;
 
@@ -28,10 +29,28 @@ public sealed record Gliner2ExtractorOptions
     public int MaxSequenceLength { get; init; } = ProfileMaxSequenceLength;
 
     /// <summary>
-    /// Texts per ONNX Runtime call. Larger batches run as consecutive padded chunks of this size. Default 8,
+    /// Texts per ONNX Runtime call at most. Larger batches run as consecutive padded chunks of this size (see also
+    /// <see cref="MaxBatchTokens"/> and <see cref="SortByLength"/>). Default 8,
     /// GLiNER2's default <c>batch_size</c>.
     /// </summary>
     public int MaxBatchSize { get; init; } = 8;
+
+    /// <summary>
+    /// Padded token cells (texts x longest text, schema prefix included) per ONNX Runtime call at most, or
+    /// <see langword="null"/> (default) for no token budget. A chunk closes before it would exceed the budget; a single
+    /// text longer than the budget runs alone. Chunks are never larger than <see cref="MaxBatchSize"/> texts.
+    /// Experimental (capability <c>batch.token_budget</c>).
+    /// </summary>
+    public int? MaxBatchTokens { get; init; }
+
+    /// <summary>
+    /// When <see langword="true"/>, texts are ordered by ascending token count (ties in input order) before they are
+    /// chunked, so each call pads less, and results are returned in input order. Logits then depend on which texts
+    /// share a call and differ from the default within the profile's padded-batch-vs-single bound, not bit for bit.
+    /// Default <see langword="false"/>: chunks are consecutive texts in input order, as qualified. Experimental
+    /// (capability <c>batch.sort_by_length</c>).
+    /// </summary>
+    public bool SortByLength { get; init; }
 
     /// <summary>
     /// Whether graph calls from concurrent requests run one at a time. Null (default) serializes them on CUDA, where
@@ -40,6 +59,19 @@ public sealed record Gliner2ExtractorOptions
     /// </summary>
     public bool? SerializeNativeCalls { get; init; }
 
+    /// <summary>
+    /// Cross-request micro-batching for <see cref="Gliner2EntityExtractor.ExtractAsync(string, IReadOnlyList{string}, IReadOnlyDictionary{string, string}?, float?, CancellationToken)"/>
+    /// (Experimental, capability <c>micro_batching</c>), or null (default): off, <c>ExtractAsync</c> runs on the calling
+    /// thread like <see cref="Gliner2EntityExtractor.Extract"/>. When set, <c>ExtractAsync</c> prepares and validates the
+    /// text on the calling thread, then queues it; one dispatcher thread runs the queued texts of concurrent callers
+    /// that share a schema (the same labels in the same order and the same descriptions) in padded batches
+    /// (<see cref="MicroBatcher{TItem, TResult}"/>; <see cref="MaxBatchSize"/> still splits each batch into graph
+    /// calls), and each caller decodes its own spans with its own threshold. The synchronous methods never queue. A
+    /// queued text's logits then depend on the other texts in its batch: equal to a single call within the profile's
+    /// padded-batch tolerance, not bit for bit reproducible.
+    /// </summary>
+    public MicroBatchingOptions? MicroBatching { get; init; }
+
     internal void Validate()
     {
         ArgumentNullException.ThrowIfNull(Session);
@@ -47,6 +79,12 @@ public sealed record Gliner2ExtractorOptions
         ArgumentOutOfRangeException.ThrowIfLessThan(MaxSequenceLength, 1);
         ArgumentOutOfRangeException.ThrowIfGreaterThan(MaxSequenceLength, ProfileMaxSequenceLength);
         ArgumentOutOfRangeException.ThrowIfLessThan(MaxBatchSize, 1);
+        if (MaxBatchTokens is { } maxBatchTokens)
+        {
+            ArgumentOutOfRangeException.ThrowIfLessThan(maxBatchTokens, 1, nameof(MaxBatchTokens));
+        }
+
+        MicroBatching?.Validate();
     }
 
     internal static void ValidateThreshold(float threshold, string name)

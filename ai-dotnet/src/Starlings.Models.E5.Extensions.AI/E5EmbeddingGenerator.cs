@@ -1,4 +1,5 @@
 using Microsoft.Extensions.AI;
+using Starlings.Runtime.Onnx.Batching;
 
 namespace Starlings.Models.E5.Extensions.AI;
 
@@ -19,6 +20,16 @@ namespace Starlings.Models.E5.Extensions.AI;
 /// call: the encoder runs consecutive ONNX Runtime calls of at most <see cref="E5EncoderOptions.MaxBatchSize"/> rows,
 /// each right-padded to its own longest row. Results are in input order; <see cref="GeneratedEmbeddings{T}.Usage"/>
 /// reports the token count (special tokens and any prefix included, after truncation to 512).
+/// </para>
+/// <para>
+/// <b>Micro-batching (Experimental, opt-in).</b> With <see cref="E5EmbeddingGeneratorOptions.MicroBatching"/> set,
+/// a call with exactly one value is tokenized and validated on the calling thread (an invalid value fails only its own
+/// call), queued, and embedded together with other callers' queued values on one dispatcher thread; the returned task
+/// completes when that batch has run. The embedding then depends on the concurrent traffic within the padded-batch
+/// tolerance. Cancelling a queued call removes its value; cancelling a dispatched one cancels its task at once without
+/// stopping the batch the other callers wait for. <see cref="Dispose"/> faults queued calls with
+/// <see cref="ObjectDisposedException"/> and waits for a running batch. Calls with several values run as described
+/// above.
 /// </para>
 /// <para>
 /// <b>Cancellation.</b> The token is checked before each value is tokenized, before each chunk of
@@ -58,6 +69,7 @@ public sealed class E5EmbeddingGenerator : IEmbeddingGenerator<string, Embedding
     private readonly E5Encoder? _ownedEncoder;
     private readonly E5EmbeddingGeneratorOptions _options;
     private readonly EmbeddingGeneratorMetadata _metadata;
+    private readonly MicroBatcher<EncoderInput, float[]>? _batcher;
     private int _disposed;
 
     /// <summary>Wraps an existing embedder. Neither it nor its encoder is owned or disposed by this instance.</summary>
@@ -74,6 +86,12 @@ public sealed class E5EmbeddingGenerator : IEmbeddingGenerator<string, Embedding
         _options = options;
         _ownedEncoder = ownedEncoder;
         _metadata = new EmbeddingGeneratorMetadata(ProviderName, providerUri: null, options.ModelId, embedder.Encoder.Dimension);
+        if (options.MicroBatching is { } microBatching)
+        {
+            var encoder = embedder.Encoder;
+            _batcher = new MicroBatcher<EncoderInput, float[]>(
+                (inputs, token) => encoder.EmbedBatch(inputs, token), microBatching, static input => input.Length);
+        }
     }
 
     /// <summary>Options in effect.</summary>
@@ -114,7 +132,10 @@ public sealed class E5EmbeddingGenerator : IEmbeddingGenerator<string, Embedding
     }
 
     /// <inheritdoc />
-    /// <remarks>Runs synchronously and returns a completed task; see the class remarks for batching, cancellation and options.</remarks>
+    /// <remarks>
+    /// Runs synchronously and returns a completed task, except a one-value call with micro-batching on; see the class
+    /// remarks for batching, micro-batching, cancellation and options.
+    /// </remarks>
     public Task<GeneratedEmbeddings<Embedding<float>>> GenerateAsync(
         IEnumerable<string> values,
         EmbeddingGenerationOptions? options = null,
@@ -122,7 +143,10 @@ public sealed class E5EmbeddingGenerator : IEmbeddingGenerator<string, Embedding
     {
         try
         {
-            return Task.FromResult(Generate(values, options, cancellationToken));
+            var texts = Prepare(values, options, cancellationToken);
+            return _batcher is not null && texts.Count == 1
+                ? GenerateQueuedAsync(_batcher, texts[0], cancellationToken)
+                : Task.FromResult(Generate(texts, cancellationToken));
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
@@ -168,11 +192,19 @@ public sealed class E5EmbeddingGenerator : IEmbeddingGenerator<string, Embedding
     {
         if (Interlocked.Exchange(ref _disposed, 1) == 0)
         {
+            // Queued calls fault; a running batch finishes before the encoder goes.
+            _batcher?.Dispose();
             _ownedEncoder?.Dispose();
         }
     }
 
-    private GeneratedEmbeddings<Embedding<float>> Generate(IEnumerable<string> values, EmbeddingGenerationOptions? options, CancellationToken cancellationToken)
+    /// <summary>
+    /// Statistics of the micro-batcher (batches, items, padding, queue and run time), or null when micro-batching is off.
+    /// Experimental.
+    /// </summary>
+    public MicroBatcherStatistics? MicroBatchingStatistics => _batcher?.GetStatistics();
+
+    private List<string> Prepare(IEnumerable<string> values, EmbeddingGenerationOptions? options, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(values);
         ObjectDisposedException.ThrowIf(Volatile.Read(ref _disposed) != 0, this);
@@ -195,6 +227,25 @@ public sealed class E5EmbeddingGenerator : IEmbeddingGenerator<string, Embedding
             texts.Add(prefix.Length == 0 ? value : prefix + value);
         }
 
+        return texts;
+    }
+
+    private async Task<GeneratedEmbeddings<Embedding<float>>> GenerateQueuedAsync(MicroBatcher<EncoderInput, float[]> batcher, string text, CancellationToken cancellationToken)
+    {
+        // Validated here, so an invalid value fails this call alone and never the batch it would have joined.
+        var input = _embedder.Tokenizer.Tokenize(text);
+        _embedder.Encoder.Validate(input);
+        float[] vector = await batcher.EnqueueAsync(input, cancellationToken).ConfigureAwait(false);
+        var result = new GeneratedEmbeddings<Embedding<float>>(1)
+        {
+            new Embedding<float>(vector) { ModelId = _options.ModelId, CreatedAt = DateTimeOffset.UtcNow },
+        };
+        result.Usage = new UsageDetails { InputTokenCount = input.Length, TotalTokenCount = input.Length };
+        return result;
+    }
+
+    private GeneratedEmbeddings<Embedding<float>> Generate(List<string> texts, CancellationToken cancellationToken)
+    {
         var tokenCounts = new int[texts.Count];
         float[][] vectors = _embedder.EmbedBatch(texts, tokenCounts, cancellationToken);
         var createdAt = DateTimeOffset.UtcNow;

@@ -48,6 +48,41 @@ public class CpuParityTests(E5CpuFixture fixture, ITestOutputHelper output) : IC
         E5ParityChecks.AllCasesInBatches(chunked, 46, Tolerances, singles, output);
     }
 
+    /// <summary>
+    /// The experimental batching options against the binding bounds: length-sorted chunks, a token budget, and both,
+    /// over random orders of the fixture cases (lengths up to 512 interleaved).
+    /// </summary>
+    [Fact]
+    public void SortedAndTokenBudgetedBatchesStayWithinThePaddedBatchBound()
+    {
+        var encoder = fixture.Encoder;
+        var singles = E5Fixtures.Cases.ToDictionary(c => c.Id, c => encoder.Embed(new EncoderInput(c.InputIds), TestContext.Current.CancellationToken), StringComparer.Ordinal);
+        int[] seeds = [1, 2, 3];
+        using (var sorted = new E5Encoder(encoder.Session, new E5EncoderOptions { MaxBatchSize = 8, SortByLength = true }))
+        {
+            E5ParityChecks.ShuffledBatches(sorted, seeds, Tolerances, singles, output);
+        }
+
+        using (var budgeted = new E5Encoder(encoder.Session, new E5EncoderOptions { MaxBatchTokens = 1024 }))
+        {
+            E5ParityChecks.ShuffledBatches(budgeted, seeds, Tolerances, singles, output);
+        }
+
+        using var both = new E5Encoder(encoder.Session, new E5EncoderOptions { MaxBatchSize = 16, MaxBatchTokens = 2048, SortByLength = true });
+        E5ParityChecks.ShuffledBatches(both, seeds, Tolerances, singles, output);
+
+        // Padding efficiency (real tokens / padded cells) of the plans on one random order: informational.
+        var order = Enumerable.Range(0, E5Fixtures.Cases.Count).ToArray();
+        new Random(1).Shuffle(order);
+        var inputs = order.Select(i => new EncoderInput(E5Fixtures.Cases[i].InputIds)).ToList();
+        long tokens = inputs.Sum(i => (long)i.Length);
+        foreach (var options in new[] { new E5EncoderOptions { MaxBatchSize = 8 }, new E5EncoderOptions { MaxBatchSize = 8, SortByLength = true } })
+        {
+            var plan = E5Encoder.Plan(inputs, options);
+            output.WriteLine($"plan MaxBatchSize 8, SortByLength {options.SortByLength}: {plan.Chunks.Count} calls, {plan.PaddedCells} padded cells for {tokens} tokens, efficiency {(double)tokens / plan.PaddedCells:P1}");
+        }
+    }
+
     [Fact]
     public void AllNodesRunOnCpu()
     {

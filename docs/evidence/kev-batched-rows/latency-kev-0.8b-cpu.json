@@ -1,0 +1,140 @@
+{
+  "model": "Kev08B",
+  "intra_op_threads": "4",
+  "processors": 12,
+  "reps": 2,
+  "results": [
+    {
+      "state_tokens": 46,
+      "questions": 8,
+      "branch_tokens_min": 16,
+      "branch_tokens_max": 155,
+      "branch_tokens_sum": 432,
+      "variant": "cached sequential (Run, default)",
+      "min_ms": 3279,
+      "max_ms": 3387.4,
+      "max_abs_vs_sequential": 0
+    },
+    {
+      "state_tokens": 46,
+      "questions": 8,
+      "branch_tokens_min": 16,
+      "branch_tokens_max": 155,
+      "branch_tokens_sum": 432,
+      "variant": "uncached sequential (RunUncached)",
+      "min_ms": 5098.7,
+      "max_ms": 5266.1,
+      "max_abs_vs_sequential": 0
+    },
+    {
+      "state_tokens": 46,
+      "questions": 8,
+      "branch_tokens_min": 16,
+      "branch_tokens_max": 155,
+      "branch_tokens_sum": 432,
+      "variant": "uncached batched b4 sorted",
+      "min_ms": 6576.2,
+      "max_ms": 6628.2,
+      "max_abs_vs_sequential": 0
+    },
+    {
+      "state_tokens": 46,
+      "questions": 8,
+      "branch_tokens_min": 16,
+      "branch_tokens_max": 155,
+      "branch_tokens_sum": 432,
+      "variant": "uncached batched b8 sorted",
+      "min_ms": 10128.6,
+      "max_ms": 11001,
+      "max_abs_vs_sequential": 0
+    },
+    {
+      "state_tokens": 134,
+      "questions": 8,
+      "branch_tokens_min": 16,
+      "branch_tokens_max": 155,
+      "branch_tokens_sum": 432,
+      "variant": "cached sequential (Run, default)",
+      "min_ms": 3857.2,
+      "max_ms": 3921.3,
+      "max_abs_vs_sequential": 0
+    },
+    {
+      "state_tokens": 134,
+      "questions": 8,
+      "branch_tokens_min": 16,
+      "branch_tokens_max": 155,
+      "branch_tokens_sum": 432,
+      "variant": "uncached sequential (RunUncached)",
+      "min_ms": 9505.2,
+      "max_ms": 9755.8,
+      "max_abs_vs_sequential": 1.4901161193847656E-08
+    },
+    {
+      "state_tokens": 134,
+      "questions": 8,
+      "branch_tokens_min": 16,
+      "branch_tokens_max": 155,
+      "branch_tokens_sum": 432,
+      "variant": "uncached batched b4 sorted",
+      "min_ms": 10872,
+      "max_ms": 11057.4,
+      "max_abs_vs_sequential": 1.4901161193847656E-08
+    },
+    {
+      "state_tokens": 134,
+      "questions": 8,
+      "branch_tokens_min": 16,
+      "branch_tokens_max": 155,
+      "branch_tokens_sum": 432,
+      "variant": "uncached batched b8 sorted",
+      "min_ms": 14742.5,
+      "max_ms": 14916.3,
+      "max_abs_vs_sequential": 1.4901161193847656E-08
+    },
+    {
+      "state_tokens": 530,
+      "questions": 8,
+      "branch_tokens_min": 16,
+      "branch_tokens_max": 155,
+      "branch_tokens_sum": 432,
+      "variant": "cached sequential (Run, default)",
+      "min_ms": 6453.9,
+      "max_ms": 6584.2,
+      "max_abs_vs_sequential": 0
+    },
+    {
+      "state_tokens": 530,
+      "questions": 8,
+      "branch_tokens_min": 16,
+      "branch_tokens_max": 155,
+      "branch_tokens_sum": 432,
+      "variant": "uncached sequential (RunUncached)",
+      "min_ms": 28966.2,
+      "max_ms": 29600,
+      "max_abs_vs_sequential": 0
+    },
+    {
+      "state_tokens": 530,
+      "questions": 8,
+      "branch_tokens_min": 16,
+      "branch_tokens_max": 155,
+      "branch_tokens_sum": 432,
+      "variant": "uncached batched b4 sorted",
+      "min_ms": 31909.8,
+      "max_ms": 32230.8,
+      "max_abs_vs_sequential": 0
+    },
+    {
+      "state_tokens": 530,
+      "questions": 8,
+      "branch_tokens_min": 16,
+      "branch_tokens_max": 155,
+      "branch_tokens_sum": 432,
+      "variant": "uncached batched b8 sorted",
+      "min_ms": 33469,
+      "max_ms": 35990.9,
+      "max_abs_vs_sequential": 0
+    }
+  ]
+}

@@ -18,6 +18,7 @@
 
   <ItemGroup>
     <Compile Include="../Core/*.cs" Link="Core/%(Filename)%(Extension)" />
+    <Compile Include="../Core/Batching/SweepTargets.cs" Link="Core/Batching/SweepTargets.cs" />
     <Compile Include="../../tests/Shared/Gliner2/Gliner2TestAssets.cs" Link="Shared/Gliner2TestAssets.cs" />
     <Compile Include="../../tests/Shared/Gliner2/Gliner2ParityChecks.cs" Link="Shared/Gliner2ParityChecks.cs" />
   </ItemGroup>

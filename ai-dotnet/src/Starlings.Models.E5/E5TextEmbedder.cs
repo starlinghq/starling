@@ -40,6 +40,9 @@ public sealed class E5TextEmbedder
     /// <summary>The encoder (dimension, options, session diagnostics). Not owned by this instance.</summary>
     public E5Encoder Encoder => _encoder;
 
+    /// <summary>The tokenizer. Not owned by this instance.</summary>
+    public IEncoderTokenizer Tokenizer => _tokenizer;
+
     /// <summary>Embeds texts in order, tokenized as given.</summary>
     public float[][] EmbedBatch(IReadOnlyList<string> texts, CancellationToken cancellationToken = default)
     {

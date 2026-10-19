@@ -14,7 +14,7 @@ namespace Starlings.Benchmarks;
 /// <see cref="Gliner2EntityExtractor.RunModel"/>) and <c>decode</c> (span decoding to entities:
 /// <see cref="Gliner2EntityExtractor.Decode"/>).
 /// </summary>
-internal sealed class Gliner2Driver : IBenchDriver
+internal sealed class Gliner2Driver : IBenchDriver, ISweepDriver
 {
     public const string ReferencePath = "model-pipeline/protected/gliner2-base-v1/onnx-fp32-cpu/extraction.jsonl";
 
@@ -31,6 +31,10 @@ internal sealed class Gliner2Driver : IBenchDriver
     public string Usage => $"  model: ${Gliner2TestAssets.SnapshotEnvironmentVariable} or $STARLING_MODELS (acquisition cache); never downloads.";
 
     public IBenchRun Load(HarnessContext context) => new Gliner2Run(context, Files());
+
+    public IReadOnlyCollection<string> WiredSweepHooks => SweepOptions.AllHooks;
+
+    public ISweepTarget LoadSweep(HarnessContext context, SweepOptions options) => new Gliner2SweepTarget(context, options);
 
     public JsonObject Artifacts(HarnessContext context)
     {

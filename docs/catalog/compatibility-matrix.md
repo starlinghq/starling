@@ -27,6 +27,8 @@ Platform (OS, architecture) by runtime and execution provider by profile. A cell
 
 | Profile | Runtime version | Maturity | linux-x64 cpu | linux-x64 cuda | windows-x64 cpu | windows-x64 cuda |
 | --- | --- | --- | --- | --- | --- | --- |
+| qwen2.5-0.5b-instruct/ortgenai-fp32-cpu | 0.17.1 | experimental | experimental (2026-10-18) | unrecorded | untested | unrecorded |
+| qwen3-0.6b/ortgenai-fp32-cpu | 0.17.1 | experimental | experimental (2026-10-18) | unrecorded | untested | unrecorded |
 | qwen3.5-0.8b/ortgenai-fp16x-cuda | 0.17.1 | stable | unrecorded | supported (2026-10-16) | unrecorded | untested |
 | qwen3.5-0.8b/ortgenai-fp32x-cpu | 0.17.1 | stable | supported (2026-10-16) | unrecorded | untested | unrecorded |
 | qwen3.5-0.8b/ortgenai-fp32x-cuda | 0.17.1 | stable | unrecorded | supported (2026-10-16) | unrecorded | untested |

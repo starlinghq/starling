@@ -129,6 +129,9 @@
           "xunit.v3.runner.common": "[4.0.1]"
         }
       },
+      "starlings.acquisition": {
+        "type": "Project"
+      },
       "starlings.generation.onnxgenai": {
         "type": "Project",
         "dependencies": {
@@ -139,6 +142,7 @@
       "starlings.models.qwenchat": {
         "type": "Project",
         "dependencies": {
+          "Starlings.Acquisition": "[0.2.0, )",
           "Starlings.Generation.OnnxGenAI": "[0.2.0, )",
           "Starlings.Tokenizers": "[0.3.1-preview.1, 0.3.1-preview.1]"
         }

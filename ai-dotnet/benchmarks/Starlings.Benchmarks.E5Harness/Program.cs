@@ -20,6 +20,16 @@ int ToolBody()
         return args.Length == 0 ? 2 : 0;
     }
 
+    if (args[0] == "sweep")
+    {
+#if ORT_CUDA
+        const bool cudaBuild = true;
+#else
+        const bool cudaBuild = false;
+#endif
+        return BatchSweep.Command(args[1..], "Starlings.Benchmarks.E5Harness", cudaBuild, (context, sweep) => new E5SweepTarget(context, sweep), SweepOptions.AllHooks);
+    }
+
     try
     {
         var options = HarnessOptions.Parse(args.Skip(1).ToArray());
@@ -112,6 +122,7 @@ internal static class Harness
 {
     public const string Usage = """
         usage: E5Harness warm|cold --provider cpu|cuda --out <raw.jsonl> [options]
+               E5Harness sweep --out <sweep.jsonl> [options]   batching sweep (sweep --help; --snapshot as below)
           --impl library|direct     library: E5Tokenizer + E5Encoder public API (default); direct: raw InferenceSession
           --threads N               intra_op_num_threads (default: ORT default)    --inter-threads N (default 1)
           --snapshot <dir>          e5 snapshot (default: $STARLING_E5_SNAPSHOT, else the acquisition cache)

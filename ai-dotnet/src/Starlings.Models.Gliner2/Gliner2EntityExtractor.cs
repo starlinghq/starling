@@ -1,4 +1,6 @@
+using Starlings.Batching;
 using Starlings.Runtime.Onnx;
+using Starlings.Runtime.Onnx.Batching;
 using Microsoft.ML.OnnxRuntime;
 
 namespace Starlings.Models.Gliner2;
@@ -25,10 +27,20 @@ namespace Starlings.Models.Gliner2;
 /// </para>
 /// <para>
 /// <b>Threading and lifetime.</b> Methods are synchronous and safe to call concurrently. Cancellation follows E5 and
-/// <see cref="OnnxModelSession"/>: checked while preparing each text, before each chunk of
-/// <see cref="Gliner2ExtractorOptions.MaxBatchSize"/> texts and inside a run (between graph nodes on CPU; on CUDA when
-/// the run completes). A cancelled call
+/// <see cref="OnnxModelSession"/>: checked while preparing each text, before each chunk (at most
+/// <see cref="Gliner2ExtractorOptions.MaxBatchSize"/> texts and, when set,
+/// <see cref="Gliner2ExtractorOptions.MaxBatchTokens"/> padded tokens) and inside a run (between graph nodes on CPU;
+/// on CUDA when the run completes). A cancelled call
 /// throws <see cref="OperationCanceledException"/> and returns nothing; the extractor stays usable.
+/// </para>
+/// <para>
+/// <b>Micro-batching (Experimental, opt-in).</b> With <see cref="Gliner2ExtractorOptions.MicroBatching"/> set,
+/// <see cref="ExtractAsync(string, IReadOnlyList{string}, IReadOnlyDictionary{string, string}?, float?, CancellationToken)"/>
+/// prepares and length-checks the text on the calling thread (an invalid text fails only its own call), queues it, and
+/// runs it in one padded batch with other callers' queued texts of the same schema on one dispatcher thread; each caller
+/// decodes with its own threshold. On CUDA this replaces one-at-a-time serialized calls with batched ones. Cancelling a
+/// queued call removes it; cancelling a dispatched one cancels its task at once without stopping the batch.
+/// <see cref="Dispose"/> faults queued calls with <see cref="ObjectDisposedException"/> and waits for a running batch.
 /// </para>
 /// </remarks>
 public sealed class Gliner2EntityExtractor : IDisposable
@@ -60,6 +72,7 @@ public sealed class Gliner2EntityExtractor : IDisposable
     private readonly bool _ownsSession;
     private readonly Gliner2Preprocessor _preprocessor;
     private readonly Gliner2ExtractorOptions _options;
+    private readonly MicroBatcher<Gliner2ModelInput, Gliner2ModelOutput>? _batcher;
     private int _disposed;
 
     private Gliner2EntityExtractor(OnnxModelSession session, bool ownsSession, Gliner2Preprocessor preprocessor, Gliner2ExtractorOptions options)
@@ -71,6 +84,14 @@ public sealed class Gliner2EntityExtractor : IDisposable
         _options = options;
         bool serialize = options.SerializeNativeCalls ?? session.Diagnostics.SessionProviders[0] == OnnxRuntimeInfo.CudaProviderName;
         _runGate = serialize ? new SemaphoreSlim(1, 1) : null;
+        if (options.MicroBatching is { } microBatching)
+        {
+            _batcher = new MicroBatcher<Gliner2ModelInput, Gliner2ModelOutput>(
+                (inputs, token) => RunModelCore(inputs, enforceLengthLimit: true, token),
+                microBatching,
+                static input => input.TokenCount,
+                static input => new SchemaKey(input.SchemaTokens));
+        }
     }
 
     /// <summary>
@@ -197,6 +218,60 @@ public sealed class Gliner2EntityExtractor : IDisposable
     }
 
     /// <summary>
+    /// Extracts entities of the given labels from one text, as a task. Without
+    /// <see cref="Gliner2ExtractorOptions.MicroBatching"/> it runs on the calling thread exactly as
+    /// <see cref="Extract"/> and returns a completed task. With it, the text is prepared and validated on the calling
+    /// thread, then queued and run in a padded batch with other callers' texts of the same schema (Experimental; see the
+    /// class remarks). Failures are never thrown synchronously: they are in the returned task.
+    /// </summary>
+    /// <param name="text">English text (valid Unicode).</param>
+    /// <param name="labels">Entity labels; duplicates are ignored after the first, order and case matter to the model.</param>
+    /// <param name="threshold">Score threshold in [0, 1]; null for <see cref="Gliner2ExtractorOptions.Threshold"/>.</param>
+    /// <param name="cancellationToken">Cancels this call only: before or during its run, or while it is queued.</param>
+    public Task<Gliner2ExtractionResult> ExtractAsync(string text, IReadOnlyList<string> labels, float? threshold = null, CancellationToken cancellationToken = default) =>
+        ExtractAsync(text, labels, null, threshold, cancellationToken);
+
+    /// <summary>
+    /// As <see cref="ExtractAsync(string, IReadOnlyList{string}, float?, CancellationToken)"/>, with label descriptions
+    /// (Experimental, <see cref="Gliner2Capabilities"/>). Only texts with the same labels and descriptions share a batch.
+    /// </summary>
+    /// <param name="text">English text (valid Unicode).</param>
+    /// <param name="labels">Entity labels; duplicates are ignored after the first, order and case matter to the model.</param>
+    /// <param name="descriptions">Label descriptions (label to description), or null.</param>
+    /// <param name="threshold">Score threshold in [0, 1]; null for <see cref="Gliner2ExtractorOptions.Threshold"/>.</param>
+    /// <param name="cancellationToken">Cancels this call only: before or during its run, or while it is queued.</param>
+    public Task<Gliner2ExtractionResult> ExtractAsync(
+        string text, IReadOnlyList<string> labels, IReadOnlyDictionary<string, string>? descriptions, float? threshold = null, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            if (_batcher is null)
+            {
+                ArgumentNullException.ThrowIfNull(text);
+                return Task.FromResult(ExtractBatch([text], labels, descriptions, threshold, cancellationToken)[0]);
+            }
+
+            return ExtractQueuedAsync(_batcher, text, labels, descriptions, threshold, cancellationToken);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            return Task.FromCanceled<Gliner2ExtractionResult>(cancellationToken);
+        }
+#pragma warning disable CA1031 // Every failure is reported through the returned task, never thrown synchronously.
+        catch (Exception ex)
+#pragma warning restore CA1031
+        {
+            return Task.FromException<Gliner2ExtractionResult>(ex);
+        }
+    }
+
+    /// <summary>
+    /// Statistics of the micro-batcher (batches, items, padding, queue and run time), or null when micro-batching is off.
+    /// Experimental.
+    /// </summary>
+    public MicroBatcherStatistics? MicroBatchingStatistics => _batcher?.GetStatistics();
+
+    /// <summary>
     /// Stage 1: builds the model input GLiNER2 would build (normalization, words, schema prefix, token ids, routing
     /// positions). Does not check the length limit; <see cref="RunModel"/> does.
     /// </summary>
@@ -209,7 +284,9 @@ public sealed class Gliner2EntityExtractor : IDisposable
 
     /// <summary>
     /// Stage 2: runs the graph on prepared inputs in right-padded batches of <see cref="Gliner2ExtractorOptions.MaxBatchSize"/>
-    /// (ids and mask padded with 0, word positions padded with 0). All inputs must share one label count.
+    /// (ids and mask padded with 0, word positions padded with 0). All inputs must share one label count. Outputs are in
+    /// input order; <see cref="Gliner2ExtractorOptions.MaxBatchTokens"/> and
+    /// <see cref="Gliner2ExtractorOptions.SortByLength"/> change only how inputs are grouped into calls.
     /// </summary>
     /// <exception cref="Gliner2InputTooLongException">An input exceeds <see cref="Gliner2ExtractorOptions.MaxSequenceLength"/>.</exception>
     /// <exception cref="ArgumentException">Inputs with different label counts.</exception>
@@ -254,14 +331,26 @@ public sealed class Gliner2EntityExtractor : IDisposable
         }
 
         var outputs = new Gliner2ModelOutput[inputs.Count];
-        for (int start = 0; start < inputs.Count; start += _options.MaxBatchSize)
+        var plan = Plan(inputs, _options);
+        foreach (var chunk in plan.Chunks)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            int count = Math.Min(_options.MaxBatchSize, inputs.Count - start);
-            RunChunk(inputs, start, count, outputs, cancellationToken);
+            RunChunk(inputs, plan.Rows(chunk).ToArray(), outputs, cancellationToken);
         }
 
         return outputs;
+    }
+
+    /// <summary>The chunk plan <see cref="RunModel"/> runs, over token counts (schema prefix included).</summary>
+    internal static BatchPlan Plan(IReadOnlyList<Gliner2ModelInput> inputs, Gliner2ExtractorOptions options)
+    {
+        var lengths = new int[inputs.Count];
+        for (int i = 0; i < lengths.Length; i++)
+        {
+            lengths[i] = inputs[i].TokenCount;
+        }
+
+        return BatchPlan.Create(lengths, options.MaxBatchSize, options.MaxBatchTokens, options.SortByLength);
     }
 
     /// <summary>Stage 3: GLiNER2's span decoding of one input's graph outputs, mapped onto the input text.</summary>
@@ -285,10 +374,36 @@ public sealed class Gliner2EntityExtractor : IDisposable
     /// <summary>Disposes the session if this extractor owns it. Idempotent.</summary>
     public void Dispose()
     {
-        if (Interlocked.Exchange(ref _disposed, 1) == 0 && _ownsSession)
+        if (Interlocked.Exchange(ref _disposed, 1) == 0)
         {
-            _session.Dispose();
+            // Queued calls fault; a running batch finishes before the session goes.
+            _batcher?.Dispose();
+            if (_ownsSession)
+            {
+                _session.Dispose();
+            }
         }
+    }
+
+    private async Task<Gliner2ExtractionResult> ExtractQueuedAsync(
+        MicroBatcher<Gliner2ModelInput, Gliner2ModelOutput> batcher,
+        string text,
+        IReadOnlyList<string> labels,
+        IReadOnlyDictionary<string, string>? descriptions,
+        float? threshold,
+        CancellationToken cancellationToken)
+    {
+        // Everything ExtractBatch checks before inference is checked here, so an invalid text fails this call alone and
+        // never the batch it would have joined.
+        ArgumentNullException.ThrowIfNull(text);
+        ObjectDisposedException.ThrowIf(Volatile.Read(ref _disposed) != 0, this);
+        cancellationToken.ThrowIfCancellationRequested();
+        float t = threshold ?? _options.Threshold;
+        Gliner2ExtractorOptions.ValidateThreshold(t, nameof(threshold));
+        var input = _preprocessor.Build(text, Gliner2Preprocessor.NormalizeLabels(labels, nameof(labels)), descriptions);
+        CheckLength(input, 0);
+        var output = await batcher.EnqueueAsync(input, cancellationToken).ConfigureAwait(false);
+        return Decode(input, output, t);
     }
 
     private static void ValidateSignature(OnnxModelSession session)
@@ -335,15 +450,17 @@ public sealed class Gliner2EntityExtractor : IDisposable
         }
     }
 
-    private void RunChunk(IReadOnlyList<Gliner2ModelInput> inputs, int start, int count, Gliner2ModelOutput[] outputs, CancellationToken cancellationToken)
+    /// <summary>Runs the inputs at <paramref name="rows"/> as one padded call; writes <c>outputs[rows[r]]</c>.</summary>
+    private void RunChunk(IReadOnlyList<Gliner2ModelInput> inputs, int[] rows, Gliner2ModelOutput[] outputs, CancellationToken cancellationToken)
     {
+        int count = rows.Length;
         int sequence = 0;
         int words = 0;
-        int slots = inputs[start].SchemaIndex.Length;
+        int slots = inputs[rows[0]].SchemaIndex.Length;
         for (int r = 0; r < count; r++)
         {
-            sequence = Math.Max(sequence, inputs[start + r].TokenCount);
-            words = Math.Max(words, inputs[start + r].WordCount);
+            sequence = Math.Max(sequence, inputs[rows[r]].TokenCount);
+            words = Math.Max(words, inputs[rows[r]].WordCount);
         }
 
         var ids = new long[count * sequence];
@@ -352,7 +469,7 @@ public sealed class Gliner2EntityExtractor : IDisposable
         var schemaIndex = new long[count * slots];
         for (int r = 0; r < count; r++)
         {
-            var input = inputs[start + r];
+            var input = inputs[rows[r]];
             input.InputIds.CopyTo(ids.AsSpan(r * sequence));
             mask.AsSpan(r * sequence, input.TokenCount).Fill(1);
             input.WordIndex.CopyTo(wordIndex.AsSpan(r * words));
@@ -368,7 +485,7 @@ public sealed class Gliner2EntityExtractor : IDisposable
         _runGate?.Wait(cancellationToken);
         try
         {
-            ReadOutputs(inputs, start, count, outputs, words, slots, idsValue, maskValue, wordValue, schemaValue, cancellationToken);
+            ReadOutputs(inputs, rows, outputs, words, slots, idsValue, maskValue, wordValue, schemaValue, cancellationToken);
         }
         finally
         {
@@ -377,9 +494,10 @@ public sealed class Gliner2EntityExtractor : IDisposable
     }
 
     private void ReadOutputs(
-        IReadOnlyList<Gliner2ModelInput> inputs, int start, int count, Gliner2ModelOutput[] outputs, int words, int slots,
+        IReadOnlyList<Gliner2ModelInput> inputs, int[] rows, Gliner2ModelOutput[] outputs, int words, int slots,
         OrtValue idsValue, OrtValue maskValue, OrtValue wordValue, OrtValue schemaValue, CancellationToken cancellationToken)
     {
+        int count = rows.Length;
         using var results = _session.Run(InputNames, [idsValue, maskValue, wordValue, schemaValue], OutputNames, cancellationToken);
 
         var countShape = results[0].GetTensorTypeAndShape().Shape;
@@ -397,7 +515,7 @@ public sealed class Gliner2EntityExtractor : IDisposable
         var spanData = results[1].GetTensorDataAsSpan<float>();
         for (int r = 0; r < count; r++)
         {
-            var input = inputs[start + r];
+            var input = inputs[rows[r]];
             int n = input.WordCount;
             var countLogits = countData.Slice(r * countWidth, countWidth).ToArray();
             var spans = new float[labels * n * maxWidth];
@@ -407,7 +525,35 @@ public sealed class Gliner2EntityExtractor : IDisposable
                 source.CopyTo(spans.AsSpan(label * n * maxWidth));
             }
 
-            outputs[start + r] = new Gliner2ModelOutput(countLogits, spans, labels, n, maxWidth);
+            outputs[rows[r]] = new Gliner2ModelOutput(countLogits, spans, labels, n, maxWidth);
+        }
+    }
+
+    /// <summary>
+    /// Micro-batching group key: the schema tokens of a prepared input (labels in order and the description prompt).
+    /// The threshold is not part of it: it only affects decoding, which each caller does for itself.
+    /// </summary>
+    private sealed class SchemaKey(IReadOnlyList<string> tokens) : IEquatable<SchemaKey>
+    {
+        private readonly IReadOnlyList<string> _tokens = tokens;
+        private readonly int _hash = Hash(tokens);
+
+        public bool Equals(SchemaKey? other) =>
+            other is not null && (ReferenceEquals(this, other) || (_hash == other._hash && _tokens.SequenceEqual(other._tokens, StringComparer.Ordinal)));
+
+        public override bool Equals(object? obj) => Equals(obj as SchemaKey);
+
+        public override int GetHashCode() => _hash;
+
+        private static int Hash(IReadOnlyList<string> tokens)
+        {
+            var hash = default(HashCode);
+            foreach (string token in tokens)
+            {
+                hash.Add(token, StringComparer.Ordinal);
+            }
+
+            return hash.ToHashCode();
         }
     }
 }

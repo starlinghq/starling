@@ -1,0 +1,30 @@
+graph inputs:
+   input_ids ['batch_size', 'sequence_length']
+   attention_mask ['batch_size', 'total_sequence_length']
+   position_ids [3, 'batch_size', 'sequence_length']
+   past_key_values.3.key ['batch_size', 2, 'past_sequence_length', 'kv_cache_dim']
+   past_key_values.7.key ['batch_size', 2, 'past_sequence_length', 'kv_cache_dim']
+   past_key_values.11.key ['batch_size', 2, 'past_sequence_length', 'kv_cache_dim']
+   past_key_values.15.key ['batch_size', 2, 'past_sequence_length', 'kv_cache_dim']
+   past_key_values.19.key ['batch_size', 2, 'past_sequence_length', 'kv_cache_dim']
+   past_key_values.23.key ['batch_size', 2, 'past_sequence_length', 'kv_cache_dim']
+   past_key_values.3.value ['batch_size', 2, 'past_sequence_length', 'kv_cache_dim']
+   past_key_values.7.value ['batch_size', 2, 'past_sequence_length', 'kv_cache_dim']
+   past_key_values.11.value ['batch_size', 2, 'past_sequence_length', 'kv_cache_dim']
+  ... 51 inputs total
+   past.0.conv ['batch_size', 6144, 3]
+   past.0.recurrent ['batch_size', 16, 128, 128]
+ops: [(('', 'MatMul'), 187), (('', 'Reshape'), 114), (('', 'Mul'), 72), (('com.microsoft', 'SkipSimplifiedLayerNormalization'), 48), (('', 'Transpose'), 37), (('', 'LpNormalization'), 36), (('', 'Sigmoid'), 30), (('', 'Split'), 24), (('com.microsoft', 'CausalConvWithState'), 18), (('com.microsoft', 'LinearAttentionGate'), 18), (('com.microsoft', 'LinearAttention'), 18), (('com.microsoft', 'GatedRMSNorm'), 18), (('', 'SimplifiedLayerNormalization'), 13), (('com.microsoft', 'MRotaryEmbedding'), 12), (('', 'Constant'), 11), (('com.microsoft', 'GroupQueryAttention'), 6), (('', 'Cast'), 2), (('', 'Gather'), 2), (('', 'ReduceSum'), 1), (('', 'Sub'), 1), (('', 'Shape'), 1)]
+CausalConvWithState com.microsoft
+   inputs: ['/model/layers.0/linear_attn/qkv_proj/Transpose/output_0', 'model.layers.0.linear_attn.conv1d.weight', 'model.layers.0.linear_attn.conv1d.bias', 'past.0.conv']
+   outputs: ['/model/layers.0/linear_attn/CausalConvWithState/output_0', 'present.0.conv']
+   attrs: [('ndim', 1), ('activation', b'silu'), ('state_window', 0)]
+LinearAttention com.microsoft
+   inputs: ['/model/layers.0/linear_attn/q_scaled/Mul/output_0', '/model/layers.0/linear_attn/k_l2norm/unflat/Reshape/output_0', '/model/layers.0/linear_attn/split_qkv/Split/output_2', 'past.0.recurrent', '/model/layers.0/linear_attn/LinearAttentionGate/output_0', '/model/layers.0/linear_attn/LinearAttentionGate/output_1']
+   outputs: ['/model/layers.0/linear_attn/LinearAttention/output_0', 'present.0.recurrent']
+   attrs: [('q_num_heads', 16), ('kv_num_heads', 16), ('update_rule', b'gated_delta'), ('scale', 1.0), ('state_window', 0)]
+GroupQueryAttention com.microsoft
+   inputs: ['/model/layers.3/attn/q_rotary/MRotaryEmbedding/output_0', '/model/layers.3/attn/k_rotary/MRotaryEmbedding/output_0', '/model/layers.3/attn/v_proj/MatMul/output_0', 'past_key_values.3.key', 'past_key_values.3.value', '/model/attn_mask_reformat/attn_mask_subgraph/Sub/Cast/output_0', '/model/attn_mask_reformat/attn_mask_subgraph/Gather/Cast/output_0', '', '', '', '', '']
+   outputs: ['/model/layers.3/attn/GroupQueryAttention/output_0', 'present.3.key', 'present.3.value']
+   attrs: [('num_heads', 8), ('kv_num_heads', 2), ('scale', 0.0625), ('local_window_size', -1), ('softcap', 0.0), ('do_rotary', 0), ('rotary_interleaved', 0)]
+direct attention_mask consumers: [('ReduceSum', '/model/attn_mask_reformat/attn_mask_subgraph/ReduceSum'), ('Shape', '/model/attn_mask_reformat/attn_mask_subgraph/Shape')]

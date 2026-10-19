@@ -1,0 +1,157 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/starlinghq/starling/model-pipeline/schemas/benchmark-sweep.schema.json",
+  "title": "Batching sweep record (starlings-bench-sweep/1)",
+  "description": "One line of a batching-sweep result file (JSON lines), written by the 'sweep' command of the e5, EmbeddingGemma 2 and GLiNER2 harnesses (ai-dotnet/benchmarks/README.md, 'Batching sweep'). A sibling of starlings-bench-raw/1: the 'run' record carries the same artifacts, environment and settings blocks (mode 'sweep') plus the sweep configuration; one 'cell' record per (set, batch, concurrency) holds raw per-call timings, token and padding counts, memory and the cell's quality check; an 'end' record closes the run (a run without one did not finish). Summaries are computed from these records (model-pipeline bench sweep).",
+  "oneOf": [
+    { "$ref": "#/$defs/run" },
+    { "$ref": "#/$defs/cell" },
+    { "$ref": "#/$defs/end" }
+  ],
+  "$defs": {
+    "msArray": { "type": "array", "items": { "type": "number", "minimum": 0 } },
+    "intArray": { "type": "array", "items": { "type": "integer", "minimum": 0 } },
+    "run": {
+      "type": "object",
+      "required": ["schema", "kind", "run_id", "started_utc", "mode", "model", "profile", "harness", "artifacts", "environment", "settings", "sweep"],
+      "properties": {
+        "schema": { "const": "starlings-bench-sweep/1" },
+        "kind": { "const": "run" },
+        "run_id": { "type": "string", "minLength": 1 },
+        "started_utc": { "type": "string" },
+        "mode": { "const": "sweep" },
+        "model": { "type": "string" },
+        "profile": { "type": "string" },
+        "harness": {
+          "type": "object",
+          "required": ["name", "language", "impl", "version"]
+        },
+        "artifacts": {
+          "type": "object",
+          "required": ["model_sha256", "tokenizer_sha256", "workload_sha256", "fixture_sha256", "git_commit", "git_dirty", "packages"]
+        },
+        "environment": {
+          "type": "object",
+          "required": ["cpu_model", "logical_cpus", "ram_bytes", "ort_version", "gpu", "load_before"]
+        },
+        "settings": {
+          "type": "object",
+          "required": ["provider", "intra_op_num_threads", "max_batch_size"],
+          "properties": { "provider": { "enum": ["cpu", "cuda"] } }
+        },
+        "load_ms": { "type": "object", "additionalProperties": { "type": "number" } },
+        "sweep": {
+          "type": "object",
+          "required": ["sets", "batches", "concurrency", "max_batch_size", "seed", "pools", "quality_check", "tolerance", "tolerance_file"],
+          "properties": {
+            "sets": { "type": "array", "items": { "type": "string" }, "minItems": 1 },
+            "batches": { "type": "array", "items": { "type": "integer", "minimum": 1 }, "minItems": 1 },
+            "concurrency": { "type": "array", "items": { "type": "integer", "minimum": 1 }, "minItems": 1 },
+            "tolerance": { "type": "number", "minimum": 0 },
+            "config": { "type": "string", "description": "Batching configuration label: baseline, sorted, tokensN, micro-wW-rR[-tT], joined with '+'. Absent in files written before it existed (baseline)." },
+            "sort_by_length": { "type": "boolean" },
+            "max_batch_tokens": { "type": ["integer", "null"] },
+            "micro_batching": { "oneOf": [{ "type": "null" }, { "type": "object", "required": ["max_wait_ms", "max_rows"], "properties": { "max_wait_ms": { "type": "number", "minimum": 0 }, "max_rows": { "type": "integer", "minimum": 1 }, "max_tokens": { "type": ["integer", "null"] } } }] }
+          }
+        },
+        "quality": {
+          "description": "The harness's fixture quality sweep (null when it was skipped with --preliminary false).",
+          "oneOf": [{ "type": "null" }, { "type": "object", "required": ["pass"] }]
+        }
+      }
+    },
+    "cell": {
+      "type": "object",
+      "required": [
+        "schema", "kind", "run_id", "model", "provider", "set", "batch", "concurrency", "intra_op_num_threads", "max_batch_size",
+        "n", "items", "wall_ms", "items_per_s", "latency_p50_ms", "padding_efficiency", "ms", "stages_ms",
+        "call_real_tokens", "call_padded_cells", "rss", "quality"
+      ],
+      "properties": {
+        "schema": { "const": "starlings-bench-sweep/1" },
+        "kind": { "const": "cell" },
+        "run_id": { "type": "string", "minLength": 1 },
+        "provider": { "enum": ["cpu", "cuda"] },
+        "set": { "type": "string" },
+        "batch": { "type": "integer", "minimum": 1 },
+        "concurrency": { "type": "integer", "minimum": 1 },
+        "intra_op_num_threads": { "type": ["integer", "null"] },
+        "max_batch_size": { "type": "integer", "minimum": 1 },
+        "max_batch_tokens": { "type": ["integer", "null"] },
+        "config": { "type": "string" },
+        "n": { "type": "integer", "minimum": 0 },
+        "items": { "type": "integer", "minimum": 0 },
+        "wall_ms": { "type": "number", "minimum": 0 },
+        "items_per_s": { "type": "number", "minimum": 0 },
+        "latency_p50_ms": { "type": "number", "minimum": 0 },
+        "latency_p95_ms": { "type": ["number", "null"] },
+        "padding_efficiency": { "type": "number", "minimum": 0, "maximum": 1 },
+        "ms": { "$ref": "#/$defs/msArray" },
+        "offset_ms": { "$ref": "#/$defs/msArray" },
+        "worker": { "$ref": "#/$defs/intArray" },
+        "stages_ms": { "type": "object", "additionalProperties": { "$ref": "#/$defs/msArray" } },
+        "call_real_tokens": { "$ref": "#/$defs/intArray" },
+        "call_padded_cells": { "$ref": "#/$defs/intArray" },
+        "call_runs": { "$ref": "#/$defs/intArray" },
+        "rss": {
+          "type": "object",
+          "required": ["before_bytes", "peak_bytes"],
+          "properties": { "before_bytes": { "type": "integer" }, "peak_bytes": { "type": "integer" } }
+        },
+        "micro_batching": {
+          "description": "Micro-batched configurations: the library batcher's counters over the cell's timed calls (padding_efficiency of the cell is then the dispatched batches').",
+          "oneOf": [
+            { "type": "null" },
+            {
+              "type": "object",
+              "required": ["batches", "items", "mean_rows", "queue_ms_per_item", "run_ms_per_batch"],
+              "properties": {
+                "batches": { "type": "integer", "minimum": 0 },
+                "items": { "type": "integer", "minimum": 0 },
+                "mean_rows": { "type": "number", "minimum": 0 },
+                "tokens": { "type": "integer", "minimum": 0 },
+                "padded_cells": { "type": "integer", "minimum": 0 },
+                "padding_efficiency": { "type": ["number", "null"] },
+                "queue_ms_per_item": { "type": "number", "minimum": 0 },
+                "run_ms_per_batch": { "type": "number", "minimum": 0 },
+                "run_ms_total": { "type": "number", "minimum": 0 }
+              }
+            }
+          ]
+        },
+        "vram": {
+          "oneOf": [
+            { "type": "null" },
+            { "type": "object", "properties": { "before_mib": { "type": ["number", "null"] }, "peak_mib": { "type": ["number", "null"] } } }
+          ]
+        },
+        "quality": {
+          "type": "object",
+          "required": ["check", "items_checked", "max_diff", "tolerance", "finite", "mismatches", "pass"],
+          "properties": {
+            "items_checked": { "type": "integer", "minimum": 0 },
+            "max_diff": { "type": "number", "minimum": 0 },
+            "tolerance": { "type": "number", "minimum": 0 },
+            "finite": { "type": "boolean" },
+            "mismatches": { "type": "integer", "minimum": 0 },
+            "pass": { "type": "boolean" }
+          }
+        }
+      }
+    },
+    "end": {
+      "type": "object",
+      "required": ["schema", "kind", "run_id", "cells", "failed_cells", "pass"],
+      "properties": {
+        "schema": { "const": "starlings-bench-sweep/1" },
+        "kind": { "const": "end" },
+        "run_id": { "type": "string", "minLength": 1 },
+        "cells": { "type": "integer", "minimum": 0 },
+        "preliminary_pass": { "type": ["boolean", "null"] },
+        "failed_cells": { "type": "array", "items": { "type": "string" } },
+        "skipped_cells": { "type": "array", "items": { "type": "string" }, "description": "Cells left out by --max-inflight-items (never measured)." },
+        "pass": { "type": "boolean" }
+      }
+    }
+  }
+}

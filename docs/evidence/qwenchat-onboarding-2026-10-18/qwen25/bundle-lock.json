@@ -1,0 +1,95 @@
+{
+  "builder": {
+    "source_commit": "83de55a1f3886cddbb32a5517e26adb3f9d65159",
+    "version": "0.17.1"
+  },
+  "files": [
+    {
+      "path": "model.onnx",
+      "sha256": "716a2db391784191cc1323417e1ff5bec682673b7105b8ddc4011e7a9f2c4a88",
+      "size": 147574
+    },
+    {
+      "path": "model.onnx.data",
+      "sha256": "4269c6a8f794c9db3f1304c18ead66ca8aa6eb67e57b8bbe1b815cdbdecd7f99",
+      "size": 1984561152
+    },
+    {
+      "path": "genai_config.json",
+      "sha256": "a023918fb6dfdf680b0267bdb4ead00083a954194d8178d8fb1af7a0d9adbe63",
+      "size": 1581
+    },
+    {
+      "path": "tokenizer.json",
+      "sha256": "c0382117ea329cdf097041132f6d735924b697924d6f6fc3945713e96ce87539",
+      "size": 7031645
+    },
+    {
+      "path": "tokenizer_config.json",
+      "sha256": "5b5d4f65d0acd3b2d56a35b56d374a36cbc1c8fa5cf3b3febbbfabf22f359583",
+      "size": 7305
+    },
+    {
+      "path": "chat_template.jinja",
+      "sha256": "cd8e9439f0570856fd70470bf8889ebd8b5d1107207f67a5efb46e342330527f",
+      "size": 2507
+    }
+  ],
+  "float32_config_sha256": "40907b0e04f7ba4a33df79d837572fabd9393e436d2d0550967ce7822ff9112e",
+  "format_version": 1,
+  "origin": {
+    "files": [
+      {
+        "path": "LICENSE",
+        "sha256": "832dd9e00a68dd83b3c3fb9f5588dad7dcf337a0db50f7d9483f310cd292e92e",
+        "size": 11343
+      },
+      {
+        "path": "README.md",
+        "sha256": "b19c806a904db6dc878a0462e70b551f6b7ac78dfbb88c2eb966ca2b9109ae15",
+        "size": 4917
+      },
+      {
+        "path": "config.json",
+        "sha256": "18e18afcaccafade98daf13a54092927904649e1dd4eba8299ab717d5d94ff45",
+        "size": 659
+      },
+      {
+        "path": "generation_config.json",
+        "sha256": "e558847a8b4402616f1273797b015104dc266fe4b520056fca88823ba8f8ebe6",
+        "size": 242
+      },
+      {
+        "path": "merges.txt",
+        "sha256": "599bab54075088774b1733fde865d5bd747cbcc7a547c5bc12610e874e26f5e3",
+        "size": 1671839
+      },
+      {
+        "path": "model.safetensors",
+        "sha256": "fdf756fa7fcbe7404d5c60e26bff1a0c8b8aa1f72ced49e7dd0210fe288fb7fe",
+        "size": 988097824
+      },
+      {
+        "path": "tokenizer.json",
+        "sha256": "c0382117ea329cdf097041132f6d735924b697924d6f6fc3945713e96ce87539",
+        "size": 7031645
+      },
+      {
+        "path": "tokenizer_config.json",
+        "sha256": "5b5d4f65d0acd3b2d56a35b56d374a36cbc1c8fa5cf3b3febbbfabf22f359583",
+        "size": 7305
+      },
+      {
+        "path": "vocab.json",
+        "sha256": "ca10d7e9fb3ed18575dd1e277a2579c16d108e32f27439684afa0e10b1440910",
+        "size": 2776833
+      }
+    ],
+    "repo": "Qwen/Qwen2.5-0.5B-Instruct",
+    "revision": "7ae557604adf67be50417f59c2c2f167def9a775"
+  },
+  "precision": "fp32",
+  "profile": "qwen2.5-0.5b-instruct/ortgenai-fp32-cpu",
+  "provider": "CPUExecutionProvider",
+  "status": "proposed; observed graph bytes require independent review"
+}

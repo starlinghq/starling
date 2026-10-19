@@ -1,0 +1,15 @@
+Command: ["unshare","-rn","/home/mark/.local/share/mise/dotnet-root/dotnet","/tmp/candidate-consumer-2fzw5p2w/consumer/app/Consumer.dll","--candidate","/tmp/candidate-consumer-2fzw5p2w/consumer/candidate.json","--bundle","/tmp/candidate-consumer-2fzw5p2w/model","--corpus","/tmp/candidate-consumer-2fzw5p2w/consumer/corpus.jsonl","--out","/home/mark/Projects/starling/.claude/worktrees/issue-124-publish-qwenchat-kev/artifacts/onboarding/qwen25/stages/distribution/cc71676af60d4cf880bb6a51f7e27aaa/output/consumer-evidence","--threads","2"]
+greeting: prompt=31 completion=9 stop=151645
+arithmetic: prompt=40 completion=8 stop=151645
+system: prompt=24 completion=16 stop=
+multi-turn: prompt=48 completion=2 stop=151645
+assistant-thinking: prompt=63 completion=12 stop=151645
+reasoning-content: prompt=52 completion=1 stop=151645
+whitespace: prompt=22 completion=9 stop=151645
+empty-content: prompt=29 completion=9 stop=151645
+chinese: prompt=35 completion=16 stop=
+unicode: prompt=39 completion=16 stop=
+endoftext-literal: prompt=44 completion=16 stop=
+role-lookalikes: prompt=40 completion=16 stop=
+long-prefill: prompt=387 completion=8 stop=151645
+one-token-limit: prompt=33 completion=1 stop=

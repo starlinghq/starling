@@ -64,6 +64,18 @@ float[][] docs = embedder.EmbedBatch(["As a general guideline, ..."], EmbeddingG
 
 Vectors are normalized, so cosine similarity is the dot product.
 
+### Batching options
+
+`EmbedBatch` splits a batch into ONNX Runtime calls, each right-padded to its longest row. `EmbeddingGemma2EncoderOptions` controls the split:
+
+| Option | Default | Effect |
+| --- | --- | --- |
+| `MaxBatchSize` | 16 | Rows per call at most. |
+| `MaxBatchTokens` | 8,192 | Padded cells (rows x longest row) per call at most; a row longer than the budget runs alone. |
+| `SortByLength` | `false` | Chunks rows in ascending token length (ties in input order) so each call pads less, and writes each result back to its input position. Experimental (`batch.sort_by_length`). `EmbeddingGemma2MultimodalOptions.SortByLength` applies it to text-only inputs of the multimodal embedder; inputs with images or videos keep input order. |
+
+The defaults are the qualified behavior: chunks are consecutive rows in input order, with outputs unchanged bit for bit. With `SortByLength`, which rows share a call depends on the whole batch, so a row's embedding can differ from the default by up to the profile's padded-batch-vs-single bound (CPU tests: at most 1.5e-7 against 5e-6 on 46 fixture rows of 2 to 1,743 tokens in random orders). If a call is cancelled, the `Span<float>` overload may already hold the rows of the chunks that completed: a prefix of the rows by default, the shortest rows with `SortByLength`.
+
 `DownloadAsync` fetches the tokenizer and prompt configuration from `google/embeddinggemma-2` and the text graph from the public Hugging Face repository `Starlinghq/embeddinggemma-2-onnx` at a pinned commit (`EmbeddingGemma2ModelAssets.ModelSource`), with no token. To use a graph you produced yourself with `model-pipeline/reference/embeddinggemma2/release_embeddinggemma2_onnx.py` (the digest must match), use `OpenDirectory`.
 
 ## Images

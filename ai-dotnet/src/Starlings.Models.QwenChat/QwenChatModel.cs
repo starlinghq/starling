@@ -28,7 +28,7 @@ public sealed class QwenChatModel : IDisposable
     /// <summary>Loaded identity and explicit experimental capabilities.</summary>
     public QwenChatModelInfo Info { get; }
 
-    /// <summary>Verify a proposed bundle lock and load CPU fp32. No implicit download occurs.</summary>
+    /// <summary>Verify the bundle against the profile's pinned lock and load CPU fp32. No implicit download occurs.</summary>
     public static QwenChatModel Load(QwenChatProfile profile, string bundleDirectory, QwenChatModelOptions? options = null)
     {
         ArgumentNullException.ThrowIfNull(profile);
@@ -101,39 +101,21 @@ public sealed class QwenChatModel : IDisposable
 
     private static void VerifyBundle(QwenChatProfile profile, string directory)
     {
-        using JsonDocument document = JsonDocument.Parse(File.ReadAllText(Path.Combine(directory, "bundle-lock.json")));
-        JsonElement root = document.RootElement;
-        if (root.GetProperty("format_version").GetInt32() != 1 || root.GetProperty("profile").GetString() != profile.Id ||
-            root.GetProperty("origin").GetProperty("repo").GetString() != profile.Repository ||
-            root.GetProperty("origin").GetProperty("revision").GetString() != profile.Revision ||
-            root.GetProperty("builder").GetProperty("version").GetString() != "0.17.1" ||
-            root.GetProperty("builder").GetProperty("source_commit").GetString() != "83de55a1f3886cddbb32a5517e26adb3f9d65159" ||
-            root.GetProperty("precision").GetString() != "fp32" || root.GetProperty("provider").GetString() != "CPUExecutionProvider")
+        // A local build writes bundle-lock.json; a download (QwenChatModelAssets) has none. Either way every file must
+        // equal the profile's pin.
+        string lockPath = Path.Combine(directory, "bundle-lock.json");
+        if (File.Exists(lockPath))
         {
-            throw new InvalidDataException("Proposed bundle identity differs from the admitted original or pinned builder.");
+            VerifyBuildLock(profile, lockPath);
         }
 
-        var files = new HashSet<string>(StringComparer.Ordinal);
-        foreach (JsonElement file in root.GetProperty("files").EnumerateArray())
+        foreach (QwenChatBundleFile pinned in profile.BundleFiles)
         {
-            string name = file.GetProperty("path").GetString() ?? throw new InvalidDataException("Null bundle path.");
-            if (Path.GetFileName(name) != name || name.Contains('\\', StringComparison.Ordinal) || !files.Add(name))
+            string path = Path.Combine(directory, pinned.Path);
+            if (!File.Exists(path) || new FileInfo(path).Length != pinned.Size || Sha256(path) != pinned.Sha256)
             {
-                throw new InvalidDataException("Unsafe or duplicate bundle path.");
+                throw new InvalidDataException($"Bundle asset mismatch: {pinned.Path}.");
             }
-
-            string path = Path.Combine(directory, name);
-            if (new FileInfo(path).Length != file.GetProperty("size").GetInt64() || Sha256(path) != file.GetProperty("sha256").GetString())
-            {
-                throw new InvalidDataException($"Proposed bundle asset mismatch: {name}.");
-            }
-        }
-
-        string[] required = ["genai_config.json", "model.onnx", "model.onnx.data", "tokenizer.json", "tokenizer_config.json", "chat_template.jinja"];
-        if (!files.SetEquals(required) || Sha256(Path.Combine(directory, "tokenizer.json")) != profile.TokenizerSha256 ||
-            Sha256(Path.Combine(directory, "chat_template.jinja")) != profile.TemplateSha256)
-        {
-            throw new InvalidDataException("Incomplete bundle or wrong pinned tokenizer/template bytes.");
         }
 
         using JsonDocument config = JsonDocument.Parse(File.ReadAllText(Path.Combine(directory, "genai_config.json")));
@@ -145,6 +127,43 @@ public sealed class QwenChatModel : IDisposable
             decoder.GetProperty("head_size").GetInt32() != profile.HeadSize || decoder.GetProperty("filename").GetString() != "model.onnx")
         {
             throw new InvalidDataException("GenAI decoder geometry differs from the admitted original configuration.");
+        }
+    }
+
+    private static void VerifyBuildLock(QwenChatProfile profile, string lockPath)
+    {
+        using JsonDocument document = JsonDocument.Parse(File.ReadAllText(lockPath));
+        JsonElement root = document.RootElement;
+        if (root.GetProperty("format_version").GetInt32() != 1 || root.GetProperty("profile").GetString() != profile.Id ||
+            root.GetProperty("origin").GetProperty("repo").GetString() != profile.Repository ||
+            root.GetProperty("origin").GetProperty("revision").GetString() != profile.Revision ||
+            root.GetProperty("builder").GetProperty("version").GetString() != "0.17.1" ||
+            root.GetProperty("builder").GetProperty("source_commit").GetString() != "83de55a1f3886cddbb32a5517e26adb3f9d65159" ||
+            root.GetProperty("precision").GetString() != "fp32" || root.GetProperty("provider").GetString() != "CPUExecutionProvider")
+        {
+            throw new InvalidDataException("Bundle identity differs from the admitted original or pinned builder.");
+        }
+
+        var files = new HashSet<string>(StringComparer.Ordinal);
+        foreach (JsonElement file in root.GetProperty("files").EnumerateArray())
+        {
+            string name = file.GetProperty("path").GetString() ?? throw new InvalidDataException("Null bundle path.");
+            if (Path.GetFileName(name) != name || name.Contains('\\', StringComparison.Ordinal) || !files.Add(name))
+            {
+                throw new InvalidDataException("Unsafe or duplicate bundle path.");
+            }
+
+            QwenChatBundleFile pinned = profile.BundleFiles.FirstOrDefault(f => f.Path == name)
+                ?? throw new InvalidDataException($"Bundle file not in the profile's lock: {name}.");
+            if (file.GetProperty("size").GetInt64() != pinned.Size || file.GetProperty("sha256").GetString() != pinned.Sha256)
+            {
+                throw new InvalidDataException($"Bundle lock differs from the profile's pinned digest: {name}.");
+            }
+        }
+
+        if (!files.SetEquals(profile.BundleFiles.Select(f => f.Path)))
+        {
+            throw new InvalidDataException("Bundle lock does not list exactly the profile's pinned files.");
         }
     }
 
