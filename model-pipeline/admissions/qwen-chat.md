@@ -10,7 +10,7 @@ Pipeline stage 1 for `Starlings.Models.QwenChat` (plan section 7; five-model onb
 | Requested by / demand evidence | #124 (Roost R-009: a named consumer). Hub downloads on 2026-10-18: Qwen3-0.6B 247.0M (1,828 likes), Qwen2.5-0.5B-Instruct 74.8M (697 likes). |
 | Proposed owner | Mark |
 | Proposed maturity at first release | Experimental |
-| Decision | Proposed: admitted at maturity Experimental, both profiles, CPU fp32 on Linux x64. Bundles built locally from the pinned originals, no Starling hosting (see "Open risks"). |
+| Decision | Proposed: admitted at maturity Experimental, both profiles, CPU fp32 on Linux x64. Bundles hosted publicly by Starling (decided by Mark on 2026-10-19): `Starlinghq/qwen3-0.6b-ortgenai` (`c24cd59c`) and `Starlinghq/qwen2.5-0.5b-instruct-ortgenai` (`6b6957c8`), tag `r1`; `QwenChatModelAssets` downloads them explicitly, and a local build gives the same bytes. |
 | Decided by and date | Pending: merging the PR that adds this record is the decision. |
 
 ## Rights (hard blockers)
@@ -18,7 +18,7 @@ Pipeline stage 1 for `Starlings.Models.QwenChat` (plan section 7; five-model onb
 | Item | License or terms | Redistribution |
 | --- | --- | --- |
 | Code | No upstream code adopted. The template strings are Apache-2.0 (Copyright 2024 Alibaba Cloud), recorded in the package's `THIRD-PARTY-NOTICES.md` with the full license in `LICENSE.Qwen.txt`. | Permitted with the license and attribution, which the package carries. |
-| Weights | Apache-2.0: the `LICENSE` file at each pinned revision (SHA-256 `832dd9e0...e92e`, 11,343 bytes, identical in both) and the model card front matter (`license: apache-2.0`). | Apache-2.0 permits redistribution. Starling does not redistribute: the package ships no weights, and users build the bundle from the original Hub files. |
+| Weights | Apache-2.0: the `LICENSE` file at each pinned revision (SHA-256 `832dd9e0...e92e`, 11,343 bytes, identical in both) and the model card front matter (`license: apache-2.0`). | Apache-2.0 permits redistribution. Hosting decided by Mark on 2026-10-19 (P-009-style): Starling redistributes the built bundles, publicly, in `Starlinghq/qwen3-0.6b-ortgenai` and `Starlinghq/qwen2.5-0.5b-instruct-ortgenai` (tag `r1`) with LICENSE, NOTICE and SHA256SUMS; `QwenChatModelAssets` pins them by commit and `QwenChatProfile.BundleFiles` by SHA-256. The package itself ships no weights. |
 | Tokenizer assets | Apache-2.0, same repositories and revisions. | Same as the weights. |
 | Evaluation data | The Starling-written corpus `model-pipeline/corpora/five-models/chat.jsonl` (14 conversations). | Repository license. |
 
@@ -78,8 +78,8 @@ On every row, streaming, chunked prefill, repeated-request isolation, usage, can
 
 ## Open risks
 
-- **Asset lock.** The lock is pinned in code (`QwenChatProfile.BundleFiles`) and in the registry manifests: six files per profile. `Load` refuses any bundle whose `bundle-lock.json` or files differ from the pin. The pin works without hosting because the build is reproducible: two builds per profile from the verified originals with the hash-locked builder were byte-identical. This was shown on one machine. Another builder wheel or platform could produce other bytes, and such a bundle would be refused rather than loaded.
-- **Hosting.** Starling hosts no QwenChat bundle. Users install `onnxruntime-genai` 0.17.1 and run `build_bundle.py`, so this package is harder to adopt than Kev or Qwen3.5. Public hosting would need its own decision, as P-009 was for Kev. It also blocks G0: `tools/check-provenance.py` fetches every lock file from where the package gets it. The nine pinned originals per profile pass anonymously, but the four built files aren't served anywhere. G0 therefore needs either hosting or a local-build route added to the check.
+- **Asset lock.** The lock is pinned in code (`QwenChatProfile.BundleFiles`) and in the registry manifests: six files per profile. `Load` refuses any bundle whose files (or, for a local build, `bundle-lock.json`) differ from the pin. A local build matches the hosted bundle because the build is reproducible: two builds per profile from the verified originals with the hash-locked builder were byte-identical. This was shown on one machine. Another builder wheel or platform could produce other bytes, and such a bundle would be refused rather than loaded.
+- **Hosting.** Decided by Mark on 2026-10-19: the bundles are public at `Starlinghq/qwen3-0.6b-ortgenai` (`c24cd59c`) and `Starlinghq/qwen2.5-0.5b-instruct-ortgenai` (`6b6957c8`), tag `r1`, with LICENSE, NOTICE and SHA256SUMS, uploaded from the reproducibility builds after checking every digest against the pin. `QwenChatModelAssets.DownloadAsync` fetches them anonymously; a real download of the Qwen2.5 bundle verified on 2026-10-19. `tools/check-provenance.py` now serves all 13 lock files per profile anonymously with the pinned SHA-256 and size (the G0 provenance check; the gate itself has not run).
 - **References are proposed.** The transformers references and the comparison policy (exact prompt and greedy ids, step-0 logits within 0.005 max and 0.0005 mean) are not adopted into `protected/`, and no gate (G0 to G7) has run.
 - **`MaxNewTokens` defaults to 16**, the corpus setting. Applications must set it.
 - **Naming.** `ai-dotnet/samples/QwenChat` is the Qwen3.5 sample, not this package's.
@@ -93,4 +93,4 @@ Plan section 14: "declared scope passes meaningful tests".
 3. G4: a soak with bounded memory, and repeated load and unload.
 4. G6 as a gate. The development clean-consumer drill passed (see "Evidence"); the release drill (`tools/release-drill-ai.sh`) packs and inspects QwenChat but doesn't yet run it, because it has no seeded bundle.
 5. A larger corpus: longer completions than 16 tokens, multi-turn conversations, long prompts near the stated context, and non-English text.
-6. Decide whether to keep a local-build-only route or host bundles.
+6. Add QwenChat to the release drill's `--public-hosting` step (download with no token, then run offline).

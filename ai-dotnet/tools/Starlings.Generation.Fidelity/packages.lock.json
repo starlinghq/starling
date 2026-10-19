@@ -17,6 +17,9 @@
         "resolved": "9.0.0",
         "contentHash": "hyJB4UlpAi19Xr9AXzu2NuagKC4lPfHObNMEAA0HmqFz2rX7wKgzeYzO/jM/eBHDhnUGFFEjk5cOoJaxqg5J4A=="
       },
+      "starlings.acquisition": {
+        "type": "Project"
+      },
       "starlings.generation.onnxgenai": {
         "type": "Project",
         "dependencies": {
@@ -27,6 +30,7 @@
       "starlings.models.qwenchat": {
         "type": "Project",
         "dependencies": {
+          "Starlings.Acquisition": "[0.2.0, )",
           "Starlings.Generation.OnnxGenAI": "[0.2.0, )",
           "Starlings.Tokenizers": "[0.3.0, 0.3.0]"
         }

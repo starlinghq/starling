@@ -47,6 +47,23 @@ public sealed class BundleLockTests
         Assert.Contains("not in the profile's lock", error.Message, StringComparison.Ordinal);
     }
 
+    [Fact]
+    public void VerifiesEveryPinnedFileWithoutABuildLock()
+    {
+        // A downloaded bundle has no bundle-lock.json; the files themselves must still equal the pin.
+        string directory = Directory.CreateTempSubdirectory("qwenchat-nolock-").FullName;
+        try
+        {
+            File.WriteAllText(Path.Combine(directory, "genai_config.json"), "{}");
+            var error = Assert.Throws<InvalidDataException>(() => QwenChatModel.Load(QwenChatProfile.Qwen3, directory));
+            Assert.Contains("Bundle asset mismatch", error.Message, StringComparison.Ordinal);
+        }
+        finally
+        {
+            Directory.Delete(directory, recursive: true);
+        }
+    }
+
     private static string RepositoryRoot()
     {
         for (var dir = new DirectoryInfo(AppContext.BaseDirectory); dir is not null; dir = dir.Parent)

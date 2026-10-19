@@ -101,7 +101,38 @@ public sealed class QwenChatModel : IDisposable
 
     private static void VerifyBundle(QwenChatProfile profile, string directory)
     {
-        using JsonDocument document = JsonDocument.Parse(File.ReadAllText(Path.Combine(directory, "bundle-lock.json")));
+        // A local build writes bundle-lock.json; a download (QwenChatModelAssets) has none. Either way every file must
+        // equal the profile's pin.
+        string lockPath = Path.Combine(directory, "bundle-lock.json");
+        if (File.Exists(lockPath))
+        {
+            VerifyBuildLock(profile, lockPath);
+        }
+
+        foreach (QwenChatBundleFile pinned in profile.BundleFiles)
+        {
+            string path = Path.Combine(directory, pinned.Path);
+            if (!File.Exists(path) || new FileInfo(path).Length != pinned.Size || Sha256(path) != pinned.Sha256)
+            {
+                throw new InvalidDataException($"Bundle asset mismatch: {pinned.Path}.");
+            }
+        }
+
+        using JsonDocument config = JsonDocument.Parse(File.ReadAllText(Path.Combine(directory, "genai_config.json")));
+        JsonElement decoder = config.RootElement.GetProperty("model").GetProperty("decoder");
+        if (decoder.GetProperty("hidden_size").GetInt32() != profile.HiddenSize ||
+            decoder.GetProperty("num_hidden_layers").GetInt32() != profile.Layers ||
+            decoder.GetProperty("num_attention_heads").GetInt32() != profile.AttentionHeads ||
+            decoder.GetProperty("num_key_value_heads").GetInt32() != profile.KeyValueHeads ||
+            decoder.GetProperty("head_size").GetInt32() != profile.HeadSize || decoder.GetProperty("filename").GetString() != "model.onnx")
+        {
+            throw new InvalidDataException("GenAI decoder geometry differs from the admitted original configuration.");
+        }
+    }
+
+    private static void VerifyBuildLock(QwenChatProfile profile, string lockPath)
+    {
+        using JsonDocument document = JsonDocument.Parse(File.ReadAllText(lockPath));
         JsonElement root = document.RootElement;
         if (root.GetProperty("format_version").GetInt32() != 1 || root.GetProperty("profile").GetString() != profile.Id ||
             root.GetProperty("origin").GetProperty("repo").GetString() != profile.Repository ||
@@ -128,30 +159,11 @@ public sealed class QwenChatModel : IDisposable
             {
                 throw new InvalidDataException($"Bundle lock differs from the profile's pinned digest: {name}.");
             }
-
-            string path = Path.Combine(directory, name);
-            if (new FileInfo(path).Length != pinned.Size || Sha256(path) != pinned.Sha256)
-            {
-                throw new InvalidDataException($"Bundle asset mismatch: {name}.");
-            }
         }
 
-        string[] required = ["genai_config.json", "model.onnx", "model.onnx.data", "tokenizer.json", "tokenizer_config.json", "chat_template.jinja"];
-        if (!files.SetEquals(required) || Sha256(Path.Combine(directory, "tokenizer.json")) != profile.TokenizerSha256 ||
-            Sha256(Path.Combine(directory, "chat_template.jinja")) != profile.TemplateSha256)
+        if (!files.SetEquals(profile.BundleFiles.Select(f => f.Path)))
         {
-            throw new InvalidDataException("Incomplete bundle or wrong pinned tokenizer/template bytes.");
-        }
-
-        using JsonDocument config = JsonDocument.Parse(File.ReadAllText(Path.Combine(directory, "genai_config.json")));
-        JsonElement decoder = config.RootElement.GetProperty("model").GetProperty("decoder");
-        if (decoder.GetProperty("hidden_size").GetInt32() != profile.HiddenSize ||
-            decoder.GetProperty("num_hidden_layers").GetInt32() != profile.Layers ||
-            decoder.GetProperty("num_attention_heads").GetInt32() != profile.AttentionHeads ||
-            decoder.GetProperty("num_key_value_heads").GetInt32() != profile.KeyValueHeads ||
-            decoder.GetProperty("head_size").GetInt32() != profile.HeadSize || decoder.GetProperty("filename").GetString() != "model.onnx")
-        {
-            throw new InvalidDataException("GenAI decoder geometry differs from the admitted original configuration.");
+            throw new InvalidDataException("Bundle lock does not list exactly the profile's pinned files.");
         }
     }
 
