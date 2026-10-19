@@ -24,15 +24,15 @@
         "type": "Project",
         "dependencies": {
           "Microsoft.ML.OnnxRuntimeGenAI.Managed": "[0.17.1, 0.17.1]",
-          "Starlings.Tokenizers": "[0.3.1-preview.1, 0.3.1-preview.1]"
+          "Starlings.Tokenizers": "[0.3.1, 0.3.1]"
         }
       },
       "starlings.models.qwen35": {
         "type": "Project",
         "dependencies": {
-          "Starlings.Acquisition": "[0.2.0, )",
-          "Starlings.Generation.OnnxGenAI": "[0.2.0, )",
-          "Starlings.Tokenizers": "[0.3.1-preview.1, 0.3.1-preview.1]"
+          "Starlings.Acquisition": "[0.3.0, )",
+          "Starlings.Generation.OnnxGenAI": "[0.3.0, )",
+          "Starlings.Tokenizers": "[0.3.1, 0.3.1]"
         }
       },
       "starlings.runtime.onnx": {
@@ -76,9 +76,9 @@
       },
       "Starlings.Tokenizers": {
         "type": "CentralTransitive",
-        "requested": "[0.3.1-preview.1, 0.3.1-preview.1]",
-        "resolved": "0.3.1-preview.1",
-        "contentHash": "SI2/ddJ3SObRLBP0nHxUcq7Tw5zhbYHrTxHzH1wzZZy8+02JMEVigqY6LXJcx8rDHq/phODqB9NBjX+jvrNcwA=="
+        "requested": "[0.3.1, 0.3.1]",
+        "resolved": "0.3.1",
+        "contentHash": "5q7VVzj3v4Cm7jaru6/SFwRjG4RXKDhbXifmM6odCLtOuCA200y4CUyiflsDIQ37kknOSpsk9r/YGdNJx6y5BQ=="
       }
     }
   }
