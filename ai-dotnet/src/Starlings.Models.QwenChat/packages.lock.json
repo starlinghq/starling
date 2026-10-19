@@ -8,6 +8,9 @@
         "resolved": "0.3.0",
         "contentHash": "5VQxvrls4G1GQBsnJaHuMsgzGWGVDlUCQ4p3Z5/lAiMhTG4FZPZ4RbvGxegOtzqM/8kBVTMD8zvicspZyYlnTg=="
       },
+      "starlings.acquisition": {
+        "type": "Project"
+      },
       "starlings.generation.onnxgenai": {
         "type": "Project",
         "dependencies": {

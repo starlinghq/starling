@@ -32,11 +32,13 @@ Console.WriteLine($"{result.Text} ({result.FinishReason}, {result.Usage.Completi
 
 ## Maturity
 
-<!-- catalog:maturity profiles=qwen3.5-0.8b/* -->
+<!-- catalog:maturity profiles=qwen3.5-0.8b/*,qwen3-0.6b/*,qwen2.5-0.5b-instruct/* -->
 Maturity is per profile, generated from the registry manifests by `model-pipeline catalog` (do not edit this table by hand). Gates, evidence and capabilities per profile: the [model catalog](https://github.com/starlinghq/starling/blob/main/docs/catalog/README.md).
 
 | Profile | Maturity | Platforms |
 | --- | --- | --- |
+| `qwen2.5-0.5b-instruct/ortgenai-fp32-cpu` | experimental | linux-x64 cpu: experimental; windows-x64 cpu: untested |
+| `qwen3-0.6b/ortgenai-fp32-cpu` | experimental | linux-x64 cpu: experimental; windows-x64 cpu: untested |
 | `qwen3.5-0.8b/ortgenai-fp16x-cuda` | stable | linux-x64 cuda: supported; windows-x64 cuda: untested |
 | `qwen3.5-0.8b/ortgenai-fp32x-cpu` | stable | linux-x64 cpu: supported; windows-x64 cpu: untested |
 | `qwen3.5-0.8b/ortgenai-fp32x-cuda` | stable | linux-x64 cuda: supported; windows-x64 cuda: untested |

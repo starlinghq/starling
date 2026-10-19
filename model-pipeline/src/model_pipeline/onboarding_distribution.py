@@ -34,6 +34,9 @@ TOOLS = {
     "onnx": "ai-dotnet/tools/Starlings.Bert.Fidelity.Tool/Program.cs",
     "ortgenai": "ai-dotnet/tools/Starlings.Generation.Fidelity/Program.cs",
 }
+# Every fidelity tool links the shared entry point (ai-dotnet/tools/Shared/ToolMain.cs, #37); the consumer compiles
+# it next to Program.cs.
+TOOL_MAIN = "ai-dotnet/tools/Shared/ToolMain.cs"
 NATIVE = {"onnx": ("Microsoft.ML.OnnxRuntime", "1.30.0"), "ortgenai": ("Microsoft.ML.OnnxRuntimeGenAI", "0.17.1")}
 
 
@@ -257,6 +260,7 @@ def append_distribution(
         "ai-dotnet/Directory.Build.targets",
         "ai-dotnet/Directory.Packages.props",
         TOOLS[backend],
+        TOOL_MAIN,
         "model-pipeline/src/model_pipeline/onboarding_distribution.py",
         "model-pipeline/src/model_pipeline/evaluate_generation_candidate.py",
         "model-pipeline/src/model_pipeline/onboarding_bert.py",
@@ -333,6 +337,7 @@ def append_distribution(
                 _consumer_project(typed_model, versions[typed_model], native, native_version)
             )
             shutil.copyfile(clone / TOOLS[backend], consumer / "Program.cs")
+            shutil.copyfile(clone / TOOL_MAIN, consumer / "ToolMain.cs")
             shutil.copyfile(clone / "global.json", consumer / "global.json")
             config = ET.Element("configuration")
             sources = ET.SubElement(config, "packageSources")
@@ -456,6 +461,7 @@ def append_distribution(
             write_json(out / "consumer-parity.json", parity)
             shutil.copyfile(consumer / "Consumer.csproj", out / "Consumer.csproj")
             shutil.copyfile(consumer / "Program.cs", out / "Program.cs")
+            shutil.copyfile(consumer / "ToolMain.cs", out / "ToolMain.cs")
             shutil.copyfile(consumer / "packages.lock.json", out / "consumer.packages.lock.json")
             shutil.copyfile(consumer / "obj/project.assets.json", out / "consumer.project.assets.json")
             shutil.copyfile(published / "Consumer.deps.json", out / "Consumer.deps.json")

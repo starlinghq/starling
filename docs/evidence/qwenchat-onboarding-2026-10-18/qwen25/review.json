@@ -1,0 +1,499 @@
+{
+  "candidate_commit": "bbe92d70967d72886ba67d52d2cd6679fe45c3e1",
+  "development_parity": {
+    "comparisons": [
+      {
+        "backend": "python-genai",
+        "id": "greeting",
+        "logits_max_abs": 4.482269287109375e-05,
+        "logits_mean_abs": 6.8025570679099e-06
+      },
+      {
+        "backend": "dotnet",
+        "id": "greeting",
+        "logits_max_abs": 4.482269287109375e-05,
+        "logits_mean_abs": 6.8025570679099e-06
+      },
+      {
+        "backend": "python-genai",
+        "id": "arithmetic",
+        "logits_max_abs": 4.0531158447265625e-05,
+        "logits_mean_abs": 6.090796928668023e-06
+      },
+      {
+        "backend": "dotnet",
+        "id": "arithmetic",
+        "logits_max_abs": 4.0531158447265625e-05,
+        "logits_mean_abs": 6.090796928668023e-06
+      },
+      {
+        "backend": "python-genai",
+        "id": "system",
+        "logits_max_abs": 4.1961669921875e-05,
+        "logits_mean_abs": 6.765709617203604e-06
+      },
+      {
+        "backend": "dotnet",
+        "id": "system",
+        "logits_max_abs": 4.1961669921875e-05,
+        "logits_mean_abs": 6.765709617203604e-06
+      },
+      {
+        "backend": "python-genai",
+        "id": "multi-turn",
+        "logits_max_abs": 2.6226043701171875e-05,
+        "logits_mean_abs": 4.297013802233402e-06
+      },
+      {
+        "backend": "dotnet",
+        "id": "multi-turn",
+        "logits_max_abs": 2.6226043701171875e-05,
+        "logits_mean_abs": 4.297013802233402e-06
+      },
+      {
+        "backend": "python-genai",
+        "id": "assistant-thinking",
+        "logits_max_abs": 4.00543212890625e-05,
+        "logits_mean_abs": 6.35736657701501e-06
+      },
+      {
+        "backend": "dotnet",
+        "id": "assistant-thinking",
+        "logits_max_abs": 4.00543212890625e-05,
+        "logits_mean_abs": 6.35736657701501e-06
+      },
+      {
+        "backend": "python-genai",
+        "id": "reasoning-content",
+        "logits_max_abs": 7.009506225585938e-05,
+        "logits_mean_abs": 1.1521383203523314e-05
+      },
+      {
+        "backend": "dotnet",
+        "id": "reasoning-content",
+        "logits_max_abs": 7.009506225585938e-05,
+        "logits_mean_abs": 1.1521383203523314e-05
+      },
+      {
+        "backend": "python-genai",
+        "id": "whitespace",
+        "logits_max_abs": 4.38690185546875e-05,
+        "logits_mean_abs": 7.769288384480553e-06
+      },
+      {
+        "backend": "dotnet",
+        "id": "whitespace",
+        "logits_max_abs": 4.38690185546875e-05,
+        "logits_mean_abs": 7.769288384480553e-06
+      },
+      {
+        "backend": "python-genai",
+        "id": "empty-content",
+        "logits_max_abs": 5.4836273193359375e-05,
+        "logits_mean_abs": 7.946664157131606e-06
+      },
+      {
+        "backend": "dotnet",
+        "id": "empty-content",
+        "logits_max_abs": 5.4836273193359375e-05,
+        "logits_mean_abs": 7.946664157131606e-06
+      },
+      {
+        "backend": "python-genai",
+        "id": "chinese",
+        "logits_max_abs": 3.719329833984375e-05,
+        "logits_mean_abs": 5.691045155779735e-06
+      },
+      {
+        "backend": "dotnet",
+        "id": "chinese",
+        "logits_max_abs": 3.719329833984375e-05,
+        "logits_mean_abs": 5.691045155779735e-06
+      },
+      {
+        "backend": "python-genai",
+        "id": "unicode",
+        "logits_max_abs": 6.079673767089844e-05,
+        "logits_mean_abs": 9.867070818366209e-06
+      },
+      {
+        "backend": "dotnet",
+        "id": "unicode",
+        "logits_max_abs": 6.079673767089844e-05,
+        "logits_mean_abs": 9.867070818366209e-06
+      },
+      {
+        "backend": "python-genai",
+        "id": "endoftext-literal",
+        "logits_max_abs": 2.765655517578125e-05,
+        "logits_mean_abs": 4.471565354393923e-06
+      },
+      {
+        "backend": "dotnet",
+        "id": "endoftext-literal",
+        "logits_max_abs": 2.765655517578125e-05,
+        "logits_mean_abs": 4.471565354393923e-06
+      },
+      {
+        "backend": "python-genai",
+        "id": "role-lookalikes",
+        "logits_max_abs": 7.015466690063477e-05,
+        "logits_mean_abs": 9.924170277991568e-06
+      },
+      {
+        "backend": "dotnet",
+        "id": "role-lookalikes",
+        "logits_max_abs": 7.015466690063477e-05,
+        "logits_mean_abs": 9.924170277991568e-06
+      },
+      {
+        "backend": "python-genai",
+        "id": "long-prefill",
+        "logits_max_abs": 3.600120544433594e-05,
+        "logits_mean_abs": 7.228813892721356e-06
+      },
+      {
+        "backend": "dotnet",
+        "id": "long-prefill",
+        "logits_max_abs": 3.600120544433594e-05,
+        "logits_mean_abs": 7.228813892721356e-06
+      },
+      {
+        "backend": "python-genai",
+        "id": "one-token-limit",
+        "logits_max_abs": 6.031990051269531e-05,
+        "logits_mean_abs": 1.0934253968980058e-05
+      },
+      {
+        "backend": "dotnet",
+        "id": "one-token-limit",
+        "logits_max_abs": 6.031990051269531e-05,
+        "logits_mean_abs": 1.0934253968980058e-05
+      }
+    ],
+    "failures": [],
+    "format_version": 1,
+    "policy": {
+      "greedy_ids": "exact",
+      "logits_max_abs": 0.005,
+      "logits_mean_abs": 0.0005,
+      "prompt_ids": "exact",
+      "required_evidence": [
+        "prompt_text",
+        "prompt_ids",
+        "initial_logits",
+        "output_ids",
+        "finish_reason",
+        "stream",
+        "usage",
+        "cancellation",
+        "cache",
+        "isolation"
+      ]
+    },
+    "profile": "qwen2.5-0.5b-instruct/ortgenai-fp32-cpu",
+    "protected_release_qualification": "unapproved",
+    "reference_status": "proposed",
+    "rows": 14,
+    "status": "passed"
+  },
+  "distribution": {
+    "checkout_and_package_caches_removed_before_execution": true,
+    "command": {
+      "argv": [
+        "unshare",
+        "-rn",
+        "/home/mark/.local/share/mise/dotnet-root/dotnet",
+        "/tmp/candidate-consumer-2fzw5p2w/consumer/app/Consumer.dll",
+        "--candidate",
+        "/tmp/candidate-consumer-2fzw5p2w/consumer/candidate.json",
+        "--bundle",
+        "/tmp/candidate-consumer-2fzw5p2w/model",
+        "--corpus",
+        "/tmp/candidate-consumer-2fzw5p2w/consumer/corpus.jsonl",
+        "--out",
+        "/home/mark/Projects/starling/.claude/worktrees/issue-124-publish-qwenchat-kev/artifacts/onboarding/qwen25/stages/distribution/cc71676af60d4cf880bb6a51f7e27aaa/output/consumer-evidence",
+        "--threads",
+        "2"
+      ],
+      "cwd": "/tmp/candidate-consumer-2fzw5p2w/consumer",
+      "duration_seconds": 128.62754558498273,
+      "log_path": "/home/mark/Projects/starling/.claude/worktrees/issue-124-publish-qwenchat-kev/artifacts/onboarding/qwen25/stages/distribution/cc71676af60d4cf880bb6a51f7e27aaa/output/consumer-offline.log",
+      "returncode": 0,
+      "timeout_seconds": 3600
+    },
+    "consumer_restore": {
+      "libraries": {
+        "Microsoft.Extensions.AI.Abstractions": "9.8.0",
+        "Microsoft.ML.OnnxRuntime": "1.30.0",
+        "Microsoft.ML.OnnxRuntime.Managed": "1.30.0",
+        "Microsoft.ML.OnnxRuntimeGenAI": "0.17.1",
+        "Microsoft.ML.OnnxRuntimeGenAI.Managed": "0.17.1",
+        "Starlings.Generation.OnnxGenAI": "0.2.0",
+        "Starlings.Models.QwenChat": "0.2.0",
+        "Starlings.Tokenizers": "0.3.0",
+        "System.Numerics.Tensors": "9.0.0"
+      },
+      "only_packages": true,
+      "packed_package_bytes_verified": true,
+      "tokenizer_package_bytes_verified": true
+    },
+    "development_parity": "passed",
+    "model_seed": [
+      {
+        "path": "model.onnx",
+        "sha256": "716a2db391784191cc1323417e1ff5bec682673b7105b8ddc4011e7a9f2c4a88",
+        "size": 147574
+      },
+      {
+        "path": "model.onnx.data",
+        "sha256": "4269c6a8f794c9db3f1304c18ead66ca8aa6eb67e57b8bbe1b815cdbdecd7f99",
+        "size": 1984561152
+      },
+      {
+        "path": "genai_config.json",
+        "sha256": "a023918fb6dfdf680b0267bdb4ead00083a954194d8178d8fb1af7a0d9adbe63",
+        "size": 1581
+      },
+      {
+        "path": "tokenizer.json",
+        "sha256": "c0382117ea329cdf097041132f6d735924b697924d6f6fc3945713e96ce87539",
+        "size": 7031645
+      },
+      {
+        "path": "tokenizer_config.json",
+        "sha256": "5b5d4f65d0acd3b2d56a35b56d374a36cbc1c8fa5cf3b3febbbfabf22f359583",
+        "size": 7305
+      },
+      {
+        "path": "chat_template.jinja",
+        "sha256": "cd8e9439f0570856fd70470bf8889ebd8b5d1107207f67a5efb46e342330527f",
+        "size": 2507
+      }
+    ],
+    "native_runtime_files": [
+      {
+        "path": "runtimes/linux-x64/native/libonnxruntime-genai.so",
+        "sha256": "0cdf8076ecf75eebe2bd1507c7904651e3d27d6f0b853ed361772ab25c1f2d40",
+        "size": 37415960
+      },
+      {
+        "path": "runtimes/linux-x64/native/libonnxruntime.so",
+        "sha256": "245a6f8c38127551057a1cd1ffd59f0a186a227ade4f3492dea2494eb565542e",
+        "size": 28985152
+      },
+      {
+        "path": "runtimes/linux-x64/native/libonnxruntime_providers_shared.so",
+        "sha256": "086ec1d5388f64153d9c63470d126693db9a182c8ce236d3a1119068471b8a0d",
+        "size": 14632
+      }
+    ],
+    "offline": "network namespace without interfaces (unshare -rn)",
+    "packages": [
+      {
+        "dependencies": {},
+        "id": "Starlings.Acquisition",
+        "sha256": "5d170ee9cf1c245e794f8a7e966f142ff1b7a1136fd82edfaaef72aed73308f4",
+        "source_commit": "bbe92d70967d72886ba67d52d2cd6679fe45c3e1",
+        "version": "0.2.0"
+      },
+      {
+        "dependencies": {
+          "Microsoft.ML.OnnxRuntime.Managed": "[1.30.0]"
+        },
+        "id": "Starlings.Runtime.Onnx",
+        "sha256": "dbf1f3ab8cde7e673d043e432e2af02b183aa4cc561c43e429b21690326bcfc9",
+        "source_commit": "bbe92d70967d72886ba67d52d2cd6679fe45c3e1",
+        "version": "0.2.0"
+      },
+      {
+        "dependencies": {
+          "Microsoft.ML.OnnxRuntimeGenAI.Managed": "[0.17.1]",
+          "Starlings.Tokenizers": "[0.3.0]"
+        },
+        "id": "Starlings.Generation.OnnxGenAI",
+        "sha256": "83bee7a9a65b01d89c98539100cc37400eb8d9639d66501f04f9313d3c439029",
+        "source_commit": "bbe92d70967d72886ba67d52d2cd6679fe45c3e1",
+        "version": "0.2.0"
+      },
+      {
+        "dependencies": {
+          "Starlings.Acquisition": "[0.2.0]",
+          "Starlings.Runtime.Onnx": "[0.2.0]",
+          "Starlings.Tokenizers": "[0.3.0]"
+        },
+        "id": "Starlings.Models.Bert",
+        "sha256": "2cd568f703223348713ef495ec224153a4d98b37241590432438d0ed45f1ae6f",
+        "source_commit": "bbe92d70967d72886ba67d52d2cd6679fe45c3e1",
+        "version": "0.2.0"
+      },
+      {
+        "dependencies": {
+          "Starlings.Generation.OnnxGenAI": "[0.2.0]",
+          "Starlings.Tokenizers": "[0.3.0]"
+        },
+        "id": "Starlings.Models.QwenChat",
+        "sha256": "e649f84a9d1016029fc28b12fd97822eebaaa147a09a2b14299b8478c7d028be",
+        "source_commit": "bbe92d70967d72886ba67d52d2cd6679fe45c3e1",
+        "version": "0.2.0"
+      }
+    ],
+    "profile": "qwen2.5-0.5b-instruct/ortgenai-fp32-cpu",
+    "runtime_and_model_identity": {
+      "Cache": "fresh-request",
+      "ContextLength": 32768,
+      "EnableThinking": false,
+      "GenAIVersion": "0.17.1",
+      "Multimodal": "unsupported",
+      "NativePackage": "Microsoft.ML.OnnxRuntimeGenAI/0.17.1",
+      "PadTokenIdOverlay": 151935,
+      "Profile": "qwen2.5-0.5b-instruct/ortgenai-fp32-cpu",
+      "Repository": "Qwen/Qwen2.5-0.5B-Instruct",
+      "Revision": "7ae557604adf67be50417f59c2c2f167def9a775",
+      "TemplateSha256": "cd8e9439f0570856fd70470bf8889ebd8b5d1107207f67a5efb46e342330527f",
+      "TextGeneration": "experimental",
+      "TokenizerSha256": "c0382117ea329cdf097041132f6d735924b697924d6f6fc3945713e96ce87539",
+      "Tools": "unsupported"
+    },
+    "scope": "development distribution; protected release qualification unapproved",
+    "source_commit": "bbe92d70967d72886ba67d52d2cd6679fe45c3e1",
+    "status": "passed",
+    "temporary_caches_removed": true
+  },
+  "policy": {
+    "greedy_ids": "exact",
+    "logits_max_abs": 0.005,
+    "logits_mean_abs": 0.0005,
+    "prompt_ids": "exact",
+    "required_evidence": [
+      "prompt_text",
+      "prompt_ids",
+      "initial_logits",
+      "output_ids",
+      "finish_reason",
+      "stream",
+      "usage",
+      "cancellation",
+      "cache",
+      "isolation"
+    ]
+  },
+  "profile": "qwen2.5-0.5b-instruct/ortgenai-fp32-cpu",
+  "protected_fixture_adoption": false,
+  "protected_release_qualification": "unapproved",
+  "reference_status": "proposed",
+  "release_qualification": "unapproved",
+  "source_lock": {
+    "assets": [
+      {
+        "path": "LICENSE",
+        "sha256": "832dd9e00a68dd83b3c3fb9f5588dad7dcf337a0db50f7d9483f310cd292e92e",
+        "size": 11343,
+        "verification": "pinned-size-and-sha256"
+      },
+      {
+        "path": "README.md",
+        "sha256": "b19c806a904db6dc878a0462e70b551f6b7ac78dfbb88c2eb966ca2b9109ae15",
+        "size": 4917,
+        "verification": "pinned-size-and-sha256"
+      },
+      {
+        "path": "config.json",
+        "sha256": "18e18afcaccafade98daf13a54092927904649e1dd4eba8299ab717d5d94ff45",
+        "size": 659,
+        "verification": "pinned-size-and-sha256"
+      },
+      {
+        "path": "generation_config.json",
+        "sha256": "e558847a8b4402616f1273797b015104dc266fe4b520056fca88823ba8f8ebe6",
+        "size": 242,
+        "verification": "pinned-size-and-sha256"
+      },
+      {
+        "path": "merges.txt",
+        "sha256": "599bab54075088774b1733fde865d5bd747cbcc7a547c5bc12610e874e26f5e3",
+        "size": 1671839,
+        "verification": "pinned-size-and-sha256"
+      },
+      {
+        "path": "model.safetensors",
+        "sha256": "fdf756fa7fcbe7404d5c60e26bff1a0c8b8aa1f72ced49e7dd0210fe288fb7fe",
+        "size": 988097824,
+        "verification": "pinned-size-and-sha256"
+      },
+      {
+        "path": "tokenizer.json",
+        "sha256": "c0382117ea329cdf097041132f6d735924b697924d6f6fc3945713e96ce87539",
+        "size": 7031645,
+        "verification": "pinned-size-and-sha256"
+      },
+      {
+        "path": "tokenizer_config.json",
+        "sha256": "5b5d4f65d0acd3b2d56a35b56d374a36cbc1c8fa5cf3b3febbbfabf22f359583",
+        "size": 7305,
+        "verification": "pinned-size-and-sha256"
+      },
+      {
+        "path": "vocab.json",
+        "sha256": "ca10d7e9fb3ed18575dd1e277a2579c16d108e32f27439684afa0e10b1440910",
+        "size": 2776833,
+        "verification": "pinned-size-and-sha256"
+      }
+    ],
+    "origin": {
+      "files": [
+        {
+          "path": "LICENSE",
+          "sha256": "832dd9e00a68dd83b3c3fb9f5588dad7dcf337a0db50f7d9483f310cd292e92e",
+          "size": 11343
+        },
+        {
+          "path": "README.md",
+          "sha256": "b19c806a904db6dc878a0462e70b551f6b7ac78dfbb88c2eb966ca2b9109ae15",
+          "size": 4917
+        },
+        {
+          "path": "config.json",
+          "sha256": "18e18afcaccafade98daf13a54092927904649e1dd4eba8299ab717d5d94ff45",
+          "size": 659
+        },
+        {
+          "path": "generation_config.json",
+          "sha256": "e558847a8b4402616f1273797b015104dc266fe4b520056fca88823ba8f8ebe6",
+          "size": 242
+        },
+        {
+          "path": "merges.txt",
+          "sha256": "599bab54075088774b1733fde865d5bd747cbcc7a547c5bc12610e874e26f5e3",
+          "size": 1671839
+        },
+        {
+          "path": "model.safetensors",
+          "sha256": "fdf756fa7fcbe7404d5c60e26bff1a0c8b8aa1f72ced49e7dd0210fe288fb7fe",
+          "size": 988097824
+        },
+        {
+          "path": "tokenizer.json",
+          "sha256": "c0382117ea329cdf097041132f6d735924b697924d6f6fc3945713e96ce87539",
+          "size": 7031645
+        },
+        {
+          "path": "tokenizer_config.json",
+          "sha256": "5b5d4f65d0acd3b2d56a35b56d374a36cbc1c8fa5cf3b3febbbfabf22f359583",
+          "size": 7305
+        },
+        {
+          "path": "vocab.json",
+          "sha256": "ca10d7e9fb3ed18575dd1e277a2579c16d108e32f27439684afa0e10b1440910",
+          "size": 2776833
+        }
+      ],
+      "repo": "Qwen/Qwen2.5-0.5B-Instruct",
+      "revision": "7ae557604adf67be50417f59c2c2f167def9a775"
+    },
+    "profile": "qwen2.5-0.5b-instruct/ortgenai-fp32-cpu"
+  },
+  "support_status": "experimental",
+  "support_status_changed": false,
+  "task": "generation"
+}
