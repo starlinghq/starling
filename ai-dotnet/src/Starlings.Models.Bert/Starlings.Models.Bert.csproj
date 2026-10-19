@@ -12,4 +12,9 @@
     <PackageReference Include="Starlings.Tokenizers" />
     <InternalsVisibleTo Include="Starlings.Models.Bert.Tests" />
   </ItemGroup>
+  <ItemGroup>
+    <!-- Length-aware chunk planning shared by the explicit-batch encoders (internal). -->
+    <Compile Include="../Shared/Batching/*.cs" Link="Shared/%(Filename)%(Extension)" />
+  </ItemGroup>
+
 </Project>

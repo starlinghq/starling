@@ -44,6 +44,18 @@ foreach (var e in result.Entities)
 }
 ```
 
+## Batching options
+
+`ExtractBatch` and `RunModel` split a batch (one label set) into ONNX Runtime calls, each right-padded to its longest text. `Gliner2ExtractorOptions` controls the split:
+
+| Option | Default | Effect |
+| --- | --- | --- |
+| `MaxBatchSize` | 8 | Texts per call at most (GLiNER2's default `batch_size`). Chunks are consecutive texts in input order. |
+| `MaxBatchTokens` | `null` (no budget) | Padded tokens (texts x longest text, schema prefix included) per call at most. A chunk closes before it would exceed the budget; a text longer than the budget runs alone. Experimental (`batch.token_budget`). |
+| `SortByLength` | `false` | Chunks texts in ascending token count (ties in input order) so each call pads less; results stay in input order. Experimental (`batch.sort_by_length`). |
+
+The defaults are the qualified behavior, with outputs unchanged bit for bit. With `SortByLength`, which texts share a call depends on the whole batch, so span logits can differ from the default by up to the profile's padded-batch-vs-single bound (`padded_batch_vs_single_span_logits_relative`); the CPU tests saw no difference and identical entities on the 54 in-contract fixture cases in random orders. On CUDA, calls stay serialized (`SerializeNativeCalls`); the options only change how one request is chunked.
+
 ## Stable contract
 
 This is the contract of profile `gliner2-base-v1/onnx-fp32-cpu`. Its Stable label commits to it under the [support policy](https://github.com/starlinghq/starling/blob/main/docs/support-policy.md). The statuses are the registry manifest's and `Gliner2Capabilities.Profiles`, which a test keeps equal key for key.
@@ -85,6 +97,10 @@ This is the contract of profile `gliner2-base-v1/onnx-fp32-cuda` (Stable since 2
 | Outside the Stable contract | Native AOT with the CUDA natives: experimental (one local run, `tools/aot-check-ai.sh --cuda`, not in the per-release run). Label descriptions and the closed count gate: experimental, as on CPU. Windows x64 CUDA: untested. |
 
 Evidence: [binding CUDA G4 and G5 round](https://github.com/starlinghq/starling/blob/main/docs/evidence/qualification-2026-10-16-cuda/README.md), [per-release GPU regression, run 38857860186](https://github.com/starlinghq/starling/blob/main/docs/evidence/gpu-regression-2026-10-16/README.md), [release-set gates](https://github.com/starlinghq/starling/blob/main/docs/evidence/release-set-gates-2026-10-14/gliner2-onnx-fp32-cuda/README.md), [CUDA cancellation](https://github.com/starlinghq/starling/blob/main/docs/evidence/gliner2-cuda-wrong-output/README.md).
+
+## Micro-batching (experimental, opt-in)
+
+`Gliner2ExtractorOptions.MicroBatching` (null by default: off) applies to `ExtractAsync` only; `Extract`, `ExtractBatch` and the staged methods never queue. Without it, `ExtractAsync` runs on the calling thread like `Extract` and returns a completed task. With it, each call's text is prepared and length-checked on the calling thread (an invalid text fails only its own call), then queued; one dispatcher thread runs the queued texts of concurrent callers that share a schema (the same labels in the same order and the same descriptions) in padded batches of at most `MaxRows` texts and `MaxTokens` padded token cells, and each caller decodes its spans with its own threshold. `MaxBatchSize` still splits each batch into graph calls, and the CUDA run gate still applies, so on CUDA serialized single calls become serialized batched calls. Outputs then depend on the concurrent traffic: equal to a single call within the profile's padded-batch tolerance, not bit for bit reproducible. Cancelling a queued call removes it; cancelling a dispatched one cancels only that caller's task (the batch keeps running for the others). A full queue (`QueueCapacity`) makes callers wait for a slot. `Dispose` faults queued calls with `ObjectDisposedException` and waits for a running batch. `MicroBatchingStatistics` reports batches, items, padding and queue and run time. Status: experimental (capability `micro_batching`): weight-free tests and one real-model test within the padded-batch tolerance on Linux x64 CPU; no benchmark adoption decision, no CUDA run and no soak yet.
 
 ## Memory on Linux
 

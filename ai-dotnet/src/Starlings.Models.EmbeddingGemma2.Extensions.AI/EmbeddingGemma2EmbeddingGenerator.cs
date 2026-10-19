@@ -1,4 +1,5 @@
 using Microsoft.Extensions.AI;
+using Starlings.Runtime.Onnx.Batching;
 
 namespace Starlings.Models.EmbeddingGemma2.Extensions.AI;
 
@@ -34,6 +35,16 @@ namespace Starlings.Models.EmbeddingGemma2.Extensions.AI;
 /// <see cref="EmbeddingGemma2InputTooLongException"/>; nothing is truncated.
 /// </para>
 /// <para>
+/// <b>Micro-batching (Experimental, opt-in).</b> With <see cref="EmbeddingGemma2EmbeddingGeneratorOptions.MicroBatching"/>
+/// set, a call with exactly one value is tokenized and validated on the calling thread (an input above 8,192 tokens
+/// fails only its own call), queued, and embedded together with other callers' queued values on one dispatcher thread;
+/// the returned task completes when that batch has run. The embedding then depends on the concurrent traffic within the
+/// padded-batch tolerance. Cancelling a queued call removes its value; cancelling a dispatched one cancels its task at
+/// once without stopping the batch the other callers wait for. <see cref="Dispose"/> faults queued calls with
+/// <see cref="ObjectDisposedException"/> and waits for a running batch. Calls with several values run as described
+/// above.
+/// </para>
+/// <para>
 /// <b>Cancellation.</b> The token is checked before each value is tokenized, before each chunk, and inside a run (on CPU
 /// between graph nodes, on CUDA when the current run completes); then the task is cancelled. Nothing is returned for a cancelled call,
 /// and the generator stays usable.
@@ -67,6 +78,7 @@ public sealed class EmbeddingGemma2EmbeddingGenerator : IEmbeddingGenerator<stri
     private readonly EmbeddingGemma2Encoder? _ownedEncoder;
     private readonly EmbeddingGemma2EmbeddingGeneratorOptions _options;
     private readonly EmbeddingGeneratorMetadata _metadata;
+    private readonly MicroBatcher<EmbeddingGemma2Input, float[]>? _batcher;
     private int _disposed;
 
     /// <summary>Wraps an existing embedder. Neither it nor its encoder is owned or disposed by this instance.</summary>
@@ -89,6 +101,12 @@ public sealed class EmbeddingGemma2EmbeddingGenerator : IEmbeddingGenerator<stri
         _options = options;
         _ownedEncoder = ownedEncoder;
         _metadata = new EmbeddingGeneratorMetadata(ProviderName, providerUri: null, options.ModelId, options.Dimensions);
+        if (options.MicroBatching is { } microBatching)
+        {
+            var encoder = embedder.Encoder;
+            _batcher = new MicroBatcher<EmbeddingGemma2Input, float[]>(
+                (inputs, token) => encoder.EmbedBatch(inputs, token), microBatching, static input => input.Length);
+        }
     }
 
     /// <summary>Options in effect.</summary>
@@ -143,7 +161,10 @@ public sealed class EmbeddingGemma2EmbeddingGenerator : IEmbeddingGenerator<stri
     }
 
     /// <inheritdoc />
-    /// <remarks>Runs synchronously and returns a completed task; see the class remarks for prompts, dimensions, batching and cancellation.</remarks>
+    /// <remarks>
+    /// Runs synchronously and returns a completed task, except a one-value call with micro-batching on; see the class
+    /// remarks for prompts, dimensions, batching, micro-batching and cancellation.
+    /// </remarks>
     public Task<GeneratedEmbeddings<Embedding<float>>> GenerateAsync(
         IEnumerable<string> values,
         EmbeddingGenerationOptions? options = null,
@@ -151,7 +172,10 @@ public sealed class EmbeddingGemma2EmbeddingGenerator : IEmbeddingGenerator<stri
     {
         try
         {
-            return Task.FromResult(Generate(values, options, cancellationToken));
+            var (texts, prompt, dimensions) = Prepare(values, options, cancellationToken);
+            return _batcher is not null && texts.Count == 1
+                ? GenerateQueuedAsync(_batcher, texts[0], prompt, dimensions, cancellationToken)
+                : Task.FromResult(Generate(texts, prompt, dimensions, cancellationToken));
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
@@ -197,11 +221,19 @@ public sealed class EmbeddingGemma2EmbeddingGenerator : IEmbeddingGenerator<stri
     {
         if (Interlocked.Exchange(ref _disposed, 1) == 0)
         {
+            // Queued calls fault; a running batch finishes before the encoder goes.
+            _batcher?.Dispose();
             _ownedEncoder?.Dispose();
         }
     }
 
-    private GeneratedEmbeddings<Embedding<float>> Generate(IEnumerable<string> values, EmbeddingGenerationOptions? options, CancellationToken cancellationToken)
+    /// <summary>
+    /// Statistics of the micro-batcher (batches, items, padding, queue and run time), or null when micro-batching is off.
+    /// Experimental.
+    /// </summary>
+    public MicroBatcherStatistics? MicroBatchingStatistics => _batcher?.GetStatistics();
+
+    private (List<string> Texts, EmbeddingGemma2Prompt Prompt, int Dimensions) Prepare(IEnumerable<string> values, EmbeddingGenerationOptions? options, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(values);
         ObjectDisposedException.ThrowIf(Volatile.Read(ref _disposed) != 0, this);
@@ -214,6 +246,27 @@ public sealed class EmbeddingGemma2EmbeddingGenerator : IEmbeddingGenerator<stri
             texts.Add(value ?? throw new ArgumentException($"Value {texts.Count} is null.", nameof(values)));
         }
 
+        return (texts, prompt, dimensions);
+    }
+
+    private async Task<GeneratedEmbeddings<Embedding<float>>> GenerateQueuedAsync(
+        MicroBatcher<EmbeddingGemma2Input, float[]> batcher, string text, EmbeddingGemma2Prompt prompt, int dimensions, CancellationToken cancellationToken)
+    {
+        // Validated here, so an invalid value fails this call alone and never the batch it would have joined.
+        var input = _embedder.Tokenizer.Tokenize(prompt.Apply(text));
+        _embedder.Encoder.Validate(input);
+        float[] vector = await batcher.EnqueueAsync(input, cancellationToken).ConfigureAwait(false);
+        float[] output = vector.Length == dimensions ? vector : EmbeddingGemma2Encoder.Truncate(vector, dimensions);
+        var result = new GeneratedEmbeddings<Embedding<float>>(1)
+        {
+            new Embedding<float>(output) { ModelId = _options.ModelId, CreatedAt = DateTimeOffset.UtcNow },
+        };
+        result.Usage = new UsageDetails { InputTokenCount = input.Length, TotalTokenCount = input.Length };
+        return result;
+    }
+
+    private GeneratedEmbeddings<Embedding<float>> Generate(List<string> texts, EmbeddingGemma2Prompt prompt, int dimensions, CancellationToken cancellationToken)
+    {
         var tokenCounts = new int[texts.Count];
         float[][] vectors = _embedder.EmbedBatch(texts, prompt, tokenCounts, cancellationToken);
         var createdAt = DateTimeOffset.UtcNow;

@@ -20,13 +20,16 @@
   <ItemGroup>
     <Compile Include="../Starlings.Benchmarks.E5Harness/Program.cs" Link="Program.cs" />
     <Compile Include="../Starlings.Benchmarks.E5Harness/Pipelines.cs" Link="Pipelines.cs" />
+    <Compile Include="../Starlings.Benchmarks.E5Harness/E5Sweep.cs" Link="E5Sweep.cs" />
     <Compile Include="../Core/*.cs" Link="Core/%(Filename)%(Extension)" />
+    <Compile Include="../Core/Batching/SweepTargets.cs" Link="Core/Batching/SweepTargets.cs" />
     <Compile Include="../Shared/*.cs" Link="Shared/%(Filename)%(Extension)" />
     <Compile Include="../../tests/Shared/E5/E5TestAssets.cs" Link="Shared/E5TestAssets.cs" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="../../src/Starlings.Models.E5/Starlings.Models.E5.csproj" />
+    <ProjectReference Include="../../src/Starlings.Models.E5.Extensions.AI/Starlings.Models.E5.Extensions.AI.csproj" />
   </ItemGroup>
 
   <ItemGroup>

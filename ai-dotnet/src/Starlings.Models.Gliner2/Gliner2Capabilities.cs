@@ -51,12 +51,23 @@ public static class Gliner2Capabilities
         ["threshold"] = Gliner2CapabilityStatus.Supported,
         ["offsets.original_text"] = Gliner2CapabilityStatus.Supported,
         ["batch"] = Gliner2CapabilityStatus.Supported,
+        // Opt-in explicit-batch chunking, Gliner2ExtractorOptions.MaxBatchTokens and SortByLength: off by default, and
+        // the defaults keep the qualified outputs bit for bit. With sort_by_length, outputs stay within the
+        // padded-batch-vs-single bound in the CPU tests; no qualification run yet.
+        ["batch.token_budget"] = Gliner2CapabilityStatus.Experimental,
+        ["batch.sort_by_length"] = Gliner2CapabilityStatus.Experimental,
         ["cancellation"] = Gliner2CapabilityStatus.Supported,
         ["concurrent_calls"] = Gliner2CapabilityStatus.Supported,
         // On CUDA, concurrent runs on one session returned wrong entities (6 of 8 test runs); calls are serialized
         // there by default (Gliner2ExtractorOptions.SerializeNativeCalls), and that serialized mode is the CUDA contract's.
         ["concurrent_calls.cuda.serialized"] = Gliner2CapabilityStatus.Supported,
         ["concurrent_calls.cuda.unserialized"] = Gliner2CapabilityStatus.Unsupported,
+        // Cross-request micro-batching (opt-in Gliner2ExtractorOptions.MicroBatching, ExtractAsync; texts of one schema only): concurrent single requests share padded batches on one
+        // dispatcher thread. Weight-free tests (coalescing, ordering, per-caller cancellation, backpressure, grouping,
+        // disposal, failure isolation) and one weight-dependent test against direct calls within the padded-batch
+        // tolerance; no benchmark adoption decision and no soak yet. Outputs depend on the concurrent traffic (within
+        // tolerance, not bit for bit reproducible). Not part of any Stable profile's contract.
+        ["micro_batching"] = Gliner2CapabilityStatus.Experimental,
         ["asset_acquisition.offline"] = Gliner2CapabilityStatus.Supported,
 
         // Proposed capability cases on public text, run by the pinned GLiNER2: 11 with label descriptions, 12 where the

@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-  <!-- Unit tests for the benchmark harness logic: whether a run's results are valid (P-008), the shared timing core, the G5 workload files and the native library digests. -->
+  <!-- Unit tests for the benchmark harness logic: whether a run's results are valid (P-008), the shared timing core, the G5 workload files, the native library digests and the batching sweep's options, padding arithmetic and pools. -->
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <GenerateDocumentationFile>false</GenerateDocumentationFile>
@@ -17,6 +17,9 @@
     <Compile Include="../Core/HarnessCore.cs" Link="Core/HarnessCore.cs" />
     <Compile Include="../Core/WorkloadSpec.cs" Link="Core/WorkloadSpec.cs" />
     <Compile Include="../Core/NativeLibraryDigests.cs" Link="Core/NativeLibraryDigests.cs" />
+    <Compile Include="../Core/BenchPaths.cs" Link="Core/BenchPaths.cs" />
+    <Compile Include="../Core/SweepPrimitives.cs" Link="Core/SweepPrimitives.cs" />
+    <Compile Include="../Core/SweepWorkloads.cs" Link="Core/SweepWorkloads.cs" />
   </ItemGroup>
 
 </Project>

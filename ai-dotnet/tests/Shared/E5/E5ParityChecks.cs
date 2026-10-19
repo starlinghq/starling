@@ -94,4 +94,35 @@ internal static class E5ParityChecks
         Assert.True(vsProtected.Max <= tolerances.EmbeddingMaxAbs, $"batches vs protected {vsProtected.Max:E3}");
         Assert.True(vsSingle.Max <= tolerances.PaddedBatchVsSingleMaxAbs, $"batches vs single {vsSingle.Max:E3}");
     }
+
+    /// <summary>
+    /// The fixture cases in random orders (mixed neighbours: short and long rows interleaved), embedded in one call by
+    /// <paramref name="encoder"/> (typically with <see cref="E5EncoderOptions.SortByLength"/> or
+    /// <see cref="E5EncoderOptions.MaxBatchTokens"/>): every row comes back at its input position, within the
+    /// padded-batch-vs-single bound of its own single call and within the embedding bound of the protected reference.
+    /// </summary>
+    public static void ShuffledBatches(E5Encoder encoder, int[] seeds, E5Tolerances tolerances, IReadOnlyDictionary<string, float[]> singles, ITestOutputHelper output)
+    {
+        var cases = E5Fixtures.Cases;
+        var vsProtected = new ErrorStats();
+        var vsSingle = new ErrorStats();
+        foreach (int seed in seeds)
+        {
+            var order = Enumerable.Range(0, cases.Count).ToArray();
+            new Random(seed).Shuffle(order);
+            var embeddings = encoder.EmbedBatch(order.Select(i => new EncoderInput(cases[i].InputIds)).ToList(), TestContext.Current.CancellationToken);
+            for (int k = 0; k < order.Length; k++)
+            {
+                vsProtected.Add(embeddings[k], cases[order[k]].Embedding);
+                vsSingle.Add(embeddings[k], singles[cases[order[k]].Id]);
+            }
+        }
+
+        var o = encoder.Options;
+        output.WriteLine($"{cases.Count} cases x {seeds.Length} random orders (MaxBatchSize {o.MaxBatchSize}, MaxBatchTokens {o.MaxBatchTokens?.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? "none"}, SortByLength {o.SortByLength}) vs protected: {vsProtected}");
+        output.WriteLine($"  vs own single rows: {vsSingle}");
+        Assert.False(vsProtected.NonFinite);
+        Assert.True(vsProtected.Max <= tolerances.EmbeddingMaxAbs, $"shuffled batches vs protected {vsProtected.Max:E3}");
+        Assert.True(vsSingle.Max <= tolerances.PaddedBatchVsSingleMaxAbs, $"shuffled batches vs single {vsSingle.Max:E3}");
+    }
 }

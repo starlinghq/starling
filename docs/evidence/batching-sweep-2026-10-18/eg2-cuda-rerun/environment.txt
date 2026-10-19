@@ -1,0 +1,51 @@
+== GPU
+Mon Oct 19 15:08:30 2026       
++-----------------------------------------------------------------------------------------+
+| NVIDIA-SMI 580.126.20             Driver Version: 580.126.20     CUDA Version: 13.0     |
++-----------------------------------------+------------------------+----------------------+
+| GPU  Name                 Persistence-M | Bus-Id          Disp.A | Volatile Uncorr. ECC |
+| Fan  Temp   Perf          Pwr:Usage/Cap |           Memory-Usage | GPU-Util  Compute M. |
+|                                         |                        |               MIG M. |
+|=========================================+========================+======================|
+|   0  NVIDIA GeForce RTX 3090        On  |   00000000:25:00.0 Off |                  N/A |
+| 30%   35C    P8             24W /  350W |       1MiB /  24576MiB |      0%      Default |
+|                                         |                        |                  N/A |
++-----------------------------------------+------------------------+----------------------+
+
++-----------------------------------------------------------------------------------------+
+| Processes:                                                                              |
+|  GPU   GI   CI              PID   Type   Process name                        GPU Memory |
+|        ID   ID                                                               Usage      |
+|=========================================================================================|
+|  No running processes found                                                             |
++-----------------------------------------------------------------------------------------+
+index, name, driver_version, memory.total [MiB], pci.bus_id, clocks.max.sm [MHz], power.limit [W]
+0, NVIDIA GeForce RTX 3090, 580.126.20, 24576 MiB, 00000000:25:00.0, 2100 MHz, 350.00 W
+== CPU
+CPU(s):                                  256
+Model name:                              AMD EPYC 7H12 64-Core Processor
+Thread(s) per core:                      2
+Core(s) per socket:                      64
+Socket(s):                               2
+CPU(s) scaling MHz:                      64%
+NUMA node(s):                            2
+NUMA node0 CPU(s):                       0-63,128-191
+NUMA node1 CPU(s):                       64-127,192-255
+cgroup cpu.max:   memory.max: 
+cgroup v1 /sys/fs/cgroup/cpu,cpuacct: cfs_quota_us 3112500 cfs_period_us 100000
+cgroup v1 /sys/fs/cgroup/cpu: cfs_quota_us 3112500 cfs_period_us 100000
+nproc: 256; CPU quota: 31 (cgroup-v1-/sys/fs/cgroup/cpu,cpuacct/cpu.cfs_quota_us(3112500/100000)); main CPU threads 16; thread sweep: 1 2 4 8 16 31
+loadavg: 22.50 23.87 25.01 17/16556 662; CFS throttled (periods, s): 0 0
+               total        used        free      shared  buff/cache   available
+Mem:            1007         114         387           2         515         893
+Swap:              0           0           0
+Linux 3e13cf369d80 6.8.0-107-generic #107~22.04.1-Ubuntu SMP PREEMPT_DYNAMIC Wed Mar 18 23:40:43 UTC  x86_64 x86_64 x86_64 GNU/Linux
+== disk
+Filesystem                   Size  Used Avail Use% Mounted on
+overlay                      120G   16M  120G   1% /
+mfs#eu-cz-1.runpod.net:9421  943T  539T  405T  58% /workspace
+== tools
+10.0.100 [/workspace/dotnet/sdk]
+uv 0.13.1 (x86_64-unknown-linux-gnu)
+git version 2.43.0
+LD_LIBRARY_PATH=/workspace/venvs/eg2-cuda/lib/python3.11/site-packages/nvidia/cu13/lib:/workspace/venvs/eg2-cuda/lib/python3.11/site-packages/nvidia/cudnn/lib:/workspace/venvs/eg2-cuda/lib/python3.11/site-packages/nvidia/cusparselt/lib:/workspace/venvs/eg2-cuda/lib/python3.11/site-packages/nvidia/nccl/lib:/workspace/venvs/eg2-cuda/lib/python3.11/site-packages/nvidia/nvshmem/lib

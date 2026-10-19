@@ -31,8 +31,8 @@ public sealed record EmbeddingGemma2EncoderOptions
     public int MaxSequenceLength { get; init; } = EmbeddingGemma2Encoder.MaxSupportedSequenceLength;
 
     /// <summary>
-    /// Rows per ONNX Runtime call at most. Batches run as consecutive chunks in input order, each right-padded to its
-    /// own longest row. Default 16.
+    /// Rows per ONNX Runtime call at most. Batches run as consecutive chunks in input order (unless
+    /// <see cref="SortByLength"/>), each right-padded to its own longest row. Default 16.
     /// </summary>
     public int MaxBatchSize { get; init; } = 16;
 
@@ -43,6 +43,15 @@ public sealed record EmbeddingGemma2EncoderOptions
     /// scores. Default 8,192.
     /// </summary>
     public int MaxBatchTokens { get; init; } = 8_192;
+
+    /// <summary>
+    /// When <see langword="true"/>, rows are ordered by ascending token length (ties in input order) before they are
+    /// chunked by <see cref="MaxBatchSize"/> and <see cref="MaxBatchTokens"/>, so each call pads less, and results are
+    /// scattered back to input order. Outputs then depend on which rows share a call and differ from the default within
+    /// the profile's padded-batch-vs-single bound, not bit for bit. Default <see langword="false"/>: chunks are
+    /// consecutive rows in input order, as qualified. Experimental (capability <c>batch.sort_by_length</c>).
+    /// </summary>
+    public bool SortByLength { get; init; }
 
     internal void Validate()
     {

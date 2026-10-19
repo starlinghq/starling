@@ -18,7 +18,20 @@ public sealed class BertTextEmbedder : IDisposable
     public OnnxModelSession Session => _model.Session;
 
     /// <summary>Verifies local assets and creates a CPU session; never downloads.</summary>
-    public static BertTextEmbedder Create(BertModelProfile profile, string snapshot, int threads = 2, int maxBatchSize = 32)
+    /// <param name="profile">The candidate profile.</param>
+    /// <param name="snapshot">The local snapshot directory holding the locked files.</param>
+    /// <param name="threads">Intra-op threads (1 to 64).</param>
+    /// <param name="maxBatchSize">Rows per ONNX Runtime call at most (1 to 128). Default 32.</param>
+    /// <param name="maxBatchTokens">
+    /// Padded cells (rows x longest row) per call at most, or null (default) for no token budget. A row longer than the
+    /// budget runs alone. Experimental (<see cref="BertCapabilities.BatchTokenBudget"/>).
+    /// </param>
+    /// <param name="sortByLength">
+    /// Chunk rows in ascending token length order (ties in input order) and return results in input order. Outputs
+    /// then depend on which rows share a call (within padded-batch tolerance, not bit for bit). Default false: chunks
+    /// are consecutive rows in input order. Experimental (<see cref="BertCapabilities.BatchSortByLength"/>).
+    /// </param>
+    public static BertTextEmbedder Create(BertModelProfile profile, string snapshot, int threads = 2, int maxBatchSize = 32, int? maxBatchTokens = null, bool sortByLength = false)
     {
         ArgumentNullException.ThrowIfNull(profile);
         if (profile.Task != BertTask.Embeddings)
@@ -26,7 +39,7 @@ public sealed class BertTextEmbedder : IDisposable
             throw new ArgumentException("Use BertReranker for paired-input scoring profiles.", nameof(profile));
         }
 
-        return new BertTextEmbedder(new BertSession(profile, snapshot, threads, maxBatchSize));
+        return new BertTextEmbedder(new BertSession(profile, snapshot, threads, maxBatchSize, maxBatchTokens, sortByLength));
     }
 
     /// <summary>Tokenizes an explicitly named prompt followed by text as one sequence.</summary>

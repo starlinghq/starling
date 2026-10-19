@@ -34,6 +34,20 @@ public class CpuParityTests(Gliner2CpuFixture fixture, ITestOutputHelper output)
     }
 
     /// <summary>
+    /// The experimental batching options against the protected padded-batch bound: length-sorted chunks with a token
+    /// budget, over random orders of the in-contract cases (short and long texts as neighbours).
+    /// </summary>
+    [Fact]
+    public void SortedAndTokenBudgetedBatchesStayWithinThePaddedBatchBound()
+    {
+        var (tokenizer, reason) = Gliner2TestAssets.FindTokenizer();
+        Assert.SkipWhen(tokenizer is null, reason);
+        var cases = fixture.Cases;
+        using var sorted = Gliner2EntityExtractor.Create(fixture.Extractor.Session, tokenizer!, new Gliner2ExtractorOptions { SortByLength = true, MaxBatchTokens = 2048 });
+        Gliner2ModelParity.ShuffledBatches(sorted, cases, [1, 2], Tolerances, output);
+    }
+
+    /// <summary>
     /// Capabilities <c>count_gate_closed</c> and <c>label_descriptions</c> (proposed cases, protected bounds of this
     /// profile): 12 cases where the reference's count gate closes (no entities) and 10 with label descriptions.
     /// </summary>

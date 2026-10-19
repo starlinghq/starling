@@ -49,6 +49,11 @@ public static class E5Capabilities
         ["embedding.pretokenized.cuda"] = CapabilityStatus.Supported,
         ["embedding.text"] = CapabilityStatus.Supported,
         ["batch"] = CapabilityStatus.Supported,
+        // Opt-in explicit-batch chunking, E5EncoderOptions.MaxBatchTokens and SortByLength: off by default, and the
+        // defaults keep the qualified outputs bit for bit. With sort_by_length, outputs stay within the
+        // padded-batch-vs-single bound in the CPU tests; no qualification run yet.
+        ["batch.token_budget"] = CapabilityStatus.Experimental,
+        ["batch.sort_by_length"] = CapabilityStatus.Experimental,
         ["cancellation"] = CapabilityStatus.Supported,
         ["concurrent_calls"] = CapabilityStatus.Supported,
         ["streaming"] = CapabilityStatus.Unsupported,
@@ -69,6 +74,12 @@ public static class E5Capabilities
         ["extensions_ai.embedding_generator"] = CapabilityStatus.Supported,
         ["extensions_ai.embedding_generator.cuda"] = CapabilityStatus.Supported,
         ["extensions_ai.dimensions_truncation"] = CapabilityStatus.Unsupported,
+        // Cross-request micro-batching (opt-in E5EmbeddingGeneratorOptions.MicroBatching): concurrent single requests share padded batches on one
+        // dispatcher thread. Weight-free tests (coalescing, ordering, per-caller cancellation, backpressure, grouping,
+        // disposal, failure isolation) and one weight-dependent test against direct calls within the padded-batch
+        // tolerance; no benchmark adoption decision and no soak yet. Outputs depend on the concurrent traffic (within
+        // tolerance, not bit for bit reproducible). Not part of any Stable profile's contract.
+        ["extensions_ai.micro_batching"] = CapabilityStatus.Experimental,
 
         // ML.NET estimator/transformer, in Starlings.Models.E5.MLNet (P-012). Plan 15.2 badges: pipeline
         // composition (embedding_transform, CPU profile), save/load and portable asset packaging (persistence:
