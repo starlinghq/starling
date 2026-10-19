@@ -72,7 +72,7 @@ Library dependency boundaries (`ai-dotnet` job), checked on each library's trans
 `release.yml`: releases the ai-dotnet packages (`Starlings.*`) to nuget.org.
 
 ```sh
-git tag ai-v0.2.0 && git push origin ai-v0.2.0
+git tag ai-v0.3.0 && git push origin ai-v0.3.0
 ```
 
 - **Triggers:** `push` of tags `ai-v*`; `workflow_dispatch`, which builds the candidate only and never publishes. Concurrency group `release-<ref>`, not cancelled in progress.

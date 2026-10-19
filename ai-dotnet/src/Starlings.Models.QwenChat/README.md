@@ -1,6 +1,6 @@
 # Experimental Qwen text chat
 
-Experimental. The package is in the release set from the release after 0.2.0 (it was not part of 0.2.0). The API may still change. For the Stable Qwen3.5-0.8B chat model, use `Starlings.Models.Qwen35`.
+Experimental. The package is on nuget.org from release 0.3.0 (`docs/releases/ai-0.3.0.md`); keep every `Starlings.*` package at the same version. The API may still change. For the Stable Qwen3.5-0.8B chat model, use `Starlings.Models.Qwen35`.
 
 ## Maturity
 
