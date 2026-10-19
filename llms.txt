@@ -9,7 +9,7 @@ Key facts for writing code against it:
 - e5 needs `query: ` and `passage: ` prefixes. EmbeddingGemma 2 needs `EmbeddingGemma2Prompt.Query` or `.Document`; images take no prompt.
 - Over-long input throws a typed exception (for example `Gliner2InputTooLongException`, `EmbeddingGemma2InputTooLongException`) and is never silently truncated. The exception is e5: like the reference, its tokenizer truncates text to 512 tokens.
 - On Linux, GLiNER2 (CPU and CUDA) and EmbeddingGemma 2 video on CUDA need `MALLOC_MMAP_THRESHOLD_=65536` in the process environment for bounded memory.
-- Current release: 0.2.0 (nuget.org, 2026-10-17), the first with Stable profiles and Qwen tool calling; it depends on `Starlings.Tokenizers` 0.3.0. Keep every `Starlings.*` package at the same version.
+- Current release: 0.3.0 (nuget.org, 2026-10-19): adds the Experimental Kev and QwenChat packages and opt-in batching; Stable profiles unchanged since 0.2.0, the first with Stable profiles. It depends on `Starlings.Tokenizers` 0.3.0. Keep every `Starlings.*` package at the same version.
 - Not on nuget.org: `Starlings.Models.Kev`, `Starlings.Models.Bert` and `Starlings.Models.QwenChat` are experimental and source only; build them from this repository.
 
 ## Docs
