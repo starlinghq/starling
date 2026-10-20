@@ -101,7 +101,7 @@ jobs:
   assets:
     name: model locks
     if: github.repository == 'starlinghq/starling'
-    runs-on: ubuntu-latest
+    runs-on: qualification
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
       - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
@@ -137,7 +137,7 @@ jobs:
     name: model tests (linux x64 cpu)
     needs: assets
     if: ${{ !inputs.soak_only }}
-    runs-on: ubuntu-latest
+    runs-on: qualification
     timeout-minutes: 180
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
@@ -182,7 +182,7 @@ jobs:
     name: evaluator ${{ matrix.profile }}
     needs: assets
     if: ${{ !inputs.soak_only }}
-    runs-on: ubuntu-latest
+    runs-on: qualification
     timeout-minutes: 120
     strategy:
       fail-fast: false
@@ -309,10 +309,12 @@ jobs:
     name: release gates ${{ matrix.profile }}
     needs: assets
     if: ${{ !inputs.soak_only }}
-    runs-on: ubuntu-latest
+    runs-on: qualification
     timeout-minutes: 300
     strategy:
       fail-fast: false
+      # One release set at a time on the self-hosted qualification runners: the video set peaks near 20 GB resident.
+      max-parallel: 1
       matrix:
         include:
           - profile: multilingual-e5-small/onnx-fp32-cpu
@@ -357,6 +359,11 @@ jobs:
         env:
           SWAP_GB: ${{ matrix.swap_gb }}
         run: |
+          # The self-hosted runner has no sudo and its host already has swap; only a host without swap adds one.
+          if swapon --noheadings | grep -q . || ! sudo -n true 2>/dev/null; then
+            free -g
+            exit 0
+          fi
           dir=/mnt
           [[ -d "$dir" ]] || dir=/
           sudo swapoff -a || true
@@ -407,7 +414,7 @@ jobs:
   soak:
     name: soak ${{ matrix.profile }}${{ matrix.variant != 'default' && format(' ({0})', matrix.variant) || '' }}
     needs: assets
-    runs-on: ubuntu-latest
+    runs-on: qualification
     timeout-minutes: 150
     strategy:
       fail-fast: false
@@ -485,7 +492,7 @@ jobs:
           VARIANT: ${{ matrix.variant }}
         run: |
           dotnet build ai-dotnet/tools/Starlings.Soak.Tool -c Release --nologo -v quiet
-          note="GitHub-hosted ubuntu-latest, scheduled qualification run ${GITHUB_RUN_ID}"
+          note="self-hosted runner ${RUNNER_NAME}, scheduled qualification run ${GITHUB_RUN_ID}"
           extra=()
           thp=madvise
           IFS=+ read -ra parts <<<"$VARIANT"
@@ -509,7 +516,7 @@ jobs:
               mmap64k) export MALLOC_MMAP_THRESHOLD_=65536 ;;
               arena2) export MALLOC_ARENA_MAX=2 ;;
               no-env) MMAP_THRESHOLD="" ;;
-              thp-always) thp="" ;;
+              thp-always) thp="" ;; # keeps the host's setting, whatever it is
               *) echo "::error::unknown soak variant part '$part'"; exit 2 ;;
             esac
           done
@@ -541,7 +548,7 @@ jobs:
   catalog:
     name: catalog up to date
     if: github.repository == 'starlinghq/starling' && !inputs.soak_only
-    runs-on: ubuntu-latest
+    runs-on: qualification
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
       - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
@@ -554,7 +561,7 @@ jobs:
   upstream:
     name: upstream change detection
     if: github.repository == 'starlinghq/starling' && !inputs.soak_only
-    runs-on: ubuntu-latest
+    runs-on: qualification
     defaults:
       run:
         working-directory: model-pipeline
@@ -607,7 +614,7 @@ jobs:
   cuda:
     name: cuda (runpod)
     if: github.repository == 'starlinghq/starling' && (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/ai-v') || github.event_name == 'workflow_dispatch' && !inputs.soak_only && !inputs.skip_cuda)
-    runs-on: ubuntu-latest
+    runs-on: qualification
     # Up to 30 min stock wait + 20 min SSH wait + POD_RUN_MINUTES + copy-back and termination, with margin.
     timeout-minutes: 290
     concurrency:
