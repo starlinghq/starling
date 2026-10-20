@@ -24,7 +24,7 @@ jobs:
   # names, embedded base64/hex data, commit authors and messages.
   boundary:
     name: boundary
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, omarchy]
     steps:
       - uses: actions/checkout@v5
         with:
@@ -38,7 +38,7 @@ jobs:
   # docs/releases/). Nothing is published.
   ai-release-drill:
     name: ai release-candidate drill
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, omarchy]
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-dotnet@v5
@@ -49,7 +49,7 @@ jobs:
 
   ai-dotnet:
     name: ai-dotnet
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, omarchy]
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-dotnet@v5
@@ -158,7 +158,7 @@ jobs:
         run: ./tools/release-drill-ai.ps1 -NoModel
 
   model-pipeline:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, omarchy]
     defaults:
       run:
         working-directory: model-pipeline
@@ -177,7 +177,7 @@ jobs:
 
   repo:
     name: repository checks
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, omarchy]
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-python@v6
