@@ -23,7 +23,7 @@ Work from a clone of https://github.com/starlinghq/starling on Linux x64. Read `
 
 ## 1. Start with an issue
 
-Open a [model request](https://github.com/starlinghq/starling/issues/new/choose) (`model-request` template): model, intended use, license, suggested runtime route, hardware. A new architecture family needs a **design proposal** issue before code. Admission is scored on demand, backend fit, reuse, licensing, testability and maintenance (plan §7, `docs/plan/fast-faithful-ai-dotnet.md`); missing redistribution rights block admission outright, so check the code license, weights license and tokenizer terms first.
+Open a [model request](https://github.com/starlinghq/starling/issues/new/choose) (`model-request` template): a title and the model link, plus use cases if you have them. A new architecture family needs a **design proposal** issue before code. Admission is scored on demand, backend fit, reuse, licensing, testability and maintenance (plan §7, `docs/plan/fast-faithful-ai-dotnet.md`); missing redistribution rights block admission outright, so check the code license, weights license and tokenizer terms first.
 
 ## 2. Find the route
 
