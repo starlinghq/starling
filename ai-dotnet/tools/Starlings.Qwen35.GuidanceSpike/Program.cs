@@ -10,6 +10,7 @@
 //   guided-all     all 12 tools, Qwen35ToolGrammar (Required); one grammar for every case
 //   free-subset    the expected tool plus 4 others chosen by case id, no grammar
 //   guided-subset  the same 5 tools with their grammar; the grammar differs per case (no compile-cache reuse)
+// --aa replaces each guided condition with a repeat of its free one (an A/A control for run-to-run noise).
 using System.Diagnostics;
 using System.Globalization;
 using System.Text.Json;
@@ -26,7 +27,7 @@ internal static class Spike
     public static int Run(string[] args)
     {
         string? modelDir = null, outPath = null;
-        bool cuda = false, smoke = false;
+        bool cuda = false, smoke = false, aa = false;
         int count = int.MaxValue, start = 0;
         for (int i = 0; i < args.Length; i++)
         {
@@ -36,6 +37,7 @@ internal static class Spike
                 case "--out": outPath = args[++i]; break;
                 case "--cuda": cuda = true; break;
                 case "--smoke": smoke = true; break;
+                case "--aa": aa = true; break;
                 case "--cases": count = int.Parse(args[++i], CultureInfo.InvariantCulture); break;
                 case "--start": start = int.Parse(args[++i], CultureInfo.InvariantCulture); break;
                 default: Console.Error.WriteLine($"unknown argument {args[i]}"); return 2;
@@ -81,11 +83,10 @@ internal static class Spike
             var others = allTools.Where(t => t.Name != expected).OrderBy(t => Hash(id, t.Name)).Take(4);
             Qwen35Tool[] subset = [.. allTools.Where(t => t.Name == expected || others.Contains(t))];
 
-            foreach (var (condition, tools, guided) in new[]
-            {
-                ("free-all", allTools, false), ("guided-all", allTools, true),
-                ("free-subset", subset, false), ("guided-subset", subset, true),
-            })
+            var conditions = aa
+                ? new[] { ("free-all", allTools, false), ("free-all-repeat", allTools, false), ("free-subset", subset, false), ("free-subset-repeat", subset, false) }
+                : new[] { ("free-all", allTools, false), ("guided-all", allTools, true), ("free-subset", subset, false), ("guided-subset", subset, true) };
+            foreach (var (condition, tools, guided) in conditions)
             {
                 var compile = Stopwatch.StartNew();
                 GenerationGuidance? guidance = guided ? Qwen35ToolGrammar.Build(tools) : null;
@@ -96,7 +97,7 @@ internal static class Spike
                 record["grammar_build_ms"] = grammarBuildMs;
                 output.WriteLine(record.ToJsonString());
                 output.Flush();
-                Console.Error.WriteLine($"{id,3} {condition,-13} {record["outcome"],-12} {record["called"],-16} ttft={run.TtftMs,7:F1} total={run.TotalMs,7:F1} tok={run.Tokens}");
+                Console.Error.WriteLine($"{id,3} {condition,-18} {record["outcome"],-12} {record["called"],-16} ttft={run.TtftMs,7:F1} total={run.TotalMs,7:F1} tok={run.Tokens}");
             }
         }
 
