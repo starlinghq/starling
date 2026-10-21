@@ -1,0 +1,263 @@
+{
+  "behavior": {
+    "architecture": "WhisperForConditionalGeneration",
+    "begin_suppress_tokens": [
+      220,
+      50257
+    ],
+    "decoder_file": "onnx/decoder_model_fp16.onnx",
+    "decoder_layers": 4,
+    "decoding": "greedy",
+    "encoder_file": "onnx/encoder_model_fp16.onnx",
+    "encoder_layers": 32,
+    "encoder_positions": 1500,
+    "hidden_size": 1280,
+    "hop_length": 160,
+    "languages": {
+      "en": 50259
+    },
+    "max_samples": 480000,
+    "max_target_positions": 448,
+    "n_fft": 400,
+    "num_frames": 3000,
+    "num_mel_bins": 128,
+    "sample_rate": 16000,
+    "special_tokens": {
+      "end_of_text": 50257,
+      "no_speech": 50363,
+      "no_timestamps": 50364,
+      "start_of_lm": 50361,
+      "start_of_prev": 50362,
+      "start_of_transcript": 50258,
+      "transcribe": 50360,
+      "translate": 50359
+    },
+    "suppress_tokens": [
+      1,
+      2,
+      7,
+      8,
+      9,
+      10,
+      14,
+      25,
+      26,
+      27,
+      28,
+      29,
+      31,
+      58,
+      59,
+      60,
+      61,
+      62,
+      63,
+      90,
+      91,
+      92,
+      93,
+      359,
+      503,
+      522,
+      542,
+      873,
+      893,
+      902,
+      918,
+      922,
+      931,
+      1350,
+      1853,
+      1982,
+      2460,
+      2627,
+      3246,
+      3253,
+      3268,
+      3536,
+      3846,
+      3961,
+      4183,
+      4667,
+      6585,
+      6647,
+      7273,
+      9061,
+      9383,
+      10428,
+      10929,
+      11938,
+      12033,
+      12331,
+      12562,
+      13793,
+      14157,
+      14635,
+      15265,
+      15618,
+      16553,
+      16604,
+      18362,
+      18956,
+      20075,
+      21675,
+      22520,
+      26130,
+      26161,
+      26435,
+      28279,
+      29464,
+      31650,
+      32302,
+      32470,
+      36865,
+      42863,
+      47425,
+      49870,
+      50254,
+      50258,
+      50359,
+      50360,
+      50361,
+      50362,
+      50363
+    ],
+    "task": "transcribe",
+    "timestamps": false,
+    "tokenizer_file": "tokenizer.json",
+    "tokenizer_profile": "whisper-bpe",
+    "vocabulary_size": 51866
+  },
+  "evaluation": {
+    "policy": {
+      "ground_truth_wer_max": 0.2,
+      "hidden_max_abs": 0.25,
+      "logits_max_abs": 0.5,
+      "mel_max_abs": 1e-06,
+      "mel_path_max_abs": 0.0001,
+      "non_finite": "fail",
+      "reference_wer_max": 0.0,
+      "required_paths": [
+        "reference",
+        "python-onnx",
+        "dotnet-mel",
+        "dotnet-audio"
+      ],
+      "same_backend_max_abs": 1e-05,
+      "token_ids": "exact",
+      "transcript": "exact"
+    },
+    "status": "proposed"
+  },
+  "format_version": 1,
+  "id": "whisper-large-v3-turbo/onnx-fp16-cpu",
+  "origin": {
+    "base": {
+      "files": [
+        {
+          "path": "added_tokens.json",
+          "sha256": "3c51f66c4c21f9e126970078f11ae77a78c74aee8df606ee9daba86e467108e0",
+          "size": 34648
+        },
+        {
+          "path": "config.json",
+          "sha256": "c5b526b3e3cd64cd8940dabb45e8ba726629e22d8ed389c29b552f9140daf04a",
+          "size": 1256
+        },
+        {
+          "path": "generation_config.json",
+          "sha256": "cce11bfe3aaa6ae9e072ea2637caaec8795e68d9b67e655a5af16ee509681a4c",
+          "size": 3772
+        },
+        {
+          "path": "merges.txt",
+          "sha256": "2df2990a395e35e8dfbc7511e08c12d56018d8d04691e0133e5d63b21e154dc6",
+          "size": 493869
+        },
+        {
+          "path": "model.safetensors",
+          "sha256": "542566a422ae4f3fd23f1ba11add198fca01bbf82e66e6a2857b3f608b1eb9d1",
+          "size": 1617824864
+        },
+        {
+          "path": "normalizer.json",
+          "sha256": "bf1c507dc8724ca9cf9903640dacfb69dae2f00edee4f21ceba106a7392f26dd",
+          "size": 52666
+        },
+        {
+          "path": "preprocessor_config.json",
+          "sha256": "7ccc62c6f2765af1f3b46c00c9b5894426835a05021c8b9c01eecb6dfb542711",
+          "size": 340
+        },
+        {
+          "path": "special_tokens_map.json",
+          "sha256": "baea4ea09372eb4fca86b4e4346139fd73cb807d5087e9de0948e971739c3e74",
+          "size": 2186
+        },
+        {
+          "path": "tokenizer.json",
+          "sha256": "297b13372ac43916285644fb9687add3cc62ee2a1adb60da3dc25cc94c1871fd",
+          "size": 2710337
+        },
+        {
+          "path": "tokenizer_config.json",
+          "sha256": "844b642c73a91359722f47b35705f7174686df33d252695d8572cf9ac03a6389",
+          "size": 282843
+        },
+        {
+          "path": "vocab.json",
+          "sha256": "e2aa043ef015641d363d8288e7c241c85e36a5c761fb303598e0710233344387",
+          "size": 1036558
+        }
+      ],
+      "repo": "openai/whisper-large-v3-turbo",
+      "revision": "41f01f3fe87f28c78e2fbf8b568835947dd65ed9"
+    },
+    "files": [
+      {
+        "path": "added_tokens.json",
+        "sha256": "3c51f66c4c21f9e126970078f11ae77a78c74aee8df606ee9daba86e467108e0",
+        "size": 34648
+      },
+      {
+        "path": "config.json",
+        "sha256": "fdd959b061c832e534dea5c3d606fae22fbbd3ab12ad126d0d2eb602779eb9a3",
+        "size": 1223
+      },
+      {
+        "path": "generation_config.json",
+        "sha256": "8568ddf83476167b4607014956b87142763fa6923e71259a606734beb39bdfc8",
+        "size": 3797
+      },
+      {
+        "path": "onnx/decoder_model_fp16.onnx",
+        "sha256": "15870b95e08e666ea2423738ee12722de965d09cf05f4579fa947357332b5057",
+        "size": 343974281
+      },
+      {
+        "path": "onnx/encoder_model_fp16.onnx",
+        "sha256": "b48fd309c51e77ba88324469632fbff8796d2dd37b1658c9516c1c1b1d96428d",
+        "size": 1274342603
+      },
+      {
+        "path": "preprocessor_config.json",
+        "sha256": "7ccc62c6f2765af1f3b46c00c9b5894426835a05021c8b9c01eecb6dfb542711",
+        "size": 340
+      },
+      {
+        "path": "tokenizer.json",
+        "sha256": "b3c8202bbf06d8ee4232c5984baa563784ac4737e2e7fdc42fa180200d3cfcdb",
+        "size": 2480645
+      }
+    ],
+    "repo": "onnx-community/whisper-large-v3-turbo-ONNX",
+    "revision": "76ba4fb597cca51a329a1820e49282e26248b36b"
+  },
+  "runtime": {
+    "backend": "onnx",
+    "precision": "fp16",
+    "provider": "CPUExecutionProvider",
+    "version": "1.30.0"
+  },
+  "task": "transcription"
+}

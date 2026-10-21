@@ -7,7 +7,8 @@ them explicitly. The application adds the ONNX Runtime native package.
 
 This library is **experimental** and not yet qualified. The log-mel spectrogram, the encoder and the greedy decoder are
 verified bit-exact against the reference (transformers `WhisperFeatureExtractor` numpy path and the same ONNX graphs);
-the end-to-end transcript parity is pending the model-pipeline evaluator.
+end-to-end transcript parity against a fresh transformers reference is checked by the model-pipeline route
+`whisper-onnx-cpu-v1` (`model-pipeline/candidates/whisper-large-v3-turbo/`). Its evidence is proposed, not yet adopted.
 
 ## Install
 
@@ -46,7 +47,8 @@ string text = transcriber.Transcribe(waveform);
 
 ## Supported
 
-- Transcription of up to 30 s of 16 kHz audio, greedy decoding, no timestamps.
+- Transcription of up to 30 s of 16 kHz audio, greedy decoding, no timestamps. Shorter clips are zero-padded to 30 s
+  (`WhisperMelSpectrogram.ExtractChunk`, as the feature extractor pads); longer clips are refused, not truncated.
 - Explicit language (two-letter code) or auto-detection (`<|startoflm|>`).
 - The asset lock and explicit acquisition.
 
