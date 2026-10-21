@@ -48,7 +48,7 @@ ruff check . && ruff format --check .
 
 The onboarding runner orchestrates model-specific reference/backend/.NET tools with resumable stages,
 and workflows aggregate independent per-model records. The reference implementations in `reference/`
-remain model-specific. Routes exist for E5 (`e5-onnx-cpu-v1`), BERT embeddings and reranking (`bert-onnx-cpu-v1`), Qwen text generation (`qwen-genai-cpu-v1`) and Kev decisions (`kev-onnx-cpu-v1`); the plugin registry is `src/model_pipeline/onboarding_plugins.py`. Other models need their own route.
+remain model-specific. Routes exist for E5 (`e5-onnx-cpu-v1`), BERT embeddings and reranking (`bert-onnx-cpu-v1`), Qwen text generation (`qwen-genai-cpu-v1`), Kev decisions (`kev-onnx-cpu-v1`) and Whisper speech-to-text (`whisper-onnx-cpu-v1`); the plugin registry is `src/model_pipeline/onboarding_plugins.py`. Other models need their own route.
 Acquisition and verified loading (P-009) is the C# `Starlings.Acquisition` library and tool in `ai-dotnet/`.
 
 ## Staged fidelity evaluator (P-007)

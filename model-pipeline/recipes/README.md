@@ -27,6 +27,7 @@ Paths are repository-relative. Absolute paths, backslashes, `.` or `..` segments
 | `qwen25-cpu.yaml` | `qwen-genai-cpu-v1` | `candidates/qwen25/profile.json` | `corpora/five-models/chat.jsonl` | `reference/generation/requirements.txt` |
 | `kev-0.8b-cpu.yaml` | `kev-onnx-cpu-v1` | `candidates/kev-0.8b/profile.json` | `reference/corpus/kev-decisions-v1.jsonl` | `reference/kev/requirements.txt` |
 | `kev-4b-cpu.yaml` | `kev-onnx-cpu-v1` | `candidates/kev-4b/profile.json` | `reference/corpus/kev-decisions-v1.jsonl` | `reference/kev/requirements.txt` |
+| `whisper-large-v3-turbo-cpu.yaml` | `whisper-onnx-cpu-v1` | `candidates/whisper-large-v3-turbo/profile.json` | `reference/corpus/asr-corpus-v1.jsonl` | `reference/whisper/requirements.txt` |
 
 Contract, corpus and environment paths in the table are relative to `model-pipeline/`; in the recipe files they start with `model-pipeline/`.
 

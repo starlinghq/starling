@@ -49,7 +49,9 @@ string text = transcriber.Transcribe(waveform);
 
 - Transcription of up to 30 s of 16 kHz audio, greedy decoding, no timestamps. Shorter clips are zero-padded to 30 s
   (`WhisperMelSpectrogram.ExtractChunk`, as the feature extractor pads); longer clips are refused, not truncated.
-- Explicit language (two-letter code) or auto-detection (`<|startoflm|>`).
+- Explicit language (two-letter code); the onboarding evidence covers English (`en`). Auto-detection
+  (`Language = null`, prompted with `<|startoflm|>`) is **untested**: it differs from transformers, which picks the most
+  likely language token after `<|startoftranscript|>`.
 - The asset lock and explicit acquisition.
 
 ## Unsupported (for now)

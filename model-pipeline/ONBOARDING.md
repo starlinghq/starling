@@ -114,6 +114,40 @@ The `kev-onnx-cpu-v1` plugin (`src/model_pipeline/onboarding_kev.py`) runs `reci
 
 References and fixtures stay proposals. The Kev registry manifests (`registry/kev-0.8b/`, `registry/kev-4b/`, CPU and CUDA) are Experimental with every gate `not-run`; this route's reports do not change them.
 
+## Whisper route
+
+The `whisper-onnx-cpu-v1` plugin (`src/model_pipeline/onboarding_whisper.py`) runs
+`recipes/whisper-large-v3-turbo-cpu.yaml`. It accepts only the pinned fp16 graphs of
+`onnx-community/whisper-large-v3-turbo-ONNX` and, as `origin.base`, the pinned `openai/whisper-large-v3-turbo` PyTorch
+checkpoint they were exported from (`candidates/whisper-large-v3-turbo/`). Stages: `assets`, `environment`,
+`reference`, `onnx`, `dotnet`, `evaluate`, `review`.
+
+```sh
+.venv/bin/model-pipeline run model-pipeline/recipes/whisper-large-v3-turbo-cpu.yaml \
+  --snapshot /path/to/whisper-large-v3-turbo-ONNX-snapshot \
+  --base-snapshot /path/to/whisper-large-v3-turbo-snapshot \
+  --reference-python /path/to/whisper-venv/bin/python \
+  --out artifacts/onboarding/whisper-large-v3-turbo --threads 2 --timeout 3600
+```
+
+- `--base-snapshot` is a plain snapshot directory (no cache layout needed). The `assets` stage verifies both
+  repositories' pins and checks their `config.json`, `generation_config.json` and `preprocessor_config.json` against
+  the contract.
+- The reference environment is `reference/whisper/requirements.txt` (Python 3.11, torch 2.14.1 CPU, transformers
+  5.18.0, onnxruntime 1.30.0). The corpus is `reference/corpus/asr-corpus-v1.jsonl`: LibriSpeech WAV clips pinned by
+  SHA-256.
+- Evidence is checked at three levels. Intermediate tensors: the .NET mel against the reference mel; the fp16 encoder
+  hidden state (separately on the positions that cover audio and on the zero-padded tail) and the decoder logits,
+  teacher-forced on the reference ids, against the fp32 PyTorch reference. Same backend: .NET against Python ONNX
+  Runtime on the same graphs (hidden state and logits). Output: greedy ids and transcripts identical between .NET
+  and Python ONNX Runtime, word error rate against the reference transcript, and a corpus-level word error rate
+  against the LibriSpeech text as a sanity bound.
+- The reference stage records the mel on both of `WhisperFeatureExtractor`'s paths (numpy, which the library
+  restates, and the default torch path) and checks that the default path yields the same ids.
+- `--distribution` is refused, and the workflow command takes no base snapshot, so Whisper runs only through `run`.
+
+References and policies stay proposals; no protected fixtures or tolerances exist for this profile yet.
+
 ## Add another execution plugin
 
 1. Specify the upstream behavior contract and exact source assets in a reviewed registry manifest or proposed candidate contract. Reuse existing tokenizer/runtime components only where their supported parameters match.
