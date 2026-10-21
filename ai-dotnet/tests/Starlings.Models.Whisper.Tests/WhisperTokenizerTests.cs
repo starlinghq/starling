@@ -5,7 +5,7 @@ public sealed class WhisperTokenizerTests
 {
     private const string Golden = "/home/mark/Projects/starling/.models/snapshots/whisper-large-v3-turbo";
 
-    [Fact(Skip = "Requires Starlings.Tokenizers 0.3.2 (whisper-bpe use_regex); starling pins 0.3.1.")]
+    [Fact]
     public void DecodeSkipsSpecialTokens()
     {
         var tokenizer = WhisperTokenizer.FromFile($"{Golden}/tokenizer.json");

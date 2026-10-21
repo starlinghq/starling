@@ -141,7 +141,7 @@
         "type": "Project",
         "dependencies": {
           "Microsoft.ML.OnnxRuntimeGenAI.Managed": "[0.17.1, 0.17.1]",
-          "Starlings.Tokenizers": "[0.3.1, 0.3.1]"
+          "Starlings.Tokenizers": "[0.3.2, 0.3.2]"
         }
       },
       "starlings.models.e5": {
@@ -149,7 +149,7 @@
         "dependencies": {
           "Starlings.Acquisition": "[0.3.0, )",
           "Starlings.Runtime.Onnx": "[0.3.0, )",
-          "Starlings.Tokenizers": "[0.3.1, 0.3.1]"
+          "Starlings.Tokenizers": "[0.3.2, 0.3.2]"
         }
       },
       "starlings.models.embeddinggemma2": {
@@ -157,7 +157,7 @@
         "dependencies": {
           "Starlings.Acquisition": "[0.3.0, )",
           "Starlings.Runtime.Onnx": "[0.3.0, )",
-          "Starlings.Tokenizers": "[0.3.1, 0.3.1]"
+          "Starlings.Tokenizers": "[0.3.2, 0.3.2]"
         }
       },
       "starlings.models.gliner2": {
@@ -165,7 +165,7 @@
         "dependencies": {
           "Starlings.Acquisition": "[0.3.0, )",
           "Starlings.Runtime.Onnx": "[0.3.0, )",
-          "Starlings.Tokenizers": "[0.3.1, 0.3.1]"
+          "Starlings.Tokenizers": "[0.3.2, 0.3.2]"
         }
       },
       "starlings.models.kev": {
@@ -173,7 +173,7 @@
         "dependencies": {
           "Starlings.Acquisition": "[0.3.0, )",
           "Starlings.Runtime.Onnx": "[0.3.0, )",
-          "Starlings.Tokenizers": "[0.3.1, 0.3.1]"
+          "Starlings.Tokenizers": "[0.3.2, 0.3.2]"
         }
       },
       "starlings.models.qwen35": {
@@ -181,7 +181,7 @@
         "dependencies": {
           "Starlings.Acquisition": "[0.3.0, )",
           "Starlings.Generation.OnnxGenAI": "[0.3.0, )",
-          "Starlings.Tokenizers": "[0.3.1, 0.3.1]"
+          "Starlings.Tokenizers": "[0.3.2, 0.3.2]"
         }
       },
       "starlings.runtime.onnx": {
@@ -246,9 +246,9 @@
       },
       "Starlings.Tokenizers": {
         "type": "CentralTransitive",
-        "requested": "[0.3.1, 0.3.1]",
-        "resolved": "0.3.1",
-        "contentHash": "5q7VVzj3v4Cm7jaru6/SFwRjG4RXKDhbXifmM6odCLtOuCA200y4CUyiflsDIQ37kknOSpsk9r/YGdNJx6y5BQ=="
+        "requested": "[0.3.2, 0.3.2]",
+        "resolved": "0.3.2",
+        "contentHash": "HZn31iCOWxhXSNjj5kavc/St0YbtPzdmDM78sz5laj1IL90IdYWAA0Hf2fsQsBM44NzlaKdolwXYiEC+Po8VnQ=="
       }
     }
   }
