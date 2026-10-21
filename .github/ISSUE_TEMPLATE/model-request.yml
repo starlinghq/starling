@@ -1,32 +1,20 @@
 name: Model request
-description: Ask for a model to be admitted (plan section 7).
+description: Ask for a model to be added to Starling.
+title: "Model request: "
 labels: [model-request]
 body:
   - type: input
     id: model
     attributes:
-      label: Model
-      description: Hub ID or upstream URL, with a revision if you have one.
+      label: Model link
+      description: Hugging Face or upstream URL.
+      placeholder: https://huggingface.co/org/model
     validations:
       required: true
   - type: textarea
     id: use
     attributes:
-      label: What would you build with it?
-      description: Concrete use cases count toward the user-demand score.
+      label: Use cases (optional)
+      description: What would you build with it?
     validations:
-      required: true
-  - type: input
-    id: license
-    attributes:
-      label: Code and weight licenses
-      description: Lack of access or redistribution rights is a hard blocker.
-  - type: dropdown
-    id: route
-    attributes:
-      label: Likely execution route
-      options: [Unknown, ONNX Runtime, ONNX Runtime GenAI, llama.cpp binding, TorchSharp, Managed .NET]
-  - type: textarea
-    id: hardware
-    attributes:
-      label: Target hardware
+      required: false
