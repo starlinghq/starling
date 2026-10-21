@@ -1,7 +1,11 @@
 """Summarizes the spike's runs.jsonl: outcomes, argument validity and latency per condition (python3 -I summarize.py runs.jsonl)."""
-import collections, json, statistics, sys
+import collections, json, os, statistics, sys
 
 runs = [json.loads(l) for l in open(sys.argv[1])]
+# The runner records args_match = true for correct calls on cases without labelled arguments, so the match column is
+# restricted to the cases that have labels (73 of 100).
+fixtures = os.path.join(os.path.dirname(os.path.abspath(__file__)), "fixtures", "cases.jsonl")
+labelled = {c["id"] for c in (json.loads(l) for l in open(fixtures) if l.strip()) if c.get("args")}
 by = collections.defaultdict(list)
 for r in runs:
     by[r["condition"]].append(r)
@@ -17,13 +21,13 @@ def decode_rate(r):
     return (n - 1) / ((r["total_ms"] - r["ttft_ms"]) / 1000) if n > 1 and r["total_ms"] > r["ttft_ms"] else None
 
 order = [c for c in ["free-all", "guided-all", "free-all-repeat", "free-subset", "guided-subset", "free-subset-repeat"] if c in by]
-print("| condition | n | correct tool | wrong tool | invalid name | malformed | no call | args valid (of calls to offered tools) | labelled args match (of correct) |")
+print("| condition | n | correct tool | wrong tool | invalid name | malformed | no call | args valid (of calls to offered tools) | labelled args match (of correct, labelled cases) |")
 print("|---|---|---|---|---|---|---|---|---|")
 for c in order:
     rs = by[c]
     o = collections.Counter(r["outcome"] for r in rs)
     valid = [r["args_valid"] for r in rs if r["args_valid"] is not None]
-    match = [r["args_match"] for r in rs if r["args_match"] is not None]
+    match = [r["args_match"] for r in rs if r["args_match"] is not None and r["id"] in labelled]
     print(f"| {c} | {len(rs)} | {o['correct']} | {o['wrong_tool']} | {o['invalid_name']} | {o['malformed']} | {o['no_call']} | {sum(valid)}/{len(valid)} | {sum(match)}/{len(match)} |")
 
 print()

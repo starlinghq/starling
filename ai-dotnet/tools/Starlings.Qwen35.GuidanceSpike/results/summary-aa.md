@@ -1,9 +1,9 @@
-| condition | n | correct tool | wrong tool | invalid name | malformed | no call | args valid (of calls to offered tools) | labelled args match (of correct) |
+| condition | n | correct tool | wrong tool | invalid name | malformed | no call | args valid (of calls to offered tools) | labelled args match (of correct, labelled cases) |
 |---|---|---|---|---|---|---|---|---|
-| free-all | 100 | 88 | 8 | 0 | 1 | 3 | 96/96 | 85/88 |
-| free-all-repeat | 100 | 88 | 8 | 0 | 1 | 3 | 96/96 | 85/88 |
-| free-subset | 100 | 83 | 2 | 0 | 0 | 15 | 85/85 | 79/83 |
-| free-subset-repeat | 100 | 83 | 2 | 0 | 0 | 15 | 85/85 | 79/83 |
+| free-all | 100 | 88 | 8 | 0 | 1 | 3 | 96/96 | 63/66 |
+| free-all-repeat | 100 | 88 | 8 | 0 | 1 | 3 | 96/96 | 63/66 |
+| free-subset | 100 | 83 | 2 | 0 | 0 | 15 | 85/85 | 60/64 |
+| free-subset-repeat | 100 | 83 | 2 | 0 | 0 | 15 | 85/85 | 60/64 |
 
 Invalid names (condition: case id -> name):
   free-all: [(23, 'create_note'), (35, None), (60, None), (70, None)]
