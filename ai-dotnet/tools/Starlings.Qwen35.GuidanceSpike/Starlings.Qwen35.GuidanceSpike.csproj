@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Spike S5 (Corvid C-003): Qwen3.5-0.8B tool calling with and without an llguidance grammar
+    (Qwen35ToolGrammar through GeneratorParams.SetGuidance). Not packed, not in AI.slnx.
+    -p:UseCuda=true swaps the CPU native package for the CUDA one, as Starlings.Qwen35.Fidelity does.
+  -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <NuGetLockFilePath Condition="'$(UseCuda)' == 'true'">packages.cuda.lock.json</NuGetLockFilePath>
+  </PropertyGroup>
+
+  <ItemGroup Condition="'$(UseCuda)' != 'true'">
+    <PackageReference Include="Microsoft.ML.OnnxRuntimeGenAI" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(UseCuda)' == 'true'">
+    <PackageReference Include="Microsoft.ML.OnnxRuntimeGenAI.Cuda" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../src/Starlings.Models.Qwen35/Starlings.Models.Qwen35.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="../Shared/ToolMain.cs" Link="Shared/ToolMain.cs" />
+    <None Include="fixtures/*" CopyToOutputDirectory="PreserveNewest" LinkBase="fixtures" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,100 @@
+{"id":1,"prompt":"Remind me to call the dentist tomorrow at 9am.","tool":"create_reminder"}
+{"id":2,"prompt":"Set a reminder for 2026-11-02T18:00 to pick up the dry cleaning.","tool":"create_reminder","args":{"time":"2026-11-02T18:00"}}
+{"id":3,"prompt":"Don't let me forget to water the plants this evening at 7.","tool":"create_reminder","tempting":true}
+{"id":4,"prompt":"Ping me in the morning about the quarterly report.","tool":"create_reminder","tempting":true}
+{"id":5,"prompt":"Add 'renew passport' to my reminders for Friday noon.","tool":"create_reminder"}
+{"id":6,"prompt":"Schedule a reminder: take medication at 21:00 every day.","tool":"create_reminder","tempting":true}
+{"id":7,"prompt":"Put 'Mum's birthday' on my calendar for March 3rd at 8am.","tool":"create_reminder","tempting":true}
+{"id":8,"prompt":"Remind me at 5pm to leave for the airport.","tool":"create_reminder"}
+{"id":9,"prompt":"What reminders do I have?","tool":"list_reminders"}
+{"id":10,"prompt":"Show my reminders for 2026-10-25.","tool":"list_reminders","args":{"date":"2026-10-25"}}
+{"id":11,"prompt":"List everything I need to be reminded of on 2026-12-24.","tool":"list_reminders","args":{"date":"2026-12-24"}}
+{"id":12,"prompt":"Check my agenda of reminders.","tool":"list_reminders","tempting":true}
+{"id":13,"prompt":"Do I have anything scheduled? Show all reminders.","tool":"list_reminders"}
+{"id":14,"prompt":"Get my upcoming reminders please.","tool":"list_reminders","tempting":true}
+{"id":15,"prompt":"Delete reminder 42.","tool":"delete_reminder","args":{"id":42}}
+{"id":16,"prompt":"Cancel reminder number 7, I already did it.","tool":"delete_reminder","args":{"id":7},"tempting":true}
+{"id":17,"prompt":"Remove the reminder with id 1003.","tool":"delete_reminder","args":{"id":1003}}
+{"id":18,"prompt":"Get rid of reminder #15.","tool":"delete_reminder","args":{"id":15},"tempting":true}
+{"id":19,"prompt":"Clear reminder 8 from my list.","tool":"delete_reminder","args":{"id":8},"tempting":true}
+{"id":20,"prompt":"Drop reminder id 250.","tool":"delete_reminder","args":{"id":250}}
+{"id":21,"prompt":"Make a note titled 'Groceries' with: eggs, milk, bread.","tool":"create_note","args":{"title":"Groceries"}}
+{"id":22,"prompt":"Jot down that the wifi password is on the fridge.","tool":"create_note","tempting":true}
+{"id":23,"prompt":"Save a note called 'Book ideas': a detective story set on Mars.","tool":"create_note","args":{"title":"Book ideas"}}
+{"id":24,"prompt":"Write down meeting notes: titled 'Standup', body 'shipped the parser, blocked on review'.","tool":"create_note","args":{"title":"Standup"}}
+{"id":25,"prompt":"Take a note: the plumber's number is 555-0142.","tool":"create_note","tempting":true}
+{"id":26,"prompt":"Create a note named 'Gift list' containing 'scarf for Ana, book for Leo'.","tool":"create_note","args":{"title":"Gift list"}}
+{"id":27,"prompt":"Store this in my notes under 'Recipe': 200g flour, 2 eggs, 300ml milk.","tool":"create_note","args":{"title":"Recipe"},"tempting":true}
+{"id":28,"prompt":"Add a memo titled 'Car' saying the next service is in May.","tool":"create_note","args":{"title":"Car"},"tempting":true}
+{"id":29,"prompt":"Search my notes for 'wifi password'.","tool":"search_notes","args":{"query":"wifi password"}}
+{"id":30,"prompt":"Did I write anything down about the plumber?","tool":"search_notes","tempting":true}
+{"id":31,"prompt":"Find my note about book ideas.","tool":"search_notes"}
+{"id":32,"prompt":"Look through my notes for 'recipe'.","tool":"search_notes","args":{"query":"recipe"}}
+{"id":33,"prompt":"Which of my notes mention Ana?","tool":"search_notes","args":{"query":"Ana"}}
+{"id":34,"prompt":"Query my notebook for 'standup'.","tool":"search_notes","args":{"query":"standup"},"tempting":true}
+{"id":35,"prompt":"Recall what I noted about the car service.","tool":"search_notes","tempting":true}
+{"id":36,"prompt":"Open README.md and show me what it says.","tool":"read_file","args":{"path":"README.md"}}
+{"id":37,"prompt":"Read the file src/app/config.yaml.","tool":"read_file","args":{"path":"src/app/config.yaml"}}
+{"id":38,"prompt":"What's in docs/todo.txt?","tool":"read_file","args":{"path":"docs/todo.txt"}}
+{"id":39,"prompt":"Cat the contents of notes/2026-10-01.md.","tool":"read_file","args":{"path":"notes/2026-10-01.md"},"tempting":true}
+{"id":40,"prompt":"Load package.json so I can see the dependencies.","tool":"read_file","args":{"path":"package.json"},"tempting":true}
+{"id":41,"prompt":"Show me the file at logs/error.log.","tool":"read_file","args":{"path":"logs/error.log"}}
+{"id":42,"prompt":"Print the text of LICENSE.","tool":"read_file","args":{"path":"LICENSE"},"tempting":true}
+{"id":43,"prompt":"Display .env.example for me.","tool":"read_file","args":{"path":".env.example"}}
+{"id":44,"prompt":"Write 'hello world' to hello.txt.","tool":"write_file","args":{"path":"hello.txt"}}
+{"id":45,"prompt":"Save the text 'TODO: refactor' into todo.md.","tool":"write_file","args":{"path":"todo.md"}}
+{"id":46,"prompt":"Create a file called out/result.csv containing 'a,b\\n1,2'.","tool":"write_file","args":{"path":"out/result.csv"},"tempting":true}
+{"id":47,"prompt":"Overwrite version.txt with 1.4.2.","tool":"write_file","args":{"path":"version.txt"}}
+{"id":48,"prompt":"Put 'build passed' into status.txt.","tool":"write_file","args":{"path":"status.txt"}}
+{"id":49,"prompt":"Dump the word 'ready' to flags/ready.","tool":"write_file","args":{"path":"flags/ready"},"tempting":true}
+{"id":50,"prompt":"Make a new file greeting.md that says 'Welcome aboard'.","tool":"write_file","args":{"path":"greeting.md"},"tempting":true}
+{"id":51,"prompt":"Find all PDF files in Downloads.","tool":"search_files","args":{"pattern":"*.pdf"},"tempting":true}
+{"id":52,"prompt":"List every *.csv file in the workspace.","tool":"search_files","args":{"pattern":"*.csv"}}
+{"id":53,"prompt":"Where are the Python files? Search for *.py.","tool":"search_files","args":{"pattern":"*.py"}}
+{"id":54,"prompt":"Look for files named report*.docx in /home/mark/Documents.","tool":"search_files","args":{"pattern":"report*.docx"}}
+{"id":55,"prompt":"Locate any .log files under logs.","tool":"search_files","tempting":true}
+{"id":56,"prompt":"Search the disk for photos matching IMG_*.jpg.","tool":"search_files","args":{"pattern":"IMG_*.jpg"}}
+{"id":57,"prompt":"Which files match *.json?","tool":"search_files","args":{"pattern":"*.json"}}
+{"id":58,"prompt":"Grep the filesystem for files called Dockerfile.","tool":"search_files","args":{"pattern":"Dockerfile"},"tempting":true}
+{"id":59,"prompt":"Search the web for the best hiking trails near Lisbon.","tool":"web_search"}
+{"id":60,"prompt":"Google who won the 2022 World Cup.","tool":"web_search","tempting":true}
+{"id":61,"prompt":"Look up the latest .NET release online, give me 3 results.","tool":"web_search","args":{"max_results":3}}
+{"id":62,"prompt":"Find articles about llguidance on the internet.","tool":"web_search","tempting":true}
+{"id":63,"prompt":"Search online for a recipe for pastel de nata.","tool":"web_search"}
+{"id":64,"prompt":"What's the population of Iceland? Check the web.","tool":"web_search"}
+{"id":65,"prompt":"Browse for reviews of the Framework 13 laptop, top 5.","tool":"web_search","args":{"max_results":5},"tempting":true}
+{"id":66,"prompt":"Do a web search: ONNX Runtime GenAI guidance.","tool":"web_search","args":{"query":"ONNX Runtime GenAI guidance"}}
+{"id":67,"prompt":"Fetch news about the Artemis mission.","tool":"web_search","tempting":true}
+{"id":68,"prompt":"Research the opening hours of the Louvre.","tool":"web_search","tempting":true}
+{"id":69,"prompt":"Text Bob on SMS that I'm running late.","tool":"send_message","args":{"recipient":"Bob","channel":"sms"},"tempting":true}
+{"id":70,"prompt":"Email Alice: the report is attached.","tool":"send_message","args":{"recipient":"Alice","channel":"email"},"tempting":true}
+{"id":71,"prompt":"Send a Telegram message to Dmitri saying 'see you at 8'.","tool":"send_message","args":{"recipient":"Dmitri","channel":"telegram"}}
+{"id":72,"prompt":"Message Mum by SMS: landed safely.","tool":"send_message","args":{"recipient":"Mum","channel":"sms"}}
+{"id":73,"prompt":"Shoot an email to finance@acme.com saying the invoice is paid.","tool":"send_message","args":{"recipient":"finance@acme.com","channel":"email"},"tempting":true}
+{"id":74,"prompt":"Tell Priya on telegram that the build is green.","tool":"send_message","args":{"recipient":"Priya","channel":"telegram"}}
+{"id":75,"prompt":"Notify Carlos via SMS: meeting moved to 3pm.","tool":"send_message","args":{"recipient":"Carlos","channel":"sms"},"tempting":true}
+{"id":76,"prompt":"Reply to Jun by email with 'thanks, got it'.","tool":"send_message","args":{"recipient":"Jun","channel":"email"},"tempting":true}
+{"id":77,"prompt":"WhatsApp-style quick text to Sam over SMS: 'on my way'.","tool":"send_message","args":{"recipient":"Sam","channel":"sms"},"tempting":true}
+{"id":78,"prompt":"Drop Lena a telegram: 'call me when free'.","tool":"send_message","args":{"recipient":"Lena","channel":"telegram"}}
+{"id":79,"prompt":"What's the weather in Porto?","tool":"get_weather","args":{"city":"Porto"}}
+{"id":80,"prompt":"Is it going to rain in London tomorrow?","tool":"get_weather","args":{"city":"London"},"tempting":true}
+{"id":81,"prompt":"Temperature in Chicago in fahrenheit please.","tool":"get_weather","args":{"city":"Chicago","units":"fahrenheit"}}
+{"id":82,"prompt":"Forecast for Tokyo in celsius.","tool":"get_weather","args":{"city":"Tokyo","units":"celsius"},"tempting":true}
+{"id":83,"prompt":"Should I bring a jacket in Berlin today?","tool":"get_weather","args":{"city":"Berlin"}}
+{"id":84,"prompt":"How hot is it in Phoenix right now?","tool":"get_weather","args":{"city":"Phoenix"}}
+{"id":85,"prompt":"Check conditions in Reykjavik.","tool":"get_weather","args":{"city":"Reykjavik"},"tempting":true}
+{"id":86,"prompt":"Weather report for Nairobi.","tool":"get_weather","args":{"city":"Nairobi"}}
+{"id":87,"prompt":"Is it sunny in Madrid?","tool":"get_weather","args":{"city":"Madrid"}}
+{"id":88,"prompt":"Set a timer for 10 minutes.","tool":"set_timer","args":{"minutes":10}}
+{"id":89,"prompt":"Start a 25 minute pomodoro.","tool":"set_timer","args":{"minutes":25},"tempting":true}
+{"id":90,"prompt":"Timer: 3 minutes for the eggs.","tool":"set_timer","args":{"minutes":3}}
+{"id":91,"prompt":"Countdown 45 minutes labelled 'laundry'.","tool":"set_timer","args":{"minutes":45}}
+{"id":92,"prompt":"Alert me in 15 minutes, tea is steeping.","tool":"set_timer","args":{"minutes":15},"tempting":true}
+{"id":93,"prompt":"Start a stopwatch-style timer of 60 minutes.","tool":"set_timer","args":{"minutes":60},"tempting":true}
+{"id":94,"prompt":"Give me a 5 minute timer.","tool":"set_timer","args":{"minutes":5}}
+{"id":95,"prompt":"Set an alarm-like timer for 90 minutes for my nap.","tool":"set_timer","args":{"minutes":90},"tempting":true}
+{"id":96,"prompt":"Bookmark this: note titled 'Links' with body 'https://example.com'.","tool":"create_note","args":{"title":"Links"},"tempting":true}
+{"id":97,"prompt":"Translate 'good morning' into French by searching the web.","tool":"web_search","tempting":true}
+{"id":98,"prompt":"Convert 100 USD to EUR using a web search.","tool":"web_search","tempting":true}
+{"id":99,"prompt":"Calculate my calories: search my notes for 'diet'.","tool":"search_notes","args":{"query":"diet"},"tempting":true}
+{"id":100,"prompt":"Book a table: remind me to call Luigi's at 6pm.","tool":"create_reminder","tempting":true}

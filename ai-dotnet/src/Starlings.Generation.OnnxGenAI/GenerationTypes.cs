@@ -38,6 +38,12 @@ public sealed record GenerationOptions
     /// </summary>
     public int? PrefillChunkTokens { get; init; }
 
+    /// <summary>
+    /// Spike S5 (experimental): constrains decoding with ONNX Runtime GenAI's llguidance integration, or null (default)
+    /// for unconstrained decoding. Needs <c>tokenizer.json</c> in the model directory (GenAI reads it from there).
+    /// </summary>
+    public GenerationGuidance? Guidance { get; init; }
+
     internal void Validate()
     {
         if (PrefillChunkTokens is int chunk)
@@ -63,6 +69,24 @@ public sealed record GenerationOptions
 
         Sampling?.Validate();
     }
+}
+
+/// <summary>
+/// Spike S5 (experimental): an llguidance constraint passed to <c>GeneratorParams.SetGuidance</c>. The token mask is
+/// applied inside GenAI's <c>GenerateNextToken</c>; fast-forward tokens are off, so every step still yields one token.
+/// </summary>
+/// <param name="Type"><c>json_schema</c>, <c>regex</c> or <c>lark_grammar</c>.</param>
+/// <param name="Data">The schema, regex or grammar text.</param>
+public sealed record GenerationGuidance(string Type, string Data)
+{
+    /// <summary>A Lark grammar (llguidance dialect).</summary>
+    public static GenerationGuidance Lark(string grammar) => new("lark_grammar", grammar);
+
+    /// <summary>A JSON Schema.</summary>
+    public static GenerationGuidance JsonSchema(string schema) => new("json_schema", schema);
+
+    /// <summary>A regular expression.</summary>
+    public static GenerationGuidance Regex(string pattern) => new("regex", pattern);
 }
 
 /// <summary>

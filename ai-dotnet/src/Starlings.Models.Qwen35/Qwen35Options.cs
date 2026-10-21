@@ -61,6 +61,12 @@ public sealed record Qwen35ChatOptions
     /// </summary>
     public int? PrefillChunkTokens { get; init; }
 
+    /// <summary>
+    /// Spike S5 (experimental): llguidance constraint for the completion, for example
+    /// <see cref="Qwen35ToolGrammar.Build(IReadOnlyList{Qwen35Tool}, Qwen35ToolGrammarMode)"/>; null (default) for none.
+    /// </summary>
+    public GenerationGuidance? Guidance { get; init; }
+
     /// <summary>Prefill chunk size used on CUDA when <see cref="PrefillChunkTokens"/> is null.</summary>
     public const int DefaultCudaPrefillChunkTokens = 512;
 
@@ -70,6 +76,7 @@ public sealed record Qwen35ChatOptions
         StopSequences = StopSequences,
         AdditionalStopTokenIds = AdditionalStopTokenIds,
         Sampling = Sampling,
+        Guidance = Guidance,
         PrefillChunkTokens = PrefillChunkTokens ?? (provider == GenAIExecutionProvider.Cuda ? DefaultCudaPrefillChunkTokens : null),
     };
 }

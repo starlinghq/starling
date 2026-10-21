@@ -11,6 +11,9 @@ public sealed record GenAISequenceOptions
     /// <summary>Sampling settings, or null for greedy search (argmax at every step).</summary>
     public SamplingOptions? Sampling { get; init; }
 
+    /// <summary>Spike S5 (experimental): llguidance constraint, or null for none.</summary>
+    public GenerationGuidance? Guidance { get; init; }
+
     internal void Validate()
     {
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(MaxLength, nameof(MaxLength));

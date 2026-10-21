@@ -193,6 +193,11 @@ public sealed class GenAIModel : IDisposable
                 parameters.SetSearchOption("do_sample", false);
             }
 
+            if (options.Guidance is { } guidance)
+            {
+                parameters.SetGuidance(guidance.Type, guidance.Data, enableFFTokens: false);
+            }
+
             Generator generator;
             if (NativeCallLock is { } gate)
             {

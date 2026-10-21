@@ -140,6 +140,7 @@ public sealed class TextGenerator
         {
             MaxLength = prompt.Length + options.MaxNewTokens,
             Sampling = options.Sampling,
+            Guidance = options.Guidance,
         });
 
         var clock = Stopwatch.StartNew();
