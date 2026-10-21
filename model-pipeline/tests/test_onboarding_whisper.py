@@ -84,7 +84,12 @@ NEAR_MISSES = [
     ("ids made fuzzy", lambda c: c["evaluation"]["policy"].update(token_ids="wer"), "token_ids"),
     ("transcript made fuzzy", lambda c: c["evaluation"]["policy"].update(transcript="wer"), "transcript"),
     ("dropped path", lambda c: c["evaluation"]["policy"]["required_paths"].pop(), "required_paths"),
-    ("hidden over cap", lambda c: c["evaluation"]["policy"].update(hidden_max_abs=0.6), "hidden_max_abs"),
+    ("hidden over cap", lambda c: c["evaluation"]["policy"].update(hidden_max_abs=0.2), "hidden_max_abs"),
+    (
+        "padding over cap",
+        lambda c: c["evaluation"]["policy"].update(hidden_padding_max_abs=3.0),
+        "hidden_padding_max_abs",
+    ),
     ("logits over cap", lambda c: c["evaluation"]["policy"].update(logits_max_abs=2.0), "logits_max_abs"),
     ("wer over cap", lambda c: c["evaluation"]["policy"].update(reference_wer_max=0.5), "reference_wer_max"),
     ("negative wer", lambda c: c["evaluation"]["policy"].update(reference_wer_max=-0.1), "reference_wer_max"),
@@ -106,7 +111,9 @@ def test_contract_refuses_near_misses_field_by_field(name, mutate, field):
 
 def test_fidelity_bounds_may_be_proposed_within_caps():
     candidate = profile()
-    candidate["evaluation"]["policy"].update(hidden_max_abs=0.5, logits_max_abs=1.0, reference_wer_max=0.1)
+    candidate["evaluation"]["policy"].update(
+        hidden_max_abs=0.1, hidden_padding_max_abs=2.0, logits_max_abs=0.5, reference_wer_max=0.1
+    )
     whisper.validate_candidate_behavior(candidate)
 
 
@@ -274,7 +281,7 @@ def write_stage(
             "transcript": f" Words of {identifier}.",
         }
         if stage == "reference":
-            row.update(text=f"WORDS OF {identifier.upper()}", samples=16000 * (seed + 1), default_path_ids=ids)
+            row.update(text=f"WORDS OF {identifier.upper()}", samples=320 * (seed + 1), default_path_ids=ids)
         else:
             row["forced_ids"] = ids
         if stage == "dotnet":
@@ -338,6 +345,7 @@ def test_complete_evidence_passes_and_never_adopts_protected_gates(tmp_path, tin
         "reference/*/default_path_ids",
         "dotnet-audio/*/mel_vs_reference",
         "onnx/*/hidden_vs_reference",
+        "onnx/*/hidden_padding_vs_reference",
         "dotnet-mel/*/hidden_vs_python",
         "onnx/*/logits_vs_reference",
         "dotnet-mel/*/logits_vs_python",
@@ -350,10 +358,10 @@ def test_complete_evidence_passes_and_never_adopts_protected_gates(tmp_path, tin
     assert report["checks"][-1]["id"] == "reference/corpus/wer_vs_ground_truth"
 
 
-def nudge(name: str, delta: float, clip: str = "clip-a"):
+def nudge(name: str, delta: float, clip: str = "clip-a", index: int = 0):
     def edit(document, blob):
         entry = next(layout for layout in _layout(document, blob) if (layout["id"], layout["name"]) == (clip, name))
-        blob[entry["offset"]] += delta
+        blob[entry["offset"] + index] += delta
 
     return edit
 
@@ -381,7 +389,8 @@ def _layout(document, blob):
         ("dotnet", nudge("mel", 1e-5), "dotnet-audio/clip-a/mel_vs_reference"),
         ("dotnet", nudge("hidden", 1e-4), "dotnet-mel/clip-a/hidden_vs_python"),
         ("dotnet", nudge("logits", 1e-4, "clip-b"), "dotnet-mel/clip-b/logits_vs_python"),
-        ("onnx", nudge("hidden", 1.0), "onnx/clip-a/hidden_vs_reference"),
+        ("onnx", nudge("hidden", 0.1), "onnx/clip-a/hidden_vs_reference"),
+        ("onnx", nudge("hidden", 1.5, index=TINY["hidden_size"]), "onnx/clip-a/hidden_padding_vs_reference"),
         ("reference", nudge("mel_torch", 1e-2), "reference/clip-a/mel_torch_vs_numpy"),
         (
             "dotnet",

@@ -125,8 +125,9 @@ CONTRACTS = {
 POLICY = {
     "mel_max_abs": 1e-6,
     "mel_path_max_abs": 1e-4,
-    "hidden_max_abs": 0.25,
-    "logits_max_abs": 0.5,
+    "hidden_max_abs": 0.05,
+    "hidden_padding_max_abs": 1.0,
+    "logits_max_abs": 0.1,
     "same_backend_max_abs": 1e-5,
     "token_ids": "exact",
     "transcript": "exact",
@@ -150,7 +151,16 @@ FIXED_POLICY_KEYS = {
         "required_paths",
     )
 }
-FIDELITY_CAPS = {"mel_path_max_abs": 1e-3, "hidden_max_abs": 0.5, "logits_max_abs": 1.0, "reference_wer_max": 0.1}
+# The encoder hidden state is bounded separately on the positions that cover audio and on the zero-padded tail: fp16
+# drifts most on the padded (log-mel floor) frames, and one bound loose enough for those would hide a regression on the
+# frames the transcript depends on.
+FIDELITY_CAPS = {
+    "mel_path_max_abs": 1e-3,
+    "hidden_max_abs": 0.1,
+    "hidden_padding_max_abs": 2.0,
+    "logits_max_abs": 0.5,
+    "reference_wer_max": 0.1,
+}
 TENSORS = {
     "reference": ("mel", "mel_torch", "hidden", "logits"),
     "onnx": ("hidden", "logits"),
@@ -421,8 +431,12 @@ def _document(path: Path, candidate: dict, digest: str, stage: str) -> tuple[dic
                 or not isinstance(row["audio_sha256"], str)
             ):
                 raise PipelineError(f"{stage}/{identifier}: invalid prompt, ids, or transcript")
-            if stage == "reference" and row["default_path_ids"][: len(expected_prompt)] != expected_prompt:
-                raise PipelineError(f"{stage}/{identifier}: invalid default feature-path ids")
+            if stage == "reference" and (
+                row["default_path_ids"][: len(expected_prompt)] != expected_prompt
+                or type(row["samples"]) is not int
+                or not 0 < row["samples"] <= behavior["max_samples"]
+            ):
+                raise PipelineError(f"{stage}/{identifier}: invalid default feature-path ids or sample count")
             if stage == "dotnet" and not isinstance(row["audio_transcript"], str):
                 raise PipelineError(f"{stage}/{identifier}: the public audio-path transcript is missing")
             cases[identifier] = row
@@ -494,6 +508,11 @@ def _difference(actual, expected, bound: float, where: str) -> dict:
     }
 
 
+def audio_positions(samples: int, behavior: dict) -> int:
+    """Encoder positions that cover audio: one per two mel frames (the encoder's stride-2 convolution)."""
+    return min(behavior["encoder_positions"], math.ceil(samples / (2 * behavior["hop_length"])))
+
+
 def _exact(actual, expected, where: str) -> dict:
     return {"id": where, "status": "passed" if actual == expected else "failed", "bound": "exact", "actual": actual}
 
@@ -537,6 +556,7 @@ def evaluate_development(
     checks = []
     for identifier, row in expected.items():
         python_row, dotnet_row = python_cases[identifier], dotnet_cases[identifier]
+        split = audio_positions(row["samples"], behavior) * behavior["hidden_size"]
         checks += [
             _difference(
                 reference_tensors[identifier, "mel_torch"],
@@ -552,10 +572,16 @@ def evaluate_development(
                 f"dotnet-audio/{identifier}/mel_vs_reference",
             ),
             _difference(
-                python_tensors[identifier, "hidden"],
-                reference_tensors[identifier, "hidden"],
+                python_tensors[identifier, "hidden"][:split],
+                reference_tensors[identifier, "hidden"][:split],
                 policy["hidden_max_abs"],
                 f"onnx/{identifier}/hidden_vs_reference",
+            ),
+            _difference(
+                python_tensors[identifier, "hidden"][split:],
+                reference_tensors[identifier, "hidden"][split:],
+                policy["hidden_padding_max_abs"],
+                f"onnx/{identifier}/hidden_padding_vs_reference",
             ),
             _difference(
                 dotnet_tensors[identifier, "hidden"],

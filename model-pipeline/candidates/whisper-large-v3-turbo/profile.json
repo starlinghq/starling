@@ -131,8 +131,9 @@
   "evaluation": {
     "policy": {
       "ground_truth_wer_max": 0.2,
-      "hidden_max_abs": 0.25,
-      "logits_max_abs": 0.5,
+      "hidden_max_abs": 0.05,
+      "hidden_padding_max_abs": 1.0,
+      "logits_max_abs": 0.1,
       "mel_max_abs": 1e-06,
       "mel_path_max_abs": 0.0001,
       "non_finite": "fail",
