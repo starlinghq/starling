@@ -13,6 +13,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Include="../Shared/Whisper/*.cs" Link="Shared/Whisper/%(Filename)%(Extension)" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="../../src/Starlings.Models.Whisper/Starlings.Models.Whisper.csproj" />
   </ItemGroup>
 

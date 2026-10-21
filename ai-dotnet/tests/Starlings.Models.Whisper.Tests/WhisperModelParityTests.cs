@@ -1,12 +1,11 @@
+using Starlings.TestSupport;
+
 namespace Starlings.Models.Whisper.Tests;
 
 /// <summary>Encoder and decoder parity against ONNX Runtime in the reference (same graphs, so bit-exact).</summary>
+/// <remarks>The model and golden fixtures live in the snapshot directory (not Git); tests skip when they are absent.</remarks>
 public sealed class WhisperModelParityTests
 {
-    private const string Golden = "/home/mark/Projects/starling/.models/snapshots/whisper-large-v3-turbo";
-    private const string EncoderModel = Golden + "/onnx/encoder_model_fp16.onnx";
-    private const string DecoderModel = Golden + "/onnx/decoder_model_fp16.onnx";
-
     private static float[] ReadF32(string path)
     {
         byte[] bytes = File.ReadAllBytes(path);
@@ -21,13 +20,23 @@ public sealed class WhisperModelParityTests
         return result;
     }
 
+    private static float[] Golden(string name, out string reason)
+    {
+        var (path, r) = WhisperTestAssets.FindGoldenFile(name);
+        reason = r;
+        return path is null ? [] : ReadF32(path);
+    }
+
     [Fact]
     public void EncoderMatchesReference()
     {
-        using var model = WhisperModel.Create(EncoderModel, DecoderModel);
-        float[] mel = ReadF32($"{Golden}/golden-mel-numpy.f32");
-        float[] expected = ReadF32($"{Golden}/golden-encoder-hidden.f32");
+        var (files, modelReason) = WhisperTestAssets.FindModel();
+        Assert.SkipWhen(files is null, modelReason);
+        float[] mel = Golden("golden-mel-numpy.f32", out string goldenReason);
+        Assert.SkipWhen(mel.Length == 0, goldenReason);
+        float[] expected = Golden("golden-encoder-hidden.f32", out _);
 
+        using var model = WhisperModel.Create(files!.EncoderPath, files.DecoderPath);
         float[] actual = model.Encode(mel, TestContext.Current.CancellationToken);
 
         Assert.Equal(expected.Length, actual.Length);
@@ -43,10 +52,13 @@ public sealed class WhisperModelParityTests
     [Fact]
     public void DecoderMatchesReference()
     {
-        using var model = WhisperModel.Create(EncoderModel, DecoderModel);
-        float[] hidden = ReadF32($"{Golden}/golden-encoder-hidden.f32");
-        float[] expected = ReadF32($"{Golden}/golden-decoder-logits.f32");
+        var (files, modelReason) = WhisperTestAssets.FindModel();
+        Assert.SkipWhen(files is null, modelReason);
+        float[] hidden = Golden("golden-encoder-hidden.f32", out string goldenReason);
+        Assert.SkipWhen(hidden.Length == 0, goldenReason);
+        float[] expected = Golden("golden-decoder-logits.f32", out _);
 
+        using var model = WhisperModel.Create(files!.EncoderPath, files.DecoderPath);
         long[] prompt = [50258, 50259, 50360, 50364];
         float[] actual = model.DecodeLogits(prompt, hidden, TestContext.Current.CancellationToken);
 
@@ -63,10 +75,13 @@ public sealed class WhisperModelParityTests
     [Fact]
     public void GreedyDecodeMatchesReference()
     {
-        using var model = WhisperModel.Create(EncoderModel, DecoderModel);
-        float[] mel = ReadF32($"{Golden}/golden-mel-numpy.f32");
-        float[] hidden = model.Encode(mel, TestContext.Current.CancellationToken);
+        var (files, modelReason) = WhisperTestAssets.FindModel();
+        Assert.SkipWhen(files is null, modelReason);
+        float[] mel = Golden("golden-mel-numpy.f32", out string goldenReason);
+        Assert.SkipWhen(mel.Length == 0, goldenReason);
 
+        using var model = WhisperModel.Create(files!.EncoderPath, files.DecoderPath);
+        float[] hidden = model.Encode(mel, TestContext.Current.CancellationToken);
         int[] prompt = WhisperModel.Prompt("en");
         int[] actual = model.Generate(hidden, prompt, maxLength: 448, cancellationToken: TestContext.Current.CancellationToken);
 
