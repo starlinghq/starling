@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <IsPackable>true</IsPackable>
+    <IsAotCompatible>true</IsAotCompatible>
+    <Description>openai/whisper-large-v3-turbo (revision 41f01f3f) speech-to-text on ONNX Runtime: 16 kHz audio to the 128-bin log-mel spectrogram, the encoder, and the autoregressive decoder (greedy), through the owned tokenizer (Starlings.Tokenizers profile whisper-bpe). Ships the asset lock, not the weights; acquire them explicitly. The application adds the ONNX Runtime native package.</Description>
+    <PackageTags>whisper;speech-to-text;asr;onnxruntime;transcription</PackageTags>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../Starlings.Runtime.Onnx/Starlings.Runtime.Onnx.csproj" />
+    <PackageReference Include="Starlings.Tokenizers" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../Starlings.Acquisition/Starlings.Acquisition.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Starlings.Models.Whisper.Tests" />
+  </ItemGroup>
+
+</Project>

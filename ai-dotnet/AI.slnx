@@ -10,6 +10,7 @@
     <Project Path="src/Starlings.Models.EmbeddingGemma2.Video.FFmpeg9/Starlings.Models.EmbeddingGemma2.Video.FFmpeg9.csproj" />
     <Project Path="src/Starlings.Models.Gliner2/Starlings.Models.Gliner2.csproj" />
     <Project Path="src/Starlings.Models.Kev/Starlings.Models.Kev.csproj" />
+    <Project Path="src/Starlings.Models.Whisper/Starlings.Models.Whisper.csproj" />
     <Project Path="src/Starlings.Runtime.Onnx/Starlings.Runtime.Onnx.csproj" />
     <Project Path="src/Starlings.Models.E5.Extensions.AI/Starlings.Models.E5.Extensions.AI.csproj" />
     <Project Path="src/Starlings.Models.E5.MLNet/Starlings.Models.E5.MLNet.csproj" />
@@ -22,6 +23,7 @@
   <Folder Name="/tests/">
     <Project Path="tests/Starlings.Models.Bert.Tests/Starlings.Models.Bert.Tests.csproj" />
     <Project Path="tests/Starlings.Models.QwenChat.Tests/Starlings.Models.QwenChat.Tests.csproj" />
+    <Project Path="tests/Starlings.Models.Whisper.Tests/Starlings.Models.Whisper.Tests.csproj" />
     <Project Path="tests/Starlings.Runtime.Onnx.Tests/Starlings.Runtime.Onnx.Tests.csproj" />
     <Project Path="tests/Starlings.Soak.Tool.Tests/Starlings.Soak.Tool.Tests.csproj" />
     <Project Path="tests/Starlings.Models.E5.Extensions.AI.Tests/Starlings.Models.E5.Extensions.AI.Tests.csproj" />

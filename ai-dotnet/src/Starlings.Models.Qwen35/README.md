@@ -100,7 +100,7 @@ This is the contract of profile `qwen3.5-0.8b/ortgenai-fp32x-cpu` (fp32x on Linu
 | --- | --- |
 | Profile | `qwen3.5-0.8b/ortgenai-fp32x-cpu` (registry manifest `model-pipeline/registry/qwen3.5-0.8b/ortgenai-fp32x-cpu/manifest.yaml`). |
 | Model | `Qwen/Qwen3.5-0.8B` at `2fc06364715b967f1860aea9cf38778875588b17`, built with the onnxruntime-genai 0.17.1 builder (source `83de55a1f3886cddbb32a5517e26adb3f9d65159`, float32 `config.json` overlay, `exclude_mtp=true`). The files are downloaded with no token from the public hosting repository and verified by SHA-256 (`Qwen35ModelAssets`). |
-| Tokenizer and template | `Starlings.Tokenizers` `0.3.1`, profile `qwen35-bpe-chat`. The chat template is rendered by `Qwen35ChatTemplate`. GenAI's tokenizer and template engine are never loaded. |
+| Tokenizer and template | `Starlings.Tokenizers` `0.3.2`, profile `qwen35-bpe-chat`. The chat template is rendered by `Qwen35ChatTemplate`. GenAI's tokenizer and template engine are never loaded. |
 | Runtime | ONNX Runtime GenAI 0.17.1 with its CPU natives (`Microsoft.ML.OnnxRuntimeGenAI`), fp32, .NET 10. |
 | Supported platform | Linux x64, CPU. G1 to G4 ran on an Intel Core i7-5820K (AVX2, no AVX-512), .NET 10.0.12. G5 ran on a quiet host with both sides pinned to the same cores. The weekly qualification reruns G1 to G3 on the release sets and a one-hour soak on GitHub-hosted `ubuntu-latest` x64 (4 logical CPUs; transparent huge pages `madvise`). |
 | Memory on Linux | No `MALLOC_*` environment setting is required. On hosts with transparent huge pages set to `always`, resident memory can look larger and rise over time with no leak behind it (the qualification soak sets `madvise`, the Ubuntu default). |
