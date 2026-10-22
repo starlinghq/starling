@@ -31,6 +31,12 @@ int ToolBody()
         return 2;
     }
 
+    // The WAV reader and the tensor sidecars are little-endian.
+    if (!BitConverter.IsLittleEndian)
+    {
+        throw new PlatformNotSupportedException("WAV samples and fidelity tensor sidecars require a little-endian host.");
+    }
+
     int threads = options.TryGetValue("--threads", out var rawThreads) ? int.Parse(rawThreads, System.Globalization.CultureInfo.InvariantCulture) : 2;
     string profilePath = options["--profile"];
     using var profileDocument = JsonDocument.Parse(File.ReadAllText(profilePath));
@@ -38,7 +44,6 @@ int ToolBody()
     Contract.Check(profile);
     string profileId = profile.GetProperty("id").GetString()!;
     string profileHash = Sha256(profilePath);
-    int maxPositions = profile.GetProperty("behavior").GetProperty("max_target_positions").GetInt32();
 
     using var referenceDocument = JsonDocument.Parse(File.ReadAllText(options["--reference"]));
     var reference = referenceDocument.RootElement;
@@ -47,15 +52,16 @@ int ToolBody()
         throw new InvalidDataException("Reference inputs do not belong to the selected candidate contract.");
     }
 
+    if (reference.GetProperty("cases").GetArrayLength() < 2)
+    {
+        throw new InvalidDataException("Reference inputs require at least two clips.");
+    }
+
     var corpus = ReadCorpus(options["--corpus"]);
     var referenceMel = ReadReferenceMel(options["--reference"], reference);
     var files = WhisperModelAssets.OpenDirectory(options["--snapshot"]);
     string output = Path.GetFullPath(options["--out"]);
     Directory.CreateDirectory(output);
-    if (!BitConverter.IsLittleEndian)
-    {
-        throw new PlatformNotSupportedException("Fidelity tensor sidecars require little-endian float32.");
-    }
 
     var session = new OnnxSessionOptions { IntraOpNumThreads = threads, InterOpNumThreads = 1 };
     var tokenizer = WhisperTokenizer.FromFile(files.TokenizerPath, WhisperModelAssets.TokenizerSha256);
@@ -80,14 +86,8 @@ int ToolBody()
 
             if (!transcribers.TryGetValue(language, out var transcriber))
             {
-                // The decoder holds at most max_target_positions tokens, the prompt included (transformers' max_length).
-                var whisperOptions = new WhisperOptions
-                {
-                    Language = language,
-                    MaxLength = maxPositions - WhisperModel.Prompt(language).Length,
-                    EncoderSession = session,
-                    DecoderSession = session,
-                };
+                // Default MaxLength: the library stops at max_target_positions tokens, the prompt included, as transformers does.
+                var whisperOptions = new WhisperOptions { Language = language, EncoderSession = session, DecoderSession = session };
                 transcriber = WhisperTranscriber.Create(files.EncoderPath, files.DecoderPath, files.TokenizerPath, whisperOptions);
                 transcribers.Add(language, transcriber);
             }
@@ -230,7 +230,13 @@ int ToolBody()
                 throw new InvalidDataException($"{id}: audio differs from its pinned SHA-256.");
             }
 
-            clips.Add(id, new Clip(Wav.ReadPcm16Mono(path, WhisperMelSpectrogram.SampleRate), sha256));
+            float[] waveform = Wav.ReadPcm16Mono(path, WhisperMelSpectrogram.SampleRate);
+            if (waveform.Length != row.RootElement.GetProperty("samples").GetInt32())
+            {
+                throw new InvalidDataException($"{id}: the WAV holds {waveform.Length} samples, not the indexed count.");
+            }
+
+            clips.Add(id, new Clip(waveform, sha256));
         }
 
         return clips;
@@ -280,6 +286,10 @@ internal static class Contract
         Same("behavior.encoder_positions", behavior.GetProperty("encoder_positions").GetInt32(), WhisperModel.EncoderSequenceLength);
         Same("behavior.hidden_size", behavior.GetProperty("hidden_size").GetInt32(), WhisperModel.HiddenSize);
         Same("behavior.vocabulary_size", behavior.GetProperty("vocabulary_size").GetInt32(), WhisperModel.VocabSize);
+        Same("behavior.max_target_positions", behavior.GetProperty("max_target_positions").GetInt32(), WhisperModel.MaxTargetPositions);
+        // Transcribe always prompts with <|transcribe|>; the suppression lists are private to WhisperModel and are compared
+        // with the contract from WhisperModel.cs by model-pipeline's tests.
+        Same("behavior.task", behavior.GetProperty("task").GetString(), "transcribe");
         Same("behavior.timestamps", behavior.GetProperty("timestamps").GetBoolean(), false);
         Same("behavior.decoding", behavior.GetProperty("decoding").GetString(), "greedy");
         var special = behavior.GetProperty("special_tokens");

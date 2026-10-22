@@ -44,6 +44,9 @@ public sealed class WhisperTranscriber : IDisposable
     public string Transcribe(float[] waveform, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(waveform);
+        // Refuse before the 30 s spectrogram, the costliest CPU step ahead of the encoder.
+        ObjectDisposedException.ThrowIf(Volatile.Read(ref _disposed) != 0, this);
+        cancellationToken.ThrowIfCancellationRequested();
         var mel = WhisperMelSpectrogram.ExtractChunk(waveform);
         return TranscribeMel(mel, cancellationToken);
     }

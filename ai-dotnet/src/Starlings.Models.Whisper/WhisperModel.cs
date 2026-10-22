@@ -40,6 +40,8 @@ public sealed class WhisperModel : IDisposable
     public const int HiddenSize = 1280;
     /// <summary>Vocabulary size (51866).</summary>
     public const int VocabSize = 51866;
+    /// <summary>Decoder positions (448): the prompt plus generated tokens never exceed this (transformers' <c>max_length</c>).</summary>
+    public const int MaxTargetPositions = 448;
 
     /// <summary><c>&lt;|endoftext|&gt;</c> (also eos and pad).</summary>
     public const int EndOfText = 50257;
@@ -173,11 +175,21 @@ public sealed class WhisperModel : IDisposable
         return prompt.ToArray();
     }
 
-    /// <summary>Greedily decodes from <paramref name="prompt"/> until eos or <paramref name="maxLength"/>. Returns ids including the prompt.</summary>
+    /// <summary>
+    /// Greedily decodes from <paramref name="prompt"/> until eos, <paramref name="maxLength"/> generated tokens, or
+    /// <see cref="MaxTargetPositions"/> tokens in total (the decoder has no position beyond it). Returns ids including the prompt.
+    /// </summary>
+    /// <exception cref="ArgumentException">The prompt fills every decoder position.</exception>
     public int[] Generate(float[] encoderHidden, int[] prompt, int maxLength = 448, CancellationToken cancellationToken = default)
     {
+        ArgumentNullException.ThrowIfNull(prompt);
+        if (prompt.Length is 0 || prompt.Length >= MaxTargetPositions)
+        {
+            throw new ArgumentException($"The prompt must hold 1 to {MaxTargetPositions - 1} tokens, got {prompt.Length}.", nameof(prompt));
+        }
+
         var ids = new List<int>(prompt);
-        for (int step = 0; step < maxLength; step++)
+        for (int step = 0; step < maxLength && ids.Count < MaxTargetPositions; step++)
         {
             cancellationToken.ThrowIfCancellationRequested();
             var logits = DecodeLogits(ids.Select(i => (long)i).ToArray(), encoderHidden, cancellationToken);

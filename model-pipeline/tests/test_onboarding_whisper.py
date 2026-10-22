@@ -217,7 +217,12 @@ def corpus_copy(tmp_path: Path, mutate=None) -> Path:
         ("other rate", lambda d, rows: rows[0].update(sample_rate=8000), "16 kHz"),
         ("other language", lambda d, rows: rows[0].update(language="fr"), "language"),
         ("duplicate id", lambda d, rows: rows[1].update(id=rows[0]["id"]), "unique"),
-        ("one size", lambda d, rows: [row.update(samples=1000) for row in rows], "differently sized"),
+        ("wrong sample count", lambda d, rows: rows[0].update(samples=rows[0]["samples"] + 1), "indexed clip"),
+        (
+            "one size",
+            lambda d, rows: [row.update({key: rows[0][key] for key in ("audio", "sha256", "samples")}) for row in rows],
+            "differently sized",
+        ),
     ],
     ids=lambda value: value if isinstance(value, str) else "",
 )
@@ -235,7 +240,9 @@ def test_word_error_rate():
 
 # --- evaluator ------------------------------------------------------------------------------------------------------
 
-TINY = {"num_mel_bins": 2, "num_frames": 3, "encoder_positions": 2, "hidden_size": 3}
+TINY = {"num_mel_bins": 2, "num_frames": 3, "encoder_positions": 4, "hidden_size": 3}
+# clip-a covers two of the four encoder positions (the rest is padding); clip-b covers all four.
+SAMPLES = {"clip-a": 1, "clip-b": 640}
 GENERATED = {"clip-a": [440, 1029, 13], "clip-b": [2221, 50257 - 1]}
 
 
@@ -281,7 +288,7 @@ def write_stage(
             "transcript": f" Words of {identifier}.",
         }
         if stage == "reference":
-            row.update(text=f"WORDS OF {identifier.upper()}", samples=320 * (seed + 1), default_path_ids=ids)
+            row.update(text=f"WORDS OF {identifier.upper()}", samples=SAMPLES[identifier], default_path_ids=ids)
         else:
             row["forced_ids"] = ids
         if stage == "dotnet":
@@ -316,7 +323,21 @@ def write_stage(
     return path
 
 
-def evidence(tmp_path: Path, candidate: dict, edits: dict | None = None) -> dict:
+def synthetic_corpus() -> list[dict]:
+    """The pinned-corpus rows write_stage's reference cases describe."""
+    return [
+        {
+            "id": identifier,
+            "sha256": hashlib.sha256(identifier.encode()).hexdigest(),
+            "samples": SAMPLES[identifier],
+            "language": "en",
+            "text": f"WORDS OF {identifier.upper()}",
+        }
+        for seed, identifier in enumerate(GENERATED)
+    ]
+
+
+def evidence(tmp_path: Path, candidate: dict, edits: dict | None = None, corpus: list[dict] | None = None) -> dict:
     edits = edits or {}
     candidate_path = tmp_path / "profile.json"
     candidate_path.write_text(json.dumps(candidate), encoding="utf-8")
@@ -331,6 +352,7 @@ def evidence(tmp_path: Path, candidate: dict, edits: dict | None = None) -> dict
         "reference_path": reference,
         "onnx_path": onnx,
         "dotnet_path": dotnet,
+        "corpus": synthetic_corpus() if corpus is None else corpus,
     }
 
 
@@ -390,7 +412,7 @@ def _layout(document, blob):
         ("dotnet", nudge("hidden", 1e-4), "dotnet-mel/clip-a/hidden_vs_python"),
         ("dotnet", nudge("logits", 1e-4, "clip-b"), "dotnet-mel/clip-b/logits_vs_python"),
         ("onnx", nudge("hidden", 0.1), "onnx/clip-a/hidden_vs_reference"),
-        ("onnx", nudge("hidden", 1.5, index=TINY["hidden_size"]), "onnx/clip-a/hidden_padding_vs_reference"),
+        ("onnx", nudge("hidden", 1.5, index=2 * TINY["hidden_size"]), "onnx/clip-a/hidden_padding_vs_reference"),
         ("reference", nudge("mel_torch", 1e-2), "reference/clip-a/mel_torch_vs_numpy"),
         (
             "dotnet",
@@ -433,12 +455,49 @@ def test_transcript_drift_against_the_reference_fails_its_wer_bound(tmp_path, ti
 
 
 def test_ground_truth_wer_bound_catches_agreeing_but_wrong_transcripts(tmp_path, tiny):
-    def wrong(document, blob):
-        for row in document["cases"]:
-            row["text"] = "SOMETHING ELSE WAS SAID HERE"
+    corpus = synthetic_corpus()
+    for row in corpus:
+        row["text"] = "SOMETHING ELSE WAS SAID HERE"
 
-    report = whisper.evaluate_development(**evidence(tmp_path, tiny, {"reference": wrong}))
+    report = whisper.evaluate_development(**evidence(tmp_path, tiny, corpus=corpus))
     assert report["failed_checks"] == ["reference/corpus/wer_vs_ground_truth"]
+
+
+def test_ground_truth_comes_from_the_pinned_corpus_not_the_reference(tmp_path, tiny):
+    def rewrite(document, blob):
+        for row in document["cases"]:
+            row["text"] = row["transcript"]
+
+    corpus = synthetic_corpus()
+    for row in corpus:
+        row["text"] = "SOMETHING ELSE WAS SAID HERE"
+    report = whisper.evaluate_development(**evidence(tmp_path, tiny, {"reference": rewrite}, corpus))
+    assert report["failed_checks"] == ["reference/corpus/wer_vs_ground_truth"]
+
+
+@pytest.mark.parametrize(
+    ("change", "message"),
+    [
+        (lambda corpus: corpus.pop(), "exactly the pinned corpus"),
+        (lambda corpus: corpus[0].update(sha256="0" * 64), "pinned corpus"),
+        (lambda corpus: corpus[1].update(samples=999), "pinned corpus"),
+    ],
+    ids=["missing clip", "other audio", "other sample count"],
+)
+def test_reference_must_describe_the_pinned_corpus(tmp_path, tiny, change, message):
+    corpus = synthetic_corpus()
+    change(corpus)
+    with pytest.raises(PipelineError, match=message):
+        whisper.evaluate_development(**evidence(tmp_path, tiny, corpus=corpus))
+
+
+@pytest.mark.parametrize(
+    ("samples", "positions"),
+    [(1, 2), (26239, 84), (93680, 295), (480000, 1500)],
+)
+def test_audio_positions_follow_the_encoder_receptive_field(samples, positions):
+    # 26239 samples: the last frame touching audio is (26238 + 200) // 160 = 165, so positions 0..83 see audio.
+    assert whisper.audio_positions(samples, whisper.BEHAVIOR) == positions
 
 
 def _set(path: tuple, value):

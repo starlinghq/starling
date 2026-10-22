@@ -22,6 +22,7 @@ import os
 import shutil
 import sys
 import tempfile
+import wave
 from dataclasses import replace
 from pathlib import Path, PurePosixPath
 
@@ -299,19 +300,9 @@ def check_configs(candidate: dict, snapshot: Path, base_snapshot: Path) -> dict:
 
 def verify_base(candidate: dict, base_snapshot: Path) -> list[dict]:
     """Pinned size and SHA-256 of every base file, read only inside the base snapshot."""
-    from model_pipeline.onboarding_candidate import _source
+    from model_pipeline.onboarding_candidate import verify_files
 
-    records = []
-    for record in candidate["origin"]["base"]["files"]:
-        path = _source(base_snapshot, record["path"])
-        size, digest = path.stat().st_size, fixtures.sha256_file(path)
-        if (size, digest) != (record["size"], record["sha256"]):
-            raise PipelineError(
-                f"base asset mismatch: {record['path']}: expected {record['size']} bytes sha256 {record['sha256']}, "
-                f"found {size} bytes sha256 {digest}"
-            )
-        records.append({**record, "verification": "pinned-size-and-sha256"})
-    return records
+    return verify_files(candidate["origin"]["base"]["files"], base_snapshot, "base")
 
 
 def load_corpus(corpus: Path, candidate: dict) -> list[dict]:
@@ -338,6 +329,14 @@ def load_corpus(corpus: Path, candidate: dict) -> list[dict]:
             or not isinstance(row.get("text"), str)
         ):
             raise PipelineError(f"{identifier}: needs 16 kHz audio up to 30 s, a contract language, and its text")
+        # The indexed count decides where the encoder's audio positions end, so it must be the WAV's own.
+        try:
+            with wave.open(str(path), "rb") as reader:
+                header = (reader.getnchannels(), reader.getsampwidth(), reader.getframerate(), reader.getnframes())
+        except (OSError, EOFError, wave.Error) as exc:
+            raise PipelineError(f"{identifier}: unreadable WAV: {exc}") from exc
+        if header != (1, 2, behavior["sample_rate"], samples):
+            raise PipelineError(f"{identifier}: WAV is {header} (channels, width, rate, frames), not the indexed clip")
         rows.append({**row, "path": path})
     if len(rows) < 2 or len({row["samples"] for row in rows}) < 2:
         raise PipelineError("ASR corpus must hold at least two differently sized clips")
@@ -437,6 +436,8 @@ def _document(path: Path, candidate: dict, digest: str, stage: str) -> tuple[dic
                 or not 0 < row["samples"] <= behavior["max_samples"]
             ):
                 raise PipelineError(f"{stage}/{identifier}: invalid default feature-path ids or sample count")
+            if stage != "reference" and not isinstance(row["forced_ids"], list):
+                raise PipelineError(f"{stage}/{identifier}: the teacher-forced ids are missing")
             if stage == "dotnet" and not isinstance(row["audio_transcript"], str):
                 raise PipelineError(f"{stage}/{identifier}: the public audio-path transcript is missing")
             cases[identifier] = row
@@ -509,8 +510,14 @@ def _difference(actual, expected, bound: float, where: str) -> dict:
 
 
 def audio_positions(samples: int, behavior: dict) -> int:
-    """Encoder positions that cover audio: one per two mel frames (the encoder's stride-2 convolution)."""
-    return min(behavior["encoder_positions"], math.ceil(samples / (2 * behavior["hop_length"])))
+    """Encoder positions whose receptive field holds any audio sample; the rest see only zero padding.
+
+    Mel frame t is a window of n_fft samples centred on sample t * hop, so the last frame touching audio is
+    floor((samples - 1 + n_fft / 2) / hop). The encoder's two kernel-3 convolutions (stride 1, then stride 2, both
+    padding 1) let position p read mel frames 2p - 2 through 2p + 2, so p sees audio when 2p - 2 <= that frame.
+    """
+    last_frame = (samples - 1 + behavior["n_fft"] // 2) // behavior["hop_length"]
+    return min(behavior["encoder_positions"], (last_frame + 2) // 2 + 1)
 
 
 def _exact(actual, expected, where: str) -> dict:
@@ -522,15 +529,37 @@ def _rate(value: float, bound: float, where: str, **details) -> dict:
 
 
 def evaluate_development(
-    candidate: dict, candidate_path: Path, reference_path: Path, onnx_path: Path, dotnet_path: Path
+    candidate: dict,
+    candidate_path: Path,
+    reference_path: Path,
+    onnx_path: Path,
+    dotnet_path: Path,
+    corpus: list[dict],
 ) -> dict:
-    """Check complete proposed evidence without reading or promoting protected fixtures."""
+    """Check complete proposed evidence without reading or promoting protected fixtures.
+
+    `corpus` is the pinned corpus as `load_corpus` verified it: it, not the reference evidence, supplies each clip's
+    audio digest, sample count, language and ground-truth text.
+    """
     validate_candidate_behavior(candidate)
     behavior, policy = candidate["behavior"], candidate["evaluation"]["policy"]
     digest = fixtures.sha256_file(candidate_path)
     reference, expected = _document(reference_path, candidate, digest, "reference")
     onnx, python_cases = _document(onnx_path, candidate, digest, "onnx")
     dotnet, dotnet_cases = _document(dotnet_path, candidate, digest, "dotnet")
+    clips = {row["id"]: row for row in corpus}
+    if set(expected) != set(clips):
+        raise PipelineError("reference evidence does not cover exactly the pinned corpus clips")
+    for identifier, row in expected.items():
+        clip = clips[identifier]
+        if (row["audio_sha256"], row["samples"], row["language"]) != (
+            clip["sha256"],
+            clip["samples"],
+            clip["language"],
+        ):
+            raise PipelineError(
+                f"reference/{identifier}: audio, sample count or language differs from the pinned corpus"
+            )
     machines = [document.get("environment", {}).get("machine") for document in (reference, onnx, dotnet)]
     if any(not isinstance(machine, str) or not machine for machine in machines) or len(set(machines)) != 1:
         raise PipelineError("same-backend comparison requires all stages to name the same machine")
@@ -621,8 +650,11 @@ def evaluate_development(
                 f"dotnet-audio/{identifier}/wer_vs_reference",
             ),
         ]
-    errors = sum(edit_distance(words(row["transcript"]), words(row["text"])) for row in expected.values())
-    total = sum(len(words(row["text"])) for row in expected.values())
+    errors = sum(
+        edit_distance(words(row["transcript"]), words(clips[identifier]["text"]))
+        for identifier, row in expected.items()
+    )
+    total = sum(len(words(clip["text"])) for clip in clips.values())
     checks.append(
         _rate(
             errors / total if total else 1.0,
@@ -646,7 +678,7 @@ def evaluate_development(
         "case_count": len(expected),
         "transcripts": {
             identifier: {
-                "ground_truth": row["text"],
+                "ground_truth": clips[identifier]["text"],
                 "reference": row["transcript"],
                 "python-onnx": python_cases[identifier]["transcript"],
                 "dotnet-audio": dotnet_cases[identifier]["audio_transcript"],
@@ -908,6 +940,7 @@ def build_stages(
             deps["reference"] / "reference.json",
             deps["onnx"] / "onnx.json",
             deps["dotnet"] / "dotnet.json",
+            load_corpus(corpus, candidate),
         )
         write_json(out / "report.json", report)
         (out / "report.md").write_text(render_report(report, candidate["id"]), encoding="utf-8")
