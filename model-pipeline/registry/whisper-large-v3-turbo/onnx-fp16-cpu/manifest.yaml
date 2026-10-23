@@ -1,0 +1,207 @@
+# Whisper speech-to-text (design #132): openai/whisper-large-v3-turbo as the fp16 ONNX export of
+# onnx-community/whisper-large-v3-turbo-ONNX on ONNX Runtime 1.30.0, CPU provider, through
+# ai-dotnet/src/Starlings.Models.Whisper (WhisperModelAssets.Lock pins the same graphs and tokenizer). Candidate contract:
+# model-pipeline/candidates/whisper-large-v3-turbo/profile.json (onboarding route whisper-onnx-cpu-v1,
+# recipes/whisper-large-v3-turbo-cpu.yaml). Development parity passed on the onboarding route (#136, #141; 53/53 checks,
+# .NET bit-identical to Python ONNX Runtime). Binding tolerances are adopted (#142); no reference fixtures are adopted
+# and no gate has run.
+schema_version: 1
+id: whisper-large-v3-turbo/onnx-fp16-cpu
+# Experimental: development parity on the onboarding route only; no gate ran.
+maturity: experimental
+
+origin:
+  code:
+    # The original checkpoint and configuration the graphs were exported from; the route's PyTorch fp32 reference
+    # (transformers WhisperForConditionalGeneration) runs it (candidates/whisper-large-v3-turbo/profile.json, origin.base).
+    url: https://huggingface.co/openai/whisper-large-v3-turbo
+    revision: "41f01f3fe87f28c78e2fbf8b568835947dd65ed9"
+  weights:
+    # The fp16 ONNX export the package runs, downloaded from this repository at the pinned commit.
+    url: https://huggingface.co/onnx-community/whisper-large-v3-turbo-ONNX
+    revision: "76ba4fb597cca51a329a1820e49282e26248b36b"
+  files:
+    # onnx-community/whisper-large-v3-turbo-ONNX at the pinned commit (candidates/whisper-large-v3-turbo/profile.json,
+    # origin.files). The graphs and tokenizer.json carry the same digests as WhisperModelAssets.Lock.
+    - path: added_tokens.json
+      sha256: "3c51f66c4c21f9e126970078f11ae77a78c74aee8df606ee9daba86e467108e0"
+      size: 34648
+    - path: config.json
+      sha256: "fdd959b061c832e534dea5c3d606fae22fbbd3ab12ad126d0d2eb602779eb9a3"
+      size: 1223
+    - path: generation_config.json
+      sha256: "8568ddf83476167b4607014956b87142763fa6923e71259a606734beb39bdfc8"
+      size: 3797
+    - path: onnx/decoder_model_fp16.onnx
+      sha256: "15870b95e08e666ea2423738ee12722de965d09cf05f4579fa947357332b5057"
+      size: 343974281
+    - path: onnx/encoder_model_fp16.onnx
+      sha256: "b48fd309c51e77ba88324469632fbff8796d2dd37b1658c9516c1c1b1d96428d"
+      size: 1274342603
+    - path: preprocessor_config.json
+      sha256: "7ccc62c6f2765af1f3b46c00c9b5894426835a05021c8b9c01eecb6dfb542711"
+      size: 340
+    - path: tokenizer.json
+      sha256: "b3c8202bbf06d8ee4232c5984baa563784ac4737e2e7fdc42fa180200d3cfcdb"
+      size: 2480645
+  attribution: >-
+    Whisper large-v3-turbo by OpenAI (openai/whisper-large-v3-turbo, MIT; Radford et al., "Robust Speech Recognition via
+    Large-Scale Weak Supervision", arXiv:2212.04356). fp16 ONNX export by the onnx-community Hugging Face organization
+    (onnx-community/whisper-large-v3-turbo-ONNX).
+
+rights:
+  code_license: MIT
+  weights_license: MIT
+  tokenizer_terms: MIT
+  redistribution: download
+  notes: >-
+    The original weights, configuration and tokenizer are MIT (model card front matter of openai/whisper-large-v3-turbo
+    at the pinned commit). The ONNX export repository has no model card and no license tag at the pinned commit; its
+    graphs are a conversion of the MIT weights, and the MIT license permits that derivative with the notice above. To
+    confirm before any redistribution: Starling does not redistribute the graphs. The C# package ships the lock
+    (WhisperModelAssets.Lock) and Starlings.Acquisition downloads and verifies the files from the export repository
+    explicitly (WhisperModelAssets.DownloadAsync); nothing is bundled.
+
+behavior:
+  tasks: [transcription]
+  # Decoder positions (max_target_positions): the four-token prompt plus generated tokens. Input audio is up to 30 s
+  # (480,000 samples at 16 kHz), zero-padded to 30 s; longer clips are refused, not chunked or truncated.
+  max_input_tokens: 448
+  offsets_unit: none
+  truncation: error
+  defaults:
+    audio: 16 kHz mono float32 PCM, up to 30 s; WhisperMelSpectrogram.ExtractChunk zero-pads shorter clips
+    language: explicit two-letter code; the onboarding evidence covers English (en) only
+    task: transcribe (prompt <|startoftranscript|> <|lang|> <|transcribe|> <|notimestamps|>)
+    decoding: greedy, with generation_config.json's suppress_tokens on every step and begin_suppress_tokens on the first
+    max_new_tokens: 448 total decoder positions, the prompt included (WhisperModel.MaxTargetPositions)
+    decoder: full-context decoder_model_fp16.onnx, no KV cache (each step re-runs the decoder over the prefix)
+  unsupported:
+    - translation (<|translate|>)
+    - timestamps
+    - audio longer than 30 s, chunking and streaming
+    - batching several clips in one call
+    - beam search and sampling
+    - KV-cache decoding (decoder_with_past_model_fp16.onnx, decoder_model_merged_fp16.onnx)
+    - quantized graphs (q4f16 and others in the export repository)
+    - audio decoding from files (the caller supplies 16 kHz PCM)
+    - CUDA (untested)
+
+processing:
+  tokenizer:
+    package: Starlings.Tokenizers
+    version: 0.3.2
+    # The export repository's tokenizer.json through the whisper-bpe profile (byte-level BPE with the multilingual
+    # special tokens); WhisperTokenizer decodes the generated ids and skips special tokens.
+    profile_id: whisper-bpe
+    algorithm: byte-level-bpe
+    assets:
+      - path: tokenizer.json
+        sha256: "b3c8202bbf06d8ee4232c5984baa563784ac4737e2e7fdc42fa180200d3cfcdb"
+        size: 2480645
+    backend_tokenizer_dependency: false
+  audio_processor:
+    # WhisperMelSpectrogram restates transformers WhisperFeatureExtractor's numpy path bit for bit: periodic Hann
+    # window, reflect-padded STFT (power 2) computed in float64, Slaney mel filterbank (area-normalized), log10 with a
+    # 1e-10 floor, clamp to max - 8, then (x + 4) / 4. The route also checks the feature extractor's default torch path
+    # (within 2.4e-5) yields the same ids.
+    sample_rate: 16000
+    n_fft: 400
+    hop_length: 160
+    num_mel_bins: 128
+    frames: 3000
+    mel_scale: slaney
+    window: hann-periodic
+
+execution:
+  backend:
+    name: onnxruntime
+    version: 1.30.0
+    binding: Microsoft.ML.OnnxRuntime
+  precision: fp16
+  variant: reference
+  graph:
+    # Two graphs with float32 inputs and outputs (fp16 inside).
+    inputs:
+      - { name: input_features, type: float32, shape: [batch_size, 128, 3000], graph: onnx/encoder_model_fp16.onnx }
+      - { name: input_ids, type: int64, shape: [batch_size, decoder_sequence_length], graph: onnx/decoder_model_fp16.onnx }
+      - { name: encoder_hidden_states, type: float32, shape: [batch_size, 1500, 1280], graph: onnx/decoder_model_fp16.onnx }
+    outputs:
+      - { name: last_hidden_state, type: float32, shape: [batch_size, 1500, 1280], graph: onnx/encoder_model_fp16.onnx }
+      - { name: logits, type: float32, shape: [batch_size, decoder_sequence_length, 51866], graph: onnx/decoder_model_fp16.onnx }
+
+capabilities:
+  # Starlings.Models.Whisper (WhisperCapabilities.All, same statuses; ai-dotnet/tests/Starlings.Models.Whisper.Tests
+  # RegistryContractTests keeps them equal). Experimental where the onboarding route compared the package with the
+  # transformers reference and Python ONNX Runtime (no adopted reference fixtures, no gate); unsupported where the
+  # package refuses or does not offer it; untested where no evidence exists.
+  batch: unsupported
+  streaming: unsupported
+  cancellation: experimental  # a pre-cancelled request is refused before the spectrogram (route evidence)
+  persistence: unsupported
+  training: unsupported
+  aot: untested
+  extensions_ai: unsupported
+  mlnet: unsupported
+  transcription: experimental  # 4 LibriSpeech clips: transcripts equal the PyTorch fp32 reference word for word
+  transcription_cuda: untested
+  language_detection: untested  # <|startoflm|> prompting differs from transformers' language-token detection
+  concurrent_calls: untested
+  asset_acquisition: supported  # the shared Starlings.Acquisition implementation (pinned size and SHA-256)
+  translation: unsupported
+  timestamps: unsupported
+  chunking: unsupported
+  quantized: unsupported
+
+compatibility:
+  # Linux x64 CPU: the onboarding route on 2026-10-22 and 2026-10-23 (two native threads). No gate.
+  - os: linux
+    arch: x64
+    provider: cpu
+    status: experimental
+    verified: 2026-10-23
+  - os: windows
+    arch: x64
+    provider: cpu
+    status: untested
+  - os: linux
+    arch: x64
+    provider: cuda
+    status: untested
+
+qualification:
+  reference_runner: model-pipeline/reference/whisper/run_whisper.py
+  # No protected reference fixtures: the route compares against a fresh transformers reference on this corpus
+  # (four LibriSpeech dev-clean clips, CC BY 4.0, pinned by SHA-256).
+  fixtures: model-pipeline/reference/corpus/asr-corpus-v1.jsonl
+  # Binding tolerances adopted by Mark (#142); the onboarding route requires the candidate policy to equal them.
+  tolerances: model-pipeline/protected/whisper-large-v3-turbo/onnx-fp16/tolerances.yaml
+  gates:
+    G0: { status: not-run }
+    G1: { status: not-run }
+    G2: { status: not-run }
+    G3: { status: not-run }
+    G4: { status: not-run }
+    G5: { status: not-run }
+    G6: { status: not-run }
+    G7: { status: not-run }
+
+maintenance:
+  owner: Mark
+  # The export repository's main moved to f2d0148f (2025-03-05, "Upload fixed & optimized fp16/q4f16 ONNX weights"),
+  # which changes only decoder_model_merged_fp16.onnx and decoder_model_merged_q4f16.onnx; no file this profile locks
+  # changed, so the pin stays.
+  latest_known_upstream_revision: "f2d0148f21bb07751a7e6e9a4377e1ae7146607f"
+  latest_verified_upstream_revision: "76ba4fb597cca51a329a1820e49282e26248b36b"
+  last_checked: 2026-10-23
+  review_date: 2027-01-23
+  known_issues:
+    - >-
+      No reference fixtures are adopted into protected/ and no gate has run; every capability is at most experimental
+      apart from asset acquisition.
+    - >-
+      The evidence covers English only (four LibriSpeech clips, 1.6 s to 12.5 s); other languages are untested.
+    - >-
+      Decoding re-runs the full decoder over the prefix at every step (no KV cache), so long transcripts are slow.
+    - >-
+      The export repository has no license tag; see rights.notes.

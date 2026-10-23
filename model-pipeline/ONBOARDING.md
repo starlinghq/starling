@@ -146,7 +146,10 @@ checkpoint they were exported from (`candidates/whisper-large-v3-turbo/`). Stage
   restates, and the default torch path) and checks that the default path yields the same ids.
 - `--distribution` is refused, and the workflow command takes no base snapshot, so Whisper runs only through `run`.
 
-References and policies stay proposals; no protected fixtures or tolerances exist for this profile yet.
+The binding tolerances are `protected/whisper-large-v3-turbo/onnx-fp16/tolerances.yaml` (#142); the plugin requires the
+candidate policy to equal them. References stay proposals: no reference fixtures are adopted. The registry manifest
+(`registry/whisper-large-v3-turbo/onnx-fp16-cpu/`) is Experimental with every gate `not-run`; this route's reports do not
+change it.
 
 ## Add another execution plugin
 

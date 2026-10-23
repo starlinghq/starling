@@ -31,6 +31,7 @@ Gate cells link to the evidence the manifest records. The Stable readiness colum
 | [qwen3.5-0.8b/ortgenai-fp16x-cuda](../../model-pipeline/registry/qwen3.5-0.8b/ortgenai-fp16x-cuda/manifest.yaml) | generation | stable | Mark | 2027-01-05 | [passed](../evidence/g0-provenance-2026-10-14/README.md) | [passed](../evidence/release-set-gates-2026-10-14/qwen35-ortgenai-fp16x-cuda/README.md) | [passed](../evidence/release-set-gates-2026-10-14/qwen35-ortgenai-fp16x-cuda/README.md) | [passed](../evidence/release-set-gates-2026-10-14/qwen35-ortgenai-fp16x-cuda/README.md) | [passed](../evidence/qualification-2026-10-16-cuda/README.md) | [passed](../evidence/qualification-2026-10-16-cuda/README.md) | [passed](../evidence/g6-distribution-2026-10-14/README.md) | [passed](../evidence/g7-integration-2026-10-14/README.md) | stable: meets the validator's Stable rules |
 | [qwen3.5-0.8b/ortgenai-fp32x-cpu](../../model-pipeline/registry/qwen3.5-0.8b/ortgenai-fp32x-cpu/manifest.yaml) | generation | stable | Mark | 2027-01-05 | [passed](../evidence/g0-provenance-2026-10-14/README.md) | [passed](../evidence/release-set-gates-2026-10-14/qwen35-ortgenai-fp32x-cpu/README.md) | [passed](../evidence/release-set-gates-2026-10-14/qwen35-ortgenai-fp32x-cpu/README.md) | [passed](../evidence/release-set-gates-2026-10-14/qwen35-ortgenai-fp32x-cpu/README.md) | [passed](../evidence/g4-soak-1h-2026-10-14/README.md) | [passed](../evidence/qualification-2026-10-15/README.md) | [passed](../evidence/g6-distribution-2026-10-14/README.md) | [passed](../evidence/g7-integration-2026-10-14/README.md) | stable: meets the validator's Stable rules |
 | [qwen3.5-0.8b/ortgenai-fp32x-cuda](../../model-pipeline/registry/qwen3.5-0.8b/ortgenai-fp32x-cuda/manifest.yaml) | generation | stable | Mark | 2027-01-05 | [passed](../evidence/g0-provenance-2026-10-14/README.md) | [passed](../evidence/release-set-gates-2026-10-14/qwen35-ortgenai-fp32x-cuda/README.md) | [passed](../evidence/release-set-gates-2026-10-14/qwen35-ortgenai-fp32x-cuda/README.md) | [passed](../evidence/release-set-gates-2026-10-14/qwen35-ortgenai-fp32x-cuda/README.md) | [passed](../evidence/qualification-2026-10-16-cuda/README.md) | [passed](../evidence/qualification-2026-10-16-cuda/README.md) | [passed](../evidence/g6-distribution-2026-10-14/README.md) | [passed](../evidence/g7-integration-2026-10-14/README.md) | stable: meets the validator's Stable rules |
+| [whisper-large-v3-turbo/onnx-fp16-cpu](../../model-pipeline/registry/whisper-large-v3-turbo/onnx-fp16-cpu/manifest.yaml) | transcription | experimental | Mark | 2027-01-23 | not-run | not-run | not-run | not-run | not-run | not-run | not-run | not-run | gates not passed: G0, G1, G2, G3, G4, G5, G6, G7; untested: aot, concurrent_calls, language_detection, transcription_cuda |
 
 ## Execution
 
@@ -55,6 +56,7 @@ Gate cells link to the evidence the manifest records. The Stable readiness colum
 | qwen3.5-0.8b/ortgenai-fp16x-cuda | onnxruntime-genai 0.17.1 | Microsoft.ML.OnnxRuntimeGenAI.Cuda 0.17.1 | fp16 | reference |
 | qwen3.5-0.8b/ortgenai-fp32x-cpu | onnxruntime-genai 0.17.1 | Microsoft.ML.OnnxRuntimeGenAI 0.17.1 | fp32 | reference |
 | qwen3.5-0.8b/ortgenai-fp32x-cuda | onnxruntime-genai 0.17.1 | Microsoft.ML.OnnxRuntimeGenAI.Cuda 0.17.1 | fp32 | reference |
+| whisper-large-v3-turbo/onnx-fp16-cpu | onnxruntime 1.30.0 | Microsoft.ML.OnnxRuntime | fp16 | reference |
 
 ## Capabilities
 
@@ -334,6 +336,28 @@ One table per family, one column per profile. Rows are every capability any prof
 | usage | supported | supported | supported |
 | vision | unsupported | unsupported | unsupported |
 
+### whisper-large-v3-turbo
+
+| Capability | onnx-fp16-cpu |
+| --- | --- |
+| batch | unsupported |
+| streaming | unsupported |
+| cancellation | experimental |
+| persistence | unsupported |
+| training | unsupported |
+| aot | untested |
+| extensions_ai | unsupported |
+| mlnet | unsupported |
+| asset_acquisition | supported |
+| chunking | unsupported |
+| concurrent_calls | untested |
+| language_detection | untested |
+| quantized | unsupported |
+| timestamps | unsupported |
+| transcription | experimental |
+| transcription_cuda | untested |
+| translation | unsupported |
+
 ## Known issues
 
 - `embeddinggemma-2/image-fp32-cpu`: The image release set's reference stage tensors regenerate byte-identical only on the reference CPU at 6 threads; the accepted soft-token and token-embedding arrays are hosted at Starlinghq/starling-release-references (commit and file digests in the protected hosted-reference.json, #71), and the evaluator checks every array against the protected tensors.json, so the scheduled G2 needs no regeneration.
@@ -455,3 +479,7 @@ One table per family, one column per profile. Rows are every capability any prof
 - `qwen3.5-0.8b/ortgenai-fp32x-cuda`: The ONNX Runtime GenAI C# API is labeled preview upstream; Starlings.Generation.OnnxGenAI isolates it. The runtime version must equal the builder version that wrote the graph (0.17.1).
 - `qwen3.5-0.8b/ortgenai-fp32x-cuda`: The fp32x graph was built for the CPU provider; on the CUDA provider it decodes far slower than fp16x (M0: about 22 tokens/s; node placement not inspected, so CPU fallback of the DeltaNet operators is possible). fp32 built for the CUDA provider fails (M0 failure 2).
 - `qwen3.5-0.8b/ortgenai-fp32x-cuda`: Native runtime: Microsoft.ML.OnnxRuntimeGenAI.Cuda 0.17.1 brings Microsoft.ML.OnnxRuntime.Gpu 1.30.0 and needs the CUDA 13 runtime and cuBLAS on the loader path (not shipped). The schema has no field for native runtime, driver or GPU requirements; they are recorded here and in docs/evidence/p016-qwen35/README.md.
+- `whisper-large-v3-turbo/onnx-fp16-cpu`: No reference fixtures are adopted into protected/ and no gate has run; every capability is at most experimental apart from asset acquisition.
+- `whisper-large-v3-turbo/onnx-fp16-cpu`: The evidence covers English only (four LibriSpeech clips, 1.6 s to 12.5 s); other languages are untested.
+- `whisper-large-v3-turbo/onnx-fp16-cpu`: Decoding re-runs the full decoder over the prefix at every step (no KV cache), so long transcripts are slow.
+- `whisper-large-v3-turbo/onnx-fp16-cpu`: The export repository has no license tag; see rights.notes.

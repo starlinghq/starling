@@ -46,5 +46,8 @@ public static class WhisperCapabilities
         ["persistence"] = CapabilityStatus.Unsupported,
         ["training"] = CapabilityStatus.Unsupported,
         ["quantized"] = CapabilityStatus.Unsupported,
+        ["aot"] = CapabilityStatus.Untested,
+        ["extensions_ai"] = CapabilityStatus.Unsupported,
+        ["mlnet"] = CapabilityStatus.Unsupported,
     };
 }

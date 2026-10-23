@@ -8,7 +8,19 @@ them explicitly. The application adds the ONNX Runtime native package.
 This library is **experimental** and not yet qualified. The log-mel spectrogram, the encoder and the greedy decoder are
 verified bit-exact against the reference (transformers `WhisperFeatureExtractor` numpy path and the same ONNX graphs);
 end-to-end transcript parity against a fresh transformers reference is checked by the model-pipeline route
-`whisper-onnx-cpu-v1` (`model-pipeline/candidates/whisper-large-v3-turbo/`). Its evidence is proposed, not yet adopted.
+`whisper-onnx-cpu-v1` (`model-pipeline/candidates/whisper-large-v3-turbo/`). Its tolerances are adopted
+(`model-pipeline/protected/whisper-large-v3-turbo/onnx-fp16/tolerances.yaml`); no reference fixtures are adopted and no
+release gate has run.
+
+## Maturity
+
+<!-- catalog:maturity profiles=whisper-large-v3-turbo/* -->
+Maturity is per profile, generated from the registry manifests by `model-pipeline catalog` (do not edit this table by hand). Gates, evidence and capabilities per profile: the [model catalog](https://github.com/starlinghq/starling/blob/main/docs/catalog/README.md).
+
+| Profile | Maturity | Platforms |
+| --- | --- | --- |
+| `whisper-large-v3-turbo/onnx-fp16-cpu` | experimental | linux-x64 cpu: experimental; linux-x64 cuda: untested; windows-x64 cpu: untested |
+<!-- /catalog:maturity -->
 
 ## Install
 

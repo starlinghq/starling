@@ -22,6 +22,7 @@ Platform (OS, architecture) by runtime and execution provider by profile. A cell
 | kev-4b/onnx-fp32-cuda | 1.30.0 | experimental | unrecorded | experimental (2026-10-17) | unrecorded | untested |
 | multilingual-e5-small/onnx-fp32-cpu | 1.30.0 | stable | supported (2026-10-15) | unrecorded | experimental (2026-10-15) | unrecorded |
 | multilingual-e5-small/onnx-fp32-cuda | 1.30.0 | stable | unrecorded | supported (2026-10-16) | unrecorded | untested |
+| whisper-large-v3-turbo/onnx-fp16-cpu | 1.30.0 | experimental | experimental (2026-10-23) | untested | untested | unrecorded |
 
 ## onnxruntime-genai
 
