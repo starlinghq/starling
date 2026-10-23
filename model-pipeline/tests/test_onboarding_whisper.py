@@ -117,6 +117,39 @@ def test_fidelity_bounds_may_be_proposed_within_caps():
     whisper.validate_candidate_behavior(candidate)
 
 
+TOLERANCES = REPO / "model-pipeline/protected/whisper-large-v3-turbo/onnx-fp16/tolerances.yaml"
+
+
+def test_shipped_candidate_equals_the_binding_tolerances():
+    bound = whisper.protected_policy(TOLERANCES.read_text(encoding="utf-8"), "whisper-large-v3-turbo/onnx-fp16-cpu")
+    assert bound == whisper.POLICY == profile()["evaluation"]["policy"]
+    whisper.validate_candidate_behavior(load_candidate(PROFILE), REPO)
+
+
+def test_a_policy_within_caps_but_off_the_binding_tolerances_is_refused():
+    candidate = profile()
+    candidate["evaluation"]["policy"]["hidden_max_abs"] = 0.1
+    whisper.validate_candidate_behavior(candidate)  # within the route's caps
+    with pytest.raises(PipelineError, match="hidden_max_abs \\(binding .*tolerances.yaml\\)"):
+        whisper.validate_candidate_behavior(candidate, REPO)
+
+
+@pytest.mark.parametrize(
+    ("change", "message"),
+    [
+        (lambda text: text.replace("onnx-fp16-cpu", "onnx-fp16-cuda"), "profile"),
+        (lambda text: text.replace("  logits_max_abs: 0.1\n", ""), "policy fields"),
+        (lambda text: text + "extra: 1\n", "profile, reference, policy"),
+        (lambda text: "[unclosed", "layout"),
+    ],
+    ids=["other profile", "missing bound", "unknown field", "not yaml"],
+)
+def test_unexpected_tolerance_layouts_are_refused(change, message):
+    text = change(TOLERANCES.read_text(encoding="utf-8"))
+    with pytest.raises(PipelineError, match=message):
+        whisper.protected_policy(text, "whisper-large-v3-turbo/onnx-fp16-cpu")
+
+
 def test_other_routes_still_refuse_fp16_and_transcription():
     bert = json.loads((REPO / "model-pipeline/candidates/minilm/profile.json").read_text(encoding="utf-8"))
     bert["runtime"]["precision"] = "fp16"
@@ -132,6 +165,7 @@ def test_plugin_is_registered_and_recipe_plans(capsys):
     assert plan["stages"] == ["assets", "environment", "reference", "onnx", "dotnet", "evaluate", "review"]
     assert plan["base"]["repo"] == "openai/whisper-large-v3-turbo"
     assert plan["qualification_status"] == "unapproved" and plan["reference_status"] == "proposed"
+    assert plan["policy_source"] == "model-pipeline/protected/whisper-large-v3-turbo/onnx-fp16/tolerances.yaml"
 
 
 # --- configs and corpus ---------------------------------------------------------------------------------------------

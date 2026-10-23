@@ -121,6 +121,8 @@ CONTRACTS = {
             TOKENIZER_FILE: (2480645, "b3c8202bbf06d8ee4232c5984baa563784ac4737e2e7fdc42fa180200d3cfcdb"),
         },
         "behavior": BEHAVIOR,
+        # Binding tolerances adopted by the maintainer (#142): the candidate policy must equal them exactly.
+        "protected_tolerances": "model-pipeline/protected/whisper-large-v3-turbo/onnx-fp16/tolerances.yaml",
     },
 }
 POLICY = {
@@ -196,8 +198,27 @@ def _validate_policy(policy: dict) -> None:
             _refuse(f"evaluation.policy.{key}", f"must be a finite number up to {cap}")
 
 
-def validate_candidate_behavior(candidate: dict) -> dict:
-    """Refuse every contract this route does not implement; returns the matching allow-list entry."""
+def protected_policy(text: str, profile: str) -> dict:
+    """The `policy` block of a Whisper tolerance file (YAML text) for `profile`; refuses an unexpected layout."""
+    import yaml
+
+    try:
+        data = yaml.safe_load(text)
+        if set(data) != {"profile", "reference", "policy", "report_only"} or data["profile"] != profile:
+            raise PipelineError(f"tolerance file must hold profile, reference, policy and report_only for {profile}")
+        policy = data["policy"]
+        if not isinstance(policy, dict) or set(policy) != set(POLICY):
+            raise PipelineError(f"tolerance policy fields must be exactly {sorted(POLICY)}")
+        return policy
+    except (TypeError, AttributeError, yaml.YAMLError) as exc:
+        raise PipelineError(f"unexpected Whisper tolerance file layout: {exc}") from exc
+
+
+def validate_candidate_behavior(candidate: dict, repo_root: Path | None = None) -> dict:
+    """Refuse every contract this route does not implement; returns the matching allow-list entry.
+
+    With `repo_root`, the candidate policy must also equal the binding protected tolerances exactly.
+    """
     try:
         origin = candidate["origin"]
         repo = origin["repo"]
@@ -235,6 +256,15 @@ def validate_candidate_behavior(candidate: dict) -> dict:
             _same(f"behavior.{key}", behavior[key], value)
         _same("evaluation.status", candidate["evaluation"]["status"], "proposed")
         _validate_policy(candidate["evaluation"]["policy"])
+        if repo_root is not None:
+            relative = contract["protected_tolerances"]
+            try:
+                text = (repo_root / relative).read_text(encoding="utf-8")
+            except OSError as exc:
+                raise PipelineError(f"binding tolerances are unreadable: {relative}: {exc}") from exc
+            bound = protected_policy(text, contract["id"])
+            for key, value in bound.items():
+                _same(f"evaluation.policy.{key} (binding {relative})", candidate["evaluation"]["policy"][key], value)
         return contract
     except (KeyError, TypeError, AttributeError) as exc:
         raise PipelineError(f"unsupported or incomplete Whisper contract: {exc!r}") from exc
@@ -723,12 +753,12 @@ def _profile(recipe: dict, root: Path) -> tuple[Path, dict, dict]:
         raise PipelineError(f"expected recipe_version 1 and plugin {PLUGIN}")
     path = repository_input(root, recipe["manifest"])
     candidate = load_candidate(path)
-    return path, candidate, validate_candidate_behavior(candidate)
+    return path, candidate, validate_candidate_behavior(candidate, root)
 
 
 def describe_plan(recipe: dict, *, repo_root: Path) -> dict:
     root = repo_root.resolve()
-    _, candidate, _ = _profile(recipe, root)
+    _, candidate, contract = _profile(recipe, root)
     origin = candidate["origin"]
     return {
         "plugin": PLUGIN,
@@ -747,6 +777,7 @@ def describe_plan(recipe: dict, *, repo_root: Path) -> dict:
         "reference_status": "proposed",
         "qualification_status": "unapproved",
         "policy": candidate["evaluation"]["policy"],
+        "policy_source": contract["protected_tolerances"],
     }
 
 
@@ -773,7 +804,7 @@ def build_stages(
     base_snapshot = base_snapshot.resolve()
     if not base_snapshot.is_dir():
         raise PipelineError(f"base snapshot is not a directory: {base_snapshot}")
-    manifest, candidate, _ = _profile(recipe, root)
+    manifest, candidate, contract = _profile(recipe, root)
     corpus = repository_input(root, recipe["reference_corpus"])
     audio = {f"corpus_audio:{row['audio']}": row["path"] for row in load_corpus(corpus, candidate)}
     _, initial, shared = candidate_stages(
@@ -783,7 +814,11 @@ def build_stages(
         reference_python=reference_python,
         threads=threads,
         timeout=timeout,
-        source_files=(RUNNER, "model-pipeline/src/model_pipeline/onboarding_whisper.py"),
+        source_files=(
+            RUNNER,
+            "model-pipeline/src/model_pipeline/onboarding_whisper.py",
+            contract["protected_tolerances"],
+        ),
     )
     python = Path(os.path.abspath(reference_python))
     env = {
