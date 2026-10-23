@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk.BlazorWebAssembly">
+
+  <!--
+    Multilingual semantic search in the browser with multilingual-e5-small: a standalone Blazor WebAssembly app on the
+    published packages only (no project references, no repository paths). Everything runs on the user's machine: the
+    graph and tokenizer download once into Cache Storage, and no text leaves the page.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <OverrideHtmlAssetPlaceholders>true</OverrideHtmlAssetPlaceholders>
+    <!-- The release drill fails if this differs from the version it packs. -->
+    <StarlingsVersion>0.3.0</StarlingsVersion>
+    <!--
+      Recommended for production: dotnet publish -c Release -p:RunAOTCompilation=true (needs the wasm-tools workload).
+      AOT makes the owned tokenizer 3x to 4x faster; inference speed is onnxruntime-web's either way.
+    -->
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Brings Starlings.Runtime.OnnxWeb (onnxruntime-web, WASM backend), Starlings.Models.E5 and Starlings.Tokenizers. -->
+    <PackageReference Include="Starlings.Models.E5.Browser" Version="$(StarlingsVersion)" />
+    <!-- Optional: WebGPU. Remove it (and the WebGPU option in Search.razor) to ship only the WASM backend. -->
+    <PackageReference Include="Starlings.Runtime.OnnxWeb.WebGpu" Version="$(StarlingsVersion)" />
+    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="10.0.12" />
+    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="10.0.12" PrivateAssets="all" />
+  </ItemGroup>
+
+</Project>

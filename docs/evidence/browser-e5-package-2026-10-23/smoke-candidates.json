@@ -1,0 +1,74 @@
+{
+ "variant": "int8embed",
+ "provider": "wasm",
+ "queries": [
+  {
+   "query": "how long should I soak rice before cooking",
+   "meta": "Query embedded in 101 ms.",
+   "top": [
+    "0.833 JA おいしいご飯を炊くには、お米を研いでから三十分ほど水に浸しておきます。",
+    "0.827 EN To keep basil fresh, trim the stems and stand it in a glass of water on the kitchen counter, not in the fridge.",
+    "0.803 FR Pour réussir une mayonnaise, tous les ingrédients doivent être à la même température."
+   ]
+  },
+  {
+   "query": "earthquakes and tectonic plates",
+   "meta": "Query embedded in 63 ms.",
+   "top": [
+    "0.816 ES Los terremotos se producen cuando las placas tectónicas liberan energía de forma repentina.",
+    "0.782 EN Photosynthesis turns sunlight, water and carbon dioxide into sugar and oxygen inside the leaves of plants.",
+    "0.778 PT O Rio Amazonas é o maior do mundo em volume de água e atravessa vários países da América do Sul."
+   ]
+  },
+  {
+   "query": "train from Madrid to Barcelona",
+   "meta": "Query embedded in 58 ms.",
+   "top": [
+    "0.853 ES El tren de alta velocidad une Madrid y Barcelona en unas dos horas y media.",
+    "0.803 EN The night train from Vienna reaches Venice early in the morning, in time for breakfast by the canals.",
+    "0.768 KO 서울의 지하철은 깨끗하고 빠르며 대부분의 관광지와 연결되어 있습니다."
+   ]
+  },
+  {
+   "query": "comment fonctionne la photosynthèse",
+   "meta": "Query embedded in 88 ms.",
+   "top": [
+    "0.871 EN Photosynthesis turns sunlight, water and carbon dioxide into sugar and oxygen inside the leaves of plants.",
+    "0.809 FR Pour réussir une mayonnaise, tous les ingrédients doivent être à la même température.",
+    "0.800 PT O Rio Amazonas é o maior do mundo em volume de água e atravessa vários países da América do Sul."
+   ]
+  },
+  {
+   "query": "pasta without cream",
+   "meta": "Query embedded in 64 ms.",
+   "top": [
+    "0.816 IT Per una carbonara autentica si usano guanciale, pecorino, uova e pepe nero, senza panna.",
+    "0.792 EN To keep basil fresh, trim the stems and stand it in a glass of water on the kitchen counter, not in the fridge.",
+    "0.771 DE Für einen guten Hefeteig sollte die Milch lauwarm sein, sonst geht der Teig nicht richtig auf."
+   ]
+  },
+  {
+   "query": "mountain visible from Tokyo",
+   "meta": "Query embedded in 70 ms.",
+   "top": [
+    "0.787 JA 富士山は日本で最も高い山で、晴れた日には東京からも見えることがあります。",
+    "0.762 PT O Rio Amazonas é o maior do mundo em volume de água e atravessa vários países da América do Sul.",
+    "0.760 EN The night train from Vienna reaches Venice early in the morning, in time for breakfast by the canals."
+   ]
+  },
+  {
+   "query": "what to drink with dates",
+   "meta": "Query embedded in 65 ms.",
+   "top": [
+    "0.793 EN To keep basil fresh, trim the stems and stand it in a glass of water on the kitchen counter, not in the fridge.",
+    "0.790 EN Photosynthesis turns sunlight, water and carbon dioxide into sugar and oxygen inside the leaves of plants.",
+    "0.786 ZH 绿茶不宜用沸水冲泡，水温在八十度左右最好。"
+   ]
+  }
+ ],
+ "load_s": 10.93814238799996,
+ "diagnostics": "Runtime\nProfile\nmultilingual-e5-small/onnx-int8embed-wasm\nonnxruntime-web\n1.30.0 (wasm bundle)\nThreads\n4 of 12 logical cores\nLoad\n10.8 s, corpus embedded in 1657 ms",
+ "console": [
+  "error: Failed to load resource: the server responded with a status of 404 (Not Found)"
+ ]
+}

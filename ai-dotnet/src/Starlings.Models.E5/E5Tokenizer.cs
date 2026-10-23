@@ -33,13 +33,29 @@ public sealed class E5Tokenizer : IEncoderTokenizer
     {
         ArgumentException.ThrowIfNullOrEmpty(path);
         ArgumentOutOfRangeException.ThrowIfLessThan(maxLength, 2);
-        byte[] bytes = File.ReadAllBytes(path);
+        return Load(File.ReadAllBytes(path), path, expectedSha256, maxLength);
+    }
+
+    /// <summary>
+    /// Loads <c>tokenizer.json</c> from its UTF-8 bytes (for example fetched in a browser, where there is no file
+    /// system). When <paramref name="expectedSha256"/> is given, the bytes must match it (lower-case hex) or
+    /// <see cref="InvalidDataException"/> is thrown.
+    /// </summary>
+    public static E5Tokenizer FromUtf8Json(byte[] json, string? expectedSha256 = null, int maxLength = 512)
+    {
+        ArgumentNullException.ThrowIfNull(json);
+        ArgumentOutOfRangeException.ThrowIfLessThan(maxLength, 2);
+        return Load(json, "tokenizer.json", expectedSha256, maxLength);
+    }
+
+    private static E5Tokenizer Load(byte[] bytes, string source, string? expectedSha256, int maxLength)
+    {
         if (expectedSha256 is not null)
         {
             string actual = Convert.ToHexStringLower(SHA256.HashData(bytes));
             if (!string.Equals(actual, expectedSha256, StringComparison.OrdinalIgnoreCase))
             {
-                throw new InvalidDataException($"{path}: SHA-256 {actual} does not match the expected {expectedSha256}.");
+                throw new InvalidDataException($"{source}: SHA-256 {actual} does not match the expected {expectedSha256}.");
             }
         }
 

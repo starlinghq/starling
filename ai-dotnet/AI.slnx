@@ -15,6 +15,9 @@
     <Project Path="src/Starlings.Models.E5.Extensions.AI/Starlings.Models.E5.Extensions.AI.csproj" />
     <Project Path="src/Starlings.Models.E5.MLNet/Starlings.Models.E5.MLNet.csproj" />
     <Project Path="src/Starlings.Models.E5/Starlings.Models.E5.csproj" />
+    <Project Path="src/Starlings.Models.E5.Browser/Starlings.Models.E5.Browser.csproj" />
+    <Project Path="src/Starlings.Runtime.OnnxWeb/Starlings.Runtime.OnnxWeb.csproj" />
+    <Project Path="src/Starlings.Runtime.OnnxWeb.WebGpu/Starlings.Runtime.OnnxWeb.WebGpu.csproj" />
     <Project Path="src/Starlings.Acquisition/Starlings.Acquisition.csproj" />
     <Project Path="src/Starlings.Generation.OnnxGenAI/Starlings.Generation.OnnxGenAI.csproj" />
     <Project Path="src/Starlings.Models.Qwen35/Starlings.Models.Qwen35.csproj" />
@@ -29,6 +32,7 @@
     <Project Path="tests/Starlings.Models.E5.Extensions.AI.Tests/Starlings.Models.E5.Extensions.AI.Tests.csproj" />
     <Project Path="tests/Starlings.Models.E5.MLNet.Tests/Starlings.Models.E5.MLNet.Tests.csproj" />
     <Project Path="tests/Starlings.Models.E5.Tests/Starlings.Models.E5.Tests.csproj" />
+    <Project Path="tests/Starlings.Models.E5.Browser.Tests/Starlings.Models.E5.Browser.Tests.csproj" />
     <Project Path="tests/Starlings.Acquisition.Tests/Starlings.Acquisition.Tests.csproj" />
     <Project Path="tests/Starlings.Models.EmbeddingGemma2.Extensions.AI.Tests/Starlings.Models.EmbeddingGemma2.Extensions.AI.Tests.csproj" />
     <Project Path="tests/Starlings.Models.EmbeddingGemma2.MLNet.Tests/Starlings.Models.EmbeddingGemma2.MLNet.Tests.csproj" />

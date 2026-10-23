@@ -1,0 +1,9 @@
+{
+  "name": "starlings-onnxweb",
+  "private": true,
+  "description": "Pins onnxruntime-web for Starlings.Runtime.OnnxWeb and Starlings.Runtime.OnnxWeb.WebGpu (static web assets). The build runs npm ci here and copies the listed dist files; nothing from node_modules is committed.",
+  "license": "MIT",
+  "dependencies": {
+    "onnxruntime-web": "1.30.0"
+  }
+}

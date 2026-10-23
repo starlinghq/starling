@@ -55,6 +55,11 @@ jobs:
       - uses: actions/setup-dotnet@v5
         with:
           global-json-file: global.json
+      # npm ci for onnxruntime-web, the static web assets of Starlings.Runtime.OnnxWeb and its WebGPU adapter
+      # (ai-dotnet/src/Shared/OnnxWeb/OrtWebAssets.targets).
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
+        with:
+          node-version: "24"
       # CPU only. The e5 parity tests skip without the model (not in Git); the CUDA test project is
       # local-only and not in AI.slnx (ai-dotnet/README.md).
       # dotnet test builds only test projects and their references; this builds every project in AI.slnx,
@@ -136,6 +141,11 @@ jobs:
       - uses: actions/setup-dotnet@26b0ec14cb23fa6904739307f278c14f94c95bf1 # v5
         with:
           global-json-file: global.json
+      # npm ci for onnxruntime-web, the static web assets of Starlings.Runtime.OnnxWeb and its WebGPU adapter
+      # (ai-dotnet/src/Shared/OnnxWeb/OrtWebAssets.targets).
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
+        with:
+          node-version: "24"
       # The SDK that global.json resolves to; restores run in locked mode, so a different SDK can change the lock files.
       - run: dotnet --version
       # A direct checksum of the one input file: hashFiles() walks the whole workspace and timed out on Windows runners.

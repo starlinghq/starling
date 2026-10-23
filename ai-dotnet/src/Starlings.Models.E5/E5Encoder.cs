@@ -305,7 +305,10 @@ public sealed class E5Encoder : IDisposable
         return ((int)output.Dimensions[2], hasTypes);
     }
 
-    private void Validate(EncoderInput input, int index)
+    private void Validate(EncoderInput input, int index) => Validate(input, index, _options);
+
+    /// <summary>The input checks of <see cref="Validate(EncoderInput)"/> against <paramref name="options"/> (shared with the browser encoder).</summary>
+    internal static void Validate(EncoderInput input, int index, E5EncoderOptions options)
     {
         var ids = input.InputIds.Span;
         if (ids.Length == 0)
@@ -313,16 +316,16 @@ public sealed class E5Encoder : IDisposable
             throw new ArgumentException($"Input {index} has no tokens.", nameof(input));
         }
 
-        if (ids.Length > _options.MaxSequenceLength)
+        if (ids.Length > options.MaxSequenceLength)
         {
-            throw new ArgumentException($"Input {index} has {ids.Length} tokens; the maximum is {_options.MaxSequenceLength}. Truncate in the tokenizer.", nameof(input));
+            throw new ArgumentException($"Input {index} has {ids.Length} tokens; the maximum is {options.MaxSequenceLength}. Truncate in the tokenizer.", nameof(input));
         }
 
         foreach (long id in ids)
         {
-            if (id < 0 || id >= _options.VocabularySize)
+            if (id < 0 || id >= options.VocabularySize)
             {
-                throw new ArgumentException($"Input {index} contains token id {id}, outside [0, {_options.VocabularySize}).", nameof(input));
+                throw new ArgumentException($"Input {index} contains token id {id}, outside [0, {options.VocabularySize}).", nameof(input));
             }
         }
 

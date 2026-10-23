@@ -1,0 +1,40 @@
+<Project Sdk="Microsoft.NET.Sdk.Razor">
+
+  <!--
+    The voluntary WebGPU adapter of Starlings.Runtime.OnnxWeb (docs/plan/embeddinggemma2-follow-up.md, section 1: every
+    adapter is opt-in and no core package references one). Ships onnxruntime-web 1.30.0's WebGPU-capable bundle
+    (ort.webgpu.min.mjs and its asyncify binary, the build the browser spike measured) as static web assets under
+    _content/Starlings.Runtime.OnnxWeb.WebGpu/ort/; the app initializes the runtime with OnnxWebGpuBundle.WebGpu instead
+    of the core package's WASM-only bundle. The same bundle also runs the WASM provider.
+  -->
+  <PropertyGroup>
+    <IsPackable>true</IsPackable>
+    <IsAotCompatible>true</IsAotCompatible>
+    <AddRazorSupportForMvc>false</AddRazorSupportForMvc>
+    <Description>WebGPU for Starlings.Runtime.OnnxWeb: onnxruntime-web 1.30.0's WebGPU-capable bundle as static web assets (26.8 MB binary, about 4 MB brotli) and the OnnxWebGpuBundle to initialize with. Opt-in adapter; Experimental (tested on one NVIDIA GPU with Chromium on Linux).</Description>
+    <PackageTags>onnxruntime-web;webgpu;wasm;webassembly;blazor;browser;inference;ai</PackageTags>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <StarlingsOrtWebFile Include="ort.webgpu.min.mjs" />
+    <StarlingsOrtWebFile Include="ort-wasm-simd-threaded.asyncify.mjs" />
+    <StarlingsOrtWebFile Include="ort-wasm-simd-threaded.asyncify.wasm" />
+  </ItemGroup>
+
+  <!-- npm ci runs in the core project's build, which MSBuild finishes before this one (project reference). -->
+  <PropertyGroup>
+    <StarlingsOrtWebNpmCi>false</StarlingsOrtWebNpmCi>
+  </PropertyGroup>
+
+  <Import Project="../Shared/OnnxWeb/OrtWebAssets.targets" />
+
+  <ItemGroup>
+    <ProjectReference Include="../Starlings.Runtime.OnnxWeb/Starlings.Runtime.OnnxWeb.csproj" />
+  </ItemGroup>
+
+</Project>

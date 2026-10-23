@@ -25,6 +25,9 @@
 
   <ItemGroup>
     <InternalsVisibleTo Include="Starlings.Models.E5.Tests" />
+    <!-- The browser encoder reuses the padding, pooling, chunk planning and input checks, so both paths compute the same numbers. -->
+    <InternalsVisibleTo Include="Starlings.Models.E5.Browser" />
+    <InternalsVisibleTo Include="Starlings.Models.E5.Browser.Tests" />
   </ItemGroup>
 
   <ItemGroup>
