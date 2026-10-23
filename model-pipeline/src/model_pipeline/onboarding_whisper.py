@@ -198,20 +198,38 @@ def _validate_policy(policy: dict) -> None:
             _refuse(f"evaluation.policy.{key}", f"must be a finite number up to {cap}")
 
 
-def protected_policy(text: str, profile: str) -> dict:
-    """The `policy` block of a Whisper tolerance file (YAML text) for `profile`; refuses an unexpected layout."""
-    import yaml
+def protected_policy(path: Path, profile: str) -> dict:
+    """The `policy` block of a Whisper tolerance file for `profile`, numeric bounds as floats; refuses another layout.
+
+    Loading and the profile check are the protected evaluator's (`evaluate.load_tolerances`). A numeric bound may be
+    written as an integer or in exponent form (YAML reads `1e-5` as a string); a non-numeric value where the route
+    expects a number is refused.
+    """
+    from model_pipeline import protection
+    from model_pipeline.evaluate import EvaluationError, load_tolerances
 
     try:
-        data = yaml.safe_load(text)
-        if set(data) != {"profile", "reference", "policy", "report_only"} or data["profile"] != profile:
-            raise PipelineError(f"tolerance file must hold profile, reference, policy and report_only for {profile}")
-        policy = data["policy"]
-        if not isinstance(policy, dict) or set(policy) != set(POLICY):
-            raise PipelineError(f"tolerance policy fields must be exactly {sorted(POLICY)}")
-        return policy
-    except (TypeError, AttributeError, yaml.YAMLError) as exc:
-        raise PipelineError(f"unexpected Whisper tolerance file layout: {exc}") from exc
+        data = load_tolerances(path, profile)
+    except (OSError, EvaluationError, protection.ProtectedEvidenceError) as exc:
+        raise PipelineError(f"binding tolerances are unusable: {exc}") from exc
+    if set(data) != {"profile", "reference", "policy", "report_only"}:
+        raise PipelineError(f"{path}: tolerance file must hold exactly profile, reference, policy and report_only")
+    policy = data["policy"]
+    if not isinstance(policy, dict) or set(policy) != set(POLICY):
+        raise PipelineError(f"{path}: tolerance policy fields must be exactly {sorted(POLICY)}")
+    bound = {}
+    for key, value in policy.items():
+        if isinstance(POLICY[key], float):
+            try:
+                number = float(value)
+            except (TypeError, ValueError):
+                raise PipelineError(f"{path}: policy.{key} must be a number, found {value!r}") from None
+            if isinstance(value, bool) or not math.isfinite(number):
+                raise PipelineError(f"{path}: policy.{key} must be a finite number, found {value!r}")
+            bound[key] = number
+        else:
+            bound[key] = value
+    return bound
 
 
 def validate_candidate_behavior(candidate: dict, repo_root: Path | None = None) -> dict:
@@ -258,11 +276,7 @@ def validate_candidate_behavior(candidate: dict, repo_root: Path | None = None) 
         _validate_policy(candidate["evaluation"]["policy"])
         if repo_root is not None:
             relative = contract["protected_tolerances"]
-            try:
-                text = (repo_root / relative).read_text(encoding="utf-8")
-            except OSError as exc:
-                raise PipelineError(f"binding tolerances are unreadable: {relative}: {exc}") from exc
-            bound = protected_policy(text, contract["id"])
+            bound = protected_policy(repository_input(repo_root, relative), contract["id"])
             for key, value in bound.items():
                 _same(f"evaluation.policy.{key} (binding {relative})", candidate["evaluation"]["policy"][key], value)
         return contract
@@ -565,13 +579,16 @@ def evaluate_development(
     onnx_path: Path,
     dotnet_path: Path,
     corpus: list[dict],
+    repo_root: Path | None = None,
 ) -> dict:
     """Check complete proposed evidence without reading or promoting protected fixtures.
 
     `corpus` is the pinned corpus as `load_corpus` verified it: it, not the reference evidence, supplies each clip's
-    audio digest, sample count, language and ground-truth text.
+    audio digest, sample count, language and ground-truth text. With `repo_root` the policy must equal the binding
+    protected tolerances (the pipeline always passes it); without it the policy is only checked against the route caps.
     """
-    validate_candidate_behavior(candidate)
+    contract = validate_candidate_behavior(candidate, repo_root)
+    policy_source = contract["protected_tolerances"] if repo_root is not None else "unbound (route caps only)"
     behavior, policy = candidate["behavior"], candidate["evaluation"]["policy"]
     digest = fixtures.sha256_file(candidate_path)
     reference, expected = _document(reference_path, candidate, digest, "reference")
@@ -715,8 +732,11 @@ def evaluate_development(
             }
             for identifier, row in expected.items()
         },
+        # References stay proposed; the comparison policy is binding when it came from the protected tolerances.
         "evaluation_status": "proposed",
         "policy": policy,
+        "policy_source": policy_source,
+        "policy_status": "binding" if repo_root is not None else "proposed",
         "protected_release_qualification": {"status": "unapproved", "G1": "not-run", "G2": "not-run"},
         "inputs": {
             "candidate_sha256": digest,
@@ -732,8 +752,9 @@ def render_report(report: dict, profile: str) -> str:
         f"# Development parity: {profile}",
         "",
         f"Status: **{report['status']}**; {report['case_count']} clips, {len(report['checks'])} checks. Original "
-        "references and comparison policies are **proposed**. Protected G1/G2 release qualification is "
-        "**unapproved**. No protected fixtures were adopted.",
+        f"references are **proposed**; the comparison policy is **{report['policy_status']}** "
+        f"(`{report['policy_source']}`). Protected G1/G2 release qualification is **unapproved**. No protected "
+        "reference fixtures were adopted.",
         "",
         "| Clip | Ground truth | Reference (PyTorch fp32) | .NET (audio, fp16 ONNX) |",
         "| --- | --- | --- | --- |",
@@ -976,6 +997,7 @@ def build_stages(
             deps["onnx"] / "onnx.json",
             deps["dotnet"] / "dotnet.json",
             load_corpus(corpus, candidate),
+            root,
         )
         write_json(out / "report.json", report)
         (out / "report.md").write_text(render_report(report, candidate["id"]), encoding="utf-8")
@@ -1001,13 +1023,16 @@ def build_stages(
             "support_status": "experimental",
             "release_qualification": "unapproved",
             "reference_status": "proposed",
+            "policy_status": report["policy_status"],
+            "policy_source": report["policy_source"],
             "protected_fixture_adoption": False,
             "distribution": "not-run",
         }
         write_json(out / "review.json", document)
         (out / "review.md").write_text(
             f"# Candidate review: {candidate['id']}\n\n"
-            "Development transcript parity passed. References/policies remain proposed. "
+            "Development transcript parity passed. References remain proposed; the comparison policy is "
+            f"{report['policy_status']} ({report['policy_source']}). "
             "Protected G1/G2 and full release qualification are unapproved; distribution is not run.\n",
             encoding="utf-8",
         )

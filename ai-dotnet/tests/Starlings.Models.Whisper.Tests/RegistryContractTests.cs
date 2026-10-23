@@ -30,4 +30,24 @@ public sealed class RegistryContractTests
             Manifest.Capabilities.OrderBy(entry => entry.Key, StringComparer.Ordinal),
             package.OrderBy(entry => entry.Key, StringComparer.Ordinal));
     }
+
+    [Fact]
+    public void AnExperimentalProfileSupportsNothing()
+    {
+        Assert.Equal("experimental", Manifest.Maturity);
+        Assert.DoesNotContain(CapabilityStatus.Supported, WhisperCapabilities.All.Values);
+        Assert.DoesNotContain("supported", Manifest.Capabilities.Values);
+        Assert.DoesNotContain("supported", Manifest.Compatibility.Values);
+    }
+
+    [Fact]
+    public void CompatibilityRowsFollowThePackageStatuses()
+    {
+        // CPU transcription is what the route evidenced; CUDA follows the package's transcription.cuda status.
+        Assert.Equal(Name(WhisperCapabilities.All["transcription"]), Manifest.Compatibility["linux-x64 cpu"]);
+        Assert.Equal(Name(WhisperCapabilities.All["transcription.cuda"]), Manifest.Compatibility["linux-x64 cuda"]);
+        Assert.Equal("untested", Manifest.Compatibility["windows-x64 cpu"]);
+    }
+
+    private static string Name(CapabilityStatus status) => status.ToString().ToLowerInvariant();
 }

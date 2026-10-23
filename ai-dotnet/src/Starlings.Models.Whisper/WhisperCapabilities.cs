@@ -37,7 +37,7 @@ public static class WhisperCapabilities
         ["language_detection"] = CapabilityStatus.Untested,
         ["cancellation"] = CapabilityStatus.Experimental,
         ["concurrent_calls"] = CapabilityStatus.Untested,
-        ["asset_acquisition"] = CapabilityStatus.Supported,
+        ["asset_acquisition"] = CapabilityStatus.Experimental,
         ["translation"] = CapabilityStatus.Unsupported,
         ["timestamps"] = CapabilityStatus.Unsupported,
         ["chunking"] = CapabilityStatus.Unsupported,

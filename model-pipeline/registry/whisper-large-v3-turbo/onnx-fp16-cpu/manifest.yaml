@@ -21,8 +21,10 @@ origin:
     url: https://huggingface.co/onnx-community/whisper-large-v3-turbo-ONNX
     revision: "76ba4fb597cca51a329a1820e49282e26248b36b"
   files:
-    # onnx-community/whisper-large-v3-turbo-ONNX at the pinned commit (candidates/whisper-large-v3-turbo/profile.json,
-    # origin.files). The graphs and tokenizer.json carry the same digests as WhisperModelAssets.Lock.
+    # onnx-community/whisper-large-v3-turbo-ONNX at the pinned commit: the route's pinned set
+    # (candidates/whisper-large-v3-turbo/profile.json, origin.files). The package's own lock (WhisperModelAssets.Lock)
+    # holds three of them, the two graphs and tokenizer.json, with the same digests; the four configuration files are
+    # what the route's assets stage checks against the contract (geometry, special tokens, suppression lists).
     - path: added_tokens.json
       sha256: "3c51f66c4c21f9e126970078f11ae77a78c74aee8df606ee9daba86e467108e0"
       size: 34648
@@ -64,9 +66,10 @@ rights:
 
 behavior:
   tasks: [transcription]
-  # Decoder positions (max_target_positions): the four-token prompt plus generated tokens. Input audio is up to 30 s
-  # (480,000 samples at 16 kHz), zero-padded to 30 s; longer clips are refused, not chunked or truncated.
-  max_input_tokens: 448
+  # The model input is a log-mel spectrogram of 3000 frames: up to 30 s of audio (480,000 samples at 16 kHz),
+  # zero-padded to 30 s; longer clips are refused, not chunked or truncated. The transcript is bounded separately by
+  # the decoder's 448 positions (defaults.max_new_tokens).
+  max_input_tokens: 3000
   offsets_unit: none
   truncation: error
   defaults:
@@ -74,7 +77,7 @@ behavior:
     language: explicit two-letter code; the onboarding evidence covers English (en) only
     task: transcribe (prompt <|startoftranscript|> <|lang|> <|transcribe|> <|notimestamps|>)
     decoding: greedy, with generation_config.json's suppress_tokens on every step and begin_suppress_tokens on the first
-    max_new_tokens: 448 total decoder positions, the prompt included (WhisperModel.MaxTargetPositions)
+    max_new_tokens: 444 (448 decoder positions, WhisperModel.MaxTargetPositions, less the four-token prompt)
     decoder: full-context decoder_model_fp16.onnx, no KV cache (each step re-runs the decoder over the prefix)
   unsupported:
     - translation (<|translate|>)
@@ -147,7 +150,7 @@ capabilities:
   transcription_cuda: untested
   language_detection: untested  # <|startoflm|> prompting differs from transformers' language-token detection
   concurrent_calls: untested
-  asset_acquisition: supported  # the shared Starlings.Acquisition implementation (pinned size and SHA-256)
+  asset_acquisition: experimental  # the shared Starlings.Acquisition download and verification (pinned size and SHA-256)
   translation: unsupported
   timestamps: unsupported
   chunking: unsupported
@@ -197,8 +200,8 @@ maintenance:
   review_date: 2027-01-23
   known_issues:
     - >-
-      No reference fixtures are adopted into protected/ and no gate has run; every capability is at most experimental
-      apart from asset acquisition.
+      No reference fixtures are adopted into protected/ and no gate has run; every capability is at most
+      experimental.
     - >-
       The evidence covers English only (four LibriSpeech clips, 1.6 s to 12.5 s); other languages are untested.
     - >-

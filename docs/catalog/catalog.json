@@ -4347,7 +4347,7 @@
       "review_date": "2027-01-23",
       "last_checked": "2026-10-23",
       "known_issues": [
-        "No reference fixtures are adopted into protected/ and no gate has run; every capability is at most experimental apart from asset acquisition.",
+        "No reference fixtures are adopted into protected/ and no gate has run; every capability is at most experimental.",
         "The evidence covers English only (four LibriSpeech clips, 1.6 s to 12.5 s); other languages are untested.",
         "Decoding re-runs the full decoder over the prefix at every step (no KV cache), so long transcripts are slow.",
         "The export repository has no license tag; see rights.notes."
@@ -4395,7 +4395,7 @@
         "aot": "untested",
         "extensions_ai": "unsupported",
         "mlnet": "unsupported",
-        "asset_acquisition": "supported",
+        "asset_acquisition": "experimental",
         "asset_acquisition_download": "unrecorded",
         "asset_verification_offline": "unrecorded",
         "audio": "unrecorded",

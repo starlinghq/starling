@@ -348,7 +348,7 @@ One table per family, one column per profile. Rows are every capability any prof
 | aot | untested |
 | extensions_ai | unsupported |
 | mlnet | unsupported |
-| asset_acquisition | supported |
+| asset_acquisition | experimental |
 | chunking | unsupported |
 | concurrent_calls | untested |
 | language_detection | untested |
@@ -479,7 +479,7 @@ One table per family, one column per profile. Rows are every capability any prof
 - `qwen3.5-0.8b/ortgenai-fp32x-cuda`: The ONNX Runtime GenAI C# API is labeled preview upstream; Starlings.Generation.OnnxGenAI isolates it. The runtime version must equal the builder version that wrote the graph (0.17.1).
 - `qwen3.5-0.8b/ortgenai-fp32x-cuda`: The fp32x graph was built for the CPU provider; on the CUDA provider it decodes far slower than fp16x (M0: about 22 tokens/s; node placement not inspected, so CPU fallback of the DeltaNet operators is possible). fp32 built for the CUDA provider fails (M0 failure 2).
 - `qwen3.5-0.8b/ortgenai-fp32x-cuda`: Native runtime: Microsoft.ML.OnnxRuntimeGenAI.Cuda 0.17.1 brings Microsoft.ML.OnnxRuntime.Gpu 1.30.0 and needs the CUDA 13 runtime and cuBLAS on the loader path (not shipped). The schema has no field for native runtime, driver or GPU requirements; they are recorded here and in docs/evidence/p016-qwen35/README.md.
-- `whisper-large-v3-turbo/onnx-fp16-cpu`: No reference fixtures are adopted into protected/ and no gate has run; every capability is at most experimental apart from asset acquisition.
+- `whisper-large-v3-turbo/onnx-fp16-cpu`: No reference fixtures are adopted into protected/ and no gate has run; every capability is at most experimental.
 - `whisper-large-v3-turbo/onnx-fp16-cpu`: The evidence covers English only (four LibriSpeech clips, 1.6 s to 12.5 s); other languages are untested.
 - `whisper-large-v3-turbo/onnx-fp16-cpu`: Decoding re-runs the full decoder over the prefix at every step (no KV cache), so long transcripts are slow.
 - `whisper-large-v3-turbo/onnx-fp16-cpu`: The export repository has no license tag; see rights.notes.
