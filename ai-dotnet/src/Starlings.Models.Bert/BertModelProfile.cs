@@ -50,8 +50,7 @@ public sealed class BertModelProfile
         TokenizerProfile = spec.TokenizerProfile;
         TokenTypeIds = spec.TokenTypeIds;
         Prompts = new ReadOnlyDictionary<string, string>(new Dictionary<string, string>(prompts));
-        RuntimeLock = new ModelAssetLock(id, sourceLock.Repository, sourceLock.Revision,
-            [sourceLock.GetFile(GraphFile), sourceLock.GetFile(TokenizerFile)]);
+        RuntimeLock = RuntimeLockFor(id, sourceLock);
     }
 
     /// <summary>Candidate profile identifier.</summary>
@@ -88,6 +87,11 @@ public sealed class BertModelProfile
     public bool TokenTypeIds { get; }
     /// <summary>Graph path inside the pinned snapshot.</summary>
     public const string GraphFile = "onnx/model.onnx";
+    /// <summary>
+    /// External weights of the graph, for graphs over the 2 GB protobuf limit. Part of <see cref="RuntimeLock"/> exactly
+    /// when the source lock pins it.
+    /// </summary>
+    public const string GraphDataFile = "onnx/model.onnx_data";
     /// <summary>Owned tokenizer asset path.</summary>
     public const string TokenizerFile = "tokenizer.json";
     /// <summary>The optional BGE retrieval-query prefix; callers choose it explicitly.</summary>
@@ -96,7 +100,7 @@ public sealed class BertModelProfile
     /// <summary>Reads a portable candidate JSON contract; never executes or downloads source.</summary>
     public static BertModelProfile Load(string path) => Parse(File.ReadAllText(path));
 
-    /// <summary>Parses and rejects contracts that differ from the five implemented task profiles.</summary>
+    /// <summary>Parses and rejects contracts that differ from the implemented task profiles.</summary>
     public static BertModelProfile Parse(string json)
     {
         ArgumentNullException.ThrowIfNull(json);
@@ -121,6 +125,9 @@ public sealed class BertModelProfile
             "BAAI/bge-m3" => Bert(BertTask.Embeddings, 8192, "cls", 1024, "l2",
                 vocabularySize: 250002, clsTokenId: 0, sepTokenId: 2, padTokenId: 1,
                 outputName: "token_embeddings", tokenizerProfile: "xlmr-unigram", tokenTypeIds: false),
+            "Starlinghq/bge-reranker-v2-m3-onnx" => Bert(BertTask.Reranking, 8192, "none", 1024, "none",
+                vocabularySize: 250002, clsTokenId: 0, sepTokenId: 2, padTokenId: 1,
+                tokenizerProfile: "xlmr-unigram", tokenTypeIds: false),
             _ => throw new NotSupportedException($"Unsupported BERT repository '{repository}'."),
         };
         Require(root, "task", spec.Task == BertTask.Embeddings ? "embeddings" : "reranking");
@@ -161,6 +168,20 @@ public sealed class BertModelProfile
             origin.GetProperty("files").EnumerateArray().Select(f => new ModelAssetFile(
                 f.GetProperty("path").GetString()!, f.GetProperty("size").GetInt64(), f.GetProperty("sha256").GetString()!)));
         return new BertModelProfile(id, assetLock, spec, prompts);
+    }
+
+    /// <summary>The graph, its external data when the source pins one, and the tokenizer.</summary>
+    internal static ModelAssetLock RuntimeLockFor(string id, ModelAssetLock sourceLock)
+    {
+        var files = new List<ModelAssetFile> { sourceLock.GetFile(GraphFile) };
+        var data = sourceLock.Files.FirstOrDefault(f => string.Equals(f.Path, GraphDataFile, StringComparison.Ordinal));
+        if (data is not null)
+        {
+            files.Add(data);
+        }
+
+        files.Add(sourceLock.GetFile(TokenizerFile));
+        return new ModelAssetLock(id, sourceLock.Repository, sourceLock.Revision, files);
     }
 
     private static void Require(JsonElement parent, string key, string expected)

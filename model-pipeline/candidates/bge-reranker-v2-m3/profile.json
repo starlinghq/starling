@@ -1,0 +1,111 @@
+{
+  "behavior": {
+    "architecture": "bert",
+    "graph_file": "onnx/model.onnx",
+    "hidden_size": 1024,
+    "max_tokens": 8192,
+    "normalize": "none",
+    "output_name": "logits",
+    "pad_token_id": 1,
+    "padding_side": "right",
+    "pooling": "none",
+    "prompts": {
+      "none": ""
+    },
+    "score_activation": "identity",
+    "tokenizer_file": "tokenizer.json",
+    "tokenizer_profile": "xlmr-unigram",
+    "truncation": "longest_first",
+    "vocabulary_size": 250002
+  },
+  "evaluation": {
+    "policy": {
+      "attention_mask": "exact",
+      "embedding_max_abs": 1e-05,
+      "hidden_max_abs": 0.0001,
+      "non_finite": "fail",
+      "padded_batch_max_abs": 1e-05,
+      "required_paths": [
+        "reference",
+        "python-onnx",
+        "dotnet-ids",
+        "dotnet-text"
+      ],
+      "same_backend_max_abs": 1e-05,
+      "score_max_abs": 0.0001,
+      "token_ids": "exact",
+      "token_type_ids": "exact"
+    },
+    "status": "proposed"
+  },
+  "format_version": 1,
+  "id": "bge-reranker-v2-m3/onnx-fp32-cpu",
+  "origin": {
+    "files": [
+      {
+        "path": "README.md",
+        "sha256": "1db866cb10448b018649c24e39dd5416ddeb35876bc4810d5d8f73156c39171d",
+        "size": 3904
+      },
+      {
+        "path": "README.upstream.md",
+        "sha256": "c887aa6dd2598f908bf0582ca7068cc816585c7a1b6a07df305b631ede0cb174",
+        "size": 17229
+      },
+      {
+        "path": "SHA256SUMS",
+        "sha256": "2aceea0e1cb5281be4856d488508ced464c27b5b91c4113cbb502fbd9810bfee",
+        "size": 841
+      },
+      {
+        "path": "config.json",
+        "sha256": "13dcd6c31d9fec9d1d8e158702072f62d7fa7d312a64b9fe057bec9a08cfe41a",
+        "size": 795
+      },
+      {
+        "path": "model.safetensors",
+        "sha256": "d9e3e081faff1eefb84019509b2f5558fd74c1a05a2c7db22f74174fcedb5286",
+        "size": 2271071852
+      },
+      {
+        "path": "onnx/model.onnx",
+        "sha256": "905f6c02919c0dbed213d922e097e06aa9787088a8f5173efa1d00d722948394",
+        "size": 551401
+      },
+      {
+        "path": "onnx/model.onnx_data",
+        "sha256": "61f3e7229e6c1cc5e8e3d09f7657210a9cc15247cd6944ac60303e1b900a7f9b",
+        "size": 2271023104
+      },
+      {
+        "path": "sentencepiece.bpe.model",
+        "sha256": "cfc8146abe2a0488e9e2a0c56de7952f7c11ab059eca145a0a727afce0db2865",
+        "size": 5069051
+      },
+      {
+        "path": "special_tokens_map.json",
+        "sha256": "8c785abebea9ae3257b61681b4e6fd8365ceafde980c21970d001e834cf10835",
+        "size": 964
+      },
+      {
+        "path": "tokenizer.json",
+        "sha256": "69564b696052886ed0ac63fa393e928384e0f8caada38c1f4864a9bfbf379c15",
+        "size": 17098273
+      },
+      {
+        "path": "tokenizer_config.json",
+        "sha256": "7e4c1cc848840aeccdd763458c18dd525eb0f795c992e00ebe9c28554e7db2d4",
+        "size": 1173
+      }
+    ],
+    "repo": "Starlinghq/bge-reranker-v2-m3-onnx",
+    "revision": "047d4622e93d347828457e8a13bccd997fb6a969"
+  },
+  "runtime": {
+    "backend": "onnx",
+    "precision": "fp32",
+    "provider": "CPUExecutionProvider",
+    "version": "1.30.0"
+  },
+  "task": "reranking"
+}

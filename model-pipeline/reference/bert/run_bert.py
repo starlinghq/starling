@@ -113,10 +113,21 @@ def main() -> int:
                 raise ValueError("sentence-transformers maximum sequence length differs from candidate")
         else:
             config = json.loads((args.snapshot / "config.json").read_text(encoding="utf-8"))
-            if config.get("sbert_ce_default_activation_function") != "torch.nn.modules.linear.Identity":
-                raise ValueError("pinned reranker config must declare identity score activation")
+            declared = config.get("sbert_ce_default_activation_function")
+            extra = {}
+            source = CONTRACTS[candidate["origin"]["repo"]].get("score_activation_source", "config")
+            if source not in ("config", "explicit"):
+                raise ValueError(f"unsupported score_activation_source: {source!r}")
+            if source == "config":
+                if declared != "torch.nn.modules.linear.Identity":
+                    raise ValueError("pinned reranker config must declare identity score activation")
+            elif declared is not None or "sentence_transformers" in config:
+                raise ValueError("contract passes identity explicitly; pinned config must not declare an activation")
+            else:
+                # CrossEncoder would default to sigmoid for one label; the upstream scores are raw logits.
+                extra["activation_fn"] = torch.nn.Identity()
             model = CrossEncoder(
-                str(args.snapshot), device="cpu", max_length=behavior["max_tokens"], trust_remote_code=False
+                str(args.snapshot), device="cpu", max_length=behavior["max_tokens"], trust_remote_code=False, **extra
             )
             activation = getattr(model, "activation_fn", getattr(model, "default_activation_function", None))
             if not isinstance(activation, torch.nn.Identity):

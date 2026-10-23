@@ -33,6 +33,7 @@ assets=(
     "nomic-ai/nomic-embed-text-v1.5|e9b6763023c676ca8431644204f50c2b100d9aab|tokenizer.json|d241a60d5e8f04cc1b2b3e9ef7a4921b27bf526d9f6050ab90f9267a1f9e5c66"
     "BAAI/bge-base-en-v1.5|a5beb1e3e68b9ab74eb54cfd186867f64f240e1a|tokenizer.json|d241a60d5e8f04cc1b2b3e9ef7a4921b27bf526d9f6050ab90f9267a1f9e5c66"
     "BAAI/bge-m3|5617a9f61b028005a4858fdac845db406aefb181|tokenizer.json|21106b6d7dab2952c1d496fb21d5dc9db75c28ed361a05f5020bbba27810dd08"
+    "Starlinghq/bge-reranker-v2-m3-onnx|047d4622e93d347828457e8a13bccd997fb6a969|tokenizer.json|69564b696052886ed0ac63fa393e928384e0f8caada38c1f4864a9bfbf379c15"
 )
 
 # target repo|commit|path|sha256 <- source repo|commit|path (the source must be in assets above)

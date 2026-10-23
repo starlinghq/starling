@@ -4,11 +4,12 @@ Experimental. This package is not published to nuget.org: it is not part of the 
 (`docs/releases/ai-0.2.0.md`, "Not published"). Build it from this repository, for example with a
 `ProjectReference` to `ai-dotnet/src/Starlings.Models.Bert/Starlings.Models.Bert.csproj`. The API may still change.
 
-Experimental CPU fp32 implementations for six explicitly pinned candidate contracts:
+Experimental CPU fp32 implementations for seven explicitly pinned candidate contracts:
 `sentence-transformers/all-MiniLM-L6-v2` (mean/L2, 256 tokens), `BAAI/bge-small-en-v1.5`
 (CLS/L2, 512 tokens), `BAAI/bge-base-en-v1.5` (CLS/L2, 512 tokens, 768-wide),
 `BAAI/bge-m3` (CLS/L2, 8192 tokens, 1024-wide, XLM-R), `cross-encoder/ms-marco-MiniLM-L6-v2`
-(paired inputs, raw scalar logits, 512 tokens), and `nomic-ai/nomic-embed-text-v1.5`
+(paired inputs, raw scalar logits, 512 tokens), `BAAI/bge-reranker-v2-m3` (XLM-R cross-encoder, raw scalar
+logits, 8192 tokens, from the Starling-built graph `Starlinghq/bge-reranker-v2-m3-onnx`), and `nomic-ai/nomic-embed-text-v1.5`
 (mean, no L2, 8192 tokens, 768-wide). Candidate parity is
 development evidence; protected release qualification requires independent fixture adoption.
 
@@ -35,7 +36,7 @@ persistence, AOT, GPU providers, and unlisted model contracts are unsupported or
 ## Profiles
 
 The candidate contracts live in the repository, not in the package:
-`model-pipeline/candidates/<name>/profile.json`. `BertModelProfile.Parse` accepts only these five
+`model-pipeline/candidates/<name>/profile.json`. `BertModelProfile.Parse` accepts only these seven
 repositories, ONNX Runtime 1.30.0 on `CPUExecutionProvider` in fp32, and the exact values below; anything
 else throws `NotSupportedException`.
 
@@ -46,11 +47,19 @@ else throws `NotSupportedException`.
 | `bge-base` | `bge-base-en-v1.5/onnx-fp32-cpu` | embeddings | 512 | cls | 768 | l2 | `none`, `query` |
 | `bge-m3` | `bge-m3/onnx-fp32-cpu` | embeddings | 8192 | cls | 1024 | l2 | `none` |
 | `ms-marco` | `ms-marco-minilm-l6-v2/onnx-fp32-cpu` | reranking | 512 | none | 384 (one logit out) | none | `none` |
+| `bge-reranker-v2-m3` | `bge-reranker-v2-m3/onnx-fp32-cpu` | reranking | 8192 | none | 1024 (one logit out) | none | `none` |
 | `nomic-embed` | `nomic-embed-text-v1.5/onnx-fp32-cpu` | embeddings | 8192 | mean | 768 | none | `none` |
 
 nomic-embed-text-v1.5 vectors are not unit length; normalize them before cosine or dot-product comparison.
 Its profile declares only the `none` prompt, so `Embed(text, "query")` throws `ArgumentException`; any task
 prefix is part of the text the caller passes.
+
+bge-reranker-v2-m3 has no ONNX graph upstream. Its profile pins `Starlinghq/bge-reranker-v2-m3-onnx`, which holds
+the original files of `BAAI/bge-reranker-v2-m3` at `953dc6f6f85a1b2dbfca4c34a2796e7dde08d41e` unchanged plus an
+fp32 export (`model-pipeline/reference/bert/export_reranker_onnx.py`). Pairs are encoded `<s> query </s></s> document </s>`
+without segment ids. Scores are raw logits (the model card's `normalize=False` default); apply a sigmoid for its 0-1
+mapping. FlagEmbedding's fp16 inference, its LLM-based and layerwise rerankers, and query/passage length splits
+(`max_length` per side) are not implemented; truncation is longest-first over the pair.
 
 ## Use
 
@@ -67,8 +76,9 @@ float[] query = embedder.Embed("how do magnets work", "query");
 float[][] passages = embedder.EmbedBatch(["Magnets attract iron.", "Paris is in France."]);
 ```
 
-`profile.RuntimeLock` names the two files inference needs (`onnx/model.onnx` and `tokenizer.json`) at the pinned
-revision; `profile.SourceLock` is the full upstream file list used by reference jobs. `Create` verifies the
+`profile.RuntimeLock` names the files inference needs at the pinned revision: `onnx/model.onnx`, its external
+weights `onnx/model.onnx_data` when the profile pins them (bge-m3 and bge-reranker-v2-m3, whose graphs exceed 2 GB),
+and `tokenizer.json`; `profile.SourceLock` is the full upstream file list used by reference jobs. `Create` verifies the
 directory by size and SHA-256 (`ModelAssetStore.VerifyDirectory`) and never downloads.
 
 ## API
@@ -76,7 +86,7 @@ directory by size and SHA-256 (`ModelAssetStore.VerifyDirectory`) and never down
 - `BertModelProfile`: `Load(path)`, `Parse(json)`, `Id`, `Task` (`BertTask.Embeddings` or `BertTask.Reranking`),
   `MaxTokens` (including special tokens and the prompt), `Pooling`, `HiddenSize`, `Normalize`, `Prompts`,
   `VocabularySize`, `ClsTokenId`, `SepTokenId`, `PadTokenId`, `OutputName`, `TokenizerProfile`, `TokenTypeIds`,
-  `SourceLock`, `RuntimeLock`, and the constants `BgeQueryInstruction`, `GraphFile`, `TokenizerFile`.
+  `SourceLock`, `RuntimeLock`, and the constants `BgeQueryInstruction`, `GraphFile`, `GraphDataFile`, `TokenizerFile`.
 - `BertTextEmbedder.Create(profile, snapshot, threads = 2, maxBatchSize = 32)`: `Embed`, `EmbedBatch`
   (input order), `EmbedTokens`, `Tokenize`, `Dimension`, `Profile`, `Diagnostics`, and the owned
   `Session` (advanced).

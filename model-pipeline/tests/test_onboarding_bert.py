@@ -241,6 +241,54 @@ def test_nomic_requires_its_hidden_size():
         bert.validate_candidate_behavior(contract)
 
 
+XLMR_RERANKER = "Starlinghq/bge-reranker-v2-m3-onnx"
+
+
+def test_xlmr_reranker_contract_is_accepted_and_scores_raw_logits():
+    contract = candidate(XLMR_RERANKER)
+    bert.validate_candidate_behavior(contract)
+    spec = bert.CONTRACTS[XLMR_RERANKER]
+    assert (contract["task"], contract["behavior"]["max_tokens"], contract["behavior"]["pooling"]) == (
+        "reranking",
+        8192,
+        "none",
+    )
+    geometry = (spec["cls_token_id"], spec["sep_token_id"], spec["pad_token_id"], spec["token_type_ids"])
+    assert geometry == (0, 2, 1, False)
+    assert contract["behavior"]["output_name"] == "logits"
+    assert contract["behavior"]["score_activation"] == "identity"
+    # The pinned config declares no activation, so the reference passes identity explicitly; ms-marco's config does.
+    assert spec["score_activation_source"] == "explicit"
+    assert "score_activation_source" not in bert.CONTRACTS["cross-encoder/ms-marco-MiniLM-L6-v2"]
+
+
+@pytest.mark.parametrize(
+    "key,value",
+    [
+        ("pooling", "cls"),
+        ("max_tokens", 512),
+        ("hidden_size", 384),
+        ("pad_token_id", 0),
+        ("tokenizer_profile", "bert-wordpiece-uncased"),
+        ("output_name", "token_embeddings"),
+        ("score_activation", "sigmoid"),
+        ("prompts", {"none": "", "query": bert.QUERY}),
+    ],
+)
+def test_xlmr_reranker_near_misses_are_refused(key, value):
+    contract = candidate(XLMR_RERANKER)
+    contract["behavior"][key] = value
+    with pytest.raises(PipelineError, match="unsupported BERT behavior"):
+        bert.validate_candidate_behavior(contract)
+
+
+def test_xlmr_reranker_refuses_embeddings_task():
+    contract = candidate(XLMR_RERANKER)
+    contract["task"] = "embeddings"
+    with pytest.raises(PipelineError, match="unsupported BERT behavior"):
+        bert.validate_candidate_behavior(contract)
+
+
 def test_policies_cannot_be_raised_after_reference_execution():
     contract = candidate()
     contract["evaluation"]["policy"]["embedding_max_abs"] = 0.1

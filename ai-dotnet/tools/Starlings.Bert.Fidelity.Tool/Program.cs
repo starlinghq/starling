@@ -143,7 +143,9 @@ int ToolBody()
         ["format"] = "starlings.bert-candidate-results", ["format_version"] = 1,
         ["profile"] = profile.Id, ["task"] = root.GetProperty("task").GetString()!, ["candidate_sha256"] = profileHash,
         ["stage"] = "dotnet", ["reference_sha256"] = Sha256(options["--reference"]),
-        ["assets"] = profile.RuntimeLock.Files.Select(file => new { path = file.Path, sha256 = file.Sha256 }).ToArray(),
+        // The evidence names the graph and tokenizer identities; external graph data is verified by RuntimeLock.
+        ["assets"] = new[] { BertModelProfile.GraphFile, BertModelProfile.TokenizerFile }
+            .Select(path => profile.RuntimeLock.GetFile(path)).Select(file => new { path = file.Path, sha256 = file.Sha256 }).ToArray(),
         ["environment"] = new { machine = Environment.MachineName, dotnet = RuntimeInformation.FrameworkDescription,
             onnxruntime = diagnostics.OrtVersion, provider = "CPUExecutionProvider", threads, inter_op_threads = 1 },
         ["cases"] = rows,

@@ -77,6 +77,23 @@ CONTRACTS = {
         tokenizer_profile="xlmr-unigram",
         token_type_ids=False,
     ),
+    # XLM-R cross-encoder: BAAI/bge-reranker-v2-m3 with a Starling-exported ONNX graph (raw logits).
+    "Starlinghq/bge-reranker-v2-m3-onnx": _bert(
+        "reranking",
+        8192,
+        "none",
+        1024,
+        "none",
+        vocabulary_size=250002,
+        cls_token_id=0,
+        sep_token_id=2,
+        pad_token_id=1,
+        tokenizer_profile="xlmr-unigram",
+        token_type_ids=False,
+        # config.json declares no sentence-transformers activation (where CrossEncoder would default to
+        # sigmoid); the model card scores raw logits, so the reference passes identity explicitly.
+        score_activation_source="explicit",
+    ),
 }
 
 
