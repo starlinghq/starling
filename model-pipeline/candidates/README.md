@@ -29,6 +29,7 @@ The schema is only the first check. Each plugin compares the whole contract fiel
 | `qwen25/` | `qwen2.5-0.5b-instruct/ortgenai-fp32-cpu` | `Qwen/Qwen2.5-0.5B-Instruct` (`7ae55760`) | generation: greedy text chat | `qwen-genai-cpu-v1` |
 | `kev-0.8b/` | `kev-0.8b/onnx-fp32-cpu` | `jaredpalmer/kev-0.8b` (`9a45d25e`) on `Qwen/Qwen3.5-0.8B-Base` (`dc7cdfe2`) | decision | `kev-onnx-cpu-v1` |
 | `kev-4b/` | `kev-4b/onnx-fp32-cpu` | `jaredpalmer/kev-4b` (`139fdd94`) on `Qwen/Qwen3.5-4B-Base` (`1001bb4d`) | decision | `kev-onnx-cpu-v1` |
+| `whisper-large-v3-turbo/` | `whisper-large-v3-turbo/onnx-fp16-cpu` | `onnx-community/whisper-large-v3-turbo-ONNX` (`76ba4fb5`, fp16 graphs) on `openai/whisper-large-v3-turbo` (`41f01f3f`, PyTorch reference) | transcription: 30 s of 16 kHz audio, English, greedy, no timestamps | `whisper-onnx-cpu-v1` |
 
 The full revisions and file digests are in each `profile.json`. Licenses of the five-model candidates are listed in [FIVE_MODELS.md](../FIVE_MODELS.md); candidates have no license fields.
 

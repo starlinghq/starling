@@ -26,8 +26,35 @@ public static class WhisperMelSpectrogram
     public const int NumFrequencyBins = Nfft / 2 + 1;   // 201
     /// <summary>Number of frames for a 30 s clip (480000 samples at hop 160).</summary>
     public const int NumFrames = 3000;                  // 480000 samples at hop 160
+    /// <summary>Number of samples in one 30 s chunk (the feature extractor's <c>n_samples</c>).</summary>
+    public const int MaxSamples = 480_000;
 
     private static readonly (double Cos, double Sin)[][] Twiddles = BuildTwiddles();
+
+    /// <summary>
+    /// Log-mel spectrogram of one float32 16 kHz clip of up to 30 s, shape [128, 3000]: the clip is zero-padded on the
+    /// right to <see cref="MaxSamples"/>, as <c>WhisperFeatureExtractor</c> pads it. Longer clips are refused (chunking is
+    /// unsupported) rather than silently truncated.
+    /// </summary>
+    /// <exception cref="ArgumentException">The clip is empty or longer than 30 s.</exception>
+    public static float[] ExtractChunk(float[] waveform)
+    {
+        ArgumentNullException.ThrowIfNull(waveform);
+        if (waveform.Length is 0 or > MaxSamples)
+        {
+            throw new ArgumentException(
+                $"Audio must hold 1 to {MaxSamples} samples (30 s at 16 kHz), got {waveform.Length}; chunking is unsupported.",
+                nameof(waveform));
+        }
+
+        var padded = new double[MaxSamples];
+        for (int i = 0; i < waveform.Length; i++)
+        {
+            padded[i] = waveform[i];
+        }
+
+        return Extract(padded);
+    }
 
     /// <summary>Log-mel spectrogram of one 16 kHz waveform (480,000 samples), shape [128, 3000].</summary>
     public static float[] Extract(double[] waveform) => Extract(waveform, ComputeHannWindow(), ComputeMelFilters());

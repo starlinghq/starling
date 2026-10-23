@@ -6,7 +6,7 @@
   "properties": {
     "format_version": {"const": 1},
     "id": {"type": "string", "minLength": 1},
-    "task": {"enum": ["embeddings", "reranking", "generation", "decision"]},
+    "task": {"enum": ["embeddings", "reranking", "generation", "decision", "transcription"]},
     "origin": {
       "type": "object", "additionalProperties": false,
       "required": ["repo", "revision", "files"],
@@ -42,7 +42,7 @@
         "backend": {"enum": ["onnx", "ortgenai"]},
         "version": {"enum": ["1.30.0", "0.17.1"]},
         "provider": {"const": "CPUExecutionProvider"},
-        "precision": {"const": "fp32"}
+        "precision": {"enum": ["fp32", "fp16"]}
       }
     },
     "behavior": {"type": "object", "minProperties": 1},

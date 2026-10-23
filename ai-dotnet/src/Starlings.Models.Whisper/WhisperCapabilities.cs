@@ -32,7 +32,9 @@ public static class WhisperCapabilities
         // Log-mel spectrogram, encoder and greedy decoder verified bit-exact against the reference; not yet qualified.
         ["transcription"] = CapabilityStatus.Experimental,
         ["transcription.cuda"] = CapabilityStatus.Untested,
-        ["language_detection"] = CapabilityStatus.Experimental,
+        // Auto-detection prompts with <|startoflm|>; transformers instead picks the most likely language token after
+        // <|startoftranscript|>. No reference covers it (the onboarding contract allows explicit languages only).
+        ["language_detection"] = CapabilityStatus.Untested,
         ["cancellation"] = CapabilityStatus.Experimental,
         ["concurrent_calls"] = CapabilityStatus.Untested,
         ["asset_acquisition"] = CapabilityStatus.Supported,

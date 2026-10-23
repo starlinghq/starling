@@ -12,6 +12,7 @@ Command-line tools for acquisition, fidelity stage results, operational qualific
 | [`Starlings.Bert.Fidelity.Tool`](#starlingsbertfidelitytool) | The .NET stage of the `bert-onnx-cpu-v1` onboarding route. | yes |
 | [`Starlings.Generation.Fidelity`](#starlingsgenerationfidelity) | The .NET stage of the `qwen-genai-cpu-v1` onboarding route (QwenChat). | yes |
 | [`Starlings.Kev.Fidelity.Tool`](#starlingskevfidelitytool) | The .NET stage of the `kev-onnx-cpu-v1` onboarding route. | yes |
+| [`Starlings.Whisper.Fidelity.Tool`](#starlingswhisperfidelitytool) | The .NET stage of the `whisper-onnx-cpu-v1` onboarding route. | yes |
 | [`Starlings.Soak.Tool`](#starlingssoaktool) | Gate G4 soak for every model profile. | yes |
 | [`Starlings.Gliner2.CudaStress`](#starlingsgliner2cudastress) | Local reproducer for the GLiNER2 CUDA wrong output. | no (local) |
 | [`Shared/ToolMain.cs`](#sharedtoolmaincs) | Common entry-point wrapper. | n/a (source) |
@@ -88,6 +89,14 @@ Starlings.Generation.Fidelity --candidate <candidate.json> --bundle <dir> --corp
 ```
 
 The .NET stage of the `qwen-genai-cpu-v1` onboarding route (`model-pipeline/src/model_pipeline/onboarding_generation.py`) for `Starlings.Models.QwenChat` (Qwen3-0.6B, Qwen2.5-0.5B-Instruct). It checks the candidate's profile id and revision against `QwenChatProfile`, refuses an output directory inside the bundle and corpus rows with `enable_thinking`, and runs each corpus row through `QwenChatModel`. It writes `results.jsonl`, or `templates.jsonl` with `--templates-only true` (template rendering and ids, no model load). Arguments are `--name value` pairs. Recipes: `model-pipeline/recipes/{qwen3,qwen25}-cpu.yaml`.
+
+## Starlings.Whisper.Fidelity.Tool
+
+```
+Starlings.Whisper.Fidelity.Tool --profile <candidate.json> --snapshot <dir> --corpus <asr-corpus.jsonl> --reference <reference.json> --out <dir> [--threads 2]
+```
+
+The .NET stage of the `whisper-onnx-cpu-v1` onboarding route (`model-pipeline/src/model_pipeline/onboarding_whisper.py`). It checks the candidate contract against the library's constants, then for every reference clip runs `Starlings.Models.Whisper` from the reference log-mel spectrogram (encoder hidden state, greedy ids, decoder logits teacher-forced on the reference ids, transcript) and from the clip's WAV samples (the .NET mel and the public `WhisperTranscriber.Transcribe` path), and writes `dotnet.json` plus a float32 tensor sidecar. Exit 2 on a usage error.
 
 ## Starlings.Kev.Fidelity.Tool
 

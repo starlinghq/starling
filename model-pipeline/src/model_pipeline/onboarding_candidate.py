@@ -93,17 +93,23 @@ def _source(snapshot: Path, relative: str) -> Path:
         raise PipelineError(f"missing candidate source: {relative}: {exc}") from exc
 
 
-def verify_assets(candidate: dict, snapshot: Path, out: Path) -> dict:
+def verify_files(files: list[dict], snapshot: Path, label: str = "candidate") -> list[dict]:
+    """Pinned size and SHA-256 of every listed file, each read only inside the snapshot directory."""
     records = []
-    for record in candidate["origin"]["files"]:
+    for record in files:
         path = _source(snapshot, record["path"])
         actual_size, digest = path.stat().st_size, fixtures.sha256_file(path)
         if (actual_size, digest) != (record["size"], record["sha256"]):
             raise PipelineError(
-                f"candidate asset mismatch: {record['path']}: expected {record['size']} bytes "
+                f"{label} asset mismatch: {record['path']}: expected {record['size']} bytes "
                 f"sha256 {record['sha256']}, found {actual_size} bytes sha256 {digest}"
             )
         records.append({**record, "verification": "pinned-size-and-sha256"})
+    return records
+
+
+def verify_assets(candidate: dict, snapshot: Path, out: Path) -> dict:
+    records = verify_files(candidate["origin"]["files"], snapshot)
     lock = {"profile": candidate["id"], "origin": candidate["origin"], "assets": records}
     write_json(out / "source-lock.json", lock)
     return {"source_files_verified": len(records), "reference_status": "proposed"}

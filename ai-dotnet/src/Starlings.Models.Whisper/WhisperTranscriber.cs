@@ -39,11 +39,15 @@ public sealed class WhisperTranscriber : IDisposable
         }
     }
 
-    /// <summary>Transcribes one 16 kHz float32 waveform (480,000 samples for a 30 s clip).</summary>
+    /// <summary>Transcribes one 16 kHz float32 clip of up to 30 s (at most 480,000 samples; shorter clips are zero-padded).</summary>
+    /// <exception cref="ArgumentException">The clip is empty or longer than 30 s (chunking is unsupported).</exception>
     public string Transcribe(float[] waveform, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(waveform);
-        var mel = WhisperMelSpectrogram.Extract(waveform);
+        // Refuse before the 30 s spectrogram, the costliest CPU step ahead of the encoder.
+        ObjectDisposedException.ThrowIf(Volatile.Read(ref _disposed) != 0, this);
+        cancellationToken.ThrowIfCancellationRequested();
+        var mel = WhisperMelSpectrogram.ExtractChunk(waveform);
         return TranscribeMel(mel, cancellationToken);
     }
 
