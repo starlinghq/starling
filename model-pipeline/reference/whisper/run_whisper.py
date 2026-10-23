@@ -90,6 +90,7 @@ def main() -> int:
     cases = []
     if args.stage == "reference":
         from transformers import WhisperFeatureExtractor, WhisperForConditionalGeneration, WhisperTokenizerFast
+        from transformers.modeling_outputs import BaseModelOutput
 
         extractor = WhisperFeatureExtractor.from_pretrained(str(args.snapshot))
         tokenizer = WhisperTokenizerFast.from_pretrained(str(args.snapshot))
@@ -100,9 +101,15 @@ def main() -> int:
         def transcribe(features: np.ndarray, language: str) -> tuple[torch.Tensor, list[int]]:
             features = torch.from_numpy(features[None])
             hidden = model.model.encoder(features).last_hidden_state
+            # generate() decodes from this encoder output instead of running the 32-layer encoder again.
             # transformers 5 returns only the generated text tokens: no decoder prompt, no end of text.
             generated = model.generate(
-                features, language=language, task="transcribe", return_timestamps=False, do_sample=False, num_beams=1
+                encoder_outputs=BaseModelOutput(last_hidden_state=hidden),
+                language=language,
+                task="transcribe",
+                return_timestamps=False,
+                do_sample=False,
+                num_beams=1,
             )[0].tolist()
             return hidden, generated
 

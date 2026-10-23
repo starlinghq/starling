@@ -28,6 +28,23 @@ public sealed class ExtractChunkTests
     }
 
     [Fact]
+    public void SkippingSilentFramesIsBitIdenticalToTheFullDft()
+    {
+        // A short clip (mostly zero padding) and a clip with exact digital silence in the middle.
+        var shortClip = new double[WhisperMelSpectrogram.MaxSamples];
+        Array.Copy(Tone(26_239).Select(value => (double)value).ToArray(), shortClip, 26_239);
+        var gapped = Tone(WhisperMelSpectrogram.MaxSamples).Select(value => (double)value).ToArray();
+        Array.Clear(gapped, 100_000, 64_000);
+
+        foreach (double[] waveform in new[] { shortClip, gapped })
+        {
+            Assert.Equal(
+                WhisperMelSpectrogram.Extract(waveform, skipSilentFrames: false),
+                WhisperMelSpectrogram.Extract(waveform, skipSilentFrames: true));
+        }
+    }
+
+    [Fact]
     public void FullChunkIsUnchanged()
     {
         float[] clip = Tone(WhisperMelSpectrogram.MaxSamples);

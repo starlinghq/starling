@@ -57,7 +57,11 @@ public static class WhisperMelSpectrogram
     }
 
     /// <summary>Log-mel spectrogram of one 16 kHz waveform (480,000 samples), shape [128, 3000].</summary>
-    public static float[] Extract(double[] waveform) => Extract(waveform, ComputeHannWindow(), ComputeMelFilters());
+    public static float[] Extract(double[] waveform) => Extract(waveform, skipSilentFrames: true);
+
+    /// <summary>As <see cref="Extract(double[])"/>; <paramref name="skipSilentFrames"/> false computes every frame's DFT (tests).</summary>
+    internal static float[] Extract(double[] waveform, bool skipSilentFrames) =>
+        Extract(waveform, ComputeHannWindow(), ComputeMelFilters(), skipSilentFrames);
 
     /// <summary>Log-mel spectrogram of one float32 16 kHz waveform (480,000 samples), shape [128, 3000].</summary>
     public static float[] Extract(float[] waveform)
@@ -154,7 +158,7 @@ public static class WhisperMelSpectrogram
         return freq;
     }
 
-    private static float[] Extract(double[] waveform, double[] window, double[,] melFilters)
+    private static float[] Extract(double[] waveform, double[] window, double[,] melFilters, bool skipSilentFrames)
     {
         int n = waveform.Length;
         int pad = Nfft / 2;
@@ -175,12 +179,27 @@ public static class WhisperMelSpectrogram
         double[] buf = new double[Nfft];
         double[] power = new double[NumFrequencyBins];
 
+        // A frame whose windowed samples are all zero (the zero padding of a short clip, or exact digital silence) has zero
+        // power in every bin, so its value is log10(max(1e-10, 0)) exactly; skipping its DFT changes no bit of the output.
+        double silentFrame = Math.Log10(Math.Max(1e-10, 0.0));
         for (int t = 0; t < frameCount; t++)
         {
             int offset = t * HopLength;
+            bool silent = true;
             for (int j = 0; j < Nfft; j++)
             {
                 buf[j] = padded[offset + j] * window[j];
+                silent &= buf[j] == 0.0;
+            }
+
+            if (silent && skipSilentFrames)
+            {
+                for (int m = 0; m < NumMelBins; m++)
+                {
+                    mel[m * frameCount + t] = silentFrame;
+                }
+
+                continue;
             }
 
             for (int k = 0; k < NumFrequencyBins; k++)
