@@ -158,7 +158,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
 
-The WebAssembly binaries also contain third-party components compiled into ONNX Runtime; their notices are ONNX Runtime's `ThirdPartyNotices.txt` at the same commit (`https://github.com/microsoft/onnxruntime/blob/f2c39fe2f838cf35ce7da92824f5a5e3ee6e88a7/ThirdPartyNotices.txt`). The npm package itself carries neither file; whether the Starlings packages should embed that file (338 KB) is open for the maintainer.
+The WebAssembly binaries also contain third-party components compiled into ONNX Runtime; their notices are ONNX Runtime's `ThirdPartyNotices.txt` at the same commit. The npm package carries neither file, so both packages ship them: `LICENSE-onnxruntime.txt` (SHA-256 `2f07c727…922c`) and `ThirdPartyNotices-onnxruntime.txt` (SHA-256 `143764b9…3de3`), taken unmodified from `microsoft/onnxruntime` at `f2c39fe2f838cf35ce7da92824f5a5e3ee6e88a7` and committed in `ai-dotnet/src/Shared/OnnxWeb/`. They are at the root of each package and are served next to the binaries (`_content/<package>/ort/`), so an app that deploys the binaries deploys the notices.
 
 ## Excluded
 

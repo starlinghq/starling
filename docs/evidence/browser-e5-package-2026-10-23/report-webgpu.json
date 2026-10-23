@@ -1,0 +1,201 @@
+[
+ {
+  "profile": "multilingual-e5-small/onnx-fp32-webgpu",
+  "label": "aot",
+  "browser": "153.0.8010.12",
+  "cross_origin_isolated": true,
+  "onnxruntime_web": {
+   "version": "1.30.0",
+   "bundle": "webgpu",
+   "cross_origin_isolated": true,
+   "hardware_concurrency": 12,
+   "num_threads": 4,
+   "proxy": false,
+   "webgpu_exposed": true
+  },
+  "runtime": ".NET 10.0.12 (interpreter)",
+  "statistics": {
+   "max_abs": 2.0499999999618046e-07,
+   "mean_abs": 2.6603274343284962e-08,
+   "p99_abs": 9.699999999751574e-08,
+   "min_cosine": 0.999999999999205,
+   "min_cosine_case": "space-only",
+   "cases": 46,
+   "vs_native_same_graph_max_abs": 2.0624858531985424e-07
+  },
+  "generator_vs_ids_max_abs": 1.4999999999737446e-07,
+  "checks": [
+   {
+    "bound": "discrete.token_ids",
+    "observed": "0 mismatches (46 e5 inputs, 46 tokenizer cases)",
+    "limit": "exact",
+    "status": "passed"
+   },
+   {
+    "bound": "discrete.attention_mask",
+    "observed": "0 mismatches (46 e5 inputs, 46 tokenizer cases)",
+    "limit": "exact",
+    "status": "passed"
+   },
+   {
+    "bound": "discrete.offsets",
+    "observed": "0 mismatches (utf16, 46 cases)",
+    "limit": "exact",
+    "status": "passed"
+   },
+   {
+    "bound": "float.embedding_max_abs",
+    "observed": 2.0499999999618046e-07,
+    "limit": 1e-05,
+    "status": "passed"
+   },
+   {
+    "bound": "float.padded_batch_vs_single_embedding_max_abs",
+    "observed": 1.4999999999737446e-07,
+    "limit": 1e-05,
+    "status": "passed"
+   },
+   {
+    "bound": "float.nan_or_inf",
+    "observed": "none",
+    "limit": "fail",
+    "status": "passed"
+   },
+   {
+    "bound": "harness.generator_vs_ids_max_abs",
+    "observed": 1.4999999999737446e-07,
+    "limit": 1e-05,
+    "status": "passed"
+   }
+  ],
+  "passed": true,
+  "load": {
+   "Runtime_until_ms": 56.335,
+   "Tokenizer_until_ms": 815.13,
+   "Model_until_ms": 3055.815,
+   "Session_until_ms": 5802.495,
+   "Done_until_ms": 5803.39,
+   "session_create_ms": 2731.095,
+   "model_bytes": 470268510,
+   "model_sha256": "ca456c06b3a9505ddfd9131408916dd79290368331e7d76bb621f1cba6bc8665"
+  },
+  "first_run_ms": 234.3049,
+  "latency_median_ms": {
+   "passage34_b1": 18.3049,
+   "short_b8": 17.26,
+   "long512_b1": 17.8449,
+   "generator_text_e5-passage-prefix_b1": 17.64
+  },
+  "peak_rss_renderer_bytes": 3187675136,
+  "file": "fp32-webgpu-aot.json"
+ },
+ {
+  "profile": "multilingual-e5-small/onnx-int8embed-webgpu",
+  "label": "aot",
+  "browser": "153.0.8010.12",
+  "cross_origin_isolated": true,
+  "onnxruntime_web": {
+   "version": "1.30.0",
+   "bundle": "webgpu",
+   "cross_origin_isolated": true,
+   "hardware_concurrency": 12,
+   "num_threads": 4,
+   "proxy": false,
+   "webgpu_exposed": true
+  },
+  "runtime": ".NET 10.0.12 (interpreter)",
+  "statistics": {
+   "max_abs": 0.0035069899999999946,
+   "mean_abs": 0.0003830273817610337,
+   "p99_abs": 0.0015498161799999998,
+   "min_cosine": 0.999803824346864,
+   "min_cosine_case": "repeated-char",
+   "cases": 46,
+   "vs_native_same_graph_max_abs": 1.732854461658495e-07
+  },
+  "generator_vs_ids_max_abs": 1.599999999990498e-07,
+  "checks": [
+   {
+    "bound": "discrete.token_ids",
+    "observed": "0 mismatches (46 e5 inputs, 46 tokenizer cases)",
+    "limit": "exact",
+    "status": "passed"
+   },
+   {
+    "bound": "discrete.attention_mask",
+    "observed": "0 mismatches (46 e5 inputs, 46 tokenizer cases)",
+    "limit": "exact",
+    "status": "passed"
+   },
+   {
+    "bound": "discrete.offsets",
+    "observed": "0 mismatches (utf16, 46 cases)",
+    "limit": "exact",
+    "status": "passed"
+   },
+   {
+    "bound": "float.embedding_max_abs",
+    "observed": 0.0035069899999999946,
+    "limit": 0.01,
+    "status": "passed"
+   },
+   {
+    "bound": "float.min_cosine",
+    "observed": 0.999803824346864,
+    "limit": 0.9995,
+    "status": "passed"
+   },
+   {
+    "bound": "float.padded_batch_vs_single_embedding_max_abs",
+    "observed": 1.599999999990498e-07,
+    "limit": 1e-05,
+    "status": "passed"
+   },
+   {
+    "bound": "float.nan_or_inf",
+    "observed": "none",
+    "limit": "fail",
+    "status": "passed"
+   },
+   {
+    "bound": "browser_vs_native_same_graph.embedding_max_abs",
+    "observed": 1.732854461658495e-07,
+    "limit": 1e-05,
+    "status": "passed"
+   },
+   {
+    "bound": "task_metric_before_preview.retrieval_top10_overlap_vs_fp32",
+    "observed": null,
+    "limit": 0.95,
+    "status": "not evaluated",
+    "reason": "needs a P-030 held-out query set (gates Preview, not Experimental)"
+   },
+   {
+    "bound": "harness.generator_vs_ids_max_abs",
+    "observed": 1.599999999990498e-07,
+    "limit": 1e-05,
+    "status": "passed"
+   }
+  ],
+  "passed": true,
+  "load": {
+   "Runtime_until_ms": 47.855,
+   "Tokenizer_until_ms": 798.79,
+   "Model_until_ms": 1619.9899,
+   "Session_until_ms": 3504.565,
+   "Done_until_ms": 3505.095,
+   "session_create_ms": 1871.37,
+   "model_bytes": 181715582,
+   "model_sha256": "374a3cc034a1dba112ecd1a9fba920be63f295cada3c65ab15a0a3a84739fb19"
+  },
+  "first_run_ms": 261.305,
+  "latency_median_ms": {
+   "passage34_b1": 18.61,
+   "short_b8": 18.47,
+   "long512_b1": 18.85,
+   "generator_text_e5-passage-prefix_b1": 18.63
+  },
+  "peak_rss_renderer_bytes": 1505648640,
+  "file": "int8embed-webgpu-aot.json"
+ }
+]

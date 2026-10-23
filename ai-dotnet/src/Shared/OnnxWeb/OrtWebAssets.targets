@@ -18,6 +18,16 @@
     <StarlingsOrtWebNpmCi Condition="'$(StarlingsOrtWebNpmCi)' == ''">true</StarlingsOrtWebNpmCi>
   </PropertyGroup>
 
+  <!--
+    onnxruntime's MIT license and its ThirdPartyNotices.txt (the components compiled into the .wasm binaries), both from
+    microsoft/onnxruntime at f2c39fe2f838cf35ce7da92824f5a5e3ee6e88a7 (v1.30.0), committed next to this file: packed at
+    the package root and served next to the binaries under ort/, so an app that deploys the binaries deploys them too.
+  -->
+  <ItemGroup>
+    <StarlingsOrtWebNotice Include="$(MSBuildThisFileDirectory)LICENSE-onnxruntime.txt;$(MSBuildThisFileDirectory)ThirdPartyNotices-onnxruntime.txt" />
+    <None Include="@(StarlingsOrtWebNotice)" Pack="true" PackagePath="" Visible="false" />
+  </ItemGroup>
+
   <ItemGroup>
     <!-- The copies are build outputs: keep them out of the default globs so the target alone decides what is served. -->
     <Content Remove="wwwroot/ort/**" />
@@ -45,10 +55,11 @@
       <_StarlingsOrtWebSource Include="@(StarlingsOrtWebFile->'$(StarlingsOrtWebDist)%(Identity)')" />
     </ItemGroup>
     <Error Condition="!Exists('%(_StarlingsOrtWebSource.FullPath)')" Text="onnxruntime-web dist file missing: %(_StarlingsOrtWebSource.FullPath)" />
-    <Copy SourceFiles="@(_StarlingsOrtWebSource)" DestinationFolder="$(MSBuildProjectDirectory)/wwwroot/ort/" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(_StarlingsOrtWebSource);@(StarlingsOrtWebNotice)" DestinationFolder="$(MSBuildProjectDirectory)/wwwroot/ort/" SkipUnchangedFiles="true" />
     <ItemGroup>
       <Content Remove="wwwroot/ort/**" />
       <Content Include="@(StarlingsOrtWebFile->'wwwroot/ort/%(Identity)')" CopyToOutputDirectory="Never" CopyToPublishDirectory="PreserveNewest" />
+      <Content Include="@(StarlingsOrtWebNotice->'wwwroot/ort/%(Filename)%(Extension)')" CopyToOutputDirectory="Never" CopyToPublishDirectory="PreserveNewest" />
     </ItemGroup>
   </Target>
 </Project>

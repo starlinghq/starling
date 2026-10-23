@@ -1,6 +1,6 @@
 # e5 browser packages: conformance evidence (2026-10-23)
 
-This tests the shipping code: `Starlings.Models.E5.Browser` on `Starlings.Runtime.OnnxWeb`, with the voluntary `Starlings.Runtime.OnnxWeb.WebGpu`. It runs in headless Chrome against the committed browser tolerances. It follows the 2026-10-11 spike ([docs/m0/browser-wasm-spike.md](../../m0/browser-wasm-spike.md)), which measured a prototype. The harness is in [`browser/conformance/`](../../../browser/conformance/README.md). This is exploratory evidence from one workstation, not a qualified benchmark, and it grants no support badge (plan 13.1).
+This tests the shipping code: `Starlings.Models.E5.Browser` on `Starlings.Runtime.OnnxWeb`, with the voluntary `Starlings.Runtime.OnnxWeb.WebGpu`. It runs in headless Chrome against the committed browser tolerances. It follows the 2026-10-11 spike ([docs/m0/browser-wasm-spike.md](../../m0/browser-wasm-spike.md)), which measured a prototype. The harness is in [`browser/conformance/`](../../../browser/conformance/README.md). This is exploratory evidence from one workstation, not a qualified benchmark, and it grants no support badge (plan 13.1). All four browser profiles pass every evaluated bound: fp32 and int8-embed on WASM and on WebGPU.
 
 ## Setup
 
@@ -59,9 +59,25 @@ The sample was built from packages packed from this branch (a local feed with is
 - **fp32 from the Hugging Face Hub** (`smoke-sample-fp32-hub.json`): the zero-setup default. The page fetched the graph (470 MB) and the tokenizer from `huggingface.co` at the pinned revision, under COEP `require-corp`, which works because the Hub sends CORS headers on the redirect and the CDN response. It verified both SHA-256s and was ready in 20.2 s. Queries took 35 to 71 ms.
 - **Rankings.** Both variants rank the 28 passages identically. Six of seven candidate example queries (`smoke-candidates.json`) put the passage they are about first, mostly across languages: English to Japanese, Spanish and Italian, and French to English. The seventh, "what to drink with dates", missed the Arabic coffee passage. The sample's example list keeps the queries that rank as intended. A final run of the rebuilt sample (`smoke-sample-final.json`, `sample-screenshot.png`) ranks the intended passage first for all three default smoke queries.
 
-## WebGPU: not re-verified in this run
+## WebGPU
 
-Both WebGPU runs failed: `WebGPU validation failed. [Invalid Buffer]`, preceded in the console by `vkAllocateMemory failed with VK_ERROR_OUT_OF_DEVICE_MEMORY`. The harness pins WebGPU to GPU 1 (RTX 4060 Ti, `VK_LOADER_DEVICE_ID_FILTER=0x2805`, as in the spike), and `nvidia-smi-before-webgpu.csv` shows 15,585 of 16,380 MiB on it already held by another long-running process. This is a co-tenant out-of-memory, not a package result. The standing WebGPU evidence is still the spike's (fp32 2.1e-7 and int8-embed 3.5e-3 on the asyncify bundle). GPU 0 (RTX 3090) was idle but left alone, as in the spike. Rerunning `run_conformance.py --provider webgpu` when GPU 1 has room, or with `--vk-device-filter` set to GPU 0, refreshes this.
+A rerun on the same day, on the conformance app rebuilt from merged `main` (`634fb790`), passed. The harness pins WebGPU to GPU 1 (RTX 4060 Ti, `VK_LOADER_DEVICE_ID_FILTER=0x2805`), as in the spike. `nvidia-smi-before-webgpu.csv` and `nvidia-smi-after-webgpu.csv` show GPU 1 at 502 MiB used before the runs and 510 MiB after, with GPU 0 (RTX 3090) unchanged at 298 MiB. Load average was 4 (`load-average-webgpu.txt`). The results are in `report-webgpu.json` and `runs/*-webgpu-aot.json`.
+
+| Profile | Embedding max abs (limit) | Min cosine (limit) | Padded batch vs single (limit) | Browser vs native, same graph (limit) | Text through generator vs ids |
+| --- | --- | --- | --- | --- | --- |
+| `onnx-fp32-webgpu` | 2.05e-7 (1e-5) | 1.0000000 (report only) | 1.5e-7 (1e-5) | 2.1e-7 (no bound) | 1.5e-7 |
+| `onnx-int8embed-webgpu` | 3.51e-3 (1e-2) | 0.9998038 (0.9995) | 1.6e-7 (1e-5) | 1.7e-7 (1e-5) | 1.6e-7 |
+
+Token ids, masks and offsets: 0 mismatches. `task_metric_before_preview` is not evaluated, as for WASM.
+
+| Run | Session creation | First run (shader compilation) | Passage, batch 1 | Short batch of 8 | One 512-token input | Renderer peak RSS |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| fp32, WebGPU | 2,731 ms | 234 ms | 18.3 ms | 17.3 ms | 17.8 ms | 3.19 GB |
+| int8-embed, WebGPU | 1,871 ms | 261 ms | 18.6 ms | 18.5 ms | 18.9 ms | 1.51 GB |
+
+- **A flat floor.** As in the spike, WebGPU costs about 18 ms per call whatever the batch or length. Against 4 WASM threads it is 1.4x faster on one short passage (18 vs 25 ms), 12x on a batch of 8 and 23x on a 512-token input.
+- **ORT's placement warning.** onnxruntime-web logs that some nodes run on the CPU instead (`VerifyEachNodeIsAssignedToAnEp`), as in the spike.
+- **The earlier attempt.** An attempt earlier the same day failed with `VK_ERROR_OUT_OF_DEVICE_MEMORY`, because another process held 15.6 of 16.4 GB of GPU 1 at the time. Those runs were replaced by these.
 
 ## Harness pitfalls found on the way
 
@@ -77,4 +93,6 @@ Both WebGPU runs failed: `WebGPU validation failed. [Invalid Buffer]`, preceded 
 | `smoke-*.json` | sample UI runs and the example-query check |
 | `sample-screenshot.png` | the sample after a search (int8-embed, WASM, 4 threads) |
 | `load-average.txt` | load average and available memory at the start of each run |
-| `nvidia-smi-before-webgpu.csv` | GPU memory before the WebGPU runs |
+| `report-webgpu.json` | the evaluator's output for the two WebGPU runs |
+| `nvidia-smi-before-webgpu.csv`, `nvidia-smi-after-webgpu.csv` | GPU memory before and after the WebGPU runs |
+| `load-average-webgpu.txt` | load average and available memory during the WebGPU runs |

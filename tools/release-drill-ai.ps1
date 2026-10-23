@@ -190,6 +190,7 @@ try {
     $pack = Join-Path $work 'pack'
     $projects = @(
         'Starlings.Acquisition', 'Starlings.Runtime.Onnx', 'Starlings.Models.E5', 'Starlings.Models.E5.Extensions.AI',
+        'Starlings.Runtime.OnnxWeb', 'Starlings.Runtime.OnnxWeb.WebGpu', 'Starlings.Models.E5.Browser',
         'Starlings.Models.E5.MLNet', 'Starlings.Models.Gliner2', 'Starlings.Models.EmbeddingGemma2',
         'Starlings.Models.EmbeddingGemma2.Extensions.AI', 'Starlings.Models.EmbeddingGemma2.MLNet',
         'Starlings.Models.EmbeddingGemma2.Imaging.SkiaSharp', 'Starlings.Models.EmbeddingGemma2.Video.FFmpeg',
@@ -209,6 +210,9 @@ try {
         'Starlings.Acquisition'                              = @()
         'Starlings.Runtime.Onnx'                             = @("Microsoft.ML.OnnxRuntime.Managed [$ortVersion]")
         'Starlings.Models.E5'                                = @("Starlings.Acquisition [$aiVersion]", "Starlings.Runtime.Onnx [$aiVersion]", "Starlings.Tokenizers [$tokVersion]")
+        'Starlings.Runtime.OnnxWeb'                          = @()
+        'Starlings.Runtime.OnnxWeb.WebGpu'                   = @("Starlings.Runtime.OnnxWeb [$aiVersion]")
+        'Starlings.Models.E5.Browser'                        = @("Starlings.Models.E5 [$aiVersion]", "Starlings.Models.E5.Extensions.AI [$aiVersion]", "Starlings.Runtime.OnnxWeb [$aiVersion]")
         'Starlings.Models.E5.Extensions.AI'                  = @("Starlings.Models.E5 [$aiVersion]", 'Microsoft.Extensions.AI.Abstractions 10.10.1', 'Microsoft.Extensions.DependencyInjection.Abstractions 10.0.12')
         'Starlings.Models.E5.MLNet'                          = @("Starlings.Models.E5 [$aiVersion]", 'Microsoft.ML 5.0.0')
         'Starlings.Models.Gliner2'                           = @("Starlings.Acquisition [$aiVersion]", "Starlings.Runtime.Onnx [$aiVersion]", "Starlings.Tokenizers [$tokVersion]")

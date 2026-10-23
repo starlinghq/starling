@@ -11,22 +11,22 @@ The app does three things:
 
 Nothing you type leaves the page. Inference is Experimental: WebAssembly has no support badge (see the package README).
 
-## Run
+## Demo (three commands)
 
 ```sh
-dotnet run                                # http://localhost:5000; one inference thread (see below)
+dotnet publish -c Release -o out                   # add -p:RunAOTCompilation=true with the wasm-tools workload
+python model-pipeline/reference/encoder/quantize_e5_browser.py --model <e5 snapshot>/onnx/model.onnx --out models
+python3 serve.py out/wwwroot --models models       # http://127.0.0.1:8080/
 ```
 
-Pick a graph and a backend, then click **Load**. The fp32 graph downloads 470 MB the first time (about 249 MB if your host compresses; the Hub does not). After that it loads from the cache in a couple of seconds.
+Pick **int8-embed, self-hosted** (URL `models/model-int8-embed.onnx`) and **WebAssembly**, then click **Load**. It's ready in about 8 s, and the runtime panel should say "4 of N logical cores". Then click the example queries; most are in another language than the passage they find.
 
-The int8-embed graph is smaller (182 MB) and almost as accurate (cosine 0.9998 to fp32). It has no public URL. Build it and put it next to the app:
+- **What `serve.py` does.** It's standard-library Python. It serves the publish output with the cross-origin isolation headers (several inference threads), its precompressed `.br` files, and the graph directory under `/models/`.
+- **The graph.** The int8-embed graph (182 MB, cosine 0.9998 to fp32) has no public URL. `quantize_e5_browser.py` builds it deterministically. The loader rejects any file whose SHA-256 differs from the pin (`374a3cc0…fb19`). Don't commit it.
+- **No preparation.** Pick **fp32 reference, from the Hugging Face Hub**. It downloads 470 MB from the Hub on the first visit (about 20 s on a fast line), then loads from the browser cache.
+- **WebGPU.** Pick **WebGPU** in a browser that exposes it. Each call costs about 18 ms whatever the batch size, against about 25 ms for one short text on 4 WASM threads.
 
-```sh
-python model-pipeline/reference/encoder/quantize_e5_browser.py --model <e5 snapshot>/onnx/model.onnx --out wwwroot/models
-# then choose "int8-embed, self-hosted" with the URL models/model-int8-embed.onnx
-```
-
-The loader rejects any file whose SHA-256 differs from the pin (`374a3cc0…fb19`). Don't commit the graph.
+`dotnet run` also works, but its development server sends no isolation headers, so the panel shows one thread (3–4x slower). Everything else is the same.
 
 ## Publish and host
 
@@ -35,18 +35,22 @@ dotnet workload install wasm-tools        # once, for AOT
 dotnet publish -c Release -p:RunAOTCompilation=true -o out
 ```
 
-Serve `out/wwwroot` from any static host, with these response headers so onnxruntime-web can use several threads (2.7x to 5x faster than one):
+Serve `out/wwwroot` from any static host, with these response headers so onnxruntime-web can use several threads:
 
 ```
 Cross-Origin-Opener-Policy: same-origin
 Cross-Origin-Embedder-Policy: require-corp
 ```
 
+- **Netlify and Cloudflare Pages:** `wwwroot/_headers` already sets them.
+- **Azure Static Web Apps:** `wwwroot/staticwebapp.config.json` already sets them.
 - **nginx:** `add_header Cross-Origin-Opener-Policy same-origin always; add_header Cross-Origin-Embedder-Policy require-corp always;`
-- **Azure Static Web Apps** (`staticwebapp.config.json`): `"globalHeaders": { "Cross-Origin-Opener-Policy": "same-origin", "Cross-Origin-Embedder-Policy": "require-corp" }`
-- **Netlify** (`_headers`): `/*` followed by the two header lines.
+- **GitHub Pages:** it cannot set headers, so the app runs one thread there.
 
-`dotnet run`'s development server does not send them. The diagnostics panel then says the page is not cross-origin isolated and shows one thread; everything else works the same. The page must be https or localhost, because SHA-256 verification uses the browser's SubtleCrypto.
+Hosting rules:
+- **Secure context.** The page must be https or localhost, because SHA-256 verification uses the browser's SubtleCrypto.
+- **Self-hosted graph.** Host it with the app, or on a server that sends CORS headers.
+- **Notices.** onnxruntime's license and third-party notices are published next to its binaries (`_content/Starlings.Runtime.OnnxWeb/ort/`).
 
 ## What to expect
 
@@ -58,7 +62,8 @@ These are measured in headless Chrome for Testing 153 on an i7-5820K (6 cores), 
 | Load to searchable, first visit (download, verify, session, 28 passages) | 20 s | 11 s (from localhost) |
 | Session creation | about 1.4 s | about 0.9 s |
 | Renderer memory | about 2.3 GB | about 1.4 GB |
-| One 34-token passage, 4 threads | about 25 ms | about 25 ms |
+| One 34-token passage, 4 WASM threads | about 25 ms | about 25 ms |
+| Any call on WebGPU (RTX 4060 Ti) | about 18 ms | about 18 ms |
 
 The .NET runtime and assemblies were 2.4 MB (interpreter) to 4.5 MB (AOT) brotli in the browser spike; onnxruntime-web's WASM bundle adds about 2.3 MB.
 

@@ -135,8 +135,9 @@ jobs:
           NUGET_API_KEY: ${{ steps.nuget.outputs.NUGET_API_KEY }}
         run: |
           order=(
-            Starlings.Acquisition Starlings.Runtime.Onnx Starlings.Generation.OnnxGenAI
-            Starlings.Models.E5 Starlings.Models.Gliner2 Starlings.Models.EmbeddingGemma2 Starlings.Models.Qwen35
+            Starlings.Acquisition Starlings.Runtime.Onnx Starlings.Generation.OnnxGenAI Starlings.Runtime.OnnxWeb
+            Starlings.Models.E5 Starlings.Models.E5.Extensions.AI Starlings.Models.Gliner2 Starlings.Models.EmbeddingGemma2
+            Starlings.Models.Qwen35
           )
           pushed=()
           push() {

@@ -14,7 +14,7 @@
     <!-- [JSImport] generated code. -->
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <AddRazorSupportForMvc>false</AddRazorSupportForMvc>
-    <Description>ONNX Runtime Web (onnxruntime-web 1.30.0, WASM backend) for Starlings models in .NET browser-wasm apps such as Blazor WebAssembly: model download with SHA-256 verification and Cache Storage, session creation and runs from C# through [JSImport]; model bytes never enter the .NET heap. Ships onnxruntime-web's WASM-only bundle as static web assets. WebGPU is the separate Starlings.Runtime.OnnxWeb.WebGpu package. Experimental: WebAssembly has no support badge.</Description>
+    <Description>ONNX Runtime Web (onnxruntime-web 1.30.0, WASM backend) for Starlings models in .NET browser-wasm apps such as Blazor WebAssembly: model download with SHA-256 verification and Cache Storage, session creation and runs from C# through [JSImport]; model bytes never enter the .NET heap. Ships onnxruntime-web's WASM-only bundle as static web assets. WebGPU is the separate Starlings.Runtime.OnnxWeb.WebGpu package. WebAssembly has no support badge. Maturity is per model profile (Stable, Preview or Experimental): see the README, generated from the model registry.</Description>
     <PackageTags>onnxruntime-web;onnx;wasm;webassembly;blazor;browser;inference;ai</PackageTags>
     <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
