@@ -4,7 +4,16 @@ The voluntary WebGPU adapter of `Starlings.Runtime.OnnxWeb`. It ships onnxruntim
 
 ## Maturity
 
-**Experimental.** Its WebGPU evidence is the 2026-10-11 browser spike's (the same onnxruntime-web 1.30.0 bundle on one NVIDIA RTX 4060 Ti, headless Chromium 153, Linux): e5 fp32 within 2.1e-7 of the reference. A rerun through the packages could not get GPU memory on that machine (`docs/evidence/browser-e5-package-2026-10-23/`), so WebGPU through this package is not yet re-verified. fp16 graphs need the adapter feature `shader-f16`, which that setup does not expose. Other GPUs and browsers are untested.
+<!-- catalog:maturity profiles=multilingual-e5-small/onnx-*-webgpu -->
+Maturity is per profile, generated from the registry manifests by `model-pipeline catalog` (do not edit this table by hand). Gates, evidence and capabilities per profile: the [model catalog](https://github.com/starlinghq/starling/blob/main/docs/catalog/README.md).
+
+| Profile | Maturity | Platforms |
+| --- | --- | --- |
+| `multilingual-e5-small/onnx-fp32-webgpu` | experimental | linux-x64 webgpu chromium-153: experimental; linux-x64 webgpu firefox: untested; macos-arm64 webgpu safari: untested; windows-x64 webgpu chromium: untested |
+| `multilingual-e5-small/onnx-int8embed-webgpu` | experimental | linux-x64 webgpu chromium-153: experimental; linux-x64 webgpu firefox: untested; macos-arm64 webgpu safari: untested; windows-x64 webgpu chromium: untested |
+<!-- /catalog:maturity -->
+
+**Experimental.** WebGPU stays local evidence (no CI job). Through this package, both e5 WebGPU profiles pass every bound of their protected tolerances, G1 and G2 included, on one NVIDIA RTX 4060 Ti in headless Chromium 153 (Chrome for Testing) on Linux: fp32 within 2.05e-7 of the reference, int8-embed 3.51e-3 with minimum cosine 0.99980 and 1.7e-7 from native ONNX Runtime on the same graph ([evidence](https://github.com/starlinghq/starling/blob/main/docs/evidence/browser-e5-package-2026-10-23/README.md)). fp16 graphs need the adapter feature `shader-f16`, which that setup does not expose. Other GPUs, vendors, browsers and operating systems are untested.
 
 ## Use
 

@@ -591,6 +591,71 @@ def _budget(root: Path, man: dict[str, Any], task: str, protected_base: str):
     return rel, entry, verification, None
 
 
+def _preview_overlap(
+    root: Path,
+    man: dict[str, Any],
+    protected_base: str,
+    metrics: dict[str, Any],
+    baseline: Path | None,
+    entry: dict[str, Any] | None,
+    matched_form: str | None,
+) -> dict[str, Any] | None:
+    """`task_metric_before_preview.retrieval_top10_overlap_vs_fp32` of the protected tolerances, if the profile has it.
+
+    The bound gates Preview, not G3 (kickoff, browser decision 3: "top-10 overlap with fp32 at least 0.95 on a P-030
+    held-out query set"). It is evaluated only on the dataset the profile's protected budget names (the accepted P-030
+    retrieval set, matched by digest) and with `--baseline` (the fp32 profile's embeddings of that set): the mean
+    over queries of `top10_overlap_vs_baseline` must be at least the bound. Otherwise it is reported as not run, with
+    the reason; it never passes without being measured.
+    """
+    from model_pipeline import evaluate as fidelity
+
+    tol_rel = man["qualification"]["tolerances"]
+    tol_path = protection.resolve_protected(root, tol_rel, kind="tolerances", must_exist=False)
+    if not tol_path.is_file():
+        return None
+    tol = fidelity.flatten(fidelity.load_tolerances(tol_path, man["id"]))
+    key = fidelity.PREVIEW_OVERLAP_KEY
+    if key not in tol:
+        return None
+    verification = protection.verify_unchanged(root, [tol_path], protected_base)
+    bound = tol[key]
+    value = metrics.get("top10_overlap_vs_baseline.mean")
+    check = {
+        "id": "preview.retrieval_top10_overlap_vs_fp32",
+        "gate": "Preview",
+        "tolerance_key": key,
+        "tolerances": tol_rel,
+        "bound": bound,
+        "metric": "top10_overlap_vs_baseline.mean",
+        "value": value,
+        "protected_evidence": verification.status,
+        "status": "not-run",
+        "detail": "",
+    }
+    if isinstance(bound, bool) or not isinstance(bound, int | float):
+        check["detail"] = f"{key}: {bound!r} is not a number"
+    elif baseline is None:
+        check["detail"] = "needs --baseline: the fp32 profile's embeddings of the same retrieval set"
+    elif entry is None or matched_form is None:
+        check["detail"] = (
+            "needs a P-030 held-out query set: the dataset is not the retrieval set the profile's protected "
+            f"{BUDGET_FILE} names, so the result is not a Preview result"
+        )
+    elif verification.status == "changed":
+        check["detail"] = f"{tol_rel} differs from the base commit; this run is not Preview evidence"
+    elif value is None:
+        check["detail"] = "the overlap metric was not computed"
+    else:
+        check["status"] = "passed" if value >= bound else "failed"
+        relation = ">=" if check["status"] == "passed" else "<"
+        check["detail"] = f"mean top-10 overlap with fp32 {value:.4f} {relation} {bound}"
+        if check["status"] == "passed" and verification.status != "verified":
+            check["status"] = "not-run"
+            check["detail"] += f"; tolerances not verified against Git ({verification.detail})"
+    return check
+
+
 def evaluate(
     manifest_path: Path,
     task: str,
@@ -748,6 +813,10 @@ def evaluate(
         else:
             gate_status, reason = "passed", "every budgeted metric meets its minimum"
 
+    preview = None
+    if task == "retrieval":
+        preview = _preview_overlap(root, man, protected_base, metrics, baseline, entry, matched_form)
+
     def rel(p: Path) -> str:
         try:
             return str(p.resolve().relative_to(root.resolve())).replace("\\", "/")
@@ -787,9 +856,12 @@ def evaluate(
         "gates": {"G3": {"status": gate_status, "reason": reason}},
         **extra,
     }
-    if verification.status == "changed":
+    if preview is not None:
+        report["preview_requirements"] = [preview]
+    preview_changed = preview is not None and preview["protected_evidence"] == "changed"
+    if verification.status == "changed" or preview_changed:
         code = EXIT_PROTECTED
-    elif gate_status == "failed":
+    elif gate_status == "failed" or (preview is not None and preview["status"] == "failed"):
         code = EXIT_FAILED
     elif gate_status != "passed":
         code = EXIT_GATE_NOT_PASSED
@@ -814,6 +886,12 @@ def markdown(report: dict[str, Any]) -> str:
         "",
         f"**G3: {g3['status']}**: {g3['reason']}.",
         "",
+        *(
+            f"Preview requirement `{p['tolerance_key']}` (bound {p['bound']}, not part of G3): **{p['status']}**"
+            + (f": {p['detail']}." if p["detail"] else ".")
+            + "\n"
+            for p in report.get("preview_requirements", [])
+        ),
         f"Dataset `{report['dataset']['sha256']}`"
         + (f" ({meta.get('name')}, status {meta.get('status')})" if meta else "")
         + ": "

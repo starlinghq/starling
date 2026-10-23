@@ -36,7 +36,8 @@ public static class ConformanceEntryPoints
         using (var json = new Utf8JsonWriter(buffer))
         {
             json.WriteStartObject();
-            json.WriteString("runtime", RuntimeInformation.FrameworkDescription + (RuntimeFeature() ? " (AOT)" : " (interpreter)"));
+            // The build mode (AOT or interpreter) is the harness label (--label); Mono on WebAssembly has no API for it.
+            json.WriteString("runtime", RuntimeInformation.FrameworkDescription);
             json.WriteString("variant", variant);
             json.WriteString("provider", provider);
             try
@@ -287,8 +288,6 @@ public static class ConformanceEntryPoints
         json.WriteBoolean("webgpu_exposed", info.WebGpuExposed);
         json.WriteEndObject();
     }
-
-    private static bool RuntimeFeature() => !System.Runtime.CompilerServices.RuntimeFeature.IsDynamicCodeSupported;
 
     private static List<JsonElement> ReadJsonLines(byte[] bytes)
     {

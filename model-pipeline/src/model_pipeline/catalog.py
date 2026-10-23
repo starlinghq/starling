@@ -53,6 +53,8 @@ VOCABULARY = (
 # on manual dispatch, so a CUDA-only profile has no scheduled regression runs.
 SCHEDULED_REGRESSION_PROVIDERS = ("cpu",)
 GPU_PROMOTION_NOTE = "promotion awaits a green per-release GPU regression run"
+BROWSER_RUNTIME = "onnxruntime-web"
+BROWSER_PROMOTION_NOTE = "promotion awaits a browser regression run in CI (no headless Chromium job yet)"
 
 # Package README maturity blocks.
 PACKAGE_READMES = "ai-dotnet/src/*/README.md"
@@ -71,10 +73,15 @@ class Platform:
     os: str
     arch: str
     provider: str
+    browser: str = ""  # browser rows only (providers wasm and webgpu)
 
     @property
     def label(self) -> str:
-        return f"{self.os}-{self.arch} {self.provider}"
+        return f"{self.os}-{self.arch} {self.provider}" + (f" {self.browser}" if self.browser else "")
+
+    @classmethod
+    def of(cls, row: dict[str, Any]) -> Platform:
+        return cls(row["os"], row["arch"], row["provider"], row.get("browser", ""))
 
 
 def _posix_relpath(path: Path, start: Path) -> str:
@@ -110,8 +117,8 @@ def build(registry: Path = DEFAULT_REGISTRY, repo_root: Path = REPO_ROOT) -> dic
     profiles = _load_profiles(registry)
     capability_names = _capability_order({c for _, m in profiles for c in m["capabilities"]})
     platforms = sorted(
-        {Platform(c["os"], c["arch"], c["provider"]) for _, m in profiles for c in m["compatibility"]},
-        key=lambda p: (p.os, p.arch, p.provider),
+        {Platform.of(c) for _, m in profiles for c in m["compatibility"]},
+        key=lambda p: (p.os, p.arch, p.provider, p.browser),
     )
 
     entries = []
@@ -138,7 +145,7 @@ def build(registry: Path = DEFAULT_REGISTRY, repo_root: Path = REPO_ROOT) -> dic
             cell: dict[str, Any] = {"status": c["status"]}
             if "verified" in c:
                 cell["verified"] = str(c["verified"])
-            compatibility[Platform(c["os"], c["arch"], c["provider"]).label] = cell
+            compatibility[Platform.of(c).label] = cell
         blockers = stable_blockers(m)
         providers = {c["provider"] for c in m["compatibility"]}
         backend = m["execution"]["backend"]
@@ -220,15 +227,21 @@ def _gate_cell(gate: dict[str, Any], out: Path, repo_root: Path) -> str:
 
 
 def stable_readiness_text(
-    readiness: dict[str, Any], *, maturity: str | None = None, scheduled_regression: bool = True
+    readiness: dict[str, Any],
+    *,
+    maturity: str | None = None,
+    scheduled_regression: bool = True,
+    browser: bool = False,
 ) -> str:
     """The Stable readiness cell. Stable needs every gate and regression support (docs/support-policy.md); a profile
-    without scheduled regression runs is not promoted even when its gates pass."""
+    without scheduled regression runs is not promoted even when its gates pass. Browser profiles (runtime
+    onnxruntime-web) have no regression runs yet: no CI browser job exists."""
+    note = BROWSER_PROMOTION_NOTE if browser else GPU_PROMOTION_NOTE
     if readiness["ready"]:
         if maturity == "stable":
             return "stable: meets the validator's Stable rules"
         if not scheduled_regression:
-            return f"all eight gates pass where recorded; {GPU_PROMOTION_NOTE}"
+            return f"all eight gates pass where recorded; {note}"
         return "meets the validator's Stable rules"
     parts = []
     if readiness["gates_not_passed"]:
@@ -236,7 +249,7 @@ def stable_readiness_text(
     if readiness["untested_capabilities"]:
         parts.append("untested: " + ", ".join(readiness["untested_capabilities"]))
     if not scheduled_regression:
-        parts.append("promotion also awaits a green per-release GPU regression run")
+        parts.append(f"promotion also {note.removeprefix('promotion ')}")
     return "; ".join(parts)
 
 
@@ -271,7 +284,10 @@ def _render_readme(catalog: dict[str, Any], out: Path, repo_root: Path) -> str:
             p["review_date"],
             *(_gate_cell(p["gates"][g], out, repo_root) for g in GATES),
             stable_readiness_text(
-                p["stable_readiness"], maturity=p["maturity"], scheduled_regression=p["scheduled_regression"]
+                p["stable_readiness"],
+                maturity=p["maturity"],
+                scheduled_regression=p["scheduled_regression"],
+                browser=p["execution"]["runtime"] == BROWSER_RUNTIME,
             ),
         ]
         for p in profiles

@@ -26,6 +26,10 @@ Gate cells link to the evidence the manifest records. The Stable readiness colum
 | [kev-4b/onnx-fp32-cuda](../../model-pipeline/registry/kev-4b/onnx-fp32-cuda/manifest.yaml) | decision | experimental | Mark | 2027-01-05 | not-run | not-run | not-run | not-run | not-run | not-run | not-run | not-run | gates not passed: G0, G1, G2, G3, G4, G5, G6, G7; untested: aot, concurrent_calls_unserialized; promotion also awaits a green per-release GPU regression run |
 | [multilingual-e5-small/onnx-fp32-cpu](../../model-pipeline/registry/multilingual-e5-small/onnx-fp32-cpu/manifest.yaml) | embedding | stable | Mark | 2027-01-05 | [passed](../releases/e5-0.1.0-preview.1.md) | [passed](../evidence/release-set-gates-2026-10-14/e5-onnx-fp32-cpu/README.md) | [passed](../evidence/release-set-gates-2026-10-14/e5-onnx-fp32-cpu/README.md) | [passed](../evidence/release-set-gates-2026-10-14/e5-onnx-fp32-cpu/README.md) | [passed](../evidence/g4-soak-1h-2026-10-14/README.md) | [passed](../evidence/qualification-2026-10-15/README.md) | [passed](../evidence/g6-distribution-2026-10-14/README.md) | [passed](../evidence/g7-integration-2026-10-14/README.md) | stable: meets the validator's Stable rules |
 | [multilingual-e5-small/onnx-fp32-cuda](../../model-pipeline/registry/multilingual-e5-small/onnx-fp32-cuda/manifest.yaml) | embedding | stable | Mark | 2027-01-05 | [passed](../evidence/g0-provenance-2026-10-14/README.md) | [passed](../evidence/release-set-gates-2026-10-14/e5-onnx-fp32-cuda/README.md) | [passed](../evidence/release-set-gates-2026-10-14/e5-onnx-fp32-cuda/README.md) | [passed](../evidence/release-set-gates-2026-10-14/e5-onnx-fp32-cuda/README.md) | [passed](../evidence/qualification-2026-10-16-cuda/README.md) | [passed](../evidence/qualification-2026-10-16-cuda/README.md) | [passed](../evidence/g6-distribution-2026-10-14/README.md) | [passed](../evidence/g7-integration-2026-10-14/README.md) | stable: meets the validator's Stable rules |
+| [multilingual-e5-small/onnx-fp32-wasm](../../model-pipeline/registry/multilingual-e5-small/onnx-fp32-wasm/manifest.yaml) | embedding | experimental | Mark | 2027-01-23 | not-run | [passed](../evidence/browser-e5-package-2026-10-23/gates/README.md) | [passed](../evidence/browser-e5-package-2026-10-23/gates/README.md) | not-run | not-run | not-run | not-run | not-run | gates not passed: G0, G3, G4, G5, G6, G7; untested: cache_storage, proxy_worker, single_thread_without_isolation; promotion also awaits a browser regression run in CI (no headless Chromium job yet) |
+| [multilingual-e5-small/onnx-fp32-webgpu](../../model-pipeline/registry/multilingual-e5-small/onnx-fp32-webgpu/manifest.yaml) | embedding | experimental | Mark | 2027-01-23 | not-run | [passed](../evidence/browser-e5-package-2026-10-23/gates/README.md) | [passed](../evidence/browser-e5-package-2026-10-23/gates/README.md) | not-run | not-run | not-run | not-run | not-run | gates not passed: G0, G3, G4, G5, G6, G7; untested: cache_storage, proxy_worker, single_thread_without_isolation, wasm_interpreter; promotion also awaits a browser regression run in CI (no headless Chromium job yet) |
+| [multilingual-e5-small/onnx-int8embed-wasm](../../model-pipeline/registry/multilingual-e5-small/onnx-int8embed-wasm/manifest.yaml) | embedding | experimental | Mark | 2027-01-23 | not-run | [passed](../evidence/browser-e5-package-2026-10-23/gates/README.md) | [passed](../evidence/browser-e5-package-2026-10-23/gates/README.md) | not-run | not-run | not-run | not-run | not-run | gates not passed: G0, G3, G4, G5, G6, G7; promotion also awaits a browser regression run in CI (no headless Chromium job yet) |
+| [multilingual-e5-small/onnx-int8embed-webgpu](../../model-pipeline/registry/multilingual-e5-small/onnx-int8embed-webgpu/manifest.yaml) | embedding | experimental | Mark | 2027-01-23 | not-run | [passed](../evidence/browser-e5-package-2026-10-23/gates/README.md) | [passed](../evidence/browser-e5-package-2026-10-23/gates/README.md) | not-run | not-run | not-run | not-run | not-run | gates not passed: G0, G3, G4, G5, G6, G7; untested: cache_storage, proxy_worker, single_thread_without_isolation, wasm_interpreter; promotion also awaits a browser regression run in CI (no headless Chromium job yet) |
 | [qwen2.5-0.5b-instruct/ortgenai-fp32-cpu](../../model-pipeline/registry/qwen2.5-0.5b-instruct/ortgenai-fp32-cpu/manifest.yaml) | generation | experimental | Mark | 2027-01-18 | not-run | not-run | not-run | not-run | not-run | not-run | not-run | not-run | gates not passed: G0, G1, G2, G3, G4, G5, G6, G7; untested: aot, concurrent_requests, long_context |
 | [qwen3-0.6b/ortgenai-fp32-cpu](../../model-pipeline/registry/qwen3-0.6b/ortgenai-fp32-cpu/manifest.yaml) | generation | experimental | Mark | 2027-01-18 | not-run | not-run | not-run | not-run | not-run | not-run | not-run | not-run | gates not passed: G0, G1, G2, G3, G4, G5, G6, G7; untested: aot, concurrent_requests, long_context |
 | [qwen3.5-0.8b/ortgenai-fp16x-cuda](../../model-pipeline/registry/qwen3.5-0.8b/ortgenai-fp16x-cuda/manifest.yaml) | generation | stable | Mark | 2027-01-05 | [passed](../evidence/g0-provenance-2026-10-14/README.md) | [passed](../evidence/release-set-gates-2026-10-14/qwen35-ortgenai-fp16x-cuda/README.md) | [passed](../evidence/release-set-gates-2026-10-14/qwen35-ortgenai-fp16x-cuda/README.md) | [passed](../evidence/release-set-gates-2026-10-14/qwen35-ortgenai-fp16x-cuda/README.md) | [passed](../evidence/qualification-2026-10-16-cuda/README.md) | [passed](../evidence/qualification-2026-10-16-cuda/README.md) | [passed](../evidence/g6-distribution-2026-10-14/README.md) | [passed](../evidence/g7-integration-2026-10-14/README.md) | stable: meets the validator's Stable rules |
@@ -51,6 +55,10 @@ Gate cells link to the evidence the manifest records. The Stable readiness colum
 | kev-4b/onnx-fp32-cuda | onnxruntime 1.30.0 | Microsoft.ML.OnnxRuntime.Gpu.Linux 1.30.0 | fp32 | reference |
 | multilingual-e5-small/onnx-fp32-cpu | onnxruntime 1.30.0 | Microsoft.ML.OnnxRuntime | fp32 | reference |
 | multilingual-e5-small/onnx-fp32-cuda | onnxruntime 1.30.0 | Microsoft.ML.OnnxRuntime.Gpu 1.30.0 | fp32 | reference |
+| multilingual-e5-small/onnx-fp32-wasm | onnxruntime-web 1.30.0 | Starlings.Runtime.OnnxWeb | fp32 | reference |
+| multilingual-e5-small/onnx-fp32-webgpu | onnxruntime-web 1.30.0 | Starlings.Runtime.OnnxWeb.WebGpu | fp32 | reference |
+| multilingual-e5-small/onnx-int8embed-wasm | onnxruntime-web 1.30.0 | Starlings.Runtime.OnnxWeb | mixed | quantized |
+| multilingual-e5-small/onnx-int8embed-webgpu | onnxruntime-web 1.30.0 | Starlings.Runtime.OnnxWeb.WebGpu | mixed | quantized |
 | qwen2.5-0.5b-instruct/ortgenai-fp32-cpu | onnxruntime-genai 0.17.1 | Microsoft.ML.OnnxRuntimeGenAI 0.17.1 | fp32 | reference |
 | qwen3-0.6b/ortgenai-fp32-cpu | onnxruntime-genai 0.17.1 | Microsoft.ML.OnnxRuntimeGenAI 0.17.1 | fp32 | reference |
 | qwen3.5-0.8b/ortgenai-fp16x-cuda | onnxruntime-genai 0.17.1 | Microsoft.ML.OnnxRuntimeGenAI.Cuda 0.17.1 | fp16 | reference |
@@ -230,16 +238,25 @@ One table per family, one column per profile. Rows are every capability any prof
 
 ### multilingual-e5-small
 
-| Capability | onnx-fp32-cpu | onnx-fp32-cuda |
-| --- | --- | --- |
-| batch | supported | supported |
-| streaming | unsupported | unsupported |
-| cancellation | supported | supported |
-| persistence | unsupported | unsupported |
-| training | unsupported | unsupported |
-| aot | supported | experimental |
-| extensions_ai | supported | supported |
-| mlnet | supported | supported |
+| Capability | onnx-fp32-cpu | onnx-fp32-cuda | onnx-fp32-wasm | onnx-fp32-webgpu | onnx-int8embed-wasm | onnx-int8embed-webgpu |
+| --- | --- | --- | --- | --- | --- | --- |
+| batch | supported | supported | experimental | experimental | experimental | experimental |
+| streaming | unsupported | unsupported | unsupported | unsupported | unsupported | unsupported |
+| cancellation | supported | supported | experimental | experimental | experimental | experimental |
+| persistence | unsupported | unsupported | unsupported | unsupported | unsupported | unsupported |
+| training | unsupported | unsupported | unsupported | unsupported | unsupported | unsupported |
+| aot | supported | experimental | unsupported | unsupported | unsupported | unsupported |
+| extensions_ai | supported | supported | experimental | experimental | experimental | experimental |
+| mlnet | supported | supported | unsupported | unsupported | unsupported | unsupported |
+| cache_storage | unrecorded | unrecorded | untested | untested | experimental | untested |
+| embedding_pretokenized | unrecorded | unrecorded | experimental | experimental | experimental | experimental |
+| embedding_text | unrecorded | unrecorded | experimental | experimental | experimental | experimental |
+| multithreaded_cross_origin_isolated | unrecorded | unrecorded | experimental | experimental | experimental | experimental |
+| proxy_worker | unrecorded | unrecorded | untested | untested | experimental | untested |
+| single_thread_without_isolation | unrecorded | unrecorded | untested | untested | experimental | untested |
+| tokenizer_owned | unrecorded | unrecorded | experimental | experimental | experimental | experimental |
+| wasm_aot | unrecorded | unrecorded | experimental | experimental | experimental | experimental |
+| wasm_interpreter | unrecorded | unrecorded | experimental | untested | experimental | untested |
 
 ### qwen2.5-0.5b-instruct
 
@@ -455,6 +472,20 @@ One table per family, one column per profile. Rows are every capability any prof
 - `multilingual-e5-small/onnx-fp32-cuda`: tokenizer.json leaves decomposed Hangul jamo uncomposed, while SentencePiece composes them.
 - `multilingual-e5-small/onnx-fp32-cuda`: Native runtime: Microsoft.ML.OnnxRuntime.Gpu 1.30.0 needs CUDA 13 runtime libraries and cuDNN 9 on the loader path; the package does not ship them. The schema has no field for native runtime, driver or GPU requirements, so they are recorded here and in docs/m0/e5-gpu.md.
 - `multilingual-e5-small/onnx-fp32-cuda`: With use_tf32 0, ORT CUDA matches the PyTorch fp32 CPU hidden states to 2.1e-6 and the protected embeddings to 1.9e-7 on the M0 corpus; C# and Python ORT CUDA hidden states are bit-identical.
+- `multilingual-e5-small/onnx-fp32-wasm`: No CI browser job yet (follow-up plan W6): the evidence is one local run of headless Chrome for Testing 153.
+- `multilingual-e5-small/onnx-fp32-wasm`: Without cross-origin isolation (COOP/COEP) onnxruntime-web runs one thread, 3.2x to 3.7x slower in the int8-embed evidence; asking for more than one thread then fails with NotSupportedException.
+- `multilingual-e5-small/onnx-fp32-wasm`: An interpreter publish that reuses an obj/ left by an AOT publish can ship IL-stripped assemblies, and the Mono interpreter then aborts (browser/conformance/README.md). Publish each build mode from a clean obj/.
+- `multilingual-e5-small/onnx-fp32-webgpu`: No CI browser job yet (follow-up plan W6): WebGPU stays local evidence (one run, headless Chrome for Testing 153, one NVIDIA GPU).
+- `multilingual-e5-small/onnx-fp32-webgpu`: Without cross-origin isolation (COOP/COEP) onnxruntime-web runs one thread, 3.2x to 3.7x slower (WASM) in the int8-embed evidence; asking for more than one thread then fails with NotSupportedException.
+- `multilingual-e5-small/onnx-fp32-webgpu`: An interpreter publish that reuses an obj/ left by an AOT publish can ship IL-stripped assemblies, and the Mono interpreter then aborts (browser/conformance/README.md). Publish each build mode from a clean obj/.
+- `multilingual-e5-small/onnx-int8embed-wasm`: No CI browser job yet (follow-up plan W6): the evidence is local runs of headless Chrome for Testing 153.
+- `multilingual-e5-small/onnx-int8embed-wasm`: The int8-embed graph has no public URL yet: users build it with quantize_e5_browser.py and host it themselves.
+- `multilingual-e5-small/onnx-int8embed-wasm`: Without cross-origin isolation (COOP/COEP) onnxruntime-web runs one thread, 3.2x to 3.7x slower; asking for more than one thread then fails with NotSupportedException.
+- `multilingual-e5-small/onnx-int8embed-wasm`: An interpreter publish that reuses an obj/ left by an AOT publish can ship IL-stripped assemblies, and the Mono interpreter then aborts (browser/conformance/README.md). Publish each build mode from a clean obj/.
+- `multilingual-e5-small/onnx-int8embed-webgpu`: No CI browser job yet (follow-up plan W6): WebGPU stays local evidence (one run, headless Chrome for Testing 153, one NVIDIA GPU).
+- `multilingual-e5-small/onnx-int8embed-webgpu`: The int8-embed graph has no public URL yet: users build it with quantize_e5_browser.py and host it themselves.
+- `multilingual-e5-small/onnx-int8embed-webgpu`: Without cross-origin isolation (COOP/COEP) onnxruntime-web runs one thread, 3.2x to 3.7x slower on WASM; asking for more than one thread then fails with NotSupportedException.
+- `multilingual-e5-small/onnx-int8embed-webgpu`: An interpreter publish that reuses an obj/ left by an AOT publish can ship IL-stripped assemblies, and the Mono interpreter then aborts (browser/conformance/README.md). Publish each build mode from a clean obj/.
 - `qwen2.5-0.5b-instruct/ortgenai-fp32-cpu`: The references are proposed, not adopted into protected/, and no gate has run; every capability is at most experimental.
 - `qwen2.5-0.5b-instruct/ortgenai-fp32-cpu`: Bundle reproducibility was shown on one machine (two builds, identical digests) with the hash-locked builder wheel; another builder wheel or platform was not tested. A bundle with other digests is refused.
 - `qwen2.5-0.5b-instruct/ortgenai-fp32-cpu`: QwenChatOptions.MaxNewTokens defaults to 16, the corpus setting.

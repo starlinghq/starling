@@ -4,16 +4,27 @@
 
 ## Maturity
 
-**Experimental.** WebAssembly has no support badge (plan 13.1). The four browser profiles have binding tolerances (`model-pipeline/protected/multilingual-e5-small/onnx-*-wasm|webgpu/tolerances.yaml`) but no registry manifest yet, so the catalog does not list them. The evidence is in [docs/evidence/browser-e5-package-2026-10-23](https://github.com/starlinghq/starling/blob/main/docs/evidence/browser-e5-package-2026-10-23/README.md).
+<!-- catalog:maturity profiles=multilingual-e5-small/onnx-*-wasm,multilingual-e5-small/onnx-*-webgpu -->
+Maturity is per profile, generated from the registry manifests by `model-pipeline catalog` (do not edit this table by hand). Gates, evidence and capabilities per profile: the [model catalog](https://github.com/starlinghq/starling/blob/main/docs/catalog/README.md).
+
+| Profile | Maturity | Platforms |
+| --- | --- | --- |
+| `multilingual-e5-small/onnx-fp32-wasm` | experimental | linux-x64 wasm chromium-153: experimental; linux-x64 wasm firefox: untested; macos-arm64 wasm safari: untested; windows-x64 wasm chromium: untested |
+| `multilingual-e5-small/onnx-fp32-webgpu` | experimental | linux-x64 webgpu chromium-153: experimental; linux-x64 webgpu firefox: untested; macos-arm64 webgpu safari: untested; windows-x64 webgpu chromium: untested |
+| `multilingual-e5-small/onnx-int8embed-wasm` | experimental | linux-x64 wasm chromium-153: experimental; linux-x64 wasm firefox: untested; macos-arm64 wasm safari: untested; windows-x64 wasm chromium: untested |
+| `multilingual-e5-small/onnx-int8embed-webgpu` | experimental | linux-x64 webgpu chromium-153: experimental; linux-x64 webgpu firefox: untested; macos-arm64 webgpu safari: untested; windows-x64 webgpu chromium: untested |
+<!-- /catalog:maturity -->
+
+**Experimental.** WebAssembly has no support badge (plan 13.1). The table above is generated from the four browser profiles' registry manifests; the catalog has their gates and per-profile capabilities. G1 and G2 pass for all four with the protected evaluator on the development fixtures ([gate reports](https://github.com/starlinghq/starling/blob/main/docs/evidence/browser-e5-package-2026-10-23/gates/README.md)); the other gates have not been run. The evidence is in [docs/evidence/browser-e5-package-2026-10-23](https://github.com/starlinghq/starling/blob/main/docs/evidence/browser-e5-package-2026-10-23/README.md). The table below summarizes the evidence per feature; where it names a profile, the status is the manifest's.
 
 | Capability | Status | Evidence |
 | --- | --- | --- |
 | `onnx-fp32-wasm`: fp32 graph, WASM backend | experimental | every bound of its tolerance file passes (max abs 1.4e-7), AOT and interpreter, Chrome for Testing 153 on Linux x64 |
-| `onnx-int8embed-wasm`: int8-embed graph, WASM backend | experimental | every evaluated bound passes (max abs 3.5e-3, min cosine 0.99980, 1.3e-7 vs native ONNX Runtime on the same graph); `task_metric_before_preview` (retrieval top-10 overlap) not evaluated yet |
-| `onnx-fp32-webgpu`, `onnx-int8embed-webgpu` (with `Starlings.Runtime.OnnxWeb.WebGpu`) | experimental | the 2026-10-11 spike only (one NVIDIA GPU, Linux, headless Chromium 153); not yet re-verified through these packages |
+| `onnx-int8embed-wasm`: int8-embed graph, WASM backend | experimental | every bound of G1 and G2 passes (max abs 3.5e-3, min cosine 0.99980, 1.3e-7 vs native ONNX Runtime on the same graph); `task_metric_before_preview` (retrieval top-10 overlap, needed for Preview) not evaluated yet |
+| `onnx-fp32-webgpu`, `onnx-int8embed-webgpu` (with `Starlings.Runtime.OnnxWeb.WebGpu`) | experimental | every bound of G1 and G2 passes through these packages on one NVIDIA RTX 4060 Ti, headless Chromium 153 (Chrome for Testing), Linux: fp32 max abs 2.05e-7; int8-embed 3.5e-3, min cosine 0.99980, 1.7e-7 vs native; other GPUs and browsers untested |
 | Owned tokenizer in the browser (ids, masks, offsets) | experimental | 0 mismatches on the protected fixtures, interpreter and AOT |
 | `IEmbeddingGenerator<string, Embedding<float>>` (`E5BrowserEmbeddingGenerator`) | experimental | same request rules as `Starlings.Models.E5.Extensions.AI`; unit tests and the browser run |
-| Cache Storage reuse across page loads | experimental | reload check in the evidence |
+| Cache Storage reuse across page loads | experimental for `onnx-int8embed-wasm`; untested for the other profiles | reload check in the evidence (int8-embed, WASM) |
 | Cancellation | experimental: checked before each chunk and run; a run already inside onnxruntime-web completes first | unit tests |
 | Micro-batching, fp16, dynamic int8 | unsupported | the spike rejected dynamic int8 (batch-dependent); fp16 fails on WebGPU without `shader-f16` |
 | Firefox, Safari, Windows or macOS browsers, mobile, non-NVIDIA GPUs | untested | |
