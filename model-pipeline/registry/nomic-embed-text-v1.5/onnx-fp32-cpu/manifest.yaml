@@ -1,0 +1,186 @@
+# BERT route (Starlings.Models.Bert): nomic-ai/nomic-embed-text-v1.5 on ONNX Runtime 1.30.0, fp32 on the CPU provider. Candidate
+# contract: model-pipeline/candidates/nomic-embed/profile.json (onboarding route bert-onnx-cpu-v1,
+# recipes/nomic-embed-cpu.yaml), admitted to the route in #120; BertModelProfile.BuiltIn("nomic-embed") embeds the same
+# file. Registry manifest added at Experimental in the ai-dotnet 0.4.0 release candidate at the maintainer's request, so
+# the package README states its maturity. No admission record exists for the BERT route; the references are proposed,
+# not adopted into protected/, and no gate has run.
+schema_version: 1
+id: nomic-embed-text-v1.5/onnx-fp32-cpu
+# Experimental: development parity on the onboarding route only (proposed references, predeclared candidate policy); no gate ran.
+maturity: experimental
+
+origin:
+  code:
+    # No separate inference code is pinned: the C# package reimplements the pipeline (tokenization, pooling,
+    # normalization) from this repository's configuration at the same commit.
+    url: https://huggingface.co/nomic-ai/nomic-embed-text-v1.5
+    revision: "e9b6763023c676ca8431644204f50c2b100d9aab"
+  weights:
+    url: https://huggingface.co/nomic-ai/nomic-embed-text-v1.5
+    revision: "e9b6763023c676ca8431644204f50c2b100d9aab"
+  files:
+    # nomic-ai/nomic-embed-text-v1.5 at the pinned commit (candidates/nomic-embed/profile.json, origin.files), verified on download.
+    - path: 1_Pooling/config.json
+      sha256: "3d6180f7233df2f529d65ea60c8db4af614fb78cbe99fd81103dcfeb9f8166a5"
+      size: 286
+    - path: README.md
+      sha256: "4430178908fbd574fdb6457e302d23e643d733ed036b5777180b0806946767b2"
+      size: 71843
+    - path: config.json
+      sha256: "9ab00bd92cee80a569f708140b7b6c1661a65891ff3765b1519e181ba2f2c92b"
+      size: 2538
+    - path: config_sentence_transformers.json
+      sha256: "482f42ca954f5a8d55bccbb437b8d6eb721ce19059c78330c815045ddd1a87eb"
+      size: 140
+    - path: model.safetensors
+      sha256: "9e7d262b1fe5ea350782829496efa831901b77486bbde1cea54a4c822d010d5c"
+      size: 546938168
+    - path: modules.json
+      sha256: "f93c503b32fa7bc2e186843f0add961caa14eb68f7be516e327df3cadbcd541a"
+      size: 255
+    - path: onnx/model.onnx
+      sha256: "147d5aa88c2101237358e17796cf3a227cead1ec304ec34b465bb08e9d952965"
+      size: 547310275
+    - path: sentence_bert_config.json
+      sha256: "9ee3935137f87c9ce6662ae17fe7afb7c9c64744a41247359fd228dc37e627b3"
+      size: 58
+    - path: special_tokens_map.json
+      sha256: "5d5b662e421ea9fac075174bb0688ee0d9431699900b90662acd44b2a350503a"
+      size: 695
+    - path: tokenizer.json
+      sha256: "d241a60d5e8f04cc1b2b3e9ef7a4921b27bf526d9f6050ab90f9267a1f9e5c66"
+      size: 711396
+    - path: tokenizer_config.json
+      sha256: "d7e0000bcc80134debd2222220427e6bf5fa20a669f40a0d0d1409cc18e0a9bc"
+      size: 1191
+    - path: vocab.txt
+      sha256: "07eced375cec144d27c900241f3e339478dec958f92fddbc551f295c992038a3"
+      size: 231508
+  attribution: >-
+    nomic-embed-text-v1.5 by Nomic AI (nomic-ai/nomic-embed-text-v1.5, Apache-2.0).
+
+rights:
+  code_license: MIT OR Apache-2.0
+  weights_license: Apache-2.0
+  tokenizer_terms: Apache-2.0
+  redistribution: download
+  notes: >-
+    Weights and tokenizer: Apache-2.0 (license: apache-2.0 in the model card front matter at the pinned commit). code_license is this repository's (the C# package
+    reimplements the pipeline; no upstream source is copied). Nothing is bundled in the package: the application
+    downloads the pinned files explicitly (ModelAssetStore.DownloadAsync(profile.RuntimeLock)) from the public upstream repository, verified by size and SHA-256.
+
+behavior:
+  tasks: [embedding]
+  # Including special tokens and the prompt (BertModelProfile.MaxTokens).
+  max_input_tokens: 8192
+  offsets_unit: none
+  # Longest-first truncation by the pinned tokenizer (candidate behavior.truncation longest_first): a single text loses its
+  # right end.
+  truncation: truncate-right
+  defaults:
+    pooling: mean
+    normalize: none
+    dimension: 768
+    prompts: "none = ''; never applied implicitly"
+    truncation: right, special tokens and the prompt included
+    batching: right padding with mask 0, maxBatchSize rows per call (default 32); maxBatchTokens and sortByLength opt-in (experimental)
+    threads: two intra-op, one inter-op (Create threads argument)
+  unsupported:
+    - "GPU execution providers (CUDA, DirectML, CoreML)"
+    - "fp16, bf16 and quantized graphs"
+    - "streaming"
+    - "training and fine-tuning"
+    - "Microsoft.Extensions.AI and ML.NET adapters"
+    - "Matryoshka dimension truncation"
+    - "implicit task prefixes (search_query: and others are part of the caller's text)"
+
+processing:
+  tokenizer:
+    # The owned tokenizer pinned in ai-dotnet/Directory.Packages.props; ONNX Runtime receives ids only.
+    package: Starlings.Tokenizers
+    version: 0.3.2
+    profile_id: bert-wordpiece-uncased
+    algorithm: wordpiece
+    assets:
+      - path: tokenizer.json
+        sha256: "d241a60d5e8f04cc1b2b3e9ef7a4921b27bf526d9f6050ab90f9267a1f9e5c66"
+        size: 711396
+    backend_tokenizer_dependency: false
+
+execution:
+  backend:
+    name: onnxruntime
+    version: 1.30.0
+    binding: Microsoft.ML.OnnxRuntime
+  precision: fp32
+  variant: reference
+  graph:
+    # BertModelProfile.RuntimeLock: these graph files and tokenizer.json at the pinned revision.
+    assets:
+      - path: onnx/model.onnx
+        sha256: "147d5aa88c2101237358e17796cf3a227cead1ec304ec34b465bb08e9d952965"
+        size: 547310275
+    inputs:
+      - { name: input_ids, type: int64, shape: [batch, sequence] }
+      - { name: attention_mask, type: int64, shape: [batch, sequence] }
+      - { name: token_type_ids, type: int64, shape: [batch, sequence] }
+    outputs:
+      - { name: last_hidden_state, type: float32, shape: [batch, sequence, 768] }
+
+capabilities:
+  # Starlings.Models.Bert (BertCapabilities). Experimental where the onboarding route compared the C# package with the
+  # framework reference on the proposed corpus (no adopted reference, no gate); unsupported where the package does not
+  # offer it; untested where no evidence exists.
+  batch: experimental
+  streaming: unsupported
+  cancellation: experimental  # between batch chunks and at ONNX Runtime graph-node boundaries
+  persistence: unsupported
+  training: unsupported
+  aot: untested
+  extensions_ai: unsupported
+  mlnet: unsupported
+  text: experimental
+  batch_token_budget: experimental  # maxBatchTokens, off by default
+  batch_sort_by_length: experimental  # sortByLength, off by default
+  asset_verification_offline: experimental
+  built_in_profile: experimental  # BertModelProfile.BuiltIn("nomic-embed")
+  gpu: unsupported
+
+compatibility:
+  # Linux x64 CPU: development evidence from the onboarding route (#120). No gate.
+  - os: linux
+    arch: x64
+    provider: cpu
+    status: experimental
+  - os: windows
+    arch: x64
+    provider: cpu
+    status: untested
+
+qualification:
+  reference_runner: model-pipeline/reference/bert/run_bert.py
+  # No protected fixtures exist for this profile: the proposed corpus the recipe runs (recipes/nomic-embed-cpu.yaml).
+  fixtures: model-pipeline/corpora/five-models/embeddings.jsonl
+  # No protected tolerances: the predeclared candidate policy (evaluation.policy, status proposed). Adoption into
+  # protected/ is a separate change.
+  tolerances: model-pipeline/candidates/nomic-embed/profile.json
+  gates:
+    G0: { status: not-run }
+    G1: { status: not-run }
+    G2: { status: not-run }
+    G3: { status: not-run }
+    G4: { status: not-run }
+    G5: { status: not-run }
+    G6: { status: not-run }
+    G7: { status: not-run }
+
+maintenance:
+  owner: Mark
+  latest_verified_upstream_revision: "e9b6763023c676ca8431644204f50c2b100d9aab"
+  review_date: 2027-01-23
+  known_issues:
+    - >-
+      The references are proposed, not adopted into protected/, and no gate has run; every capability is at most
+      experimental.
+    - >-
+      Vectors are not unit length (normalize: none); normalize them before cosine or dot-product comparison.

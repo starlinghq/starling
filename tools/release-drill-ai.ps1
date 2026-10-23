@@ -14,7 +14,7 @@
       4. inspects every nuspec (version, license, readme, repository commit, exact dependency list) and the packed files
          (no model assets, no FFmpeg library) and the symbol packages (SourceLink to the commit),
       5. pushes the packages to a local folder feed only (never nuget.org),
-      6. copies the samples and the checkers (tools/release-drill/ai-consumer, mlnet-consumer) outside the repository,
+      6. copies the samples and the checkers (tools/release-drill/ai-consumer, mlnet-consumer, bert-consumer) outside the repository,
          with a NuGet.config that knows only that feed and nuget.org and an isolated empty package cache, restores and
          builds them, and proves the restore graph holds only packages, that the Starlings packages are the packed bytes
          (Starlings.Tokenizers: the nuget.org bytes the lock files record) and that no foreign tokenizer, GPU native or
@@ -194,7 +194,7 @@ try {
         'Starlings.Models.EmbeddingGemma2.Extensions.AI', 'Starlings.Models.EmbeddingGemma2.MLNet',
         'Starlings.Models.EmbeddingGemma2.Imaging.SkiaSharp', 'Starlings.Models.EmbeddingGemma2.Video.FFmpeg',
         'Starlings.Generation.OnnxGenAI', 'Starlings.Models.Qwen35', 'Starlings.Models.Qwen35.Extensions.AI',
-        'Starlings.Models.Kev', 'Starlings.Models.QwenChat')
+        'Starlings.Models.Kev', 'Starlings.Models.QwenChat', 'Starlings.Models.Bert')
     $env:CI = 'true'
     Push-Location $src
     foreach ($id in $projects) {
@@ -222,6 +222,7 @@ try {
         'Starlings.Models.Qwen35.Extensions.AI'              = @("Starlings.Models.Qwen35 [$aiVersion]", 'Microsoft.Extensions.AI.Abstractions 10.10.1', 'Microsoft.Extensions.DependencyInjection.Abstractions 10.0.12')
         'Starlings.Models.Kev'                               = @("Starlings.Acquisition [$aiVersion]", "Starlings.Runtime.Onnx [$aiVersion]", "Starlings.Tokenizers [$tokVersion]")
         'Starlings.Models.QwenChat'                          = @("Starlings.Acquisition [$aiVersion]", "Starlings.Generation.OnnxGenAI [$aiVersion]", "Starlings.Tokenizers [$tokVersion]")
+        'Starlings.Models.Bert'                              = @("Starlings.Acquisition [$aiVersion]", "Starlings.Runtime.Onnx [$aiVersion]", "Starlings.Tokenizers [$tokVersion]")
     }
     Add-Type -AssemblyName System.IO.Compression.FileSystem
     function Read-Entry([string]$Zip, [string]$Name) {
@@ -282,13 +283,13 @@ try {
     Step '6. Clean consumers outside the repository'
     $apps = Join-Path $work 'apps'
     $fixtures = Join-Path $work 'fixtures'
-    $appNames = 'E5Search', 'Gliner2Ner', 'QwenChat', 'EmbeddingGemma2Search', 'AiConsumer', 'MlNetConsumer'
+    $appNames = 'E5Search', 'Gliner2Ner', 'QwenChat', 'EmbeddingGemma2Search', 'AiConsumer', 'MlNetConsumer', 'BertConsumer'
     foreach ($app in $appNames) { New-Item -ItemType Directory -Path (Join-Path $apps $app) -Force | Out-Null }
     New-Item -ItemType Directory -Path $fixtures | Out-Null
     foreach ($sample in 'E5Search', 'Gliner2Ner', 'EmbeddingGemma2Search', 'QwenChat') {
         Copy-Item (Join-Path $src "ai-dotnet/samples/$sample/Program.cs"), (Join-Path $src "ai-dotnet/samples/$sample/$sample.csproj") (Join-Path $apps $sample)
     }
-    foreach ($checker in @(@('ai-consumer', 'AiConsumer'), @('mlnet-consumer', 'MlNetConsumer'))) {
+    foreach ($checker in @(@('ai-consumer', 'AiConsumer'), @('mlnet-consumer', 'MlNetConsumer'), @('bert-consumer', 'BertConsumer'))) {
         Copy-Item (Join-Path $src "tools/release-drill/$($checker[0])/Program.cs") (Join-Path $apps $checker[1])
         (Get-Content (Join-Path $src "tools/release-drill/$($checker[0])/$($checker[1]).csproj.in") -Raw).Replace('@VERSION@', $aiVersion) |
             Set-Content (Join-Path $apps "$($checker[1])/$($checker[1]).csproj") -Encoding utf8
@@ -345,6 +346,7 @@ try {
             'Gliner2Ner' { 'Starlings.Tokenizers', 'Starlings.Acquisition', 'Starlings.Runtime.Onnx', 'Microsoft.ML.OnnxRuntime', 'Starlings.Models.Gliner2' }
             'EmbeddingGemma2Search' { 'Starlings.Tokenizers', 'Starlings.Acquisition', 'Starlings.Runtime.Onnx', 'Microsoft.ML.OnnxRuntime', 'Starlings.Models.EmbeddingGemma2', 'Starlings.Models.EmbeddingGemma2.Extensions.AI', 'Starlings.Models.EmbeddingGemma2.Imaging.SkiaSharp', 'Starlings.Models.EmbeddingGemma2.Video.FFmpeg' }
             'MlNetConsumer' { 'Starlings.Tokenizers', 'Starlings.Acquisition', 'Starlings.Runtime.Onnx', 'Microsoft.ML.OnnxRuntime', 'Starlings.Models.E5', 'Starlings.Models.E5.MLNet', 'Starlings.Models.EmbeddingGemma2', 'Starlings.Models.EmbeddingGemma2.MLNet', 'Microsoft.ML' }
+            'BertConsumer' { 'Starlings.Tokenizers', 'Starlings.Acquisition', 'Starlings.Runtime.Onnx', 'Microsoft.ML.OnnxRuntime', 'Starlings.Models.Bert' }
             'AiConsumer' { 'Starlings.Tokenizers', 'Starlings.Acquisition', 'Starlings.Runtime.Onnx', 'Microsoft.ML.OnnxRuntime', 'Starlings.Models.E5', 'Starlings.Models.E5.Extensions.AI', 'Starlings.Models.E5.MLNet', 'Microsoft.ML' }
             default { 'Starlings.Tokenizers', 'Starlings.Acquisition', 'Starlings.Runtime.Onnx', 'Microsoft.ML.OnnxRuntime', 'Starlings.Models.E5', 'Starlings.Models.E5.Extensions.AI' }
         }
@@ -378,6 +380,13 @@ try {
     $bin = { param($app) Join-Path $apps "$app/bin/Release/net10.0/$app.dll" }
     $models = Join-Path $work 'models'
     New-Item -ItemType Directory -Path $models | Out-Null
+
+    # Every mode: the built-in BERT profiles from the packed package, offline (no model; the snapshot directory is empty).
+    $bertEmpty = Join-Path $work 'bert-empty'
+    New-Item -ItemType Directory -Path $bertEmpty | Out-Null
+    $log = RunOffline -Log (Join-Path $work 'consumer-bert.log') -What 'BERT checker failed' -Exe dotnet -Arguments @((& $bin 'BertConsumer'), $bertEmpty)
+    Assert-Match $log '^RESULT: PASS$' 'BERT checker did not pass'
+    Write-Host 'ok:   Starlings.Models.Bert: the seven built-in profiles parse from the package alone, offline'
 
     if ($mode -eq 'no-model') {
         Step '7. Acquisition of tokenizer.json only (real Hub download; no model)'

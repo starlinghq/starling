@@ -1,8 +1,30 @@
 # BERT embeddings and reranking
 
-Experimental. This package is not published to nuget.org: it is not part of the 0.2.0 release
-(`docs/releases/ai-0.2.0.md`, "Not published"). Build it from this repository, for example with a
-`ProjectReference` to `ai-dotnet/src/Starlings.Models.Bert/Starlings.Models.Bert.csproj`. The API may still change.
+Experimental. The package is on nuget.org from release 0.4.0 (`docs/releases/ai-0.4.0.md`); keep every `Starlings.*`
+package at the same version. The API may still change.
+
+<!-- catalog:maturity profiles=all-minilm-l6-v2/*,bge-small-en-v1.5/*,bge-base-en-v1.5/*,bge-m3/*,ms-marco-minilm-l6-v2/*,bge-reranker-v2-m3/*,nomic-embed-text-v1.5/* -->
+Maturity is per profile, generated from the registry manifests by `model-pipeline catalog` (do not edit this table by hand). Gates, evidence and capabilities per profile: the [model catalog](https://github.com/starlinghq/starling/blob/main/docs/catalog/README.md).
+
+| Profile | Maturity | Platforms |
+| --- | --- | --- |
+| `all-minilm-l6-v2/onnx-fp32-cpu` | experimental | linux-x64 cpu: experimental; windows-x64 cpu: untested |
+| `bge-base-en-v1.5/onnx-fp32-cpu` | experimental | linux-x64 cpu: experimental; windows-x64 cpu: untested |
+| `bge-m3/onnx-fp32-cpu` | experimental | linux-x64 cpu: experimental; windows-x64 cpu: untested |
+| `bge-reranker-v2-m3/onnx-fp32-cpu` | experimental | linux-x64 cpu: experimental; windows-x64 cpu: untested |
+| `bge-small-en-v1.5/onnx-fp32-cpu` | experimental | linux-x64 cpu: experimental; windows-x64 cpu: untested |
+| `ms-marco-minilm-l6-v2/onnx-fp32-cpu` | experimental | linux-x64 cpu: experimental; windows-x64 cpu: untested |
+| `nomic-embed-text-v1.5/onnx-fp32-cpu` | experimental | linux-x64 cpu: experimental; windows-x64 cpu: untested |
+<!-- /catalog:maturity -->
+
+## Install
+
+```sh
+dotnet add package Starlings.Models.Bert
+dotnet add package Microsoft.ML.OnnxRuntime --version 1.30.0     # CPU natives
+```
+
+## Overview
 
 Experimental CPU fp32 implementations for seven explicitly pinned candidate contracts:
 `sentence-transformers/all-MiniLM-L6-v2` (mean/L2, 256 tokens), `BAAI/bge-small-en-v1.5`
@@ -13,7 +35,7 @@ logits, 8192 tokens, from the Starling-built graph `Starlinghq/bge-reranker-v2-m
 (mean, no L2, 8192 tokens, 768-wide). Candidate parity is
 development evidence; protected release qualification requires independent fixture adoption.
 
-Load a reviewed candidate profile with `BertModelProfile.Load`. `BertTextEmbedder.Create`
+Pick a built-in profile with `BertModelProfile.BuiltIn` (or load a candidate file with `BertModelProfile.Load`). `BertTextEmbedder.Create`
 provides embeddings; `BertReranker.Create` provides scores and document ranking. Both
 verify the graph and tokenizer against the profile's immutable lock and load one reusable
 ONNX session. Acquisition is explicit through `ModelAssetStore`; inference never downloads.
@@ -35,12 +57,14 @@ persistence, AOT, GPU providers, and unlisted model contracts are unsupported or
 
 ## Profiles
 
-The candidate contracts live in the repository, not in the package:
-`model-pipeline/candidates/<name>/profile.json`. `BertModelProfile.Parse` accepts only these seven
-repositories, ONNX Runtime 1.30.0 on `CPUExecutionProvider` in fp32, and the exact values below; anything
-else throws `NotSupportedException`.
+The package carries the seven candidate contracts as built-in profiles: `BertModelProfile.BuiltIn(name)` parses the
+embedded copy of `model-pipeline/candidates/<name>/profile.json` at the packed commit (linked at build time, so the
+package cannot drift from the repository), and `BertModelProfile.BuiltInIds` lists the names. `BertModelProfile.Load(path)`
+and `Parse(json)` still read a contract file or string. Every path accepts only these seven repositories, ONNX Runtime
+1.30.0 on `CPUExecutionProvider` in fp32, and the exact values below; anything else throws `NotSupportedException`.
+Each profile's maturity is in the table above (all Experimental; registry manifests under `model-pipeline/registry/`).
 
-| Candidate | Profile id | Task | Max tokens | Pooling | Width | Normalize | Prompts |
+| Built-in name | Profile id | Task | Max tokens | Pooling | Width | Normalize | Prompts |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | `minilm` | `all-minilm-l6-v2/onnx-fp32-cpu` | embeddings | 256 | mean | 384 | l2 | `none` |
 | `bge-small` | `bge-small-en-v1.5/onnx-fp32-cpu` | embeddings | 512 | cls | 384 | l2 | `none`, `query` |
@@ -67,13 +91,18 @@ mapping. FlagEmbedding's fp16 inference, its LLM-based and layerwise rerankers, 
 using Starlings.Acquisition;
 using Starlings.Models.Bert;
 
-var profile = BertModelProfile.Load("model-pipeline/candidates/bge-small/profile.json");
+var profile = BertModelProfile.BuiltIn("bge-small");          // or BertModelProfile.Load("<path>/profile.json")
 using var store = new ModelAssetStore();
 ModelSnapshot snapshot = await store.DownloadAsync(profile.RuntimeLock);   // explicit network step
 
 using var embedder = BertTextEmbedder.Create(profile, snapshot.Directory);
 float[] query = embedder.Embed("how do magnets work", "query");
 float[][] passages = embedder.EmbedBatch(["Magnets attract iron.", "Paris is in France."]);
+
+var rerankerProfile = BertModelProfile.BuiltIn("bge-reranker-v2-m3");
+ModelSnapshot rerankerFiles = await store.DownloadAsync(rerankerProfile.RuntimeLock);
+using var reranker = BertReranker.Create(rerankerProfile, rerankerFiles.Directory);
+var ranked = reranker.Rank("how do magnets work", ["Magnets attract iron.", "Paris is in France."]);
 ```
 
 `profile.RuntimeLock` names the files inference needs at the pinned revision: `onnx/model.onnx`, its external
@@ -83,7 +112,7 @@ directory by size and SHA-256 (`ModelAssetStore.VerifyDirectory`) and never down
 
 ## API
 
-- `BertModelProfile`: `Load(path)`, `Parse(json)`, `Id`, `Task` (`BertTask.Embeddings` or `BertTask.Reranking`),
+- `BertModelProfile`: `BuiltIn(name)`, `BuiltInIds`, `Load(path)`, `Parse(json)`, `Id`, `Task` (`BertTask.Embeddings` or `BertTask.Reranking`),
   `MaxTokens` (including special tokens and the prompt), `Pooling`, `HiddenSize`, `Normalize`, `Prompts`,
   `VocabularySize`, `ClsTokenId`, `SepTokenId`, `PadTokenId`, `OutputName`, `TokenizerProfile`, `TokenTypeIds`,
   `SourceLock`, `RuntimeLock`, and the constants `BgeQueryInstruction`, `GraphFile`, `GraphDataFile`, `TokenizerFile`.
@@ -104,7 +133,7 @@ directory by size and SHA-256 (`ModelAssetStore.VerifyDirectory`) and never down
 ## Errors
 
 - `NotSupportedException`: the profile JSON or the graph signature differs from an implemented contract.
-- `ArgumentException`: the wrong task for `Create`, an undeclared prompt name, or an invalid `BertInput` row.
+- `ArgumentException`: an unknown `BuiltIn` name, the wrong task for `Create`, an undeclared prompt name, or an invalid `BertInput` row.
 - `ModelAssetMissingException`, `ModelAssetIntegrityException` (`Starlings.Acquisition`): a runtime file is missing
   or its size or SHA-256 differs.
 - `OnnxRuntimeUnavailableException` (`Starlings.Runtime.Onnx`): no native ONNX Runtime 1.30.0; add

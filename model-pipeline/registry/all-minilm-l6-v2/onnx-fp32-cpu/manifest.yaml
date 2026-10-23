@@ -1,0 +1,185 @@
+# BERT route (Starlings.Models.Bert): sentence-transformers/all-MiniLM-L6-v2 on ONNX Runtime 1.30.0, fp32 on the CPU provider. Candidate
+# contract: model-pipeline/candidates/minilm/profile.json (onboarding route bert-onnx-cpu-v1,
+# recipes/minilm-cpu.yaml), admitted to the route in the initial five-model onboarding (FIVE_MODELS.md); BertModelProfile.BuiltIn("minilm") embeds the same
+# file. Registry manifest added at Experimental in the ai-dotnet 0.4.0 release candidate at the maintainer's request, so
+# the package README states its maturity. No admission record exists for the BERT route; the references are proposed,
+# not adopted into protected/, and no gate has run.
+schema_version: 1
+id: all-minilm-l6-v2/onnx-fp32-cpu
+# Experimental: development parity on the onboarding route only (proposed references, predeclared candidate policy); no gate ran.
+maturity: experimental
+
+origin:
+  code:
+    # No separate inference code is pinned: the C# package reimplements the pipeline (tokenization, pooling,
+    # normalization) from this repository's configuration at the same commit.
+    url: https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2
+    revision: "1110a243fdf4706b3f48f1d95db1a4f5529b4d41"
+  weights:
+    url: https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2
+    revision: "1110a243fdf4706b3f48f1d95db1a4f5529b4d41"
+  files:
+    # sentence-transformers/all-MiniLM-L6-v2 at the pinned commit (candidates/minilm/profile.json, origin.files), verified on download.
+    - path: 1_Pooling/config.json
+      sha256: "4be450dde3b0273bb9787637cfbd28fe04a7ba6ab9d36ac48e92b11e350ffc23"
+      size: 190
+    - path: README.md
+      sha256: "dcd602d2fd35c203a247304a06fec6654a12f7941b739f9221a064fe8dc3b7f0"
+      size: 10502
+    - path: config.json
+      sha256: "953f9c0d463486b10a6871cc2fd59f223b2c70184f49815e7efbcab5d8908b41"
+      size: 612
+    - path: config_sentence_transformers.json
+      sha256: "061ca9d39661d6c6d6de5ba27f79a1cd5770ea247f8d46412a68a498dc5ac9f3"
+      size: 116
+    - path: data_config.json
+      sha256: "32edcb108fc2516b920734a862ae0692bcae1c5d45d5f8d972cb0d53434a4c54"
+      size: 39265
+    - path: model.safetensors
+      sha256: "53aa51172d142c89d9012cce15ae4d6cc0ca6895895114379cacb4fab128d9db"
+      size: 90868376
+    - path: modules.json
+      sha256: "84e40c8e006c9b1d6c122e02cba9b02458120b5fb0c87b746c41e0207cf642cf"
+      size: 349
+    - path: onnx/model.onnx
+      sha256: "6fd5d72fe4589f189f8ebc006442dbb529bb7ce38f8082112682524616046452"
+      size: 90405214
+    - path: sentence_bert_config.json
+      sha256: "fc1993fde0a95c24ec6c022539d41cf6e2f7c9721e5415d6fb6897472a9cd4b7"
+      size: 53
+    - path: special_tokens_map.json
+      sha256: "303df45a03609e4ead04bc3dc1536d0ab19b5358db685b6f3da123d05ec200e3"
+      size: 112
+    - path: tokenizer.json
+      sha256: "be50c3628f2bf5bb5e3a7f17b1f74611b2561a3a27eeab05e5aa30f411572037"
+      size: 466247
+    - path: tokenizer_config.json
+      sha256: "acb92769e8195aabd29b7b2137a9e6d6e25c476a4f15aa4355c233426c61576b"
+      size: 350
+    - path: vocab.txt
+      sha256: "07eced375cec144d27c900241f3e339478dec958f92fddbc551f295c992038a3"
+      size: 231508
+  attribution: >-
+    all-MiniLM-L6-v2 by the sentence-transformers team (sentence-transformers/all-MiniLM-L6-v2, Apache-2.0).
+
+rights:
+  code_license: MIT OR Apache-2.0
+  weights_license: Apache-2.0
+  tokenizer_terms: Apache-2.0
+  redistribution: download
+  notes: >-
+    Weights and tokenizer: Apache-2.0 (license: apache-2.0 in the model card front matter at the pinned commit; FIVE_MODELS.md). code_license is this repository's (the C# package
+    reimplements the pipeline; no upstream source is copied). Nothing is bundled in the package: the application
+    downloads the pinned files explicitly (ModelAssetStore.DownloadAsync(profile.RuntimeLock)) from the public upstream repository, verified by size and SHA-256.
+
+behavior:
+  tasks: [embedding]
+  # Including special tokens and the prompt (BertModelProfile.MaxTokens).
+  max_input_tokens: 256
+  offsets_unit: none
+  # Longest-first truncation by the pinned tokenizer (candidate behavior.truncation longest_first): a single text loses its
+  # right end.
+  truncation: truncate-right
+  defaults:
+    pooling: mean
+    normalize: l2
+    dimension: 384
+    prompts: "none = ''; never applied implicitly"
+    truncation: right, special tokens and the prompt included
+    batching: right padding with mask 0, maxBatchSize rows per call (default 32); maxBatchTokens and sortByLength opt-in (experimental)
+    threads: two intra-op, one inter-op (Create threads argument)
+  unsupported:
+    - "GPU execution providers (CUDA, DirectML, CoreML)"
+    - "fp16, bf16 and quantized graphs"
+    - "streaming"
+    - "training and fine-tuning"
+    - "Microsoft.Extensions.AI and ML.NET adapters"
+
+processing:
+  tokenizer:
+    # The owned tokenizer pinned in ai-dotnet/Directory.Packages.props; ONNX Runtime receives ids only.
+    package: Starlings.Tokenizers
+    version: 0.3.2
+    profile_id: bert-wordpiece-uncased
+    algorithm: wordpiece
+    assets:
+      - path: tokenizer.json
+        sha256: "be50c3628f2bf5bb5e3a7f17b1f74611b2561a3a27eeab05e5aa30f411572037"
+        size: 466247
+    backend_tokenizer_dependency: false
+
+execution:
+  backend:
+    name: onnxruntime
+    version: 1.30.0
+    binding: Microsoft.ML.OnnxRuntime
+  precision: fp32
+  variant: reference
+  graph:
+    # BertModelProfile.RuntimeLock: these graph files and tokenizer.json at the pinned revision.
+    assets:
+      - path: onnx/model.onnx
+        sha256: "6fd5d72fe4589f189f8ebc006442dbb529bb7ce38f8082112682524616046452"
+        size: 90405214
+    inputs:
+      - { name: input_ids, type: int64, shape: [batch, sequence] }
+      - { name: attention_mask, type: int64, shape: [batch, sequence] }
+      - { name: token_type_ids, type: int64, shape: [batch, sequence] }
+    outputs:
+      - { name: last_hidden_state, type: float32, shape: [batch, sequence, 384] }
+
+capabilities:
+  # Starlings.Models.Bert (BertCapabilities). Experimental where the onboarding route compared the C# package with the
+  # framework reference on the proposed corpus (no adopted reference, no gate); unsupported where the package does not
+  # offer it; untested where no evidence exists.
+  batch: experimental
+  streaming: unsupported
+  cancellation: experimental  # between batch chunks and at ONNX Runtime graph-node boundaries
+  persistence: unsupported
+  training: unsupported
+  aot: untested
+  extensions_ai: unsupported
+  mlnet: unsupported
+  text: experimental
+  batch_token_budget: experimental  # maxBatchTokens, off by default
+  batch_sort_by_length: experimental  # sortByLength, off by default
+  asset_verification_offline: experimental
+  built_in_profile: experimental  # BertModelProfile.BuiltIn("minilm")
+  gpu: unsupported
+
+compatibility:
+  # Linux x64 CPU: development evidence from the onboarding route (the initial five-model onboarding (FIVE_MODELS.md)). No gate.
+  - os: linux
+    arch: x64
+    provider: cpu
+    status: experimental
+  - os: windows
+    arch: x64
+    provider: cpu
+    status: untested
+
+qualification:
+  reference_runner: model-pipeline/reference/bert/run_bert.py
+  # No protected fixtures exist for this profile: the proposed corpus the recipe runs (recipes/minilm-cpu.yaml).
+  fixtures: model-pipeline/corpora/five-models/embeddings.jsonl
+  # No protected tolerances: the predeclared candidate policy (evaluation.policy, status proposed). Adoption into
+  # protected/ is a separate change.
+  tolerances: model-pipeline/candidates/minilm/profile.json
+  gates:
+    G0: { status: not-run }
+    G1: { status: not-run }
+    G2: { status: not-run }
+    G3: { status: not-run }
+    G4: { status: not-run }
+    G5: { status: not-run }
+    G6: { status: not-run }
+    G7: { status: not-run }
+
+maintenance:
+  owner: Mark
+  latest_verified_upstream_revision: "1110a243fdf4706b3f48f1d95db1a4f5529b4d41"
+  review_date: 2027-01-23
+  known_issues:
+    - >-
+      The references are proposed, not adopted into protected/, and no gate has run; every capability is at most
+      experimental.

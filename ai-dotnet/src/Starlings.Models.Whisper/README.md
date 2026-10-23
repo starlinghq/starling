@@ -12,6 +12,8 @@ end-to-end transcript parity against a fresh transformers reference is checked b
 
 ## Install
 
+Not published to nuget.org yet: the package is not in the 0.4.0 publishable set (`docs/releases/ai-0.4.0.md`, "Not published"), because its profile has no registry manifest and so no per-profile maturity statement. Build it from this repository (a `ProjectReference` to `ai-dotnet/src/Starlings.Models.Whisper/Starlings.Models.Whisper.csproj`). Once published:
+
 ```
 dotnet add package Starlings.Models.Whisper
 dotnet add package Microsoft.ML.OnnxRuntime     # CPU native runtime

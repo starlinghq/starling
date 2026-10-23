@@ -1,0 +1,195 @@
+# BERT route (Starlings.Models.Bert): Starlinghq/bge-reranker-v2-m3-onnx on ONNX Runtime 1.30.0, fp32 on the CPU provider. Candidate
+# contract: model-pipeline/candidates/bge-reranker-v2-m3/profile.json (onboarding route bert-onnx-cpu-v1,
+# recipes/bge-reranker-v2-m3-cpu.yaml), admitted to the route in #146 (closes #99); BertModelProfile.BuiltIn("bge-reranker-v2-m3") embeds the same
+# file. Registry manifest added at Experimental in the ai-dotnet 0.4.0 release candidate at the maintainer's request, so
+# the package README states its maturity. No admission record exists for the BERT route; the references are proposed,
+# not adopted into protected/, and no gate has run.
+schema_version: 1
+id: bge-reranker-v2-m3/onnx-fp32-cpu
+# Experimental: development parity on the onboarding route only (proposed references, predeclared candidate policy); no gate ran.
+maturity: experimental
+
+origin:
+  code:
+    # Starling's export script (model-pipeline/reference/bert/export_reranker_onnx.py) at main after #146: upstream
+    # ships PyTorch weights only, so the graph is Starling's fp32 export, hosted at Starlinghq/bge-reranker-v2-m3-onnx.
+    url: https://github.com/starlinghq/starling
+    revision: "5d203a23e3cdc7c01798ab67a35b25382451c209"
+  weights:
+    url: https://huggingface.co/BAAI/bge-reranker-v2-m3
+    revision: "953dc6f6f85a1b2dbfca4c34a2796e7dde08d41e"
+  files:
+    # Starlinghq/bge-reranker-v2-m3-onnx at the pinned commit (candidates/bge-reranker-v2-m3/profile.json, origin.files): the
+    # original files of BAAI/bge-reranker-v2-m3 at 953dc6f6 unchanged, plus the fp32 export (onnx/) and SHA256SUMS.
+    - path: README.md
+      sha256: "1db866cb10448b018649c24e39dd5416ddeb35876bc4810d5d8f73156c39171d"
+      size: 3904
+    - path: README.upstream.md
+      sha256: "c887aa6dd2598f908bf0582ca7068cc816585c7a1b6a07df305b631ede0cb174"
+      size: 17229
+    - path: SHA256SUMS
+      sha256: "2aceea0e1cb5281be4856d488508ced464c27b5b91c4113cbb502fbd9810bfee"
+      size: 841
+    - path: config.json
+      sha256: "13dcd6c31d9fec9d1d8e158702072f62d7fa7d312a64b9fe057bec9a08cfe41a"
+      size: 795
+    - path: model.safetensors
+      sha256: "d9e3e081faff1eefb84019509b2f5558fd74c1a05a2c7db22f74174fcedb5286"
+      size: 2271071852
+    - path: onnx/model.onnx
+      sha256: "905f6c02919c0dbed213d922e097e06aa9787088a8f5173efa1d00d722948394"
+      size: 551401
+    - path: onnx/model.onnx_data
+      sha256: "61f3e7229e6c1cc5e8e3d09f7657210a9cc15247cd6944ac60303e1b900a7f9b"
+      size: 2271023104
+    - path: sentencepiece.bpe.model
+      sha256: "cfc8146abe2a0488e9e2a0c56de7952f7c11ab059eca145a0a727afce0db2865"
+      size: 5069051
+    - path: special_tokens_map.json
+      sha256: "8c785abebea9ae3257b61681b4e6fd8365ceafde980c21970d001e834cf10835"
+      size: 964
+    - path: tokenizer.json
+      sha256: "69564b696052886ed0ac63fa393e928384e0f8caada38c1f4864a9bfbf379c15"
+      size: 17098273
+    - path: tokenizer_config.json
+      sha256: "7e4c1cc848840aeccdd763458c18dd525eb0f795c992e00ebe9c28554e7db2d4"
+      size: 1173
+  attribution: >-
+    bge-reranker-v2-m3 by BAAI (BAAI/bge-reranker-v2-m3, Apache-2.0), on XLM-RoBERTa. fp32 ONNX export by Starling (model-pipeline/reference/bert/export_reranker_onnx.py).
+
+rights:
+  code_license: MIT OR Apache-2.0
+  weights_license: Apache-2.0
+  tokenizer_terms: Apache-2.0
+  redistribution: download
+  notes: >-
+    Weights and tokenizer: Apache-2.0 (license: apache-2.0 in the model card front matter of BAAI/bge-reranker-v2-m3 at 953dc6f6f85a1b2dbfca4c34a2796e7dde08d41e (README.upstream.md in the hosting repository)). code_license is this repository's (the C# package
+    reimplements the pipeline; no upstream source is copied). Nothing is bundled in the package: the application
+    downloads the pinned files explicitly (ModelAssetStore.DownloadAsync(profile.RuntimeLock)) from the public Starling hosting repository Starlinghq/bge-reranker-v2-m3-onnx, verified by size and SHA-256.
+
+behavior:
+  tasks: [reranking]
+  # Including special tokens (BertModelProfile.MaxTokens).
+  max_input_tokens: 8192
+  offsets_unit: none
+  # Longest-first truncation by the pinned tokenizer (candidate behavior.truncation longest_first): a single text loses its
+  # right end; a pair shortens its longer side first.
+  truncation: truncate-right
+  defaults:
+    score: raw logit of the single output (identity activation); not a calibrated probability
+    pair_encoding: "<s> query </s></s> document </s>, no segment ids"
+    truncation: longest-first over the pair, special tokens included (the pinned tokenizer's policy)
+    ranking: BertReranker.Rank orders by descending score, ties in input order
+    batching: right padding with mask 0, maxBatchSize rows per call (default 32); maxBatchTokens and sortByLength opt-in (experimental)
+    threads: two intra-op, one inter-op (Create threads argument)
+  unsupported:
+    - "GPU execution providers (CUDA, DirectML, CoreML)"
+    - "fp16, bf16 and quantized graphs"
+    - "streaming"
+    - "training and fine-tuning"
+    - "Microsoft.Extensions.AI and ML.NET adapters"
+    - "FlagEmbedding fp16 inference"
+    - "LLM-based and layerwise bge rerankers"
+    - "per-side max_length (query/passage) truncation; truncation is longest-first over the pair"
+    - "sigmoid-normalized scores (apply a sigmoid yourself)"
+
+processing:
+  tokenizer:
+    # The owned tokenizer pinned in ai-dotnet/Directory.Packages.props; ONNX Runtime receives ids only.
+    package: Starlings.Tokenizers
+    version: 0.3.2
+    profile_id: xlmr-unigram
+    algorithm: unigram
+    assets:
+      - path: tokenizer.json
+        sha256: "69564b696052886ed0ac63fa393e928384e0f8caada38c1f4864a9bfbf379c15"
+        size: 17098273
+    backend_tokenizer_dependency: false
+
+execution:
+  backend:
+    name: onnxruntime
+    version: 1.30.0
+    binding: Microsoft.ML.OnnxRuntime
+  precision: fp32
+  variant: reference
+  graph:
+    # BertModelProfile.RuntimeLock: these graph files and tokenizer.json at the pinned revision.
+    assets:
+      - path: onnx/model.onnx
+        sha256: "905f6c02919c0dbed213d922e097e06aa9787088a8f5173efa1d00d722948394"
+        size: 551401
+      - path: onnx/model.onnx_data
+        sha256: "61f3e7229e6c1cc5e8e3d09f7657210a9cc15247cd6944ac60303e1b900a7f9b"
+        size: 2271023104
+    hosting:
+      # Public repository (tag r1); the digests, not the address, pin the bytes.
+      repository: https://huggingface.co/Starlinghq/bge-reranker-v2-m3-onnx
+      revision: "047d4622e93d347828457e8a13bccd997fb6a969"
+      source_base: https://huggingface.co/Starlinghq/bge-reranker-v2-m3-onnx/resolve/047d4622e93d347828457e8a13bccd997fb6a969/
+      source_status: public
+      produced_by:
+        - model-pipeline/reference/bert/export_reranker_onnx.py (TorchScript ONNX exporter, opset 17, fp32, external data)
+    inputs:
+      - { name: input_ids, type: int64, shape: [batch, sequence] }
+      - { name: attention_mask, type: int64, shape: [batch, sequence] }
+    outputs:
+      - { name: logits, type: float32, shape: [batch, 1] }
+
+capabilities:
+  # Starlings.Models.Bert (BertCapabilities). Experimental where the onboarding route compared the C# package with the
+  # framework reference on the proposed corpus (no adopted reference, no gate); unsupported where the package does not
+  # offer it; untested where no evidence exists.
+  batch: experimental
+  streaming: unsupported
+  cancellation: experimental  # between batch chunks and at ONNX Runtime graph-node boundaries
+  persistence: unsupported
+  training: unsupported
+  aot: untested
+  extensions_ai: unsupported
+  mlnet: unsupported
+  text: experimental
+  batch_token_budget: experimental  # maxBatchTokens, off by default
+  batch_sort_by_length: experimental  # sortByLength, off by default
+  asset_verification_offline: experimental
+  built_in_profile: experimental  # BertModelProfile.BuiltIn("bge-reranker-v2-m3")
+  gpu: unsupported
+
+compatibility:
+  # Linux x64 CPU: development evidence from the onboarding route (#146 (closes #99)). No gate.
+  - os: linux
+    arch: x64
+    provider: cpu
+    status: experimental
+  - os: windows
+    arch: x64
+    provider: cpu
+    status: untested
+
+qualification:
+  reference_runner: model-pipeline/reference/bert/run_bert.py
+  # No protected fixtures exist for this profile: the proposed corpus the recipe runs (recipes/bge-reranker-v2-m3-cpu.yaml).
+  fixtures: model-pipeline/corpora/five-models/reranking.jsonl
+  # No protected tolerances: the predeclared candidate policy (evaluation.policy, status proposed). Adoption into
+  # protected/ is a separate change.
+  tolerances: model-pipeline/candidates/bge-reranker-v2-m3/profile.json
+  gates:
+    G0: { status: not-run }
+    G1: { status: not-run }
+    G2: { status: not-run }
+    G3: { status: not-run }
+    G4: { status: not-run }
+    G5: { status: not-run }
+    G6: { status: not-run }
+    G7: { status: not-run }
+
+maintenance:
+  owner: Mark
+  latest_verified_upstream_revision: "953dc6f6f85a1b2dbfca4c34a2796e7dde08d41e"
+  review_date: 2027-01-23
+  known_issues:
+    - >-
+      The references are proposed, not adopted into protected/, and no gate has run; every capability is at most
+      experimental.
+    - >-
+      Scores are raw logits, not calibrated probabilities.

@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <IsPackable>true</IsPackable>
-    <Description>Experimental pinned BERT text embeddings and paired-input reranking on ONNX Runtime CPU, with owned WordPiece tokenization. MiniLM masked mean pooling, BGE CLS pooling, nomic-embed-text-v1.5 mean pooling (768 wide, not normalized), and MS MARCO scalar logits have separate typed APIs. No model weights are bundled.</Description>
+    <Description>Pinned BERT-family text embeddings and paired-input reranking on ONNX Runtime CPU (fp32), with owned tokenization (Starlings.Tokenizers: WordPiece, XLM-R Unigram; no Microsoft.ML.Tokenizers). Built-in profiles for all-MiniLM-L6-v2 (mean/L2), bge-small-en-v1.5 and bge-base-en-v1.5 (CLS/L2), bge-m3 (CLS/L2, 1024 wide), nomic-embed-text-v1.5 (mean, not normalized), and the rerankers ms-marco-MiniLM-L6-v2 and bge-reranker-v2-m3 (raw logits), through separate typed APIs. Ships the asset locks, not the weights; acquire them explicitly. The application adds the ONNX Runtime native package. Maturity is per model profile (Stable, Preview or Experimental): see the README, generated from the model registry.</Description>
     <PackageTags>bert;embeddings;reranking;onnxruntime;wordpiece</PackageTags>
     <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
@@ -11,6 +11,19 @@
     <ProjectReference Include="../Starlings.Acquisition/Starlings.Acquisition.csproj" />
     <PackageReference Include="Starlings.Tokenizers" />
     <InternalsVisibleTo Include="Starlings.Models.Bert.Tests" />
+  </ItemGroup>
+  <ItemGroup>
+    <!--
+      Built-in profiles (BertModelProfile.BuiltIn): the candidate contracts themselves, linked rather than copied so the
+      package cannot drift from model-pipeline/candidates/. One item per repository BertModelProfile.Parse accepts.
+    -->
+    <EmbeddedResource Include="../../../model-pipeline/candidates/bge-base/profile.json" Link="Profiles/bge-base.json" LogicalName="Starlings.Models.Bert.Profiles.bge-base.json" />
+    <EmbeddedResource Include="../../../model-pipeline/candidates/bge-m3/profile.json" Link="Profiles/bge-m3.json" LogicalName="Starlings.Models.Bert.Profiles.bge-m3.json" />
+    <EmbeddedResource Include="../../../model-pipeline/candidates/bge-reranker-v2-m3/profile.json" Link="Profiles/bge-reranker-v2-m3.json" LogicalName="Starlings.Models.Bert.Profiles.bge-reranker-v2-m3.json" />
+    <EmbeddedResource Include="../../../model-pipeline/candidates/bge-small/profile.json" Link="Profiles/bge-small.json" LogicalName="Starlings.Models.Bert.Profiles.bge-small.json" />
+    <EmbeddedResource Include="../../../model-pipeline/candidates/minilm/profile.json" Link="Profiles/minilm.json" LogicalName="Starlings.Models.Bert.Profiles.minilm.json" />
+    <EmbeddedResource Include="../../../model-pipeline/candidates/ms-marco/profile.json" Link="Profiles/ms-marco.json" LogicalName="Starlings.Models.Bert.Profiles.ms-marco.json" />
+    <EmbeddedResource Include="../../../model-pipeline/candidates/nomic-embed/profile.json" Link="Profiles/nomic-embed.json" LogicalName="Starlings.Models.Bert.Profiles.nomic-embed.json" />
   </ItemGroup>
   <ItemGroup>
     <!-- Length-aware chunk planning shared by the explicit-batch encoders (internal). -->

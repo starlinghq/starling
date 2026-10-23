@@ -20,7 +20,7 @@ Starling ships open models as NuGet libraries that run in-process on ONNX Runtim
 
 ML.NET transformers exist for e5 and EmbeddingGemma 2 (`*.MLNet`). The target framework is `net10.0`.
 
-`Starlings.Models.Kev`, `Starlings.Models.Bert` and `Starlings.Models.QwenChat` also exist in the repository. They are experimental, not published to nuget.org, and build only from source; don't recommend them for an app.
+`Starlings.Models.Kev`, `Starlings.Models.QwenChat` (on nuget.org from 0.3.0) and `Starlings.Models.Bert` (from 0.4.0) also exist. Their profiles are all Experimental (no gate has run); don't recommend them for an app unless the user asks for those models.
 
 **Always add exactly one native ONNX Runtime package to the application project**, at the version in the table. The libraries reference only the managed binding. For CUDA on Linux x64, use `Microsoft.ML.OnnxRuntime.Gpu.Linux` 1.30.0 instead of `Microsoft.ML.OnnxRuntime`, never both. For Qwen on CUDA, use `Microsoft.ML.OnnxRuntimeGenAI.Cuda` 0.17.1 instead of `Microsoft.ML.OnnxRuntimeGenAI`.
 

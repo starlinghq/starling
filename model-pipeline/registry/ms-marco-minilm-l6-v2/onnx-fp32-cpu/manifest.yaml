@@ -1,0 +1,171 @@
+# BERT route (Starlings.Models.Bert): cross-encoder/ms-marco-MiniLM-L6-v2 on ONNX Runtime 1.30.0, fp32 on the CPU provider. Candidate
+# contract: model-pipeline/candidates/ms-marco/profile.json (onboarding route bert-onnx-cpu-v1,
+# recipes/ms-marco-cpu.yaml), admitted to the route in the initial five-model onboarding (FIVE_MODELS.md); BertModelProfile.BuiltIn("ms-marco") embeds the same
+# file. Registry manifest added at Experimental in the ai-dotnet 0.4.0 release candidate at the maintainer's request, so
+# the package README states its maturity. No admission record exists for the BERT route; the references are proposed,
+# not adopted into protected/, and no gate has run.
+schema_version: 1
+id: ms-marco-minilm-l6-v2/onnx-fp32-cpu
+# Experimental: development parity on the onboarding route only (proposed references, predeclared candidate policy); no gate ran.
+maturity: experimental
+
+origin:
+  code:
+    # No separate inference code is pinned: the C# package reimplements the pipeline (tokenization, pooling,
+    # normalization) from this repository's configuration at the same commit.
+    url: https://huggingface.co/cross-encoder/ms-marco-MiniLM-L6-v2
+    revision: "233902d25c440f23af6f7d6e94d2946bac0bee0a"
+  weights:
+    url: https://huggingface.co/cross-encoder/ms-marco-MiniLM-L6-v2
+    revision: "233902d25c440f23af6f7d6e94d2946bac0bee0a"
+  files:
+    # cross-encoder/ms-marco-MiniLM-L6-v2 at the pinned commit (candidates/ms-marco/profile.json, origin.files), verified on download.
+    - path: README.md
+      sha256: "7c0ec39941d0d1d766ccde671f592971d82fe45b7eea550a80d1ea864ebc3baa"
+      size: 3673
+    - path: config.json
+      sha256: "380e02c93f431831be65d99a4e7e5f67c133985bf2e77d9d4eba46847190bacc"
+      size: 794
+    - path: model.safetensors
+      sha256: "821d1aa69520101d6e0737f78a042ae25b19e5cb9160701909d10434f4aeb0ae"
+      size: 90870598
+    - path: onnx/model.onnx
+      sha256: "5d3e70fd0c9ff14b9b5169a51e957b7a9c74897afd0a35ce4bd318150c1d4d4a"
+      size: 91011230
+    - path: special_tokens_map.json
+      sha256: "3c3507f36dff57bce437223db3b3081d1e2b52ec3e56ee55438193ecb2c94dd6"
+      size: 132
+    - path: tokenizer.json
+      sha256: "d241a60d5e8f04cc1b2b3e9ef7a4921b27bf526d9f6050ab90f9267a1f9e5c66"
+      size: 711396
+    - path: tokenizer_config.json
+      sha256: "a5c2e5a7b1a29a0702cd28c08a399b5ecc110c263009d17f7e3b415f25905fd8"
+      size: 1330
+    - path: vocab.txt
+      sha256: "07eced375cec144d27c900241f3e339478dec958f92fddbc551f295c992038a3"
+      size: 231508
+  attribution: >-
+    ms-marco-MiniLM-L6-v2 by the sentence-transformers team (cross-encoder/ms-marco-MiniLM-L6-v2, Apache-2.0).
+
+rights:
+  code_license: MIT OR Apache-2.0
+  weights_license: Apache-2.0
+  tokenizer_terms: Apache-2.0
+  redistribution: download
+  notes: >-
+    Weights and tokenizer: Apache-2.0 (license: apache-2.0 in the model card front matter at the pinned commit; FIVE_MODELS.md). code_license is this repository's (the C# package
+    reimplements the pipeline; no upstream source is copied). Nothing is bundled in the package: the application
+    downloads the pinned files explicitly (ModelAssetStore.DownloadAsync(profile.RuntimeLock)) from the public upstream repository, verified by size and SHA-256.
+
+behavior:
+  tasks: [reranking]
+  # Including special tokens (BertModelProfile.MaxTokens).
+  max_input_tokens: 512
+  offsets_unit: none
+  # Longest-first truncation by the pinned tokenizer (candidate behavior.truncation longest_first): a single text loses its
+  # right end; a pair shortens its longer side first.
+  truncation: truncate-right
+  defaults:
+    score: raw logit of the single output (identity activation); not a calibrated probability
+    pair_encoding: "[CLS] query [SEP] document [SEP], token_type_ids 0 then 1"
+    truncation: longest-first over the pair, special tokens included (the pinned tokenizer's policy)
+    ranking: BertReranker.Rank orders by descending score, ties in input order
+    batching: right padding with mask 0, maxBatchSize rows per call (default 32); maxBatchTokens and sortByLength opt-in (experimental)
+    threads: two intra-op, one inter-op (Create threads argument)
+  unsupported:
+    - "GPU execution providers (CUDA, DirectML, CoreML)"
+    - "fp16, bf16 and quantized graphs"
+    - "streaming"
+    - "training and fine-tuning"
+    - "Microsoft.Extensions.AI and ML.NET adapters"
+
+processing:
+  tokenizer:
+    # The owned tokenizer pinned in ai-dotnet/Directory.Packages.props; ONNX Runtime receives ids only.
+    package: Starlings.Tokenizers
+    version: 0.3.2
+    profile_id: bert-wordpiece-uncased
+    algorithm: wordpiece
+    assets:
+      - path: tokenizer.json
+        sha256: "d241a60d5e8f04cc1b2b3e9ef7a4921b27bf526d9f6050ab90f9267a1f9e5c66"
+        size: 711396
+    backend_tokenizer_dependency: false
+
+execution:
+  backend:
+    name: onnxruntime
+    version: 1.30.0
+    binding: Microsoft.ML.OnnxRuntime
+  precision: fp32
+  variant: reference
+  graph:
+    # BertModelProfile.RuntimeLock: these graph files and tokenizer.json at the pinned revision.
+    assets:
+      - path: onnx/model.onnx
+        sha256: "5d3e70fd0c9ff14b9b5169a51e957b7a9c74897afd0a35ce4bd318150c1d4d4a"
+        size: 91011230
+    inputs:
+      - { name: input_ids, type: int64, shape: [batch, sequence] }
+      - { name: attention_mask, type: int64, shape: [batch, sequence] }
+      - { name: token_type_ids, type: int64, shape: [batch, sequence] }
+    outputs:
+      - { name: logits, type: float32, shape: [batch, 1] }
+
+capabilities:
+  # Starlings.Models.Bert (BertCapabilities). Experimental where the onboarding route compared the C# package with the
+  # framework reference on the proposed corpus (no adopted reference, no gate); unsupported where the package does not
+  # offer it; untested where no evidence exists.
+  batch: experimental
+  streaming: unsupported
+  cancellation: experimental  # between batch chunks and at ONNX Runtime graph-node boundaries
+  persistence: unsupported
+  training: unsupported
+  aot: untested
+  extensions_ai: unsupported
+  mlnet: unsupported
+  text: experimental
+  batch_token_budget: experimental  # maxBatchTokens, off by default
+  batch_sort_by_length: experimental  # sortByLength, off by default
+  asset_verification_offline: experimental
+  built_in_profile: experimental  # BertModelProfile.BuiltIn("ms-marco")
+  gpu: unsupported
+
+compatibility:
+  # Linux x64 CPU: development evidence from the onboarding route (the initial five-model onboarding (FIVE_MODELS.md)). No gate.
+  - os: linux
+    arch: x64
+    provider: cpu
+    status: experimental
+  - os: windows
+    arch: x64
+    provider: cpu
+    status: untested
+
+qualification:
+  reference_runner: model-pipeline/reference/bert/run_bert.py
+  # No protected fixtures exist for this profile: the proposed corpus the recipe runs (recipes/ms-marco-cpu.yaml).
+  fixtures: model-pipeline/corpora/five-models/reranking.jsonl
+  # No protected tolerances: the predeclared candidate policy (evaluation.policy, status proposed). Adoption into
+  # protected/ is a separate change.
+  tolerances: model-pipeline/candidates/ms-marco/profile.json
+  gates:
+    G0: { status: not-run }
+    G1: { status: not-run }
+    G2: { status: not-run }
+    G3: { status: not-run }
+    G4: { status: not-run }
+    G5: { status: not-run }
+    G6: { status: not-run }
+    G7: { status: not-run }
+
+maintenance:
+  owner: Mark
+  latest_verified_upstream_revision: "233902d25c440f23af6f7d6e94d2946bac0bee0a"
+  review_date: 2027-01-23
+  known_issues:
+    - >-
+      The references are proposed, not adopted into protected/, and no gate has run; every capability is at most
+      experimental.
+    - >-
+      Scores are raw logits, not calibrated probabilities.

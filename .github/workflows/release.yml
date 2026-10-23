@@ -2,7 +2,7 @@ name: release
 
 # Release the ai-dotnet packages (Starlings.*) to nuget.org.
 #
-#   git tag ai-v0.3.0 && git push origin ai-v0.3.0
+#   git tag ai-v0.4.0 && git push origin ai-v0.4.0
 #
 # 1. candidate: boundary check; the tag must equal the ai-dotnet version, point at a commit on main and have a release
 #    record docs/releases/ai-<version>.md. The release drill (tools/release-drill-ai.sh --no-model) then packs every
@@ -137,6 +137,7 @@ jobs:
           order=(
             Starlings.Acquisition Starlings.Runtime.Onnx Starlings.Generation.OnnxGenAI
             Starlings.Models.E5 Starlings.Models.Gliner2 Starlings.Models.EmbeddingGemma2 Starlings.Models.Qwen35
+            Starlings.Models.Bert
           )
           pushed=()
           push() {
