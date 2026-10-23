@@ -54,7 +54,7 @@ VOCABULARY = (
 SCHEDULED_REGRESSION_PROVIDERS = ("cpu",)
 GPU_PROMOTION_NOTE = "promotion awaits a green per-release GPU regression run"
 BROWSER_RUNTIME = "onnxruntime-web"
-BROWSER_PROMOTION_NOTE = "promotion awaits a browser regression run in CI (no headless Chromium job yet)"
+BROWSER_PROMOTION_NOTE = "promotion awaits a passing history of the qualification job 'browser' (WASM, headless Chromium)"
 
 # Package README maturity blocks.
 PACKAGE_READMES = "ai-dotnet/src/*/README.md"
