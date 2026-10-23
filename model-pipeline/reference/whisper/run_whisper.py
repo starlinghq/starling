@@ -98,20 +98,20 @@ def main() -> int:
             str(args.snapshot), dtype=torch.float32, attn_implementation="eager"
         ).eval()
 
+        options = {"task": "transcribe", "return_timestamps": False, "do_sample": False, "num_beams": 1}
+
         def transcribe(features: np.ndarray, language: str) -> tuple[torch.Tensor, list[int]]:
-            features = torch.from_numpy(features[None])
-            hidden = model.model.encoder(features).last_hidden_state
-            # generate() decodes from this encoder output instead of running the 32-layer encoder again.
+            """The recorded encoder output, and generate() decoding from it instead of running the encoder again."""
+            hidden = model.model.encoder(torch.from_numpy(features[None])).last_hidden_state
             # transformers 5 returns only the generated text tokens: no decoder prompt, no end of text.
             generated = model.generate(
-                encoder_outputs=BaseModelOutput(last_hidden_state=hidden),
-                language=language,
-                task="transcribe",
-                return_timestamps=False,
-                do_sample=False,
-                num_beams=1,
+                encoder_outputs=BaseModelOutput(last_hidden_state=hidden), language=language, **options
             )[0].tolist()
             return hidden, generated
+
+        def transcribe_default(features: np.ndarray, language: str) -> list[int]:
+            """Plain generate(input_features), the call users make: its own encoder pass stays an independent check."""
+            return model.generate(torch.from_numpy(features[None]), language=language, **options)[0].tolist()
 
         for row in corpus:
             audio = read_audio(row["path"], behavior["sample_rate"])
@@ -125,7 +125,7 @@ def main() -> int:
             expected_prompt = prompt(candidate, row["language"])
             with torch.inference_mode():
                 hidden, generated = transcribe(numpy_mel, row["language"])
-                _, default_generated = transcribe(default_mel, row["language"])
+                default_generated = transcribe_default(default_mel, row["language"])
                 ids = expected_prompt + generated + [eos]
                 if len(ids) > behavior["max_target_positions"]:
                     raise ValueError(f"{row['id']}: generation reached the maximum length without end of text")
