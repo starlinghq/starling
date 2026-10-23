@@ -115,7 +115,10 @@ def main() -> int:
             config = json.loads((args.snapshot / "config.json").read_text(encoding="utf-8"))
             declared = config.get("sbert_ce_default_activation_function")
             extra = {}
-            if CONTRACTS[candidate["origin"]["repo"]].get("score_activation_source", "config") == "config":
+            source = CONTRACTS[candidate["origin"]["repo"]].get("score_activation_source", "config")
+            if source not in ("config", "explicit"):
+                raise ValueError(f"unsupported score_activation_source: {source!r}")
+            if source == "config":
                 if declared != "torch.nn.modules.linear.Identity":
                     raise ValueError("pinned reranker config must declare identity score activation")
             elif declared is not None or "sentence_transformers" in config:
