@@ -318,6 +318,8 @@ jobs:
       GRAPHS: ${{ github.workspace }}/.browser-graphs
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          fetch-depth: 0 # the evaluator verifies protected evidence against its merge base with origin/main
       - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
         with:
           python-version: "3.11"
@@ -369,10 +371,30 @@ jobs:
               --label interp --variant "$variant" --provider wasm --iterations 10 \
               --models-root "$STARLING_MODELS" --graphs "$GRAPHS" --out "$EVIDENCE/browser/$variant-wasm.json"
           done
-      - name: Check against the protected browser tolerances
+      # Quick check of every bound with the harness's own evaluator (also reports latency and memory).
+      - name: Check against the protected browser tolerances (harness evaluator)
         run: |
           "$RUNNER_TEMP/venv/bin/python" browser/conformance/evaluate_e5_browser.py --graphs "$GRAPHS" \
             --out "$EVIDENCE/browser/report.json" --require-pass "$EVIDENCE"/browser/*-wasm.json
+      # The gate path (the one that produced the manifests' G1/G2 evidence): native ONNX Runtime on the same graph as
+      # stage 2, the browser run converted to stages 1 and 3, then the protected staged evaluator with G1 and G2 required.
+      - name: G1 and G2 with the protected evaluator
+        env:
+          FX: model-pipeline/protected/multilingual-e5-small/onnx-fp32-cpu
+        run: |
+          for variant in fp32 int8embed; do
+            profile="multilingual-e5-small/onnx-$variant-wasm"
+            if [[ $variant == fp32 ]]; then graph=model-fp32.onnx; path=onnx/model.onnx; else graph=model-int8-embed.onnx; path=onnx/model-int8-embed.onnx; fi
+            results="$RUNNER_TEMP/gates/$variant/results"
+            mkdir -p "$results"
+            PYTHONPATH=model-pipeline/src "$RUNNER_TEMP/venv/bin/python" model-pipeline/reference/encoder/stage_e5_browser_native.py \
+              --graph "$GRAPHS/$graph" --graph-path "$path" --fixtures "$FX" --profile "$profile" \
+              --out "$results" --intra-op-threads 4
+            model-pipeline browser-results "$EVIDENCE/browser/$variant-wasm.json" \
+              --manifest "model-pipeline/registry/$profile/manifest.yaml" --fixtures "$FX" --out "$results" --machine "$(hostname)"
+            model-pipeline evaluate "model-pipeline/registry/$profile/manifest.yaml" --results "$results" \
+              --out "$EVIDENCE/browser/gates/$variant" --require-gates G1,G2
+          done
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         if: always()
         with:

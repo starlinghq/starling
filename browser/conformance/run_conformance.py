@@ -17,6 +17,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import subprocess
 import sys
 import time
 import urllib.request
@@ -31,6 +32,18 @@ from run_spike import RssSampler, gpu_snapshot  # noqa: E402
 
 REVISION = "614241f622f53c4eeff9890bdc4f31cfecc418b3"
 GRAPHS = {"fp32": "model-fp32.onnx", "int8embed": "model-int8-embed.onnx"}
+
+
+def source_commit() -> str:
+    """HEAD of the harness's repository, with -dirty when the working tree has changes; 'unknown' outside Git."""
+    try:
+        head = subprocess.run(["git", "-C", str(REPO), "rev-parse", "HEAD"], capture_output=True, text=True, check=True)
+        status = subprocess.run(
+            ["git", "-C", str(REPO), "status", "--porcelain"], capture_output=True, text=True, check=True
+        )
+    except (OSError, subprocess.CalledProcessError):
+        return "unknown"
+    return head.stdout.strip() + ("-dirty" if status.stdout.strip() else "")
 
 
 def main() -> None:
@@ -90,6 +103,8 @@ def main() -> None:
         "provider": args.provider,
         "isolation": not args.no_isolation,
         "gpu_before": gpu_snapshot() if args.provider == "webgpu" else None,
+        # Provenance: the repository state of the harness (the publish is built from it) and the browser that ran.
+        "source_commit": source_commit(),
     }
     sampler = RssSampler(marker)
     sampler.start()
@@ -102,6 +117,11 @@ def main() -> None:
             env=env,
         )
         result["browser_version"] = context.browser.version if context.browser else None
+        result["browser"] = {
+            "name": "chromium",
+            "version": result["browser_version"],
+            "executable": args.chrome.name if args.chrome else "playwright-default",
+        }
         page = context.new_page()
         page.set_default_timeout(args.timeout_s * 1000)
         # The console also streams to <out>.console.log as it happens, so a crash or hang shows the last stage reached.
