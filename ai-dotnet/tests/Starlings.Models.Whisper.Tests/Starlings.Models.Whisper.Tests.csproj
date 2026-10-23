@@ -14,6 +14,7 @@
 
   <ItemGroup>
     <Compile Include="../Shared/Whisper/*.cs" Link="Shared/Whisper/%(Filename)%(Extension)" />
+    <Compile Include="../Shared/Registry/*.cs" Link="Shared/Registry/%(Filename)%(Extension)" />
   </ItemGroup>
 
   <ItemGroup>

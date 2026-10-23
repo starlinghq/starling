@@ -85,7 +85,7 @@
         "tasks": {
           "type": "array",
           "minItems": 1,
-          "items": { "enum": ["embedding", "image-embedding", "video-embedding", "classification", "extraction", "reranking", "generation", "decision"] }
+          "items": { "enum": ["embedding", "image-embedding", "video-embedding", "classification", "extraction", "reranking", "generation", "decision", "transcription"] }
         },
         "max_input_tokens": { "type": "integer", "minimum": 1 },
         "offsets_unit": {

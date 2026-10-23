@@ -117,6 +117,63 @@ def test_fidelity_bounds_may_be_proposed_within_caps():
     whisper.validate_candidate_behavior(candidate)
 
 
+TOLERANCES = REPO / "model-pipeline/protected/whisper-large-v3-turbo/onnx-fp16/tolerances.yaml"
+
+
+PROFILE_ID = "whisper-large-v3-turbo/onnx-fp16-cpu"
+
+
+def test_shipped_candidate_equals_the_binding_tolerances():
+    # Against the candidate, not a copy in code: the maintainer may move a fidelity bound in protected/ together with
+    # the candidate (neither is implementation code) without touching the plugin.
+    assert whisper.protected_policy(TOLERANCES, PROFILE_ID) == profile()["evaluation"]["policy"]
+    whisper.validate_candidate_behavior(load_candidate(PROFILE), REPO)
+
+
+def test_numeric_bounds_may_be_written_as_integers_or_exponents(tmp_path):
+    text = TOLERANCES.read_text(encoding="utf-8")
+    text = text.replace("hidden_padding_max_abs: 1.0", "hidden_padding_max_abs: 1")
+    text = text.replace("same_backend_max_abs: 1.0e-5", "same_backend_max_abs: 1e-5")  # a string in YAML 1.1
+    (tmp_path / "tolerances.yaml").write_text(text, encoding="utf-8")
+    bound = whisper.protected_policy(tmp_path / "tolerances.yaml", PROFILE_ID)
+    assert bound == profile()["evaluation"]["policy"]
+    assert type(bound["hidden_padding_max_abs"]) is float and type(bound["same_backend_max_abs"]) is float
+
+
+def test_a_policy_within_caps_but_off_the_binding_tolerances_is_refused():
+    candidate = profile()
+    candidate["evaluation"]["policy"]["hidden_max_abs"] = 0.1
+    whisper.validate_candidate_behavior(candidate)  # within the route's caps
+    with pytest.raises(PipelineError, match="hidden_max_abs \\(binding .*tolerances.yaml\\)"):
+        whisper.validate_candidate_behavior(candidate, REPO)
+
+
+@pytest.mark.parametrize(
+    ("change", "message"),
+    [
+        (lambda text: text.replace("onnx-fp16-cpu", "onnx-fp16-cuda"), "profile"),
+        (lambda text: text.replace("  logits_max_abs: 0.1\n", ""), "policy fields"),
+        (lambda text: text + "extra: 1\n", "profile, reference, policy"),
+        (lambda text: text.replace("logits_max_abs: 0.1", "logits_max_abs: small"), "must be a number"),
+        (lambda text: text.replace("logits_max_abs: 0.1", "logits_max_abs: .inf"), "finite number"),
+        (lambda text: "[unclosed", "invalid YAML"),
+    ],
+    ids=["other profile", "missing bound", "unknown field", "non-numeric bound", "infinite bound", "not yaml"],
+)
+def test_unexpected_tolerance_layouts_are_refused(tmp_path, change, message):
+    (tmp_path / "tolerances.yaml").write_text(change(TOLERANCES.read_text(encoding="utf-8")), encoding="utf-8")
+    with pytest.raises(PipelineError, match=message):
+        whisper.protected_policy(tmp_path / "tolerances.yaml", PROFILE_ID)
+
+
+def test_the_evaluator_itself_applies_the_binding(tmp_path, monkeypatch):
+    """evaluate_development refuses an off-binding policy when it is given the repository, before reading evidence."""
+    candidate = profile()
+    candidate["evaluation"]["policy"]["logits_max_abs"] = 0.2
+    with pytest.raises(PipelineError, match="logits_max_abs \\(binding"):
+        whisper.evaluate_development(candidate, PROFILE, tmp_path, tmp_path, tmp_path, [], REPO)
+
+
 def test_other_routes_still_refuse_fp16_and_transcription():
     bert = json.loads((REPO / "model-pipeline/candidates/minilm/profile.json").read_text(encoding="utf-8"))
     bert["runtime"]["precision"] = "fp16"
@@ -132,6 +189,7 @@ def test_plugin_is_registered_and_recipe_plans(capsys):
     assert plan["stages"] == ["assets", "environment", "reference", "onnx", "dotnet", "evaluate", "review"]
     assert plan["base"]["repo"] == "openai/whisper-large-v3-turbo"
     assert plan["qualification_status"] == "unapproved" and plan["reference_status"] == "proposed"
+    assert plan["policy_source"] == "model-pipeline/protected/whisper-large-v3-turbo/onnx-fp16/tolerances.yaml"
 
 
 # --- configs and corpus ---------------------------------------------------------------------------------------------
@@ -361,6 +419,8 @@ def test_complete_evidence_passes_and_never_adopts_protected_gates(tmp_path, tin
     assert report["status"] == "passed", report["failed_checks"]
     assert report["protected_release_qualification"] == {"status": "unapproved", "G1": "not-run", "G2": "not-run"}
     assert report["evaluation_status"] == "proposed" and report["case_count"] == 2
+    # Synthetic evidence runs without the repository, so its (tiny-geometry) policy is checked against the caps only.
+    assert (report["policy_status"], report["policy_source"]) == ("proposed", "unbound (route caps only)")
     per_clip = {check["id"].replace("/clip-a/", "/*/") for check in report["checks"] if "/clip-a/" in check["id"]}
     assert per_clip == {
         "reference/*/mel_torch_vs_numpy",
