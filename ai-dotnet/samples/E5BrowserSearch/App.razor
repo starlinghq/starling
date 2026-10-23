@@ -1,0 +1,200 @@
+@using Starlings.Models.E5.Browser
+@using Starlings.Runtime.OnnxWeb
+@inject SearchEngine Engine
+
+<main>
+    <header>
+        <h1>Multilingual search in your browser</h1>
+        <p class="lede">
+            <code>intfloat/multilingual-e5-small</code> runs on this page through onnxruntime-web and the Starlings
+            packages. The model downloads once, is checked against its pinned SHA-256 and kept in your browser's cache.
+            Nothing you type leaves the page.
+        </p>
+    </header>
+
+    @if (!Engine.IsLoaded)
+    {
+        <section class="card">
+            <h2>1. Load the model</h2>
+            <div class="options">
+                <label>
+                    Graph
+                    <select @bind="_variant" disabled="@_loading">
+                        <option value="@E5BrowserVariant.Fp32">fp32 reference, from the Hugging Face Hub (470 MB, about 249 MB compressed)</option>
+                        <option value="@E5BrowserVariant.Int8Embed">int8-embed, self-hosted (182 MB, about 109 MB compressed)</option>
+                    </select>
+                </label>
+                @if (_variant == E5BrowserVariant.Int8Embed)
+                {
+                    <label>
+                        Graph URL
+                        <input @bind="_modelUrl" placeholder="models/model-int8-embed.onnx" disabled="@_loading" />
+                    </label>
+                }
+                <label>
+                    Backend
+                    <select @bind="_provider" disabled="@_loading">
+                        <option value="@OnnxWebExecutionProvider.Wasm">WebAssembly (CPU)</option>
+                        <option value="@OnnxWebExecutionProvider.WebGpu">WebGPU (experimental)</option>
+                    </select>
+                </label>
+            </div>
+            <button class="primary" @onclick="LoadAsync" disabled="@_loading">@(_loading ? "Loading…" : "Load")</button>
+            @if (_loading)
+            {
+                <div class="progress">
+                    <div class="stage">@StageText</div>
+                    <progress max="1" value="@(_fraction ?? 0)"></progress>
+                </div>
+            }
+        </section>
+    }
+    else
+    {
+        <section class="card">
+            <h2>2. Search @Engine.Passages.Count passages in @Engine.Passages.Select(p => p.Language).Distinct().Count() languages</h2>
+            <form @onsubmit="SearchAsync" class="query">
+                <input @bind="_query" @bind:event="oninput" placeholder="Ask in any language…" aria-label="Query" />
+                <button class="primary" type="submit" disabled="@(_searching || string.IsNullOrWhiteSpace(_query))">Search</button>
+            </form>
+            <div class="examples">
+                Try:
+                @foreach (var example in Corpus.ExampleQueries)
+                {
+                    <button class="chip" @onclick="() => RunExampleAsync(example)">@example</button>
+                }
+            </div>
+            @if (_hits is not null)
+            {
+                <p class="meta">Query embedded in @_queryTime.TotalMilliseconds.ToString("0") ms.</p>
+                <ol class="hits" data-query="@_hitsQuery">
+                    @foreach (var hit in _hits)
+                    {
+                        <li>
+                            <span class="score">@hit.Score.ToString("0.000")</span>
+                            <span class="lang">@hit.Passage.Language</span>
+                            <span>@hit.Passage.Text</span>
+                        </li>
+                    }
+                </ol>
+            }
+        </section>
+    }
+
+    @if (_error is not null)
+    {
+        <section class="card error">
+            <h2>Something went wrong</h2>
+            <pre>@_error</pre>
+        </section>
+    }
+
+    @if (Engine.Runtime is { } runtime)
+    {
+        <section class="card diagnostics">
+            <h2>Runtime</h2>
+            <dl>
+                <dt>Profile</dt><dd>@(Engine.Profile ?? "–")</dd>
+                <dt>onnxruntime-web</dt><dd>@runtime.OrtVersion (@runtime.Bundle bundle)</dd>
+                <dt>Threads</dt>
+                <dd>
+                    @runtime.NumThreads of @runtime.HardwareConcurrency logical cores
+                    @if (!runtime.CrossOriginIsolated)
+                    {
+                        <span class="hint">: the page is not cross-origin isolated, so onnxruntime-web runs one thread. Serve it with COOP/COEP headers (see the README) for several.</span>
+                    }
+                </dd>
+                @if (_loadTime is { } load)
+                {
+                    <dt>Load</dt><dd>@load.TotalSeconds.ToString("0.0") s, corpus embedded in @Engine.CorpusTime.TotalMilliseconds.ToString("0") ms</dd>
+                }
+            </dl>
+        </section>
+    }
+</main>
+
+@code {
+    private E5BrowserVariant _variant = E5BrowserVariant.Fp32;
+    private OnnxWebExecutionProvider _provider = OnnxWebExecutionProvider.Wasm;
+    private string _modelUrl = "models/model-int8-embed.onnx";
+    private bool _loading;
+    private bool _searching;
+    private E5BrowserLoadProgress _progress;
+    private double? _fraction;
+    private TimeSpan? _loadTime;
+    private string _query = string.Empty;
+    private IReadOnlyList<Hit>? _hits;
+    private string? _hitsQuery;
+    private TimeSpan _queryTime;
+    private string? _error;
+
+    private string StageText => _progress.Stage switch
+    {
+        E5BrowserLoadStage.Runtime => "Starting onnxruntime-web…",
+        E5BrowserLoadStage.Tokenizer => $"Tokenizer: {Megabytes(_progress.BytesReceived)}{Total()}",
+        E5BrowserLoadStage.Model => $"Model: {Megabytes(_progress.BytesReceived)}{Total()}",
+        E5BrowserLoadStage.Session => "Creating the inference session…",
+        _ => "Embedding the corpus…",
+    };
+
+    private string Total() => _progress.TotalBytes is { } total ? $" of {Megabytes(total)}" : string.Empty;
+
+    private static string Megabytes(long bytes) => $"{bytes / 1_000_000.0:0} MB";
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        _error = null;
+        var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+        var progress = new Progress<E5BrowserLoadProgress>(p =>
+        {
+            _progress = p;
+            _fraction = p.TotalBytes is > 0 ? (double)p.BytesReceived / p.TotalBytes.Value : null;
+            StateHasChanged();
+        });
+        try
+        {
+            await Engine.LoadAsync(_variant, _variant == E5BrowserVariant.Int8Embed ? _modelUrl : null, _provider, progress);
+            _loadTime = stopwatch.Elapsed;
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task RunExampleAsync(string query)
+    {
+        _query = query;
+        await SearchAsync();
+    }
+
+    private async Task SearchAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_query))
+        {
+            return;
+        }
+
+        _searching = true;
+        try
+        {
+            string query = _query;
+            (_hits, _queryTime) = await Engine.SearchAsync(query);
+            _hitsQuery = query;
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _searching = false;
+        }
+    }
+
+}

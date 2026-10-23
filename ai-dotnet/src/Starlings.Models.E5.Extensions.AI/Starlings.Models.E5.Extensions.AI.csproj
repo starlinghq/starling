@@ -22,4 +22,9 @@
     <ProjectReference Include="../Starlings.Models.E5/Starlings.Models.E5.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- The browser generator applies the same request-option rules (ResolveInputType). -->
+    <InternalsVisibleTo Include="Starlings.Models.E5.Browser" />
+  </ItemGroup>
+
 </Project>

@@ -273,9 +273,13 @@ public sealed class E5Encoder : IDisposable
         }
     }
 
-    private static (int Dimension, bool HasTokenTypeIds) ValidateSignature(OnnxModelSession session)
+    private static (int Dimension, bool HasTokenTypeIds) ValidateSignature(OnnxModelSession session) =>
+        ValidateSignature(session.Inputs, session.Outputs);
+
+    /// <summary>The e5 graph signature checks on ONNX Runtime's tensor descriptions (shared with the browser encoder).</summary>
+    internal static (int Dimension, bool HasTokenTypeIds) ValidateSignature(IReadOnlyList<OnnxTensorInfo> graphInputs, IReadOnlyList<OnnxTensorInfo> graphOutputs)
     {
-        var inputs = session.Inputs.ToDictionary(i => i.Name, StringComparer.Ordinal);
+        var inputs = graphInputs.ToDictionary(i => i.Name, StringComparer.Ordinal);
         foreach (var name in new[] { InputIdsName, AttentionMaskName })
         {
             if (!inputs.TryGetValue(name, out var info) || info.ElementType != "Int64" || info.Dimensions.Count != 2)
@@ -296,7 +300,7 @@ public sealed class E5Encoder : IDisposable
             throw new NotSupportedException($"Graph has inputs this encoder does not feed: {string.Join(", ", unknown)}.");
         }
 
-        var output = session.Outputs.FirstOrDefault(o => o.Name == LastHiddenStateName);
+        var output = graphOutputs.FirstOrDefault(o => o.Name == LastHiddenStateName);
         if (output is null || output.ElementType != "Float" || output.Dimensions.Count != 3 || output.Dimensions[2] <= 0)
         {
             throw new NotSupportedException($"Graph output '{LastHiddenStateName}' (float, [batch, sequence, hidden] with fixed hidden size) is missing.");
@@ -305,7 +309,10 @@ public sealed class E5Encoder : IDisposable
         return ((int)output.Dimensions[2], hasTypes);
     }
 
-    private void Validate(EncoderInput input, int index)
+    private void Validate(EncoderInput input, int index) => Validate(input, index, _options);
+
+    /// <summary>The input checks of <see cref="Validate(EncoderInput)"/> against <paramref name="options"/> (shared with the browser encoder).</summary>
+    internal static void Validate(EncoderInput input, int index, E5EncoderOptions options)
     {
         var ids = input.InputIds.Span;
         if (ids.Length == 0)
@@ -313,16 +320,16 @@ public sealed class E5Encoder : IDisposable
             throw new ArgumentException($"Input {index} has no tokens.", nameof(input));
         }
 
-        if (ids.Length > _options.MaxSequenceLength)
+        if (ids.Length > options.MaxSequenceLength)
         {
-            throw new ArgumentException($"Input {index} has {ids.Length} tokens; the maximum is {_options.MaxSequenceLength}. Truncate in the tokenizer.", nameof(input));
+            throw new ArgumentException($"Input {index} has {ids.Length} tokens; the maximum is {options.MaxSequenceLength}. Truncate in the tokenizer.", nameof(input));
         }
 
         foreach (long id in ids)
         {
-            if (id < 0 || id >= _options.VocabularySize)
+            if (id < 0 || id >= options.VocabularySize)
             {
-                throw new ArgumentException($"Input {index} contains token id {id}, outside [0, {_options.VocabularySize}).", nameof(input));
+                throw new ArgumentException($"Input {index} contains token id {id}, outside [0, {options.VocabularySize}).", nameof(input));
             }
         }
 

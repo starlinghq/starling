@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    CoreCLR tests of the browser packages: the encoder over a fake graph runner and over native ONNX Runtime (real
+    model, skipped when absent), the graph signature checks, the generator's request rules, and the parsers and option
+    checks of Starlings.Runtime.OnnxWeb. The [JSImport] calls themselves run only in a browser:
+    browser/conformance/ (docs/evidence/browser-e5-package-2026-10-23/).
+  -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="xunit.v3" />
+    <!-- CPU native runtime, for the parity test against E5Encoder. -->
+    <PackageReference Include="Microsoft.ML.OnnxRuntime" />
+    <Using Include="Xunit" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="../Shared/E5/*.cs;../Shared/TestModels/*.cs" Link="Shared/%(RecursiveDir)%(Filename)%(Extension)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../src/Starlings.Models.E5.Browser/Starlings.Models.E5.Browser.csproj" />
+  </ItemGroup>
+
+</Project>

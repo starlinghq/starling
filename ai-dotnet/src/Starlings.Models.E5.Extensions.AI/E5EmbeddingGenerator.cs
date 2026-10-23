@@ -265,22 +265,28 @@ public sealed class E5EmbeddingGenerator : IEmbeddingGenerator<string, Embedding
         return result;
     }
 
-    private E5InputType ResolveInputType(EmbeddingGenerationOptions? options)
+    private E5InputType ResolveInputType(EmbeddingGenerationOptions? options) =>
+        ResolveInputType(options, _options.InputType, _options.ModelId, _embedder.Encoder.Dimension);
+
+    /// <summary>
+    /// The request-option rules of <see cref="GenerateAsync"/> (shared with the browser generator): returns the input
+    /// type for this request or throws for an unsupported option.
+    /// </summary>
+    internal static E5InputType ResolveInputType(EmbeddingGenerationOptions? options, E5InputType defaultInputType, string generatorModelId, int dimension)
     {
         if (options is null)
         {
-            return _options.InputType;
+            return defaultInputType;
         }
 
-        int dimension = _embedder.Encoder.Dimension;
         if (options.Dimensions is { } dimensions && dimensions != dimension)
         {
-            throw new NotSupportedException($"EmbeddingGenerationOptions.Dimensions = {dimensions} is not supported: {_options.ModelId} produces {dimension} dimensions and has no truncation (Matryoshka) support.");
+            throw new NotSupportedException($"EmbeddingGenerationOptions.Dimensions = {dimensions} is not supported: {generatorModelId} produces {dimension} dimensions and has no truncation (Matryoshka) support.");
         }
 
-        if (options.ModelId is { } modelId && !string.Equals(modelId, _options.ModelId, StringComparison.Ordinal))
+        if (options.ModelId is { } modelId && !string.Equals(modelId, generatorModelId, StringComparison.Ordinal))
         {
-            throw new NotSupportedException($"EmbeddingGenerationOptions.ModelId = '{modelId}' is not supported: this generator serves only '{_options.ModelId}'.");
+            throw new NotSupportedException($"EmbeddingGenerationOptions.ModelId = '{modelId}' is not supported: this generator serves only '{generatorModelId}'.");
         }
 
         if (options.RawRepresentationFactory is not null)
@@ -288,7 +294,7 @@ public sealed class E5EmbeddingGenerator : IEmbeddingGenerator<string, Embedding
             throw new NotSupportedException("EmbeddingGenerationOptions.RawRepresentationFactory is not supported: this generator has no provider-specific options object.");
         }
 
-        var inputType = _options.InputType;
+        var inputType = defaultInputType;
         if (options.AdditionalProperties is { Count: > 0 } properties)
         {
             foreach (var (key, value) in properties)
