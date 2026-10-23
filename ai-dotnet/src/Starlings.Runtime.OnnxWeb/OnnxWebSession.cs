@@ -200,24 +200,7 @@ public sealed class OnnxWebSession : IAsyncDisposable, IDisposable
         ArgumentNullException.ThrowIfNull(model);
         options ??= new OnnxWebSessionOptions();
         options.Validate();
-        var runtime = OnnxWebRuntime.RequireInitialized();
-        if (options.Provider == OnnxWebExecutionProvider.WebGpu)
-        {
-            if (!OnnxWebRuntime.CurrentBundleSupportsWebGpu)
-            {
-                throw new NotSupportedException($"The onnxruntime-web bundle '{runtime.Bundle}' has no WebGPU provider. Reference Starlings.Runtime.OnnxWeb.WebGpu and initialize with its bundle.");
-            }
-
-            if (!runtime.WebGpuExposed)
-            {
-                throw new NotSupportedException("This browser does not expose WebGPU (navigator.gpu is undefined).");
-            }
-
-            if (runtime.Proxy)
-            {
-                throw new NotSupportedException("onnxruntime-web's proxy worker supports only the WASM provider.");
-            }
-        }
+        OnnxWebRuntime.EnsureProviderAvailable(options.Provider);
 
         cancellationToken.ThrowIfCancellationRequested();
         var handle = model.Handle;

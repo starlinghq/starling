@@ -95,10 +95,10 @@ def drive(page, base: str, args, result: dict) -> None:
             page.fill("form.query input", query)
             page.click("form.query button")
             page.wait_for_function(
-                "q => document.querySelector('ol.hits') && document.querySelector('form.query input').value === q",
+                # The list names the query it answers (data-query), so earlier hits never pass for this query's.
+                "q => document.querySelector('ol.hits')?.dataset.query === q",
                 arg=query,
             )
-            page.wait_for_timeout(200)
             hits = page.eval_on_selector_all("ol.hits li", "els => els.map(e => e.innerText)")
             meta = page.inner_text("p.meta")
             result["queries"].append({"query": query, "meta": meta, "top": hits[:3]})

@@ -273,9 +273,13 @@ public sealed class E5Encoder : IDisposable
         }
     }
 
-    private static (int Dimension, bool HasTokenTypeIds) ValidateSignature(OnnxModelSession session)
+    private static (int Dimension, bool HasTokenTypeIds) ValidateSignature(OnnxModelSession session) =>
+        ValidateSignature(session.Inputs, session.Outputs);
+
+    /// <summary>The e5 graph signature checks on ONNX Runtime's tensor descriptions (shared with the browser encoder).</summary>
+    internal static (int Dimension, bool HasTokenTypeIds) ValidateSignature(IReadOnlyList<OnnxTensorInfo> graphInputs, IReadOnlyList<OnnxTensorInfo> graphOutputs)
     {
-        var inputs = session.Inputs.ToDictionary(i => i.Name, StringComparer.Ordinal);
+        var inputs = graphInputs.ToDictionary(i => i.Name, StringComparer.Ordinal);
         foreach (var name in new[] { InputIdsName, AttentionMaskName })
         {
             if (!inputs.TryGetValue(name, out var info) || info.ElementType != "Int64" || info.Dimensions.Count != 2)
@@ -296,7 +300,7 @@ public sealed class E5Encoder : IDisposable
             throw new NotSupportedException($"Graph has inputs this encoder does not feed: {string.Join(", ", unknown)}.");
         }
 
-        var output = session.Outputs.FirstOrDefault(o => o.Name == LastHiddenStateName);
+        var output = graphOutputs.FirstOrDefault(o => o.Name == LastHiddenStateName);
         if (output is null || output.ElementType != "Float" || output.Dimensions.Count != 3 || output.Dimensions[2] <= 0)
         {
             throw new NotSupportedException($"Graph output '{LastHiddenStateName}' (float, [batch, sequence, hidden] with fixed hidden size) is missing.");

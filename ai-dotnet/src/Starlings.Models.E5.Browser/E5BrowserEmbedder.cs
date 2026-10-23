@@ -22,8 +22,13 @@ public sealed record E5BrowserLoadOptions
     /// <summary>Execution provider. Default <see cref="OnnxWebExecutionProvider.Wasm"/> (the qualified path).</summary>
     public OnnxWebExecutionProvider Provider { get; init; } = OnnxWebExecutionProvider.Wasm;
 
-    /// <summary>onnxruntime-web settings, applied if this load is the first initialization on the page.</summary>
-    public OnnxWebRuntimeOptions Runtime { get; init; } = new();
+    /// <summary>
+    /// onnxruntime-web settings, or <see langword="null"/> (default) to use the page's existing initialization, or the
+    /// default options when nothing initialized it yet. A page initializes onnxruntime-web once: settings that differ
+    /// from an earlier, successful initialization throw <see cref="InvalidOperationException"/>, so after the first
+    /// load leave this <see langword="null"/>.
+    /// </summary>
+    public OnnxWebRuntimeOptions? Runtime { get; init; }
 
     /// <summary>Cache Storage settings for the graph and the tokenizer.</summary>
     public OnnxWebFetchOptions Fetch { get; init; } = new();
@@ -110,7 +115,6 @@ public sealed class E5BrowserEmbedder : IDisposable
         CancellationToken cancellationToken = default)
     {
         options ??= new E5BrowserLoadOptions();
-        ArgumentNullException.ThrowIfNull(options.Runtime);
         ArgumentNullException.ThrowIfNull(options.Fetch);
         ArgumentNullException.ThrowIfNull(options.Encoder);
         ArgumentException.ThrowIfNullOrWhiteSpace(options.TokenizerUrl, nameof(options));
@@ -119,7 +123,14 @@ public sealed class E5BrowserEmbedder : IDisposable
             ?? throw new ArgumentException($"The {options.Variant} graph has no public URL; set ModelUrl to where the app hosts it (SHA-256 {graph.Sha256}).", nameof(options));
 
         progress?.Report(new E5BrowserLoadProgress(E5BrowserLoadStage.Runtime, 0, null));
-        await OnnxWebRuntime.InitializeAsync(options.Runtime).ConfigureAwait(false);
+        if (options.Runtime is not null || OnnxWebRuntime.Info is null)
+        {
+            await OnnxWebRuntime.InitializeAsync(options.Runtime).ConfigureAwait(false);
+        }
+
+        // Everything that can be rejected without the files is rejected before the downloads (up to 487 MB).
+        OnnxWebRuntime.EnsureProviderAvailable(options.Provider);
+        options.Encoder.Validate();
 
         E5Tokenizer tokenizer;
         using (var tokenizerAsset = await OnnxWebAssets.FetchAsync(

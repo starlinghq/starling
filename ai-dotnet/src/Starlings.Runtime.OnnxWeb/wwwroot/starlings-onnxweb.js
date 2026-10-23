@@ -154,7 +154,8 @@ export async function fetchAsset(url, expectedSha256, cacheName, requestId, onPr
       }
       bytes = await readWithProgress(response, onProgress);
     }
-    const actual = expected || self.crypto?.subtle ? await sha256Hex(bytes) : null;
+    // Hash only what the caller asked to verify: a 470 MB digest costs time and a second buffer for nothing otherwise.
+    const actual = expected ? await sha256Hex(bytes) : null;
     if (expected && actual !== expected) {
       throw new Error(`${absolute}: SHA-256 ${actual} does not match the expected ${expected}.`);
     }

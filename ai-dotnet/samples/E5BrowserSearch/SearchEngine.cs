@@ -44,29 +44,41 @@ public sealed class SearchEngine : IDisposable
             throw new InvalidOperationException("Already loaded; reload the page to switch models.");
         }
 
-        _embedder = await E5BrowserEmbedder.LoadAsync(
+        var embedder = await E5BrowserEmbedder.LoadAsync(
             new E5BrowserLoadOptions
             {
                 Variant = variant,
                 ModelUrl = modelUrl,
                 Provider = provider,
-                // One onnxruntime-web bundle per page. The WASM-only bundle is the smaller download (2.3 MB brotli);
-                // the WebGPU adapter's bundle (about 4 MB) is needed only for WebGPU.
-                Runtime = new OnnxWebRuntimeOptions
-                {
-                    Bundle = provider == OnnxWebExecutionProvider.WebGpu ? OnnxWebGpuBundle.WebGpu : OnnxWebBundle.Wasm,
-                },
+                // A page initializes onnxruntime-web once, so the bundle is chosen on the first load only. The WASM-only
+                // bundle is the smaller download (2.3 MB brotli); the WebGPU adapter's (about 4 MB) is needed only for
+                // WebGPU, and it also runs WASM, so a failed WebGPU attempt can be retried with WASM without a reload.
+                Runtime = OnnxWebRuntime.Info is not null
+                    ? null
+                    : new OnnxWebRuntimeOptions
+                    {
+                        Bundle = provider == OnnxWebExecutionProvider.WebGpu ? OnnxWebGpuBundle.WebGpu : OnnxWebBundle.Wasm,
+                    },
             },
             progress);
-        _generator = new E5BrowserEmbeddingGenerator(_embedder);
+        var generator = new E5BrowserEmbeddingGenerator(embedder, ownsEmbedder: true);
+        try
+        {
+            var stopwatch = Stopwatch.StartNew();
+            var corpus = Corpus.Passages;
+            var embeddings = await generator.GenerateAsync(corpus.Select(p => p.Text), PassageOptions);
+            _passages = [.. corpus.Select((p, i) => new Passage(p.Language, p.Text, embeddings[i].Vector.ToArray()))];
+            CorpusTime = stopwatch.Elapsed;
+        }
+        catch
+        {
+            // Not loaded: the caller can try again (for example with the other backend).
+            generator.Dispose();
+            throw;
+        }
 
-        var stopwatch = Stopwatch.StartNew();
-        var corpus = Corpus.Passages;
-        var embeddings = await _generator.GenerateAsync(
-            corpus.Select(p => p.Text),
-            PassageOptions);
-        _passages = [.. corpus.Select((p, i) => new Passage(p.Language, p.Text, embeddings[i].Vector.ToArray()))];
-        CorpusTime = stopwatch.Elapsed;
+        _embedder = embedder;
+        _generator = generator;
     }
 
     /// <summary>The <paramref name="top"/> passages closest to <paramref name="query"/>, and the time the query embedding took.</summary>
@@ -96,11 +108,7 @@ public sealed class SearchEngine : IDisposable
         return sum;
     }
 
-    public void Dispose()
-    {
-        _generator?.Dispose();
-        _embedder?.Dispose();
-    }
+    public void Dispose() => _generator?.Dispose();
 
     private static EmbeddingGenerationOptions QueryOptions { get; } = InputType(E5InputType.Query);
 

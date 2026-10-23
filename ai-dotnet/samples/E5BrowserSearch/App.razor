@@ -67,7 +67,7 @@
             @if (_hits is not null)
             {
                 <p class="meta">Query embedded in @_queryTime.TotalMilliseconds.ToString("0") ms.</p>
-                <ol class="hits">
+                <ol class="hits" data-query="@_hitsQuery">
                     @foreach (var hit in _hits)
                     {
                         <li>
@@ -124,6 +124,7 @@
     private TimeSpan? _loadTime;
     private string _query = string.Empty;
     private IReadOnlyList<Hit>? _hits;
+    private string? _hitsQuery;
     private TimeSpan _queryTime;
     private string? _error;
 
@@ -182,7 +183,9 @@
         _searching = true;
         try
         {
-            (_hits, _queryTime) = await Engine.SearchAsync(_query);
+            string query = _query;
+            (_hits, _queryTime) = await Engine.SearchAsync(query);
+            _hitsQuery = query;
         }
         catch (Exception ex)
         {

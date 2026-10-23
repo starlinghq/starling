@@ -231,8 +231,12 @@ def evaluate(result: dict, graphs: Path, native_cache: dict) -> dict:
             }
         )
 
-    # Not a tolerance: the text path (tokenizer + encoder through IEmbeddingGenerator) must equal the id path.
+    # Harness check, not a tolerance-file key: the text path (owned tokenizer + encoder through IEmbeddingGenerator, all
+    # texts in one call, so padded batches) must equal the id path within the profile's padded-batch bound. It counts
+    # toward "passed" like the protected bounds.
     generator_vs_ids = max_abs(run["generator_embeddings"], got)
+    gen_limit = floats.get("padded_batch_vs_single_embedding_max_abs", 1e-5)
+    checks.append(bound("harness.generator_vs_ids_max_abs", generator_vs_ids, gen_limit, generator_vs_ids <= gen_limit))
     return {
         "profile": profile,
         "label": result["label"],

@@ -135,7 +135,7 @@ public sealed class OnnxWebAsset : IDisposable
     /// <summary>Absolute URL fetched.</summary>
     public string Url { get; }
 
-    /// <summary>SHA-256 of the bytes (lower-case hex), or <see langword="null"/> when not verified and SubtleCrypto was unavailable.</summary>
+    /// <summary>SHA-256 of the bytes (lower-case hex), or <see langword="null"/> when no expected SHA-256 was given (unverified fetches are not hashed).</summary>
     public string? Sha256 { get; }
 
     /// <summary>Size in bytes.</summary>

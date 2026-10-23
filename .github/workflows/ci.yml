@@ -60,6 +60,8 @@ jobs:
       - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
         with:
           node-version: "24"
+          cache: npm
+          cache-dependency-path: ai-dotnet/src/Shared/OnnxWeb/package-lock.json
       # CPU only. The e5 parity tests skip without the model (not in Git); the CUDA test project is
       # local-only and not in AI.slnx (ai-dotnet/README.md).
       # dotnet test builds only test projects and their references; this builds every project in AI.slnx,
@@ -146,6 +148,8 @@ jobs:
       - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
         with:
           node-version: "24"
+          cache: npm
+          cache-dependency-path: ai-dotnet/src/Shared/OnnxWeb/package-lock.json
       # The SDK that global.json resolves to; restores run in locked mode, so a different SDK can change the lock files.
       - run: dotnet --version
       # A direct checksum of the one input file: hashFiles() walks the whole workspace and timed out on Windows runners.

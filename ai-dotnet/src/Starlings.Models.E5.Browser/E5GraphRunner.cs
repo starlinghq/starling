@@ -1,4 +1,5 @@
 using System.Runtime.Versioning;
+using Starlings.Runtime.Onnx;
 using Starlings.Runtime.OnnxWeb;
 
 namespace Starlings.Models.E5.Browser;
@@ -17,40 +18,27 @@ internal interface IE5GraphRunner : IDisposable
     Task RunAsync(long[] ids, long[] mask, long[]? types, int rows, int width, Memory<float> hidden, CancellationToken cancellationToken);
 }
 
-/// <summary>The graph checks of <see cref="E5Encoder"/>'s constructor, on onnxruntime-web's metadata.</summary>
+/// <summary>
+/// The graph checks of <see cref="E5Encoder"/>'s constructor, on onnxruntime-web's metadata: the same code, after
+/// mapping onnxruntime-web's element type names (<c>int64</c>, <c>float32</c>) to ONNX Runtime's (<c>Int64</c>,
+/// <c>Float</c>).
+/// </summary>
 internal static class E5GraphSignature
 {
-    internal static (int Dimension, bool HasTokenTypeIds) Validate(IReadOnlyList<OnnxWebTensorInfo> inputs, IReadOnlyList<OnnxWebTensorInfo> outputs)
-    {
-        var byName = inputs.ToDictionary(i => i.Name, StringComparer.Ordinal);
-        foreach (var name in new[] { E5Encoder.InputIdsName, E5Encoder.AttentionMaskName })
-        {
-            if (!byName.TryGetValue(name, out var info) || info.ElementType != "int64" || info.Dimensions is not { Count: 2 })
-            {
-                throw new NotSupportedException($"Graph input '{name}' (int64, rank 2) is missing or has another type; this is not the e5 encoder signature.");
-            }
-        }
+    internal static (int Dimension, bool HasTokenTypeIds) Validate(IReadOnlyList<OnnxWebTensorInfo> inputs, IReadOnlyList<OnnxWebTensorInfo> outputs) =>
+        E5Encoder.ValidateSignature([.. inputs.Select(ToOnnx)], [.. outputs.Select(ToOnnx)]);
 
-        bool hasTypes = byName.TryGetValue(E5Encoder.TokenTypeIdsName, out var types);
-        if (hasTypes && (types!.ElementType != "int64" || types.Dimensions is not { Count: 2 }))
+    private static OnnxTensorInfo ToOnnx(OnnxWebTensorInfo info) => new(
+        info.Name,
+        info.ElementType switch
         {
-            throw new NotSupportedException($"Graph input '{E5Encoder.TokenTypeIdsName}' must be int64 of rank 2.");
-        }
-
-        var unknown = byName.Keys.Except([E5Encoder.InputIdsName, E5Encoder.AttentionMaskName, E5Encoder.TokenTypeIdsName], StringComparer.Ordinal).ToList();
-        if (unknown.Count > 0)
-        {
-            throw new NotSupportedException($"Graph has inputs this encoder does not feed: {string.Join(", ", unknown)}.");
-        }
-
-        var output = outputs.FirstOrDefault(o => o.Name == E5Encoder.LastHiddenStateName);
-        if (output is null || output.ElementType != "float32" || output.Dimensions is not { Count: 3 } || output.Dimensions[2] <= 0)
-        {
-            throw new NotSupportedException($"Graph output '{E5Encoder.LastHiddenStateName}' (float32, [batch, sequence, hidden] with fixed hidden size) is missing.");
-        }
-
-        return ((int)output.Dimensions[2], hasTypes);
-    }
+            "int64" => "Int64",
+            "float32" => "Float",
+            null => "NonTensor",
+            var other => other,
+        },
+        info.Dimensions ?? [],
+        [.. (info.Dimensions ?? []).Select(d => d < 0 ? "?" : string.Empty)]);
 }
 
 /// <summary>The e5 graph on an <see cref="OnnxWebSession"/>.</summary>

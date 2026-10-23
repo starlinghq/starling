@@ -153,8 +153,19 @@ public static class OnnxWebRuntime
             }
 
             _initializedWith = options;
-            _initialization = InitializeCoreAsync(options);
-            return _initialization;
+            var initialization = InitializeCoreAsync(options);
+            // A failure that completes synchronously has already run the reset in InitializeCoreAsync's catch; caching
+            // the faulted task here would make every retry fail with "already initialized".
+            if (!initialization.IsFaulted && !initialization.IsCanceled)
+            {
+                _initialization = initialization;
+            }
+            else
+            {
+                _initializedWith = null;
+            }
+
+            return initialization;
         }
     }
 
@@ -197,7 +208,19 @@ public static class OnnxWebRuntime
     {
         lock (Gate)
         {
-            return _module ??= ImportModuleAsync();
+            if (_module is not null)
+            {
+                return _module;
+            }
+
+            var module = ImportModuleAsync();
+            // Same as InitializeAsync: never cache a task that already failed synchronously.
+            if (!module.IsFaulted && !module.IsCanceled)
+            {
+                _module = module;
+            }
+
+            return module;
         }
     }
 
@@ -220,6 +243,44 @@ public static class OnnxWebRuntime
             }
 
             throw;
+        }
+    }
+
+    /// <summary>
+    /// Throws if <paramref name="provider"/> cannot run on this page with the initialized bundle and options: the check
+    /// <see cref="OnnxWebSession.CreateAsync"/> makes, available before any model is downloaded.
+    /// </summary>
+    /// <exception cref="InvalidOperationException"><see cref="InitializeAsync"/> has not completed.</exception>
+    /// <exception cref="NotSupportedException">
+    /// WebGPU was requested but the bundle has no WebGPU provider, the browser does not expose WebGPU, or the proxy worker
+    /// is on.
+    /// </exception>
+    public static void EnsureProviderAvailable(OnnxWebExecutionProvider provider)
+    {
+        if (!Enum.IsDefined(provider))
+        {
+            throw new ArgumentOutOfRangeException(nameof(provider), provider, "Unknown execution provider.");
+        }
+
+        var runtime = RequireInitialized();
+        if (provider != OnnxWebExecutionProvider.WebGpu)
+        {
+            return;
+        }
+
+        if (!CurrentBundleSupportsWebGpu)
+        {
+            throw new NotSupportedException($"The onnxruntime-web bundle '{runtime.Bundle}' has no WebGPU provider. Reference Starlings.Runtime.OnnxWeb.WebGpu and initialize with its bundle.");
+        }
+
+        if (!runtime.WebGpuExposed)
+        {
+            throw new NotSupportedException("This browser does not expose WebGPU (navigator.gpu is undefined).");
+        }
+
+        if (runtime.Proxy)
+        {
+            throw new NotSupportedException("onnxruntime-web's proxy worker supports only the WASM provider.");
         }
     }
 
