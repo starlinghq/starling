@@ -1,4 +1,7 @@
+using System.Security.Cryptography;
+using System.Text;
 using System.Text.Json;
+using Starlings.Acquisition;
 using Starlings.Runtime.Onnx;
 
 namespace Starlings.Models.Bert.Tests;
@@ -11,6 +14,7 @@ public sealed class ContractTests
     [InlineData("BAAI/bge-base-en-v1.5", 512, "cls", BertTask.Embeddings, 768)]
     [InlineData("BAAI/bge-m3", 8192, "cls", BertTask.Embeddings, 1024)]
     [InlineData("cross-encoder/ms-marco-MiniLM-L6-v2", 512, "none", BertTask.Reranking, 384)]
+    [InlineData("Starlinghq/bge-reranker-v2-m3-onnx", 8192, "none", BertTask.Reranking, 1024)]
     [InlineData("nomic-ai/nomic-embed-text-v1.5", 8192, "mean", BertTask.Embeddings, 768)]
     public void ParsesOnlyDeclaredTaskContracts(string repository, int maxTokens, string pooling, BertTask task, int hiddenSize)
     {
@@ -34,6 +38,94 @@ public sealed class ContractTests
         var document = ProfileData("sentence-transformers/all-MiniLM-L6-v2");
         ((Dictionary<string, object>)document["behavior"])[key] = value;
         Assert.Throws<NotSupportedException>(() => BertModelProfile.Parse(JsonSerializer.Serialize(document)));
+    }
+
+    [Fact]
+    public void XlmrRerankerContractIsExactAndUsesNoSegmentIds()
+    {
+        var profile = BertModelProfile.Parse(ProfileJson("Starlinghq/bge-reranker-v2-m3-onnx"));
+        Assert.Equal(("logits", "xlmr-unigram", false), (profile.OutputName, profile.TokenizerProfile, profile.TokenTypeIds));
+        Assert.Equal((250002, 0, 2, 1), (profile.VocabularySize, profile.ClsTokenId, profile.SepTokenId, profile.PadTokenId));
+        Assert.Equal("none", profile.Normalize);
+    }
+
+    [Theory]
+    [InlineData("pooling", "cls")]
+    [InlineData("tokenizer_profile", "bert-wordpiece-uncased")]
+    [InlineData("output_name", "token_embeddings")]
+    [InlineData("score_activation", "sigmoid")]
+    [InlineData("max_tokens", 512)]
+    [InlineData("hidden_size", 384)]
+    [InlineData("pad_token_id", 0)]
+    public void RejectsXlmrRerankerNearMisses(string key, object value)
+    {
+        var document = ProfileData("Starlinghq/bge-reranker-v2-m3-onnx");
+        ((Dictionary<string, object>)document["behavior"])[key] = value;
+        Assert.Throws<NotSupportedException>(() => BertModelProfile.Parse(JsonSerializer.Serialize(document)));
+    }
+
+    [Fact]
+    public void XlmrRerankerRefusesEmbeddingsTask()
+    {
+        var document = ProfileData("Starlinghq/bge-reranker-v2-m3-onnx");
+        document["task"] = "embeddings";
+        Assert.Throws<NotSupportedException>(() => BertModelProfile.Parse(JsonSerializer.Serialize(document)));
+    }
+
+    [Theory]
+    [InlineData("BAAI/bge-m3", true)]
+    [InlineData("Starlinghq/bge-reranker-v2-m3-onnx", true)]
+    [InlineData("sentence-transformers/all-MiniLM-L6-v2", false)]
+    public void RuntimeLockCarriesExternalGraphDataExactlyWhenPinned(string repository, bool externalData)
+    {
+        var profile = BertModelProfile.Parse(ProfileJson(repository, externalData));
+        string[] expected = externalData
+            ? [BertModelProfile.GraphFile, BertModelProfile.GraphDataFile, BertModelProfile.TokenizerFile]
+            : [BertModelProfile.GraphFile, BertModelProfile.TokenizerFile];
+        Assert.Equal(expected, profile.RuntimeLock.Files.Select(file => file.Path));
+        Assert.DoesNotContain(profile.RuntimeLock.Files, file => file.Path == "model.safetensors");
+    }
+
+    [Fact]
+    public void RuntimeLockAloneVerifiesADirectoryWithOnlyItsFiles()
+    {
+        string directory = Path.Combine(Path.GetTempPath(), "bert-runtime-lock-" + Guid.NewGuid().ToString("N"));
+        try
+        {
+            var contents = new Dictionary<string, byte[]>
+            {
+                [BertModelProfile.GraphFile] = Encoding.UTF8.GetBytes("graph"),
+                [BertModelProfile.GraphDataFile] = Encoding.UTF8.GetBytes("external weights"),
+                [BertModelProfile.TokenizerFile] = Encoding.UTF8.GetBytes("{}"),
+                ["model.safetensors"] = Encoding.UTF8.GetBytes("source-only weights, never written"),
+            };
+            var files = contents.Select(entry => new
+            {
+                path = entry.Key, size = entry.Value.LongLength, sha256 = Convert.ToHexStringLower(SHA256.HashData(entry.Value)),
+            }).ToArray();
+            var document = ProfileData("Starlinghq/bge-reranker-v2-m3-onnx");
+            document["origin"] = new { repo = "Starlinghq/bge-reranker-v2-m3-onnx", revision = new string('a', 40), files };
+            var profile = BertModelProfile.Parse(JsonSerializer.Serialize(document));
+            foreach (var file in profile.RuntimeLock.Files)
+            {
+                string path = Path.Combine(directory, file.Path);
+                Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+                File.WriteAllBytes(path, contents[file.Path]);
+            }
+
+            var snapshot = ModelAssetStore.VerifyDirectory(profile.RuntimeLock, directory);
+            Assert.True(File.Exists(snapshot.GetFilePath(BertModelProfile.GraphDataFile)));
+            Assert.Throws<ModelAssetMissingException>(() => ModelAssetStore.VerifyDirectory(profile.SourceLock, directory));
+            File.Delete(Path.Combine(directory, BertModelProfile.GraphDataFile));
+            Assert.Throws<ModelAssetMissingException>(() => ModelAssetStore.VerifyDirectory(profile.RuntimeLock, directory));
+        }
+        finally
+        {
+            if (Directory.Exists(directory))
+            {
+                Directory.Delete(directory, recursive: true);
+            }
+        }
     }
 
     [Fact]
@@ -81,6 +173,29 @@ public sealed class ContractTests
     }
 
     [Fact]
+    public void XlmrPairLayoutIsAcceptedWithZeroSegmentIds()
+    {
+        // <s> A </s></s> B </s>, right padded with <pad> = 1.
+        BertSession.ValidateInput(new BertInput(new long[] { 0, 2367, 2, 2, 1274, 2, 1 },
+            new long[] { 1, 1, 1, 1, 1, 1, 0 }, new long[7]), 8192, 250002, 1, 0, 2);
+        Assert.Throws<ArgumentException>(() => BertSession.ValidateInput(new BertInput(new long[] { 0, 2367, 2, 2, 1274, 2, 0 },
+            new long[] { 1, 1, 1, 1, 1, 1, 0 }, new long[7]), 8192, 250002, 1, 0, 2));
+    }
+
+    [Fact]
+    public void RerankerSignatureWithoutSegmentIdsNeedsOneLogit()
+    {
+        OnnxTensorInfo Input(string name) => new(name, "Int64", [-1, -1], ["batch", "sequence"]);
+        OnnxTensorInfo[] inputs = [Input("input_ids"), Input("attention_mask")];
+        OnnxTensorInfo[] logits = [new("logits", "Float", [-1, 1], ["batch", ""])];
+        BertSession.ValidateSignature(inputs, logits, BertTask.Reranking, 1024, "logits", false);
+        Assert.Throws<NotSupportedException>(() => BertSession.ValidateSignature(
+            [.. inputs, Input("token_type_ids")], logits, BertTask.Reranking, 1024, "logits", false));
+        Assert.Throws<NotSupportedException>(() => BertSession.ValidateSignature(
+            inputs, [new("logits", "Float", [-1, 2], ["batch", ""])], BertTask.Reranking, 1024, "logits", false));
+    }
+
+    [Fact]
     public void SignatureRequiresPairSegmentIdsAndFixedTaskOutputWidth()
     {
         OnnxTensorInfo Input(string name) => new(name, "Int64", [-1, -1], ["batch", "sequence"]);
@@ -93,23 +208,26 @@ public sealed class ContractTests
             [inputs[0], inputs[0], inputs[2]], embeddings, BertTask.Embeddings, 384, "last_hidden_state", true));
     }
 
-    private static string ProfileJson(string repository) => JsonSerializer.Serialize(ProfileData(repository));
+    private static string ProfileJson(string repository, bool externalData = false) =>
+        JsonSerializer.Serialize(ProfileData(repository, externalData));
 
-    private static Dictionary<string, object> ProfileData(string repository)
+    private static Dictionary<string, object> ProfileData(string repository, bool externalData = false)
     {
-        bool reranking = repository.StartsWith("cross-encoder/", StringComparison.Ordinal);
+        bool xlmrReranker = repository == "Starlinghq/bge-reranker-v2-m3-onnx";
+        bool reranking = xlmrReranker || repository.StartsWith("cross-encoder/", StringComparison.Ordinal);
         bool bge = repository is "BAAI/bge-small-en-v1.5" or "BAAI/bge-base-en-v1.5";
         bool nomic = repository == "nomic-ai/nomic-embed-text-v1.5";
         bool bgeM3 = repository == "BAAI/bge-m3";
+        bool xlmr = bgeM3 || xlmrReranker;
         var behavior = new Dictionary<string, object>
         {
             ["architecture"] = "bert", ["graph_file"] = "onnx/model.onnx", ["tokenizer_file"] = "tokenizer.json",
-            ["max_tokens"] = bgeM3 || nomic ? 8192 : reranking || bge ? 512 : 256,
-            ["padding_side"] = "right", ["pad_token_id"] = bgeM3 ? 1 : 0,
-            ["vocabulary_size"] = bgeM3 ? 250002 : 30522,
-            ["hidden_size"] = bgeM3 ? 1024 : nomic || repository == "BAAI/bge-base-en-v1.5" ? 768 : 384,
+            ["max_tokens"] = xlmr || nomic ? 8192 : reranking || bge ? 512 : 256,
+            ["padding_side"] = "right", ["pad_token_id"] = xlmr ? 1 : 0,
+            ["vocabulary_size"] = xlmr ? 250002 : 30522,
+            ["hidden_size"] = xlmr ? 1024 : nomic || repository == "BAAI/bge-base-en-v1.5" ? 768 : 384,
             ["truncation"] = "longest_first",
-            ["tokenizer_profile"] = bgeM3 ? "xlmr-unigram" : "bert-wordpiece-uncased",
+            ["tokenizer_profile"] = xlmr ? "xlmr-unigram" : "bert-wordpiece-uncased",
             ["pooling"] = reranking ? "none" : bge || bgeM3 ? "cls" : "mean",
             ["normalize"] = reranking || nomic ? "none" : "l2",
             ["output_name"] = reranking ? "logits" : bgeM3 ? "token_embeddings" : "last_hidden_state",
@@ -126,9 +244,11 @@ public sealed class ContractTests
             ["format_version"] = 1, ["id"] = "test-bert", ["task"] = reranking ? "reranking" : "embeddings",
             ["origin"] = new { repo = repository, revision = new string('a', 40), files = new[]
             {
+                new { path = "model.safetensors", size = 1, sha256 = new string('0', 64) },
                 new { path = "onnx/model.onnx", size = 1, sha256 = new string('1', 64) },
+                new { path = "onnx/model.onnx_data", size = 1, sha256 = new string('3', 64) },
                 new { path = "tokenizer.json", size = 1, sha256 = new string('2', 64) },
-            } },
+            }.Where(file => externalData || file.path != "onnx/model.onnx_data").ToArray() },
             ["runtime"] = new { backend = "onnx", version = "1.30.0", provider = "CPUExecutionProvider", precision = "fp32" },
             ["behavior"] = behavior,
         };
