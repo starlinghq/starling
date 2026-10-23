@@ -18,7 +18,7 @@ dotnet run -- videos [--cache <dir> | --snapshot <dir>] --videos <dir> [--ffmpeg
 
 Without `--cache` the files go to `$STARLING_MODELS` or the user cache directory (`~/.cache/starlings/models` on Linux). `images` and `videos` each need at least two decodable files in their directory.
 
-The sample uses `PackageReference`s only, no project references: `Starlings.*` 0.3.0 (the `StarlingsVersion` property) restores from nuget.org. `tools/release-drill-ai.sh` also builds it from a local feed, with a variant on `Starlings.Models.EmbeddingGemma2.Video.FFmpeg9` (FFmpeg 9) and, when given a CUDA device, a variant with the CUDA natives.
+The sample uses `PackageReference`s only, no project references: `Starlings.*` 0.4.0 (the `StarlingsVersion` property) restores from nuget.org. `tools/release-drill-ai.sh` also builds it from a local feed, with a variant on `Starlings.Models.EmbeddingGemma2.Video.FFmpeg9` (FFmpeg 9) and, when given a CUDA device, a variant with the CUDA natives.
 
 `--cuda` (the `videos` command only) runs the model on CUDA device 0. It needs `Microsoft.ML.OnnxRuntime.Gpu.Linux` 1.30.0 in place of `Microsoft.ML.OnnxRuntime` in `EmbeddingGemma2Search.csproj` (reference exactly one), Linux x64 and the CUDA 13 runtime on the loader path. A Linux process that runs the video profile on CUDA in deployment needs `MALLOC_MMAP_THRESHOLD_=65536` in its environment (the `Starlings.Models.EmbeddingGemma2` README). `search` and `images` run on CPU.
 

@@ -30,4 +30,4 @@ The hosting repository is public: `download` needs no token. Files already in th
 
 The sample does not demonstrate tool calling (experimental in 0.2.0); for the `ChatOptions.Tools` and `UseFunctionInvocation` pattern, see the `Starlings.Models.Qwen35.Extensions.AI` README.
 
-The sample uses `PackageReference`s only, no project references: `Starlings.*` 0.3.0 (the `StarlingsVersion` property) restores from nuget.org. `tools/release-drill-ai.sh` also packs the packages into a local feed and builds this sample from a copy outside the repository, and, when given a CUDA device, a copy on `Microsoft.ML.OnnxRuntimeGenAI.Cuda`.
+The sample uses `PackageReference`s only, no project references: `Starlings.*` 0.4.0 (the `StarlingsVersion` property) restores from nuget.org. `tools/release-drill-ai.sh` also packs the packages into a local feed and builds this sample from a copy outside the repository, and, when given a CUDA device, a copy on `Microsoft.ML.OnnxRuntimeGenAI.Cuda`.
