@@ -29,7 +29,17 @@ public static class WhisperMelSpectrogram
     /// <summary>Number of samples in one 30 s chunk (the feature extractor's <c>n_samples</c>).</summary>
     public const int MaxSamples = 480_000;
 
+    // The reference's power floor: log10(max(1e-10, power)).
+    private const double PowerFloor = 1e-10;
+
+    // A frame whose windowed samples are all zero has zero power in every bin, so its value is exactly this.
+    private static readonly double SilentLogMel = Math.Log10(PowerFloor);
+
+    // A naive DFT, not an FFT: it reproduces the reference's float64 spectrogram bit for bit, which an FFT's different
+    // summation order would not.
     private static readonly (double Cos, double Sin)[][] Twiddles = BuildTwiddles();
+    private static readonly double[] HannWindow = ComputeHannWindow();
+    private static readonly double[,] MelFilters = ComputeMelFilters();
 
     /// <summary>
     /// Log-mel spectrogram of one float32 16 kHz clip of up to 30 s, shape [128, 3000]: the clip is zero-padded on the
@@ -56,12 +66,29 @@ public static class WhisperMelSpectrogram
         return Extract(padded);
     }
 
-    /// <summary>Log-mel spectrogram of one 16 kHz waveform (480,000 samples), shape [128, 3000].</summary>
-    public static float[] Extract(double[] waveform) => Extract(waveform, ComputeHannWindow(), ComputeMelFilters());
+    /// <summary>Log-mel spectrogram of one 16 kHz waveform (exactly 480,000 samples), shape [128, 3000].</summary>
+    /// <exception cref="ArgumentException">The waveform is not exactly 480,000 samples; use <see cref="ExtractChunk"/> for shorter clips.</exception>
+    public static float[] Extract(double[] waveform) => Extract(waveform, skipSilentFrames: true);
 
-    /// <summary>Log-mel spectrogram of one float32 16 kHz waveform (480,000 samples), shape [128, 3000].</summary>
+    /// <summary>As <see cref="Extract(double[])"/>; <paramref name="skipSilentFrames"/> false computes every frame's DFT (tests).</summary>
+    internal static float[] Extract(double[] waveform, bool skipSilentFrames)
+    {
+        ArgumentNullException.ThrowIfNull(waveform);
+        if (waveform.Length != MaxSamples)
+        {
+            throw new ArgumentException(
+                $"Waveform must hold exactly {MaxSamples} samples, got {waveform.Length}; ExtractChunk pads shorter clips.",
+                nameof(waveform));
+        }
+
+        return Extract(waveform, HannWindow, MelFilters, skipSilentFrames);
+    }
+
+    /// <summary>Log-mel spectrogram of one float32 16 kHz waveform (exactly 480,000 samples), shape [128, 3000].</summary>
+    /// <exception cref="ArgumentException">The waveform is not exactly 480,000 samples; use <see cref="ExtractChunk"/> for shorter clips.</exception>
     public static float[] Extract(float[] waveform)
     {
+        ArgumentNullException.ThrowIfNull(waveform);
         var d = new double[waveform.Length];
         for (int i = 0; i < waveform.Length; i++)
         {
@@ -154,7 +181,7 @@ public static class WhisperMelSpectrogram
         return freq;
     }
 
-    private static float[] Extract(double[] waveform, double[] window, double[,] melFilters)
+    private static float[] Extract(double[] waveform, double[] window, double[,] melFilters, bool skipSilentFrames)
     {
         int n = waveform.Length;
         int pad = Nfft / 2;
@@ -175,12 +202,26 @@ public static class WhisperMelSpectrogram
         double[] buf = new double[Nfft];
         double[] power = new double[NumFrequencyBins];
 
+        // A frame whose windowed samples are all zero (the zero padding of a short clip, or exact digital silence) has zero
+        // power in every bin, so its value is SilentLogMel exactly; skipping its DFT changes no bit of the output.
         for (int t = 0; t < frameCount; t++)
         {
             int offset = t * HopLength;
+            bool silent = skipSilentFrames;
             for (int j = 0; j < Nfft; j++)
             {
                 buf[j] = padded[offset + j] * window[j];
+                silent = silent && buf[j] == 0.0;
+            }
+
+            if (silent)
+            {
+                for (int m = 0; m < NumMelBins; m++)
+                {
+                    mel[m * frameCount + t] = SilentLogMel;
+                }
+
+                continue;
             }
 
             for (int k = 0; k < NumFrequencyBins; k++)
@@ -204,7 +245,7 @@ public static class WhisperMelSpectrogram
                     acc += melFilters[k, m] * power[k];
                 }
 
-                mel[m * frameCount + t] = Math.Log10(Math.Max(1e-10, acc));
+                mel[m * frameCount + t] = Math.Log10(Math.Max(PowerFloor, acc));
             }
         }
 
