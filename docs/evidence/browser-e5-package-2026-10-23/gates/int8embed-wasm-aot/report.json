@@ -6,7 +6,7 @@
   "evaluator": {
     "name": "model-pipeline evaluate",
     "version": "0.1.0",
-    "repository_commit": "a886b5da6d6568f3b09cecb81762a4cf086d1496-dirty"
+    "repository_commit": "ccc20820389955e70789f7250d40d18b88a3f90e"
   },
   "inputs": {
     "manifest": {
@@ -34,11 +34,11 @@
     "results": {
       "tokenizer": {
         "path": "/home/mark/.claude/jobs/0e59d1f9/tmp/w6eval/results/int8embed-wasm-aot/tokenizer.results.json",
-        "sha256": "5fe82f5cb635ad2bfb1431fef5b9c14c83ec05e16fc1c78d27bbe823a245a17a",
+        "sha256": "79c45909a9704ab87ab4c5d4ecff38ae7e9c5d61ac57b6bf05426c5f97c67448",
         "candidate": "Starlings.Models.E5.Browser on onnxruntime-web 1.30.0 (wasm, bundle wasm, 4 threads), build aot: E5 tokenization (owned tokenizer, truncation to 512)",
         "producer": {
           "name": "browser/conformance/run_conformance.py (E5Conformance) via model-pipeline browser-results",
-          "repository_commit": "a886b5da6d6568f3b09cecb81762a4cf086d1496-dirty"
+          "repository_commit": "ccc20820389955e70789f7250d40d18b88a3f90e"
         },
         "environment": {
           "machine": "omarchy",
@@ -69,11 +69,11 @@
       },
       "export": {
         "path": "/home/mark/.claude/jobs/0e59d1f9/tmp/w6eval/results/int8embed-wasm-aot/export.results.json",
-        "sha256": "028d6b8edda989b471bea3b3bdd8f5cf4ee90c5e012843a98916c36c30833d7c",
+        "sha256": "89ddbb683558f156f78432644a85e23cba3d6e7090d985199b43c0209cea1d8b",
         "candidate": "Python onnxruntime 1.30.0 CPUExecutionProvider on onnx/model-int8-embed.onnx (the browser profile's graph), float64 pooling; no hidden-state reference (not bound for browser profiles)",
         "producer": {
           "name": "model-pipeline/reference/encoder/stage_e5_browser_native.py",
-          "repository_commit": "634fb790b1d1d2780fad55148c4546c31b1fffa0-dirty"
+          "repository_commit": "ccc20820389955e70789f7250d40d18b88a3f90e"
         },
         "environment": {
           "python": "3.11.16",
@@ -101,11 +101,11 @@
       },
       "dotnet": {
         "path": "/home/mark/.claude/jobs/0e59d1f9/tmp/w6eval/results/int8embed-wasm-aot/dotnet.results.json",
-        "sha256": "091ed0e55b3ddc04c41db9a32afee89ba037b66dcaa41525a736db3a3b149905",
+        "sha256": "46f8989155355f4e19a479ed9e5e98cdd54c2019f51c9a8567f84dcbd360d7b6",
         "candidate": "Starlings.Models.E5.Browser on onnxruntime-web 1.30.0 (wasm, bundle wasm, 4 threads), build aot",
         "producer": {
           "name": "browser/conformance/run_conformance.py (E5Conformance) via model-pipeline browser-results",
-          "repository_commit": "a886b5da6d6568f3b09cecb81762a4cf086d1496-dirty"
+          "repository_commit": "ccc20820389955e70789f7250d40d18b88a3f90e"
         },
         "environment": {
           "machine": "omarchy",

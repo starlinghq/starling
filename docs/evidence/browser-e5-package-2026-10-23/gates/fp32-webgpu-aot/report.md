@@ -1,6 +1,6 @@
 # Fidelity report: multilingual-e5-small/onnx-fp32-webgpu
 
-Date 2026-10-23. Evaluator model-pipeline evaluate 0.1.0 at `a886b5da6d6568f3b09cecb81762a4cf086d1496-dirty`. Exit code 0.
+Date 2026-10-23. Evaluator model-pipeline evaluate 0.1.0 at `ccc20820389955e70789f7250d40d18b88a3f90e`. Exit code 0.
 
 Fixtures: `model-pipeline/protected/multilingual-e5-small/onnx-fp32-cpu` (from the manifest).
 
@@ -75,6 +75,6 @@ Status **verified** (merge base of HEAD and origin/main; base `634fb790b1d1d2780
 
 | Stage | Candidate | Producer | Machine | Results SHA-256 |
 | --- | --- | --- | --- | --- |
-| tokenizer | Starlings.Models.E5.Browser on onnxruntime-web 1.30.0 (webgpu, bundle webgpu, 4 threads), build aot: E5 tokenization (owned tokenizer, truncation to 512) | browser/conformance/run_conformance.py (E5Conformance) via model-pipeline browser-results `a886b5da6d6568f3b09cecb81762a4cf086d1496-dirty` | omarchy | `b14c46a389324fdf` |
-| export | Python onnxruntime 1.30.0 CPUExecutionProvider on onnx/model.onnx (the browser profile's graph), float64 pooling; no hidden-state reference (not bound for browser profiles) | model-pipeline/reference/encoder/stage_e5_browser_native.py `634fb790b1d1d2780fad55148c4546c31b1fffa0-dirty` | omarchy | `5f320d74e0cb3257` |
-| dotnet | Starlings.Models.E5.Browser on onnxruntime-web 1.30.0 (webgpu, bundle webgpu, 4 threads), build aot | browser/conformance/run_conformance.py (E5Conformance) via model-pipeline browser-results `a886b5da6d6568f3b09cecb81762a4cf086d1496-dirty` | omarchy | `de23cdc255c74b0e` |
+| tokenizer | Starlings.Models.E5.Browser on onnxruntime-web 1.30.0 (webgpu, bundle webgpu, 4 threads), build aot: E5 tokenization (owned tokenizer, truncation to 512) | browser/conformance/run_conformance.py (E5Conformance) via model-pipeline browser-results `ccc20820389955e70789f7250d40d18b88a3f90e` | omarchy | `848231c0330e0c14` |
+| export | Python onnxruntime 1.30.0 CPUExecutionProvider on onnx/model.onnx (the browser profile's graph), float64 pooling; no hidden-state reference (not bound for browser profiles) | model-pipeline/reference/encoder/stage_e5_browser_native.py `ccc20820389955e70789f7250d40d18b88a3f90e` | omarchy | `ea29d2dda2c6b1b2` |
+| dotnet | Starlings.Models.E5.Browser on onnxruntime-web 1.30.0 (webgpu, bundle webgpu, 4 threads), build aot | browser/conformance/run_conformance.py (E5Conformance) via model-pipeline browser-results `ccc20820389955e70789f7250d40d18b88a3f90e` | omarchy | `3267b56439e7d10f` |
