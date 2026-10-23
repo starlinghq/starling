@@ -1,0 +1,41 @@
+# Binding tolerances for whisper-large-v3-turbo on ONNX Runtime 1.30.0, CPU provider, fp16 graphs (plan 10.1).
+# Adopted unchanged from the proposed policy of model-pipeline/candidates/whisper-large-v3-turbo/profile.json
+# (onboarding route whisper-onnx-cpu-v1, #136; corrected encoder position split, #136 review).
+#
+# Evidence: model-pipeline run of recipes/whisper-large-v3-turbo-cpu.yaml at 69006a8 (the code merged as d72a67f;
+# outputs bit-identical to the #136 run at dd87699), 53/53 checks passed, CPU, 2 threads. Corpus: four LibriSpeech
+# dev-clean clips, 1.6 s to 12.5 s (reference/corpus/asr-corpus-v1.jsonl). Reference: transformers 5.18.0
+# WhisperForConditionalGeneration, PyTorch 2.14.1 fp32 CPU, openai/whisper-large-v3-turbo 41f01f3f. Graphs:
+# onnx-community/whisper-large-v3-turbo-ONNX 76ba4fb5 (encoder_model_fp16.onnx, decoder_model_fp16.onnx).
+#
+# Observed worst against each bound:
+#   mel (.NET vs reference numpy path)              1.2e-7    mel_max_abs             1e-6
+#   mel, torch vs numpy feature path (reference)    2.4e-5    mel_path_max_abs        1e-4
+#   encoder hidden, audio positions (fp16 vs fp32)  1.2e-2    hidden_max_abs          0.05
+#   encoder hidden, zero-padded tail (fp16 vs fp32) 5.4e-1    hidden_padding_max_abs  1.0
+#   teacher-forced logits (fp16 vs fp32)            3.6e-2    logits_max_abs          0.1
+#   .NET vs Python ONNX Runtime, hidden and logits  0         same_backend_max_abs    1e-5
+#   word error rate, .NET and Python ORT vs ref     0         reference_wer_max       0
+#   corpus word error rate, ref vs LibriSpeech text 0.018     ground_truth_wer_max    0.2
+#
+# The encoder hidden state is bounded separately on the positions whose receptive field holds audio and on the
+# zero-padded tail: fp16 drift concentrates on the padded (log-mel floor) frames (0.16 to 0.54 there, at most 0.012 on
+# audio positions), and one bound loose enough for the tail would hide a regression on the frames the transcript
+# depends on. The fixed keys (mel, same backend, ids, transcripts, ground-truth sanity bound, non-finite, required
+# paths) are correctness checks, not fp16 fidelity, and stay at the route's predeclared template.
+profile: whisper-large-v3-turbo/onnx-fp16-cpu
+reference: transformers 5.18.0 WhisperForConditionalGeneration, PyTorch fp32 CPU; log-mel from WhisperFeatureExtractor (numpy path)
+policy:
+  mel_max_abs: 1.0e-6
+  mel_path_max_abs: 1.0e-4
+  hidden_max_abs: 0.05
+  hidden_padding_max_abs: 1.0
+  logits_max_abs: 0.1
+  same_backend_max_abs: 1.0e-5
+  token_ids: exact
+  transcript: exact
+  reference_wer_max: 0.0
+  ground_truth_wer_max: 0.2
+  non_finite: fail
+  required_paths: [reference, python-onnx, dotnet-mel, dotnet-audio]
+report_only: [mean_abs]
