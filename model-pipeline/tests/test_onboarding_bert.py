@@ -253,7 +253,8 @@ def test_xlmr_reranker_contract_is_accepted_and_scores_raw_logits():
         8192,
         "none",
     )
-    assert (spec["cls_token_id"], spec["sep_token_id"], spec["pad_token_id"], spec["token_type_ids"]) == (0, 2, 1, False)
+    geometry = (spec["cls_token_id"], spec["sep_token_id"], spec["pad_token_id"], spec["token_type_ids"])
+    assert geometry == (0, 2, 1, False)
     assert contract["behavior"]["output_name"] == "logits"
     assert contract["behavior"]["score_activation"] == "identity"
     # The pinned config declares no activation, so the reference passes identity explicitly; ms-marco's config does.
