@@ -2,7 +2,8 @@
 
 Point it at the running page (npm run dev, or any server of dist/ with the isolation headers). It loads the selected
 graph, samples the page's frame counter while loading (it advances only if the main thread is free, the reason for the
-Web Worker), runs queries and records the top hits, the runtime panel and a screenshot.
+Web Worker), runs queries and records the top hits, the runtime panel and a screenshot. Exits non-zero on a load
+error, a page error or any failed request other than /favicon.ico.
 
 Usage:
     python smoke_js_sample.py --url http://127.0.0.1:5173/ --out smoke-js.json \
@@ -13,6 +14,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import sys
 import time
 from pathlib import Path
 
@@ -44,6 +46,9 @@ def main() -> None:
         page.set_default_timeout(args.timeout_s * 1000)
         page.on("console", lambda m: console.append(f"{m.type}: {m.text}"[:500]))
         page.on("pageerror", lambda e: console.append(f"pageerror: {e}"[:500]))
+        # Every failed request is recorded; only the favicon (the sample has none) is expected to 404.
+        failed: list[str] = []
+        page.on("response", lambda r: failed.append(f"{r.status} {r.url}") if r.status >= 400 else None)
         page.goto(args.url)
         page.wait_for_selector("button.primary")
         page.select_option("select >> nth=0", args.variant)
@@ -71,6 +76,8 @@ def main() -> None:
         page.screenshot(path=str(args.out.with_suffix(".png")), full_page=True)
         browser.close()
     result["console"] = console[-30:]
+    result["failed_requests"] = failed
+    unexpected = [f for f in failed if not f.endswith("/favicon.ico")]
     args.out.write_text(json.dumps(result, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
     print(
         json.dumps(
@@ -79,6 +86,8 @@ def main() -> None:
             ensure_ascii=False,
         )
     )
+    if "error" in result or unexpected or any(line.startswith("pageerror") for line in console):
+        sys.exit(f"smoke test failed: {result.get('error') or unexpected or 'page error'}")
 
 
 if __name__ == "__main__":

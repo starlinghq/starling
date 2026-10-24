@@ -36,11 +36,22 @@ public static partial class E5Exports
             return Describe();
         }
 
-        bool webGpu = provider == "webgpu";
+        var graph = variant switch
+        {
+            "fp32" => E5BrowserVariant.Fp32,
+            "int8embed" => E5BrowserVariant.Int8Embed,
+            _ => throw new ArgumentException($"variant '{variant}' is not 'fp32' or 'int8embed'.", nameof(variant)),
+        };
+        bool webGpu = provider switch
+        {
+            "wasm" => false,
+            "webgpu" => true,
+            _ => throw new ArgumentException($"provider '{provider}' is not 'wasm' or 'webgpu'.", nameof(provider)),
+        };
         _embedder = await E5BrowserEmbedder.LoadAsync(
             new E5BrowserLoadOptions
             {
-                Variant = variant == "int8embed" ? E5BrowserVariant.Int8Embed : E5BrowserVariant.Fp32,
+                Variant = graph,
                 ModelUrl = string.IsNullOrEmpty(modelUrl) ? null : modelUrl,
                 Provider = webGpu ? OnnxWebExecutionProvider.WebGpu : OnnxWebExecutionProvider.Wasm,
                 // One onnxruntime-web bundle per worker; the WASM-only one is the smaller download.
@@ -86,7 +97,9 @@ public static partial class E5Exports
     {
         "query" => E5TextEmbedder.QueryPrefix,
         "passage" => E5TextEmbedder.PassagePrefix,
-        _ => string.Empty,
+        "none" => string.Empty,
+        // A misspelt input type would silently drop e5's prefix and degrade retrieval: reject it.
+        _ => throw new ArgumentException($"inputType '{inputType}' is not 'query', 'passage' or 'none'.", nameof(inputType)),
     };
 
     private static string Describe()

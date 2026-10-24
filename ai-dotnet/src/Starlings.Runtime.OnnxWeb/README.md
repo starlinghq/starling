@@ -36,7 +36,9 @@ int[] shape = await session.RunAsync(
 - **Threads.** More than one needs a cross-origin isolated page (COOP `same-origin`, COEP `require-corp` or `credentialless`); `OnnxWebRuntimeInfo` reports what's in effect.
 - **Proxy worker.** `Proxy = true` runs the WASM backend in onnxruntime-web's worker, so the page never blocks during inference. It's experimental and WASM-only.
 - **Threading model.** It supports the default single-threaded .NET browser runtime, not `WasmEnableThreads`.
-- **Hosts.** It runs on a page (Blazor WebAssembly, or any .NET `browser-wasm` app) and in a Web Worker. In a worker, URLs resolve against the worker script's location, so place the worker next to `_framework/` and `_content/`. `ai-dotnet/samples/E5BrowserJs` hosts it in a worker behind a JavaScript API.
+- **Hosts.**
+  - **On a page** (Blazor WebAssembly, or any .NET `browser-wasm` app): experimental, with the conformance evidence of the e5 browser profiles.
+  - **In a Web Worker:** experimental, from one smoke run (`docs/evidence/browser-e5-package-2026-10-23/js-host/`); the worker path has no gate evidence of its own. In a worker, URLs resolve against the worker script's location, so place the worker next to `_framework/` and `_content/`, as `dotnet.js` requires anyway. `ai-dotnet/samples/E5BrowserJs` hosts it in a worker behind a JavaScript API.
 
 ## Build
 

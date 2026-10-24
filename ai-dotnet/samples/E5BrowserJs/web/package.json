@@ -5,7 +5,7 @@
   "license": "MIT",
   "type": "module",
   "scripts": {
-    "bundle": "dotnet publish ../E5Wasm -c Release -o .bundle && node scripts/copy-bundle.mjs .bundle/wwwroot public/e5",
+    "bundle": "node scripts/copy-bundle.mjs --clean .bundle && dotnet publish ../E5Wasm -c Release -o .bundle && node scripts/copy-bundle.mjs .bundle/wwwroot public/e5",
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview"

@@ -19,7 +19,7 @@ import { createE5, cosine } from "./e5.js";
 
 const e5 = await createE5({
   variant: "int8embed",                         // or "fp32" (loads from the Hugging Face Hub when modelUrl is empty)
-  modelUrl: "/models/model-int8-embed.onnx",
+  modelUrl: "models/model-int8-embed.onnx",            // resolved against the page
   provider: "wasm",                             // or "webgpu"
   onProgress: ({ stage, received, total }) => console.log(stage, received, total),
 });
@@ -29,7 +29,8 @@ cosine(query, docs[0]);
 e5.info;   // { profile, dimension, ortVersion, bundle, threads, cores, crossOriginIsolated }
 ```
 
-- **Input types.** `"query"` and `"passage"` add e5's prefixes; `"none"` embeds the text as given.
+- **Input types.** `"query"` and `"passage"` add e5's prefixes; `"none"` embeds the text as given. Unknown variants, providers or input types are rejected, never silently replaced.
+- **Failure and teardown.** A failed load terminates its worker. `terminate()` rejects any call still in flight.
 - **Returned vectors.** They are transferred from the worker, not copied.
 - **One model per page.** The model loads once per `createE5` call. Keep one instance (for example in a React context).
 
@@ -44,6 +45,8 @@ cp <dir>/model-int8-embed.onnx public/models/
 npm run dev             # http://localhost:5173/  (vite.config.js sends the isolation headers)
 ```
 
+After `npm run bundle`, restart `npm run dev`. Vite's dev server caches the list of files in `public/`, and while it runs it answers replaced files with `index.html`. The worker then fails to import `dotnet.js` ("e5 worker error").
+
 Pick **int8-embed** or **fp32 from the Hub**, then click **Load**. In the evidence run, int8-embed was ready in about 8 s with 4 inference threads, and each query took about 20 ms in the worker.
 
 `E5Wasm/E5Wasm.csproj` references the packages by version (`StarlingsVersion`). Until that version is on nuget.org, build against a local feed packed from this repository, as for the other samples (`../README.md`).
@@ -53,7 +56,7 @@ Pick **int8-embed** or **fp32 from the Hub**, then click **Load**. In the eviden
 - **Build.** `npm run build` writes `dist/`. The React code is bundled (about 50 KB gzipped); the .NET bundle stays plain static files under `dist/e5/`. Vite does not bundle `dotnet.js`, because it loads its fingerprinted parts at run time. Keep model files out of `dist/` (or out of `public/models/`) and host them where the app can fetch them.
 - **Headers.** Serve with `Cross-Origin-Opener-Policy: same-origin` and `Cross-Origin-Embedder-Policy: require-corp` for several inference threads. Without them it runs one thread, 3–4x slower. The page must be https or localhost, because model SHA-256 verification uses SubtleCrypto.
 - **Download.** The .NET runtime and assemblies are a few MB brotli, plus onnxruntime-web: 2.3 MB for the WASM bundle, about 4 MB with WebGPU. Remove `Starlings.Runtime.OnnxWeb.WebGpu` from `E5Wasm.csproj` (and the WebGPU option in `App.jsx`) to ship only WASM.
-- **The bundle as a package.** To use it in several apps, publish `E5Wasm` once and ship `public/e5/` (worker plus `_framework/` and `_content/`) and `src/e5.js` as an npm package. `createE5({ base })` points at wherever the files are served.
+- **The bundle as a package.** To use it in several apps, publish `E5Wasm` once and ship `public/e5/` (worker plus `_framework/` and `_content/`) and `src/e5.js` as an npm package. `createE5({ base })` points at where the files are served. By default that's the app's base path plus `e5/`, so a Vite `base` such as `/app/` works. Browsers require the worker script to be on the page's origin, so serve the bundle from the app, not from a CDN on another origin.
 
 ## Maturity
 

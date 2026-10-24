@@ -3,7 +3,13 @@
 import { cpSync, existsSync, rmSync } from "node:fs";
 import { join } from "node:path";
 
-const [from, to] = process.argv.slice(2);
+const args = process.argv.slice(2);
+if (args[0] === "--clean") {
+  // dotnet publish -o adds to the folder without removing older fingerprinted files: start from an empty one.
+  rmSync(args[1], { recursive: true, force: true });
+  process.exit(0);
+}
+const [from, to] = args;
 for (const dir of ["_framework", "_content"]) {
   if (!existsSync(join(from, dir))) throw new Error(`${join(from, dir)} is missing: publish ../E5Wasm first`);
   rmSync(join(to, dir), { recursive: true, force: true });

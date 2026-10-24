@@ -14,7 +14,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <!-- The release drill fails if this differs from the version it packs. -->
+    <!-- Follows the repository version, like the other samples (set it to the version you consume from nuget.org). -->
     <StarlingsVersion>0.3.0</StarlingsVersion>
   </PropertyGroup>
 

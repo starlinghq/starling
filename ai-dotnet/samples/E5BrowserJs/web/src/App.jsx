@@ -45,7 +45,7 @@ function FrameTicker() {
 
 export default function App() {
   const [variant, setVariant] = useState("int8embed");
-  const [modelUrl, setModelUrl] = useState("/models/model-int8-embed.onnx");
+  const [modelUrl, setModelUrl] = useState("models/model-int8-embed.onnx");
   const [provider, setProvider] = useState("wasm");
   const [loading, setLoading] = useState(false);
   const [progress, setProgress] = useState(null);
@@ -87,15 +87,20 @@ export default function App() {
   async function search(text) {
     if (!text.trim() || !e5.current) return;
     setQuery(text);
-    const started = performance.now();
-    const q = await e5.current.embed(text, "query");
-    const ms = performance.now() - started;
-    const ranked = engine.corpus
-      .map((p) => ({ ...p, score: cosine(q, p.vector) }))
-      .sort((a, b) => b.score - a.score)
-      .slice(0, 5);
-    setHits({ query: text, ranked });
-    setTiming(ms);
+    setError(null);
+    try {
+      const started = performance.now();
+      const q = await e5.current.embed(text, "query");
+      const ms = performance.now() - started;
+      const ranked = engine.corpus
+        .map((p) => ({ ...p, score: cosine(q, p.vector) }))
+        .sort((a, b) => b.score - a.score)
+        .slice(0, 5);
+      setHits({ query: text, ranked });
+      setTiming(ms);
+    } catch (e) {
+      setError(String(e.message ?? e));
+    }
   }
 
   return (

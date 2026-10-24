@@ -4,7 +4,7 @@
  "queries": [
   {
    "query": "how long should I soak rice before cooking",
-   "meta": "Query embedded in 27 ms (in the worker).",
+   "meta": "Query embedded in 49 ms (in the worker).",
    "top": [
     "0.833JAおいしいご飯を炊くには、お米を研いでから三十分ほど水に浸しておきます。",
     "0.827ENTo keep basil fresh, trim the stems and stand it in a glass of water on the kitchen counter, not in the fridge.",
@@ -13,7 +13,7 @@
   },
   {
    "query": "Wann kann ich Bücher ausleihen?",
-   "meta": "Query embedded in 21 ms (in the worker).",
+   "meta": "Query embedded in 38 ms (in the worker).",
    "top": [
     "0.803DEDie Bibliothek ist am Samstag von zehn bis sechzehn Uhr geöffnet, sonntags bleibt sie geschlossen.",
     "0.747DEFür einen guten Hefeteig sollte die Milch lauwarm sein, sonst geht der Teig nicht richtig auf.",
@@ -22,7 +22,7 @@
   },
   {
    "query": "earthquakes and tectonic plates",
-   "meta": "Query embedded in 22 ms (in the worker).",
+   "meta": "Query embedded in 92 ms (in the worker).",
    "top": [
     "0.816ESLos terremotos se producen cuando las placas tectónicas liberan energía de forma repentina.",
     "0.782ENPhotosynthesis turns sunlight, water and carbon dioxide into sugar and oxygen inside the leaves of plants.",
@@ -31,29 +31,38 @@
   }
  ],
  "browser_version": "153.0.8010.12",
- "load_s": 7.719404773000861,
+ "load_s": 11.971130433998042,
  "ticker_during_load": [
-  "7 frames",
-  "38 frames",
-  "68 frames",
-  "99 frames",
-  "129 frames",
-  "160 frames",
-  "191 frames",
-  "221 frames",
-  "252 frames",
-  "282 frames",
-  "314 frames",
-  "344 frames",
-  "375 frames",
-  "405 frames",
-  "436 frames"
+  "15 frames",
+  "46 frames",
+  "76 frames",
+  "107 frames",
+  "138 frames",
+  "169 frames",
+  "200 frames",
+  "231 frames",
+  "262 frames",
+  "293 frames",
+  "324 frames",
+  "355 frames",
+  "386 frames",
+  "417 frames",
+  "448 frames",
+  "479 frames",
+  "510 frames",
+  "541 frames",
+  "572 frames",
+  "603 frames",
+  "633 frames",
+  "664 frames",
+  "695 frames"
  ],
- "diagnostics": "Runtime\nProfile\nmultilingual-e5-small/onnx-int8embed-wasm\nonnxruntime-web\n1.30.0 (wasm bundle), in a Web Worker\nThreads\n4 of 12 logical cores\nLoad\n7.6 s, corpus embedded in 944 ms",
+ "diagnostics": "Runtime\nProfile\nmultilingual-e5-small/onnx-int8embed-wasm\nonnxruntime-web\n1.30.0 (wasm bundle), in a Web Worker\nThreads\n4 of 12 logical cores\nLoad\n11.8 s, corpus embedded in 1733 ms",
  "console": [
   "debug: [vite] connecting...",
   "debug: [vite] connected.",
   "info: %cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold",
   "error: Failed to load resource: the server responded with a status of 404 (Not Found)"
- ]
+ ],
+ "failed_requests": []
 }
