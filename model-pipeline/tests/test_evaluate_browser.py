@@ -12,7 +12,7 @@ import pytest
 import yaml
 from synthetic_profile import EMBEDDING, IDS, MODEL_SHA, PROFILE, PROTECTED, TOLERANCES, SyntheticRepo
 
-from model_pipeline import browser_results, catalog, evaluate, fixtures, manifest, results
+from model_pipeline import browser_results, catalog, evaluate, fixtures, manifest, protection, results
 from model_pipeline import evaluate_task_quality as tq
 from model_pipeline.cli import main
 
@@ -74,9 +74,17 @@ class BrowserRepo(SyntheticRepo):
         return self._write(data, "export")
 
     def run_file(
-        self, noise: float = 0.0, text_noise: float = 0.0, model_sha: str = MODEL_SHA, error: str | None = None
+        self,
+        noise: float = 0.0,
+        text_noise: float = 0.0,
+        model_sha: str = MODEL_SHA,
+        error: str | None = None,
+        top: dict | None = None,
+        fixtures_sha256: dict | None = None,
     ) -> Path:
-        """A run_conformance.py result file: browser embeddings = reference + `noise` on component 1."""
+        """A run_conformance.py result file: browser embeddings = reference + `noise` on component 1.
+
+        Without `top` it has the older run-file shape (no source_commit, browser or fixtures digests)."""
 
         def emb(cid: str, extra: float = 0.0) -> list[float]:
             return fixtures.float32_list(v + ((noise + extra) if i == 1 else 0.0) for i, v in enumerate(EMBEDDING[cid]))
@@ -92,11 +100,17 @@ class BrowserRepo(SyntheticRepo):
             "batch8": {c: emb(c) for c in ("ascii", "long")},
             "generator_embeddings": {c: emb(c, text_noise) for c in IDS},
         }
+        if fixtures_sha256 is not None:
+            run["fixtures_sha256"] = fixtures_sha256
         if error:
             run = {"error": error}
         path = self.runs / f"run-{len(list(self.runs.iterdir()))}.json"
-        path.write_text(json.dumps({"label": "aot", "browser_version": "153", "run": run}), encoding="utf-8")
+        data = {"label": "aot", "browser_version": "153", "run": run} | (top or {})
+        path.write_text(json.dumps(data), encoding="utf-8")
         return path
+
+    def fixture_digests(self) -> dict[str, str]:
+        return {n: fixtures.sha256_file(self.protected / n) for n in browser_results.FIXTURE_FILES}
 
     def convert(self, run: Path) -> dict[str, Path]:
         return browser_results.convert(run, self.manifest, self.protected, self.results, machine="box")
@@ -232,9 +246,81 @@ def test_cli_browser_results(int8, capsys):
     args = ["browser-results", str(run), "--manifest", str(int8.manifest), "--fixtures", str(int8.protected)]
     assert main([*args, "--out", str(int8.results)]) == 0
     assert "dotnet" in capsys.readouterr().out
-    assert main([*args, "--out", str(int8.results), "--repository-commit", "x"]) == 0
+    assert main([*args, "--out", str(int8.results), "--converted-at-commit", "x"]) == 0
+    assert results.load(int8.results / "dotnet.results.json").producer["converted_at_commit"] == "x"
     bad = int8.run_file(error="boom")
     assert main(["browser-results", str(bad), *args[2:], "--out", str(int8.results)]) == 2
+
+
+def test_cli_browser_results_reports_malformed_inputs(int8, tmp_path):
+    run = int8.run_file()
+    base = ["--fixtures", str(int8.protected), "--out", str(int8.results)]
+    broken = tmp_path / "broken.json"
+    broken.write_text("{not json", encoding="utf-8")
+    assert main(["browser-results", str(broken), "--manifest", str(int8.manifest), *base]) == 2
+    bad_yaml = tmp_path / "manifest.yaml"
+    bad_yaml.write_text("a: [unclosed\n", encoding="utf-8")
+    assert main(["browser-results", str(run), "--manifest", str(bad_yaml), *base]) == 2
+    incomplete = tmp_path / "incomplete.yaml"
+    incomplete.write_text("schema_version: 1\nid: x/y\n", encoding="utf-8")
+    assert main(["browser-results", str(run), "--manifest", str(incomplete), *base]) == 2
+    assert main(["browser-results", str(tmp_path / "missing.json"), "--manifest", str(int8.manifest), *base]) == 2
+
+
+def test_fp32_same_graph_without_native_stage_does_not_block_g2(tmp_path):
+    repo = BrowserRepo(tmp_path / "repo", FP32_LIKE)
+    repo.native()
+    repo.convert(repo.run_file())
+    (repo.results / "export.results.json").unlink()
+    ev = repo.evaluate()
+    same = check(ev, "dotnet.embedding.vs_native_same_graph")
+    assert same["status"] == "not-applicable" and "no results for 'export'" in same["detail"]
+    # G2 is not-run here only because stage 2's own checks did not run, not because of the report-only comparison.
+    assert all(c["id"].startswith("export.") for c in ev.report["checks"] if c["status"] == "not-run")
+
+
+def test_fp32_same_graph_digest_mismatch_does_not_block_g2(tmp_path):
+    repo = BrowserRepo(tmp_path / "repo", FP32_LIKE)
+    native = repo.native()
+    data = json.loads(native.read_text(encoding="utf-8"))
+    data["assets"] = [{"path": "other.onnx", "sha256": "dd" * 32}]  # declares no profile graph
+    native.write_text(json.dumps(data), encoding="utf-8")
+    repo.convert(repo.run_file())
+    ev = repo.evaluate()
+    same = check(ev, "dotnet.embedding.vs_native_same_graph")
+    assert same["status"] == "not-applicable" and "same graph" in same["detail"]
+    assert same["id"] not in ev.report["gates"]["G2"]["reason"]
+
+
+def test_provenance_comes_from_the_run(int8):
+    top = {
+        "source_commit": "abc123-dirty",
+        "browser": {"name": "chromium", "version": "153.0.8010.12", "executable": "playwright-default"},
+    }
+    paths = int8.convert(int8.run_file(top=top, fixtures_sha256=int8.fixture_digests()))
+    for path in paths.values():
+        stage = results.load(path)
+        assert stage.producer["repository_commit"] == "abc123-dirty"
+        assert stage.producer["fixtures_sha256"] == int8.fixture_digests()
+        assert stage.environment["browser"] == "chromium 153.0.8010.12"
+
+
+def test_older_runs_record_what_is_missing_not_the_converters_head(int8):
+    paths = browser_results.convert(
+        int8.run_file(), int8.manifest, int8.protected, int8.results, converted_at_commit="deadbeef"
+    )
+    stage = results.load(paths["dotnet"])
+    assert stage.producer["repository_commit"] == browser_results.UNRECORDED_COMMIT
+    assert stage.producer["converted_at_commit"] == "deadbeef"
+    assert stage.producer["fixtures_sha256"] == browser_results.FIXTURES_NOT_RECORDED
+    assert stage.environment["browser"] == "chromium 153"
+    assert "Chrome for Testing" not in json.dumps(stage.environment)
+
+
+def test_fixture_digests_must_match_the_fixtures(int8):
+    wrong = int8.fixture_digests() | {"tokenizer.jsonl": "00" * 32}
+    with pytest.raises(browser_results.BrowserResultsError, match="tokenizer.jsonl"):
+        int8.convert(int8.run_file(fixtures_sha256=wrong))
 
 
 # The Preview metric in G3 ---------------------------------------------------------------------------
@@ -338,6 +424,37 @@ def test_g3_preview_overlap_needs_the_budgeted_held_out_set(tmp_path):
     assert preview(ev)["status"] == "not-run" and "P-030" in preview(ev)["detail"]
 
 
+def test_g3_preview_overlap_needs_a_verified_budget(tmp_path, monkeypatch):
+    data = tq.load_retrieval_set(SMOKE / "retrieval")
+    root = tmp_path / "repo"
+    man = g3_repo(root, tq.dataset_digest(data.files[:3]))
+    fp32 = embeddings(tmp_path / "fp32.jsonl", data)
+    real = protection.verify_unchanged
+
+    def budget_unverifiable(repo_root, paths, base="auto"):
+        if any(p.name == tq.BUDGET_FILE for p in paths):
+            return protection.Verification("unverified", None, "test: no base", [], {})
+        return real(repo_root, paths, base)
+
+    monkeypatch.setattr(protection, "verify_unchanged", budget_unverifiable)
+    ev = tq.evaluate(man, "retrieval", SMOKE / "retrieval", fp32, baseline=fp32, repo_root=root, protected_base="HEAD")
+    assert preview(ev)["value"] == pytest.approx(1.0)
+    assert preview(ev)["status"] == "not-run" and tq.BUDGET_FILE in preview(ev)["detail"]
+    assert preview(ev)["budget_protected_evidence"] == "unverified"
+
+
+def test_g3_preview_overlap_with_a_changed_budget_is_not_preview_evidence(tmp_path):
+    data = tq.load_retrieval_set(SMOKE / "retrieval")
+    root = tmp_path / "repo"
+    man = g3_repo(root, tq.dataset_digest(data.files[:3]))
+    budget = root / PROTECTED / tq.BUDGET_FILE
+    budget.write_text(budget.read_text(encoding="utf-8") + "# edited\n", encoding="utf-8")
+    fp32 = embeddings(tmp_path / "fp32.jsonl", data)
+    ev = tq.evaluate(man, "retrieval", SMOKE / "retrieval", fp32, baseline=fp32, repo_root=root, protected_base="HEAD")
+    assert preview(ev)["status"] == "not-run" and "differs from the base commit" in preview(ev)["detail"]
+    assert ev.exit_code == tq.EXIT_PROTECTED
+
+
 # Manifest schema and catalog ------------------------------------------------------------------------
 
 
@@ -369,6 +486,6 @@ def test_catalog_labels_browser_platforms_and_regression_note():
     assert catalog.Platform.of({"os": "linux", "arch": "x64", "provider": "cpu"}).label == "linux-x64 cpu"
     readiness = {"ready": False, "gates_not_passed": ["G3"], "untested_capabilities": []}
     text = catalog.stable_readiness_text(readiness, scheduled_regression=False, browser=True)
-    assert "browser regression" in text and "GPU" not in text
+    assert text.endswith(catalog.BROWSER_PROMOTION_NOTE.removeprefix("promotion ")) and "GPU" not in text
     gpu = catalog.stable_readiness_text(readiness, scheduled_regression=False)
     assert gpu == "gates not passed: G3; promotion also awaits a green per-release GPU regression run"

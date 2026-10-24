@@ -20,7 +20,15 @@ from dataclasses import dataclass
 from pathlib import Path, PurePosixPath
 from typing import Any
 
-from model_pipeline.manifest import GATES, SCHEMA_PATH, find_manifests, load, stable_blockers, validate_file
+from model_pipeline.manifest import (
+    BROWSER_BACKEND,
+    GATES,
+    SCHEMA_PATH,
+    find_manifests,
+    load,
+    stable_blockers,
+    validate_file,
+)
 
 CATALOG_FORMAT = "starlings-catalog/1"
 UNRECORDED = "unrecorded"
@@ -53,8 +61,9 @@ VOCABULARY = (
 # on manual dispatch, so a CUDA-only profile has no scheduled regression runs.
 SCHEDULED_REGRESSION_PROVIDERS = ("cpu",)
 GPU_PROMOTION_NOTE = "promotion awaits a green per-release GPU regression run"
-BROWSER_RUNTIME = "onnxruntime-web"
-BROWSER_PROMOTION_NOTE = "promotion awaits a passing history of the qualification job 'browser' (WASM, headless Chromium)"
+BROWSER_PROMOTION_NOTE = (
+    "promotion awaits a passing history of the qualification job 'browser' (WASM, headless Chromium)"
+)
 
 # Package README maturity blocks.
 PACKAGE_READMES = "ai-dotnet/src/*/README.md"
@@ -287,7 +296,7 @@ def _render_readme(catalog: dict[str, Any], out: Path, repo_root: Path) -> str:
                 p["stable_readiness"],
                 maturity=p["maturity"],
                 scheduled_regression=p["scheduled_regression"],
-                browser=p["execution"]["runtime"] == BROWSER_RUNTIME,
+                browser=p["execution"]["runtime"] == BROWSER_BACKEND,
             ),
         ]
         for p in profiles

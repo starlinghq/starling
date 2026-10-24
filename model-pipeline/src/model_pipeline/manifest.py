@@ -14,6 +14,23 @@ from jsonschema import Draft202012Validator
 SCHEMA_PATH = Path(__file__).resolve().parents[2] / "schemas" / "model-manifest.schema.json"
 MANIFEST_NAME = "manifest.yaml"
 GATES = tuple(f"G{i}" for i in range(8))
+# Execution backend of the browser profiles (onnxruntime-web in a .NET browser-wasm app; follow-up plan W6).
+BROWSER_BACKEND = "onnxruntime-web"
+
+
+def is_browser(manifest: dict[str, Any]) -> bool:
+    return manifest.get("execution", {}).get("backend", {}).get("name") == BROWSER_BACKEND
+
+
+def graph_asset(manifest: dict[str, Any]) -> dict[str, Any]:
+    """The graph a profile runs: `execution.graph.asset` when the manifest has one, else its first `.onnx` file."""
+    asset = (manifest.get("execution", {}).get("graph") or {}).get("asset")
+    if isinstance(asset, dict) and "path" in asset:
+        return asset
+    for f in manifest["origin"]["files"]:
+        if f["path"].endswith(".onnx"):
+            return f
+    raise ValueError(f"{manifest['id']}: the manifest names no ONNX graph")
 
 
 class _Loader(yaml.SafeLoader):

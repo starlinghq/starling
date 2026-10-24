@@ -21,6 +21,13 @@ The browser run records no per-case ids for its embeddings: the conformance app 
 of the graph the loader verified (`run.load.model_sha256`); the converter refuses a run whose graph is not the
 manifest's. `tokenizer.json` is declared with the manifest's digest, which the browser loader enforces
 (`E5BrowserAssets`). Like every producer, the converter writes outputs only, never thresholds.
+
+Provenance comes from the run, never from the converter: `producer.repository_commit` is the run's `source_commit`
+(the commit the harness was built and run from), or `UNRECORDED_COMMIT` for runs that predate it, and the converting
+HEAD is recorded separately as `producer.converted_at_commit`. `environment.browser` is the run's `browser` field (or
+its older `browser_version`). When the run records `run.fixtures_sha256` (the digests of the fixture bytes the app
+fetched), they must equal the `--fixtures` files; older runs are converted with `FIXTURES_NOT_RECORDED` in
+`producer.fixtures_sha256`.
 """
 
 from __future__ import annotations
@@ -34,22 +41,41 @@ from model_pipeline import fixtures, manifest, results
 PRODUCER = "browser/conformance/run_conformance.py (E5Conformance) via model-pipeline browser-results"
 TEXT_BATCH = "generator-all-cases"
 ID_BATCH = "short-b8"
-BROWSER_BACKEND = "onnxruntime-web"
+# Recorded when a run file predates the harness's `source_commit` field: the converter never substitutes its own HEAD.
+UNRECORDED_COMMIT = "unrecorded (run predates source_commit)"
+FIXTURES_NOT_RECORDED = "fixtures digest not recorded by the run"
+FIXTURE_FILES = ("embeddings.jsonl", "tokenizer.jsonl")
 
 
 class BrowserResultsError(ValueError):
     """The conformance run cannot be converted (failed run, wrong profile or graph, incomplete outputs)."""
 
 
-def graph_asset(man: dict[str, Any]) -> dict[str, Any]:
-    """The graph a profile runs: `execution.graph.asset` when the manifest has one, else its first `.onnx` file."""
-    asset = (man.get("execution", {}).get("graph") or {}).get("asset")
-    if isinstance(asset, dict) and "path" in asset:
-        return asset
-    for f in man["origin"]["files"]:
-        if f["path"].endswith(".onnx"):
-            return f
-    raise BrowserResultsError(f"{man['id']}: the manifest names no ONNX graph")
+def _browser(data: dict[str, Any]) -> str | None:
+    """`chromium <version>` from the run's `browser` field, else from its older top-level `browser_version`."""
+    browser = data.get("browser")
+    if isinstance(browser, dict) and browser.get("version"):
+        return f"{browser.get('name') or 'chromium'} {browser['version']}"
+    if data.get("browser_version"):
+        return f"chromium {data['browser_version']}"
+    return None
+
+
+def _fixtures_provenance(run_file: Path, run: dict[str, Any], fixtures_dir: Path) -> dict[str, str] | str:
+    """The fixture digests the run recorded, checked against the --fixtures files; or the reason there are none."""
+    recorded = run.get("fixtures_sha256")
+    if recorded is None:
+        return FIXTURES_NOT_RECORDED
+    if not isinstance(recorded, dict):
+        raise BrowserResultsError(f"{run_file}: run.fixtures_sha256 must map file names to SHA-256 digests")
+    for name in FIXTURE_FILES:
+        actual = fixtures.sha256_file(fixtures_dir / name)
+        if recorded.get(name) != actual:
+            raise BrowserResultsError(
+                f"{run_file}: the run fetched {name} with SHA-256 {recorded.get(name)}; {fixtures_dir / name} is "
+                f"{actual}, so the run was not made on these fixtures"
+            )
+    return {name: recorded[name] for name in FIXTURE_FILES}
 
 
 def _file(man: dict[str, Any], path: str) -> dict[str, Any]:
@@ -66,19 +92,27 @@ def convert(
     out_dir: Path,
     *,
     machine: str | None = None,
-    repository_commit: str | None = None,
+    converted_at_commit: str | None = None,
 ) -> dict[str, Path]:
     """Write `tokenizer.results.json` and `dotnet.results.json` for one conformance run; returns their paths."""
     data = json.loads(run_file.read_text(encoding="utf-8"))
     run = data.get("run") or {}
     if "error" in run:
         raise BrowserResultsError(f"{run_file}: the run failed: {str(run['error']).splitlines()[0]}")
+    problems = manifest.validate_file(manifest_path)
+    if problems:
+        raise BrowserResultsError("manifest is invalid: " + "; ".join(str(p) for p in problems))
     man = manifest.load(manifest_path)
-    if man["execution"]["backend"]["name"] != BROWSER_BACKEND:
-        raise BrowserResultsError(f"{manifest_path}: not a browser profile (backend {BROWSER_BACKEND} expected)")
+    if not manifest.is_browser(man):
+        raise BrowserResultsError(
+            f"{manifest_path}: not a browser profile (backend {manifest.BROWSER_BACKEND} expected)"
+        )
     if run.get("profile") != man["id"]:
         raise BrowserResultsError(f"{run_file}: run reports profile {run.get('profile')!r}, manifest is {man['id']!r}")
-    graph = graph_asset(man)
+    try:
+        graph = manifest.graph_asset(man)
+    except ValueError as exc:
+        raise BrowserResultsError(str(exc)) from exc
     ran = (run.get("load") or {}).get("model_sha256")
     if ran != graph["sha256"]:
         raise BrowserResultsError(
@@ -87,6 +121,7 @@ def convert(
         )
     tokenizer_file = _file(man, "tokenizer.json")
 
+    fixtures_digest = _fixtures_provenance(run_file, run, fixtures_dir)
     reference = {r["id"]: r for r in fixtures.read_jsonl(fixtures_dir / "embeddings.jsonl")}
     for name in ("embeddings", "batch8", "generator_embeddings", "e5_tokenizer"):
         if name not in run:
@@ -100,7 +135,7 @@ def convert(
         "machine": machine,
         "provider": run.get("provider"),
         "provider_options": {},
-        "browser": f"Chrome for Testing {data.get('browser_version')}",
+        "browser": _browser(data),
         "cross_origin_isolated": data.get("cross_origin_isolated"),
         "dotnet_runtime": run.get("runtime"),
         "build_label": data.get("label"),
@@ -108,9 +143,17 @@ def convert(
         "run_file": run_file.name,
         "run_file_sha256": fixtures.sha256_file(run_file),
     }
-    if machine is None:
-        del environment["machine"]  # the run file does not record its host
-    producer = {"name": PRODUCER, "repository_commit": repository_commit}
+    for key in ("machine", "browser"):
+        if environment[key] is None:
+            del environment[key]  # not recorded
+    source_commit = data.get("source_commit")
+    producer = {
+        "name": PRODUCER,
+        # The commit the harness was built and run from, as the run records it; never the converter's HEAD.
+        "repository_commit": source_commit if isinstance(source_commit, str) and source_commit else UNRECORDED_COMMIT,
+        "converted_at_commit": converted_at_commit,
+        "fixtures_sha256": fixtures_digest,
+    }
     candidate = (
         f"Starlings.Models.E5.Browser on onnxruntime-web {ort_web.get('version')} ({run.get('provider')}, bundle "
         f"{ort_web.get('bundle')}, {ort_web.get('num_threads')} threads), build {data.get('label')}"

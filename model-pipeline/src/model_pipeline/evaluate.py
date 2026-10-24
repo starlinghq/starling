@@ -55,10 +55,9 @@ STAGE_OF_SUBSTAGE = {
     "dotnet-text": "dotnet",
     "preview": "task-metric",
 }
-# Browser profiles (execution backend onnxruntime-web, follow-up plan W6). Their stage 3 is the .NET library in the
-# browser (`browser_results.py`), their stage 2 native ONNX Runtime on the same graph
+# Browser profiles (execution backend manifest.BROWSER_BACKEND, follow-up plan W6). Their stage 3 is the .NET library
+# in the browser (`browser_results.py`), their stage 2 native ONNX Runtime on the same graph
 # (`reference/encoder/stage_e5_browser_native.py`).
-BROWSER_BACKEND = "onnxruntime-web"
 SAME_GRAPH_KEY = "browser_vs_native_same_graph.embedding_max_abs"
 # A task metric that gates Preview, not G1 or G2 (kickoff, browser decision 3). A staged run has no retrieval outputs,
 # so it is listed here as not run, and `evaluate --g3 retrieval --baseline` evaluates it (`evaluate_task_quality.py`).
@@ -331,9 +330,10 @@ class Check:
 
 
 def _graph_path(man: dict[str, Any]) -> str:
-    from model_pipeline import browser_results
-
-    return browser_results.graph_asset(man)["path"]
+    try:
+        return manifest.graph_asset(man)["path"]
+    except ValueError as exc:
+        raise EvaluationError(str(exc)) from exc
 
 
 def _bound(tol: dict[str, Any], key: str) -> float | None:
@@ -352,7 +352,7 @@ class EncoderEvaluator:
         self.tol = flatten(tol)
         self.stages = stages
         self.checks: list[Check] = []
-        self.browser = man["execution"]["backend"]["name"] == BROWSER_BACKEND
+        self.browser = manifest.is_browser(man)
 
     # -- helpers ------------------------------------------------------------------------------
 
@@ -924,8 +924,13 @@ class EncoderEvaluator:
 
         Binding where the protected tolerances set `browser_vs_native_same_graph.embedding_max_abs`; otherwise measured
         and reported only. Both stages must declare the profile's graph with the same digest, or the comparison is
-        invalid. There is no same-machine condition: the bound is about the backend, not the host.
+        invalid while the key is bound. No same-machine condition: the bound is about the backend, not the host.
+
+        Without the key (the fp32 browser profiles) the comparison is a measurement only: a missing stage 2 or a graph
+        digest mismatch leaves it not applicable, with the reason, and never blocks G2.
         """
+        bound_key = SAME_GRAPH_KEY in self.tol
+        report_only = f"report only: {SAME_GRAPH_KEY} is not in the protected tolerances"
         check = Check(
             "dotnet.embedding.vs_native_same_graph",
             "dotnet-ids",
@@ -934,22 +939,28 @@ class EncoderEvaluator:
             _bound(self.tol, SAME_GRAPH_KEY),
         )
         if export is None:
-            self._missing_stage(check, "export")
+            if bound_key:
+                self._missing_stage(check, "export")
+            else:
+                check.status, check.detail = "not-applicable", f"{report_only}; not measured: no results for 'export'"
+                self._add(check)
             return
         graph = _graph_path(self.man)
         mine = {a["path"]: a["sha256"] for a in stage.assets}.get(graph)
         native = {a["path"]: a["sha256"] for a in export.assets}.get(graph)
         if not mine or mine != native:
-            check.status = "invalid"
-            check.detail = f"the stages must run the same graph {graph}: browser declares {mine}, native {native}"
+            problem = f"the stages must run the same graph {graph}: browser declares {mine}, native {native}"
+            check.status, check.detail = (
+                ("invalid", problem) if bound_key else ("not-applicable", f"{report_only}; not measured: {problem}")
+            )
             self._add(check)
             return
         self._compare_vectors(
             check, browser, self._case_output(export, "embedding"), check.bound, expected_stage="export"
         )
-        if SAME_GRAPH_KEY not in self.tol and check.status == "not-run" and check.metrics.get("values"):
+        if not bound_key and check.status == "not-run":
             check.status = "not-applicable"
-            check.detail = f"report only: {SAME_GRAPH_KEY} is not in the protected tolerances"
+            check.detail = report_only + (f"; not measured: {check.detail}" if not check.metrics.get("values") else "")
 
     def check_preview(self) -> None:
         """Task metrics that gate Preview: listed explicitly, never passed by a staged run (see PREVIEW_OVERLAP_KEY)."""

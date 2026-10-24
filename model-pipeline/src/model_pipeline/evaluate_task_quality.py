@@ -599,6 +599,7 @@ def _preview_overlap(
     baseline: Path | None,
     entry: dict[str, Any] | None,
     matched_form: str | None,
+    budget_verification: protection.Verification,
 ) -> dict[str, Any] | None:
     """`task_metric_before_preview.retrieval_top10_overlap_vs_fp32` of the protected tolerances, if the profile has it.
 
@@ -630,6 +631,7 @@ def _preview_overlap(
         "metric": "top10_overlap_vs_baseline.mean",
         "value": value,
         "protected_evidence": verification.status,
+        "budget_protected_evidence": budget_verification.status,
         "status": "not-run",
         "detail": "",
     }
@@ -644,15 +646,26 @@ def _preview_overlap(
         )
     elif verification.status == "changed":
         check["detail"] = f"{tol_rel} differs from the base commit; this run is not Preview evidence"
+    elif budget_verification.status == "changed":
+        check["detail"] = (
+            f"the {BUDGET_FILE} that identifies the held-out set differs from the base commit; this run is not "
+            "Preview evidence"
+        )
     elif value is None:
         check["detail"] = "the overlap metric was not computed"
     else:
+        # The same rule as G3: a measured failure stands; a pass needs both protected files verified against Git.
         check["status"] = "passed" if value >= bound else "failed"
         relation = ">=" if check["status"] == "passed" else "<"
         check["detail"] = f"mean top-10 overlap with fp32 {value:.4f} {relation} {bound}"
-        if check["status"] == "passed" and verification.status != "verified":
+        unverified = [
+            f"{name} not verified against Git ({v.detail})"
+            for name, v in ((tol_rel, verification), (BUDGET_FILE, budget_verification))
+            if v.status != "verified"
+        ]
+        if check["status"] == "passed" and unverified:
             check["status"] = "not-run"
-            check["detail"] += f"; tolerances not verified against Git ({verification.detail})"
+            check["detail"] += "; " + "; ".join(unverified)
     return check
 
 
@@ -815,7 +828,7 @@ def evaluate(
 
     preview = None
     if task == "retrieval":
-        preview = _preview_overlap(root, man, protected_base, metrics, baseline, entry, matched_form)
+        preview = _preview_overlap(root, man, protected_base, metrics, baseline, entry, matched_form, verification)
 
     def rel(p: Path) -> str:
         try:

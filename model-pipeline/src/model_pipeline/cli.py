@@ -182,6 +182,8 @@ def _check_protected(args: argparse.Namespace) -> int:
 
 
 def _browser_results(args: argparse.Namespace) -> int:
+    import yaml
+
     from model_pipeline import browser_results, fixtures, results
 
     try:
@@ -191,9 +193,18 @@ def _browser_results(args: argparse.Namespace) -> int:
             Path(args.fixtures),
             Path(args.out),
             machine=args.machine,
-            repository_commit=args.repository_commit or fixtures.git_head(Path(args.manifest).parent),
+            converted_at_commit=args.converted_at_commit or fixtures.git_head(Path(args.manifest).parent),
         )
-    except (browser_results.BrowserResultsError, results.ResultsError, OSError, KeyError) as exc:
+    except (
+        browser_results.BrowserResultsError,
+        results.ResultsError,
+        json.JSONDecodeError,
+        UnicodeDecodeError,
+        yaml.YAMLError,
+        OSError,
+        KeyError,
+        TypeError,
+    ) as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 2
     for stage, path in paths.items():
@@ -397,7 +408,11 @@ def main(argv: list[str] | None = None) -> int:
     )
     br.add_argument("--out", required=True, help="results directory")
     br.add_argument("--machine", help="host the browser ran on (environment.machine; omitted when not given)")
-    br.add_argument("--repository-commit", help="commit of the conformance app (default: HEAD of the repository)")
+    br.add_argument(
+        "--converted-at-commit",
+        help="commit the conversion ran at (producer.converted_at_commit; default: HEAD of the repository). The "
+        "harness commit (producer.repository_commit) always comes from the run's source_commit",
+    )
     br.set_defaults(func=_browser_results)
 
     cp = sub.add_parser(
