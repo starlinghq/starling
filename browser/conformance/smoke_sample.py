@@ -33,8 +33,9 @@ DEFAULT_QUERIES = [
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("--publish", type=Path, required=True)
-    parser.add_argument("--graphs", type=Path, required=True)
+    parser.add_argument("--publish", type=Path, help="publish output to serve (with --graphs)")
+    parser.add_argument("--graphs", type=Path, help="directory served under /models/")
+    parser.add_argument("--url", help="drive an already running server instead (for example the sample's serve.py)")
     parser.add_argument("--variant", choices=["fp32", "int8embed"], default="int8embed")
     parser.add_argument("--provider", choices=["wasm", "webgpu"], default="wasm")
     parser.add_argument("--chrome", type=Path)
@@ -45,15 +46,21 @@ def main() -> None:
     parser.add_argument("--out", type=Path, required=True)
     parser.add_argument("--screenshot", type=Path)
     args = parser.parse_args()
+    if not args.url and not (args.publish and args.graphs):
+        parser.error("either --url, or --publish and --graphs")
 
     from playwright.sync_api import sync_playwright
 
-    mounts = [("/models/", args.graphs), ("/", args.publish / "wwwroot")]
-    server = serve.SpikeServer(("127.0.0.1", args.port), mounts, not args.no_isolation)
-    import threading
+    server = None
+    if args.url:
+        base = args.url.rstrip("/") + "/"
+    else:
+        mounts = [("/models/", args.graphs), ("/", args.publish / "wwwroot")]
+        server = serve.SpikeServer(("127.0.0.1", args.port), mounts, not args.no_isolation)
+        import threading
 
-    threading.Thread(target=server.serve_forever, daemon=True).start()
-    base = f"http://127.0.0.1:{args.port}/"
+        threading.Thread(target=server.serve_forever, daemon=True).start()
+        base = f"http://127.0.0.1:{args.port}/"
     console: list[str] = []
     result: dict = {"variant": args.variant, "provider": args.provider, "queries": []}
     with sync_playwright() as p:
@@ -71,7 +78,8 @@ def main() -> None:
             page.set_viewport_size({"width": 900, "height": 1400})
             page.screenshot(path=str(args.screenshot), full_page=True)
         browser.close()
-    server.shutdown()
+    if server is not None:
+        server.shutdown()
     result["console"] = console[-50:]
     args.out.write_text(json.dumps(result, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
     print(json.dumps({k: v for k, v in result.items() if k != "console"}, indent=1, ensure_ascii=False))

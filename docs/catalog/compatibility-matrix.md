@@ -6,30 +6,39 @@ Platform (OS, architecture) by runtime and execution provider by profile. A cell
 
 ## onnxruntime
 
-| Profile | Runtime version | Maturity | linux-x64 cpu | linux-x64 cuda | windows-x64 cpu | windows-x64 cuda |
-| --- | --- | --- | --- | --- | --- | --- |
-| embeddinggemma-2/image-fp32-cpu | 1.30.0 | stable | supported (2026-10-16) | unrecorded | untested | unrecorded |
-| embeddinggemma-2/image-fp32-cuda | 1.30.0 | stable | unrecorded | supported (2026-10-16) | unrecorded | untested |
-| embeddinggemma-2/onnx-fp32-cpu | 1.30.0 | stable | supported (2026-10-15) | unrecorded | experimental (2026-10-15) | unrecorded |
-| embeddinggemma-2/onnx-fp32-cuda | 1.30.0 | stable | unrecorded | supported (2026-10-16) | unrecorded | untested |
-| embeddinggemma-2/video-fp32-cpu | 1.30.0 | stable | supported (2026-10-17) | unrecorded | untested | unrecorded |
-| embeddinggemma-2/video-fp32-cuda | 1.30.0 | stable | unrecorded | supported (2026-10-17) | unrecorded | untested |
-| gliner2-base-v1/onnx-fp32-cpu | 1.30.0 | stable | supported (2026-10-15) | supported (2026-10-16) | experimental (2026-10-15) | unrecorded |
-| gliner2-base-v1/onnx-fp32-cuda | 1.30.0 | stable | unrecorded | supported (2026-10-16) | unrecorded | untested |
-| kev-0.8b/onnx-fp32-cpu | 1.30.0 | experimental | experimental (2026-10-16) | experimental (2026-10-17) | untested | unrecorded |
-| kev-0.8b/onnx-fp32-cuda | 1.30.0 | experimental | unrecorded | experimental (2026-10-17) | unrecorded | untested |
-| kev-4b/onnx-fp32-cpu | 1.30.0 | experimental | experimental (2026-10-16) | experimental (2026-10-17) | untested | unrecorded |
-| kev-4b/onnx-fp32-cuda | 1.30.0 | experimental | unrecorded | experimental (2026-10-17) | unrecorded | untested |
-| multilingual-e5-small/onnx-fp32-cpu | 1.30.0 | stable | supported (2026-10-15) | unrecorded | experimental (2026-10-15) | unrecorded |
-| multilingual-e5-small/onnx-fp32-cuda | 1.30.0 | stable | unrecorded | supported (2026-10-16) | unrecorded | untested |
-| whisper-large-v3-turbo/onnx-fp16-cpu | 1.30.0 | experimental | experimental (2026-10-23) | untested | untested | unrecorded |
+| Profile | Runtime version | Maturity | linux-x64 cpu | linux-x64 cuda | linux-x64 wasm chromium-153 | linux-x64 wasm firefox | linux-x64 webgpu chromium-153 | linux-x64 webgpu firefox | macos-arm64 wasm safari | macos-arm64 webgpu safari | windows-x64 cpu | windows-x64 cuda | windows-x64 wasm chromium | windows-x64 webgpu chromium |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| embeddinggemma-2/image-fp32-cpu | 1.30.0 | stable | supported (2026-10-16) | unrecorded | unrecorded | unrecorded | unrecorded | unrecorded | unrecorded | unrecorded | untested | unrecorded | unrecorded | unrecorded |
+| embeddinggemma-2/image-fp32-cuda | 1.30.0 | stable | unrecorded | supported (2026-10-16) | unrecorded | unrecorded | unrecorded | unrecorded | unrecorded | unrecorded | unrecorded | untested | unrecorded | unrecorded |
+| embeddinggemma-2/onnx-fp32-cpu | 1.30.0 | stable | supported (2026-10-15) | unrecorded | unrecorded | unrecorded | unrecorded | unrecorded | unrecorded | unrecorded | experimental (2026-10-15) | unrecorded | unrecorded | unrecorded |
+| embeddinggemma-2/onnx-fp32-cuda | 1.30.0 | stable | unrecorded | supported (2026-10-16) | unrecorded | unrecorded | unrecorded | unrecorded | unrecorded | unrecorded | unrecorded | untested | unrecorded | unrecorded |
+| embeddinggemma-2/video-fp32-cpu | 1.30.0 | stable | supported (2026-10-17) | unrecorded | unrecorded | unrecorded | unrecorded | unrecorded | unrecorded | unrecorded | untested | unrecorded | unrecorded | unrecorded |
+| embeddinggemma-2/video-fp32-cuda | 1.30.0 | stable | unrecorded | supported (2026-10-17) | unrecorded | unrecorded | unrecorded | unrecorded | unrecorded | unrecorded | unrecorded | untested | unrecorded | unrecorded |
+| gliner2-base-v1/onnx-fp32-cpu | 1.30.0 | stable | supported (2026-10-15) | supported (2026-10-16) | unrecorded | unrecorded | unrecorded | unrecorded | unrecorded | unrecorded | experimental (2026-10-15) | unrecorded | unrecorded | unrecorded |
+| gliner2-base-v1/onnx-fp32-cuda | 1.30.0 | stable | unrecorded | supported (2026-10-16) | unrecorded | unrecorded | unrecorded | unrecorded | unrecorded | unrecorded | unrecorded | untested | unrecorded | unrecorded |
+| kev-0.8b/onnx-fp32-cpu | 1.30.0 | experimental | experimental (2026-10-16) | experimental (2026-10-17) | unrecorded | unrecorded | unrecorded | unrecorded | unrecorded | unrecorded | untested | unrecorded | unrecorded | unrecorded |
+| kev-0.8b/onnx-fp32-cuda | 1.30.0 | experimental | unrecorded | experimental (2026-10-17) | unrecorded | unrecorded | unrecorded | unrecorded | unrecorded | unrecorded | unrecorded | untested | unrecorded | unrecorded |
+| kev-4b/onnx-fp32-cpu | 1.30.0 | experimental | experimental (2026-10-16) | experimental (2026-10-17) | unrecorded | unrecorded | unrecorded | unrecorded | unrecorded | unrecorded | untested | unrecorded | unrecorded | unrecorded |
+| kev-4b/onnx-fp32-cuda | 1.30.0 | experimental | unrecorded | experimental (2026-10-17) | unrecorded | unrecorded | unrecorded | unrecorded | unrecorded | unrecorded | unrecorded | untested | unrecorded | unrecorded |
+| multilingual-e5-small/onnx-fp32-cpu | 1.30.0 | stable | supported (2026-10-15) | unrecorded | unrecorded | unrecorded | unrecorded | unrecorded | unrecorded | unrecorded | experimental (2026-10-15) | unrecorded | unrecorded | unrecorded |
+| multilingual-e5-small/onnx-fp32-cuda | 1.30.0 | stable | unrecorded | supported (2026-10-16) | unrecorded | unrecorded | unrecorded | unrecorded | unrecorded | unrecorded | unrecorded | untested | unrecorded | unrecorded |
+| whisper-large-v3-turbo/onnx-fp16-cpu | 1.30.0 | experimental | experimental (2026-10-23) | untested | unrecorded | unrecorded | unrecorded | unrecorded | unrecorded | unrecorded | untested | unrecorded | unrecorded | unrecorded |
 
 ## onnxruntime-genai
 
-| Profile | Runtime version | Maturity | linux-x64 cpu | linux-x64 cuda | windows-x64 cpu | windows-x64 cuda |
-| --- | --- | --- | --- | --- | --- | --- |
-| qwen2.5-0.5b-instruct/ortgenai-fp32-cpu | 0.17.1 | experimental | experimental (2026-10-18) | unrecorded | untested | unrecorded |
-| qwen3-0.6b/ortgenai-fp32-cpu | 0.17.1 | experimental | experimental (2026-10-18) | unrecorded | untested | unrecorded |
-| qwen3.5-0.8b/ortgenai-fp16x-cuda | 0.17.1 | stable | unrecorded | supported (2026-10-16) | unrecorded | untested |
-| qwen3.5-0.8b/ortgenai-fp32x-cpu | 0.17.1 | stable | supported (2026-10-16) | unrecorded | untested | unrecorded |
-| qwen3.5-0.8b/ortgenai-fp32x-cuda | 0.17.1 | stable | unrecorded | supported (2026-10-16) | unrecorded | untested |
+| Profile | Runtime version | Maturity | linux-x64 cpu | linux-x64 cuda | linux-x64 wasm chromium-153 | linux-x64 wasm firefox | linux-x64 webgpu chromium-153 | linux-x64 webgpu firefox | macos-arm64 wasm safari | macos-arm64 webgpu safari | windows-x64 cpu | windows-x64 cuda | windows-x64 wasm chromium | windows-x64 webgpu chromium |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| qwen2.5-0.5b-instruct/ortgenai-fp32-cpu | 0.17.1 | experimental | experimental (2026-10-18) | unrecorded | unrecorded | unrecorded | unrecorded | unrecorded | unrecorded | unrecorded | untested | unrecorded | unrecorded | unrecorded |
+| qwen3-0.6b/ortgenai-fp32-cpu | 0.17.1 | experimental | experimental (2026-10-18) | unrecorded | unrecorded | unrecorded | unrecorded | unrecorded | unrecorded | unrecorded | untested | unrecorded | unrecorded | unrecorded |
+| qwen3.5-0.8b/ortgenai-fp16x-cuda | 0.17.1 | stable | unrecorded | supported (2026-10-16) | unrecorded | unrecorded | unrecorded | unrecorded | unrecorded | unrecorded | unrecorded | untested | unrecorded | unrecorded |
+| qwen3.5-0.8b/ortgenai-fp32x-cpu | 0.17.1 | stable | supported (2026-10-16) | unrecorded | unrecorded | unrecorded | unrecorded | unrecorded | unrecorded | unrecorded | untested | unrecorded | unrecorded | unrecorded |
+| qwen3.5-0.8b/ortgenai-fp32x-cuda | 0.17.1 | stable | unrecorded | supported (2026-10-16) | unrecorded | unrecorded | unrecorded | unrecorded | unrecorded | unrecorded | unrecorded | untested | unrecorded | unrecorded |
+
+## onnxruntime-web
+
+| Profile | Runtime version | Maturity | linux-x64 cpu | linux-x64 cuda | linux-x64 wasm chromium-153 | linux-x64 wasm firefox | linux-x64 webgpu chromium-153 | linux-x64 webgpu firefox | macos-arm64 wasm safari | macos-arm64 webgpu safari | windows-x64 cpu | windows-x64 cuda | windows-x64 wasm chromium | windows-x64 webgpu chromium |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| multilingual-e5-small/onnx-fp32-wasm | 1.30.0 | experimental | unrecorded | unrecorded | experimental (2026-10-23) | untested | unrecorded | unrecorded | untested | unrecorded | unrecorded | unrecorded | untested | unrecorded |
+| multilingual-e5-small/onnx-fp32-webgpu | 1.30.0 | experimental | unrecorded | unrecorded | unrecorded | unrecorded | experimental (2026-10-23) | untested | unrecorded | untested | unrecorded | unrecorded | unrecorded | untested |
+| multilingual-e5-small/onnx-int8embed-wasm | 1.30.0 | experimental | unrecorded | unrecorded | experimental (2026-10-23) | untested | unrecorded | unrecorded | untested | unrecorded | unrecorded | unrecorded | untested | unrecorded |
+| multilingual-e5-small/onnx-int8embed-webgpu | 1.30.0 | experimental | unrecorded | unrecorded | unrecorded | unrecorded | experimental (2026-10-23) | untested | unrecorded | untested | unrecorded | unrecorded | unrecorded | untested |

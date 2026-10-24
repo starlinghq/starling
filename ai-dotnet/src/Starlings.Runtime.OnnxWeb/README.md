@@ -4,7 +4,18 @@
 
 ## Maturity
 
-**Experimental.** WebAssembly has no support badge (plan 13.1). Model profiles that use this runtime are listed in `Starlings.Models.E5.Browser`. Tested in Chrome for Testing 153 on Linux x64; other browsers are untested.
+<!-- catalog:maturity profiles=multilingual-e5-small/onnx-*-wasm,multilingual-e5-small/onnx-*-webgpu -->
+Maturity is per profile, generated from the registry manifests by `model-pipeline catalog` (do not edit this table by hand). Gates, evidence and capabilities per profile: the [model catalog](https://github.com/starlinghq/starling/blob/main/docs/catalog/README.md).
+
+| Profile | Maturity | Platforms |
+| --- | --- | --- |
+| `multilingual-e5-small/onnx-fp32-wasm` | experimental | linux-x64 wasm chromium-153: experimental; linux-x64 wasm firefox: untested; macos-arm64 wasm safari: untested; windows-x64 wasm chromium: untested |
+| `multilingual-e5-small/onnx-fp32-webgpu` | experimental | linux-x64 webgpu chromium-153: experimental; linux-x64 webgpu firefox: untested; macos-arm64 webgpu safari: untested; windows-x64 webgpu chromium: untested |
+| `multilingual-e5-small/onnx-int8embed-wasm` | experimental | linux-x64 wasm chromium-153: experimental; linux-x64 wasm firefox: untested; macos-arm64 wasm safari: untested; windows-x64 wasm chromium: untested |
+| `multilingual-e5-small/onnx-int8embed-webgpu` | experimental | linux-x64 webgpu chromium-153: experimental; linux-x64 webgpu firefox: untested; macos-arm64 webgpu safari: untested; windows-x64 webgpu chromium: untested |
+<!-- /catalog:maturity -->
+
+**Experimental.** WebAssembly has no support badge (plan 13.1). The model profiles that use this runtime are the e5 browser profiles above (the WebGPU ones through `Starlings.Runtime.OnnxWeb.WebGpu`); their capabilities are in `Starlings.Models.E5.Browser`. G1 and G2 pass in Chrome for Testing 153 on Linux x64 (`docs/evidence/browser-e5-package-2026-10-23/gates/`); other browsers and operating systems are untested.
 
 ## Use
 

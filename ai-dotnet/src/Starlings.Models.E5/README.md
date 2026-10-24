@@ -8,7 +8,7 @@ Sentence embeddings from [`intfloat/multilingual-e5-small`](https://huggingface.
 
 ## Maturity
 
-<!-- catalog:maturity profiles=multilingual-e5-small/* -->
+<!-- catalog:maturity profiles=multilingual-e5-small/onnx-fp32-cpu,multilingual-e5-small/onnx-fp32-cuda -->
 Maturity is per profile, generated from the registry manifests by `model-pipeline catalog` (do not edit this table by hand). Gates, evidence and capabilities per profile: the [model catalog](https://github.com/starlinghq/starling/blob/main/docs/catalog/README.md).
 
 | Profile | Maturity | Platforms |

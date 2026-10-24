@@ -4,7 +4,7 @@ ONNX Runtime session ownership for Starlings models: provider selection with no 
 
 ## Maturity
 
-<!-- catalog:maturity profiles=multilingual-e5-small/*,gliner2-base-v1/*,embeddinggemma-2/*,kev-0.8b/*,kev-4b/*,whisper-large-v3-turbo/* -->
+<!-- catalog:maturity profiles=multilingual-e5-small/onnx-fp32-cpu,multilingual-e5-small/onnx-fp32-cuda,gliner2-base-v1/*,embeddinggemma-2/*,kev-0.8b/*,kev-4b/*,whisper-large-v3-turbo/* -->
 Maturity is per profile, generated from the registry manifests by `model-pipeline catalog` (do not edit this table by hand). Gates, evidence and capabilities per profile: the [model catalog](https://github.com/starlinghq/starling/blob/main/docs/catalog/README.md).
 
 | Profile | Maturity | Platforms |

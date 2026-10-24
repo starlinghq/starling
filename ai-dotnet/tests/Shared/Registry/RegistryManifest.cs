@@ -27,7 +27,7 @@ internal sealed partial class RegistryManifest
     /// <summary>Capability name to status, in file order.</summary>
     public IReadOnlyDictionary<string, string> Capabilities { get; }
 
-    /// <summary>Platform (<c>os-arch provider</c>, as the catalog labels it) to status.</summary>
+    /// <summary>Platform (<c>os-arch provider</c>, plus the browser on browser rows, as the catalog labels it) to status.</summary>
     public IReadOnlyDictionary<string, string> Compatibility { get; }
 
     /// <summary>The manifests of a registry family, by profile id.</summary>
@@ -54,7 +54,9 @@ internal sealed partial class RegistryManifest
         {
             if (row is not null)
             {
-                compatibility.Add($"{row["os"]}-{row["arch"]} {row["provider"]}", row["status"]);
+                // Browser rows (providers wasm and webgpu) also name the browser, as the catalog's platform label does.
+                string browser = row.TryGetValue("browser", out var b) ? " " + b.Trim('"') : string.Empty;
+                compatibility.Add($"{row["os"]}-{row["arch"]} {row["provider"]}{browser}", row["status"]);
                 row = null;
             }
         }

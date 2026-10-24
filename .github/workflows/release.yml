@@ -48,6 +48,12 @@ jobs:
       - uses: actions/setup-dotnet@26b0ec14cb23fa6904739307f278c14f94c95bf1 # v5
         with:
           global-json-file: global.json
+      # npm ci for onnxruntime-web, the static web assets the drill packs (ai-dotnet/src/Shared/OnnxWeb).
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: ai-dotnet/src/Shared/OnnxWeb/package-lock.json
       - name: Version
         id: version
         run: |
@@ -135,8 +141,9 @@ jobs:
           NUGET_API_KEY: ${{ steps.nuget.outputs.NUGET_API_KEY }}
         run: |
           order=(
-            Starlings.Acquisition Starlings.Runtime.Onnx Starlings.Generation.OnnxGenAI
-            Starlings.Models.E5 Starlings.Models.Gliner2 Starlings.Models.EmbeddingGemma2 Starlings.Models.Qwen35
+            Starlings.Acquisition Starlings.Runtime.Onnx Starlings.Generation.OnnxGenAI Starlings.Runtime.OnnxWeb
+            Starlings.Models.E5 Starlings.Models.E5.Extensions.AI Starlings.Models.Gliner2 Starlings.Models.EmbeddingGemma2
+            Starlings.Models.Qwen35
           )
           pushed=()
           push() {

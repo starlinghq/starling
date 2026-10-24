@@ -1,0 +1,3 @@
+fp32-webgpu-aot 4.09 3.99 9.11 mem_available_gb=75
+int8embed-webgpu-aot 4.18 4.01 9.06 mem_available_gb=73
+end 4.32 4.04 9.02 mem_available_gb=73

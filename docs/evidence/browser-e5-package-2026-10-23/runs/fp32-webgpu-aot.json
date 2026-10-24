@@ -3,12 +3,12 @@
  "variant": "fp32",
  "provider": "webgpu",
  "isolation": true,
- "gpu_before": "0, NVIDIA GeForce RTX 3090, 298 MiB, 0 %\n1, NVIDIA GeForce RTX 4060 Ti, 15585 MiB, 0 %",
+ "gpu_before": "0, NVIDIA GeForce RTX 3090, 298 MiB, 0 %\n1, NVIDIA GeForce RTX 4060 Ti, 502 MiB, 3 %",
  "browser_version": "153.0.8010.12",
- "startup_ms": 897.259077988565,
+ "startup_ms": 861.4874209997652,
  "startup_download": {
   "/": {
-   "bytes": 523,
+   "bytes": 519,
    "uncompressed": 1732,
    "encoding": "br"
   },
@@ -17,8 +17,8 @@
    "uncompressed": 60682,
    "encoding": "br"
   },
-  "/_framework/dotnet.4vhf16ghf0.js": {
-   "bytes": 14031,
+  "/_framework/dotnet.jwwukjjnbf.js": {
+   "bytes": 14032,
    "uncompressed": 52892,
    "encoding": "br"
   },
@@ -32,24 +32,9 @@
    "uncompressed": 198480,
    "encoding": "br"
   },
-  "/_framework/dotnet.native.igztv39yjj.wasm": {
-   "bytes": 3720998,
-   "uncompressed": 17223973,
-   "encoding": "br"
-  },
-  "/_framework/Microsoft.AspNetCore.Components.Web.47dz9hse4m.wasm": {
-   "bytes": 16522,
-   "uncompressed": 56085,
-   "encoding": "br"
-  },
-  "/_framework/Microsoft.Extensions.AI.Abstractions.ny76my4xnp.wasm": {
-   "bytes": 4258,
-   "uncompressed": 11029,
-   "encoding": "br"
-  },
-  "/_framework/Microsoft.Extensions.Configuration.tg4ht29ydd.wasm": {
-   "bytes": 3482,
-   "uncompressed": 8981,
+  "/_framework/Microsoft.AspNetCore.Components.WebAssembly.0ilzv5jqtj.wasm": {
+   "bytes": 33404,
+   "uncompressed": 118549,
    "encoding": "br"
   },
   "/_framework/Microsoft.AspNetCore.Components.7w7m3fwxrv.wasm": {
@@ -57,14 +42,19 @@
    "uncompressed": 172309,
    "encoding": "br"
   },
-  "/_framework/Microsoft.AspNetCore.Components.WebAssembly.0ilzv5jqtj.wasm": {
-   "bytes": 33404,
-   "uncompressed": 118549,
+  "/_framework/Microsoft.AspNetCore.Components.Web.47dz9hse4m.wasm": {
+   "bytes": 16522,
+   "uncompressed": 56085,
    "encoding": "br"
   },
-  "/_framework/Microsoft.Extensions.Configuration.Abstractions.7c61r60qh9.wasm": {
-   "bytes": 2334,
-   "uncompressed": 6933,
+  "/_framework/Microsoft.Extensions.Configuration.tg4ht29ydd.wasm": {
+   "bytes": 3482,
+   "uncompressed": 8981,
+   "encoding": "br"
+  },
+  "/_framework/Microsoft.Extensions.AI.Abstractions.ny76my4xnp.wasm": {
+   "bytes": 4258,
+   "uncompressed": 11029,
    "encoding": "br"
   },
   "/_framework/Microsoft.Extensions.Configuration.Json.67m37tob8g.wasm": {
@@ -72,9 +62,9 @@
    "uncompressed": 10517,
    "encoding": "br"
   },
-  "/_framework/Microsoft.Extensions.DependencyInjection.Abstractions.n4zzpfnvjp.wasm": {
-   "bytes": 7954,
-   "uncompressed": 26389,
+  "/_framework/Microsoft.Extensions.Configuration.Abstractions.7c61r60qh9.wasm": {
+   "bytes": 2334,
+   "uncompressed": 6933,
    "encoding": "br"
   },
   "/_framework/Microsoft.Extensions.DependencyInjection.esd6sux8jj.wasm": {
@@ -87,6 +77,11 @@
    "uncompressed": 17685,
    "encoding": "br"
   },
+  "/_framework/Microsoft.Extensions.DependencyInjection.Abstractions.n4zzpfnvjp.wasm": {
+   "bytes": 7954,
+   "uncompressed": 26389,
+   "encoding": "br"
+  },
   "/_framework/Microsoft.Extensions.Logging.Abstractions.z341bfijf3.wasm": {
    "bytes": 9779,
    "uncompressed": 27413,
@@ -97,14 +92,14 @@
    "uncompressed": 16661,
    "encoding": "br"
   },
-  "/_framework/Microsoft.JSInterop.76d6culo5q.wasm": {
-   "bytes": 16402,
-   "uncompressed": 45845,
-   "encoding": "br"
-  },
   "/_framework/Microsoft.Extensions.Primitives.xlxo9m8p3j.wasm": {
    "bytes": 3305,
    "uncompressed": 8981,
+   "encoding": "br"
+  },
+  "/_framework/Microsoft.JSInterop.76d6culo5q.wasm": {
+   "bytes": 16402,
+   "uncompressed": 45845,
    "encoding": "br"
   },
   "/_framework/Microsoft.JSInterop.WebAssembly.vjcfjtelwd.wasm": {
@@ -137,19 +132,9 @@
    "uncompressed": 56597,
    "encoding": "br"
   },
-  "/_framework/System.Collections.yaffzay0ng.wasm": {
-   "bytes": 11201,
-   "uncompressed": 31509,
-   "encoding": "br"
-  },
   "/_framework/System.ComponentModel.iv4cyr9ulo.wasm": {
    "bytes": 1721,
    "uncompressed": 4885,
-   "encoding": "br"
-  },
-  "/_framework/System.Diagnostics.TraceSource.91gzj6v2lb.wasm": {
-   "bytes": 4467,
-   "uncompressed": 11541,
    "encoding": "br"
   },
   "/_framework/System.Diagnostics.DiagnosticSource.itvz6wwc64.wasm": {
@@ -162,14 +147,24 @@
    "uncompressed": 15125,
    "encoding": "br"
   },
+  "/_framework/System.Collections.yaffzay0ng.wasm": {
+   "bytes": 11201,
+   "uncompressed": 31509,
+   "encoding": "br"
+  },
+  "/_framework/System.Diagnostics.TraceSource.91gzj6v2lb.wasm": {
+   "bytes": 4467,
+   "uncompressed": 11541,
+   "encoding": "br"
+  },
   "/_framework/System.IO.Pipelines.syhqffnboi.wasm": {
    "bytes": 2337,
    "uncompressed": 5909,
    "encoding": "br"
   },
-  "/_framework/System.Linq.oq1grkpc0d.wasm": {
-   "bytes": 20426,
-   "uncompressed": 53525,
+  "/_framework/System.Net.Http.dsplcwl7zz.wasm": {
+   "bytes": 38695,
+   "uncompressed": 139541,
    "encoding": "br"
   },
   "/_framework/System.Memory.sucol9jcy8.wasm": {
@@ -177,14 +172,14 @@
    "uncompressed": 16149,
    "encoding": "br"
   },
+  "/_framework/System.Linq.oq1grkpc0d.wasm": {
+   "bytes": 20426,
+   "uncompressed": 53525,
+   "encoding": "br"
+  },
   "/_framework/System.Net.Primitives.lt870ub8vp.wasm": {
    "bytes": 2815,
    "uncompressed": 7445,
-   "encoding": "br"
-  },
-  "/_framework/System.Net.Http.dsplcwl7zz.wasm": {
-   "bytes": 38695,
-   "uncompressed": 139541,
    "encoding": "br"
   },
   "/_framework/System.Private.Uri.81sfi1c25u.wasm": {
@@ -197,6 +192,11 @@
    "uncompressed": 49941,
    "encoding": "br"
   },
+  "/_framework/System.Runtime.21dfh8gy56.wasm": {
+   "bytes": 3073,
+   "uncompressed": 10005,
+   "encoding": "br"
+  },
   "/_framework/System.Runtime.InteropServices.1sk8xnkvn6.wasm": {
    "bytes": 2970,
    "uncompressed": 8981,
@@ -207,14 +207,9 @@
    "uncompressed": 20757,
    "encoding": "br"
   },
-  "/_framework/System.Runtime.21dfh8gy56.wasm": {
-   "bytes": 3073,
-   "uncompressed": 10005,
-   "encoding": "br"
-  },
-  "/_framework/System.Text.Encodings.Web.kwy3qekb07.wasm": {
-   "bytes": 7100,
-   "uncompressed": 29461,
+  "/_framework/System.Text.Json.xfd0j4rtzx.wasm": {
+   "bytes": 93355,
+   "uncompressed": 382741,
    "encoding": "br"
   },
   "/_framework/System.Text.Encoding.Extensions.ajdtrmih3n.wasm": {
@@ -227,48 +222,48 @@
    "uncompressed": 15125,
    "encoding": "br"
   },
+  "/_framework/System.Text.Encodings.Web.kwy3qekb07.wasm": {
+   "bytes": 7100,
+   "uncompressed": 29461,
+   "encoding": "br"
+  },
   "/_framework/System.Private.CoreLib.ekb2bbnoyb.wasm": {
    "bytes": 371974,
    "uncompressed": 1675029,
    "encoding": "br"
   },
-  "/_framework/System.Text.Json.xfd0j4rtzx.wasm": {
-   "bytes": 93355,
-   "uncompressed": 382741,
-   "encoding": "br"
-  },
-  "/_framework/Starlings.Models.E5.olxh9onqrh.wasm": {
-   "bytes": 5376,
-   "uncompressed": 17173,
-   "encoding": "br"
-  },
-  "/_framework/Starlings.Models.E5.Browser.ofabho25oi.wasm": {
-   "bytes": 13797,
-   "uncompressed": 40213,
-   "encoding": "br"
-  },
-  "/_framework/Starlings.Models.E5.Extensions.AI.71tyde5prv.wasm": {
+  "/_framework/Starlings.Models.E5.Extensions.AI.7pgvefs4xt.wasm": {
    "bytes": 3458,
    "uncompressed": 9493,
    "encoding": "br"
   },
-  "/_framework/Starlings.Runtime.Onnx.c69t6urd2e.wasm": {
-   "bytes": 3209,
-   "uncompressed": 10005,
+  "/_framework/Starlings.Models.E5.dzk0934blf.wasm": {
+   "bytes": 7205,
+   "uncompressed": 23317,
    "encoding": "br"
   },
-  "/_framework/Starlings.Runtime.OnnxWeb.WebGpu.346ur5a9pi.wasm": {
-   "bytes": 2037,
+  "/_framework/Starlings.Models.E5.Browser.9ph4o1fa1e.wasm": {
+   "bytes": 13729,
+   "uncompressed": 39189,
+   "encoding": "br"
+  },
+  "/_framework/Starlings.Runtime.OnnxWeb.WebGpu.9exnwiyasl.wasm": {
+   "bytes": 2047,
    "uncompressed": 5909,
    "encoding": "br"
   },
-  "/_framework/Starlings.Runtime.OnnxWeb.2kn0bhebyl.wasm": {
-   "bytes": 16466,
+  "/_framework/Starlings.Runtime.OnnxWeb.lhkc2n0744.wasm": {
+   "bytes": 16441,
    "uncompressed": 52501,
    "encoding": "br"
   },
-  "/_framework/E5Conformance.dzlcv4o80n.wasm": {
-   "bytes": 13317,
+  "/_framework/Starlings.Runtime.Onnx.3rhgkcaelp.wasm": {
+   "bytes": 3585,
+   "uncompressed": 11541,
+   "encoding": "br"
+  },
+  "/_framework/E5Conformance.f8rakn40xc.wasm": {
+   "bytes": 13386,
    "uncompressed": 35605,
    "encoding": "br"
   },
@@ -281,6 +276,11 @@
    "bytes": 143983,
    "uncompressed": 550832,
    "encoding": "br"
+  },
+  "/_framework/dotnet.native.d0il2h2gun.wasm": {
+   "bytes": 3722933,
+   "uncompressed": 17245419,
+   "encoding": "br"
   }
  },
  "cross_origin_isolated": true,
@@ -289,12 +289,12 @@
   "variant": "Fp32",
   "provider": "webgpu",
   "load": {
-   "Runtime_until_ms": 47.3249,
-   "Tokenizer_until_ms": 794.5149,
-   "Model_until_ms": 2961.5449,
-   "Session_until_ms": 5736.565,
-   "Done_until_ms": 5737.3899,
-   "session_create_ms": 2760.255,
+   "Runtime_until_ms": 56.335,
+   "Tokenizer_until_ms": 815.13,
+   "Model_until_ms": 3055.815,
+   "Session_until_ms": 5802.495,
+   "Done_until_ms": 5803.39,
+   "session_create_ms": 2731.095,
    "model_bytes": 470268510,
    "model_sha256": "ca456c06b3a9505ddfd9131408916dd79290368331e7d76bb621f1cba6bc8665"
   },
@@ -311,12 +311,73 @@
   },
   "e5_tokenizer": "<46 entries, removed>",
   "tokenizer": "<46 entries, removed>",
-  "error": "Starlings.Runtime.OnnxWeb.OnnxWebException: onnxruntime-web run failed: Error: failed to call OrtRun(). ERROR_CODE: 1, ERROR_MESSAGE: WebGPU validation failed. [Invalid Buffer (unlabeled)] is invalid due to a previous error.\n - While validating entries[0] against { binding: 0, visibility: ShaderStage::Compute, buffer: {type: BufferBindingType::ReadOnlyStorage, minBindingSize: 0, hasDynamicOffset: 0} }.\n - While validating [BindGroupDescriptor \"\"Gather\"\"] against [BindGroupLayout \"Gather\"]\n - While calling [Device].CreateBindGroup([BindGroupDescriptor \"\"Gather\"\"]).\n\n ---> Error: failed to call OrtRun(). ERROR_CODE: 1, ERROR_MESSAGE: WebGPU validation failed. [Invalid Buffer (unlabeled)] is invalid due to a previous error.\n - While validating entries[0] against { binding: 0, visibility: ShaderStage::Compute, buffer: {type: BufferBindingType::ReadOnlyStorage, minBindingSize: 0, hasDynamicOffset: 0} }.\n - While validating [BindGroupDescriptor \"\"Gather\"\"] against [BindGroupLayout \"Gather\"]\n - While calling [Device].CreateBindGroup([BindGroupDescriptor \"\"Gather\"\"]).\n\n   Exception_EndOfInnerExceptionStack\n   at Starlings.Runtime.OnnxWeb.OnnxWebSession.RunAsync(IReadOnlyList`1 , String , Memory`1 , CancellationToken )\n   at Starlings.Models.E5.Browser.OnnxWebE5GraphRunner.RunAsync(Int64[] , Int64[] , Int64[] , Int32 , Int32 , Memory`1 , CancellationToken )\n   at Starlings.Models.E5.Browser.E5BrowserEncoder.EmbedChunkAsync(IReadOnlyList`1 , Int32[] , Int32 , Memory`1 , CancellationToken )\n   at Starlings.Models.E5.Browser.E5BrowserEncoder.EmbedBatchAsync(IReadOnlyList`1 , Memory`1 , CancellationToken )\n   at Starlings.Models.E5.Browser.E5BrowserEncoder.EmbedAsync(EncoderInput , CancellationToken )\n   at Starlings.E5Conformance.ConformanceEntryPoints.RunCoreAsync(Utf8JsonWriter json, String variant, String modelUrl, String tokenizerUrl, String provider, Int32 threads, Boolean proxy, Int32 iterations)\n   at Starlings.E5Conformance.ConformanceEntryPoints.Run(String variant, String modelUrl, String tokenizerUrl, String provider, Int32 threads, Boolean proxy, Int32 iterations)"
+  "first_run_ms": 234.3049,
+  "embeddings": "<46 entries, removed>",
+  "batch8": "<8 entries, removed>",
+  "generator_input_tokens": 1689,
+  "generator_embeddings": "<46 entries, removed>",
+  "latency_ms": {
+   "passage34_b1": {
+    "median": 18.3049,
+    "samples": [
+     16.505,
+     16.67,
+     17,
+     17.635,
+     18.055,
+     18.305,
+     18.795,
+     18.92,
+     20.335,
+     22.65
+    ]
+   },
+   "short_b8": {
+    "median": 17.26,
+    "samples": [
+     16.98,
+     16.985,
+     17.055,
+     17.13,
+     17.15,
+     17.26,
+     18.275,
+     18.31,
+     18.84,
+     19.75
+    ]
+   },
+   "long512_b1": {
+    "median": 17.8449,
+    "samples": [
+     17.46,
+     17.69,
+     17.845,
+     17.88,
+     21.89
+    ]
+   },
+   "generator_text_e5-passage-prefix_b1": {
+    "median": 17.64,
+    "samples": [
+     17.055,
+     17.235,
+     17.34,
+     17.375,
+     17.525,
+     17.64,
+     17.89,
+     17.96,
+     18.075,
+     18.82
+    ]
+   }
+  }
  },
  "run_download": {
   "/_content/Starlings.Runtime.OnnxWeb/starlings-onnxweb.js": {
-   "bytes": 3078,
-   "uncompressed": 9850,
+   "bytes": 3128,
+   "uncompressed": 9947,
    "encoding": "br"
   },
   "/_content/Starlings.Runtime.OnnxWeb.WebGpu/ort/ort.webgpu.min.mjs": {
@@ -355,28 +416,17 @@
    "encoding": null
   }
  },
- "peak_rss_tree_bytes": 4653236224,
- "peak_rss_renderer_bytes": 3207921664,
- "gpu_after": "0, NVIDIA GeForce RTX 3090, 298 MiB, 0 %\n1, NVIDIA GeForce RTX 4060 Ti, 15583 MiB, 0 %",
+ "peak_rss_tree_bytes": 4578852864,
+ "peak_rss_renderer_bytes": 3187675136,
+ "gpu_after": "0, NVIDIA GeForce RTX 3090, 298 MiB, 0 %\n1, NVIDIA GeForce RTX 4060 Ti, 508 MiB, 0 %",
  "console": [
   "error: Failed to load resource: the server responded with a status of 404 (Not Found)",
-  "error: \u001b[0;93m2026-10-23 00:19:56.118014 [W:onnxruntime:, session_state.cc:1397 VerifyEachNodeIsAssignedToAnEp] Some nodes were not assigned to the preferred execution providers which may or may not have an negative impact on performance. e.g. ORT explicitly assigns shape related ops to CPU to improve perf.\u001b[m",
-  "error: \u001b[0;93m2026-10-23 00:19:56.128104 [W:onnxruntime:, session_state.cc:1399 VerifyEachNodeIsAssignedToAnEp] Rerunning with verbose output on a non-minimal build will show node assignments.\u001b[m",
-  "error: \u001b[1;31m2026-10-23 00:19:56.975043 [E:onnxruntime:Default, webgpu_context.cc:171 operator()] WebGPU device error(3): vkAllocateMemory failed with VK_ERROR_OUT_OF_DEVICE_MEMORY",
-  "error:  - While calling [Device].CreateBuffer([BufferDescriptor]).",
-  "error:     at CheckVkOOMThenSuccessImpl (../../third_party/dawn/src/dawn/native/vulkan/VulkanError.cpp:119)",
-  "error: \u001b[m",
-  "warning: vkAllocateMemory failed with VK_ERROR_OUT_OF_DEVICE_MEMORY\n - While calling [Device].CreateBuffer([BufferDescriptor]).\n",
+  "error: \u001b[0;93m2026-10-23 16:13:44.130854 [W:onnxruntime:, session_state.cc:1397 VerifyEachNodeIsAssignedToAnEp] Some nodes were not assigned to the preferred execution providers which may or may not have an negative impact on performance. e.g. ORT explicitly assigns shape related ops to CPU to improve perf.\u001b[m",
+  "error: \u001b[0;93m2026-10-23 16:13:44.136153 [W:onnxruntime:, session_state.cc:1399 VerifyEachNodeIsAssignedToAnEp] Rerunning with verbose output on a non-minimal build will show node assignments.\u001b[m",
   "log: conformance stage: tokenizer",
-  "error: \u001b[1;31m2026-10-23 00:19:57.185364 [E:onnxruntime:Default, webgpu_context.cc:171 operator()] WebGPU device error(2): [Invalid Buffer (unlabeled)] is invalid due to a previous error.",
-  "error:  - While encoding [CommandEncoder (unlabeled)].CopyBufferToBuffer([Buffer (unlabeled)], 0, [Invalid Buffer (unlabeled)], 0, 384056832).",
-  "error:  - While finishing [CommandEncoder (unlabeled)].",
-  "error: \u001b[m",
-  "warning: [Invalid Buffer (unlabeled)] is invalid due to a previous error.\n - While encoding [CommandEncoder (unlabeled)].CopyBufferToBuffer([Buffer (unlabeled)], 0, [Invalid Buffer (unlabeled)], 0, 384056832).\n - While finishing [CommandEncoder (unlabeled)].\n",
-  "error: \u001b[1;31m2026-10-23 00:19:57.186704 [E:onnxruntime:Default, webgpu_context.cc:171 operator()] WebGPU device error(2): [Invalid CommandBuffer] is invalid due to a previous error.",
-  "error:  - While calling [Queue].Submit([[Invalid CommandBuffer]])",
-  "error: \u001b[m",
-  "warning: [Invalid CommandBuffer] is invalid due to a previous error.\n - While calling [Queue].Submit([[Invalid CommandBuffer]])\n",
-  "log: conformance stage: embeddings"
+  "log: conformance stage: embeddings",
+  "log: conformance stage: batch8",
+  "log: conformance stage: generator",
+  "log: conformance stage: latency"
  ]
 }

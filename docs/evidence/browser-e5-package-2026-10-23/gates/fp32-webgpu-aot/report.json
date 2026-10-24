@@ -1,0 +1,665 @@
+{
+  "format": "starlings.fidelity-report",
+  "format_version": 1,
+  "profile": "multilingual-e5-small/onnx-fp32-webgpu",
+  "date": "2026-10-24",
+  "evaluator": {
+    "name": "model-pipeline evaluate",
+    "version": "0.1.0",
+    "repository_commit": "d8fa2b168e531910a5da01b9d803c05a04f140e6"
+  },
+  "inputs": {
+    "manifest": {
+      "path": "model-pipeline/registry/multilingual-e5-small/onnx-fp32-webgpu/manifest.yaml",
+      "sha256": "2fd56fab64fca633bb224974db25b1f445391dac49f569322be64621e2926e80"
+    },
+    "tolerances": {
+      "path": "model-pipeline/protected/multilingual-e5-small/onnx-fp32-webgpu/tolerances.yaml",
+      "sha256": "1925de0d081531eab1d9c800c86cd2ff229c420df958cc97602e1e19e483ba5c"
+    },
+    "fixtures_directory": {
+      "path": "model-pipeline/protected/multilingual-e5-small/onnx-fp32-cpu",
+      "source": "manifest"
+    },
+    "fixtures": [
+      {
+        "path": "model-pipeline/protected/multilingual-e5-small/onnx-fp32-cpu/tokenizer.jsonl",
+        "sha256": "cb0e61fe1de97956fef1a847a102f2aadd675a2ed7efbfc1a48ac9db2f4b61a1"
+      },
+      {
+        "path": "model-pipeline/protected/multilingual-e5-small/onnx-fp32-cpu/embeddings.jsonl",
+        "sha256": "cb7c1fcd618bcddeb664dc05fb14f896c253b1151c2969ab87a1b819a6415ae1"
+      }
+    ],
+    "results": {
+      "tokenizer": {
+        "path": "/home/mark/.claude/jobs/0e59d1f9/tmp/prov/results/fp32-webgpu-aot/tokenizer.results.json",
+        "sha256": "327d71b1385f12944ecbc132b28612fc7fae3f8c3b00e5b28db00bda1238a4ca",
+        "candidate": "Starlings.Models.E5.Browser on onnxruntime-web 1.30.0 (webgpu, bundle webgpu, 4 threads), build aot: E5 tokenization (owned tokenizer, truncation to 512)",
+        "producer": {
+          "name": "browser/conformance/run_conformance.py (E5Conformance) via model-pipeline browser-results",
+          "repository_commit": "d8fa2b168e531910a5da01b9d803c05a04f140e6",
+          "converted_at_commit": "d8fa2b168e531910a5da01b9d803c05a04f140e6",
+          "fixtures_sha256": {
+            "embeddings.jsonl": "cb7c1fcd618bcddeb664dc05fb14f896c253b1151c2969ab87a1b819a6415ae1",
+            "tokenizer.jsonl": "cb0e61fe1de97956fef1a847a102f2aadd675a2ed7efbfc1a48ac9db2f4b61a1"
+          }
+        },
+        "environment": {
+          "machine": "omarchy",
+          "provider": "webgpu",
+          "provider_options": {},
+          "browser": "chromium 153.0.8010.12",
+          "cross_origin_isolated": true,
+          "dotnet_runtime": ".NET 10.0.12",
+          "build_label": "aot",
+          "onnxruntime_web": {
+            "version": "1.30.0",
+            "bundle": "webgpu",
+            "cross_origin_isolated": true,
+            "hardware_concurrency": 12,
+            "num_threads": 4,
+            "proxy": false,
+            "webgpu_exposed": true
+          },
+          "run_file": "fp32-webgpu-aot.json",
+          "run_file_sha256": "72d0ce1e931c6861ce9366b008c04b030f7152ceadc165d65df27679edcb0f6f"
+        },
+        "assets": [
+          {
+            "path": "tokenizer.json",
+            "sha256": "0b44a9d7b51c3c62626640cda0e2c2f70fdacdc25bbbd68038369d14ebdf4c39"
+          }
+        ]
+      },
+      "export": {
+        "path": "/home/mark/.claude/jobs/0e59d1f9/tmp/prov/results/fp32-webgpu-aot/export.results.json",
+        "sha256": "47e1ecd5733a8f8448bb967c67fb1fa5d097a4402ff727b9cf96aae88dee94b1",
+        "candidate": "Python onnxruntime 1.30.0 CPUExecutionProvider on onnx/model.onnx (the browser profile's graph), float64 pooling; no hidden-state reference (not bound for browser profiles)",
+        "producer": {
+          "name": "model-pipeline/reference/encoder/stage_e5_browser_native.py",
+          "repository_commit": "d8fa2b168e531910a5da01b9d803c05a04f140e6"
+        },
+        "environment": {
+          "python": "3.11.16",
+          "platform": "Linux-7.2.5-3-omarchy-x86_64-with-glibc2.44",
+          "machine": "omarchy",
+          "cpu": "Intel(R) Core(TM) i7-5820K CPU @ 3.30GHz",
+          "cpu_count": 12,
+          "packages": {
+            "onnxruntime": "1.30.0",
+            "numpy": "2.4.6"
+          },
+          "provider": "cpu",
+          "provider_options": {},
+          "onnxruntime_providers": [
+            "CPUExecutionProvider"
+          ],
+          "intra_op_threads": 4
+        },
+        "assets": [
+          {
+            "path": "onnx/model.onnx",
+            "sha256": "ca456c06b3a9505ddfd9131408916dd79290368331e7d76bb621f1cba6bc8665"
+          }
+        ]
+      },
+      "dotnet": {
+        "path": "/home/mark/.claude/jobs/0e59d1f9/tmp/prov/results/fp32-webgpu-aot/dotnet.results.json",
+        "sha256": "635689d4543fbd768a9ee4efd65b7e4971abab7f078b457065e0c00edebf7496",
+        "candidate": "Starlings.Models.E5.Browser on onnxruntime-web 1.30.0 (webgpu, bundle webgpu, 4 threads), build aot",
+        "producer": {
+          "name": "browser/conformance/run_conformance.py (E5Conformance) via model-pipeline browser-results",
+          "repository_commit": "d8fa2b168e531910a5da01b9d803c05a04f140e6",
+          "converted_at_commit": "d8fa2b168e531910a5da01b9d803c05a04f140e6",
+          "fixtures_sha256": {
+            "embeddings.jsonl": "cb7c1fcd618bcddeb664dc05fb14f896c253b1151c2969ab87a1b819a6415ae1",
+            "tokenizer.jsonl": "cb0e61fe1de97956fef1a847a102f2aadd675a2ed7efbfc1a48ac9db2f4b61a1"
+          }
+        },
+        "environment": {
+          "machine": "omarchy",
+          "provider": "webgpu",
+          "provider_options": {},
+          "browser": "chromium 153.0.8010.12",
+          "cross_origin_isolated": true,
+          "dotnet_runtime": ".NET 10.0.12",
+          "build_label": "aot",
+          "onnxruntime_web": {
+            "version": "1.30.0",
+            "bundle": "webgpu",
+            "cross_origin_isolated": true,
+            "hardware_concurrency": 12,
+            "num_threads": 4,
+            "proxy": false,
+            "webgpu_exposed": true
+          },
+          "run_file": "fp32-webgpu-aot.json",
+          "run_file_sha256": "72d0ce1e931c6861ce9366b008c04b030f7152ceadc165d65df27679edcb0f6f"
+        },
+        "assets": [
+          {
+            "path": "onnx/model.onnx",
+            "sha256": "ca456c06b3a9505ddfd9131408916dd79290368331e7d76bb621f1cba6bc8665"
+          },
+          {
+            "path": "tokenizer.json",
+            "sha256": "0b44a9d7b51c3c62626640cda0e2c2f70fdacdc25bbbd68038369d14ebdf4c39"
+          }
+        ]
+      }
+    }
+  },
+  "protected_evidence": {
+    "status": "verified",
+    "base": "634fb790b1d1d2780fad55148c4546c31b1fffa0",
+    "detail": "merge base of HEAD and origin/main",
+    "changed": [],
+    "sha256": {
+      "model-pipeline/protected/multilingual-e5-small/onnx-fp32-webgpu/tolerances.yaml": "1925de0d081531eab1d9c800c86cd2ff229c420df958cc97602e1e19e483ba5c",
+      "model-pipeline/protected/multilingual-e5-small/onnx-fp32-cpu/tokenizer.jsonl": "cb0e61fe1de97956fef1a847a102f2aadd675a2ed7efbfc1a48ac9db2f4b61a1",
+      "model-pipeline/protected/multilingual-e5-small/onnx-fp32-cpu/embeddings.jsonl": "cb7c1fcd618bcddeb664dc05fb14f896c253b1151c2969ab87a1b819a6415ae1"
+    }
+  },
+  "report_only_metrics": [
+    "mean_abs",
+    "p99_abs",
+    "min_cosine"
+  ],
+  "stages": {
+    "tokenizer": "passed",
+    "export": "passed",
+    "dotnet-ids": "passed",
+    "dotnet-text": "passed"
+  },
+  "first_divergence": null,
+  "findings": [],
+  "gates": {
+    "G1": {
+      "status": "passed",
+      "reason": "every check passed or is not applicable by the manifest"
+    },
+    "G2": {
+      "status": "passed",
+      "reason": "every check passed or is not applicable by the manifest"
+    }
+  },
+  "manifest_gates": {
+    "G1": {
+      "status": "passed",
+      "date": "2026-10-24"
+    },
+    "G2": {
+      "status": "passed",
+      "date": "2026-10-24"
+    }
+  },
+  "checks": [
+    {
+      "id": "dotnet.identity",
+      "stage": "dotnet",
+      "substage": "dotnet-ids",
+      "gate": "G2",
+      "title": "dotnet: profile and artifact digests match the manifest",
+      "tolerance_key": null,
+      "bound": null,
+      "status": "passed",
+      "metrics": {},
+      "detail": ""
+    },
+    {
+      "id": "export.identity",
+      "stage": "export",
+      "substage": "export",
+      "gate": "G2",
+      "title": "export: profile and artifact digests match the manifest",
+      "tolerance_key": null,
+      "bound": null,
+      "status": "passed",
+      "metrics": {},
+      "detail": ""
+    },
+    {
+      "id": "tokenizer.identity",
+      "stage": "tokenizer",
+      "substage": "tokenizer",
+      "gate": "G1",
+      "title": "tokenizer: profile and artifact digests match the manifest",
+      "tolerance_key": null,
+      "bound": null,
+      "status": "passed",
+      "metrics": {},
+      "detail": ""
+    },
+    {
+      "id": "tokenizer.input_ids",
+      "stage": "tokenizer",
+      "substage": "tokenizer",
+      "gate": "G1",
+      "title": "tokenizer input_ids exact",
+      "tolerance_key": "discrete.token_ids",
+      "bound": "exact",
+      "status": "passed",
+      "metrics": {
+        "cases": 46,
+        "mismatched_cases": []
+      },
+      "detail": ""
+    },
+    {
+      "id": "tokenizer.attention_mask",
+      "stage": "tokenizer",
+      "substage": "tokenizer",
+      "gate": "G1",
+      "title": "tokenizer attention_mask exact",
+      "tolerance_key": "discrete.attention_mask",
+      "bound": "exact",
+      "status": "passed",
+      "metrics": {
+        "cases": 46,
+        "mismatched_cases": []
+      },
+      "detail": ""
+    },
+    {
+      "id": "tokenizer.offsets",
+      "stage": "tokenizer",
+      "substage": "tokenizer",
+      "gate": "G1",
+      "title": "tokenizer offsets exact",
+      "tolerance_key": "discrete.offsets",
+      "bound": "exact",
+      "status": "not-applicable",
+      "metrics": {},
+      "detail": "manifest behavior.offsets_unit is 'none': the embedding task exposes no offsets"
+    },
+    {
+      "id": "export.input_ids",
+      "stage": "export",
+      "substage": "export",
+      "gate": "G2",
+      "title": "export: ran on the protected fixture ids",
+      "tolerance_key": null,
+      "bound": null,
+      "status": "passed",
+      "metrics": {},
+      "detail": ""
+    },
+    {
+      "id": "export.finite",
+      "stage": "export",
+      "substage": "export",
+      "gate": "G2",
+      "title": "export: no NaN or Inf in any output",
+      "tolerance_key": "float.nan_or_inf",
+      "bound": "fail",
+      "status": "passed",
+      "metrics": {
+        "non_finite": []
+      },
+      "detail": ""
+    },
+    {
+      "id": "export.last_hidden_state",
+      "stage": "export",
+      "substage": "export",
+      "gate": "G2",
+      "title": "Python ORT hidden states vs PyTorch hidden states",
+      "tolerance_key": "float.last_hidden_state_max_abs",
+      "bound": null,
+      "status": "not-applicable",
+      "metrics": {},
+      "detail": "report only: float.last_hidden_state_max_abs is not in the protected tolerances (export results need tensors 'last_hidden_state' and 'reference_last_hidden_state')"
+    },
+    {
+      "id": "export.embedding",
+      "stage": "export",
+      "substage": "export",
+      "gate": "G2",
+      "title": "Python ORT embeddings vs protected reference embeddings",
+      "tolerance_key": "float.embedding_max_abs",
+      "bound": 1e-05,
+      "status": "passed",
+      "metrics": {
+        "max_abs": 2.3199999999931609e-07,
+        "mean_abs": 1.9507800951091147e-08,
+        "p99_abs": 7.137000000149894e-08,
+        "values": 17664,
+        "cases": 46,
+        "worst_case": "special-lookalike-spaced",
+        "non_finite_cases": [],
+        "min_cosine": 0.9999999999994447,
+        "min_cosine_case": "special-lookalike-spaced"
+      },
+      "detail": ""
+    },
+    {
+      "id": "export.batch_evidence.embedding",
+      "stage": "export",
+      "substage": "export",
+      "gate": "G2",
+      "title": "export: a padded batch exercises 'embedding'",
+      "tolerance_key": "float.padded_batch_vs_single_embedding_max_abs",
+      "bound": 1e-05,
+      "status": "passed",
+      "metrics": {
+        "batches": [
+          "fixture-padded",
+          "short-b8"
+        ],
+        "padding_batches": [
+          "fixture-padded",
+          "short-b8"
+        ]
+      },
+      "detail": ""
+    },
+    {
+      "id": "export.batch.fixture-padded.vs_single",
+      "stage": "export",
+      "substage": "export",
+      "gate": "G2",
+      "title": "export: batch 'fixture-padded' vs own single rows",
+      "tolerance_key": "float.padded_batch_vs_single_embedding_max_abs",
+      "bound": 1e-05,
+      "status": "passed",
+      "metrics": {
+        "max_abs": 0.0,
+        "mean_abs": 0.0,
+        "p99_abs": 0.0,
+        "values": 2304,
+        "cases": 6,
+        "worst_case": "empty",
+        "non_finite_cases": [],
+        "min_cosine": 1.0,
+        "min_cosine_case": "empty"
+      },
+      "detail": ""
+    },
+    {
+      "id": "export.batch.fixture-padded.vs_reference",
+      "stage": "export",
+      "substage": "export",
+      "gate": "G2",
+      "title": "export: batch 'fixture-padded' vs reference",
+      "tolerance_key": "float.embedding_max_abs",
+      "bound": 1e-05,
+      "status": "passed",
+      "metrics": {
+        "max_abs": 2.06000000002593e-07,
+        "mean_abs": 2.1310059895888775e-08,
+        "p99_abs": 7.600000000163032e-08,
+        "values": 2304,
+        "cases": 6,
+        "worst_case": "empty",
+        "non_finite_cases": [],
+        "min_cosine": 0.9999999999997248,
+        "min_cosine_case": "empty"
+      },
+      "detail": ""
+    },
+    {
+      "id": "export.batch.short-b8.vs_single",
+      "stage": "export",
+      "substage": "export",
+      "gate": "G2",
+      "title": "export: batch 'short-b8' vs own single rows",
+      "tolerance_key": "float.padded_batch_vs_single_embedding_max_abs",
+      "bound": 1e-05,
+      "status": "passed",
+      "metrics": {
+        "max_abs": 0.0,
+        "mean_abs": 0.0,
+        "p99_abs": 0.0,
+        "values": 3072,
+        "cases": 8,
+        "worst_case": "empty",
+        "non_finite_cases": [],
+        "min_cosine": 1.0,
+        "min_cosine_case": "empty"
+      },
+      "detail": ""
+    },
+    {
+      "id": "export.batch.short-b8.vs_reference",
+      "stage": "export",
+      "substage": "export",
+      "gate": "G2",
+      "title": "export: batch 'short-b8' vs reference",
+      "tolerance_key": "float.embedding_max_abs",
+      "bound": 1e-05,
+      "status": "passed",
+      "metrics": {
+        "max_abs": 2.06000000002593e-07,
+        "mean_abs": 2.419825618490351e-08,
+        "p99_abs": 8.529000000121603e-08,
+        "values": 3072,
+        "cases": 8,
+        "worst_case": "empty",
+        "non_finite_cases": [],
+        "min_cosine": 0.9999999999997002,
+        "min_cosine_case": "space-only"
+      },
+      "detail": ""
+    },
+    {
+      "id": "dotnet.input_ids",
+      "stage": "dotnet",
+      "substage": "dotnet-ids",
+      "gate": "G2",
+      "title": "dotnet: ran on the protected fixture ids",
+      "tolerance_key": null,
+      "bound": null,
+      "status": "passed",
+      "metrics": {},
+      "detail": ""
+    },
+    {
+      "id": "dotnet.finite",
+      "stage": "dotnet",
+      "substage": "dotnet-ids",
+      "gate": "G2",
+      "title": "dotnet: no NaN or Inf in any output",
+      "tolerance_key": "float.nan_or_inf",
+      "bound": "fail",
+      "status": "passed",
+      "metrics": {
+        "non_finite": []
+      },
+      "detail": ""
+    },
+    {
+      "id": "dotnet.embedding",
+      "stage": "dotnet",
+      "substage": "dotnet-ids",
+      "gate": "G2",
+      "title": "C# embeddings from ids vs protected reference",
+      "tolerance_key": "float.embedding_max_abs",
+      "bound": 1e-05,
+      "status": "passed",
+      "metrics": {
+        "max_abs": 2.0499999999618046e-07,
+        "mean_abs": 2.6603274343284962e-08,
+        "p99_abs": 9.699999999751574e-08,
+        "values": 17664,
+        "cases": 46,
+        "worst_case": "empty",
+        "non_finite_cases": [],
+        "min_cosine": 0.9999999999992047,
+        "min_cosine_case": "space-only"
+      },
+      "detail": ""
+    },
+    {
+      "id": "dotnet.embedding.vs_native_same_graph",
+      "stage": "dotnet",
+      "substage": "dotnet-ids",
+      "gate": "G2",
+      "title": "browser embeddings vs native ONNX Runtime (CPU), same graph and ids",
+      "tolerance_key": "browser_vs_native_same_graph.embedding_max_abs",
+      "bound": null,
+      "status": "not-applicable",
+      "metrics": {
+        "max_abs": 2.0620000000005911e-07,
+        "mean_abs": 2.556576086960054e-08,
+        "p99_abs": 9.500000000030318e-08,
+        "values": 17664,
+        "cases": 46,
+        "worst_case": "space-only",
+        "non_finite_cases": [],
+        "min_cosine": 0.9999999999992967,
+        "min_cosine_case": "space-only"
+      },
+      "detail": "report only: browser_vs_native_same_graph.embedding_max_abs is not in the protected tolerances"
+    },
+    {
+      "id": "dotnet.text_embedding",
+      "stage": "dotnet",
+      "substage": "dotnet-text",
+      "gate": "G2",
+      "title": "browser embeddings from text (padded generator batches) vs protected reference",
+      "tolerance_key": "float.embedding_max_abs",
+      "bound": 1e-05,
+      "status": "passed",
+      "metrics": {
+        "max_abs": 2.0500000000311935e-07,
+        "mean_abs": 2.6187673969657213e-08,
+        "p99_abs": 9.500000000550735e-08,
+        "values": 17664,
+        "cases": 46,
+        "worst_case": "space-only",
+        "non_finite_cases": [],
+        "min_cosine": 0.9999999999993386,
+        "min_cosine_case": "empty"
+      },
+      "detail": ""
+    },
+    {
+      "id": "dotnet.batch_evidence.embedding",
+      "stage": "dotnet",
+      "substage": "dotnet-ids",
+      "gate": "G2",
+      "title": "dotnet: a padded batch exercises 'embedding'",
+      "tolerance_key": "float.padded_batch_vs_single_embedding_max_abs",
+      "bound": 1e-05,
+      "status": "passed",
+      "metrics": {
+        "batches": [
+          "short-b8"
+        ],
+        "padding_batches": [
+          "short-b8"
+        ]
+      },
+      "detail": ""
+    },
+    {
+      "id": "dotnet.batch_evidence.text_embedding",
+      "stage": "dotnet",
+      "substage": "dotnet-text",
+      "gate": "G2",
+      "title": "dotnet: a padded batch exercises 'text_embedding'",
+      "tolerance_key": "float.padded_batch_vs_single_embedding_max_abs",
+      "bound": 1e-05,
+      "status": "passed",
+      "metrics": {
+        "batches": [
+          "generator-all-cases"
+        ],
+        "padding_batches": [
+          "generator-all-cases"
+        ]
+      },
+      "detail": ""
+    },
+    {
+      "id": "dotnet.batch.short-b8.vs_single",
+      "stage": "dotnet",
+      "substage": "dotnet-ids",
+      "gate": "G2",
+      "title": "dotnet: batch 'short-b8' vs own single rows",
+      "tolerance_key": "float.padded_batch_vs_single_embedding_max_abs",
+      "bound": 1e-05,
+      "status": "passed",
+      "metrics": {
+        "max_abs": 1.4999999999737446e-07,
+        "mean_abs": 1.4454737630169087e-08,
+        "p99_abs": 8.758000000448622e-08,
+        "values": 3072,
+        "cases": 8,
+        "worst_case": "space-only",
+        "non_finite_cases": [],
+        "min_cosine": 0.9999999999995243,
+        "min_cosine_case": "space-only"
+      },
+      "detail": ""
+    },
+    {
+      "id": "dotnet.batch.short-b8.vs_reference",
+      "stage": "dotnet",
+      "substage": "dotnet-ids",
+      "gate": "G2",
+      "title": "dotnet: batch 'short-b8' vs reference",
+      "tolerance_key": "float.embedding_max_abs",
+      "bound": 1e-05,
+      "status": "passed",
+      "metrics": {
+        "max_abs": 2.0500000000311935e-07,
+        "mean_abs": 3.1430608724048024e-08,
+        "p99_abs": 1.2000000000253127e-07,
+        "values": 3072,
+        "cases": 8,
+        "worst_case": "space-only",
+        "non_finite_cases": [],
+        "min_cosine": 0.9999999999993386,
+        "min_cosine_case": "empty"
+      },
+      "detail": ""
+    },
+    {
+      "id": "dotnet.batch.generator-all-cases.vs_single",
+      "stage": "dotnet",
+      "substage": "dotnet-text",
+      "gate": "G2",
+      "title": "dotnet: batch 'generator-all-cases' vs own single rows ('embedding', same ids)",
+      "tolerance_key": "float.padded_batch_vs_single_embedding_max_abs",
+      "bound": 1e-05,
+      "status": "passed",
+      "metrics": {
+        "max_abs": 1.4999999999737446e-07,
+        "mean_abs": 1.1307907325650318e-08,
+        "p99_abs": 5.7999999997226936e-08,
+        "values": 17664,
+        "cases": 46,
+        "worst_case": "space-only",
+        "non_finite_cases": [],
+        "min_cosine": 0.9999999999995243,
+        "min_cosine_case": "space-only"
+      },
+      "detail": ""
+    },
+    {
+      "id": "dotnet.batch.generator-all-cases.vs_reference",
+      "stage": "dotnet",
+      "substage": "dotnet-text",
+      "gate": "G2",
+      "title": "dotnet: batch 'generator-all-cases' vs reference",
+      "tolerance_key": "float.embedding_max_abs",
+      "bound": 1e-05,
+      "status": "passed",
+      "metrics": {
+        "max_abs": 2.0500000000311935e-07,
+        "mean_abs": 2.6187673969657213e-08,
+        "p99_abs": 9.500000000550735e-08,
+        "values": 17664,
+        "cases": 46,
+        "worst_case": "space-only",
+        "non_finite_cases": [],
+        "min_cosine": 0.9999999999993386,
+        "min_cosine_case": "empty"
+      },
+      "detail": ""
+    }
+  ],
+  "exit_code": 0
+}

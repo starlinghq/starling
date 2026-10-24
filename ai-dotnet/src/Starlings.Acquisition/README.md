@@ -4,7 +4,7 @@ Explicit, verified acquisition of model files. An asset lock names a Hub reposit
 
 ## Maturity
 
-<!-- catalog:maturity profiles=* -->
+<!-- catalog:maturity profiles=*-cpu,*-cuda -->
 Maturity is per profile, generated from the registry manifests by `model-pipeline catalog` (do not edit this table by hand). Gates, evidence and capabilities per profile: the [model catalog](https://github.com/starlinghq/starling/blob/main/docs/catalog/README.md).
 
 | Profile | Maturity | Platforms |

@@ -47,8 +47,26 @@ SUBSTAGE_TITLES = {
     "dotnet-ids": "Stage 3a, .NET from fixture ids",
     "dotnet-text": "Stage 3b, .NET from text (owned tokenizer + encoder)",
 }
-GATE_OF_SUBSTAGE = {"tokenizer": "G1", "export": "G2", "dotnet-ids": "G2", "dotnet-text": "G2"}
-STAGE_OF_SUBSTAGE = {"tokenizer": "tokenizer", "export": "export", "dotnet-ids": "dotnet", "dotnet-text": "dotnet"}
+GATE_OF_SUBSTAGE = {"tokenizer": "G1", "export": "G2", "dotnet-ids": "G2", "dotnet-text": "G2", "preview": "Preview"}
+STAGE_OF_SUBSTAGE = {
+    "tokenizer": "tokenizer",
+    "export": "export",
+    "dotnet-ids": "dotnet",
+    "dotnet-text": "dotnet",
+    "preview": "task-metric",
+}
+# Browser profiles (execution backend manifest.BROWSER_BACKEND, follow-up plan W6). Their stage 3 is the .NET library
+# in the browser (`browser_results.py`), their stage 2 native ONNX Runtime on the same graph
+# (`reference/encoder/stage_e5_browser_native.py`).
+SAME_GRAPH_KEY = "browser_vs_native_same_graph.embedding_max_abs"
+# A task metric that gates Preview, not G1 or G2 (kickoff, browser decision 3). A staged run has no retrieval outputs,
+# so it is listed here as not run, and `evaluate --g3 retrieval --baseline` evaluates it (`evaluate_task_quality.py`).
+PREVIEW_OVERLAP_KEY = "task_metric_before_preview.retrieval_top10_overlap_vs_fp32"
+PREVIEW_NOT_EVALUATED = (
+    "gates Preview, not G1 or G2. Not evaluated: it needs this profile's embeddings of a P-030 held-out query set "
+    "(the profile's budgeted G3 retrieval set) and the fp32 baseline's, through `model-pipeline evaluate --g3 "
+    "retrieval --baseline <fp32 embeddings>`; a staged fidelity run has no retrieval outputs"
+)
 
 # Tolerance keys this evaluator implements. Any other key is reported as not evaluated, and the
 # gate it belongs to cannot pass: a bound nobody checks is not silently satisfied.
@@ -67,6 +85,8 @@ KNOWN_KEYS = {
     "float.nan_or_inf",
     "float.report_only",
     "csharp_vs_python_same_machine_and_provider.embedding_max_abs",
+    SAME_GRAPH_KEY,
+    PREVIEW_OVERLAP_KEY,
 }
 GATE_OF_KEY_PREFIX = {"discrete": "G1"}
 
@@ -309,6 +329,13 @@ class Check:
         }
 
 
+def _graph_path(man: dict[str, Any]) -> str:
+    try:
+        return manifest.graph_asset(man)["path"]
+    except ValueError as exc:
+        raise EvaluationError(str(exc)) from exc
+
+
 def _bound(tol: dict[str, Any], key: str) -> float | None:
     value = tol.get(key)
     if isinstance(value, bool) or not isinstance(value, int | float):
@@ -325,6 +352,7 @@ class EncoderEvaluator:
         self.tol = flatten(tol)
         self.stages = stages
         self.checks: list[Check] = []
+        self.browser = manifest.is_browser(man)
 
     # -- helpers ------------------------------------------------------------------------------
 
@@ -413,6 +441,8 @@ class EncoderEvaluator:
         manifest_files = {f["path"]: f["sha256"] for f in self.man["origin"]["files"]}
         required = {"tokenizer": ["tokenizer.json"], "export": [], "dotnet": []}
         graph = [f["path"] for f in self.man["origin"]["files"] if f["path"].endswith(".onnx")]
+        if self.browser:
+            graph = [_graph_path(self.man)]
         required["export"] = graph[:1]
         required["dotnet"] = graph[:1] + (["tokenizer.json"] if self._has_text_path(self.stages.get("dotnet")) else [])
         for name, stage in self.stages.items():
@@ -539,7 +569,20 @@ class EncoderEvaluator:
         check.detail = f"NaN or Inf in {bad}" if bad else ""
         self._add(check)
 
-    def _batches(self, stage: results.StageResults, substage: str, outputs: tuple[str, ...]) -> None:
+    def _batches(
+        self,
+        stage: results.StageResults,
+        substage: str,
+        outputs: tuple[str, ...],
+        singles_of: dict[str, str] | None = None,
+    ) -> None:
+        """Padded batches against the stage's own single rows and the reference.
+
+        `singles_of` maps a batch output to the single-row output it is compared with when the stage has no single
+        rows of its own for it (browser profiles: the text path ran only as one padded generator call, so its rows are
+        compared with the stage's single rows from the same ids; the tokenizer stage shows the ids are exact).
+        """
+        singles_of = singles_of or {}
         emb_key = "float.embedding_max_abs"
         pad_key = "float.padded_batch_vs_single_embedding_max_abs"
         relevant = {n: b for n, b in stage.batches.items() if b["output"] in outputs}
@@ -568,12 +611,14 @@ class EncoderEvaluator:
                 ) + "; the padded-batch bound is binding and needs evidence"
             self._add(evidence)
         for name, batch in relevant.items():
-            singles = self._case_output(stage, batch["output"])
+            single_output = singles_of.get(batch["output"], batch["output"])
+            singles = self._case_output(stage, single_output)
             sub = substage if batch["output"] != "text_embedding" else "dotnet-text"
             vs_single = Check(
                 f"{stage.stage}.batch.{name}.vs_single",
                 sub,
-                f"{stage.stage}: batch '{name}' vs own single rows",
+                f"{stage.stage}: batch '{name}' vs own single rows"
+                + ("" if single_output == batch["output"] else f" ('{single_output}', same ids)"),
                 pad_key,
             )
             vs_ref = Check(
@@ -788,7 +833,10 @@ class EncoderEvaluator:
         cs_emb = self._case_output(stage, "embedding")
         self._min_cosine(self._compare_vectors(ids_ref, cs_emb, self.fx.embedding, _bound(self.tol, emb_key)))
 
-        if cs_key not in self.tol:
+        if cs_key not in self.tol and self.browser:
+            # Browser profiles bind backend drift against native ONNX Runtime on the same graph instead.
+            self._vs_native_same_graph(stage, export, cs_emb)
+        elif cs_key not in self.tol:
             ids_py.detail = f"{cs_key} is not in the protected tolerances"
             self._add(ids_py)
         elif export is None:
@@ -832,7 +880,19 @@ class EncoderEvaluator:
                 info.status, info.detail = "not-applicable", "report only: shapes or case sets differ"
             self._add(info)
 
-        if self._has_text_path(stage):
+        text_singles = any("text_embedding" in outs for outs in stage.cases.values())
+        if self.browser and self._has_text_path(stage) and not text_singles:
+            # The browser text path ran as one padded generator call over every fixture text: its batch rows are the
+            # text path's output, judged against the reference, and against the stage's single rows from the same ids.
+            rows: dict[str, list] = {}
+            for batch in stage.batches.values():
+                if batch["output"] == "text_embedding":
+                    for cid, row in zip(batch["case_ids"], batch["values"], strict=True):
+                        rows.setdefault(cid, row)
+            text.title = "browser embeddings from text (padded generator batches) vs protected reference"
+            self._min_cosine(self._compare_vectors(text, rows, self.fx.embedding, _bound(self.tol, emb_key)))
+            self._batches(stage, "dotnet-ids", ("embedding", "text_embedding"), {"text_embedding": "embedding"})
+        elif self._has_text_path(stage):
             self._min_cosine(
                 self._compare_vectors(
                     text, self._case_output(stage, "text_embedding"), self.fx.embedding, _bound(self.tol, emb_key)
@@ -856,6 +916,67 @@ class EncoderEvaluator:
                 )
             )
             self._batches(stage, "dotnet-ids", ("embedding",))
+
+    def _vs_native_same_graph(
+        self, stage: results.StageResults, export: results.StageResults | None, browser: dict[str, list]
+    ) -> None:
+        """Browser embeddings vs native ONNX Runtime (stage 2) on the same graph and ids: backend drift alone.
+
+        Binding where the protected tolerances set `browser_vs_native_same_graph.embedding_max_abs`; otherwise measured
+        and reported only. Both stages must declare the profile's graph with the same digest, or the comparison is
+        invalid while the key is bound. No same-machine condition: the bound is about the backend, not the host.
+
+        Without the key (the fp32 browser profiles) the comparison is a measurement only: a missing stage 2 or a graph
+        digest mismatch leaves it not applicable, with the reason, and never blocks G2.
+        """
+        bound_key = SAME_GRAPH_KEY in self.tol
+        report_only = f"report only: {SAME_GRAPH_KEY} is not in the protected tolerances"
+        check = Check(
+            "dotnet.embedding.vs_native_same_graph",
+            "dotnet-ids",
+            "browser embeddings vs native ONNX Runtime (CPU), same graph and ids",
+            SAME_GRAPH_KEY,
+            _bound(self.tol, SAME_GRAPH_KEY),
+        )
+        if export is None:
+            if bound_key:
+                self._missing_stage(check, "export")
+            else:
+                check.status, check.detail = "not-applicable", f"{report_only}; not measured: no results for 'export'"
+                self._add(check)
+            return
+        graph = _graph_path(self.man)
+        mine = {a["path"]: a["sha256"] for a in stage.assets}.get(graph)
+        native = {a["path"]: a["sha256"] for a in export.assets}.get(graph)
+        if not mine or mine != native:
+            problem = f"the stages must run the same graph {graph}: browser declares {mine}, native {native}"
+            check.status, check.detail = (
+                ("invalid", problem) if bound_key else ("not-applicable", f"{report_only}; not measured: {problem}")
+            )
+            self._add(check)
+            return
+        self._compare_vectors(
+            check, browser, self._case_output(export, "embedding"), check.bound, expected_stage="export"
+        )
+        if not bound_key and check.status == "not-run":
+            check.status = "not-applicable"
+            check.detail = report_only + (f"; not measured: {check.detail}" if not check.metrics.get("values") else "")
+
+    def check_preview(self) -> None:
+        """Task metrics that gate Preview: listed explicitly, never passed by a staged run (see PREVIEW_OVERLAP_KEY)."""
+        if PREVIEW_OVERLAP_KEY not in self.tol:
+            return
+        self._add(
+            Check(
+                "preview.retrieval_top10_overlap_vs_fp32",
+                "preview",
+                "retrieval top-10 overlap with fp32 (mean over queries)",
+                PREVIEW_OVERLAP_KEY,
+                self.tol[PREVIEW_OVERLAP_KEY],
+                "not-run",
+                detail=PREVIEW_NOT_EVALUATED,
+            )
+        )
 
     @staticmethod
     def _same_machine(a: results.StageResults, b: results.StageResults) -> bool:
@@ -886,6 +1007,7 @@ class EncoderEvaluator:
         self.check_tokenizer()
         self.check_export()
         self.check_dotnet()
+        self.check_preview()
         self.check_unknown_keys()
         return self.checks
 
@@ -1251,6 +1373,10 @@ def evaluate(
         },
         "checks": [c.as_dict() for c in checks],
     }
+    preview = [c.as_dict() for c in checks if getattr(c, "gate", None) == "Preview"]
+    if preview:
+        # Outside G1 and G2 and outside the manifest's gates: requirements for the Preview label, reported explicitly.
+        report["preview_requirements"] = preview
     if exceptions is not None:
         report["entity_exceptions"] = exceptions
     if task == "embedding" and reference_embeddings is not None:
@@ -1358,6 +1484,10 @@ def _task_markdown(report: dict[str, Any]) -> str:
         lines.append("")
     lines += ["## Gates", "", "| Gate | Status | Reason |", "| --- | --- | --- |"]
     lines += [f"| {g} | {v['status']} | {v['reason']} |" for g, v in report["gates"].items()]
+    lines += [
+        f"| Preview requirement `{c['tolerance_key']}` (not G1 or G2) | {c['status']} | {c['detail']} |"
+        for c in report.get("preview_requirements", [])
+    ]
     lines += ["", "## Stages", "", "| Stage | Status |", "| --- | --- |"]
     lines += [f"| {SUBSTAGE_TITLES[s]} | {v} |" for s, v in report["stages"].items()]
     lines += [

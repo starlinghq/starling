@@ -36,7 +36,8 @@ public static class ConformanceEntryPoints
         using (var json = new Utf8JsonWriter(buffer))
         {
             json.WriteStartObject();
-            json.WriteString("runtime", RuntimeInformation.FrameworkDescription + (RuntimeFeature() ? " (AOT)" : " (interpreter)"));
+            // The build mode (AOT or interpreter) is the harness label (--label); Mono on WebAssembly has no API for it.
+            json.WriteString("runtime", RuntimeInformation.FrameworkDescription);
             json.WriteString("variant", variant);
             json.WriteString("provider", provider);
             try
@@ -101,8 +102,15 @@ public static class ConformanceEntryPoints
         json.WriteNumber("dimension", embedder.Encoder.Dimension);
         WriteRuntimeInfo(json, OnnxWebRuntime.Info!);
 
-        List<JsonElement> embeddingRows = ReadJsonLines(await Http.GetByteArrayAsync(Fixtures + "embeddings.jsonl"));
-        List<JsonElement> tokenizerRows = ReadJsonLines(await Http.GetByteArrayAsync(Fixtures + "tokenizer.jsonl"));
+        byte[] embeddingsBytes = await Http.GetByteArrayAsync(Fixtures + "embeddings.jsonl");
+        byte[] tokenizerBytes = await Http.GetByteArrayAsync(Fixtures + "tokenizer.jsonl");
+        // The exact fixture bytes this run used, so a converter can prove they are the fixtures it evaluates against.
+        json.WriteStartObject("fixtures_sha256");
+        json.WriteString("embeddings.jsonl", Convert.ToHexStringLower(System.Security.Cryptography.SHA256.HashData(embeddingsBytes)));
+        json.WriteString("tokenizer.jsonl", Convert.ToHexStringLower(System.Security.Cryptography.SHA256.HashData(tokenizerBytes)));
+        json.WriteEndObject();
+        List<JsonElement> embeddingRows = ReadJsonLines(embeddingsBytes);
+        List<JsonElement> tokenizerRows = ReadJsonLines(tokenizerBytes);
         var texts = tokenizerRows.ToDictionary(r => r.GetProperty("id").GetString()!, r => r.GetProperty("text").GetString()!);
 
         Console.WriteLine("conformance stage: tokenizer");
@@ -287,8 +295,6 @@ public static class ConformanceEntryPoints
         json.WriteBoolean("webgpu_exposed", info.WebGpuExposed);
         json.WriteEndObject();
     }
-
-    private static bool RuntimeFeature() => !System.Runtime.CompilerServices.RuntimeFeature.IsDynamicCodeSupported;
 
     private static List<JsonElement> ReadJsonLines(byte[] bytes)
     {

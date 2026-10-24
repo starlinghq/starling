@@ -259,6 +259,9 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--graphs", type=Path, required=True)
     parser.add_argument("--out", type=Path, required=True)
+    parser.add_argument(
+        "--require-pass", action="store_true", help="exit 1 unless every result ran and passed every evaluated bound"
+    )
     parser.add_argument("results", type=Path, nargs="+")
     args = parser.parse_args()
     cache: dict = {}
@@ -279,6 +282,8 @@ def main() -> None:
         for c in r["checks"]:
             if c["status"] != "passed":
                 print(f"    {c['status']}: {c['bound']} observed {c['observed']} limit {c['limit']}")
+    if args.require_pass and not all("error" not in r and r["passed"] for r in reports):
+        raise SystemExit("not every result passed")
 
 
 if __name__ == "__main__":

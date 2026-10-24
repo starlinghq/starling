@@ -1,0 +1,210 @@
+# Browser profile (kickoff 2026-10-12, browser decisions 1 to 8; follow-up plan W6): the int8-embed e5 graph (the
+# browser default variant) on onnxruntime-web's WebGPU backend, through Starlings.Models.E5.Browser with the voluntary
+# adapter Starlings.Runtime.OnnxWeb.WebGpu in a .NET browser-wasm app. The reference is the PyTorch fp32 fixture set of
+# multilingual-e5-small/onnx-fp32-cpu; the binding tolerances (set by Mark on 2026-10-12) are this profile's own.
+# Evidence: docs/evidence/browser-e5-package-2026-10-23/ (section WebGPU).
+schema_version: 1
+id: multilingual-e5-small/onnx-int8embed-webgpu
+# Experimental: WebGPU stays local evidence (kickoff browser decision 1): one browser, one NVIDIA GPU, no CI job.
+# Preview also needs the retrieval task metric (task_metric_before_preview in the protected tolerances).
+maturity: experimental
+
+origin:
+  code:
+    url: https://huggingface.co/intfloat/multilingual-e5-small
+    revision: "614241f622f53c4eeff9890bdc4f31cfecc418b3"
+  weights:
+    url: https://huggingface.co/intfloat/multilingual-e5-small
+    revision: "614241f622f53c4eeff9890bdc4f31cfecc418b3"
+  # The int8-embed graph is not on the Hub: it is derived from the Hub's onnx/model.onnx (listed as its input) by
+  # quantize_e5_browser.py (execution.graph.asset). tokenizer.json is the Hub's (the same pin as E5ModelAssets.Lock);
+  # README.md carries the license.
+  files:
+    - path: onnx/model-int8-embed.onnx
+      sha256: "374a3cc034a1dba112ecd1a9fba920be63f295cada3c65ab15a0a3a84739fb19"
+      size: 181715582
+    - path: README.md
+      sha256: "0038de97aee16258cecbad7ffda4b4febd6953e747a00e0ddbc8e6ed241e9c1c"
+      size: 497538
+    - path: onnx/model.onnx
+      sha256: "ca456c06b3a9505ddfd9131408916dd79290368331e7d76bb621f1cba6bc8665"
+      size: 470268510
+    - path: tokenizer.json
+      sha256: "0b44a9d7b51c3c62626640cda0e2c2f70fdacdc25bbbd68038369d14ebdf4c39"
+      size: 17082730
+  attribution: >-
+    multilingual-e5-small by Liang Wang, Nan Yang, Xiaolong Huang, Linjun Yang, Rangan Majumder and
+    Furu Wei (Microsoft), "Multilingual E5 Text Embeddings: A Technical Report", arXiv:2402.05672.
+    Tokenizer vocabulary from XLM-RoBERTa (Conneau et al.).
+
+rights:
+  code_license: MIT
+  weights_license: MIT
+  tokenizer_terms: MIT
+  redistribution: download
+  notes: >-
+    MIT is stated only in the model card front matter (README.md at the pinned revision). The int8-embed graph has no
+    public URL (hosting as a GitHub release asset is the recorded default, kickoff browser decision 4, not done yet):
+    users build it with quantize_e5_browser.py from the pinned fp32 graph and host it with their app; the loader
+    rejects bytes whose SHA-256 differs from the pin. tokenizer.json comes from the Hub at the pinned revision or the
+    app's host. onnxruntime-web (npm, MIT) ships with Starlings.Runtime.OnnxWeb as a redistributed static web asset
+    (ai-dotnet/THIRD-PARTY-NOTICES.md).
+
+behavior:
+  tasks: [embedding]
+  max_input_tokens: 512
+  # The embedding API exposes no offsets. The conformance run also checks the owned tokenizer's UTF-16 offsets against
+  # tokenizer.jsonl (0 mismatches), measured but not bound here, as for onnx-fp32-cpu.
+  offsets_unit: none
+  truncation: truncate-right
+  defaults:
+    pooling: mean over attention mask
+    normalize: l2
+    dimension: 384
+    input_prefix: >-
+      Callers add "query: " or "passage: " themselves (model card), or pass E5InputType to
+      E5BrowserEmbeddingGenerator. The profile does not insert prefixes otherwise.
+  unsupported:
+    - pair encoding as an embedding input (the tokenizer supports pairs; the embedding task does not use them)
+    - token_type_ids other than 0
+    - micro-batching across calls
+    - fp16 and dynamic int8 graph variants (the spike rejected them, docs/m0/browser-wasm-spike.md)
+
+processing:
+  tokenizer:
+    package: Starlings.Tokenizers
+    version: 0.3.2
+    profile_id: xlmr-unigram-e5
+    algorithm: unigram
+    assets:
+      - path: tokenizer.json
+        sha256: "0b44a9d7b51c3c62626640cda0e2c2f70fdacdc25bbbd68038369d14ebdf4c39"
+        size: 17082730
+    backend_tokenizer_dependency: false
+  decoding:
+    reference_tokenizer: >-
+      As multilingual-e5-small/onnx-fp32-cpu: the pinned tokenizer.json as read by tokenizers 0.23.2.
+
+execution:
+  backend:
+    name: onnxruntime-web
+    version: 1.30.0
+    # Starlings.Runtime.OnnxWeb with the voluntary adapter package, which ships the WebGPU-capable bundle.
+    binding: Starlings.Runtime.OnnxWeb.WebGpu
+  # int8 embedding tables (word, position, type; weight-only, with DequantizeLinear), every MatMul fp32.
+  precision: mixed
+  variant: quantized
+  graph:
+    # quantize_dynamic(QInt8, op_types_to_quantize=["Gather"]) on the Hub's onnx/model.onnx, onnxruntime 1.30.0 and
+    # onnx 1.23.1 (requirements-browser.txt); deterministic (docs/m0/browser-wasm-spike.md section 3.2).
+    asset:
+      path: onnx/model-int8-embed.onnx
+      sha256: "374a3cc034a1dba112ecd1a9fba920be63f295cada3c65ab15a0a3a84739fb19"
+      size: 181715582
+      source_status: not-hosted
+      produced_by:
+        - model-pipeline/reference/encoder/quantize_e5_browser.py --model <snapshot>/onnx/model.onnx --out <dir> (variant int8-embed, file model-int8-embed.onnx)
+    inputs:
+      - { name: input_ids, type: int64, shape: [batch_size, sequence_length] }
+      - { name: attention_mask, type: int64, shape: [batch_size, sequence_length] }
+      - { name: token_type_ids, type: int64, shape: [batch_size, sequence_length] }
+    outputs:
+      - { name: last_hidden_state, type: float32, shape: [batch_size, sequence_length, 384] }
+
+capabilities:
+  # Starlings.Models.E5.Browser with Starlings.Runtime.OnnxWeb.WebGpu; evidence docs/evidence/browser-e5-package-2026-10-23/
+  # (section WebGPU: one AOT build, headless Chrome for Testing 153, Linux x64, NVIDIA RTX 4060 Ti over Vulkan). The
+  # library's padding, pooling and normalization are the code of Starlings.Models.E5 (NativeParityTests: bit for bit on
+  # native ONNX Runtime).
+  # batch: E5BrowserEncoder.EmbedBatchAsync, padded batch of 8 vs single rows within the bound (fidelity report).
+  batch: experimental
+  streaming: unsupported
+  # cancellation: checked before each chunk and run; a run already inside onnxruntime-web completes first (unit tests).
+  cancellation: experimental
+  persistence: unsupported
+  training: unsupported
+  # aot: Native AOT does not apply in the browser (browser-wasm has no Native AOT). WebAssembly AOT compilation
+  # (RunAOTCompilation, the recommended consumer build) is the capability wasm_aot below.
+  aot: unsupported
+  # extensions_ai: E5BrowserEmbeddingGenerator (IEmbeddingGenerator<string, Embedding<float>>): all 46 fixture texts in
+  # one call within the bounds of the text path (fidelity report).
+  extensions_ai: experimental
+  # mlnet: ML.NET does not run in the browser; Starlings.Models.E5.MLNet is a native-only adapter.
+  mlnet: unsupported
+  embedding_pretokenized: experimental
+  embedding_text: experimental
+  tokenizer_owned: experimental
+  wasm_aot: experimental
+  # Not run on WebGPU: the interpreter build, one thread without cross-origin isolation, the proxy worker, Cache Storage
+  # reuse (each measured on WASM only).
+  wasm_interpreter: untested
+  multithreaded_cross_origin_isolated: experimental
+  single_thread_without_isolation: untested
+  proxy_worker: untested
+  cache_storage: untested
+
+compatibility:
+  # Headless Chrome for Testing 153.0.8010.12 on Linux x64, WebGPU over Vulkan on an NVIDIA RTX 4060 Ti (GPU pinned with
+  # VK_LOADER_DEVICE_ID_FILTER): every bound of the profile's G1 and G2 passes (fidelity
+  # report under docs/evidence/browser-e5-package-2026-10-23/gates/). Other GPUs and vendors are untested.
+  - os: linux
+    arch: x64
+    provider: webgpu
+    browser: chromium-153
+    status: experimental
+    verified: 2026-10-23
+  # No run: other browsers, other operating systems, mobile browsers.
+  - os: linux
+    arch: x64
+    provider: webgpu
+    browser: firefox
+    status: untested
+  - os: windows
+    arch: x64
+    provider: webgpu
+    browser: chromium
+    status: untested
+  - os: macos
+    arch: arm64
+    provider: webgpu
+    browser: safari
+    status: untested
+
+qualification:
+  reference_runner: browser/conformance/run_conformance.py
+  # The reference of every browser profile: the PyTorch fp32 fixture set of onnx-fp32-cpu (development fixtures).
+  fixtures: model-pipeline/protected/multilingual-e5-small/onnx-fp32-cpu
+  # Binding tolerances set by Mark on 2026-10-12 (docs/plan/embeddinggemma2-follow-up.md section 1.1).
+  tolerances: model-pipeline/protected/multilingual-e5-small/onnx-int8embed-webgpu/tolerances.yaml
+  # G1, G2: model-pipeline evaluate on the conformance run converted by model-pipeline browser-results, with stage 2 from
+  # reference/encoder/stage_e5_browser_native.py (commands in the evidence README). Development fixtures, not the P-030
+  # release sets. task_metric_before_preview.retrieval_top10_overlap_vs_fp32 gates Preview, not G1 or G2, and is not
+  # evaluated: it needs browser embeddings of the budgeted retrieval set (evaluate --g3 retrieval --baseline).
+  # G0 and G3 to G7 have not been run for this profile.
+  gates:
+    G0: { status: not-run }
+    G1: { status: passed, evidence: docs/evidence/browser-e5-package-2026-10-23/gates/README.md, date: 2026-10-23 }
+    G2: { status: passed, evidence: docs/evidence/browser-e5-package-2026-10-23/gates/README.md, date: 2026-10-23 }
+    G3: { status: not-run }
+    G4: { status: not-run }
+    G5: { status: not-run }
+    G6: { status: not-run }
+    G7: { status: not-run }
+
+maintenance:
+  owner: Mark
+  latest_known_upstream_revision: "614241f622f53c4eeff9890bdc4f31cfecc418b3"
+  latest_verified_upstream_revision: "614241f622f53c4eeff9890bdc4f31cfecc418b3"
+  last_checked: 2026-10-23
+  review_date: 2027-01-23
+  known_issues:
+    - >-
+      No CI browser job yet (follow-up plan W6): WebGPU stays local evidence (one run, headless Chrome for Testing 153, one NVIDIA GPU).
+    - >-
+      The int8-embed graph has no public URL yet: users build it with quantize_e5_browser.py and host it themselves.
+    - >-
+      Without cross-origin isolation (COOP/COEP) onnxruntime-web runs one thread, 3.2x to 3.7x slower on WASM; asking for
+      more than one thread then fails with NotSupportedException.
+    - >-
+      An interpreter publish that reuses an obj/ left by an AOT publish can ship IL-stripped assemblies, and the Mono
+      interpreter then aborts (browser/conformance/README.md). Publish each build mode from a clean obj/.

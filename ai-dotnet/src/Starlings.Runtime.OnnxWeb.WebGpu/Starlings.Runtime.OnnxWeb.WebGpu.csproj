@@ -11,7 +11,7 @@
     <IsPackable>true</IsPackable>
     <IsAotCompatible>true</IsAotCompatible>
     <AddRazorSupportForMvc>false</AddRazorSupportForMvc>
-    <Description>WebGPU for Starlings.Runtime.OnnxWeb: onnxruntime-web 1.30.0's WebGPU-capable bundle as static web assets (26.8 MB binary, about 4 MB brotli) and the OnnxWebGpuBundle to initialize with. Opt-in adapter; Experimental (tested on one NVIDIA GPU with Chromium on Linux).</Description>
+    <Description>WebGPU for Starlings.Runtime.OnnxWeb: onnxruntime-web 1.30.0's WebGPU-capable bundle as static web assets (26.8 MB binary, about 4 MB brotli) and the OnnxWebGpuBundle to initialize with. WebAssembly has no support badge. Maturity is per model profile (Stable, Preview or Experimental): see the README, generated from the model registry.</Description>
     <PackageTags>onnxruntime-web;webgpu;wasm;webassembly;blazor;browser;inference;ai</PackageTags>
     <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>

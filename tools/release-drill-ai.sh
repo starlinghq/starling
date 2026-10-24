@@ -319,6 +319,9 @@ projects=(
     ai-dotnet/src/Starlings.Runtime.Onnx
     ai-dotnet/src/Starlings.Models.E5
     ai-dotnet/src/Starlings.Models.E5.Extensions.AI
+    ai-dotnet/src/Starlings.Runtime.OnnxWeb
+    ai-dotnet/src/Starlings.Runtime.OnnxWeb.WebGpu
+    ai-dotnet/src/Starlings.Models.E5.Browser
     ai-dotnet/src/Starlings.Models.E5.MLNet
     ai-dotnet/src/Starlings.Models.Gliner2
     ai-dotnet/src/Starlings.Models.EmbeddingGemma2
@@ -372,6 +375,13 @@ expect_deps() {
             echo "Starlings.Models.E5 [$ai_version]"
             echo "Microsoft.Extensions.AI.Abstractions 10.10.1"
             echo "Microsoft.Extensions.DependencyInjection.Abstractions 10.0.12" ;;
+        Starlings.Runtime.OnnxWeb) ;;
+        Starlings.Runtime.OnnxWeb.WebGpu)
+            echo "Starlings.Runtime.OnnxWeb [$ai_version]" ;;
+        Starlings.Models.E5.Browser)
+            echo "Starlings.Models.E5 [$ai_version]"
+            echo "Starlings.Models.E5.Extensions.AI [$ai_version]"
+            echo "Starlings.Runtime.OnnxWeb [$ai_version]" ;;
         Starlings.Models.E5.MLNet)
             echo "Starlings.Models.E5 [$ai_version]"
             echo "Microsoft.ML 5.0.0" ;;
@@ -656,6 +666,44 @@ if find "$NUGET_PACKAGES" "$apps" -regextype posix-extended -iregex '.*/(lib)?(a
     fail "an FFmpeg library is in the consumer package cache or a build output (FFmpeg must be user-supplied)"
 fi
 echo "ok:   no FFmpeg library in the consumer package cache or any build output (the video adapter loads the user's FFmpeg through its own bindings)"
+
+# The browser sample (Blazor WebAssembly) from the packed browser packages: restored from the local feed only, every
+# Starlings.* package equal to the packed bytes, published without the wasm-tools workload (interpreter), and the output
+# carries onnxruntime-web, the module and onnxruntime's notices. Inference needs a browser: browser/conformance/ and the
+# qualification job "browser" run it.
+browser_sample_version="$(sed -n 's:.*<StarlingsVersion>\(.*\)</StarlingsVersion>.*:\1:p' "$src/ai-dotnet/samples/E5BrowserSearch/E5BrowserSearch.csproj")"
+[[ "$browser_sample_version" == "$ai_version" ]] || fail "E5BrowserSearch references $browser_sample_version, the packages are $ai_version"
+mkdir -p "$apps/E5BrowserSearch"
+cp -r "$src/ai-dotnet/samples/E5BrowserSearch/." "$apps/E5BrowserSearch/"
+rm -rf "$apps/E5BrowserSearch/bin" "$apps/E5BrowserSearch/obj"
+(cd "$apps/E5BrowserSearch" && dotnet publish --configuration Release -o "$work/browser-publish" >"$work/publish-E5BrowserSearch.log" 2>&1) \
+    || { cat "$work/publish-E5BrowserSearch.log"; fail "E5BrowserSearch publish failed"; }
+python3 - "$pack" "$apps/E5BrowserSearch/obj/project.assets.json" <<'PYEOF' || fail "browser sample restore check failed"
+import base64, hashlib, json, os, sys
+pack, path = sys.argv[1:3]
+libraries = json.load(open(path))["libraries"]
+names = sorted(libraries)
+assert all(lib["type"] == "package" for lib in libraries.values()), "non-package library (project reference)"
+for want in ("Starlings.Models.E5.Browser", "Starlings.Runtime.OnnxWeb", "Starlings.Runtime.OnnxWeb.WebGpu",
+             "Starlings.Models.E5", "Starlings.Models.E5.Extensions.AI"):
+    assert len([n for n in names if n.split("/")[0] == want]) == 1, f"{want} not restored exactly once"
+for name_version in names:
+    name, version = name_version.split("/")
+    if name.startswith("Starlings.") and name != "Starlings.Tokenizers":
+        packed = base64.b64encode(hashlib.sha512(open(os.path.join(pack, f"{name}.{version}.nupkg"), "rb").read()).digest()).decode()
+        assert libraries[name_version]["sha512"] == packed, f"{name_version} differs from the packed package"
+# A browser app needs no native ONNX Runtime: only the managed binding comes in, through Starlings.Runtime.Onnx.
+natives = [n for n in names if n.split("/")[0] in ("Microsoft.ML.OnnxRuntime", "Microsoft.ML.OnnxRuntime.Gpu.Linux")]
+assert not natives, f"native ONNX Runtime restored into the browser sample: {natives}"
+print(f"ok:   E5BrowserSearch: {len(names)} packages, Starlings.* equal the packed .nupkg files, no ONNX Runtime natives")
+PYEOF
+for f in starlings-onnxweb.js ort/ort.wasm.min.mjs ort/ort-wasm-simd-threaded.wasm ort/LICENSE-onnxruntime.txt ort/ThirdPartyNotices-onnxruntime.txt; do
+    [[ -f "$work/browser-publish/wwwroot/_content/Starlings.Runtime.OnnxWeb/$f" ]] || fail "E5BrowserSearch publish lacks _content/Starlings.Runtime.OnnxWeb/$f"
+done
+for f in ort/ort.webgpu.min.mjs ort/ort-wasm-simd-threaded.asyncify.wasm ort/ThirdPartyNotices-onnxruntime.txt; do
+    [[ -f "$work/browser-publish/wwwroot/_content/Starlings.Runtime.OnnxWeb.WebGpu/$f" ]] || fail "E5BrowserSearch publish lacks _content/Starlings.Runtime.OnnxWeb.WebGpu/$f"
+done
+echo "ok:   E5BrowserSearch publishes from the packed packages with onnxruntime-web, its module and onnxruntime's notices"
 
 sample=(dotnet "$apps/E5Search/bin/Release/net10.0/E5Search.dll")
 gliner2_sample=(dotnet "$apps/Gliner2Ner/bin/Release/net10.0/Gliner2Ner.dll")
