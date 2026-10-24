@@ -1,0 +1,28 @@
+/* The frame ticker in the header: it keeps moving while e5 loads and searches in the worker. */
+.ticker {
+  font-size: 0.8rem;
+  font-weight: 400;
+  color: var(--muted);
+  margin-left: 12px;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.ticker .track {
+  display: inline-block;
+  position: relative;
+  width: 92px;
+  height: 8px;
+  margin-right: 8px;
+  vertical-align: middle;
+}
+
+.ticker .dot {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+}
