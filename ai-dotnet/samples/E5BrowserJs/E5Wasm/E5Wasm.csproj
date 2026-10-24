@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk.WebAssembly">
+
+  <!--
+    A headless .NET WebAssembly bundle for JavaScript apps: no Blazor, no UI. It exposes multilingual-e5-small
+    (Starlings.Models.E5.Browser on onnxruntime-web) to JavaScript through [JSExport] (Exports.cs). The JavaScript side
+    (../web/public/e5/e5-worker.js) loads it in a Web Worker with dotnet.js. Publish output = static files:
+
+      dotnet publish -c Release -o ../web/public/e5-bundle      (or run ../web's "bundle" script)
+  -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <OutputType>Exe</OutputType>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <!-- Follows the repository version, like the other samples (set it to the version you consume from nuget.org). -->
+    <StarlingsVersion>0.3.0</StarlingsVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Starlings.Models.E5.Browser" Version="$(StarlingsVersion)" />
+    <!-- Optional: WebGPU. Remove it (and the "webgpu" option in ../web) to ship only the WASM backend. -->
+    <PackageReference Include="Starlings.Runtime.OnnxWeb.WebGpu" Version="$(StarlingsVersion)" />
+  </ItemGroup>
+
+</Project>

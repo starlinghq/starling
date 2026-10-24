@@ -16,7 +16,7 @@ public enum OnnxWebExecutionProvider
 
 /// <summary>
 /// One onnxruntime-web distribution served as static web assets: the ES module and the directory holding its
-/// Emscripten loader and binary. URLs are relative to the page's base URI (<c>document.baseURI</c>). A page loads one
+/// Emscripten loader and binary. URLs are relative to the page's base URI (<c>document.baseURI</c>; in a Web Worker, the worker script's URL). A page loads one
 /// bundle; <see cref="Wasm"/> is this package's, the WebGPU adapter package provides the other.
 /// </summary>
 /// <param name="Name">Short name reported in diagnostics.</param>
@@ -202,7 +202,7 @@ public static class OnnxWebRuntime
         }
     }
 
-    /// <summary>Imports <c>starlings-onnxweb.js</c> once (resolved against <c>document.baseURI</c>).</summary>
+    /// <summary>Imports <c>starlings-onnxweb.js</c> once (resolved against <see cref="BaseUri"/>).</summary>
     [SupportedOSPlatform("browser")]
     internal static Task EnsureModuleAsync()
     {
@@ -224,15 +224,31 @@ public static class OnnxWebRuntime
         }
     }
 
+    /// <summary>
+    /// The base the package's URLs resolve against: the page's <c>document.baseURI</c>, or in a Web Worker (no
+    /// document) the worker script's <c>location.href</c>, so a worker next to <c>_framework/</c> and
+    /// <c>_content/</c> resolves them as the page would.
+    /// </summary>
+    [SupportedOSPlatform("browser")]
+    internal static string BaseUri()
+    {
+        using JSObject? document = JSHost.GlobalThis.GetPropertyAsJSObject("document");
+        if (document?.GetPropertyAsString("baseURI") is { Length: > 0 } baseUri)
+        {
+            return baseUri;
+        }
+
+        using JSObject location = JSHost.GlobalThis.GetPropertyAsJSObject("location")
+            ?? throw new NotSupportedException("Starlings.Runtime.OnnxWeb runs on a browser page or in a Web Worker (no document or location here).");
+        return location.GetPropertyAsString("href") ?? throw new NotSupportedException("location.href is not available.");
+    }
+
     [SupportedOSPlatform("browser")]
     private static async Task ImportModuleAsync()
     {
         try
         {
-            using JSObject document = JSHost.GlobalThis.GetPropertyAsJSObject("document")
-                ?? throw new NotSupportedException("Starlings.Runtime.OnnxWeb runs on a browser page (no document object here).");
-            string baseUri = document.GetPropertyAsString("baseURI") ?? throw new NotSupportedException("document.baseURI is not available.");
-            var url = new Uri(new Uri(baseUri), ModulePath);
+            var url = new Uri(new Uri(BaseUri()), ModulePath);
             await JSHost.ImportAsync(OnnxWebInterop.ModuleName, url.AbsoluteUri).ConfigureAwait(false);
         }
         catch

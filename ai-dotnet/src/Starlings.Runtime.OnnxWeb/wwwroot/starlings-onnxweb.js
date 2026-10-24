@@ -8,7 +8,10 @@ let loadedBundle = null;
 let info = null;
 const controllers = new Map();
 
-const resolve = (url) => new URL(url, document.baseURI).href;
+// The page's base URI, or in a Web Worker (no document) the worker script's URL: the package also runs in a worker,
+// which keeps inference off the page's main thread for JavaScript hosts (ai-dotnet/samples/E5BrowserJs).
+const baseUri = () => globalThis.document?.baseURI ?? self.location.href;
+const resolve = (url) => new URL(url, baseUri()).href;
 
 // ONNX Runtime Web's own default when numThreads is not set (backend-wasm.ts): half the logical cores, at most 4,
 // and 1 without cross-origin isolation (no SharedArrayBuffer).
