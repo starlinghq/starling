@@ -2,11 +2,11 @@
   "format": "starlings.fidelity-report",
   "format_version": 1,
   "profile": "multilingual-e5-small/onnx-fp32-webgpu",
-  "date": "2026-10-23",
+  "date": "2026-10-24",
   "evaluator": {
     "name": "model-pipeline evaluate",
     "version": "0.1.0",
-    "repository_commit": "ccc20820389955e70789f7250d40d18b88a3f90e"
+    "repository_commit": "d8fa2b168e531910a5da01b9d803c05a04f140e6"
   },
   "inputs": {
     "manifest": {
@@ -33,20 +33,25 @@
     ],
     "results": {
       "tokenizer": {
-        "path": "/home/mark/.claude/jobs/0e59d1f9/tmp/w6eval/results/fp32-webgpu-aot/tokenizer.results.json",
-        "sha256": "848231c0330e0c146c854023289f2592d9f4755abffb8e289486eab4e75875da",
+        "path": "/home/mark/.claude/jobs/0e59d1f9/tmp/prov/results/fp32-webgpu-aot/tokenizer.results.json",
+        "sha256": "327d71b1385f12944ecbc132b28612fc7fae3f8c3b00e5b28db00bda1238a4ca",
         "candidate": "Starlings.Models.E5.Browser on onnxruntime-web 1.30.0 (webgpu, bundle webgpu, 4 threads), build aot: E5 tokenization (owned tokenizer, truncation to 512)",
         "producer": {
           "name": "browser/conformance/run_conformance.py (E5Conformance) via model-pipeline browser-results",
-          "repository_commit": "ccc20820389955e70789f7250d40d18b88a3f90e"
+          "repository_commit": "d8fa2b168e531910a5da01b9d803c05a04f140e6",
+          "converted_at_commit": "d8fa2b168e531910a5da01b9d803c05a04f140e6",
+          "fixtures_sha256": {
+            "embeddings.jsonl": "cb7c1fcd618bcddeb664dc05fb14f896c253b1151c2969ab87a1b819a6415ae1",
+            "tokenizer.jsonl": "cb0e61fe1de97956fef1a847a102f2aadd675a2ed7efbfc1a48ac9db2f4b61a1"
+          }
         },
         "environment": {
           "machine": "omarchy",
           "provider": "webgpu",
           "provider_options": {},
-          "browser": "Chrome for Testing 153.0.8010.12",
+          "browser": "chromium 153.0.8010.12",
           "cross_origin_isolated": true,
-          "dotnet_runtime": ".NET 10.0.12 (interpreter)",
+          "dotnet_runtime": ".NET 10.0.12",
           "build_label": "aot",
           "onnxruntime_web": {
             "version": "1.30.0",
@@ -58,7 +63,7 @@
             "webgpu_exposed": true
           },
           "run_file": "fp32-webgpu-aot.json",
-          "run_file_sha256": "ae8cb713989e4e6f382bfe050b1926c8384f744e58b718037eb902af6acfcafc"
+          "run_file_sha256": "72d0ce1e931c6861ce9366b008c04b030f7152ceadc165d65df27679edcb0f6f"
         },
         "assets": [
           {
@@ -68,12 +73,12 @@
         ]
       },
       "export": {
-        "path": "/home/mark/.claude/jobs/0e59d1f9/tmp/w6eval/results/fp32-webgpu-aot/export.results.json",
-        "sha256": "ea29d2dda2c6b1b29bf989c38d6966cf47cf76c1926f88e8897ac731f2ac80f2",
+        "path": "/home/mark/.claude/jobs/0e59d1f9/tmp/prov/results/fp32-webgpu-aot/export.results.json",
+        "sha256": "47e1ecd5733a8f8448bb967c67fb1fa5d097a4402ff727b9cf96aae88dee94b1",
         "candidate": "Python onnxruntime 1.30.0 CPUExecutionProvider on onnx/model.onnx (the browser profile's graph), float64 pooling; no hidden-state reference (not bound for browser profiles)",
         "producer": {
           "name": "model-pipeline/reference/encoder/stage_e5_browser_native.py",
-          "repository_commit": "ccc20820389955e70789f7250d40d18b88a3f90e"
+          "repository_commit": "d8fa2b168e531910a5da01b9d803c05a04f140e6"
         },
         "environment": {
           "python": "3.11.16",
@@ -100,20 +105,25 @@
         ]
       },
       "dotnet": {
-        "path": "/home/mark/.claude/jobs/0e59d1f9/tmp/w6eval/results/fp32-webgpu-aot/dotnet.results.json",
-        "sha256": "3267b56439e7d10f2b1e09eafc4abe64e1084326b48b6677c3dde26231c6c773",
+        "path": "/home/mark/.claude/jobs/0e59d1f9/tmp/prov/results/fp32-webgpu-aot/dotnet.results.json",
+        "sha256": "635689d4543fbd768a9ee4efd65b7e4971abab7f078b457065e0c00edebf7496",
         "candidate": "Starlings.Models.E5.Browser on onnxruntime-web 1.30.0 (webgpu, bundle webgpu, 4 threads), build aot",
         "producer": {
           "name": "browser/conformance/run_conformance.py (E5Conformance) via model-pipeline browser-results",
-          "repository_commit": "ccc20820389955e70789f7250d40d18b88a3f90e"
+          "repository_commit": "d8fa2b168e531910a5da01b9d803c05a04f140e6",
+          "converted_at_commit": "d8fa2b168e531910a5da01b9d803c05a04f140e6",
+          "fixtures_sha256": {
+            "embeddings.jsonl": "cb7c1fcd618bcddeb664dc05fb14f896c253b1151c2969ab87a1b819a6415ae1",
+            "tokenizer.jsonl": "cb0e61fe1de97956fef1a847a102f2aadd675a2ed7efbfc1a48ac9db2f4b61a1"
+          }
         },
         "environment": {
           "machine": "omarchy",
           "provider": "webgpu",
           "provider_options": {},
-          "browser": "Chrome for Testing 153.0.8010.12",
+          "browser": "chromium 153.0.8010.12",
           "cross_origin_isolated": true,
-          "dotnet_runtime": ".NET 10.0.12 (interpreter)",
+          "dotnet_runtime": ".NET 10.0.12",
           "build_label": "aot",
           "onnxruntime_web": {
             "version": "1.30.0",
@@ -125,7 +135,7 @@
             "webgpu_exposed": true
           },
           "run_file": "fp32-webgpu-aot.json",
-          "run_file_sha256": "ae8cb713989e4e6f382bfe050b1926c8384f744e58b718037eb902af6acfcafc"
+          "run_file_sha256": "72d0ce1e931c6861ce9366b008c04b030f7152ceadc165d65df27679edcb0f6f"
         },
         "assets": [
           {
@@ -177,11 +187,11 @@
   "manifest_gates": {
     "G1": {
       "status": "passed",
-      "date": "2026-10-23"
+      "date": "2026-10-24"
     },
     "G2": {
       "status": "passed",
-      "date": "2026-10-23"
+      "date": "2026-10-24"
     }
   },
   "checks": [

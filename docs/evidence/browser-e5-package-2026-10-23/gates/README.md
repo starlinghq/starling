@@ -31,11 +31,20 @@ Every run gives G1 passed and G2 passed, exit code 0 with `--require-gates G1,G2
 
 Stage 2 on its own (Python ONNX Runtime vs PyTorch): fp32 embedding max abs 2.32e-7, int8-embed 3.51e-3 with min cosine 0.9998038. So the int8-embed drift comes from quantization, not from the browser backend. The numbers match the harness's own `report.json` and `report-webgpu.json`.
 
-The reports name the evaluator commit `a886b5da…-dirty`: the evaluator code for the browser path was not yet committed when they were made. The machine `omarchy` is the workstation of `../README.md` (i7-5820K; the WebGPU runs used the RTX 4060 Ti).
+**Provenance.** The fp32 and int8-embed reports for AOT, interpreter and WebGPU come from a rerun at commit `d8fa2b16`, made with the provenance-recording harness on a clean tree, at load average about 4 (`load-average.txt`). Each of these reports records three things:
+- the commit the conformance app was built and run from (`d8fa2b16`, recorded by the run, not by the converter)
+- the converting commit (`converted_at_commit`, the same)
+- the browser (`chromium 153.0.8010.12`)
+
+The run also recorded the SHA-256 of the fixture files it fetched, and `browser-results` verified those against the protected fixtures before evaluating. Slimmed copies of these six runs are in `runs/`.
+
+The four reports for AOT runs 2 and 3, 1 thread without isolation, and the proxy worker come from the earlier runs of `../README.md`, evaluated at commit `ccc20820`. Those runs predate the provenance fields, so their stages say "unrecorded" and "fixtures digest not recorded by the run". Their numbers are identical to the rerun's.
+
+The machine `omarchy` is the workstation of `../README.md` (i7-5820K; the WebGPU runs used the RTX 4060 Ti).
 
 ## Commands
 
-The run files with per-case outputs are kept outside Git. `runs/*.json` are the same runs without them. The SHA-256 of each full file is recorded in its report (`inputs.results.*.environment.run_file_sha256`).
+The run files with per-case outputs are kept outside Git. `runs/*.json` are the rerun's runs without them. The qualification job `browser` runs the same gate path on WASM on schedule (`.github/workflows/qualification.yml`). The SHA-256 of each full file is recorded in its report (`inputs.results.*.environment.run_file_sha256`).
 
 ```sh
 FX=model-pipeline/protected/multilingual-e5-small/onnx-fp32-cpu
@@ -50,7 +59,8 @@ PYTHONPATH=model-pipeline/src python model-pipeline/reference/encoder/stage_e5_b
 #   (fp32 profiles: --graph $G/model-fp32.onnx --graph-path onnx/model.onnx)
 
 # Stages 1 and 3 from one conformance run (run_conformance.py output with per-case outputs)
-model-pipeline browser-results <run>.json --manifest $MAN --fixtures $FX --out <results> --machine "$(hostname)"
+model-pipeline browser-results <run>.json --manifest $MAN --fixtures $FX --out <results> --machine "$(hostname)" \
+  --converted-at-commit "$(git rev-parse HEAD)"
 
 model-pipeline evaluate $MAN --results <results> --out <report> --require-gates G1,G2
 ```

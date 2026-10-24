@@ -1,0 +1,7 @@
+fp32-wasm-aot 4.46 8.97 9.20 mem_available_gb=75
+int8embed-wasm-aot 4.18 8.47 9.03 mem_available_gb=75
+fp32-wasm-interp 4.12 8.11 8.89 mem_available_gb=75
+int8embed-wasm-interp 4.03 7.69 8.73 mem_available_gb=75
+fp32-webgpu-aot 3.74 7.25 8.55 mem_available_gb=75
+int8embed-webgpu-aot 3.63 7.11 8.49 mem_available_gb=75
+end 4.20 7.13 8.48 mem_available_gb=75

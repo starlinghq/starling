@@ -2,11 +2,11 @@
   "format": "starlings.fidelity-report",
   "format_version": 1,
   "profile": "multilingual-e5-small/onnx-fp32-wasm",
-  "date": "2026-10-23",
+  "date": "2026-10-24",
   "evaluator": {
     "name": "model-pipeline evaluate",
     "version": "0.1.0",
-    "repository_commit": "ccc20820389955e70789f7250d40d18b88a3f90e"
+    "repository_commit": "d8fa2b168e531910a5da01b9d803c05a04f140e6"
   },
   "inputs": {
     "manifest": {
@@ -33,20 +33,25 @@
     ],
     "results": {
       "tokenizer": {
-        "path": "/home/mark/.claude/jobs/0e59d1f9/tmp/w6eval/results/fp32-wasm-interp/tokenizer.results.json",
-        "sha256": "080149e7284824014a5ac43f66afd954f687f830443cf67e5cbf995cd033413a",
+        "path": "/home/mark/.claude/jobs/0e59d1f9/tmp/prov/results/fp32-wasm-interp/tokenizer.results.json",
+        "sha256": "42443ebf132e29e1ccda7ab7a0a944ca45f8e3aa904ea0ad4d66a09f7579d668",
         "candidate": "Starlings.Models.E5.Browser on onnxruntime-web 1.30.0 (wasm, bundle wasm, 4 threads), build interp: E5 tokenization (owned tokenizer, truncation to 512)",
         "producer": {
           "name": "browser/conformance/run_conformance.py (E5Conformance) via model-pipeline browser-results",
-          "repository_commit": "ccc20820389955e70789f7250d40d18b88a3f90e"
+          "repository_commit": "d8fa2b168e531910a5da01b9d803c05a04f140e6",
+          "converted_at_commit": "d8fa2b168e531910a5da01b9d803c05a04f140e6",
+          "fixtures_sha256": {
+            "embeddings.jsonl": "cb7c1fcd618bcddeb664dc05fb14f896c253b1151c2969ab87a1b819a6415ae1",
+            "tokenizer.jsonl": "cb0e61fe1de97956fef1a847a102f2aadd675a2ed7efbfc1a48ac9db2f4b61a1"
+          }
         },
         "environment": {
           "machine": "omarchy",
           "provider": "wasm",
           "provider_options": {},
-          "browser": "Chrome for Testing 153.0.8010.12",
+          "browser": "chromium 153.0.8010.12",
           "cross_origin_isolated": true,
-          "dotnet_runtime": ".NET 10.0.12 (interpreter)",
+          "dotnet_runtime": ".NET 10.0.12",
           "build_label": "interp",
           "onnxruntime_web": {
             "version": "1.30.0",
@@ -58,7 +63,7 @@
             "webgpu_exposed": true
           },
           "run_file": "fp32-wasm-interp.json",
-          "run_file_sha256": "db0fe12d17d9889fd39f2dbcf43eea4fea3583d8904b99363ad5b4f0d1bd1d5d"
+          "run_file_sha256": "a1e00f5011480e5cb4d909d247eb3762da01eefceec0d0b2856186c2bf6e91c8"
         },
         "assets": [
           {
@@ -68,12 +73,12 @@
         ]
       },
       "export": {
-        "path": "/home/mark/.claude/jobs/0e59d1f9/tmp/w6eval/results/fp32-wasm-interp/export.results.json",
-        "sha256": "f9c193b61d20ec8c5cc8afca0d461f7dc1fd64db95018be666132befb6d0e7b2",
+        "path": "/home/mark/.claude/jobs/0e59d1f9/tmp/prov/results/fp32-wasm-interp/export.results.json",
+        "sha256": "5db786134c2fded9bde9a457129b3ede9f002e949e1ca30f890454743e311ddb",
         "candidate": "Python onnxruntime 1.30.0 CPUExecutionProvider on onnx/model.onnx (the browser profile's graph), float64 pooling; no hidden-state reference (not bound for browser profiles)",
         "producer": {
           "name": "model-pipeline/reference/encoder/stage_e5_browser_native.py",
-          "repository_commit": "ccc20820389955e70789f7250d40d18b88a3f90e"
+          "repository_commit": "d8fa2b168e531910a5da01b9d803c05a04f140e6"
         },
         "environment": {
           "python": "3.11.16",
@@ -100,20 +105,25 @@
         ]
       },
       "dotnet": {
-        "path": "/home/mark/.claude/jobs/0e59d1f9/tmp/w6eval/results/fp32-wasm-interp/dotnet.results.json",
-        "sha256": "1596886040db1052f2630c163387886b2cd372c9c66f219cdc930c5f98dabb67",
+        "path": "/home/mark/.claude/jobs/0e59d1f9/tmp/prov/results/fp32-wasm-interp/dotnet.results.json",
+        "sha256": "7a08364c7b668eb3ed03a46701c0fae0a2039f9fc21a29048785c719647c3d4e",
         "candidate": "Starlings.Models.E5.Browser on onnxruntime-web 1.30.0 (wasm, bundle wasm, 4 threads), build interp",
         "producer": {
           "name": "browser/conformance/run_conformance.py (E5Conformance) via model-pipeline browser-results",
-          "repository_commit": "ccc20820389955e70789f7250d40d18b88a3f90e"
+          "repository_commit": "d8fa2b168e531910a5da01b9d803c05a04f140e6",
+          "converted_at_commit": "d8fa2b168e531910a5da01b9d803c05a04f140e6",
+          "fixtures_sha256": {
+            "embeddings.jsonl": "cb7c1fcd618bcddeb664dc05fb14f896c253b1151c2969ab87a1b819a6415ae1",
+            "tokenizer.jsonl": "cb0e61fe1de97956fef1a847a102f2aadd675a2ed7efbfc1a48ac9db2f4b61a1"
+          }
         },
         "environment": {
           "machine": "omarchy",
           "provider": "wasm",
           "provider_options": {},
-          "browser": "Chrome for Testing 153.0.8010.12",
+          "browser": "chromium 153.0.8010.12",
           "cross_origin_isolated": true,
-          "dotnet_runtime": ".NET 10.0.12 (interpreter)",
+          "dotnet_runtime": ".NET 10.0.12",
           "build_label": "interp",
           "onnxruntime_web": {
             "version": "1.30.0",
@@ -125,7 +135,7 @@
             "webgpu_exposed": true
           },
           "run_file": "fp32-wasm-interp.json",
-          "run_file_sha256": "db0fe12d17d9889fd39f2dbcf43eea4fea3583d8904b99363ad5b4f0d1bd1d5d"
+          "run_file_sha256": "a1e00f5011480e5cb4d909d247eb3762da01eefceec0d0b2856186c2bf6e91c8"
         },
         "assets": [
           {
@@ -177,11 +187,11 @@
   "manifest_gates": {
     "G1": {
       "status": "passed",
-      "date": "2026-10-23"
+      "date": "2026-10-24"
     },
     "G2": {
       "status": "passed",
-      "date": "2026-10-23"
+      "date": "2026-10-24"
     }
   },
   "checks": [
