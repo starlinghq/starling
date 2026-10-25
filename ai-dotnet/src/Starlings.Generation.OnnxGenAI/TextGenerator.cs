@@ -92,6 +92,12 @@ public sealed class TextGenerator
     /// validated when this method is called; generation starts on the first <c>MoveNext</c>. Disposing the enumerator
     /// early releases the native generator.
     /// </summary>
+    /// <remarks>
+    /// The enumerator must be disposed (<c>foreach</c> and <c>await foreach</c> do): the native sequence is released by
+    /// the iterator's <c>using</c> when the enumeration completes or the enumerator is disposed, and
+    /// <see cref="GenAISequence"/> has no finalizer, so an enumerator that is abandoned after its first <c>MoveNext</c>
+    /// without disposal keeps the sequence, and with it the model's native reference count, alive until the process ends.
+    /// </remarks>
     public IEnumerable<GenerationUpdate> GenerateStreaming(IReadOnlyList<int> promptIds, GenerationOptions? options = null, CancellationToken cancellationToken = default) =>
         GenerateStreamingCore(promptIds, options, null, cancellationToken);
 
@@ -133,6 +139,8 @@ public sealed class TextGenerator
         return Run(prompt, options, stopIds, step0Logits, cancellationToken);
     }
 
+    // An iterator: the sequence below is released by its using when the enumeration completes or the enumerator is
+    // disposed, so a caller must dispose the enumerator (see GenerateStreaming).
     private IEnumerable<GenerationUpdate> Run(int[] prompt, GenerationOptions options, HashSet<int> stopIds, Action<float[]>? step0Logits, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();

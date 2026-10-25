@@ -5,11 +5,21 @@ using Microsoft.Extensions.AI;
 
 namespace Starlings.Models.Qwen35.Extensions.AI;
 
-/// <summary>Maps Microsoft.Extensions.AI messages and options onto <see cref="Qwen35Message"/> and <see cref="Qwen35ChatOptions"/>.</summary>
+/// <summary>
+/// Maps Microsoft.Extensions.AI messages and options onto <see cref="Qwen35Message"/> and <see cref="Qwen35ChatOptions"/>:
+/// what <see cref="Qwen35ChatClient"/> renders for a request, exposed so a conversation can be rendered or counted
+/// (<see cref="Qwen35ChatModel.CreatePrompt(IReadOnlyList{Qwen35Message}, Qwen35ChatOptions)"/>) without a request.
+/// </summary>
 /// <remarks>Anything the model cannot honor fails with <see cref="NotSupportedException"/>; it is never silently ignored.</remarks>
-internal static class Qwen35ChatRequestMapper
+public static class Qwen35ChatRequestMapper
 {
-
+    /// <summary>
+    /// Maps a conversation as the class remarks of <see cref="Qwen35ChatClient"/> describe: <paramref name="instructions"/>
+    /// (<see cref="ChatOptions.Instructions"/>) becomes a leading system message when given, system, user and assistant
+    /// messages map one to one (text concatenated; assistant reasoning and function calls carried over), and each
+    /// <see cref="FunctionResultContent"/> of a tool message becomes one tool message.
+    /// </summary>
+    /// <exception cref="NotSupportedException">A role, content type, author name or instructions placement the template cannot render.</exception>
     public static List<Qwen35Message> MapMessages(IEnumerable<ChatMessage> messages, string? instructions)
     {
         ArgumentNullException.ThrowIfNull(messages);
@@ -82,8 +92,20 @@ internal static class Qwen35ChatRequestMapper
         return result;
     }
 
+    /// <summary>
+    /// Maps request options onto <paramref name="defaults"/> as the class remarks of <see cref="Qwen35ChatClient"/>
+    /// describe: null returns <paramref name="defaults"/> unchanged; otherwise every set <see cref="ChatOptions"/>
+    /// property is applied or rejected, never ignored. <paramref name="modelId"/> is the only
+    /// <see cref="ChatOptions.ModelId"/> accepted. Settings without a <see cref="ChatOptions"/> counterpart
+    /// (<see cref="Qwen35ChatOptions.EscapeSpecialTokens"/>, <see cref="Qwen35ChatOptions.StopAtRoleMarker"/>,
+    /// <see cref="Qwen35ChatOptions.PrefillChunkTokens"/>) are kept from <paramref name="defaults"/>.
+    /// </summary>
+    /// <exception cref="NotSupportedException">An option the model cannot honor is set.</exception>
+    /// <exception cref="ArgumentOutOfRangeException">A value is out of range (<c>MaxOutputTokens</c>, <c>Temperature</c>, <c>Seed</c>).</exception>
     public static Qwen35ChatOptions MapOptions(ChatOptions? options, Qwen35ChatOptions defaults, string modelId)
     {
+        ArgumentNullException.ThrowIfNull(defaults);
+        ArgumentNullException.ThrowIfNull(modelId);
         if (options is null)
         {
             return defaults;
@@ -310,6 +332,8 @@ internal static class Qwen35ChatRequestMapper
     };
 
     // Greedy unless sampling is requested. Sampling needs an explicit seed (P-016: every sampled run is reproducible).
+    // A request that sets Temperature or TopP without TopK, over no sampling default, gets SamplingOptions' default
+    // top-k of 50 (the GenAI default); ChatOptions has no way to switch top-k off, and this is stated in the docs.
     private static SamplingOptions? MapSampling(ChatOptions options, SamplingOptions? defaults)
     {
         bool samplingRequested = options.TopP is not null || options.TopK is not null || options.Temperature is not null;
