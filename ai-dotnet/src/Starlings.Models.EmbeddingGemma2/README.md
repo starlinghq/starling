@@ -64,6 +64,8 @@ float[][] docs = embedder.EmbedBatch(["As a general guideline, ..."], EmbeddingG
 
 Vectors are normalized, so cosine similarity is the dot product.
 
+`using var embedder = EmbeddingGemma2TextEmbedder.Create(files, options)` builds the same pair in one call (tokenizer and graph SHA-256 enforced) and owns the encoder and session; an embedder from the constructor owns nothing and its `Dispose` does nothing.
+
 ### Batching options
 
 `EmbedBatch` splits a batch into ONNX Runtime calls, each right-padded to its longest row. `EmbeddingGemma2EncoderOptions` controls the split:

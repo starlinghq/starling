@@ -102,10 +102,17 @@ public sealed record GenerationOptions
 /// </summary>
 public sealed record SamplingOptions
 {
-    /// <summary>Softmax temperature, greater than 0. Default 1.</summary>
+    /// <summary>
+    /// Softmax temperature, greater than 0. Default 1. Setting only the temperature (or only <see cref="TopP"/>) does not
+    /// turn <see cref="TopK"/> off: its default of 50 still applies, so the sample is drawn from the 50 most likely tokens.
+    /// </summary>
     public double Temperature { get; init; } = 1.0;
 
-    /// <summary>Keep the k most likely tokens (at least 1). Default 50 (the GenAI default).</summary>
+    /// <summary>
+    /// Keep the k most likely tokens (at least 1). Default 50 (the GenAI default), applied whenever this property is not
+    /// set, including a request that sets only <see cref="Temperature"/> or <see cref="TopP"/>; there is no "off" value
+    /// other than a k of at least the vocabulary size.
+    /// </summary>
     public int TopK { get; init; } = 50;
 
     /// <summary>Nucleus probability mass in (0, 1]. Default 1 (off).</summary>

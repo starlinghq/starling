@@ -99,7 +99,9 @@ public class TokenizerBenchmarks
 /// (<see cref="E5TextEmbedder.EmbedBatch"/>).
 /// </summary>
 [MemoryDiagnoser]
+#pragma warning disable CA1001 // BenchmarkDotNet's lifecycle: GlobalCleanup disposes the encoder; the embedder wraps it and owns nothing.
 public class E5Benchmarks
+#pragma warning restore CA1001
 {
     private E5Encoder _encoder = null!;
     private E5TextEmbedder _embedder = null!;
