@@ -21,7 +21,9 @@ env:
 
 jobs:
   # Names of an unrelated older project must never enter this repository (tools/check-boundary.py): files, file
-  # names, embedded base64/hex data, commit authors and messages.
+  # names, embedded base64/hex data, commit authors and messages. Files and names are scanned in full. Commits are
+  # scanned from the baseline recorded in tools/check-boundary.baseline on (a push to main), or the pull request's own
+  # commits (base..head of the PR), so a past commit message cannot block every later run.
   boundary:
     name: boundary
     runs-on: [self-hosted, omarchy]
@@ -29,7 +31,18 @@ jobs:
       - uses: actions/checkout@v5
         with:
           fetch-depth: 0
-      - run: python3 -I tools/check-boundary.py
+      - name: Boundary check tests
+        run: python3 -I -m unittest discover -s tools/tests -v
+      - name: Boundary check
+        env:
+          PR_BASE: ${{ github.event.pull_request.base.sha }}
+          PR_HEAD: ${{ github.event.pull_request.head.sha }}
+        run: |
+          if [[ -n "$PR_BASE" && -n "$PR_HEAD" ]]; then
+            python3 -I tools/check-boundary.py --range "$PR_BASE..$PR_HEAD"
+          else
+            python3 -I tools/check-boundary.py
+          fi
 
   # P-010: the ai-dotnet packages pack from a clean clone, install from a local folder feed (and the published
   # Starlings.Tokenizers from nuget.org, checked against the lock files) into the sample and a checker outside the checkout (isolated NuGet cache, no project references, no Microsoft.ML.Tokenizers
@@ -194,6 +207,52 @@ jobs:
       - run: model-pipeline validate registry
       # P-021: docs/catalog is generated from the registry; fail when the committed catalog is stale.
       - run: model-pipeline catalog --check
+      # docs/evidence/README.md is generated from the evidence directories and the registry; fail when it is stale.
+      - run: model-pipeline evidence-index --check
+
+  # Weight-free coverage of the e5 browser profiles beyond the solution's Starlings.Models.E5.Browser.Tests: the
+  # conformance app (browser/conformance/E5Conformance) that the qualification job `browser` runs in headless Chromium
+  # must still publish against the packages' current source. Interpreter build (no wasm-tools workload) and not in
+  # locked restore mode, as in qualification.yml: publishing a browser-wasm app re-resolves the referenced libraries'
+  # trimming package (browser/conformance/README.md). No model, no browser run.
+  browser-conformance-build:
+    name: browser conformance app (build)
+    runs-on: [self-hosted, omarchy]
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-dotnet@v5
+        with:
+          global-json-file: global.json
+      # npm ci for onnxruntime-web, the static web assets of Starlings.Runtime.OnnxWeb and its WebGPU adapter.
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: ai-dotnet/src/Shared/OnnxWeb/package-lock.json
+      - name: Publish the conformance app
+        run: dotnet publish browser/conformance/E5Conformance -c Release -p:RestoreLockedMode=false -o "$RUNNER_TEMP/conformance"
+
+  # The documentation site: the API reference (docfx metadata from the projects in ai-dotnet/src and their XML docs)
+  # with the generated catalog, compatibility matrix, evidence index and support policy (docs/docfx.json). Built and
+  # uploaded as the artifact docs-site only; nothing is deployed. Publishing it to GitHub Pages needs a Pages source,
+  # the pages and id-token permissions and the github-pages environment, which the maintainer sets up.
+  docs:
+    name: docs site (docfx)
+    runs-on: [self-hosted, omarchy]
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-dotnet@v5
+        with:
+          global-json-file: global.json
+      # docfx is a local tool pinned in .config/dotnet-tools.json.
+      - run: dotnet tool restore
+      - name: Build the site
+        run: dotnet docfx docs/docfx.json
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: docs-site
+          path: artifacts/docfx/_site/
+          if-no-files-found: error
 
   repo:
     name: repository checks
@@ -205,6 +264,20 @@ jobs:
           python-version: "3.11"
       - name: Backlog parses from the plan
         run: python tools/create_backlog_issues.py > /dev/null
+      # The weight-free tests of every package (Kev, QwenChat, Whisper and the browser packages included) run in the
+      # ai-dotnet jobs through AI.slnx; a test project left out of the solution would silently drop out of CI. The
+      # *.Tests.Cuda projects are local-only and stay out (ai-dotnet/README.md).
+      - name: Every CPU test project is in AI.slnx
+        run: |
+          status=0
+          for proj in ai-dotnet/tests/*/*.csproj; do
+            case "$proj" in *.Tests.Cuda/*) continue ;; esac
+            if ! grep -qF "Path=\"${proj#ai-dotnet/}\"" ai-dotnet/AI.slnx; then
+              echo "FAIL: $proj is not in ai-dotnet/AI.slnx, so CI does not run it" >&2
+              status=1
+            fi
+          done
+          exit "$status"
       - name: No model weights committed
         run: |
           if git ls-files | grep -Ei '\.(onnx|safetensors|gguf|pt|pth|ckpt|h5)$'; then
