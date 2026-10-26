@@ -148,6 +148,8 @@ public sealed class TextGenerator
         return Run(prompt, options, stopIds, step0Logits, cancellationToken);
     }
 
+    // An iterator: the sequence below is released by its using when the enumeration completes or the enumerator is
+    // disposed, so a caller must dispose the enumerator (see GenerateStreaming).
     private IEnumerable<GenerationUpdate> Run(int[] prompt, GenerationOptions options, HashSet<int> stopIds, Action<float[]>? step0Logits, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();

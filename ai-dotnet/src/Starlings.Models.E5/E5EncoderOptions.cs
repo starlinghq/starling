@@ -12,10 +12,12 @@ public sealed record E5EncoderOptions
     public OnnxSessionOptions Session { get; init; } = new();
 
     /// <summary>
-    /// Maximum tokens per sequence, special tokens included. Longer inputs are rejected, not truncated: truncation
-    /// (right, per the profile) is the tokenizer's job. Default 512.
+    /// Maximum tokens per sequence, special tokens included. The encoder rejects longer id sequences with
+    /// <see cref="ArgumentException"/> and never truncates them; text is truncated on the right to this length by
+    /// <see cref="E5Tokenizer"/> (the profile's <c>truncate-right</c>, as the reference does). Default
+    /// <see cref="E5Encoder.MaxSupportedSequenceLength"/> (512).
     /// </summary>
-    public int MaxSequenceLength { get; init; } = 512;
+    public int MaxSequenceLength { get; init; } = E5Encoder.MaxSupportedSequenceLength;
 
     /// <summary>Id used to right-pad shorter rows in a batch (XLM-R <c>&lt;pad&gt;</c> = 1). Default 1.</summary>
     public long PadTokenId { get; init; } = 1;

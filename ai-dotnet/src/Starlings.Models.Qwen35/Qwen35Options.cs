@@ -51,6 +51,24 @@ public sealed record Qwen35ChatOptions
     /// <summary>Stop token ids in addition to <c>&lt;|im_end|&gt;</c> and <c>&lt;|endoftext|&gt;</c>.</summary>
     public IReadOnlyCollection<int> AdditionalStopTokenIds { get; init; } = [];
 
+    /// <summary>
+    /// Opt-in: also stop at <c>&lt;|im_start|&gt;</c> (<see cref="Qwen35ChatModel.ImStartTokenId"/>). The decode loop
+    /// otherwise stops only at the two end-of-sequence ids, so a model that runs on after its answer into
+    /// <c>&lt;|im_start|&gt;user ...</c> streams that role markup as text. Default false (today's behaviour: the token is
+    /// decoded as text like any other).
+    /// </summary>
+    public bool StopAtRoleMarker { get; init; }
+
+    /// <summary>
+    /// Opt-in: escape the tokenizer's special-token strings in message content before rendering
+    /// (<see cref="Qwen35ChatTemplate.EscapeSpecialTokens"/>): every <c>&lt;|name|&gt;</c> in the content and reasoning
+    /// of system, user, assistant and tool messages becomes <c>&lt;¦name¦&gt;</c>, so content containing
+    /// <c>&lt;|im_end|&gt;</c> or <c>&lt;|im_start|&gt;</c> cannot rewrite the conversation. Tool definitions and
+    /// tool-call arguments are not escaped. Default false, which is faithful to upstream <c>apply_chat_template</c>: the
+    /// content is rendered verbatim and tokenized with special tokens enabled.
+    /// </summary>
+    public bool EscapeSpecialTokens { get; init; }
+
     /// <summary>Sampling settings, or null (default) for greedy decoding (the evidence profile).</summary>
     public SamplingOptions? Sampling { get; init; }
 
@@ -94,7 +112,9 @@ public sealed record Qwen35ChatOptions
         Guidance = Guidance,
         MaxNewTokens = MaxNewTokens,
         StopSequences = StopSequences,
-        AdditionalStopTokenIds = AdditionalStopTokenIds,
+        AdditionalStopTokenIds = StopAtRoleMarker && !AdditionalStopTokenIds.Contains(Qwen35ChatModel.ImStartTokenId)
+            ? [.. AdditionalStopTokenIds, Qwen35ChatModel.ImStartTokenId]
+            : AdditionalStopTokenIds,
         Sampling = Sampling,
         PrefillChunkTokens = PrefillChunkTokens ?? (provider == GenAIExecutionProvider.Cuda ? DefaultCudaPrefillChunkTokens : null),
         ReturnLogprobs = ReturnLogprobs,

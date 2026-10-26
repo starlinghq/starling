@@ -178,6 +178,150 @@ public sealed class StoreTests : IDisposable
         using var store = Store();
         var ex = await Assert.ThrowsAsync<ModelAssetIntegrityException>(() => store.DownloadAsync(expected, cancellationToken: Ct));
         Assert.True(ex.ActualSize > ex.ExpectedSize);
+
+        // The bytes are not hashed once they exceed the lock: the digest is null (as documented), the message explains.
+        Assert.Null(ex.ActualSha256);
+        Assert.Equal(FakeHub.Sha256(_tokenizer), ex.ExpectedSha256);
+        Assert.Contains("longer than the lock", ex.Message, StringComparison.Ordinal);
+        Assert.Contains(_tokenizer.Length.ToString(System.Globalization.CultureInfo.InvariantCulture), ex.Message, StringComparison.Ordinal);
+        Assert.DoesNotContain("not hashed: longer", ex.ActualSha256 ?? string.Empty, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task OfflineMissingAndCorruptFilesReportTheMissingOnesFirst()
+    {
+        string modelPath;
+        using (var first = Store())
+        {
+            var snapshot = await first.DownloadAsync(Lock, cancellationToken: Ct);
+            modelPath = snapshot.GetFilePath(Model);
+            File.Delete(snapshot.GetFilePath(Tokenizer));
+        }
+
+        // The lock lists the model (corrupt, same size) before the tokenizer (missing): the pass must not stop at the first.
+        var bytes = File.ReadAllBytes(modelPath);
+        bytes[99] ^= 0xFF;
+        File.WriteAllBytes(modelPath, bytes);
+
+        using var offline = new ModelAssetStore(Options(), new HttpClient(new NoNetwork()));
+        var ex = Assert.Throws<ModelAssetMissingException>(() => offline.OpenLocal(Lock));
+        Assert.Equal([Tokenizer], ex.MissingPaths);
+        Assert.Contains(Tokenizer, ex.Message, StringComparison.Ordinal);
+        Assert.Contains("also failed verification", ex.Message, StringComparison.Ordinal);
+        Assert.Contains(Model, ex.Message, StringComparison.Ordinal);
+        var corrupt = Assert.IsType<ModelAssetIntegrityException>(ex.InnerException);
+        Assert.Equal(Model, corrupt.AssetPath);
+        Assert.Equal(FakeHub.Sha256(bytes), corrupt.ActualSha256);
+
+        // With every file present, the integrity failure is what is thrown.
+        File.WriteAllBytes(Path.Combine(offline.GetSnapshotDirectory(Lock), Tokenizer), _tokenizer);
+        Assert.Equal(Model, Assert.Throws<ModelAssetIntegrityException>(() => offline.OpenLocal(Lock)).AssetPath);
+    }
+
+    [Fact]
+    public async Task CacheWriteFailureIsNotRetriedAndNamesThePath()
+    {
+        // A directory where the partial file goes makes every open of it fail, like a full disk or a read-only cache
+        // would (the tests may run as root, so permissions cannot be relied on).
+        string partial = Path.Combine(_cache.Root, ".downloads", "acme", "tiny-model", FakeHub.Sha, "onnx", "model.onnx.partial");
+        Directory.CreateDirectory(partial);
+        using var store = Store();
+        var ex = await Assert.ThrowsAsync<ModelAcquisitionException>(() => store.DownloadAsync(_hub.LockFor(Model), cancellationToken: Ct));
+
+        Assert.Equal(Model, ex.AssetPath);
+        Assert.Equal(FakeHub.Repo, ex.Repository);
+        Assert.Contains(partial, ex.Message, StringComparison.Ordinal);
+        Assert.Contains("not retried", ex.Message, StringComparison.Ordinal);
+        Assert.DoesNotContain("calling DownloadAsync again", ex.Message, StringComparison.Ordinal);
+        Assert.NotNull(ex.InnerException);
+        Assert.Equal(1, _hub.RequestCount);
+    }
+
+    [Fact]
+    public async Task StalledBodyIsATransientFailureThatResumes()
+    {
+        // The first body stops delivering after 100 000 bytes without closing; the per-read idle budget ends the
+        // attempt, the partial file is kept, and the second request resumes from it.
+        _hub.StallBody = (1, 100_000);
+        var options = new ModelAcquisitionOptions
+        {
+            CacheDirectory = _cache.Root,
+            Endpoint = FakeHub.Endpoint,
+            RetryDelay = TimeSpan.Zero,
+            ResponseTimeout = TimeSpan.FromMilliseconds(200),
+            UseEnvironmentToken = false,
+        };
+        using var store = Store(options);
+        var snapshot = await store.DownloadAsync(_hub.LockFor(Model), cancellationToken: Ct);
+
+        Assert.Equal(_model, File.ReadAllBytes(snapshot.GetFilePath(Model)));
+        var requests = _hub.Requests.ToArray();
+        Assert.Equal(2, requests.Length);
+        Assert.Null(requests[0].Headers.Range);
+        long resumedFrom = requests[1].Headers.Range!.Ranges.Single().From!.Value;
+        Assert.InRange(resumedFrom, 100_000, _model.Length - 1);
+    }
+
+    [Fact]
+    public async Task StalledBodyExhaustingAttemptsIsADownloadErrorThatKeepsThePartialFile()
+    {
+        _hub.StallBody = (1, 100_000);
+        _hub.Override = (n, _) => n > 1 ? new HttpResponseMessage(HttpStatusCode.BadGateway) : null;
+        var options = new ModelAcquisitionOptions
+        {
+            CacheDirectory = _cache.Root,
+            Endpoint = FakeHub.Endpoint,
+            RetryDelay = TimeSpan.Zero,
+            MaxAttempts = 2,
+            ResponseTimeout = TimeSpan.FromMilliseconds(200),
+            UseEnvironmentToken = false,
+        };
+        using var store = Store(options);
+        var ex = await Assert.ThrowsAsync<ModelAssetDownloadException>(() => store.DownloadAsync(_hub.LockFor(Model), cancellationToken: Ct));
+        Assert.Equal(2, ex.Attempts);
+        var partial = Assert.Single(Directory.GetFiles(_cache.Root, "*.partial", SearchOption.AllDirectories));
+        Assert.InRange(new FileInfo(partial).Length, 100_000, _model.Length - 1);
+    }
+
+    [Fact]
+    public async Task StalledBodyAsTheLastAttemptReportsTheStallNotACancellation()
+    {
+        // The stall is the last error: the message must say that nothing was received, not that the operation was canceled.
+        _hub.StallBody = (1, 100_000);
+        var options = new ModelAcquisitionOptions
+        {
+            CacheDirectory = _cache.Root,
+            Endpoint = FakeHub.Endpoint,
+            RetryDelay = TimeSpan.Zero,
+            MaxAttempts = 1,
+            ResponseTimeout = TimeSpan.FromMilliseconds(200),
+            UseEnvironmentToken = false,
+        };
+        using var store = Store(options);
+        var ex = await Assert.ThrowsAsync<ModelAssetDownloadException>(() => store.DownloadAsync(_hub.LockFor(Model), cancellationToken: Ct));
+        Assert.Equal(1, ex.Attempts);
+        Assert.Contains("No data was received for 0.2 s after", ex.Message, StringComparison.Ordinal);
+        Assert.DoesNotContain("canceled", ex.Message, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task CallerCancellationDuringAStallIsCancellationNotATimeout()
+    {
+        using var cts = CancellationTokenSource.CreateLinkedTokenSource(Ct);
+        _hub.StallBody = (1, 100_000);
+        _hub.OnBodyProgress = (1, 100_000, () => cts.CancelAfter(TimeSpan.FromMilliseconds(100)));
+        var options = new ModelAcquisitionOptions
+        {
+            CacheDirectory = _cache.Root,
+            Endpoint = FakeHub.Endpoint,
+            RetryDelay = TimeSpan.Zero,
+            ResponseTimeout = TimeSpan.FromSeconds(30),
+            UseEnvironmentToken = false,
+        };
+        using var store = Store(options);
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => store.DownloadAsync(_hub.LockFor(Model), cancellationToken: cts.Token));
+        Assert.Equal(1, _hub.RequestCount);
+        Assert.Single(Directory.GetFiles(_cache.Root, "*.partial", SearchOption.AllDirectories));
     }
 
     [Fact]
@@ -460,6 +604,23 @@ public sealed class StoreTests : IDisposable
         await store.DownloadAsync(SourceLock(source, built), cancellationToken: Ct);
 
         Assert.Null(_hub.Requests.Single().Headers.Authorization);
+    }
+
+    [Fact]
+    public async Task TokenIsNotSentToAnHttpEndpoint()
+    {
+        // An http:// endpoint (a local mirror) matches the Hub host rule but would carry the token in cleartext.
+        var plainHub = new Uri("http://hub.test/");
+        using var store = new ModelAssetStore(
+            new ModelAcquisitionOptions { CacheDirectory = _cache.Root, Endpoint = plainHub, HuggingFaceToken = HubToken, RetryDelay = TimeSpan.Zero, UseEnvironmentToken = false },
+            new HttpClient(_hub, disposeHandler: false));
+        var snapshot = await store.DownloadAsync(_hub.LockFor(Tokenizer), cancellationToken: Ct);
+
+        Assert.Equal(_tokenizer, File.ReadAllBytes(snapshot.GetFilePath(Tokenizer)));
+        var request = _hub.Requests.Single();
+        Assert.Equal(Uri.UriSchemeHttp, request.RequestUri!.Scheme);
+        Assert.Null(request.Headers.Authorization);
+        Assert.False(store.IsTokenHost(new ModelAssetFile(Tokenizer, 1, new string('a', 64)), request.RequestUri));
     }
 
     [Fact]
