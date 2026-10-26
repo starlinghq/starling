@@ -145,6 +145,14 @@ With default glibc settings, a process that loads and unloads the multimodal emb
 
 In a container whose CPU quota is below the host's CPU count, the session now uses .NET's container-aware processor count for its intra-op threads when none is set (ONNX Runtime's own default started one thread, and one malloc arena, per physical core of the host). Evidence: [CUDA soak growth](https://github.com/starlinghq/starling/blob/main/docs/evidence/cuda-soak-growth/README.md).
 
+## Token counting, cheap rejection and chunking (experimental)
+
+`EmbeddingGemma2TextEmbedder.CountTokens(text[, prompt])` and `CountTokens(texts[, prompt])` count tokens without embedding, `<bos>`, `<eos>` and prompt included. `Validate(text[, prompt])` returns a `TokenLimitCheck` and never throws. `Tokenize(text, prompt)` tokenizes with the limit check every embedding method applies.
+
+Text whose length alone proves it is above the limit is rejected without being tokenized. No token of the pinned `tokenizer.json` covers more than 31 UTF-16 code units (`EmbeddingGemma2Tokenizer.MaxCharactersPerToken`, computed from the file at load), so a text of `n` code units needs at least `2 + ceil(n / 31)` tokens. With the default limit of 8,192 tokens, text above 253,890 code units (a 1 MB document, for example) fails with `EmbeddingGemma2InputTooLongException` at once, with `TokenCountIsLowerBound` true and the bound as `TokenCount`; `Validate` reports the same bound. Shorter text is tokenized and checked exactly, as before. The bound is off for a `tokenizer.json` whose pipeline could drop characters.
+
+`EmbeddingGemma2Tokenizer` is an `IChunkingTokenizer` (`EmbeddingGemma2TextEmbedder.ChunkingTokenizer`), so `TextChunker` of `Starlings.Models.Abstractions` can split long documents into windows that fit the limit; pass the prompt's `Text` as `TextChunkerOptions.Prefix`. Pooled chunk vectors carry no parity claim. Capabilities `token_counting` and `chunking`: experimental (weight-free tests on the pinned `tokenizer.json`).
+
 ## Shared types
 
 The package uses the backend-neutral types of `Starlings.Models.Abstractions`. `EmbeddingGemma2TextEmbedder` is an `ITextEmbedder` (no prompt through that interface; pass a prompt with the overloads that take one). `EmbeddingGemma2ModelAssets.Assets` is the text lock and acquisition as an `IModelAssets<EmbeddingGemma2ModelFiles>`. `EmbeddingGemma2InputTooLongException` derives from `InputTooLongException`, whose `MaxTokens` replaces the obsolete `MaximumTokens`. `EmbeddingGemma2Capabilities.Statuses` is the package-wide capability table in `Starlings.Models.CapabilityStatus`, and `EmbeddingGemma2Capabilities.ProfileCapabilities` holds each profile's capability record (`ModelProfileCapabilities`), generated from its registry manifest. `EmbeddingGemma2Capabilities.All`, `EmbeddingGemma2Capabilities.Profiles` and `EmbeddingGemma2CapabilityStatus` are obsolete and are removed in the next minor version.

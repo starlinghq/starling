@@ -53,4 +53,10 @@ public class InputTooLongException : ArgumentException
 
     /// <summary>The limit in effect.</summary>
     public int MaxTokens { get; init; }
+
+    /// <summary>
+    /// True when the input was rejected from its length alone, without tokenizing it all; <see cref="TokenCount"/> is
+    /// then a lower bound of the tokens it needs. False (default) when <see cref="TokenCount"/> is exact.
+    /// </summary>
+    public bool TokenCountIsLowerBound { get; init; }
 }

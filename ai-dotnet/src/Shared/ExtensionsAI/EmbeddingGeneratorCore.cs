@@ -1,5 +1,6 @@
 // Shared by Starlings.Models.E5.Extensions.AI and Starlings.Models.EmbeddingGemma2.Extensions.AI (compiled into each,
 // internal): the parts of their IEmbeddingGenerator implementations that were copies of each other.
+using System.Runtime.CompilerServices;
 using Microsoft.Extensions.AI;
 
 namespace Starlings.Models.ExtensionsAI;
@@ -31,6 +32,93 @@ internal static class EmbeddingGeneratorCore
         {
             return Task.FromException<GeneratedEmbeddings<Embedding<float>>>(ex);
         }
+    }
+
+    /// <summary>
+    /// <see cref="Run(Func{Task{GeneratedEmbeddings{Embedding{float}}}}, CancellationToken)"/> on
+    /// <paramref name="scheduler"/>: null runs <paramref name="start"/> on the calling thread; otherwise it is queued to
+    /// the scheduler (<see cref="TaskCreationOptions.DenyChildAttach"/>) and the returned task completes with it. A token
+    /// cancelled before the work starts cancels the task without running it.
+    /// </summary>
+    public static Task<GeneratedEmbeddings<Embedding<float>>> Run(Func<Task<GeneratedEmbeddings<Embedding<float>>>> start, TaskScheduler? scheduler, CancellationToken cancellationToken) =>
+        scheduler is null
+            ? Run(start, cancellationToken)
+            : Task.Factory.StartNew(() => Run(start, cancellationToken), cancellationToken, TaskCreationOptions.DenyChildAttach, scheduler).Unwrap();
+
+    /// <summary>
+    /// Embeds a stream of texts in order: each value is tokenized (<paramref name="tokenize"/>, given the value and its
+    /// position) as it arrives, and the tokenized values are grouped exactly as the encoder's batch plan groups an
+    /// explicit batch in input order (a group grows while it has fewer than <paramref name="maxRows"/> rows and, with a
+    /// budget, its padded size stays within <paramref name="maxCells"/>). Each full group runs as one
+    /// <paramref name="embed"/> call (on <paramref name="scheduler"/> when set, else on the enumerating thread) and its
+    /// embeddings are yielded in order; the last group runs when the source ends.
+    /// </summary>
+    public static async IAsyncEnumerable<Embedding<float>> Stream<TInput>(
+        IAsyncEnumerable<string> values,
+        Func<string, int, TInput> tokenize,
+        Func<TInput, int> length,
+        int maxRows,
+        int? maxCells,
+        Func<IReadOnlyList<TInput>, CancellationToken, float[][]> embed,
+        Func<float[], float[]> output,
+        string modelId,
+        TaskScheduler? scheduler,
+        [EnumeratorCancellation] CancellationToken cancellationToken)
+    {
+        var batch = new List<TInput>(maxRows);
+        int width = 0;
+        int index = 0;
+        await foreach (string? value in values.WithCancellation(cancellationToken).ConfigureAwait(false))
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            if (value is null)
+            {
+                throw new ArgumentException($"Value {index} is null.", nameof(values));
+            }
+
+            var input = tokenize(value, index++);
+            int rowLength = length(input);
+            int newWidth = Math.Max(width, rowLength);
+            if (batch.Count > 0 && (batch.Count >= maxRows || (maxCells is { } budget && (long)(batch.Count + 1) * newWidth > budget)))
+            {
+                foreach (var embedding in await EmbedGroupAsync(batch, embed, output, modelId, scheduler, cancellationToken).ConfigureAwait(false))
+                {
+                    yield return embedding;
+                }
+
+                batch.Clear();
+                newWidth = rowLength;
+            }
+
+            batch.Add(input);
+            width = newWidth;
+        }
+
+        if (batch.Count > 0)
+        {
+            foreach (var embedding in await EmbedGroupAsync(batch, embed, output, modelId, scheduler, cancellationToken).ConfigureAwait(false))
+            {
+                yield return embedding;
+            }
+        }
+    }
+
+    private static async Task<Embedding<float>[]> EmbedGroupAsync<TInput>(
+        List<TInput> batch, Func<IReadOnlyList<TInput>, CancellationToken, float[][]> embed, Func<float[], float[]> output,
+        string modelId, TaskScheduler? scheduler, CancellationToken cancellationToken)
+    {
+        TInput[] rows = [.. batch];
+        float[][] vectors = scheduler is null
+            ? embed(rows, cancellationToken)
+            : await Task.Factory.StartNew(() => embed(rows, cancellationToken), cancellationToken, TaskCreationOptions.DenyChildAttach, scheduler).ConfigureAwait(false);
+        var createdAt = DateTimeOffset.UtcNow;
+        var embeddings = new Embedding<float>[vectors.Length];
+        for (int i = 0; i < vectors.Length; i++)
+        {
+            embeddings[i] = new Embedding<float>(output(vectors[i])) { ModelId = modelId, CreatedAt = createdAt };
+        }
+
+        return embeddings;
     }
 
     /// <summary>

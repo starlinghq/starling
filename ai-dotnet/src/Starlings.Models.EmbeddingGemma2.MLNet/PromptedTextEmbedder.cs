@@ -12,4 +12,10 @@ internal sealed class PromptedTextEmbedder(EmbeddingGemma2TextEmbedder inner, Em
 
     public float[][] EmbedBatch(IReadOnlyList<string> texts, Span<int> tokenCounts, CancellationToken cancellationToken = default) =>
         inner.EmbedBatch(texts, prompt, tokenCounts, cancellationToken);
+
+    public int CountTokens(string text) => inner.CountTokens(text, prompt);
+
+    public int[] CountTokens(IReadOnlyList<string> texts) => inner.CountTokens(texts, prompt);
+
+    public TokenLimitCheck Validate(string text) => inner.Validate(text, prompt);
 }

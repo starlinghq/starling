@@ -90,7 +90,9 @@ directory by size and SHA-256 (`ModelAssetStore.VerifyDirectory`) and never down
 - `BertTextEmbedder.Create(profile, snapshot, threads = 2, maxBatchSize = 32)`: `Embed`, `EmbedBatch`
   (input order), `EmbedTokens`, `Tokenize`, `Dimension`, `MaxSequenceLength`, `Profile`, `Diagnostics`, and the owned
   `Session` (advanced). It is an `ITextEmbedder` (`Starlings.Models.Abstractions`): `EmbedBatch(texts, tokenCounts)`
-  embeds with the prompt `none` and reports each text's token count.
+  embeds with the prompt `none` and reports each text's token count. `CountTokens(text)`, `CountTokens(texts)` and
+  `Validate(text)` count before truncation without embedding, and `ChunkingTokenizer` (the profile's tokenizer without
+  truncation) feeds `TextChunker`; both experimental (`BertCapabilities.TokenCounting`).
 - `BertReranker.Create(profile, snapshot, threads = 2, maxBatchSize = 32)`: `Score(BertPair)`, `ScoreBatch`,
   `ScoreTokens`, `Tokenize`, and `Rank(query, documents)`, which returns `BertRankedDocument(Index, Document, Score)`
   by descending score, ties in original order. It is an `IReranker`: `Score(query, documents)` returns the raw logits

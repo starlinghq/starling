@@ -34,4 +34,24 @@ public interface ITextEmbedder
     /// <param name="cancellationToken">Cancels the call; nothing is returned for a cancelled call.</param>
     /// <returns>One new vector of <see cref="Dimension"/> floats per text.</returns>
     float[][] EmbedBatch(IReadOnlyList<string> texts, Span<int> tokenCounts, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Tokens <paramref name="text"/> needs, special tokens included, without embedding it. The count is taken before any
+    /// truncation, so on a truncating profile it can exceed <see cref="MaxSequenceLength"/> (an embedder whose tokenizer
+    /// can only return truncated sequences says so on its own member). Tokenizes the whole text.
+    /// </summary>
+    /// <param name="text">The text, exactly as it would be embedded.</param>
+    int CountTokens(string text);
+
+    /// <summary>The token count of each text, in order, as <see cref="CountTokens(string)"/> returns it.</summary>
+    /// <param name="texts">The texts; none may be null.</param>
+    int[] CountTokens(IReadOnlyList<string> texts);
+
+    /// <summary>
+    /// Checks <paramref name="text"/> against <see cref="MaxSequenceLength"/> without embedding it and without throwing
+    /// for an input above the limit. An implementation may skip tokenization when the text's length alone proves it is
+    /// above the limit (<see cref="TokenLimitCheck.TokenCountIsLowerBound"/>).
+    /// </summary>
+    /// <param name="text">The text, exactly as it would be embedded.</param>
+    TokenLimitCheck Validate(string text);
 }
