@@ -1,0 +1,12 @@
+- name: Home
+  href: index.md
+- name: API reference
+  href: api/
+- name: Model catalog
+  href: catalog/README.md
+- name: Compatibility matrix
+  href: catalog/compatibility-matrix.md
+- name: Evidence index
+  href: evidence/README.md
+- name: Support policy
+  href: support-policy.md

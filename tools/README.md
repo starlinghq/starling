@@ -11,12 +11,18 @@ Repository scripts: checks, release drills, qualification helpers and code gener
 Fails if any tracked file, file name or commit names a term that must never appear in this repository (a boundary with an unrelated older project). The terms are stored only as SHA-256 hashes, so the script does not name them either. It scans text lowercased and split into words, decompresses `.gz` files, and decodes embedded base64 (16 or more characters) and hex (32 or more) runs, so a term inside a fixture or test model is found too.
 
 ```sh
-python3 -I tools/check-boundary.py    # tracked files, file names, and commits reachable from HEAD
+python3 -I tools/check-boundary.py                  # tracked files and names; commits since the recorded baseline
+python3 -I tools/check-boundary.py --range A..B     # tracked files and names; the commits of a range (a pull request)
+python3 -I tools/check-boundary.py --all-history    # tracked files and names; every commit reachable from HEAD
 ```
 
-To add a term, append the SHA-256 of its lowercase alphanumeric form under its length in `FORBIDDEN`.
+Files and file names are always scanned in full. Commits (author, committer and message) are scanned from a baseline on, because a published commit cannot be corrected without rewriting history: the baseline is the full commit SHA in `tools/check-boundary.baseline`, and the commits reachable from HEAD but not from it are scanned. The baseline and its ancestors passed the full-history scan when it was recorded; only the maintainer moves it. Without the file every commit reachable from HEAD is scanned. A baseline the clone does not hold (a shallow checkout) or a range that does not resolve is an error (exit 2), never a pass. Exit 1 when a term is found.
 
-CI: `ci` job `boundary` (full history checkout); `release` job `candidate`.
+To add a term, append the SHA-256 of its lowercase alphanumeric form under its length in `FORBIDDEN`. starlinghq/roost keeps a copy of the script; it stays byte-identical to this one once roost adopts this version and records its own baseline file.
+
+Tests: `python3 -I -m unittest discover -s tools/tests -v` (`tools/tests/test_check_boundary.py`: matching, the full-tree file scan, the baseline and range selection, in temporary repositories with a made-up term).
+
+CI: `ci` job `boundary` (full-history checkout; the tests, then the check with `--range <base sha>..<head sha>` on a pull request and the baseline on a push); `release` job `candidate` (the baseline).
 
 ### `check-provenance.py`
 
@@ -95,14 +101,16 @@ Helpers for the scheduled qualification workflow (P-018, workstream R6). Reads m
 ```sh
 python3 -I tools/qualification.py hosting <manifest.yaml>
 python3 -I tools/qualification.py lock <manifest.yaml> <out.json> [--reference-environment <environment.json>]
+python3 -I tools/qualification.py lock-candidate <profile.json> <out.json> [--base]
 python3 -I tools/qualification.py snapshot <lock.json>
 ```
 
 - `hosting` prints `public` or `private: <where>`. A profile is private when any `source_status` in its manifest is `placeholder` or `private`. With `$GITHUB_OUTPUT` set it also writes `hosting=public|private` there.
 - `lock` writes a `Starlings.Acquisition` JSON lock of every file in `origin.files`, at the `origin.weights` repository and pinned revision. `--reference-environment` adds the files the protected reference run recorded when its model is the same repository and revision. Files Starling hosts outside the upstream repository carry their download `url` (lock `schema_version` 2). Only public Hub origins are supported.
+- `lock-candidate` writes the same kind of lock (schema version 1) for an onboarding candidate contract (`model-pipeline/candidates/<name>/profile.json`): every file of `origin.files` at `origin.repo` and `origin.revision`, or with `--base` every file of `origin.base` (the pinned base model of the Kev and Whisper routes). Only Hugging Face repositories pinned by a full commit SHA are supported. Tests: `tools/tests/test_qualification.py` (skipped without PyYAML).
 - `snapshot` prints the lock's snapshot directory relative to the cache root, `<repository>/<revision>`.
 
-CI: `qualification` jobs `assets`, `evaluator` and `soak` (and through `acquire-models.sh`).
+CI: `qualification` jobs `assets`, `evaluator`, `experimental` (`lock-candidate`) and `soak` (and through `acquire-models.sh`).
 
 ### `release-gates.sh`
 
@@ -186,9 +194,12 @@ Further options, each described in the script header:
 | `--ffmpeg-gpl-dir <dir>`, `--ffmpeg9-gpl-dir <dir>` | a GPL FFmpeg build the adapter must refuse |
 | `--seed-qwen35-from <dir>` | the QwenChat sample on CPU, from a `build_ortgenai_bundle.py --variant fp32x` bundle |
 | `--public-hosting`, `--public-hosting-only <labels>` | download GLiNER2, EmbeddingGemma 2 and Qwen 3.5 from public hosting with no token, then run offline |
-| `--aot` | the Native AOT check (`aot-check-ai.sh`) on the drill's feed |
+| `--aot` | the Native AOT check (`aot-check-ai.sh`) and the AOT smoke check (`aot-smoke-ai.sh`) on the drill's feed |
+| `--aot-smoke` | only the weight-free AOT smoke check (`aot-smoke-ai.sh`) on the drill's feed |
 | `--cuda <device> [--cuda-lib-path <dirs>] [--cuda-only]` | the CUDA profiles on one GPU, through CUDA consumers whose only natives are the GPU packages |
 | `--packages-from <dir>` | reuse the `.nupkg` and `.snupkg` files of an earlier drill instead of packing |
+
+Every mode also checks the build-time native package checks: `Starlings.Runtime.Onnx` and `Starlings.Generation.OnnxGenAI` must pack their `buildTransitive` targets, no sample or checker may trigger `STARLINGS001` to `STARLINGS004`, and four throwaway consumers (`release-drill/native-check`) must trigger them (no native: warning; CPU and GPU native together: error; the latter restores the GPU packages, about 420 MB).
 
 Packages and logs are copied to `artifacts/release-drill-ai/` (ignored by Git).
 
@@ -227,6 +238,22 @@ Exit 0 when every target that ran published, ran under AOT and matched the JIT r
 
 Not run by a workflow; `release-drill-ai.sh --aot` calls it.
 
+### `aot-smoke-ai.sh`
+
+Weight-free Native AOT smoke check of every published package (backlog E1). For each package it builds `release-drill/aot-smoke` outside the repository against the packed package with the whole package assembly rooted (`TrimmerRootAssembly`, so ILC analyzes every member), publishes it with `-p:PublishAot=true`, records every trim and AOT warning, and runs the binary with no network (it only loads the assembly). No model file is needed.
+
+```sh
+tools/aot-smoke-ai.sh [--feed <dir>] [--packages a,b] [--out <dir>]
+```
+
+- `--feed`: local folder feed of packed packages; without it the script packs the committed `HEAD` from a clean clone first.
+- `--packages`: package ids (default: every published package except the browser ones, which target `browser-wasm`).
+- `--out`: logs, warnings and `summary.md` (default `artifacts/aot-smoke-ai`).
+
+`summary.md` gives each package a verdict: `AOT-clean` (no warning anywhere), `clean in Starlings.*` (warnings only in third-party code) or `not clean`. Exit 0 when every package not recorded as AOT unsupported (the ML.NET adapters) published and ran; warnings do not fail the check. Record: [`docs/evidence/aot-smoke/`](../docs/evidence/aot-smoke/README.md).
+
+Not run by a workflow; `release-drill-ai.sh --aot` and `--aot-smoke` call it.
+
 ### `release-drill/`
 
 Clean-consumer programs that the drills copy into a temporary directory outside the repository and build against the packed packages from a local folder feed (`*.csproj.in` is the project template). They compile and run with nothing but those packages: no project references, no repository paths, no test framework. Each exits 0 only if every check passes.
@@ -237,6 +264,8 @@ Clean-consumer programs that the drills copy into a temporary directory outside 
 | `mlnet-consumer` | `release-drill-ai.sh`, `release-drill-ai.ps1` | `MlNetConsumer e5 <cache>` or `MlNetConsumer eg2 <cache>`: the ML.NET transform's column type, row-wise and look-ahead batched results equal to the typed API, token counts, ranking, `Save` rejected; for EmbeddingGemma 2 also a Matryoshka 256 column and a rejected video column. |
 | `cuda-consumer` | `release-drill-ai.sh --cuda` | `CudaConsumer <profile> <cache> <fixture dir> <tolerances.yaml> [<image dir>]` and `CudaConsumer eg2-video ... <video dir> <FFmpeg lib dir> 8` (or `9`): offline CUDA sessions on device 0, version diagnostics, outputs against the protected fixtures within the CUDA profile's bounds. |
 | `aot-consumer` | `aot-check-ai.sh` | `AotConsumer <cache> <results file> [<empty download dir>]`: one target fixed at build time (`AotTarget`); runs the inference and writes results for the script to compare. |
+| `aot-smoke` | `aot-smoke-ai.sh` | `AotSmoke`: one package fixed at build time (`SmokePackage`) and rooted; loads the package assembly and reports `Native AOT` mode. No inference. |
+| `native-check` | `release-drill-ai.sh` | Project template only: one model package and zero, one or two native packages; the drill checks the `STARLINGS00x` diagnostic of each case. |
 
 ## Code generation
 

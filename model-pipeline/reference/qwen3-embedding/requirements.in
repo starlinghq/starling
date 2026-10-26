@@ -1,0 +1,13 @@
+# Qwen3 Embedding series 0.6B (embedding and reranker), CPU: transformers and sentence-transformers reference, ONNX
+# export (dynamo) and ONNX Runtime CPU. The EmbeddingGemma 2 export toolchain (torch, onnx, onnxscript, onnx-ir,
+# onnxruntime) with the encoder route's transformers 5.18.0, which defines qwen3.
+torch==2.14.1
+transformers==5.18.0
+sentence-transformers==6.1.0
+tokenizers==0.23.3
+onnx==1.23.1
+onnxscript==0.7.2
+onnx-ir==1.0.0
+onnxruntime==1.30.0
+numpy
+safetensors
