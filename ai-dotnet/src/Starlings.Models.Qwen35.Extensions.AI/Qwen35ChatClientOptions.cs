@@ -35,6 +35,14 @@ public sealed record Qwen35ChatClientOptions
     /// </summary>
     public bool SplitReasoning { get; init; }
 
+    /// <summary>
+    /// Opt-in: build the tool-call grammar of <c>ChatToolMode.RequireAny</c> and <c>RequireSpecific</c> with fast-forward
+    /// tokens (<see cref="Qwen35ToolGrammarOptions.FastForward"/>), so its fixed tags are appended without a decode step
+    /// each. Default false: one token per step. Applies only where guided decoding is available
+    /// (<see cref="Qwen35ModelInfo.GuidanceMissingFiles"/> empty). Experimental.
+    /// </summary>
+    public bool GuidanceFastForward { get; init; }
+
     internal void Validate()
     {
         ArgumentNullException.ThrowIfNull(Defaults, nameof(Defaults));

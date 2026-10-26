@@ -1,0 +1,13 @@
+xUnit.net v3 In-Process Runner v4.0.1+8ed8aa354c (64-bit .NET 10.0.13)
+  Discovering: Starlings.Models.Qwen35.Tests
+  Discovered:  Starlings.Models.Qwen35.Tests
+  Starting:    Starlings.Models.Qwen35.Tests
+    Starlings.Models.Qwen35.Tests.GuidanceCpuModelTests.ARegexIsFollowed [OUTPUT] regex: 6 tokens, Stop, decode 1063 ms: FORCED-101
+    Starlings.Models.Qwen35.Tests.GuidanceCpuModelTests.AJsonSchemaIsFollowed [OUTPUT] json_schema: 19 tokens, Stop, decode 3193 ms: \{\n\ \ "city":\ "Paris",\n\ \ "country":\ "France"\n}
+    Starlings.Models.Qwen35.Tests.GuidanceCpuModelTests.FastForwardKeepsTheTextOfTheOneTokenPerStepRun [OUTPUT] timer: 27 tokens, Stop, decode 4602 ms: <tool_call>\n<function=set_timer>\n<parameter=minutes>\n25\n</parameter>\n</function>\n</tool_call>
+    Starlings.Models.Qwen35.Tests.GuidanceCpuModelTests.FastForwardKeepsTheTextOfTheOneTokenPerStepRun [OUTPUT] timer, fast-forward: 27 tokens, Stop, decode 1526 ms: <tool_call>\n<function=set_timer>\n<parameter=minutes>\n25\n</parameter>\n</function>\n</tool_call>
+    Starlings.Models.Qwen35.Tests.GuidanceCpuModelTests.TheRequiredToolGrammarYieldsOneParsedCall(fastForward: False) [OUTPUT] tool grammar: 40 tokens, Stop, decode 6810 ms: <tool_call>\n<function=get_weather>\n<parameter=city>\nPorto\n</parameter>\n<parameter=units>\ncelsius\n</parameter>\n</function>\n</tool_call>
+    Starlings.Models.Qwen35.Tests.GuidanceCpuModelTests.TheRequiredToolGrammarYieldsOneParsedCall(fastForward: True) [OUTPUT] tool grammar, fast-forward: 40 tokens, Stop, decode 2815 ms: <tool_call>\n<function=get_weather>\n<parameter=city>\nPorto\n</parameter>\n<parameter=units>\ncelsius\n</parameter>\n</function>\n</tool_call>
+  Finished:    Starlings.Models.Qwen35.Tests (ID = 'a23792ef220369f7a4d5e917cc50e38d672182e2720a5aa981777147efbd5237')
+=== TEST EXECUTION SUMMARY ===
+   Starlings.Models.Qwen35.Tests  Total: 7, Errors: 0, Failed: 0, Skipped: 0, Not Run: 0, Time: 47.805s

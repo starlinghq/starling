@@ -11,6 +11,14 @@ public sealed record GenAISequenceOptions
     /// <summary>Sampling settings, or null for greedy search (argmax at every step).</summary>
     public SamplingOptions? Sampling { get; init; }
 
+    /// <summary>
+    /// Experimental: the constraint passed to GenAI's <c>SetGuidance</c>, or null (default) for none. With
+    /// <see cref="GenerationGuidance.FastForward"/>, a step can append several tokens
+    /// (<see cref="GenAISequence.GenerateNextTokens"/>), and <see cref="MaxLength"/> must leave room for them: GenAI does
+    /// not check it for forced tokens.
+    /// </summary>
+    public GenerationGuidance? Guidance { get; init; }
+
     internal void Validate()
     {
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(MaxLength, nameof(MaxLength));
@@ -98,6 +106,51 @@ public sealed class GenAISequence : IGenerationSequence
 
         int[] ids = tokenIds.ToArray();
         Invoke(() => _generator.AppendTokens(ids));
+    }
+
+    /// <summary>
+    /// Runs one decode step and returns every token id it appended, in order: with fast-forward guidance
+    /// (<see cref="GenerationGuidance.FastForward"/>), the tokens the constraint forced after the previous step's
+    /// token, then the selected token, which is always last; otherwise only the selected token.
+    /// </summary>
+    public int[] GenerateNextTokens()
+    {
+        ThrowIfDisposed();
+        int[] appended = [];
+        Invoke(() =>
+        {
+            long before = (long)_generator.TokenCount();
+            _generator.GenerateNextToken();
+            long after = (long)_generator.TokenCount();
+            int selected = _generator.GetNextTokens()[0];
+
+            // GenAI appends forced tokens to the sequence before it selects the step's token
+            // (Generator::ComputeLogits, onnxruntime-genai rel-0.17.1), then appends the selected token unless it is an
+            // end-of-sequence id, which ends the search without being appended (GreedySearch_Cpu::SelectTop).
+            // GetNextTokens returns only the selected token.
+            bool selectedAppended = !_owner.EosTokenIds.Contains(selected);
+            int forced = checked((int)(after - before)) - (selectedAppended ? 1 : 0);
+            if (forced < 0)
+            {
+                throw new GenAIModelException($"ONNX Runtime GenAI's sequence did not grow by the selected token {selected} (length {before} to {after}).");
+            }
+
+            if (forced == 0)
+            {
+                appended = [selected];
+                return;
+            }
+
+            ReadOnlySpan<int> sequence = _generator.GetSequence(0);
+            if (selectedAppended && sequence[checked((int)after) - 1] != selected)
+            {
+                throw new GenAIModelException(
+                    $"ONNX Runtime GenAI's sequence does not end with the selected token {selected} after a fast-forward step (length {before} to {after}).");
+            }
+
+            appended = [.. sequence.Slice(checked((int)before), forced), selected];
+        });
+        return appended;
     }
 
     /// <summary>Runs one decode step and returns the selected token id (greedy or sampled per the options).</summary>
@@ -228,6 +281,9 @@ internal interface IGenerationSequence : IDisposable
     void AppendTokens(ReadOnlySpan<int> tokenIds);
 
     int GenerateNextToken();
+
+    /// <summary>Every token id one step appended, the selected one last (see <see cref="GenAISequence.GenerateNextTokens"/>).</summary>
+    int[] GenerateNextTokens() => [GenerateNextToken()];
 
     void CopyLastLogits(Span<float> destination);
 }

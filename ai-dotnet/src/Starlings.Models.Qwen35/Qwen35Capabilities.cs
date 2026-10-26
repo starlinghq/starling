@@ -118,6 +118,18 @@ public static class Qwen35Capabilities
         ["extensions_ai.logprobs"] = Qwen35CapabilityStatus.Experimental,
         ["extensions_ai.reasoning_split"] = Qwen35CapabilityStatus.Experimental,
 
+        // Opt-in, off by default: guided decoding through ONNX Runtime GenAI's llguidance (GenerationOptions.Guidance,
+        // Qwen35ChatOptions.Guidance, Qwen35ToolGrammar; in the IChatClient, ToolMode RequireAny and RequireSpecific and a
+        // JSON ResponseFormat). Needs tokenizer.json and tokenizer_config.json in the variant directory, which the
+        // published bundle lacks, so on the published bundle these requests fail with NotSupportedException and
+        // "structured_output", "extensions_ai.tool_mode.required" and "extensions_ai.structured_output" below stay
+        // Unsupported. Grammar builder and decode loop (fast-forward tokens included) tested with scripted sequences in
+        // CI; on the real fp32x model on CPU with the two files added (local, one machine): a regex, a JSON schema and the
+        // required tool-call grammar were followed. No latency qualification.
+        ["guidance.json_schema"] = Qwen35CapabilityStatus.Experimental,
+        ["guidance.lark"] = Qwen35CapabilityStatus.Experimental,
+        ["guidance.regex"] = Qwen35CapabilityStatus.Experimental,
+
         // Implemented, without enough evidence.
         ["windows"] = Qwen35CapabilityStatus.Untested,
         ["linux_arm64"] = Qwen35CapabilityStatus.Untested,
