@@ -98,7 +98,9 @@ public sealed class DefinitionTests
     [Fact]
     public void ChatTemplateSeamRejectsAsTheTypedRenderer()
     {
-        Assert.Throws<Qwen35TemplateException>(() => Qwen35ChatTemplate.Instance.Render([]));
+        // An empty conversation is an ArgumentException under IChatTemplate's contract; the typed renderer throws its own type.
+        Assert.Throws<ArgumentException>(() => Qwen35ChatTemplate.Instance.Render([]));
+        Assert.Throws<Qwen35TemplateException>(() => Qwen35ChatTemplate.Render([]));
         Assert.Throws<Qwen35TemplateException>(() => Qwen35ChatTemplate.Instance.Render([ChatTurn.User("a"), ChatTurn.System("late")]));
         Assert.Throws<ArgumentException>(() => Qwen35ChatTemplate.Instance.Render([ChatTurn.User("a")], [ToolDefinition.Function("bad<name")]));
     }

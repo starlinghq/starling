@@ -21,6 +21,8 @@ int[] promptIds = [.. tokenizer.Encode(text, addSpecialTokens: false).Ids];
 Qwen35ParsedOutput parsed = Qwen35ToolCallParser.Parse(completionText, tools: [], enableThinking: false);
 ```
 
+Status of the definition surface added with the package split: `Qwen35ChatTemplate.Instance` and `Qwen35ToolCallParser.Create` (the `IChatTemplate` and `IToolCallParser` seams) are experimental: they give the same text and parts as the typed renderer and parser on every case of the template corpus, and no backend other than ONNX Runtime GenAI uses them yet. `Qwen35Checkpoint.Lock` is experimental: its sizes and digests were read from the Hub on 2026-10-26, and no runtime in this repository loads the checkpoint files yet. The Stable contract of the registry profiles below covers the ONNX Runtime GenAI runtime package; it is unchanged by the split.
+
 The types of the runtime package (`Qwen35ChatModel`, `Qwen35ModelAssets`, `Qwen35ModelOptions`, `Qwen35ModelInfo`, `Qwen35Capabilities`) keep the namespace `Starlings.Models.Qwen35`.
 
 ## Maturity

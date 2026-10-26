@@ -12,6 +12,8 @@ Namespace `Starlings.Generation`:
 - `IGenerationSequence`: the asynchronous seam of one request's decoding state (`AppendTokensAsync`, `StepAsync`, `CopyLastLogitsAsync`, `Dispose`). `GenAISequence` in `Starlings.Generation.OnnxGenAI` implements it; other backends can.
 - `GenerationChatMapping`: `ToChatFinishReason`, `ToUsageDetails` and `ToChatRole` for Microsoft.Extensions.AI adapters.
 
+Status: the moved request, result and text types keep the behaviour (and the profile maturity below) they had in `Starlings.Generation.OnnxGenAI`. The new chat seams (`ChatTurn`, `ToolDefinition`, `ToolCall`, `IChatTemplate`, `IToolCallParser`, `ParsedCompletion`), `ModelProfile`, `PythonJson` and `GenerationChatMapping` are experimental. `IGenerationSequence` is experimental for `GenAISequence` (each call wraps the synchronous call and completes synchronously) and untested for any other backend: no asynchronous implementation exists in this repository yet.
+
 ```csharp
 using Starlings.Generation;
 using Starlings.Models.Qwen35;

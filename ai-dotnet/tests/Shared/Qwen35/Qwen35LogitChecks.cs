@@ -82,6 +82,66 @@ internal static class Qwen35LogitChecks
         Assert.Equal(first, r.Usage.CompletionTokens);
     }
 
+    /// <summary>
+    /// The public asynchronous seam (<see cref="IGenerationSequence"/>) over a GenAI sequence: the same greedy ids and
+    /// bit-identical step-0 and selecting logits as the synchronous calls, and a cancelled token stops each call before
+    /// it starts, leaving the sequence usable.
+    /// </summary>
+    public static async Task AsyncSequenceSeamEqualsTheSynchronousCalls(Qwen35ChatModel model, GenerationCase c, int steps)
+    {
+        steps = Math.Min(steps, c.ContentIds.Length);
+        var options = new GenAISequenceOptions { MaxLength = c.PromptIds.Length + steps };
+        var syncIds = new List<int>();
+        var syncLogits = new List<float[]>();
+        using (var seq = model.Backend.CreateSequence(options))
+        {
+            seq.AppendTokens(c.PromptIds);
+            syncLogits.Add(LastLogits(seq));
+            for (int k = 0; k < steps; k++)
+            {
+                syncIds.AddRange(seq.GenerateNextTokens());
+                syncLogits.Add(LastLogits(seq));
+            }
+        }
+
+        Assert.Equal(c.ContentIds.Take(steps), syncIds);
+
+        using GenAISequence native = model.Backend.CreateSequence(options);
+        var (asyncIds, asyncLogits) = await DriveAsync(native, c.PromptIds, steps);
+        Assert.Equal(syncIds, asyncIds);
+        Assert.Equal(syncLogits.Count, asyncLogits.Count);
+        for (int k = 0; k < syncLogits.Count; k++)
+        {
+            Assert.True(syncLogits[k].AsSpan().SequenceEqual(asyncLogits[k]), $"{c.Id}: logits {k} differ between the synchronous and asynchronous calls");
+        }
+    }
+
+    // Through the interface only, as a backend-neutral decode loop would drive it.
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1859", Justification = "The check is of the interface seam.")]
+    private static async Task<(List<int> Ids, List<float[]> Logits)> DriveAsync(IGenerationSequence sequence, int[] promptIds, int steps)
+    {
+        using var cancelled = new CancellationTokenSource();
+        await cancelled.CancelAsync();
+        var buffer = new float[sequence.VocabularySize];
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => sequence.AppendTokensAsync(promptIds, cancelled.Token).AsTask());
+
+        var ids = new List<int>();
+        var logits = new List<float[]>();
+        await sequence.AppendTokensAsync(promptIds, TestContext.Current.CancellationToken);
+        await sequence.CopyLastLogitsAsync(buffer, TestContext.Current.CancellationToken);
+        logits.Add([.. buffer]);
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => sequence.StepAsync(cancelled.Token).AsTask());
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => sequence.CopyLastLogitsAsync(buffer, cancelled.Token).AsTask());
+        for (int k = 0; k < steps; k++)
+        {
+            ids.AddRange(await sequence.StepAsync(TestContext.Current.CancellationToken));
+            await sequence.CopyLastLogitsAsync(buffer, TestContext.Current.CancellationToken);
+            logits.Add([.. buffer]);
+        }
+
+        return (ids, logits);
+    }
+
     private static void Append(GenAISequence seq, int[] ids, int? chunk)
     {
         int size = chunk ?? ids.Length;

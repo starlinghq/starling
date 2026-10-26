@@ -51,8 +51,8 @@ public static class Qwen35ChatTemplate
     /// This renderer behind the backend-neutral <see cref="IChatTemplate"/> seam: the turns and tool definitions are
     /// converted (<see cref="Qwen35Message.FromChatTurn"/>, <see cref="Qwen35Tool.FromDefinition"/>) and rendered by
     /// <see cref="Render(IReadOnlyList{Qwen35Message}, IReadOnlyList{Qwen35Tool}?, bool)"/>, so the text is the same.
-    /// Invalid conversations throw <see cref="Qwen35TemplateException"/>; tool names the call format cannot carry throw
-    /// <see cref="ArgumentException"/>.
+    /// An empty conversation and tool names the call format cannot carry throw <see cref="ArgumentException"/>; other
+    /// invalid conversations throw <see cref="Qwen35TemplateException"/>.
     /// </summary>
     public static IChatTemplate Instance { get; } = new Renderer();
 
@@ -319,6 +319,12 @@ file sealed class Renderer : IChatTemplate
     public string Render(IReadOnlyList<ChatTurn> turns, IReadOnlyList<ToolDefinition>? tools = null, bool enableThinking = false)
     {
         ArgumentNullException.ThrowIfNull(turns);
+        if (turns.Count == 0)
+        {
+            // IChatTemplate's contract for an empty conversation (the typed renderer throws Qwen35TemplateException).
+            throw new ArgumentException("At least one turn is required.", nameof(turns));
+        }
+
         return Qwen35ChatTemplate.Render(
             [.. turns.Select(Qwen35Message.FromChatTurn)],
             tools is null ? null : [.. tools.Select(Qwen35Tool.FromDefinition)],
