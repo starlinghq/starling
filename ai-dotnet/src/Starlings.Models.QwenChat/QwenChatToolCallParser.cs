@@ -58,7 +58,7 @@ public sealed record QwenChatParsedOutput(IReadOnlyList<QwenChatOutputPart> Part
 /// <b>Streaming.</b> <see cref="Append"/> returns text as soon as it cannot be the start of a tool call, and each tool
 /// call once its block is complete; raw tool-call markup is never returned as text unless it is malformed. The parts of
 /// any split of a completion into deltas, with adjacent text merged, equal <see cref="Parse(string)"/> of the whole
-/// completion.
+/// completion. An instance holds the state of one completion and is not thread-safe; <see cref="Parse(string)"/> is.
 /// </para>
 /// <para>
 /// The Qwen3 profile runs with thinking disabled, so the completion holds no reasoning and nothing is skipped.

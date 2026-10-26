@@ -51,6 +51,16 @@ public sealed class ToolCallingTests
     }
 
     [Fact]
+    public void LoneSurrogatesInToolDataAreRejected()
+    {
+        var key = QwenChatTool.FromJson(JsonDocument.Parse("""{"name": "f", "parameters": {"\ud800": 1}}""").RootElement);
+        Assert.Throws<NotSupportedException>(() => QwenChatTemplate.Render(QwenChatProfile.Qwen25, [new(QwenChatRole.User, "Q")], [key]));
+        var value = QwenChatTool.FromJson(JsonDocument.Parse("""{"name": "f", "description": "\ud800"}""").RootElement);
+        Assert.Throws<NotSupportedException>(() => QwenChatTemplate.Render(QwenChatProfile.Qwen25, [new(QwenChatRole.User, "Q")], [value]));
+        Assert.Throws<ArgumentException>(() => QwenChatTool.FromJson(JsonDocument.Parse("""{"name": "f\ud800"}""").RootElement));
+    }
+
+    [Fact]
     public void ParsesACallWithTextBefore()
     {
         QwenChatParsedOutput parsed = QwenChatToolCallParser.Parse("Let me check.\n" + ParisCall);

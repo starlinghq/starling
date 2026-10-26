@@ -35,10 +35,11 @@ internal static class QwenChatPythonJson
                     bool first = true;
                     foreach (var property in value.EnumerateObject())
                     {
-                        if (!(seen ??= new HashSet<string>(StringComparer.Ordinal)).Add(property.Name))
+                        string key = PropertyName(property);
+                        if (!(seen ??= new HashSet<string>(StringComparer.Ordinal)).Add(key))
                         {
                             // A Python dict keeps one value per key; which one depends on how the JSON was loaded.
-                            throw new NotSupportedException($"Duplicate JSON object key '{property.Name}' in tool data.");
+                            throw new NotSupportedException($"Duplicate JSON object key '{key}' in tool data.");
                         }
 
                         if (!first)
@@ -47,7 +48,7 @@ internal static class QwenChatPythonJson
                         }
 
                         first = false;
-                        AppendString(sb, property.Name);
+                        AppendString(sb, key);
                         sb.Append(": ");
                         Dumps(sb, property.Value);
                     }
@@ -230,6 +231,18 @@ internal static class QwenChatPythonJson
         try
         {
             return value.GetString()!;
+        }
+        catch (InvalidOperationException ex)
+        {
+            throw new NotSupportedException("Tool data contains a lone UTF-16 surrogate.", ex);
+        }
+    }
+
+    private static string PropertyName(JsonProperty property)
+    {
+        try
+        {
+            return property.Name;
         }
         catch (InvalidOperationException ex)
         {

@@ -64,7 +64,9 @@ public sealed class QwenChatTool
     /// A definition given as JSON, rendered exactly as given: an object with a <c>function</c> object (or the function
     /// object itself) whose <c>name</c> is a string.
     /// </summary>
-    /// <exception cref="ArgumentException">The JSON is not such an object, or the name cannot appear in a tool call.</exception>
+    /// <exception cref="ArgumentException">
+    /// The JSON is not such an object, or the name cannot appear in a tool call (including a name with a lone surrogate).
+    /// </exception>
     public static QwenChatTool FromJson(JsonElement json)
     {
         if (json.ValueKind != JsonValueKind.Object)
@@ -78,7 +80,16 @@ public sealed class QwenChatTool
             throw new ArgumentException("A tool definition needs a string function name (\"function\": {\"name\": ...}).", nameof(json));
         }
 
-        string n = name.GetString()!;
+        string n;
+        try
+        {
+            n = QwenChatPythonJson.CheckedString(name.GetString()!);
+        }
+        catch (Exception ex) when (ex is InvalidOperationException or NotSupportedException)
+        {
+            throw new ArgumentException("The tool name contains a lone UTF-16 surrogate.", nameof(json), ex);
+        }
+
         QwenChatToolCall.ValidateName(n, nameof(json));
         return new QwenChatTool(json.Clone(), n);
     }
