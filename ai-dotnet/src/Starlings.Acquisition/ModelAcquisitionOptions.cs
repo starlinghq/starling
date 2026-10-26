@@ -86,7 +86,7 @@ public sealed class ModelAcquisitionOptions
     public int MaxConcurrentFiles { get; init; } = 1;
 
     /// <summary>
-    /// Further Hub-layout base addresses (mirrors), tried in order after <see cref="Endpoint"/> for a file without an
+    /// Further Hub-layout base addresses (mirrors; http or https, checked when the store is created), tried in order after <see cref="Endpoint"/> for a file without an
     /// explicit <see cref="ModelAssetFile.Source"/> when the previous one fails: a download failure after all
     /// <see cref="MaxAttempts"/>, 401/403, 404 or bytes that do not match the lock. Default empty. A mirror receives the
     /// token only under the same rule as any other address (https, and the host of <see cref="Endpoint"/> or a host in

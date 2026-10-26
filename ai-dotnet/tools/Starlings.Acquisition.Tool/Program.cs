@@ -76,7 +76,7 @@ async Task<int> ToolBody()
             case "--offline":
                 offline = true;
                 break;
-            case "--lock-timeout" when i + 1 < args.Length && double.TryParse(args[i + 1], NumberStyles.Float, CultureInfo.InvariantCulture, out double seconds) && seconds >= 0:
+            case "--lock-timeout" when i + 1 < args.Length && double.TryParse(args[i + 1], NumberStyles.Float, CultureInfo.InvariantCulture, out double seconds) && seconds >= 0 && seconds <= int.MaxValue:
                 lockTimeout = TimeSpan.FromSeconds(seconds);
                 i++;
                 break;

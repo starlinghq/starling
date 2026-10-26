@@ -225,6 +225,14 @@ public sealed class SurfaceTests : IDisposable
         Assert.Throws<ArgumentOutOfRangeException>(() => new ModelAssetStore(Options(concurrent: 0)));
     }
 
+    [Fact]
+    public void AFallbackEndpointMustBeHttpOrHttps()
+    {
+        string local = new Uri(Path.Combine(_cache.Root, "mirror")).AbsoluteUri;
+        var ex = Assert.Throws<ArgumentException>(() => new ModelAssetStore(Options(fallbacks: [new Uri(local)])));
+        Assert.Contains("LocalSources", ex.Message, StringComparison.Ordinal);
+    }
+
     // Concurrent files.
 
     [Fact]

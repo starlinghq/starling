@@ -31,6 +31,7 @@ public sealed partial class ModelAssetStore : IDisposable
     private const string DownloadsDirectoryName = ".downloads";
     private const int MaxRedirects = 10;
     private static readonly TimeSpan LockPollInterval = TimeSpan.FromMilliseconds(100);
+    private const int MaxVanishedLockRetries = 8;
     private static readonly ProductInfoHeaderValue UserAgent = new("Starlings.Acquisition", typeof(ModelAssetStore).Assembly.GetName().Version?.ToString(3) ?? "0");
 
     private readonly ModelAcquisitionOptions _options;
@@ -52,9 +53,11 @@ public sealed partial class ModelAssetStore : IDisposable
         ArgumentNullException.ThrowIfNull(_options.Endpoint, nameof(options));
         ArgumentOutOfRangeException.ThrowIfLessThan(_options.MaxConcurrentFiles, 1, nameof(options));
         ValidateLockWaitTimeout(_options.LockWaitTimeout, nameof(options));
-        if (_options.FallbackEndpoints is null || _options.FallbackEndpoints.Any(e => e is null || !e.IsAbsoluteUri))
+        if (_options.FallbackEndpoints is null
+            || _options.FallbackEndpoints.Any(e => e is null || !e.IsAbsoluteUri || (e.Scheme != Uri.UriSchemeHttps && e.Scheme != Uri.UriSchemeHttp)))
         {
-            throw new ArgumentException("FallbackEndpoints must be a list of absolute addresses.", nameof(options));
+            throw new ArgumentException(
+                "FallbackEndpoints must be a list of absolute http or https addresses; use LocalSources for a local directory.", nameof(options));
         }
 
         if (_options.LocalSources is null || _options.LocalSources.Any(string.IsNullOrEmpty))
@@ -475,8 +478,8 @@ public sealed partial class ModelAssetStore : IDisposable
             ?? throw new ModelAssetLockTimeoutException(
                 string.Create(CultureInfo.InvariantCulture,
                     $"{assetLock.Name}: another download of {file.Path} held its lock {lockPath} for {waited.Elapsed.TotalSeconds:0.###} s, ") +
-                $"longer than LockWaitTimeout ({call.LockWaitTimeout}). Nothing was changed; call DownloadAsync again to wait again, " +
-                "or remove a stale lock with ModelAssetStore.RemovePartialDownloads once no other download runs.")
+                $"longer than LockWaitTimeout ({call.LockWaitTimeout}). Nothing was changed; call DownloadAsync again to wait again. " +
+                "The lock is held by a running download (the system releases it when that process exits), so it is not stale.")
             {
                 Repository = assetLock.Repository,
                 Revision = assetLock.Revision,
@@ -512,6 +515,7 @@ public sealed partial class ModelAssetStore : IDisposable
     private static async Task<FileStream?> LockFileAsync(string path, TimeSpan? timeout, Action? onWaiting, CancellationToken cancellationToken)
     {
         Stopwatch? waiting = null;
+        int vanished = 0;
         while (true)
         {
             cancellationToken.ThrowIfCancellationRequested();
@@ -526,6 +530,13 @@ public sealed partial class ModelAssetStore : IDisposable
             {
                 // Prune or RemovePartialDownloads removed the empty work directory after this call created it.
                 Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+                continue;
+            }
+            catch (IOException) when (!File.Exists(path) && vanished++ < MaxVanishedLockRetries)
+            {
+                // The lock was refused and the file is gone: RemovePartialDownloads or Prune held it and unlinked it
+                // (Unix) between this open and the refusal. Open again by name; the bound stops a persistent failure
+                // to create the file (disk full, read-only cache) from looping.
                 continue;
             }
             catch (IOException) when (File.Exists(path))
