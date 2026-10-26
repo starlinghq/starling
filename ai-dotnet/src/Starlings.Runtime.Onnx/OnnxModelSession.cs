@@ -380,7 +380,7 @@ public sealed class OnnxModelSession : IDisposable
         }
 
         string? optimizedModelPath = options.OptimizedModelFilePath is { } optimized ? Path.GetFullPath(optimized) : null;
-        if (optimizedModelPath is not null && string.Equals(optimizedModelPath, source, StringComparison.Ordinal))
+        if (optimizedModelPath is not null && string.Equals(optimizedModelPath, source, OperatingSystem.IsLinux() ? StringComparison.Ordinal : StringComparison.OrdinalIgnoreCase))
         {
             throw new ArgumentException("The optimized model path must not be the model file being loaded.", nameof(options));
         }

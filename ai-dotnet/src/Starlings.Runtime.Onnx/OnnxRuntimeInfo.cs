@@ -147,7 +147,18 @@ public static class OnnxRuntimeInfo
                 loggingFunction = function,
             };
             s_loggingFunction = function;
-            _ = LoadEnvironment(() => OrtEnv.CreateInstanceWithOptions(ref creation));
+            try
+            {
+                _ = LoadEnvironment(() => OrtEnv.CreateInstanceWithOptions(ref creation));
+            }
+            catch (OnnxRuntimeException ex) when (OrtEnv.IsCreated)
+            {
+                // Another thread created the environment between the check above and this call.
+                throw new InvalidOperationException(
+                    "The ONNX Runtime environment was created by another caller while logging was being configured, and ONNX Runtime accepts a logging function only when it creates it. " +
+                    "Call OnnxRuntimeInfo.ConfigureLogging before any session is created or any other ONNX Runtime call.",
+                    ex);
+            }
         }
     }
 
