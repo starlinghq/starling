@@ -6,6 +6,7 @@
 // subset; vision content is rejected.
 
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace Starlings.Models.Qwen35;
 
@@ -41,7 +42,7 @@ namespace Starlings.Models.Qwen35;
 /// rejects that corpus's unsupported and invalid cases.
 /// </para>
 /// </remarks>
-public static class Qwen35ChatTemplate
+public static partial class Qwen35ChatTemplate
 {
     /// <summary>SHA-256 of the pinned <c>chat_template.jinja</c> this renderer was ported from.</summary>
     public const string TemplateSha256 = "273d8e0e683b885071fb17e08d71e5f2a5ddfb5309756181681de4f5a1822d80";
@@ -71,7 +72,24 @@ public static class Qwen35ChatTemplate
     /// </param>
     /// <param name="enableThinking">The template's <c>enable_thinking</c>, as in <see cref="Render(IReadOnlyList{Qwen35Message}, bool)"/>.</param>
     /// <exception cref="Qwen35TemplateException">The conversation or tool data is invalid for the template.</exception>
-    public static string Render(IReadOnlyList<Qwen35Message> messages, IReadOnlyList<Qwen35Tool>? tools, bool enableThinking = false)
+    public static string Render(IReadOnlyList<Qwen35Message> messages, IReadOnlyList<Qwen35Tool>? tools, bool enableThinking = false) =>
+        Render(messages, tools, enableThinking, escapeSpecialTokens: false);
+
+    /// <summary>
+    /// Renders a conversation with tool definitions, followed by the assistant generation prompt, optionally escaping
+    /// special-token strings in message content.
+    /// </summary>
+    /// <param name="messages">The conversation.</param>
+    /// <param name="tools">The template's <c>tools</c>, as in <see cref="Render(IReadOnlyList{Qwen35Message}, IReadOnlyList{Qwen35Tool}?, bool)"/>.</param>
+    /// <param name="enableThinking">The template's <c>enable_thinking</c>, as in <see cref="Render(IReadOnlyList{Qwen35Message}, bool)"/>.</param>
+    /// <param name="escapeSpecialTokens">
+    /// True applies <see cref="EscapeSpecialTokens"/> to the content and reasoning of every message (system, user,
+    /// assistant and tool) before rendering, so content containing <c>&lt;|im_end|&gt;</c> or <c>&lt;|im_start|&gt;</c>
+    /// cannot rewrite the conversation; tool definitions and tool-call arguments are rendered as is. False (the
+    /// default of the other overloads) is faithful to upstream <c>apply_chat_template</c>, which renders content verbatim.
+    /// </param>
+    /// <exception cref="Qwen35TemplateException">The conversation or tool data is invalid for the template.</exception>
+    public static string Render(IReadOnlyList<Qwen35Message> messages, IReadOnlyList<Qwen35Tool>? tools, bool enableThinking, bool escapeSpecialTokens)
     {
         ArgumentNullException.ThrowIfNull(messages);
         if (messages.Count == 0)
@@ -117,7 +135,7 @@ public static class Qwen35ChatTemplate
             sb.Append("\n</tools>").Append(ToolsInstructions);
             if (messages[0].Role == Qwen35Role.System)
             {
-                string system = PyStrip(messages[0].Content);
+                string system = PyStrip(Text(messages[0].Content));
                 if (system.Length > 0)
                 {
                     sb.Append("\n\n").Append(system);
@@ -128,7 +146,7 @@ public static class Qwen35ChatTemplate
         }
         else if (messages[0].Role == Qwen35Role.System)
         {
-            sb.Append(ImStart).Append("system\n").Append(PyStrip(messages[0].Content)).Append(ImEnd).Append('\n');
+            sb.Append(ImStart).Append("system\n").Append(PyStrip(Text(messages[0].Content))).Append(ImEnd).Append('\n');
         }
 
         // {%- for message in messages[::-1] %}: the last user message that is not a tool response.
@@ -137,7 +155,7 @@ public static class Qwen35ChatTemplate
         {
             if (messages[index].Role == Qwen35Role.User)
             {
-                string content = PyStrip(messages[index].Content);
+                string content = PyStrip(Text(messages[index].Content));
                 if (!(content.StartsWith("<tool_response>", StringComparison.Ordinal) && content.EndsWith("</tool_response>", StringComparison.Ordinal)))
                 {
                     lastQueryIndex = index;
@@ -154,7 +172,7 @@ public static class Qwen35ChatTemplate
         for (int i = 0; i < messages.Count; i++)
         {
             var message = messages[i];
-            string content = PyStrip(message.Content);
+            string content = PyStrip(Text(message.Content));
             switch (message.Role)
             {
                 case Qwen35Role.System:
@@ -172,7 +190,7 @@ public static class Qwen35ChatTemplate
                         string reasoning = string.Empty;
                         if (message.ReasoningContent is not null)
                         {
-                            reasoning = message.ReasoningContent;
+                            reasoning = Text(message.ReasoningContent);
                         }
                         else if (content.Contains("</think>", StringComparison.Ordinal))
                         {
@@ -221,7 +239,25 @@ public static class Qwen35ChatTemplate
 
         sb.Append(ImStart).Append("assistant\n").Append(enableThinking ? "<think>\n" : "<think>\n\n</think>\n\n");
         return sb.ToString();
+
+        string Text(string s) => escapeSpecialTokens ? EscapeSpecialTokens(s) : s;
     }
+
+    /// <summary>
+    /// Rewrites every special-token string <c>&lt;|name|&gt;</c> (ASCII letters, digits, underscore) in
+    /// <paramref name="text"/> to <c>&lt;¦name¦&gt;</c> (U+00A6), so that the text tokenizes to no control token
+    /// (<c>&lt;|im_start|&gt;</c>, <c>&lt;|im_end|&gt;</c>, <c>&lt;|endoftext|&gt;</c> and the others). The same rewrite
+    /// as <c>KevText.EscapeSpecialTokens</c>; applied by <see cref="Render(IReadOnlyList{Qwen35Message}, IReadOnlyList{Qwen35Tool}?, bool, bool)"/>
+    /// when asked, never by default.
+    /// </summary>
+    public static string EscapeSpecialTokens(string text)
+    {
+        ArgumentNullException.ThrowIfNull(text);
+        return SpecialToken().Replace(text, "<¦$1¦>");
+    }
+
+    [GeneratedRegex("<\\|([A-Za-z0-9_]+)\\|>", RegexOptions.CultureInvariant)]
+    private static partial Regex SpecialToken();
 
     private static void AppendToolCalls(StringBuilder sb, IReadOnlyList<Qwen35ToolCall> calls, bool contentIsBlank)
     {
