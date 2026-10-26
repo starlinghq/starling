@@ -123,3 +123,4 @@ The maintainer sets these. Agents do not write `model-pipeline/protected/`. Sugg
 - Does GenAI 0.17.1 batch > 1 on CUDA show the same row independence for equal lengths, and does it avoid the concurrent-generator defect? This is unmeasured and is step 2 above.
 - Is the 0.17.1 builder's paged Qwen3.5 export numerically close enough to the dense graph to reuse the dense fixtures' near-tie rules?
 - Will a later GenAI release add a managed Engine binding? If so, wait for it rather than own a P/Invoke layer. Any version change also needs the pinned builder, the bundle and every profile requalified together (`Directory.Packages.props` note).
+- Prefix caching for chat, which the Engine's dynamic batching configuration also lists, is covered by `docs/plan/prefix-state-reuse.md`.

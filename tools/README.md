@@ -11,12 +11,18 @@ Repository scripts: checks, release drills, qualification helpers and code gener
 Fails if any tracked file, file name or commit names a term that must never appear in this repository (a boundary with an unrelated older project). The terms are stored only as SHA-256 hashes, so the script does not name them either. It scans text lowercased and split into words, decompresses `.gz` files, and decodes embedded base64 (16 or more characters) and hex (32 or more) runs, so a term inside a fixture or test model is found too.
 
 ```sh
-python3 -I tools/check-boundary.py    # tracked files, file names, and commits reachable from HEAD
+python3 -I tools/check-boundary.py                  # tracked files and names; commits since the recorded baseline
+python3 -I tools/check-boundary.py --range A..B     # tracked files and names; the commits of a range (a pull request)
+python3 -I tools/check-boundary.py --all-history    # tracked files and names; every commit reachable from HEAD
 ```
 
-To add a term, append the SHA-256 of its lowercase alphanumeric form under its length in `FORBIDDEN`.
+Files and file names are always scanned in full. Commits (author, committer and message) are scanned from a baseline on, because a published commit cannot be corrected without rewriting history: the baseline is the full commit SHA in `tools/check-boundary.baseline`, and the commits reachable from HEAD but not from it are scanned. The baseline and its ancestors passed the full-history scan when it was recorded; only the maintainer moves it. Without the file every commit reachable from HEAD is scanned. A baseline the clone does not hold (a shallow checkout) or a range that does not resolve is an error (exit 2), never a pass. Exit 1 when a term is found.
 
-CI: `ci` job `boundary` (full history checkout); `release` job `candidate`.
+To add a term, append the SHA-256 of its lowercase alphanumeric form under its length in `FORBIDDEN`. starlinghq/roost keeps a copy of the script; it stays byte-identical to this one once roost adopts this version and records its own baseline file.
+
+Tests: `python3 -I -m unittest discover -s tools/tests -v` (`tools/tests/test_check_boundary.py`: matching, the full-tree file scan, the baseline and range selection, in temporary repositories with a made-up term).
+
+CI: `ci` job `boundary` (full-history checkout; the tests, then the check with `--range <base sha>..<head sha>` on a pull request and the baseline on a push); `release` job `candidate` (the baseline).
 
 ### `check-provenance.py`
 
@@ -95,14 +101,16 @@ Helpers for the scheduled qualification workflow (P-018, workstream R6). Reads m
 ```sh
 python3 -I tools/qualification.py hosting <manifest.yaml>
 python3 -I tools/qualification.py lock <manifest.yaml> <out.json> [--reference-environment <environment.json>]
+python3 -I tools/qualification.py lock-candidate <profile.json> <out.json> [--base]
 python3 -I tools/qualification.py snapshot <lock.json>
 ```
 
 - `hosting` prints `public` or `private: <where>`. A profile is private when any `source_status` in its manifest is `placeholder` or `private`. With `$GITHUB_OUTPUT` set it also writes `hosting=public|private` there.
 - `lock` writes a `Starlings.Acquisition` JSON lock of every file in `origin.files`, at the `origin.weights` repository and pinned revision. `--reference-environment` adds the files the protected reference run recorded when its model is the same repository and revision. Files Starling hosts outside the upstream repository carry their download `url` (lock `schema_version` 2). Only public Hub origins are supported.
+- `lock-candidate` writes the same kind of lock (schema version 1) for an onboarding candidate contract (`model-pipeline/candidates/<name>/profile.json`): every file of `origin.files` at `origin.repo` and `origin.revision`, or with `--base` every file of `origin.base` (the pinned base model of the Kev and Whisper routes). Only Hugging Face repositories pinned by a full commit SHA are supported. Tests: `tools/tests/test_qualification.py` (skipped without PyYAML).
 - `snapshot` prints the lock's snapshot directory relative to the cache root, `<repository>/<revision>`.
 
-CI: `qualification` jobs `assets`, `evaluator` and `soak` (and through `acquire-models.sh`).
+CI: `qualification` jobs `assets`, `evaluator`, `experimental` (`lock-candidate`) and `soak` (and through `acquire-models.sh`).
 
 ### `release-gates.sh`
 
