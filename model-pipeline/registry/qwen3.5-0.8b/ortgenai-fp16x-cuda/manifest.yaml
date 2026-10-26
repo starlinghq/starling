@@ -93,7 +93,7 @@ behavior:
       returned; the tokens that produced it stay in the completion ids and the usage count.
     usage: prompt tokens = ids fed to the model; completion tokens = generated ids excluding a stop token id.
     cancellation: checked before the prefill, between prefill chunks and between decode steps; a running chunk or step is not interrupted.
-    prefill_chunk_tokens: "512 on CUDA, one call on CPU (Qwen35ChatOptions default); a one-call prefill allocates about 1 MB of fp32 logits per prompt token"
+    prefill_chunk_tokens: "512 on CUDA; on CPU one call up to 1,024 prompt tokens and 1,024-token chunks above (Qwen35ChatOptions default); a one-call prefill allocates about 1 MB of fp32 logits per prompt token"
     concurrency: >-
       serialized: on CUDA the native work of concurrent requests runs one call at a time (requests interleave step by step). Unserialized concurrent ONNX Runtime GenAI 0.17.1 generators on the CUDA provider produced wrong tokens (docs/evidence/p016-qwen35/README.md); that mode is unsupported.
     request_state: >-
