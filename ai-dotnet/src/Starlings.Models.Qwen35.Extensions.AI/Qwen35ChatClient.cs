@@ -41,11 +41,22 @@ namespace Starlings.Models.Qwen35.Extensions.AI;
 /// (each <see cref="AIFunctionDeclaration"/>, with its JSON schema) are rendered into the template's tools block when
 /// <see cref="ChatOptions.ToolMode"/> is
 /// <see cref="ChatToolMode.Auto"/> or unset; <see cref="ChatToolMode.None"/> renders no tools. Other tool types,
-/// <see cref="ChatToolMode.RequireAny"/>, a required function, <c>AllowMultipleToolCalls = false</c>, a non-text
-/// <see cref="ChatOptions.ResponseFormat"/>,
+/// <c>AllowMultipleToolCalls = false</c> with <see cref="ChatToolMode.Auto"/>,
 /// <see cref="ChatOptions.ConversationId"/>, <see cref="ChatOptions.Reasoning"/>, frequency and presence penalties, background
 /// responses, another <see cref="ChatOptions.ModelId"/> and a <see cref="ChatOptions.RawRepresentationFactory"/> fail with
 /// <see cref="NotSupportedException"/> rather than being ignored.
+/// </para>
+/// <para>
+/// <b>Guided decoding (experimental).</b> When the model directory has ONNX Runtime GenAI's guidance files
+/// (<see cref="Qwen35ModelInfo.GuidanceMissingFiles"/> empty), <see cref="ChatToolMode.RequireAny"/> and
+/// <see cref="ChatToolMode.RequireSpecific"/> constrain the completion to tool calls with
+/// <see cref="Qwen35ToolGrammar"/> (all offered functions, or the named one; one call when
+/// <c>AllowMultipleToolCalls = false</c>, one or more otherwise), and a JSON <see cref="ChatOptions.ResponseFormat"/>
+/// constrains it to its schema (to a JSON object without one) through <see cref="GenerationGuidance.JsonSchema"/>. A
+/// JSON format with offered tools, guidance with thinking enabled or with log probabilities, and a required function
+/// that is not offered fail with <see cref="NotSupportedException"/>. Without the guidance files, which the published
+/// bundle does not have, each of these requests fails with <see cref="NotSupportedException"/> naming the missing files.
+/// Other non-text response formats always fail.
 /// </para>
 /// <para>
 /// <b>Responses.</b> One assistant message with the completion text (when thinking is enabled, the reasoning,
@@ -562,7 +573,8 @@ public sealed class Qwen35ChatClient : IChatClient
     {
         ObjectDisposedException.ThrowIf(Volatile.Read(ref _disposed) != 0, this);
         var conversation = Qwen35ChatRequestMapper.MapMessages(messages, options?.Instructions);
-        var chatOptions = Qwen35ChatRequestMapper.MapOptions(options, _options.Defaults, ModelId);
+        var guidance = new Qwen35ChatRequestMapper.GuidanceSupport(_model.Info.GuidanceMissingFiles, _model.Info.ModelDirectory, _options.GuidanceFastForward);
+        var chatOptions = Qwen35ChatRequestMapper.MapOptions(options, _options.Defaults, ModelId, guidance);
         return (conversation, chatOptions);
     }
 }

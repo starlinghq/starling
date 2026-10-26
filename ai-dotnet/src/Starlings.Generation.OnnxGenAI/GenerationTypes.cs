@@ -58,6 +58,16 @@ public sealed record GenerationOptions
     /// </summary>
     public int TopLogprobs { get; init; }
 
+    /// <summary>
+    /// Experimental, opt-in: a constraint on the completion (JSON Schema, Lark grammar or regex) applied by ONNX Runtime
+    /// GenAI's llguidance integration, or null (default) for unconstrained decoding, which is unchanged by this option.
+    /// Needs <c>tokenizer.json</c> and <c>tokenizer_config.json</c> in the model directory
+    /// (<see cref="GenAIModel.GuidanceMissingFiles"/>); without them the request fails with
+    /// <see cref="NotSupportedException"/>. Cannot be combined with <see cref="ReturnLogprobs"/> (how GenAI's token mask
+    /// shows in the logits it returns is untested). See <see cref="GenerationGuidance"/>.
+    /// </summary>
+    public GenerationGuidance? Guidance { get; init; }
+
     internal void Validate()
     {
         if (TopLogprobs is < 0 or > MaxTopLogprobs)
@@ -68,6 +78,11 @@ public sealed record GenerationOptions
         if (TopLogprobs > 0 && !ReturnLogprobs)
         {
             throw new ArgumentException("TopLogprobs needs ReturnLogprobs = true.", nameof(TopLogprobs));
+        }
+
+        if (Guidance is not null && ReturnLogprobs)
+        {
+            throw new ArgumentException("ReturnLogprobs cannot be combined with Guidance.", nameof(ReturnLogprobs));
         }
 
         if (PrefillChunkTokens is int chunk)

@@ -19,6 +19,12 @@ namespace Starlings.Generation.OnnxGenAI;
 /// at a stop sequence (cut before the match).
 /// </para>
 /// <para>
+/// With <see cref="GenerationOptions.Guidance"/> (experimental, opt-in), GenAI masks the tokens the constraint does not
+/// allow before it selects each one. With fast-forward guidance a step can also append the tokens the constraint
+/// forces; the loop takes them in order, before the step's selected token, through the same checks (maximum tokens,
+/// stop ids, detokenization, stop sequences). Without guidance the loop is unchanged.
+/// </para>
+/// <para>
 /// Cancellation is checked before the prefill and between decode steps. A token passed in cancels at the next check:
 /// the call throws <see cref="OperationCanceledException"/> and the native generator is released. It cannot interrupt
 /// a prefill or a step already running.
@@ -123,11 +129,14 @@ public sealed class TextGenerator
                 nameof(promptIds));
         }
 
-        long total = (long)prompt.Length + options.MaxNewTokens;
+        int headroom = options.Guidance?.MaxFastForwardTokens ?? 0;
+        long total = (long)prompt.Length + options.MaxNewTokens + headroom;
         if (total > _contextLength)
         {
             throw new GenerationContextLengthException(
-                $"{prompt.Length} prompt tokens plus {options.MaxNewTokens} new tokens exceed the context length {_contextLength}.")
+                headroom == 0
+                    ? $"{prompt.Length} prompt tokens plus {options.MaxNewTokens} new tokens exceed the context length {_contextLength}."
+                    : $"{prompt.Length} prompt tokens plus {options.MaxNewTokens} new tokens plus {headroom} tokens of fast-forward headroom exceed the context length {_contextLength}.")
             {
                 PromptTokens = prompt.Length,
                 MaxNewTokens = options.MaxNewTokens,
@@ -144,10 +153,15 @@ public sealed class TextGenerator
     private IEnumerable<GenerationUpdate> Run(int[] prompt, GenerationOptions options, HashSet<int> stopIds, Action<float[]>? step0Logits, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
+        // Fast-forward guidance appends forced tokens without checking GenAI's maximum length, so the sequence gets room
+        // for one step's forced tokens beyond MaxNewTokens; the loop never returns more than MaxNewTokens tokens.
+        int fastForwardHeadroom = options.Guidance?.MaxFastForwardTokens ?? 0;
+        Queue<int>? forced = options.Guidance is { FastForward: true } ? new Queue<int>() : null;
         using IGenerationSequence sequence = _createSequence(new GenAISequenceOptions
         {
-            MaxLength = prompt.Length + options.MaxNewTokens,
+            MaxLength = prompt.Length + options.MaxNewTokens + fastForwardHeadroom,
             Sampling = options.Sampling,
+            Guidance = options.Guidance,
         });
 
         var clock = Stopwatch.StartNew();
@@ -192,14 +206,44 @@ public sealed class TextGenerator
                 break;
             }
 
-            if (sequence.IsDone)
+            int id;
+            if (forced is { Count: > 0 })
             {
-                // GenAI ends a sequence only at its end-of-sequence ids (handled below) or at its maximum length, which
-                // is the prompt plus MaxNewTokens (handled above).
-                throw new GenAIModelException($"ONNX Runtime GenAI ended the sequence unexpectedly after {all.Count} tokens.");
+                // The rest of a fast-forward step: its tokens go through the same checks one at a time, the selected
+                // token last.
+                id = forced.Dequeue();
+            }
+            else
+            {
+                if (sequence.IsDone)
+                {
+                    // GenAI ends a sequence only at its end-of-sequence ids (handled below) or at its maximum length, which
+                    // is the prompt plus MaxNewTokens plus the fast-forward headroom (handled above).
+                    throw new GenAIModelException($"ONNX Runtime GenAI ended the sequence unexpectedly after {all.Count} tokens.");
+                }
+
+                if (forced is null)
+                {
+                    id = sequence.GenerateNextToken();
+                }
+                else
+                {
+                    int[] appended = sequence.GenerateNextTokens();
+                    if (appended.Length == 0 || appended.Length > fastForwardHeadroom + 1)
+                    {
+                        // GenAI has already written the tokens; the bound is the caller's (GenerationGuidance.WithFastForward).
+                        throw new GenAIModelException(
+                            $"A fast-forward step appended {appended.Length} tokens; the guidance allows at most {fastForwardHeadroom} forced tokens and the selected one.");
+                    }
+
+                    id = appended[0];
+                    for (int i = 1; i < appended.Length; i++)
+                    {
+                        forced.Enqueue(appended[i]);
+                    }
+                }
             }
 
-            int id = sequence.GenerateNextToken();
             if (stopIds.Contains(id))
             {
                 finish = GenerationFinishReason.Stop;

@@ -96,8 +96,20 @@ public sealed record Qwen35ChatOptions
     /// </summary>
     public int TopLogprobs { get; init; }
 
+    /// <summary>
+    /// Experimental, opt-in: a constraint on the completion (see <see cref="GenerationOptions.Guidance"/>), for example
+    /// <see cref="Qwen35ToolGrammar.Build(IReadOnlyList{Qwen35Tool}, Qwen35ToolGrammarOptions?)"/> for a required tool
+    /// call or <see cref="GenerationGuidance.JsonSchema"/> for JSON output; null (default) for unconstrained decoding,
+    /// which this option leaves unchanged. Needs <c>tokenizer.json</c> and <c>tokenizer_config.json</c> in the variant's
+    /// model directory, which the published bundle does not have (<see cref="Qwen35ModelInfo.GuidanceMissingFiles"/>); a
+    /// guided request on such a directory fails with <see cref="NotSupportedException"/>. With
+    /// <see cref="EnableThinking"/>, the constraint applies from the first completion token, which is reasoning text.
+    /// </summary>
+    public GenerationGuidance? Guidance { get; init; }
+
     internal GenerationOptions ToGenerationOptions(GenAIExecutionProvider provider = GenAIExecutionProvider.Cpu) => new()
     {
+        Guidance = Guidance,
         MaxNewTokens = MaxNewTokens,
         StopSequences = StopSequences,
         AdditionalStopTokenIds = StopAtRoleMarker && !AdditionalStopTokenIds.Contains(Qwen35ChatModel.ImStartTokenId)
@@ -173,4 +185,12 @@ public sealed record Qwen35ModelInfo
 
     /// <summary>Stop token ids applied to every request.</summary>
     public required ImmutableArray<int> StopTokenIds { get; init; }
+
+    /// <summary>
+    /// Experimental: the files guided decoding (<see cref="Qwen35ChatOptions.Guidance"/>) needs that the model directory
+    /// lacks (<see cref="GenAIModel.GuidanceMissingFiles"/>); empty when guided requests can be served. The published
+    /// bundle's variant directories have neither <c>tokenizer.json</c> nor <c>tokenizer_config.json</c>. Defaults to both
+    /// file names for an instance that <see cref="Qwen35ChatModel.Load"/> did not create.
+    /// </summary>
+    public IReadOnlyList<string> GuidanceMissingFiles { get; init; } = GenAIModel.GuidanceFiles;
 }

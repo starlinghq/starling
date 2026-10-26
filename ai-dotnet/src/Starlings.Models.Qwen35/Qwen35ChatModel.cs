@@ -149,6 +149,7 @@ public sealed class Qwen35ChatModel : IDisposable
                 ContextLength = Math.Min(backend.ContextLength, MaxContextTokens),
                 ModelContextLength = backend.ContextLength,
                 StopTokenIds = [],
+                GuidanceMissingFiles = backend.GuidanceMissingFiles,
             };
             return new Qwen35ChatModel(backend, tokenizer, info);
         }
@@ -204,6 +205,7 @@ public sealed class Qwen35ChatModel : IDisposable
     {
         ArgumentNullException.ThrowIfNull(prompt);
         options ??= new Qwen35ChatOptions();
+        CheckGuidance(options);
         CheckContextLength(prompt, options);
         return _generator.Generate(prompt.TokenIds, options.ToGenerationOptions(Info.Provider), cancellationToken);
     }
@@ -228,6 +230,7 @@ public sealed class Qwen35ChatModel : IDisposable
     {
         ArgumentNullException.ThrowIfNull(prompt);
         options ??= new Qwen35ChatOptions();
+        CheckGuidance(options);
         CheckContextLength(prompt, options);
         return _generator.GenerateStreaming(prompt.TokenIds, options.ToGenerationOptions(Info.Provider), cancellationToken);
     }
@@ -237,6 +240,15 @@ public sealed class Qwen35ChatModel : IDisposable
     /// enforces. The model's own context length still applies in <see cref="TextGenerator"/>.
     /// </summary>
     internal int EnforcedContextTokens { get; set; } = MaxContextTokens;
+
+    // A guided request on a directory without GenAI's guidance files fails here, before any native call.
+    private void CheckGuidance(Qwen35ChatOptions options)
+    {
+        if (options.Guidance is not null && Info.GuidanceMissingFiles.Count > 0)
+        {
+            throw new NotSupportedException(GenAIModel.GuidanceUnavailableMessage(Info.ModelDirectory, Info.GuidanceMissingFiles));
+        }
+    }
 
     private void CheckContextLength(Qwen35Prompt prompt, Qwen35ChatOptions options)
     {
