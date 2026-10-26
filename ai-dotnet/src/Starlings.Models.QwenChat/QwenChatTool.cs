@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Starlings.Generation;
 
 namespace Starlings.Models.QwenChat;
 
@@ -93,6 +94,17 @@ public sealed class QwenChatTool
         QwenChatToolCall.ValidateName(n, nameof(json));
         return new QwenChatTool(json.Clone(), n);
     }
+
+    /// <summary>The definition of a backend-neutral <see cref="ToolDefinition"/>, rendered from its JSON (<see cref="FromJson"/>).</summary>
+    /// <exception cref="ArgumentException">The name cannot appear in the templates' call format.</exception>
+    public static QwenChatTool FromDefinition(ToolDefinition definition)
+    {
+        ArgumentNullException.ThrowIfNull(definition);
+        return FromJson(definition.Json);
+    }
+
+    /// <summary>This definition as a backend-neutral <see cref="ToolDefinition"/> (the same JSON).</summary>
+    public ToolDefinition ToDefinition() => ToolDefinition.FromJson(Json);
 }
 
 /// <summary>
@@ -130,6 +142,16 @@ public sealed record QwenChatToolCall(string Name, JsonElement Arguments)
         using var document = JsonDocument.Parse(stream.ToArray());
         return new QwenChatToolCall(name, document.RootElement.Clone());
     }
+
+    /// <summary>The call of a backend-neutral <see cref="Starlings.Generation.ToolCall"/>.</summary>
+    public static QwenChatToolCall FromToolCall(ToolCall call)
+    {
+        ArgumentNullException.ThrowIfNull(call);
+        return new QwenChatToolCall(call.Name, call.Arguments);
+    }
+
+    /// <summary>This call as a backend-neutral <see cref="Starlings.Generation.ToolCall"/>.</summary>
+    public ToolCall ToToolCall() => new(Name, Arguments);
 
     internal static bool IsValidName(string? name)
     {

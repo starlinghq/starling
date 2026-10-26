@@ -1,4 +1,4 @@
-# Qwen text chat (Starlings.Models.QwenChat): Qwen/Qwen2.5-0.5B-Instruct on ONNX Runtime GenAI 0.17.1, fp32 on the CPU
+# Qwen text chat (Starlings.Models.QwenChat.OnnxGenAI): Qwen/Qwen2.5-0.5B-Instruct on ONNX Runtime GenAI 0.17.1, fp32 on the CPU
 # provider. Admission: model-pipeline/admissions/qwen-chat.md (proposed at Experimental, #124). Candidate contract:
 # model-pipeline/candidates/qwen25/profile.json (onboarding route qwen-genai-cpu-v1, recipes/qwen25-cpu.yaml). The Hub
 # repository ships no GenAI build: the graph is Starling's build of the pinned original
@@ -180,7 +180,7 @@ execution:
         - model-pipeline/reference/qwen-chat/build_bundle.py (ONNX Runtime GenAI 0.17.1 builder, -p fp32 -e cpu)
 
 capabilities:
-  # Starlings.Models.QwenChat; evidence: docs/evidence/qwenchat-onboarding-2026-10-18/README.md. Experimental where the
+  # Starlings.Models.QwenChat.OnnxGenAI; evidence: docs/evidence/qwenchat-onboarding-2026-10-18/README.md. Experimental where the
   # onboarding route compared the C# package with transformers and Python GenAI on the proposed corpus (no adopted
   # reference, no gate); unsupported where the package refuses or does not offer it; untested where no evidence exists.
   batch: unsupported

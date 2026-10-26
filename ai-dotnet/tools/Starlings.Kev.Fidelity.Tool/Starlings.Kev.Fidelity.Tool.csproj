@@ -17,7 +17,7 @@
     <PackageReference Include="Microsoft.ML.OnnxRuntime.Gpu.Linux" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="../../src/Starlings.Models.Kev/Starlings.Models.Kev.csproj" />
+    <ProjectReference Include="../../src/Starlings.Models.Kev.Onnx/Starlings.Models.Kev.Onnx.csproj" />
   </ItemGroup>
   <ItemGroup>
     <!-- Entry-point wrapper: an escaping exception gives "error:" and exit code 70, not an abort and core dump. -->

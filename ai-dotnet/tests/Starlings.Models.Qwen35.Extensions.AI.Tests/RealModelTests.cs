@@ -92,7 +92,7 @@ public sealed class RealModelTests(Qwen35ChatClientFixture fixture) : IClassFixt
         Assert.Equal(c.PromptIds, Client.Model.CreatePrompt(c.Messages!, c.Tools).TokenIds);
 
         var response = await Client.GetResponseAsync(ChatClientModelChecks.ToChatMessages(c), options, Ct);
-        var raw = Assert.IsType<Starlings.Generation.OnnxGenAI.GenerationResult>(response.RawRepresentation);
+        var raw = Assert.IsType<Starlings.Generation.GenerationResult>(response.RawRepresentation);
         Assert.Equal(c.PromptIds.Length, response.Usage!.InputTokenCount);
         Assert.Equal(c.ContentIds, raw.TokenIds);
         var call = Assert.IsType<FunctionCallContent>(Assert.Single(response.Messages.Single().Contents));

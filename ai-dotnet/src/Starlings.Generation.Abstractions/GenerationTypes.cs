@@ -1,6 +1,6 @@
 using System.Collections.Immutable;
 
-namespace Starlings.Generation.OnnxGenAI;
+namespace Starlings.Generation;
 
 /// <summary>Per-request generation settings. Immutable; reuse freely.</summary>
 public sealed record GenerationOptions
@@ -62,13 +62,20 @@ public sealed record GenerationOptions
     /// Experimental, opt-in: a constraint on the completion (JSON Schema, Lark grammar or regex) applied by ONNX Runtime
     /// GenAI's llguidance integration, or null (default) for unconstrained decoding, which is unchanged by this option.
     /// Needs <c>tokenizer.json</c> and <c>tokenizer_config.json</c> in the model directory
-    /// (<see cref="GenAIModel.GuidanceMissingFiles"/>); without them the request fails with
+    /// (<c>GenAIModel.GuidanceMissingFiles</c> in Starlings.Generation.OnnxGenAI); without them the request fails with
     /// <see cref="NotSupportedException"/>. Cannot be combined with <see cref="ReturnLogprobs"/> (how GenAI's token mask
     /// shows in the logits it returns is untested). See <see cref="GenerationGuidance"/>.
     /// </summary>
     public GenerationGuidance? Guidance { get; init; }
 
-    internal void Validate()
+    /// <summary>
+    /// Checks the settings as a decode loop does before it starts a request: <see cref="MaxNewTokens"/> and
+    /// <see cref="PrefillChunkTokens"/> positive, stop sequences non-empty, stop ids non-negative, <see cref="TopLogprobs"/>
+    /// in range and only with <see cref="ReturnLogprobs"/>, no <see cref="Guidance"/> with <see cref="ReturnLogprobs"/>,
+    /// and valid <see cref="Sampling"/>.
+    /// </summary>
+    /// <exception cref="ArgumentException">A setting is out of range or the combination is rejected.</exception>
+    public void Validate()
     {
         if (TopLogprobs is < 0 or > MaxTopLogprobs)
         {
@@ -111,7 +118,8 @@ public sealed record GenerationOptions
 }
 
 /// <summary>
-/// Sampling through ONNX Runtime GenAI's sampler: temperature, then top-k, then top-p, with an explicit seed. The same
+/// Sampling settings: temperature, then top-k, then top-p, with an explicit seed (the order of ONNX Runtime GenAI's
+/// sampler, which Starlings.Generation.OnnxGenAI uses). The same
 /// seed, prompt, settings, model and device reproduce the same tokens; outputs are not expected to match across
 /// devices, versions or the reference implementation (plan 10.1).
 /// </summary>
@@ -129,7 +137,9 @@ public sealed record SamplingOptions
     /// <summary>Random seed (non-negative). Required so that a run is reproducible.</summary>
     public required int Seed { get; init; }
 
-    internal void Validate()
+    /// <summary>Checks the settings: temperature finite and above 0, top-k at least 1, top-p in (0, 1], seed non-negative.</summary>
+    /// <exception cref="ArgumentOutOfRangeException">A setting is out of range.</exception>
+    public void Validate()
     {
         if (!(Temperature > 0) || double.IsInfinity(Temperature))
         {

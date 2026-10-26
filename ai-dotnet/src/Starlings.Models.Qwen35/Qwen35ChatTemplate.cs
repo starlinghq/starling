@@ -6,6 +6,7 @@
 // subset; vision content is rejected.
 
 using System.Text;
+using Starlings.Generation;
 
 namespace Starlings.Models.Qwen35;
 
@@ -45,6 +46,15 @@ public static class Qwen35ChatTemplate
 {
     /// <summary>SHA-256 of the pinned <c>chat_template.jinja</c> this renderer was ported from.</summary>
     public const string TemplateSha256 = "273d8e0e683b885071fb17e08d71e5f2a5ddfb5309756181681de4f5a1822d80";
+
+    /// <summary>
+    /// This renderer behind the backend-neutral <see cref="IChatTemplate"/> seam: the turns and tool definitions are
+    /// converted (<see cref="Qwen35Message.FromChatTurn"/>, <see cref="Qwen35Tool.FromDefinition"/>) and rendered by
+    /// <see cref="Render(IReadOnlyList{Qwen35Message}, IReadOnlyList{Qwen35Tool}?, bool)"/>, so the text is the same.
+    /// Invalid conversations throw <see cref="Qwen35TemplateException"/>; tool names the call format cannot carry throw
+    /// <see cref="ArgumentException"/>.
+    /// </summary>
+    public static IChatTemplate Instance { get; } = new Renderer();
 
     private const string ImStart = "<|im_start|>";
     private const string ImEnd = "<|im_end|>";
@@ -297,6 +307,23 @@ public static class Qwen35ChatTemplate
         '\u2028' or '\u2029' or '\u202F' or '\u205F' or '\u3000' => true,
         _ => false,
     };
+}
+
+/// <summary><see cref="Qwen35ChatTemplate.Instance"/>.</summary>
+file sealed class Renderer : IChatTemplate
+{
+    public string TemplateSha256 => Qwen35ChatTemplate.TemplateSha256;
+
+    public bool SupportsThinking => true;
+
+    public string Render(IReadOnlyList<ChatTurn> turns, IReadOnlyList<ToolDefinition>? tools = null, bool enableThinking = false)
+    {
+        ArgumentNullException.ThrowIfNull(turns);
+        return Qwen35ChatTemplate.Render(
+            [.. turns.Select(Qwen35Message.FromChatTurn)],
+            tools is null ? null : [.. tools.Select(Qwen35Tool.FromDefinition)],
+            enableThinking);
+    }
 }
 
 /// <summary>A conversation the pinned chat template rejects, or a template feature this package does not render.</summary>

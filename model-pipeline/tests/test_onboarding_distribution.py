@@ -48,7 +48,7 @@ def package_feed(tmp_path, *, altered=None):
 def test_inspects_all_committed_packages_and_exact_sibling_dependencies(tmp_path):
     feed, selected = package_feed(tmp_path)
     records = distribution._inspect_packages(feed, selected, "a" * 40)
-    assert len(records) == len(distribution.PACKAGES) == 5
+    assert len(records) == len(distribution.PACKAGES) == 7
     assert distribution.TOKENIZER not in {record["id"] for record in records}
     assert all(record["source_commit"] == "a" * 40 for record in records)
     assert all(len(record["sha256"]) == 64 for record in records)

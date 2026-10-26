@@ -48,9 +48,10 @@ public sealed class KevInputTooLongException : ArgumentException
 /// <summary>
 /// Kev's encoder (<c>kev/model.py</c> <c>encode</c> and <c>rows_of</c>, strict, row form) over the owned tokenizer.
 /// Each text segment is escaped (<see cref="KevText.EscapeSpecialTokens"/>) and tokenized on its own without special
-/// tokens; delimiters are inserted by id.
+/// tokens; delimiters are inserted by id. The decision runtime (<c>KevDecisionModel</c> in Starlings.Models.Kev.Onnx)
+/// runs the rows it returns; another runtime can run the same rows. Thread-safe.
 /// </summary>
-internal sealed class KevEncoder
+public sealed class KevEncoder
 {
     private static readonly (string Token, int Id)[] Delimiters =
     [
@@ -66,6 +67,9 @@ internal sealed class KevEncoder
 
     private KevEncoder(Tokenizer tokenizer) => _tokenizer = tokenizer;
 
+    /// <summary>Loads the owned tokenizer and checks Kev's delimiter ids.</summary>
+    /// <param name="tokenizerPath">The <c>qwen2-bpe-kev</c> profile's <c>tokenizer.json</c> (both checkpoints ship it).</param>
+    /// <exception cref="InvalidDataException">A delimiter token is not at Kev's id.</exception>
     public static KevEncoder FromFile(string tokenizerPath)
     {
         var tokenizer = Tokenizer.FromFile(tokenizerPath);
@@ -80,11 +84,20 @@ internal sealed class KevEncoder
         return new KevEncoder(tokenizer);
     }
 
+    /// <summary>The owned tokenizer.</summary>
     public Tokenizer Tokenizer => _tokenizer;
 
     /// <summary><c>user_tokens</c>: escape, then encode without special tokens.</summary>
     public int[] UserTokens(string text) => [.. _tokenizer.Encode(KevText.EscapeSpecialTokens(text), addSpecialTokens: false).Ids];
 
+    /// <summary>
+    /// <c>encode</c> and <c>rows_of</c>: the state ids (the <c>&lt;state&gt;</c> token first) and one row per question
+    /// (positions continuing after the state, the <c>&lt;decide&gt;</c> index and each option's <c>&lt;/opt&gt;</c> index).
+    /// </summary>
+    /// <param name="record">The rendered request (<see cref="KevRequest.ToRecord"/>).</param>
+    /// <param name="maxStateTokens">Longest accepted state, the <c>&lt;state&gt;</c> token included.</param>
+    /// <param name="maxRowTokens">Longest accepted state plus one question row.</param>
+    /// <exception cref="ArgumentException">No question, a question without 1 to 255 options, or a null option.</exception>
     /// <exception cref="KevInputTooLongException">The state or a row exceeds the limits.</exception>
     public KevEncoding Encode(KevRecord record, int maxStateTokens = KevModelProfile.MaxStateTokens, int maxRowTokens = KevModelProfile.MaxRowTokens)
     {

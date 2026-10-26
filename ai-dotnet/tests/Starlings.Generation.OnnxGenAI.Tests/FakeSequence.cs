@@ -3,7 +3,7 @@ using Starlings.Generation.OnnxGenAI;
 namespace Starlings.Generation.OnnxGenAI.Tests;
 
 /// <summary>A scripted sequence: returns the given ids in order and reports done after an end-of-sequence id.</summary>
-internal sealed class FakeSequence : IGenerationSequence
+internal sealed class FakeSequence : IDecodeSequence
 {
     private readonly IReadOnlyList<int> _script;
     private readonly HashSet<int> _eos;

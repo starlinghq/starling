@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using System.Collections.Immutable;
+using Starlings.Generation;
 using Starlings.Generation.OnnxGenAI;
 using Starlings.Tokenizers;
 
@@ -70,7 +71,7 @@ internal sealed class ScriptedBackend
 }
 
 /// <summary>One request's scripted sequence: records the prompt, chunks, steps, threads and disposal.</summary>
-internal sealed class ScriptedSequence(GenAISequenceOptions options, ScriptedBackend backend) : IGenerationSequence
+internal sealed class ScriptedSequence(GenAISequenceOptions options, ScriptedBackend backend) : IDecodeSequence
 {
     private readonly List<int> _prompt = [];
     private IReadOnlyList<int>? _script;

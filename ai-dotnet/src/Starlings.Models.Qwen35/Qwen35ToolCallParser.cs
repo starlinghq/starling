@@ -10,6 +10,7 @@ using System.Numerics;
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
+using Starlings.Generation;
 
 namespace Starlings.Models.Qwen35;
 
@@ -23,6 +24,9 @@ public sealed record Qwen35OutputPart(string? Text, Qwen35ToolCall? ToolCall)
 
     /// <summary>A tool-call part.</summary>
     public static Qwen35OutputPart FromToolCall(Qwen35ToolCall call) => new(null, call);
+
+    /// <summary>This part as a backend-neutral <see cref="CompletionPart"/>.</summary>
+    public CompletionPart ToCompletionPart() => new(Text, ToolCall?.ToToolCall());
 }
 
 /// <summary>A completion split into text and tool calls by <see cref="Qwen35ToolCallParser"/>.</summary>
@@ -37,6 +41,9 @@ public sealed record Qwen35ParsedOutput(IReadOnlyList<Qwen35OutputPart> Parts)
 
     /// <summary>The completion as an assistant message for the next request: <see cref="Text"/> and <see cref="ToolCalls"/>.</summary>
     public Qwen35Message ToAssistantMessage() => new(Qwen35Role.Assistant, Text) { ToolCalls = ToolCalls is { Count: > 0 } calls ? calls : null };
+
+    /// <summary>This output as a backend-neutral <see cref="ParsedCompletion"/> (the same parts in order).</summary>
+    public ParsedCompletion ToParsedCompletion() => new([.. Parts.Select(p => p.ToCompletionPart())]);
 }
 
 /// <summary>
@@ -78,7 +85,7 @@ public sealed record Qwen35ParsedOutput(IReadOnlyList<Qwen35OutputPart> Parts)
 /// merged, equal <see cref="Parse(string, IReadOnlyList{Qwen35Tool}, bool)"/> of the whole completion.
 /// </para>
 /// </remarks>
-public sealed partial class Qwen35ToolCallParser
+public sealed partial class Qwen35ToolCallParser : IToolCallParser
 {
     private const string CallOpen = "<tool_call>";
     private const string CallClose = "</tool_call>";
@@ -104,6 +111,18 @@ public sealed partial class Qwen35ToolCallParser
         }
 
         _inReasoning = enableThinking;
+    }
+
+    /// <summary>
+    /// A parser for one completion over backend-neutral tool definitions (each converted with
+    /// <see cref="Qwen35Tool.FromDefinition"/>). Use it through <see cref="IToolCallParser"/> for
+    /// <see cref="CompletionPart"/> results.
+    /// </summary>
+    /// <exception cref="ArgumentException">A tool name cannot appear in the template's call format.</exception>
+    public static Qwen35ToolCallParser Create(IReadOnlyList<ToolDefinition> tools, bool enableThinking)
+    {
+        ArgumentNullException.ThrowIfNull(tools);
+        return new Qwen35ToolCallParser([.. tools.Select(Qwen35Tool.FromDefinition)], enableThinking);
     }
 
     /// <summary>Parses a whole completion.</summary>
@@ -163,6 +182,12 @@ public sealed partial class Qwen35ToolCallParser
         _completed = true;
         return Merge(parts);
     }
+
+    /// <inheritdoc />
+    IReadOnlyList<CompletionPart> IToolCallParser.Append(string delta) => [.. Append(delta).Select(p => p.ToCompletionPart())];
+
+    /// <inheritdoc />
+    IReadOnlyList<CompletionPart> IToolCallParser.Complete() => [.. Complete().Select(p => p.ToCompletionPart())];
 
     private void Process(List<Qwen35OutputPart> parts, bool final)
     {

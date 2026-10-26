@@ -26,10 +26,14 @@ from model_pipeline.tokenizer_package import TOKENIZER, tokenizer_content_hash, 
 PACKAGES = {
     "Starlings.Acquisition": "ai-dotnet/src/Starlings.Acquisition",
     "Starlings.Runtime.Onnx": "ai-dotnet/src/Starlings.Runtime.Onnx",
+    "Starlings.Generation.Abstractions": "ai-dotnet/src/Starlings.Generation.Abstractions",
     "Starlings.Generation.OnnxGenAI": "ai-dotnet/src/Starlings.Generation.OnnxGenAI",
     "Starlings.Models.Bert": "ai-dotnet/src/Starlings.Models.Bert",
     "Starlings.Models.QwenChat": "ai-dotnet/src/Starlings.Models.QwenChat",
+    "Starlings.Models.QwenChat.OnnxGenAI": "ai-dotnet/src/Starlings.Models.QwenChat.OnnxGenAI",
 }
+# The typed model package the candidate consumer references, per backend.
+TYPED_MODEL = {"onnx": "Starlings.Models.Bert", "ortgenai": "Starlings.Models.QwenChat.OnnxGenAI"}
 TOOLS = {
     "onnx": "ai-dotnet/tools/Starlings.Bert.Fidelity.Tool/Program.cs",
     "ortgenai": "ai-dotnet/tools/Starlings.Generation.Fidelity/Program.cs",
@@ -62,8 +66,13 @@ def _dependencies(versions: dict[str, str]) -> dict[str, dict[str, str]]:
     return {
         "Starlings.Acquisition": {},
         "Starlings.Runtime.Onnx": {"Microsoft.ML.OnnxRuntime.Managed": "[1.30.0]"},
+        "Starlings.Generation.Abstractions": {
+            "Microsoft.Extensions.AI.Abstractions": "10.10.1",
+            "Starlings.Tokenizers": exact["Starlings.Tokenizers"],
+        },
         "Starlings.Generation.OnnxGenAI": {
             "Microsoft.ML.OnnxRuntimeGenAI.Managed": "[0.17.1]",
+            "Starlings.Generation.Abstractions": exact["Starlings.Generation.Abstractions"],
             "Starlings.Tokenizers": exact["Starlings.Tokenizers"],
         },
         "Starlings.Models.Bert": {
@@ -75,7 +84,16 @@ def _dependencies(versions: dict[str, str]) -> dict[str, dict[str, str]]:
             )
         },
         "Starlings.Models.QwenChat": {
-            name: exact[name] for name in ("Starlings.Generation.OnnxGenAI", "Starlings.Tokenizers")
+            name: exact[name] for name in ("Starlings.Generation.Abstractions", "Starlings.Tokenizers")
+        },
+        "Starlings.Models.QwenChat.OnnxGenAI": {
+            name: exact[name]
+            for name in (
+                "Starlings.Acquisition",
+                "Starlings.Generation.OnnxGenAI",
+                "Starlings.Models.QwenChat",
+                "Starlings.Tokenizers",
+            )
         },
     }
 
@@ -168,7 +186,7 @@ def _consumer_graph(path: Path, feed: Path, versions: dict[str, str], backend: s
     native, version = NATIVE[backend]
     if restored.get(native) != version:
         raise PipelineError("consumer native CPU package identity differs")
-    model = "Starlings.Models.QwenChat" if backend == "ortgenai" else "Starlings.Models.Bert"
+    model = TYPED_MODEL[backend]
     if model not in restored or TOKENIZER not in restored:
         raise PipelineError("consumer is missing its typed model or owned tokenizer package")
     return {
@@ -332,7 +350,7 @@ def append_distribution(
             packages = _inspect_packages(feed, versions, commit)
             shutil.copytree(feed, out / "packages")
             native, native_version = NATIVE[backend]
-            typed_model = "Starlings.Models.QwenChat" if backend == "ortgenai" else "Starlings.Models.Bert"
+            typed_model = TYPED_MODEL[backend]
             (consumer / "Consumer.csproj").write_text(
                 _consumer_project(typed_model, versions[typed_model], native, native_version)
             )

@@ -149,7 +149,14 @@
       "starlings.models.kev": {
         "type": "Project",
         "dependencies": {
+          "Starlings.Tokenizers": "[0.3.2, 0.3.2]"
+        }
+      },
+      "starlings.models.kev.onnx": {
+        "type": "Project",
+        "dependencies": {
           "Starlings.Acquisition": "[0.3.0, )",
+          "Starlings.Models.Kev": "[0.3.0, )",
           "Starlings.Runtime.Onnx": "[0.3.0, )",
           "Starlings.Tokenizers": "[0.3.2, 0.3.2]"
         }

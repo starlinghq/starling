@@ -1,4 +1,5 @@
 using Starlings.Acquisition;
+using Starlings.Generation;
 using Starlings.Generation.OnnxGenAI;
 using Starlings.Models.Qwen35;
 using Starlings.TestSupport;

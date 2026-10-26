@@ -360,6 +360,8 @@ def build_stages(
         ),
         directories=(
             "ai-dotnet/src/Starlings.Models.QwenChat",
+            "ai-dotnet/src/Starlings.Models.QwenChat.OnnxGenAI",
+            "ai-dotnet/src/Starlings.Generation.Abstractions",
             "ai-dotnet/src/Starlings.Generation.OnnxGenAI",
             "ai-dotnet/tools/Starlings.Generation.Fidelity",
         ),

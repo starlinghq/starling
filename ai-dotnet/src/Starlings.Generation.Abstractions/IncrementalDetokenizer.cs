@@ -1,7 +1,7 @@
 using System.Runtime.InteropServices;
 using Starlings.Tokenizers;
 
-namespace Starlings.Generation.OnnxGenAI;
+namespace Starlings.Generation;
 
 /// <summary>
 /// Turns a stream of generated token ids into text pieces with the owned tokenizer's decoder, never emitting half a

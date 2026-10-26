@@ -1,5 +1,6 @@
 using System.Collections.Immutable;
 using System.Security.Cryptography;
+using Starlings.Generation;
 using Starlings.Generation.OnnxGenAI;
 using Starlings.Tokenizers;
 
@@ -26,11 +27,11 @@ namespace Starlings.Models.Qwen35;
 /// </remarks>
 public sealed class Qwen35ChatModel : IDisposable
 {
-    /// <summary><c>&lt;|im_end|&gt;</c>: ends an assistant turn.</summary>
-    public const int ImEndTokenId = 248046;
+    /// <summary><c>&lt;|im_end|&gt;</c>: ends an assistant turn (<see cref="Qwen35Checkpoint.ImEndTokenId"/>).</summary>
+    public const int ImEndTokenId = Qwen35Checkpoint.ImEndTokenId;
 
-    /// <summary><c>&lt;|endoftext|&gt;</c>.</summary>
-    public const int EndOfTextTokenId = 248044;
+    /// <summary><c>&lt;|endoftext|&gt;</c> (<see cref="Qwen35Checkpoint.EndOfTextTokenId"/>).</summary>
+    public const int EndOfTextTokenId = Qwen35Checkpoint.EndOfTextTokenId;
 
     /// <summary>
     /// Pad id overlaid on <c>genai_config.json</c>: the last of the 248,320 embedding rows; the tokenizer's ids end at
@@ -49,7 +50,7 @@ public sealed class Qwen35ChatModel : IDisposable
     public const int MaxContextTokens = 8192;
 
     private const string ExpectedModelType = "qwen3_5_text";
-    private const int ExpectedVocabularySize = 248320;
+    private const int ExpectedVocabularySize = Qwen35Checkpoint.VocabularySize;
 
     private readonly GenAIModel? _backend;
     private readonly TextGenerator _generator;
@@ -251,7 +252,7 @@ public sealed class Qwen35ChatModel : IDisposable
     private static void CheckTokenizer(Tokenizer tokenizer)
     {
         if (tokenizer.TokenToId("<|im_end|>") != ImEndTokenId || tokenizer.TokenToId("<|endoftext|>") != EndOfTextTokenId ||
-            tokenizer.TokenToId("<|im_start|>") != 248045 || tokenizer.IdToToken(PadTokenIdOverlay) is not null)
+            tokenizer.TokenToId("<|im_start|>") != Qwen35Checkpoint.ImStartTokenId || tokenizer.IdToToken(PadTokenIdOverlay) is not null)
         {
             throw new InvalidDataException("tokenizer.json is not the qwen35-bpe-chat profile asset (special token ids differ).");
         }

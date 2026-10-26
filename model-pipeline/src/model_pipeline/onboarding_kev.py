@@ -555,6 +555,7 @@ def build_stages(
         for relative in (
             "ai-dotnet/tools/Starlings.Kev.Fidelity.Tool",
             "ai-dotnet/src/Starlings.Models.Kev",
+            "ai-dotnet/src/Starlings.Models.Kev.Onnx",
             "ai-dotnet/src/Starlings.Runtime.Onnx",
         )
         if (root / relative).is_dir()

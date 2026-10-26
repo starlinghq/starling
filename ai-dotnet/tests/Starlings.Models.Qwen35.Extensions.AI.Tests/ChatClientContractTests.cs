@@ -1,7 +1,7 @@
 using System.Collections.Concurrent;
 using System.Reflection;
 using System.Text.Json;
-using Starlings.Generation.OnnxGenAI;
+using Starlings.Generation;
 using Starlings.TestSupport;
 using Starlings.Tokenizers;
 using Microsoft.Extensions.AI;

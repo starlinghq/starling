@@ -1,6 +1,7 @@
 using System.Text;
 using System.Text.Json.Nodes;
 using Starlings.Acquisition;
+using Starlings.Generation;
 using Starlings.Generation.OnnxGenAI;
 using Starlings.Models.E5;
 using Starlings.Models.EmbeddingGemma2;

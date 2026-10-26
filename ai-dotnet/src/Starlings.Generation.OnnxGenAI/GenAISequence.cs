@@ -36,7 +36,7 @@ public sealed record GenAISequenceOptions
 /// finds it: the finalizer queues the same release as <see cref="Dispose"/> (the native generator under the model's
 /// native-call lock, then the model reference) to a thread-pool thread, never running it on the finalizer thread.
 /// </remarks>
-public sealed class GenAISequence : IGenerationSequence
+public sealed class GenAISequence : IGenerationSequence, IDecodeSequence
 {
     private readonly GenAIModel _owner;
     private readonly Generator _generator;
@@ -211,6 +211,38 @@ public sealed class GenAISequence : IGenerationSequence
         row.CopyTo(destination);
     }
 
+    /// <summary>
+    /// <see cref="IGenerationSequence"/>: <see cref="AppendTokens"/>, completed synchronously (GenAI's prefill is
+    /// blocking native work); <paramref name="cancellationToken"/> is checked before it starts.
+    /// </summary>
+    public ValueTask AppendTokensAsync(ReadOnlyMemory<int> tokenIds, CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        AppendTokens(tokenIds.Span);
+        return ValueTask.CompletedTask;
+    }
+
+    /// <summary>
+    /// <see cref="IGenerationSequence"/>: <see cref="GenerateNextTokens"/>, completed synchronously;
+    /// <paramref name="cancellationToken"/> is checked before it starts.
+    /// </summary>
+    public ValueTask<int[]> StepAsync(CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        return ValueTask.FromResult(GenerateNextTokens());
+    }
+
+    /// <summary>
+    /// <see cref="IGenerationSequence"/>: <see cref="CopyLastLogits"/>, completed synchronously;
+    /// <paramref name="cancellationToken"/> is checked before it starts.
+    /// </summary>
+    public ValueTask CopyLastLogitsAsync(Memory<float> destination, CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        CopyLastLogits(destination.Span);
+        return ValueTask.CompletedTask;
+    }
+
     /// <summary>Releases the generator and its reference on the model, on the calling thread. Idempotent.</summary>
     public void Dispose()
     {
@@ -271,8 +303,11 @@ public sealed class GenAISequence : IGenerationSequence
     private void ThrowIfDisposed() => ObjectDisposedException.ThrowIf(Volatile.Read(ref _disposed) != 0, this);
 }
 
-/// <summary>What the decode loop needs from a sequence; implemented by <see cref="GenAISequence"/> and by test fakes.</summary>
-internal interface IGenerationSequence : IDisposable
+/// <summary>
+/// What the synchronous decode loop (<see cref="TextGenerator"/>) needs from a sequence; implemented by
+/// <see cref="GenAISequence"/> and by test fakes. The public, asynchronous seam is <see cref="IGenerationSequence"/>.
+/// </summary>
+internal interface IDecodeSequence : IDisposable
 {
     int VocabularySize { get; }
 

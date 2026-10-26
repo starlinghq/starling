@@ -4,7 +4,7 @@
     <IsPackable>true</IsPackable>
     <!-- Trim, AOT and single-file analyzers on (warnings are errors); Native AOT evidence: docs/evidence/aot/. -->
     <IsAotCompatible>true</IsAotCompatible>
-    <Description>Microsoft.Extensions.AI IChatClient over the Qwen/Qwen3.5-0.8B chat model (Starlings.Models.Qwen35): system, user and assistant text messages; tool calling (AIFunction tools, FunctionCallContent and FunctionResultContent, ToolMode Auto and None, works with UseFunctionInvocation); streaming with UTF-8-safe text deltas that reassemble the completed response; finish reasons and usage (stop token excluded); max output tokens, stop sequences, seeded sampling and the thinking switch; unsupported options and non-text content rejected; cancellation between prefill chunks and decode steps on a dedicated worker thread; model metadata and DI registration. Maturity is per model profile (Stable, Preview or Experimental): see the README, generated from the model registry.</Description>
+    <Description>Microsoft.Extensions.AI IChatClient over the Qwen/Qwen3.5-0.8B chat model (Starlings.Models.Qwen35.OnnxGenAI): system, user and assistant text messages; tool calling (AIFunction tools, FunctionCallContent and FunctionResultContent, ToolMode Auto and None, works with UseFunctionInvocation); streaming with UTF-8-safe text deltas that reassemble the completed response; finish reasons and usage (stop token excluded); max output tokens, stop sequences, seeded sampling and the thinking switch; unsupported options and non-text content rejected; cancellation between prefill chunks and decode steps on a dedicated worker thread; model metadata and DI registration. Maturity is per model profile (Stable, Preview or Experimental): see the README, generated from the model registry.</Description>
     <PackageTags>llm;chat;qwen;qwen3.5;microsoft.extensions.ai;ichatclient;streaming;onnxruntime-genai;tool-calling;function-calling</PackageTags>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageReleaseNotes>https://github.com/starlinghq/starling/blob/main/ai-dotnet/README.md#microsoftextensionsai-chat-client-p-017</PackageReleaseNotes>
@@ -16,16 +16,16 @@
 
   <ItemGroup>
     <!--
-      10.10.1, the version the e5 adapter uses. Microsoft.ML.OnnxRuntimeGenAI.Managed 0.17.1 (through Models.Qwen35)
-      depends on Microsoft.Extensions.AI.Abstractions >= 9.8.0 for its own IChatClient, which no Starling code
-      uses; this direct reference lifts the whole graph to 10.10.1 (NuGet's direct-dependency-wins rule; no downgrade).
+      10.10.1, the version every generation package resolves: Starlings.Generation.Abstractions references it directly,
+      which lifts Microsoft.ML.OnnxRuntimeGenAI.Managed 0.17.1's >= 9.8.0 (for its own IChatClient, which no Starling
+      code uses). Kept direct here because this package's API is built on it.
     -->
     <PackageReference Include="Microsoft.Extensions.AI.Abstractions" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="../Starlings.Models.Qwen35/Starlings.Models.Qwen35.csproj" />
+    <ProjectReference Include="../Starlings.Models.Qwen35.OnnxGenAI/Starlings.Models.Qwen35.OnnxGenAI.csproj" />
   </ItemGroup>
 
   <ItemGroup>

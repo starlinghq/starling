@@ -6,13 +6,16 @@ Text generation on [ONNX Runtime GenAI](https://github.com/microsoft/onnxruntime
 - `TextGenerator`: greedy or seeded sampling, `MaxNewTokens`, stop token ids (never part of the completion) and stop strings (text cut before the match), streaming with UTF-8-safe incremental detokenization (`IncrementalDetokenizer`), optional chunked prefill, cancellation checked before the prefill, between prefill chunks and between decode steps (not inside a step), usage (`PromptTokens`, `CompletionTokens` excluding the stop token) and stage timings. Synchronous by design: each step is blocking native work.
 - `StopSequenceMatcher`: the stop-string matcher `TextGenerator` uses, for applications with their own decode loop. Push each detokenized piece and emit what `Push` returns; text that could still start a stop string is held back, so no emitted piece contains part of one. When `Matched` is set, the text is cut before the match and the request ends; otherwise emit `Flush()` at the end. Ordinal comparison; the earliest match wins, the longest at the same start. One instance per request.
 - Experimental, opt-in: guided decoding (`GenerationOptions.Guidance`): a JSON Schema, Lark grammar or regex constraint passed to GenAI's llguidance integration (`GeneratorParams.SetGuidance`), optionally with fast-forward tokens.
-- Advanced: `GenAISequence` (append ids, step, step with forced tokens, copy the last logits).
+- Advanced: `GenAISequence` (append ids, step, step with forced tokens, copy the last logits); it also implements the asynchronous `IGenerationSequence` seam of `Starlings.Generation.Abstractions` (each call completes synchronously).
 
-Most applications use it through a model package such as `Starlings.Models.Qwen35`.
+The request and result types (`GenerationOptions`, `SamplingOptions`, `GenerationGuidance`, `GenerationResult`, `GenerationUpdate`, `GenerationUsage`, `TokenLogprob`, `GenerationContextLengthException`), `StopSequenceMatcher` and `IncrementalDetokenizer` are in `Starlings.Generation.Abstractions` (namespace `Starlings.Generation`), which this package references; they moved there unchanged in behaviour. Code in the namespace `Starlings.Generation.OnnxGenAI` sees them without a `using`; other code adds `using Starlings.Generation;`.
+
+Most applications use it through a model package such as `Starlings.Models.Qwen35.OnnxGenAI`.
 
 ## Use
 
 ```csharp
+using Starlings.Generation;
 using Starlings.Generation.OnnxGenAI;
 using Starlings.Tokenizers;
 
@@ -50,7 +53,7 @@ Maturity is per profile, generated from the registry manifests by `model-pipelin
 
 ## Native runtime
 
-The package references only `Microsoft.ML.OnnxRuntimeGenAI.Managed` (exactly 0.17.1; it brings `Microsoft.Extensions.AI.Abstractions`). The application references exactly one native package of the same version:
+The package references `Microsoft.ML.OnnxRuntimeGenAI.Managed` (exactly 0.17.1; it asks for `Microsoft.Extensions.AI.Abstractions` 9.8.0 or later, which `Starlings.Generation.Abstractions` lifts to 10.10.1), `Starlings.Generation.Abstractions` and the owned tokenizer. The application references exactly one native package of the same version:
 
 | Deployment | Package | Notes |
 | --- | --- | --- |

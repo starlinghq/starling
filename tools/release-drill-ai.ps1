@@ -194,8 +194,9 @@ try {
         'Starlings.Models.E5.MLNet', 'Starlings.Models.Gliner2', 'Starlings.Models.EmbeddingGemma2',
         'Starlings.Models.EmbeddingGemma2.Extensions.AI', 'Starlings.Models.EmbeddingGemma2.MLNet',
         'Starlings.Models.EmbeddingGemma2.Imaging.SkiaSharp', 'Starlings.Models.EmbeddingGemma2.Video.FFmpeg',
-        'Starlings.Generation.OnnxGenAI', 'Starlings.Models.Qwen35', 'Starlings.Models.Qwen35.Extensions.AI',
-        'Starlings.Models.Kev', 'Starlings.Models.QwenChat')
+        'Starlings.Generation.Abstractions', 'Starlings.Generation.OnnxGenAI', 'Starlings.Models.Qwen35',
+        'Starlings.Models.Qwen35.OnnxGenAI', 'Starlings.Models.Qwen35.Extensions.AI', 'Starlings.Models.Kev',
+        'Starlings.Models.Kev.Onnx', 'Starlings.Models.QwenChat', 'Starlings.Models.QwenChat.OnnxGenAI')
     $env:CI = 'true'
     Push-Location $src
     foreach ($id in $projects) {
@@ -221,11 +222,15 @@ try {
         'Starlings.Models.EmbeddingGemma2.MLNet'             = @("Starlings.Models.EmbeddingGemma2 [$aiVersion]", 'Microsoft.ML 5.0.0')
         'Starlings.Models.EmbeddingGemma2.Imaging.SkiaSharp' = @("Starlings.Models.EmbeddingGemma2 [$aiVersion]", "SkiaSharp [$skiaVersion]", "SkiaSharp.NativeAssets.Linux.NoDependencies [$skiaVersion]")
         'Starlings.Models.EmbeddingGemma2.Video.FFmpeg'     = @("Starlings.Models.EmbeddingGemma2 [$aiVersion]")
-        'Starlings.Generation.OnnxGenAI'                     = @("Starlings.Tokenizers [$tokVersion]", "Microsoft.ML.OnnxRuntimeGenAI.Managed [$genaiVersion]")
-        'Starlings.Models.Qwen35'                            = @("Starlings.Acquisition [$aiVersion]", "Starlings.Generation.OnnxGenAI [$aiVersion]", "Starlings.Tokenizers [$tokVersion]")
-        'Starlings.Models.Qwen35.Extensions.AI'              = @("Starlings.Models.Qwen35 [$aiVersion]", 'Microsoft.Extensions.AI.Abstractions 10.10.1', 'Microsoft.Extensions.DependencyInjection.Abstractions 10.0.12')
-        'Starlings.Models.Kev'                               = @("Starlings.Acquisition [$aiVersion]", "Starlings.Runtime.Onnx [$aiVersion]", "Starlings.Tokenizers [$tokVersion]")
-        'Starlings.Models.QwenChat'                          = @("Starlings.Acquisition [$aiVersion]", "Starlings.Generation.OnnxGenAI [$aiVersion]", "Starlings.Tokenizers [$tokVersion]")
+        'Starlings.Generation.Abstractions'                  = @("Starlings.Tokenizers [$tokVersion]", 'Microsoft.Extensions.AI.Abstractions 10.10.1')
+        'Starlings.Generation.OnnxGenAI'                     = @("Starlings.Generation.Abstractions [$aiVersion]", "Starlings.Tokenizers [$tokVersion]", "Microsoft.ML.OnnxRuntimeGenAI.Managed [$genaiVersion]")
+        'Starlings.Models.Qwen35'                            = @("Starlings.Acquisition [$aiVersion]", "Starlings.Generation.Abstractions [$aiVersion]", "Starlings.Tokenizers [$tokVersion]")
+        'Starlings.Models.Qwen35.OnnxGenAI'                  = @("Starlings.Acquisition [$aiVersion]", "Starlings.Generation.OnnxGenAI [$aiVersion]", "Starlings.Models.Qwen35 [$aiVersion]", "Starlings.Tokenizers [$tokVersion]")
+        'Starlings.Models.Qwen35.Extensions.AI'              = @("Starlings.Models.Qwen35.OnnxGenAI [$aiVersion]", 'Microsoft.Extensions.AI.Abstractions 10.10.1', 'Microsoft.Extensions.DependencyInjection.Abstractions 10.0.12')
+        'Starlings.Models.Kev'                               = @("Starlings.Tokenizers [$tokVersion]")
+        'Starlings.Models.Kev.Onnx'                          = @("Starlings.Acquisition [$aiVersion]", "Starlings.Models.Kev [$aiVersion]", "Starlings.Runtime.Onnx [$aiVersion]", "Starlings.Tokenizers [$tokVersion]")
+        'Starlings.Models.QwenChat'                          = @("Starlings.Generation.Abstractions [$aiVersion]", "Starlings.Tokenizers [$tokVersion]")
+        'Starlings.Models.QwenChat.OnnxGenAI'                = @("Starlings.Acquisition [$aiVersion]", "Starlings.Generation.OnnxGenAI [$aiVersion]", "Starlings.Models.QwenChat [$aiVersion]", "Starlings.Tokenizers [$tokVersion]")
     }
     Add-Type -AssemblyName System.IO.Compression.FileSystem
     function Read-Entry([string]$Zip, [string]$Name) {
@@ -345,7 +350,7 @@ try {
         if (($names | Where-Object { $_ -match '(?i)^skiasharp' }) -and $app -ne 'EmbeddingGemma2Search') { Fail "${app}: SkiaSharp restored outside the image sample" }
         if ($names | Where-Object { $_ -match '(?i)sdcb\.ffmpeg|ffmpeg\.(native|runtime|redist)|ffmpeg\.autogen|ffmpegcore|xabe\.ffmpeg' }) { Fail "${app}: FFmpeg bindings or binaries restored" }
         $want = switch ($app) {
-            'QwenChat' { 'Starlings.Tokenizers', 'Starlings.Acquisition', 'Microsoft.ML.OnnxRuntime', 'Microsoft.ML.OnnxRuntimeGenAI', 'Microsoft.ML.OnnxRuntimeGenAI.Managed', 'Starlings.Generation.OnnxGenAI', 'Starlings.Models.Qwen35', 'Starlings.Models.Qwen35.Extensions.AI' }
+            'QwenChat' { 'Starlings.Tokenizers', 'Starlings.Acquisition', 'Microsoft.ML.OnnxRuntime', 'Microsoft.ML.OnnxRuntimeGenAI', 'Microsoft.ML.OnnxRuntimeGenAI.Managed', 'Starlings.Generation.Abstractions', 'Starlings.Generation.OnnxGenAI', 'Starlings.Models.Qwen35', 'Starlings.Models.Qwen35.OnnxGenAI', 'Starlings.Models.Qwen35.Extensions.AI' }
             'Gliner2Ner' { 'Starlings.Tokenizers', 'Starlings.Acquisition', 'Starlings.Runtime.Onnx', 'Microsoft.ML.OnnxRuntime', 'Starlings.Models.Gliner2' }
             'EmbeddingGemma2Search' { 'Starlings.Tokenizers', 'Starlings.Acquisition', 'Starlings.Runtime.Onnx', 'Microsoft.ML.OnnxRuntime', 'Starlings.Models.EmbeddingGemma2', 'Starlings.Models.EmbeddingGemma2.Extensions.AI', 'Starlings.Models.EmbeddingGemma2.Imaging.SkiaSharp', 'Starlings.Models.EmbeddingGemma2.Video.FFmpeg' }
             'MlNetConsumer' { 'Starlings.Tokenizers', 'Starlings.Acquisition', 'Starlings.Runtime.Onnx', 'Microsoft.ML.OnnxRuntime', 'Starlings.Models.E5', 'Starlings.Models.E5.MLNet', 'Starlings.Models.EmbeddingGemma2', 'Starlings.Models.EmbeddingGemma2.MLNet', 'Microsoft.ML' }
@@ -487,7 +492,7 @@ try {
     $hosting = @(
         @('GLiNER2', 'ai-dotnet/src/Starlings.Models.Gliner2/Gliner2ModelAssets.cs', 'ModelSourceIsPlaceholder = true'),
         @('EmbeddingGemma 2', 'ai-dotnet/src/Starlings.Models.EmbeddingGemma2/EmbeddingGemma2ModelAssets.cs', 'ModelSourceIsPlaceholder = true'),
-        @('Qwen 3.5', 'ai-dotnet/src/Starlings.Models.Qwen35/Qwen35ModelAssets.cs', 'HostingIsPrivate = true'))
+        @('Qwen 3.5', 'ai-dotnet/src/Starlings.Models.Qwen35.OnnxGenAI/Qwen35ModelAssets.cs', 'HostingIsPrivate = true'))
     $publicRan = @()
     if (-not $PublicHosting) {
         Write-Host 'skipped: not requested (pass -PublicHosting to download the GLiNER2, EmbeddingGemma 2 and Qwen 3.5 files, about 4 GB, from their public hosting)'
