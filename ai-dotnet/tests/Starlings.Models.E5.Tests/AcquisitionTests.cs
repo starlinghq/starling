@@ -31,6 +31,8 @@ public class AcquisitionTests(ITestOutputHelper output)
         Assert.Equal(E5ModelAssets.Revision, E5ModelAssets.Lock.Revision);
         Assert.Equal(E5ModelAssets.ModelSha256, E5ModelAssets.Lock.GetFile(E5ModelAssets.ModelFile).Sha256);
         Assert.Equal(E5ModelAssets.TokenizerSha256, E5ModelAssets.Lock.GetFile(E5ModelAssets.TokenizerFile).Sha256);
+        Assert.Equal(E5ModelAssets.ModelSize, E5ModelAssets.Lock.GetFile(E5ModelAssets.ModelFile).Size);
+        Assert.Equal(E5ModelAssets.TokenizerSize, E5ModelAssets.Lock.GetFile(E5ModelAssets.TokenizerFile).Size);
     }
 
     [Fact]

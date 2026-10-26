@@ -91,7 +91,7 @@ public sealed class AssetAndCapabilityTests
     public void EveryCapabilityHasAnExplicitStatus()
     {
         var all = Qwen35Capabilities.All;
-        foreach (string key in new[] { "streaming", "cancellation.between_steps", "cancellation.inside_a_step", "batch", "tool_calling", "sampling.seeded", "template.owned_renderer.text", "template.tools", "extensions_ai.chat_client", "extensions_ai.tools", "mlnet", "aot", "persistence", "training", "quantized", "backend_tokenizer" })
+        foreach (string key in new[] { "streaming", "cancellation.between_steps", "cancellation.inside_a_step", "batch", "tool_calling", "sampling.seeded", "template.owned_renderer.text", "template.tools", "extensions_ai.chat_client", "extensions_ai.tools", "mlnet", "aot", "persistence", "training", "quantized", "lora", "backend_tokenizer" })
         {
             Assert.True(all.ContainsKey(key), key);
         }
@@ -104,6 +104,7 @@ public sealed class AssetAndCapabilityTests
         Assert.Equal(Qwen35CapabilityStatus.Unsupported, all["structured_output"]);
         Assert.Equal(Qwen35CapabilityStatus.Unsupported, all["batch"]);
         Assert.Equal(Qwen35CapabilityStatus.Unsupported, all["cancellation.inside_a_step"]);
+        Assert.Equal(Qwen35CapabilityStatus.Unsupported, all["lora"]);
         Assert.Equal(Qwen35CapabilityStatus.Experimental, all["long_context.1667_to_8192_tokens"]);
         Assert.Equal(Qwen35CapabilityStatus.Unsupported, all["long_context.over_8192_tokens"]);
         Assert.False(all.ContainsKey("long_context.over_1666_tokens"));
@@ -160,6 +161,7 @@ public sealed class AssetAndCapabilityTests
         Assert.Null(tokenizer!.IdToToken(Qwen35ChatModel.PadTokenIdOverlay));
         Assert.Equal(Qwen35ChatModel.EndOfTextTokenId, tokenizer.TokenToId("<|endoftext|>"));
         Assert.Equal(Qwen35ChatModel.ImEndTokenId, tokenizer.TokenToId("<|im_end|>"));
+        Assert.Equal(Qwen35ChatModel.ImStartTokenId, tokenizer.TokenToId("<|im_start|>"));
         // A user typing <|endoftext|> produces the configured pad id 248044, which GenAI would mask without the overlay.
         Assert.Contains(Qwen35ChatModel.EndOfTextTokenId, tokenizer.Encode("a <|endoftext|> b", addSpecialTokens: false).Ids);
     }
@@ -188,5 +190,15 @@ public sealed class AssetAndCapabilityTests
         Assert.Equal(64, new Qwen35ChatOptions { PrefillChunkTokens = 64 }.ToGenerationOptions(GenAIExecutionProvider.Cpu).PrefillChunkTokens);
         Assert.Equal(int.MaxValue, new Qwen35ChatOptions { PrefillChunkTokens = int.MaxValue }.ToGenerationOptions(GenAIExecutionProvider.Cpu).PrefillChunkTokens);
         Assert.Equal(64, new Qwen35ChatOptions { PrefillChunkTokens = 64 }.ToGenerationOptions(GenAIExecutionProvider.Cuda).PrefillChunkTokens);
+    }
+
+    [Fact]
+    public void StopAtRoleMarkerAddsImStartToTheStopIdsOnlyWhenAsked()
+    {
+        Assert.Empty(new Qwen35ChatOptions().ToGenerationOptions().AdditionalStopTokenIds);
+        Assert.Equal([Qwen35ChatModel.ImStartTokenId], new Qwen35ChatOptions { StopAtRoleMarker = true }.ToGenerationOptions().AdditionalStopTokenIds);
+        Assert.Equal([5, Qwen35ChatModel.ImStartTokenId], new Qwen35ChatOptions { StopAtRoleMarker = true, AdditionalStopTokenIds = [5] }.ToGenerationOptions().AdditionalStopTokenIds);
+        Assert.Equal([Qwen35ChatModel.ImStartTokenId], new Qwen35ChatOptions { StopAtRoleMarker = true, AdditionalStopTokenIds = [Qwen35ChatModel.ImStartTokenId] }.ToGenerationOptions().AdditionalStopTokenIds);
+        Assert.Equal([5], new Qwen35ChatOptions { AdditionalStopTokenIds = [5] }.ToGenerationOptions().AdditionalStopTokenIds);
     }
 }

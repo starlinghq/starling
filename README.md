@@ -78,7 +78,7 @@ await foreach (var update in chat.GetStreamingResponseAsync("In one sentence, wh
     Console.Write(update.Text);
 ```
 
-Seven complete programs are in [`ai-dotnet/samples/`](ai-dotnet/samples): semantic search with e5 (`E5Search`) and with an in-memory `Microsoft.Extensions.VectorData` collection (`E5VectorStore`), text, image and video search with EmbeddingGemma 2 (`EmbeddingGemma2Search`), entity extraction with GLiNER2 (`Gliner2Ner`), streaming chat with Qwen3.5 (`QwenChat`), local question answering over your own files (`LocalRag`), and multilingual ticket triage in an ML.NET pipeline (`TicketTriage`).
+Nine complete programs are in [`ai-dotnet/samples/`](ai-dotnet/samples): semantic search with e5 (`E5Search`) and with an in-memory `Microsoft.Extensions.VectorData` collection (`E5VectorStore`), text, image and video search with EmbeddingGemma 2 (`EmbeddingGemma2Search`), entity extraction with GLiNER2 (`Gliner2Ner`), streaming chat with Qwen3.5 (`QwenChat`), local question answering over your own files (`LocalRag`), multilingual ticket triage in an ML.NET pipeline (`TicketTriage`), and e5 search in the browser from Blazor WebAssembly (`E5BrowserSearch`) and from a JavaScript page (`E5BrowserJs`), both on the not yet published browser packages.
 
 ## Models
 
@@ -91,19 +91,20 @@ Choosing a text embedder? See [choosing an embedding model](docs/guides/choosing
 | [GLiNER2](https://huggingface.co/fastino/gliner2-base-v1) | Zero-shot entity extraction with any labels | `Starlings.Models.Gliner2` | Stable | Stable |
 | [Qwen3.5-0.8B](https://huggingface.co/Qwen/Qwen3.5-0.8B) | Chat and text generation | `Starlings.Models.Qwen35.OnnxGenAI` (+ `.Extensions.AI`; model definition `Starlings.Models.Qwen35`) | Stable | Stable (fp32x and fp16x) |
 
-**Experimental, on nuget.org from 0.3.0:** `Starlings.Models.Kev` (Kev-0.8B and Kev-4B decision models, CPU and CUDA) and `Starlings.Models.QwenChat` (Qwen3-0.6B and Qwen2.5-0.5B-Instruct text chat, CPU) have no Stable profile; their model files download from public hosting ([release record](docs/releases/ai-0.3.0.md#packages)). `Starlings.Models.Bert` builds and tests on `main` but is not published; build it from this repository.
+**Experimental, on nuget.org from 0.3.0:** `Starlings.Models.Kev` (Kev-0.8B and Kev-4B decision models, CPU and CUDA) and `Starlings.Models.QwenChat` (Qwen3-0.6B and Qwen2.5-0.5B-Instruct text chat, CPU) have no Stable profile; their model files download from public hosting ([release record](docs/releases/ai-0.3.0.md#packages)). `Starlings.Models.Bert` and `Starlings.Models.Whisper` build and test on `main` but are not published; build them from this repository.
 
 | Model | What it does | Project | Status |
 | --- | --- | --- | --- |
 | [Kev-0.8B, Kev-4B](https://huggingface.co/jaredpalmer/kev-0.8b) | Decision models: a calibrated probability per option, no generated text | [`Starlings.Models.Kev.Onnx`](ai-dotnet/src/Starlings.Models.Kev.Onnx) (model definition `Starlings.Models.Kev`) | Experimental, CPU and CUDA fp32; four registry profiles (`kev-0.8b`, `kev-4b`: `onnx-fp32-cpu`, `onnx-fp32-cuda`) |
 | [all-MiniLM-L6-v2](https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2), [bge-small-en-v1.5](https://huggingface.co/BAAI/bge-small-en-v1.5), [bge-base-en-v1.5](https://huggingface.co/BAAI/bge-base-en-v1.5), [nomic-embed-text-v1.5](https://huggingface.co/nomic-ai/nomic-embed-text-v1.5), [ms-marco-MiniLM-L6-v2](https://huggingface.co/cross-encoder/ms-marco-MiniLM-L6-v2) | BERT text embeddings and reranking | [`Starlings.Models.Bert`](ai-dotnet/src/Starlings.Models.Bert) | Experimental, CPU fp32; proposed evidence only |
 | [Qwen3-0.6B](https://huggingface.co/Qwen/Qwen3-0.6B), [Qwen2.5-0.5B-Instruct](https://huggingface.co/Qwen/Qwen2.5-0.5B-Instruct) | Text-only chat | [`Starlings.Models.QwenChat.OnnxGenAI`](ai-dotnet/src/Starlings.Models.QwenChat.OnnxGenAI) (model definition `Starlings.Models.QwenChat`) | Experimental, CPU fp32; proposed evidence only |
+| [whisper-large-v3-turbo](https://huggingface.co/openai/whisper-large-v3-turbo) | Speech-to-text: 30 s of 16 kHz audio to an English transcript (greedy) | [`Starlings.Models.Whisper`](ai-dotnet/src/Starlings.Models.Whisper) | Experimental, CPU fp16 graphs, source only; one registry profile (`whisper-large-v3-turbo/onnx-fp16-cpu`), no release gate run |
 
 Their candidate contracts are in [`model-pipeline/candidates/`](model-pipeline/candidates) and the BERT and Qwen chat onboarding workflow is in [`model-pipeline/FIVE_MODELS.md`](model-pipeline/FIVE_MODELS.md). The `QwenChat` sample uses the published Qwen3.5 packages, not `Starlings.Models.QwenChat`.
 
 **Stable** means every release gate passed: provenance, numerical parity and task quality against the Python reference, a one-hour leak soak, benchmarks, a clean install from the packages, and integration. It also means regression runs continue: weekly on CPU, and on a GPU before every release for CUDA. Stable on CUDA means Linux x64 with an NVIDIA GeForce RTX 3090, where every CUDA gate and the per-release GPU run take place; other GPUs are untested. On Linux, GLiNER2 (CPU and CUDA) and EmbeddingGemma 2 video on CUDA also need `MALLOC_MMAP_THRESHOLD_=65536` in the process environment; see each package README. The [model catalog](docs/catalog/README.md) links each gate to its evidence, and the [compatibility matrix](docs/catalog/compatibility-matrix.md) lists each platform and provider.
 
-**Release status:** `0.3.0`, published on [nuget.org](https://www.nuget.org/packages?q=Starlings.Models) on 2026-10-19 ([GitHub release](https://github.com/starlinghq/starling/releases/tag/ai-v0.3.0)), adds the Experimental Kev and QwenChat packages, opt-in batching and the public stop-string matcher; every Stable profile of 0.2.0 is unchanged ([release record](docs/releases/ai-0.3.0.md)). It depends on `Starlings.Tokenizers` `0.3.0`.
+**Release status:** `0.3.0`, published on [nuget.org](https://www.nuget.org/packages?q=Starlings.Models) on 2026-10-19 ([GitHub release](https://github.com/starlinghq/starling/releases/tag/ai-v0.3.0)), adds the Experimental Kev and QwenChat packages, opt-in batching and the public stop-string matcher; every Stable profile of 0.2.0 is unchanged ([release record](docs/releases/ai-0.3.0.md)). It depends on `Starlings.Tokenizers` `0.3.0`; `main` pins `0.3.2` for the next release.
 
 ## How a model becomes a package
 
@@ -174,7 +175,7 @@ model-pipeline validate registry
 | --- | --- |
 | [`ai-dotnet/`](ai-dotnet) | .NET libraries, backend adapters, model implementations, samples, benchmarks. |
 | [`model-pipeline/`](model-pipeline) | Manifest schema, model registry, admissions, candidate contracts and onboarding recipes, reference runners, evaluation, protected fixtures. |
-| [`browser/`](browser) | The WebAssembly feasibility spike for e5 in the browser (`browser/spike/`); no browser package yet. |
+| [`browser/`](browser) | The WebAssembly spike for e5 in the browser (`browser/spike/`) and the conformance harness of the browser packages (`browser/conformance/`). The packages themselves (`Starlings.Runtime.OnnxWeb`, `Starlings.Runtime.OnnxWeb.WebGpu`, `Starlings.Models.E5.Browser`) are under `ai-dotnet/src/`: Experimental, not yet published. |
 | [`docs/`](docs) | Plan, generated catalog, guides, benchmarks, evidence and release records ([index](docs/README.md)). |
 | [`skills/`](skills) | Agent Skills for using Starling and for adding a model. |
 | [`.github/`](.github) | Charter, contribution and support policy, security reporting, issue templates, CI. |

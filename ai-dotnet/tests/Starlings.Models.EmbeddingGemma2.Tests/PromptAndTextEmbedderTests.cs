@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Starlings.Runtime.Onnx;
 using Starlings.TestSupport;
 
 namespace Starlings.Models.EmbeddingGemma2.Tests;
@@ -109,6 +110,51 @@ public class PromptAndTextEmbedderTests(ITestOutputHelper output)
             tokenizer.Seen);
         Assert.Equal("task: search result | query: x".Length + 2, counts[0]);
         Assert.Equal(EncoderBehaviorTests.Expected(tokenizer.Tokenize("task: search result | query: hello").InputIds.ToArray()).Length, q.Length);
+    }
+
+    [Fact]
+    public void DisposingAWrappingEmbedderLeavesTheEncoderUsable()
+    {
+        using var encoder = EncoderBehaviorTests.FakeEncoder();
+        var embedder = new EmbeddingGemma2TextEmbedder(new RecordingTokenizer(), encoder);
+        var ct = TestContext.Current.CancellationToken;
+        embedder.Dispose();
+        embedder.Dispose();
+        Assert.Equal(encoder.Dimension, encoder.Embed(new EmbeddingGemma2Input(new long[] { 2, 50, 1 }), ct).Length);
+    }
+
+    [Fact]
+    public void CreateRejectsNullFiles()
+    {
+        Assert.Throws<ArgumentNullException>(() => EmbeddingGemma2TextEmbedder.Create(null!));
+    }
+
+    [Fact]
+    public void CreateLoadsThePinnedFilesWithTheirDigestsAndOwnsTheEncoder()
+    {
+        var (files, reason) = EmbeddingGemma2TestAssets.FindModel();
+        Assert.SkipWhen(files is null, reason);
+        var ct = TestContext.Current.CancellationToken;
+        var embedder = EmbeddingGemma2TextEmbedder.Create(files!, new EmbeddingGemma2EncoderOptions { Dimension = 256, MaxSequenceLength = 64, Session = new OnnxSessionOptions { IntraOpNumThreads = 1 } });
+        try
+        {
+            Assert.IsType<EmbeddingGemma2Tokenizer>(embedder.Tokenizer);
+            Assert.Equal(256, embedder.Encoder.Dimension);
+            Assert.Equal(64, embedder.Encoder.Options.MaxSequenceLength);
+            Assert.Equal(1, embedder.Encoder.Options.Session.IntraOpNumThreads);
+            Assert.Equal(EmbeddingGemma2ModelAssets.ModelSha256, embedder.Encoder.Options.Session.ExpectedModelSha256);
+            var counts = new int[1];
+            Assert.Equal(256, embedder.EmbedBatch(["hello"], EmbeddingGemma2Prompt.Query, counts, ct)[0].Length);
+            Assert.InRange(counts[0], 3, 64);
+            Assert.Throws<EmbeddingGemma2InputTooLongException>(() => embedder.Embed(string.Join(' ', Enumerable.Repeat("word", 500)), ct));
+        }
+        finally
+        {
+            embedder.Dispose();
+        }
+
+        embedder.Dispose();
+        Assert.Throws<ObjectDisposedException>(() => embedder.Embed("hello", ct));
     }
 
     [Fact]

@@ -176,7 +176,9 @@ public sealed class OnnxModelSession : IDisposable
     }
 
     /// <summary>
-    /// Releases the native session once no run is executing. Idempotent. Runs already executing complete first.
+    /// Releases the native session once no run is executing. Idempotent. Runs already executing complete first. A
+    /// placement profile that was started (<see cref="OnnxSessionOptions.CapturePlacement"/>) but never read, because no
+    /// run completed, is ended and its temporary file deleted.
     /// </summary>
     public void Dispose()
     {
@@ -527,10 +529,33 @@ public sealed class OnnxModelSession : IDisposable
         }
     }
 
+    /// <summary>
+    /// Ends a profile that no completed run consumed (the session is being released before its first run, or every run
+    /// failed) so its temporary file does not stay behind. Runs at reference count zero, so no capture is in progress.
+    /// </summary>
+    private void DiscardPendingPlacementProfile()
+    {
+        if (!_placementPending)
+        {
+            return;
+        }
+
+        _placementPending = false;
+        try
+        {
+            File.Delete(_session.EndProfiling());
+        }
+        catch (Exception ex) when (ex is OnnxRuntimeException or IOException or UnauthorizedAccessException)
+        {
+            // Disposal must not throw; a profile file left behind is the only consequence.
+        }
+    }
+
     private void Release()
     {
         if (Interlocked.Decrement(ref _references) == 0)
         {
+            DiscardPendingPlacementProfile();
             _session.Dispose();
             _cudaOptions?.Dispose();
             _sessionOptions.Dispose();

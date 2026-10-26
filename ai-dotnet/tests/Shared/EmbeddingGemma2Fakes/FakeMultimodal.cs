@@ -17,7 +17,7 @@ internal static class FakeMultimodal
         var vision = OnnxModelSession.Create(TestModels.FakeEmbeddingGemma2Vision, Session);
         var multimodal = OnnxModelSession.Create(TestModels.FakeEmbeddingGemma2Multimodal, Session);
         var text = withTextEncoder
-            ? new EmbeddingGemma2Encoder(OnnxModelSession.Create(TestModels.FakeEmbeddingGemma2, Session), new EmbeddingGemma2EncoderOptions { Dimension = options.Dimension }, ownsSession: true)
+            ? new EmbeddingGemma2Encoder(OnnxModelSession.Create(TestModels.FakeEmbeddingGemma2, Session), new EmbeddingGemma2EncoderOptions { Dimension = options.Dimension, MaxSequenceLength = options.MaxSequenceLength }, ownsSession: true)
             : null;
         return new EmbeddingGemma2MultimodalEmbedder(new MarkerTokenizer(), vision, multimodal, text, options, ownsSessions: true);
     }

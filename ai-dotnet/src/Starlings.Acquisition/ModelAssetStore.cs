@@ -32,7 +32,7 @@ public sealed class ModelAssetStore : IDisposable
     private readonly HttpClient? _injectedClient;
     private readonly object _clientGate = new();
     private HttpClient? _ownedClient;
-    private bool _disposed;
+    private volatile bool _disposed;
 
     /// <summary>Creates a store. No network or file access happens here.</summary>
     /// <param name="options">Cache location, verification and download settings; defaults when null.</param>
@@ -90,8 +90,8 @@ public sealed class ModelAssetStore : IDisposable
     /// <summary>
     /// Explicit acquisition: ensures every file of <paramref name="assetLock"/> is in the cache and verified, downloading
     /// missing or invalid ones from <c>{Endpoint}/{repository}/resolve/{commit SHA}/{path}</c>, or from the file's explicit
-    /// <see cref="ModelAssetFile.Source"/> when it has one. The Hub token goes only to <see cref="ModelAcquisitionOptions.Endpoint"/>
-    /// and to https sources on <see cref="ModelAcquisitionOptions.TokenHosts"/> (see <see cref="ModelAcquisitionOptions.HuggingFaceToken"/>).
+    /// <see cref="ModelAssetFile.Source"/> when it has one. The Hub token goes only over https, to <see cref="ModelAcquisitionOptions.Endpoint"/>
+    /// and to sources on <see cref="ModelAcquisitionOptions.TokenHosts"/> (see <see cref="ModelAcquisitionOptions.HuggingFaceToken"/>).
     /// Cached files are checked with
     /// <see cref="ModelAcquisitionOptions.Verification"/>; a cached file that fails the check is downloaded again and replaced.
     /// </summary>
@@ -102,6 +102,7 @@ public sealed class ModelAssetStore : IDisposable
     /// <exception cref="ModelAssetNotFoundException">HTTP 404: the revision or file does not exist.</exception>
     /// <exception cref="ModelAssetIntegrityException">Downloaded bytes do not match the lock.</exception>
     /// <exception cref="ModelAssetDownloadException">Network or server failure after all attempts.</exception>
+    /// <exception cref="ModelAcquisitionException">Writing to the cache failed (disk full, permissions); not retried, the message names the path.</exception>
     public async Task<ModelSnapshot> DownloadAsync(ModelAssetLock assetLock, IProgress<ModelAssetProgress>? progress = null, CancellationToken cancellationToken = default)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -120,13 +121,20 @@ public sealed class ModelAssetStore : IDisposable
     /// <inheritdoc />
     public void Dispose()
     {
-        if (_disposed)
+        HttpClient? owned;
+        lock (_clientGate)
         {
-            return;
+            if (_disposed)
+            {
+                return;
+            }
+
+            _disposed = true;
+            owned = _ownedClient;
+            _ownedClient = null;
         }
 
-        _disposed = true;
-        _ownedClient?.Dispose();
+        owned?.Dispose();
     }
 
     internal static string LocalPath(string directory, string relativePath)
@@ -168,7 +176,11 @@ public sealed class ModelAssetStore : IDisposable
 
     private static ModelSnapshot Verify(ModelAssetLock assetLock, string directory, CacheVerification verification, string hint)
     {
+        // The whole pass completes before anything is thrown: missing files are reported together, ahead of integrity
+        // failures, so a partially populated directory with one corrupt file still says which files are absent.
         var missing = new List<string>();
+        ModelAssetIntegrityException? firstFailure = null;
+        int failures = 0;
         foreach (var file in assetLock.Files)
         {
             string path = LocalPath(directory, file.Path);
@@ -181,22 +193,41 @@ public sealed class ModelAssetStore : IDisposable
             var failure = CheckFile(assetLock, file, path, verification, null, CancellationToken.None);
             if (failure is not null)
             {
-                throw failure;
+                firstFailure ??= failure;
+                failures++;
             }
         }
 
         if (missing.Count > 0)
         {
-            throw new ModelAssetMissingException(
+            string alsoFailed = firstFailure is null
+                ? string.Empty
+                : $" {failures} other file(s) also failed verification, first {firstFailure.AssetPath}: {firstFailure.Message}";
+            string message =
                 $"{assetLock.Name}: {missing.Count} of {assetLock.Files.Count} files of {assetLock.Repository}@{assetLock.Revision} " +
-                $"are not in {directory}: {string.Join(", ", missing)}. {hint}")
-            {
-                Repository = assetLock.Repository,
-                Revision = assetLock.Revision,
-                AssetPath = missing[0],
-                MissingPaths = missing,
-                SnapshotDirectory = directory,
-            };
+                $"are not in {directory}: {string.Join(", ", missing)}.{alsoFailed} {hint}";
+            throw firstFailure is null
+                ? new ModelAssetMissingException(message)
+                {
+                    Repository = assetLock.Repository,
+                    Revision = assetLock.Revision,
+                    AssetPath = missing[0],
+                    MissingPaths = missing,
+                    SnapshotDirectory = directory,
+                }
+                : new ModelAssetMissingException(message, firstFailure)
+                {
+                    Repository = assetLock.Repository,
+                    Revision = assetLock.Revision,
+                    AssetPath = missing[0],
+                    MissingPaths = missing,
+                    SnapshotDirectory = directory,
+                };
+        }
+
+        if (firstFailure is not null)
+        {
+            throw firstFailure;
         }
 
         return new ModelSnapshot(assetLock, directory, verification);
@@ -223,10 +254,15 @@ public sealed class ModelAssetStore : IDisposable
         return actual == file.Sha256 ? null : IntegrityFailure(assetLock, file, path, size, actual);
     }
 
-    private static ModelAssetIntegrityException IntegrityFailure(ModelAssetLock assetLock, ModelAssetFile file, string path, long actualSize, string? actualSha) =>
-        new(actualSha is null
+    /// <summary>
+    /// Builds the integrity failure. <paramref name="actualSha"/> is null when the size already differed and the bytes were
+    /// not hashed; <paramref name="message"/> replaces the default wording.
+    /// </summary>
+    private static ModelAssetIntegrityException IntegrityFailure(
+        ModelAssetLock assetLock, ModelAssetFile file, string path, long actualSize, string? actualSha, string? message = null) =>
+        new(message ?? (actualSha is null
             ? $"{assetLock.Name}: {file.Path} at {path} is {actualSize} bytes; the lock for {assetLock.Repository}@{assetLock.Revision} expects {file.Size} bytes (sha256 {file.Sha256})."
-            : $"{assetLock.Name}: {file.Path} at {path} has sha256 {actualSha}; the lock for {assetLock.Repository}@{assetLock.Revision} expects {file.Sha256} ({file.Size} bytes).")
+            : $"{assetLock.Name}: {file.Path} at {path} has sha256 {actualSha}; the lock for {assetLock.Repository}@{assetLock.Revision} expects {file.Sha256} ({file.Size} bytes)."))
         {
             Repository = assetLock.Repository,
             Revision = assetLock.Revision,
@@ -372,7 +408,8 @@ public sealed class ModelAssetStore : IDisposable
             }
             catch (Exception ex) when (ex is HttpRequestException or IOException or OperationCanceledException)
             {
-                // Network failure, truncated body, or a response-header timeout.
+                // Network failure, truncated body, or a response-header timeout. Cache write failures are not IOExceptions
+                // here: DownloadOnceAsync raises them as ModelAcquisitionException, which propagates without a retry.
                 lastError = ex;
                 lastStatus = (ex as HttpRequestException)?.StatusCode;
                 continue;
@@ -393,7 +430,11 @@ public sealed class ModelAssetStore : IDisposable
                 continue;
             }
 
-            throw IntegrityFailure(assetLock, file, uri.ToString(), outcome.Size, outcome.Sha256);
+            throw outcome.Sha256 is null
+                ? IntegrityFailure(assetLock, file, uri.ToString(), outcome.Size, null,
+                    $"{assetLock.Name}: {file.Path} from {uri} is longer than the lock for {assetLock.Repository}@{assetLock.Revision} expects " +
+                    $"({file.Size} bytes; the transfer was stopped after {outcome.Size} bytes and the bytes were not hashed).")
+                : IntegrityFailure(assetLock, file, uri.ToString(), outcome.Size, outcome.Sha256);
         }
 
         throw new ModelAssetDownloadException(
@@ -410,7 +451,8 @@ public sealed class ModelAssetStore : IDisposable
         };
     }
 
-    private readonly record struct DownloadOutcome(long Size, string Sha256, bool Resumed);
+    /// <summary>Result of one attempt. <see cref="Sha256"/> is null when the response was longer than the lock and not hashed.</summary>
+    private readonly record struct DownloadOutcome(long Size, string? Sha256, bool Resumed);
 
     private async Task<DownloadOutcome> DownloadOnceAsync(
         ModelAssetLock assetLock, ModelAssetFile file, Uri uri, string? token, string partial, IProgress<ModelAssetProgress>? progress, CancellationToken cancellationToken)
@@ -468,50 +510,125 @@ public sealed class ModelAssetStore : IDisposable
                 existing = 0;
             }
 
-            await using var output = new FileStream(partial, resumed ? FileMode.Append : FileMode.Create, FileAccess.Write, FileShare.None, 1, FileOptions.Asynchronous);
-            await using var input = await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
-            byte[] buffer = ArrayPool<byte>.Shared.Rent(BufferSize);
+            FileStream output;
             try
             {
-                long total = existing;
-                long nextReport = total;
-                int read;
-                while ((read = await input.ReadAsync(buffer.AsMemory(0, BufferSize), cancellationToken).ConfigureAwait(false)) > 0)
-                {
-                    total += read;
-                    if (total > file.Size)
-                    {
-                        break;
-                    }
-
-                    hash.AppendData(buffer, 0, read);
-                    await output.WriteAsync(buffer.AsMemory(0, read), cancellationToken).ConfigureAwait(false);
-                    if (progress is not null && total >= nextReport)
-                    {
-                        progress.Report(new ModelAssetProgress(file.Path, ModelAssetStage.Downloading, total, file.Size));
-                        nextReport = total + ProgressInterval;
-                    }
-                }
-
-                await output.FlushAsync(cancellationToken).ConfigureAwait(false);
-                output.Flush(flushToDisk: true);
-                if (total < file.Size)
-                {
-                    throw new TransientDownloadException(
-                        string.Create(CultureInfo.InvariantCulture, $"The response ended after {total} of {file.Size} bytes."), null);
-                }
-
-                progress?.Report(new ModelAssetProgress(file.Path, ModelAssetStage.Downloading, Math.Min(total, file.Size), file.Size));
-                return total > file.Size
-                    ? new DownloadOutcome(total, "(not hashed: longer than the lock)", resumed)
-                    : new DownloadOutcome(total, Convert.ToHexStringLower(hash.GetHashAndReset()), resumed);
+                output = new FileStream(partial, resumed ? FileMode.Append : FileMode.Create, FileAccess.Write, FileShare.None, 1, FileOptions.Asynchronous);
             }
-            finally
+            catch (Exception ex) when (IsLocalWriteFailure(ex))
             {
-                ArrayPool<byte>.Shared.Return(buffer);
+                throw CacheWriteFailure(assetLock, file, partial, ex);
+            }
+
+            await using (output.ConfigureAwait(false))
+            await using (var input = await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false))
+            {
+                // Each read has its own idle budget (ResponseTimeout): a half-open connection never completes a read, and
+                // the owned client has no whole-request timeout. The budget is disarmed while the bytes are written, so a
+                // slow disk does not count against it.
+                using var idle = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+                byte[] buffer = ArrayPool<byte>.Shared.Rent(BufferSize);
+                try
+                {
+                    long total = existing;
+                    long nextReport = total;
+                    while (true)
+                    {
+                        int read = await ReadWithIdleTimeoutAsync(input, buffer, idle, total, cancellationToken).ConfigureAwait(false);
+                        if (read <= 0)
+                        {
+                            break;
+                        }
+
+                        total += read;
+                        if (total > file.Size)
+                        {
+                            break;
+                        }
+
+                        hash.AppendData(buffer, 0, read);
+                        try
+                        {
+                            await output.WriteAsync(buffer.AsMemory(0, read), cancellationToken).ConfigureAwait(false);
+                        }
+                        catch (Exception ex) when (IsLocalWriteFailure(ex))
+                        {
+                            throw CacheWriteFailure(assetLock, file, partial, ex);
+                        }
+
+                        if (progress is not null && total >= nextReport)
+                        {
+                            progress.Report(new ModelAssetProgress(file.Path, ModelAssetStage.Downloading, total, file.Size));
+                            nextReport = total + ProgressInterval;
+                        }
+                    }
+
+                    try
+                    {
+                        await output.FlushAsync(cancellationToken).ConfigureAwait(false);
+                        output.Flush(flushToDisk: true);
+                    }
+                    catch (Exception ex) when (IsLocalWriteFailure(ex))
+                    {
+                        throw CacheWriteFailure(assetLock, file, partial, ex);
+                    }
+
+                    if (total < file.Size)
+                    {
+                        throw new TransientDownloadException(
+                            string.Create(CultureInfo.InvariantCulture, $"The response ended after {total} of {file.Size} bytes."), null);
+                    }
+
+                    progress?.Report(new ModelAssetProgress(file.Path, ModelAssetStage.Downloading, Math.Min(total, file.Size), file.Size));
+                    return total > file.Size
+                        ? new DownloadOutcome(total, null, resumed)
+                        : new DownloadOutcome(total, Convert.ToHexStringLower(hash.GetHashAndReset()), resumed);
+                }
+                finally
+                {
+                    ArrayPool<byte>.Shared.Return(buffer);
+                }
             }
         }
     }
+
+    /// <summary>
+    /// One body read bounded by <see cref="ModelAcquisitionOptions.ResponseTimeout"/>. A read that receives nothing within
+    /// the budget is a transient failure (the retry loop keeps the partial file and resumes); the caller's own
+    /// cancellation still surfaces as <see cref="OperationCanceledException"/>.
+    /// </summary>
+    private async ValueTask<int> ReadWithIdleTimeoutAsync(Stream input, byte[] buffer, CancellationTokenSource idle, long received, CancellationToken cancellationToken)
+    {
+        idle.CancelAfter(_options.ResponseTimeout);
+        try
+        {
+            int read = await input.ReadAsync(buffer.AsMemory(0, BufferSize), idle.Token).ConfigureAwait(false);
+            idle.CancelAfter(Timeout.InfiniteTimeSpan);
+            return read;
+        }
+        catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+        {
+            // Not wrapped: the retry loop reports a transient failure's inner exception when it has one, and the
+            // cancellation's own message would read as if the caller had canceled.
+            throw new TransientDownloadException(
+                string.Create(CultureInfo.InvariantCulture, $"No data was received for {_options.ResponseTimeout.TotalSeconds:0.###} s after {received} bytes."),
+                null);
+        }
+    }
+
+    /// <summary>Failures of the partial file itself (disk full, permissions, a path in the way), as opposed to the transfer.</summary>
+    private static bool IsLocalWriteFailure(Exception ex) => ex is IOException or UnauthorizedAccessException;
+
+    private static ModelAcquisitionException CacheWriteFailure(ModelAssetLock assetLock, ModelAssetFile file, string partial, Exception cause) =>
+        new($"{assetLock.Name}: writing {file.Path} to the cache at {partial} failed: {cause.Message} " +
+            "This is a local failure (disk full, permissions, or a path in the way), not a download failure, and it was not retried. " +
+            $"Fix the cache directory, or point ModelAcquisitionOptions.CacheDirectory or ${ModelAcquisitionOptions.CacheDirectoryEnvironmentVariable} elsewhere.",
+            cause)
+        {
+            Repository = assetLock.Repository,
+            Revision = assetLock.Revision,
+            AssetPath = file.Path,
+        };
 
     /// <summary>
     /// Sends the GET and follows up to <see cref="MaxRedirects"/> redirects itself, with a fresh request per hop that carries
@@ -573,12 +690,14 @@ public sealed class ModelAssetStore : IDisposable
     /// <summary>
     /// Whether a request to <paramref name="address"/> may carry the token: an https address on the default port whose host
     /// is exactly one of <see cref="ModelAcquisitionOptions.TokenHosts"/>, or, for a file without an explicit source, an
-    /// address with the scheme, host and port of <see cref="ModelAcquisitionOptions.Endpoint"/>.
+    /// https address with the host and port of <see cref="ModelAcquisitionOptions.Endpoint"/>. Never over http, so an
+    /// <c>http://</c> endpoint (a local mirror) is used without the token rather than sending it in cleartext.
     /// </summary>
     internal bool IsTokenHost(ModelAssetFile file, Uri address) =>
         IsAllowedTokenHost(address)
         || (file.Source is null
-            && Uri.Compare(address, _options.Endpoint, UriComponents.SchemeAndServer, UriFormat.Unescaped, StringComparison.OrdinalIgnoreCase) == 0);
+            && address.Scheme == Uri.UriSchemeHttps
+            && Uri.Compare(address, _options.Endpoint, UriComponents.HostAndPort, UriFormat.Unescaped, StringComparison.OrdinalIgnoreCase) == 0);
 
     private static bool IsAllowedTokenHost(Uri address) =>
         address.Scheme == Uri.UriSchemeHttps && address.IsDefaultPort
