@@ -1,0 +1,2 @@
+long-license         prompt  1666 gen    8 length DIFF  render eq ids eq stream ok 18.12s+1.86s
+command: --modes parity --prefill-chunk 1024 ; start 2026-10-26T06:41:36Z ; end 2026-10-26T06:42:03Z ; exit 0

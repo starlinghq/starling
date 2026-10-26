@@ -10,15 +10,18 @@ public sealed record Qwen35ChatClientOptions
     /// Request settings used when a request's <c>ChatOptions</c> does not set them: <see cref="Qwen35ChatOptions.MaxNewTokens"/>
     /// (default 512), <see cref="Qwen35ChatOptions.EnableThinking"/> (default false), <see cref="Qwen35ChatOptions.StopSequences"/>,
     /// <see cref="Qwen35ChatOptions.AdditionalStopTokenIds"/>, <see cref="Qwen35ChatOptions.Sampling"/> (default greedy) and
-    /// <see cref="Qwen35ChatOptions.PrefillChunkTokens"/> (default: 512 on CUDA, one call on CPU). A request value replaces
-    /// the default; see <see cref="Qwen35ChatClient"/> for the mapping. The opt-in settings that <c>ChatOptions</c> cannot
-    /// express, <see cref="Qwen35ChatOptions.EscapeSpecialTokens"/> and <see cref="Qwen35ChatOptions.StopAtRoleMarker"/>
-    /// (both default false), apply to every request from here.
+    /// <see cref="Qwen35ChatOptions.PrefillChunkTokens"/> (default: 512 on CUDA; on CPU one call up to 1,024 prompt tokens and
+    /// 1,024-token chunks above). A request value replaces the default; see <see cref="Qwen35ChatClient"/> for the mapping.
+    /// The opt-in settings that <c>ChatOptions</c> cannot express, <see cref="Qwen35ChatOptions.EscapeSpecialTokens"/> and
+    /// <see cref="Qwen35ChatOptions.StopAtRoleMarker"/> (both default false), apply to every request from here.
     /// </summary>
     /// <remarks>
-    /// On CPU the default one-call prefill cannot be cancelled until it completes (12 s for a 1,666-token prompt on the
-    /// M0 workstation). Set <see cref="Qwen35ChatOptions.PrefillChunkTokens"/> to bound that latency; on CPU chunks give
-    /// bit-identical logits but a slower prefill (P-016).
+    /// On CPU a prefill call cannot be cancelled until it completes (12 s for a 1,666-token prompt on the M0
+    /// workstation); the default 1,024-token chunks bound that to one chunk. Set
+    /// <see cref="Qwen35ChatOptions.PrefillChunkTokens"/> lower to bound it further; on CPU smaller chunks give logits
+    /// equal to one call or within the profile's chunked-prefill tolerance (P-016, and
+    /// <c>docs/evidence/cpu-prefill-chunking-2026-10-26/</c>), and very small chunks slow the prefill (7-token chunks of a
+    /// 61-token prompt: 2.2 s against 0.9 s in one call).
     /// A <see cref="Qwen35ChatOptions.Guidance"/> set here applies to every request whose <c>ChatOptions</c> maps no
     /// constraint of its own (a required tool mode or a JSON response format replaces it), without the request-level
     /// checks those mappings make; leave it null (the default) unless every request should be constrained.
