@@ -31,6 +31,12 @@ internal sealed class FakeHub : HttpMessageHandler
     /// <summary>When set, the body of the given request number throws an IOException after this many bytes.</summary>
     public (int Request, int AfterBytes)? BreakBody { get; set; }
 
+    /// <summary>
+    /// When set, the body of the given request number delivers nothing after this many bytes: the read completes only
+    /// when its cancellation token fires, like a half-open connection.
+    /// </summary>
+    public (int Request, int AfterBytes)? StallBody { get; set; }
+
     /// <summary>When true, range headers are ignored and the full body is returned with 200.</summary>
     public bool IgnoreRange { get; set; }
 
@@ -103,6 +109,7 @@ internal sealed class FakeHub : HttpMessageHandler
         var body = new FaultingStream(
             content.AsMemory((int)from),
             BreakBody is { } b && b.Request == number ? b.AfterBytes : null,
+            StallBody is { } st && st.Request == number ? st.AfterBytes : null,
             OnBodyProgress is { } o && o.Request == number ? (o.AfterBytes, o.Action) : null);
         var response = new HttpResponseMessage(status) { Content = new StreamContent(body) };
         response.Content.Headers.ContentLength = content.Length - from;
@@ -114,8 +121,8 @@ internal sealed class FakeHub : HttpMessageHandler
         return response;
     }
 
-    /// <summary>Read-only stream that can fail after N bytes, like a dropped connection.</summary>
-    private sealed class FaultingStream(ReadOnlyMemory<byte> data, int? breakAfter, (int AfterBytes, Action Action)? onProgress) : Stream
+    /// <summary>Read-only stream that can fail after N bytes, like a dropped connection, or stall there, like a half-open one.</summary>
+    private sealed class FaultingStream(ReadOnlyMemory<byte> data, int? breakAfter, int? stallAfter, (int AfterBytes, Action Action)? onProgress) : Stream
     {
         private int _position;
         private (int AfterBytes, Action Action)? _onProgress = onProgress;
@@ -152,10 +159,15 @@ internal sealed class FakeHub : HttpMessageHandler
             return n;
         }
 
-        public override ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken cancellationToken = default)
+        public override async ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken cancellationToken = default)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            return ValueTask.FromResult(Read(buffer.Span));
+            if (stallAfter is { } stall && _position >= stall)
+            {
+                await Task.Delay(Timeout.Infinite, cancellationToken);
+            }
+
+            return Read(buffer.Span);
         }
 
         public override Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken) =>
