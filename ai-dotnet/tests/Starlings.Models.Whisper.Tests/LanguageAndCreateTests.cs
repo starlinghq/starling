@@ -55,6 +55,15 @@ public sealed class LanguageAndCreateTests
     }
 
     [Fact]
+    public void ModelCreateRejectsAnUnknownLanguageBeforeLoadingAnyGraph()
+    {
+        var ex = Assert.Throws<WhisperUnsupportedLanguageException>(
+            () => WhisperModel.Create("missing-encoder.onnx", "missing-decoder.onnx", new WhisperOptions { Language = "xx" }));
+
+        Assert.Equal("xx", ex.Language);
+    }
+
+    [Fact]
     public void CreateRejectsATokenizerThatIsNotThePinnedFile()
     {
         string path = Path.Combine(Path.GetTempPath(), $"whisper-tokenizer-{Guid.NewGuid():N}.json");

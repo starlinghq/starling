@@ -85,6 +85,7 @@ public sealed class WhisperModel : IDisposable
     }
 
     /// <summary>Loads the encoder and decoder graphs and owns the resulting sessions.</summary>
+    /// <exception cref="WhisperUnsupportedLanguageException"><see cref="WhisperOptions.Language"/> is not a language code of the model (checked before any graph loads).</exception>
     public static WhisperModel Create(string encoderPath, string decoderPath, WhisperOptions? options = null)
     {
         options ??= new WhisperOptions();
