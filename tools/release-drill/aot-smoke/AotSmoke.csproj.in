@@ -1,0 +1,38 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Weight-free Native AOT smoke consumer for tools/aot-smoke-ai.sh. The script copies this file outside the repository
+    once per package and replaces @VERSION@ and @PACKAGE@. The whole package assembly is rooted (TrimmerRootAssembly),
+    so the trim and AOT analysis of ILC covers every member of the package, not only what a sample happens to call.
+    Unlike tools/aot-check-ai.sh it runs no inference and needs no model file: it records whether each package
+    publishes under Native AOT without warnings and whether the binary starts with the package's metadata present.
+  -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <PublishAot>true</PublishAot>
+    <!-- One warning per call site instead of one summary warning (IL2104/IL3053) per assembly. -->
+    <TrimmerSingleWarn>false</TrimmerSingleWarn>
+    <!-- Warnings are the evidence here: the script records them, so they must not stop the publish. -->
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <SmokePackage>@PACKAGE@</SmokePackage>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <AssemblyMetadata Include="SmokePackage" Value="$(SmokePackage)" />
+    <PackageReference Include="$(SmokePackage)" Version="[@VERSION@]" />
+    <TrimmerRootAssembly Include="$(SmokePackage)" />
+  </ItemGroup>
+
+  <!--
+    The application's choice of natives, as in the samples: the CPU packages. Microsoft.ML.OnnxRuntimeGenAI brings
+    Microsoft.ML.OnnxRuntime, so both runtimes are present once and the native package checks stay quiet.
+  -->
+  <ItemGroup>
+    <PackageReference Include="Microsoft.ML.OnnxRuntime" Version="1.30.0" />
+    <PackageReference Include="Microsoft.ML.OnnxRuntimeGenAI" Version="0.17.1" />
+  </ItemGroup>
+
+</Project>
