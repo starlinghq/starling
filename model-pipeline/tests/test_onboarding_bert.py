@@ -446,7 +446,11 @@ def test_contract_table_rejects_missing_fields_prompts_keys_format_and_duplicate
     bad_key["contracts"]["not-a-repository"] = bad_key["contracts"][repo]
     version = _contract_table()
     version["format_version"] = 2
-    for table in (missing, prompts, bad_key, version):
+    boolean = _contract_table()
+    boolean["format_version"] = True
+    real = _contract_table()
+    real["format_version"] = 1.0
+    for table in (missing, prompts, bad_key, version, boolean, real):
         with pytest.raises(PipelineError):
             bert.validate_contracts(table)
     text = bert.CONTRACTS_PATH.read_text(encoding="utf-8")

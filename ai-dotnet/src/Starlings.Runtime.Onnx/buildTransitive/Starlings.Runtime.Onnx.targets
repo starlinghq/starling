@@ -30,8 +30,11 @@
       <_StarlingsOrtAsset Include="@(RuntimeTargetsCopyLocalItems);@(NativeCopyLocalItems)" />
       <_StarlingsOrtCpu Include="@(_StarlingsOrtAsset)" Condition="'%(_StarlingsOrtAsset.NuGetPackageId)' == 'Microsoft.ML.OnnxRuntime'" />
       <_StarlingsOrtGpu Include="@(_StarlingsOrtAsset)" Condition="$([System.String]::Copy('%(_StarlingsOrtAsset.NuGetPackageId)').StartsWith('Microsoft.ML.OnnxRuntime.Gpu'))" />
-      <!-- Other execution-provider builds (DirectML, OpenVINO, QNN, ...): a native, but neither of the two qualified ones. -->
-      <_StarlingsOrtOther Include="@(_StarlingsOrtAsset)" Condition="$([System.String]::Copy('%(_StarlingsOrtAsset.NuGetPackageId)').StartsWith('Microsoft.ML.OnnxRuntime.')) and '%(_StarlingsOrtAsset.NuGetPackageId)' != 'Microsoft.ML.OnnxRuntime.Managed' and !$([System.String]::Copy('%(_StarlingsOrtAsset.NuGetPackageId)').StartsWith('Microsoft.ML.OnnxRuntime.Gpu'))" />
+      <!--
+        Other execution-provider builds (DirectML, OpenVINO, QNN, ...): a native, but neither of the two qualified ones.
+        Microsoft.ML.OnnxRuntime.Extensions ships a custom-operator library, not ONNX Runtime, so it does not count.
+      -->
+      <_StarlingsOrtOther Include="@(_StarlingsOrtAsset)" Condition="$([System.String]::Copy('%(_StarlingsOrtAsset.NuGetPackageId)').StartsWith('Microsoft.ML.OnnxRuntime.')) and '%(_StarlingsOrtAsset.NuGetPackageId)' != 'Microsoft.ML.OnnxRuntime.Managed' and '%(_StarlingsOrtAsset.NuGetPackageId)' != 'Microsoft.ML.OnnxRuntime.Extensions' and !$([System.String]::Copy('%(_StarlingsOrtAsset.NuGetPackageId)').StartsWith('Microsoft.ML.OnnxRuntime.Gpu'))" />
       <_StarlingsOrtWeb Include="@(RuntimeCopyLocalItems)" Condition="'%(RuntimeCopyLocalItems.NuGetPackageId)' == 'Starlings.Runtime.OnnxWeb'" />
     </ItemGroup>
 

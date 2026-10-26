@@ -87,6 +87,13 @@ public sealed class ContractTableTests
         var format = Table();
         format["format_version"] = 2;
         Assert.Throws<InvalidDataException>(() => BertModelProfile.ParseContracts(format.ToJsonString()));
+        format["format_version"] = true;
+        Assert.Throws<InvalidDataException>(() => BertModelProfile.ParseContracts(format.ToJsonString()));
+        // JsonNode writes 1.0 as 1, so the real-number spelling goes into the text.
+        format["format_version"] = 2;
+        string real = format.ToJsonString().Replace("\"format_version\":2", "\"format_version\":1.0", StringComparison.Ordinal);
+        Assert.Contains("\"format_version\":1.0", real, StringComparison.Ordinal);
+        Assert.Throws<InvalidDataException>(() => BertModelProfile.ParseContracts(real));
     }
 
     [Fact]

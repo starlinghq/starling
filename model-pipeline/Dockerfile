@@ -57,11 +57,14 @@ RUN set -eu; \
         uv venv --python "$python" "/opt/venvs/$env"; \
         uv pip install --python "/opt/venvs/$env/bin/python" --require-hashes -r "/opt/locks/$env.txt" \
             --index-url https://pypi.org/simple --extra-index-url "$extra" --index-strategy unsafe-best-match; \
-        # The one pipeline dependency the reference locks do not pin (the runners import model_pipeline).
-        uv pip install --python "/opt/venvs/$env/bin/python" 'jsonschema>=4.21'; \
+        # The one pipeline dependency the reference locks do not pin (the runners import model_pipeline), and the
+        # build backend of model-pipeline/pyproject.toml: the entrypoint installs the mounted checkout offline
+        # without build isolation, so setuptools must already be in every venv.
+        uv pip install --python "/opt/venvs/$env/bin/python" 'jsonschema>=4.21' 'setuptools>=70.1'; \
     done; \
     uv venv --python 3.11 /opt/venvs/pipeline; \
-    uv pip install --python /opt/venvs/pipeline/bin/python 'jsonschema>=4.21' 'pyyaml>=6.0' 'pytest>=8' 'ruff>=0.6'; \
+    uv pip install --python /opt/venvs/pipeline/bin/python 'jsonschema>=4.21' 'pyyaml>=6.0' 'pytest>=8' 'ruff>=0.6' \
+        'setuptools>=70.1'; \
     rm -rf "$UV_CACHE_DIR"
 
 COPY container-entrypoint.sh /usr/local/bin/starlings-onboarding

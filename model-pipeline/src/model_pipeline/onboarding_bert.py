@@ -72,7 +72,9 @@ def validate_contracts(document: object) -> dict[str, dict]:
     """Validate the route contract table; the .NET side (BertModelProfile) applies the same rules."""
     if not isinstance(document, dict) or set(document) != {"format", "format_version", "route", "contracts"}:
         raise PipelineError("BERT route contracts: expected exactly format, format_version, route and contracts")
-    if (document["format"], document["format_version"], document["route"]) != (CONTRACTS_FORMAT, 1, PLUGIN):
+    # type() as well: True == 1 and 1.0 == 1 in Python, and the .NET reader (GetInt32) rejects both.
+    version = document["format_version"]
+    if (document["format"], type(version), version, document["route"]) != (CONTRACTS_FORMAT, int, 1, PLUGIN):
         raise PipelineError(f"BERT route contracts: expected {CONTRACTS_FORMAT} version 1 for {PLUGIN}")
     contracts = document["contracts"]
     if not isinstance(contracts, dict) or not contracts:

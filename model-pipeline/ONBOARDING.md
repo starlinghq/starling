@@ -55,7 +55,7 @@ For `candidates/<name>/profile.json` on the `bert-onnx-cpu-v1` route, `scaffold`
 
 ## Container image
 
-`model-pipeline/Dockerfile` builds a contributor image with the .NET SDK `global.json` pins (by digest), uv (by version and wheel SHA-256), and the hash-locked reference environments of the CPU routes under `/opt/venvs/` (`encoder`, `generation`, `whisper`; build argument `ENVIRONMENTS` selects them). The checkout is mounted at `/work` and the model cache at `/models` (`STARLING_MODELS`); the entrypoint installs the mounted `model-pipeline` into every environment without dependencies, so no PyTorch environment is rebuilt per contributor. The image holds no model file. No CI job builds or publishes it, and it has not been built in CI or on the qualification machine: its status is untested.
+`model-pipeline/Dockerfile` builds a contributor image with the .NET SDK `global.json` pins (by digest), uv (by version and wheel SHA-256), and the hash-locked reference environments of the CPU routes under `/opt/venvs/` (`encoder`, `generation`, `whisper`; build argument `ENVIRONMENTS` selects them). The checkout is mounted at `/work` and the model cache at `/models` (`STARLING_MODELS`); the entrypoint installs the mounted `model-pipeline` into every environment without dependencies, offline and without build isolation (setuptools is preinstalled), so no PyTorch environment is rebuilt per contributor. The image holds no model file. No CI job builds or publishes it, and it has not been built in CI or on the qualification machine: its status is untested.
 
 ```sh
 docker build -f model-pipeline/Dockerfile -t starlings-onboarding model-pipeline
