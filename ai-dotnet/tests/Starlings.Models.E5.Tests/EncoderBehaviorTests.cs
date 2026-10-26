@@ -174,10 +174,25 @@ public class EncoderBehaviorTests
         var bad = mask is null ? new EncoderInput(ids) : new EncoderInput(ids, mask);
         var destination = new float[8];
 
-        Assert.ThrowsAny<ArgumentException>(() => encoder.EmbedBatch([new EncoderInput(new long[] { 0, 3, 2 }), bad], destination, TestContext.Current.CancellationToken));
+        var batch = Assert.ThrowsAny<ArgumentException>(() => encoder.EmbedBatch([new EncoderInput(new long[] { 0, 3, 2 }), bad], destination, TestContext.Current.CancellationToken));
 
         // The valid first row would have been written by the first chunk if validation ran lazily.
         Assert.All(destination, v => Assert.Equal(0f, v));
+
+        // ParamName names the caller's parameter: the batch for EmbedBatch, the input for Validate.
+        Assert.Equal("inputs", batch.ParamName);
+        Assert.StartsWith("Input 1 ", batch.Message, StringComparison.Ordinal);
+        var single = Assert.ThrowsAny<ArgumentException>(() => encoder.Validate(bad));
+        Assert.Equal("input", single.ParamName);
+        Assert.StartsWith("Input 0 ", single.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void ProfileConstantsAreTheDefaults()
+    {
+        Assert.Equal(512, E5Encoder.MaxSupportedSequenceLength);
+        Assert.Equal(384, E5Encoder.NativeDimension);
+        Assert.Equal(E5Encoder.MaxSupportedSequenceLength, new E5EncoderOptions().MaxSequenceLength);
     }
 
     [Fact]

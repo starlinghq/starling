@@ -23,7 +23,7 @@ public class AbstractionsTests
         Assert.Equal(1, ex.InputIndex);
         Assert.Equal(5, ex.TokenCount);
         Assert.Equal(4, ex.MaxTokens);
-        Assert.Equal("Input 1 has 5 tokens; the maximum is 4. Truncate in the tokenizer. (Parameter 'input')", ex.Message);
+        Assert.Equal("Input 1 has 5 tokens; the maximum is 4. Truncate in the tokenizer. (Parameter 'inputs')", ex.Message);
         Assert.Equal(0, Assert.Throws<InputTooLongException>(() => encoder.Validate(tooLong)).InputIndex);
     }
 

@@ -10,8 +10,8 @@ namespace Starlings.Models.E5.MLNet;
 /// </summary>
 public sealed class E5EmbeddingEstimator : IEstimator<E5EmbeddingTransformer>
 {
-    /// <summary>Embedding dimension of multilingual-e5-small, declared before the model is loaded.</summary>
-    public const int E5SmallDimension = 384;
+    /// <summary>Embedding dimension of multilingual-e5-small (<see cref="E5Encoder.NativeDimension"/>), declared before the model is loaded.</summary>
+    public const int E5SmallDimension = E5Encoder.NativeDimension;
 
     private readonly E5TextEmbedder? _embedder;
     private readonly E5ModelFiles? _files;

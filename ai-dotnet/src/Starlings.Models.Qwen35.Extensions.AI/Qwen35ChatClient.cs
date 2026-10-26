@@ -27,9 +27,18 @@ namespace Starlings.Models.Qwen35.Extensions.AI;
 /// <see cref="Qwen35ChatClientOptions.Defaults"/>. Decoding is greedy unless <see cref="ChatOptions.Temperature"/> (above 0),
 /// <see cref="ChatOptions.TopP"/> or <see cref="ChatOptions.TopK"/> is set; sampling then requires
 /// <see cref="ChatOptions.Seed"/> (or a seeded default) and fails with <see cref="NotSupportedException"/> without one.
-/// <c>Temperature = 0</c> selects greedy decoding. <see cref="ChatOptions.AdditionalProperties"/> may contain only
-/// <see cref="EnableThinkingPropertyName"/>. <see cref="ChatOptions.Tools"/> (each <see cref="AIFunctionDeclaration"/>, with
-/// its JSON schema) are rendered into the template's tools block when <see cref="ChatOptions.ToolMode"/> is
+/// <c>Temperature = 0</c> selects greedy decoding. When sampling is on and <see cref="ChatOptions.TopK"/> is not set
+/// (by the request or a sampling default), the sampler's default top-k of 50 applies, also to a request that sets only
+/// <see cref="ChatOptions.Temperature"/> or <see cref="ChatOptions.TopP"/>. <see cref="ChatOptions.AdditionalProperties"/>
+/// may contain only <see cref="EnableThinkingPropertyName"/>. Two opt-in settings have no <see cref="ChatOptions"/>
+/// counterpart and come from <see cref="Qwen35ChatClientOptions.Defaults"/> for every request:
+/// <see cref="Qwen35ChatOptions.EscapeSpecialTokens"/> (special-token strings in message and tool-result content are
+/// escaped before rendering; off by default, faithful to upstream <c>apply_chat_template</c>) and
+/// <see cref="Qwen35ChatOptions.StopAtRoleMarker"/> (<c>&lt;|im_start|&gt;</c> ends generation; off by default).
+/// <see cref="CountTokens"/> renders a request exactly as the two response methods do and returns its prompt token
+/// count without generating; the mapping itself is <see cref="Qwen35ChatRequestMapper"/>. <see cref="ChatOptions.Tools"/>
+/// (each <see cref="AIFunctionDeclaration"/>, with its JSON schema) are rendered into the template's tools block when
+/// <see cref="ChatOptions.ToolMode"/> is
 /// <see cref="ChatToolMode.Auto"/> or unset; <see cref="ChatToolMode.None"/> renders no tools. Other tool types,
 /// <see cref="ChatToolMode.RequireAny"/>, a required function, <c>AllowMultipleToolCalls = false</c>, a non-text
 /// <see cref="ChatOptions.ResponseFormat"/>,
@@ -67,7 +76,9 @@ namespace Starlings.Models.Qwen35.Extensions.AI;
 /// synchronous API that P-016 tested, and avoids blocking thread-pool threads for seconds. The streaming worker runs
 /// ahead of the consumer by at most <see cref="Qwen35ChatClientOptions.StreamingBufferCapacity"/> updates.
 /// Concurrent requests are safe; on CUDA the model serializes their native work step by step (P-016), on CPU they run in
-/// parallel.
+/// parallel. <see cref="Qwen35ChatClientOptions.MaxConcurrentRequests"/> caps how many requests generate at once;
+/// further requests wait, in order, before their thread and native generator exist, and a wait honours the request's
+/// cancellation token. By default (null) nothing is capped.
 /// </para>
 /// <para>
 /// <b>Cancellation.</b> A token cancelled before the call starts no work. Afterwards it is checked between prefill chunks
@@ -97,6 +108,10 @@ public sealed class Qwen35ChatClient : IChatClient
     private readonly bool _ownsModel;
     private readonly Qwen35ChatClientOptions _options;
     private readonly ChatClientMetadata _metadata;
+
+    // Admission control (MaxConcurrentRequests), or null when unbounded. Never disposed: it owns no operating-system
+    // handle (AvailableWaitHandle is never read), and requests still running after Dispose release it when they finish.
+    private readonly SemaphoreSlim? _admission;
     private int _disposed;
 
     /// <summary>Wraps an existing model, which is neither owned nor disposed by this instance.</summary>
@@ -112,6 +127,7 @@ public sealed class Qwen35ChatClient : IChatClient
         _model = model;
         _options = options;
         _ownsModel = ownsModel;
+        _admission = options.MaxConcurrentRequests is int max ? new SemaphoreSlim(max, max) : null;
         ModelId = model.Info.Checkpoint;
         _metadata = new ChatClientMetadata(ProviderName, providerUri: null, ModelId);
     }
@@ -156,7 +172,17 @@ public sealed class Qwen35ChatClient : IChatClient
     {
         var (conversation, chatOptions) = Prepare(messages, options);
         cancellationToken.ThrowIfCancellationRequested();
-        GenerationResult result = await RunOnDedicatedThread(() => _model.Generate(conversation, chatOptions, cancellationToken)).ConfigureAwait(false);
+        GenerationResult result;
+        await AdmitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            result = await RunOnDedicatedThread(() => _model.Generate(conversation, chatOptions, cancellationToken)).ConfigureAwait(false);
+        }
+        finally
+        {
+            _admission?.Release();
+        }
+
         string id = NewId();
         var contents = new List<AIContent>(1);
         bool toolCalls = false;
@@ -189,8 +215,9 @@ public sealed class Qwen35ChatClient : IChatClient
 
     /// <inheritdoc />
     /// <remarks>
-    /// Validation errors surface on the first <c>MoveNextAsync</c>. Generation runs on a dedicated thread; see the class
-    /// remarks for the update contract and cancellation.
+    /// Validation errors surface on the first <c>MoveNextAsync</c>, which also waits for an admission slot when
+    /// <see cref="Qwen35ChatClientOptions.MaxConcurrentRequests"/> is set. Generation runs on a dedicated thread; see
+    /// the class remarks for the update contract and cancellation.
     /// </remarks>
     public async IAsyncEnumerable<ChatResponseUpdate> GetStreamingResponseAsync(
         IEnumerable<ChatMessage> messages,
@@ -199,6 +226,41 @@ public sealed class Qwen35ChatClient : IChatClient
     {
         var (conversation, chatOptions) = Prepare(messages, options);
         cancellationToken.ThrowIfCancellationRequested();
+        await AdmitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            await foreach (ChatResponseUpdate update in StreamAdmitted(conversation, chatOptions, cancellationToken).ConfigureAwait(false))
+            {
+                yield return update;
+            }
+        }
+        finally
+        {
+            _admission?.Release();
+        }
+    }
+
+    /// <summary>
+    /// Renders <paramref name="messages"/> and <paramref name="options"/> exactly as <see cref="GetResponseAsync"/> and
+    /// <see cref="GetStreamingResponseAsync"/> would (same mapping, defaults, instructions, tools and thinking mode) and
+    /// returns the number of prompt tokens the model would be fed, which is the <see cref="UsageDetails.InputTokenCount"/>
+    /// such a request reports. Renders and tokenizes only: no thread, no native generator, no admission slot.
+    /// </summary>
+    /// <exception cref="NotSupportedException">The messages or options cannot be mapped (as for a request).</exception>
+    /// <exception cref="Qwen35TemplateException">The conversation is invalid for the template.</exception>
+    public int CountTokens(IEnumerable<ChatMessage> messages, ChatOptions? options = null, CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        var (conversation, chatOptions) = Prepare(messages, options);
+        return _model.CreatePrompt(conversation, chatOptions).TokenIds.Length;
+    }
+
+    // The streaming request once admitted: the worker thread, the bounded channel and the update mapping.
+    private async IAsyncEnumerable<ChatResponseUpdate> StreamAdmitted(
+        List<Qwen35Message> conversation,
+        Qwen35ChatOptions chatOptions,
+        [EnumeratorCancellation] CancellationToken cancellationToken)
+    {
         var channel = Channel.CreateBounded<GenerationUpdate>(new BoundedChannelOptions(_options.StreamingBufferCapacity)
         {
             SingleReader = true,
@@ -364,6 +426,9 @@ public sealed class Qwen35ChatClient : IChatClient
     };
 
     private static string NewId() => "qwen35-" + Guid.NewGuid().ToString("N");
+
+    // Waits for an admission slot when MaxConcurrentRequests is set; the caller releases it when the request's work ends.
+    private Task AdmitAsync(CancellationToken cancellationToken) => _admission?.WaitAsync(cancellationToken) ?? Task.CompletedTask;
 
     // Adds a parsed part as TextContent or FunctionCallContent; true for a tool call.
     private static bool AddPart(List<AIContent> contents, Qwen35OutputPart part)

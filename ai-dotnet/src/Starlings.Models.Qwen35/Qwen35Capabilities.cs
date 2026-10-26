@@ -124,6 +124,7 @@ public static class Qwen35Capabilities
         ["fp16x.cpu"] = Qwen35CapabilityStatus.Unsupported,
         ["tf32"] = Qwen35CapabilityStatus.Unsupported,
         ["quantized"] = Qwen35CapabilityStatus.Unsupported,
+        ["lora"] = Qwen35CapabilityStatus.Unsupported,
         ["mtp_speculative_decoding"] = Qwen35CapabilityStatus.Unsupported,
         ["backend_tokenizer"] = Qwen35CapabilityStatus.Unsupported,
         ["extensions_ai.tool_mode.required"] = Qwen35CapabilityStatus.Unsupported,

@@ -1,3 +1,5 @@
+using Starlings.Runtime.Onnx;
+
 namespace Starlings.Models.EmbeddingGemma2;
 
 /// <summary>
@@ -6,23 +8,37 @@ namespace Starlings.Models.EmbeddingGemma2;
 /// prepended to every text before tokenization, as sentence-transformers does with <c>prompt_name</c>.
 /// </summary>
 /// <remarks>
+/// <para>
 /// No prompt is ever inserted implicitly: every method takes the prompt as an argument, and the overloads without one
 /// use <see cref="EmbeddingGemma2Prompt.None"/>. With <see cref="EmbeddingGemma2Tokenizer"/> this is experimental on
 /// Linux x64: fixture texts under each documented prompt reproduce the protected ids exactly and the protected
 /// embeddings within the binding tolerance.
+/// </para>
+/// <para>
+/// <b>Lifetime.</b> An instance from <see cref="Create"/> owns its encoder and session and disposes them; an instance
+/// from the constructor owns nothing and its <see cref="Dispose"/> does nothing. Both are idempotent.
+/// </para>
 /// </remarks>
-public sealed class EmbeddingGemma2TextEmbedder : ITextEmbedder
+public sealed class EmbeddingGemma2TextEmbedder : ITextEmbedder, IDisposable
 {
     private readonly IEmbeddingGemma2Tokenizer _tokenizer;
     private readonly EmbeddingGemma2Encoder _encoder;
+    private readonly bool _ownsEncoder;
+    private int _disposed;
 
     /// <summary>Combines a tokenizer and an encoder. Neither is owned or disposed by this instance.</summary>
     public EmbeddingGemma2TextEmbedder(IEmbeddingGemma2Tokenizer tokenizer, EmbeddingGemma2Encoder encoder)
+        : this(tokenizer, encoder, ownsEncoder: false)
+    {
+    }
+
+    private EmbeddingGemma2TextEmbedder(IEmbeddingGemma2Tokenizer tokenizer, EmbeddingGemma2Encoder encoder, bool ownsEncoder)
     {
         ArgumentNullException.ThrowIfNull(tokenizer);
         ArgumentNullException.ThrowIfNull(encoder);
         _tokenizer = tokenizer;
         _encoder = encoder;
+        _ownsEncoder = ownsEncoder;
     }
 
     /// <summary>Floats per embedding (<see cref="EmbeddingGemma2EncoderOptions.Dimension"/>: 768, 512, 256 or 128).</summary>
@@ -34,10 +50,52 @@ public sealed class EmbeddingGemma2TextEmbedder : ITextEmbedder
     /// </summary>
     public int MaxSequenceLength => _encoder.Options.MaxSequenceLength;
 
-    /// <summary>The encoder (dimension, options, session diagnostics). Not owned by this instance.</summary>
+    /// <summary>
+    /// Loads the pinned graph and the owned tokenizer (<see cref="EmbeddingGemma2Tokenizer"/>) from verified local files
+    /// (<see cref="EmbeddingGemma2ModelAssets.OpenLocal"/> or <see cref="EmbeddingGemma2ModelAssets.OpenDirectory"/>;
+    /// never downloads) and owns the resulting encoder and session. The tokenizer's SHA-256
+    /// (<see cref="EmbeddingGemma2ModelAssets.TokenizerSha256"/>) is checked while loading, and the graph's
+    /// (<see cref="EmbeddingGemma2ModelAssets.ModelSha256"/>) is set as <see cref="OnnxSessionOptions.ExpectedModelSha256"/>
+    /// on <paramref name="options"/>.<see cref="EmbeddingGemma2EncoderOptions.Session"/>. The other options, the
+    /// dimension included, are taken as given.
+    /// </summary>
+    /// <param name="files">Verified files.</param>
+    /// <param name="options">Encoder options; defaults to the profile.</param>
+    public static EmbeddingGemma2TextEmbedder Create(EmbeddingGemma2ModelFiles files, EmbeddingGemma2EncoderOptions? options = null)
+    {
+        ArgumentNullException.ThrowIfNull(files);
+        options ??= new EmbeddingGemma2EncoderOptions();
+        options.Validate();
+        var tokenizer = EmbeddingGemma2Tokenizer.FromFile(files.TokenizerPath, EmbeddingGemma2ModelAssets.TokenizerSha256);
+        var encoderOptions = options with
+        {
+            Session = options.Session with { ExpectedModelSha256 = EmbeddingGemma2ModelAssets.ModelSha256 },
+        };
+        var encoder = EmbeddingGemma2Encoder.Create(files.ModelPath, encoderOptions);
+        try
+        {
+            return new EmbeddingGemma2TextEmbedder(tokenizer, encoder, ownsEncoder: true);
+        }
+        catch
+        {
+            encoder.Dispose();
+            throw;
+        }
+    }
+
+    /// <summary>Disposes the encoder and session if this instance owns them (<see cref="Create"/>). Idempotent.</summary>
+    public void Dispose()
+    {
+        if (Interlocked.Exchange(ref _disposed, 1) == 0 && _ownsEncoder)
+        {
+            _encoder.Dispose();
+        }
+    }
+
+    /// <summary>The encoder (dimension, options, session diagnostics). Owned by this instance only when it came from <see cref="Create"/>.</summary>
     public EmbeddingGemma2Encoder Encoder => _encoder;
 
-    /// <summary>The tokenizer. Not owned by this instance.</summary>
+    /// <summary>The tokenizer (<see cref="EmbeddingGemma2Tokenizer"/> when this instance came from <see cref="Create"/>).</summary>
     public IEmbeddingGemma2Tokenizer Tokenizer => _tokenizer;
 
     /// <summary>Embeds one text with no prompt.</summary>
