@@ -1,0 +1,5 @@
+# Boundary-check baseline (tools/check-boundary.py). Commit messages, authors and committers are scanned for the
+# commits reachable from HEAD but not from this commit. This commit (origin/main after PR #155) and every ancestor
+# passed the full-history scan of the ci job `boundary` on its push to main (run 40253239091, 2026-10-26).
+# Only the maintainer moves this line.
+9a54cc2d07ded17a7a30516696836cbe4b6c6de2

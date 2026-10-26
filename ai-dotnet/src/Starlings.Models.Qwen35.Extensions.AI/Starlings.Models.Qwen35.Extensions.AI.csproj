@@ -28,4 +28,9 @@
     <ProjectReference Include="../Starlings.Models.Qwen35/Starlings.Models.Qwen35.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- The reasoning splitter's delta-split tests. -->
+    <InternalsVisibleTo Include="Starlings.Models.Qwen35.Extensions.AI.Tests" />
+  </ItemGroup>
+
 </Project>

@@ -6,4 +6,4 @@ Copyright 2024 Alibaba Cloud. Licensed under Apache License 2.0. The complete up
 
 Source template SHA-256: Qwen3 `a55ee1b1660128b7098723e0abcd92caa0788061051c62d51cbe87d9cf1974d8`; Qwen2.5 `cd8e9439f0570856fd70470bf8889ebd8b5d1107207f67a5efb46e342330527f` (UTF-8 bytes of the JSON string without an added newline).
 
-Modifications: C# rendering restricted to text system/user/assistant messages, with Qwen3 thinking disabled. Tools and multimodal content are rejected. Model weights are not distributed in this package.
+Modifications: C# rendering restricted to text system, user, assistant and tool messages, tool definitions and assistant tool calls (the templates' tool instructions are copied verbatim; since 2026-10-26), with Qwen3 thinking disabled. Multimodal content is rejected. Model weights are not distributed in this package.

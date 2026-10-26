@@ -38,8 +38,38 @@ public sealed record GenerationOptions
     /// </summary>
     public int? PrefillChunkTokens { get; init; }
 
+    /// <summary>Largest accepted <see cref="TopLogprobs"/>.</summary>
+    public const int MaxTopLogprobs = 20;
+
+    /// <summary>
+    /// Opt-in: return the log probability of every completion token in <see cref="GenerationUpdate.Logprobs"/> and
+    /// <see cref="GenerationResult.Logprobs"/>. Default false. Each step then copies the step's logits row (vocabulary
+    /// size x 4 bytes: about 1 MB for Qwen3.5) from the native generator and computes a log-softmax over it, so it costs
+    /// time on every step. The values come from the model's raw logits for the step that selected the token: before
+    /// temperature, top-k and top-p, so under <see cref="Sampling"/> they describe the model's distribution, not the
+    /// truncated one the sample was drawn from.
+    /// </summary>
+    public bool ReturnLogprobs { get; init; }
+
+    /// <summary>
+    /// With <see cref="ReturnLogprobs"/>: how many of the most likely tokens of each step to return as
+    /// <see cref="TokenLogprob.TopLogprobs"/>, from 0 (default: only the chosen token) to <see cref="MaxTopLogprobs"/>.
+    /// A value above 0 without <see cref="ReturnLogprobs"/> is rejected.
+    /// </summary>
+    public int TopLogprobs { get; init; }
+
     internal void Validate()
     {
+        if (TopLogprobs is < 0 or > MaxTopLogprobs)
+        {
+            throw new ArgumentOutOfRangeException(nameof(TopLogprobs), TopLogprobs, $"TopLogprobs must be in [0, {MaxTopLogprobs}].");
+        }
+
+        if (TopLogprobs > 0 && !ReturnLogprobs)
+        {
+            throw new ArgumentException("TopLogprobs needs ReturnLogprobs = true.", nameof(TopLogprobs));
+        }
+
         if (PrefillChunkTokens is int chunk)
         {
             ArgumentOutOfRangeException.ThrowIfNegativeOrZero(chunk, nameof(PrefillChunkTokens));
@@ -158,6 +188,12 @@ public sealed record GenerationResult
 
     /// <summary>Stage timings.</summary>
     public required GenerationTimings Timings { get; init; }
+
+    /// <summary>
+    /// With <see cref="GenerationOptions.ReturnLogprobs"/>: one entry per id of <see cref="TokenIds"/>, in order (a stop
+    /// token id has none). Empty otherwise.
+    /// </summary>
+    public ImmutableArray<TokenLogprob> Logprobs { get; init; } = [];
 }
 
 /// <summary>
@@ -173,6 +209,12 @@ public sealed record GenerationUpdate
 
     /// <summary>Completion token ids since the previous update.</summary>
     public required ImmutableArray<int> TokenIds { get; init; }
+
+    /// <summary>
+    /// With <see cref="GenerationOptions.ReturnLogprobs"/>: one entry per id of <see cref="TokenIds"/>, in order. Empty
+    /// otherwise. Concatenated over all updates they equal <see cref="GenerationResult.Logprobs"/>.
+    /// </summary>
+    public ImmutableArray<TokenLogprob> Logprobs { get; init; } = [];
 
     /// <summary>The completed result on the last update; null on every other update.</summary>
     public GenerationResult? Result { get; init; }
