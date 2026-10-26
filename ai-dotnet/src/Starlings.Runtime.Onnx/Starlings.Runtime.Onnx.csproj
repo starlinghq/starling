@@ -11,6 +11,8 @@
 
   <ItemGroup>
     <None Include="README.md" Pack="true" PackagePath="" />
+    <!-- Build-time native package check for every consumer, direct or transitive (README, "Native package check"). -->
+    <None Include="buildTransitive/Starlings.Runtime.Onnx.targets" Pack="true" PackagePath="buildTransitive/" />
   </ItemGroup>
 
   <ItemGroup>
@@ -24,6 +26,11 @@
 
   <ItemGroup>
     <InternalsVisibleTo Include="Starlings.Runtime.Onnx.Tests" />
+    <!-- EncoderCore (packing, pooling, the chunk run) is shared by the text encoders; it is internal, not public API. The
+         packages pin each other exactly, so the internal surface always comes from the same build. -->
+    <InternalsVisibleTo Include="Starlings.Models.E5" />
+    <InternalsVisibleTo Include="Starlings.Models.EmbeddingGemma2" />
+    <InternalsVisibleTo Include="Starlings.Models.Bert" />
   </ItemGroup>
 
 </Project>

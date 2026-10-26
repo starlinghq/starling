@@ -16,7 +16,7 @@ Format: [`../schemas/onboarding-candidate.schema.json`](../schemas/onboarding-ca
 | `behavior` | The route-specific contract (for BERT: pooling, normalization, width, token limit, prompts). |
 | `evaluation.status`, `evaluation.policy` | Always `proposed`; the policy holds the predeclared development bounds. |
 
-The schema is only the first check. Each plugin compares the whole contract field by field with its own allow-list (Python in `src/model_pipeline/onboarding_*.py`, and the matching .NET library) and refuses anything else. Changing a value here without changing the route code makes the run fail.
+The schema is only the first check. Each plugin compares the whole contract field by field with its own allow-list (Python in `src/model_pipeline/onboarding_*.py`, and the matching .NET library) and refuses anything else. Changing a value here without changing the route code makes the run fail. The BERT route's allow-list is a data file both sides read, [`../routes/bert-onnx-cpu-v1/contracts.json`](../routes/README.md); the other routes keep theirs in code.
 
 | Directory | Profile | Upstream (revision) | Task | Plugin |
 | --- | --- | --- | --- | --- |
@@ -33,4 +33,4 @@ The schema is only the first check. Each plugin compares the whole contract fiel
 
 The full revisions and file digests are in each `profile.json`. Licenses of the five-model candidates are listed in [FIVE_MODELS.md](../FIVE_MODELS.md); candidates have no license fields.
 
-Adding a model to an existing route means a new candidate, a recipe, and matching entries in the route's Python and .NET allow-lists, with tests (`skills/starling-add-model/SKILL.md`). Fresh references and policies stay proposals: adoption into `protected/` and any registry manifest are maintainer changes.
+Adding a model to an existing route means a new candidate, a recipe, and matching entries in the route's Python and .NET allow-lists, with tests (`skills/starling-add-model/SKILL.md`). For the BERT route, `model-pipeline scaffold <name>` generates the recipe, the contract table entry and the other inputs from the candidate ([ONBOARDING.md](../ONBOARDING.md#scaffold-a-bert-route-candidate)). Fresh references and policies stay proposals: adoption into `protected/` and any registry manifest are maintainer changes.

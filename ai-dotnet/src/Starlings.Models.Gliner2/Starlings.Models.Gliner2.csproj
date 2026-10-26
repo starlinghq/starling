@@ -16,6 +16,8 @@
 
   <ItemGroup>
     <ProjectReference Include="../Starlings.Runtime.Onnx/Starlings.Runtime.Onnx.csproj" />
+    <!-- CapabilityStatus, ModelProfileCapabilities, ITextEmbedder and the InputTooLongException base (no ONNX Runtime dependency). -->
+    <ProjectReference Include="../Starlings.Models.Abstractions/Starlings.Models.Abstractions.csproj" />
     <PackageReference Include="Starlings.Tokenizers" />
     <!-- Asset lock and explicit acquisition of the pinned files (P-009). BCL only. -->
     <ProjectReference Include="../Starlings.Acquisition/Starlings.Acquisition.csproj" />

@@ -1,5 +1,6 @@
 using Microsoft.ML;
 using Microsoft.ML.Data;
+using Starlings.Models.MLNet;
 
 namespace Starlings.Models.EmbeddingGemma2.MLNet;
 
@@ -49,8 +50,9 @@ namespace Starlings.Models.EmbeddingGemma2.MLNet;
 public sealed class EmbeddingGemma2EmbeddingTransformer : ITransformer, IDisposable
 {
     private readonly EmbeddingGemma2Encoder? _ownedEncoder;
-    private readonly EmbeddingGemma2ColumnNames _names;
-    private readonly EmbeddingGemma2Inference _inference;
+    private readonly TextEmbeddingColumnNames _names;
+    private readonly EmbeddingGemma2TextEmbedder _embedder;
+    private readonly TextEmbeddingInference _inference;
     private int _disposed;
 
     /// <summary>Wraps an existing embedder. Neither it nor its encoder is owned or disposed by this instance.</summary>
@@ -59,18 +61,19 @@ public sealed class EmbeddingGemma2EmbeddingTransformer : ITransformer, IDisposa
     /// <param name="inputColumnName">Name of the text column; defaults to <paramref name="outputColumnName"/> (which then hides it).</param>
     /// <param name="options">Prompt, batching, token-count column; defaults to none, 1, none.</param>
     public EmbeddingGemma2EmbeddingTransformer(EmbeddingGemma2TextEmbedder embedder, string outputColumnName, string? inputColumnName = null, EmbeddingGemma2EmbeddingOptions? options = null)
-        : this(embedder, EmbeddingGemma2ColumnNames.Create(outputColumnName, inputColumnName, options?.TokenCountColumnName), options ?? new EmbeddingGemma2EmbeddingOptions(), ownedEncoder: null)
+        : this(embedder, TextEmbeddingColumnNames.Create(outputColumnName, inputColumnName, options?.TokenCountColumnName), options ?? new EmbeddingGemma2EmbeddingOptions(), ownedEncoder: null)
     {
     }
 
-    internal EmbeddingGemma2EmbeddingTransformer(EmbeddingGemma2TextEmbedder embedder, EmbeddingGemma2ColumnNames names, EmbeddingGemma2EmbeddingOptions options, EmbeddingGemma2Encoder? ownedEncoder, Action<int>? inferenceObserver = null)
+    internal EmbeddingGemma2EmbeddingTransformer(EmbeddingGemma2TextEmbedder embedder, TextEmbeddingColumnNames names, EmbeddingGemma2EmbeddingOptions options, EmbeddingGemma2Encoder? ownedEncoder, Action<int>? inferenceObserver = null)
     {
         ArgumentNullException.ThrowIfNull(embedder);
         options.Validate();
         _names = names;
         _ownedEncoder = ownedEncoder;
         Options = options;
-        _inference = new EmbeddingGemma2Inference(embedder, options.Prompt, inferenceObserver);
+        _embedder = embedder;
+        _inference = new TextEmbeddingInference(new PromptedTextEmbedder(embedder, options.Prompt), inferenceObserver);
     }
 
     /// <summary>Name of the text column read.</summary>
@@ -83,10 +86,10 @@ public sealed class EmbeddingGemma2EmbeddingTransformer : ITransformer, IDisposa
     public EmbeddingGemma2EmbeddingOptions Options { get; }
 
     /// <summary>Embedding dimension (the encoder's: 768, 512, 256 or 128).</summary>
-    public int Dimension => _inference.Embedder.Encoder.Dimension;
+    public int Dimension => _embedder.Encoder.Dimension;
 
     /// <summary>The underlying embedder.</summary>
-    public EmbeddingGemma2TextEmbedder Embedder => _inference.Embedder;
+    public EmbeddingGemma2TextEmbedder Embedder => _embedder;
 
     /// <summary>Always <see langword="true"/>: the transform maps each row on its own (prediction engines work).</summary>
     public bool IsRowToRowMapper => true;
@@ -97,11 +100,11 @@ public sealed class EmbeddingGemma2EmbeddingTransformer : ITransformer, IDisposa
     /// </summary>
     public static EmbeddingGemma2EmbeddingTransformer Create(EmbeddingGemma2ModelFiles files, IEmbeddingGemma2Tokenizer tokenizer, string outputColumnName, string? inputColumnName = null, EmbeddingGemma2EmbeddingOptions? options = null)
     {
-        var names = EmbeddingGemma2ColumnNames.Create(outputColumnName, inputColumnName, options?.TokenCountColumnName);
+        var names = TextEmbeddingColumnNames.Create(outputColumnName, inputColumnName, options?.TokenCountColumnName);
         return Create(files, tokenizer, names, options ?? new EmbeddingGemma2EmbeddingOptions());
     }
 
-    internal static EmbeddingGemma2EmbeddingTransformer Create(EmbeddingGemma2ModelFiles files, IEmbeddingGemma2Tokenizer tokenizer, EmbeddingGemma2ColumnNames names, EmbeddingGemma2EmbeddingOptions options)
+    internal static EmbeddingGemma2EmbeddingTransformer Create(EmbeddingGemma2ModelFiles files, IEmbeddingGemma2Tokenizer tokenizer, TextEmbeddingColumnNames names, EmbeddingGemma2EmbeddingOptions options)
     {
         ArgumentNullException.ThrowIfNull(files);
         ArgumentNullException.ThrowIfNull(tokenizer);
@@ -132,14 +135,14 @@ public sealed class EmbeddingGemma2EmbeddingTransformer : ITransformer, IDisposa
     {
         ArgumentNullException.ThrowIfNull(input);
         ObjectDisposedException.ThrowIf(Volatile.Read(ref _disposed) != 0, this);
-        return new EmbeddingGemma2EmbeddingDataView(input, Bind(input.Schema), _inference, Options.BatchSize);
+        return new TextEmbeddingDataView(input, Bind(input.Schema), _inference, Options.BatchSize);
     }
 
     /// <summary>A row-wise mapper (no look-ahead batching), used by prediction engines.</summary>
     public IRowToRowMapper GetRowToRowMapper(DataViewSchema inputSchema)
     {
         ObjectDisposedException.ThrowIf(Volatile.Read(ref _disposed) != 0, this);
-        return new EmbeddingGemma2RowToRowMapper(Bind(inputSchema), _inference);
+        return new TextEmbeddingRowToRowMapper(Bind(inputSchema), _inference);
     }
 
     /// <summary>Unsupported: always throws. See the class remarks, "Persistence is unsupported".</summary>
@@ -162,9 +165,9 @@ public sealed class EmbeddingGemma2EmbeddingTransformer : ITransformer, IDisposa
         "transformer and, after loading it, append mlContext.Transforms.ApplyEmbeddingGemma2Embedding(...) with the same " +
         "column names and options.";
 
-    private EmbeddingGemma2Bindings Bind(DataViewSchema inputSchema)
+    private TextEmbeddingBindings Bind(DataViewSchema inputSchema)
     {
         ArgumentNullException.ThrowIfNull(inputSchema);
-        return EmbeddingGemma2Bindings.Create(inputSchema, _names, Dimension);
+        return TextEmbeddingBindings.Create(inputSchema, _names, Dimension);
     }
 }

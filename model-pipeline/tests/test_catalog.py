@@ -245,3 +245,69 @@ def test_committed_catalog_is_up_to_date():
     stale = catalog.stale(catalog.render(built), catalog.DEFAULT_OUT)
     stale += [str(path) for path in catalog.stale_readmes(catalog.package_readmes(built))]
     assert not stale, f"docs/catalog is stale ({', '.join(stale)}); regenerate with: model-pipeline catalog"
+
+
+def test_catalog_json_carries_the_capability_record_contract_fields(repo):
+    def edit(m):
+        m["behavior"]["defaults"] = {"dimension": 384, "stop_token_ids": [7, 9]}
+        m["compatibility"].append({"os": "linux", "arch": "x64", "provider": "cuda", "status": "experimental"})
+
+    add_profile(repo / "registry", "fam/a", edit)
+    entry = profile(catalog.build(repo / "registry", repo), "fam/a")
+    assert entry["behavior"] == {
+        "max_input_tokens": 512,
+        "truncation": "truncate-right",
+        "dimension": 384,
+        "stop_token_ids": [7, 9],
+    }
+    # Only providers with a supported row are qualified.
+    assert entry["qualified_providers"] == ["cpu"]
+
+
+def test_csharp_capability_records_are_generated_and_checked(repo):
+    def edit(m):
+        m["behavior"]["defaults"] = {"dimension": 384}
+        m["compatibility"][0]["verified"] = "2026-10-15"
+        m["capabilities"]["vision"] = "untested"
+
+    add_profile(repo / "registry", "fam/a-cpu", edit)
+    add_profile(repo / "registry", "other/b")
+    pkg = repo / "ai-dotnet" / "src" / "Starlings.Models.Fam"
+    pkg.mkdir(parents=True)
+    source = pkg / "ProfileCapabilities.g.cs"
+    source.write_text("// catalog:capabilities profiles=fam/*\n", encoding="utf-8")
+    other = repo / "ai-dotnet" / "src" / "Other"
+    other.mkdir()
+    (other / "ProfileCapabilities.g.cs").write_text("// no header\n", encoding="utf-8")
+
+    assert run(repo, "--check") == 1
+    assert run(repo) == 0
+    text = source.read_text(encoding="utf-8")
+    assert "// catalog:capabilities profiles=fam/*\n" in text
+    assert "namespace Starlings.Models.Fam;" in text
+    assert '["fam/a-cpu"] = new ModelProfileCapabilities' in text
+    assert "Maturity = ProfileMaturity.Preview," in text
+    assert "MaxInputTokens = 512," in text
+    assert "Truncation = TruncationPolicy.TruncatesRight," in text
+    assert "Dimension = 384," in text
+    assert 'QualifiedProviders = ["cpu"],' in text
+    assert 'new ProfilePlatform("linux", "x64", "cpu", Status.Supported, Verified: new DateOnly(2026, 10, 15)),' in text
+    assert '["vision"] = Status.Untested,' in text
+    assert "other/b" not in text
+    assert (other / "ProfileCapabilities.g.cs").read_text(encoding="utf-8") == "// no header\n"
+    assert run(repo, "--check") == 0
+
+    source.write_text(text.replace('"fam/a-cpu"', '"fam/x"', 1), encoding="utf-8")
+    assert run(repo, "--check") == 1
+
+    source.write_text("// catalog:capabilities profiles=none/*\n", encoding="utf-8")
+    assert run(repo, "--check") == 2
+
+
+def test_committed_capability_sources_are_up_to_date():
+    sources = catalog.capability_sources()
+    assert sources, "no package opts in to a generated capability record"
+    stale = catalog.stale_readmes(sources)
+    assert not stale, (
+        f"capability sources are stale ({', '.join(map(str, stale))}); regenerate with: model-pipeline catalog"
+    )

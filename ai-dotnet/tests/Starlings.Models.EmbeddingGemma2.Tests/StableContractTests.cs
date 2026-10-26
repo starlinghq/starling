@@ -1,4 +1,5 @@
 using Starlings.TestSupport;
+using Status = Starlings.Models.CapabilityStatus;
 
 namespace Starlings.Models.EmbeddingGemma2.Tests;
 
@@ -8,7 +9,7 @@ namespace Starlings.Models.EmbeddingGemma2.Tests;
 /// </summary>
 public class StableContractTests
 {
-    // Per Stable profile: manifest capability -> the package-wide keys (EmbeddingGemma2Capabilities.All) that carry the
+    // Per Stable profile: manifest capability -> the package-wide keys (EmbeddingGemma2Capabilities.Statuses) that carry the
     // same status on that profile (keys without a provider suffix: the CPU profiles; .cuda: the CUDA profiles). An empty list means the package table has no key with that profile's status: the
     // text profile records image and video unsupported, and the image profile video unsupported, while in the package
     // table they are the image and video profiles' capabilities (and the reverse for text-only rows or features shared
@@ -203,14 +204,47 @@ public class StableContractTests
 
     private static IReadOnlyList<RegistryManifest> Family { get; } = RegistryManifest.Family(EmbeddingGemma2TestAssets.RepositoryRoot, "embeddinggemma-2");
 
-    private static string Name(EmbeddingGemma2CapabilityStatus status) => status.ToString().ToLowerInvariant();
+    private static string Name(Status status) => status.ToString().ToLowerInvariant();
+
+    // The capability tables of the Stable profiles, from the generated records.
+    private static IReadOnlyDictionary<string, IReadOnlyDictionary<string, Status>> StableTables { get; } =
+        EmbeddingGemma2Capabilities.ProfileCapabilities.Values
+            .Where(p => p.Maturity == ProfileMaturity.Stable)
+            .ToDictionary(p => p.ProfileId, p => p.Capabilities, StringComparer.Ordinal);
+
+    [Fact]
+    public void GeneratedRecordsEqualTheManifestsFieldForField() =>
+        CapabilityRecordChecks.AssertRecordsEqualManifests(EmbeddingGemma2Capabilities.ProfileCapabilities, Family);
+
+    [Fact]
+    public void ObsoleteMembersEqualTheNewOnes()
+    {
+#pragma warning disable CS0618 // The former members stay for one minor version and must keep their values.
+        Assert.Equal(EmbeddingGemma2Capabilities.Statuses.Keys.Order(StringComparer.Ordinal), EmbeddingGemma2Capabilities.All.Keys.Order(StringComparer.Ordinal));
+        foreach (var (key, status) in EmbeddingGemma2Capabilities.Statuses)
+        {
+            Assert.Equal(status.ToString(), EmbeddingGemma2Capabilities.All[key].ToString());
+            Assert.Equal((int)status, (int)EmbeddingGemma2Capabilities.All[key]);
+        }
+
+        Assert.Equal(StableTables.Keys.Order(StringComparer.Ordinal), EmbeddingGemma2Capabilities.Profiles.Keys.Order(StringComparer.Ordinal));
+        foreach (var (profile, table) in StableTables)
+        {
+            Assert.Equal(table.Keys.Order(StringComparer.Ordinal), EmbeddingGemma2Capabilities.Profiles[profile].Keys.Order(StringComparer.Ordinal));
+            foreach (var (key, status) in table)
+            {
+                Assert.Equal(status.ToString(), EmbeddingGemma2Capabilities.Profiles[profile][key].ToString());
+            }
+        }
+#pragma warning restore CS0618
+    }
 
     [Fact]
     public void EveryStableProfileOfTheFamilyHasACodeTable()
     {
         foreach (var manifest in Family.Where(m => m.Maturity == "stable"))
         {
-            Assert.True(EmbeddingGemma2Capabilities.Profiles.ContainsKey(manifest.Id), $"{manifest.Id} is stable in the registry but has no EmbeddingGemma2Capabilities.Profiles entry");
+            Assert.True(StableTables.ContainsKey(manifest.Id), $"{manifest.Id} is stable in the registry but has no StableTables entry");
         }
 
         Assert.Equal(
@@ -222,66 +256,66 @@ public class StableContractTests
                 EmbeddingGemma2Capabilities.StableVideoProfile,
                 EmbeddingGemma2Capabilities.StableCudaVideoProfile,
             ],
-            EmbeddingGemma2Capabilities.Profiles.Keys.Order(StringComparer.Ordinal));
+            StableTables.Keys.Order(StringComparer.Ordinal));
         Assert.Equal(
             Family.Where(m => m.Maturity == "stable").Select(m => m.Id).Order(StringComparer.Ordinal),
-            EmbeddingGemma2Capabilities.Profiles.Keys.Order(StringComparer.Ordinal));
+            StableTables.Keys.Order(StringComparer.Ordinal));
     }
 
     [Fact]
     public void ProfileTableEqualsTheManifestKeyForKey()
     {
-        foreach (var (profile, table) in EmbeddingGemma2Capabilities.Profiles)
+        foreach (var (profile, table) in StableTables)
         {
             var manifest = Family.Single(m => m.Id == profile);
             Assert.Equal(manifest.Capabilities.Keys.Order(StringComparer.Ordinal), table.Keys.Order(StringComparer.Ordinal));
             foreach (var (key, status) in manifest.Capabilities)
             {
-                Assert.True(status == Name(table[key]), $"{profile} {key}: manifest {status}, EmbeddingGemma2Capabilities.Profiles {Name(table[key])}");
+                Assert.True(status == Name(table[key]), $"{profile} {key}: manifest {status}, StableTables {Name(table[key])}");
             }
 
-            Assert.DoesNotContain(EmbeddingGemma2CapabilityStatus.Untested, table.Values);
+            Assert.DoesNotContain(Status.Untested, table.Values);
         }
     }
 
     [Fact]
     public void PackageTableAgreesWithTheStableProfiles()
     {
-        Assert.Equal(EmbeddingGemma2Capabilities.Profiles.Keys.Order(StringComparer.Ordinal), PackageKeys.Keys.Order(StringComparer.Ordinal));
+        Assert.Equal(StableTables.Keys.Order(StringComparer.Ordinal), PackageKeys.Keys.Order(StringComparer.Ordinal));
         foreach (var (profile, keys) in PackageKeys)
         {
-            var table = EmbeddingGemma2Capabilities.Profiles[profile];
+            var table = StableTables[profile];
             Assert.Equal(table.Keys.Order(StringComparer.Ordinal), keys.Keys.Order(StringComparer.Ordinal));
             foreach (var (key, packageKeys) in keys)
             {
                 foreach (string packageKey in packageKeys)
                 {
-                    Assert.True(table[key] == EmbeddingGemma2Capabilities.All[packageKey], $"{profile} {key}: profile {table[key]}, EmbeddingGemma2Capabilities.All[{packageKey}] {EmbeddingGemma2Capabilities.All[packageKey]}");
+                    Assert.True(table[key] == EmbeddingGemma2Capabilities.Statuses[packageKey], $"{profile} {key}: profile {table[key]}, EmbeddingGemma2Capabilities.Statuses[{packageKey}] {EmbeddingGemma2Capabilities.Statuses[packageKey]}");
                 }
             }
 
             var manifest = Family.Single(m => m.Id == profile);
             Assert.Equal("stable", manifest.Maturity);
             Assert.Equal("supported", manifest.Compatibility[profile.EndsWith("-cuda", StringComparison.Ordinal) ? "linux-x64 cuda" : "linux-x64 cpu"]);
-            Assert.DoesNotContain(EmbeddingGemma2CapabilityStatus.Untested, table.Values);
+            Assert.DoesNotContain(Status.Untested, table.Values);
         }
 
         var stable = Family.Single(m => m.Id == EmbeddingGemma2Capabilities.StableProfile);
-        Assert.Equal(EmbeddingGemma2CapabilityStatus.Supported, EmbeddingGemma2Capabilities.All["embedding.pretokenized.cpu"]);
-        Assert.Equal(EmbeddingGemma2CapabilityStatus.Supported, EmbeddingGemma2Capabilities.All["embedding.text"]);
-        Assert.Equal(EmbeddingGemma2CapabilityStatus.Supported, EmbeddingGemma2Capabilities.All["image.cpu"]);
-        Assert.Equal(EmbeddingGemma2CapabilityStatus.Supported, EmbeddingGemma2Capabilities.All["video.cpu"]);
+        Assert.Equal(Status.Supported, EmbeddingGemma2Capabilities.Statuses["embedding.pretokenized.cpu"]);
+        Assert.Equal(Status.Supported, EmbeddingGemma2Capabilities.Statuses["embedding.text"]);
+        Assert.Equal(Status.Supported, EmbeddingGemma2Capabilities.Statuses["image.cpu"]);
+        Assert.Equal(Status.Supported, EmbeddingGemma2Capabilities.Statuses["video.cpu"]);
         // Outside the contracts: proposed rows and opt-in deviations (experimental).
-        Assert.Equal(EmbeddingGemma2CapabilityStatus.Experimental, EmbeddingGemma2Capabilities.All["input.2050_to_8192_tokens"]);
-        Assert.Equal(EmbeddingGemma2CapabilityStatus.Experimental, EmbeddingGemma2Capabilities.All["prompts.task"]);
-        Assert.Equal(EmbeddingGemma2CapabilityStatus.Experimental, EmbeddingGemma2Capabilities.All["image.budget_other"]);
-        Assert.Equal(EmbeddingGemma2CapabilityStatus.Experimental, EmbeddingGemma2Capabilities.All["video.hdr"]);
-        Assert.Equal(EmbeddingGemma2CapabilityStatus.Supported, EmbeddingGemma2Capabilities.All["image.cuda"]);
-        Assert.Equal(EmbeddingGemma2CapabilityStatus.Experimental, EmbeddingGemma2Capabilities.All["video.frames_without_timing.upstream_opt_in"]);
-        Assert.Equal(EmbeddingGemma2CapabilityStatus.Supported, EmbeddingGemma2Capabilities.All["video.cuda"]);
-        Assert.Equal(EmbeddingGemma2CapabilityStatus.Supported, EmbeddingGemma2Capabilities.All["embedding.pretokenized.cuda"]);
+        Assert.Equal(Status.Experimental, EmbeddingGemma2Capabilities.Statuses["input.2050_to_8192_tokens"]);
+        Assert.Equal(Status.Experimental, EmbeddingGemma2Capabilities.Statuses["prompts.task"]);
+        Assert.Equal(Status.Experimental, EmbeddingGemma2Capabilities.Statuses["image.budget_other"]);
+        Assert.Equal(Status.Experimental, EmbeddingGemma2Capabilities.Statuses["video.hdr"]);
+        Assert.Equal(Status.Supported, EmbeddingGemma2Capabilities.Statuses["image.cuda"]);
+        Assert.Equal(Status.Experimental, EmbeddingGemma2Capabilities.Statuses["video.frames_without_timing.upstream_opt_in"]);
+        Assert.Equal(Status.Supported, EmbeddingGemma2Capabilities.Statuses["video.cuda"]);
+        Assert.Equal(Status.Supported, EmbeddingGemma2Capabilities.Statuses["embedding.pretokenized.cuda"]);
         // ARM64 and x86-64 without AVX2 stay outside the video contracts (swscale SIMD paths are unmeasured there).
-        Assert.Equal(EmbeddingGemma2CapabilityStatus.Untested, EmbeddingGemma2Capabilities.All["video.decode.arm64_or_non_avx2"]);
-        Assert.Equal(stable.Compatibility["windows-x64 cpu"], Name(EmbeddingGemma2Capabilities.All["windows"]));
+        Assert.Equal(Status.Untested, EmbeddingGemma2Capabilities.Statuses["video.decode.arm64_or_non_avx2"]);
+        Assert.Equal(stable.Compatibility["windows-x64 cpu"], Name(EmbeddingGemma2Capabilities.Statuses["windows"]));
     }
 }

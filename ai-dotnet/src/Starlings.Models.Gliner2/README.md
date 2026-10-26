@@ -58,7 +58,7 @@ The defaults are the qualified behavior, with outputs unchanged bit for bit. Wit
 
 ## Stable contract
 
-This is the contract of profile `gliner2-base-v1/onnx-fp32-cpu`. Its Stable label commits to it under the [support policy](https://github.com/starlinghq/starling/blob/main/docs/support-policy.md). The statuses are the registry manifest's and `Gliner2Capabilities.Profiles`, which a test keeps equal key for key.
+This is the contract of profile `gliner2-base-v1/onnx-fp32-cpu`. Its Stable label commits to it under the [support policy](https://github.com/starlinghq/starling/blob/main/docs/support-policy.md). The statuses are the registry manifest's and `Gliner2Capabilities.ProfileCapabilities`, which a test keeps equal key for key.
 
 | Item | Contract |
 | --- | --- |
@@ -80,7 +80,7 @@ This is the contract of profile `gliner2-base-v1/onnx-fp32-cpu`. Its Stable labe
 
 ## Stable contract: CUDA
 
-This is the contract of profile `gliner2-base-v1/onnx-fp32-cuda` (Stable since 2026-10-16). It is the CPU contract above, with these differences. The statuses are the registry manifest's and `Gliner2Capabilities.Profiles`, which a test keeps equal key for key.
+This is the contract of profile `gliner2-base-v1/onnx-fp32-cuda` (Stable since 2026-10-16). It is the CPU contract above, with these differences. The statuses are the registry manifest's and `Gliner2Capabilities.ProfileCapabilities`, which a test keeps equal key for key.
 
 | Item | Contract |
 | --- | --- |
@@ -109,6 +109,10 @@ Evidence: [binding CUDA G4 and G5 round](https://github.com/starlinghq/starling/
 With default glibc settings, a process that loads and unloads the extractor repeatedly keeps freed native memory resident: about 1.2 to 1.5 GiB between loads, rising by about 65 to 90 MiB over the first half hour of cycling and then holding. This is allocator retention (glibc malloc's resident high-water mark and fragmentation), not a leak: with the threshold set, every unload returns what the load and its requests allocated. But the soak's growth rule, which is not changed for this, judges the default run: the one-hour default soak fit 81 to 82 MiB/h over the whole run and failed the rule, although the curve flattens after about 30 minutes. With `MALLOC_MMAP_THRESHOLD_=65536` the footprint after unloading held at about 76 MiB, the loaded footprint was about 740 MiB lower, and the one-hour G4 soak passed.
 
 Evidence: [GLiNER2 soak growth](https://github.com/starlinghq/starling/blob/main/docs/evidence/gliner2-soak-growth/README.md) (diagnosis, six controlled runs), [G4 qualification soak](https://github.com/starlinghq/starling/blob/main/docs/evidence/qualification-2026-10-15/README.md).
+
+## Shared types
+
+The package uses the backend-neutral types of `Starlings.Models.Abstractions`. `Gliner2InputTooLongException` derives from `InputTooLongException` (`InputIndex`, `TokenCount`, `MaxTokens`). `Gliner2ModelAssets.Assets` is the lock and acquisition as an `IModelAssets<Gliner2ModelFiles>`. `Gliner2Capabilities.Statuses` is the package-wide capability table in `Starlings.Models.CapabilityStatus`, and `Gliner2Capabilities.ProfileCapabilities` holds each profile's capability record (`ModelProfileCapabilities`), generated from its registry manifest. `Gliner2Capabilities.All`, `Gliner2Capabilities.Profiles` and `Gliner2CapabilityStatus` are obsolete and are removed in the next minor version.
 
 ## Status
 

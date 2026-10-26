@@ -19,7 +19,7 @@ namespace Starlings.Models.EmbeddingGemma2;
 /// from the constructor owns nothing and its <see cref="Dispose"/> does nothing. Both are idempotent.
 /// </para>
 /// </remarks>
-public sealed class EmbeddingGemma2TextEmbedder : IDisposable
+public sealed class EmbeddingGemma2TextEmbedder : ITextEmbedder, IDisposable
 {
     private readonly IEmbeddingGemma2Tokenizer _tokenizer;
     private readonly EmbeddingGemma2Encoder _encoder;
@@ -40,6 +40,15 @@ public sealed class EmbeddingGemma2TextEmbedder : IDisposable
         _encoder = encoder;
         _ownsEncoder = ownsEncoder;
     }
+
+    /// <summary>Floats per embedding (<see cref="EmbeddingGemma2EncoderOptions.Dimension"/>: 768, 512, 256 or 128).</summary>
+    public int Dimension => _encoder.Dimension;
+
+    /// <summary>
+    /// Tokens per text at most, prompt included (<see cref="EmbeddingGemma2EncoderOptions.MaxSequenceLength"/>, 8,192
+    /// by default). Longer text throws <see cref="EmbeddingGemma2InputTooLongException"/>.
+    /// </summary>
+    public int MaxSequenceLength => _encoder.Options.MaxSequenceLength;
 
     /// <summary>
     /// Loads the pinned graph and the owned tokenizer (<see cref="EmbeddingGemma2Tokenizer"/>) from verified local files
@@ -112,6 +121,14 @@ public sealed class EmbeddingGemma2TextEmbedder : IDisposable
         ArgumentNullException.ThrowIfNull(prompt);
         return EmbedBatchCore(texts, prompt, default, cancellationToken);
     }
+
+    /// <summary>
+    /// Embeds texts in order with no prompt (<see cref="EmbeddingGemma2Prompt.None"/>) and writes each text's token
+    /// count (special tokens included) to <paramref name="tokenCounts"/>, which must hold exactly <c>texts.Count</c>
+    /// values. The <see cref="ITextEmbedder"/> form; pass a prompt with the overload that takes one.
+    /// </summary>
+    public float[][] EmbedBatch(IReadOnlyList<string> texts, Span<int> tokenCounts, CancellationToken cancellationToken = default) =>
+        EmbedBatch(texts, EmbeddingGemma2Prompt.None, tokenCounts, cancellationToken);
 
     /// <summary>
     /// Embeds texts in order, each with <paramref name="prompt"/> prepended, and writes each text's token count (special

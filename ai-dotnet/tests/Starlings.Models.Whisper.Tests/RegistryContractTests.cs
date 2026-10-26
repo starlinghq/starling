@@ -14,7 +14,7 @@ public sealed class RegistryContractTests
     [Fact]
     public void TheRegisteredProfileIsThePackageProfile()
     {
-        Assert.Equal(WhisperCapabilities.StableProfile, Manifest.Id);
+        Assert.Equal(WhisperCapabilities.CpuProfile, Manifest.Id);
         Assert.Equal("experimental", Manifest.Maturity);
     }
 

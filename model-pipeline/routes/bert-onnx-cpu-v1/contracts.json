@@ -1,0 +1,129 @@
+{
+  "format": "starlings.bert-route-contracts",
+  "format_version": 1,
+  "route": "bert-onnx-cpu-v1",
+  "contracts": {
+    "sentence-transformers/all-MiniLM-L6-v2": {
+      "task": "embeddings",
+      "max_tokens": 256,
+      "pooling": "mean",
+      "hidden_size": 384,
+      "normalize": "l2",
+      "vocabulary_size": 30522,
+      "cls_token_id": 101,
+      "sep_token_id": 102,
+      "pad_token_id": 0,
+      "output_name": "last_hidden_state",
+      "tokenizer_profile": "bert-wordpiece-uncased",
+      "token_type_ids": true,
+      "prompts": {
+        "none": ""
+      }
+    },
+    "BAAI/bge-small-en-v1.5": {
+      "task": "embeddings",
+      "max_tokens": 512,
+      "pooling": "cls",
+      "hidden_size": 384,
+      "normalize": "l2",
+      "vocabulary_size": 30522,
+      "cls_token_id": 101,
+      "sep_token_id": 102,
+      "pad_token_id": 0,
+      "output_name": "last_hidden_state",
+      "tokenizer_profile": "bert-wordpiece-uncased",
+      "token_type_ids": true,
+      "prompts": {
+        "none": "",
+        "query": "Represent this sentence for searching relevant passages: "
+      }
+    },
+    "BAAI/bge-base-en-v1.5": {
+      "task": "embeddings",
+      "max_tokens": 512,
+      "pooling": "cls",
+      "hidden_size": 768,
+      "normalize": "l2",
+      "vocabulary_size": 30522,
+      "cls_token_id": 101,
+      "sep_token_id": 102,
+      "pad_token_id": 0,
+      "output_name": "last_hidden_state",
+      "tokenizer_profile": "bert-wordpiece-uncased",
+      "token_type_ids": true,
+      "prompts": {
+        "none": "",
+        "query": "Represent this sentence for searching relevant passages: "
+      }
+    },
+    "cross-encoder/ms-marco-MiniLM-L6-v2": {
+      "task": "reranking",
+      "max_tokens": 512,
+      "pooling": "none",
+      "hidden_size": 384,
+      "normalize": "none",
+      "vocabulary_size": 30522,
+      "cls_token_id": 101,
+      "sep_token_id": 102,
+      "pad_token_id": 0,
+      "output_name": "logits",
+      "tokenizer_profile": "bert-wordpiece-uncased",
+      "token_type_ids": true,
+      "prompts": {
+        "none": ""
+      }
+    },
+    "nomic-ai/nomic-embed-text-v1.5": {
+      "task": "embeddings",
+      "max_tokens": 8192,
+      "pooling": "mean",
+      "hidden_size": 768,
+      "normalize": "none",
+      "vocabulary_size": 30522,
+      "cls_token_id": 101,
+      "sep_token_id": 102,
+      "pad_token_id": 0,
+      "output_name": "last_hidden_state",
+      "tokenizer_profile": "bert-wordpiece-uncased",
+      "token_type_ids": true,
+      "prompts": {
+        "none": ""
+      }
+    },
+    "BAAI/bge-m3": {
+      "task": "embeddings",
+      "max_tokens": 8192,
+      "pooling": "cls",
+      "hidden_size": 1024,
+      "normalize": "l2",
+      "vocabulary_size": 250002,
+      "cls_token_id": 0,
+      "sep_token_id": 2,
+      "pad_token_id": 1,
+      "output_name": "token_embeddings",
+      "tokenizer_profile": "xlmr-unigram",
+      "token_type_ids": false,
+      "prompts": {
+        "none": ""
+      }
+    },
+    "Starlinghq/bge-reranker-v2-m3-onnx": {
+      "task": "reranking",
+      "max_tokens": 8192,
+      "pooling": "none",
+      "hidden_size": 1024,
+      "normalize": "none",
+      "vocabulary_size": 250002,
+      "cls_token_id": 0,
+      "sep_token_id": 2,
+      "pad_token_id": 1,
+      "output_name": "logits",
+      "tokenizer_profile": "xlmr-unigram",
+      "token_type_ids": false,
+      "prompts": {
+        "none": ""
+      },
+      "score_activation_source": "explicit"
+    }
+  }
+}

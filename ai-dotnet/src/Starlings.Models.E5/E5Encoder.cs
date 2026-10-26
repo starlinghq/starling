@@ -1,7 +1,5 @@
-using System.Buffers;
 using Starlings.Batching;
 using Starlings.Runtime.Onnx;
-using Microsoft.ML.OnnxRuntime;
 
 namespace Starlings.Models.E5;
 
@@ -63,9 +61,7 @@ public sealed class E5Encoder : IDisposable
     private readonly OnnxModelSession _session;
     private readonly bool _ownsSession;
     private readonly E5EncoderOptions _options;
-    private readonly bool _hasTokenTypeIds;
-    private readonly string[] _inputNames;
-    private readonly string[] _outputNames = [LastHiddenStateName];
+    private readonly EncoderCore _core;
     private int _disposed;
 
     /// <summary>
@@ -84,8 +80,8 @@ public sealed class E5Encoder : IDisposable
         _session = session;
         _ownsSession = ownsSession;
         _options = options;
-        (Dimension, _hasTokenTypeIds) = ValidateSignature(session);
-        _inputNames = _hasTokenTypeIds ? [InputIdsName, AttentionMaskName, TokenTypeIdsName] : [InputIdsName, AttentionMaskName];
+        (Dimension, bool hasTokenTypeIds) = ValidateSignature(session);
+        _core = new EncoderCore(session, InputIdsName, AttentionMaskName, hasTokenTypeIds ? TokenTypeIdsName : null, LastHiddenStateName);
     }
 
     /// <summary>Embedding dimension read from the graph (<see cref="NativeDimension"/>, 384, for the pinned graph).</summary>
@@ -154,7 +150,8 @@ public sealed class E5Encoder : IDisposable
     /// Embeds a batch into <paramref name="destination"/>, row-major, <c>inputs.Count x Dimension</c> floats.
     /// All inputs are validated before any inference runs.
     /// </summary>
-    /// <exception cref="ArgumentException">An input is empty, too long, has an invalid mask or id, or the destination size is wrong.</exception>
+    /// <exception cref="InputTooLongException">An input has more ids than <see cref="E5EncoderOptions.MaxSequenceLength"/> (an <see cref="ArgumentException"/>).</exception>
+    /// <exception cref="ArgumentException">An input is empty, has an invalid mask or id, or the destination size is wrong.</exception>
     public void EmbedBatch(IReadOnlyList<EncoderInput> inputs, Span<float> destination, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(inputs);
@@ -194,7 +191,8 @@ public sealed class E5Encoder : IDisposable
     /// before any inference, and throws what a one-input call would throw (the message names it input 0). Lets a caller
     /// reject an invalid input on its own before queueing it next to others (micro-batching).
     /// </summary>
-    /// <exception cref="ArgumentException">The input is empty, too long, or has an invalid mask or id.</exception>
+    /// <exception cref="InputTooLongException">The input has more ids than <see cref="E5EncoderOptions.MaxSequenceLength"/> (an <see cref="ArgumentException"/>).</exception>
+    /// <exception cref="ArgumentException">The input is empty, or has an invalid mask or id.</exception>
     public void Validate(EncoderInput input) => Validate(input, 0, _options, nameof(input));
 
     /// <summary>Disposes the session if this encoder owns it. Idempotent.</summary>
@@ -208,42 +206,11 @@ public sealed class E5Encoder : IDisposable
 
     /// <summary>
     /// Mean over positions with mask 1 (sum / max(count, 1e-9)), then x / max(||x||2, 1e-12), accumulated in double
-    /// and rounded to float once. Matches sentence-transformers Pooling(mean) + Normalize.
+    /// and rounded to float once. Matches sentence-transformers Pooling(mean) + Normalize. The arithmetic is
+    /// <see cref="EncoderCore.Pool"/>'s (shared with the other encoders).
     /// </summary>
-    internal static void MeanPoolAndNormalize(ReadOnlySpan<float> hidden, ReadOnlySpan<long> mask, int dimension, Span<float> destination)
-    {
-        Span<double> sum = dimension <= 1024 ? stackalloc double[dimension] : new double[dimension];
-        sum.Clear();
-        double count = 0;
-        for (int t = 0; t < mask.Length; t++)
-        {
-            if (mask[t] == 0)
-            {
-                continue;
-            }
-
-            count++;
-            var row = hidden.Slice(t * dimension, dimension);
-            for (int d = 0; d < dimension; d++)
-            {
-                sum[d] += row[d];
-            }
-        }
-
-        count = Math.Max(count, 1e-9);
-        double norm = 0;
-        for (int d = 0; d < dimension; d++)
-        {
-            sum[d] /= count;
-            norm += sum[d] * sum[d];
-        }
-
-        norm = Math.Max(Math.Sqrt(norm), 1e-12);
-        for (int d = 0; d < dimension; d++)
-        {
-            destination[d] = (float)(sum[d] / norm);
-        }
-    }
+    internal static void MeanPoolAndNormalize(ReadOnlySpan<float> hidden, ReadOnlySpan<long> mask, int dimension, Span<float> destination) =>
+        EncoderCore.Pool(hidden, mask, dimension, dimension, EncoderPooling.Mean, normalize: true, destination);
 
     /// <summary>
     /// Writes rows <paramref name="start"/>..start+count into row-major <c>[count, width]</c> id and mask buffers,
@@ -264,27 +231,11 @@ public sealed class E5Encoder : IDisposable
     /// Writes the inputs at <paramref name="rows"/>, in that order, into row-major <c>[rows.Length, width]</c> id and
     /// mask buffers, right-padding each row with <paramref name="padId"/> and mask 0.
     /// </summary>
-    internal static void PackRightPadded(IReadOnlyList<EncoderInput> inputs, ReadOnlySpan<int> rows, int width, long padId, Span<long> ids, Span<long> mask)
-    {
-        for (int r = 0; r < rows.Length; r++)
-        {
-            var input = inputs[rows[r]];
-            var idRow = ids.Slice(r * width, width);
-            var maskRow = mask.Slice(r * width, width);
-            input.InputIds.Span.CopyTo(idRow);
-            idRow[input.Length..].Fill(padId);
-            if (input.AttentionMask.IsEmpty)
-            {
-                maskRow[..input.Length].Fill(1);
-            }
-            else
-            {
-                input.AttentionMask.Span.CopyTo(maskRow);
-            }
+    internal static void PackRightPadded(IReadOnlyList<EncoderInput> inputs, ReadOnlySpan<int> rows, int width, long padId, Span<long> ids, Span<long> mask) =>
+        EncoderCore.PackRightPadded(inputs, rows, width, padId, ReadRow, ids, mask, tokenTypes: default);
 
-            maskRow[input.Length..].Clear();
-        }
-    }
+    /// <summary>An input as <see cref="EncoderCore"/> packs it: ids and mask; token type ids are all zero for e5.</summary>
+    internal static EncoderRow ReadRow(EncoderInput input) => new(input.InputIds, input.AttentionMask, default);
 
     private static (int Dimension, bool HasTokenTypeIds) ValidateSignature(OnnxModelSession session) =>
         ValidateSignature(session.Inputs, session.Outputs);
@@ -337,7 +288,7 @@ public sealed class E5Encoder : IDisposable
 
         if (ids.Length > options.MaxSequenceLength)
         {
-            throw new ArgumentException($"Input {index} has {ids.Length} tokens; the maximum is {options.MaxSequenceLength}. Truncate in the tokenizer.", paramName);
+            throw new InputTooLongException($"Input {index} has {ids.Length} tokens; the maximum is {options.MaxSequenceLength}. Truncate in the tokenizer.", paramName, index, ids.Length, options.MaxSequenceLength);
         }
 
         foreach (long id in ids)
@@ -378,60 +329,9 @@ public sealed class E5Encoder : IDisposable
 
     /// <summary>
     /// Runs the inputs at <paramref name="rows"/> as one call padded to <paramref name="width"/> and writes row
-    /// <c>rows[r]</c>'s embedding at <c>destination[rows[r] * Dimension]</c>.
+    /// <c>rows[r]</c>'s embedding at <c>destination[rows[r] * Dimension]</c>: mean pooling and L2 normalization of the
+    /// last hidden state (<see cref="EncoderCore.EmbedChunk"/>; token type ids, when the graph has them, are zero).
     /// </summary>
-    private void EmbedChunk(IReadOnlyList<EncoderInput> inputs, ReadOnlySpan<int> rows, int width, Span<float> destination, CancellationToken cancellationToken)
-    {
-        int count = rows.Length;
-        int cells = count * width;
-        int hiddenCells = checked(cells * Dimension);
-        long[] ids = ArrayPool<long>.Shared.Rent(cells);
-        long[] mask = ArrayPool<long>.Shared.Rent(cells);
-        long[]? types = _hasTokenTypeIds ? ArrayPool<long>.Shared.Rent(cells) : null;
-        float[] hidden = ArrayPool<float>.Shared.Rent(hiddenCells);
-        try
-        {
-            PackRightPadded(inputs, rows, width, _options.PadTokenId, ids, mask);
-            if (types is not null)
-            {
-                Array.Clear(types, 0, cells);
-            }
-
-            RunGraph(ids, mask, types, hidden, count, width, cancellationToken);
-
-            for (int r = 0; r < count; r++)
-            {
-                MeanPoolAndNormalize(
-                    hidden.AsSpan(r * width * Dimension, width * Dimension),
-                    mask.AsSpan(r * width, width),
-                    Dimension,
-                    destination.Slice(rows[r] * Dimension, Dimension));
-            }
-        }
-        finally
-        {
-            // The OrtValues pinning these arrays are disposed inside RunGraph, before the arrays return to the pool.
-            ArrayPool<float>.Shared.Return(hidden);
-            if (types is not null)
-            {
-                ArrayPool<long>.Shared.Return(types);
-            }
-
-            ArrayPool<long>.Shared.Return(mask);
-            ArrayPool<long>.Shared.Return(ids);
-        }
-    }
-
-    private void RunGraph(long[] ids, long[] mask, long[]? types, float[] hidden, int count, int width, CancellationToken cancellationToken)
-    {
-        int cells = count * width;
-        long[] shape = [count, width];
-        var memoryInfo = OrtMemoryInfo.DefaultInstance;
-        using var idsValue = OrtValue.CreateTensorValueFromMemory(memoryInfo, ids.AsMemory(0, cells), shape);
-        using var maskValue = OrtValue.CreateTensorValueFromMemory(memoryInfo, mask.AsMemory(0, cells), shape);
-        using var typesValue = types is null ? null : OrtValue.CreateTensorValueFromMemory(memoryInfo, types.AsMemory(0, cells), shape);
-        using var hiddenValue = OrtValue.CreateTensorValueFromMemory(memoryInfo, hidden.AsMemory(0, cells * Dimension), [count, width, Dimension]);
-        OrtValue[] inputValues = typesValue is null ? [idsValue, maskValue] : [idsValue, maskValue, typesValue];
-        _session.Run(_inputNames, inputValues, _outputNames, [hiddenValue], cancellationToken);
-    }
+    private void EmbedChunk(IReadOnlyList<EncoderInput> inputs, ReadOnlySpan<int> rows, int width, Span<float> destination, CancellationToken cancellationToken) =>
+        _core.EmbedChunk(inputs, rows, width, ReadRow, _options.PadTokenId, Dimension, EncoderPooling.Mean, normalize: true, Dimension, destination, cancellationToken);
 }

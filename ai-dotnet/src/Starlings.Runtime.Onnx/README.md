@@ -47,6 +47,8 @@ using var outputs = session.Run(inputNames, inputValues, outputNames, cancellati
 - `OnnxRuntimeInfo`: `NativeVersion`, `ManagedVersion`, `AvailableProviders`, `CpuProviderName`, `CudaProviderName`.
 - Exceptions: `OnnxRuntimeUnavailableException` (native library missing or of another version), `OnnxProviderUnavailableException` (the requested provider cannot be used; never followed by a fallback), `OnnxModelIntegrityException` (SHA-256 mismatch). A cancelled run throws `OperationCanceledException`; the session stays usable.
 
+The text encoders of `Starlings.Models.E5`, `Starlings.Models.EmbeddingGemma2` and `Starlings.Models.Bert` share one internal implementation of right-padded packing, mean and CLS pooling with L2 normalization, and the chunk run (`EncoderCore`). It is not public API.
+
 ## Native runtime
 
 The package references only `Microsoft.ML.OnnxRuntime.Managed` (exactly 1.30.0). The application references exactly one native package of the same version:
@@ -57,6 +59,10 @@ The package references only `Microsoft.ML.OnnxRuntime.Managed` (exactly 1.30.0).
 | CUDA, Linux x64 | `Microsoft.ML.OnnxRuntime.Gpu.Linux` 1.30.0 (needs the CUDA 13 runtime, cuBLAS and cuDNN 9 on the loader path; not shipped) |
 
 Both ship `libonnxruntime` under the same file name. Without a native package, or with a different version, session creation fails with `OnnxRuntimeUnavailableException` naming the package to add.
+
+### Native package check
+
+The package ships MSBuild targets in `buildTransitive/`, so every executable or test project that references it, directly or through a model package, checks its package graph after restore: warning `STARLINGS001` when no ONNX Runtime native package is present, error `STARLINGS002` when both `Microsoft.ML.OnnxRuntime` and a `Microsoft.ML.OnnxRuntime.Gpu*` package are (a GenAI native package counts through the ONNX Runtime package it brings). Class libraries and browser projects (`browser-*` runtime identifiers, or `Starlings.Runtime.OnnxWeb` in the graph) are not checked. Turn it off with `<StarlingsOnnxRuntimeNativeCheck>false</StarlingsOnnxRuntimeNativeCheck>`, for example when the application deploys its own ONNX Runtime library. CUDA build recipe, Linux GPU dependencies and Native AOT status: [native runtimes guide](https://github.com/starlinghq/starling/blob/main/docs/guides/native-runtimes-and-cuda.md).
 
 ## Threads in containers
 
