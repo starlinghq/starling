@@ -89,7 +89,10 @@ public sealed class TextChunker
 
     /// <summary>
     /// Splits <paramref name="text"/> into chunks of at most <see cref="TextChunkerOptions.MaxTokens"/> tokens, prefix and
-    /// special tokens included, in text order. An empty text, or one that fits whole, is one chunk.
+    /// special tokens included, in text order. An empty text, or one that fits whole, is one chunk. If the span of a
+    /// single token needs more tokens than fit when tokenized alone with the prefix, that one-token chunk is returned
+    /// as it is, with its larger <see cref="TextChunk.TokenCount"/>; check it before embedding with a profile that
+    /// rejects long input.
     /// </summary>
     /// <param name="text">The text.</param>
     /// <param name="cancellationToken">Checked before each chunk.</param>

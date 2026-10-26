@@ -80,6 +80,24 @@ public sealed class StreamingAndSchedulerTests : IDisposable
     }
 
     [Fact]
+    public async Task AnInvalidInputFailsTheStreamWhenItArrivesWithItsPosition()
+    {
+        using var generator = new EmbeddingGemma2EmbeddingGenerator(new EmbeddingGemma2TextEmbedder(_tokenizer, _encoder));
+        var received = new List<Embedding<float>>();
+        var ex = await Assert.ThrowsAsync<ArgumentException>(async () =>
+        {
+            await foreach (var embedding in generator.EmbedStreamAsync(Source(["a", "b", "c", CodePointTokenizer.MediaText]), cancellationToken: Ct))
+            {
+                received.Add(embedding);
+            }
+        });
+        Assert.Equal("values", ex.ParamName);
+        Assert.StartsWith("Value 3:", ex.Message, StringComparison.Ordinal);
+        Assert.Contains("placeholder", ex.Message, StringComparison.Ordinal);
+        Assert.Equal(2, received.Count);
+    }
+
+    [Fact]
     public async Task WithASchedulerTextGenerationRunsOnIt()
     {
         var scheduler = new CountingTaskScheduler();
@@ -132,11 +150,19 @@ public sealed class StreamingAndSchedulerTests : IDisposable
 
     private sealed class CodePointTokenizer : IEmbeddingGemma2Tokenizer
     {
+        /// <summary>Tokenizes to the image placeholder id, which the encoder rejects.</summary>
+        public const string MediaText = "<image>";
+
         public ConcurrentQueue<int> Threads { get; } = new();
 
         public EmbeddingGemma2Input Tokenize(string text)
         {
             Threads.Enqueue(Environment.CurrentManagedThreadId);
+            if (text == MediaText)
+            {
+                return new EmbeddingGemma2Input(new long[] { 2, 255_999, 1 });
+            }
+
             return new EmbeddingGemma2Input(new long[] { 2 }.Concat(text.Select(c => (long)c + 10)).Append(1).ToArray());
         }
     }

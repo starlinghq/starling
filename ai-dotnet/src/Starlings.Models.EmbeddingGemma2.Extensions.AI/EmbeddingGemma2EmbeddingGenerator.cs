@@ -205,7 +205,8 @@ public sealed class EmbeddingGemma2EmbeddingGenerator : IEmbeddingGenerator<stri
     /// <see cref="GenerateAsync"/>. Each value is tokenized with the prompt as it arrives, on the thread that enumerates,
     /// and checked against the 8,192-token limit: an input above it fails the enumeration with
     /// <see cref="EmbeddingGemma2InputTooLongException"/> (its <see cref="InputTooLongException.InputIndex"/> is the
-    /// position in the stream; text whose length alone proves it too long is not tokenized). Values are grouped as the
+    /// position in the stream; text whose length alone proves it too long is not tokenized), and any other invalid input
+    /// (a media token, for example) with <see cref="ArgumentException"/> naming its position. Values are grouped as the
     /// encoder groups an explicit batch in input order (<see cref="EmbeddingGemma2EncoderOptions.MaxBatchSize"/> rows,
     /// <see cref="EmbeddingGemma2EncoderOptions.MaxBatchTokens"/> padded cells); each group runs as one encoder call when
     /// the next value does not fit or the source ends, and its embeddings are then yielded. With
@@ -294,7 +295,12 @@ public sealed class EmbeddingGemma2EmbeddingGenerator : IEmbeddingGenerator<stri
         var encoder = embedder.Encoder;
         await foreach (var embedding in EmbeddingGeneratorCore.Stream(
             values,
-            (text, index) => embedder.Tokenize(text, prompt, index),
+            (text, index) =>
+            {
+                var input = embedder.Tokenize(text, prompt, index);
+                encoder.Validate(input);
+                return input;
+            },
             static input => input.Length,
             encoder.Options.MaxBatchSize,
             encoder.Options.MaxBatchTokens,

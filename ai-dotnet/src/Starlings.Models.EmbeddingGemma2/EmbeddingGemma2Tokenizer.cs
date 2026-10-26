@@ -160,8 +160,8 @@ public sealed class EmbeddingGemma2Tokenizer : IEmbeddingGemma2Tokenizer, IChunk
     /// <summary>
     /// The longest token of a BPE <c>tokenizer.json</c> in UTF-16 code units (vocabulary and added tokens), when every
     /// character of the input ends up inside some token: a normalizer of string replacements that never shorten the
-    /// text, a pre-tokenizer that only splits, byte fallback or no fused unknown token, and added tokens that strip
-    /// nothing. Otherwise null.
+    /// text, a pre-tokenizer that only splits, byte fallback or an unknown token that is not fused, and added tokens that
+    /// strip nothing. Otherwise null.
     /// </summary>
     internal static int? ComputeMaxCharactersPerToken(byte[] json)
     {
@@ -180,7 +180,10 @@ public sealed class EmbeddingGemma2Tokenizer : IEmbeddingGemma2Tokenizer, IChunk
                 return null;
             }
 
-            if (!IsTrue(model, "byte_fallback") && IsTrue(model, "fuse_unk"))
+            // Without byte fallback an unknown character becomes the unknown token, one per character unless fused, or
+            // is dropped when the model has no unknown token.
+            bool hasUnknownToken = model.TryGetProperty("unk_token", out var unknown) && unknown.ValueKind == JsonValueKind.String;
+            if (!IsTrue(model, "byte_fallback") && (IsTrue(model, "fuse_unk") || !hasUnknownToken))
             {
                 return null;
             }

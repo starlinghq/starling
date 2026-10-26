@@ -46,8 +46,9 @@ internal static class EmbeddingGeneratorCore
             : Task.Factory.StartNew(() => Run(start, cancellationToken), cancellationToken, TaskCreationOptions.DenyChildAttach, scheduler).Unwrap();
 
     /// <summary>
-    /// Embeds a stream of texts in order: each value is tokenized (<paramref name="tokenize"/>, given the value and its
-    /// position) as it arrives, and the tokenized values are grouped exactly as the encoder's batch plan groups an
+    /// Embeds a stream of texts in order: each value is tokenized and validated (<paramref name="tokenize"/>, given the
+    /// value and its position) as it arrives; an <see cref="ArgumentException"/> from it other than
+    /// <see cref="InputTooLongException"/> is rethrown naming the position, and the tokenized values are grouped exactly as the encoder's batch plan groups an
     /// explicit batch in input order (a group grows while it has fewer than <paramref name="maxRows"/> rows and, with a
     /// budget, its padded size stays within <paramref name="maxCells"/>). Each full group runs as one
     /// <paramref name="embed"/> call (on <paramref name="scheduler"/> when set, else on the enumerating thread) and its
@@ -76,7 +77,18 @@ internal static class EmbeddingGeneratorCore
                 throw new ArgumentException($"Value {index} is null.", nameof(values));
             }
 
-            var input = tokenize(value, index++);
+            TInput input;
+            try
+            {
+                input = tokenize(value, index);
+            }
+            catch (ArgumentException ex) when (ex is not InputTooLongException)
+            {
+                // The encoder's own checks number the input within its call (0); report the position in the stream.
+                throw new ArgumentException($"Value {index}: {ex.Message}", nameof(values), ex);
+            }
+
+            index++;
             int rowLength = length(input);
             int newWidth = Math.Max(width, rowLength);
             if (batch.Count > 0 && (batch.Count >= maxRows || (maxCells is { } budget && (long)(batch.Count + 1) * newWidth > budget)))

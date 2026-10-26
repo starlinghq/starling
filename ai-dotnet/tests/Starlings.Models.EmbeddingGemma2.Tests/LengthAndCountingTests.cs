@@ -143,5 +143,13 @@ public class LengthAndCountingTests(ITestOutputHelper output)
         Assert.Null(Bound(File(model: "WordPiece")));
         Assert.Null(Bound(File(fallback: "false")));
         Assert.Null(Bound("not json"));
+
+        // Without byte fallback: one unknown token per unknown character keeps a bound; a fused or absent unknown token does not.
+        static string NoFallback(string unknown, string fuse) =>
+            "{\"normalizer\": null, \"pre_tokenizer\": null, \"added_tokens\": [], \"model\": {\"type\": \"BPE\", \"byte_fallback\": false, \"fuse_unk\": " +
+            fuse + ", \"unk_token\": " + unknown + ", \"vocab\": {\"abcdefgh\": 1, \"<unk>\": 2}}}";
+        Assert.Equal(8, Bound(NoFallback("\"<unk>\"", "false")));
+        Assert.Null(Bound(NoFallback("\"<unk>\"", "true")));
+        Assert.Null(Bound(NoFallback("null", "false")));
     }
 }
