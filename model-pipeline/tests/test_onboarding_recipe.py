@@ -338,3 +338,137 @@ def test_missing_metadata_stays_unknown(tmp_path: Path) -> None:
     assert report["model_config"]["hidden_size"] == "unknown"
     assert report["tokenizer"]["status"] == "missing"
     assert report["sentence_transformers"]["pooling"]["status"] == "unknown"
+
+
+_WORDPIECE = {
+    "version": "1.0",
+    "normalizer": {
+        "type": "BertNormalizer",
+        "clean_text": True,
+        "handle_chinese_chars": True,
+        "strip_accents": None,
+        "lowercase": True,
+    },
+    "pre_tokenizer": {"type": "BertPreTokenizer"},
+    "model": {
+        "type": "WordPiece",
+        "unk_token": "[UNK]",
+        "continuing_subword_prefix": "##",
+        "max_input_chars_per_word": 100,
+        "vocab": {"[UNK]": 0},
+    },
+}
+
+
+def _write_snapshot(
+    root: Path, config: dict, tokenizer: dict, modules: list | None = None, pooling: dict | None = None
+):
+    root.mkdir(parents=True, exist_ok=True)
+    (root / "config.json").write_text(json.dumps(config), encoding="utf-8")
+    (root / "tokenizer.json").write_text(json.dumps(tokenizer), encoding="utf-8")
+    if modules is not None:
+        (root / "modules.json").write_text(json.dumps(modules), encoding="utf-8")
+    if pooling is not None:
+        (root / "1_Pooling").mkdir(exist_ok=True)
+        (root / "1_Pooling/config.json").write_text(json.dumps(pooling), encoding="utf-8")
+    return root
+
+
+def _modules(normalize: bool) -> list:
+    modules = [
+        {"path": "", "type": "sentence_transformers.models.Transformer"},
+        {"path": "1_Pooling", "type": "sentence_transformers.models.Pooling"},
+    ]
+    return modules + ([{"path": "2_Normalize", "type": "sentence_transformers.models.Normalize"}] if normalize else [])
+
+
+def _pooling(mode: str) -> dict:
+    keys = ("cls_token", "mean_tokens", "max_tokens", "mean_sqrt_len_tokens")
+    return {f"pooling_mode_{key}": key == mode for key in keys}
+
+
+_BERT = {"model_type": "bert", "architectures": ["BertModel"], "hidden_size": 768, "max_position_embeddings": 512}
+
+
+@pytest.mark.parametrize(
+    ("mode", "normalize", "expected"), [("cls_token", True, "cls"), ("mean_tokens", False, "mean")]
+)
+def test_inspect_recommends_the_bert_route_for_sentence_transformers_encoders(
+    tmp_path: Path, mode: str, normalize: bool, expected: str
+) -> None:
+    snapshot = _write_snapshot(tmp_path / "s", _BERT, _WORDPIECE, _modules(normalize), _pooling(mode))
+    route = inspect_snapshot(snapshot)["plugin_route"]
+    assert (route["id"], route["status"], route["task"]) == ("bert-onnx-cpu-v1", "candidate", "embeddings")
+    assert route["facts"] == {
+        "hidden_size": 768,
+        "max_position_embeddings": 512,
+        "pooling": expected,
+        "normalize": "l2" if normalize else "none",
+    }
+
+
+def test_inspect_refuses_the_bert_route_for_other_pooling_modes(tmp_path: Path) -> None:
+    snapshot = _write_snapshot(tmp_path / "s", _BERT, _WORDPIECE, _modules(True), _pooling("max_tokens"))
+    route = inspect_snapshot(snapshot)["plugin_route"]
+    assert (route["id"], route["status"]) == ("unknown", "unknown")
+    assert "mean or CLS" in route["reason"]
+
+
+def test_inspect_recommends_the_bert_route_for_single_logit_cross_encoders(tmp_path: Path) -> None:
+    config = {**_BERT, "architectures": ["BertForSequenceClassification"], "id2label": {"0": "LABEL_0"}}
+    route = inspect_snapshot(_write_snapshot(tmp_path / "s", config, _WORDPIECE))["plugin_route"]
+    assert (route["id"], route["task"], route["facts"]["pooling"]) == ("bert-onnx-cpu-v1", "reranking", "none")
+    two_labels = {**config, "id2label": {"0": "a", "1": "b"}}
+    assert inspect_snapshot(_write_snapshot(tmp_path / "t", two_labels, _WORDPIECE))["plugin_route"]["id"] == "unknown"
+
+
+def test_inspect_needs_a_supported_tokenizer_for_the_bert_route(tmp_path: Path) -> None:
+    tokenizer = {**_WORDPIECE, "model": {**_WORDPIECE["model"], "merges": []}}
+    snapshot = _write_snapshot(tmp_path / "s", _BERT, tokenizer, _modules(True), _pooling("mean_tokens"))
+    assert inspect_snapshot(snapshot)["plugin_route"]["status"] == "unknown"
+
+
+def _qwen_tokenizer() -> dict:
+    byte_level = {"type": "ByteLevel", "add_prefix_space": False, "trim_offsets": False, "use_regex": False}
+    return {
+        "version": "1.0",
+        "normalizer": {"type": "NFC"},
+        "pre_tokenizer": {
+            "type": "Sequence",
+            "pretokenizers": [
+                {"type": "Split", "pattern": {"Regex": _QWEN2_SPLIT}, "behavior": "Isolated", "invert": False},
+                byte_level,
+            ],
+        },
+        "post_processor": byte_level,
+        "decoder": byte_level,
+        "model": {
+            "type": "BPE",
+            "dropout": None,
+            "unk_token": None,
+            "continuing_subword_prefix": "",
+            "end_of_word_suffix": "",
+            "fuse_unk": False,
+            "byte_fallback": False,
+            "ignore_merges": False,
+            "vocab": {},
+            "merges": [],
+        },
+    }
+
+
+@pytest.mark.parametrize(("model_type", "architecture"), [("qwen3", "Qwen3ForCausalLM"), ("qwen2", "Qwen2ForCausalLM")])
+def test_inspect_recommends_the_qwen_route_for_qwen_decoders(
+    tmp_path: Path, model_type: str, architecture: str
+) -> None:
+    config = {"model_type": model_type, "architectures": [architecture], "hidden_size": 1024}
+    route = inspect_snapshot(_write_snapshot(tmp_path / "s", config, _qwen_tokenizer()))["plugin_route"]
+    assert (route["id"], route["status"], route["task"]) == ("qwen-genai-cpu-v1", "candidate", "generation")
+
+
+def test_inspect_refuses_the_qwen_route_for_another_head_or_tokenizer(tmp_path: Path) -> None:
+    head = {"model_type": "qwen3", "architectures": ["Qwen3ForSequenceClassification"]}
+    assert inspect_snapshot(_write_snapshot(tmp_path / "s", head, _qwen_tokenizer()))["plugin_route"]["id"] == "unknown"
+    config = {"model_type": "qwen3", "architectures": ["Qwen3ForCausalLM"]}
+    route = inspect_snapshot(_write_snapshot(tmp_path / "t", config, _WORDPIECE))["plugin_route"]
+    assert (route["id"], route["status"]) == ("unknown", "unknown")

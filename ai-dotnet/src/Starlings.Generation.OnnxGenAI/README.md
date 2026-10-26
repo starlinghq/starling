@@ -60,4 +60,8 @@ The package references `Microsoft.ML.OnnxRuntimeGenAI.Managed` (exactly 0.17.1; 
 | CPU | `Microsoft.ML.OnnxRuntimeGenAI` 0.17.1 | Brings `Microsoft.ML.OnnxRuntime` 1.30.0. Natives for linux-x64, linux-arm64, win-x64, win-arm64, osx-arm64; exercised on linux-x64 only. |
 | CUDA | `Microsoft.ML.OnnxRuntimeGenAI.Cuda` 0.17.1 | Brings `Microsoft.ML.OnnxRuntime.Gpu` 1.30.0. linux-x64 and win-x64 natives (CUDA 13 build); the CUDA runtime and cuBLAS are not shipped. Exercised on linux-x64 only. |
 
+### Native package check
+
+The package ships MSBuild targets in `buildTransitive/`, so every executable or test project that references it, directly or through `Starlings.Models.Qwen35.OnnxGenAI` or `Starlings.Models.QwenChat.OnnxGenAI` (the definition packages `Starlings.Models.Qwen35` and `Starlings.Models.QwenChat` do not bring it), checks its package graph after restore: warning `STARLINGS003` when no GenAI native package is present (loading a model would throw `GenAIRuntimeUnavailableException`), error `STARLINGS004` when both `Microsoft.ML.OnnxRuntimeGenAI` and `Microsoft.ML.OnnxRuntimeGenAI.Cuda` are. Class libraries and browser projects are not checked. Turn it off with `<StarlingsOnnxRuntimeGenAINativeCheck>false</StarlingsOnnxRuntimeGenAINativeCheck>`. CUDA build recipe and Linux GPU dependencies: [native runtimes guide](https://github.com/starlinghq/starling/blob/main/docs/guides/native-runtimes-and-cuda.md).
+
 The model directory must come from the onnxruntime-genai builder of the same version. Documentation: [ai-dotnet/README.md](https://github.com/starlinghq/starling/blob/main/ai-dotnet/README.md#generation-backend-and-pilot-llm-p-016).

@@ -189,7 +189,7 @@ try {
     Step '3. Pack (locked restore, empty package cache)'
     $pack = Join-Path $work 'pack'
     $projects = @(
-        'Starlings.Acquisition', 'Starlings.Runtime.Onnx', 'Starlings.Models.E5', 'Starlings.Models.E5.Extensions.AI',
+        'Starlings.Acquisition', 'Starlings.Runtime.Onnx', 'Starlings.Models.Abstractions', 'Starlings.Models.E5', 'Starlings.Models.E5.Extensions.AI',
         'Starlings.Runtime.OnnxWeb', 'Starlings.Runtime.OnnxWeb.WebGpu', 'Starlings.Models.E5.Browser',
         'Starlings.Models.E5.MLNet', 'Starlings.Models.Gliner2', 'Starlings.Models.EmbeddingGemma2',
         'Starlings.Models.EmbeddingGemma2.Extensions.AI', 'Starlings.Models.EmbeddingGemma2.MLNet',
@@ -210,14 +210,15 @@ try {
     $expectedDeps = @{
         'Starlings.Acquisition'                              = @()
         'Starlings.Runtime.Onnx'                             = @("Microsoft.ML.OnnxRuntime.Managed [$ortVersion]")
-        'Starlings.Models.E5'                                = @("Starlings.Acquisition [$aiVersion]", "Starlings.Runtime.Onnx [$aiVersion]", "Starlings.Tokenizers [$tokVersion]")
+        'Starlings.Models.Abstractions'                      = @("Starlings.Acquisition [$aiVersion]")
+        'Starlings.Models.E5'                                = @("Starlings.Acquisition [$aiVersion]", "Starlings.Models.Abstractions [$aiVersion]", "Starlings.Runtime.Onnx [$aiVersion]", "Starlings.Tokenizers [$tokVersion]")
         'Starlings.Runtime.OnnxWeb'                          = @()
         'Starlings.Runtime.OnnxWeb.WebGpu'                   = @("Starlings.Runtime.OnnxWeb [$aiVersion]")
         'Starlings.Models.E5.Browser'                        = @("Starlings.Models.E5 [$aiVersion]", "Starlings.Models.E5.Extensions.AI [$aiVersion]", "Starlings.Runtime.OnnxWeb [$aiVersion]")
         'Starlings.Models.E5.Extensions.AI'                  = @("Starlings.Models.E5 [$aiVersion]", 'Microsoft.Extensions.AI.Abstractions 10.10.1', 'Microsoft.Extensions.DependencyInjection.Abstractions 10.0.12')
         'Starlings.Models.E5.MLNet'                          = @("Starlings.Models.E5 [$aiVersion]", 'Microsoft.ML 5.0.0')
-        'Starlings.Models.Gliner2'                           = @("Starlings.Acquisition [$aiVersion]", "Starlings.Runtime.Onnx [$aiVersion]", "Starlings.Tokenizers [$tokVersion]")
-        'Starlings.Models.EmbeddingGemma2'                   = @("Starlings.Acquisition [$aiVersion]", "Starlings.Runtime.Onnx [$aiVersion]", "Starlings.Tokenizers [$tokVersion]")
+        'Starlings.Models.Gliner2'                           = @("Starlings.Acquisition [$aiVersion]", "Starlings.Models.Abstractions [$aiVersion]", "Starlings.Runtime.Onnx [$aiVersion]", "Starlings.Tokenizers [$tokVersion]")
+        'Starlings.Models.EmbeddingGemma2'                   = @("Starlings.Acquisition [$aiVersion]", "Starlings.Models.Abstractions [$aiVersion]", "Starlings.Runtime.Onnx [$aiVersion]", "Starlings.Tokenizers [$tokVersion]")
         'Starlings.Models.EmbeddingGemma2.Extensions.AI'     = @("Starlings.Models.EmbeddingGemma2 [$aiVersion]", 'Microsoft.Extensions.AI.Abstractions 10.10.1', 'Microsoft.Extensions.DependencyInjection.Abstractions 10.0.12')
         'Starlings.Models.EmbeddingGemma2.MLNet'             = @("Starlings.Models.EmbeddingGemma2 [$aiVersion]", 'Microsoft.ML 5.0.0')
         'Starlings.Models.EmbeddingGemma2.Imaging.SkiaSharp' = @("Starlings.Models.EmbeddingGemma2 [$aiVersion]", "SkiaSharp [$skiaVersion]", "SkiaSharp.NativeAssets.Linux.NoDependencies [$skiaVersion]")
@@ -351,11 +352,11 @@ try {
         if ($names | Where-Object { $_ -match '(?i)sdcb\.ffmpeg|ffmpeg\.(native|runtime|redist)|ffmpeg\.autogen|ffmpegcore|xabe\.ffmpeg' }) { Fail "${app}: FFmpeg bindings or binaries restored" }
         $want = switch ($app) {
             'QwenChat' { 'Starlings.Tokenizers', 'Starlings.Acquisition', 'Microsoft.ML.OnnxRuntime', 'Microsoft.ML.OnnxRuntimeGenAI', 'Microsoft.ML.OnnxRuntimeGenAI.Managed', 'Starlings.Generation.Abstractions', 'Starlings.Generation.OnnxGenAI', 'Starlings.Models.Qwen35', 'Starlings.Models.Qwen35.OnnxGenAI', 'Starlings.Models.Qwen35.Extensions.AI' }
-            'Gliner2Ner' { 'Starlings.Tokenizers', 'Starlings.Acquisition', 'Starlings.Runtime.Onnx', 'Microsoft.ML.OnnxRuntime', 'Starlings.Models.Gliner2' }
-            'EmbeddingGemma2Search' { 'Starlings.Tokenizers', 'Starlings.Acquisition', 'Starlings.Runtime.Onnx', 'Microsoft.ML.OnnxRuntime', 'Starlings.Models.EmbeddingGemma2', 'Starlings.Models.EmbeddingGemma2.Extensions.AI', 'Starlings.Models.EmbeddingGemma2.Imaging.SkiaSharp', 'Starlings.Models.EmbeddingGemma2.Video.FFmpeg' }
-            'MlNetConsumer' { 'Starlings.Tokenizers', 'Starlings.Acquisition', 'Starlings.Runtime.Onnx', 'Microsoft.ML.OnnxRuntime', 'Starlings.Models.E5', 'Starlings.Models.E5.MLNet', 'Starlings.Models.EmbeddingGemma2', 'Starlings.Models.EmbeddingGemma2.MLNet', 'Microsoft.ML' }
-            'AiConsumer' { 'Starlings.Tokenizers', 'Starlings.Acquisition', 'Starlings.Runtime.Onnx', 'Microsoft.ML.OnnxRuntime', 'Starlings.Models.E5', 'Starlings.Models.E5.Extensions.AI', 'Starlings.Models.E5.MLNet', 'Microsoft.ML' }
-            default { 'Starlings.Tokenizers', 'Starlings.Acquisition', 'Starlings.Runtime.Onnx', 'Microsoft.ML.OnnxRuntime', 'Starlings.Models.E5', 'Starlings.Models.E5.Extensions.AI' }
+            'Gliner2Ner' { 'Starlings.Tokenizers', 'Starlings.Acquisition', 'Starlings.Runtime.Onnx', 'Starlings.Models.Abstractions', 'Microsoft.ML.OnnxRuntime', 'Starlings.Models.Gliner2' }
+            'EmbeddingGemma2Search' { 'Starlings.Tokenizers', 'Starlings.Acquisition', 'Starlings.Runtime.Onnx', 'Starlings.Models.Abstractions', 'Microsoft.ML.OnnxRuntime', 'Starlings.Models.EmbeddingGemma2', 'Starlings.Models.EmbeddingGemma2.Extensions.AI', 'Starlings.Models.EmbeddingGemma2.Imaging.SkiaSharp', 'Starlings.Models.EmbeddingGemma2.Video.FFmpeg' }
+            'MlNetConsumer' { 'Starlings.Tokenizers', 'Starlings.Acquisition', 'Starlings.Runtime.Onnx', 'Starlings.Models.Abstractions', 'Microsoft.ML.OnnxRuntime', 'Starlings.Models.E5', 'Starlings.Models.E5.MLNet', 'Starlings.Models.EmbeddingGemma2', 'Starlings.Models.EmbeddingGemma2.MLNet', 'Microsoft.ML' }
+            'AiConsumer' { 'Starlings.Tokenizers', 'Starlings.Acquisition', 'Starlings.Runtime.Onnx', 'Starlings.Models.Abstractions', 'Microsoft.ML.OnnxRuntime', 'Starlings.Models.E5', 'Starlings.Models.E5.Extensions.AI', 'Starlings.Models.E5.MLNet', 'Microsoft.ML' }
+            default { 'Starlings.Tokenizers', 'Starlings.Acquisition', 'Starlings.Runtime.Onnx', 'Starlings.Models.Abstractions', 'Microsoft.ML.OnnxRuntime', 'Starlings.Models.E5', 'Starlings.Models.E5.Extensions.AI' }
         }
         foreach ($package in $want) {
             $hits = @($names | Where-Object { $_.Split('/')[0] -eq $package })

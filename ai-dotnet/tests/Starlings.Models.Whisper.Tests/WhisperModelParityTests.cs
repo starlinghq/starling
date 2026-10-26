@@ -88,4 +88,50 @@ public sealed class WhisperModelParityTests
         int[] expected = [50258, 50259, 50360, 50364, 1044, 291, 13, 50257];
         Assert.Equal(expected, actual);
     }
+
+    [Fact]
+    public void GenerateMatchesTheStepwiseFullContextLoop()
+    {
+        // Generate reuses one ids buffer and one growing logits buffer; the ids must equal a loop that allocates fresh
+        // logits through DecodeLogits on every step. Speech-free input: a 440 Hz tone, so no golden fixture is needed.
+        var (files, modelReason) = WhisperTestAssets.FindModel();
+        Assert.SkipWhen(files is null, modelReason);
+        var waveform = new float[WhisperMelSpectrogram.SampleRate * 2];
+        for (int i = 0; i < waveform.Length; i++)
+        {
+            waveform[i] = 0.25f * MathF.Sin(2 * MathF.PI * 440 * i / WhisperMelSpectrogram.SampleRate);
+        }
+
+        var cancellationToken = TestContext.Current.CancellationToken;
+        using var model = WhisperModel.Create(files!.EncoderPath, files.DecoderPath);
+        float[] hidden = model.Encode(WhisperMelSpectrogram.ExtractChunk(waveform), cancellationToken);
+        // The one-token prompt starts the logits buffer at 2 rows, so it grows during the decode.
+        foreach (int[] prompt in new[] { WhisperModel.Prompt("en"), [WhisperModel.StartOfTranscript] })
+        {
+            foreach (int maxLength in new[] { 1, 3, 40 })
+            {
+                int[] expected = StepwiseGenerate(model, hidden, prompt, maxLength, cancellationToken);
+                int[] actual = model.Generate(hidden, prompt, maxLength, cancellationToken);
+                Assert.Equal(expected, actual);
+            }
+        }
+    }
+
+    private static int[] StepwiseGenerate(WhisperModel model, float[] hidden, int[] prompt, int maxLength, CancellationToken cancellationToken)
+    {
+        var ids = new List<int>(prompt);
+        for (int step = 0; step < maxLength && ids.Count < WhisperModel.MaxTargetPositions; step++)
+        {
+            float[] logits = model.DecodeLogits(ids.Select(id => (long)id).ToArray(), hidden, cancellationToken);
+            var last = logits.AsSpan((ids.Count - 1) * WhisperModel.VocabSize, WhisperModel.VocabSize);
+            WhisperModel.ApplySuppression(last, step == 0);
+            ids.Add(WhisperModel.ArgMax(last));
+            if (ids[^1] == WhisperModel.EndOfText)
+            {
+                break;
+            }
+        }
+
+        return ids.ToArray();
+    }
 }

@@ -14,6 +14,7 @@
 
   <ItemGroup>
     <Compile Include="../Shared/Registry/*.cs" Link="Shared/Registry/%(Filename)%(Extension)" />
+    <Compile Include="../Shared/CapabilityRecords/*.cs" Link="Shared/CapabilityRecords/%(Filename)%(Extension)" />
     <Compile Include="../Shared/EmbeddingGemma2/*.cs" Link="Shared/EmbeddingGemma2/%(Filename)%(Extension)" />
     <Compile Include="../Shared/EmbeddingGemma2Images/*.cs" Link="Shared/EmbeddingGemma2Images/%(Filename)%(Extension)" />
     <Compile Include="../Shared/EmbeddingGemma2Videos/*.cs" Link="Shared/EmbeddingGemma2Videos/%(Filename)%(Extension)" />

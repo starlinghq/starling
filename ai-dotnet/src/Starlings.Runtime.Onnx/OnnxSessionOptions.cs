@@ -16,6 +16,39 @@ public enum OnnxExecutionProvider
     Cuda,
 }
 
+/// <summary>How ONNX Runtime schedules the nodes of one run (<c>ExecutionMode</c>).</summary>
+public enum OnnxExecutionMode
+{
+    /// <summary>One node at a time, in topological order (<c>ORT_SEQUENTIAL</c>). The default, and the mode every profile was qualified in.</summary>
+    Sequential,
+
+    /// <summary>
+    /// Independent nodes run concurrently on an inter-op thread pool of <see cref="OnnxSessionOptions.InterOpNumThreads"/>
+    /// threads (<c>ORT_PARALLEL</c>). Each node computes the same values as in sequential mode. It helps only graphs with
+    /// independent branches. Experimental on CPU; untested on CUDA.
+    /// </summary>
+    Parallel,
+}
+
+/// <summary>Graph optimizations ONNX Runtime applies when it creates the session (<c>GraphOptimizationLevel</c>).</summary>
+public enum OnnxGraphOptimizationLevel
+{
+    /// <summary>No graph optimization (<c>ORT_DISABLE_ALL</c>).</summary>
+    None,
+
+    /// <summary>Semantics-preserving rewrites such as constant folding and redundant-node removal (<c>ORT_ENABLE_BASIC</c>).</summary>
+    Basic,
+
+    /// <summary>Basic plus node fusions (<c>ORT_ENABLE_EXTENDED</c>).</summary>
+    Extended,
+
+    /// <summary>Extended plus layout optimizations (<c>ORT_ENABLE_LAYOUT</c>).</summary>
+    Layout,
+
+    /// <summary>Every optimization (<c>ORT_ENABLE_ALL</c>). The default, and the level every profile was qualified at.</summary>
+    All,
+}
+
 /// <summary>
 /// Immutable session configuration. Every setting that changes numerical results or native resource use is
 /// explicit here; settings ONNX Runtime would accept but this profile does not support are not exposed.
@@ -36,11 +69,54 @@ public sealed record OnnxSessionOptions
     public int? IntraOpNumThreads { get; init; }
 
     /// <summary>
-    /// Threads used across independent operators (<c>inter_op_num_threads</c>). Only relevant with parallel
-    /// execution, which this component does not enable (execution mode is sequential); exposed so the value is
-    /// recorded. <see langword="null"/> keeps ONNX Runtime's default. Must be positive when set.
+    /// Threads used across independent operators (<c>inter_op_num_threads</c>). ONNX Runtime uses them only with
+    /// <see cref="ExecutionMode"/> <see cref="OnnxExecutionMode.Parallel"/>; in the default sequential mode it creates no
+    /// inter-op pool and the value is only recorded in <see cref="OnnxSessionDiagnostics.InterOpNumThreads"/>.
+    /// <see langword="null"/> keeps ONNX Runtime's default. Must be positive when set.
     /// </summary>
     public int? InterOpNumThreads { get; init; }
+
+    /// <summary>
+    /// Node scheduling within a run. Default <see cref="OnnxExecutionMode.Sequential"/>, as before this option existed.
+    /// <see cref="OnnxExecutionMode.Parallel"/> makes <see cref="InterOpNumThreads"/> take effect.
+    /// </summary>
+    public OnnxExecutionMode ExecutionMode { get; init; } = OnnxExecutionMode.Sequential;
+
+    /// <summary>
+    /// Graph optimization level. Default <see cref="OnnxGraphOptimizationLevel.All"/>, the level every profile was
+    /// qualified at. A lower level keeps the graph closer to the file (useful to inspect it or to rule out a fusion) and
+    /// can change results in the last bits; no parity claim of a model package covers another level.
+    /// </summary>
+    public OnnxGraphOptimizationLevel GraphOptimizationLevel { get; init; } = OnnxGraphOptimizationLevel.All;
+
+    /// <summary>
+    /// Path where ONNX Runtime writes the graph after optimization (<c>optimized_model_filepath</c>), for inspection or to
+    /// load later with <see cref="OnnxGraphOptimizationLevel.None"/>. <see langword="null"/> (the default) writes nothing.
+    /// An existing file is overwritten. It must not be the model file being loaded. The optimized graph can contain
+    /// provider-specific nodes, so it loads only with the provider it was written for.
+    /// </summary>
+    public string? OptimizedModelFilePath { get; init; }
+
+    /// <summary>
+    /// Logger id of this session's ONNX Runtime messages (<c>session_log_id</c>), so messages of several sessions can be
+    /// told apart. <see langword="null"/> keeps ONNX Runtime's default (empty). See
+    /// <see cref="OnnxRuntimeInfo.ConfigureLogging"/>.
+    /// </summary>
+    public string? LogId { get; init; }
+
+    /// <summary>
+    /// Lowest severity of this session's ONNX Runtime messages that are logged. Default <see cref="OnnxLogSeverity.Error"/>,
+    /// as before this option existed. Messages go to standard error unless a sink is set with
+    /// <see cref="OnnxRuntimeInfo.ConfigureLogging"/>.
+    /// </summary>
+    public OnnxLogSeverity LogSeverity { get; init; } = OnnxLogSeverity.Error;
+
+    /// <summary>
+    /// CUDA execution provider options beyond the device id: memory limit, arena growth, cuDNN algorithm search and CUDA
+    /// graphs. Used when <see cref="Provider"/> is <see cref="OnnxExecutionProvider.Cuda"/>, ignored for CPU, validated
+    /// either way. <see langword="null"/> (the default) keeps ONNX Runtime's defaults. Untested on CUDA.
+    /// </summary>
+    public OnnxCudaProviderOptions? Cuda { get; init; }
 
     /// <summary>
     /// CUDA device ordinal as the CUDA runtime enumerates it (after <c>CUDA_VISIBLE_DEVICES</c> and
@@ -68,6 +144,16 @@ public sealed record OnnxSessionOptions
     /// (about 1 s for a 470 MB file). Always on when <see cref="ExpectedModelSha256"/> is set.
     /// </summary>
     public bool ComputeModelSha256 { get; init; } = true;
+
+    /// <summary>
+    /// Lowercase hex SHA-256 of the model bytes as the caller already established it, for example from an acquisition
+    /// snapshot verified with <c>CacheVerification.Sha256</c> (<c>ModelSnapshot.GetVerifiedSha256</c>). When set, the
+    /// model is not read for hashing: the digest is reported in <see cref="OnnxSessionDiagnostics.ModelSha256"/> (with
+    /// <see cref="OnnxSessionDiagnostics.ModelSha256Source"/> <see cref="OnnxModelDigestSource.Known"/>),
+    /// <see cref="ExpectedModelSha256"/> is compared with it, and <see cref="ComputeModelSha256"/> has no effect. The
+    /// caller vouches that the bytes have not changed since they were hashed. Default <see langword="null"/>.
+    /// </summary>
+    public string? KnownModelSha256 { get; init; }
 
     /// <summary>
     /// On Linux with glibc, call <c>malloc_trim(0)</c> when the session's native memory is released (after
@@ -146,9 +232,36 @@ public sealed record OnnxSessionOptions
             throw new ArgumentOutOfRangeException(nameof(CudaDeviceId), CudaDeviceId, "Must not be negative.");
         }
 
+        if (!Enum.IsDefined(ExecutionMode))
+        {
+            throw new ArgumentOutOfRangeException(nameof(ExecutionMode), ExecutionMode, "Unknown execution mode.");
+        }
+
+        if (!Enum.IsDefined(GraphOptimizationLevel))
+        {
+            throw new ArgumentOutOfRangeException(nameof(GraphOptimizationLevel), GraphOptimizationLevel, "Unknown graph optimization level.");
+        }
+
+        if (!Enum.IsDefined(LogSeverity))
+        {
+            throw new ArgumentOutOfRangeException(nameof(LogSeverity), LogSeverity, "Unknown log severity.");
+        }
+
+        if (OptimizedModelFilePath is { Length: 0 })
+        {
+            throw new ArgumentException("Must not be empty; use null to write no optimized model.", nameof(OptimizedModelFilePath));
+        }
+
+        Cuda?.Validate();
+
         if (ExpectedModelSha256 is { } sha && (sha.Length != 64 || !sha.All(char.IsAsciiHexDigitLower)))
         {
             throw new ArgumentException("Expected a 64-character lowercase hex SHA-256.", nameof(ExpectedModelSha256));
+        }
+
+        if (KnownModelSha256 is { } known && (known.Length != 64 || !known.All(char.IsAsciiHexDigitLower)))
+        {
+            throw new ArgumentException("Expected a 64-character lowercase hex SHA-256.", nameof(KnownModelSha256));
         }
     }
 }

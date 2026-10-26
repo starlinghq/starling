@@ -1,14 +1,21 @@
 namespace Starlings.Models.Kev;
 
 /// <summary>The answers to a request, in question order.</summary>
-/// <param name="Answers">One answer per question.</param>
+/// <param name="Answers">One answer per question, in request order (questions in <see cref="Declined"/> have none).</param>
 /// <param name="StateTokens">Tokens of the state, <c>&lt;state&gt;</c> included.</param>
-/// <param name="BranchTokens">Tokens of all question branches together.</param>
+/// <param name="BranchTokens">Tokens of all answered question branches together.</param>
 public sealed record KevDecision(IReadOnlyList<KevAnswer> Answers, int StateTokens, int BranchTokens)
 {
+    /// <summary>
+    /// Questions left unanswered because they are over a token limit (<c>KevOptions.DeclineOverLongQuestions</c>),
+    /// in question order; empty otherwise. <see cref="Answers"/> then holds the other questions, still in request order.
+    /// </summary>
+    public IReadOnlyList<KevOverLongQuestion> Declined { get; init; } = [];
+
     /// <summary>The answer to a question by id.</summary>
-    /// <exception cref="KeyNotFoundException">No question has this id.</exception>
-    public KevAnswer this[string id] => Answers.FirstOrDefault(a => a.Id == id) ?? throw new KeyNotFoundException($"No question '{id}'.");
+    /// <exception cref="KeyNotFoundException">No question has this id, or it was declined (<see cref="Declined"/>).</exception>
+    public KevAnswer this[string id] => Answers.FirstOrDefault(a => a.Id == id) ?? throw new KeyNotFoundException(
+        Declined.Any(d => d.Id == id) ? $"Question '{id}' was declined: it is over a token limit." : $"No question '{id}'.");
 }
 
 /// <summary>
@@ -18,9 +25,11 @@ public sealed record KevDecision(IReadOnlyList<KevAnswer> Answers, int StateToke
 /// </summary>
 public sealed class KevAnswer
 {
-    internal KevAnswer(string id, KevQuestion question, float[] probabilities)
+    internal KevAnswer(string id, KevQuestion question, float[] probabilities, double temperature = 1.0, bool isCalibrated = false)
     {
         Id = id;
+        Temperature = temperature;
+        IsCalibrated = isCalibrated;
         Type = question.Type;
         Keys = question.Keys;
         Legend = question.Legend;
@@ -70,6 +79,16 @@ public sealed class KevAnswer
 
     /// <summary>Score: the expected level index <c>sum(i * p_i)</c>.</summary>
     public double ExpectedScore { get; }
+
+    /// <summary>The temperature the probabilities were divided by (<c>KevDecisionModel.Temperature</c>).</summary>
+    public double Temperature { get; }
+
+    /// <summary>
+    /// True when <see cref="Temperature"/> is the checkpoint's calibrated temperature (<see cref="KevModelProfile.Temperature"/>,
+    /// from <c>head.pt</c>), so the probabilities are the calibrated ones; false for any other
+    /// <c>KevOptions.Temperature</c>, 1.0 (raw) included.
+    /// </summary>
+    public bool IsCalibrated { get; }
 
     // system-one-adapter 0.2.1 _normalize: p normalised to sum 1 (all zeros -> uniform).
     private static double[] Normalize(double[] p)

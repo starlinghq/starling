@@ -58,7 +58,7 @@ The defaults are the qualified behavior, with outputs unchanged bit for bit. Wit
 
 ## Stable contract
 
-This is the contract of profile `gliner2-base-v1/onnx-fp32-cpu`. Its Stable label commits to it under the [support policy](https://github.com/starlinghq/starling/blob/main/docs/support-policy.md). The statuses are the registry manifest's and `Gliner2Capabilities.Profiles`, which a test keeps equal key for key.
+This is the contract of profile `gliner2-base-v1/onnx-fp32-cpu`. Its Stable label commits to it under the [support policy](https://github.com/starlinghq/starling/blob/main/docs/support-policy.md). The statuses are the registry manifest's and `Gliner2Capabilities.ProfileCapabilities`, which a test keeps equal key for key.
 
 | Item | Contract |
 | --- | --- |
@@ -80,7 +80,7 @@ This is the contract of profile `gliner2-base-v1/onnx-fp32-cpu`. Its Stable labe
 
 ## Stable contract: CUDA
 
-This is the contract of profile `gliner2-base-v1/onnx-fp32-cuda` (Stable since 2026-10-16). It is the CPU contract above, with these differences. The statuses are the registry manifest's and `Gliner2Capabilities.Profiles`, which a test keeps equal key for key.
+This is the contract of profile `gliner2-base-v1/onnx-fp32-cuda` (Stable since 2026-10-16). It is the CPU contract above, with these differences. The statuses are the registry manifest's and `Gliner2Capabilities.ProfileCapabilities`, which a test keeps equal key for key.
 
 | Item | Contract |
 | --- | --- |
@@ -102,6 +102,10 @@ Evidence: [binding CUDA G4 and G5 round](https://github.com/starlinghq/starling/
 
 `Gliner2ExtractorOptions.MicroBatching` (null by default: off) applies to `ExtractAsync` only; `Extract`, `ExtractBatch` and the staged methods never queue. Without it, `ExtractAsync` runs on the calling thread like `Extract` and returns a completed task. With it, each call's text is prepared and length-checked on the calling thread (an invalid text fails only its own call), then queued; one dispatcher thread runs the queued texts of concurrent callers that share a schema (the same labels in the same order and the same descriptions) in padded batches of at most `MaxRows` texts and `MaxTokens` padded token cells, and each caller decodes its spans with its own threshold. `MaxBatchSize` still splits each batch into graph calls, and the CUDA run gate still applies, so on CUDA serialized single calls become serialized batched calls. Outputs then depend on the concurrent traffic: equal to a single call within the profile's padded-batch tolerance, not bit for bit reproducible. Cancelling a queued call removes it; cancelling a dispatched one cancels only that caller's task (the batch keeps running for the others). A full queue (`QueueCapacity`) makes callers wait for a slot. `Dispose` faults queued calls with `ObjectDisposedException` and waits for a running batch. `MicroBatchingStatistics` reports batches, items, padding and queue and run time. Status: experimental (capability `micro_batching`): weight-free tests and one real-model test within the padded-batch tolerance on Linux x64 CPU; no benchmark adoption decision, no CUDA run and no soak yet.
 
+## Execution scheduler (experimental, opt-in)
+
+`Gliner2ExtractorOptions.ExecutionScheduler` (a `TaskScheduler`, null by default) chooses where `ExtractAsync` executes. Null keeps it inline: on the calling thread, a completed task without micro-batching. `TaskScheduler.Default` offloads to the thread pool; an application's own scheduler (for example one thread per device) can serialize or place the work. With micro-batching on, only the preparation and queueing move to the scheduler; batches still run on the dispatcher thread. The synchronous methods ignore it, and the entities do not change. Status: experimental (capability `execution_scheduler`; weight-free tests).
+
 ## Memory on Linux
 
 **Deployment requirement: set `MALLOC_MMAP_THRESHOLD_=65536` in the environment of a Linux process that runs this profile (CPU or CUDA).**
@@ -109,6 +113,12 @@ Evidence: [binding CUDA G4 and G5 round](https://github.com/starlinghq/starling/
 With default glibc settings, a process that loads and unloads the extractor repeatedly keeps freed native memory resident: about 1.2 to 1.5 GiB between loads, rising by about 65 to 90 MiB over the first half hour of cycling and then holding. This is allocator retention (glibc malloc's resident high-water mark and fragmentation), not a leak: with the threshold set, every unload returns what the load and its requests allocated. But the soak's growth rule, which is not changed for this, judges the default run: the one-hour default soak fit 81 to 82 MiB/h over the whole run and failed the rule, although the curve flattens after about 30 minutes. With `MALLOC_MMAP_THRESHOLD_=65536` the footprint after unloading held at about 76 MiB, the loaded footprint was about 740 MiB lower, and the one-hour G4 soak passed.
 
 Evidence: [GLiNER2 soak growth](https://github.com/starlinghq/starling/blob/main/docs/evidence/gliner2-soak-growth/README.md) (diagnosis, six controlled runs), [G4 qualification soak](https://github.com/starlinghq/starling/blob/main/docs/evidence/qualification-2026-10-15/README.md).
+
+## Shared types
+
+A snapshot verified with `CacheVerification.Sha256` (the default) carries its digests: `Gliner2ModelFiles.ModelSha256` is the graph's SHA-256 then, and `Gliner2EntityExtractor.Create(files)` passes it to the session as `OnnxSessionOptions.KnownModelSha256`, so the graph is read once at startup, by the verification, not again by the session. With `CacheVerification.Size` it is null and the session hashes the graph as before.
+
+The package uses the backend-neutral types of `Starlings.Models.Abstractions`. `Gliner2InputTooLongException` derives from `InputTooLongException` (`InputIndex`, `TokenCount`, `MaxTokens`). `Gliner2ModelAssets.Assets` is the lock and acquisition as an `IModelAssets<Gliner2ModelFiles>`. `Gliner2Capabilities.Statuses` is the package-wide capability table in `Starlings.Models.CapabilityStatus`, and `Gliner2Capabilities.ProfileCapabilities` holds each profile's capability record (`ModelProfileCapabilities`), generated from its registry manifest. `Gliner2Capabilities.All`, `Gliner2Capabilities.Profiles` and `Gliner2CapabilityStatus` are obsolete and are removed in the next minor version.
 
 ## Status
 

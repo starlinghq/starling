@@ -5,9 +5,9 @@ The model definitions of the Kev 1.0 decision models ([`jaredpalmer/kev-0.8b`](h
 - `KevRequest` (a state and named `KevQuestion`s: `Noul`, `Choice`, `Score`; `ParseSystemOne` for a System One request body) and `KevContent` (text, or JSON rendered as Kev does).
 - `KevText`: Kev's rendering of JSON values (Python `str()` of numbers and booleans), option text, and `EscapeSpecialTokens`, which rewrites `<|…|>` in user text so it can never become a delimiter.
 - `KevRequest.ToRecord()`: the rendered record Kev's encoder reads (`KevRecord`, `KevRecordQuestion`).
-- `KevEncoder`: `FromFile(tokenizerPath)` checks Kev's delimiter ids in the `qwen2-bpe-kev` tokenizer; `Encode(record)` returns the state ids and one row per question (`KevEncoding`, `KevRow`: ids, positions continuing after the state, the `<decide>` index and each option's `</opt>` index), or throws `KevInputTooLongException` (state or row over 8,192 tokens).
+- `KevEncoder`: `FromFile(tokenizerPath)` checks Kev's delimiter ids in the `qwen2-bpe-kev` tokenizer; `Encode(record)` returns the state ids and one row per question (`KevEncoding`, `KevRow`: ids, positions continuing after the state, the `<decide>` index and each option's `</opt>` index), or throws `KevInputTooLongException` (state or row over 8,192 tokens; with `maxBranchTokens`, a branch over that budget). Every over-long question is found in one pass: the exception lists them all (`OverLongQuestions`, each a `KevOverLongQuestion` with `Index`, `Id`, `Limit`, `TokenCount`, `MaxTokens`), or, with `decline: true`, the encoding leaves them out and lists them in `KevEncoding.Declined`. `EncodeState` and `EncodeRows` are the two halves, for runtimes that reuse one state across question sets.
 - `KevModelProfile` (`Kev08B`, `Kev4B`): repositories, revisions, base checkpoints, head and adapter digests, dimensions and calibrated temperature.
-- `KevDecision` and `KevAnswer`: the result types the runtime returns.
+- `KevDecision` (with `Declined`) and `KevAnswer` (with `Temperature` and `IsCalibrated`): the result types the runtime returns.
 
 ```csharp
 using Starlings.Models.Kev;

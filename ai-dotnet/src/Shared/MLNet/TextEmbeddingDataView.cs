@@ -1,22 +1,55 @@
+// Shared by Starlings.Models.E5.MLNet and Starlings.Models.EmbeddingGemma2.MLNet (compiled into each, internal):
+// the ML.NET transform over any ITextEmbedder. Moved from the two packages' copies, which differed only in names.
 using Microsoft.ML;
 using Microsoft.ML.Data;
 
-namespace Starlings.Models.EmbeddingGemma2.MLNet;
+namespace Starlings.Models.MLNet;
 
 /// <summary>Embeds texts for the transform; the single place inference happens.</summary>
-internal sealed class EmbeddingGemma2Inference(EmbeddingGemma2TextEmbedder embedder, EmbeddingGemma2Prompt prompt, Action<int>? observer)
+internal sealed class TextEmbeddingInference(ITextEmbedder embedder, Action<int>? observer)
 {
-    public EmbeddingGemma2TextEmbedder Embedder { get; } = embedder;
-
     public float[][] Embed(IReadOnlyList<string> texts, int[] tokenCounts)
     {
         observer?.Invoke(texts.Count);
-        return Embedder.EmbedBatch(texts, prompt, tokenCounts);
+        return embedder.EmbedBatch(texts, tokenCounts);
     }
 }
 
+/// <summary>
+/// Prepends a fixed prefix to every text, then embeds with <paramref name="inner"/> (e5's <c>"query: "</c> and
+/// <c>"passage: "</c>). With an empty prefix the texts pass through unchanged.
+/// </summary>
+internal sealed class PrefixedTextEmbedder(ITextEmbedder inner, string prefix) : ITextEmbedder
+{
+    public int Dimension => inner.Dimension;
+
+    public int MaxSequenceLength => inner.MaxSequenceLength;
+
+    public float[][] EmbedBatch(IReadOnlyList<string> texts, Span<int> tokenCounts, CancellationToken cancellationToken = default)
+    {
+        if (prefix.Length > 0)
+        {
+            var prefixed = new string[texts.Count];
+            for (int i = 0; i < prefixed.Length; i++)
+            {
+                prefixed[i] = prefix + texts[i];
+            }
+
+            texts = prefixed;
+        }
+
+        return inner.EmbedBatch(texts, tokenCounts, cancellationToken);
+    }
+
+    public int CountTokens(string text) => inner.CountTokens(prefix + text);
+
+    public int[] CountTokens(IReadOnlyList<string> texts) => inner.CountTokens(texts.Select(text => prefix + text).ToArray());
+
+    public TokenLimitCheck Validate(string text) => inner.Validate(prefix + text);
+}
+
 /// <summary>The embedding of the row a cursor or row is on, computed at most once per row.</summary>
-internal interface IEmbeddingGemma2CurrentRow
+internal interface ITextEmbeddingCurrentRow
 {
     float[] Vector();
 
@@ -28,7 +61,7 @@ internal interface IEmbeddingGemma2CurrentRow
 /// and same text) return the cached result. The text comparison also protects row mappers whose input position does
 /// not advance (prediction engines).
 /// </summary>
-internal sealed class RowWiseState(EmbeddingGemma2Inference inference, DataViewRow input, ValueGetter<ReadOnlyMemory<char>> text) : IEmbeddingGemma2CurrentRow
+internal sealed class RowWiseState(TextEmbeddingInference inference, DataViewRow input, ValueGetter<ReadOnlyMemory<char>> text) : ITextEmbeddingCurrentRow
 {
     private readonly int[] _count = new int[1];
     private long _position = -1;
@@ -65,9 +98,9 @@ internal sealed class RowWiseState(EmbeddingGemma2Inference inference, DataViewR
 }
 
 /// <summary>Getter dispatch shared by the cursors and the mapper row.</summary>
-internal static class EmbeddingGemma2Getters
+internal static class TextEmbeddingGetters
 {
-    public static ValueGetter<TValue> Create<TValue>(EmbeddingGemma2Bindings bindings, bool[] active, DataViewRow input, IEmbeddingGemma2CurrentRow? current, DataViewSchema.Column column)
+    public static ValueGetter<TValue> Create<TValue>(TextEmbeddingBindings bindings, bool[] active, DataViewRow input, ITextEmbeddingCurrentRow? current, DataViewSchema.Column column)
     {
         int index = bindings.CheckColumn(column);
         if (!active[index])
@@ -108,14 +141,14 @@ internal static class EmbeddingGemma2Getters
 }
 
 /// <summary>The lazily transformed view. Nothing is computed until a cursor's output getter is called.</summary>
-internal sealed class EmbeddingGemma2EmbeddingDataView : IDataView
+internal sealed class TextEmbeddingDataView : IDataView
 {
     private readonly IDataView _source;
-    private readonly EmbeddingGemma2Bindings _bindings;
-    private readonly EmbeddingGemma2Inference _inference;
+    private readonly TextEmbeddingBindings _bindings;
+    private readonly TextEmbeddingInference _inference;
     private readonly int _batchSize;
 
-    public EmbeddingGemma2EmbeddingDataView(IDataView source, EmbeddingGemma2Bindings bindings, EmbeddingGemma2Inference inference, int batchSize)
+    public TextEmbeddingDataView(IDataView source, TextEmbeddingBindings bindings, TextEmbeddingInference inference, int batchSize)
     {
         _source = source;
         _bindings = bindings;
@@ -137,10 +170,10 @@ internal sealed class EmbeddingGemma2EmbeddingDataView : IDataView
         {
             if (UsesLookAhead(active, rand))
             {
-                return new EmbeddingGemma2BatchedCursor(_bindings, active, input, _source, _inference, _batchSize);
+                return new TextEmbeddingBatchedCursor(_bindings, active, input, _source, _inference, _batchSize);
             }
 
-            return new EmbeddingGemma2RowCursor(_bindings, active, input, _inference);
+            return new TextEmbeddingRowCursor(_bindings, active, input, _inference);
         }
         catch
         {
@@ -166,7 +199,7 @@ internal sealed class EmbeddingGemma2EmbeddingDataView : IDataView
         var cursors = new DataViewRowCursor[inputs.Length];
         for (int i = 0; i < inputs.Length; i++)
         {
-            cursors[i] = new EmbeddingGemma2RowCursor(_bindings, active, inputs[i], _inference);
+            cursors[i] = new TextEmbeddingRowCursor(_bindings, active, inputs[i], _inference);
         }
 
         return cursors;
@@ -176,14 +209,14 @@ internal sealed class EmbeddingGemma2EmbeddingDataView : IDataView
 }
 
 /// <summary>Row-wise cursor: pass-through getters from the input cursor, one inference per row on first use.</summary>
-internal sealed class EmbeddingGemma2RowCursor : DataViewRowCursor
+internal sealed class TextEmbeddingRowCursor : DataViewRowCursor
 {
-    private readonly EmbeddingGemma2Bindings _bindings;
+    private readonly TextEmbeddingBindings _bindings;
     private readonly bool[] _active;
     private readonly DataViewRowCursor _input;
     private readonly RowWiseState? _current;
 
-    public EmbeddingGemma2RowCursor(EmbeddingGemma2Bindings bindings, bool[] active, DataViewRowCursor input, EmbeddingGemma2Inference inference)
+    public TextEmbeddingRowCursor(TextEmbeddingBindings bindings, bool[] active, DataViewRowCursor input, TextEmbeddingInference inference)
     {
         _bindings = bindings;
         _active = active;
@@ -205,7 +238,7 @@ internal sealed class EmbeddingGemma2RowCursor : DataViewRowCursor
     public override bool IsColumnActive(DataViewSchema.Column column) => _active[_bindings.CheckColumn(column)];
 
     public override ValueGetter<TValue> GetGetter<TValue>(DataViewSchema.Column column) =>
-        EmbeddingGemma2Getters.Create<TValue>(_bindings, _active, _input, _current, column);
+        TextEmbeddingGetters.Create<TValue>(_bindings, _active, _input, _current, column);
 
     public override bool MoveNext() => _input.MoveNext();
 
@@ -227,13 +260,13 @@ internal sealed class EmbeddingGemma2RowCursor : DataViewRowCursor
 /// with the id the look-ahead cursor saw for that row; a mismatch (an input whose cursors do not return rows in the
 /// same order) throws instead of returning another row's vector. Upstream transforms of the text column run twice.
 /// </summary>
-internal sealed class EmbeddingGemma2BatchedCursor : DataViewRowCursor, IEmbeddingGemma2CurrentRow
+internal sealed class TextEmbeddingBatchedCursor : DataViewRowCursor, ITextEmbeddingCurrentRow
 {
-    private readonly EmbeddingGemma2Bindings _bindings;
+    private readonly TextEmbeddingBindings _bindings;
     private readonly bool[] _active;
     private readonly DataViewRowCursor _input;
     private readonly DataViewRowCursor _ahead;
-    private readonly EmbeddingGemma2Inference _inference;
+    private readonly TextEmbeddingInference _inference;
     private readonly int _batchSize;
     private readonly ValueGetter<DataViewRowId> _inputId;
     private readonly ValueGetter<DataViewRowId> _aheadId;
@@ -248,7 +281,7 @@ internal sealed class EmbeddingGemma2BatchedCursor : DataViewRowCursor, IEmbeddi
     private float[][] _vectors = [];
     private int[] _counts = [];
 
-    public EmbeddingGemma2BatchedCursor(EmbeddingGemma2Bindings bindings, bool[] active, DataViewRowCursor input, IDataView source, EmbeddingGemma2Inference inference, int batchSize)
+    public TextEmbeddingBatchedCursor(TextEmbeddingBindings bindings, bool[] active, DataViewRowCursor input, IDataView source, TextEmbeddingInference inference, int batchSize)
     {
         _bindings = bindings;
         _active = active;
@@ -274,7 +307,7 @@ internal sealed class EmbeddingGemma2BatchedCursor : DataViewRowCursor, IEmbeddi
     public override bool IsColumnActive(DataViewSchema.Column column) => _active[_bindings.CheckColumn(column)];
 
     public override ValueGetter<TValue> GetGetter<TValue>(DataViewSchema.Column column) =>
-        EmbeddingGemma2Getters.Create<TValue>(_bindings, _active, _input, this, column);
+        TextEmbeddingGetters.Create<TValue>(_bindings, _active, _input, this, column);
 
     public override bool MoveNext()
     {

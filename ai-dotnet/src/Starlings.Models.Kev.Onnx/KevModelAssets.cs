@@ -25,6 +25,11 @@ public sealed record KevModelFiles(
             snapshot.GetFilePath(KevModelAssets.TokenizerFile),
             snapshot);
     }
+
+    /// <summary>
+    /// SHA-256 of <see cref="ModelPath"/> when <see cref="Snapshot"/> hashed it (<see cref="ModelSnapshot.Verification"/> <see cref="CacheVerification.Sha256"/>); otherwise null. <see cref="KevDecisionModel.Create(KevModelFiles, KevOptions?)"/> passes it as <c>OnnxSessionOptions.KnownModelSha256</c>, so the graph is not read a second time at load.
+    /// </summary>
+    public string? ModelSha256 => Snapshot?.GetVerifiedSha256(KevModelAssets.ModelFile);
 }
 
 /// <summary>
@@ -136,7 +141,7 @@ public static class KevModelAssets
 
     /// <summary>
     /// Explicitly downloads (or verifies already cached) a model's bundle from its hosting repository (3.1 GB for 0.8B,
-    /// 16.9 GB for 4B). See <see cref="ModelAssetStore.DownloadAsync"/>.
+    /// 16.9 GB for 4B). See <see cref="ModelAssetStore.DownloadAsync(ModelAssetLock, IProgress{ModelAssetProgress}?, CancellationToken)"/>.
     /// </summary>
     public static async Task<KevModelFiles> DownloadAsync(
         KevModel model, ModelAcquisitionOptions? options = null, IProgress<ModelAssetProgress>? progress = null, CancellationToken cancellationToken = default)

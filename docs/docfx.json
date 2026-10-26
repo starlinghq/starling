@@ -1,0 +1,49 @@
+{
+  "$schema": "https://raw.githubusercontent.com/dotnet/docfx/main/schemas/docfx.schema.json",
+  "metadata": [
+    {
+      "src": [
+        {
+          "src": "../ai-dotnet/src",
+          "files": ["*/*.csproj"]
+        }
+      ],
+      "dest": "api",
+      "outputFormat": "mref",
+      "namespaceLayout": "flattened",
+      "memberLayout": "samePage",
+      "properties": {
+        "Configuration": "Release"
+      }
+    }
+  ],
+  "build": {
+    "content": [
+      {
+        "files": [
+          "index.md",
+          "toc.yml",
+          "api/index.md",
+          "api/**/*.yml",
+          "catalog/README.md",
+          "catalog/compatibility-matrix.md",
+          "evidence/**/*.md",
+          "support-policy.md"
+        ]
+      }
+    ],
+    "resource": [
+      {
+        "files": ["catalog/catalog.json"]
+      }
+    ],
+    "output": "../artifacts/docfx/_site",
+    "template": ["default", "modern"],
+    "globalMetadata": {
+      "_appTitle": "Starling",
+      "_appName": "Starling",
+      "_enableSearch": true,
+      "_disableContribution": true
+    }
+  }
+}

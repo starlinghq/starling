@@ -131,7 +131,7 @@ public static class Qwen35ModelAssets
         _ => throw new ArgumentOutOfRangeException(nameof(variant), variant, "Unknown variant."),
     };
 
-    /// <summary>Explicitly downloads (or verifies already cached) a variant's files. See <see cref="ModelAssetStore.DownloadAsync"/>.</summary>
+    /// <summary>Explicitly downloads (or verifies already cached) a variant's files. See <see cref="ModelAssetStore.DownloadAsync(ModelAssetLock, IProgress{ModelAssetProgress}?, CancellationToken)"/>.</summary>
     public static async Task<Qwen35ModelFiles> DownloadAsync(
         Qwen35Variant variant, ModelAcquisitionOptions? options = null, IProgress<ModelAssetProgress>? progress = null, CancellationToken cancellationToken = default)
     {

@@ -21,6 +21,12 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- The ML.NET transform over ITextEmbedder (data view, cursors, bindings, row mapper), shared with the other
+         embedding package's ML.NET adapter (internal). -->
+    <Compile Include="../Shared/MLNet/*.cs" Link="Shared/%(Filename)%(Extension)" />
+  </ItemGroup>
+
+  <ItemGroup>
     <InternalsVisibleTo Include="Starlings.Models.EmbeddingGemma2.MLNet.Tests" />
   </ItemGroup>
 

@@ -106,7 +106,7 @@ if [[ -z "$feed" ]]; then
     export NUGET_PACKAGES="$work/nuget-build"
     feed="$work/feed"
     mkdir -p "$feed"
-    for proj in Acquisition Runtime.Onnx Models.E5 Models.E5.Extensions.AI Models.E5.MLNet Models.Gliner2 \
+    for proj in Acquisition Runtime.Onnx Models.Abstractions Models.E5 Models.E5.Extensions.AI Models.E5.MLNet Models.Gliner2 \
         Models.EmbeddingGemma2 Models.EmbeddingGemma2.Extensions.AI Models.EmbeddingGemma2.MLNet Generation.Abstractions Generation.OnnxGenAI \
         Models.Qwen35 Models.Qwen35.OnnxGenAI Models.Qwen35.Extensions.AI; do
         (cd "$src" && CI=true dotnet pack "ai-dotnet/src/Starlings.$proj" -c Release -o "$feed" >"$work/pack-$proj.log" 2>&1) \

@@ -13,6 +13,7 @@ namespace Starlings.Models.Kev.Tests;
 /// GroupQueryAttention; a test pins that, so a runtime that lifts it shows up as a failure here.
 /// Model tests skip without a bundle (see <see cref="KevTestAssets"/>).
 /// </summary>
+[Collection(KevModelGroup.Name)]
 public sealed class BatchedRowsTests
 {
     private const double PaddedBatchBound = 1.0e-5;

@@ -199,7 +199,7 @@ async Task<int> ToolBody()
     }
     catch (EmbeddingGemma2InputTooLongException ex)
     {
-        Console.WriteLine($"long input rejected: {ex.TokenCount} tokens > {ex.MaximumTokens}");
+        Console.WriteLine($"long input rejected: {ex.TokenCount} tokens > {ex.MaxTokens}");
     }
 
     return 0;

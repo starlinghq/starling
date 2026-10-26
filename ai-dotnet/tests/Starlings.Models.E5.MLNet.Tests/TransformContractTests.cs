@@ -3,6 +3,8 @@ using Starlings.Runtime.Onnx;
 using Starlings.TestSupport;
 using Microsoft.ML;
 using Microsoft.ML.Data;
+using Starlings.Models.MLNet;
+using Status = Starlings.Models.CapabilityStatus;
 
 namespace Starlings.Models.E5.MLNet.Tests;
 
@@ -45,7 +47,7 @@ public sealed class TransformContractTests : IDisposable
     private E5EmbeddingTransformer Observed(E5EmbeddingOptions? options = null, string output = "Embedding", string input = "Text")
     {
         options ??= new E5EmbeddingOptions { TokenCountColumnName = "TokenCount" };
-        return new E5EmbeddingTransformer(Embedder, E5ColumnNames.Create(output, input, options.TokenCountColumnName), options, ownedEncoder: null, _inferences.Enqueue);
+        return new E5EmbeddingTransformer(Embedder, TextEmbeddingColumnNames.Create(output, input, options.TokenCountColumnName), options, ownedEncoder: null, _inferences.Enqueue);
     }
 
     private IDataView Rows(params string?[] texts) =>
@@ -548,11 +550,11 @@ public sealed class TransformContractTests : IDisposable
     [Fact]
     public void CapabilityDescriptorReportsTheMlNetStatuses()
     {
-        Assert.Equal(CapabilityStatus.Supported, E5Capabilities.All["mlnet.embedding_transform"]);
-        Assert.Equal(CapabilityStatus.Supported, E5Capabilities.All["mlnet.batching"]);
-        Assert.Equal(CapabilityStatus.Unsupported, E5Capabilities.All["mlnet.persistence"]);
-        Assert.Equal(CapabilityStatus.Unsupported, E5Capabilities.All["mlnet.cancellation"]);
-        Assert.Equal(CapabilityStatus.Unsupported, E5Capabilities.All["mlnet.training"]);
-        Assert.Equal(CapabilityStatus.Supported, E5Capabilities.All["mlnet.embedding_transform.cuda"]); // Stable CUDA profile (RTX 3090)
+        Assert.Equal(Status.Supported, E5Capabilities.Statuses["mlnet.embedding_transform"]);
+        Assert.Equal(Status.Supported, E5Capabilities.Statuses["mlnet.batching"]);
+        Assert.Equal(Status.Unsupported, E5Capabilities.Statuses["mlnet.persistence"]);
+        Assert.Equal(Status.Unsupported, E5Capabilities.Statuses["mlnet.cancellation"]);
+        Assert.Equal(Status.Unsupported, E5Capabilities.Statuses["mlnet.training"]);
+        Assert.Equal(Status.Supported, E5Capabilities.Statuses["mlnet.embedding_transform.cuda"]); // Stable CUDA profile (RTX 3090)
     }
 }

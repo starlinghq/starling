@@ -77,7 +77,7 @@ public static class Qwen35Checkpoint
     /// <see cref="Repository"/> at <see cref="Revision"/>. Sizes and digests were read from the Hub on 2026-10-26: the
     /// Hub's LFS SHA-256 for the safetensors file, and the SHA-256 of the downloaded bytes for every other file (the Hub's
     /// LFS digest of <c>tokenizer.json</c> agrees). This package does not download it; pass it to
-    /// <see cref="ModelAssetStore.DownloadAsync"/> to fetch the checkpoint explicitly (about 1.76 GB).
+    /// <see cref="ModelAssetStore.DownloadAsync(ModelAssetLock, IProgress{ModelAssetProgress}?, CancellationToken)"/> to fetch the checkpoint explicitly (about 1.76 GB).
     /// </summary>
     public static ModelAssetLock Lock { get; } = new("qwen3.5-0.8b-checkpoint", Repository, Revision,
     [

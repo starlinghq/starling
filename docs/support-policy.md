@@ -31,6 +31,19 @@ Response and window figures are internal operating targets, not commercial SLAs 
 
 Maturity belongs to profiles, not packages (`docs/kickoff.md`, "ai-dotnet package versions and maturity", 2026-10-15). One package version serves profiles of different maturities, so no package carries a blanket label: each package README has a maturity table generated from the registry manifests (`model-pipeline catalog`, checked in CI), and the package description points to it. The packages stay at `0.x`, so the public API may still change between minor versions; a Stable profile's contract does not.
 
+### Public API deprecation
+
+The packages are at `0.x`, so a public member may be removed or change shape between minor versions. It never does so without warning (*proposed*; see [open questions](#open-questions)):
+
+1. **One minor version of notice.** A public type, member, parameter or enum value that minor version N+1 removes or changes incompatibly is marked `[Obsolete]` in minor version N, with the replacement added in the same release. A patch release never removes a public member.
+2. **The message names the replacement and the removal.** The form is `[Obsolete("Use X; removed in the next minor version.")]`, where `X` is the replacing member, named in full. Where nothing replaces it, the message says what to do instead. The attribute is a warning, not an error (`error: false`), so existing code still compiles; a consumer that treats warnings as errors sees the build break at the upgrade, with the message.
+3. **Behavior is unchanged while obsolete.** A member marked `[Obsolete]` behaves as before until it is removed, and keeps its XML documentation, which names the replacement too.
+4. **The release record lists them.** Each release record (`docs/releases/ai-<version>.md`) lists every member it marks `[Obsolete]`, with its replacement, and every member it removes, with the release that marked it. A removal that no earlier release record announced is a release blocker.
+5. **Exceptions** are breaking changes that cannot keep the old member working: a security or correctness fix where the old behavior is unsafe or wrong. The release record states the exception, the reason and the migration.
+6. **From 1.0 on**, a member marked `[Obsolete]` in a minor version is removed only in the next major version.
+
+The window covers the C# API. Model outputs follow the profile rules above: an output-changing fix is a new qualified profile and a release note, whatever happens to the API.
+
 ### Promotion and demotion
 
 - **Promotion** happens only when the maintainer records gate results in the manifest (M10). Agents produce evidence and tooling; they never set a gate to `passed` or raise maturity. The manifest validator refuses `stable` while any gate is not `passed` or any capability is `untested` (`model-pipeline/src/model_pipeline/manifest.py`). The catalog's Stable readiness column lists what still fails, and notes that a CUDA profile is not promoted until the per-release GPU run (the workflow's `cuda (runpod)` job, below) is green for it. The first promotion (GLiNER2 CPU, 2026-10-15) was made on the maintainer's instruction; the agent change set `maturity: stable` only where every gate was recorded passed and the scheduled regression runs were green.
@@ -72,7 +85,7 @@ Matrix rows beyond Linux x64 need qualification runs on that platform (P-018, wo
 
 ## Regression support
 
-Regression support applies to **Stable** profiles only (`.github/SUPPORT.md`). Earlier maturities get best-effort fixes.
+Regression support applies to **Stable** profiles only (`.github/SUPPORT.md`). Earlier maturities get best-effort fixes. The qualification job `experimental` runs the onboarding routes of the Experimental CPU profiles of Kev-0.8B, QwenChat and Whisper on the same schedule; it reports (a warning and the step summary) and never fails the workflow, and it is not regression support.
 
 A regression is any of the following, on a supported matrix row:
 
@@ -124,3 +137,4 @@ These are for the maintainer. None is settled by this document.
 4. **Second release owner (M7):** the first Stable promotion (GLiNER2 `onnx-fp32-cpu`, 2026-10-15) ships with a recorded single-owner exception (`docs/kickoff.md`); every later promotion and the `0.2.0` release (`docs/releases/ai-0.2.0.md`) carry the same exception. M7 stays open.
 5. **Advisory records:** use GitHub advisories only, or also `docs/advisories/` records that the catalog links? Should the manifest schema gain a field for affected version ranges?
 6. **Old and new profile identities** after an upstream update: see `docs/plan/maintained-update-drill.md`, open questions.
+7. **API deprecation window:** confirm or change the proposed [public API deprecation](#public-api-deprecation) rule: one minor version with `[Obsolete]` (a warning naming the replacement) before a removal at `0.x`, removal only in a new major version from `1.0` on, and the release record listing both.

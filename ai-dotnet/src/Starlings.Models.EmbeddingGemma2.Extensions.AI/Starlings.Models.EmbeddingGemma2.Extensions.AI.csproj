@@ -22,4 +22,9 @@
     <ProjectReference Include="../Starlings.Models.EmbeddingGemma2/Starlings.Models.EmbeddingGemma2.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- Request and result handling shared with the other text embedding generator (internal). -->
+    <Compile Include="../Shared/ExtensionsAI/*.cs" Link="Shared/%(Filename)%(Extension)" />
+  </ItemGroup>
+
 </Project>

@@ -17,6 +17,11 @@ public sealed record Gliner2ModelFiles(string ModelPath, string TokenizerPath, M
             snapshot.GetFilePath(Gliner2ModelAssets.TokenizerFile),
             snapshot);
     }
+
+    /// <summary>
+    /// SHA-256 of <see cref="ModelPath"/> when <see cref="Snapshot"/> hashed it (<see cref="ModelSnapshot.Verification"/> <see cref="CacheVerification.Sha256"/>); otherwise null. The model factories pass it as <c>OnnxSessionOptions.KnownModelSha256</c>, so the graph is not read a second time at load.
+    /// </summary>
+    public string? ModelSha256 => Snapshot?.GetVerifiedSha256(Gliner2ModelAssets.ModelFile);
 }
 
 /// <summary>
@@ -94,7 +99,7 @@ public static class Gliner2ModelAssets
             new ModelAssetFile(TokenizerFile, TokenizerSize, TokenizerSha256),
         ]);
 
-    /// <summary>Explicitly downloads (or verifies already cached) GLiNER2 files. See <see cref="ModelAssetStore.DownloadAsync"/>.</summary>
+    /// <summary>Explicitly downloads (or verifies already cached) GLiNER2 files. See <see cref="ModelAssetStore.DownloadAsync(ModelAssetLock, IProgress{ModelAssetProgress}?, CancellationToken)"/>.</summary>
     public static async Task<Gliner2ModelFiles> DownloadAsync(
         ModelAcquisitionOptions? options = null, IProgress<ModelAssetProgress>? progress = null, CancellationToken cancellationToken = default)
     {
@@ -117,4 +122,23 @@ public static class Gliner2ModelAssets
     /// </summary>
     public static Gliner2ModelFiles OpenDirectory(string directory, CacheVerification verification = CacheVerification.Sha256) =>
         Gliner2ModelFiles.From(ModelAssetStore.VerifyDirectory(Lock, directory, verification));
+
+    /// <summary>
+    /// The GLiNER2 lock and acquisition members of this class as an <see cref="IModelAssets{TFiles}"/>, for setup code
+    /// that acquires several models the same way. Each member calls the static member of the same name.
+    /// </summary>
+    public static IModelAssets<Gliner2ModelFiles> Assets { get; } = new AssetsInstance();
+
+    private sealed class AssetsInstance : IModelAssets<Gliner2ModelFiles>
+    {
+        public ModelAssetLock Lock => Gliner2ModelAssets.Lock;
+
+        public Task<Gliner2ModelFiles> DownloadAsync(ModelAcquisitionOptions? options = null, IProgress<ModelAssetProgress>? progress = null, CancellationToken cancellationToken = default) =>
+            Gliner2ModelAssets.DownloadAsync(options, progress, cancellationToken);
+
+        public Gliner2ModelFiles OpenLocal(ModelAcquisitionOptions? options = null) => Gliner2ModelAssets.OpenLocal(options);
+
+        public Gliner2ModelFiles OpenDirectory(string directory, CacheVerification verification = CacheVerification.Sha256) =>
+            Gliner2ModelAssets.OpenDirectory(directory, verification);
+    }
 }

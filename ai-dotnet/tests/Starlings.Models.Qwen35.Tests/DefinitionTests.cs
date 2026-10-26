@@ -59,7 +59,8 @@ public sealed class DefinitionTests
         string json = File.ReadAllText(path);
         using (var doc = JsonDocument.Parse(json))
         {
-            Assert.Equal(ModelAssetLock.SchemaVersion, doc.RootElement.GetProperty("schema_version").GetInt32());
+            // Written as format 2 (before display_name and hosting, format 3); the lock needs neither.
+            Assert.Equal(ModelAssetLock.SourcesSchemaVersion, doc.RootElement.GetProperty("schema_version").GetInt32());
         }
 
         ModelAssetLock file = ModelAssetLock.Load(path);

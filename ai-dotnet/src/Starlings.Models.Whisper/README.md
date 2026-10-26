@@ -38,13 +38,13 @@ using Starlings.Models.Whisper;
 var files = await WhisperModelAssets.DownloadAsync();
 
 // Load offline at startup.
-using var transcriber = WhisperTranscriber.Create(
-    files.EncoderPath, files.DecoderPath, files.TokenizerPath,
-    new WhisperOptions { Language = "en" });
+using var transcriber = WhisperTranscriber.Create(files, new WhisperOptions { Language = "en" });
 
 // 16 kHz float32 PCM, up to 30 seconds.
 string text = transcriber.Transcribe(waveform);
 ```
+
+`WhisperTranscriber.Create(files)` and `WhisperModel.Create(files)` pass the graph digests a snapshot verified with `CacheVerification.Sha256` already computed (`WhisperModelFiles.EncoderSha256`, `DecoderSha256`) to the sessions as `OnnxSessionOptions.KnownModelSha256`, so the graphs are read once at startup. The path overloads hash each graph as before.
 
 ## Model
 
@@ -61,9 +61,16 @@ string text = transcriber.Transcribe(waveform);
 
 - Transcription of up to 30 s of 16 kHz audio, greedy decoding, no timestamps. Shorter clips are zero-padded to 30 s
   (`WhisperMelSpectrogram.ExtractChunk`, as the feature extractor pads); longer clips are refused, not truncated.
-- Explicit language (two-letter code); the onboarding evidence covers English (`en`). Auto-detection
-  (`Language = null`, prompted with `<|startoflm|>`) is **untested**: it differs from transformers, which picks the most
-  likely language token after `<|startoftranscript|>`.
+- Explicit language, a code of `WhisperModel.LanguageToId` (case-insensitive). `WhisperOptions.Language` defaults to
+  `"en"` (`WhisperOptions.DefaultLanguage`), the language the onboarding evidence covers. An unknown code throws
+  `WhisperUnsupportedLanguageException` (an `ArgumentException` that carries the code), from `WhisperTranscriber.Create`
+  and from `WhisperModel.Prompt`.
+- Auto-detection is opt-in with `Language = null` and **untested**: the language slot then holds `<|startoflm|>`, which
+  is a task token, not a language token. Transformers instead picks the most likely language token after
+  `<|startoftranscript|>`.
+- `WhisperTranscriber.Create` checks `tokenizer.json` against `WhisperModelAssets.TokenizerSha256` before it loads the
+  graphs, and throws `InvalidDataException` for any other file. The graphs are checked only when
+  `OnnxSessionOptions.ExpectedModelSha256` is set.
 - The asset lock and explicit acquisition.
 
 ## Unsupported (for now)
@@ -71,6 +78,12 @@ string text = transcriber.Transcribe(waveform);
 Translation, timestamped output, chunking/streaming of clips longer than 30 s, batching, KV-cache decoding,
 CUDA qualification, persistence, training.
 
+Without a KV cache, every decode step re-runs the decoder over all ids so far. `WhisperModel.Generate` writes the
+`[seq, 51866]` logits of those steps into one buffer per call, which grows by doubling, instead of a new array per step.
+
 ## Capabilities
 
-See `WhisperCapabilities`; transcription is `Experimental` until the evaluator qualifies it.
+See `WhisperCapabilities`; transcription is `Experimental` until the evaluator qualifies it. The registered profile is
+`WhisperCapabilities.CpuProfile` (the profile in the maturity table above, Experimental).
+`WhisperCapabilities.StableProfile` is the same string under its old name; it is obsolete because the profile is not
+Stable, and is removed in the next minor version.

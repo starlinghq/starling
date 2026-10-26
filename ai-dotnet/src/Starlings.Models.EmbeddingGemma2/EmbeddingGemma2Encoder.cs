@@ -1,7 +1,5 @@
-using System.Buffers;
 using Starlings.Batching;
 using Starlings.Runtime.Onnx;
-using Microsoft.ML.OnnxRuntime;
 
 namespace Starlings.Models.EmbeddingGemma2;
 
@@ -68,8 +66,7 @@ public sealed class EmbeddingGemma2Encoder : IDisposable
     private readonly OnnxModelSession _session;
     private readonly bool _ownsSession;
     private readonly EmbeddingGemma2EncoderOptions _options;
-    private readonly string[] _inputNames = [InputIdsName, AttentionMaskName];
-    private readonly string[] _outputNames = [TokenEmbeddingsName];
+    private readonly EncoderCore _core;
     private int _disposed;
 
     /// <summary>
@@ -87,6 +84,7 @@ public sealed class EmbeddingGemma2Encoder : IDisposable
         options.Validate();
         ValidateSignature(session);
         _session = session;
+        _core = new EncoderCore(session, InputIdsName, AttentionMaskName, tokenTypeIdsName: null, TokenEmbeddingsName);
         _ownsSession = ownsSession;
         _options = options;
     }
@@ -279,40 +277,8 @@ public sealed class EmbeddingGemma2Encoder : IDisposable
     /// For 768 this is sentence-transformers Pooling(mean) + Normalize; for a Matryoshka size it equals normalizing,
     /// truncating and normalizing again (normalization is scale-invariant).
     /// </summary>
-    internal static void MeanPoolAndNormalize(ReadOnlySpan<float> tokens, ReadOnlySpan<long> mask, int width, int outputDimension, Span<float> destination)
-    {
-        Span<double> sum = stackalloc double[width];
-        sum.Clear();
-        double count = 0;
-        for (int t = 0; t < mask.Length; t++)
-        {
-            if (mask[t] == 0)
-            {
-                continue;
-            }
-
-            count++;
-            var row = tokens.Slice(t * width, width);
-            for (int d = 0; d < width; d++)
-            {
-                sum[d] += row[d];
-            }
-        }
-
-        count = Math.Max(count, 1e-9);
-        double norm = 0;
-        for (int d = 0; d < outputDimension; d++)
-        {
-            sum[d] /= count;
-            norm += sum[d] * sum[d];
-        }
-
-        norm = Math.Max(Math.Sqrt(norm), 1e-12);
-        for (int d = 0; d < outputDimension; d++)
-        {
-            destination[d] = (float)(sum[d] / norm);
-        }
-    }
+    internal static void MeanPoolAndNormalize(ReadOnlySpan<float> tokens, ReadOnlySpan<long> mask, int width, int outputDimension, Span<float> destination) =>
+        EncoderCore.Pool(tokens, mask, width, outputDimension, EncoderPooling.Mean, normalize: true, destination);
 
     /// <summary>
     /// Writes rows <paramref name="start"/>..start+count into row-major <c>[count, width]</c> id and mask buffers,
@@ -333,27 +299,11 @@ public sealed class EmbeddingGemma2Encoder : IDisposable
     /// Writes the inputs at <paramref name="rows"/>, in that order, into row-major <c>[rows.Length, width]</c> id and
     /// mask buffers, right-padding each row with <see cref="PadTokenId"/> and mask 0.
     /// </summary>
-    internal static void PackRightPadded(IReadOnlyList<EmbeddingGemma2Input> inputs, ReadOnlySpan<int> rows, int width, Span<long> ids, Span<long> mask)
-    {
-        for (int r = 0; r < rows.Length; r++)
-        {
-            var input = inputs[rows[r]];
-            var idRow = ids.Slice(r * width, width);
-            var maskRow = mask.Slice(r * width, width);
-            input.InputIds.Span.CopyTo(idRow);
-            idRow[input.Length..].Clear(); // PadTokenId is 0
-            if (input.AttentionMask.IsEmpty)
-            {
-                maskRow[..input.Length].Fill(1);
-            }
-            else
-            {
-                input.AttentionMask.Span.CopyTo(maskRow);
-            }
+    internal static void PackRightPadded(IReadOnlyList<EmbeddingGemma2Input> inputs, ReadOnlySpan<int> rows, int width, Span<long> ids, Span<long> mask) =>
+        EncoderCore.PackRightPadded(inputs, rows, width, PadTokenId, ReadRow, ids, mask, tokenTypes: default);
 
-            maskRow[input.Length..].Clear();
-        }
-    }
+    /// <summary>An input as <see cref="EncoderCore"/> packs it: ids and mask (the graph has no token type ids).</summary>
+    private static EncoderRow ReadRow(EmbeddingGemma2Input input) => new(input.InputIds, input.AttentionMask, default);
 
     private static void ValidateSignature(OnnxModelSession session)
     {
@@ -437,47 +387,9 @@ public sealed class EmbeddingGemma2Encoder : IDisposable
 
     /// <summary>
     /// Runs the inputs at <paramref name="rows"/> as one call padded to <paramref name="width"/> and writes row
-    /// <c>rows[r]</c>'s embedding at <c>destination[rows[r] * Dimension]</c>.
+    /// <c>rows[r]</c>'s embedding at <c>destination[rows[r] * Dimension]</c>: mean pooling of the 768-wide token
+    /// embeddings, L2 normalization of the leading <see cref="Dimension"/> values (<see cref="EncoderCore.EmbedChunk"/>).
     /// </summary>
-    private void EmbedChunk(IReadOnlyList<EmbeddingGemma2Input> inputs, ReadOnlySpan<int> rows, int width, Span<float> destination, CancellationToken cancellationToken)
-    {
-        int count = rows.Length;
-        int cells = count * width;
-        int tokenCells = checked(cells * NativeDimension);
-        long[] ids = ArrayPool<long>.Shared.Rent(cells);
-        long[] mask = ArrayPool<long>.Shared.Rent(cells);
-        float[] tokens = ArrayPool<float>.Shared.Rent(tokenCells);
-        try
-        {
-            PackRightPadded(inputs, rows, width, ids, mask);
-            RunGraph(ids, mask, tokens, count, width, cancellationToken);
-            for (int r = 0; r < count; r++)
-            {
-                MeanPoolAndNormalize(
-                    tokens.AsSpan(r * width * NativeDimension, width * NativeDimension),
-                    mask.AsSpan(r * width, width),
-                    NativeDimension,
-                    Dimension,
-                    destination.Slice(rows[r] * Dimension, Dimension));
-            }
-        }
-        finally
-        {
-            // The OrtValues pinning these arrays are disposed inside RunGraph, before the arrays return to the pool.
-            ArrayPool<float>.Shared.Return(tokens);
-            ArrayPool<long>.Shared.Return(mask);
-            ArrayPool<long>.Shared.Return(ids);
-        }
-    }
-
-    private void RunGraph(long[] ids, long[] mask, float[] tokens, int count, int width, CancellationToken cancellationToken)
-    {
-        int cells = count * width;
-        long[] shape = [count, width];
-        var memoryInfo = OrtMemoryInfo.DefaultInstance;
-        using var idsValue = OrtValue.CreateTensorValueFromMemory(memoryInfo, ids.AsMemory(0, cells), shape);
-        using var maskValue = OrtValue.CreateTensorValueFromMemory(memoryInfo, mask.AsMemory(0, cells), shape);
-        using var tokensValue = OrtValue.CreateTensorValueFromMemory(memoryInfo, tokens.AsMemory(0, cells * NativeDimension), [count, width, NativeDimension]);
-        _session.Run(_inputNames, [idsValue, maskValue], _outputNames, [tokensValue], cancellationToken);
-    }
+    private void EmbedChunk(IReadOnlyList<EmbeddingGemma2Input> inputs, ReadOnlySpan<int> rows, int width, Span<float> destination, CancellationToken cancellationToken) =>
+        _core.EmbedChunk(inputs, rows, width, ReadRow, PadTokenId, NativeDimension, EncoderPooling.Mean, normalize: true, Dimension, destination, cancellationToken);
 }

@@ -23,7 +23,7 @@ namespace Starlings.Models.E5;
 /// from the constructor owns nothing and its <see cref="Dispose"/> does nothing. Both are idempotent.
 /// </para>
 /// </remarks>
-public sealed class E5TextEmbedder : IDisposable
+public sealed class E5TextEmbedder : ITextEmbedder, IDisposable
 {
     private readonly IEncoderTokenizer _tokenizer;
     private readonly E5Encoder _encoder;
@@ -63,7 +63,11 @@ public sealed class E5TextEmbedder : IDisposable
         var tokenizer = E5Tokenizer.FromFile(files.TokenizerPath, E5ModelAssets.TokenizerSha256, options.MaxSequenceLength);
         var encoderOptions = options with
         {
-            Session = options.Session with { ExpectedModelSha256 = E5ModelAssets.ModelSha256 },
+            Session = options.Session with
+            {
+                ExpectedModelSha256 = E5ModelAssets.ModelSha256,
+                KnownModelSha256 = options.Session.KnownModelSha256 ?? files.ModelSha256,
+            },
         };
         var encoder = E5Encoder.Create(files.ModelPath, encoderOptions);
         try
@@ -99,11 +103,59 @@ public sealed class E5TextEmbedder : IDisposable
         return _encoder.Embed(_tokenizer.Tokenize(text), cancellationToken);
     }
 
+    /// <summary>Floats per embedding (<see cref="E5Encoder.Dimension"/>, 384).</summary>
+    public int Dimension => _encoder.Dimension;
+
+    /// <summary>
+    /// Tokens per text at most (<see cref="E5EncoderOptions.MaxSequenceLength"/>, 512 by default). With
+    /// <see cref="E5Tokenizer"/>, longer text is truncated on the right to this length.
+    /// </summary>
+    public int MaxSequenceLength => _encoder.Options.MaxSequenceLength;
+
     /// <summary>The encoder (dimension, options, session diagnostics). Owned by this instance only when it came from <see cref="Create"/>.</summary>
     public E5Encoder Encoder => _encoder;
 
     /// <summary>The tokenizer (<see cref="E5Tokenizer"/> when this instance came from <see cref="Create"/>).</summary>
     public IEncoderTokenizer Tokenizer => _tokenizer;
+
+    /// <summary>
+    /// The tokenizer as an <see cref="IChunkingTokenizer"/> for <see cref="TextChunker"/> (Experimental), or null when it
+    /// is not one (an <see cref="IEncoderTokenizer"/> other than <see cref="E5Tokenizer"/>).
+    /// </summary>
+    public IChunkingTokenizer? ChunkingTokenizer => _tokenizer as IChunkingTokenizer;
+
+    /// <summary>
+    /// Tokens <paramref name="text"/> needs, special tokens included, without embedding it. With
+    /// <see cref="E5Tokenizer"/> the count is before truncation, so text that is embedded truncated reports more than
+    /// <see cref="MaxSequenceLength"/>; with another <see cref="IEncoderTokenizer"/> that does not implement
+    /// <see cref="IChunkingTokenizer"/>, it is the length of <see cref="IEncoderTokenizer.Tokenize"/>'s output (after
+    /// that tokenizer's own truncation). Experimental (capability <c>token_counting</c>).
+    /// </summary>
+    public int CountTokens(string text)
+    {
+        ArgumentNullException.ThrowIfNull(text);
+        return _tokenizer is IChunkingTokenizer counter ? counter.CountTokens(text) : _tokenizer.Tokenize(text).Length;
+    }
+
+    /// <summary>The token count of each text, in order, as <see cref="CountTokens(string)"/> returns it.</summary>
+    public int[] CountTokens(IReadOnlyList<string> texts)
+    {
+        ArgumentNullException.ThrowIfNull(texts);
+        var counts = new int[texts.Count];
+        for (int i = 0; i < counts.Length; i++)
+        {
+            counts[i] = CountTokens(texts[i] ?? throw new ArgumentException($"Text {i} is null.", nameof(texts)));
+        }
+
+        return counts;
+    }
+
+    /// <summary>
+    /// <see cref="CountTokens(string)"/> against <see cref="MaxSequenceLength"/>. e5 truncates rather than rejects: an
+    /// input with <see cref="TokenLimitCheck.ExceedsLimit"/> is embedded from its first <see cref="MaxSequenceLength"/>
+    /// tokens. Experimental (capability <c>token_counting</c>).
+    /// </summary>
+    public TokenLimitCheck Validate(string text) => new(CountTokens(text), MaxSequenceLength);
 
     /// <summary>Embeds texts in order, tokenized as given.</summary>
     public float[][] EmbedBatch(IReadOnlyList<string> texts, CancellationToken cancellationToken = default)

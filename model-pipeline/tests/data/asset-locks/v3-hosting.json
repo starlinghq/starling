@@ -1,0 +1,24 @@
+{
+  "schema_version": 3,
+  "name": "tiny",
+  "display_name": "Tiny Model 1.0",
+  "repository": "acme/tiny-model",
+  "revision": "0123456789abcdef0123456789abcdef01234567",
+  "hosting": {
+    "repository": "hosts/tiny-model-onnx",
+    "revision": "fedcba9876543210fedcba9876543210fedcba98"
+  },
+  "files": [
+    {
+      "path": "onnx/model.onnx",
+      "size": 300000,
+      "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    },
+    {
+      "path": "tokenizer.json",
+      "size": 10000,
+      "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "url": "https://huggingface.co/acme/tiny-model/resolve/0123456789abcdef0123456789abcdef01234567/tokenizer.json"
+    }
+  ]
+}

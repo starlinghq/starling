@@ -41,11 +41,41 @@ Console.WriteLine(session.Diagnostics.OrtVersion);
 using var outputs = session.Run(inputNames, inputValues, outputNames, cancellationToken);
 ```
 
-- `OnnxModelSession.Create(modelPath | byte[] model, options)` loads once; `Run` is safe to call concurrently. One `Run` overload returns outputs the caller owns and disposes (before the session); the other writes into caller-allocated `OrtValue`s. Input values stay caller-owned. `Inputs`, `Outputs`, `Diagnostics`, `Placement` and `IsDisposed` describe the session. `Dispose` is idempotent; runs already executing complete first.
-- `OnnxSessionOptions` (immutable record): `Provider` (default `Cpu`), `CudaDeviceId` (default 0), `IntraOpNumThreads` and `InterOpNumThreads` (null: defaults, below), `ExpectedModelSha256`, `ComputeModelSha256` (default true), `CapturePlacement` (default false; when true, profiles the first run and publishes `Placement`, an `OnnxPlacementReport` of nodes per provider), and the memory settings under "Memory on Linux".
-- `OnnxSessionDiagnostics`: native and managed versions, available and session providers, provider options, thread counts, memory settings, graph optimization level, model source, size, SHA-256, metadata, and input and output signatures (`OnnxTensorInfo`).
-- `OnnxRuntimeInfo`: `NativeVersion`, `ManagedVersion`, `AvailableProviders`, `CpuProviderName`, `CudaProviderName`.
-- Exceptions: `OnnxRuntimeUnavailableException` (native library missing or of another version), `OnnxProviderUnavailableException` (the requested provider cannot be used; never followed by a fallback), `OnnxModelIntegrityException` (SHA-256 mismatch). A cancelled run throws `OperationCanceledException`; the session stays usable.
+- `OnnxModelSession.Create(modelPath | byte[] model, options)` loads once; `Run` is safe to call concurrently. One `Run` overload returns outputs the caller owns and disposes (before the session); another writes into caller-allocated `OrtValue`s; a third takes inputs as a dictionary keyed by input name (`Run(inputs, outputNames = null)`, null meaning every graph output). Input values stay caller-owned. `Inputs`, `Outputs`, `Diagnostics`, `Placement` and `IsDisposed` describe the session. `Dispose` is idempotent; runs already executing complete first.
+- I/O binding: `CreateIoBinding()` returns an ONNX Runtime `OrtIoBinding` (caller-owned, one per concurrent caller, disposed before the session); `RunWithBinding(binding, cancellationToken)` runs on the bound values with the same cancellation, placement and lifetime rules as `Run`. `CreateDeviceMemoryInfo()` describes the session's device (the CUDA device, or CPU memory) for `BindOutputToDevice`. On CUDA this is how inputs already on the device avoid the per-run copy. Status: experimental on CPU, untested on CUDA.
+- Warmup: `Warmup(inputs, runs = 1)` runs on given inputs and discards the outputs; `WarmupWithZeroInputs(symbolicDimensions = null, runs = 1)` builds zero-filled tensors from the graph signature (each symbolic dimension from the dictionary, or 1). Both return each run's duration. With `CapturePlacement` the first warmup run is the profiled one. Status: experimental.
+- `OnnxSessionOptions` (immutable record): `Provider` (default `Cpu`), `CudaDeviceId` (default 0), `Cuda` (typed CUDA provider options, below), `IntraOpNumThreads` and `InterOpNumThreads` (null: defaults, below), `ExecutionMode` (default `Sequential`), `GraphOptimizationLevel` (default `All`), `OptimizedModelFilePath` (default null), `LogId` and `LogSeverity` (default `Error`), `ExpectedModelSha256`, `ComputeModelSha256` (default true), `KnownModelSha256` (a digest the caller already established, for example `ModelSnapshot.GetVerifiedSha256`: reported as `Diagnostics.ModelSha256` with `ModelSha256Source = Known` and compared with `ExpectedModelSha256` without reading the file again), `CapturePlacement` (default false; when true, profiles the first run and publishes `Placement`, an `OnnxPlacementReport` of nodes per provider), and the memory settings under "Memory on Linux".
+- `OnnxSessionDiagnostics`: native and managed versions, available and session providers, provider options, thread counts, execution mode, memory settings, graph optimization level, optimized model path, log id and severity, model source, size, SHA-256, metadata, and input and output signatures (`OnnxTensorInfo`).
+- `OnnxRuntimeInfo`: `NativeVersion`, `ManagedVersion`, `AvailableProviders`, `CpuProviderName`, `CudaProviderName`, `TryInitializeProvider` and `ConfigureLogging` (below).
+- Exceptions: `OnnxRuntimeUnavailableException` (native library missing or of another version), `OnnxProviderUnavailableException` (the requested provider cannot be used; never followed by a fallback), `OnnxModelIntegrityException` (SHA-256 mismatch). All three derive from `OnnxSessionException`, so one `catch (OnnxSessionException)` handles them. Invalid options throw `ArgumentException`; a cancelled run throws `OperationCanceledException` and the session stays usable; a failing run throws ONNX Runtime's `OnnxRuntimeException`.
+
+### Provider probe
+
+`OnnxRuntimeInfo.TryInitializeProvider(provider, deviceId, out problem)` (or `TryInitializeProvider(sessionOptions, out problem)`, which also passes `OnnxSessionOptions.Cuda`) checks without loading a model that the native library loads and matches the managed binding and, for CUDA, that the native package has the CUDA provider and that `libonnxruntime_providers_cuda` with its CUDA and cuDNN dependencies loads and accepts the options. It returns `false` with the reason that session creation would throw. It allocates no device memory, so a missing, busy or full device can still fail at session creation. On the CPU native package it returns `false` for CUDA with the package to reference instead. Status: experimental on CPU; untested on CUDA (no GPU run).
+
+### CUDA provider options
+
+`OnnxSessionOptions.Cuda` (`OnnxCudaProviderOptions`) passes typed options to the CUDA provider; each null member keeps ONNX Runtime's default:
+
+| Member | ONNX Runtime option | Values |
+| --- | --- | --- |
+| `GpuMemoryLimitBytes` | `gpu_mem_limit` | positive bytes |
+| `ArenaExtendStrategy` | `arena_extend_strategy` | `NextPowerOfTwo` (`kNextPowerOfTwo`), `SameAsRequested` (`kSameAsRequested`) |
+| `CudnnConvolutionAlgorithmSearch` | `cudnn_conv_algo_search` | `Exhaustive`, `Heuristic`, `Default` |
+| `EnableCudaGraph` | `enable_cuda_graph` | true or false; needs every node on CUDA, fixed shapes and I/O binding at fixed device addresses |
+
+The options are validated on every build, CPU-only included, and ignored for a CPU session. `use_tf32=0` is always set and is not an option. A non-default cuDNN algorithm search can change convolution results in the last bits; the qualified CUDA profiles were measured with the defaults, and no model package's parity claim covers other values. `Diagnostics.ProviderOptions` reports the options as ONNX Runtime returns them. Status: untested on CUDA (no GPU run with these options).
+
+### Logging, optimization level and the optimized graph
+
+- `LogSeverity` (default `Error`, the level before this option existed) and `LogId` set the session's ONNX Runtime log filter and logger id.
+- `OnnxRuntimeInfo.ConfigureLogging(sink, minimumSeverity = Warning, logId = null)` sends ONNX Runtime's messages (`OnnxRuntimeLogMessage`: severity, category, log id, code location, message) to a delegate instead of standard error. ONNX Runtime takes a logging function only when it creates its process-wide environment, so call it once, before any other ONNX Runtime use in the process; afterwards it throws `InvalidOperationException`. The sink runs on ONNX Runtime's threads, possibly concurrently; an exception it throws is dropped. Status: experimental.
+- `GraphOptimizationLevel` (`None`, `Basic`, `Extended`, `Layout`, `All`; default `All`, the level every profile was qualified at). Another level can change results in the last bits. `OptimizedModelFilePath` writes the optimized graph to a file (never the model file itself); it can contain provider-specific nodes, so it loads with the provider it was written for. Status: experimental.
+- `ExecutionMode = Parallel` runs independent nodes concurrently on `InterOpNumThreads` threads; in the default sequential mode ONNX Runtime creates no inter-op pool and `InterOpNumThreads` is only recorded. Each node computes the same values in either mode. Status: experimental on CPU, untested on CUDA.
+
+DirectML (Windows) and CoreML (macOS) are not offered: they need hardware this repository has no runner for.
+
+The text encoders of `Starlings.Models.E5`, `Starlings.Models.EmbeddingGemma2` and `Starlings.Models.Bert` share one internal implementation of right-padded packing, mean and CLS pooling with L2 normalization, and the chunk run (`EncoderCore`). It is not public API.
 
 ## Native runtime
 
@@ -57,6 +87,10 @@ The package references only `Microsoft.ML.OnnxRuntime.Managed` (exactly 1.30.0).
 | CUDA, Linux x64 | `Microsoft.ML.OnnxRuntime.Gpu.Linux` 1.30.0 (needs the CUDA 13 runtime, cuBLAS and cuDNN 9 on the loader path; not shipped) |
 
 Both ship `libonnxruntime` under the same file name. Without a native package, or with a different version, session creation fails with `OnnxRuntimeUnavailableException` naming the package to add.
+
+### Native package check
+
+The package ships MSBuild targets in `buildTransitive/`, so every executable or test project that references it, directly or through a model package, checks its package graph after restore: warning `STARLINGS001` when no ONNX Runtime native package is present, error `STARLINGS002` when both `Microsoft.ML.OnnxRuntime` and a `Microsoft.ML.OnnxRuntime.Gpu*` package are (a GenAI native package counts through the ONNX Runtime package it brings). Class libraries and browser projects (`browser-*` runtime identifiers, or `Starlings.Runtime.OnnxWeb` in the graph) are not checked. Turn it off with `<StarlingsOnnxRuntimeNativeCheck>false</StarlingsOnnxRuntimeNativeCheck>`, for example when the application deploys its own ONNX Runtime library. CUDA build recipe, Linux GPU dependencies and Native AOT status: [native runtimes guide](https://github.com/starlinghq/starling/blob/main/docs/guides/native-runtimes-and-cuda.md).
 
 ## Threads in containers
 

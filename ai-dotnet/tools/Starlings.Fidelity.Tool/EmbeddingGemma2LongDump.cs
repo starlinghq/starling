@@ -208,7 +208,7 @@ internal static class EmbeddingGemma2LongDump
                 {
                     ["type"] = ex.GetType().Name,
                     ["token_count"] = ex.TokenCount,
-                    ["maximum_tokens"] = ex.MaximumTokens,
+                    ["maximum_tokens"] = ex.MaxTokens,
                     ["message"] = ex.Message,
                 };
             }

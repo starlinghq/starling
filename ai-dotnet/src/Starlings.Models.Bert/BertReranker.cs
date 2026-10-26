@@ -3,7 +3,7 @@ using Starlings.Runtime.Onnx;
 namespace Starlings.Models.Bert;
 
 /// <summary>Paired query/document relevance scoring. Scores are raw logits with identity activation.</summary>
-public sealed class BertReranker : IDisposable
+public sealed class BertReranker : IReranker, IDisposable
 {
     private readonly BertSession _model;
     private BertReranker(BertSession model) => _model = model;
@@ -63,6 +63,17 @@ public sealed class BertReranker : IDisposable
     /// <summary>Scores supplied tokenized pair inputs, retaining masks and segment ids.</summary>
     public float[] ScoreTokens(IReadOnlyList<BertInput> inputs, CancellationToken cancellationToken = default) =>
         _model.Predict(inputs, cancellationToken).Select(row => row[0]).ToArray();
+
+    /// <summary>
+    /// Scores each document against <paramref name="query"/>, in document order: raw logits, as
+    /// <see cref="ScoreBatch"/> returns them for the pairs. The <see cref="IReranker"/> form.
+    /// </summary>
+    public float[] Score(string query, IReadOnlyList<string> documents, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(query);
+        ArgumentNullException.ThrowIfNull(documents);
+        return ScoreBatch(documents.Select(document => new BertPair(query, document)).ToArray(), cancellationToken);
+    }
 
     /// <summary>Ranks documents by descending logit, with stable original-index ties.</summary>
     public IReadOnlyList<BertRankedDocument> Rank(string query, IReadOnlyList<string> documents, CancellationToken cancellationToken = default)

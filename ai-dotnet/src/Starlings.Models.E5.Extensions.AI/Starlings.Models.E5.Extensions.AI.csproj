@@ -27,4 +27,9 @@
     <InternalsVisibleTo Include="Starlings.Models.E5.Browser" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- Request and result handling shared with the other text embedding generator (internal). -->
+    <Compile Include="../Shared/ExtensionsAI/*.cs" Link="Shared/%(Filename)%(Extension)" />
+  </ItemGroup>
+
 </Project>

@@ -65,7 +65,9 @@
 #      <labels> limits step 11 to a comma-separated subset of: GLiNER2, EmbeddingGemma 2, EmbeddingGemma 2 images,
 #      EmbeddingGemma 2 videos, Qwen 3.5, Qwen 3.5 fp16x,
 #  12. with --aot: tools/aot-check-ai.sh on the drill's feed and model cache (Native AOT publish of a consumer per
-#      package, trim/AOT warnings recorded, AOT results compared with JIT results),
+#      package, trim/AOT warnings recorded, AOT results compared with JIT results), then (12b, also with --aot-smoke
+#      alone) tools/aot-smoke-ai.sh: every package published under Native AOT with its whole assembly rooted, no model
+#      files, its warnings recorded and a summary of which packages are AOT-clean,
 #  13. with --cuda <device>: the CUDA profiles from the same packed packages. Step 6 also builds two CUDA consumers
 #      outside the repository whose only native packages are the GPU ones, in place of the CPU natives:
 #      tools/release-drill/cuda-consumer (Microsoft.ML.OnnxRuntime.Gpu.Linux 1.30.0) and a copy of QwenChat with
@@ -125,6 +127,8 @@
 #                                                               # from public hosting (no token, no seed; ~7 GB); only
 #                                                               # once maintainer action M3 has made the hosting public
 #   ... --aot                                                   # also run the Native AOT check (tools/aot-check-ai.sh)
+#                                                               # and the AOT smoke check (tools/aot-smoke-ai.sh)
+#   ... --aot-smoke                                             # only the weight-free AOT smoke check of every package
 #   ... --cuda <device> [--cuda-lib-path <dirs>] [--cuda-only]  # also run the CUDA profiles on one GPU (UUID or
 #                                                               # PCI-ordered index)
 #   ... --packages-from artifacts/release-drill-ai              # reuse the packages of an earlier drill
@@ -168,6 +172,7 @@ ffmpeg9_gpl_dir=""
 public_hosting=0
 public_only=""
 aot=0
+aot_smoke=0
 cuda_device=""
 cuda_lib_path=""
 cuda_only=0
@@ -190,6 +195,7 @@ while [[ $# -gt 0 ]]; do
         --no-model) mode="no-model"; shift ;;
         --public-hosting) public_hosting=1; shift ;;
         --aot) aot=1; shift ;;
+        --aot-smoke) aot_smoke=1; shift ;;
         *) echo "unknown argument: $1" >&2; exit 2 ;;
     esac
 done
@@ -318,6 +324,7 @@ pack="$work/pack"
 projects=(
     ai-dotnet/src/Starlings.Acquisition
     ai-dotnet/src/Starlings.Runtime.Onnx
+    ai-dotnet/src/Starlings.Models.Abstractions
     ai-dotnet/src/Starlings.Models.E5
     ai-dotnet/src/Starlings.Models.E5.Extensions.AI
     ai-dotnet/src/Starlings.Runtime.OnnxWeb
@@ -356,7 +363,7 @@ else
     done
     pack_sha="$(unzip -p "$pack/Starlings.Models.E5.$ai_version.nupkg" Starlings.Models.E5.nuspec | sed -n 's:.*<repository [^>]*commit="\([0-9a-f]*\)".*:\1:p')"
     git -C "$src" cat-file -e "$pack_sha^{commit}" 2>/dev/null || fail "--packages-from: packed commit $pack_sha is not in the history of $sha"
-    packed_paths=(ai-dotnet/src ai-dotnet/Directory.Build.props ai-dotnet/Directory.Build.targets ai-dotnet/Directory.Packages.props Directory.Build.props .editorconfig global.json LICENSE-APACHE LICENSE-MIT)
+    packed_paths=(ai-dotnet/src model-pipeline/routes ai-dotnet/Directory.Build.props ai-dotnet/Directory.Build.targets ai-dotnet/Directory.Packages.props Directory.Build.props .editorconfig global.json LICENSE-APACHE LICENSE-MIT)
     if ! git -C "$src" diff --quiet "$pack_sha" "$sha" -- "${packed_paths[@]}"; then
         git -C "$src" diff --stat "$pack_sha" "$sha" -- "${packed_paths[@]}"
         fail "--packages-from: the packages were built from $pack_sha, which differs from $sha in packed sources"
@@ -372,8 +379,10 @@ expect_deps() {
         Starlings.Tokenizers) ;;
         Starlings.Acquisition) ;;
         Starlings.Runtime.Onnx) echo "Microsoft.ML.OnnxRuntime.Managed [$ort_version]" ;;
+        Starlings.Models.Abstractions) echo "Starlings.Acquisition [$ai_version]" ;;
         Starlings.Models.E5)
             echo "Starlings.Acquisition [$ai_version]"
+            echo "Starlings.Models.Abstractions [$ai_version]"
             echo "Starlings.Runtime.Onnx [$ai_version]"
             echo "Starlings.Tokenizers [$tok_version]" ;;
         Starlings.Models.E5.Extensions.AI)
@@ -392,10 +401,12 @@ expect_deps() {
             echo "Microsoft.ML 5.0.0" ;;
         Starlings.Models.Gliner2)
             echo "Starlings.Acquisition [$ai_version]"
+            echo "Starlings.Models.Abstractions [$ai_version]"
             echo "Starlings.Runtime.Onnx [$ai_version]"
             echo "Starlings.Tokenizers [$tok_version]" ;;
         Starlings.Models.EmbeddingGemma2)
             echo "Starlings.Acquisition [$ai_version]"
+            echo "Starlings.Models.Abstractions [$ai_version]"
             echo "Starlings.Runtime.Onnx [$ai_version]"
             echo "Starlings.Tokenizers [$tok_version]" ;;
         Starlings.Models.EmbeddingGemma2.Extensions.AI)
@@ -480,6 +491,11 @@ $expected"
     for f in "lib/net10.0/$id.dll" "lib/net10.0/$id.xml" README.md; do
         grep -qx "$f" <<<"$contents" || fail "$id: package lacks $f"
     done
+    # The build-time native package checks travel to every consumer (README, "Native package check").
+    case "$id" in
+        Starlings.Runtime.Onnx | Starlings.Generation.OnnxGenAI)
+            grep -qx "buildTransitive/$id.targets" <<<"$contents" || fail "$id: package lacks buildTransitive/$id.targets" ;;
+    esac
     # FFmpeg is user-supplied: no package may carry an FFmpeg library (libavcodec.so.62, avcodec-62.dll, ...).
     if grep -Eqi '(^|/)(lib)?(avcodec|avformat|avutil|avfilter|avdevice|swscale|swresample|postproc)([-.][0-9]+)*\.(so|dll|dylib)(\.[0-9]+)*$' <<<"$contents"; then
         fail "$id: package contains an FFmpeg library"
@@ -624,10 +640,10 @@ for path in sys.argv[5:]:
         mea = [n for n in names if n.split("/")[0] == "Microsoft.Extensions.AI.Abstractions"]
         assert mea == ["Microsoft.Extensions.AI.Abstractions/10.10.1"], f"Microsoft.Extensions.AI.Abstractions resolved as {mea}"
         unrelated = ("Starlings.Runtime.Onnx", "Starlings.Models.E5", "Starlings.Models.Gliner2",
-                     "Starlings.Models.EmbeddingGemma2")
+                     "Starlings.Models.EmbeddingGemma2", "Starlings.Models.Abstractions")
         assert not [n for n in names if n.split("/")[0] in unrelated], "unrelated packages restored"
     else:
-        common = ["Starlings.Tokenizers", "Starlings.Acquisition", "Starlings.Runtime.Onnx",
+        common = ["Starlings.Tokenizers", "Starlings.Acquisition", "Starlings.Runtime.Onnx", "Starlings.Models.Abstractions",
                   "Microsoft.ML.OnnxRuntime.Gpu.Linux" if app in ("CudaConsumer", "EmbeddingGemma2SearchCuda") else "Microsoft.ML.OnnxRuntime",
                   "Microsoft.ML.OnnxRuntime.Managed"]
         # Each EmbeddingGemma2Search copy restores exactly one video adapter: FFmpeg9 for its FFmpeg 9 copy, FFmpeg otherwise.
@@ -673,6 +689,38 @@ echo "ok:   consumer package cache holds only: $(ls "$NUGET_PACKAGES" | tr '\n' 
 for app in "${consumer_apps[@]}"; do
     (cd "$apps/$app" && dotnet build --configuration Release --no-restore >"$work/build-$app.log" 2>&1) \
         || { cat "$work/build-$app.log"; fail "$app build failed"; }
+    # Each consumer references exactly one native package per runtime: the native package checks stay quiet.
+    if grep -Eq '(warning|error) STARLINGS00[1-4]' "$work/build-$app.log"; then
+        grep -E '(warning|error) STARLINGS00[1-4]' "$work/build-$app.log" | sort -u
+        fail "$app: a native package check fired on a consumer with one native package per runtime"
+    fi
+done
+echo "ok:   no native package check fired in ${consumer_apps[*]}"
+
+# The build-time native package checks (buildTransitive targets of Starlings.Runtime.Onnx and
+# Starlings.Generation.OnnxGenAI) on throwaway consumers: no native warns, a CPU and a GPU native together fail.
+# The two-native cases restore the GPU packages (about 420 MB) into the isolated consumer cache.
+native_cases=(
+    "ort-none|Starlings.Models.E5||warning STARLINGS001"
+    "ort-both|Starlings.Models.E5|Microsoft.ML.OnnxRuntime/$ort_version Microsoft.ML.OnnxRuntime.Gpu.Linux/$ort_version|error STARLINGS002"
+    "genai-none|Starlings.Models.Qwen35.OnnxGenAI||warning STARLINGS003"
+    "genai-both|Starlings.Models.Qwen35.OnnxGenAI|Microsoft.ML.OnnxRuntimeGenAI/$genai_version Microsoft.ML.OnnxRuntimeGenAI.Cuda/$genai_version|error STARLINGS004"
+)
+for entry in "${native_cases[@]}"; do
+    IFS='|' read -r name package natives want <<<"$entry"
+    case_dir="$apps/NativeCheck-$name"
+    mkdir -p "$case_dir"
+    refs=""
+    for native in $natives; do refs="$refs<PackageReference Include=\"${native%/*}\" Version=\"${native#*/}\" />"; done
+    sed -e "s|@VERSION@|$ai_version|" -e "s|@PACKAGE@|$package|" -e "s|@NATIVES@|$refs|" \
+        "$src/tools/release-drill/native-check/NativeCheck.csproj.in" >"$case_dir/NativeCheck.csproj"
+    echo 'Console.WriteLine("native check");' >"$case_dir/Program.cs"
+    status=0
+    (cd "$case_dir" && dotnet build --configuration Release >"$work/native-check-$name.log" 2>&1) || status=$?
+    grep -q "$want" "$work/native-check-$name.log" || { tail -30 "$work/native-check-$name.log"; fail "native check $name: expected $want"; }
+    if [[ "$want" == error* && "$status" == 0 ]]; then fail "native check $name: the build passed despite $want"; fi
+    if [[ "$want" == warning* && "$status" != 0 ]]; then tail -30 "$work/native-check-$name.log"; fail "native check $name: the build failed"; fi
+    echo "ok:   native check $name: $package${natives:+ + $natives}: $want"
 done
 if find "$apps" -path '*/bin/*' \( -iname '*tokeni[sz]er*' -a ! -iname 'Starlings.Tokenizers.*' \) | grep -q .; then
     fail "foreign tokenizer files in a build output"
@@ -1108,6 +1156,13 @@ if [[ "$aot" == 1 && "$cuda_only" != 1 ]]; then
 else
     echo "note: no --aot: the Native AOT check was not run"
 fi
+if [[ ( "$aot" == 1 || "$aot_smoke" == 1 ) && "$cuda_only" != 1 ]]; then
+    step "12b. Native AOT smoke check of every package (tools/aot-smoke-ai.sh on the drill feed; no model files)"
+    "$src/tools/aot-smoke-ai.sh" --feed "$feed" --out "$work/aot-smoke" | tee "$work/aot-smoke.log" \
+        || fail "the Native AOT smoke check failed"
+else
+    echo "note: no --aot or --aot-smoke: the Native AOT smoke check was not run"
+fi
 
 cuda_ran=""
 if [[ -n "$cuda_device" ]]; then
@@ -1225,8 +1280,9 @@ out="$root/artifacts/release-drill-ai"
 rm -rf "$out"
 mkdir -p "$out"
 cp "$pack"/*.nupkg "$pack"/*.snupkg "$work"/*-packages.txt "$out/"
-cp "$work"/sample-*.log "$work"/consumer-*.log "$work"/public-*.log "$work"/cuda-*.log "$work"/aot-check.log "$out/" 2>/dev/null || true
+cp "$work"/sample-*.log "$work"/consumer-*.log "$work"/public-*.log "$work"/cuda-*.log "$work"/aot-check.log "$work"/aot-smoke.log "$work"/native-check-*.log "$out/" 2>/dev/null || true
 if [[ -d "$work/aot" ]]; then cp -r "$work/aot" "$out/aot"; fi
+if [[ -d "$work/aot-smoke" ]]; then cp -r "$work/aot-smoke" "$out/aot-smoke"; fi
 aot_label=""
 [[ "$aot" != 1 ]] || aot_label=", AOT check"
 cpu_label="$mode${gliner2_seed:+, GLiNER2 run}${eg2_seed:+, EmbeddingGemma 2 run}${ffmpeg_dir:+ with FFmpeg $ffmpeg_dir}${ffmpeg9_dir:+ and FFmpeg 9 $ffmpeg9_dir}${qwen_seed:+, Qwen3.5 run}"

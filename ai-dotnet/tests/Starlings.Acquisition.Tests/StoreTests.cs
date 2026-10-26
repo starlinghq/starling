@@ -81,6 +81,27 @@ public sealed class StoreTests : IDisposable
     }
 
     [Fact]
+    public async Task VerifiedDigestIsCarriedOnlyWhenTheSnapshotHashedTheFiles()
+    {
+        using (var first = Store())
+        {
+            var downloaded = await first.DownloadAsync(Lock, cancellationToken: Ct);
+            Assert.Equal(FakeHub.Sha256(_model), downloaded.GetVerifiedSha256(Model)); // hashed in transit
+        }
+
+        using var full = new ModelAssetStore(Options(), new HttpClient(new NoNetwork()));
+        var hashed = full.OpenLocal(Lock);
+        Assert.Equal(FakeHub.Sha256(_model), hashed.GetVerifiedSha256(Model));
+        Assert.Equal(FakeHub.Sha256(_tokenizer), hashed.GetVerifiedSha256(Tokenizer));
+        Assert.Throws<KeyNotFoundException>(() => hashed.GetVerifiedSha256("other.bin"));
+
+        using var sizeOnly = new ModelAssetStore(Options(CacheVerification.Size), new HttpClient(new NoNetwork()));
+        Assert.Null(sizeOnly.OpenLocal(Lock).GetVerifiedSha256(Model));
+        Assert.Null(ModelAssetStore.VerifyDirectory(Lock, hashed.Directory, CacheVerification.Size).GetVerifiedSha256(Model));
+        Assert.Equal(FakeHub.Sha256(_model), ModelAssetStore.VerifyDirectory(Lock, hashed.Directory).GetVerifiedSha256(Model));
+    }
+
+    [Fact]
     public void OfflineMissNamesTheFilesAndHowToDownload()
     {
         using var offline = new ModelAssetStore(Options(), new HttpClient(new NoNetwork()));
