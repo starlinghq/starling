@@ -111,7 +111,11 @@ public sealed class EmbeddingGemma2EmbeddingTransformer : ITransformer, IDisposa
         options.Validate();
         var encoderOptions = options.Encoder with
         {
-            Session = options.Encoder.Session with { ExpectedModelSha256 = EmbeddingGemma2ModelAssets.ModelSha256 },
+            Session = options.Encoder.Session with
+            {
+                ExpectedModelSha256 = EmbeddingGemma2ModelAssets.ModelSha256,
+                KnownModelSha256 = options.Encoder.Session.KnownModelSha256 ?? files.ModelSha256,
+            },
         };
         var encoder = EmbeddingGemma2Encoder.Create(files.ModelPath, encoderOptions);
         try

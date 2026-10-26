@@ -61,6 +61,59 @@ public class SessionTests
     }
 
     [Fact]
+    public void KnownDigestReplacesTheReadAndSatisfiesTheExpectedDigest()
+    {
+        string actual = Convert.ToHexStringLower(SHA256.HashData(TestModels.Add));
+        using (var computed = OnnxModelSession.Create(TestModels.Add))
+        {
+            Assert.Equal(OnnxModelDigestSource.Computed, computed.Diagnostics.ModelSha256Source);
+        }
+
+        // A digest the caller vouches for is reported as given: the bytes are not hashed (a different digest shows it).
+        string other = new('a', 64);
+        using (var known = OnnxModelSession.Create(TestModels.Add, new OnnxSessionOptions { KnownModelSha256 = other }))
+        {
+            Assert.Equal(other, known.Diagnostics.ModelSha256);
+            Assert.Equal(OnnxModelDigestSource.Known, known.Diagnostics.ModelSha256Source);
+        }
+
+        using (var expected = OnnxModelSession.Create(TestModels.Add, new OnnxSessionOptions { KnownModelSha256 = actual, ExpectedModelSha256 = actual }))
+        {
+            Assert.Equal(actual, expected.Diagnostics.ModelSha256);
+            Assert.Equal(OnnxModelDigestSource.Known, expected.Diagnostics.ModelSha256Source);
+        }
+
+        var mismatch = Assert.Throws<OnnxModelIntegrityException>(() => OnnxModelSession.Create(
+            TestModels.Add, new OnnxSessionOptions { KnownModelSha256 = other, ExpectedModelSha256 = actual }));
+        Assert.Contains("KnownModelSha256", mismatch.Message, StringComparison.Ordinal);
+        Assert.Throws<ArgumentException>(() => OnnxModelSession.Create(TestModels.Add, new OnnxSessionOptions { KnownModelSha256 = "ABC" }));
+
+        using (var none = OnnxModelSession.Create(TestModels.Add, new OnnxSessionOptions { ComputeModelSha256 = false }))
+        {
+            Assert.Null(none.Diagnostics.ModelSha256Source);
+        }
+    }
+
+    [Fact]
+    public void KnownDigestSkipsReadingTheFile()
+    {
+        string path = Path.Combine(Path.GetTempPath(), $"starlings-add-{Guid.NewGuid():N}.onnx");
+        File.WriteAllBytes(path, TestModels.Add);
+        // Not the file's digest: had the file been hashed, the session would report the real one.
+        string known = new('b', 64);
+        try
+        {
+            using var session = OnnxModelSession.Create(path, new OnnxSessionOptions { KnownModelSha256 = known, ExpectedModelSha256 = known });
+            Assert.Equal(known, session.Diagnostics.ModelSha256);
+            Assert.Equal(OnnxModelDigestSource.Known, session.Diagnostics.ModelSha256Source);
+        }
+        finally
+        {
+            File.Delete(path);
+        }
+    }
+
+    [Fact]
     public void FileModelIsHashedFromDisk()
     {
         string path = Path.Combine(Path.GetTempPath(), $"starlings-add-{Guid.NewGuid():N}.onnx");

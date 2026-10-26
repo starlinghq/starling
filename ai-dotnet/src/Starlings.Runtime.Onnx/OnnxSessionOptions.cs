@@ -70,6 +70,16 @@ public sealed record OnnxSessionOptions
     public bool ComputeModelSha256 { get; init; } = true;
 
     /// <summary>
+    /// Lowercase hex SHA-256 of the model bytes as the caller already established it, for example from an acquisition
+    /// snapshot verified with <c>CacheVerification.Sha256</c> (<c>ModelSnapshot.GetVerifiedSha256</c>). When set, the
+    /// model is not read for hashing: the digest is reported in <see cref="OnnxSessionDiagnostics.ModelSha256"/> (with
+    /// <see cref="OnnxSessionDiagnostics.ModelSha256Source"/> <see cref="OnnxModelDigestSource.Known"/>),
+    /// <see cref="ExpectedModelSha256"/> is compared with it, and <see cref="ComputeModelSha256"/> has no effect. The
+    /// caller vouches that the bytes have not changed since they were hashed. Default <see langword="null"/>.
+    /// </summary>
+    public string? KnownModelSha256 { get; init; }
+
+    /// <summary>
     /// On Linux with glibc, call <c>malloc_trim(0)</c> when the session's native memory is released (after
     /// <see cref="OnnxModelSession.Dispose"/> and the last in-flight run), so freed memory goes back to the operating
     /// system instead of staying resident in glibc's heaps. Default <see langword="true"/>. It releases only free
@@ -149,6 +159,11 @@ public sealed record OnnxSessionOptions
         if (ExpectedModelSha256 is { } sha && (sha.Length != 64 || !sha.All(char.IsAsciiHexDigitLower)))
         {
             throw new ArgumentException("Expected a 64-character lowercase hex SHA-256.", nameof(ExpectedModelSha256));
+        }
+
+        if (KnownModelSha256 is { } known && (known.Length != 64 || !known.All(char.IsAsciiHexDigitLower)))
+        {
+            throw new ArgumentException("Expected a 64-character lowercase hex SHA-256.", nameof(KnownModelSha256));
         }
     }
 }
