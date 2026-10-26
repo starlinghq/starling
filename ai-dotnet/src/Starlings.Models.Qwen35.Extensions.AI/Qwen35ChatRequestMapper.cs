@@ -110,7 +110,7 @@ public static class Qwen35ChatRequestMapper
     /// whether <see cref="ChatToolMode.RequireAny"/>, a required function and a JSON <see cref="ChatOptions.ResponseFormat"/>
     /// map to a grammar or fail with <see cref="NotSupportedException"/>.
     /// </summary>
-    public static Qwen35ChatOptions MapOptions(ChatOptions? options, Qwen35ChatOptions defaults, string modelId, GuidanceSupport guidance)
+    internal static Qwen35ChatOptions MapOptions(ChatOptions? options, Qwen35ChatOptions defaults, string modelId, GuidanceSupport guidance)
     {
         ArgumentNullException.ThrowIfNull(defaults);
         ArgumentNullException.ThrowIfNull(modelId);
