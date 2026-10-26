@@ -61,7 +61,7 @@ Class libraries and browser projects are not checked. Opt-out properties: `Starl
 
 - An executable or test project that references a Starlings model package without a native package now gets warning `STARLINGS001` or `STARLINGS003` at build time (an error under `TreatWarningsAsErrors`). Add the native package, or set the opt-out property if the application deploys its own native library.
 - A project with both a CPU and a GPU native package of one runtime now fails to build (`STARLINGS002`, `STARLINGS004`). Such a project shipped two copies of one native library, of which the loader picked one; keep one package.
-- Nothing breaks: every former member is still there, marked `[Obsolete]`. Projects that treat warnings as errors see CS0618 until they move to the replacements above.
+- `Starlings.Models.Abstractions` breaks nothing: every former member is still there, marked `[Obsolete]`. Projects that treat warnings as errors see CS0618 until they move to the replacements above.
 - A file that imports both `Starlings.Models` and `Starlings.Models.E5` sees two types named `CapabilityStatus` until the obsolete one is removed: qualify it or alias it (`using Status = Starlings.Models.CapabilityStatus;`).
 - Code that tested for the exact type `ArgumentException` (not `is ArgumentException`) on an over-long e5 id sequence now gets `InputTooLongException`, a subclass.
 - Add `Starlings.Models.Abstractions` at the same version as the other `Starlings.*` packages; it comes in transitively with e5, EmbeddingGemma 2 and GLiNER2.
