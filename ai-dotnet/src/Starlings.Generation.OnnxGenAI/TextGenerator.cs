@@ -92,6 +92,12 @@ public sealed class TextGenerator
     /// validated when this method is called; generation starts on the first <c>MoveNext</c>. Disposing the enumerator
     /// early releases the native generator.
     /// </summary>
+    /// <remarks>
+    /// Dispose the enumerator (<c>foreach</c> does): that releases the native generator and its reference on the model at
+    /// once, on the disposing thread. An enumerator abandoned after its first <c>MoveNext</c> without disposal is a
+    /// safety-net case: its <see cref="GenAISequence"/> is released on a thread-pool thread after a garbage collection
+    /// finds it unreachable, so it no longer pins the model, but the native memory stays allocated until then.
+    /// </remarks>
     public IEnumerable<GenerationUpdate> GenerateStreaming(IReadOnlyList<int> promptIds, GenerationOptions? options = null, CancellationToken cancellationToken = default) =>
         GenerateStreamingCore(promptIds, options, null, cancellationToken);
 
@@ -167,6 +173,9 @@ public sealed class TextGenerator
         var stops = new StopSequenceMatcher(options.StopSequences);
         var all = ImmutableArray.CreateBuilder<int>();
         var pendingIds = ImmutableArray.CreateBuilder<int>();
+        LogprobCalculator? logprobs = options.ReturnLogprobs ? new LogprobCalculator(Tokenizer, sequence.VocabularySize, options.TopLogprobs) : null;
+        var allLogprobs = ImmutableArray.CreateBuilder<TokenLogprob>();
+        var pendingLogprobs = ImmutableArray.CreateBuilder<TokenLogprob>();
         var text = new StringBuilder();
         GenerationFinishReason finish;
         int? stopTokenId = null;
@@ -198,6 +207,16 @@ public sealed class TextGenerator
 
             all.Add(id);
             pendingIds.Add(id);
+            if (logprobs is not null)
+            {
+                // GenAI runs the model on a selected token only at the next step, so the logits read now are those of
+                // the step that selected id (GenAISequence.CopyLastLogits; measured with ONNX Runtime GenAI 0.17.1).
+                sequence.CopyLastLogits(logprobs.Logits);
+                TokenLogprob entry = logprobs.Compute(id);
+                allLogprobs.Add(entry);
+                pendingLogprobs.Add(entry);
+            }
+
             var (emit, matched) = stops.Push(detokenizer.Push(id));
             if (matched is not null)
             {
@@ -210,8 +229,9 @@ public sealed class TextGenerator
             if (emit.Length > 0)
             {
                 text.Append(emit);
-                yield return new GenerationUpdate { Text = emit, TokenIds = pendingIds.ToImmutable() };
+                yield return new GenerationUpdate { Text = emit, TokenIds = pendingIds.ToImmutable(), Logprobs = pendingLogprobs.ToImmutable() };
                 pendingIds.Clear();
+                pendingLogprobs.Clear();
             }
         }
 
@@ -243,7 +263,8 @@ public sealed class TextGenerator
             StopSequence = stopSequence,
             Usage = new GenerationUsage(prompt.Length, all.Count),
             Timings = new GenerationTimings(prefill, clock.Elapsed - prefill),
+            Logprobs = allLogprobs.ToImmutable(),
         };
-        yield return new GenerationUpdate { Text = finalText, TokenIds = pendingIds.ToImmutable(), Result = result };
+        yield return new GenerationUpdate { Text = finalText, TokenIds = pendingIds.ToImmutable(), Logprobs = pendingLogprobs.ToImmutable(), Result = result };
     }
 }

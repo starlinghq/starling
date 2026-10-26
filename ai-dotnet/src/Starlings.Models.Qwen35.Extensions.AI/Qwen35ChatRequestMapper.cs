@@ -129,7 +129,7 @@ internal static class Qwen35ChatRequestMapper
         if (options.Reasoning is not null)
         {
             throw new NotSupportedException(
-                $"ChatOptions.Reasoning is not supported: the model has no reasoning effort levels and its reasoning is not split from the answer. Use AdditionalProperties['{Qwen35ChatClient.EnableThinkingPropertyName}'] = true or false to switch the template's thinking mode.");
+                $"ChatOptions.Reasoning is not supported: the model has no reasoning effort levels. Use AdditionalProperties['{Qwen35ChatClient.EnableThinkingPropertyName}'] = true or false to switch the template's thinking mode, and Qwen35ChatClientOptions.SplitReasoning to return the reasoning as TextReasoningContent.");
         }
 
         if (options.AllowBackgroundResponses == true || options.ContinuationToken is not null)
@@ -158,19 +158,57 @@ internal static class Qwen35ChatRequestMapper
 
         if (options.AdditionalProperties is { Count: > 0 } properties)
         {
+            int? topLogprobs = null;
             foreach (var (key, value) in properties)
             {
-                if (!string.Equals(key, Qwen35ChatClient.EnableThinkingPropertyName, StringComparison.Ordinal))
+                switch (key)
                 {
-                    throw new NotSupportedException(
-                        $"ChatOptions.AdditionalProperties['{key}'] is not supported; the only supported key is '{Qwen35ChatClient.EnableThinkingPropertyName}'.");
+                    case Qwen35ChatClient.EnableThinkingPropertyName:
+                        mapped = mapped with { EnableThinking = ParseBoolean(key, value) };
+                        break;
+                    case Qwen35ChatClient.LogprobsPropertyName:
+                        mapped = mapped with { ReturnLogprobs = ParseBoolean(key, value) };
+                        break;
+                    case Qwen35ChatClient.TopLogprobsPropertyName:
+                        topLogprobs = ParseTopLogprobs(value);
+                        break;
+                    default:
+                        throw new NotSupportedException(
+                            $"ChatOptions.AdditionalProperties['{key}'] is not supported; the supported keys are '{Qwen35ChatClient.EnableThinkingPropertyName}', '{Qwen35ChatClient.LogprobsPropertyName}' and '{Qwen35ChatClient.TopLogprobsPropertyName}'.");
+                }
+            }
+
+            if (topLogprobs is int top)
+            {
+                if (top > 0 && !mapped.ReturnLogprobs)
+                {
+                    throw new ArgumentException(
+                        $"AdditionalProperties['{Qwen35ChatClient.TopLogprobsPropertyName}'] needs AdditionalProperties['{Qwen35ChatClient.LogprobsPropertyName}'] = true.");
                 }
 
-                mapped = mapped with { EnableThinking = ParseBoolean(value) };
+                mapped = mapped with { TopLogprobs = top };
             }
         }
 
         return mapped;
+    }
+
+    private static int ParseTopLogprobs(object? value)
+    {
+        int? top = value switch
+        {
+            int i => i,
+            long l when l is >= int.MinValue and <= int.MaxValue => (int)l,
+            JsonElement { ValueKind: JsonValueKind.Number } e when e.TryGetInt32(out int i) => i,
+            _ => null,
+        };
+        if (top is not int n || n < 0 || n > GenerationOptions.MaxTopLogprobs)
+        {
+            throw new ArgumentException(
+                $"AdditionalProperties['{Qwen35ChatClient.TopLogprobsPropertyName}'] = '{value}' is not an integer in [0, {GenerationOptions.MaxTopLogprobs}].");
+        }
+
+        return n;
     }
 
     private static Qwen35Role MapRole(ChatRole role, int index)
@@ -355,12 +393,11 @@ internal static class Qwen35ChatRequestMapper
         };
     }
 
-    private static bool ParseBoolean(object? value) => value switch
+    private static bool ParseBoolean(string key, object? value) => value switch
     {
         bool b => b,
         JsonElement { ValueKind: JsonValueKind.True } => true,
         JsonElement { ValueKind: JsonValueKind.False } => false,
-        _ => throw new ArgumentException(
-            $"AdditionalProperties['{Qwen35ChatClient.EnableThinkingPropertyName}'] = '{value}' is not a Boolean; expected true or false."),
+        _ => throw new ArgumentException($"AdditionalProperties['{key}'] = '{value}' is not a Boolean; expected true or false."),
     };
 }

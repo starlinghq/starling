@@ -28,7 +28,8 @@ namespace Starlings.Models.Qwen35.Extensions.AI;
 /// <see cref="ChatOptions.TopP"/> or <see cref="ChatOptions.TopK"/> is set; sampling then requires
 /// <see cref="ChatOptions.Seed"/> (or a seeded default) and fails with <see cref="NotSupportedException"/> without one.
 /// <c>Temperature = 0</c> selects greedy decoding. <see cref="ChatOptions.AdditionalProperties"/> may contain only
-/// <see cref="EnableThinkingPropertyName"/>. <see cref="ChatOptions.Tools"/> (each <see cref="AIFunctionDeclaration"/>, with
+/// <see cref="EnableThinkingPropertyName"/>, <see cref="LogprobsPropertyName"/> and <see cref="TopLogprobsPropertyName"/>
+/// (per-token log probabilities, experimental). <see cref="ChatOptions.Tools"/> (each <see cref="AIFunctionDeclaration"/>, with
 /// its JSON schema) are rendered into the template's tools block when <see cref="ChatOptions.ToolMode"/> is
 /// <see cref="ChatToolMode.Auto"/> or unset; <see cref="ChatToolMode.None"/> renders no tools. Other tool types,
 /// <see cref="ChatToolMode.RequireAny"/>, a required function, <c>AllowMultipleToolCalls = false</c>, a non-text
@@ -39,7 +40,10 @@ namespace Starlings.Models.Qwen35.Extensions.AI;
 /// </para>
 /// <para>
 /// <b>Responses.</b> One assistant message with the completion text (when thinking is enabled, the reasoning,
-/// <c>&lt;/think&gt;</c> and the answer, unsplit). When tools were rendered, <see cref="Qwen35ToolCallParser"/> splits the
+/// <c>&lt;/think&gt;</c> and the answer, unsplit by default). With <see cref="Qwen35ChatClientOptions.SplitReasoning"/>
+/// (opt-in, experimental) and thinking enabled, the text before the first <c>&lt;/think&gt;</c> becomes a
+/// <see cref="TextReasoningContent"/> first and the rest the answer contents; the tag is dropped, and a completion that
+/// ends before the tag is reasoning only. When tools were rendered, <see cref="Qwen35ToolCallParser"/> splits the
 /// completion: each well-formed tool-call block becomes a <see cref="FunctionCallContent"/> (a new call id, the name,
 /// <see cref="System.Text.Json.JsonElement"/> arguments cast with the tool's schema, the <see cref="Qwen35ToolCall"/> as
 /// raw representation); a malformed or unfinished block stays text, verbatim, and never throws.
@@ -58,6 +62,10 @@ namespace Starlings.Models.Qwen35.Extensions.AI;
 /// and <see cref="ChatResponseUpdate.CreatedAt"/>; their text concatenates to the non-streamed text for the same request.
 /// With tools, text that could start a tool call is held back, each <see cref="FunctionCallContent"/> is emitted once its
 /// block is complete, updates with nothing to report are skipped, and the updates reassemble to the non-streamed contents.
+/// With the reasoning split, reasoning streams as <see cref="TextReasoningContent"/> deltas, only text that could start
+/// <c>&lt;/think&gt;</c> is held back until the tag resolves, and the answer follows as <see cref="TextContent"/> (or
+/// through the tool-call parser). With <see cref="LogprobsPropertyName"/>, each update's
+/// <see cref="ChatResponseUpdate.AdditionalProperties"/> carries the log probabilities of its tokens.
 /// </para>
 /// <para>
 /// <b>Execution and threads.</b> Each request runs on its own dedicated background thread (not a thread-pool thread):
@@ -92,6 +100,27 @@ public sealed class Qwen35ChatClient : IChatClient
     /// <see cref="Qwen35ChatOptions.EnableThinking"/> of <see cref="Qwen35ChatClientOptions.Defaults"/>.
     /// </summary>
     public const string EnableThinkingPropertyName = "enable_thinking";
+
+    /// <summary>
+    /// Key of the per-token log probabilities (experimental, opt-in). In <see cref="ChatOptions.AdditionalProperties"/>:
+    /// a <see cref="bool"/> (or a JSON <c>true</c>/<c>false</c>) that turns them on for one request, overriding
+    /// <see cref="Qwen35ChatOptions.ReturnLogprobs"/> of <see cref="Qwen35ChatClientOptions.Defaults"/>. In the
+    /// <see cref="ChatResponse.AdditionalProperties"/> of a response and the <see cref="ChatResponseUpdate.AdditionalProperties"/>
+    /// of an update: an <see cref="IReadOnlyList{T}"/> of <see cref="TokenLogprob"/> (token id, text, log probability and
+    /// the top alternatives), one entry per completion token in order (the stop token has none). A response carries every
+    /// token's entry; a streamed update carries the entries of the tokens generated since the previous update (text held
+    /// back by the detokenizer, the tool-call parser or the reasoning split moves its entries to the update that carries
+    /// it), so concatenating them over the updates gives the response's list. Absent when not requested.
+    /// </summary>
+    public const string LogprobsPropertyName = "logprobs";
+
+    /// <summary>
+    /// Key in <see cref="ChatOptions.AdditionalProperties"/> for how many of the most likely tokens to return per step
+    /// with <see cref="LogprobsPropertyName"/> (an integer from 0 to <see cref="GenerationOptions.MaxTopLogprobs"/>, or
+    /// a JSON number), overriding <see cref="Qwen35ChatOptions.TopLogprobs"/> of the defaults. A value above 0 needs
+    /// log probabilities turned on.
+    /// </summary>
+    public const string TopLogprobsPropertyName = "top_logprobs";
 
     private readonly Qwen35ChatModel _model;
     private readonly bool _ownsModel;
@@ -158,25 +187,37 @@ public sealed class Qwen35ChatClient : IChatClient
         cancellationToken.ThrowIfCancellationRequested();
         GenerationResult result = await RunOnDedicatedThread(() => _model.Generate(conversation, chatOptions, cancellationToken)).ConfigureAwait(false);
         string id = NewId();
-        var contents = new List<AIContent>(1);
+        var contents = new List<AIContent>(2);
         bool toolCalls = false;
+        bool split = SplitsReasoning(chatOptions);
+        string answer = result.Text;
+        if (split)
+        {
+            (string reasoning, answer) = Qwen35ReasoningSplitter.Split(result.Text);
+            if (reasoning.Length > 0)
+            {
+                contents.Add(new TextReasoningContent(reasoning));
+            }
+        }
+
         if (chatOptions.Tools.Count > 0)
         {
-            foreach (Qwen35OutputPart part in Qwen35ToolCallParser.Parse(result.Text, chatOptions).Parts)
+            // After a split the answer has no reasoning left for the parser to skip.
+            foreach (Qwen35OutputPart part in Qwen35ToolCallParser.Parse(answer, chatOptions.Tools, chatOptions.EnableThinking && !split).Parts)
             {
                 toolCalls |= AddPart(contents, part);
             }
         }
-        else if (result.Text.Length > 0)
+        else if (answer.Length > 0)
         {
-            contents.Add(new TextContent(result.Text));
+            contents.Add(new TextContent(answer));
         }
 
         var message = new ChatMessage(ChatRole.Assistant, contents)
         {
             MessageId = id,
         };
-        return new ChatResponse(message)
+        var response = new ChatResponse(message)
         {
             ResponseId = id,
             ModelId = ModelId,
@@ -185,6 +226,12 @@ public sealed class Qwen35ChatClient : IChatClient
             Usage = MapUsage(result.Usage),
             RawRepresentation = result,
         };
+        if (chatOptions.ReturnLogprobs)
+        {
+            response.AdditionalProperties = new() { [LogprobsPropertyName] = result.Logprobs.ToArray() };
+        }
+
+        return response;
     }
 
     /// <inheritdoc />
@@ -234,7 +281,9 @@ public sealed class Qwen35ChatClient : IChatClient
         string id = NewId();
         var createdAt = DateTimeOffset.UtcNow;
         bool finished = false;
-        var parser = chatOptions.Tools.Count > 0 ? new Qwen35ToolCallParser(chatOptions.Tools, chatOptions.EnableThinking) : null;
+        var splitter = SplitsReasoning(chatOptions) ? new Qwen35ReasoningSplitter() : null;
+        var parser = chatOptions.Tools.Count > 0 ? new Qwen35ToolCallParser(chatOptions.Tools, chatOptions.EnableThinking && splitter is null) : null;
+        List<TokenLogprob>? pendingLogprobs = chatOptions.ReturnLogprobs ? [] : null;
         bool toolCalls = false;
         try
         {
@@ -242,17 +291,33 @@ public sealed class Qwen35ChatClient : IChatClient
             {
                 while (channel.Reader.TryRead(out GenerationUpdate? update))
                 {
+                    pendingLogprobs?.AddRange(update.Logprobs);
                     var contents = new List<AIContent>(2);
+                    string answer = update.Text;
+                    if (splitter is not null)
+                    {
+                        (string reasoning, answer) = splitter.Append(update.Text);
+                        if (update.Result is not null)
+                        {
+                            reasoning += splitter.Complete();
+                        }
+
+                        if (reasoning.Length > 0)
+                        {
+                            contents.Add(new TextReasoningContent(reasoning));
+                        }
+                    }
+
                     if (parser is null)
                     {
-                        if (update.Text.Length > 0)
+                        if (answer.Length > 0)
                         {
-                            contents.Add(new TextContent(update.Text));
+                            contents.Add(new TextContent(answer));
                         }
                     }
                     else
                     {
-                        foreach (Qwen35OutputPart part in parser.Append(update.Text))
+                        foreach (Qwen35OutputPart part in parser.Append(answer))
                         {
                             toolCalls |= AddPart(contents, part);
                         }
@@ -264,11 +329,12 @@ public sealed class Qwen35ChatClient : IChatClient
                                 toolCalls |= AddPart(contents, part);
                             }
                         }
-                        else if (contents.Count == 0)
-                        {
-                            // Text held back as a possible tool-call start, or an unfinished tool-call block.
-                            continue;
-                        }
+                    }
+
+                    if (update.Result is null && contents.Count == 0)
+                    {
+                        // Text held back as a possible tool-call or think-close start, or an unfinished tool-call block.
+                        continue;
                     }
 
                     var chatUpdate = new ChatResponseUpdate(ChatRole.Assistant, contents)
@@ -279,6 +345,12 @@ public sealed class Qwen35ChatClient : IChatClient
                         ModelId = ModelId,
                         RawRepresentation = update,
                     };
+                    if (pendingLogprobs is { Count: > 0 })
+                    {
+                        chatUpdate.AdditionalProperties = new() { [LogprobsPropertyName] = pendingLogprobs.ToArray() };
+                        pendingLogprobs.Clear();
+                    }
+
                     if (update.Result is { } result)
                     {
                         chatUpdate.FinishReason = MapFinishReason(result.FinishReason, toolCalls);
@@ -364,6 +436,9 @@ public sealed class Qwen35ChatClient : IChatClient
     };
 
     private static string NewId() => "qwen35-" + Guid.NewGuid().ToString("N");
+
+    // The reasoning split applies only when opted in and the request has thinking enabled (otherwise there is no reasoning).
+    private bool SplitsReasoning(Qwen35ChatOptions chatOptions) => _options.SplitReasoning && chatOptions.EnableThinking;
 
     // Adds a parsed part as TextContent or FunctionCallContent; true for a tool call.
     private static bool AddPart(List<AIContent> contents, Qwen35OutputPart part)

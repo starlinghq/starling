@@ -22,19 +22,31 @@ public sealed record GenAISequenceOptions
 /// Advanced: one ONNX Runtime GenAI generator, owned by one request. Not thread-safe; dispose it when the request ends.
 /// Holds a reference on its <see cref="GenAIModel"/>, so the model's native memory stays alive until this is disposed.
 /// </summary>
+/// <remarks>
+/// <see cref="Dispose"/> is the way to release the generator. A sequence that becomes unreachable without it (for
+/// example inside a streaming enumerator that was dropped without disposal) is released after a garbage collection
+/// finds it: the finalizer queues the same release as <see cref="Dispose"/> (the native generator under the model's
+/// native-call lock, then the model reference) to a thread-pool thread, never running it on the finalizer thread.
+/// </remarks>
 public sealed class GenAISequence : IGenerationSequence
 {
     private readonly GenAIModel _owner;
-    private readonly GeneratorParams _parameters;
     private readonly Generator _generator;
+    private readonly NativeLifetime _lifetime;
+    private float[]? _logitsRow;
     private int _disposed;
 
     internal GenAISequence(GenAIModel owner, GeneratorParams parameters, Generator generator, int vocabularySize)
     {
         _owner = owner;
-        _parameters = parameters;
         _generator = generator;
         VocabularySize = vocabularySize;
+
+        // GenAI's own finalizers would destroy these on the finalizer thread, outside the native-call lock and the
+        // model's reference count; NativeLifetime owns their release instead (see its remarks).
+        NativeLifetime.TakeOverFinalization(generator);
+        NativeLifetime.TakeOverFinalization(parameters);
+        _lifetime = new NativeLifetime(() => ReleaseNative(owner, parameters, generator));
     }
 
     /// <summary>Width of the logits.</summary>
@@ -115,7 +127,8 @@ public sealed class GenAISequence : IGenerationSequence
             throw new ArgumentException($"Destination length must be the vocabulary size {VocabularySize}.", nameof(destination));
         }
 
-        float[] row = new float[VocabularySize];
+        // Reused across calls: per-step logprobs read one row per decode step.
+        float[] row = _logitsRow ??= new float[VocabularySize];
         Invoke(() =>
         {
             using var tensor = _generator.GetOutput("logits");
@@ -145,25 +158,38 @@ public sealed class GenAISequence : IGenerationSequence
         row.CopyTo(destination);
     }
 
-    /// <summary>Releases the generator and its reference on the model. Idempotent.</summary>
+    /// <summary>Releases the generator and its reference on the model, on the calling thread. Idempotent.</summary>
     public void Dispose()
     {
         if (Interlocked.Exchange(ref _disposed, 1) == 0)
         {
-            if (_owner.NativeCallLock is { } gate)
+            _lifetime.Dispose();
+        }
+    }
+
+    // The release of Dispose and of the finalizer path (NativeLifetime): the generator under the native-call lock, its
+    // parameters, then the model reference (which frees the native model after its last sequence).
+    private static void ReleaseNative(GenAIModel owner, GeneratorParams parameters, Generator generator)
+    {
+        try
+        {
+            if (owner.NativeCallLock is { } gate)
             {
                 lock (gate)
                 {
-                    _generator.Dispose();
+                    generator.Dispose();
                 }
             }
             else
             {
-                _generator.Dispose();
+                generator.Dispose();
             }
 
-            _parameters.Dispose();
-            _owner.Release();
+            parameters.Dispose();
+        }
+        finally
+        {
+            owner.Release();
         }
     }
 

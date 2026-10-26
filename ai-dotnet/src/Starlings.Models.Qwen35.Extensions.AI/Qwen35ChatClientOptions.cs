@@ -26,6 +26,15 @@ public sealed record Qwen35ChatClientOptions
     /// </summary>
     public int StreamingBufferCapacity { get; init; } = DefaultStreamingBufferCapacity;
 
+    /// <summary>
+    /// Opt-in: when a request has thinking enabled, return the reasoning as <c>TextReasoningContent</c> and the answer
+    /// as <c>TextContent</c>, split at the first <c>&lt;/think&gt;</c> (the tag is dropped), in streamed updates too. Default
+    /// false: the completion stays one <c>TextContent</c> with the reasoning, <c>&lt;/think&gt;</c> and the answer, as in
+    /// earlier versions. Requests without thinking are unaffected. Experimental (capability
+    /// <c>extensions_ai.reasoning_split</c>).
+    /// </summary>
+    public bool SplitReasoning { get; init; }
+
     internal void Validate()
     {
         ArgumentNullException.ThrowIfNull(Defaults, nameof(Defaults));

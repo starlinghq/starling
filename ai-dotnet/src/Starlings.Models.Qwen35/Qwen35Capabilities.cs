@@ -108,6 +108,16 @@ public static class Qwen35Capabilities
         ["long_context.1667_to_8192_tokens"] = Qwen35CapabilityStatus.Experimental,
         ["long_context.over_8192_tokens"] = Qwen35CapabilityStatus.Unsupported,
 
+        // Opt-in, off by default: per-token log probabilities (GenerationOptions.ReturnLogprobs,
+        // Qwen35ChatOptions.ReturnLogprobs, the IChatClient's "logprobs" additional property) and the IChatClient's
+        // reasoning split (Qwen35ChatClientOptions.SplitReasoning). Scripted sequences with the real tokenizer in CI;
+        // on the real fp32x model on CPU (local, one machine): greedy tokens are each step's most likely, the first step's
+        // top 5 equal the reference within the step-0 top-5 bound, and the split partitions the unsplit completion.
+        // "reasoning_split" below stays the default behaviour: unsplit.
+        ["logprobs"] = Qwen35CapabilityStatus.Experimental,
+        ["extensions_ai.logprobs"] = Qwen35CapabilityStatus.Experimental,
+        ["extensions_ai.reasoning_split"] = Qwen35CapabilityStatus.Experimental,
+
         // Implemented, without enough evidence.
         ["windows"] = Qwen35CapabilityStatus.Untested,
         ["linux_arm64"] = Qwen35CapabilityStatus.Untested,
