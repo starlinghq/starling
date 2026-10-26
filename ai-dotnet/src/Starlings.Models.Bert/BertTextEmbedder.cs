@@ -92,6 +92,37 @@ public sealed class BertTextEmbedder : ITextEmbedder, IDisposable
         return EmbedTokens(inputs, cancellationToken);
     }
 
+    /// <summary>
+    /// The profile's tokenizer without truncation, as an <see cref="IChunkingTokenizer"/> for <see cref="TextChunker"/>
+    /// (Experimental). Pass a prompt's text as <see cref="TextChunkerOptions.Prefix"/>.
+    /// </summary>
+    public IChunkingTokenizer ChunkingTokenizer => _model;
+
+    /// <summary>
+    /// Tokens <paramref name="text"/> needs with the prompt <c>none</c>, special tokens included, before truncation (so
+    /// above <see cref="MaxSequenceLength"/> for text that is embedded truncated). Tokenizes the whole text.
+    /// </summary>
+    public int CountTokens(string text) => _model.CountTokens(text);
+
+    /// <summary>The token count of each text, in order, as <see cref="CountTokens(string)"/> returns it.</summary>
+    public int[] CountTokens(IReadOnlyList<string> texts)
+    {
+        ArgumentNullException.ThrowIfNull(texts);
+        var counts = new int[texts.Count];
+        for (int i = 0; i < counts.Length; i++)
+        {
+            counts[i] = CountTokens(texts[i] ?? throw new ArgumentException($"Text {i} is null.", nameof(texts)));
+        }
+
+        return counts;
+    }
+
+    /// <summary>
+    /// <see cref="CountTokens(string)"/> against <see cref="MaxSequenceLength"/>. The profiles truncate: an input with
+    /// <see cref="TokenLimitCheck.ExceedsLimit"/> is embedded from its first <see cref="MaxSequenceLength"/> tokens.
+    /// </summary>
+    public TokenLimitCheck Validate(string text) => new(CountTokens(text), MaxSequenceLength);
+
     /// <summary>Embeds supplied tokenized inputs, retaining mask and segment ids.</summary>
     public float[][] EmbedTokens(IReadOnlyList<BertInput> inputs, CancellationToken cancellationToken = default) =>
         _model.Predict(inputs, cancellationToken);

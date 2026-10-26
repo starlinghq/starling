@@ -114,6 +114,45 @@ public sealed class E5TextEmbedder : ITextEmbedder, IDisposable
     /// <summary>The tokenizer (<see cref="E5Tokenizer"/> when this instance came from <see cref="Create"/>).</summary>
     public IEncoderTokenizer Tokenizer => _tokenizer;
 
+    /// <summary>
+    /// The tokenizer as an <see cref="IChunkingTokenizer"/> for <see cref="TextChunker"/> (Experimental), or null when it
+    /// is not one (an <see cref="IEncoderTokenizer"/> other than <see cref="E5Tokenizer"/>).
+    /// </summary>
+    public IChunkingTokenizer? ChunkingTokenizer => _tokenizer as IChunkingTokenizer;
+
+    /// <summary>
+    /// Tokens <paramref name="text"/> needs, special tokens included, without embedding it. With
+    /// <see cref="E5Tokenizer"/> the count is before truncation, so text that is embedded truncated reports more than
+    /// <see cref="MaxSequenceLength"/>; with another <see cref="IEncoderTokenizer"/> that does not implement
+    /// <see cref="IChunkingTokenizer"/>, it is the length of <see cref="IEncoderTokenizer.Tokenize"/>'s output (after
+    /// that tokenizer's own truncation). Experimental (capability <c>token_counting</c>).
+    /// </summary>
+    public int CountTokens(string text)
+    {
+        ArgumentNullException.ThrowIfNull(text);
+        return _tokenizer is IChunkingTokenizer counter ? counter.CountTokens(text) : _tokenizer.Tokenize(text).Length;
+    }
+
+    /// <summary>The token count of each text, in order, as <see cref="CountTokens(string)"/> returns it.</summary>
+    public int[] CountTokens(IReadOnlyList<string> texts)
+    {
+        ArgumentNullException.ThrowIfNull(texts);
+        var counts = new int[texts.Count];
+        for (int i = 0; i < counts.Length; i++)
+        {
+            counts[i] = CountTokens(texts[i] ?? throw new ArgumentException($"Text {i} is null.", nameof(texts)));
+        }
+
+        return counts;
+    }
+
+    /// <summary>
+    /// <see cref="CountTokens(string)"/> against <see cref="MaxSequenceLength"/>. e5 truncates rather than rejects: an
+    /// input with <see cref="TokenLimitCheck.ExceedsLimit"/> is embedded from its first <see cref="MaxSequenceLength"/>
+    /// tokens. Experimental (capability <c>token_counting</c>).
+    /// </summary>
+    public TokenLimitCheck Validate(string text) => new(CountTokens(text), MaxSequenceLength);
+
     /// <summary>Embeds texts in order, tokenized as given.</summary>
     public float[][] EmbedBatch(IReadOnlyList<string> texts, CancellationToken cancellationToken = default)
     {

@@ -218,11 +218,13 @@ public sealed class Gliner2EntityExtractor : IDisposable
     }
 
     /// <summary>
-    /// Extracts entities of the given labels from one text, as a task. Without
+    /// Extracts entities of the given labels from one text, as a task. Runs inline unless a scheduler is set: without
     /// <see cref="Gliner2ExtractorOptions.MicroBatching"/> it runs on the calling thread exactly as
     /// <see cref="Extract"/> and returns a completed task. With it, the text is prepared and validated on the calling
     /// thread, then queued and run in a padded batch with other callers' texts of the same schema (Experimental; see the
-    /// class remarks). Failures are never thrown synchronously: they are in the returned task.
+    /// class remarks). With <see cref="Gliner2ExtractorOptions.ExecutionScheduler"/> set (Experimental), the work that
+    /// would run on the calling thread runs as one task on that scheduler instead. Failures are never thrown
+    /// synchronously: they are in the returned task.
     /// </summary>
     /// <param name="text">English text (valid Unicode).</param>
     /// <param name="labels">Entity labels; duplicates are ignored after the first, order and case matter to the model.</param>
@@ -241,7 +243,13 @@ public sealed class Gliner2EntityExtractor : IDisposable
     /// <param name="threshold">Score threshold in [0, 1]; null for <see cref="Gliner2ExtractorOptions.Threshold"/>.</param>
     /// <param name="cancellationToken">Cancels this call only: before or during its run, or while it is queued.</param>
     public Task<Gliner2ExtractionResult> ExtractAsync(
-        string text, IReadOnlyList<string> labels, IReadOnlyDictionary<string, string>? descriptions, float? threshold = null, CancellationToken cancellationToken = default)
+        string text, IReadOnlyList<string> labels, IReadOnlyDictionary<string, string>? descriptions, float? threshold = null, CancellationToken cancellationToken = default) =>
+        _options.ExecutionScheduler is { } scheduler
+            ? Task.Factory.StartNew(() => ExtractInlineAsync(text, labels, descriptions, threshold, cancellationToken), cancellationToken, TaskCreationOptions.DenyChildAttach, scheduler).Unwrap()
+            : ExtractInlineAsync(text, labels, descriptions, threshold, cancellationToken);
+
+    private Task<Gliner2ExtractionResult> ExtractInlineAsync(
+        string text, IReadOnlyList<string> labels, IReadOnlyDictionary<string, string>? descriptions, float? threshold, CancellationToken cancellationToken)
     {
         try
         {

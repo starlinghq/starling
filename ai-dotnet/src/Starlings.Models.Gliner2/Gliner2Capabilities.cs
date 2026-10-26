@@ -72,6 +72,9 @@ public static class Gliner2Capabilities
         // tolerance; no benchmark adoption decision and no soak yet. Outputs depend on the concurrent traffic (within
         // tolerance, not bit for bit reproducible). Not part of any Stable profile's contract.
         ["micro_batching"] = Status.Experimental,
+        // Gliner2ExtractorOptions.ExecutionScheduler: null keeps ExtractAsync inline; a TaskScheduler moves its work onto it.
+        // Weight-free tests; not part of any Stable profile's contract.
+        ["execution_scheduler"] = Status.Experimental,
         ["asset_acquisition.offline"] = Status.Supported,
 
         // Proposed capability cases on public text, run by the pinned GLiNER2: 11 with label descriptions, 12 where the

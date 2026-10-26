@@ -40,6 +40,12 @@ internal sealed class PrefixedTextEmbedder(ITextEmbedder inner, string prefix) :
 
         return inner.EmbedBatch(texts, tokenCounts, cancellationToken);
     }
+
+    public int CountTokens(string text) => inner.CountTokens(prefix + text);
+
+    public int[] CountTokens(IReadOnlyList<string> texts) => inner.CountTokens(texts.Select(text => prefix + text).ToArray());
+
+    public TokenLimitCheck Validate(string text) => inner.Validate(prefix + text);
 }
 
 /// <summary>The embedding of the row a cursor or row is on, computed at most once per row.</summary>

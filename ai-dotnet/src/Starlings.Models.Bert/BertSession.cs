@@ -5,9 +5,10 @@ using Starlings.Tokenizers;
 
 namespace Starlings.Models.Bert;
 
-internal sealed class BertSession : IDisposable
+internal sealed class BertSession : IChunkingTokenizer, IDisposable
 {
     private readonly Tokenizer _tokenizer;
+    private readonly Tokenizer _untruncated;
     private readonly int _maxBatchSize;
     private readonly int? _maxBatchTokens;
     private readonly bool _sortByLength;
@@ -29,6 +30,8 @@ internal sealed class BertSession : IDisposable
         // library's default, which is the same strategy and direction.
         _tokenizer = Tokenizer.FromFile(files.GetFilePath(BertModelProfile.TokenizerFile))
             .WithPadding(null).WithTruncation(new TruncationOptions(profile.MaxTokens, TruncationStrategy.LongestFirst, TruncationDirection.Right));
+        _untruncated = _tokenizer.WithTruncation(null);
+        SpecialTokenCount = _untruncated.Encode(string.Empty).Count;
         Session = OnnxModelSession.Create(files.GetFilePath(BertModelProfile.GraphFile), new OnnxSessionOptions
         {
             IntraOpNumThreads = threads,
@@ -50,6 +53,33 @@ internal sealed class BertSession : IDisposable
 
     public BertModelProfile Profile { get; }
     public OnnxModelSession Session { get; }
+
+    /// <summary>Tokens the profile's post-processor adds around one sequence.</summary>
+    public int SpecialTokenCount { get; }
+
+    /// <summary>Tokens of one sequence before truncation, special tokens included.</summary>
+    public int CountTokens(string text)
+    {
+        ThrowIfDisposed();
+        ArgumentNullException.ThrowIfNull(text);
+        return _untruncated.Encode(text).Count;
+    }
+
+    /// <summary>Spans of the text's own tokens (no special tokens), before truncation.</summary>
+    public IReadOnlyList<TokenSpan> GetTokenSpans(string text)
+    {
+        ThrowIfDisposed();
+        ArgumentNullException.ThrowIfNull(text);
+        var encoding = _untruncated.Encode(text, addSpecialTokens: false);
+        var spans = new TokenSpan[encoding.Count];
+        for (int i = 0; i < spans.Length; i++)
+        {
+            var offset = encoding.Offsets[i];
+            spans[i] = new TokenSpan(offset.Start, offset.End);
+        }
+
+        return spans;
+    }
 
     public BertInput Tokenize(string text, string? pair = null)
     {
