@@ -279,7 +279,7 @@ using var model = QwenChatModel.Load(QwenChatProfile.Qwen3, bundleDirectory);
 var result = model.Generate([new(QwenChatRole.User, "Explain gravity briefly.")]);
 ```
 
-The bundle is built with `model-pipeline/reference/qwen-chat/build_bundle.py`; the loader never downloads. Qwen3 runs with `enable_thinking=false`; tools, multimodal input, sampling and Qwen3 thinking mode are unsupported. Experimental, source only (not published to nuget.org); parity reports are proposals and award no protected qualification. Onboarding route `qwen-genai-cpu-v1` (`model-pipeline/candidates/{qwen3,qwen25}`); stage tool `tools/Starlings.Generation.Fidelity`. See the [package README](src/Starlings.Models.QwenChat/README.md).
+The bundle is built with `model-pipeline/reference/qwen-chat/build_bundle.py`; the loader never downloads. Qwen3 runs with `enable_thinking=false`; tool calling (the templates' tools block, tool calls and tool results, and a parser for the JSON call form) is experimental; multimodal input, sampling and Qwen3 thinking mode are unsupported. Experimental, source only (not published to nuget.org); parity reports are proposals and award no protected qualification. Onboarding route `qwen-genai-cpu-v1` (`model-pipeline/candidates/{qwen3,qwen25}`); stage tool `tools/Starlings.Generation.Fidelity`. See the [package README](src/Starlings.Models.QwenChat/README.md).
 
 Tests: `tests/Starlings.Models.QwenChat.Tests` (in `AI.slnx`).
 

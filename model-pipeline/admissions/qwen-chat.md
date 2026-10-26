@@ -58,7 +58,8 @@ Byte-level BPE from each repository's `tokenizer.json` through `Starlings.Tokeni
 | Cancellation | Before prefill and between decode steps | Development parity (cancellation) |
 | Fresh cache per request; request isolation | Yes | Development parity (cache, isolation) |
 | Sampling | No | n/a |
-| Tools, tool messages, multimodal input | No (rejected) | Template tests |
+| Tools, tool messages | Experimental since 2026-10-26 | Template corpus tests (`model-pipeline/proposed/<model>/template/`), parser tests, one CPU run per profile |
+| Multimodal input | No (rejected) | Template tests |
 | CUDA, fp16, quantized graphs | No | n/a |
 
 ## Hardware and compute estimate
