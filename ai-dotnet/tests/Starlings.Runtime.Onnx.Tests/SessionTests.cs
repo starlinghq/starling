@@ -167,6 +167,31 @@ public class SessionTests
         Assert.Empty(Directory.GetFiles(Path.GetTempPath(), "starlings-ort-placement-*"));
     }
 
+    [Fact]
+    public void PlacementProfileIsRemovedWhenNoRunCompletes()
+    {
+        string[] before = Directory.GetFiles(Path.GetTempPath(), "starlings-ort-placement-*");
+
+        // Disposed before any run.
+        using (var session = OnnxModelSession.Create(TestModels.Add, new OnnxSessionOptions { CapturePlacement = true }))
+        {
+            Assert.Null(session.Placement);
+        }
+
+        Assert.Equal(before, Directory.GetFiles(Path.GetTempPath(), "starlings-ort-placement-*"));
+
+        // Every run fails (wrong input name): the profile is never read, and still goes away with the session.
+        using (var session = OnnxModelSession.Create(TestModels.Add, new OnnxSessionOptions { CapturePlacement = true }))
+        {
+            float[] x = [1, 1, 1, 1];
+            using var xv = OrtValue.CreateTensorValueFromMemory(x, [1, 4]);
+            Assert.Throws<OnnxRuntimeException>(() => session.Run(["x", "nope"], [xv, xv], ["z"], TestContext.Current.CancellationToken));
+            Assert.Null(session.Placement);
+        }
+
+        Assert.Equal(before, Directory.GetFiles(Path.GetTempPath(), "starlings-ort-placement-*"));
+    }
+
     internal static void Run(OnnxModelSession session, float value)
     {
         float[] x = [value, value, value, value];

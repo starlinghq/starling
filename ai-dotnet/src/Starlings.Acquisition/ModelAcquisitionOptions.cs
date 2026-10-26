@@ -42,9 +42,10 @@ public sealed class ModelAcquisitionOptions
 
     /// <summary>
     /// Access token for gated or private repositories. When null, <c>$HF_TOKEN</c> is used if set, unless
-    /// <see cref="UseEnvironmentToken"/> is false. Sent only as the <c>Authorization</c> header of requests to
-    /// <see cref="Endpoint"/> (same scheme, host and port) for files without an explicit source, and of requests to explicit
-    /// sources whose address is https on a host in <see cref="TokenHosts"/>. The store follows redirects itself and attaches
+    /// <see cref="UseEnvironmentToken"/> is false. Sent only over https, as the <c>Authorization</c> header of requests to
+    /// <see cref="Endpoint"/> (same host and port) for files without an explicit source, and of requests to explicit
+    /// sources on a host in <see cref="TokenHosts"/>; an <c>http://</c> endpoint is used without the token, never with it
+    /// in cleartext. The store follows redirects itself and attaches
     /// the header per hop only when that hop's address qualifies, so it never reaches the Hub's storage or CDN hosts or any
     /// other host. Never logged or put in exception messages. (An injected <see cref="HttpClient"/> whose handler follows
     /// redirects itself bypasses the per-hop check; <see cref="SocketsHttpHandler"/> then drops the header on every redirect.)
@@ -63,7 +64,11 @@ public sealed class ModelAcquisitionOptions
     /// <summary>Delay before the second attempt; doubled for each further attempt. Default 1 s.</summary>
     public TimeSpan RetryDelay { get; init; } = TimeSpan.FromSeconds(1);
 
-    /// <summary>Maximum wait for response headers of one request. Body transfer is bounded only by cancellation. Default 100 s.</summary>
+    /// <summary>
+    /// Maximum wait for the response headers of one request, and the idle budget of each body read: a transfer that
+    /// delivers nothing for this long counts as a transient failure (one of <see cref="MaxAttempts"/>), keeps its partial
+    /// file and resumes. Default 100 s.
+    /// </summary>
     public TimeSpan ResponseTimeout { get; init; } = TimeSpan.FromSeconds(100);
 
     /// <summary>

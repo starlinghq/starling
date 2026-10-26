@@ -103,7 +103,7 @@ public sealed class E5BrowserEncoder : IDisposable
 
         for (int i = 0; i < inputs.Count; i++)
         {
-            E5Encoder.Validate(inputs[i], i, _options);
+            E5Encoder.Validate(inputs[i], i, _options, nameof(inputs));
         }
 
         var plan = E5Encoder.Plan(inputs, _options);
@@ -119,7 +119,7 @@ public sealed class E5BrowserEncoder : IDisposable
     /// Checks one input as <see cref="EmbedBatchAsync(IReadOnlyList{EncoderInput}, Memory{float}, CancellationToken)"/>
     /// does before any inference, and throws what a one-input call would throw.
     /// </summary>
-    public void Validate(EncoderInput input) => E5Encoder.Validate(input, 0, _options);
+    public void Validate(EncoderInput input) => E5Encoder.Validate(input, 0, _options, nameof(input));
 
     /// <summary>Disposes the session if this encoder owns it. Idempotent.</summary>
     public void Dispose()
