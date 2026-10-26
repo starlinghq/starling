@@ -10,7 +10,7 @@ namespace Starlings.Models.E5;
 /// caller adds the right one (for symmetric tasks such as clustering, the model card uses <c>"query: "</c> on both
 /// sides). Neither this class nor the encoder inserts or detects prefixes.
 /// </remarks>
-public sealed class E5TextEmbedder
+public sealed class E5TextEmbedder : ITextEmbedder
 {
     private readonly IEncoderTokenizer _tokenizer;
     private readonly E5Encoder _encoder;
@@ -36,6 +36,15 @@ public sealed class E5TextEmbedder
         ArgumentNullException.ThrowIfNull(text);
         return _encoder.Embed(_tokenizer.Tokenize(text), cancellationToken);
     }
+
+    /// <summary>Floats per embedding (<see cref="E5Encoder.Dimension"/>, 384).</summary>
+    public int Dimension => _encoder.Dimension;
+
+    /// <summary>
+    /// Tokens per text at most (<see cref="E5EncoderOptions.MaxSequenceLength"/>, 512 by default). With
+    /// <see cref="E5Tokenizer"/>, longer text is truncated on the right to this length.
+    /// </summary>
+    public int MaxSequenceLength => _encoder.Options.MaxSequenceLength;
 
     /// <summary>The encoder (dimension, options, session diagnostics). Not owned by this instance.</summary>
     public E5Encoder Encoder => _encoder;

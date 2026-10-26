@@ -76,4 +76,23 @@ public static class E5ModelAssets
     /// <summary>Verifies an existing snapshot directory (for example a Hub snapshot) against the lock. Never downloads.</summary>
     public static E5ModelFiles OpenDirectory(string directory, CacheVerification verification = CacheVerification.Sha256) =>
         E5ModelFiles.From(ModelAssetStore.VerifyDirectory(Lock, directory, verification));
+
+    /// <summary>
+    /// The e5 lock and acquisition members of this class as an <see cref="IModelAssets{TFiles}"/>, for setup code
+    /// that acquires several models the same way. Each member calls the static member of the same name.
+    /// </summary>
+    public static IModelAssets<E5ModelFiles> Assets { get; } = new AssetsInstance();
+
+    private sealed class AssetsInstance : IModelAssets<E5ModelFiles>
+    {
+        public ModelAssetLock Lock => E5ModelAssets.Lock;
+
+        public Task<E5ModelFiles> DownloadAsync(ModelAcquisitionOptions? options = null, IProgress<ModelAssetProgress>? progress = null, CancellationToken cancellationToken = default) =>
+            E5ModelAssets.DownloadAsync(options, progress, cancellationToken);
+
+        public E5ModelFiles OpenLocal(ModelAcquisitionOptions? options = null) => E5ModelAssets.OpenLocal(options);
+
+        public E5ModelFiles OpenDirectory(string directory, CacheVerification verification = CacheVerification.Sha256) =>
+            E5ModelAssets.OpenDirectory(directory, verification);
+    }
 }

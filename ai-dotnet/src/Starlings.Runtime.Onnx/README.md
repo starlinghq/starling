@@ -47,6 +47,8 @@ using var outputs = session.Run(inputNames, inputValues, outputNames, cancellati
 - `OnnxRuntimeInfo`: `NativeVersion`, `ManagedVersion`, `AvailableProviders`, `CpuProviderName`, `CudaProviderName`.
 - Exceptions: `OnnxRuntimeUnavailableException` (native library missing or of another version), `OnnxProviderUnavailableException` (the requested provider cannot be used; never followed by a fallback), `OnnxModelIntegrityException` (SHA-256 mismatch). A cancelled run throws `OperationCanceledException`; the session stays usable.
 
+The text encoders of `Starlings.Models.E5`, `Starlings.Models.EmbeddingGemma2` and `Starlings.Models.Bert` share one internal implementation of right-padded packing, mean and CLS pooling with L2 normalization, and the chunk run (`EncoderCore`). It is not public API.
+
 ## Native runtime
 
 The package references only `Microsoft.ML.OnnxRuntime.Managed` (exactly 1.30.0). The application references exactly one native package of the same version:

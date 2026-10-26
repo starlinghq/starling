@@ -1,6 +1,7 @@
 using Starlings.Runtime.Onnx;
 using Starlings.Runtime.Onnx.Batching;
 using Starlings.TestSupport;
+using Status = Starlings.Models.CapabilityStatus;
 
 namespace Starlings.Models.Gliner2.Tests;
 
@@ -127,7 +128,7 @@ public sealed class MicroBatchingTests
 
     [Fact]
     public void CapabilityIsExperimental() =>
-        Assert.Equal(Gliner2CapabilityStatus.Experimental, Gliner2Capabilities.All["micro_batching"]);
+        Assert.Equal(Status.Experimental, Gliner2Capabilities.Statuses["micro_batching"]);
 }
 
 /// <summary>

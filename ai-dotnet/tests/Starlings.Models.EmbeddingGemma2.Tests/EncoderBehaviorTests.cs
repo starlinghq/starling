@@ -164,7 +164,7 @@ public class EncoderBehaviorTests
             encoder.EmbedBatch([new EmbeddingGemma2Input(new long[] { 2, 1 }), new EmbeddingGemma2Input(tooLong)], TestContext.Current.CancellationToken));
         Assert.Equal(1, ex.InputIndex);
         Assert.Equal(8193, ex.TokenCount);
-        Assert.Equal(8192, ex.MaximumTokens);
+        Assert.Equal(8192, ex.MaxTokens);
         Assert.IsAssignableFrom<ArgumentException>(ex);
     }
 

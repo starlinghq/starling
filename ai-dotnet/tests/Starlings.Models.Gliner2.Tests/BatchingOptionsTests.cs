@@ -1,5 +1,6 @@
 using Starlings.Runtime.Onnx;
 using Starlings.TestSupport;
+using Status = Starlings.Models.CapabilityStatus;
 
 namespace Starlings.Models.Gliner2.Tests;
 
@@ -47,9 +48,9 @@ public class BatchingOptionsTests
         Assert.Null(options.MaxBatchTokens);
         Assert.False(options.SortByLength);
         Assert.Equal(8, options.MaxBatchSize);
-        Assert.Equal(Gliner2CapabilityStatus.Supported, Gliner2Capabilities.All["batch"]);
-        Assert.Equal(Gliner2CapabilityStatus.Experimental, Gliner2Capabilities.All["batch.token_budget"]);
-        Assert.Equal(Gliner2CapabilityStatus.Experimental, Gliner2Capabilities.All["batch.sort_by_length"]);
+        Assert.Equal(Status.Supported, Gliner2Capabilities.Statuses["batch"]);
+        Assert.Equal(Status.Experimental, Gliner2Capabilities.Statuses["batch.token_budget"]);
+        Assert.Equal(Status.Experimental, Gliner2Capabilities.Statuses["batch.sort_by_length"]);
         Assert.Throws<ArgumentOutOfRangeException>(() => Fake(new Gliner2ExtractorOptions { MaxBatchTokens = 0 }));
     }
 

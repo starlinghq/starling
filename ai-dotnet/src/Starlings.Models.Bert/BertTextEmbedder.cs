@@ -3,7 +3,7 @@ using Starlings.Runtime.Onnx;
 namespace Starlings.Models.Bert;
 
 /// <summary>A reusable owned-tokenizer plus ONNX text embedding session for an explicit BERT profile.</summary>
-public sealed class BertTextEmbedder : IDisposable
+public sealed class BertTextEmbedder : ITextEmbedder, IDisposable
 {
     private readonly BertSession _model;
     private BertTextEmbedder(BertSession model) => _model = model;
@@ -12,6 +12,8 @@ public sealed class BertTextEmbedder : IDisposable
     public BertModelProfile Profile => _model.Profile;
     /// <summary>Embedding dimension.</summary>
     public int Dimension => Profile.HiddenSize;
+    /// <summary>Tokens per text at most (<see cref="BertModelProfile.MaxTokens"/>); longer text is truncated by the tokenizer.</summary>
+    public int MaxSequenceLength => Profile.MaxTokens;
     /// <summary>Loaded model and native runtime diagnostics.</summary>
     public OnnxSessionDiagnostics Diagnostics => _model.Session.Diagnostics;
     /// <summary>Advanced backend API for intermediate diagnostics. Owned by this embedder.</summary>
@@ -64,6 +66,30 @@ public sealed class BertTextEmbedder : IDisposable
         ArgumentNullException.ThrowIfNull(texts);
         cancellationToken.ThrowIfCancellationRequested();
         return EmbedTokens(texts.Select(text => Tokenize(text, prompt)).ToArray(), cancellationToken);
+    }
+
+    /// <summary>
+    /// Embeds texts in order with the prompt <c>none</c> and writes each text's token count (special tokens included,
+    /// after truncation) to <paramref name="tokenCounts"/>, which must hold exactly <c>texts.Count</c> values. The
+    /// <see cref="ITextEmbedder"/> form.
+    /// </summary>
+    public float[][] EmbedBatch(IReadOnlyList<string> texts, Span<int> tokenCounts, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(texts);
+        if (tokenCounts.Length != texts.Count)
+        {
+            throw new ArgumentException($"tokenCounts holds {tokenCounts.Length} values; {texts.Count} texts need {texts.Count}.", nameof(tokenCounts));
+        }
+
+        cancellationToken.ThrowIfCancellationRequested();
+        var inputs = new BertInput[texts.Count];
+        for (int i = 0; i < inputs.Length; i++)
+        {
+            inputs[i] = Tokenize(texts[i] ?? throw new ArgumentException($"Text {i} is null.", nameof(texts)));
+            tokenCounts[i] = inputs[i].Length;
+        }
+
+        return EmbedTokens(inputs, cancellationToken);
     }
 
     /// <summary>Embeds supplied tokenized inputs, retaining mask and segment ids.</summary>

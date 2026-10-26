@@ -96,8 +96,14 @@ public sealed record Gliner2ExtractorOptions
     }
 }
 
-/// <summary>A text needs more tokens than the profile allows. Nothing is truncated; split the text or shorten it.</summary>
-public sealed class Gliner2InputTooLongException : ArgumentException
+/// <summary>
+/// A text needs more tokens than the profile allows. Nothing is truncated; split the text or shorten it. An
+/// <see cref="InputTooLongException"/>, and through it an <see cref="ArgumentException"/>: <see cref="InputTooLongException.InputIndex"/>
+/// is the offending text's index in the call (0 for single-text calls), <see cref="InputTooLongException.TokenCount"/>
+/// the tokens it needs, schema prefix included, and <see cref="InputTooLongException.MaxTokens"/> the limit in effect
+/// (<see cref="Gliner2ExtractorOptions.MaxSequenceLength"/>).
+/// </summary>
+public sealed class Gliner2InputTooLongException : InputTooLongException
 {
     /// <summary>Creates the exception.</summary>
     public Gliner2InputTooLongException()
@@ -115,13 +121,4 @@ public sealed class Gliner2InputTooLongException : ArgumentException
         : base(message, innerException)
     {
     }
-
-    /// <summary>Index of the offending text in the call (0 for single-text calls).</summary>
-    public int InputIndex { get; init; }
-
-    /// <summary>Tokens the text needs, schema prefix included.</summary>
-    public int TokenCount { get; init; }
-
-    /// <summary>The limit in effect (<see cref="Gliner2ExtractorOptions.MaxSequenceLength"/>).</summary>
-    public int MaxTokens { get; init; }
 }

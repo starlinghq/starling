@@ -132,6 +132,25 @@ public static class EmbeddingGemma2ModelAssets
     public static EmbeddingGemma2ModelFiles OpenDirectory(string directory, CacheVerification verification = CacheVerification.Sha256) =>
         EmbeddingGemma2ModelFiles.From(ModelAssetStore.VerifyDirectory(Lock, directory, verification));
 
+    /// <summary>
+    /// The EmbeddingGemma 2 text lock and acquisition members of this class as an <see cref="IModelAssets{TFiles}"/>, for setup code
+    /// that acquires several models the same way. Each member calls the static member of the same name.
+    /// </summary>
+    public static IModelAssets<EmbeddingGemma2ModelFiles> Assets { get; } = new AssetsInstance();
+
+    private sealed class AssetsInstance : IModelAssets<EmbeddingGemma2ModelFiles>
+    {
+        public ModelAssetLock Lock => EmbeddingGemma2ModelAssets.Lock;
+
+        public Task<EmbeddingGemma2ModelFiles> DownloadAsync(ModelAcquisitionOptions? options = null, IProgress<ModelAssetProgress>? progress = null, CancellationToken cancellationToken = default) =>
+            EmbeddingGemma2ModelAssets.DownloadAsync(options, progress, cancellationToken);
+
+        public EmbeddingGemma2ModelFiles OpenLocal(ModelAcquisitionOptions? options = null) => EmbeddingGemma2ModelAssets.OpenLocal(options);
+
+        public EmbeddingGemma2ModelFiles OpenDirectory(string directory, CacheVerification verification = CacheVerification.Sha256) =>
+            EmbeddingGemma2ModelAssets.OpenDirectory(directory, verification);
+    }
+
     /// <summary>Path of the vision graph in the snapshot directory (pixels and patch positions to soft tokens).</summary>
     public const string VisionModelFile = "onnx/embeddinggemma2-vision-fp32.onnx";
 

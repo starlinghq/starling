@@ -3,6 +3,8 @@ using Starlings.Runtime.Onnx;
 using Starlings.TestSupport;
 using Microsoft.ML;
 using Microsoft.ML.Data;
+using Starlings.Models.MLNet;
+using Status = Starlings.Models.CapabilityStatus;
 
 namespace Starlings.Models.EmbeddingGemma2.MLNet.Tests;
 
@@ -73,7 +75,7 @@ public sealed class TransformContractTests : IDisposable
     private EmbeddingGemma2EmbeddingTransformer Observed(EmbeddingGemma2EmbeddingOptions? options = null, string output = "Embedding", string input = "Text")
     {
         options ??= new EmbeddingGemma2EmbeddingOptions { TokenCountColumnName = "TokenCount" };
-        return new EmbeddingGemma2EmbeddingTransformer(Embedder, EmbeddingGemma2ColumnNames.Create(output, input, options.TokenCountColumnName), options, ownedEncoder: null, _inferences.Enqueue);
+        return new EmbeddingGemma2EmbeddingTransformer(Embedder, TextEmbeddingColumnNames.Create(output, input, options.TokenCountColumnName), options, ownedEncoder: null, _inferences.Enqueue);
     }
 
     private IDataView Rows(params string?[] texts) =>
@@ -608,12 +610,12 @@ public sealed class TransformContractTests : IDisposable
     [Fact]
     public void CapabilityDescriptorReportsTheMlNetStatuses()
     {
-        var all = EmbeddingGemma2Capabilities.All;
-        Assert.Equal(EmbeddingGemma2CapabilityStatus.Supported, all["mlnet.embedding_transform"]);
-        Assert.Equal(EmbeddingGemma2CapabilityStatus.Supported, all["mlnet.batching"]);
-        Assert.Equal(EmbeddingGemma2CapabilityStatus.Unsupported, all["mlnet.persistence"]);
-        Assert.Equal(EmbeddingGemma2CapabilityStatus.Unsupported, all["mlnet.cancellation"]);
-        Assert.Equal(EmbeddingGemma2CapabilityStatus.Unsupported, all["mlnet.training"]);
-        Assert.Equal(EmbeddingGemma2CapabilityStatus.Supported, all["mlnet.embedding_transform.cuda"]); // Stable CUDA text profile (RTX 3090)
+        var all = EmbeddingGemma2Capabilities.Statuses;
+        Assert.Equal(Status.Supported, all["mlnet.embedding_transform"]);
+        Assert.Equal(Status.Supported, all["mlnet.batching"]);
+        Assert.Equal(Status.Unsupported, all["mlnet.persistence"]);
+        Assert.Equal(Status.Unsupported, all["mlnet.cancellation"]);
+        Assert.Equal(Status.Unsupported, all["mlnet.training"]);
+        Assert.Equal(Status.Supported, all["mlnet.embedding_transform.cuda"]); // Stable CUDA text profile (RTX 3090)
     }
 }

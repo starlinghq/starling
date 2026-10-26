@@ -220,24 +220,32 @@ def _catalog(args: argparse.Namespace) -> int:
         built = catalog.build(registry, repo_root)
         files = catalog.render(built, out, repo_root)
         readmes = catalog.package_readmes(built, repo_root)
+        sources = catalog.capability_sources(registry, repo_root)
     except catalog.CatalogError as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 2
     if args.check:
         stale = [str(out / name) for name in catalog.stale(files, out)]
         stale += [str(path) for path in catalog.stale_readmes(readmes)]
+        stale += [str(path) for path in catalog.stale_readmes(sources)]
         for name in stale:
             print(f"STALE: {name}", file=sys.stderr)
         if stale:
             print("The catalog is stale. Regenerate it with: model-pipeline catalog", file=sys.stderr)
             return 1
-        print(f"catalog up to date: {len(files)} file(s) in {out}, {len(readmes)} package README maturity block(s)")
+        print(
+            f"catalog up to date: {len(files)} file(s) in {out}, {len(readmes)} package README maturity block(s), "
+            f"{len(sources)} capability source(s)"
+        )
         return 0
     catalog.write(files, out)
     catalog.write_readmes(readmes)
+    catalog.write_readmes(sources)
     print(f"catalog written: {', '.join(str(out / name) for name in files)}")
     if readmes:
         print(f"package README maturity blocks: {', '.join(str(path) for path in readmes)}")
+    if sources:
+        print(f"capability sources: {', '.join(str(path) for path in sources)}")
     return 0
 
 
@@ -430,8 +438,9 @@ def main(argv: list[str] | None = None) -> int:
     cat = sub.add_parser(
         "catalog",
         help="generate the public catalog and compatibility matrix from the registry manifests (P-021)",
-        description="Writes README.md, compatibility-matrix.md and catalog.json, and regenerates the maturity "
-        "blocks of the package READMEs (ai-dotnet/src/*/README.md). Exit codes: 0 written or up to "
+        description="Writes README.md, compatibility-matrix.md and catalog.json, regenerates the maturity "
+        "blocks of the package READMEs (ai-dotnet/src/*/README.md) and the C# capability records "
+        "(ai-dotnet/src/*/ProfileCapabilities.g.cs). Exit codes: 0 written or up to "
         "date; 1 --check found stale or missing output; 2 an invalid manifest or an empty registry.",
     )
     cat.add_argument("registry", nargs="?", default=str(DEFAULT_REGISTRY), help="registry directory")

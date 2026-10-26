@@ -1,4 +1,5 @@
 using Starlings.TestSupport;
+using Status = Starlings.Models.CapabilityStatus;
 
 namespace Starlings.Models.EmbeddingGemma2.Tests;
 
@@ -27,8 +28,8 @@ public class BatchingOptionsTests
         var plan = EmbeddingGemma2Encoder.Plan(inputs, 16, 8_192, sortByLength: false);
         Assert.True(plan.IsInputOrder);
         Assert.Equal(EmbeddingGemma2Encoder.PlanChunks(inputs, 16, 8_192), plan.Chunks.Select(c => c.Count));
-        Assert.Equal(EmbeddingGemma2CapabilityStatus.Experimental, EmbeddingGemma2Capabilities.All["batch.sort_by_length"]);
-        Assert.Equal(EmbeddingGemma2CapabilityStatus.Supported, EmbeddingGemma2Capabilities.All["batch"]);
+        Assert.Equal(Status.Experimental, EmbeddingGemma2Capabilities.Statuses["batch.sort_by_length"]);
+        Assert.Equal(Status.Supported, EmbeddingGemma2Capabilities.Statuses["batch"]);
     }
 
     [Fact]

@@ -123,7 +123,7 @@ public sealed class VideoInputTests(ITestOutputHelper output)
         var ex = Assert.Throws<EmbeddingGemma2InputTooLongException>(() =>
             EmbeddingGemma2MultimodalEmbedder.PrepareCore(tokenizer, new EmbeddingGemma2MultimodalOptions(), EmbeddingGemma2MultimodalInput.Create(full, full), EmbeddingGemma2Prompt.None, 2));
         Assert.Equal(2, ex.InputIndex);
-        Assert.Equal(8_192, ex.MaximumTokens);
+        Assert.Equal(8_192, ex.MaxTokens);
     }
 
     [Fact]
