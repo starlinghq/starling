@@ -142,7 +142,7 @@ public sealed class GuidanceTests
     }
 
     [Fact]
-    public void AStepAboveTheFastForwardBoundFails()
+    public void FastForwardPastItsLimitFails()
     {
         var tok = RequireTokenizer();
         int[][] steps = [[11], [12, 13, 14, 15]];
