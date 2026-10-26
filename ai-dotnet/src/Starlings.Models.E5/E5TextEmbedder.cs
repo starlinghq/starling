@@ -23,7 +23,7 @@ namespace Starlings.Models.E5;
 /// from the constructor owns nothing and its <see cref="Dispose"/> does nothing. Both are idempotent.
 /// </para>
 /// </remarks>
-public sealed class E5TextEmbedder : IDisposable
+public sealed class E5TextEmbedder : ITextEmbedder, IDisposable
 {
     private readonly IEncoderTokenizer _tokenizer;
     private readonly E5Encoder _encoder;
@@ -98,6 +98,15 @@ public sealed class E5TextEmbedder : IDisposable
         ArgumentNullException.ThrowIfNull(text);
         return _encoder.Embed(_tokenizer.Tokenize(text), cancellationToken);
     }
+
+    /// <summary>Floats per embedding (<see cref="E5Encoder.Dimension"/>, 384).</summary>
+    public int Dimension => _encoder.Dimension;
+
+    /// <summary>
+    /// Tokens per text at most (<see cref="E5EncoderOptions.MaxSequenceLength"/>, 512 by default). With
+    /// <see cref="E5Tokenizer"/>, longer text is truncated on the right to this length.
+    /// </summary>
+    public int MaxSequenceLength => _encoder.Options.MaxSequenceLength;
 
     /// <summary>The encoder (dimension, options, session diagnostics). Owned by this instance only when it came from <see cref="Create"/>.</summary>
     public E5Encoder Encoder => _encoder;

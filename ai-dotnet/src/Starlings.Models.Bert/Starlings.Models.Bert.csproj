@@ -8,6 +8,8 @@
   <ItemGroup>
     <None Include="README.md" Pack="true" PackagePath="" />
     <ProjectReference Include="../Starlings.Runtime.Onnx/Starlings.Runtime.Onnx.csproj" />
+    <!-- CapabilityStatus, ModelProfileCapabilities, ITextEmbedder and the InputTooLongException base (no ONNX Runtime dependency). -->
+    <ProjectReference Include="../Starlings.Models.Abstractions/Starlings.Models.Abstractions.csproj" />
     <ProjectReference Include="../Starlings.Acquisition/Starlings.Acquisition.csproj" />
     <PackageReference Include="Starlings.Tokenizers" />
     <InternalsVisibleTo Include="Starlings.Models.Bert.Tests" />

@@ -2,6 +2,7 @@ using Microsoft.Extensions.AI;
 using Starlings.Runtime.Onnx;
 using Starlings.Runtime.Onnx.Batching;
 using Starlings.TestSupport;
+using Status = Starlings.Models.CapabilityStatus;
 
 namespace Starlings.Models.EmbeddingGemma2.Extensions.AI.Tests;
 
@@ -121,7 +122,7 @@ public sealed class MicroBatchingTests : IDisposable
 
     [Fact]
     public void CapabilityIsExperimental() =>
-        Assert.Equal(EmbeddingGemma2CapabilityStatus.Experimental, EmbeddingGemma2Capabilities.All["extensions_ai.micro_batching"]);
+        Assert.Equal(Status.Experimental, EmbeddingGemma2Capabilities.Statuses["extensions_ai.micro_batching"]);
 
     private sealed class CodePointTokenizer : IEmbeddingGemma2Tokenizer
     {

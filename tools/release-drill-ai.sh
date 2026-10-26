@@ -323,6 +323,7 @@ pack="$work/pack"
 projects=(
     ai-dotnet/src/Starlings.Acquisition
     ai-dotnet/src/Starlings.Runtime.Onnx
+    ai-dotnet/src/Starlings.Models.Abstractions
     ai-dotnet/src/Starlings.Models.E5
     ai-dotnet/src/Starlings.Models.E5.Extensions.AI
     ai-dotnet/src/Starlings.Runtime.OnnxWeb
@@ -373,8 +374,10 @@ expect_deps() {
         Starlings.Tokenizers) ;;
         Starlings.Acquisition) ;;
         Starlings.Runtime.Onnx) echo "Microsoft.ML.OnnxRuntime.Managed [$ort_version]" ;;
+        Starlings.Models.Abstractions) echo "Starlings.Acquisition [$ai_version]" ;;
         Starlings.Models.E5)
             echo "Starlings.Acquisition [$ai_version]"
+            echo "Starlings.Models.Abstractions [$ai_version]"
             echo "Starlings.Runtime.Onnx [$ai_version]"
             echo "Starlings.Tokenizers [$tok_version]" ;;
         Starlings.Models.E5.Extensions.AI)
@@ -393,10 +396,12 @@ expect_deps() {
             echo "Microsoft.ML 5.0.0" ;;
         Starlings.Models.Gliner2)
             echo "Starlings.Acquisition [$ai_version]"
+            echo "Starlings.Models.Abstractions [$ai_version]"
             echo "Starlings.Runtime.Onnx [$ai_version]"
             echo "Starlings.Tokenizers [$tok_version]" ;;
         Starlings.Models.EmbeddingGemma2)
             echo "Starlings.Acquisition [$ai_version]"
+            echo "Starlings.Models.Abstractions [$ai_version]"
             echo "Starlings.Runtime.Onnx [$ai_version]"
             echo "Starlings.Tokenizers [$tok_version]" ;;
         Starlings.Models.EmbeddingGemma2.Extensions.AI)
@@ -614,10 +619,10 @@ for path in sys.argv[5:]:
         mea = [n for n in names if n.split("/")[0] == "Microsoft.Extensions.AI.Abstractions"]
         assert mea == ["Microsoft.Extensions.AI.Abstractions/10.10.1"], f"Microsoft.Extensions.AI.Abstractions resolved as {mea}"
         unrelated = ("Starlings.Runtime.Onnx", "Starlings.Models.E5", "Starlings.Models.Gliner2",
-                     "Starlings.Models.EmbeddingGemma2")
+                     "Starlings.Models.EmbeddingGemma2", "Starlings.Models.Abstractions")
         assert not [n for n in names if n.split("/")[0] in unrelated], "unrelated packages restored"
     else:
-        common = ["Starlings.Tokenizers", "Starlings.Acquisition", "Starlings.Runtime.Onnx",
+        common = ["Starlings.Tokenizers", "Starlings.Acquisition", "Starlings.Runtime.Onnx", "Starlings.Models.Abstractions",
                   "Microsoft.ML.OnnxRuntime.Gpu.Linux" if app in ("CudaConsumer", "EmbeddingGemma2SearchCuda") else "Microsoft.ML.OnnxRuntime",
                   "Microsoft.ML.OnnxRuntime.Managed"]
         # Each EmbeddingGemma2Search copy restores exactly one video adapter: FFmpeg9 for its FFmpeg 9 copy, FFmpeg otherwise.

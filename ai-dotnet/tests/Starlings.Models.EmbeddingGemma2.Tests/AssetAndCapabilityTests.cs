@@ -1,5 +1,6 @@
 using Starlings.Acquisition;
 using Starlings.TestSupport;
+using Status = Starlings.Models.CapabilityStatus;
 
 namespace Starlings.Models.EmbeddingGemma2.Tests;
 
@@ -131,26 +132,26 @@ public class AssetAndCapabilityTests
     [Fact]
     public void CapabilitiesAreExplicitAndMatchTheContract()
     {
-        var all = EmbeddingGemma2Capabilities.All;
-        Assert.Equal(EmbeddingGemma2CapabilityStatus.Supported, all["embedding.pretokenized.cpu"]);
-        Assert.Equal(EmbeddingGemma2CapabilityStatus.Supported, all["embedding.pretokenized.cuda"]);
-        Assert.Equal(EmbeddingGemma2CapabilityStatus.Supported, all["embedding.text"]);
-        Assert.Equal(EmbeddingGemma2CapabilityStatus.Supported, all["tokenizer.owned"]);
-        Assert.Equal(EmbeddingGemma2CapabilityStatus.Experimental, all["input.2050_to_8192_tokens"]);
-        Assert.Equal(EmbeddingGemma2CapabilityStatus.Experimental, all["prompts.task"]);
-        Assert.Equal(EmbeddingGemma2CapabilityStatus.Unsupported, all["image.decode.gif_transparency"]);
+        var all = EmbeddingGemma2Capabilities.Statuses;
+        Assert.Equal(Status.Supported, all["embedding.pretokenized.cpu"]);
+        Assert.Equal(Status.Supported, all["embedding.pretokenized.cuda"]);
+        Assert.Equal(Status.Supported, all["embedding.text"]);
+        Assert.Equal(Status.Supported, all["tokenizer.owned"]);
+        Assert.Equal(Status.Experimental, all["input.2050_to_8192_tokens"]);
+        Assert.Equal(Status.Experimental, all["prompts.task"]);
+        Assert.Equal(Status.Unsupported, all["image.decode.gif_transparency"]);
         foreach (var key in new[] { "audio", "video.frames_without_timing", "video.timestamps", "video.over_8192_tokens", "video.decode.ffmpeg9", "mlnet.video_column", "media_placeholder_tokens", "image.16_bit_per_channel", "image.over_8192_tokens", "mlnet.image_column", "input.over_8192_tokens", "truncation", "tf32", "fp16", "matryoshka.other_sizes", "prompt_insertion.implicit" })
         {
-            Assert.Equal(EmbeddingGemma2CapabilityStatus.Unsupported, all[key]);
+            Assert.Equal(Status.Unsupported, all[key]);
         }
 
         Assert.All(all.Values, v => Assert.True(Enum.IsDefined(v)));
 
         string cpu = Manifest("onnx-fp32-cpu");
         Assert.Contains("    version: 0.3.2\n    profile_id: gemma-bpe-embeddinggemma2\n", cpu, StringComparison.Ordinal);
-        Assert.Equal(EmbeddingGemma2CapabilityStatus.Supported, all["image"]);
-        Assert.Equal(EmbeddingGemma2CapabilityStatus.Supported, all["image.cuda"]);
-        Assert.Equal(EmbeddingGemma2CapabilityStatus.Experimental, all["image.budget_other"]);
+        Assert.Equal(Status.Supported, all["image"]);
+        Assert.Equal(Status.Supported, all["image.cuda"]);
+        Assert.Equal(Status.Experimental, all["image.budget_other"]);
         string image = Manifest("image-fp32-cpu");
         Assert.Contains("maturity: stable", image, StringComparison.Ordinal);
         Assert.Contains("  image: supported", image, StringComparison.Ordinal);
@@ -158,12 +159,12 @@ public class AssetAndCapabilityTests
         Assert.Contains("provider_options:\n    use_tf32: 0", Manifest("image-fp32-cuda"), StringComparison.Ordinal);
         foreach (var key in new[] { "video", "video.cpu", "video.cuda", "video.decoded_frames_with_timing", "video.interleaved_text", "video.interleaved_image", "video.decode.ffmpeg8", "video.decode.ffmpeg9_adapter", "extensions_ai.video_embedding_generator" })
         {
-            Assert.Equal(EmbeddingGemma2CapabilityStatus.Supported, all[key]);
+            Assert.Equal(Status.Supported, all[key]);
         }
 
         foreach (var key in new[] { "video.pre_sampled_frames", "video.frames_without_timing.upstream_opt_in", "video.variable_frame_rate", "video.interlaced", "video.hdr", "video.decode.rotation_other", "extensions_ai.video_embedding_generator.cuda" })
         {
-            Assert.Equal(EmbeddingGemma2CapabilityStatus.Experimental, all[key]);
+            Assert.Equal(Status.Experimental, all[key]);
         }
 
         string video = Manifest("video-fp32-cpu");

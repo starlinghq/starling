@@ -1,5 +1,6 @@
 using Starlings.Acquisition;
 using Starlings.TestSupport;
+using Status = Starlings.Models.CapabilityStatus;
 
 namespace Starlings.Models.Gliner2.Tests;
 
@@ -54,14 +55,14 @@ public class AssetAndCapabilityTests
     [Fact]
     public void CapabilitiesMatchTheManifestAndTheContract()
     {
-        var all = Gliner2Capabilities.All;
-        Assert.Equal(Gliner2CapabilityStatus.Supported, all["entity_extraction.cpu"]);
-        Assert.Equal(Gliner2CapabilityStatus.Supported, all["entity_extraction.cuda"]);
-        Assert.Equal(Gliner2CapabilityStatus.Experimental, all["label_descriptions"]);
-        Assert.Equal(Gliner2CapabilityStatus.Unsupported, all["concurrent_calls.cuda.unserialized"]);
+        var all = Gliner2Capabilities.Statuses;
+        Assert.Equal(Status.Supported, all["entity_extraction.cpu"]);
+        Assert.Equal(Status.Supported, all["entity_extraction.cuda"]);
+        Assert.Equal(Status.Experimental, all["label_descriptions"]);
+        Assert.Equal(Status.Unsupported, all["concurrent_calls.cuda.unserialized"]);
         foreach (var key in new[] { "classification", "relation_extraction", "structured_extraction", "plain_deduplicated_output", "input_over_512_tokens", "truncation", "tf32", "extensions_ai", "mlnet" })
         {
-            Assert.Equal(Gliner2CapabilityStatus.Unsupported, all[key]);
+            Assert.Equal(Status.Unsupported, all[key]);
         }
 
     }

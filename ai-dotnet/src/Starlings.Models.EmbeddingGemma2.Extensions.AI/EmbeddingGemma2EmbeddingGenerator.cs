@@ -1,4 +1,5 @@
 using Microsoft.Extensions.AI;
+using Starlings.Models.ExtensionsAI;
 using Starlings.Runtime.Onnx.Batching;
 
 namespace Starlings.Models.EmbeddingGemma2.Extensions.AI;
@@ -170,23 +171,13 @@ public sealed class EmbeddingGemma2EmbeddingGenerator : IEmbeddingGenerator<stri
         EmbeddingGenerationOptions? options = null,
         CancellationToken cancellationToken = default)
     {
-        try
+        return EmbeddingGeneratorCore.Run(() =>
         {
             var (texts, prompt, dimensions) = Prepare(values, options, cancellationToken);
             return _batcher is not null && texts.Count == 1
                 ? GenerateQueuedAsync(_batcher, texts[0], prompt, dimensions, cancellationToken)
                 : Task.FromResult(Generate(texts, prompt, dimensions, cancellationToken));
-        }
-        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
-        {
-            return Task.FromCanceled<GeneratedEmbeddings<Embedding<float>>>(cancellationToken);
-        }
-#pragma warning disable CA1031 // Every failure is reported through the returned task, never thrown synchronously.
-        catch (Exception ex)
-#pragma warning restore CA1031
-        {
-            return Task.FromException<GeneratedEmbeddings<Embedding<float>>>(ex);
-        }
+        }, cancellationToken);
     }
 
     /// <inheritdoc />
@@ -240,13 +231,7 @@ public sealed class EmbeddingGemma2EmbeddingGenerator : IEmbeddingGenerator<stri
         cancellationToken.ThrowIfCancellationRequested();
         var (prompt, dimensions) = Resolve(options);
 
-        var texts = new List<string>(values is ICollection<string> c ? c.Count : 0);
-        foreach (string? value in values)
-        {
-            texts.Add(value ?? throw new ArgumentException($"Value {texts.Count} is null.", nameof(values)));
-        }
-
-        return (texts, prompt, dimensions);
+        return (EmbeddingGeneratorCore.Texts(values), prompt, dimensions);
     }
 
     private async Task<GeneratedEmbeddings<Embedding<float>>> GenerateQueuedAsync(
@@ -257,34 +242,15 @@ public sealed class EmbeddingGemma2EmbeddingGenerator : IEmbeddingGenerator<stri
         _embedder.Encoder.Validate(input);
         float[] vector = await batcher.EnqueueAsync(input, cancellationToken).ConfigureAwait(false);
         float[] output = vector.Length == dimensions ? vector : EmbeddingGemma2Encoder.Truncate(vector, dimensions);
-        var result = new GeneratedEmbeddings<Embedding<float>>(1)
-        {
-            new Embedding<float>(output) { ModelId = _options.ModelId, CreatedAt = DateTimeOffset.UtcNow },
-        };
-        result.Usage = new UsageDetails { InputTokenCount = input.Length, TotalTokenCount = input.Length };
-        return result;
+        return EmbeddingGeneratorCore.Single(output, input.Length, _options.ModelId);
     }
 
     private GeneratedEmbeddings<Embedding<float>> Generate(List<string> texts, EmbeddingGemma2Prompt prompt, int dimensions, CancellationToken cancellationToken)
     {
         var tokenCounts = new int[texts.Count];
         float[][] vectors = _embedder.EmbedBatch(texts, prompt, tokenCounts, cancellationToken);
-        var createdAt = DateTimeOffset.UtcNow;
-        var result = new GeneratedEmbeddings<Embedding<float>>(vectors.Length);
-        foreach (float[] vector in vectors)
-        {
-            float[] output = vector.Length == dimensions ? vector : EmbeddingGemma2Encoder.Truncate(vector, dimensions);
-            result.Add(new Embedding<float>(output) { ModelId = _options.ModelId, CreatedAt = createdAt });
-        }
-
-        long tokens = 0;
-        foreach (int count in tokenCounts)
-        {
-            tokens += count;
-        }
-
-        result.Usage = new UsageDetails { InputTokenCount = tokens, TotalTokenCount = tokens };
-        return result;
+        return EmbeddingGeneratorCore.Result(vectors, tokenCounts, _options.ModelId,
+            vector => vector.Length == dimensions ? vector : EmbeddingGemma2Encoder.Truncate(vector, dimensions));
     }
 
     private (EmbeddingGemma2Prompt Prompt, int Dimensions) Resolve(EmbeddingGenerationOptions? options)
@@ -310,33 +276,15 @@ public sealed class EmbeddingGemma2EmbeddingGenerator : IEmbeddingGenerator<stri
             dimensions = requested;
         }
 
-        if (options.ModelId is { } modelId && !string.Equals(modelId, _options.ModelId, StringComparison.Ordinal))
-        {
-            throw new NotSupportedException($"EmbeddingGenerationOptions.ModelId = '{modelId}' is not supported: this generator serves only '{_options.ModelId}'.");
-        }
-
-        if (options.RawRepresentationFactory is not null)
-        {
-            throw new NotSupportedException("EmbeddingGenerationOptions.RawRepresentationFactory is not supported: this generator has no provider-specific options object.");
-        }
-
         var prompt = _options.Prompt;
-        if (options.AdditionalProperties is { Count: > 0 } properties)
+        if (EmbeddingGeneratorCore.CheckOptions(options, _options.ModelId, PromptPropertyName, out object? value))
         {
-            foreach (var (key, value) in properties)
+            prompt = value switch
             {
-                if (!string.Equals(key, PromptPropertyName, StringComparison.Ordinal))
-                {
-                    throw new NotSupportedException($"EmbeddingGenerationOptions.AdditionalProperties['{key}'] is not supported; the only supported key is '{PromptPropertyName}'.");
-                }
-
-                prompt = value switch
-                {
-                    EmbeddingGemma2Prompt p => p,
-                    string name when EmbeddingGemma2Prompt.TryFromName(name, out var p) => p,
-                    _ => throw new ArgumentException($"AdditionalProperties['{PromptPropertyName}'] = '{value}' is not an EmbeddingGemma 2 prompt; expected an EmbeddingGemma2Prompt, 'none' or one of: {string.Join(", ", EmbeddingGemma2Prompt.Named.Keys)} (case-sensitive)."),
-                };
-            }
+                EmbeddingGemma2Prompt p => p,
+                string name when EmbeddingGemma2Prompt.TryFromName(name, out var p) => p,
+                _ => throw new ArgumentException($"AdditionalProperties['{PromptPropertyName}'] = '{value}' is not an EmbeddingGemma 2 prompt; expected an EmbeddingGemma2Prompt, 'none' or one of: {string.Join(", ", EmbeddingGemma2Prompt.Named.Keys)} (case-sensitive)."),
+            };
         }
 
         return (prompt, dimensions);

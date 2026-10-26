@@ -36,10 +36,17 @@
       "starlings.acquisition": {
         "type": "Project"
       },
+      "starlings.models.abstractions": {
+        "type": "Project",
+        "dependencies": {
+          "Starlings.Acquisition": "[0.3.0, )"
+        }
+      },
       "starlings.models.embeddinggemma2": {
         "type": "Project",
         "dependencies": {
           "Starlings.Acquisition": "[0.3.0, )",
+          "Starlings.Models.Abstractions": "[0.3.0, )",
           "Starlings.Runtime.Onnx": "[0.3.0, )",
           "Starlings.Tokenizers": "[0.3.2, 0.3.2]"
         }

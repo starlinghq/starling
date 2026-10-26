@@ -91,11 +91,13 @@ directory by size and SHA-256 (`ModelAssetStore.VerifyDirectory`) and never down
   `SourceLock`, `RuntimeLock`, the static `SupportedRepositories`, and the constants `BgeQueryInstruction`, `GraphFile`,
   `GraphDataFile`, `TokenizerFile`.
 - `BertTextEmbedder.Create(profile, snapshot, threads = 2, maxBatchSize = 32)`: `Embed`, `EmbedBatch`
-  (input order), `EmbedTokens`, `Tokenize`, `Dimension`, `Profile`, `Diagnostics`, and the owned
-  `Session` (advanced).
+  (input order), `EmbedTokens`, `Tokenize`, `Dimension`, `MaxSequenceLength`, `Profile`, `Diagnostics`, and the owned
+  `Session` (advanced). It is an `ITextEmbedder` (`Starlings.Models.Abstractions`): `EmbedBatch(texts, tokenCounts)`
+  embeds with the prompt `none` and reports each text's token count.
 - `BertReranker.Create(profile, snapshot, threads = 2, maxBatchSize = 32)`: `Score(BertPair)`, `ScoreBatch`,
   `ScoreTokens`, `Tokenize`, and `Rank(query, documents)`, which returns `BertRankedDocument(Index, Document, Score)`
-  by descending score, ties in original order.
+  by descending score, ties in original order. It is an `IReranker`: `Score(query, documents)` returns the raw logits
+  of `ScoreBatch` in document order.
 - `BertInput(InputIds, AttentionMask, TokenTypeIds)` for pre-tokenized rows: equal lengths from 2 to `MaxTokens`,
   the profile's CLS id first and SEP id as the last visible token, right padding with the profile's pad id and mask 0.
 - `BertCapabilities`: text, batch and cancellation `experimental`; streaming, persistence and training

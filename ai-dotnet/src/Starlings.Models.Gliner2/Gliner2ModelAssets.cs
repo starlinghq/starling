@@ -117,4 +117,23 @@ public static class Gliner2ModelAssets
     /// </summary>
     public static Gliner2ModelFiles OpenDirectory(string directory, CacheVerification verification = CacheVerification.Sha256) =>
         Gliner2ModelFiles.From(ModelAssetStore.VerifyDirectory(Lock, directory, verification));
+
+    /// <summary>
+    /// The GLiNER2 lock and acquisition members of this class as an <see cref="IModelAssets{TFiles}"/>, for setup code
+    /// that acquires several models the same way. Each member calls the static member of the same name.
+    /// </summary>
+    public static IModelAssets<Gliner2ModelFiles> Assets { get; } = new AssetsInstance();
+
+    private sealed class AssetsInstance : IModelAssets<Gliner2ModelFiles>
+    {
+        public ModelAssetLock Lock => Gliner2ModelAssets.Lock;
+
+        public Task<Gliner2ModelFiles> DownloadAsync(ModelAcquisitionOptions? options = null, IProgress<ModelAssetProgress>? progress = null, CancellationToken cancellationToken = default) =>
+            Gliner2ModelAssets.DownloadAsync(options, progress, cancellationToken);
+
+        public Gliner2ModelFiles OpenLocal(ModelAcquisitionOptions? options = null) => Gliner2ModelAssets.OpenLocal(options);
+
+        public Gliner2ModelFiles OpenDirectory(string directory, CacheVerification verification = CacheVerification.Sha256) =>
+            Gliner2ModelAssets.OpenDirectory(directory, verification);
+    }
 }

@@ -2,6 +2,7 @@ using System.Collections;
 using Starlings.Batching;
 using Starlings.Runtime.Onnx;
 using Starlings.TestSupport;
+using Status = Starlings.Models.CapabilityStatus;
 
 namespace Starlings.Models.E5.Tests;
 
@@ -206,9 +207,9 @@ public class BatchingOptionsTests
         Assert.Null(options.MaxBatchTokens);
         Assert.False(options.SortByLength);
         Assert.Equal(32, options.MaxBatchSize);
-        Assert.Equal(CapabilityStatus.Supported, E5Capabilities.All["batch"]);
-        Assert.Equal(CapabilityStatus.Experimental, E5Capabilities.All["batch.token_budget"]);
-        Assert.Equal(CapabilityStatus.Experimental, E5Capabilities.All["batch.sort_by_length"]);
+        Assert.Equal(Status.Supported, E5Capabilities.Statuses["batch"]);
+        Assert.Equal(Status.Experimental, E5Capabilities.Statuses["batch.token_budget"]);
+        Assert.Equal(Status.Experimental, E5Capabilities.Statuses["batch.sort_by_length"]);
     }
 
     /// <summary>A list that cancels <paramref name="cts"/> on the n-th read of one index.</summary>

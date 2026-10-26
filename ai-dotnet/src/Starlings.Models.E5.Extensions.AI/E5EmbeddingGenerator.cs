@@ -1,4 +1,5 @@
 using Microsoft.Extensions.AI;
+using Starlings.Models.ExtensionsAI;
 using Starlings.Runtime.Onnx.Batching;
 
 namespace Starlings.Models.E5.Extensions.AI;
@@ -137,23 +138,13 @@ public sealed class E5EmbeddingGenerator : IEmbeddingGenerator<string, Embedding
         EmbeddingGenerationOptions? options = null,
         CancellationToken cancellationToken = default)
     {
-        try
+        return EmbeddingGeneratorCore.Run(() =>
         {
             var texts = Prepare(values, options, cancellationToken);
             return _batcher is not null && texts.Count == 1
                 ? GenerateQueuedAsync(_batcher, texts[0], cancellationToken)
                 : Task.FromResult(Generate(texts, cancellationToken));
-        }
-        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
-        {
-            return Task.FromCanceled<GeneratedEmbeddings<Embedding<float>>>(cancellationToken);
-        }
-#pragma warning disable CA1031 // Every failure is reported through the returned task, never thrown synchronously.
-        catch (Exception ex)
-#pragma warning restore CA1031
-        {
-            return Task.FromException<GeneratedEmbeddings<Embedding<float>>>(ex);
-        }
+        }, cancellationToken);
     }
 
     /// <inheritdoc />
@@ -215,18 +206,7 @@ public sealed class E5EmbeddingGenerator : IEmbeddingGenerator<string, Embedding
             _ => string.Empty,
         };
 
-        var texts = new List<string>(values is ICollection<string> c ? c.Count : 0);
-        foreach (string? value in values)
-        {
-            if (value is null)
-            {
-                throw new ArgumentException($"Value {texts.Count} is null.", nameof(values));
-            }
-
-            texts.Add(prefix.Length == 0 ? value : prefix + value);
-        }
-
-        return texts;
+        return EmbeddingGeneratorCore.Texts(values, prefix);
     }
 
     private async Task<GeneratedEmbeddings<Embedding<float>>> GenerateQueuedAsync(MicroBatcher<EncoderInput, float[]> batcher, string text, CancellationToken cancellationToken)
@@ -235,33 +215,14 @@ public sealed class E5EmbeddingGenerator : IEmbeddingGenerator<string, Embedding
         var input = _embedder.Tokenizer.Tokenize(text);
         _embedder.Encoder.Validate(input);
         float[] vector = await batcher.EnqueueAsync(input, cancellationToken).ConfigureAwait(false);
-        var result = new GeneratedEmbeddings<Embedding<float>>(1)
-        {
-            new Embedding<float>(vector) { ModelId = _options.ModelId, CreatedAt = DateTimeOffset.UtcNow },
-        };
-        result.Usage = new UsageDetails { InputTokenCount = input.Length, TotalTokenCount = input.Length };
-        return result;
+        return EmbeddingGeneratorCore.Single(vector, input.Length, _options.ModelId);
     }
 
     private GeneratedEmbeddings<Embedding<float>> Generate(List<string> texts, CancellationToken cancellationToken)
     {
         var tokenCounts = new int[texts.Count];
         float[][] vectors = _embedder.EmbedBatch(texts, tokenCounts, cancellationToken);
-        var createdAt = DateTimeOffset.UtcNow;
-        var result = new GeneratedEmbeddings<Embedding<float>>(vectors.Length);
-        foreach (float[] vector in vectors)
-        {
-            result.Add(new Embedding<float>(vector) { ModelId = _options.ModelId, CreatedAt = createdAt });
-        }
-
-        long tokens = 0;
-        foreach (int count in tokenCounts)
-        {
-            tokens += count;
-        }
-
-        result.Usage = new UsageDetails { InputTokenCount = tokens, TotalTokenCount = tokens };
-        return result;
+        return EmbeddingGeneratorCore.Result(vectors, tokenCounts, _options.ModelId, static vector => vector);
     }
 
     private E5InputType ResolveInputType(EmbeddingGenerationOptions? options) =>
@@ -283,31 +244,9 @@ public sealed class E5EmbeddingGenerator : IEmbeddingGenerator<string, Embedding
             throw new NotSupportedException($"EmbeddingGenerationOptions.Dimensions = {dimensions} is not supported: {generatorModelId} produces {dimension} dimensions and has no truncation (Matryoshka) support.");
         }
 
-        if (options.ModelId is { } modelId && !string.Equals(modelId, generatorModelId, StringComparison.Ordinal))
-        {
-            throw new NotSupportedException($"EmbeddingGenerationOptions.ModelId = '{modelId}' is not supported: this generator serves only '{generatorModelId}'.");
-        }
-
-        if (options.RawRepresentationFactory is not null)
-        {
-            throw new NotSupportedException("EmbeddingGenerationOptions.RawRepresentationFactory is not supported: this generator has no provider-specific options object.");
-        }
-
-        var inputType = defaultInputType;
-        if (options.AdditionalProperties is { Count: > 0 } properties)
-        {
-            foreach (var (key, value) in properties)
-            {
-                if (!string.Equals(key, InputTypePropertyName, StringComparison.Ordinal))
-                {
-                    throw new NotSupportedException($"EmbeddingGenerationOptions.AdditionalProperties['{key}'] is not supported; the only supported key is '{InputTypePropertyName}'.");
-                }
-
-                inputType = ParseInputType(value);
-            }
-        }
-
-        return inputType;
+        return EmbeddingGeneratorCore.CheckOptions(options, generatorModelId, InputTypePropertyName, out object? value)
+            ? ParseInputType(value)
+            : defaultInputType;
     }
 
     private static E5InputType ParseInputType(object? value) => value switch
