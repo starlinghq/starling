@@ -1,14 +1,17 @@
 using System.Buffers;
+using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Net;
 using System.Net.Http.Headers;
+using System.Runtime.ExceptionServices;
 using System.Security.Cryptography;
 
 namespace Starlings.Acquisition;
 
 /// <summary>
-/// Local cache of locked model assets. <see cref="OpenLocal"/> resolves and verifies files without touching the network;
-/// <see cref="DownloadAsync"/> is the only member that downloads. Nothing here is called implicitly by model packages.
+/// Local cache of locked model assets. <see cref="OpenLocal(ModelAssetLock)"/> resolves and verifies files without touching the network;
+/// <see cref="DownloadAsync(ModelAssetLock, IProgress{ModelAssetProgress}?, CancellationToken)"/> is the only member that downloads. Nothing here is called implicitly by model packages.
 /// </summary>
 /// <remarks>
 /// <para>Layout: <c>&lt;cache&gt;/&lt;owner&gt;/&lt;name&gt;/&lt;commit SHA&gt;/&lt;path&gt;</c>, the same layout as
@@ -18,8 +21,10 @@ namespace Starlings.Acquisition;
 /// partial file into place (atomic on one file system). An interrupted download keeps its partial file; the next attempt
 /// re-hashes it and resumes with an HTTP range request. Concurrent acquisitions of the same file, in one process or
 /// several, serialize on an exclusive lock file; the second one finds the verified file and does not download it again.</para>
+/// <para>A store is thread-safe and holds no per-lock state, and each member that reads or downloads can take its
+/// verification for the call (overloads with a verification, or ModelDownloadOptions), so one store can be kept for the life of the process.</para>
 /// </remarks>
-public sealed class ModelAssetStore : IDisposable
+public sealed partial class ModelAssetStore : IDisposable
 {
     private const int BufferSize = 1 << 20;
     private const long ProgressInterval = 8L << 20;
@@ -37,7 +42,7 @@ public sealed class ModelAssetStore : IDisposable
     /// <summary>Creates a store. No network or file access happens here.</summary>
     /// <param name="options">Cache location, verification and download settings; defaults when null.</param>
     /// <param name="httpClient">
-    /// Client used by <see cref="DownloadAsync"/> (proxies, tests). Not disposed by the store. When null, the store creates
+    /// Client used by <see cref="DownloadAsync(ModelAssetLock, IProgress{ModelAssetProgress}?, CancellationToken)"/> (proxies, tests). Not disposed by the store. When null, the store creates
     /// its own on first download, following redirects and without a whole-request timeout.
     /// </param>
     public ModelAssetStore(ModelAcquisitionOptions? options = null, HttpClient? httpClient = null)
@@ -45,9 +50,24 @@ public sealed class ModelAssetStore : IDisposable
         _options = options ?? new ModelAcquisitionOptions();
         ArgumentOutOfRangeException.ThrowIfLessThan(_options.MaxAttempts, 1, nameof(options));
         ArgumentNullException.ThrowIfNull(_options.Endpoint, nameof(options));
+        ArgumentOutOfRangeException.ThrowIfLessThan(_options.MaxConcurrentFiles, 1, nameof(options));
+        ValidateLockWaitTimeout(_options.LockWaitTimeout, nameof(options));
+        if (_options.FallbackEndpoints is null || _options.FallbackEndpoints.Any(e => e is null || !e.IsAbsoluteUri))
+        {
+            throw new ArgumentException("FallbackEndpoints must be a list of absolute addresses.", nameof(options));
+        }
+
+        if (_options.LocalSources is null || _options.LocalSources.Any(string.IsNullOrEmpty))
+        {
+            throw new ArgumentException("LocalSources must be a list of directory paths.", nameof(options));
+        }
+
         _injectedClient = httpClient;
         CacheDirectory = _options.ResolveCacheDirectory();
+        _localSources = [.. _options.LocalSources.Select(Path.GetFullPath)];
     }
+
+    private readonly string[] _localSources;
 
     /// <summary>Absolute cache root.</summary>
     public string CacheDirectory { get; }
@@ -66,11 +86,61 @@ public sealed class ModelAssetStore : IDisposable
     /// </summary>
     /// <exception cref="ModelAssetMissingException">One or more files are not in the cache.</exception>
     /// <exception cref="ModelAssetIntegrityException">A cached file has the wrong size or digest.</exception>
-    public ModelSnapshot OpenLocal(ModelAssetLock assetLock)
+    public ModelSnapshot OpenLocal(ModelAssetLock assetLock) => OpenLocal(assetLock, _options.Verification);
+
+    /// <summary>
+    /// Offline resolution with a verification chosen for this call instead of <see cref="ModelAcquisitionOptions.Verification"/>.
+    /// Never downloads. Blocking file I/O.
+    /// </summary>
+    /// <exception cref="ModelAssetMissingException">One or more files are not in the cache.</exception>
+    /// <exception cref="ModelAssetIntegrityException">A cached file has the wrong size or digest.</exception>
+    public ModelSnapshot OpenLocal(ModelAssetLock assetLock, CacheVerification verification)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
         ArgumentNullException.ThrowIfNull(assetLock);
-        return Verify(assetLock, GetSnapshotDirectory(assetLock), _options.Verification, MissingHint(assetLock, CacheDirectory));
+        return Verify(assetLock, GetSnapshotDirectory(assetLock), verification, MissingHint(assetLock, CacheDirectory));
+    }
+
+    /// <summary>
+    /// Offline resolution that does not throw for missing or failing files: true and the verified snapshot when every
+    /// file is in the cache and passes <see cref="ModelAcquisitionOptions.Verification"/>; otherwise false and null.
+    /// <see cref="Check(ModelAssetLock)"/> says what is wrong. Never downloads and changes nothing. Blocking file I/O.
+    /// </summary>
+    public bool TryOpenLocal(ModelAssetLock assetLock, [NotNullWhen(true)] out ModelSnapshot? snapshot) =>
+        TryOpenLocal(assetLock, _options.Verification, out snapshot);
+
+    /// <summary>As <see cref="TryOpenLocal(ModelAssetLock, out ModelSnapshot?)"/>, with a verification chosen for this call.</summary>
+    public bool TryOpenLocal(ModelAssetLock assetLock, CacheVerification verification, [NotNullWhen(true)] out ModelSnapshot? snapshot)
+    {
+        snapshot = Check(assetLock, verification).Snapshot;
+        return snapshot is not null;
+    }
+
+    /// <summary>
+    /// Checks the cached files of <paramref name="assetLock"/> with <see cref="ModelAcquisitionOptions.Verification"/> and
+    /// reports what is present, missing or failing, without throwing for any of those (an unreadable file is a
+    /// <see cref="ModelAssetProblemKind.Unreadable"/> problem). Never downloads and changes nothing. Blocking file I/O:
+    /// with <see cref="CacheVerification.Sha256"/> every present file is hashed.
+    /// </summary>
+    public ModelAssetStatus Check(ModelAssetLock assetLock) => Check(assetLock, _options.Verification);
+
+    /// <summary>As <see cref="Check(ModelAssetLock)"/>, with a verification chosen for this call.</summary>
+    public ModelAssetStatus Check(ModelAssetLock assetLock, CacheVerification verification)
+    {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        ArgumentNullException.ThrowIfNull(assetLock);
+        return Inspect(assetLock, GetSnapshotDirectory(assetLock), verification, reportUnreadable: true);
+    }
+
+    /// <summary>
+    /// <see cref="Check(ModelAssetLock)"/> for an existing directory laid out like the repository (the non-throwing form of
+    /// <see cref="VerifyDirectory"/>). Never downloads and changes nothing. Blocking file I/O.
+    /// </summary>
+    public static ModelAssetStatus CheckDirectory(ModelAssetLock assetLock, string directory, CacheVerification verification = CacheVerification.Sha256)
+    {
+        ArgumentNullException.ThrowIfNull(assetLock);
+        ArgumentException.ThrowIfNullOrEmpty(directory);
+        return Inspect(assetLock, Path.GetFullPath(directory), verification, reportUnreadable: true);
     }
 
     /// <summary>
@@ -103,19 +173,70 @@ public sealed class ModelAssetStore : IDisposable
     /// <exception cref="ModelAssetIntegrityException">Downloaded bytes do not match the lock.</exception>
     /// <exception cref="ModelAssetDownloadException">Network or server failure after all attempts.</exception>
     /// <exception cref="ModelAcquisitionException">Writing to the cache failed (disk full, permissions); not retried, the message names the path.</exception>
-    public async Task<ModelSnapshot> DownloadAsync(ModelAssetLock assetLock, IProgress<ModelAssetProgress>? progress = null, CancellationToken cancellationToken = default)
+    public Task<ModelSnapshot> DownloadAsync(ModelAssetLock assetLock, IProgress<ModelAssetProgress>? progress = null, CancellationToken cancellationToken = default) =>
+        DownloadAsync(assetLock, new ModelDownloadOptions { Progress = progress }, cancellationToken);
+
+    /// <summary>
+    /// Explicit acquisition with per-call settings (<paramref name="options"/>; null members use the store's
+    /// <see cref="ModelAcquisitionOptions"/>). Otherwise the same as
+    /// <see cref="DownloadAsync(ModelAssetLock, IProgress{ModelAssetProgress}?, CancellationToken)"/>, plus: a missing file
+    /// is first copied from <see cref="ModelAcquisitionOptions.LocalSources"/>, then downloaded from
+    /// <see cref="ModelAcquisitionOptions.Endpoint"/> and, on failure, from each of
+    /// <see cref="ModelAcquisitionOptions.FallbackEndpoints"/>; up to <see cref="ModelDownloadOptions.MaxConcurrentFiles"/>
+    /// files are acquired at once; a wait for another downloader's lock is bounded by
+    /// <see cref="ModelDownloadOptions.LockWaitTimeout"/>.
+    /// </summary>
+    /// <exception cref="ModelAssetMissingException"><see cref="ModelAcquisitionOptions.AllowNetwork"/> is false and a file is neither cached nor in a local source.</exception>
+    /// <exception cref="ModelAssetLockTimeoutException">Another downloader held a file's lock for longer than the wait timeout.</exception>
+    /// <exception cref="ModelAssetAccessDeniedException">HTTP 401/403: gated, private or nonexistent repository, or bad token.</exception>
+    /// <exception cref="ModelAssetNotFoundException">HTTP 404: the revision or file does not exist.</exception>
+    /// <exception cref="ModelAssetIntegrityException">Downloaded bytes do not match the lock.</exception>
+    /// <exception cref="ModelAssetDownloadException">Network or server failure after all attempts.</exception>
+    /// <exception cref="ModelAcquisitionException">Writing to the cache failed (disk full, permissions); not retried, the message names the path.</exception>
+    public async Task<ModelSnapshot> DownloadAsync(ModelAssetLock assetLock, ModelDownloadOptions options, CancellationToken cancellationToken = default)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
         ArgumentNullException.ThrowIfNull(assetLock);
+        ArgumentNullException.ThrowIfNull(options);
+        int concurrency = options.MaxConcurrentFiles ?? _options.MaxConcurrentFiles;
+        ArgumentOutOfRangeException.ThrowIfLessThan(concurrency, 1, nameof(options));
+        var call = new CallSettings(
+            options.Verification ?? _options.Verification,
+            options.LockWaitTimeout ?? _options.LockWaitTimeout);
+        ValidateLockWaitTimeout(call.LockWaitTimeout, nameof(options));
+
         string snapshot = GetSnapshotDirectory(assetLock);
-        string work = Path.Combine(CacheDirectory, DownloadsDirectoryName, Path.GetRelativePath(CacheDirectory, snapshot));
-        bool anyCached = false;
-        foreach (var file in assetLock.Files)
+        string work = WorkDirectory(snapshot);
+        if (!_options.AllowNetwork)
         {
-            anyCached |= await AcquireFileAsync(assetLock, file, snapshot, work, progress, cancellationToken).ConfigureAwait(false);
+            ThrowIfNotAvailableOffline(assetLock, snapshot);
         }
 
-        return new ModelSnapshot(assetLock, snapshot, anyCached ? _options.Verification : CacheVerification.Sha256);
+        var lockProgress = options.Progress is null ? null : new LockProgress(options.Progress, assetLock);
+        int anyCached = 0;
+        if (concurrency == 1)
+        {
+            for (int i = 0; i < assetLock.Files.Count; i++)
+            {
+                if (await AcquireFileAsync(assetLock, assetLock.Files[i], snapshot, work, call, lockProgress?.ForFile(i), cancellationToken).ConfigureAwait(false))
+                {
+                    anyCached = 1;
+                }
+            }
+        }
+        else
+        {
+            var parallel = new ParallelOptions { MaxDegreeOfParallelism = concurrency, CancellationToken = cancellationToken };
+            await Parallel.ForEachAsync(Enumerable.Range(0, assetLock.Files.Count), parallel, async (i, token) =>
+            {
+                if (await AcquireFileAsync(assetLock, assetLock.Files[i], snapshot, work, call, lockProgress?.ForFile(i), token).ConfigureAwait(false))
+                {
+                    Volatile.Write(ref anyCached, 1);
+                }
+            }).ConfigureAwait(false);
+        }
+
+        return new ModelSnapshot(assetLock, snapshot, anyCached != 0 ? call.Verification : CacheVerification.Sha256);
     }
 
     /// <inheritdoc />
@@ -149,22 +270,25 @@ public sealed class ModelAssetStore : IDisposable
         return full;
     }
 
-    internal Uri BuildUri(ModelAssetLock assetLock, ModelAssetFile file)
+    internal Uri BuildUri(ModelAssetLock assetLock, ModelAssetFile file) => BuildUri(assetLock, file, _options.Endpoint);
+
+    /// <summary>The file's explicit source, else its Hub-layout address on <paramref name="endpoint"/> in the hosting repository.</summary>
+    internal static Uri BuildUri(ModelAssetLock assetLock, ModelAssetFile file, Uri endpoint)
     {
         if (file.Source is not null)
         {
             return file.Source;
         }
 
-        string repo = string.Join('/', assetLock.Repository.Split('/').Select(Uri.EscapeDataString));
+        string repo = string.Join('/', assetLock.HostingRepository.Split('/').Select(Uri.EscapeDataString));
         string path = string.Join('/', file.Path.Split('/').Select(Uri.EscapeDataString));
-        string baseText = _options.Endpoint.ToString();
+        string baseText = endpoint.ToString();
         if (!baseText.EndsWith('/'))
         {
             baseText += "/";
         }
 
-        return new Uri(new Uri(baseText), $"{repo}/resolve/{assetLock.Revision}/{path}");
+        return new Uri(new Uri(baseText), $"{repo}/resolve/{assetLock.HostingRevision}/{path}");
     }
 
     private static string MissingHint(ModelAssetLock assetLock, string cacheDirectory) =>
@@ -178,26 +302,10 @@ public sealed class ModelAssetStore : IDisposable
     {
         // The whole pass completes before anything is thrown: missing files are reported together, ahead of integrity
         // failures, so a partially populated directory with one corrupt file still says which files are absent.
-        var missing = new List<string>();
-        ModelAssetIntegrityException? firstFailure = null;
-        int failures = 0;
-        foreach (var file in assetLock.Files)
-        {
-            string path = LocalPath(directory, file.Path);
-            if (!File.Exists(path))
-            {
-                missing.Add(file.Path);
-                continue;
-            }
-
-            var failure = CheckFile(assetLock, file, path, verification, null, CancellationToken.None);
-            if (failure is not null)
-            {
-                firstFailure ??= failure;
-                failures++;
-            }
-        }
-
+        var status = Inspect(assetLock, directory, verification, reportUnreadable: false);
+        var missing = status.MissingPaths;
+        var firstFailure = status.FirstFailure;
+        int failures = status.Problems.Count;
         if (missing.Count > 0)
         {
             string alsoFailed = firstFailure is null
@@ -231,6 +339,51 @@ public sealed class ModelAssetStore : IDisposable
         }
 
         return new ModelSnapshot(assetLock, directory, verification);
+    }
+
+    /// <summary>
+    /// One pass over the lock's files in <paramref name="directory"/>. With <paramref name="reportUnreadable"/> an I/O
+    /// failure reading a present file becomes an <see cref="ModelAssetProblemKind.Unreadable"/> problem; without it the
+    /// exception propagates, as <see cref="OpenLocal(ModelAssetLock)"/> always did.
+    /// </summary>
+    private static ModelAssetStatus Inspect(ModelAssetLock assetLock, string directory, CacheVerification verification, bool reportUnreadable)
+    {
+        var missing = new List<string>();
+        var problems = new List<ModelAssetProblem>();
+        ModelAssetIntegrityException? firstFailure = null;
+        foreach (var file in assetLock.Files)
+        {
+            string path = LocalPath(directory, file.Path);
+            if (!File.Exists(path))
+            {
+                missing.Add(file.Path);
+                continue;
+            }
+
+            ModelAssetIntegrityException? failure;
+            try
+            {
+                failure = CheckFile(assetLock, file, path, verification, null, CancellationToken.None);
+            }
+            catch (Exception ex) when (reportUnreadable && ex is IOException or UnauthorizedAccessException)
+            {
+                problems.Add(new ModelAssetProblem(
+                    file.Path, ModelAssetProblemKind.Unreadable, path, file.Size, -1, file.Sha256, null,
+                    $"{assetLock.Name}: {file.Path} at {path} could not be read: {ex.Message}"));
+                continue;
+            }
+
+            if (failure is not null)
+            {
+                firstFailure ??= failure;
+                problems.Add(new ModelAssetProblem(
+                    file.Path,
+                    failure.ActualSha256 is null ? ModelAssetProblemKind.SizeMismatch : ModelAssetProblemKind.DigestMismatch,
+                    path, file.Size, failure.ActualSize, file.Sha256, failure.ActualSha256, failure.Message));
+            }
+        }
+
+        return new ModelAssetStatus(assetLock, directory, verification, missing.AsReadOnly(), problems.AsReadOnly(), firstFailure);
     }
 
     /// <summary>Returns null when the file matches, otherwise the integrity failure (not thrown).</summary>
@@ -305,41 +458,275 @@ public sealed class ModelAssetStore : IDisposable
 
     /// <summary>Returns true when the file was already cached and valid.</summary>
     private async Task<bool> AcquireFileAsync(
-        ModelAssetLock assetLock, ModelAssetFile file, string snapshot, string work, IProgress<ModelAssetProgress>? progress, CancellationToken cancellationToken)
+        ModelAssetLock assetLock, ModelAssetFile file, string snapshot, string work, CallSettings call, IProgress<ModelAssetProgress>? progress, CancellationToken cancellationToken)
     {
         string target = LocalPath(snapshot, file.Path);
         string partial = LocalPath(work, file.Path) + ".partial";
         Directory.CreateDirectory(Path.GetDirectoryName(target)!);
         Directory.CreateDirectory(Path.GetDirectoryName(partial)!);
 
-        using var exclusive = await LockFileAsync(LocalPath(work, file.Path) + ".lock", cancellationToken).ConfigureAwait(false);
+        string lockPath = LocalPath(work, file.Path) + ".lock";
+        var waited = Stopwatch.StartNew();
+        using var exclusive = await LockFileAsync(
+            lockPath,
+            call.LockWaitTimeout,
+            () => progress?.Report(new ModelAssetProgress(file.Path, ModelAssetStage.Waiting, 0, file.Size)),
+            cancellationToken).ConfigureAwait(false)
+            ?? throw new ModelAssetLockTimeoutException(
+                string.Create(CultureInfo.InvariantCulture,
+                    $"{assetLock.Name}: another download of {file.Path} held its lock {lockPath} for {waited.Elapsed.TotalSeconds:0.###} s, ") +
+                $"longer than LockWaitTimeout ({call.LockWaitTimeout}). Nothing was changed; call DownloadAsync again to wait again, " +
+                "or remove a stale lock with ModelAssetStore.RemovePartialDownloads once no other download runs.")
+            {
+                Repository = assetLock.Repository,
+                Revision = assetLock.Revision,
+                AssetPath = file.Path,
+                LockFilePath = lockPath,
+                Waited = waited.Elapsed,
+            };
 
-        if (File.Exists(target) && CheckFile(assetLock, file, target, _options.Verification, progress, cancellationToken) is null)
+        if (File.Exists(target) && CheckFile(assetLock, file, target, call.Verification, progress, cancellationToken) is null)
         {
             progress?.Report(new ModelAssetProgress(file.Path, ModelAssetStage.Completed, file.Size, file.Size));
             return true;
         }
 
-        await DownloadFileAsync(assetLock, file, target, partial, progress, cancellationToken).ConfigureAwait(false);
+        if (!await TryCopyFromLocalSourceAsync(assetLock, file, target, partial, progress, cancellationToken).ConfigureAwait(false))
+        {
+            if (!_options.AllowNetwork)
+            {
+                throw OfflineMissing(assetLock, [file.Path], snapshot);
+            }
+
+            await DownloadFileAsync(assetLock, file, target, partial, progress, cancellationToken).ConfigureAwait(false);
+        }
+
         progress?.Report(new ModelAssetProgress(file.Path, ModelAssetStage.Completed, file.Size, file.Size));
         return false;
     }
 
-    private static async Task<FileStream> LockFileAsync(string path, CancellationToken cancellationToken)
+    /// <summary>
+    /// Takes the exclusive lock file, polling while another holder has it. Returns null when <paramref name="timeout"/>
+    /// passes first. <paramref name="onWaiting"/> runs once, at the first refusal.
+    /// </summary>
+    private static async Task<FileStream?> LockFileAsync(string path, TimeSpan? timeout, Action? onWaiting, CancellationToken cancellationToken)
     {
+        Stopwatch? waiting = null;
         while (true)
         {
             cancellationToken.ThrowIfCancellationRequested();
+            FileStream stream;
             try
             {
                 // FileShare.None is an exclusive lock: a mandatory share mode on Windows, flock(LOCK_EX) on Unix, per open
                 // file description, so it also excludes a second acquisition in the same process.
-                return new FileStream(path, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None, 1);
+                stream = new FileStream(path, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None, 1);
+            }
+            catch (DirectoryNotFoundException)
+            {
+                // Prune or RemovePartialDownloads removed the empty work directory after this call created it.
+                Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+                continue;
             }
             catch (IOException) when (File.Exists(path))
             {
-                await Task.Delay(LockPollInterval, cancellationToken).ConfigureAwait(false);
+                if (waiting is null)
+                {
+                    waiting = Stopwatch.StartNew();
+                    onWaiting?.Invoke();
+                }
+
+                var delay = LockPollInterval;
+                if (timeout is { } limit)
+                {
+                    var left = limit - waiting.Elapsed;
+                    if (left <= TimeSpan.Zero)
+                    {
+                        return null;
+                    }
+
+                    delay = left < delay ? left : delay;
+                }
+
+                await Task.Delay(delay, cancellationToken).ConfigureAwait(false);
+                continue;
             }
+
+            if (!File.Exists(path))
+            {
+                // RemovePartialDownloads or Prune unlinked the file (Unix) after this open and before the lock was
+                // granted: a lock on an unlinked file excludes nobody, so take the lock again by name.
+                await stream.DisposeAsync().ConfigureAwait(false);
+                continue;
+            }
+
+            return stream;
+        }
+    }
+
+    private static void ValidateLockWaitTimeout(TimeSpan? timeout, string parameterName)
+    {
+        if (timeout is { } t && t < TimeSpan.Zero)
+        {
+            throw new ArgumentOutOfRangeException(parameterName, t, "LockWaitTimeout must not be negative.");
+        }
+    }
+
+    /// <summary>Per-call settings resolved against the store's options.</summary>
+    private readonly record struct CallSettings(CacheVerification Verification, TimeSpan? LockWaitTimeout);
+
+    private string WorkDirectory(string snapshot) =>
+        Path.Combine(CacheDirectory, DownloadsDirectoryName, Path.GetRelativePath(CacheDirectory, snapshot));
+
+    /// <summary>The file in each local source (cache layout), in order.</summary>
+    private IEnumerable<string> LocalSourceCandidates(ModelAssetLock assetLock, ModelAssetFile file)
+    {
+        var parts = assetLock.Repository.Split('/');
+        foreach (string root in _localSources)
+        {
+            yield return LocalPath(Path.Combine(root, parts[0], parts[1], assetLock.Revision), file.Path);
+        }
+    }
+
+    /// <summary>
+    /// With <see cref="ModelAcquisitionOptions.AllowNetwork"/> false: throws before anything is copied when a file is
+    /// neither in the cache nor, with the right size, in a local source.
+    /// </summary>
+    private void ThrowIfNotAvailableOffline(ModelAssetLock assetLock, string snapshot)
+    {
+        var missing = assetLock.Files
+            .Where(f => !HasSize(LocalPath(snapshot, f.Path), f.Size) && !LocalSourceCandidates(assetLock, f).Any(c => HasSize(c, f.Size)))
+            .Select(f => f.Path)
+            .ToList();
+        if (missing.Count > 0)
+        {
+            throw OfflineMissing(assetLock, missing, snapshot);
+        }
+
+        static bool HasSize(string path, long size)
+        {
+            var info = new FileInfo(path);
+            return info.Exists && info.Length == size;
+        }
+    }
+
+    private ModelAssetMissingException OfflineMissing(ModelAssetLock assetLock, List<string> missing, string snapshot) =>
+        new($"{assetLock.Name}: {missing.Count} of {assetLock.Files.Count} files of {assetLock.Repository}@{assetLock.Revision} are neither in the cache " +
+            $"({snapshot}) nor, with a matching size and digest, in a local source ({(_localSources.Length == 0 ? "none configured" : string.Join(", ", _localSources))}): " +
+            $"{string.Join(", ", missing)}. ModelAcquisitionOptions.AllowNetwork is false, so nothing was downloaded. Copy the files into a local source " +
+            "laid out like the cache, or allow the network.")
+        {
+            Repository = assetLock.Repository,
+            Revision = assetLock.Revision,
+            AssetPath = missing[0],
+            MissingPaths = missing,
+            SnapshotDirectory = snapshot,
+        };
+
+    /// <summary>
+    /// Copies the file from the first local source whose copy matches the lock, hashing while copying into the partial
+    /// file and renaming it into place. Returns false when no source has a matching copy. Never changes a source.
+    /// </summary>
+    private async Task<bool> TryCopyFromLocalSourceAsync(
+        ModelAssetLock assetLock, ModelAssetFile file, string target, string partial, IProgress<ModelAssetProgress>? progress, CancellationToken cancellationToken)
+    {
+        foreach (string candidate in LocalSourceCandidates(assetLock, file))
+        {
+            var info = new FileInfo(candidate);
+            if (!info.Exists || info.Length != file.Size)
+            {
+                continue;
+            }
+
+            string? sha;
+            try
+            {
+                sha = await CopyHashingAsync(assetLock, candidate, partial, file, progress, cancellationToken).ConfigureAwait(false);
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+            {
+                // Reading the source failed (writes to the cache raise ModelAcquisitionException): skipped like a mismatching copy.
+                TryDelete(partial);
+                continue;
+            }
+
+            if (sha == file.Sha256)
+            {
+                File.Move(partial, target, overwrite: true);
+                return true;
+            }
+
+            TryDelete(partial);
+        }
+
+        return false;
+    }
+
+    /// <summary>Copies <paramref name="source"/> into <paramref name="partial"/> and returns its SHA-256, or null when it is longer than the lock.</summary>
+    private static async Task<string?> CopyHashingAsync(
+        ModelAssetLock assetLock, string source, string partial, ModelAssetFile file, IProgress<ModelAssetProgress>? progress, CancellationToken cancellationToken)
+    {
+        using var hash = IncrementalHash.CreateHash(HashAlgorithmName.SHA256);
+        byte[] buffer = ArrayPool<byte>.Shared.Rent(BufferSize);
+        try
+        {
+            await using var input = new FileStream(source, FileMode.Open, FileAccess.Read, FileShare.Read, 1, FileOptions.Asynchronous | FileOptions.SequentialScan);
+            FileStream output;
+            try
+            {
+                output = new FileStream(partial, FileMode.Create, FileAccess.Write, FileShare.None, 1, FileOptions.Asynchronous);
+            }
+            catch (Exception ex) when (IsLocalWriteFailure(ex))
+            {
+                throw CacheWriteFailure(assetLock, file, partial, ex);
+            }
+
+            await using (output.ConfigureAwait(false))
+            {
+                long total = 0;
+                long nextReport = 0;
+                int read;
+                while ((read = await input.ReadAsync(buffer.AsMemory(0, BufferSize), cancellationToken).ConfigureAwait(false)) > 0)
+                {
+                    total += read;
+                    if (total > file.Size)
+                    {
+                        return null;
+                    }
+
+                    hash.AppendData(buffer, 0, read);
+                    try
+                    {
+                        await output.WriteAsync(buffer.AsMemory(0, read), cancellationToken).ConfigureAwait(false);
+                    }
+                    catch (Exception ex) when (IsLocalWriteFailure(ex))
+                    {
+                        throw CacheWriteFailure(assetLock, file, partial, ex);
+                    }
+
+                    if (progress is not null && total >= nextReport)
+                    {
+                        progress.Report(new ModelAssetProgress(file.Path, ModelAssetStage.Downloading, total, file.Size));
+                        nextReport = total + ProgressInterval;
+                    }
+                }
+
+                try
+                {
+                    await output.FlushAsync(cancellationToken).ConfigureAwait(false);
+                    output.Flush(flushToDisk: true);
+                }
+                catch (Exception ex) when (IsLocalWriteFailure(ex))
+                {
+                    throw CacheWriteFailure(assetLock, file, partial, ex);
+                }
+
+                return total == file.Size ? Convert.ToHexStringLower(hash.GetHashAndReset()) : null;
+            }
+        }
+        finally
+        {
+            ArrayPool<byte>.Shared.Return(buffer);
         }
     }
 
@@ -369,10 +756,42 @@ public sealed class ModelAssetStore : IDisposable
         }
     }
 
+    /// <summary>
+    /// Downloads from the file's explicit source, or from <see cref="ModelAcquisitionOptions.Endpoint"/> and then each
+    /// fallback endpoint in order until one delivers the locked bytes.
+    /// </summary>
     private async Task DownloadFileAsync(
         ModelAssetLock assetLock, ModelAssetFile file, string target, string partial, IProgress<ModelAssetProgress>? progress, CancellationToken cancellationToken)
     {
-        Uri uri = BuildUri(assetLock, file);
+        if (file.Source is not null || _options.FallbackEndpoints.Count == 0)
+        {
+            await DownloadFromAsync(assetLock, file, BuildUri(assetLock, file), target, partial, progress, cancellationToken).ConfigureAwait(false);
+            return;
+        }
+
+        var failures = new List<ModelAcquisitionException>();
+        foreach (var endpoint in (IEnumerable<Uri>)[_options.Endpoint, .. _options.FallbackEndpoints])
+        {
+            try
+            {
+                await DownloadFromAsync(assetLock, file, BuildUri(assetLock, file, endpoint), target, partial, progress, cancellationToken).ConfigureAwait(false);
+                return;
+            }
+            catch (ModelAcquisitionException ex) when (ex is ModelAssetDownloadException or ModelAssetNotFoundException or ModelAssetAccessDeniedException or ModelAssetIntegrityException)
+            {
+                // A local write failure (the base type) is not the endpoint's fault and propagates at once.
+                failures.Add(ex);
+            }
+        }
+
+        var primary = failures[0];
+        primary.EndpointFailures = failures.AsReadOnly();
+        ExceptionDispatchInfo.Throw(primary);
+    }
+
+    private async Task DownloadFromAsync(
+        ModelAssetLock assetLock, ModelAssetFile file, Uri uri, string target, string partial, IProgress<ModelAssetProgress>? progress, CancellationToken cancellationToken)
+    {
 
         // Attached per request only where IsTokenHost allows it; never to storage, CDN or other hosts.
         string? token = _options.ResolveToken();
@@ -762,10 +1181,10 @@ public sealed class ModelAssetStore : IDisposable
         {
             case HttpStatusCode.Unauthorized or HttpStatusCode.Forbidden:
                 throw new ModelAssetAccessDeniedException(
-                    $"{where}. The repository {assetLock.Repository} is gated or private, or does not exist (the Hub answers 401 for unknown repositories). " +
+                    $"{where}. The repository {assetLock.HostingRepository} is gated or private, or does not exist (the Hub answers 401 for unknown repositories). " +
                     (tokenProvided
-                        ? "A token was sent: check that it is valid, has read access, and that its account accepted the repository's license or access conditions on https://huggingface.co/" + assetLock.Repository + "."
-                        : $"No token was sent: accept the license or access conditions on https://huggingface.co/{assetLock.Repository} and pass a read token through " +
+                        ? "A token was sent: check that it is valid, has read access, and that its account accepted the repository's license or access conditions on https://huggingface.co/" + assetLock.HostingRepository + "."
+                        : $"No token was sent: accept the license or access conditions on https://huggingface.co/{assetLock.HostingRepository} and pass a read token through " +
                           $"ModelAcquisitionOptions.HuggingFaceToken or ${ModelAcquisitionOptions.TokenEnvironmentVariable}."))
                 {
                     Repository = assetLock.Repository,
@@ -776,7 +1195,7 @@ public sealed class ModelAssetStore : IDisposable
                 };
             case HttpStatusCode.NotFound:
                 throw new ModelAssetNotFoundException(
-                    $"{where}. Revision {assetLock.Revision} or file {file.Path} does not exist in {assetLock.Repository}; the lock may be wrong or the revision was removed upstream.")
+                    $"{where}. Revision {assetLock.HostingRevision} or file {file.Path} does not exist in {assetLock.HostingRepository}; the lock may be wrong or the revision was removed upstream.")
                 {
                     Repository = assetLock.Repository,
                     Revision = assetLock.Revision,
@@ -823,5 +1242,42 @@ public sealed class ModelAssetStore : IDisposable
         }
 
         public HttpStatusCode? StatusCode { get; }
+    }
+
+    /// <summary>
+    /// Adds the lock totals to each file's progress and reports one value at a time, so a caller's
+    /// <see cref="IProgress{T}"/> sees a consistent sum also when files are acquired concurrently.
+    /// </summary>
+    private sealed class LockProgress(IProgress<ModelAssetProgress> target, ModelAssetLock assetLock)
+    {
+        private readonly long[] _bytes = new long[assetLock.Files.Count];
+        private readonly long _total = assetLock.TotalSize;
+        private readonly Lock _gate = new();
+
+        public IProgress<ModelAssetProgress> ForFile(int index) => new FileProgress(this, index);
+
+        private void Report(int index, ModelAssetProgress value)
+        {
+            lock (_gate)
+            {
+                if (value.Stage != ModelAssetStage.Waiting)
+                {
+                    _bytes[index] = value.BytesProcessed;
+                }
+
+                long sum = 0;
+                foreach (long b in _bytes)
+                {
+                    sum += b;
+                }
+
+                target.Report(value with { FileIndex = index, FileCount = _bytes.Length, LockBytesProcessed = sum, LockTotalBytes = _total });
+            }
+        }
+
+        private sealed class FileProgress(LockProgress owner, int index) : IProgress<ModelAssetProgress>
+        {
+            public void Report(ModelAssetProgress value) => owner.Report(index, value);
+        }
     }
 }

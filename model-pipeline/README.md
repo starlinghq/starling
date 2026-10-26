@@ -9,6 +9,7 @@ The delivery system: model registry, manifest schema, admission records, referen
 | `schemas/model-manifest.schema.json` | Manifest schema (draft). | P-002 |
 | `schemas/stage-results.schema.json` | Stage results format (versions 1 and 2): candidate outputs the evaluator compares. | P-007, P-015 |
 | `schemas/benchmark-raw.schema.json` | Raw benchmark result records (`starlings-bench-raw/1`), written by the C# and Python harnesses. | P-008 |
+| `schemas/asset-lock.schema.json` | JSON asset lock of `Starlings.Acquisition` (`schema_version` 1 to 3), the interchange format for locks; examples in `tests/data/asset-locks/`, which the .NET tests also round-trip. | P-009, D1 |
 | `schemas/onboarding-recipe.schema.json`, `schemas/onboarding-candidate.schema.json` | Onboarding recipe and candidate contract formats. | |
 | `recipes/`, `candidates/`, `corpora/`, `workflows/` | Onboarding recipes, proposed candidate contracts, development corpora and multi-model workflows. See `recipes/README.md`, `candidates/README.md`, [ONBOARDING.md](ONBOARDING.md) and [FIVE_MODELS.md](FIVE_MODELS.md). | |
 | `registry/` | One `manifest.yaml` per model profile. | P-002, P-021 |
@@ -16,7 +17,7 @@ The delivery system: model registry, manifest schema, admission records, referen
 | `protected/` | Reference fixtures and tolerances. Maintainer review only. | P-003, P-007 |
 | `proposed/` | Fixtures proposed for `protected/` and not accepted yet. See `proposed/README.md`. | |
 | `reference/` | Reference runners with pinned requirements, and the tokenizer conformance corpus. See `reference/README.md`. | P-003, P-004, P-027 |
-| `src/model_pipeline/` | CLI and stage implementations: `manifest.py` (validation), `fixtures.py` (fixture format), `results.py` (stage results format), `evaluate.py` (staged fidelity evaluator; per task `evaluate_*.py`), `evaluate_task_quality.py` (G3 task metrics), `evaluate_tokenizer_fixtures.py` (G1 on a tokenizer fixture file), `protection.py` (protected evidence rules), `evaluate_decision.py` (Kev development parity for the `kev-onnx-cpu-v1` route), `onboarding_*.py` (recipes, runner, plugins, workflows), `benchmarks.py` and `g5.py` (raw benchmark summaries and G5 budgets), `upstream.py` (upstream change detection). | P-002 onward |
+| `src/model_pipeline/` | CLI and stage implementations: `manifest.py` (validation), `asset_lock.py` (JSON asset lock validation), `fixtures.py` (fixture format), `results.py` (stage results format), `evaluate.py` (staged fidelity evaluator; per task `evaluate_*.py`), `evaluate_task_quality.py` (G3 task metrics), `evaluate_tokenizer_fixtures.py` (G1 on a tokenizer fixture file), `protection.py` (protected evidence rules), `evaluate_decision.py` (Kev development parity for the `kev-onnx-cpu-v1` route), `onboarding_*.py` (recipes, runner, plugins, workflows), `benchmarks.py` and `g5.py` (raw benchmark summaries and G5 budgets), `upstream.py` (upstream change detection). | P-002 onward |
 | `tests/` | Pipeline tests with synthetic fixtures. | |
 | `src/model_pipeline/catalog.py` | Generates `docs/catalog/` (README, compatibility matrix, `catalog.json`) from the registry; `model-pipeline catalog --check` runs in CI. | P-021 |
 
@@ -30,6 +31,7 @@ Qwen text generation with proposed development comparisons.
 ```sh
 pip install -e '.[dev]'
 model-pipeline validate registry
+model-pipeline validate-lock <lock.json>...  # JSON asset locks against schemas/asset-lock.schema.json (versions 1 to 3)
 model-pipeline catalog [--check]            # P-021: regenerate docs/catalog (or fail if stale)
 model-pipeline bench validate <raw.jsonl>    # P-008: check raw files against schemas/benchmark-raw.schema.json
 model-pipeline bench summarize <raw.jsonl>   # P-008: medians, p5-p95, bootstrap CIs, C# vs Python
