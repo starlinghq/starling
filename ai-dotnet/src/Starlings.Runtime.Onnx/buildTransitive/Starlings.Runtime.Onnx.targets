@@ -1,0 +1,46 @@
+<Project>
+  <!--
+    Build-time check of the ONNX Runtime native package (Starlings.Runtime.Onnx README, "Native package check").
+    Starlings.Runtime.Onnx references only the managed binding; the application adds exactly one native package:
+    Microsoft.ML.OnnxRuntime (CPU) or Microsoft.ML.OnnxRuntime.Gpu.Linux (CUDA; also Microsoft.ML.OnnxRuntime.Gpu and
+    .Gpu.Windows, or Microsoft.ML.OnnxRuntimeGenAI.Cuda, which brings them). Without this check a missing native shows
+    up only as OnnxRuntimeUnavailableException when the first session is created, and two natives (CPU and GPU) put two
+    copies of libonnxruntime in the output, of which the loader picks one.
+
+    Shipped in buildTransitive/, so it runs in every project that references a Starlings model package. It runs after
+    ResolvePackageAssets and reads the native assets the restore resolved (direct or transitive), in projects that
+    produce an executable (OutputType Exe or WinExe) or are test projects; class libraries are left to their
+    application. Browser projects (RuntimeIdentifier browser-*, or Starlings.Runtime.OnnxWeb in the graph) use
+    ONNX Runtime Web instead and are skipped.
+
+      STARLINGS001 (warning)  no ONNX Runtime native package in the graph
+      STARLINGS002 (error)    both the CPU and a GPU native package in the graph
+
+    Opt out with <StarlingsOnnxRuntimeNativeCheck>false</StarlingsOnnxRuntimeNativeCheck>, for example in an
+    application that deploys its own ONNX Runtime library.
+  -->
+  <PropertyGroup>
+    <StarlingsOnnxRuntimeNativeCheck Condition="'$(StarlingsOnnxRuntimeNativeCheck)' == ''">true</StarlingsOnnxRuntimeNativeCheck>
+  </PropertyGroup>
+
+  <Target Name="StarlingsCheckOnnxRuntimeNative"
+          AfterTargets="ResolvePackageAssets"
+          Condition="'$(StarlingsOnnxRuntimeNativeCheck)' == 'true' and ('$(OutputType)' == 'Exe' or '$(OutputType)' == 'WinExe' or '$(IsTestProject)' == 'true') and !$([System.String]::Copy('$(RuntimeIdentifier)').StartsWith('browser-'))">
+    <ItemGroup>
+      <_StarlingsOrtAsset Include="@(RuntimeTargetsCopyLocalItems);@(NativeCopyLocalItems)" />
+      <_StarlingsOrtCpu Include="@(_StarlingsOrtAsset)" Condition="'%(_StarlingsOrtAsset.NuGetPackageId)' == 'Microsoft.ML.OnnxRuntime'" />
+      <_StarlingsOrtGpu Include="@(_StarlingsOrtAsset)" Condition="$([System.String]::Copy('%(_StarlingsOrtAsset.NuGetPackageId)').StartsWith('Microsoft.ML.OnnxRuntime.Gpu'))" />
+      <!-- Other execution-provider builds (DirectML, OpenVINO, QNN, ...): a native, but neither of the two qualified ones. -->
+      <_StarlingsOrtOther Include="@(_StarlingsOrtAsset)" Condition="$([System.String]::Copy('%(_StarlingsOrtAsset.NuGetPackageId)').StartsWith('Microsoft.ML.OnnxRuntime.')) and '%(_StarlingsOrtAsset.NuGetPackageId)' != 'Microsoft.ML.OnnxRuntime.Managed' and !$([System.String]::Copy('%(_StarlingsOrtAsset.NuGetPackageId)').StartsWith('Microsoft.ML.OnnxRuntime.Gpu'))" />
+      <_StarlingsOrtWeb Include="@(RuntimeCopyLocalItems)" Condition="'%(RuntimeCopyLocalItems.NuGetPackageId)' == 'Starlings.Runtime.OnnxWeb'" />
+    </ItemGroup>
+
+    <Error Code="STARLINGS002"
+           Condition="'@(_StarlingsOrtCpu)' != '' and '@(_StarlingsOrtGpu)' != ''"
+           Text="Both the ONNX Runtime CPU package (Microsoft.ML.OnnxRuntime) and a GPU package (@(_StarlingsOrtGpu->'%(NuGetPackageId)'->Distinct(), ', ')) are in this project's package graph. They ship the same native library, so only one may be referenced: keep Microsoft.ML.OnnxRuntime for CPU, or Microsoft.ML.OnnxRuntime.Gpu.Linux for CUDA (see the Starlings.Runtime.Onnx README, 'Native package check'). A package that brings one transitively (Microsoft.ML.OnnxRuntimeGenAI brings the CPU package, Microsoft.ML.OnnxRuntimeGenAI.Cuda the GPU ones) counts too." />
+
+    <Warning Code="STARLINGS001"
+             Condition="'@(_StarlingsOrtCpu)' == '' and '@(_StarlingsOrtGpu)' == '' and '@(_StarlingsOrtOther)' == '' and '@(_StarlingsOrtWeb)' == ''"
+             Text="This project references Starlings.Runtime.Onnx (through a Starlings model package) but no ONNX Runtime native package, so creating a session will throw OnnxRuntimeUnavailableException. Add exactly one: Microsoft.ML.OnnxRuntime 1.30.0 (CPU) or Microsoft.ML.OnnxRuntime.Gpu.Linux 1.30.0 (CUDA). Set StarlingsOnnxRuntimeNativeCheck to false if the application deploys its own ONNX Runtime library." />
+  </Target>
+</Project>

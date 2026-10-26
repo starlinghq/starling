@@ -34,6 +34,38 @@ The reference environment is separate from pipeline development dependencies. A 
 
 Inspection reads bounded local JSON files without importing upstream model code. It reports observed architecture/configuration, tokenizer operations and parameters, sentence-transformers modules, and missing or unknown capabilities. A suggested route is a **candidate**, not a supported-model claim. Malformed or unsupported metadata remains visible. Inspection currently describes the tokenizer implementation in this checkout; it does not predict future component support.
 
+`plugin_route` names one of these routes, or `unknown` with the reason:
+
+| Route | Suggested when |
+| --- | --- |
+| `e5-onnx-cpu-v1` | The pinned e5 geometry: `BertModel`, 384 wide, 512 positions, Unigram tokenizer, mean pooling and a `Normalize` module. |
+| `bert-onnx-cpu-v1` | `model_type` `bert`, `xlm-roberta` or `nomic_bert`, a WordPiece or Unigram tokenizer whose every component is supported, and either a sentence-transformers `Pooling` module with exactly one of mean or CLS pooling (task `embeddings`; `l2` normalization when a `Normalize` module follows) or, without one, a single-logit `BertForSequenceClassification` or `XLMRobertaForSequenceClassification` head (task `reranking`). `facts` carries the observed width, positions, pooling and normalization. |
+| `qwen-genai-cpu-v1` | `model_type` `qwen2` or `qwen3` with the matching `Qwen2ForCausalLM` or `Qwen3ForCausalLM` architecture and a supported BPE tokenizer. |
+
+Each plugin still accepts only the repositories of its own contract table and refuses everything else, so a suggestion is where to start, not a result.
+
+## Scaffold a BERT-route candidate
+
+```sh
+.venv/bin/model-pipeline scaffold <name>            # print the generated pieces as JSON
+.venv/bin/model-pipeline scaffold <name> --write    # write them into the checkout
+```
+
+For `candidates/<name>/profile.json` on the `bert-onnx-cpu-v1` route, `scaffold` derives the recipe (`recipes/<name>-cpu.yaml`), the repository's entry in the route contract table `routes/bert-onnx-cpu-v1/contracts.json`, the `tools/fetch-tokenizer-assets.sh` line, the profile row of the `Starlings.Models.Bert` README, the `InlineData` row of the .NET contract tests, and a C# `ModelAssetLock` of the runtime files (printed only). The contract table is the one allow-list of the route: `onboarding_bert.py` loads it and `Starlings.Models.Bert` embeds it as a resource, and both validate it with the same rules before use. Pieces already present are reported as `unchanged`; a candidate that contradicts an existing table entry, or that the route does not implement, is refused and nothing is written. The scaffold changes no gate, tolerance, protected file or maturity; the evidence still comes from `run`.
+
+## Container image
+
+`model-pipeline/Dockerfile` builds a contributor image with the .NET SDK `global.json` pins (by digest), uv (by version and wheel SHA-256), and the hash-locked reference environments of the CPU routes under `/opt/venvs/` (`encoder`, `generation`, `whisper`; build argument `ENVIRONMENTS` selects them). The checkout is mounted at `/work` and the model cache at `/models` (`STARLING_MODELS`); the entrypoint installs the mounted `model-pipeline` into every environment without dependencies, so no PyTorch environment is rebuilt per contributor. The image holds no model file. No CI job builds or publishes it, and it has not been built in CI or on the qualification machine: its status is untested.
+
+```sh
+docker build -f model-pipeline/Dockerfile -t starlings-onboarding model-pipeline
+docker run --rm -it -v "$PWD:/work" -v "$HOME/.cache/starlings-models:/models" starlings-onboarding \
+  model-pipeline run model-pipeline/recipes/<name>-cpu.yaml --snapshot /models/<snapshot> \
+  --reference-python /opt/venvs/encoder/bin/python --out artifacts/onboarding/<name>
+```
+
+The generation environment carries the CUDA 13.0 PyTorch wheel and the CUDA dependency wheels its lock pins (the route runs it on CPU), so it is the largest of the three. Pipeline dependencies outside the reference locks (`jsonschema`, and `pytest` and `ruff` in the pipeline environment) are resolved at build time, not hash-locked. The Kev environment needs a pinned Kev checkout and is not part of the image.
+
 Recipes contain a plugin ID and repository-relative paths to the existing manifest, corpus, and reference environment. They contain no shell commands. Unknown fields, unsupported plugins, duplicate keys, traversal, and escaping paths are rejected. `plan` does not need weights, the reference environment, or an installed .NET SDK.
 
 ## Execute and resume

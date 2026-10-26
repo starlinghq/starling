@@ -1,0 +1,41 @@
+<Project>
+  <!--
+    Build-time check of the ONNX Runtime GenAI native package (Starlings.Generation.OnnxGenAI README, "Native package
+    check"); the counterpart of the check in Starlings.Runtime.Onnx. This package references only the managed binding;
+    the application adds exactly one native package: Microsoft.ML.OnnxRuntimeGenAI (CPU) or
+    Microsoft.ML.OnnxRuntimeGenAI.Cuda. Without this check a missing native shows up only as
+    GenAIRuntimeUnavailableException when the first model is loaded.
+
+    Shipped in buildTransitive/, so it runs in every project that references a Starlings generation package
+    (Starlings.Models.Qwen35, Starlings.Models.QwenChat), after ResolvePackageAssets, in projects that produce an
+    executable (OutputType Exe or WinExe) or are test projects.
+
+      STARLINGS003 (warning)  no ONNX Runtime GenAI native package in the graph
+      STARLINGS004 (error)    both the CPU and the CUDA GenAI native package in the graph
+
+    Opt out with <StarlingsOnnxRuntimeGenAINativeCheck>false</StarlingsOnnxRuntimeGenAINativeCheck>.
+  -->
+  <PropertyGroup>
+    <StarlingsOnnxRuntimeGenAINativeCheck Condition="'$(StarlingsOnnxRuntimeGenAINativeCheck)' == ''">true</StarlingsOnnxRuntimeGenAINativeCheck>
+  </PropertyGroup>
+
+  <Target Name="StarlingsCheckOnnxRuntimeGenAINative"
+          AfterTargets="ResolvePackageAssets"
+          Condition="'$(StarlingsOnnxRuntimeGenAINativeCheck)' == 'true' and ('$(OutputType)' == 'Exe' or '$(OutputType)' == 'WinExe' or '$(IsTestProject)' == 'true') and !$([System.String]::Copy('$(RuntimeIdentifier)').StartsWith('browser-'))">
+    <ItemGroup>
+      <_StarlingsGenAIAsset Include="@(RuntimeTargetsCopyLocalItems);@(NativeCopyLocalItems)" />
+      <_StarlingsGenAICpu Include="@(_StarlingsGenAIAsset)" Condition="'%(_StarlingsGenAIAsset.NuGetPackageId)' == 'Microsoft.ML.OnnxRuntimeGenAI'" />
+      <_StarlingsGenAICuda Include="@(_StarlingsGenAIAsset)" Condition="'%(_StarlingsGenAIAsset.NuGetPackageId)' == 'Microsoft.ML.OnnxRuntimeGenAI.Cuda'" />
+      <!-- Other execution-provider builds (DirectML, ...): a native, but neither of the two qualified ones. -->
+      <_StarlingsGenAIOther Include="@(_StarlingsGenAIAsset)" Condition="$([System.String]::Copy('%(_StarlingsGenAIAsset.NuGetPackageId)').StartsWith('Microsoft.ML.OnnxRuntimeGenAI.')) and '%(_StarlingsGenAIAsset.NuGetPackageId)' != 'Microsoft.ML.OnnxRuntimeGenAI.Managed' and '%(_StarlingsGenAIAsset.NuGetPackageId)' != 'Microsoft.ML.OnnxRuntimeGenAI.Cuda'" />
+    </ItemGroup>
+
+    <Error Code="STARLINGS004"
+           Condition="'@(_StarlingsGenAICpu)' != '' and '@(_StarlingsGenAICuda)' != ''"
+           Text="Both Microsoft.ML.OnnxRuntimeGenAI (CPU) and Microsoft.ML.OnnxRuntimeGenAI.Cuda are in this project's package graph. They ship the same native library, so only one may be referenced: Microsoft.ML.OnnxRuntimeGenAI for CPU, or Microsoft.ML.OnnxRuntimeGenAI.Cuda for CUDA (see the Starlings.Generation.OnnxGenAI README, 'Native package check')." />
+
+    <Warning Code="STARLINGS003"
+             Condition="'@(_StarlingsGenAICpu)' == '' and '@(_StarlingsGenAICuda)' == '' and '@(_StarlingsGenAIOther)' == ''"
+             Text="This project references Starlings.Generation.OnnxGenAI (through a Starlings generation package) but no ONNX Runtime GenAI native package, so loading a model will throw GenAIRuntimeUnavailableException. Add exactly one: Microsoft.ML.OnnxRuntimeGenAI 0.17.1 (CPU) or Microsoft.ML.OnnxRuntimeGenAI.Cuda 0.17.1 (CUDA). Set StarlingsOnnxRuntimeGenAINativeCheck to false if the application deploys its own GenAI library." />
+  </Target>
+</Project>

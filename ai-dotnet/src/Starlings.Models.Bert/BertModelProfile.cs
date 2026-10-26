@@ -16,21 +16,32 @@ public enum BertTask
 /// <summary>Pinned source identity and exact processing semantics of one experimental candidate.</summary>
 public sealed class BertModelProfile
 {
-    /// <summary>Per-repository BERT processing semantics.</summary>
-    private readonly record struct BertSpec(
+    /// <summary>Per-repository BERT processing semantics: one entry of the route contract table.</summary>
+    internal sealed record BertSpec(
         BertTask Task, int MaxTokens, string Pooling, int HiddenSize, string Normalize,
         int VocabularySize, int ClsTokenId, int SepTokenId, int PadTokenId,
-        string OutputName, string TokenizerProfile, bool TokenTypeIds);
+        string OutputName, string TokenizerProfile, bool TokenTypeIds, IReadOnlyDictionary<string, string> Prompts);
 
-    /// <summary>Common BERT/WordPiece geometry; pass overrides for other tokenizers or geometries.</summary>
-    private static BertSpec Bert(BertTask task, int maxTokens, string pooling, int hiddenSize, string normalize,
-        int vocabularySize = 30522, int clsTokenId = 101, int sepTokenId = 102, int padTokenId = 0,
-        string? outputName = null, string tokenizerProfile = "bert-wordpiece-uncased", bool tokenTypeIds = true)
-    {
-        outputName ??= task == BertTask.Embeddings ? "last_hidden_state" : "logits";
-        return new BertSpec(task, maxTokens, pooling, hiddenSize, normalize,
-            vocabularySize, clsTokenId, sepTokenId, padTokenId, outputName, tokenizerProfile, tokenTypeIds);
-    }
+    /// <summary>Manifest resource name of the embedded route contract table.</summary>
+    internal const string ContractsResource = "Starlings.Models.Bert.Contracts.json";
+
+    private const string ContractsFormat = "starlings.bert-route-contracts";
+    private const string Route = "bert-onnx-cpu-v1";
+
+    private static readonly string[] RequiredContractFields =
+    [
+        "task", "max_tokens", "pooling", "hidden_size", "normalize", "vocabulary_size", "cls_token_id", "sep_token_id",
+        "pad_token_id", "output_name", "tokenizer_profile", "token_type_ids", "prompts",
+    ];
+
+    private static readonly Lazy<IReadOnlyDictionary<string, BertSpec>> EmbeddedContracts = new(LoadEmbeddedContracts);
+
+    /// <summary>
+    /// The repositories this route implements, in the order of the route contract table
+    /// (<c>model-pipeline/routes/bert-onnx-cpu-v1/contracts.json</c>, embedded in the package). <see cref="Parse"/>
+    /// rejects every other repository.
+    /// </summary>
+    public static IReadOnlyList<string> SupportedRepositories => [.. EmbeddedContracts.Value.Keys];
 
     private BertModelProfile(string id, ModelAssetLock sourceLock, BertSpec spec,
         IReadOnlyDictionary<string, string> prompts)
@@ -115,21 +126,11 @@ public sealed class BertModelProfile
         ArgumentException.ThrowIfNullOrWhiteSpace(id);
         var origin = root.GetProperty("origin");
         string repository = origin.GetProperty("repo").GetString()!;
-        var spec = repository switch
+        if (!EmbeddedContracts.Value.TryGetValue(repository, out var spec))
         {
-            "sentence-transformers/all-MiniLM-L6-v2" => Bert(BertTask.Embeddings, 256, "mean", 384, "l2"),
-            "BAAI/bge-small-en-v1.5" => Bert(BertTask.Embeddings, 512, "cls", 384, "l2"),
-            "BAAI/bge-base-en-v1.5" => Bert(BertTask.Embeddings, 512, "cls", 768, "l2"),
-            "cross-encoder/ms-marco-MiniLM-L6-v2" => Bert(BertTask.Reranking, 512, "none", 384, "none"),
-            "nomic-ai/nomic-embed-text-v1.5" => Bert(BertTask.Embeddings, 8192, "mean", 768, "none"),
-            "BAAI/bge-m3" => Bert(BertTask.Embeddings, 8192, "cls", 1024, "l2",
-                vocabularySize: 250002, clsTokenId: 0, sepTokenId: 2, padTokenId: 1,
-                outputName: "token_embeddings", tokenizerProfile: "xlmr-unigram", tokenTypeIds: false),
-            "Starlinghq/bge-reranker-v2-m3-onnx" => Bert(BertTask.Reranking, 8192, "none", 1024, "none",
-                vocabularySize: 250002, clsTokenId: 0, sepTokenId: 2, padTokenId: 1,
-                tokenizerProfile: "xlmr-unigram", tokenTypeIds: false),
-            _ => throw new NotSupportedException($"Unsupported BERT repository '{repository}'."),
-        };
+            throw new NotSupportedException($"Unsupported BERT repository '{repository}'.");
+        }
+
         Require(root, "task", spec.Task == BertTask.Embeddings ? "embeddings" : "reranking");
         var runtime = root.GetProperty("runtime");
         Require(runtime, "backend", "onnx");
@@ -157,9 +158,8 @@ public sealed class BertModelProfile
 
         var prompts = behavior.GetProperty("prompts").EnumerateObject()
             .ToDictionary(p => p.Name, p => p.Value.GetString()!, StringComparer.Ordinal);
-        int expectedCount = repository is "BAAI/bge-small-en-v1.5" or "BAAI/bge-base-en-v1.5" ? 2 : 1;
-        if (prompts.Count != expectedCount || !prompts.TryGetValue("none", out var none) || none != ""
-            || (expectedCount == 2 && (!prompts.TryGetValue("query", out var query) || query != BgeQueryInstruction)))
+        if (prompts.Count != spec.Prompts.Count
+            || spec.Prompts.Any(p => !prompts.TryGetValue(p.Key, out var value) || value != p.Value))
         {
             throw new NotSupportedException("Prompt contract does not match the implemented BERT profile.");
         }
@@ -168,6 +168,189 @@ public sealed class BertModelProfile
             origin.GetProperty("files").EnumerateArray().Select(f => new ModelAssetFile(
                 f.GetProperty("path").GetString()!, f.GetProperty("size").GetInt64(), f.GetProperty("sha256").GetString()!)));
         return new BertModelProfile(id, assetLock, spec, prompts);
+    }
+
+    /// <summary>The embedded route contract table, byte for byte.</summary>
+    internal static string EmbeddedContractsJson()
+    {
+        using var stream = typeof(BertModelProfile).Assembly.GetManifestResourceStream(ContractsResource)
+            ?? throw new InvalidOperationException($"The BERT route contract table '{ContractsResource}' is missing from the assembly.");
+        using var reader = new StreamReader(stream);
+        return reader.ReadToEnd();
+    }
+
+    private static IReadOnlyDictionary<string, BertSpec> LoadEmbeddedContracts() => ParseContracts(EmbeddedContractsJson());
+
+    /// <summary>
+    /// Parses and validates the route contract table with the rules of the Python allow-list
+    /// (<c>validate_contracts</c> in <c>onboarding_bert.py</c>). A table that breaks them is a packaging defect.
+    /// </summary>
+    /// <exception cref="InvalidDataException">The table is malformed or breaks a rule.</exception>
+    internal static IReadOnlyDictionary<string, BertSpec> ParseContracts(string json)
+    {
+        try
+        {
+            using var document = JsonDocument.Parse(json);
+            var root = document.RootElement;
+            var rootKeys = UniqueNames(root, "the table");
+            if (!rootKeys.SetEquals(["format", "format_version", "route", "contracts"])
+                || root.GetProperty("format").GetString() != ContractsFormat
+                || root.GetProperty("format_version").GetInt32() != 1
+                || root.GetProperty("route").GetString() != Route)
+            {
+                throw new InvalidDataException($"BERT route contracts: expected exactly {ContractsFormat} version 1 for {Route}.");
+            }
+
+            var contracts = root.GetProperty("contracts");
+            UniqueNames(contracts, "contracts");
+            var table = new Dictionary<string, BertSpec>(StringComparer.Ordinal);
+            var order = new List<string>();
+            foreach (var entry in contracts.EnumerateObject())
+            {
+                table.Add(entry.Name, ParseContract(entry.Name, entry.Value));
+                order.Add(entry.Name);
+            }
+
+            if (table.Count == 0)
+            {
+                throw new InvalidDataException("BERT route contracts: the table is empty.");
+            }
+
+            // Ordered as in the file, so SupportedRepositories lists the table's order.
+            return new OrderedReadOnly(order, table);
+        }
+        catch (Exception exception) when (exception is JsonException or KeyNotFoundException or InvalidOperationException
+            or FormatException)
+        {
+            throw new InvalidDataException($"BERT route contracts: malformed table: {exception.Message}", exception);
+        }
+    }
+
+    private static BertSpec ParseContract(string repository, JsonElement spec)
+    {
+        string where = $"BERT route contract '{repository}'";
+        string[] parts = repository.Split('/');
+        if (parts.Length != 2 || parts.Any(string.IsNullOrEmpty))
+        {
+            throw new InvalidDataException($"{where}: the key must be a Hugging Face repository id <owner>/<name>.");
+        }
+
+        var names = UniqueNames(spec, where);
+        if (!names.IsSupersetOf(RequiredContractFields) || names.Count - RequiredContractFields.Length
+            != (names.Contains("score_activation_source") ? 1 : 0))
+        {
+            throw new InvalidDataException($"{where}: fields must be {string.Join(", ", RequiredContractFields)}, optionally score_activation_source.");
+        }
+
+        string String(string key) => spec.GetProperty(key).ValueKind == JsonValueKind.String
+            ? spec.GetProperty(key).GetString()!
+            : throw new InvalidDataException($"{where}: {key} must be a string.");
+        int Integer(string key) => spec.GetProperty(key).ValueKind == JsonValueKind.Number && spec.GetProperty(key).TryGetInt32(out int value)
+            ? value
+            : throw new InvalidDataException($"{where}: {key} must be an integer.");
+
+        string task = String("task"), pooling = String("pooling"), normalize = String("normalize");
+        BertTask parsedTask;
+        if (task == "embeddings")
+        {
+            parsedTask = BertTask.Embeddings;
+            if (pooling is not ("mean" or "cls") || normalize is not ("l2" or "none") || names.Contains("score_activation_source"))
+            {
+                throw new InvalidDataException($"{where}: embeddings need mean or cls pooling, l2 or none normalization and no score_activation_source.");
+            }
+        }
+        else if (task == "reranking")
+        {
+            parsedTask = BertTask.Reranking;
+            if (pooling != "none" || normalize != "none"
+                || (names.Contains("score_activation_source") && String("score_activation_source") is not ("config" or "explicit")))
+            {
+                throw new InvalidDataException($"{where}: reranking needs pooling none, normalize none and a score_activation_source of config or explicit.");
+            }
+        }
+        else
+        {
+            throw new InvalidDataException($"{where}: task must be embeddings or reranking.");
+        }
+
+        string tokenizerProfile = String("tokenizer_profile"), outputName = String("output_name");
+        if (tokenizerProfile is not ("bert-wordpiece-uncased" or "xlmr-unigram") || outputName.Length == 0)
+        {
+            throw new InvalidDataException($"{where}: tokenizer_profile must be bert-wordpiece-uncased or xlmr-unigram and output_name must not be empty.");
+        }
+
+        int maxTokens = Integer("max_tokens"), hiddenSize = Integer("hidden_size"), vocabularySize = Integer("vocabulary_size");
+        int cls = Integer("cls_token_id"), sep = Integer("sep_token_id"), pad = Integer("pad_token_id");
+        if (maxTokens <= 0 || hiddenSize <= 0 || vocabularySize <= 0
+            || new[] { cls, sep, pad }.Any(id => id < 0 || id >= vocabularySize))
+        {
+            throw new InvalidDataException($"{where}: sizes must be positive and the cls, sep and pad ids inside the vocabulary.");
+        }
+
+        var tokenTypeIds = spec.GetProperty("token_type_ids");
+        if (tokenTypeIds.ValueKind is not (JsonValueKind.True or JsonValueKind.False))
+        {
+            throw new InvalidDataException($"{where}: token_type_ids must be a boolean.");
+        }
+
+        var promptsElement = spec.GetProperty("prompts");
+        if (promptsElement.ValueKind != JsonValueKind.Object)
+        {
+            throw new InvalidDataException($"{where}: prompts must be an object.");
+        }
+
+        UniqueNames(promptsElement, where + " prompts");
+        var prompts = new Dictionary<string, string>(StringComparer.Ordinal);
+        foreach (var prompt in promptsElement.EnumerateObject())
+        {
+            prompts.Add(prompt.Name, prompt.Value.ValueKind == JsonValueKind.String
+                ? prompt.Value.GetString()!
+                : throw new InvalidDataException($"{where}: prompt '{prompt.Name}' must be a string."));
+        }
+
+        if (!prompts.TryGetValue("none", out var none) || none.Length != 0)
+        {
+            throw new InvalidDataException($"{where}: prompts must include none as the empty string.");
+        }
+
+        return new BertSpec(parsedTask, maxTokens, pooling, hiddenSize, normalize, vocabularySize, cls, sep, pad,
+            outputName, tokenizerProfile, tokenTypeIds.GetBoolean(), new ReadOnlyDictionary<string, string>(prompts));
+    }
+
+    /// <summary>The property names of an object; JSON allows duplicates, the contract table does not.</summary>
+    private static HashSet<string> UniqueNames(JsonElement element, string where)
+    {
+        if (element.ValueKind != JsonValueKind.Object)
+        {
+            throw new InvalidDataException($"BERT route contracts: {where} must be an object.");
+        }
+
+        var names = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var property in element.EnumerateObject())
+        {
+            if (!names.Add(property.Name))
+            {
+                throw new InvalidDataException($"BERT route contracts: duplicate key '{property.Name}' in {where}.");
+            }
+        }
+
+        return names;
+    }
+
+    /// <summary>A read-only dictionary that enumerates in insertion order.</summary>
+    private sealed class OrderedReadOnly(IReadOnlyList<string> order, Dictionary<string, BertSpec> table)
+        : IReadOnlyDictionary<string, BertSpec>
+    {
+        public BertSpec this[string key] => table[key];
+        public IEnumerable<string> Keys => order;
+        public IEnumerable<BertSpec> Values => order.Select(key => table[key]);
+        public int Count => table.Count;
+        public bool ContainsKey(string key) => table.ContainsKey(key);
+        public bool TryGetValue(string key, [System.Diagnostics.CodeAnalysis.MaybeNullWhen(false)] out BertSpec value) =>
+            table.TryGetValue(key, out value);
+        public IEnumerator<KeyValuePair<string, BertSpec>> GetEnumerator() =>
+            order.Select(key => new KeyValuePair<string, BertSpec>(key, table[key])).GetEnumerator();
+        System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => GetEnumerator();
     }
 
     /// <summary>The graph, its external data when the source pins one, and the tokenizer.</summary>

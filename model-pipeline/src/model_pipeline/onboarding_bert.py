@@ -21,6 +21,7 @@ SHARED_DISTRIBUTION = True
 RUNNER = "model-pipeline/reference/bert/run_bert.py"
 TOOL = "ai-dotnet/tools/Starlings.Bert.Fidelity.Tool/Starlings.Bert.Fidelity.Tool.csproj"
 FORMAT = "starlings.bert-candidate-results"
+# The BGE retrieval-query prefix (the bge-small and bge-base contracts name it as their query prompt).
 QUERY = "Represent this sentence for searching relevant passages: "
 POLICY = {
     "token_ids": "exact",
@@ -36,65 +37,96 @@ POLICY = {
 }
 
 
-def _bert(task, max_tokens, pooling, hidden_size, normalize, **overrides):
-    """Common BERT/WordPiece geometry; pass overrides for other tokenizers or geometries."""
-    spec = {
-        "task": task,
-        "max_tokens": max_tokens,
-        "pooling": pooling,
-        "hidden_size": hidden_size,
-        "normalize": normalize,
-        "vocabulary_size": 30522,
-        "cls_token_id": 101,
-        "sep_token_id": 102,
-        "pad_token_id": 0,
-        "output_name": "last_hidden_state" if task == "embeddings" else "logits",
-        "tokenizer_profile": "bert-wordpiece-uncased",
-        "token_type_ids": True,
-        "prompts": {"none": ""},
-    }
-    spec.update(overrides)
-    return spec
-
-
-CONTRACTS = {
-    "sentence-transformers/all-MiniLM-L6-v2": _bert("embeddings", 256, "mean", 384, "l2"),
-    "BAAI/bge-small-en-v1.5": _bert("embeddings", 512, "cls", 384, "l2", prompts={"none": "", "query": QUERY}),
-    "BAAI/bge-base-en-v1.5": _bert("embeddings", 512, "cls", 768, "l2", prompts={"none": "", "query": QUERY}),
-    "cross-encoder/ms-marco-MiniLM-L6-v2": _bert("reranking", 512, "none", 384, "none"),
-    "nomic-ai/nomic-embed-text-v1.5": _bert("embeddings", 8192, "mean", 768, "none"),
-    "BAAI/bge-m3": _bert(
-        "embeddings",
-        8192,
-        "cls",
-        1024,
-        "l2",
-        vocabulary_size=250002,
-        cls_token_id=0,
-        sep_token_id=2,
-        pad_token_id=1,
-        output_name="token_embeddings",
-        tokenizer_profile="xlmr-unigram",
-        token_type_ids=False,
-    ),
-    # XLM-R cross-encoder: BAAI/bge-reranker-v2-m3 with a Starling-exported ONNX graph (raw logits).
-    "Starlinghq/bge-reranker-v2-m3-onnx": _bert(
-        "reranking",
-        8192,
-        "none",
-        1024,
-        "none",
-        vocabulary_size=250002,
-        cls_token_id=0,
-        sep_token_id=2,
-        pad_token_id=1,
-        tokenizer_profile="xlmr-unigram",
-        token_type_ids=False,
-        # config.json declares no sentence-transformers activation (where CrossEncoder would default to
-        # sigmoid); the model card scores raw logits, so the reference passes identity explicitly.
-        score_activation_source="explicit",
-    ),
+# The route's per-repository contract table: the one data file that both this allow-list and the .NET
+# BertModelProfile read (Starlings.Models.Bert embeds it). Adding a repository means adding its entry there.
+CONTRACTS_PATH = Path(__file__).resolve().parents[2] / "routes" / "bert-onnx-cpu-v1" / "contracts.json"
+CONTRACTS_FORMAT = "starlings.bert-route-contracts"
+_CONTRACT_FIELDS = {
+    "task": str,
+    "max_tokens": int,
+    "pooling": str,
+    "hidden_size": int,
+    "normalize": str,
+    "vocabulary_size": int,
+    "cls_token_id": int,
+    "sep_token_id": int,
+    "pad_token_id": int,
+    "output_name": str,
+    "tokenizer_profile": str,
+    "token_type_ids": bool,
+    "prompts": dict,
 }
+_OPTIONAL_FIELDS = {"score_activation_source": str}
+TOKENIZER_PROFILES = {"bert-wordpiece-uncased", "xlmr-unigram"}
+
+
+def _no_duplicate_keys(pairs: list[tuple[str, object]]) -> dict:
+    keys = [key for key, _ in pairs]
+    duplicates = sorted({key for key in keys if keys.count(key) > 1})
+    if duplicates:
+        raise PipelineError(f"BERT route contracts: duplicate keys {duplicates}")
+    return dict(pairs)
+
+
+def validate_contracts(document: object) -> dict[str, dict]:
+    """Validate the route contract table; the .NET side (BertModelProfile) applies the same rules."""
+    if not isinstance(document, dict) or set(document) != {"format", "format_version", "route", "contracts"}:
+        raise PipelineError("BERT route contracts: expected exactly format, format_version, route and contracts")
+    if (document["format"], document["format_version"], document["route"]) != (CONTRACTS_FORMAT, 1, PLUGIN):
+        raise PipelineError(f"BERT route contracts: expected {CONTRACTS_FORMAT} version 1 for {PLUGIN}")
+    contracts = document["contracts"]
+    if not isinstance(contracts, dict) or not contracts:
+        raise PipelineError("BERT route contracts: contracts must be a non-empty object keyed by repository")
+    allowed = set(_CONTRACT_FIELDS) | set(_OPTIONAL_FIELDS)
+    for repo, spec in contracts.items():
+        where = f"BERT route contract {repo!r}"
+        if repo.count("/") != 1 or not all(repo.split("/")):
+            raise PipelineError(f"{where}: the key must be a Hugging Face repository id <owner>/<name>")
+        if not isinstance(spec, dict) or not set(_CONTRACT_FIELDS) <= set(spec) <= allowed:
+            optional = sorted(_OPTIONAL_FIELDS)
+            raise PipelineError(f"{where}: fields must be {sorted(_CONTRACT_FIELDS)}, optionally {optional}")
+        for key, kind in {**_CONTRACT_FIELDS, **_OPTIONAL_FIELDS}.items():
+            # bool is an int subclass: an integer field must not accept true or false.
+            if key in spec and type(spec[key]) is not kind:
+                raise PipelineError(f"{where}: {key} must be a {kind.__name__}")
+        task, pooling, normalize = spec["task"], spec["pooling"], spec["normalize"]
+        if task == "embeddings":
+            if pooling not in {"mean", "cls"} or normalize not in {"l2", "none"}:
+                raise PipelineError(f"{where}: embeddings need mean or cls pooling and l2 or none normalization")
+            if "score_activation_source" in spec:
+                raise PipelineError(f"{where}: score_activation_source applies to reranking only")
+        elif task == "reranking":
+            if pooling != "none" or normalize != "none":
+                raise PipelineError(f"{where}: reranking needs pooling none and normalize none")
+            if spec.get("score_activation_source", "config") not in {"config", "explicit"}:
+                raise PipelineError(f"{where}: score_activation_source must be config or explicit")
+        else:
+            raise PipelineError(f"{where}: task must be embeddings or reranking")
+        if spec["tokenizer_profile"] not in TOKENIZER_PROFILES:
+            raise PipelineError(f"{where}: tokenizer_profile must be one of {sorted(TOKENIZER_PROFILES)}")
+        if not spec["output_name"]:
+            raise PipelineError(f"{where}: output_name must not be empty")
+        if min(spec["max_tokens"], spec["hidden_size"], spec["vocabulary_size"]) <= 0:
+            raise PipelineError(f"{where}: max_tokens, hidden_size and vocabulary_size must be positive")
+        special = ("cls_token_id", "sep_token_id", "pad_token_id")
+        if not all(0 <= spec[key] < spec["vocabulary_size"] for key in special):
+            raise PipelineError(f"{where}: cls, sep and pad token ids must be inside the vocabulary")
+        prompts = spec["prompts"]
+        if prompts.get("none") != "" or not all(isinstance(value, str) for value in prompts.values()):
+            raise PipelineError(f"{where}: prompts must map names to strings and include none as the empty string")
+    return contracts
+
+
+def load_contracts(path: Path = CONTRACTS_PATH) -> dict[str, dict]:
+    """Read and validate the route contract table (repository -> processing contract)."""
+    try:
+        document = json.loads(path.read_text(encoding="utf-8"), object_pairs_hook=_no_duplicate_keys)
+    except (OSError, json.JSONDecodeError) as exc:
+        raise PipelineError(f"cannot read the BERT route contracts {path}: {exc}") from exc
+    return validate_contracts(document)
+
+
+CONTRACTS = load_contracts()
 
 
 # Correctness bounds and exact token checks are fixed for every model; a loosened reference
@@ -127,11 +159,11 @@ def _validate_policy(policy: dict) -> None:
             raise PipelineError(f"unsupported BERT evaluation policy: {key} must be a number in (0, {cap}]")
 
 
-def validate_candidate_behavior(candidate: dict) -> None:
+def validate_candidate_behavior(candidate: dict, contracts: dict[str, dict] | None = None) -> None:
     """Refuse schema-valid contracts that the fixed model implementation does not implement."""
     try:
         repo = candidate["origin"]["repo"]
-        spec = CONTRACTS[repo]
+        spec = (CONTRACTS if contracts is None else contracts)[repo]
         task, pooling, length = spec["task"], spec["pooling"], spec["max_tokens"]
         expected = {
             "architecture": "bert",
@@ -523,6 +555,7 @@ def build_stages(
     )
     source_directories = (
         "model-pipeline/schemas",
+        "model-pipeline/routes/bert-onnx-cpu-v1",
         "model-pipeline/reference/bert",
         "ai-dotnet/src/Starlings.Models.Bert",
         "ai-dotnet/tools/Starlings.Bert.Fidelity.Tool",
