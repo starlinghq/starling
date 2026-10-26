@@ -48,6 +48,8 @@ float[][] passages = embedder.EmbedBatch([E5TextEmbedder.PassagePrefix + "As a g
 
 e5 expects `"query: "` or `"passage: "` at the start of every text; nothing is added for you. Vectors are normalized, so cosine similarity is the dot product.
 
+`using var embedder = E5TextEmbedder.Create(files, options)` builds the same pair in one call (tokenizer and model SHA-256 enforced; the tokenizer truncates to the options' `MaxSequenceLength`) and owns the encoder and session; an embedder from the constructor owns nothing and its `Dispose` does nothing.
+
 ## Batching options
 
 `EmbedBatch` splits a batch into ONNX Runtime calls, each right-padded to its longest row. `E5EncoderOptions` controls the split:
