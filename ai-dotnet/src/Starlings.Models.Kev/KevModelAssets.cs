@@ -29,7 +29,7 @@ public sealed record KevModelFiles(
     /// <summary>
     /// SHA-256 of <see cref="ModelPath"/> when <see cref="Snapshot"/> hashed it (<see cref="ModelSnapshot.Verification"/> <see cref="CacheVerification.Sha256"/>); otherwise null. <see cref="KevDecisionModel.Create(KevModelFiles, KevOptions?)"/> passes it as <c>OnnxSessionOptions.KnownModelSha256</c>, so the graph is not read a second time at load.
     /// </summary>
-    public string? ModelSha256 => Snapshot.GetVerifiedSha256(KevModelAssets.ModelFile);
+    public string? ModelSha256 => Snapshot?.GetVerifiedSha256(KevModelAssets.ModelFile);
 }
 
 /// <summary>
