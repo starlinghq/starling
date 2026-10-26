@@ -38,8 +38,23 @@ var embeddings = await generator.GenerateAsync(["how much protein should a femal
 ```
 
 - Prefixes are explicit: `E5InputType.Query` or `Passage` per generator, or per request with `AdditionalProperties["e5_input_type"]`.
-- `GenerateAsync` runs synchronously on the calling thread and returns a completed task; failures and cancellation are reported through that task, never thrown synchronously.
+- `GenerateAsync` runs inline unless a scheduler is set: by default it runs synchronously on the calling thread and returns a completed task; with `ExecutionScheduler` set it runs as one task on that scheduler (below). Failures and cancellation are reported through the task, never thrown synchronously.
 - Unsupported options (`Dimensions` other than 384, another `ModelId`, a `RawRepresentationFactory`, unknown additional properties) fail with `NotSupportedException` instead of being ignored.
+
+## Streaming (experimental)
+
+```csharp
+await foreach (Embedding<float> embedding in generator.EmbedStreamAsync(ReadPassagesAsync(), cancellationToken: ct))
+{
+    // one embedding per text, in input order
+}
+```
+
+`EmbedStreamAsync(IAsyncEnumerable<string>, options, cancellationToken)` embeds a stream without materializing it. Request options are resolved once, before the first value. Values are tokenized as they arrive and grouped as the encoder groups an explicit batch (`MaxBatchSize` rows and, when set, `MaxBatchTokens` padded cells); a group runs when the next value does not fit or the source ends, and its embeddings are then yielded. With `SortByLength` off the embeddings equal one `GenerateAsync` call over the same values bit for bit. There is no per-embedding usage, and micro-batching does not apply. Status: experimental (capability `extensions_ai.stream`; weight-free tests). The profile capability `streaming` (incremental output of one input) stays unsupported.
+
+## Execution scheduler (experimental, opt-in)
+
+`E5EmbeddingGeneratorOptions.ExecutionScheduler` (a `TaskScheduler`, null by default) chooses where `GenerateAsync` and the stream's encoder runs execute. Null keeps the inline behavior above. `TaskScheduler.Default` offloads to the thread pool; an application's own scheduler (for example one thread per device) can serialize or place the work. The numbers do not change. Status: experimental (capability `extensions_ai.execution_scheduler`; weight-free tests).
 
 ## Micro-batching (experimental, opt-in)
 

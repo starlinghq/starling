@@ -205,6 +205,13 @@ public static class EmbeddingGemma2Capabilities
         ["tensorrt"] = Status.Unsupported,
         ["training"] = Status.Unsupported,
 
+        // Token counting without embedding (CountTokens, Validate) and TextChunker over the owned tokenizer; text whose
+        // length alone proves it above the limit is rejected without tokenizing it
+        // (Starlings.Models.Abstractions): weight-free tests on the pinned tokenizer.json. Pooled chunk vectors
+        // (TextChunker.EmbedPooled) are a convention with no parity claim and no fidelity gate.
+        ["token_counting"] = Status.Experimental,
+        ["chunking"] = Status.Experimental,
+
         // Microsoft.Extensions.AI IEmbeddingGenerator, in Starlings.Models.EmbeddingGemma2.Extensions.AI. Supported on
         // the CPU text profile (G7) and over CUDA sessions (EmbeddingGemma2.Tests.Cuda CudaAdapterTests, per release).
         ["extensions_ai.embedding_generator"] = Status.Supported,
@@ -216,6 +223,12 @@ public static class EmbeddingGemma2Capabilities
         // tolerance; no benchmark adoption decision and no soak yet. Outputs depend on the concurrent traffic (within
         // tolerance, not bit for bit reproducible). Not part of any Stable profile's contract.
         ["extensions_ai.micro_batching"] = Status.Experimental,
+        // EmbedStreamAsync (IAsyncEnumerable of text in, embeddings out in order, grouped as the encoder's batch plan) and
+        // EmbeddingGemma2EmbeddingGeneratorOptions (and the multimodal generator's options).ExecutionScheduler (null keeps inline execution; a TaskScheduler moves GenerateAsync and the stream's
+        // encoder runs onto it): weight-free tests and equality with GenerateAsync. The profile-level "streaming" key
+        // above stays unsupported: these are adapter features, not part of any Stable profile's contract.
+        ["extensions_ai.stream"] = Status.Experimental,
+        ["extensions_ai.execution_scheduler"] = Status.Experimental,
 
         // ML.NET estimator/transformer, in Starlings.Models.EmbeddingGemma2.MLNet (G7 on the CPU text profile).
         // Persistence: Save throws.

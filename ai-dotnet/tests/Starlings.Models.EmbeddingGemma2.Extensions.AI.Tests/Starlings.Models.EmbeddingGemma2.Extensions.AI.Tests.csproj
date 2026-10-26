@@ -20,6 +20,7 @@
     <Compile Include="../Shared/EmbeddingGemma2/*.cs" Link="Shared/EmbeddingGemma2/%(Filename)%(Extension)" />
     <Compile Include="../Shared/EmbeddingGemma2Fakes/*.cs" Link="Shared/EmbeddingGemma2Fakes/%(Filename)%(Extension)" />
     <Compile Include="../Shared/TestModels/*.cs" Link="Shared/TestModels/%(Filename)%(Extension)" />
+    <Compile Include="../Shared/Scheduling/*.cs" Link="Shared/Scheduling/%(Filename)%(Extension)" />
   </ItemGroup>
 
   <ItemGroup>

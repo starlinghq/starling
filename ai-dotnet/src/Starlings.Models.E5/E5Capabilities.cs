@@ -75,6 +75,11 @@ public static class E5Capabilities
         ["persistence"] = Status.Unsupported,
         ["training"] = Status.Unsupported,
         ["asset_acquisition"] = Status.Supported,
+        // Token counting without embedding (CountTokens, Validate) and TextChunker over the owned tokenizer
+        // (Starlings.Models.Abstractions): weight-free tests on the pinned tokenizer.json. Pooled chunk vectors
+        // (TextChunker.EmbedPooled) are a convention with no parity claim and no fidelity gate.
+        ["token_counting"] = Status.Experimental,
+        ["chunking"] = Status.Experimental,
 
         // Microsoft.Extensions.AI IEmbeddingGenerator, in Starlings.Models.E5.Extensions.AI (P-011). Supported on the
         // CPU profile (G7) and over CUDA (CudaAdapterTests, per release); the explicit input-type prefix option lives there, prefix_insertion stays unsupported here.
@@ -87,6 +92,12 @@ public static class E5Capabilities
         // tolerance; no benchmark adoption decision and no soak yet. Outputs depend on the concurrent traffic (within
         // tolerance, not bit for bit reproducible). Not part of any Stable profile's contract.
         ["extensions_ai.micro_batching"] = Status.Experimental,
+        // EmbedStreamAsync (IAsyncEnumerable of text in, embeddings out in order, grouped as the encoder's batch plan) and
+        // E5EmbeddingGeneratorOptions.ExecutionScheduler (null keeps inline execution; a TaskScheduler moves GenerateAsync and the stream's
+        // encoder runs onto it): weight-free tests and equality with GenerateAsync. The profile-level "streaming" key
+        // above stays unsupported: these are adapter features, not part of any Stable profile's contract.
+        ["extensions_ai.stream"] = Status.Experimental,
+        ["extensions_ai.execution_scheduler"] = Status.Experimental,
 
         // ML.NET estimator/transformer, in Starlings.Models.E5.MLNet (P-012). Plan 15.2 badges: pipeline
         // composition (embedding_transform, CPU profile), save/load and portable asset packaging (persistence:

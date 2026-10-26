@@ -72,6 +72,16 @@ public sealed record Gliner2ExtractorOptions
     /// </summary>
     public MicroBatchingOptions? MicroBatching { get; init; }
 
+    /// <summary>
+    /// Where <see cref="Gliner2EntityExtractor.ExtractAsync(string, IReadOnlyList{string}, IReadOnlyDictionary{string, string}?, float?, CancellationToken)"/>
+    /// executes (Experimental, capability <c>execution_scheduler</c>), or null (default): inline on the calling thread,
+    /// as without this option. <see cref="TaskScheduler.Default"/> offloads to the thread pool; a caller's own scheduler
+    /// (for example one thread per device) serializes or places the work. With micro-batching on, only the preparation
+    /// and queueing move to the scheduler; the batch still runs on the dispatcher thread. The synchronous methods
+    /// ignore it. The scheduler changes only where the work runs, not the entities.
+    /// </summary>
+    public TaskScheduler? ExecutionScheduler { get; init; }
+
     internal void Validate()
     {
         ArgumentNullException.ThrowIfNull(Session);

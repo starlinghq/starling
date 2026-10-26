@@ -6,10 +6,13 @@ Types the Starlings model packages share, with no ONNX Runtime dependency (it re
 | --- | --- | --- |
 | `CapabilityStatus` | `Supported`, `Unsupported`, `Experimental`, `Untested`. A missing entry never means supported. | the capability tables of `Starlings.Models.E5`, `Starlings.Models.EmbeddingGemma2`, `Starlings.Models.Gliner2` (`XCapabilities.Statuses`) |
 | `ModelProfileCapabilities` | The capability record of one registry profile, generated from its manifest (see below) | `E5Capabilities.ProfileCapabilities`, `EmbeddingGemma2Capabilities.ProfileCapabilities`, `Gliner2Capabilities.ProfileCapabilities` |
-| `ITextEmbedder` | `Dimension`, `MaxSequenceLength`, `EmbedBatch(texts, tokenCounts, cancellationToken)` | `E5TextEmbedder`, `EmbeddingGemma2TextEmbedder` (no prompt), `BertTextEmbedder` (prompt `none`) |
+| `ITextEmbedder` | `Dimension`, `MaxSequenceLength`, `EmbedBatch(texts, tokenCounts, cancellationToken)`, `CountTokens(text)`, `CountTokens(texts)`, `Validate(text)` (a `TokenLimitCheck`) | `E5TextEmbedder`, `EmbeddingGemma2TextEmbedder` (no prompt), `BertTextEmbedder` (prompt `none`) |
 | `IReranker` | `Score(query, documents, cancellationToken)`: one raw score per document | `BertReranker` |
 | `IModelAssets<TFiles>` | A package's asset lock and explicit acquisition (`DownloadAsync`, `OpenLocal`, `OpenDirectory`) as one object | `E5ModelAssets.Assets`, `EmbeddingGemma2ModelAssets.Assets`, `Gliner2ModelAssets.Assets` |
-| `InputTooLongException` | An `ArgumentException` for input above the limit, with `InputIndex`, `TokenCount` and `MaxTokens` | thrown by `E5Encoder` for id sequences above `MaxSequenceLength`; base of `EmbeddingGemma2InputTooLongException` and `Gliner2InputTooLongException` |
+| `TokenLimitCheck` | `TokenCount`, `MaxTokens`, `ExceedsLimit`, `TokenCountIsLowerBound`: an input checked against the limit without embedding it | returned by `ITextEmbedder.Validate` |
+| `IChunkingTokenizer`, `TokenSpan` | Untruncated `CountTokens`, `SpecialTokenCount` and `GetTokenSpans` (UTF-16 offsets of each token): what `TextChunker` needs | `E5Tokenizer`, `EmbeddingGemma2Tokenizer`, `BertTextEmbedder.ChunkingTokenizer` |
+| `TextChunker`, `TextChunkerOptions`, `TextChunk` | Sliding windows of tokens with overlap over a model's tokenizer, returning chunk offsets; optional pooled embedding (Experimental, see below) | |
+| `InputTooLongException` | An `ArgumentException` for input above the limit, with `InputIndex`, `TokenCount`, `MaxTokens` and `TokenCountIsLowerBound` | thrown by `E5Encoder` for id sequences above `MaxSequenceLength`; base of `EmbeddingGemma2InputTooLongException` and `Gliner2InputTooLongException` |
 
 ## Maturity
 
@@ -62,6 +65,25 @@ static float[][] EmbedAll(ITextEmbedder embedder, IReadOnlyList<string> texts)
     return embedder.EmbedBatch(texts, counts);
 }
 ```
+
+## Token counting and chunking (experimental)
+
+Every text embedder counts tokens without embedding: `CountTokens(text)` and `CountTokens(texts)` give the tokens a text needs, special tokens included, before any truncation (so a truncating profile can report more than `MaxSequenceLength`). `Validate(text)` returns a `TokenLimitCheck` and never throws; `ExceedsLimit` means the profile would truncate the text (e5, BERT) or reject it (EmbeddingGemma 2). An implementation may skip tokenization when the length alone proves a text too long; `TokenCountIsLowerBound` is then true. Capability `token_counting`: experimental.
+
+`TextChunker` splits a long text into windows of at most `MaxTokens` tokens (special tokens and `Prefix` included), each repeating `OverlapTokens` tokens of the previous one, using the model's own tokenizer through `IChunkingTokenizer`. Each `TextChunk` has `Start`, `Length`, `Text` and `TokenCount`; every chunk is tokenized again with the prefix and shrunk until it fits, because a substring can need more tokens alone than inside the whole text. Text between two tokens at a chunk boundary (usually a space) belongs to neither chunk.
+
+```csharp
+var chunker = new TextChunker(e5.ChunkingTokenizer!, new TextChunkerOptions
+{
+    MaxTokens = e5.MaxSequenceLength,
+    OverlapTokens = 32,
+    Prefix = E5TextEmbedder.PassagePrefix,
+});
+IReadOnlyList<TextChunk> chunks = chunker.Chunk(document);
+float[] pooled = chunker.EmbedPooled(e5, document);
+```
+
+`EmbedPooled` embeds every chunk (prefix prepended) in one `EmbedBatch` call and returns the mean of the L2-normalized chunk vectors, L2-normalized again (`TextChunker.Pool`). **A pooled vector is not the reference model's output and carries no parity claim**: the reference truncates or rejects such text, and no fidelity gate covers pooled vectors. Each chunk's own embedding is the model's output for that chunk text, with the profile's usual fidelity. Capability `chunking`: experimental.
 
 ## Migrating from the per-package types
 
