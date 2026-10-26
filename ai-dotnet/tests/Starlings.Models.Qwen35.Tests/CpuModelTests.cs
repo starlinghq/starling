@@ -142,6 +142,73 @@ public sealed class CpuModelTests(Qwen35CpuFixture fixture) : IClassFixture<Qwen
         Assert.Equal(c.ContentIds.Take(16), k1.TokenIds);
     }
 
+    /// <summary>
+    /// Per-token logprobs on the real model: under greedy decoding every token is the most likely of its step (the
+    /// logits read are those that selected it), the ids are unchanged by the option, and the first step's top 5 are the
+    /// reference's step-0 top 5 within the profile's step-0 top-5 bound.
+    /// </summary>
+    [Fact]
+    public void GreedyLogprobsAreTheStepArgmaxAndStepZeroMatchesTheReference()
+    {
+        var c = Case("en-list");
+        var prompt = Qwen35Prompt.FromTokenIds(c.PromptIds);
+        var plain = Model.Generate(prompt, new Qwen35ChatOptions { MaxNewTokens = 12 }, Ct);
+        var result = Model.Generate(prompt, new Qwen35ChatOptions { MaxNewTokens = 12, ReturnLogprobs = true, TopLogprobs = 5 }, Ct);
+        Assert.Equal(plain.TokenIds, result.TokenIds);
+        Assert.Equal(c.ContentIds.Take(12), result.TokenIds);
+        Assert.Equal(result.TokenIds, result.Logprobs.Select(l => l.TokenId));
+        Assert.All(result.Logprobs, l =>
+        {
+            Assert.Equal(l.TokenId, l.TopLogprobs[0].TokenId);
+            Assert.Equal(l.Logprob, l.TopLogprobs[0].Logprob);
+            Assert.True(l.Logprob <= 0 && double.IsFinite(l.Logprob));
+        });
+
+        var tolerances = Tolerances;
+        var first = result.Logprobs[0].TopLogprobs;
+        Assert.Equal(c.Step0Top.Take(5).Select(t => t.Id), first.Select(t => t.TokenId));
+        double top5 = c.Step0Top.Take(5).Zip(first).Max(p => Math.Abs(p.First.Logprob - p.Second.Logprob));
+        Assert.True(top5 <= tolerances.Step0Top5LogprobMaxAbs, $"step-0 top-5 logprob max abs {top5} > {tolerances.Step0Top5LogprobMaxAbs} ({tolerances.Source})");
+    }
+
+    /// <summary>
+    /// An abandoned streaming enumerator (not disposed after its first update) no longer pins the model: after a
+    /// garbage collection its native sequence is released on a thread-pool thread and the model's reference count
+    /// returns to its own reference.
+    /// </summary>
+    [Fact]
+    public void AnAbandonedStreamReleasesItsSequenceAfterCollection()
+    {
+        var model = Model;
+        Assert.Equal(1, model.Backend.References);
+        long before = NativeLifetime.FinalizerReleases;
+        StartAndAbandon(model, Qwen35Prompt.FromTokenIds(Case("en-short").PromptIds));
+        Assert.Equal(2, model.Backend.References);
+
+        var deadline = DateTime.UtcNow.AddSeconds(30);
+        while (model.Backend.References != 1 && DateTime.UtcNow < deadline)
+        {
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
+            Thread.Sleep(50);
+        }
+
+        Assert.Equal(1, model.Backend.References);
+        Assert.True(NativeLifetime.FinalizerReleases > before);
+
+        // The model stays usable.
+        Assert.Equal(c0(), model.Generate(Qwen35Prompt.FromTokenIds(Case("en-short").PromptIds), new Qwen35ChatOptions { MaxNewTokens = 4 }, Ct).TokenIds);
+
+        IEnumerable<int> c0() => Case("en-short").ContentIds.Take(4);
+    }
+
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
+    private static void StartAndAbandon(Qwen35ChatModel model, Qwen35Prompt prompt)
+    {
+        var enumerator = model.GenerateStreaming(prompt, new Qwen35ChatOptions { MaxNewTokens = 8 }, CancellationToken.None).GetEnumerator();
+        Assert.True(enumerator.MoveNext());
+    }
+
     [Fact]
     public void InfoNamesEveryIdentity()
     {
