@@ -18,7 +18,16 @@ public sealed class Qwen35GuidedChatClientFixture : IDisposable
         Reason = reason;
         if (_directory is not null)
         {
-            Client = Qwen35ChatClient.Create(_directory.Files);
+            try
+            {
+                Client = Qwen35ChatClient.Create(_directory.Files);
+            }
+            catch
+            {
+                // A constructor that throws gets no Dispose; remove the temporary directory here.
+                _directory.Dispose();
+                throw;
+            }
         }
     }
 

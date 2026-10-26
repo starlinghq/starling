@@ -181,6 +181,25 @@ public sealed class GuidanceTests
         Assert.Contains("tokenizer.json and tokenizer_config.json are missing", two, StringComparison.Ordinal);
     }
 
+    [Theory]
+    [InlineData(null)]
+    [InlineData("tokenizer")]
+    public void TheConfigSummaryReadsTheTokenizerDirectory(string? tokenizerDirectory)
+    {
+        string directory = Directory.CreateTempSubdirectory("starling-genai-config-").FullName;
+        try
+        {
+            string field = tokenizerDirectory is null ? string.Empty : $", \"tokenizer_dir\": \"{tokenizerDirectory}\"";
+            string path = Path.Combine(directory, "genai_config.json");
+            File.WriteAllText(path, $$$"""{"model": {"type": "qwen3_5", "context_length": 1000, "vocab_size": 10, "eos_token_id": [1, 2]{{{field}}}}}""");
+            Assert.Equal(tokenizerDirectory, GenAIConfigSummary.Read(path).TokenizerDirectory);
+        }
+        finally
+        {
+            Directory.Delete(directory, recursive: true);
+        }
+    }
+
     /// <summary>A scripted sequence whose steps append groups of tokens (forced tokens, then the selected one).</summary>
     private sealed class FastForwardSequence(GenAISequenceOptions options, IReadOnlyList<int[]> steps) : IGenerationSequence
     {

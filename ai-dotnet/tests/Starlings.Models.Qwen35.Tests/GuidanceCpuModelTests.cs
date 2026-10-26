@@ -20,7 +20,16 @@ public sealed class Qwen35GuidedCpuFixture : IDisposable
         Reason = reason;
         if (_directory is not null)
         {
-            Model = Qwen35ChatModel.Load(_directory.Files);
+            try
+            {
+                Model = Qwen35ChatModel.Load(_directory.Files);
+            }
+            catch
+            {
+                // A constructor that throws gets no Dispose; remove the temporary directory here.
+                _directory.Dispose();
+                throw;
+            }
         }
     }
 

@@ -17,6 +17,9 @@ public sealed record Qwen35ChatClientOptions
     /// On CPU the default one-call prefill cannot be cancelled until it completes (12 s for a 1,666-token prompt on the
     /// M0 workstation). Set <see cref="Qwen35ChatOptions.PrefillChunkTokens"/> to bound that latency; on CPU chunks give
     /// bit-identical logits but a slower prefill (P-016).
+    /// A <see cref="Qwen35ChatOptions.Guidance"/> set here applies to every request whose <c>ChatOptions</c> maps no
+    /// constraint of its own (a required tool mode or a JSON response format replaces it), without the request-level
+    /// checks those mappings make; leave it null (the default) unless every request should be constrained.
     /// </remarks>
     public Qwen35ChatOptions Defaults { get; init; } = new();
 

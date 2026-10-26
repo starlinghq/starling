@@ -47,13 +47,22 @@ internal sealed class Qwen35GuidedDirectory : IDisposable
         }
 
         string directory = Directory.CreateTempSubdirectory("starling-qwen35-guided-").FullName;
-        foreach (string file in Directory.EnumerateFiles(files.ModelDirectory))
+        try
         {
-            File.CreateSymbolicLink(Path.Combine(directory, Path.GetFileName(file)), file);
+            foreach (string file in Directory.EnumerateFiles(files.ModelDirectory))
+            {
+                File.CreateSymbolicLink(Path.Combine(directory, Path.GetFileName(file)), file);
+            }
+
+            File.Copy(files.TokenizerPath, Path.Combine(directory, "tokenizer.json"));
+            File.Copy(config, Path.Combine(directory, "tokenizer_config.json"));
+        }
+        catch
+        {
+            Directory.Delete(directory, recursive: true);
+            throw;
         }
 
-        File.Copy(files.TokenizerPath, Path.Combine(directory, "tokenizer.json"));
-        File.Copy(config, Path.Combine(directory, "tokenizer_config.json"));
         reason = string.Empty;
         return new Qwen35GuidedDirectory(files with { ModelDirectory = directory });
     }
