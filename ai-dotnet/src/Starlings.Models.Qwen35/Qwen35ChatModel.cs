@@ -199,7 +199,7 @@ public sealed class Qwen35ChatModel : IDisposable
         return Generate(CreatePrompt(messages, options), options, cancellationToken);
     }
 
-    /// <summary>Generates from a prepared prompt (<see cref="Qwen35ChatOptions.EnableThinking"/> is a property of the prompt and is ignored here).</summary>
+    /// <summary>Generates from a prepared prompt (<see cref="Qwen35ChatOptions.EnableThinking"/> and <see cref="Qwen35ChatOptions.EscapeSpecialTokens"/> are properties of the prompt and are ignored here).</summary>
     public GenerationResult Generate(Qwen35Prompt prompt, Qwen35ChatOptions? options = null, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(prompt);
