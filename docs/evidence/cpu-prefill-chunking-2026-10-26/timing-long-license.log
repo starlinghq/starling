@@ -1,0 +1,18 @@
+timing-1-chunk1024       prefill_ms   19475.4  ids_equal_one_call True  step0_bytes_equal_one_call True
+timing-1-chunk512        prefill_ms   20897.7  ids_equal_one_call True  step0_bytes_equal_one_call True
+timing-1-one-call        prefill_ms   20085.8  ids_equal_one_call True  step0_bytes_equal_one_call True
+timing-2-chunk1024       prefill_ms   18117.0  ids_equal_one_call True  step0_bytes_equal_one_call True
+timing-2-chunk512        prefill_ms   17933.6  ids_equal_one_call True  step0_bytes_equal_one_call True
+timing-2-one-call        prefill_ms   20064.0  ids_equal_one_call True  step0_bytes_equal_one_call True
+timing-3-chunk1024       prefill_ms   18281.8  ids_equal_one_call True  step0_bytes_equal_one_call True
+timing-3-chunk512        prefill_ms   18213.2  ids_equal_one_call True  step0_bytes_equal_one_call True
+timing-3-one-call        prefill_ms   18378.0  ids_equal_one_call True  step0_bytes_equal_one_call True
+timing-4-chunk1024       prefill_ms   18107.3  ids_equal_one_call True  step0_bytes_equal_one_call True
+timing-4-chunk512        prefill_ms   19388.1  ids_equal_one_call True  step0_bytes_equal_one_call True
+timing-4-one-call        prefill_ms   20246.0  ids_equal_one_call True  step0_bytes_equal_one_call True
+chunk1024    n=4 median_ms   18199.4 min_ms   18107.3 max_ms   19475.4
+chunk512     n=4 median_ms   18800.7 min_ms   17933.6 max_ms   20897.7
+one-call     n=4 median_ms   20074.9 min_ms   18378.0 max_ms   20246.0
+chunk1024    median ratio to one-call 0.907
+chunk512     median ratio to one-call 0.937
+one-call     median ratio to one-call 1.000

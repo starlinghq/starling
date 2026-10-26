@@ -57,13 +57,23 @@ public sealed record Qwen35ChatOptions
     /// <summary>
     /// Prefill chunk size (see <see cref="GenerationOptions.PrefillChunkTokens"/>), or null (default) for the provider
     /// default: <see cref="DefaultCudaPrefillChunkTokens"/> on CUDA, where a one-call prefill allocates about 1 MB of
-    /// fp32 logits per prompt token in device memory, and one call on CPU, where chunks were slower (the logits are
-    /// bit-identical either way on CPU). <see cref="int.MaxValue"/> forces one call.
+    /// fp32 logits per prompt token in device memory, and <see cref="DefaultCpuPrefillChunkTokens"/> on CPU, so a prompt
+    /// of at most 1,024 tokens is prefilled in one call as before and a longer one in 1,024-token chunks, which bounds
+    /// the transient logits buffer to about 1 GB and lets cancellation act between chunks. On CPU, 1,024-token chunks
+    /// gave greedy ids and step-0 logits bit-identical to one call; other chunk sizes stayed within the profile's
+    /// chunked-prefill tolerance (<c>docs/evidence/cpu-prefill-chunking-2026-10-26/</c>).
+    /// <see cref="int.MaxValue"/> forces one call.
     /// </summary>
     public int? PrefillChunkTokens { get; init; }
 
     /// <summary>Prefill chunk size used on CUDA when <see cref="PrefillChunkTokens"/> is null.</summary>
     public const int DefaultCudaPrefillChunkTokens = 512;
+
+    /// <summary>
+    /// Prefill chunk size used on CPU when <see cref="PrefillChunkTokens"/> is null, and so the prompt length above which
+    /// the CPU prefill is chunked: prompts up to this many tokens take one call.
+    /// </summary>
+    public const int DefaultCpuPrefillChunkTokens = 1024;
 
     /// <summary>
     /// Opt-in: per-token log probabilities in <see cref="GenerationUpdate.Logprobs"/> and
@@ -96,7 +106,7 @@ public sealed record Qwen35ChatOptions
         StopSequences = StopSequences,
         AdditionalStopTokenIds = AdditionalStopTokenIds,
         Sampling = Sampling,
-        PrefillChunkTokens = PrefillChunkTokens ?? (provider == GenAIExecutionProvider.Cuda ? DefaultCudaPrefillChunkTokens : null),
+        PrefillChunkTokens = PrefillChunkTokens ?? (provider == GenAIExecutionProvider.Cuda ? DefaultCudaPrefillChunkTokens : DefaultCpuPrefillChunkTokens),
         ReturnLogprobs = ReturnLogprobs,
         TopLogprobs = TopLogprobs,
     };

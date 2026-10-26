@@ -14,8 +14,17 @@ All additive, opt-in and experimental. Unguided requests are unchanged: without 
 - **Evidence.** Scripted sequences in CI: the grammar builder, the grammar against calls the template renders and against calls outside the schemas, the fast-forward decode loop, and the `IChatClient` mapping. On the real fp32x model on CPU with the two files added to a temporary copy of the variant directory (local, one machine): a regex, a JSON schema and the required tool-call grammar were followed, with and without fast-forward, and unguided greedy ids still equal the reference. See `docs/evidence/qwen35-guidance-2026-10-26/`. No latency qualification.
 - **Not in this change (maintainer).** The bundle change of B1 part 2: both tokenizer files in each GenAI variant directory, which means a new hosting revision and new asset locks. Until then, guided requests need a directory the user prepares.
 
+## CPU prefill in 1,024-token chunks above 1,024 prompt tokens (backlog B2)
+
+- **`Starlings.Models.Qwen35`.** When `Qwen35ChatOptions.PrefillChunkTokens` is null, CPU now prefills in chunks of the new `Qwen35ChatOptions.DefaultCpuPrefillChunkTokens` (1,024): a prompt of at most 1,024 tokens is still prefilled in one call, and a longer one in 1,024-token chunks. This bounds the transient logits buffer that ONNX Runtime GenAI allocates for every prompt position (about 1 MB per token in fp32: 1.65 GB for 1,666 tokens, 8.14 GB at the 8,192-token context) to about 1 GB, and cancellation now takes effect between chunks of a long prompt. CUDA keeps 512-token chunks. `PrefillChunkTokens = int.MaxValue` restores the one-call prefill.
+- **Fidelity.** On the fp32x CPU profile, 1,024-token chunks gave greedy ids and step-0 log-probabilities bit-identical to one call on the 22 development prompts (the 1,666-token prompt is the one that changes path) and on a 4,112-token long-context prompt. G1 and G2 passed on the 32 release prompts with the new setting, with the hosted full step-0 reference vectors. No tolerance, fixture or capability status changed. See `docs/evidence/cpu-prefill-chunking-2026-10-26/`.
+- **Performance.** On a shared 4-vCPU host the 1,666-token prefill took a median 18.2 s in 1,024-token chunks against 20.1 s in one call (4 runs each), and the 4,112-token prefill 48.4 s against 62.0 s. G5 was not rerun; its `long-prefill` workload now runs in two chunks.
+- **Benchmarks.** The C# harness records `prefill_chunk_tokens` 1,024 on CPU, and the matched Python runner (`bench_qwen35_matched.py`) appends the prompt in 1,024-token chunks on CPU by default, so G5 keeps comparing the same execution path.
+- `Starlings.Models.QwenChat` is unchanged (one call on CPU by default).
+
 ## Upgrading
 
 - Nothing breaks. Requests that set no guidance behave as before.
 - `IChatClient` callers that caught `NotSupportedException` for `RequireAny`, `RequireSpecific` or a JSON `ResponseFormat` still get it on the published bundle; the message changed.
 - `AllowMultipleToolCalls = false` is now accepted with `RequireAny` and `RequireSpecific` on a directory with the guidance files; with `ChatToolMode.Auto` it is still rejected.
+- `Qwen35ChatModel` on CPU: prompts above 1,024 tokens are prefilled in 1,024-token chunks unless `PrefillChunkTokens` is set. Set `PrefillChunkTokens = int.MaxValue` to keep the one-call prefill.

@@ -1,0 +1,5 @@
+baseline  lc4096-one-call: prefill_chunk_tokens=None
+candidate lc4096-chunk1024: prefill_chunk_tokens=1024
+case                   prompt ids_eq finish_eq ref_exact step0_bytes_eq step0_max_abs prefill_ms_a prefill_ms_b
+long-4096                4112   True      True      True           True     0.000e+00      62047.9      48412.4
+cases 1; ids and finish equal on all: True; step0 byte-identical on all: True; max abs step0 difference 0.000e+00

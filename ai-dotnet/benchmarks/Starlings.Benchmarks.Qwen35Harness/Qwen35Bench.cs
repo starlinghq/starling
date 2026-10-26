@@ -153,7 +153,7 @@ internal sealed class Qwen35Run : IBenchRun
         ["context_length"] = _model.Info.ContextLength,
         ["serializes_native_calls"] = _model.Info.SerializesNativeCalls,
         ["sampling"] = "greedy",
-        ["prefill_chunk_tokens"] = _context.IsCuda ? Qwen35ChatOptions.DefaultCudaPrefillChunkTokens : null,
+        ["prefill_chunk_tokens"] = _context.IsCuda ? Qwen35ChatOptions.DefaultCudaPrefillChunkTokens : Qwen35ChatOptions.DefaultCpuPrefillChunkTokens,
         ["greedy_ids_rule"] = GreedyRule,
         ["tolerance_file"] = _tolerancePath,
     };

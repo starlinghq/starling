@@ -1,0 +1,23 @@
+en-short             prompt    24 gen    8 eos    exact render eq ids eq stream ok 0.41s+1.32s
+en-list              prompt    22 gen  128 length exact render eq ids eq stream ok 0.35s+22.28s
+en-math              prompt    40 gen  128 length exact render eq ids eq stream ok 0.58s+21.87s
+system-pirate        prompt    36 gen   41 eos    exact render eq ids eq stream ok 0.45s+7.01s
+multi-turn           prompt    61 gen  128 length exact render eq ids eq stream ok 0.72s+22.39s
+zh                   prompt    18 gen   55 eos    exact render eq ids eq stream ok 0.29s+9.24s
+ja                   prompt    20 gen  128 length exact render eq ids eq stream ok 0.33s+22.68s
+ar                   prompt    23 gen  128 length exact render eq ids eq stream ok 0.47s+22.61s
+hi                   prompt    31 gen   15 eos    exact render eq ids eq stream ok 0.51s+2.47s
+th                   prompt    21 gen  128 length exact render eq ids eq stream ok 0.37s+23.15s
+ru-de-mix            prompt    48 gen   97 eos    exact render eq ids eq stream ok 0.70s+17.22s
+emoji                prompt    45 gen  128 length exact render eq ids eq stream ok 0.64s+22.44s
+code-py              prompt    29 gen  128 length exact render eq ids eq stream ok 0.41s+21.98s
+code-cs              prompt    80 gen  128 length exact render eq ids eq stream ok 0.81s+21.88s
+code-sql             prompt    43 gen  126 eos    exact render eq ids eq stream ok 0.53s+22.41s
+special-imend        prompt    24 gen    6 eos    exact render eq ids eq stream ok 0.37s+0.85s
+special-endoftext    prompt    24 gen  128 length exact render eq ids eq stream ok 0.41s+22.66s
+special-think-tool   prompt    32 gen  121 eos    exact render eq ids eq stream ok 0.46s+20.96s
+special-broken       prompt    40 gen   20 eos    exact render eq ids eq stream ok 0.49s+3.37s
+thinking-on          prompt    18 gen  128 length exact render eq ids eq stream ok 0.32s+21.96s
+tools                prompt   286 gen   26 eos    exact render unsupported ids - stream ok 3.03s+4.74s
+long-license         prompt  1666 gen  128 length exact render eq ids eq stream ok 18.63s+24.90s
+command: --modes parity  ; start 2026-10-26T06:19:27Z ; end 2026-10-26T06:26:11Z ; exit 0
