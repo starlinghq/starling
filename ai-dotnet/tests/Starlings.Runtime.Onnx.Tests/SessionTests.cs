@@ -205,6 +205,16 @@ public class SessionTests
     }
 
     [Fact]
+    public void WarmupRunIsTheProfiledRun()
+    {
+        // In this class, not with the other warmup tests: profiling writes a temporary file that the concurrent-sessions
+        // test below expects to be gone, and tests of one class do not run in parallel.
+        using var session = OnnxModelSession.Create(TestModels.Add, new OnnxSessionOptions { CapturePlacement = true });
+        session.WarmupWithZeroInputs(cancellationToken: TestContext.Current.CancellationToken);
+        Assert.Equal(1, session.Placement?.NodesByProvider[OnnxRuntimeInfo.CpuProviderName]);
+    }
+
+    [Fact]
     public void ConcurrentSessionsCapturePlacementFromTheirOwnProfileFiles()
     {
         // Each session's profile goes to its own temporary prefix, never ONNX Runtime's default name in the working
