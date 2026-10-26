@@ -25,7 +25,8 @@ combination is untested (ai-dotnet/README.md, "ONNX Runtime GenAI packages").
 ## Build-time check
 
 `Starlings.Runtime.Onnx` and `Starlings.Generation.OnnxGenAI` ship MSBuild targets in `buildTransitive/`, so they run
-in every project that references a Starlings model package. After restore they read the native assets in the
+in every project that references a Starlings model runtime package (not the definition packages `Starlings.Models.Qwen35`,
+`Starlings.Models.QwenChat` and `Starlings.Models.Kev`, which bring no runtime). After restore they read the native assets in the
 project's package graph (direct or transitive) and report:
 
 | Code | Level | Condition |

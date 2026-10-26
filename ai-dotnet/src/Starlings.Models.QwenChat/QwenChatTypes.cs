@@ -1,5 +1,5 @@
 using System.Collections.Immutable;
-using Starlings.Generation.OnnxGenAI;
+using Starlings.Generation;
 
 namespace Starlings.Models.QwenChat;
 
@@ -30,19 +30,47 @@ public sealed record QwenChatMessage(QwenChatRole Role, string Content, string? 
     /// <c>&lt;tool_call&gt;</c> JSON blocks. Null or empty: no tool calls. Experimental.
     /// </summary>
     public IReadOnlyList<QwenChatToolCall>? ToolCalls { get; init; }
+
+    /// <summary>The message of a backend-neutral <see cref="ChatTurn"/> (role, content, reasoning and tool calls).</summary>
+    public static QwenChatMessage FromChatTurn(ChatTurn turn)
+    {
+        ArgumentNullException.ThrowIfNull(turn);
+        QwenChatRole role = turn.Role switch
+        {
+            ChatTurnRole.System => QwenChatRole.System,
+            ChatTurnRole.User => QwenChatRole.User,
+            ChatTurnRole.Assistant => QwenChatRole.Assistant,
+            ChatTurnRole.Tool => QwenChatRole.Tool,
+            _ => throw new ArgumentOutOfRangeException(nameof(turn), turn.Role, "Unknown role."),
+        };
+        return new QwenChatMessage(role, turn.Content, turn.ReasoningContent)
+        {
+            ToolCalls = turn.ToolCalls is null ? null : [.. turn.ToolCalls.Select(QwenChatToolCall.FromToolCall)],
+        };
+    }
+
+    /// <summary>This message as a backend-neutral <see cref="ChatTurn"/>.</summary>
+    public ChatTurn ToChatTurn()
+    {
+        ChatTurnRole role = Role switch
+        {
+            QwenChatRole.System => ChatTurnRole.System,
+            QwenChatRole.User => ChatTurnRole.User,
+            QwenChatRole.Assistant => ChatTurnRole.Assistant,
+            QwenChatRole.Tool => ChatTurnRole.Tool,
+            _ => throw new InvalidOperationException($"Unknown role {Role}."),
+        };
+        return new ChatTurn(role, Content, ReasoningContent)
+        {
+            ToolCalls = ToolCalls is null ? null : [.. ToolCalls.Select(c => c.ToToolCall())],
+        };
+    }
 }
 
 /// <summary>A rendered prompt with owned tokenizer ids.</summary>
 public sealed record QwenChatPrompt(string Text, ImmutableArray<int> TokenIds);
 
-/// <summary>Experimental CPU load settings; no provider fallback.</summary>
-public sealed record QwenChatModelOptions
-{
-    /// <summary>Bounded native thread count, from 1 through 2.</summary>
-    public int IntraOpThreads { get; init; } = 2;
-}
-
-/// <summary>Per-request settings. Qwen3 explicitly uses enable_thinking=false.</summary>
+/// <summary>Per-request settings of <c>QwenChatModel</c>. Qwen3 explicitly uses enable_thinking=false.</summary>
 public sealed record QwenChatOptions
 {
     /// <summary>Maximum completion tokens, excluding an EOS or stop id.</summary>
@@ -58,40 +86,18 @@ public sealed record QwenChatOptions
     public int? PrefillChunkTokens { get; init; }
 
     /// <summary>
-    /// Tool definitions rendered into the template's tools block by <see cref="QwenChatModel.Generate(IReadOnlyList{QwenChatMessage}, QwenChatOptions?, CancellationToken)"/>
+    /// Tool definitions rendered into the template's tools block by <c>QwenChatModel.Generate</c> (Starlings.Models.QwenChat.OnnxGenAI)
     /// (default none). The completion may then contain tool calls; split them out with
     /// <see cref="QwenChatToolCallParser"/>. Experimental.
     /// </summary>
     public IReadOnlyList<QwenChatTool> Tools { get; init; } = [];
 
-    internal GenerationOptions ToGenerationOptions() => new()
+    /// <summary>The decode-loop options of this request (greedy).</summary>
+    public GenerationOptions ToGenerationOptions() => new()
     {
         MaxNewTokens = MaxNewTokens,
         AdditionalStopTokenIds = AdditionalStopTokenIds,
         StopSequences = StopSequences,
         PrefillChunkTokens = PrefillChunkTokens,
     };
-}
-
-/// <summary>Loaded profile identity and explicitly scoped capabilities.</summary>
-public sealed record QwenChatModelInfo(
-    string Profile, string Repository, string Revision, string TokenizerSha256, string TemplateSha256,
-    string GenAIVersion, string? NativePackage, int ContextLength)
-{
-    /// <summary>The profile is experimental pending independent protected fixture adoption.</summary>
-    public string TextGeneration { get; } = "experimental";
-    /// <summary>
-    /// Tool calling is experimental: the tools block, assistant tool calls and tool messages of the owned template
-    /// equal the upstream rendering on the proposed template corpus, and <see cref="QwenChatToolCallParser"/> reads the
-    /// templates' JSON call form. The model's choice of tools is not qualified.
-    /// </summary>
-    public string Tools { get; } = "experimental";
-    /// <summary>Multimodal input is unsupported.</summary>
-    public string Multimodal { get; } = "unsupported";
-    /// <summary>Each request gets a fresh generator; weights are shared, conversation cache state is never reused.</summary>
-    public string Cache { get; } = "fresh-request";
-    /// <summary>Qwen3 thinking is explicitly disabled for this profile.</summary>
-    public bool EnableThinking { get; }
-    /// <summary>Unused embedding row used for padding so literal endoftext prompt positions remain attended.</summary>
-    public int PadTokenIdOverlay { get; } = 151935;
 }

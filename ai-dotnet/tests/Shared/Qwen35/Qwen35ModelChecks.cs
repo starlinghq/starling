@@ -1,5 +1,5 @@
 using System.Collections.Immutable;
-using Starlings.Generation.OnnxGenAI;
+using Starlings.Generation;
 using Starlings.Models.Qwen35;
 using Xunit;
 

@@ -201,7 +201,7 @@ public sealed class GuidanceTests
     }
 
     /// <summary>A scripted sequence whose steps append groups of tokens (forced tokens, then the selected one).</summary>
-    private sealed class FastForwardSequence(GenAISequenceOptions options, IReadOnlyList<int[]> steps) : IGenerationSequence
+    private sealed class FastForwardSequence(GenAISequenceOptions options, IReadOnlyList<int[]> steps) : IDecodeSequence
     {
         private int _length;
         private int _step;

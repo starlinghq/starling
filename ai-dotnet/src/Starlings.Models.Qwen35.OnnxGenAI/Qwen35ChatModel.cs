@@ -1,5 +1,6 @@
 using System.Collections.Immutable;
 using System.Security.Cryptography;
+using Starlings.Generation;
 using Starlings.Generation.OnnxGenAI;
 using Starlings.Tokenizers;
 
@@ -26,17 +27,18 @@ namespace Starlings.Models.Qwen35;
 /// </remarks>
 public sealed class Qwen35ChatModel : IDisposable
 {
-    /// <summary><c>&lt;|im_end|&gt;</c>: ends an assistant turn.</summary>
-    public const int ImEndTokenId = 248046;
+    /// <summary><c>&lt;|im_end|&gt;</c>: ends an assistant turn (<see cref="Qwen35Checkpoint.ImEndTokenId"/>).</summary>
+    public const int ImEndTokenId = Qwen35Checkpoint.ImEndTokenId;
 
-    /// <summary><c>&lt;|endoftext|&gt;</c>.</summary>
-    public const int EndOfTextTokenId = 248044;
+    /// <summary><c>&lt;|endoftext|&gt;</c> (<see cref="Qwen35Checkpoint.EndOfTextTokenId"/>).</summary>
+    public const int EndOfTextTokenId = Qwen35Checkpoint.EndOfTextTokenId;
 
     /// <summary>
     /// <c>&lt;|im_start|&gt;</c>: opens a turn. Not a stop token by default; <see cref="Qwen35ChatOptions.StopAtRoleMarker"/>
-    /// adds it, so a completion that runs on into another turn's role markup ends before it.
+    /// adds it, so a completion that runs on into another turn's role markup ends before it
+    /// (<see cref="Qwen35Checkpoint.ImStartTokenId"/>).
     /// </summary>
-    public const int ImStartTokenId = 248045;
+    public const int ImStartTokenId = Qwen35Checkpoint.ImStartTokenId;
 
     /// <summary>
     /// Pad id overlaid on <c>genai_config.json</c>: the last of the 248,320 embedding rows; the tokenizer's ids end at
@@ -55,7 +57,7 @@ public sealed class Qwen35ChatModel : IDisposable
     public const int MaxContextTokens = 8192;
 
     private const string ExpectedModelType = "qwen3_5_text";
-    private const int ExpectedVocabularySize = 248320;
+    private const int ExpectedVocabularySize = Qwen35Checkpoint.VocabularySize;
 
     private readonly GenAIModel? _backend;
     private readonly TextGenerator _generator;

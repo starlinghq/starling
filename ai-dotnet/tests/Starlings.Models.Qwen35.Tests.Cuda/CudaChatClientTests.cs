@@ -1,3 +1,4 @@
+using Starlings.Generation;
 using Starlings.Generation.OnnxGenAI;
 using Starlings.Models.Qwen35.Extensions.AI;
 using Starlings.TestSupport;

@@ -1,11 +1,11 @@
 using System.Text;
 
-namespace Starlings.Generation.OnnxGenAI;
+namespace Starlings.Generation;
 
 /// <summary>
 /// Finds stop sequences in streamed text (ordinal comparison). Text that could still become the start of a stop
 /// sequence is held back until it either completes a match or cannot, so no streamed piece ever contains part of a
-/// stop sequence. This is the matcher <see cref="TextGenerator"/> applies to
+/// stop sequence. This is the matcher <c>TextGenerator</c> (Starlings.Generation.OnnxGenAI) applies to
 /// <see cref="GenerationOptions.StopSequences"/>: push each detokenized piece (for example from
 /// <see cref="IncrementalDetokenizer"/>), emit what it returns, end the request when it reports a match, and emit
 /// <see cref="Flush"/> when generation ends without one.

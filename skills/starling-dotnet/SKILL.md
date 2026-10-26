@@ -20,7 +20,7 @@ Starling ships open models as NuGet libraries that run in-process on ONNX Runtim
 
 ML.NET transformers exist for e5 and EmbeddingGemma 2 (`*.MLNet`). The target framework is `net10.0`.
 
-`Starlings.Models.Kev` (Kev-0.8B and Kev-4B decision models) and `Starlings.Models.QwenChat` (Qwen3-0.6B and Qwen2.5-0.5B-Instruct chat) are on nuget.org from 0.3.0 with Experimental profiles only. `Starlings.Models.Bert`, `Starlings.Models.Whisper` and the browser packages (`Starlings.Models.E5.Browser`, `Starlings.Runtime.OnnxWeb`, `Starlings.Runtime.OnnxWeb.WebGpu`) also exist in the repository; they are experimental, not published to nuget.org, and build only from source. None of these has a Stable profile; don't recommend them for an app.
+`Starlings.Models.Kev` (Kev-0.8B and Kev-4B decision models) and `Starlings.Models.QwenChat` (Qwen3-0.6B and Qwen2.5-0.5B-Instruct chat) are on nuget.org from 0.3.0 with Experimental profiles only; from the next minor version their runtime packages are `Starlings.Models.Kev.Onnx` and `Starlings.Models.QwenChat.OnnxGenAI`. `Starlings.Models.Bert`, `Starlings.Models.Whisper` and the browser packages (`Starlings.Models.E5.Browser`, `Starlings.Runtime.OnnxWeb`, `Starlings.Runtime.OnnxWeb.WebGpu`) also exist in the repository; they are experimental, not published to nuget.org, and build only from source. None of these has a Stable profile; don't recommend them for an app.
 
 **Always add exactly one native ONNX Runtime package to the application project**, at the version in the table. The libraries reference only the managed binding. For CUDA on Linux x64, use `Microsoft.ML.OnnxRuntime.Gpu.Linux` 1.30.0 instead of `Microsoft.ML.OnnxRuntime`, never both. For Qwen on CUDA, use `Microsoft.ML.OnnxRuntimeGenAI.Cuda` 0.17.1 instead of `Microsoft.ML.OnnxRuntimeGenAI`.
 
@@ -157,7 +157,7 @@ await foreach (var update in chat.GetStreamingResponseAsync("In one sentence, wh
 
 `Qwen35Variant.Fp16x` is CUDA-only and an approximate variant; prefer `Fp32x` unless you measured that Fp16x is good enough. `Qwen35ChatClient.Create` loads the model and owns it.
 
-Limits: the prompt plus `MaxOutputTokens` must fit in 8,192 tokens (`Qwen35ChatModel.MaxContextTokens`). A longer request throws `GenerationContextLengthException` (namespace `Starlings.Generation.OnnxGenAI`) before any native call; nothing is truncated. Decoding is greedy unless you set `Temperature`, `TopP` or `TopK`, and sampling without an explicit `ChatOptions.Seed` is rejected. A conversation the chat template cannot render (for example a system message after the first) throws `Qwen35TemplateException`. Images and other non-text content throw `NotSupportedException`, and `ResponseFormat` JSON is unsupported.
+Limits: the prompt plus `MaxOutputTokens` must fit in 8,192 tokens (`Qwen35ChatModel.MaxContextTokens`). A longer request throws `GenerationContextLengthException` (namespace `Starlings.Generation.OnnxGenAI` in 0.3.0; `Starlings.Generation`, package `Starlings.Generation.Abstractions`, from the next minor version) before any native call; nothing is truncated. Decoding is greedy unless you set `Temperature`, `TopP` or `TopK`, and sampling without an explicit `ChatOptions.Seed` is rejected. A conversation the chat template cannot render (for example a system message after the first) throws `Qwen35TemplateException`. Images and other non-text content throw `NotSupportedException`, and `ResponseFormat` JSON is unsupported.
 
 ### Tool calling with Qwen3.5 (experimental)
 

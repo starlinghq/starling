@@ -1,6 +1,7 @@
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
+using Starlings.Generation;
 using Starlings.Generation.OnnxGenAI;
 using Starlings.Models.QwenChat;
 using Starlings.Tokenizers;

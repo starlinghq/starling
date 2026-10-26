@@ -2,6 +2,7 @@
 // Copyright Alibaba Cloud. Apache-2.0. See THIRD-PARTY-NOTICES.md.
 using System.Text;
 using System.Text.Json;
+using Starlings.Generation;
 
 namespace Starlings.Models.QwenChat;
 
@@ -36,20 +37,42 @@ public static class QwenChatTemplate
     private const string ToolsInstructions =
         "\n</tools>\n\nFor each function call, return a json object with function name and arguments within <tool_call></tool_call> XML tags:\n<tool_call>\n{\"name\": <function-name>, \"arguments\": <args-json-object>}\n</tool_call><|im_end|>\n";
 
+    private static readonly IChatTemplate Qwen3Renderer = new Renderer(QwenChatCheckpoint.Qwen3);
+    private static readonly IChatTemplate Qwen25Renderer = new Renderer(QwenChatCheckpoint.Qwen25);
+
+    /// <summary>
+    /// The renderer of <paramref name="checkpoint"/>'s template behind the backend-neutral <see cref="IChatTemplate"/>
+    /// seam: turns and tool definitions are converted (<see cref="QwenChatMessage.FromChatTurn"/>,
+    /// <see cref="QwenChatTool.FromDefinition"/>) and rendered by
+    /// <see cref="Render(QwenChatCheckpoint, IReadOnlyList{QwenChatMessage}, IReadOnlyList{QwenChatTool}?)"/>, so the text
+    /// is the same. <see cref="IChatTemplate.SupportsThinking"/> is false: Qwen3 renders with
+    /// <c>enable_thinking=false</c>, and <c>enableThinking: true</c> throws <see cref="NotSupportedException"/>.
+    /// </summary>
+    /// <exception cref="NotSupportedException">Not an admitted checkpoint.</exception>
+    public static IChatTemplate For(QwenChatCheckpoint checkpoint)
+    {
+        ArgumentNullException.ThrowIfNull(checkpoint);
+        return ReferenceEquals(checkpoint, QwenChatCheckpoint.Qwen3) ? Qwen3Renderer
+            : ReferenceEquals(checkpoint, QwenChatCheckpoint.Qwen25) ? Qwen25Renderer
+            : throw new NotSupportedException($"Unsupported Qwen chat checkpoint: {checkpoint.Id}");
+    }
+
     /// <summary>Render a conversation followed by the assistant generation prompt.</summary>
-    public static string Render(QwenChatProfile profile, IReadOnlyList<QwenChatMessage> messages) => Render(profile, messages, tools: null);
+    /// <param name="checkpoint">The admitted checkpoint whose template is rendered (a <c>QwenChatProfile</c> converts implicitly).</param>
+    /// <param name="messages">The conversation.</param>
+    public static string Render(QwenChatCheckpoint checkpoint, IReadOnlyList<QwenChatMessage> messages) => Render(checkpoint, messages, tools: null);
 
     /// <summary>Render a conversation with tool definitions, followed by the assistant generation prompt.</summary>
-    /// <param name="profile">The admitted profile whose template is rendered.</param>
+    /// <param name="checkpoint">The admitted checkpoint whose template is rendered (a <c>QwenChatProfile</c> converts implicitly).</param>
     /// <param name="messages">The conversation.</param>
     /// <param name="tools">
     /// The template's <c>tools</c>: rendered into the system block with the template's tool-call instructions. Null or
     /// empty renders no tools block (an empty list is falsy in the template). Experimental.
     /// </param>
     /// <exception cref="NotSupportedException">The conversation or tool data is outside the supported subset.</exception>
-    public static string Render(QwenChatProfile profile, IReadOnlyList<QwenChatMessage> messages, IReadOnlyList<QwenChatTool>? tools)
+    public static string Render(QwenChatCheckpoint checkpoint, IReadOnlyList<QwenChatMessage> messages, IReadOnlyList<QwenChatTool>? tools)
     {
-        ArgumentNullException.ThrowIfNull(profile);
+        ArgumentNullException.ThrowIfNull(checkpoint);
         ArgumentNullException.ThrowIfNull(messages);
         if (messages.Count == 0)
         {
@@ -76,7 +99,7 @@ public static class QwenChatTemplate
             }
         }
 
-        bool qwen3 = profile == QwenChatProfile.Qwen3;
+        bool qwen3 = ReferenceEquals(checkpoint, QwenChatCheckpoint.Qwen3);
         bool firstIsSystem = messages[0].Role == QwenChatRole.System;
         var result = new StringBuilder();
         if (tools is { Count: > 0 })
@@ -249,5 +272,27 @@ public static class QwenChatTemplate
         result.Append("<tool_call>\n{\"name\": \"").Append(QwenChatPythonJson.CheckedString(call.Name)).Append("\", \"arguments\": ");
         QwenChatPythonJson.Dumps(result, call.Arguments);
         result.Append("}\n</tool_call>");
+    }
+}
+
+/// <summary><see cref="QwenChatTemplate.For"/>.</summary>
+file sealed class Renderer(QwenChatCheckpoint checkpoint) : IChatTemplate
+{
+    public string TemplateSha256 => checkpoint.TemplateSha256;
+
+    public bool SupportsThinking => false;
+
+    public string Render(IReadOnlyList<ChatTurn> turns, IReadOnlyList<ToolDefinition>? tools = null, bool enableThinking = false)
+    {
+        ArgumentNullException.ThrowIfNull(turns);
+        if (enableThinking)
+        {
+            throw new NotSupportedException("These profiles render with enable_thinking=false; thinking mode is unsupported.");
+        }
+
+        return QwenChatTemplate.Render(
+            checkpoint,
+            [.. turns.Select(QwenChatMessage.FromChatTurn)],
+            tools is null ? null : [.. tools.Select(QwenChatTool.FromDefinition)]);
     }
 }

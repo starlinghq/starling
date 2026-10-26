@@ -1,6 +1,7 @@
 using System.Runtime.CompilerServices;
 using System.Text.Json;
 using System.Threading.Channels;
+using Starlings.Generation;
 using Starlings.Generation.OnnxGenAI;
 using Microsoft.Extensions.AI;
 
@@ -260,8 +261,8 @@ public sealed class Qwen35ChatClient : IChatClient
             ResponseId = id,
             ModelId = ModelId,
             CreatedAt = DateTimeOffset.UtcNow,
-            FinishReason = MapFinishReason(result.FinishReason, toolCalls),
-            Usage = MapUsage(result.Usage),
+            FinishReason = result.FinishReason.ToChatFinishReason(toolCalls),
+            Usage = result.Usage.ToUsageDetails(),
             RawRepresentation = result,
         };
         if (chatOptions.ReturnLogprobs)
@@ -427,8 +428,8 @@ public sealed class Qwen35ChatClient : IChatClient
 
                     if (update.Result is { } result)
                     {
-                        chatUpdate.FinishReason = MapFinishReason(result.FinishReason, toolCalls);
-                        contents.Add(new UsageContent(MapUsage(result.Usage)));
+                        chatUpdate.FinishReason = result.FinishReason.ToChatFinishReason(toolCalls);
+                        contents.Add(new UsageContent(result.Usage.ToUsageDetails()));
                     }
 
                     yield return chatUpdate;
@@ -494,20 +495,6 @@ public sealed class Qwen35ChatClient : IChatClient
             _model.Dispose();
         }
     }
-
-    internal static ChatFinishReason MapFinishReason(GenerationFinishReason reason, bool toolCalls = false) => reason switch
-    {
-        GenerationFinishReason.Stop or GenerationFinishReason.StopSequence => toolCalls ? ChatFinishReason.ToolCalls : ChatFinishReason.Stop,
-        GenerationFinishReason.Length => ChatFinishReason.Length,
-        _ => throw new ArgumentOutOfRangeException(nameof(reason), reason, "Unknown finish reason."),
-    };
-
-    private static UsageDetails MapUsage(GenerationUsage usage) => new()
-    {
-        InputTokenCount = usage.PromptTokens,
-        OutputTokenCount = usage.CompletionTokens,
-        TotalTokenCount = usage.TotalTokens,
-    };
 
     private static string NewId() => "qwen35-" + Guid.NewGuid().ToString("N");
 

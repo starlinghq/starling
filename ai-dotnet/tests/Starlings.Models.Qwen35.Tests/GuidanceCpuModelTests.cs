@@ -1,5 +1,6 @@
 using System.Text.Json;
 using System.Text.RegularExpressions;
+using Starlings.Generation;
 using Starlings.Generation.OnnxGenAI;
 using Starlings.Models.Qwen35;
 using Starlings.TestSupport;

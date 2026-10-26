@@ -29,7 +29,7 @@ internal static class CudaToolCallingChecks
         Assert.Equal(c.PromptIds, client.Model.CreatePrompt(c.Messages!, c.Tools).TokenIds);
 
         var response = await client.GetResponseAsync(ChatClientModelChecks.ToChatMessages(c), options, ct);
-        var raw = Assert.IsType<Starlings.Generation.OnnxGenAI.GenerationResult>(response.RawRepresentation);
+        var raw = Assert.IsType<Starlings.Generation.GenerationResult>(response.RawRepresentation);
         bool idsEqual = c.ContentIds.SequenceEqual(raw.TokenIds);
         TestContext.Current.TestOutputHelper?.WriteLine(
             $"{client.Model.Info.Profile} on {client.Model.Info.Provider}: {raw.TokenIds.Length} completion ids, equal to the reference: {idsEqual}");

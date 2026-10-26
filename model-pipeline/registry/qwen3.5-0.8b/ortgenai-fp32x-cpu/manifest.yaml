@@ -1,5 +1,5 @@
 # Pilot LLM profile (P-016): Qwen/Qwen3.5-0.8B on ONNX Runtime GenAI 0.17.1, variant fp32x on the CPU provider,
-# through ai-dotnet/src/Starlings.Models.Qwen35 (Qwen35ModelAssets pins the same files). Backend decision:
+# through ai-dotnet/src/Starlings.Models.Qwen35.OnnxGenAI (Qwen35ModelAssets pins the same files). Backend decision:
 # docs/kickoff.md (settled 2026-10-08) and docs/m0/generation-backend-check.md. The Hub repository ships no GenAI build:
 # the graph is Starling's reproducible build (model-pipeline/reference/generation/build_ortgenai_bundle.py: float32
 # config overlay, builder -p fp32 -e cpu, exclude_mtp=true), listed in origin.files with its digests. Development fixtures
@@ -7,7 +7,7 @@
 schema_version: 1
 id: qwen3.5-0.8b/ortgenai-fp32x-cpu
 # Stable since 2026-10-16 (maintainer's delegated promotion; docs/kickoff.md, "Stable CPU profiles, third round"): every
-# gate G0 to G7 passed (G5 on the quiet-host rerun, below), the contract is the Starlings.Models.Qwen35 README's "Stable
+# gate G0 to G7 passed (G5 on the quiet-host rerun, below), the contract is the Starlings.Models.Qwen35.OnnxGenAI README's "Stable
 # contract" (fp32x, Linux x64 CPU), and the scheduled qualification reruns G1 to G3 on the release sets (G2 on the
 # hosted full step-0 reference vectors pinned by the protected hosted-reference.json, #71) and a one-hour soak weekly,
 # green in run 38848321624.
@@ -174,7 +174,7 @@ execution:
       - { name: logits, type: float32, shape: [batch, sequence, 248320] }
 
 capabilities:
-  # Starlings.Models.Qwen35 (Qwen35Capabilities); evidence in docs/evidence/p016-qwen35/README.md and the release-set
+  # Starlings.Models.Qwen35.OnnxGenAI (Qwen35Capabilities); evidence in docs/evidence/p016-qwen35/README.md and the release-set
   # gates. Statuses follow the Stable contract in the package README: supported where the P-030 release sets (G1, G2,
   # G3), the accepted development fixtures and G4 to G7 cover it on Linux x64 CPU; experimental where only proposed rows
   # (P-029 template corpus, long context) or a single real-model run (tool calling) do; unsupported outside it.

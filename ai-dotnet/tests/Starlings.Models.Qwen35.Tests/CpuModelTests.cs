@@ -1,3 +1,4 @@
+using Starlings.Generation;
 using Starlings.Generation.OnnxGenAI;
 using Starlings.Models.Qwen35;
 using Starlings.TestSupport;
@@ -99,6 +100,9 @@ public sealed class CpuModelTests(Qwen35CpuFixture fixture) : IClassFixture<Qwen
 
     [Fact]
     public void CachedDecodingEqualsAFreshPrefill() => Qwen35LogitChecks.CachedDecodingEqualsAFreshPrefill(Model, Case("en-list"), 12, Tolerances);
+
+    [Fact]
+    public Task AsyncSequenceSeamEqualsTheSynchronousCalls() => Qwen35LogitChecks.AsyncSequenceSeamEqualsTheSynchronousCalls(Model, Case("en-list"), 8);
 
     [Fact]
     public void AdditionalStopTokenIdEndsAtItsFirstOccurrence() => Qwen35LogitChecks.AdditionalStopTokenIdEndsAtItsFirstOccurrence(Model, Case("en-list"), 3);

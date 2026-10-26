@@ -53,7 +53,7 @@ The full PyTorch notice (including the Caffe2 contributors) is the `LICENSE` fil
 
 ## Kev (reimplemented source)
 
-`Starlings.Models.Kev` (`KevText.cs`, `KevRequest.cs`, `KevEncoder.cs`, `KevPointerHead.cs`, `KevResults.cs`) reimplements in C# the request rendering, delimiter escaping, row-form encoding, pointer head and System One answer mapping of Kev (https://github.com/jaredpalmer/kev, `kev/api.py` and `kev/model.py` at commit `6b719c3c3f367295f6ef336f4f751cf5ff970abc`, tag `kev-1.0`), by Jared Palmer, licensed under the Apache License, Version 2.0. No upstream file is copied. The Kev adapter and pointer head weights (`jaredpalmer/kev-0.8b`, `jaredpalmer/kev-4b`) are Apache-2.0 per their model cards; the `Qwen/Qwen3.5-0.8B-Base` and `Qwen/Qwen3.5-4B-Base` weights and tokenizer, Copyright 2026 Alibaba Cloud, are Apache-2.0. Neither is redistributed by the package. The Apache License 2.0 text is at https://www.apache.org/licenses/LICENSE-2.0.
+`Starlings.Models.Kev` (`KevText.cs`, `KevRequest.cs`, `KevEncoder.cs`, `KevResults.cs`) and `Starlings.Models.Kev.Onnx` (`KevPointerHead.cs`) reimplement in C# the request rendering, delimiter escaping, row-form encoding, pointer head and System One answer mapping of Kev (https://github.com/jaredpalmer/kev, `kev/api.py` and `kev/model.py` at commit `6b719c3c3f367295f6ef336f4f751cf5ff970abc`, tag `kev-1.0`), by Jared Palmer, licensed under the Apache License, Version 2.0. No upstream file is copied. The Kev adapter and pointer head weights (`jaredpalmer/kev-0.8b`, `jaredpalmer/kev-4b`) are Apache-2.0 per their model cards; the `Qwen/Qwen3.5-0.8B-Base` and `Qwen/Qwen3.5-4B-Base` weights and tokenizer, Copyright 2026 Alibaba Cloud, are Apache-2.0. Neither is redistributed by the package. The Apache License 2.0 text is at https://www.apache.org/licenses/LICENSE-2.0.
 
 ## Qwen3.5-0.8B chat template and transformers (ported source)
 
@@ -61,7 +61,7 @@ The full PyTorch notice (including the Caffe2 contributors) is the `LICENSE` fil
 
 ## Qwen3 and Qwen2.5 chat templates (adapted source)
 
-`Starlings.Models.QwenChat` (`QwenChatTemplate.cs`; experimental, not published to nuget.org) adapts to C# the `chat_template` strings of `tokenizer_config.json` in `Qwen/Qwen3-0.6B` at commit `c1899de289a04d12100db370d81485cdf75e47ca` and `Qwen/Qwen2.5-0.5B-Instruct` at commit `7ae557604adf67be50417f59c2c2f167def9a775`, Copyright 2024 Alibaba Cloud, licensed under the Apache License, Version 2.0. Rendering is restricted to text system, user and assistant messages, with Qwen3 thinking disabled. The package carries the attribution and modification notice in its own `THIRD-PARTY-NOTICES.md` and the full license in `LICENSE.Qwen.txt`.
+`Starlings.Models.QwenChat` (`QwenChatTemplate.cs`; experimental) adapts to C# the `chat_template` strings of `tokenizer_config.json` in `Qwen/Qwen3-0.6B` at commit `c1899de289a04d12100db370d81485cdf75e47ca` and `Qwen/Qwen2.5-0.5B-Instruct` at commit `7ae557604adf67be50417f59c2c2f167def9a775`, Copyright 2024 Alibaba Cloud, licensed under the Apache License, Version 2.0. Rendering is restricted to text system, user and assistant messages, with Qwen3 thinking disabled. The package carries the attribution and modification notice in its own `THIRD-PARTY-NOTICES.md` and the full license in `LICENSE.Qwen.txt`.
 
 ## GLiNER2 (restated behaviour)
 

@@ -7,7 +7,7 @@ namespace Starlings.Models.Kev;
 public sealed record KevDecision(IReadOnlyList<KevAnswer> Answers, int StateTokens, int BranchTokens)
 {
     /// <summary>
-    /// Questions left unanswered because they are over a token limit (<see cref="KevOptions.DeclineOverLongQuestions"/>),
+    /// Questions left unanswered because they are over a token limit (<c>KevOptions.DeclineOverLongQuestions</c>),
     /// in question order; empty otherwise. <see cref="Answers"/> then holds the other questions, still in request order.
     /// </summary>
     public IReadOnlyList<KevOverLongQuestion> Declined { get; init; } = [];
@@ -80,13 +80,13 @@ public sealed class KevAnswer
     /// <summary>Score: the expected level index <c>sum(i * p_i)</c>.</summary>
     public double ExpectedScore { get; }
 
-    /// <summary>The temperature the probabilities were divided by (<see cref="KevDecisionModel.Temperature"/>).</summary>
+    /// <summary>The temperature the probabilities were divided by (<c>KevDecisionModel.Temperature</c>).</summary>
     public double Temperature { get; }
 
     /// <summary>
     /// True when <see cref="Temperature"/> is the checkpoint's calibrated temperature (<see cref="KevModelProfile.Temperature"/>,
     /// from <c>head.pt</c>), so the probabilities are the calibrated ones; false for any other
-    /// <see cref="KevOptions.Temperature"/>, 1.0 (raw) included.
+    /// <c>KevOptions.Temperature</c>, 1.0 (raw) included.
     /// </summary>
     public bool IsCalibrated { get; }
 

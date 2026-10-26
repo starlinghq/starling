@@ -17,27 +17,18 @@
       "starlings.acquisition": {
         "type": "Project"
       },
-      "starlings.generation.onnxgenai": {
+      "starlings.generation.abstractions": {
         "type": "Project",
         "dependencies": {
-          "Microsoft.ML.OnnxRuntimeGenAI.Managed": "[0.17.1, 0.17.1]",
+          "Microsoft.Extensions.AI.Abstractions": "[10.10.1, )",
           "Starlings.Tokenizers": "[0.3.2, 0.3.2]"
         }
       },
       "Microsoft.Extensions.AI.Abstractions": {
         "type": "CentralTransitive",
         "requested": "[10.10.1, )",
-        "resolved": "9.8.0",
-        "contentHash": "0++t+lPqX5amr7Kgh+ZFm1C5hhzMmFc5Dhoc6siNZ4sPXxy0pLTFRk+4vHn0hZf7Xe8Y9OoqL2cL4oTdjt8STQ=="
-      },
-      "Microsoft.ML.OnnxRuntimeGenAI.Managed": {
-        "type": "CentralTransitive",
-        "requested": "[0.17.1, 0.17.1]",
-        "resolved": "0.17.1",
-        "contentHash": "MIAOSt1TY4K96nGPZ1QLhEEH0XW7XmDTEwjDpxhaz+ruSnlkekaDsHmfvjXkcojQa6kgTA/SkNHkA7R849pERw==",
-        "dependencies": {
-          "Microsoft.Extensions.AI.Abstractions": "9.8.0"
-        }
+        "resolved": "10.10.1",
+        "contentHash": "Kz6ezQfRb9x2TkIWyaXkVAfpvyoAlEDfC59klPrdr2XD5WM4HNw+PREAZ+Fo43GPldtX+E0i1aYzMFQ/zXYMLg=="
       }
     }
   }

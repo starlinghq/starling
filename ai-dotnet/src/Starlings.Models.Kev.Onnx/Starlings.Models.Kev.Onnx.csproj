@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <IsPackable>true</IsPackable>
+    <IsAotCompatible>true</IsAotCompatible>
+    <!-- The types keep the namespace of the model definition package, so code moves by changing the package reference. -->
+    <RootNamespace>Starlings.Models.Kev</RootNamespace>
+    <Description>Kev decision models (jaredpalmer/kev-0.8b and jaredpalmer/kev-4b, Kev 1.0) on ONNX Runtime: one state and typed questions (noul, choice, score) in, a calibrated probability per option out, in one prefill pass without generating text. KevDecisionModel over the model definitions Starlings.Models.Kev (request rendering, delimiter escaping and token ids from the owned tokenizer Starlings.Tokenizers profile qwen2-bpe-kev), the Qwen3.5 backbone as an fp32 ONNX graph (the LoRA merged; ONNX Runtime GenAI builder without the LM head), the state run once and every question as its own row on the cached state, and Kev's pointer head. Ships the asset locks, not the weights. Profiles kev-0.8b/onnx-fp32-cpu and kev-4b/onnx-fp32-cpu, and onnx-fp32-cuda on the same bundles (TF32 off). The application adds the ONNX Runtime native package. Maturity is per model profile (Stable, Preview or Experimental): see the README, generated from the model registry.</Description>
+    <PackageTags>kev;decision;classification;calibration;qwen3.5;onnxruntime</PackageTags>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../Starlings.Models.Kev/Starlings.Models.Kev.csproj" />
+    <ProjectReference Include="../Starlings.Runtime.Onnx/Starlings.Runtime.Onnx.csproj" />
+    <PackageReference Include="Starlings.Tokenizers" />
+    <!-- Asset lock and verification of the pinned files (P-009). BCL only. -->
+    <ProjectReference Include="../Starlings.Acquisition/Starlings.Acquisition.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Starlings.Models.Kev.Tests" />
+    <InternalsVisibleTo Include="Starlings.Kev.Fidelity.Tool" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <IsPackable>true</IsPackable>
+    <!-- Trim, AOT and single-file analyzers on (warnings are errors). -->
+    <IsAotCompatible>true</IsAotCompatible>
+    <Description>Backend-neutral generation types for Starling's chat models: generation options, results, streamed updates, finish reasons, usage and per-token log probabilities; the stop-sequence matcher and the UTF-8-safe incremental detokenizer over the owned tokenizer Starlings.Tokenizers; chat turns, tool definitions and tool calls with the IChatTemplate and IToolCallParser seams; a ModelProfile record of a pinned checkpoint; Python json.dumps and str() formatting of JSON values as chat templates write them; an asynchronous IGenerationSequence seam for decode backends; and the Microsoft.Extensions.AI finish-reason and usage mapping. No ONNX Runtime dependency: the ONNX Runtime GenAI backend is Starlings.Generation.OnnxGenAI. Maturity is per model profile (Stable, Preview or Experimental): see the README, generated from the model registry.</Description>
+    <PackageTags>llm;text-generation;chat-template;tool-calling;streaming;abstractions</PackageTags>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Starlings.Tokenizers" />
+    <!--
+      One Microsoft.Extensions.AI.Abstractions version for every generation package (10.10.1, as the encoder adapters):
+      Microsoft.ML.OnnxRuntimeGenAI.Managed 0.17.1 depends on >= 9.8.0 for its own IChatClient, which no Starling code
+      uses; this direct reference lifts the graph of Starlings.Generation.OnnxGenAI and every package above it to 10.10.1.
+    -->
+    <PackageReference Include="Microsoft.Extensions.AI.Abstractions" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Starlings.Generation.Abstractions.Tests" />
+  </ItemGroup>
+
+</Project>

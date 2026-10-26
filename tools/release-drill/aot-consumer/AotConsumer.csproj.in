@@ -54,7 +54,7 @@
     <PackageReference Include="Starlings.Models.EmbeddingGemma2.MLNet" Version="[@VERSION@]" />
   </ItemGroup>
   <ItemGroup Condition="'$(AotTarget)' == 'qwen35'">
-    <PackageReference Include="Starlings.Models.Qwen35" Version="[@VERSION@]" />
+    <PackageReference Include="Starlings.Models.Qwen35.OnnxGenAI" Version="[@VERSION@]" />
   </ItemGroup>
   <ItemGroup Condition="'$(AotTarget)' == 'qwen35-meai'">
     <PackageReference Include="Starlings.Models.Qwen35.Extensions.AI" Version="[@VERSION@]" />

@@ -6,10 +6,11 @@
 # Proves a new user can install and run the release candidate without the source checkout, a hidden cache or an
 # upstream tokenizer. From a clean clone of the committed HEAD it
 #   1. packs the ai-dotnet packages (Runtime.Onnx, Acquisition,
-#      Models.E5, Models.E5.Extensions.AI, Models.E5.MLNet, Models.Gliner2, Generation.OnnxGenAI, Models.Qwen35,
-#      Models.EmbeddingGemma2, Models.EmbeddingGemma2.Extensions.AI, Models.EmbeddingGemma2.MLNet,
-#      Models.EmbeddingGemma2.Imaging.SkiaSharp, Models.EmbeddingGemma2.Video.FFmpeg, Models.EmbeddingGemma2.Video.FFmpeg9,
-#      Models.Qwen35.Extensions.AI, Models.Kev, Models.QwenChat), locked restore, empty private NuGet cache,
+#      Models.E5, Models.E5.Extensions.AI, Models.E5.MLNet, Models.Gliner2, Generation.Abstractions, Generation.OnnxGenAI,
+#      Models.Qwen35, Models.Qwen35.OnnxGenAI, Models.EmbeddingGemma2, Models.EmbeddingGemma2.Extensions.AI,
+#      Models.EmbeddingGemma2.MLNet, Models.EmbeddingGemma2.Imaging.SkiaSharp, Models.EmbeddingGemma2.Video.FFmpeg,
+#      Models.EmbeddingGemma2.Video.FFmpeg9, Models.Qwen35.Extensions.AI, Models.Kev, Models.Kev.Onnx, Models.QwenChat,
+#      Models.QwenChat.OnnxGenAI), locked restore, empty private NuGet cache,
 #   2. inspects every nuspec (version, MIT OR Apache-2.0, readme, repository commit, exact dependency list: no native ONNX Runtime or
 #      ONNX Runtime GenAI, no Microsoft.ML.Tokenizers, no FFmpeg bindings package), the packed files (no
 #      model assets, no FFmpeg library) and the symbol packages
@@ -337,11 +338,15 @@ projects=(
     ai-dotnet/src/Starlings.Models.EmbeddingGemma2.Imaging.SkiaSharp
     ai-dotnet/src/Starlings.Models.EmbeddingGemma2.Video.FFmpeg
     ai-dotnet/src/Starlings.Models.EmbeddingGemma2.Video.FFmpeg9
+    ai-dotnet/src/Starlings.Generation.Abstractions
     ai-dotnet/src/Starlings.Generation.OnnxGenAI
     ai-dotnet/src/Starlings.Models.Qwen35
+    ai-dotnet/src/Starlings.Models.Qwen35.OnnxGenAI
     ai-dotnet/src/Starlings.Models.Qwen35.Extensions.AI
     ai-dotnet/src/Starlings.Models.Kev
+    ai-dotnet/src/Starlings.Models.Kev.Onnx
     ai-dotnet/src/Starlings.Models.QwenChat
+    ai-dotnet/src/Starlings.Models.QwenChat.OnnxGenAI
 )
 pack_sha="$sha"
 if [[ -z "$packages_from" ]]; then
@@ -417,24 +422,40 @@ expect_deps() {
             echo "SkiaSharp.NativeAssets.Linux.NoDependencies [$skia_version]" ;;
         Starlings.Models.EmbeddingGemma2.Video.FFmpeg | Starlings.Models.EmbeddingGemma2.Video.FFmpeg9)
             echo "Starlings.Models.EmbeddingGemma2 [$ai_version]" ;;
+        Starlings.Generation.Abstractions)
+            echo "Starlings.Tokenizers [$tok_version]"
+            echo "Microsoft.Extensions.AI.Abstractions 10.10.1" ;;
         Starlings.Generation.OnnxGenAI)
+            echo "Starlings.Generation.Abstractions [$ai_version]"
             echo "Starlings.Tokenizers [$tok_version]"
             echo "Microsoft.ML.OnnxRuntimeGenAI.Managed [$genai_version]" ;;
         Starlings.Models.Qwen35)
             echo "Starlings.Acquisition [$ai_version]"
+            echo "Starlings.Generation.Abstractions [$ai_version]"
+            echo "Starlings.Tokenizers [$tok_version]" ;;
+        Starlings.Models.Qwen35.OnnxGenAI)
+            echo "Starlings.Acquisition [$ai_version]"
             echo "Starlings.Generation.OnnxGenAI [$ai_version]"
+            echo "Starlings.Models.Qwen35 [$ai_version]"
             echo "Starlings.Tokenizers [$tok_version]" ;;
         Starlings.Models.Qwen35.Extensions.AI)
-            echo "Starlings.Models.Qwen35 [$ai_version]"
+            echo "Starlings.Models.Qwen35.OnnxGenAI [$ai_version]"
             echo "Microsoft.Extensions.AI.Abstractions 10.10.1"
             echo "Microsoft.Extensions.DependencyInjection.Abstractions 10.0.12" ;;
         Starlings.Models.Kev)
+            echo "Starlings.Tokenizers [$tok_version]" ;;
+        Starlings.Models.Kev.Onnx)
             echo "Starlings.Acquisition [$ai_version]"
+            echo "Starlings.Models.Kev [$ai_version]"
             echo "Starlings.Runtime.Onnx [$ai_version]"
             echo "Starlings.Tokenizers [$tok_version]" ;;
         Starlings.Models.QwenChat)
+            echo "Starlings.Generation.Abstractions [$ai_version]"
+            echo "Starlings.Tokenizers [$tok_version]" ;;
+        Starlings.Models.QwenChat.OnnxGenAI)
             echo "Starlings.Acquisition [$ai_version]"
             echo "Starlings.Generation.OnnxGenAI [$ai_version]"
+            echo "Starlings.Models.QwenChat [$ai_version]"
             echo "Starlings.Tokenizers [$tok_version]" ;;
     esac
 }
@@ -613,9 +634,9 @@ for path in sys.argv[5:]:
                   else ["Starlings.Tokenizers", "Starlings.Acquisition", "Microsoft.ML.OnnxRuntime.Gpu",
                         "Microsoft.ML.OnnxRuntime.Gpu.Linux", "Microsoft.ML.OnnxRuntimeGenAI.Cuda",
                         "Microsoft.ML.OnnxRuntimeGenAI.Managed", "Microsoft.ML.OnnxRuntime.Managed"])
-        models = ["Starlings.Generation.OnnxGenAI", "Starlings.Models.Qwen35",
-                  "Starlings.Models.Qwen35.Extensions.AI", "Microsoft.Extensions.AI.Abstractions"]
-        # One Microsoft.Extensions.AI.Abstractions: the adapter's 10.10.1 lifts the 9.8.0 that GenAI's managed binding asks for.
+        models = ["Starlings.Generation.Abstractions", "Starlings.Generation.OnnxGenAI", "Starlings.Models.Qwen35",
+                  "Starlings.Models.Qwen35.OnnxGenAI", "Starlings.Models.Qwen35.Extensions.AI", "Microsoft.Extensions.AI.Abstractions"]
+        # One Microsoft.Extensions.AI.Abstractions: Generation.Abstractions' 10.10.1 lifts the 9.8.0 that GenAI's managed binding asks for.
         mea = [n for n in names if n.split("/")[0] == "Microsoft.Extensions.AI.Abstractions"]
         assert mea == ["Microsoft.Extensions.AI.Abstractions/10.10.1"], f"Microsoft.Extensions.AI.Abstractions resolved as {mea}"
         unrelated = ("Starlings.Runtime.Onnx", "Starlings.Models.E5", "Starlings.Models.Gliner2",
@@ -682,8 +703,8 @@ echo "ok:   no native package check fired in ${consumer_apps[*]}"
 native_cases=(
     "ort-none|Starlings.Models.E5||warning STARLINGS001"
     "ort-both|Starlings.Models.E5|Microsoft.ML.OnnxRuntime/$ort_version Microsoft.ML.OnnxRuntime.Gpu.Linux/$ort_version|error STARLINGS002"
-    "genai-none|Starlings.Models.Qwen35||warning STARLINGS003"
-    "genai-both|Starlings.Models.Qwen35|Microsoft.ML.OnnxRuntimeGenAI/$genai_version Microsoft.ML.OnnxRuntimeGenAI.Cuda/$genai_version|error STARLINGS004"
+    "genai-none|Starlings.Models.Qwen35.OnnxGenAI||warning STARLINGS003"
+    "genai-both|Starlings.Models.Qwen35.OnnxGenAI|Microsoft.ML.OnnxRuntimeGenAI/$genai_version Microsoft.ML.OnnxRuntimeGenAI.Cuda/$genai_version|error STARLINGS004"
 )
 for entry in "${native_cases[@]}"; do
     IFS='|' read -r name package natives want <<<"$entry"
@@ -998,8 +1019,8 @@ hosting=(
     "EmbeddingGemma 2|ai-dotnet/src/Starlings.Models.EmbeddingGemma2/EmbeddingGemma2ModelAssets.cs|ModelSourceIsPlaceholder = true"
     "EmbeddingGemma 2 images|ai-dotnet/src/Starlings.Models.EmbeddingGemma2/EmbeddingGemma2ModelAssets.cs|ImageModelSourceIsPlaceholder = true"
     "EmbeddingGemma 2 videos|ai-dotnet/src/Starlings.Models.EmbeddingGemma2/EmbeddingGemma2ModelAssets.cs|ImageModelSourceIsPlaceholder = true"
-    "Qwen 3.5|ai-dotnet/src/Starlings.Models.Qwen35/Qwen35ModelAssets.cs|HostingIsPrivate = true"
-    "Qwen 3.5 fp16x|ai-dotnet/src/Starlings.Models.Qwen35/Qwen35ModelAssets.cs|HostingIsPrivate = true"
+    "Qwen 3.5|ai-dotnet/src/Starlings.Models.Qwen35.OnnxGenAI/Qwen35ModelAssets.cs|HostingIsPrivate = true"
+    "Qwen 3.5 fp16x|ai-dotnet/src/Starlings.Models.Qwen35.OnnxGenAI/Qwen35ModelAssets.cs|HostingIsPrivate = true"
 )
 # The protected greedy reference of the drill's question (Qwen 3.5 reference fixtures, row en-short): the answer text
 # without the stop token, and the completion token count without it.

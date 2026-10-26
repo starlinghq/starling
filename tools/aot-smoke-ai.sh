@@ -24,12 +24,13 @@ set -euo pipefail
 
 root="$(cd "$(dirname "$0")/.." && pwd)"
 all_packages=(
-    Starlings.Acquisition Starlings.Runtime.Onnx Starlings.Models.E5 Starlings.Models.E5.Extensions.AI
-    Starlings.Models.E5.MLNet Starlings.Models.Gliner2 Starlings.Models.EmbeddingGemma2
+    Starlings.Acquisition Starlings.Runtime.Onnx Starlings.Models.Abstractions Starlings.Models.E5
+    Starlings.Models.E5.Extensions.AI Starlings.Models.E5.MLNet Starlings.Models.Gliner2 Starlings.Models.EmbeddingGemma2
     Starlings.Models.EmbeddingGemma2.Extensions.AI Starlings.Models.EmbeddingGemma2.MLNet
     Starlings.Models.EmbeddingGemma2.Imaging.SkiaSharp Starlings.Models.EmbeddingGemma2.Video.FFmpeg
-    Starlings.Models.EmbeddingGemma2.Video.FFmpeg9 Starlings.Generation.OnnxGenAI Starlings.Models.Qwen35
-    Starlings.Models.Qwen35.Extensions.AI Starlings.Models.Kev Starlings.Models.QwenChat Starlings.Models.Bert
+    Starlings.Models.EmbeddingGemma2.Video.FFmpeg9 Starlings.Generation.Abstractions Starlings.Generation.OnnxGenAI
+    Starlings.Models.Qwen35 Starlings.Models.Qwen35.OnnxGenAI Starlings.Models.Qwen35.Extensions.AI Starlings.Models.Kev
+    Starlings.Models.Kev.Onnx Starlings.Models.QwenChat Starlings.Models.QwenChat.OnnxGenAI Starlings.Models.Bert
     Starlings.Models.Whisper
 )
 # AOT unsupported with the reason in docs/evidence/aot/README.md (Microsoft.ML builds its row getters with

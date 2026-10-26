@@ -364,3 +364,18 @@ internal sealed record GenAIConfigSummary(string ModelType, int ContextLength, i
         }
     }
 }
+
+/// <summary>The type strings GenAI's <c>SetGuidance</c> takes.</summary>
+internal static class GuidanceNativeTypes
+{
+    extension(GenerationGuidance guidance)
+    {
+        /// <summary>The type string of the guidance's <see cref="GenerationGuidance.Kind"/>.</summary>
+        public string NativeType => guidance.Kind switch
+        {
+            GenerationGuidanceKind.JsonSchema => "json_schema",
+            GenerationGuidanceKind.Lark => "lark_grammar",
+            _ => "regex",
+        };
+    }
+}

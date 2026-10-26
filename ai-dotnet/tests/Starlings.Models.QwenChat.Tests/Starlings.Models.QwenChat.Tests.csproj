@@ -6,6 +6,6 @@
   <ItemGroup>
     <PackageReference Include="xunit.v3" />
     <Using Include="Xunit" />
-    <ProjectReference Include="../../src/Starlings.Models.QwenChat/Starlings.Models.QwenChat.csproj" />
+    <ProjectReference Include="../../src/Starlings.Models.QwenChat.OnnxGenAI/Starlings.Models.QwenChat.OnnxGenAI.csproj" />
   </ItemGroup>
 </Project>

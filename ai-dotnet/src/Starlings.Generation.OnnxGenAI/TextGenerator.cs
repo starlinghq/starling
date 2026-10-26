@@ -37,7 +37,7 @@ namespace Starlings.Generation.OnnxGenAI;
 public sealed class TextGenerator
 {
     private readonly HashSet<int> _stopIds;
-    private readonly Func<GenAISequenceOptions, IGenerationSequence> _createSequence;
+    private readonly Func<GenAISequenceOptions, IDecodeSequence> _createSequence;
     private readonly int? _padTokenId;
     private readonly int _contextLength;
 
@@ -59,7 +59,7 @@ public sealed class TextGenerator
     }
 
     /// <summary>Test seam: the decode loop over any sequence implementation (no native model).</summary>
-    internal TextGenerator(Func<GenAISequenceOptions, IGenerationSequence> createSequence, Tokenizer tokenizer, IEnumerable<int> eosTokenIds, int contextLength, int? padTokenId)
+    internal TextGenerator(Func<GenAISequenceOptions, IDecodeSequence> createSequence, Tokenizer tokenizer, IEnumerable<int> eosTokenIds, int contextLength, int? padTokenId)
     {
         Model = null!;
         Tokenizer = tokenizer;
@@ -157,7 +157,7 @@ public sealed class TextGenerator
         // for one step's forced tokens beyond MaxNewTokens; the loop never returns more than MaxNewTokens tokens.
         int fastForwardHeadroom = options.Guidance?.MaxFastForwardTokens ?? 0;
         Queue<int>? forced = options.Guidance is { FastForward: true } ? new Queue<int>() : null;
-        using IGenerationSequence sequence = _createSequence(new GenAISequenceOptions
+        using IDecodeSequence sequence = _createSequence(new GenAISequenceOptions
         {
             MaxLength = prompt.Length + options.MaxNewTokens + fastForwardHeadroom,
             Sampling = options.Sampling,

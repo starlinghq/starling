@@ -20,6 +20,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json.Nodes;
 using Starlings.Acquisition;
+using Starlings.Generation;
 using Starlings.Generation.OnnxGenAI;
 using Starlings.Models.Qwen35;
 

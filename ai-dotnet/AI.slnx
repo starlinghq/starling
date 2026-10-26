@@ -2,6 +2,7 @@
   <Folder Name="/src/">
     <Project Path="src/Starlings.Models.Bert/Starlings.Models.Bert.csproj" />
     <Project Path="src/Starlings.Models.QwenChat/Starlings.Models.QwenChat.csproj" />
+    <Project Path="src/Starlings.Models.QwenChat.OnnxGenAI/Starlings.Models.QwenChat.OnnxGenAI.csproj" />
     <Project Path="src/Starlings.Models.EmbeddingGemma2.Extensions.AI/Starlings.Models.EmbeddingGemma2.Extensions.AI.csproj" />
     <Project Path="src/Starlings.Models.EmbeddingGemma2.MLNet/Starlings.Models.EmbeddingGemma2.MLNet.csproj" />
     <Project Path="src/Starlings.Models.EmbeddingGemma2/Starlings.Models.EmbeddingGemma2.csproj" />
@@ -10,6 +11,7 @@
     <Project Path="src/Starlings.Models.EmbeddingGemma2.Video.FFmpeg9/Starlings.Models.EmbeddingGemma2.Video.FFmpeg9.csproj" />
     <Project Path="src/Starlings.Models.Gliner2/Starlings.Models.Gliner2.csproj" />
     <Project Path="src/Starlings.Models.Kev/Starlings.Models.Kev.csproj" />
+    <Project Path="src/Starlings.Models.Kev.Onnx/Starlings.Models.Kev.Onnx.csproj" />
     <Project Path="src/Starlings.Models.Whisper/Starlings.Models.Whisper.csproj" />
     <Project Path="src/Starlings.Runtime.Onnx/Starlings.Runtime.Onnx.csproj" />
     <Project Path="src/Starlings.Models.Abstractions/Starlings.Models.Abstractions.csproj" />
@@ -20,8 +22,10 @@
     <Project Path="src/Starlings.Runtime.OnnxWeb/Starlings.Runtime.OnnxWeb.csproj" />
     <Project Path="src/Starlings.Runtime.OnnxWeb.WebGpu/Starlings.Runtime.OnnxWeb.WebGpu.csproj" />
     <Project Path="src/Starlings.Acquisition/Starlings.Acquisition.csproj" />
+    <Project Path="src/Starlings.Generation.Abstractions/Starlings.Generation.Abstractions.csproj" />
     <Project Path="src/Starlings.Generation.OnnxGenAI/Starlings.Generation.OnnxGenAI.csproj" />
     <Project Path="src/Starlings.Models.Qwen35/Starlings.Models.Qwen35.csproj" />
+    <Project Path="src/Starlings.Models.Qwen35.OnnxGenAI/Starlings.Models.Qwen35.OnnxGenAI.csproj" />
     <Project Path="src/Starlings.Models.Qwen35.Extensions.AI/Starlings.Models.Qwen35.Extensions.AI.csproj" />
   </Folder>
   <Folder Name="/tests/">
@@ -43,6 +47,7 @@
     <Project Path="tests/Starlings.Models.EmbeddingGemma2.Video.FFmpeg9.Tests/Starlings.Models.EmbeddingGemma2.Video.FFmpeg9.Tests.csproj" />
     <Project Path="tests/Starlings.Models.Gliner2.Tests/Starlings.Models.Gliner2.Tests.csproj" />
     <Project Path="tests/Starlings.Models.Kev.Tests/Starlings.Models.Kev.Tests.csproj" />
+    <Project Path="tests/Starlings.Generation.Abstractions.Tests/Starlings.Generation.Abstractions.Tests.csproj" />
     <Project Path="tests/Starlings.Generation.OnnxGenAI.Tests/Starlings.Generation.OnnxGenAI.Tests.csproj" />
     <Project Path="tests/Starlings.Models.Qwen35.Tests/Starlings.Models.Qwen35.Tests.csproj" />
     <Project Path="tests/Starlings.Models.Qwen35.Extensions.AI.Tests/Starlings.Models.Qwen35.Extensions.AI.Tests.csproj" />

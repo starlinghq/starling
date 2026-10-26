@@ -19,7 +19,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="../../src/Starlings.Models.Kev/Starlings.Models.Kev.csproj" />
+    <ProjectReference Include="../../src/Starlings.Models.Kev.Onnx/Starlings.Models.Kev.Onnx.csproj" />
   </ItemGroup>
 
 </Project>

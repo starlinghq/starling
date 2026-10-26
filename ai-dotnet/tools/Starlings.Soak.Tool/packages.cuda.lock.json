@@ -38,51 +38,75 @@
       "starlings.acquisition": {
         "type": "Project"
       },
+      "starlings.generation.abstractions": {
+        "type": "Project",
+        "dependencies": {
+          "Microsoft.Extensions.AI.Abstractions": "[10.10.1, )",
+          "Starlings.Tokenizers": "[0.3.2, 0.3.2]"
+        }
+      },
       "starlings.generation.onnxgenai": {
         "type": "Project",
         "dependencies": {
           "Microsoft.ML.OnnxRuntimeGenAI.Managed": "[0.17.1, 0.17.1]",
-          "Starlings.Tokenizers": "[0.3.0, 0.3.0]"
+          "Starlings.Generation.Abstractions": "[0.3.0, )",
+          "Starlings.Tokenizers": "[0.3.2, 0.3.2]"
         }
       },
       "starlings.models.e5": {
         "type": "Project",
         "dependencies": {
-          "Starlings.Acquisition": "[0.2.0, )",
-          "Starlings.Runtime.Onnx": "[0.2.0, )",
-          "Starlings.Tokenizers": "[0.3.0, 0.3.0]"
+          "Starlings.Acquisition": "[0.3.0, )",
+          "Starlings.Runtime.Onnx": "[0.3.0, )",
+          "Starlings.Tokenizers": "[0.3.2, 0.3.2]"
         }
       },
       "starlings.models.embeddinggemma2": {
         "type": "Project",
         "dependencies": {
-          "Starlings.Acquisition": "[0.2.0, )",
-          "Starlings.Runtime.Onnx": "[0.2.0, )",
-          "Starlings.Tokenizers": "[0.3.0, 0.3.0]"
+          "Starlings.Acquisition": "[0.3.0, )",
+          "Starlings.Runtime.Onnx": "[0.3.0, )",
+          "Starlings.Tokenizers": "[0.3.2, 0.3.2]"
         }
       },
       "starlings.models.gliner2": {
         "type": "Project",
         "dependencies": {
-          "Starlings.Acquisition": "[0.2.0, )",
-          "Starlings.Runtime.Onnx": "[0.2.0, )",
-          "Starlings.Tokenizers": "[0.3.0, 0.3.0]"
+          "Starlings.Acquisition": "[0.3.0, )",
+          "Starlings.Runtime.Onnx": "[0.3.0, )",
+          "Starlings.Tokenizers": "[0.3.2, 0.3.2]"
         }
       },
       "starlings.models.kev": {
         "type": "Project",
         "dependencies": {
-          "Starlings.Acquisition": "[0.2.0, )",
-          "Starlings.Runtime.Onnx": "[0.2.0, )",
-          "Starlings.Tokenizers": "[0.3.0, 0.3.0]"
+          "Starlings.Tokenizers": "[0.3.2, 0.3.2]"
+        }
+      },
+      "starlings.models.kev.onnx": {
+        "type": "Project",
+        "dependencies": {
+          "Starlings.Acquisition": "[0.3.0, )",
+          "Starlings.Models.Kev": "[0.3.0, )",
+          "Starlings.Runtime.Onnx": "[0.3.0, )",
+          "Starlings.Tokenizers": "[0.3.2, 0.3.2]"
         }
       },
       "starlings.models.qwen35": {
         "type": "Project",
         "dependencies": {
-          "Starlings.Acquisition": "[0.2.0, )",
-          "Starlings.Generation.OnnxGenAI": "[0.2.0, )",
-          "Starlings.Tokenizers": "[0.3.0, 0.3.0]"
+          "Starlings.Acquisition": "[0.3.0, )",
+          "Starlings.Generation.Abstractions": "[0.3.0, )",
+          "Starlings.Tokenizers": "[0.3.2, 0.3.2]"
+        }
+      },
+      "starlings.models.qwen35.onnxgenai": {
+        "type": "Project",
+        "dependencies": {
+          "Starlings.Acquisition": "[0.3.0, )",
+          "Starlings.Generation.OnnxGenAI": "[0.3.0, )",
+          "Starlings.Models.Qwen35": "[0.3.0, )",
+          "Starlings.Tokenizers": "[0.3.2, 0.3.2]"
         }
       },
       "starlings.runtime.onnx": {
@@ -94,8 +118,8 @@
       "Microsoft.Extensions.AI.Abstractions": {
         "type": "CentralTransitive",
         "requested": "[10.10.1, )",
-        "resolved": "9.8.0",
-        "contentHash": "0++t+lPqX5amr7Kgh+ZFm1C5hhzMmFc5Dhoc6siNZ4sPXxy0pLTFRk+4vHn0hZf7Xe8Y9OoqL2cL4oTdjt8STQ=="
+        "resolved": "10.10.1",
+        "contentHash": "Kz6ezQfRb9x2TkIWyaXkVAfpvyoAlEDfC59klPrdr2XD5WM4HNw+PREAZ+Fo43GPldtX+E0i1aYzMFQ/zXYMLg=="
       },
       "Microsoft.ML.OnnxRuntime.Gpu.Linux": {
         "type": "CentralTransitive",
@@ -126,9 +150,9 @@
       },
       "Starlings.Tokenizers": {
         "type": "CentralTransitive",
-        "requested": "[0.3.0, 0.3.0]",
-        "resolved": "0.3.0",
-        "contentHash": "5VQxvrls4G1GQBsnJaHuMsgzGWGVDlUCQ4p3Z5/lAiMhTG4FZPZ4RbvGxegOtzqM/8kBVTMD8zvicspZyYlnTg=="
+        "requested": "[0.3.2, 0.3.2]",
+        "resolved": "0.3.2",
+        "contentHash": "HZn31iCOWxhXSNjj5kavc/St0YbtPzdmDM78sz5laj1IL90IdYWAA0Hf2fsQsBM44NzlaKdolwXYiEC+Po8VnQ=="
       }
     }
   }

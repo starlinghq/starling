@@ -1,6 +1,6 @@
 using System.Text;
 using System.Text.Json;
-using Starlings.Generation.OnnxGenAI;
+using Starlings.Generation;
 using Starlings.TestSupport;
 using Starlings.Tokenizers;
 using Microsoft.Extensions.AI;

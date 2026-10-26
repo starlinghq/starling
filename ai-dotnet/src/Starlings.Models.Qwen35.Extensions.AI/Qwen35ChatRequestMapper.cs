@@ -1,5 +1,6 @@
 using System.Text;
 using System.Text.Json;
+using Starlings.Generation;
 using Starlings.Generation.OnnxGenAI;
 using Microsoft.Extensions.AI;
 

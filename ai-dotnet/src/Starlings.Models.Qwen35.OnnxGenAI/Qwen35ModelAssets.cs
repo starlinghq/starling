@@ -40,7 +40,8 @@ public sealed record Qwen35ModelFiles(Qwen35Variant Variant, string ModelDirecto
 
 /// <summary>
 /// The immutable asset locks of the profiles <c>qwen3.5-0.8b/ortgenai-fp32x</c> and <c>qwen3.5-0.8b/ortgenai-fp16x</c>,
-/// and explicit acquisition of those files. The model never downloads; call <see cref="DownloadAsync"/> once (setup
+/// and explicit acquisition of those files. The Hub checkpoint they are built from has its own lock,
+/// <see cref="Qwen35Checkpoint.Lock"/>. The model never downloads; call <see cref="DownloadAsync"/> once (setup
 /// step), then <see cref="OpenLocal"/> or <see cref="OpenDirectory"/> at startup.
 /// </summary>
 /// <remarks>
@@ -61,11 +62,11 @@ public sealed record Qwen35ModelFiles(Qwen35Variant Variant, string ModelDirecto
 /// </remarks>
 public static class Qwen35ModelAssets
 {
-    /// <summary>Hub repository of the checkpoint.</summary>
-    public const string Repository = "Qwen/Qwen3.5-0.8B";
+    /// <summary>Hub repository of the checkpoint (<see cref="Qwen35Checkpoint.Repository"/>).</summary>
+    public const string Repository = Qwen35Checkpoint.Repository;
 
-    /// <summary>Pinned commit of <see cref="Repository"/>.</summary>
-    public const string Revision = "2fc06364715b967f1860aea9cf38778875588b17";
+    /// <summary>Pinned commit of <see cref="Repository"/> (<see cref="Qwen35Checkpoint.Revision"/>).</summary>
+    public const string Revision = Qwen35Checkpoint.Revision;
 
     /// <summary>onnxruntime-genai builder version that wrote the graphs (must equal the runtime version).</summary>
     public const string BuilderVersion = "0.17.1";
@@ -76,11 +77,11 @@ public static class Qwen35ModelAssets
     /// <summary>Path of the owned tokenizer's <c>tokenizer.json</c> in the snapshot directory.</summary>
     public const string TokenizerFile = "transformers-5.18.0/tokenizer.json";
 
-    /// <summary>SHA-256 of <see cref="TokenizerFile"/> (the <c>qwen35-bpe-chat</c> profile asset).</summary>
-    public const string TokenizerSha256 = "a5cd9732badce41de57e6efce8302930ded1c1188c5f81feb2bd6c24c4a1941f";
+    /// <summary>SHA-256 of <see cref="TokenizerFile"/> (the <c>qwen35-bpe-chat</c> profile asset, <see cref="Qwen35Checkpoint.TokenizerSha256"/>).</summary>
+    public const string TokenizerSha256 = Qwen35Checkpoint.TokenizerSha256;
 
-    /// <summary>Owned tokenizer profile.</summary>
-    public const string TokenizerProfile = "qwen35-bpe-chat";
+    /// <summary>Owned tokenizer profile (<see cref="Qwen35Checkpoint.TokenizerProfile"/>).</summary>
+    public const string TokenizerProfile = Qwen35Checkpoint.TokenizerProfile;
 
     /// <summary>Path of the chat template in the snapshot directory (a Hub file).</summary>
     public const string ChatTemplateFile = "chat_template.jinja";

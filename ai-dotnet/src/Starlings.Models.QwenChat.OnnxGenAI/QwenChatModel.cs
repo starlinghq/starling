@@ -1,5 +1,6 @@
 using System.Security.Cryptography;
 using System.Text.Json;
+using Starlings.Generation;
 using Starlings.Generation.OnnxGenAI;
 using Starlings.Tokenizers;
 
@@ -75,7 +76,7 @@ public sealed class QwenChatModel : IDisposable
     /// </summary>
     public QwenChatPrompt CreatePrompt(IReadOnlyList<QwenChatMessage> messages, IReadOnlyList<QwenChatTool>? tools)
     {
-        string text = QwenChatTemplate.Render(Profile, messages, tools);
+        string text = QwenChatTemplate.Render(Profile.Checkpoint, messages, tools);
         return new QwenChatPrompt(text, Tokenizer.Encode(text, addSpecialTokens: false).Ids);
     }
 

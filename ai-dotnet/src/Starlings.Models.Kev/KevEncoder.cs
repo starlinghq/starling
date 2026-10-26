@@ -17,12 +17,12 @@ public sealed record KevEncoding(ImmutableArray<int> StateIds, IReadOnlyList<Kev
 {
     /// <summary>
     /// The question index of each row, in row order, or null when row <c>k</c> is question <c>k</c> (every question
-    /// encoded). Set when <see cref="KevOptions.DeclineOverLongQuestions"/> left questions out.
+    /// encoded). Set when <c>KevOptions.DeclineOverLongQuestions</c> in Starlings.Models.Kev.Onnx left questions out.
     /// </summary>
     public IReadOnlyList<int>? QuestionIndices { get; init; }
 
     /// <summary>
-    /// Questions left out because they are over a limit (<see cref="KevOptions.DeclineOverLongQuestions"/>), in question
+    /// Questions left out because they are over a limit (<c>KevOptions.DeclineOverLongQuestions</c>), in question
     /// order; empty otherwise.
     /// </summary>
     public IReadOnlyList<KevOverLongQuestion> Declined { get; init; } = [];
@@ -34,13 +34,13 @@ public sealed record KevEncoding(ImmutableArray<int> StateIds, IReadOnlyList<Kev
 /// <summary>Which token limit a state or question is over.</summary>
 public enum KevTokenLimit
 {
-    /// <summary>The state, <c>&lt;state&gt;</c> included, is over <see cref="KevOptions.MaxStateTokens"/>.</summary>
+    /// <summary>The state, <c>&lt;state&gt;</c> included, is over <c>KevOptions.MaxStateTokens</c>.</summary>
     State,
 
-    /// <summary>The question's row (state plus branch) is over <see cref="KevOptions.MaxRowTokens"/>.</summary>
+    /// <summary>The question's row (state plus branch) is over <c>KevOptions.MaxRowTokens</c>.</summary>
     Row,
 
-    /// <summary>The question's branch alone is over <see cref="KevOptions.MaxBranchTokens"/>.</summary>
+    /// <summary>The question's branch alone is over <c>KevOptions.MaxBranchTokens</c>.</summary>
     Branch,
 }
 
@@ -97,9 +97,10 @@ public sealed class KevInputTooLongException : ArgumentException
 /// <summary>
 /// Kev's encoder (<c>kev/model.py</c> <c>encode</c> and <c>rows_of</c>, strict, row form) over the owned tokenizer.
 /// Each text segment is escaped (<see cref="KevText.EscapeSpecialTokens"/>) and tokenized on its own without special
-/// tokens; delimiters are inserted by id.
+/// tokens; delimiters are inserted by id. The decision runtime (<c>KevDecisionModel</c> in Starlings.Models.Kev.Onnx)
+/// runs the rows it returns; another runtime can run the same rows. Thread-safe.
 /// </summary>
-internal sealed class KevEncoder
+public sealed class KevEncoder
 {
     private static readonly (string Token, int Id)[] Delimiters =
     [
@@ -115,6 +116,9 @@ internal sealed class KevEncoder
 
     private KevEncoder(Tokenizer tokenizer) => _tokenizer = tokenizer;
 
+    /// <summary>Loads the owned tokenizer and checks Kev's delimiter ids.</summary>
+    /// <param name="tokenizerPath">The <c>qwen2-bpe-kev</c> profile's <c>tokenizer.json</c> (both checkpoints ship it).</param>
+    /// <exception cref="InvalidDataException">A delimiter token is not at Kev's id.</exception>
     public static KevEncoder FromFile(string tokenizerPath)
     {
         var tokenizer = Tokenizer.FromFile(tokenizerPath);
@@ -129,11 +133,22 @@ internal sealed class KevEncoder
         return new KevEncoder(tokenizer);
     }
 
+    /// <summary>The owned tokenizer.</summary>
     public Tokenizer Tokenizer => _tokenizer;
 
     /// <summary><c>user_tokens</c>: escape, then encode without special tokens.</summary>
     public int[] UserTokens(string text) => [.. _tokenizer.Encode(KevText.EscapeSpecialTokens(text), addSpecialTokens: false).Ids];
 
+    /// <summary>
+    /// <c>encode</c> and <c>rows_of</c>: the state ids (the <c>&lt;state&gt;</c> token first) and one row per question
+    /// (positions continuing after the state, the <c>&lt;decide&gt;</c> index and each option's <c>&lt;/opt&gt;</c> index).
+    /// </summary>
+    /// <param name="record">The rendered request (<see cref="KevRequest.ToRecord"/>).</param>
+    /// <param name="maxStateTokens">Longest accepted state, the <c>&lt;state&gt;</c> token included.</param>
+    /// <param name="maxRowTokens">Longest accepted state plus one question row.</param>
+    /// <param name="maxBranchTokens">Longest accepted question branch alone; null for no branch limit.</param>
+    /// <param name="decline">Leave over-long questions out (<see cref="KevEncoding.Declined"/>) instead of throwing.</param>
+    /// <exception cref="ArgumentException">No question, a question without 1 to 255 options, or a null option.</exception>
     /// <exception cref="KevInputTooLongException">
     /// The state is over the limit, or a question is and <paramref name="decline"/> is false.
     /// </exception>

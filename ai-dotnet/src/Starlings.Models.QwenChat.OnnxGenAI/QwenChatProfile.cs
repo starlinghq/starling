@@ -1,4 +1,3 @@
-using System.Security.Cryptography;
 using Starlings.Tokenizers;
 
 namespace Starlings.Models.QwenChat;
@@ -10,28 +9,22 @@ namespace Starlings.Models.QwenChat;
 public sealed record QwenChatBundleFile(string Path, string Sha256, long Size);
 
 /// <summary>
-/// An immutable admitted original model identity with its bundle lock: the six files the pinned builder produces from
-/// the pinned original (rebuilt byte-identically; registry manifest <c>execution.graph.assets</c>).
+/// An admitted original checkpoint (<see cref="Checkpoint"/>) with its ONNX Runtime GenAI bundle lock: the six files the
+/// pinned builder produces from the pinned original (rebuilt byte-identically; registry manifest
+/// <c>execution.graph.assets</c>). Converts implicitly to its <see cref="QwenChatCheckpoint"/>, so
+/// <c>QwenChatTemplate.Render(profile, ...)</c> renders the profile's template.
 /// </summary>
 public sealed class QwenChatProfile
 {
-    private QwenChatProfile(string id, string repository, string revision, string modelType, string tokenizerSha256,
-        string templateSha256, int[] eosTokenIds, QwenChatBundleFile[] bundleFiles)
+    private QwenChatProfile(string id, QwenChatCheckpoint checkpoint, QwenChatBundleFile[] bundleFiles)
     {
         Id = id;
-        Repository = repository;
-        Revision = revision;
-        ModelType = modelType;
-        TokenizerSha256 = tokenizerSha256;
-        TemplateSha256 = templateSha256;
-        EosTokenIds = Array.AsReadOnly(eosTokenIds);
+        Checkpoint = checkpoint;
         BundleFiles = Array.AsReadOnly(bundleFiles);
     }
 
     /// <summary>Pinned Qwen3 original, with enable_thinking=false.</summary>
-    public static QwenChatProfile Qwen3 { get; } = new("qwen3-0.6b/ortgenai-fp32-cpu", "Qwen/Qwen3-0.6B",
-        "c1899de289a04d12100db370d81485cdf75e47ca", "qwen3", "aeb13307a71acd8fe81861d94ad54ab689df773318809eed3cbe794b4492dae4",
-        "a55ee1b1660128b7098723e0abcd92caa0788061051c62d51cbe87d9cf1974d8", [151643, 151645],
+    public static QwenChatProfile Qwen3 { get; } = new("qwen3-0.6b/ortgenai-fp32-cpu", QwenChatCheckpoint.Qwen3,
         [
             new("genai_config.json", "0af5816836cdd4414bc38239443ec2fe1f554ca44daf282b48f07e3768e264e4", 1648),
             new("model.onnx", "b9fdea5216f1642d7926c64f77875c43a43b320531db841d8b3984b79a754ae8", 248657),
@@ -42,9 +35,7 @@ public sealed class QwenChatProfile
         ]);
 
     /// <summary>Pinned Qwen2.5 original with upstream default system insertion.</summary>
-    public static QwenChatProfile Qwen25 { get; } = new("qwen2.5-0.5b-instruct/ortgenai-fp32-cpu", "Qwen/Qwen2.5-0.5B-Instruct",
-        "7ae557604adf67be50417f59c2c2f167def9a775", "qwen2", "c0382117ea329cdf097041132f6d735924b697924d6f6fc3945713e96ce87539",
-        "cd8e9439f0570856fd70470bf8889ebd8b5d1107207f67a5efb46e342330527f", [151643, 151645],
+    public static QwenChatProfile Qwen25 { get; } = new("qwen2.5-0.5b-instruct/ortgenai-fp32-cpu", QwenChatCheckpoint.Qwen25,
         [
             new("genai_config.json", "a023918fb6dfdf680b0267bdb4ead00083a954194d8178d8fb1af7a0d9adbe63", 1581),
             new("model.onnx", "716a2db391784191cc1323417e1ff5bec682673b7105b8ddc4011e7a9f2c4a88", 147574),
@@ -59,48 +50,43 @@ public sealed class QwenChatProfile
 
     /// <summary>Portable candidate profile id.</summary>
     public string Id { get; }
+
+    /// <summary>The admitted original checkpoint the bundle is built from.</summary>
+    public QwenChatCheckpoint Checkpoint { get; }
+
     /// <summary>Original Hub repository.</summary>
-    public string Repository { get; }
+    public string Repository => Checkpoint.Repository;
     /// <summary>Immutable original revision.</summary>
-    public string Revision { get; }
-    /// <summary>Required GenAI model type.</summary>
-    public string ModelType { get; }
+    public string Revision => Checkpoint.Revision;
+    /// <summary>Required GenAI model type (the original configuration's model type).</summary>
+    public string ModelType => Checkpoint.ModelType;
     /// <summary>Pinned original tokenizer digest.</summary>
-    public string TokenizerSha256 { get; }
+    public string TokenizerSha256 => Checkpoint.TokenizerSha256;
     /// <summary>Digest of the UTF-8 upstream template string.</summary>
-    public string TemplateSha256 { get; }
+    public string TemplateSha256 => Checkpoint.TemplateSha256;
     /// <summary>EOS token ids from the pinned generation configuration.</summary>
-    public IReadOnlyList<int> EosTokenIds { get; }
+    public IReadOnlyList<int> EosTokenIds => Checkpoint.EosTokenIds;
     /// <summary>Original hidden-state width.</summary>
-    public int HiddenSize => ModelType == "qwen3" ? 1024 : 896;
+    public int HiddenSize => Checkpoint.HiddenSize;
     /// <summary>Original number of decoder layers.</summary>
-    public int Layers => ModelType == "qwen3" ? 28 : 24;
+    public int Layers => Checkpoint.Layers;
     /// <summary>Original number of attention heads.</summary>
-    public int AttentionHeads => ModelType == "qwen3" ? 16 : 14;
+    public int AttentionHeads => Checkpoint.AttentionHeads;
     /// <summary>Original number of key/value heads.</summary>
-    public int KeyValueHeads => ModelType == "qwen3" ? 8 : 2;
+    public int KeyValueHeads => Checkpoint.KeyValueHeads;
     /// <summary>Original attention head width; Qwen3 declares it independently of hidden size.</summary>
-    public int HeadSize => ModelType == "qwen3" ? 128 : 64;
+    public int HeadSize => Checkpoint.HeadSize;
     /// <summary>Original maximum prompt plus completion context.</summary>
-    public int ContextLength => ModelType == "qwen3" ? 40960 : 32768;
+    public int ContextLength => Checkpoint.ContextLength;
 
-    /// <summary>Verify and open the admitted original tokenizer without loading native model weights.</summary>
-    public Tokenizer OpenTokenizer(string path)
+    /// <summary>Verify and open the admitted original tokenizer without loading native model weights (<see cref="QwenChatCheckpoint.OpenTokenizer"/>).</summary>
+    public Tokenizer OpenTokenizer(string path) => Checkpoint.OpenTokenizer(path);
+
+    /// <summary>The profile's checkpoint (<see cref="Checkpoint"/>).</summary>
+    public static implicit operator QwenChatCheckpoint(QwenChatProfile profile)
     {
-        using FileStream stream = File.OpenRead(path);
-        if (Convert.ToHexStringLower(SHA256.HashData(stream)) != TokenizerSha256)
-        {
-            throw new InvalidDataException("Tokenizer bytes differ from the admitted original.");
-        }
-
-        Tokenizer tokenizer = Tokenizer.FromFile(path);
-        if (tokenizer.TokenToId("<|im_start|>") != 151644 || tokenizer.TokenToId("<|im_end|>") != 151645 ||
-            tokenizer.TokenToId("<|endoftext|>") != 151643 || tokenizer.IdToToken(151935) is not null)
-        {
-            throw new InvalidDataException("Original tokenizer identity or unused padding row differs.");
-        }
-
-        return tokenizer;
+        ArgumentNullException.ThrowIfNull(profile);
+        return profile.Checkpoint;
     }
 
     /// <summary>Resolve an admitted candidate id, rejecting other profiles.</summary>

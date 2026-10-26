@@ -1,5 +1,6 @@
 using System.Text;
 using System.Text.Json;
+using Starlings.Generation;
 
 namespace Starlings.Models.QwenChat;
 
@@ -13,6 +14,9 @@ public sealed record QwenChatOutputPart(string? Text, QwenChatToolCall? ToolCall
 
     /// <summary>A tool-call part.</summary>
     public static QwenChatOutputPart FromToolCall(QwenChatToolCall call) => new(null, call);
+
+    /// <summary>This part as a backend-neutral <see cref="CompletionPart"/>.</summary>
+    public CompletionPart ToCompletionPart() => new(Text, ToolCall?.ToToolCall());
 }
 
 /// <summary>A completion split into text and tool calls by <see cref="QwenChatToolCallParser"/>.</summary>
@@ -28,6 +32,9 @@ public sealed record QwenChatParsedOutput(IReadOnlyList<QwenChatOutputPart> Part
     /// <summary>The completion as an assistant message for the next request: <see cref="Text"/> and <see cref="ToolCalls"/>.</summary>
     public QwenChatMessage ToAssistantMessage() =>
         new(QwenChatRole.Assistant, Text) { ToolCalls = ToolCalls is { Count: > 0 } calls ? calls : null };
+
+    /// <summary>This output as a backend-neutral <see cref="ParsedCompletion"/> (the same parts in order).</summary>
+    public ParsedCompletion ToParsedCompletion() => new([.. Parts.Select(p => p.ToCompletionPart())]);
 }
 
 /// <summary>
@@ -65,7 +72,7 @@ public sealed record QwenChatParsedOutput(IReadOnlyList<QwenChatOutputPart> Part
 /// The Qwen3.5 package's parser reads a different (XML parameter) form and is not used here.
 /// </para>
 /// </remarks>
-public sealed class QwenChatToolCallParser
+public sealed class QwenChatToolCallParser : IToolCallParser
 {
     private const string CallOpen = "<tool_call>";
     private const string CallClose = "</tool_call>";
@@ -132,6 +139,12 @@ public sealed class QwenChatToolCallParser
         _completed = true;
         return Merge(parts);
     }
+
+    /// <inheritdoc />
+    IReadOnlyList<CompletionPart> IToolCallParser.Append(string delta) => [.. Append(delta).Select(p => p.ToCompletionPart())];
+
+    /// <inheritdoc />
+    IReadOnlyList<CompletionPart> IToolCallParser.Complete() => [.. Complete().Select(p => p.ToCompletionPart())];
 
     private void Process(List<QwenChatOutputPart> parts, bool final)
     {

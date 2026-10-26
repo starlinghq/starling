@@ -1,6 +1,7 @@
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
+using Starlings.Generation;
 using Starlings.Generation.OnnxGenAI;
 using Starlings.Models.Qwen35;
 using Starlings.TestSupport;
@@ -360,7 +361,7 @@ public sealed class ToolGrammarTests
     }
 
     /// <summary>A sequence that ends at once (the end-of-turn id), for request plumbing tests.</summary>
-    private sealed class EndSequence : IGenerationSequence
+    private sealed class EndSequence : IDecodeSequence
     {
         public int VocabularySize => 248320;
 

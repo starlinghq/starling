@@ -1,7 +1,7 @@
 using System.Globalization;
 using System.Text;
 using System.Text.Json;
-using Starlings.Generation.OnnxGenAI;
+using Starlings.Generation;
 
 namespace Starlings.Models.Qwen35;
 
