@@ -68,6 +68,8 @@ The defaults are the qualified behavior and give the same outputs as before thes
 
 ## Shared types
 
+A snapshot verified with `CacheVerification.Sha256` (the default) carries its digests: `E5ModelFiles.ModelSha256` is the graph's SHA-256 then, and `E5TextEmbedder.Create(files)`, `E5EmbeddingGenerator.Create(files)` and the ML.NET transform pass it to the session as `OnnxSessionOptions.KnownModelSha256`, so the graph is read once at startup, by the verification, not again by the session. With `CacheVerification.Size` it is null and the session hashes the graph as before.
+
 The package uses the backend-neutral types of `Starlings.Models.Abstractions`. `E5TextEmbedder` is an `ITextEmbedder` (`Dimension`, `MaxSequenceLength`, `EmbedBatch(texts, tokenCounts)`). `E5ModelAssets.Assets` is the lock and acquisition as an `IModelAssets<E5ModelFiles>`. An id sequence above `E5EncoderOptions.MaxSequenceLength` throws `InputTooLongException` (an `ArgumentException`, with `InputIndex`, `TokenCount` and `MaxTokens`); text through `E5Tokenizer` is truncated to the limit first, so it never reaches the check. `E5Capabilities.Statuses` is the package-wide capability table in `Starlings.Models.CapabilityStatus`, and `E5Capabilities.ProfileCapabilities` holds each profile's capability record (`ModelProfileCapabilities`), generated from its registry manifest. `E5Capabilities.All`, `E5Capabilities.Profiles` and the enum `Starlings.Models.E5.CapabilityStatus` are obsolete and are removed in the next minor version.
 
 ## Status

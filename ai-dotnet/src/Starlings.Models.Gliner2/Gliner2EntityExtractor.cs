@@ -120,6 +120,12 @@ public sealed class Gliner2EntityExtractor : IDisposable
             options = options with { Session = session with { ExpectedModelSha256 = Gliner2ModelAssets.ModelSha256 } };
         }
 
+        // A snapshot verified with SHA-256 already hashed the graph: pass the digest instead of reading the file again.
+        if (options.Session is { KnownModelSha256: null } known && files.ModelSha256 is { } verified)
+        {
+            options = options with { Session = known with { KnownModelSha256 = verified } };
+        }
+
         return Create(files.ModelPath, files.TokenizerPath, options);
     }
 

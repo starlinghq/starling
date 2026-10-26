@@ -251,7 +251,7 @@ capabilities:
   batch: unsupported  # one request per call; rows are not batched
   streaming: unsupported  # one probability vector per question, nothing to stream
   cancellation: experimental
-  persistence: unsupported  # the state cache lives for one request
+  persistence: unsupported  # nothing is saved; KevState keeps a state cache in memory across calls (package README)
   training: unsupported
   aot: untested
   extensions_ai: unsupported

@@ -72,7 +72,20 @@ public static class KevCapabilities
         // STARLING_NETWORK_TESTS=1 (HostingDownloadTests). Experimental until the G6 distribution drill.
         ["asset_acquisition.download"] = KevCapabilityStatus.Experimental,
 
-        // Not offered.
+        // KevOptions.MaxBranchTokens and KevOptions.DeclineOverLongQuestions: every over-long question found in one pass,
+        // thrown together or declined while the rest are answered with unchanged probabilities (ApiTests, CPU, KevModel.Kev08B).
+        ["branch_token_limit"] = KevCapabilityStatus.Experimental,
+        ["decline_over_long_questions"] = KevCapabilityStatus.Experimental,
+        // KevDecisionModel.Placement (provider, device, profile, serialization, captured node placement) and
+        // KevAnswer.IsCalibrated / KevDecisionModel.IsCalibrated (ApiTests, CPU, KevModel.Kev08B).
+        ["placement_report"] = KevCapabilityStatus.Experimental,
+        ["calibration_flag"] = KevCapabilityStatus.Experimental,
+        // KevState: one state pass reused by later Decide calls, on the bundles as qualified (no new graph). Every request
+        // golden bit-identical to Decide, also from four concurrent callers (ApiTests, CPU, KevModel.Kev08B). Not run on CUDA.
+        ["state_reuse_across_calls"] = KevCapabilityStatus.Experimental,
+        ["state_reuse_across_calls.cuda"] = KevCapabilityStatus.Untested,
+
+        // Not offered: reusing the cache of a common prefix of different states.
         ["state_prefix_reuse_across_requests"] = KevCapabilityStatus.Unsupported,
         // batched_rows: CPU spike evidence in docs/evidence/kev-batched-rows (internal API only; maintainer decision).
         ["batched_rows"] = KevCapabilityStatus.Unsupported,

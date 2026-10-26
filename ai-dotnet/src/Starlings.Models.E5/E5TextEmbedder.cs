@@ -63,7 +63,11 @@ public sealed class E5TextEmbedder : ITextEmbedder, IDisposable
         var tokenizer = E5Tokenizer.FromFile(files.TokenizerPath, E5ModelAssets.TokenizerSha256, options.MaxSequenceLength);
         var encoderOptions = options with
         {
-            Session = options.Session with { ExpectedModelSha256 = E5ModelAssets.ModelSha256 },
+            Session = options.Session with
+            {
+                ExpectedModelSha256 = E5ModelAssets.ModelSha256,
+                KnownModelSha256 = options.Session.KnownModelSha256 ?? files.ModelSha256,
+            },
         };
         var encoder = E5Encoder.Create(files.ModelPath, encoderOptions);
         try

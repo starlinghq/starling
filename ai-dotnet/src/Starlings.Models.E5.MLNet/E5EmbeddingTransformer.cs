@@ -110,7 +110,11 @@ public sealed class E5EmbeddingTransformer : ITransformer, IDisposable
         var tokenizer = E5Tokenizer.FromFile(files.TokenizerPath, E5ModelAssets.TokenizerSha256, options.Encoder.MaxSequenceLength);
         var encoderOptions = options.Encoder with
         {
-            Session = options.Encoder.Session with { ExpectedModelSha256 = E5ModelAssets.ModelSha256 },
+            Session = options.Encoder.Session with
+            {
+                ExpectedModelSha256 = E5ModelAssets.ModelSha256,
+                KnownModelSha256 = options.Encoder.Session.KnownModelSha256 ?? files.ModelSha256,
+            },
         };
         var encoder = E5Encoder.Create(files.ModelPath, encoderOptions);
         try

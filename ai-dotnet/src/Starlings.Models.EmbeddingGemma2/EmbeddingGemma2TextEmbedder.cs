@@ -69,7 +69,11 @@ public sealed class EmbeddingGemma2TextEmbedder : ITextEmbedder, IDisposable
         var tokenizer = EmbeddingGemma2Tokenizer.FromFile(files.TokenizerPath, EmbeddingGemma2ModelAssets.TokenizerSha256);
         var encoderOptions = options with
         {
-            Session = options.Session with { ExpectedModelSha256 = EmbeddingGemma2ModelAssets.ModelSha256 },
+            Session = options.Session with
+            {
+                ExpectedModelSha256 = EmbeddingGemma2ModelAssets.ModelSha256,
+                KnownModelSha256 = options.Session.KnownModelSha256 ?? files.ModelSha256,
+            },
         };
         var encoder = EmbeddingGemma2Encoder.Create(files.ModelPath, encoderOptions);
         try

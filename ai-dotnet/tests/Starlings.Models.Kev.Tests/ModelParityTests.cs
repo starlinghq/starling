@@ -10,6 +10,7 @@ namespace Starlings.Models.Kev.Tests;
 /// probabilities within the profile bound (2e-4, protected/kev-0.8b/onnx-fp32/tolerances.yaml; proposed for 4B), no
 /// argmax flip, cached equal to uncached within 1e-5. Skips without a bundle (see <see cref="KevTestAssets"/>).
 /// </summary>
+[Collection(KevModelGroup.Name)]
 public sealed class ModelParityTests
 {
     private static CancellationToken Ct => TestContext.Current.CancellationToken;

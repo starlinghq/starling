@@ -17,6 +17,11 @@ public sealed record E5ModelFiles(string ModelPath, string TokenizerPath, ModelS
             snapshot.GetFilePath(E5ModelAssets.TokenizerFile),
             snapshot);
     }
+
+    /// <summary>
+    /// SHA-256 of <see cref="ModelPath"/> when <see cref="Snapshot"/> hashed it (<see cref="ModelSnapshot.Verification"/> <see cref="CacheVerification.Sha256"/>); otherwise null. The model factories pass it as <c>OnnxSessionOptions.KnownModelSha256</c>, so the graph is not read a second time at load.
+    /// </summary>
+    public string? ModelSha256 => Snapshot?.GetVerifiedSha256(E5ModelAssets.ModelFile);
 }
 
 /// <summary>

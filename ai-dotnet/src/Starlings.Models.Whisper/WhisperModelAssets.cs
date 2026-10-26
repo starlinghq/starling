@@ -19,6 +19,19 @@ public sealed record WhisperModelFiles(string EncoderPath, string DecoderPath, s
             snapshot.GetFilePath(WhisperModelAssets.TokenizerFile),
             snapshot);
     }
+
+    /// <summary>
+    /// SHA-256 of <see cref="EncoderPath"/> when <see cref="Snapshot"/> hashed it (<see cref="ModelSnapshot.Verification"/>
+    /// <see cref="CacheVerification.Sha256"/>); otherwise null. Usable as <c>OnnxSessionOptions.KnownModelSha256</c> in
+    /// <see cref="WhisperOptions.EncoderSession"/>.
+    /// </summary>
+    public string? EncoderSha256 => Snapshot?.GetVerifiedSha256(WhisperModelAssets.EncoderFile);
+
+    /// <summary>
+    /// SHA-256 of <see cref="DecoderPath"/> when <see cref="Snapshot"/> hashed it; otherwise null. Usable as
+    /// <c>OnnxSessionOptions.KnownModelSha256</c> in <see cref="WhisperOptions.DecoderSession"/>.
+    /// </summary>
+    public string? DecoderSha256 => Snapshot?.GetVerifiedSha256(WhisperModelAssets.DecoderFile);
 }
 
 /// <summary>
