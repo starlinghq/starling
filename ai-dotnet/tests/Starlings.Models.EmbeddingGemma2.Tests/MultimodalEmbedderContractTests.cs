@@ -163,6 +163,28 @@ public sealed class MultimodalEmbedderContractTests
     }
 
     [Fact]
+    public void TextEncoderMustShareTheDimensionAndTheSequenceLimit()
+    {
+        var session = new OnnxSessionOptions { ComputeModelSha256 = false };
+        using var vision = OnnxModelSession.Create(TestModels.FakeEmbeddingGemma2Vision, session);
+        using var multimodal = OnnxModelSession.Create(TestModels.FakeEmbeddingGemma2Multimodal, session);
+        using var text = OnnxModelSession.Create(TestModels.FakeEmbeddingGemma2, session);
+        using var shorter = new EmbeddingGemma2Encoder(text, new EmbeddingGemma2EncoderOptions { MaxSequenceLength = 300 });
+        using var narrower = new EmbeddingGemma2Encoder(text, new EmbeddingGemma2EncoderOptions { Dimension = 128 });
+
+        var length = Assert.Throws<ArgumentException>(() => new EmbeddingGemma2MultimodalEmbedder(new MarkerTokenizer(), vision, multimodal, shorter));
+        Assert.Equal("textEncoder", length.ParamName);
+        Assert.Contains("300", length.Message, StringComparison.Ordinal);
+        var dimension = Assert.Throws<ArgumentException>(() => new EmbeddingGemma2MultimodalEmbedder(new MarkerTokenizer(), vision, multimodal, narrower));
+        Assert.Equal("textEncoder", dimension.ParamName);
+
+        // The same limit on both sides is accepted, and text-only rows are checked against it.
+        using var embedder = new EmbeddingGemma2MultimodalEmbedder(new MarkerTokenizer(), vision, multimodal, shorter, new EmbeddingGemma2MultimodalOptions { MaxSequenceLength = 300 });
+        Assert.Equal(768, embedder.Embed(EmbeddingGemma2MultimodalInput.FromText("hello"), Ct).Length);
+        Assert.Throws<EmbeddingGemma2InputTooLongException>(() => embedder.Embed(EmbeddingGemma2MultimodalInput.FromText(new string('x', 300)), Ct));
+    }
+
+    [Fact]
     public void CancellationAndDisposal()
     {
         var embedder = FakeMultimodal.Create();

@@ -12,6 +12,8 @@ public sealed record Qwen35ChatClientOptions
     /// <see cref="Qwen35ChatOptions.AdditionalStopTokenIds"/>, <see cref="Qwen35ChatOptions.Sampling"/> (default greedy) and
     /// <see cref="Qwen35ChatOptions.PrefillChunkTokens"/> (default: 512 on CUDA; on CPU one call up to 1,024 prompt tokens and
     /// 1,024-token chunks above). A request value replaces the default; see <see cref="Qwen35ChatClient"/> for the mapping.
+    /// The opt-in settings that <c>ChatOptions</c> cannot express, <see cref="Qwen35ChatOptions.EscapeSpecialTokens"/> and
+    /// <see cref="Qwen35ChatOptions.StopAtRoleMarker"/> (both default false), apply to every request from here.
     /// </summary>
     /// <remarks>
     /// On CPU a prefill call cannot be cancelled until it completes (12 s for a 1,666-token prompt on the M0
@@ -49,10 +51,25 @@ public sealed record Qwen35ChatClientOptions
     /// </summary>
     public bool GuidanceFastForward { get; init; }
 
+    /// <summary>
+    /// Admission control: the number of requests (<c>GetResponseAsync</c> and <c>GetStreamingResponseAsync</c> together)
+    /// that may generate at the same time, at least 1; further requests wait their turn, in order, before any thread or
+    /// native generator is created for them, and a request cancelled while waiting throws
+    /// <see cref="OperationCanceledException"/> without having started. A streaming request holds its slot from its
+    /// first <c>MoveNextAsync</c> until its enumeration completes or is disposed. Null (default) is unbounded, as before:
+    /// one dedicated thread and one native generator per request.
+    /// </summary>
+    public int? MaxConcurrentRequests { get; init; }
+
     internal void Validate()
     {
         ArgumentNullException.ThrowIfNull(Defaults, nameof(Defaults));
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(StreamingBufferCapacity, nameof(StreamingBufferCapacity));
+        if (MaxConcurrentRequests is int max)
+        {
+            ArgumentOutOfRangeException.ThrowIfNegativeOrZero(max, nameof(MaxConcurrentRequests));
+        }
+
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(Defaults.MaxNewTokens, nameof(Qwen35ChatOptions.MaxNewTokens));
     }
 }

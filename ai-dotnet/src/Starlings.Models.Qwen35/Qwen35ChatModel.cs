@@ -33,6 +33,12 @@ public sealed class Qwen35ChatModel : IDisposable
     public const int EndOfTextTokenId = 248044;
 
     /// <summary>
+    /// <c>&lt;|im_start|&gt;</c>: opens a turn. Not a stop token by default; <see cref="Qwen35ChatOptions.StopAtRoleMarker"/>
+    /// adds it, so a completion that runs on into another turn's role markup ends before it.
+    /// </summary>
+    public const int ImStartTokenId = 248045;
+
+    /// <summary>
     /// Pad id overlaid on <c>genai_config.json</c>: the last of the 248,320 embedding rows; the tokenizer's ids end at
     /// 248,076, so it never occurs in a prompt.
     /// </summary>
@@ -170,6 +176,19 @@ public sealed class Qwen35ChatModel : IDisposable
     }
 
     /// <summary>
+    /// Renders and tokenizes exactly what <see cref="Generate(IReadOnlyList{Qwen35Message}, Qwen35ChatOptions?, CancellationToken)"/>
+    /// would feed the model for <paramref name="options"/>: its <see cref="Qwen35ChatOptions.Tools"/>,
+    /// <see cref="Qwen35ChatOptions.EnableThinking"/> and <see cref="Qwen35ChatOptions.EscapeSpecialTokens"/>.
+    /// </summary>
+    /// <exception cref="Qwen35TemplateException">The conversation or tool data is invalid for the template.</exception>
+    public Qwen35Prompt CreatePrompt(IReadOnlyList<Qwen35Message> messages, Qwen35ChatOptions options)
+    {
+        ArgumentNullException.ThrowIfNull(options);
+        string text = Qwen35ChatTemplate.Render(messages, options.Tools, options.EnableThinking, options.EscapeSpecialTokens);
+        return new Qwen35Prompt(text, Tokenizer.Encode(text, addSpecialTokens: false).Ids);
+    }
+
+    /// <summary>
     /// Generates the assistant reply to <paramref name="messages"/> (with <see cref="Qwen35ChatOptions.Tools"/> rendered
     /// into the prompt). The result's text is the raw completion; <see cref="Qwen35ToolCallParser.Parse(string, Qwen35ChatOptions)"/>
     /// splits it into text and tool calls.
@@ -178,10 +197,10 @@ public sealed class Qwen35ChatModel : IDisposable
     public GenerationResult Generate(IReadOnlyList<Qwen35Message> messages, Qwen35ChatOptions? options = null, CancellationToken cancellationToken = default)
     {
         options ??= new Qwen35ChatOptions();
-        return Generate(CreatePrompt(messages, options.Tools, options.EnableThinking), options, cancellationToken);
+        return Generate(CreatePrompt(messages, options), options, cancellationToken);
     }
 
-    /// <summary>Generates from a prepared prompt (<see cref="Qwen35ChatOptions.EnableThinking"/> is a property of the prompt and is ignored here).</summary>
+    /// <summary>Generates from a prepared prompt (<see cref="Qwen35ChatOptions.EnableThinking"/> and <see cref="Qwen35ChatOptions.EscapeSpecialTokens"/> are properties of the prompt and are ignored here).</summary>
     public GenerationResult Generate(Qwen35Prompt prompt, Qwen35ChatOptions? options = null, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(prompt);
@@ -195,13 +214,18 @@ public sealed class Qwen35ChatModel : IDisposable
     /// Streams the assistant reply to <paramref name="messages"/>; see <see cref="TextGenerator.GenerateStreaming"/> for
     /// the update contract. The template is rendered and tokenized when this method is called.
     /// </summary>
+    /// <remarks>
+    /// The enumerator must be disposed (<c>foreach</c> and <c>await foreach</c> do): the native generator is released
+    /// when the enumeration completes or the enumerator is disposed, never by a finalizer, so an enumerator abandoned
+    /// after its first <c>MoveNext</c> keeps the native model alive until the process ends.
+    /// </remarks>
     public IEnumerable<GenerationUpdate> GenerateStreaming(IReadOnlyList<Qwen35Message> messages, Qwen35ChatOptions? options = null, CancellationToken cancellationToken = default)
     {
         options ??= new Qwen35ChatOptions();
-        return GenerateStreaming(CreatePrompt(messages, options.Tools, options.EnableThinking), options, cancellationToken);
+        return GenerateStreaming(CreatePrompt(messages, options), options, cancellationToken);
     }
 
-    /// <summary>Streams from a prepared prompt.</summary>
+    /// <summary>Streams from a prepared prompt. The enumerator must be disposed; see <see cref="GenerateStreaming(IReadOnlyList{Qwen35Message}, Qwen35ChatOptions?, CancellationToken)"/>.</summary>
     public IEnumerable<GenerationUpdate> GenerateStreaming(Qwen35Prompt prompt, Qwen35ChatOptions? options = null, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(prompt);
@@ -251,7 +275,7 @@ public sealed class Qwen35ChatModel : IDisposable
     private static void CheckTokenizer(Tokenizer tokenizer)
     {
         if (tokenizer.TokenToId("<|im_end|>") != ImEndTokenId || tokenizer.TokenToId("<|endoftext|>") != EndOfTextTokenId ||
-            tokenizer.TokenToId("<|im_start|>") != 248045 || tokenizer.IdToToken(PadTokenIdOverlay) is not null)
+            tokenizer.TokenToId("<|im_start|>") != ImStartTokenId || tokenizer.IdToToken(PadTokenIdOverlay) is not null)
         {
             throw new InvalidDataException("tokenizer.json is not the qwen35-bpe-chat profile asset (special token ids differ).");
         }

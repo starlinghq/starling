@@ -34,7 +34,9 @@ public class ModelAcquisitionException : Exception
 
 /// <summary>
 /// Offline resolution found no verified copy of one or more files. <see cref="Exception.Message"/>
-/// names the missing files, the cache directory searched and how to download them explicitly.
+/// names the missing files, the cache directory searched and how to download them explicitly. Verification completes
+/// before this is thrown: when other files are present but fail their size or digest check, the message says so and
+/// the first such <see cref="ModelAssetIntegrityException"/> is the <see cref="Exception.InnerException"/>.
 /// </summary>
 public sealed class ModelAssetMissingException : ModelAcquisitionException
 {
