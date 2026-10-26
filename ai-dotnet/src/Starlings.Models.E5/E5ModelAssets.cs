@@ -65,7 +65,7 @@ public static class E5ModelAssets
             new ModelAssetFile(TokenizerFile, TokenizerSize, TokenizerSha256),
         ]);
 
-    /// <summary>Explicitly downloads (or verifies already cached) e5 files. See <see cref="ModelAssetStore.DownloadAsync"/>.</summary>
+    /// <summary>Explicitly downloads (or verifies already cached) e5 files. See <see cref="ModelAssetStore.DownloadAsync(ModelAssetLock, IProgress{ModelAssetProgress}?, CancellationToken)"/>.</summary>
     public static async Task<E5ModelFiles> DownloadAsync(
         ModelAcquisitionOptions? options = null, IProgress<ModelAssetProgress>? progress = null, CancellationToken cancellationToken = default)
     {

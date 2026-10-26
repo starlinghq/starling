@@ -141,7 +141,7 @@ public static class KevModelAssets
 
     /// <summary>
     /// Explicitly downloads (or verifies already cached) a model's bundle from its hosting repository (3.1 GB for 0.8B,
-    /// 16.9 GB for 4B). See <see cref="ModelAssetStore.DownloadAsync"/>.
+    /// 16.9 GB for 4B). See <see cref="ModelAssetStore.DownloadAsync(ModelAssetLock, IProgress{ModelAssetProgress}?, CancellationToken)"/>.
     /// </summary>
     public static async Task<KevModelFiles> DownloadAsync(
         KevModel model, ModelAcquisitionOptions? options = null, IProgress<ModelAssetProgress>? progress = null, CancellationToken cancellationToken = default)

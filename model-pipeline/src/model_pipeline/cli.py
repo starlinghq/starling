@@ -27,6 +27,19 @@ def _validate(args: argparse.Namespace) -> int:
     return 1 if failed else 0
 
 
+def _validate_lock(args: argparse.Namespace) -> int:
+    from model_pipeline import asset_lock
+
+    failed = 0
+    for path in (Path(p) for p in args.paths):
+        problems = asset_lock.validate_file(path)
+        for problem in problems:
+            print(problem, file=sys.stderr)
+        failed += bool(problems)
+    print(f"{len(args.paths)} lock(s) checked, {failed} invalid")
+    return 1 if failed else 0
+
+
 class _RefuseOverride(argparse.Action):
     def __call__(self, parser, namespace, values, option_string=None):
         from model_pipeline.evaluate import EXIT_PROTECTED
@@ -351,6 +364,13 @@ def main(argv: list[str] | None = None) -> int:
     validate = sub.add_parser("validate", help="validate model manifests against the schema")
     validate.add_argument("paths", nargs="+", help="manifest files or directories to search")
     validate.set_defaults(func=_validate)
+
+    validate_lock = sub.add_parser(
+        "validate-lock",
+        help="validate JSON asset locks (Starlings.Acquisition format, schema_version 1 to 3)",
+    )
+    validate_lock.add_argument("paths", nargs="+", help="JSON lock files")
+    validate_lock.set_defaults(func=_validate_lock)
 
     ev = sub.add_parser(
         "evaluate",

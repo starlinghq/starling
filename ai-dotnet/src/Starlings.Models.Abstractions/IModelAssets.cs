@@ -16,7 +16,7 @@ public interface IModelAssets<TFiles>
     /// <summary>The immutable lock: repository, full commit SHA, and each file's size and SHA-256.</summary>
     ModelAssetLock Lock { get; }
 
-    /// <summary>Explicitly downloads (or verifies already cached) files. See <see cref="ModelAssetStore.DownloadAsync"/>.</summary>
+    /// <summary>Explicitly downloads (or verifies already cached) files. See <see cref="ModelAssetStore.DownloadAsync(ModelAssetLock, IProgress{ModelAssetProgress}?, CancellationToken)"/>.</summary>
     /// <param name="options">Cache directory, endpoint and verification; defaults per <see cref="ModelAcquisitionOptions"/>.</param>
     /// <param name="progress">Optional per-file progress.</param>
     /// <param name="cancellationToken">Cancels the download.</param>
