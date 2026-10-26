@@ -1,0 +1,84 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/starlinghq/starling/model-pipeline/schemas/asset-lock.schema.json",
+  "title": "Model asset lock",
+  "description": "The JSON asset lock of Starlings.Acquisition (ModelAssetLock.ToJson, Parse and Load), versions 1 to 3. This is the interchange format for locks between Starling and its consumers. Version 1: Hub-layout files only. Version 2 adds a per-file explicit source (url). Version 3 adds display_name and hosting. A writer uses the lowest version that holds the lock; a reader of version N rejects higher versions and rejects fields of a higher version.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "name", "repository", "revision", "files"],
+  "properties": {
+    "schema_version": { "enum": [1, 2, 3] },
+    "name": {
+      "description": "Short identifier used in messages and tool commands.",
+      "type": "string",
+      "pattern": "\\S"
+    },
+    "display_name": {
+      "description": "Version 3: optional name for people. Not used for any path.",
+      "type": "string",
+      "pattern": "^(?=.*\\S)[^\\u0000-\\u001f\\u007f-\\u009f]*$"
+    },
+    "repository": { "$ref": "#/$defs/repository" },
+    "revision": { "$ref": "#/$defs/commitSha" },
+    "hosting": {
+      "description": "Version 3: the Hub repository and commit that hold the bytes of files without a url. repository and revision stay the identity of the model and key the cache directory.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["repository", "revision"],
+      "properties": {
+        "repository": { "$ref": "#/$defs/repository" },
+        "revision": { "$ref": "#/$defs/commitSha" }
+      }
+    },
+    "files": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/file" }
+    }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "schema_version": { "const": 1 } } },
+      "then": { "properties": { "files": { "items": { "not": { "required": ["url"] } } } } }
+    },
+    {
+      "if": { "properties": { "schema_version": { "enum": [1, 2] } } },
+      "then": {
+        "not": {
+          "anyOf": [{ "required": ["display_name"] }, { "required": ["hosting"] }]
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "repository": {
+      "description": "Hub repository id, owner/name, each part letters, digits, '-', '_' and '.', not '.' or '..'.",
+      "type": "string",
+      "pattern": "^(?!\\.\\.?/)[A-Za-z0-9._-]+/(?!\\.\\.?$)[A-Za-z0-9._-]+$"
+    },
+    "commitSha": {
+      "description": "Full 40-character lowercase commit SHA. Branch and tag names are rejected.",
+      "type": "string",
+      "pattern": "^[0-9a-f]{40}$"
+    },
+    "file": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "size", "sha256"],
+      "properties": {
+        "path": {
+          "description": "Relative path with forward slashes; no empty, '.', '..' or control-character segment, no backslash or colon.",
+          "type": "string",
+          "pattern": "^(?!/)(?!.*//)(?!(.*/)?\\.\\.?(/|$))[^\\\\:\\u0000-\\u001f\\u007f-\\u009f]+(?<!/)$"
+        },
+        "size": { "type": "integer", "minimum": 0 },
+        "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "url": {
+          "description": "Version 2 and later: explicit https download address, without user information or fragment.",
+          "type": "string",
+          "pattern": "^https://[^/@#\\s]+(/[^#\\s]*)?$"
+        }
+      }
+    }
+  }
+}

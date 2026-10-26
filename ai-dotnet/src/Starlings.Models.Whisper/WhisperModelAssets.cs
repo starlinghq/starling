@@ -76,7 +76,7 @@ public static class WhisperModelAssets
             new ModelAssetFile(TokenizerFile, 2480645, TokenizerSha256),
         ]);
 
-    /// <summary>Explicitly downloads (or verifies already cached) whisper files. See <see cref="ModelAssetStore.DownloadAsync"/>.</summary>
+    /// <summary>Explicitly downloads (or verifies already cached) whisper files. See <see cref="ModelAssetStore.DownloadAsync(ModelAssetLock, IProgress{ModelAssetProgress}?, CancellationToken)"/>.</summary>
     public static async Task<WhisperModelFiles> DownloadAsync(
         ModelAcquisitionOptions? options = null, IProgress<ModelAssetProgress>? progress = null, CancellationToken cancellationToken = default)
     {

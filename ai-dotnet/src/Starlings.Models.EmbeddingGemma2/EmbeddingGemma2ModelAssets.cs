@@ -113,7 +113,7 @@ public static class EmbeddingGemma2ModelAssets
             new ModelAssetFile(PromptConfigFile, PromptConfigSize, PromptConfigSha256),
         ]);
 
-    /// <summary>Explicitly downloads (or verifies already cached) EmbeddingGemma 2 files. See <see cref="ModelAssetStore.DownloadAsync"/>.</summary>
+    /// <summary>Explicitly downloads (or verifies already cached) EmbeddingGemma 2 files. See <see cref="ModelAssetStore.DownloadAsync(ModelAssetLock, IProgress{ModelAssetProgress}?, CancellationToken)"/>.</summary>
     public static async Task<EmbeddingGemma2ModelFiles> DownloadAsync(
         ModelAcquisitionOptions? options = null, IProgress<ModelAssetProgress>? progress = null, CancellationToken cancellationToken = default)
     {

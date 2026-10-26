@@ -99,7 +99,7 @@ public static class Gliner2ModelAssets
             new ModelAssetFile(TokenizerFile, TokenizerSize, TokenizerSha256),
         ]);
 
-    /// <summary>Explicitly downloads (or verifies already cached) GLiNER2 files. See <see cref="ModelAssetStore.DownloadAsync"/>.</summary>
+    /// <summary>Explicitly downloads (or verifies already cached) GLiNER2 files. See <see cref="ModelAssetStore.DownloadAsync(ModelAssetLock, IProgress{ModelAssetProgress}?, CancellationToken)"/>.</summary>
     public static async Task<Gliner2ModelFiles> DownloadAsync(
         ModelAcquisitionOptions? options = null, IProgress<ModelAssetProgress>? progress = null, CancellationToken cancellationToken = default)
     {

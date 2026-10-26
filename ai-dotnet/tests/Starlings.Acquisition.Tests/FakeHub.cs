@@ -15,13 +15,22 @@ internal sealed class FakeHub : HttpMessageHandler
 
     private readonly ConcurrentDictionary<string, byte[]> _files = new(StringComparer.Ordinal);
     private readonly ConcurrentDictionary<string, byte[]> _external = new(StringComparer.Ordinal);
+    private readonly ConcurrentDictionary<string, byte[]> _hosted = new(StringComparer.Ordinal);
     private int _requestCount;
+    private int _inFlight;
+    private int _maxInFlight;
 
     public static Uri Endpoint { get; } = new("https://hub.test/");
 
     public ConcurrentQueue<HttpRequestMessage> Requests { get; } = new();
 
     public int RequestCount => Volatile.Read(ref _requestCount);
+
+    /// <summary>Most requests seen at once during <see cref="Latency"/> (to show concurrent file downloads).</summary>
+    public int MaxInFlight => Volatile.Read(ref _maxInFlight);
+
+    /// <summary>Further hosts (mirrors) that serve the same files as <see cref="Endpoint"/>.</summary>
+    public ConcurrentDictionary<string, bool> MirrorHosts { get; } = new(StringComparer.OrdinalIgnoreCase);
 
     /// <summary>
     /// Optional hook per request (1-based request number, request): return a response to short-circuit, or null to serve normally.
@@ -60,6 +69,10 @@ internal sealed class FakeHub : HttpMessageHandler
     /// <summary>Serves <paramref name="content"/> at an absolute address outside the Hub layout (an explicit lock source).</summary>
     public void AddExternal(Uri address, byte[] content) => _external[address.AbsoluteUri] = content;
 
+    /// <summary>Serves <paramref name="content"/> in the Hub layout of another repository and commit (a hosting repository).</summary>
+    public void AddHosted(string repository, string revision, string path, byte[] content) =>
+        _hosted[$"/{repository}/resolve/{revision}/{path}"] = content;
+
     public ModelAssetLock LockFor(params string[] paths) =>
         new("tiny", Repo, Sha, paths.Select(p => new ModelAssetFile(p, _files[p].Length, Sha256(_files[p]))));
 
@@ -72,7 +85,20 @@ internal sealed class FakeHub : HttpMessageHandler
         Requests.Enqueue(request);
         if (Latency > TimeSpan.Zero)
         {
-            await Task.Delay(Latency, cancellationToken);
+            int now = Interlocked.Increment(ref _inFlight);
+            int seen;
+            while (now > (seen = Volatile.Read(ref _maxInFlight)) && Interlocked.CompareExchange(ref _maxInFlight, now, seen) != seen)
+            {
+            }
+
+            try
+            {
+                await Task.Delay(Latency, cancellationToken);
+            }
+            finally
+            {
+                Interlocked.Decrement(ref _inFlight);
+            }
         }
 
         if (Override?.Invoke(number, request) is { } overridden)
@@ -83,11 +109,16 @@ internal sealed class FakeHub : HttpMessageHandler
         string prefix = $"/{Repo}/resolve/{Sha}/";
         string absolute = Uri.UnescapeDataString(request.RequestUri!.AbsolutePath);
         byte[]? content;
+        bool hubHost = request.RequestUri.Host == Endpoint.Host || MirrorHosts.ContainsKey(request.RequestUri.Host);
         if (_external.TryGetValue(request.RequestUri.AbsoluteUri, out var external))
         {
             content = external;
         }
-        else if (request.Method != HttpMethod.Get || request.RequestUri.Host != Endpoint.Host || !absolute.StartsWith(prefix, StringComparison.Ordinal)
+        else if (hubHost && _hosted.TryGetValue(absolute, out var hosted))
+        {
+            content = hosted;
+        }
+        else if (request.Method != HttpMethod.Get || !hubHost || !absolute.StartsWith(prefix, StringComparison.Ordinal)
             || !_files.TryGetValue(absolute[prefix.Length..], out content))
         {
             return new HttpResponseMessage(HttpStatusCode.NotFound);
