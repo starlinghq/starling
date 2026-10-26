@@ -104,7 +104,6 @@ behavior:
       151935 (the unused last embedding row) instead of 151643, because ONNX Runtime GenAI masks prompt positions equal
       to pad_token_id and 151643 is <|endoftext|>, which users can type.
   unsupported:
-    - tool definitions, tool calls and tool messages (rejected by QwenChatTemplate)
     - image, audio and video content
     - Qwen3 thinking mode (enable_thinking true); earlier assistant reasoning is dropped as upstream does
     - sampling (greedy only; QwenChatOptions has no sampling settings)
@@ -134,8 +133,9 @@ processing:
       path: chat_template.jinja
       sha256: "a55ee1b1660128b7098723e0abcd92caa0788061051c62d51cbe87d9cf1974d8"
       size: 4168
-    # C# port of the pinned template for text conversations (QwenChatTemplate, qwen3-text-v1); equal to
-    # transformers apply_chat_template on the 14 corpus conversations (prompt text and ids).
+    # C# port of the pinned template for text and tool-calling conversations (QwenChatTemplate, qwen3-text-v1); equal to
+    # transformers apply_chat_template on the 14 corpus conversations (prompt text and ids) and on the render cases
+    # of the proposed template corpus (model-pipeline/proposed/qwen3-0.6b/template/, 46 cases, tools included).
     renderer: owned
   decoding:
     loop: Starlings.Generation.OnnxGenAI TextGenerator over the GenAI Generator (AppendTokens, GenerateNextToken)
@@ -206,7 +206,12 @@ capabilities:
   bundle_lock_verification: experimental
   cancellation_inside_a_step: unsupported
   conversation_state_reuse: unsupported
-  tool_calling: unsupported
+  # Tools block, assistant tool calls and tool messages of the owned template equal transformers 5.18.0
+  # apply_chat_template on the 46 render cases of the proposed corpus
+  # (model-pipeline/proposed/qwen3-0.6b/template/, text and prompt ids); QwenChatToolCallParser reads the template's
+  # JSON call form (scripted tests in CI). One greedy CPU run on 2026-10-26 called the tool and answered from its
+  # result (docs/evidence/qwenchat-tool-calling-2026-10-26/). The model's choice of tools is not qualified.
+  tool_calling: experimental
   vision: unsupported
   long_context: untested
 
