@@ -606,12 +606,13 @@ public sealed class ModelAssetStore : IDisposable
             idle.CancelAfter(Timeout.InfiniteTimeSpan);
             return read;
         }
-        catch (OperationCanceledException ex) when (!cancellationToken.IsCancellationRequested)
+        catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
         {
+            // Not wrapped: the retry loop reports a transient failure's inner exception when it has one, and the
+            // cancellation's own message would read as if the caller had canceled.
             throw new TransientDownloadException(
                 string.Create(CultureInfo.InvariantCulture, $"No data was received for {_options.ResponseTimeout.TotalSeconds:0.###} s after {received} bytes."),
-                null,
-                ex);
+                null);
         }
     }
 
@@ -817,12 +818,6 @@ public sealed class ModelAssetStore : IDisposable
     {
         public TransientDownloadException(string message, HttpStatusCode? statusCode)
             : base(message)
-        {
-            StatusCode = statusCode;
-        }
-
-        public TransientDownloadException(string message, HttpStatusCode? statusCode, Exception innerException)
-            : base(message, innerException)
         {
             StatusCode = statusCode;
         }

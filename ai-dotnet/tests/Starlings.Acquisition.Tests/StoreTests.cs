@@ -284,6 +284,27 @@ public sealed class StoreTests : IDisposable
     }
 
     [Fact]
+    public async Task StalledBodyAsTheLastAttemptReportsTheStallNotACancellation()
+    {
+        // The stall is the last error: the message must say that nothing was received, not that the operation was canceled.
+        _hub.StallBody = (1, 100_000);
+        var options = new ModelAcquisitionOptions
+        {
+            CacheDirectory = _cache.Root,
+            Endpoint = FakeHub.Endpoint,
+            RetryDelay = TimeSpan.Zero,
+            MaxAttempts = 1,
+            ResponseTimeout = TimeSpan.FromMilliseconds(200),
+            UseEnvironmentToken = false,
+        };
+        using var store = Store(options);
+        var ex = await Assert.ThrowsAsync<ModelAssetDownloadException>(() => store.DownloadAsync(_hub.LockFor(Model), cancellationToken: Ct));
+        Assert.Equal(1, ex.Attempts);
+        Assert.Contains("No data was received for 0.2 s after", ex.Message, StringComparison.Ordinal);
+        Assert.DoesNotContain("canceled", ex.Message, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
     public async Task CallerCancellationDuringAStallIsCancellationNotATimeout()
     {
         using var cts = CancellationTokenSource.CreateLinkedTokenSource(Ct);
