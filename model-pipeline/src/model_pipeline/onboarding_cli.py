@@ -63,6 +63,14 @@ def _inspect(args: argparse.Namespace) -> int:
     return 0
 
 
+def _scaffold(args: argparse.Namespace) -> int:
+    from model_pipeline.scaffold import scaffold
+
+    root = Path(args.repo_root).resolve() if args.repo_root else protection.find_repository_root(Path.cwd())
+    _json(scaffold(root, args.candidate, corpus=args.corpus, write=args.write))
+    return 0
+
+
 def _workflow(args: argparse.Namespace) -> int:
     from model_pipeline.onboarding_workflow import run_workflow
 
@@ -247,6 +255,25 @@ def register(subparsers: argparse._SubParsersAction) -> None:
     inspect = subparsers.add_parser("inspect", help="inspect local model metadata without executing upstream code")
     inspect.add_argument("snapshot", help="existing local model snapshot")
     inspect.set_defaults(func=_dispatch, onboarding_handler=_inspect)
+
+    scaffold = subparsers.add_parser(
+        "scaffold",
+        help="generate a bert-onnx-cpu-v1 candidate's recipe, contract entry, fetch line, README row and test row",
+        description="Derives the onboarding inputs of model-pipeline/candidates/<candidate>/profile.json: the recipe, "
+        "the entry in routes/bert-onnx-cpu-v1/contracts.json (read by onboarding_bert.py and Starlings.Models.Bert), "
+        "the tools/fetch-tokenizer-assets.sh line, the package README row, the contract-test row and a C# runtime "
+        "lock. Prints them as JSON; --write applies them. Pieces already present are reported as unchanged. Changes "
+        "no gate, tolerance, protected file or maturity. Exit codes: 0 done; 2 refused.",
+    )
+    scaffold.add_argument(
+        "candidate", help="candidate directory name under model-pipeline/candidates/, or its profile.json"
+    )
+    scaffold.add_argument("--repo-root")
+    scaffold.add_argument(
+        "--corpus", help="repository-relative reference corpus (default: the task's five-model corpus)"
+    )
+    scaffold.add_argument("--write", action="store_true", help="write the generated pieces into the repository")
+    scaffold.set_defaults(func=_dispatch, onboarding_handler=_scaffold)
 
     plan = subparsers.add_parser("plan", help="validate an onboarding recipe and describe its stages")
     plan.add_argument("recipe")

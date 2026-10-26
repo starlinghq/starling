@@ -212,6 +212,26 @@ def _browser_results(args: argparse.Namespace) -> int:
     return 0
 
 
+def _evidence_index(args: argparse.Namespace) -> int:
+    from model_pipeline import evidence_index
+
+    evidence = Path(args.evidence)
+    try:
+        content = evidence_index.generate(evidence, Path(args.registry))
+    except evidence_index.EvidenceIndexError as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 2
+    if args.check:
+        if evidence_index.stale(content, evidence):
+            print(f"STALE: {evidence / evidence_index.INDEX}", file=sys.stderr)
+            print("The evidence index is stale. Regenerate it with: model-pipeline evidence-index", file=sys.stderr)
+            return 1
+        print(f"evidence index up to date: {evidence / evidence_index.INDEX}")
+        return 0
+    print(f"evidence index written: {evidence_index.write(content, evidence)}")
+    return 0
+
+
 def _catalog(args: argparse.Namespace) -> int:
     from model_pipeline import catalog
 
@@ -448,6 +468,20 @@ def main(argv: list[str] | None = None) -> int:
     cat.add_argument("--repo-root", default=str(REPO_ROOT), help="repository root that evidence paths are relative to")
     cat.add_argument("--check", action="store_true", help="write nothing; exit 1 when the committed output is stale")
     cat.set_defaults(func=_catalog)
+
+    from model_pipeline.evidence_index import DEFAULT_EVIDENCE
+
+    ev = sub.add_parser(
+        "evidence-index",
+        help="generate docs/evidence/README.md, the index of the evidence directories, from them and the manifests",
+        description="Writes the index of docs/evidence/: per entry its date, title, the profiles and gates whose "
+        "manifest records it as gate evidence, and the other profiles that cite it. Exit codes: 0 written or up to "
+        "date; 1 --check found the index stale or missing; 2 an invalid manifest or no evidence directory.",
+    )
+    ev.add_argument("--evidence", default=str(DEFAULT_EVIDENCE), help="evidence directory (default: docs/evidence)")
+    ev.add_argument("--registry", default=str(DEFAULT_REGISTRY), help="registry directory")
+    ev.add_argument("--check", action="store_true", help="write nothing; exit 1 when the committed index is stale")
+    ev.set_defaults(func=_evidence_index)
 
     bench = sub.add_parser("bench", help="raw benchmark results (starlings-bench-raw/1, P-008)")
     bench_sub = bench.add_subparsers(dest="bench_command", required=True)

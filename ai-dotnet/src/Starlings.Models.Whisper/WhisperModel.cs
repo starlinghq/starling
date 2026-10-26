@@ -1,4 +1,3 @@
-using System.Buffers;
 using Microsoft.ML.OnnxRuntime;
 using Starlings.Runtime.Onnx;
 
@@ -7,12 +6,15 @@ namespace Starlings.Models.Whisper;
 /// <summary>
 /// The <c>openai/whisper-large-v3-turbo</c> encoder and decoder over ONNX Runtime: encodes a log-mel spectrogram
 /// (<see cref="WhisperMelSpectrogram"/>) to <c>last_hidden_state</c>, then greedily decodes token ids with the model's
-/// suppression lists. Full-context decoder (no KV cache) for the first cut; transcribes at most 30 s of audio.
+/// suppression lists. Full-context decoder (no KV cache) for the first cut: every step re-runs the decoder over all
+/// ids, writing into one logits buffer per <see cref="Generate"/> call. Transcribes at most 30 s of audio.
 /// </summary>
 /// <remarks>
 /// <para><b>Prompt.</b> The decode prompt is <c>[&lt;|startoftranscript|&gt;, language, &lt;|transcribe|&gt;,
-/// &lt;|notimestamps|&gt;]</c>. The language token is a two-letter code id (see <see cref="LanguageToId"/>) or
-/// <see cref="StartOfLanguageModel"/> (auto-detect).</para>
+/// &lt;|notimestamps|&gt;]</c>. The language token is the id of a language code (see <see cref="LanguageToId"/>).
+/// With no language, the slot holds <see cref="StartOfLanguageModel"/>: that is a task token, not a language token, and
+/// this auto-detect prompt is untested (transformers instead picks the most likely language token after
+/// <c>&lt;|startoftranscript|&gt;</c>).</para>
 /// <para><b>Suppression.</b> <see cref="SuppressTokens"/> are masked on every step; <see cref="BeginSuppressTokens"/>
 /// ([220, eos]) on the first step only, mirroring transformers <c>SuppressTokensLogitsProcessor</c> +
 /// <c>SuppressTokensAtBeginLogitsProcessor</c>.</para>
@@ -47,7 +49,7 @@ public sealed class WhisperModel : IDisposable
     public const int EndOfText = 50257;
     /// <summary><c>&lt;|startoftranscript|&gt;</c>.</summary>
     public const int StartOfTranscript = 50258;
-    /// <summary><c>&lt;|startoflm|&gt;</c> — auto-detect language.</summary>
+    /// <summary><c>&lt;|startoflm|&gt;</c>: a task token; <see cref="Prompt"/> puts it in the language slot when no language is given (untested).</summary>
     public const int StartOfLanguageModel = 50361;
     /// <summary><c>&lt;|transcribe|&gt;</c>.</summary>
     public const int Transcribe = 50360;
@@ -102,6 +104,7 @@ public sealed class WhisperModel : IDisposable
     }
 
     /// <summary>Loads the encoder and decoder graphs and owns the resulting sessions.</summary>
+    /// <exception cref="WhisperUnsupportedLanguageException"><see cref="WhisperOptions.Language"/> is not a language code of the model (checked before any graph loads).</exception>
     public static WhisperModel Create(string encoderPath, string decoderPath, WhisperOptions? options = null)
     {
         options ??= new WhisperOptions();
@@ -171,19 +174,20 @@ public sealed class WhisperModel : IDisposable
     public float[] DecodeLogits(long[] ids, float[] encoderHidden, CancellationToken cancellationToken = default)
     {
         ObjectDisposedException.ThrowIf(Volatile.Read(ref _disposed) != 0, this);
-        var memoryInfo = OrtMemoryInfo.DefaultInstance;
-        using var idsValue = OrtValue.CreateTensorValueFromMemory(memoryInfo, ids.AsMemory(0, ids.Length), [1, ids.Length]);
-        using var hiddenValue = OrtValue.CreateTensorValueFromMemory(memoryInfo, encoderHidden.AsMemory(0, encoderHidden.Length), [1, EncoderSequenceLength, HiddenSize]);
+        ArgumentNullException.ThrowIfNull(ids);
         var logits = new float[ids.Length * VocabSize];
-        using var logitsValue = OrtValue.CreateTensorValueFromMemory(memoryInfo, logits.AsMemory(0, logits.Length), [1, ids.Length, VocabSize]);
-        _decoder.Run([InputIdsName, EncoderHiddenStatesName], [idsValue, hiddenValue], [LogitsName], [logitsValue], cancellationToken);
+        DecodeLogitsInto(ids.AsMemory(), encoderHidden, logits.AsMemory(), cancellationToken);
         return logits;
     }
 
-    /// <summary>Builds the decode prompt for the given language (or auto) and task.</summary>
+    /// <summary>
+    /// Builds the decode prompt for the given language and task. A <see langword="null"/> language puts
+    /// <see cref="StartOfLanguageModel"/> in the language slot (auto-detect, untested).
+    /// </summary>
+    /// <exception cref="WhisperUnsupportedLanguageException"><paramref name="language"/> is not a key of <see cref="LanguageToId"/> (case-insensitive).</exception>
     public static int[] Prompt(string? language = null, bool transcribe = true, bool noTimestamps = true)
     {
-        int lang = language is null ? StartOfLanguageModel : LanguageToId[language.ToLowerInvariant()];
+        int lang = LanguageTokenId(language, nameof(language));
         int task = transcribe ? Transcribe : Translate;
         var prompt = new List<int> { StartOfTranscript, lang, task };
         if (noTimestamps)
@@ -207,21 +211,47 @@ public sealed class WhisperModel : IDisposable
             throw new ArgumentException($"The prompt must hold 1 to {MaxTargetPositions - 1} tokens, got {prompt.Length}.", nameof(prompt));
         }
 
-        var ids = new List<int>(prompt);
-        for (int step = 0; step < maxLength && ids.Count < MaxTargetPositions; step++)
+        ObjectDisposedException.ThrowIf(Volatile.Read(ref _disposed) != 0, this);
+
+        // One ids buffer and one logits buffer per call, instead of fresh [seq, vocab] arrays every step. The logits
+        // buffer grows by doubling up to the last step's length, so it never holds more than twice the rows needed.
+        int maxIds = (int)Math.Min((long)prompt.Length + maxLength, MaxTargetPositions);
+        var ids = new long[MaxTargetPositions];
+        for (int i = 0; i < prompt.Length; i++)
+        {
+            ids[i] = prompt[i];
+        }
+
+        int count = prompt.Length;
+        float[] logits = [];
+        for (int step = 0; step < maxLength && count < MaxTargetPositions; step++)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            var logits = DecodeLogits(ids.Select(i => (long)i).ToArray(), encoderHidden, cancellationToken);
-            var last = logits.AsSpan((ids.Count - 1) * VocabSize, VocabSize);
+            if (logits.Length < count * VocabSize)
+            {
+                // count < maxIds here, so rows >= count.
+                int rows = Math.Min(count * 2, maxIds);
+                logits = new float[rows * VocabSize];
+            }
+
+            DecodeLogitsInto(ids.AsMemory(0, count), encoderHidden, logits.AsMemory(0, count * VocabSize), cancellationToken);
+            var last = logits.AsSpan((count - 1) * VocabSize, VocabSize);
             ApplySuppression(last, step == 0);
-            ids.Add(ArgMax(last));
-            if (ids[^1] == EndOfText)
+            int next = ArgMax(last);
+            ids[count++] = next;
+            if (next == EndOfText)
             {
                 break;
             }
         }
 
-        return ids.ToArray();
+        var result = new int[count];
+        for (int i = 0; i < count; i++)
+        {
+            result[i] = (int)ids[i];
+        }
+
+        return result;
     }
 
     /// <summary>Disposes the sessions if this model owns them. Idempotent.</summary>
@@ -232,6 +262,20 @@ public sealed class WhisperModel : IDisposable
             _decoder.Dispose();
             _encoder.Dispose();
         }
+    }
+
+    /// <summary>The language-slot token of <paramref name="language"/>: its <see cref="LanguageToId"/> id, or <see cref="StartOfLanguageModel"/> for null.</summary>
+    /// <exception cref="WhisperUnsupportedLanguageException">The code is not a key of <see cref="LanguageToId"/> (case-insensitive).</exception>
+    internal static int LanguageTokenId(string? language, string? paramName)
+    {
+        if (language is null)
+        {
+            return StartOfLanguageModel;
+        }
+
+        return LanguageToId.TryGetValue(language.ToLowerInvariant(), out int id)
+            ? id
+            : throw WhisperUnsupportedLanguageException.For(language, paramName);
     }
 
     internal static void ApplySuppression(Span<float> logits, bool firstStep)
@@ -267,6 +311,16 @@ public sealed class WhisperModel : IDisposable
         }
 
         return best;
+    }
+
+    private void DecodeLogitsInto(Memory<long> ids, float[] encoderHidden, Memory<float> logits, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(encoderHidden);
+        var memoryInfo = OrtMemoryInfo.DefaultInstance;
+        using var idsValue = OrtValue.CreateTensorValueFromMemory(memoryInfo, ids, [1, ids.Length]);
+        using var hiddenValue = OrtValue.CreateTensorValueFromMemory(memoryInfo, encoderHidden.AsMemory(0, encoderHidden.Length), [1, EncoderSequenceLength, HiddenSize]);
+        using var logitsValue = OrtValue.CreateTensorValueFromMemory(memoryInfo, logits, [1, ids.Length, VocabSize]);
+        _decoder.Run([InputIdsName, EncoderHiddenStatesName], [idsValue, hiddenValue], [LogitsName], [logitsValue], cancellationToken);
     }
 
     private static bool[] BuildSuppressMask()

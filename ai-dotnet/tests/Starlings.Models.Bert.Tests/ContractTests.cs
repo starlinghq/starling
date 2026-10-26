@@ -211,28 +211,19 @@ public sealed class ContractTests
     private static string ProfileJson(string repository, bool externalData = false) =>
         JsonSerializer.Serialize(ProfileData(repository, externalData));
 
+    /// <summary>A schema-valid candidate for the repository, its behavior taken from the route contract table.</summary>
     private static Dictionary<string, object> ProfileData(string repository, bool externalData = false)
     {
-        bool xlmrReranker = repository == "Starlinghq/bge-reranker-v2-m3-onnx";
-        bool reranking = xlmrReranker || repository.StartsWith("cross-encoder/", StringComparison.Ordinal);
-        bool bge = repository is "BAAI/bge-small-en-v1.5" or "BAAI/bge-base-en-v1.5";
-        bool nomic = repository == "nomic-ai/nomic-embed-text-v1.5";
-        bool bgeM3 = repository == "BAAI/bge-m3";
-        bool xlmr = bgeM3 || xlmrReranker;
+        var spec = BertModelProfile.ParseContracts(BertModelProfile.EmbeddedContractsJson())[repository];
+        bool reranking = spec.Task == BertTask.Reranking;
         var behavior = new Dictionary<string, object>
         {
             ["architecture"] = "bert", ["graph_file"] = "onnx/model.onnx", ["tokenizer_file"] = "tokenizer.json",
-            ["max_tokens"] = xlmr || nomic ? 8192 : reranking || bge ? 512 : 256,
-            ["padding_side"] = "right", ["pad_token_id"] = xlmr ? 1 : 0,
-            ["vocabulary_size"] = xlmr ? 250002 : 30522,
-            ["hidden_size"] = xlmr ? 1024 : nomic || repository == "BAAI/bge-base-en-v1.5" ? 768 : 384,
-            ["truncation"] = "longest_first",
-            ["tokenizer_profile"] = xlmr ? "xlmr-unigram" : "bert-wordpiece-uncased",
-            ["pooling"] = reranking ? "none" : bge || bgeM3 ? "cls" : "mean",
-            ["normalize"] = reranking || nomic ? "none" : "l2",
-            ["output_name"] = reranking ? "logits" : bgeM3 ? "token_embeddings" : "last_hidden_state",
-            ["prompts"] = bge ? new Dictionary<string, string> { ["none"] = "", ["query"] = BertModelProfile.BgeQueryInstruction }
-                : new Dictionary<string, string> { ["none"] = "" },
+            ["max_tokens"] = spec.MaxTokens, ["padding_side"] = "right", ["pad_token_id"] = spec.PadTokenId,
+            ["vocabulary_size"] = spec.VocabularySize, ["hidden_size"] = spec.HiddenSize,
+            ["truncation"] = "longest_first", ["tokenizer_profile"] = spec.TokenizerProfile,
+            ["pooling"] = spec.Pooling, ["normalize"] = spec.Normalize, ["output_name"] = spec.OutputName,
+            ["prompts"] = new Dictionary<string, string>(spec.Prompts),
         };
         if (reranking)
         {

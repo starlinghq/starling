@@ -21,11 +21,18 @@ namespace Starlings.Generation.OnnxGenAI;
 /// Disposal is reference-counted: <see cref="Dispose"/> stops new sequences; sequences already created keep the native
 /// model alive until they are disposed, so native memory is never freed under an active request.
 /// </para>
+/// <para>
+/// Disposal is the way to release native memory. As a safety net, a sequence or model that becomes unreachable without
+/// disposal is released after a garbage collection finds it: its finalizer queues the same release to a thread-pool
+/// thread (never running native destruction or the reference count on the finalizer thread), so an abandoned request
+/// no longer pins the model, and the native model is destroyed only after its last generator.
+/// </para>
 /// </remarks>
 public sealed class GenAIModel : IDisposable
 {
     private readonly Config _config;
     private readonly Model _model;
+    private readonly NativeLifetime _lifetime;
     private int _references = 1;
     private int _disposed;
 
@@ -44,6 +51,13 @@ public sealed class GenAIModel : IDisposable
         AppliedOverlays = overlays;
         ProviderOptions = providerOptions;
         NativeCallLock = options.EffectiveSerializeNativeCalls ? new Lock() : null;
+
+        // GenAI's own finalizers would destroy the native model on the finalizer thread, possibly before a generator
+        // created from it; the reference count releases it instead, and the model's own reference is owned by
+        // NativeLifetime (Dispose, or a thread-pool release when this instance is collected undisposed).
+        NativeLifetime.TakeOverFinalization(model);
+        NativeLifetime.TakeOverFinalization(config);
+        _lifetime = new NativeLifetime(Release);
     }
 
     /// <summary>Absolute path of the model directory.</summary>
@@ -80,6 +94,9 @@ public sealed class GenAIModel : IDisposable
     public bool SerializesNativeCalls => NativeCallLock is not null;
 
     internal Lock? NativeCallLock { get; }
+
+    /// <summary>Live references on the native model: one for this instance until disposed, one per undisposed sequence.</summary>
+    internal int References => Volatile.Read(ref _references);
 
     /// <summary>True after <see cref="Dispose"/>.</summary>
     public bool IsDisposed => Volatile.Read(ref _disposed) != 0;
@@ -230,7 +247,7 @@ public sealed class GenAIModel : IDisposable
     {
         if (Interlocked.Exchange(ref _disposed, 1) == 0)
         {
-            Release();
+            _lifetime.Dispose();
         }
     }
 

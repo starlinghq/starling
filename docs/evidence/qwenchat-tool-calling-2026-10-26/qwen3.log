@@ -1,0 +1,11 @@
+turn1 finish=Stop prompt=166 completion=19
+turn1 text="\u003Ctool_call\u003E\n{\u0022name\u0022: \u0022get_weather\u0022, \u0022arguments\u0022: {\u0022city\u0022: \u0022Paris\u0022}}\n\u003C/tool_call\u003E"
+turn1 call=get_weather args={"city": "Paris"}
+streamed calls=1
+turn2 finish=Stop prompt=213 completion=16
+turn2 text="The current weather in Paris is sunny with a temperature of 18\u00B0C."
+turn2 calls=0
+
+real	0m36.360s
+user	0m38.150s
+sys	0m9.049s
