@@ -305,6 +305,103 @@ jobs:
   # every file's SHA-256 (#71), tools/fetch-release-references.py downloads and verifies them, and the evaluator checks
   # every array against the set's own tensors.json or environment.json. These three have no Python stage 2: their
   # reference python only fetches the release media from Wikimedia Commons, and Qwen needs none.
+  # The e5 browser profiles (W6): the conformance app (browser/conformance/) on the WASM backend in headless Chromium,
+  # checked against the protected browser tolerances. WebGPU is not run here (no GPU on the runner); its evidence is local
+  # (docs/evidence/browser-e5-package-2026-10-23/).
+  browser:
+    name: browser e5 (wasm, headless chromium)
+    needs: assets
+    if: ${{ !inputs.soak_only }}
+    runs-on: qualification
+    timeout-minutes: 90
+    env:
+      GRAPHS: ${{ github.workspace }}/.browser-graphs
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          fetch-depth: 0 # the evaluator verifies protected evidence against its merge base with origin/main
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: "3.11"
+      - uses: actions/setup-dotnet@26b0ec14cb23fa6904739307f278c14f94c95bf1 # v5
+        with:
+          global-json-file: global.json
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: ai-dotnet/src/Shared/OnnxWeb/package-lock.json
+      - run: pip install -e model-pipeline
+      - name: Model cache
+        run: echo "STARLING_MODELS=$GITHUB_WORKSPACE/.models" >>"$GITHUB_ENV"
+      - name: Acquire and verify
+        run: tools/acquire-models.sh "$RUNNER_TEMP/locks" multilingual-e5-small/onnx-fp32-cpu
+      # numpy, onnx, ONNX Runtime 1.30.0 and Playwright 1.63.0 from the hash-locked browser requirements, then Playwright's
+      # pinned Chromium (with its system libraries where apt is available).
+      - name: Browser environment
+        run: |
+          pip install uv==0.12.19
+          uv venv -p 3.11 "$RUNNER_TEMP/venv"
+          VIRTUAL_ENV="$RUNNER_TEMP/venv" uv pip install --require-hashes -r model-pipeline/reference/encoder/requirements-browser.txt
+          if command -v apt-get >/dev/null && sudo -n true 2>/dev/null; then
+            "$RUNNER_TEMP/venv/bin/python" -m playwright install --with-deps chromium
+          else
+            "$RUNNER_TEMP/venv/bin/python" -m playwright install chromium
+          fi
+      # The int8-embed graph is not hosted: build it with the deterministic quantization script and require the pinned
+      # SHA-256 (E5BrowserAssets.Int8Embed). The fp32 graph is the acquired onnx/model.onnx, hard-linked next to it.
+      - name: Graphs
+        run: |
+          snapshot="$STARLING_MODELS/intfloat/multilingual-e5-small/614241f622f53c4eeff9890bdc4f31cfecc418b3"
+          mkdir -p "$GRAPHS"
+          "$RUNNER_TEMP/venv/bin/python" model-pipeline/reference/encoder/quantize_e5_browser.py \
+            --model "$snapshot/onnx/model.onnx" --out "$GRAPHS"
+          echo "374a3cc034a1dba112ecd1a9fba920be63f295cada3c65ab15a0a3a84739fb19  $GRAPHS/model-int8-embed.onnx" | sha256sum -c -
+          ln -f "$snapshot/onnx/model.onnx" "$GRAPHS/model-fp32.onnx" || cp "$snapshot/onnx/model.onnx" "$GRAPHS/model-fp32.onnx"
+      # Interpreter build (no wasm-tools workload). Not in locked restore mode: publishing a browser-wasm app re-resolves
+      # the referenced libraries' trimming package (browser/conformance/README.md); the libraries' own locked restore is
+      # the ai-dotnet CI job's.
+      - name: Publish the conformance app
+        run: dotnet publish browser/conformance/E5Conformance -c Release -p:RestoreLockedMode=false -o "$RUNNER_TEMP/conformance"
+      - name: Run fp32 and int8-embed on the WASM backend
+        run: |
+          mkdir -p "$EVIDENCE/browser"
+          for variant in fp32 int8embed; do
+            "$RUNNER_TEMP/venv/bin/python" browser/conformance/run_conformance.py --publish "$RUNNER_TEMP/conformance" \
+              --label interp --variant "$variant" --provider wasm --iterations 10 \
+              --models-root "$STARLING_MODELS" --graphs "$GRAPHS" --out "$EVIDENCE/browser/$variant-wasm.json"
+          done
+      # Quick check of every bound with the harness's own evaluator (also reports latency and memory).
+      - name: Check against the protected browser tolerances (harness evaluator)
+        run: |
+          "$RUNNER_TEMP/venv/bin/python" browser/conformance/evaluate_e5_browser.py --graphs "$GRAPHS" \
+            --out "$EVIDENCE/browser/report.json" --require-pass "$EVIDENCE"/browser/*-wasm.json
+      # The gate path (the one that produced the manifests' G1/G2 evidence): native ONNX Runtime on the same graph as
+      # stage 2, the browser run converted to stages 1 and 3, then the protected staged evaluator with G1 and G2 required.
+      - name: G1 and G2 with the protected evaluator
+        env:
+          FX: model-pipeline/protected/multilingual-e5-small/onnx-fp32-cpu
+        run: |
+          for variant in fp32 int8embed; do
+            profile="multilingual-e5-small/onnx-$variant-wasm"
+            if [[ $variant == fp32 ]]; then graph=model-fp32.onnx; path=onnx/model.onnx; else graph=model-int8-embed.onnx; path=onnx/model-int8-embed.onnx; fi
+            results="$RUNNER_TEMP/gates/$variant/results"
+            mkdir -p "$results"
+            PYTHONPATH=model-pipeline/src "$RUNNER_TEMP/venv/bin/python" model-pipeline/reference/encoder/stage_e5_browser_native.py \
+              --graph "$GRAPHS/$graph" --graph-path "$path" --fixtures "$FX" --profile "$profile" \
+              --out "$results" --intra-op-threads 4
+            model-pipeline browser-results "$EVIDENCE/browser/$variant-wasm.json" \
+              --manifest "model-pipeline/registry/$profile/manifest.yaml" --fixtures "$FX" --out "$results" --machine "$(hostname)"
+            model-pipeline evaluate "model-pipeline/registry/$profile/manifest.yaml" --results "$results" \
+              --out "$EVIDENCE/browser/gates/$variant" --require-gates G1,G2
+          done
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: always()
+        with:
+          name: qualification-browser
+          path: artifacts/qualification/browser/
+          if-no-files-found: ignore
+
   release-gates:
     name: release gates ${{ matrix.profile }}
     needs: assets

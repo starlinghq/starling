@@ -1,0 +1,13 @@
+<Project>
+  <!--
+    Browser conformance app for the e5 browser packages (docs/evidence/browser-e5-package-2026-10-23/). It references
+    the packages as projects, so the evidence is about the code that ships. Not packable; not in AI.slnx (the publish
+    needs the wasm-tools workload for AOT, and the run needs Chromium). Repository settings still apply.
+  -->
+  <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '$(MSBuildThisFileDirectory)../'))" />
+
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+  </PropertyGroup>
+</Project>

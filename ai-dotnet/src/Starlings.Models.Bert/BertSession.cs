@@ -25,8 +25,10 @@ internal sealed class BertSession : IDisposable
         _maxBatchTokens = maxBatchTokens;
         _sortByLength = sortByLength;
         var files = ModelAssetStore.VerifyDirectory(profile.RuntimeLock, snapshot, CacheVerification.Sha256);
+        // The profile requires truncation "longest_first" (BertModelProfile.Parse); stated here rather than left to the
+        // library's default, which is the same strategy and direction.
         _tokenizer = Tokenizer.FromFile(files.GetFilePath(BertModelProfile.TokenizerFile))
-            .WithPadding(null).WithTruncation(new TruncationOptions(profile.MaxTokens));
+            .WithPadding(null).WithTruncation(new TruncationOptions(profile.MaxTokens, TruncationStrategy.LongestFirst, TruncationDirection.Right));
         Session = OnnxModelSession.Create(files.GetFilePath(BertModelProfile.GraphFile), new OnnxSessionOptions
         {
             IntraOpNumThreads = threads,

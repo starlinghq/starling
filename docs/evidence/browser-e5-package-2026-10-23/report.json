@@ -1,0 +1,800 @@
+[
+ {
+  "profile": "multilingual-e5-small/onnx-fp32-wasm",
+  "label": "aot",
+  "browser": "153.0.8010.12",
+  "cross_origin_isolated": true,
+  "onnxruntime_web": {
+   "version": "1.30.0",
+   "bundle": "wasm",
+   "cross_origin_isolated": true,
+   "hardware_concurrency": 12,
+   "num_threads": 4,
+   "proxy": false,
+   "webgpu_exposed": true
+  },
+  "runtime": ".NET 10.0.12 (interpreter)",
+  "statistics": {
+   "max_abs": 1.3999999999569912e-07,
+   "mean_abs": 2.1363454143984606e-08,
+   "p99_abs": 7.400000000268303e-08,
+   "min_cosine": 0.9999999999996798,
+   "min_cosine_case": "space-only",
+   "cases": 46,
+   "vs_native_same_graph_max_abs": 2.0122211456807815e-07
+  },
+  "generator_vs_ids_max_abs": 1.0200000000182285e-07,
+  "checks": [
+   {
+    "bound": "discrete.token_ids",
+    "observed": "0 mismatches (46 e5 inputs, 46 tokenizer cases)",
+    "limit": "exact",
+    "status": "passed"
+   },
+   {
+    "bound": "discrete.attention_mask",
+    "observed": "0 mismatches (46 e5 inputs, 46 tokenizer cases)",
+    "limit": "exact",
+    "status": "passed"
+   },
+   {
+    "bound": "discrete.offsets",
+    "observed": "0 mismatches (utf16, 46 cases)",
+    "limit": "exact",
+    "status": "passed"
+   },
+   {
+    "bound": "float.embedding_max_abs",
+    "observed": 1.3999999999569912e-07,
+    "limit": 1e-05,
+    "status": "passed"
+   },
+   {
+    "bound": "float.padded_batch_vs_single_embedding_max_abs",
+    "observed": 1.0200000000182285e-07,
+    "limit": 1e-05,
+    "status": "passed"
+   },
+   {
+    "bound": "float.nan_or_inf",
+    "observed": "none",
+    "limit": "fail",
+    "status": "passed"
+   }
+  ],
+  "passed": true,
+  "load": {
+   "Runtime_until_ms": 56.29,
+   "Tokenizer_until_ms": 816.6,
+   "Model_until_ms": 3119.12,
+   "Session_until_ms": 4548.135,
+   "Done_until_ms": 4548.67,
+   "session_create_ms": 1415.94,
+   "model_bytes": 470268510,
+   "model_sha256": "ca456c06b3a9505ddfd9131408916dd79290368331e7d76bb621f1cba6bc8665"
+  },
+  "first_run_ms": 73.0799,
+  "latency_median_ms": {
+   "passage34_b1": 25.4749,
+   "short_b8": 217.005,
+   "long512_b1": 439.215,
+   "generator_text_e5-passage-prefix_b1": 28.72
+  },
+  "peak_rss_renderer_bytes": 2303713280,
+  "file": "fp32-wasm-aot.json"
+ },
+ {
+  "profile": "multilingual-e5-small/onnx-int8embed-wasm",
+  "label": "aot",
+  "browser": "153.0.8010.12",
+  "cross_origin_isolated": true,
+  "onnxruntime_web": {
+   "version": "1.30.0",
+   "bundle": "wasm",
+   "cross_origin_isolated": true,
+   "hardware_concurrency": 12,
+   "num_threads": 4,
+   "proxy": false,
+   "webgpu_exposed": true
+  },
+  "runtime": ".NET 10.0.12 (interpreter)",
+  "statistics": {
+   "max_abs": 0.0035069899999999946,
+   "mean_abs": 0.00038302785015882016,
+   "p99_abs": 0.0015497958600000003,
+   "min_cosine": 0.9998038199756645,
+   "min_cosine_case": "repeated-char",
+   "cases": 46,
+   "vs_native_same_graph_max_abs": 1.3449789047076388e-07
+  },
+  "generator_vs_ids_max_abs": 1.0000000000287557e-07,
+  "checks": [
+   {
+    "bound": "discrete.token_ids",
+    "observed": "0 mismatches (46 e5 inputs, 46 tokenizer cases)",
+    "limit": "exact",
+    "status": "passed"
+   },
+   {
+    "bound": "discrete.attention_mask",
+    "observed": "0 mismatches (46 e5 inputs, 46 tokenizer cases)",
+    "limit": "exact",
+    "status": "passed"
+   },
+   {
+    "bound": "discrete.offsets",
+    "observed": "0 mismatches (utf16, 46 cases)",
+    "limit": "exact",
+    "status": "passed"
+   },
+   {
+    "bound": "float.embedding_max_abs",
+    "observed": 0.0035069899999999946,
+    "limit": 0.01,
+    "status": "passed"
+   },
+   {
+    "bound": "float.min_cosine",
+    "observed": 0.9998038199756645,
+    "limit": 0.9995,
+    "status": "passed"
+   },
+   {
+    "bound": "float.padded_batch_vs_single_embedding_max_abs",
+    "observed": 1.0000000000287557e-07,
+    "limit": 1e-05,
+    "status": "passed"
+   },
+   {
+    "bound": "float.nan_or_inf",
+    "observed": "none",
+    "limit": "fail",
+    "status": "passed"
+   },
+   {
+    "bound": "browser_vs_native_same_graph.embedding_max_abs",
+    "observed": 1.3449789047076388e-07,
+    "limit": 1e-05,
+    "status": "passed"
+   },
+   {
+    "bound": "task_metric_before_preview.retrieval_top10_overlap_vs_fp32",
+    "observed": null,
+    "limit": 0.95,
+    "status": "not evaluated",
+    "reason": "needs a P-030 held-out query set (gates Preview, not Experimental)"
+   }
+  ],
+  "passed": true,
+  "load": {
+   "Runtime_until_ms": 50.8549,
+   "Tokenizer_until_ms": 791.655,
+   "Model_until_ms": 1612.54,
+   "Session_until_ms": 2517.9899,
+   "Done_until_ms": 2518.4499,
+   "session_create_ms": 894.965,
+   "model_bytes": 181715582,
+   "model_sha256": "374a3cc034a1dba112ecd1a9fba920be63f295cada3c65ab15a0a3a84739fb19"
+  },
+  "first_run_ms": 88.915,
+  "latency_median_ms": {
+   "passage34_b1": 110.255,
+   "short_b8": 226.085,
+   "long512_b1": 444.785,
+   "generator_text_e5-passage-prefix_b1": 27.4949
+  },
+  "peak_rss_renderer_bytes": 1423941632,
+  "file": "int8embed-wasm-aot.json"
+ },
+ {
+  "profile": "multilingual-e5-small/onnx-int8embed-wasm",
+  "label": "aot",
+  "browser": "153.0.8010.12",
+  "cross_origin_isolated": true,
+  "onnxruntime_web": {
+   "version": "1.30.0",
+   "bundle": "wasm",
+   "cross_origin_isolated": true,
+   "hardware_concurrency": 12,
+   "num_threads": 4,
+   "proxy": false,
+   "webgpu_exposed": true
+  },
+  "runtime": ".NET 10.0.12 (interpreter)",
+  "statistics": {
+   "max_abs": 0.0035069899999999946,
+   "mean_abs": 0.00038302785015882016,
+   "p99_abs": 0.0015497958600000003,
+   "min_cosine": 0.9998038199756645,
+   "min_cosine_case": "repeated-char",
+   "cases": 46,
+   "vs_native_same_graph_max_abs": 1.3449789047076388e-07
+  },
+  "generator_vs_ids_max_abs": 1.0000000000287557e-07,
+  "checks": [
+   {
+    "bound": "discrete.token_ids",
+    "observed": "0 mismatches (46 e5 inputs, 46 tokenizer cases)",
+    "limit": "exact",
+    "status": "passed"
+   },
+   {
+    "bound": "discrete.attention_mask",
+    "observed": "0 mismatches (46 e5 inputs, 46 tokenizer cases)",
+    "limit": "exact",
+    "status": "passed"
+   },
+   {
+    "bound": "discrete.offsets",
+    "observed": "0 mismatches (utf16, 46 cases)",
+    "limit": "exact",
+    "status": "passed"
+   },
+   {
+    "bound": "float.embedding_max_abs",
+    "observed": 0.0035069899999999946,
+    "limit": 0.01,
+    "status": "passed"
+   },
+   {
+    "bound": "float.min_cosine",
+    "observed": 0.9998038199756645,
+    "limit": 0.9995,
+    "status": "passed"
+   },
+   {
+    "bound": "float.padded_batch_vs_single_embedding_max_abs",
+    "observed": 1.0000000000287557e-07,
+    "limit": 1e-05,
+    "status": "passed"
+   },
+   {
+    "bound": "float.nan_or_inf",
+    "observed": "none",
+    "limit": "fail",
+    "status": "passed"
+   },
+   {
+    "bound": "browser_vs_native_same_graph.embedding_max_abs",
+    "observed": 1.3449789047076388e-07,
+    "limit": 1e-05,
+    "status": "passed"
+   },
+   {
+    "bound": "task_metric_before_preview.retrieval_top10_overlap_vs_fp32",
+    "observed": null,
+    "limit": 0.95,
+    "status": "not evaluated",
+    "reason": "needs a P-030 held-out query set (gates Preview, not Experimental)"
+   }
+  ],
+  "passed": true,
+  "load": {
+   "Runtime_until_ms": 66.33,
+   "Tokenizer_until_ms": 836.085,
+   "Model_until_ms": 1697.225,
+   "Session_until_ms": 2666.72,
+   "Done_until_ms": 2667.54,
+   "session_create_ms": 954.79,
+   "model_bytes": 181715582,
+   "model_sha256": "374a3cc034a1dba112ecd1a9fba920be63f295cada3c65ab15a0a3a84739fb19"
+  },
+  "first_run_ms": 84.7899,
+  "latency_median_ms": {
+   "passage34_b1": 27.085,
+   "short_b8": 719.23,
+   "long512_b1": 1127.7649,
+   "generator_text_e5-passage-prefix_b1": 70.135
+  },
+  "peak_rss_renderer_bytes": 1425870848,
+  "file": "int8embed-wasm-aot-r2.json"
+ },
+ {
+  "profile": "multilingual-e5-small/onnx-int8embed-wasm",
+  "label": "aot",
+  "browser": "153.0.8010.12",
+  "cross_origin_isolated": true,
+  "onnxruntime_web": {
+   "version": "1.30.0",
+   "bundle": "wasm",
+   "cross_origin_isolated": true,
+   "hardware_concurrency": 12,
+   "num_threads": 4,
+   "proxy": false,
+   "webgpu_exposed": true
+  },
+  "runtime": ".NET 10.0.12 (interpreter)",
+  "statistics": {
+   "max_abs": 0.0035069899999999946,
+   "mean_abs": 0.00038302785015882016,
+   "p99_abs": 0.0015497958600000003,
+   "min_cosine": 0.9998038199756645,
+   "min_cosine_case": "repeated-char",
+   "cases": 46,
+   "vs_native_same_graph_max_abs": 1.3449789047076388e-07
+  },
+  "generator_vs_ids_max_abs": 1.0000000000287557e-07,
+  "checks": [
+   {
+    "bound": "discrete.token_ids",
+    "observed": "0 mismatches (46 e5 inputs, 46 tokenizer cases)",
+    "limit": "exact",
+    "status": "passed"
+   },
+   {
+    "bound": "discrete.attention_mask",
+    "observed": "0 mismatches (46 e5 inputs, 46 tokenizer cases)",
+    "limit": "exact",
+    "status": "passed"
+   },
+   {
+    "bound": "discrete.offsets",
+    "observed": "0 mismatches (utf16, 46 cases)",
+    "limit": "exact",
+    "status": "passed"
+   },
+   {
+    "bound": "float.embedding_max_abs",
+    "observed": 0.0035069899999999946,
+    "limit": 0.01,
+    "status": "passed"
+   },
+   {
+    "bound": "float.min_cosine",
+    "observed": 0.9998038199756645,
+    "limit": 0.9995,
+    "status": "passed"
+   },
+   {
+    "bound": "float.padded_batch_vs_single_embedding_max_abs",
+    "observed": 1.0000000000287557e-07,
+    "limit": 1e-05,
+    "status": "passed"
+   },
+   {
+    "bound": "float.nan_or_inf",
+    "observed": "none",
+    "limit": "fail",
+    "status": "passed"
+   },
+   {
+    "bound": "browser_vs_native_same_graph.embedding_max_abs",
+    "observed": 1.3449789047076388e-07,
+    "limit": 1e-05,
+    "status": "passed"
+   },
+   {
+    "bound": "task_metric_before_preview.retrieval_top10_overlap_vs_fp32",
+    "observed": null,
+    "limit": 0.95,
+    "status": "not evaluated",
+    "reason": "needs a P-030 held-out query set (gates Preview, not Experimental)"
+   }
+  ],
+  "passed": true,
+  "load": {
+   "Runtime_until_ms": 54.6749,
+   "Tokenizer_until_ms": 808.1649,
+   "Model_until_ms": 1633.2599,
+   "Session_until_ms": 2597.6649,
+   "Done_until_ms": 2598.2049,
+   "session_create_ms": 952.035,
+   "model_bytes": 181715582,
+   "model_sha256": "374a3cc034a1dba112ecd1a9fba920be63f295cada3c65ab15a0a3a84739fb19"
+  },
+  "first_run_ms": 85.55,
+  "latency_median_ms": {
+   "passage34_b1": 25.265,
+   "short_b8": 215.1099,
+   "long512_b1": 413.655,
+   "generator_text_e5-passage-prefix_b1": 26.575
+  },
+  "peak_rss_renderer_bytes": 1440112640,
+  "file": "int8embed-wasm-aot-r3.json"
+ },
+ {
+  "profile": "multilingual-e5-small/onnx-fp32-wasm",
+  "label": "interp",
+  "browser": "153.0.8010.12",
+  "cross_origin_isolated": true,
+  "onnxruntime_web": {
+   "version": "1.30.0",
+   "bundle": "wasm",
+   "cross_origin_isolated": true,
+   "hardware_concurrency": 12,
+   "num_threads": 4,
+   "proxy": false,
+   "webgpu_exposed": true
+  },
+  "runtime": ".NET 10.0.12 (interpreter)",
+  "statistics": {
+   "max_abs": 1.3999999999569912e-07,
+   "mean_abs": 2.1363454143984606e-08,
+   "p99_abs": 7.400000000268303e-08,
+   "min_cosine": 0.9999999999996798,
+   "min_cosine_case": "space-only",
+   "cases": 46,
+   "vs_native_same_graph_max_abs": 2.0122211456807815e-07
+  },
+  "generator_vs_ids_max_abs": 1.0200000000182285e-07,
+  "checks": [
+   {
+    "bound": "discrete.token_ids",
+    "observed": "0 mismatches (46 e5 inputs, 46 tokenizer cases)",
+    "limit": "exact",
+    "status": "passed"
+   },
+   {
+    "bound": "discrete.attention_mask",
+    "observed": "0 mismatches (46 e5 inputs, 46 tokenizer cases)",
+    "limit": "exact",
+    "status": "passed"
+   },
+   {
+    "bound": "discrete.offsets",
+    "observed": "0 mismatches (utf16, 46 cases)",
+    "limit": "exact",
+    "status": "passed"
+   },
+   {
+    "bound": "float.embedding_max_abs",
+    "observed": 1.3999999999569912e-07,
+    "limit": 1e-05,
+    "status": "passed"
+   },
+   {
+    "bound": "float.padded_batch_vs_single_embedding_max_abs",
+    "observed": 1.0200000000182285e-07,
+    "limit": 1e-05,
+    "status": "passed"
+   },
+   {
+    "bound": "float.nan_or_inf",
+    "observed": "none",
+    "limit": "fail",
+    "status": "passed"
+   }
+  ],
+  "passed": true,
+  "load": {
+   "Runtime_until_ms": 55.845,
+   "Tokenizer_until_ms": 2523.27,
+   "Model_until_ms": 4616.04,
+   "Session_until_ms": 6031.39,
+   "Done_until_ms": 6031.65,
+   "session_create_ms": 1405.72,
+   "model_bytes": 470268510,
+   "model_sha256": "ca456c06b3a9505ddfd9131408916dd79290368331e7d76bb621f1cba6bc8665"
+  },
+  "first_run_ms": 77.23,
+  "latency_median_ms": {
+   "passage34_b1": 25.735,
+   "short_b8": 216.955,
+   "long512_b1": 418.195,
+   "generator_text_e5-passage-prefix_b1": 26.29
+  },
+  "peak_rss_renderer_bytes": 2290106368,
+  "file": "fp32-wasm-interp.json"
+ },
+ {
+  "profile": "multilingual-e5-small/onnx-int8embed-wasm",
+  "label": "interp",
+  "browser": "153.0.8010.12",
+  "cross_origin_isolated": true,
+  "onnxruntime_web": {
+   "version": "1.30.0",
+   "bundle": "wasm",
+   "cross_origin_isolated": true,
+   "hardware_concurrency": 12,
+   "num_threads": 4,
+   "proxy": false,
+   "webgpu_exposed": true
+  },
+  "runtime": ".NET 10.0.12 (interpreter)",
+  "statistics": {
+   "max_abs": 0.0035069899999999946,
+   "mean_abs": 0.00038302785015882016,
+   "p99_abs": 0.0015497958600000003,
+   "min_cosine": 0.9998038199756645,
+   "min_cosine_case": "repeated-char",
+   "cases": 46,
+   "vs_native_same_graph_max_abs": 1.3449789047076388e-07
+  },
+  "generator_vs_ids_max_abs": 1.0000000000287557e-07,
+  "checks": [
+   {
+    "bound": "discrete.token_ids",
+    "observed": "0 mismatches (46 e5 inputs, 46 tokenizer cases)",
+    "limit": "exact",
+    "status": "passed"
+   },
+   {
+    "bound": "discrete.attention_mask",
+    "observed": "0 mismatches (46 e5 inputs, 46 tokenizer cases)",
+    "limit": "exact",
+    "status": "passed"
+   },
+   {
+    "bound": "discrete.offsets",
+    "observed": "0 mismatches (utf16, 46 cases)",
+    "limit": "exact",
+    "status": "passed"
+   },
+   {
+    "bound": "float.embedding_max_abs",
+    "observed": 0.0035069899999999946,
+    "limit": 0.01,
+    "status": "passed"
+   },
+   {
+    "bound": "float.min_cosine",
+    "observed": 0.9998038199756645,
+    "limit": 0.9995,
+    "status": "passed"
+   },
+   {
+    "bound": "float.padded_batch_vs_single_embedding_max_abs",
+    "observed": 1.0000000000287557e-07,
+    "limit": 1e-05,
+    "status": "passed"
+   },
+   {
+    "bound": "float.nan_or_inf",
+    "observed": "none",
+    "limit": "fail",
+    "status": "passed"
+   },
+   {
+    "bound": "browser_vs_native_same_graph.embedding_max_abs",
+    "observed": 1.3449789047076388e-07,
+    "limit": 1e-05,
+    "status": "passed"
+   },
+   {
+    "bound": "task_metric_before_preview.retrieval_top10_overlap_vs_fp32",
+    "observed": null,
+    "limit": 0.95,
+    "status": "not evaluated",
+    "reason": "needs a P-030 held-out query set (gates Preview, not Experimental)"
+   }
+  ],
+  "passed": true,
+  "load": {
+   "Runtime_until_ms": 56.7599,
+   "Tokenizer_until_ms": 2516.91,
+   "Model_until_ms": 3331.0749,
+   "Session_until_ms": 4244.1299,
+   "Done_until_ms": 4244.3849,
+   "session_create_ms": 903.47,
+   "model_bytes": 181715582,
+   "model_sha256": "374a3cc034a1dba112ecd1a9fba920be63f295cada3c65ab15a0a3a84739fb19"
+  },
+  "first_run_ms": 76.095,
+  "latency_median_ms": {
+   "passage34_b1": 25.7,
+   "short_b8": 216.215,
+   "long512_b1": 418.075,
+   "generator_text_e5-passage-prefix_b1": 26.93
+  },
+  "peak_rss_renderer_bytes": 1411543040,
+  "file": "int8embed-wasm-interp.json"
+ },
+ {
+  "profile": "multilingual-e5-small/onnx-int8embed-wasm",
+  "label": "aot",
+  "browser": "153.0.8010.12",
+  "cross_origin_isolated": false,
+  "onnxruntime_web": {
+   "version": "1.30.0",
+   "bundle": "wasm",
+   "cross_origin_isolated": false,
+   "hardware_concurrency": 12,
+   "num_threads": 1,
+   "proxy": false,
+   "webgpu_exposed": true
+  },
+  "runtime": ".NET 10.0.12 (interpreter)",
+  "statistics": {
+   "max_abs": 0.0035069899999999946,
+   "mean_abs": 0.00038302785015882016,
+   "p99_abs": 0.0015497958600000003,
+   "min_cosine": 0.9998038199756645,
+   "min_cosine_case": "repeated-char",
+   "cases": 46,
+   "vs_native_same_graph_max_abs": 1.3449789047076388e-07
+  },
+  "generator_vs_ids_max_abs": 1.0000000000287557e-07,
+  "checks": [
+   {
+    "bound": "discrete.token_ids",
+    "observed": "0 mismatches (46 e5 inputs, 46 tokenizer cases)",
+    "limit": "exact",
+    "status": "passed"
+   },
+   {
+    "bound": "discrete.attention_mask",
+    "observed": "0 mismatches (46 e5 inputs, 46 tokenizer cases)",
+    "limit": "exact",
+    "status": "passed"
+   },
+   {
+    "bound": "discrete.offsets",
+    "observed": "0 mismatches (utf16, 46 cases)",
+    "limit": "exact",
+    "status": "passed"
+   },
+   {
+    "bound": "float.embedding_max_abs",
+    "observed": 0.0035069899999999946,
+    "limit": 0.01,
+    "status": "passed"
+   },
+   {
+    "bound": "float.min_cosine",
+    "observed": 0.9998038199756645,
+    "limit": 0.9995,
+    "status": "passed"
+   },
+   {
+    "bound": "float.padded_batch_vs_single_embedding_max_abs",
+    "observed": 1.0000000000287557e-07,
+    "limit": 1e-05,
+    "status": "passed"
+   },
+   {
+    "bound": "float.nan_or_inf",
+    "observed": "none",
+    "limit": "fail",
+    "status": "passed"
+   },
+   {
+    "bound": "browser_vs_native_same_graph.embedding_max_abs",
+    "observed": 1.3449789047076388e-07,
+    "limit": 1e-05,
+    "status": "passed"
+   },
+   {
+    "bound": "task_metric_before_preview.retrieval_top10_overlap_vs_fp32",
+    "observed": null,
+    "limit": 0.95,
+    "status": "not evaluated",
+    "reason": "needs a P-030 held-out query set (gates Preview, not Experimental)"
+   }
+  ],
+  "passed": true,
+  "load": {
+   "Runtime_until_ms": 53.1999,
+   "Tokenizer_until_ms": 810.5,
+   "Model_until_ms": 1627.1999,
+   "Session_until_ms": 2564.0999,
+   "Done_until_ms": 2564.5999,
+   "session_create_ms": 926.5,
+   "model_bytes": 181715582,
+   "model_sha256": "374a3cc034a1dba112ecd1a9fba920be63f295cada3c65ab15a0a3a84739fb19"
+  },
+  "first_run_ms": 74.5,
+  "latency_median_ms": {
+   "passage34_b1": 80.9,
+   "short_b8": 797,
+   "long512_b1": 1481,
+   "generator_text_e5-passage-prefix_b1": 80
+  },
+  "peak_rss_renderer_bytes": 1401786368,
+  "file": "int8embed-wasm-aot-noiso.json"
+ },
+ {
+  "profile": "multilingual-e5-small/onnx-int8embed-wasm",
+  "label": "aot",
+  "browser": "153.0.8010.12",
+  "cross_origin_isolated": true,
+  "onnxruntime_web": {
+   "version": "1.30.0",
+   "bundle": "wasm",
+   "cross_origin_isolated": true,
+   "hardware_concurrency": 12,
+   "num_threads": 4,
+   "proxy": true,
+   "webgpu_exposed": true
+  },
+  "runtime": ".NET 10.0.12 (interpreter)",
+  "statistics": {
+   "max_abs": 0.0035069899999999946,
+   "mean_abs": 0.00038302785015882016,
+   "p99_abs": 0.0015497958600000003,
+   "min_cosine": 0.9998038199756645,
+   "min_cosine_case": "repeated-char",
+   "cases": 46,
+   "vs_native_same_graph_max_abs": 1.3449789047076388e-07
+  },
+  "generator_vs_ids_max_abs": 1.0000000000287557e-07,
+  "checks": [
+   {
+    "bound": "discrete.token_ids",
+    "observed": "0 mismatches (46 e5 inputs, 46 tokenizer cases)",
+    "limit": "exact",
+    "status": "passed"
+   },
+   {
+    "bound": "discrete.attention_mask",
+    "observed": "0 mismatches (46 e5 inputs, 46 tokenizer cases)",
+    "limit": "exact",
+    "status": "passed"
+   },
+   {
+    "bound": "discrete.offsets",
+    "observed": "0 mismatches (utf16, 46 cases)",
+    "limit": "exact",
+    "status": "passed"
+   },
+   {
+    "bound": "float.embedding_max_abs",
+    "observed": 0.0035069899999999946,
+    "limit": 0.01,
+    "status": "passed"
+   },
+   {
+    "bound": "float.min_cosine",
+    "observed": 0.9998038199756645,
+    "limit": 0.9995,
+    "status": "passed"
+   },
+   {
+    "bound": "float.padded_batch_vs_single_embedding_max_abs",
+    "observed": 1.0000000000287557e-07,
+    "limit": 1e-05,
+    "status": "passed"
+   },
+   {
+    "bound": "float.nan_or_inf",
+    "observed": "none",
+    "limit": "fail",
+    "status": "passed"
+   },
+   {
+    "bound": "browser_vs_native_same_graph.embedding_max_abs",
+    "observed": 1.3449789047076388e-07,
+    "limit": 1e-05,
+    "status": "passed"
+   },
+   {
+    "bound": "task_metric_before_preview.retrieval_top10_overlap_vs_fp32",
+    "observed": null,
+    "limit": 0.95,
+    "status": "not evaluated",
+    "reason": "needs a P-030 held-out query set (gates Preview, not Experimental)"
+   }
+  ],
+  "passed": true,
+  "load": {
+   "Runtime_until_ms": 53.425,
+   "Tokenizer_until_ms": 804.38,
+   "Model_until_ms": 1635.39,
+   "Session_until_ms": 2591.53,
+   "Done_until_ms": 2592.105,
+   "session_create_ms": 944.5,
+   "model_bytes": 181715582,
+   "model_sha256": "374a3cc034a1dba112ecd1a9fba920be63f295cada3c65ab15a0a3a84739fb19"
+  },
+  "first_run_ms": 113.25,
+  "latency_median_ms": {
+   "passage34_b1": 25.265,
+   "short_b8": 215.865,
+   "long512_b1": 416.455,
+   "generator_text_e5-passage-prefix_b1": 26.74
+  },
+  "peak_rss_renderer_bytes": 1533411328,
+  "file": "int8embed-wasm-aot-proxy.json"
+ },
+ {
+  "profile": null,
+  "label": "aot",
+  "error": "Starlings.Runtime.OnnxWeb.OnnxWebException: onnxruntime-web run failed: Error: failed to call OrtRun(). ERROR_CODE: 1, ERROR_MESSAGE: WebGPU validation failed. [Invalid Buffer (unlabeled)] is invalid due to a previous error.",
+  "file": "fp32-webgpu-aot.json"
+ },
+ {
+  "profile": null,
+  "label": "aot",
+  "error": "Starlings.Runtime.OnnxWeb.OnnxWebException: onnxruntime-web run failed: Error: failed to call OrtRun(). ERROR_CODE: 1, ERROR_MESSAGE: WebGPU validation failed. [Invalid Buffer (unlabeled)] is invalid due to a previous error.",
+  "file": "int8embed-webgpu-aot.json"
+ }
+]

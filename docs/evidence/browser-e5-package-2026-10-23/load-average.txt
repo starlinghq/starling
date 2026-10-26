@@ -1,0 +1,12 @@
+fp32-wasm-aot 9.94 12.78 12.09 mem_available_gb=33
+int8embed-wasm-aot 8.97 12.29 11.95 mem_available_gb=33
+int8embed-wasm-aot-r2 7.98 11.66 11.75 mem_available_gb=33
+int8embed-wasm-aot-r3 6.00 10.58 11.37 mem_available_gb=33
+fp32-wasm-interp 5.36 10.05 11.18 mem_available_gb=33
+int8embed-wasm-interp 4.76 9.44 10.94 mem_available_gb=33
+int8embed-wasm-aot-noiso 4.67 8.96 10.73 mem_available_gb=33
+int8embed-wasm-aot-proxy 2.89 7.74 10.21 mem_available_gb=33
+cache-int8embed-wasm-aot 3.38 7.46 10.05 mem_available_gb=33
+fp32-webgpu-aot 3.32 7.31 9.97 mem_available_gb=32
+int8embed-webgpu-aot 3.64 7.25 9.92 mem_available_gb=32
+end 4.14 7.24 9.89 mem_available_gb=32

@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <IsPackable>true</IsPackable>
+    <IsAotCompatible>true</IsAotCompatible>
+    <Description>intfloat/multilingual-e5-small (revision 614241f6) sentence embeddings in the browser (Blazor WebAssembly and other .NET browser-wasm apps) on onnxruntime-web: the owned tokenizer (Starlings.Tokenizers) and the same padding, mean pooling and L2 normalization code as Starlings.Models.E5, async, plus a Microsoft.Extensions.AI IEmbeddingGenerator. Pins the fp32 graph (from the Hub) and the int8-embed variant (host it yourself) by SHA-256. Profiles multilingual-e5-small/onnx-fp32-wasm, onnx-int8embed-wasm (and -webgpu with Starlings.Runtime.OnnxWeb.WebGpu). WebAssembly has no support badge. Maturity is per model profile (Stable, Preview or Experimental): see the README, generated from the model registry.</Description>
+    <PackageTags>embeddings;e5;multilingual-e5-small;sentence-embeddings;onnxruntime-web;wasm;webassembly;blazor;browser;microsoft.extensions.ai</PackageTags>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../Starlings.Runtime.OnnxWeb/Starlings.Runtime.OnnxWeb.csproj" />
+    <ProjectReference Include="../Starlings.Models.E5/Starlings.Models.E5.csproj" />
+    <ProjectReference Include="../Starlings.Models.E5.Extensions.AI/Starlings.Models.E5.Extensions.AI.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Starlings.Models.E5.Browser.Tests" />
+  </ItemGroup>
+
+</Project>

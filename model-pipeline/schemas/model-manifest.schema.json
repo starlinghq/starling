@@ -85,7 +85,7 @@
         "tasks": {
           "type": "array",
           "minItems": 1,
-          "items": { "enum": ["embedding", "image-embedding", "video-embedding", "classification", "extraction", "reranking", "generation", "decision"] }
+          "items": { "enum": ["embedding", "image-embedding", "video-embedding", "classification", "extraction", "reranking", "generation", "decision", "transcription"] }
         },
         "max_input_tokens": { "type": "integer", "minimum": 1 },
         "offsets_unit": {
@@ -149,7 +149,7 @@
           "additionalProperties": false,
           "required": ["name", "version"],
           "properties": {
-            "name": { "enum": ["onnxruntime", "onnxruntime-genai", "llama.cpp", "torchsharp", "managed"] },
+            "name": { "enum": ["onnxruntime", "onnxruntime-genai", "onnxruntime-web", "llama.cpp", "torchsharp", "managed"] },
             "version": { "type": "string", "minLength": 1 },
             "binding": { "type": "string" },
             "binding_version": { "type": "string" }
@@ -199,10 +199,21 @@
         "properties": {
           "os": { "enum": ["linux", "windows", "macos"] },
           "arch": { "enum": ["x64", "arm64"] },
-          "provider": { "enum": ["cpu", "cuda", "directml", "coreml", "rocm", "metal", "vulkan"] },
+          "provider": {
+            "description": "Execution provider. 'wasm' and 'webgpu' are onnxruntime-web's backends in a browser; such a row also names the browser.",
+            "enum": ["cpu", "cuda", "directml", "coreml", "rocm", "metal", "vulkan", "wasm", "webgpu"]
+          },
+          "browser": {
+            "description": "Browser engine of a browser row, with the major version a status was verified on (e.g. 'chromium-153'), or without a version for a status that covers no tested version (e.g. 'firefox' untested).",
+            "type": "string",
+            "pattern": "^(chromium|firefox|safari)(-[0-9]+)?$"
+          },
           "status": { "$ref": "#/$defs/status" },
           "verified": { "type": "string", "format": "date" }
-        }
+        },
+        "if": { "properties": { "provider": { "enum": ["wasm", "webgpu"] } }, "required": ["provider"] },
+        "then": { "required": ["browser"] },
+        "else": { "not": { "required": ["browser"] } }
       }
     },
 

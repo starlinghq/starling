@@ -181,6 +181,37 @@ def _check_protected(args: argparse.Namespace) -> int:
     return 0 if result.ok else 1
 
 
+def _browser_results(args: argparse.Namespace) -> int:
+    import yaml
+
+    from model_pipeline import browser_results, fixtures, results
+
+    try:
+        paths = browser_results.convert(
+            Path(args.run),
+            Path(args.manifest),
+            Path(args.fixtures),
+            Path(args.out),
+            machine=args.machine,
+            converted_at_commit=args.converted_at_commit or fixtures.git_head(Path(args.manifest).parent),
+        )
+    except (
+        browser_results.BrowserResultsError,
+        results.ResultsError,
+        json.JSONDecodeError,
+        UnicodeDecodeError,
+        yaml.YAMLError,
+        OSError,
+        KeyError,
+        TypeError,
+    ) as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 2
+    for stage, path in paths.items():
+        print(f"{stage}: {path}")
+    return 0
+
+
 def _catalog(args: argparse.Namespace) -> int:
     from model_pipeline import catalog
 
@@ -362,6 +393,27 @@ def main(argv: list[str] | None = None) -> int:
     for option in REFUSED_OPTIONS:
         ev.add_argument(option, nargs="?", action=_RefuseOverride, help=argparse.SUPPRESS)
     ev.set_defaults(func=_evaluate)
+
+    br = sub.add_parser(
+        "browser-results",
+        help="convert an e5 browser conformance run (browser/conformance/run_conformance.py) into stage results",
+        description="Writes tokenizer.results.json and dotnet.results.json for a browser profile (backend "
+        "onnxruntime-web). Stage 2 comes from reference/encoder/stage_e5_browser_native.py. Exit codes: 0 written; "
+        "2 the run failed, is for another profile or graph, or lacks per-case outputs.",
+    )
+    br.add_argument("run", help="result JSON of run_conformance.py, with per-case outputs")
+    br.add_argument("--manifest", required=True, help="registry manifest.yaml of the browser profile")
+    br.add_argument(
+        "--fixtures", required=True, help="protected fixtures directory the run read (its embeddings.jsonl ids)"
+    )
+    br.add_argument("--out", required=True, help="results directory")
+    br.add_argument("--machine", help="host the browser ran on (environment.machine; omitted when not given)")
+    br.add_argument(
+        "--converted-at-commit",
+        help="commit the conversion ran at (producer.converted_at_commit; default: HEAD of the repository). The "
+        "harness commit (producer.repository_commit) always comes from the run's source_commit",
+    )
+    br.set_defaults(func=_browser_results)
 
     cp = sub.add_parser(
         "check-protected",

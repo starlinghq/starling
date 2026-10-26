@@ -58,7 +58,12 @@ public static class EmbeddingGemma2ImageDecoder
         return DecodeData(data, IsSixteenBitPng(encoded), options);
     }
 
-    /// <summary>Decodes an encoded image from a stream (read to the end; the stream is not disposed).</summary>
+    /// <summary>
+    /// Decodes an encoded image from a stream (read to the end; the stream is not disposed). The whole stream is
+    /// buffered in memory before the header is read, so <see cref="EmbeddingGemma2ImageDecoderOptions.MaxPixels"/>
+    /// bounds the decoded pixels, not the encoded bytes read from the stream; bound the stream's length first when the
+    /// source is untrusted.
+    /// </summary>
     public static EmbeddingGemma2Image Decode(Stream stream, EmbeddingGemma2ImageDecoderOptions? options = null)
     {
         ArgumentNullException.ThrowIfNull(stream);
@@ -222,7 +227,11 @@ public sealed record EmbeddingGemma2ImageDecoderOptions
     /// </summary>
     public bool ApplyExifOrientation { get; init; }
 
-    /// <summary>Decoded pixels at most, checked from the header before decoding. Default 50,000,000.</summary>
+    /// <summary>
+    /// Decoded pixels at most, checked from the header before any pixel is decoded. Default 50,000,000. It does not
+    /// bound the encoded bytes: <see cref="EmbeddingGemma2ImageDecoder.Decode(Stream, EmbeddingGemma2ImageDecoderOptions?)"/>
+    /// reads the whole stream into memory first.
+    /// </summary>
     public long MaxPixels { get; init; } = 50_000_000;
 
     internal void Validate() => ArgumentOutOfRangeException.ThrowIfLessThan(MaxPixels, 1);

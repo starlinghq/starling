@@ -8,7 +8,7 @@ Sentence embeddings from [`intfloat/multilingual-e5-small`](https://huggingface.
 
 ## Maturity
 
-<!-- catalog:maturity profiles=multilingual-e5-small/* -->
+<!-- catalog:maturity profiles=multilingual-e5-small/onnx-fp32-cpu,multilingual-e5-small/onnx-fp32-cuda -->
 Maturity is per profile, generated from the registry manifests by `model-pipeline catalog` (do not edit this table by hand). Gates, evidence and capabilities per profile: the [model catalog](https://github.com/starlinghq/starling/blob/main/docs/catalog/README.md).
 
 | Profile | Maturity | Platforms |
@@ -47,6 +47,8 @@ float[][] passages = embedder.EmbedBatch([E5TextEmbedder.PassagePrefix + "As a g
 ```
 
 e5 expects `"query: "` or `"passage: "` at the start of every text; nothing is added for you. Vectors are normalized, so cosine similarity is the dot product.
+
+`using var embedder = E5TextEmbedder.Create(files, options)` builds the same pair in one call (tokenizer and model SHA-256 enforced; the tokenizer truncates to the options' `MaxSequenceLength`) and owns the encoder and session; an embedder from the constructor owns nothing and its `Dispose` does nothing.
 
 ## Batching options
 

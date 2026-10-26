@@ -41,8 +41,14 @@ public static class E5ModelAssets
     /// <summary>SHA-256 of <see cref="ModelFile"/>; usable as <c>OnnxSessionOptions.ExpectedModelSha256</c>.</summary>
     public const string ModelSha256 = "ca456c06b3a9505ddfd9131408916dd79290368331e7d76bb621f1cba6bc8665";
 
+    /// <summary>Size of <see cref="ModelFile"/> in bytes.</summary>
+    public const long ModelSize = 470_268_510;
+
     /// <summary>SHA-256 of <see cref="TokenizerFile"/>.</summary>
     public const string TokenizerSha256 = "0b44a9d7b51c3c62626640cda0e2c2f70fdacdc25bbbd68038369d14ebdf4c39";
+
+    /// <summary>Size of <see cref="TokenizerFile"/> in bytes.</summary>
+    public const long TokenizerSize = 17_082_730;
 
     /// <summary>The lock: the two runtime files (about 487 MB). Other repository files are not needed at run time.</summary>
     public static ModelAssetLock Lock { get; } = new(
@@ -50,8 +56,8 @@ public static class E5ModelAssets
         Repository,
         Revision,
         [
-            new ModelAssetFile(ModelFile, 470268510, ModelSha256),
-            new ModelAssetFile(TokenizerFile, 17082730, TokenizerSha256),
+            new ModelAssetFile(ModelFile, ModelSize, ModelSha256),
+            new ModelAssetFile(TokenizerFile, TokenizerSize, TokenizerSha256),
         ]);
 
     /// <summary>Explicitly downloads (or verifies already cached) e5 files. See <see cref="ModelAssetStore.DownloadAsync"/>.</summary>

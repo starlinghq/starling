@@ -1,0 +1,38 @@
+{
+ "variant": "int8embed",
+ "provider": "wasm",
+ "queries": [
+  {
+   "query": "how long should I soak rice before cooking",
+   "meta": "Query embedded in 40 ms.",
+   "top": [
+    "0.833 JA おいしいご飯を炊くには、お米を研いでから三十分ほど水に浸しておきます。",
+    "0.827 EN To keep basil fresh, trim the stems and stand it in a glass of water on the kitchen counter, not in the fridge.",
+    "0.803 FR Pour réussir une mayonnaise, tous les ingrédients doivent être à la même température."
+   ]
+  },
+  {
+   "query": "Wann kann ich Bücher ausleihen?",
+   "meta": "Query embedded in 29 ms.",
+   "top": [
+    "0.803 DE Die Bibliothek ist am Samstag von zehn bis sechzehn Uhr geöffnet, sonntags bleibt sie geschlossen.",
+    "0.747 DE Für einen guten Hefeteig sollte die Milch lauwarm sein, sonst geht der Teig nicht richtig auf.",
+    "0.729 PT O Rio Amazonas é o maior do mundo em volume de água e atravessa vários países da América do Sul."
+   ]
+  },
+  {
+   "query": "earthquakes and tectonic plates",
+   "meta": "Query embedded in 30 ms.",
+   "top": [
+    "0.816 ES Los terremotos se producen cuando las placas tectónicas liberan energía de forma repentina.",
+    "0.782 EN Photosynthesis turns sunlight, water and carbon dioxide into sugar and oxygen inside the leaves of plants.",
+    "0.778 PT O Rio Amazonas é o maior do mundo em volume de água e atravessa vários países da América do Sul."
+   ]
+  }
+ ],
+ "load_s": 7.79745070700028,
+ "diagnostics": "Runtime\nProfile\nmultilingual-e5-small/onnx-int8embed-wasm\nonnxruntime-web\n1.30.0 (wasm bundle)\nThreads\n4 of 12 logical cores\nLoad\n7.7 s, corpus embedded in 1216 ms",
+ "console": [
+  "error: Failed to load resource: the server responded with a status of 404 (Not Found)"
+ ]
+}

@@ -130,6 +130,36 @@ The video adapters load FFmpeg shared libraries (`libavcodec`, `libavformat`, `l
 
 Codec patents, for information and not legal advice: H.264/AVC and H.265/HEVC are covered by patent licensing pools (Via LA for AVC and HEVC; Access Advance for HEVC); VP9 and AV1 are offered royalty-free by their developers (the AOMedia patent license for AV1), although third parties assert claims. FFmpeg's decoders come with no patent license. Because the adapters ship no codec binaries and decodes with the user's FFmpeg, codec licensing is the deployer's responsibility; seek legal advice for a distribution decision.
 
+## onnxruntime-web (redistributed binaries of Starlings.Runtime.OnnxWeb and Starlings.Runtime.OnnxWeb.WebGpu)
+
+`Starlings.Runtime.OnnxWeb` ships, unmodified, three files of the npm package `onnxruntime-web` 1.30.0 (`https://registry.npmjs.org/onnxruntime-web/-/onnxruntime-web-1.30.0.tgz`, integrity `sha512-q0y+JrrtukXSzsBWEMccVfqX25LRmosXHF+CaRJmg8pZClzcV7svNc4rKY3jL02Vb7QmRMDs1SigqR4CXAfKYQ==`, built from microsoft/onnxruntime commit `f2c39fe2f838cf35ce7da92824f5a5e3ee6e88a7`, tag v1.30.0) as static web assets: `dist/ort.wasm.min.mjs`, `dist/ort-wasm-simd-threaded.mjs` and `dist/ort-wasm-simd-threaded.wasm`. `Starlings.Runtime.OnnxWeb.WebGpu` ships `dist/ort.webgpu.min.mjs`, `dist/ort-wasm-simd-threaded.asyncify.mjs` and `dist/ort-wasm-simd-threaded.asyncify.wasm` from the same package. The pin is `ai-dotnet/src/Shared/OnnxWeb/package-lock.json`; the build copies the files from `npm ci` output, and nothing from `node_modules` is in Git. ONNX Runtime is licensed under the MIT License:
+
+```
+MIT License
+
+Copyright (c) Microsoft Corporation
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+```
+
+The WebAssembly binaries also contain third-party components compiled into ONNX Runtime; their notices are ONNX Runtime's `ThirdPartyNotices.txt` at the same commit. The npm package carries neither file, so both packages ship them: `LICENSE-onnxruntime.txt` (SHA-256 `2f07c727…922c`) and `ThirdPartyNotices-onnxruntime.txt` (SHA-256 `143764b9…3de3`), taken unmodified from `microsoft/onnxruntime` at `f2c39fe2f838cf35ce7da92824f5a5e3ee6e88a7` and committed in `ai-dotnet/src/Shared/OnnxWeb/`. They are at the root of each package and are served next to the binaries (`_content/<package>/ort/`), so an app that deploys the binaries deploys the notices.
+
 ## Excluded
 
 `SixLabors.ImageSharp` is not referenced by any ai-dotnet project (Six Labors Split License, not OSI-approved; Release builds need a license key; less accurate than SkiaSharp against PIL). CI fails if it appears in any project's dependency graph.

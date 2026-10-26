@@ -6,7 +6,7 @@ This repository delivers .NET implementations of AI models with reproducible evi
 
 - `ai-dotnet/`: model libraries, adapters, samples, benchmarks. Solution: `AI.slnx`. Create a project only for a backlog item that needs one.
 - `model-pipeline/`: Python manifest schema, registry, reference runners, evaluation.
-- `browser/`: the WebAssembly spike.
+- `browser/`: the WebAssembly spike (`spike/`) and the conformance harness of the browser packages (`conformance/`). The browser packages themselves are under `ai-dotnet/src/` (`Starlings.Runtime.OnnxWeb*`, `Starlings.Models.E5.Browser`).
 - `.github/`: charter, contribution policy, templates, CI.
 
 The owned tokenizer is the published package `Starlings.Tokenizers` from [starlinghq/tokenizers](https://github.com/starlinghq/tokenizers), pinned exactly in `ai-dotnet/Directory.Packages.props`. Change tokenizer behavior there, release it, then raise the pin here (and the manifests' `processing.tokenizer.version`) in one change.

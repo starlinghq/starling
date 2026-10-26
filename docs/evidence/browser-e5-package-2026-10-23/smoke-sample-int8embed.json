@@ -1,0 +1,38 @@
+{
+ "variant": "int8embed",
+ "provider": "wasm",
+ "queries": [
+  {
+   "query": "how do I make rice taste better",
+   "meta": "Query embedded in 80 ms.",
+   "top": [
+    "0.821 EN To keep basil fresh, trim the stems and stand it in a glass of water on the kitchen counter, not in the fridge.",
+    "0.804 JA おいしいご飯を炊くには、お米を研いでから三十分ほど水に浸しておきます。",
+    "0.783 EN Photosynthesis turns sunlight, water and carbon dioxide into sugar and oxygen inside the leaves of plants."
+   ]
+  },
+  {
+   "query": "Wann kann ich Bücher ausleihen?",
+   "meta": "Query embedded in 117 ms.",
+   "top": [
+    "0.803 DE Die Bibliothek ist am Samstag von zehn bis sechzehn Uhr geöffnet, sonntags bleibt sie geschlossen.",
+    "0.747 DE Für einen guten Hefeteig sollte die Milch lauwarm sein, sonst geht der Teig nicht richtig auf.",
+    "0.729 PT O Rio Amazonas é o maior do mundo em volume de água e atravessa vários países da América do Sul."
+   ]
+  },
+  {
+   "query": "why does the ground shake",
+   "meta": "Query embedded in 107 ms.",
+   "top": [
+    "0.819 EN Photosynthesis turns sunlight, water and carbon dioxide into sugar and oxygen inside the leaves of plants.",
+    "0.802 EN If your laptop battery drains quickly, lower the screen brightness and close apps running in the background.",
+    "0.775 ES Los terremotos se producen cuando las placas tectónicas liberan energía de forma repentina."
+   ]
+  }
+ ],
+ "load_s": 11.235903027000404,
+ "diagnostics": "Runtime\nProfile\nmultilingual-e5-small/onnx-int8embed-wasm\nonnxruntime-web\n1.30.0 (wasm bundle)\nThreads\n4 of 12 logical cores\nLoad\n11.1 s, corpus embedded in 2067 ms",
+ "console": [
+  "error: Failed to load resource: the server responded with a status of 404 (Not Found)"
+ ]
+}

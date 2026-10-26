@@ -1,0 +1,7 @@
+node_modules/
+dist/
+.bundle/
+# The published .NET bundle (npm run bundle) and a self-hosted graph: build outputs and model files, never committed.
+public/e5/_framework/
+public/e5/_content/
+public/models/

@@ -37,6 +37,7 @@
     "aot",
     "extensions_ai",
     "mlnet",
+    "asset_acquisition",
     "asset_acquisition_download",
     "asset_verification_offline",
     "audio",
@@ -45,11 +46,13 @@
     "bf16",
     "built_in_profile",
     "bundle_lock_verification",
+    "cache_storage",
     "calibrated_temperature",
     "calibration_fitting",
     "cancellation_inside_a_step",
     "chat_template_owned_text",
     "chunked_prefill",
+    "chunking",
     "classification",
     "concurrent_calls",
     "concurrent_calls_unserialized",
@@ -90,12 +93,14 @@
     "input_over_8192_tokens",
     "input_up_to_2049_tokens",
     "label_descriptions",
+    "language_detection",
     "long_context",
     "long_context_1667_to_8192_tokens",
     "long_context_over_8192_tokens",
     "matryoshka",
     "max_new_tokens",
     "mixed_label_sets_in_batch",
+    "multithreaded_cross_origin_isolated",
     "non_english",
     "offsets_original_text",
     "option_isolation",
@@ -103,6 +108,7 @@
     "probability_rounding",
     "prompts_query_document",
     "prompts_task",
+    "proxy_worker",
     "quantized",
     "query_instruction",
     "question_isolation",
@@ -111,6 +117,7 @@
     "relation_extraction",
     "request_isolation",
     "sampling_seeded",
+    "single_thread_without_isolation",
     "state_cache_within_request",
     "state_json_rendering",
     "state_over_8192_tokens",
@@ -123,8 +130,12 @@
     "text",
     "text_only_inputs",
     "tf32",
+    "timestamps",
     "tokenizer_owned",
     "tool_calling",
+    "transcription",
+    "transcription_cuda",
+    "translation",
     "usage",
     "usage_output_tokens",
     "video",
@@ -148,13 +159,23 @@
     "video_prompts",
     "video_timestamps",
     "video_variable_frame_rate",
-    "vision"
+    "vision",
+    "wasm_aot",
+    "wasm_interpreter"
   ],
   "platforms": [
     "linux-x64 cpu",
     "linux-x64 cuda",
+    "linux-x64 wasm chromium-153",
+    "linux-x64 wasm firefox",
+    "linux-x64 webgpu chromium-153",
+    "linux-x64 webgpu firefox",
+    "macos-arm64 wasm safari",
+    "macos-arm64 webgpu safari",
     "windows-x64 cpu",
-    "windows-x64 cuda"
+    "windows-x64 cuda",
+    "windows-x64 wasm chromium",
+    "windows-x64 webgpu chromium"
   ],
   "profiles": [
     {
@@ -215,6 +236,7 @@
         "aot": "untested",
         "extensions_ai": "unsupported",
         "mlnet": "unsupported",
+        "asset_acquisition": "unrecorded",
         "asset_acquisition_download": "unrecorded",
         "asset_verification_offline": "experimental",
         "audio": "unrecorded",
@@ -223,11 +245,13 @@
         "bf16": "unrecorded",
         "built_in_profile": "experimental",
         "bundle_lock_verification": "unrecorded",
+        "cache_storage": "unrecorded",
         "calibrated_temperature": "unrecorded",
         "calibration_fitting": "unrecorded",
         "cancellation_inside_a_step": "unrecorded",
         "chat_template_owned_text": "unrecorded",
         "chunked_prefill": "unrecorded",
+        "chunking": "unrecorded",
         "classification": "unrecorded",
         "concurrent_calls": "unrecorded",
         "concurrent_calls_unserialized": "unrecorded",
@@ -268,12 +292,14 @@
         "input_over_8192_tokens": "unrecorded",
         "input_up_to_2049_tokens": "unrecorded",
         "label_descriptions": "unrecorded",
+        "language_detection": "unrecorded",
         "long_context": "unrecorded",
         "long_context_1667_to_8192_tokens": "unrecorded",
         "long_context_over_8192_tokens": "unrecorded",
         "matryoshka": "unrecorded",
         "max_new_tokens": "unrecorded",
         "mixed_label_sets_in_batch": "unrecorded",
+        "multithreaded_cross_origin_isolated": "unrecorded",
         "non_english": "unrecorded",
         "offsets_original_text": "unrecorded",
         "option_isolation": "unrecorded",
@@ -281,6 +307,7 @@
         "probability_rounding": "unrecorded",
         "prompts_query_document": "unrecorded",
         "prompts_task": "unrecorded",
+        "proxy_worker": "unrecorded",
         "quantized": "unrecorded",
         "query_instruction": "unrecorded",
         "question_isolation": "unrecorded",
@@ -289,6 +316,7 @@
         "relation_extraction": "unrecorded",
         "request_isolation": "unrecorded",
         "sampling_seeded": "unrecorded",
+        "single_thread_without_isolation": "unrecorded",
         "state_cache_within_request": "unrecorded",
         "state_json_rendering": "unrecorded",
         "state_over_8192_tokens": "unrecorded",
@@ -301,8 +329,12 @@
         "text": "experimental",
         "text_only_inputs": "unrecorded",
         "tf32": "unrecorded",
+        "timestamps": "unrecorded",
         "tokenizer_owned": "unrecorded",
         "tool_calling": "unrecorded",
+        "transcription": "unrecorded",
+        "transcription_cuda": "unrecorded",
+        "translation": "unrecorded",
         "usage": "unrecorded",
         "usage_output_tokens": "unrecorded",
         "video": "unrecorded",
@@ -326,7 +358,9 @@
         "video_prompts": "unrecorded",
         "video_timestamps": "unrecorded",
         "video_variable_frame_rate": "unrecorded",
-        "vision": "unrecorded"
+        "vision": "unrecorded",
+        "wasm_aot": "unrecorded",
+        "wasm_interpreter": "unrecorded"
       },
       "compatibility": {
         "linux-x64 cpu": {
@@ -335,10 +369,34 @@
         "linux-x64 cuda": {
           "status": "unrecorded"
         },
+        "linux-x64 wasm chromium-153": {
+          "status": "unrecorded"
+        },
+        "linux-x64 wasm firefox": {
+          "status": "unrecorded"
+        },
+        "linux-x64 webgpu chromium-153": {
+          "status": "unrecorded"
+        },
+        "linux-x64 webgpu firefox": {
+          "status": "unrecorded"
+        },
+        "macos-arm64 wasm safari": {
+          "status": "unrecorded"
+        },
+        "macos-arm64 webgpu safari": {
+          "status": "unrecorded"
+        },
         "windows-x64 cpu": {
           "status": "untested"
         },
         "windows-x64 cuda": {
+          "status": "unrecorded"
+        },
+        "windows-x64 wasm chromium": {
+          "status": "unrecorded"
+        },
+        "windows-x64 webgpu chromium": {
           "status": "unrecorded"
         }
       },
@@ -418,6 +476,7 @@
         "aot": "untested",
         "extensions_ai": "unsupported",
         "mlnet": "unsupported",
+        "asset_acquisition": "unrecorded",
         "asset_acquisition_download": "unrecorded",
         "asset_verification_offline": "experimental",
         "audio": "unrecorded",
@@ -426,11 +485,13 @@
         "bf16": "unrecorded",
         "built_in_profile": "experimental",
         "bundle_lock_verification": "unrecorded",
+        "cache_storage": "unrecorded",
         "calibrated_temperature": "unrecorded",
         "calibration_fitting": "unrecorded",
         "cancellation_inside_a_step": "unrecorded",
         "chat_template_owned_text": "unrecorded",
         "chunked_prefill": "unrecorded",
+        "chunking": "unrecorded",
         "classification": "unrecorded",
         "concurrent_calls": "unrecorded",
         "concurrent_calls_unserialized": "unrecorded",
@@ -471,12 +532,14 @@
         "input_over_8192_tokens": "unrecorded",
         "input_up_to_2049_tokens": "unrecorded",
         "label_descriptions": "unrecorded",
+        "language_detection": "unrecorded",
         "long_context": "unrecorded",
         "long_context_1667_to_8192_tokens": "unrecorded",
         "long_context_over_8192_tokens": "unrecorded",
         "matryoshka": "unrecorded",
         "max_new_tokens": "unrecorded",
         "mixed_label_sets_in_batch": "unrecorded",
+        "multithreaded_cross_origin_isolated": "unrecorded",
         "non_english": "unrecorded",
         "offsets_original_text": "unrecorded",
         "option_isolation": "unrecorded",
@@ -484,6 +547,7 @@
         "probability_rounding": "unrecorded",
         "prompts_query_document": "unrecorded",
         "prompts_task": "unrecorded",
+        "proxy_worker": "unrecorded",
         "quantized": "unrecorded",
         "query_instruction": "experimental",
         "question_isolation": "unrecorded",
@@ -492,6 +556,7 @@
         "relation_extraction": "unrecorded",
         "request_isolation": "unrecorded",
         "sampling_seeded": "unrecorded",
+        "single_thread_without_isolation": "unrecorded",
         "state_cache_within_request": "unrecorded",
         "state_json_rendering": "unrecorded",
         "state_over_8192_tokens": "unrecorded",
@@ -504,8 +569,12 @@
         "text": "experimental",
         "text_only_inputs": "unrecorded",
         "tf32": "unrecorded",
+        "timestamps": "unrecorded",
         "tokenizer_owned": "unrecorded",
         "tool_calling": "unrecorded",
+        "transcription": "unrecorded",
+        "transcription_cuda": "unrecorded",
+        "translation": "unrecorded",
         "usage": "unrecorded",
         "usage_output_tokens": "unrecorded",
         "video": "unrecorded",
@@ -529,7 +598,9 @@
         "video_prompts": "unrecorded",
         "video_timestamps": "unrecorded",
         "video_variable_frame_rate": "unrecorded",
-        "vision": "unrecorded"
+        "vision": "unrecorded",
+        "wasm_aot": "unrecorded",
+        "wasm_interpreter": "unrecorded"
       },
       "compatibility": {
         "linux-x64 cpu": {
@@ -538,10 +609,34 @@
         "linux-x64 cuda": {
           "status": "unrecorded"
         },
+        "linux-x64 wasm chromium-153": {
+          "status": "unrecorded"
+        },
+        "linux-x64 wasm firefox": {
+          "status": "unrecorded"
+        },
+        "linux-x64 webgpu chromium-153": {
+          "status": "unrecorded"
+        },
+        "linux-x64 webgpu firefox": {
+          "status": "unrecorded"
+        },
+        "macos-arm64 wasm safari": {
+          "status": "unrecorded"
+        },
+        "macos-arm64 webgpu safari": {
+          "status": "unrecorded"
+        },
         "windows-x64 cpu": {
           "status": "untested"
         },
         "windows-x64 cuda": {
+          "status": "unrecorded"
+        },
+        "windows-x64 wasm chromium": {
+          "status": "unrecorded"
+        },
+        "windows-x64 webgpu chromium": {
           "status": "unrecorded"
         }
       },
@@ -621,6 +716,7 @@
         "aot": "untested",
         "extensions_ai": "unsupported",
         "mlnet": "unsupported",
+        "asset_acquisition": "unrecorded",
         "asset_acquisition_download": "unrecorded",
         "asset_verification_offline": "experimental",
         "audio": "unrecorded",
@@ -629,11 +725,13 @@
         "bf16": "unrecorded",
         "built_in_profile": "experimental",
         "bundle_lock_verification": "unrecorded",
+        "cache_storage": "unrecorded",
         "calibrated_temperature": "unrecorded",
         "calibration_fitting": "unrecorded",
         "cancellation_inside_a_step": "unrecorded",
         "chat_template_owned_text": "unrecorded",
         "chunked_prefill": "unrecorded",
+        "chunking": "unrecorded",
         "classification": "unrecorded",
         "concurrent_calls": "unrecorded",
         "concurrent_calls_unserialized": "unrecorded",
@@ -674,12 +772,14 @@
         "input_over_8192_tokens": "unrecorded",
         "input_up_to_2049_tokens": "unrecorded",
         "label_descriptions": "unrecorded",
+        "language_detection": "unrecorded",
         "long_context": "unrecorded",
         "long_context_1667_to_8192_tokens": "unrecorded",
         "long_context_over_8192_tokens": "unrecorded",
         "matryoshka": "unrecorded",
         "max_new_tokens": "unrecorded",
         "mixed_label_sets_in_batch": "unrecorded",
+        "multithreaded_cross_origin_isolated": "unrecorded",
         "non_english": "unrecorded",
         "offsets_original_text": "unrecorded",
         "option_isolation": "unrecorded",
@@ -687,6 +787,7 @@
         "probability_rounding": "unrecorded",
         "prompts_query_document": "unrecorded",
         "prompts_task": "unrecorded",
+        "proxy_worker": "unrecorded",
         "quantized": "unrecorded",
         "query_instruction": "unrecorded",
         "question_isolation": "unrecorded",
@@ -695,6 +796,7 @@
         "relation_extraction": "unrecorded",
         "request_isolation": "unrecorded",
         "sampling_seeded": "unrecorded",
+        "single_thread_without_isolation": "unrecorded",
         "state_cache_within_request": "unrecorded",
         "state_json_rendering": "unrecorded",
         "state_over_8192_tokens": "unrecorded",
@@ -707,8 +809,12 @@
         "text": "experimental",
         "text_only_inputs": "unrecorded",
         "tf32": "unrecorded",
+        "timestamps": "unrecorded",
         "tokenizer_owned": "unrecorded",
         "tool_calling": "unrecorded",
+        "transcription": "unrecorded",
+        "transcription_cuda": "unrecorded",
+        "translation": "unrecorded",
         "usage": "unrecorded",
         "usage_output_tokens": "unrecorded",
         "video": "unrecorded",
@@ -732,7 +838,9 @@
         "video_prompts": "unrecorded",
         "video_timestamps": "unrecorded",
         "video_variable_frame_rate": "unrecorded",
-        "vision": "unrecorded"
+        "vision": "unrecorded",
+        "wasm_aot": "unrecorded",
+        "wasm_interpreter": "unrecorded"
       },
       "compatibility": {
         "linux-x64 cpu": {
@@ -741,10 +849,34 @@
         "linux-x64 cuda": {
           "status": "unrecorded"
         },
+        "linux-x64 wasm chromium-153": {
+          "status": "unrecorded"
+        },
+        "linux-x64 wasm firefox": {
+          "status": "unrecorded"
+        },
+        "linux-x64 webgpu chromium-153": {
+          "status": "unrecorded"
+        },
+        "linux-x64 webgpu firefox": {
+          "status": "unrecorded"
+        },
+        "macos-arm64 wasm safari": {
+          "status": "unrecorded"
+        },
+        "macos-arm64 webgpu safari": {
+          "status": "unrecorded"
+        },
         "windows-x64 cpu": {
           "status": "untested"
         },
         "windows-x64 cuda": {
+          "status": "unrecorded"
+        },
+        "windows-x64 wasm chromium": {
+          "status": "unrecorded"
+        },
+        "windows-x64 webgpu chromium": {
           "status": "unrecorded"
         }
       },
@@ -825,6 +957,7 @@
         "aot": "untested",
         "extensions_ai": "unsupported",
         "mlnet": "unsupported",
+        "asset_acquisition": "unrecorded",
         "asset_acquisition_download": "unrecorded",
         "asset_verification_offline": "experimental",
         "audio": "unrecorded",
@@ -833,11 +966,13 @@
         "bf16": "unrecorded",
         "built_in_profile": "experimental",
         "bundle_lock_verification": "unrecorded",
+        "cache_storage": "unrecorded",
         "calibrated_temperature": "unrecorded",
         "calibration_fitting": "unrecorded",
         "cancellation_inside_a_step": "unrecorded",
         "chat_template_owned_text": "unrecorded",
         "chunked_prefill": "unrecorded",
+        "chunking": "unrecorded",
         "classification": "unrecorded",
         "concurrent_calls": "unrecorded",
         "concurrent_calls_unserialized": "unrecorded",
@@ -878,12 +1013,14 @@
         "input_over_8192_tokens": "unrecorded",
         "input_up_to_2049_tokens": "unrecorded",
         "label_descriptions": "unrecorded",
+        "language_detection": "unrecorded",
         "long_context": "unrecorded",
         "long_context_1667_to_8192_tokens": "unrecorded",
         "long_context_over_8192_tokens": "unrecorded",
         "matryoshka": "unrecorded",
         "max_new_tokens": "unrecorded",
         "mixed_label_sets_in_batch": "unrecorded",
+        "multithreaded_cross_origin_isolated": "unrecorded",
         "non_english": "unrecorded",
         "offsets_original_text": "unrecorded",
         "option_isolation": "unrecorded",
@@ -891,6 +1028,7 @@
         "probability_rounding": "unrecorded",
         "prompts_query_document": "unrecorded",
         "prompts_task": "unrecorded",
+        "proxy_worker": "unrecorded",
         "quantized": "unrecorded",
         "query_instruction": "unrecorded",
         "question_isolation": "unrecorded",
@@ -899,6 +1037,7 @@
         "relation_extraction": "unrecorded",
         "request_isolation": "unrecorded",
         "sampling_seeded": "unrecorded",
+        "single_thread_without_isolation": "unrecorded",
         "state_cache_within_request": "unrecorded",
         "state_json_rendering": "unrecorded",
         "state_over_8192_tokens": "unrecorded",
@@ -911,8 +1050,12 @@
         "text": "experimental",
         "text_only_inputs": "unrecorded",
         "tf32": "unrecorded",
+        "timestamps": "unrecorded",
         "tokenizer_owned": "unrecorded",
         "tool_calling": "unrecorded",
+        "transcription": "unrecorded",
+        "transcription_cuda": "unrecorded",
+        "translation": "unrecorded",
         "usage": "unrecorded",
         "usage_output_tokens": "unrecorded",
         "video": "unrecorded",
@@ -936,7 +1079,9 @@
         "video_prompts": "unrecorded",
         "video_timestamps": "unrecorded",
         "video_variable_frame_rate": "unrecorded",
-        "vision": "unrecorded"
+        "vision": "unrecorded",
+        "wasm_aot": "unrecorded",
+        "wasm_interpreter": "unrecorded"
       },
       "compatibility": {
         "linux-x64 cpu": {
@@ -945,10 +1090,34 @@
         "linux-x64 cuda": {
           "status": "unrecorded"
         },
+        "linux-x64 wasm chromium-153": {
+          "status": "unrecorded"
+        },
+        "linux-x64 wasm firefox": {
+          "status": "unrecorded"
+        },
+        "linux-x64 webgpu chromium-153": {
+          "status": "unrecorded"
+        },
+        "linux-x64 webgpu firefox": {
+          "status": "unrecorded"
+        },
+        "macos-arm64 wasm safari": {
+          "status": "unrecorded"
+        },
+        "macos-arm64 webgpu safari": {
+          "status": "unrecorded"
+        },
         "windows-x64 cpu": {
           "status": "untested"
         },
         "windows-x64 cuda": {
+          "status": "unrecorded"
+        },
+        "windows-x64 wasm chromium": {
+          "status": "unrecorded"
+        },
+        "windows-x64 webgpu chromium": {
           "status": "unrecorded"
         }
       },
@@ -1028,6 +1197,7 @@
         "aot": "untested",
         "extensions_ai": "unsupported",
         "mlnet": "unsupported",
+        "asset_acquisition": "unrecorded",
         "asset_acquisition_download": "unrecorded",
         "asset_verification_offline": "experimental",
         "audio": "unrecorded",
@@ -1036,11 +1206,13 @@
         "bf16": "unrecorded",
         "built_in_profile": "experimental",
         "bundle_lock_verification": "unrecorded",
+        "cache_storage": "unrecorded",
         "calibrated_temperature": "unrecorded",
         "calibration_fitting": "unrecorded",
         "cancellation_inside_a_step": "unrecorded",
         "chat_template_owned_text": "unrecorded",
         "chunked_prefill": "unrecorded",
+        "chunking": "unrecorded",
         "classification": "unrecorded",
         "concurrent_calls": "unrecorded",
         "concurrent_calls_unserialized": "unrecorded",
@@ -1081,12 +1253,14 @@
         "input_over_8192_tokens": "unrecorded",
         "input_up_to_2049_tokens": "unrecorded",
         "label_descriptions": "unrecorded",
+        "language_detection": "unrecorded",
         "long_context": "unrecorded",
         "long_context_1667_to_8192_tokens": "unrecorded",
         "long_context_over_8192_tokens": "unrecorded",
         "matryoshka": "unrecorded",
         "max_new_tokens": "unrecorded",
         "mixed_label_sets_in_batch": "unrecorded",
+        "multithreaded_cross_origin_isolated": "unrecorded",
         "non_english": "unrecorded",
         "offsets_original_text": "unrecorded",
         "option_isolation": "unrecorded",
@@ -1094,6 +1268,7 @@
         "probability_rounding": "unrecorded",
         "prompts_query_document": "unrecorded",
         "prompts_task": "unrecorded",
+        "proxy_worker": "unrecorded",
         "quantized": "unrecorded",
         "query_instruction": "experimental",
         "question_isolation": "unrecorded",
@@ -1102,6 +1277,7 @@
         "relation_extraction": "unrecorded",
         "request_isolation": "unrecorded",
         "sampling_seeded": "unrecorded",
+        "single_thread_without_isolation": "unrecorded",
         "state_cache_within_request": "unrecorded",
         "state_json_rendering": "unrecorded",
         "state_over_8192_tokens": "unrecorded",
@@ -1114,8 +1290,12 @@
         "text": "experimental",
         "text_only_inputs": "unrecorded",
         "tf32": "unrecorded",
+        "timestamps": "unrecorded",
         "tokenizer_owned": "unrecorded",
         "tool_calling": "unrecorded",
+        "transcription": "unrecorded",
+        "transcription_cuda": "unrecorded",
+        "translation": "unrecorded",
         "usage": "unrecorded",
         "usage_output_tokens": "unrecorded",
         "video": "unrecorded",
@@ -1139,7 +1319,9 @@
         "video_prompts": "unrecorded",
         "video_timestamps": "unrecorded",
         "video_variable_frame_rate": "unrecorded",
-        "vision": "unrecorded"
+        "vision": "unrecorded",
+        "wasm_aot": "unrecorded",
+        "wasm_interpreter": "unrecorded"
       },
       "compatibility": {
         "linux-x64 cpu": {
@@ -1148,10 +1330,34 @@
         "linux-x64 cuda": {
           "status": "unrecorded"
         },
+        "linux-x64 wasm chromium-153": {
+          "status": "unrecorded"
+        },
+        "linux-x64 wasm firefox": {
+          "status": "unrecorded"
+        },
+        "linux-x64 webgpu chromium-153": {
+          "status": "unrecorded"
+        },
+        "linux-x64 webgpu firefox": {
+          "status": "unrecorded"
+        },
+        "macos-arm64 wasm safari": {
+          "status": "unrecorded"
+        },
+        "macos-arm64 webgpu safari": {
+          "status": "unrecorded"
+        },
         "windows-x64 cpu": {
           "status": "untested"
         },
         "windows-x64 cuda": {
+          "status": "unrecorded"
+        },
+        "windows-x64 wasm chromium": {
+          "status": "unrecorded"
+        },
+        "windows-x64 webgpu chromium": {
           "status": "unrecorded"
         }
       },
@@ -1259,6 +1465,7 @@
         "aot": "supported",
         "extensions_ai": "supported",
         "mlnet": "unsupported",
+        "asset_acquisition": "unrecorded",
         "asset_acquisition_download": "unrecorded",
         "asset_verification_offline": "unrecorded",
         "audio": "unsupported",
@@ -1267,11 +1474,13 @@
         "bf16": "unrecorded",
         "built_in_profile": "unrecorded",
         "bundle_lock_verification": "unrecorded",
+        "cache_storage": "unrecorded",
         "calibrated_temperature": "unrecorded",
         "calibration_fitting": "unrecorded",
         "cancellation_inside_a_step": "unrecorded",
         "chat_template_owned_text": "unrecorded",
         "chunked_prefill": "unrecorded",
+        "chunking": "unrecorded",
         "classification": "unrecorded",
         "concurrent_calls": "supported",
         "concurrent_calls_unserialized": "unrecorded",
@@ -1312,12 +1521,14 @@
         "input_over_8192_tokens": "unsupported",
         "input_up_to_2049_tokens": "unrecorded",
         "label_descriptions": "unrecorded",
+        "language_detection": "unrecorded",
         "long_context": "unrecorded",
         "long_context_1667_to_8192_tokens": "unrecorded",
         "long_context_over_8192_tokens": "unrecorded",
         "matryoshka": "unrecorded",
         "max_new_tokens": "unrecorded",
         "mixed_label_sets_in_batch": "unrecorded",
+        "multithreaded_cross_origin_isolated": "unrecorded",
         "non_english": "unrecorded",
         "offsets_original_text": "unrecorded",
         "option_isolation": "unrecorded",
@@ -1325,6 +1536,7 @@
         "probability_rounding": "unrecorded",
         "prompts_query_document": "unrecorded",
         "prompts_task": "unrecorded",
+        "proxy_worker": "unrecorded",
         "quantized": "unrecorded",
         "query_instruction": "unrecorded",
         "question_isolation": "unrecorded",
@@ -1333,6 +1545,7 @@
         "relation_extraction": "unrecorded",
         "request_isolation": "unrecorded",
         "sampling_seeded": "unrecorded",
+        "single_thread_without_isolation": "unrecorded",
         "state_cache_within_request": "unrecorded",
         "state_json_rendering": "unrecorded",
         "state_over_8192_tokens": "unrecorded",
@@ -1345,8 +1558,12 @@
         "text": "unrecorded",
         "text_only_inputs": "supported",
         "tf32": "unrecorded",
+        "timestamps": "unrecorded",
         "tokenizer_owned": "unrecorded",
         "tool_calling": "unrecorded",
+        "transcription": "unrecorded",
+        "transcription_cuda": "unrecorded",
+        "translation": "unrecorded",
         "usage": "unrecorded",
         "usage_output_tokens": "unrecorded",
         "video": "unsupported",
@@ -1370,7 +1587,9 @@
         "video_prompts": "unrecorded",
         "video_timestamps": "unrecorded",
         "video_variable_frame_rate": "unrecorded",
-        "vision": "unrecorded"
+        "vision": "unrecorded",
+        "wasm_aot": "unrecorded",
+        "wasm_interpreter": "unrecorded"
       },
       "compatibility": {
         "linux-x64 cpu": {
@@ -1380,10 +1599,34 @@
         "linux-x64 cuda": {
           "status": "unrecorded"
         },
+        "linux-x64 wasm chromium-153": {
+          "status": "unrecorded"
+        },
+        "linux-x64 wasm firefox": {
+          "status": "unrecorded"
+        },
+        "linux-x64 webgpu chromium-153": {
+          "status": "unrecorded"
+        },
+        "linux-x64 webgpu firefox": {
+          "status": "unrecorded"
+        },
+        "macos-arm64 wasm safari": {
+          "status": "unrecorded"
+        },
+        "macos-arm64 webgpu safari": {
+          "status": "unrecorded"
+        },
         "windows-x64 cpu": {
           "status": "untested"
         },
         "windows-x64 cuda": {
+          "status": "unrecorded"
+        },
+        "windows-x64 wasm chromium": {
+          "status": "unrecorded"
+        },
+        "windows-x64 webgpu chromium": {
           "status": "unrecorded"
         }
       },
@@ -1484,6 +1727,7 @@
         "aot": "experimental",
         "extensions_ai": "experimental",
         "mlnet": "unsupported",
+        "asset_acquisition": "unrecorded",
         "asset_acquisition_download": "unrecorded",
         "asset_verification_offline": "unrecorded",
         "audio": "unsupported",
@@ -1492,11 +1736,13 @@
         "bf16": "unrecorded",
         "built_in_profile": "unrecorded",
         "bundle_lock_verification": "unrecorded",
+        "cache_storage": "unrecorded",
         "calibrated_temperature": "unrecorded",
         "calibration_fitting": "unrecorded",
         "cancellation_inside_a_step": "unrecorded",
         "chat_template_owned_text": "unrecorded",
         "chunked_prefill": "unrecorded",
+        "chunking": "unrecorded",
         "classification": "unrecorded",
         "concurrent_calls": "supported",
         "concurrent_calls_unserialized": "unrecorded",
@@ -1537,12 +1783,14 @@
         "input_over_8192_tokens": "unsupported",
         "input_up_to_2049_tokens": "unrecorded",
         "label_descriptions": "unrecorded",
+        "language_detection": "unrecorded",
         "long_context": "unrecorded",
         "long_context_1667_to_8192_tokens": "unrecorded",
         "long_context_over_8192_tokens": "unrecorded",
         "matryoshka": "unrecorded",
         "max_new_tokens": "unrecorded",
         "mixed_label_sets_in_batch": "unrecorded",
+        "multithreaded_cross_origin_isolated": "unrecorded",
         "non_english": "unrecorded",
         "offsets_original_text": "unrecorded",
         "option_isolation": "unrecorded",
@@ -1550,6 +1798,7 @@
         "probability_rounding": "unrecorded",
         "prompts_query_document": "unrecorded",
         "prompts_task": "unrecorded",
+        "proxy_worker": "unrecorded",
         "quantized": "unrecorded",
         "query_instruction": "unrecorded",
         "question_isolation": "unrecorded",
@@ -1558,6 +1807,7 @@
         "relation_extraction": "unrecorded",
         "request_isolation": "unrecorded",
         "sampling_seeded": "unrecorded",
+        "single_thread_without_isolation": "unrecorded",
         "state_cache_within_request": "unrecorded",
         "state_json_rendering": "unrecorded",
         "state_over_8192_tokens": "unrecorded",
@@ -1570,8 +1820,12 @@
         "text": "unrecorded",
         "text_only_inputs": "supported",
         "tf32": "unrecorded",
+        "timestamps": "unrecorded",
         "tokenizer_owned": "unrecorded",
         "tool_calling": "unrecorded",
+        "transcription": "unrecorded",
+        "transcription_cuda": "unrecorded",
+        "translation": "unrecorded",
         "usage": "unrecorded",
         "usage_output_tokens": "unrecorded",
         "video": "unsupported",
@@ -1595,7 +1849,9 @@
         "video_prompts": "unrecorded",
         "video_timestamps": "unrecorded",
         "video_variable_frame_rate": "unrecorded",
-        "vision": "unrecorded"
+        "vision": "unrecorded",
+        "wasm_aot": "unrecorded",
+        "wasm_interpreter": "unrecorded"
       },
       "compatibility": {
         "linux-x64 cpu": {
@@ -1605,11 +1861,35 @@
           "status": "supported",
           "verified": "2026-10-16"
         },
+        "linux-x64 wasm chromium-153": {
+          "status": "unrecorded"
+        },
+        "linux-x64 wasm firefox": {
+          "status": "unrecorded"
+        },
+        "linux-x64 webgpu chromium-153": {
+          "status": "unrecorded"
+        },
+        "linux-x64 webgpu firefox": {
+          "status": "unrecorded"
+        },
+        "macos-arm64 wasm safari": {
+          "status": "unrecorded"
+        },
+        "macos-arm64 webgpu safari": {
+          "status": "unrecorded"
+        },
         "windows-x64 cpu": {
           "status": "unrecorded"
         },
         "windows-x64 cuda": {
           "status": "untested"
+        },
+        "windows-x64 wasm chromium": {
+          "status": "unrecorded"
+        },
+        "windows-x64 webgpu chromium": {
+          "status": "unrecorded"
         }
       },
       "stable_readiness": {
@@ -1705,6 +1985,7 @@
         "aot": "supported",
         "extensions_ai": "supported",
         "mlnet": "supported",
+        "asset_acquisition": "unrecorded",
         "asset_acquisition_download": "unrecorded",
         "asset_verification_offline": "unrecorded",
         "audio": "unsupported",
@@ -1713,11 +1994,13 @@
         "bf16": "unrecorded",
         "built_in_profile": "unrecorded",
         "bundle_lock_verification": "unrecorded",
+        "cache_storage": "unrecorded",
         "calibrated_temperature": "unrecorded",
         "calibration_fitting": "unrecorded",
         "cancellation_inside_a_step": "unrecorded",
         "chat_template_owned_text": "unrecorded",
         "chunked_prefill": "unrecorded",
+        "chunking": "unrecorded",
         "classification": "unrecorded",
         "concurrent_calls": "supported",
         "concurrent_calls_unserialized": "unrecorded",
@@ -1758,12 +2041,14 @@
         "input_over_8192_tokens": "unsupported",
         "input_up_to_2049_tokens": "supported",
         "label_descriptions": "unrecorded",
+        "language_detection": "unrecorded",
         "long_context": "unrecorded",
         "long_context_1667_to_8192_tokens": "unrecorded",
         "long_context_over_8192_tokens": "unrecorded",
         "matryoshka": "supported",
         "max_new_tokens": "unrecorded",
         "mixed_label_sets_in_batch": "unrecorded",
+        "multithreaded_cross_origin_isolated": "unrecorded",
         "non_english": "unrecorded",
         "offsets_original_text": "unrecorded",
         "option_isolation": "unrecorded",
@@ -1771,6 +2056,7 @@
         "probability_rounding": "unrecorded",
         "prompts_query_document": "supported",
         "prompts_task": "experimental",
+        "proxy_worker": "unrecorded",
         "quantized": "unrecorded",
         "query_instruction": "unrecorded",
         "question_isolation": "unrecorded",
@@ -1779,6 +2065,7 @@
         "relation_extraction": "unrecorded",
         "request_isolation": "unrecorded",
         "sampling_seeded": "unrecorded",
+        "single_thread_without_isolation": "unrecorded",
         "state_cache_within_request": "unrecorded",
         "state_json_rendering": "unrecorded",
         "state_over_8192_tokens": "unrecorded",
@@ -1791,8 +2078,12 @@
         "text": "unrecorded",
         "text_only_inputs": "unrecorded",
         "tf32": "unrecorded",
+        "timestamps": "unrecorded",
         "tokenizer_owned": "supported",
         "tool_calling": "unrecorded",
+        "transcription": "unrecorded",
+        "transcription_cuda": "unrecorded",
+        "translation": "unrecorded",
         "usage": "unrecorded",
         "usage_output_tokens": "unrecorded",
         "video": "unsupported",
@@ -1816,7 +2107,9 @@
         "video_prompts": "unrecorded",
         "video_timestamps": "unrecorded",
         "video_variable_frame_rate": "unrecorded",
-        "vision": "unrecorded"
+        "vision": "unrecorded",
+        "wasm_aot": "unrecorded",
+        "wasm_interpreter": "unrecorded"
       },
       "compatibility": {
         "linux-x64 cpu": {
@@ -1826,11 +2119,35 @@
         "linux-x64 cuda": {
           "status": "unrecorded"
         },
+        "linux-x64 wasm chromium-153": {
+          "status": "unrecorded"
+        },
+        "linux-x64 wasm firefox": {
+          "status": "unrecorded"
+        },
+        "linux-x64 webgpu chromium-153": {
+          "status": "unrecorded"
+        },
+        "linux-x64 webgpu firefox": {
+          "status": "unrecorded"
+        },
+        "macos-arm64 wasm safari": {
+          "status": "unrecorded"
+        },
+        "macos-arm64 webgpu safari": {
+          "status": "unrecorded"
+        },
         "windows-x64 cpu": {
           "status": "experimental",
           "verified": "2026-10-15"
         },
         "windows-x64 cuda": {
+          "status": "unrecorded"
+        },
+        "windows-x64 wasm chromium": {
+          "status": "unrecorded"
+        },
+        "windows-x64 webgpu chromium": {
           "status": "unrecorded"
         }
       },
@@ -1930,6 +2247,7 @@
         "aot": "experimental",
         "extensions_ai": "supported",
         "mlnet": "supported",
+        "asset_acquisition": "unrecorded",
         "asset_acquisition_download": "unrecorded",
         "asset_verification_offline": "unrecorded",
         "audio": "unsupported",
@@ -1938,11 +2256,13 @@
         "bf16": "unrecorded",
         "built_in_profile": "unrecorded",
         "bundle_lock_verification": "unrecorded",
+        "cache_storage": "unrecorded",
         "calibrated_temperature": "unrecorded",
         "calibration_fitting": "unrecorded",
         "cancellation_inside_a_step": "unrecorded",
         "chat_template_owned_text": "unrecorded",
         "chunked_prefill": "unrecorded",
+        "chunking": "unrecorded",
         "classification": "unrecorded",
         "concurrent_calls": "supported",
         "concurrent_calls_unserialized": "unrecorded",
@@ -1983,12 +2303,14 @@
         "input_over_8192_tokens": "unsupported",
         "input_up_to_2049_tokens": "supported",
         "label_descriptions": "unrecorded",
+        "language_detection": "unrecorded",
         "long_context": "unrecorded",
         "long_context_1667_to_8192_tokens": "unrecorded",
         "long_context_over_8192_tokens": "unrecorded",
         "matryoshka": "supported",
         "max_new_tokens": "unrecorded",
         "mixed_label_sets_in_batch": "unrecorded",
+        "multithreaded_cross_origin_isolated": "unrecorded",
         "non_english": "unrecorded",
         "offsets_original_text": "unrecorded",
         "option_isolation": "unrecorded",
@@ -1996,6 +2318,7 @@
         "probability_rounding": "unrecorded",
         "prompts_query_document": "supported",
         "prompts_task": "experimental",
+        "proxy_worker": "unrecorded",
         "quantized": "unrecorded",
         "query_instruction": "unrecorded",
         "question_isolation": "unrecorded",
@@ -2004,6 +2327,7 @@
         "relation_extraction": "unrecorded",
         "request_isolation": "unrecorded",
         "sampling_seeded": "unrecorded",
+        "single_thread_without_isolation": "unrecorded",
         "state_cache_within_request": "unrecorded",
         "state_json_rendering": "unrecorded",
         "state_over_8192_tokens": "unrecorded",
@@ -2016,8 +2340,12 @@
         "text": "unrecorded",
         "text_only_inputs": "unrecorded",
         "tf32": "unrecorded",
+        "timestamps": "unrecorded",
         "tokenizer_owned": "supported",
         "tool_calling": "unrecorded",
+        "transcription": "unrecorded",
+        "transcription_cuda": "unrecorded",
+        "translation": "unrecorded",
         "usage": "unrecorded",
         "usage_output_tokens": "unrecorded",
         "video": "unsupported",
@@ -2041,7 +2369,9 @@
         "video_prompts": "unrecorded",
         "video_timestamps": "unrecorded",
         "video_variable_frame_rate": "unrecorded",
-        "vision": "unrecorded"
+        "vision": "unrecorded",
+        "wasm_aot": "unrecorded",
+        "wasm_interpreter": "unrecorded"
       },
       "compatibility": {
         "linux-x64 cpu": {
@@ -2051,11 +2381,35 @@
           "status": "supported",
           "verified": "2026-10-16"
         },
+        "linux-x64 wasm chromium-153": {
+          "status": "unrecorded"
+        },
+        "linux-x64 wasm firefox": {
+          "status": "unrecorded"
+        },
+        "linux-x64 webgpu chromium-153": {
+          "status": "unrecorded"
+        },
+        "linux-x64 webgpu firefox": {
+          "status": "unrecorded"
+        },
+        "macos-arm64 wasm safari": {
+          "status": "unrecorded"
+        },
+        "macos-arm64 webgpu safari": {
+          "status": "unrecorded"
+        },
         "windows-x64 cpu": {
           "status": "unrecorded"
         },
         "windows-x64 cuda": {
           "status": "untested"
+        },
+        "windows-x64 wasm chromium": {
+          "status": "unrecorded"
+        },
+        "windows-x64 webgpu chromium": {
+          "status": "unrecorded"
         }
       },
       "stable_readiness": {
@@ -2154,6 +2508,7 @@
         "aot": "supported",
         "extensions_ai": "supported",
         "mlnet": "unsupported",
+        "asset_acquisition": "unrecorded",
         "asset_acquisition_download": "unrecorded",
         "asset_verification_offline": "unrecorded",
         "audio": "unsupported",
@@ -2162,11 +2517,13 @@
         "bf16": "unrecorded",
         "built_in_profile": "unrecorded",
         "bundle_lock_verification": "unrecorded",
+        "cache_storage": "unrecorded",
         "calibrated_temperature": "unrecorded",
         "calibration_fitting": "unrecorded",
         "cancellation_inside_a_step": "unrecorded",
         "chat_template_owned_text": "unrecorded",
         "chunked_prefill": "unrecorded",
+        "chunking": "unrecorded",
         "classification": "unrecorded",
         "concurrent_calls": "supported",
         "concurrent_calls_unserialized": "unrecorded",
@@ -2207,12 +2564,14 @@
         "input_over_8192_tokens": "unsupported",
         "input_up_to_2049_tokens": "unrecorded",
         "label_descriptions": "unrecorded",
+        "language_detection": "unrecorded",
         "long_context": "unrecorded",
         "long_context_1667_to_8192_tokens": "unrecorded",
         "long_context_over_8192_tokens": "unrecorded",
         "matryoshka": "unrecorded",
         "max_new_tokens": "unrecorded",
         "mixed_label_sets_in_batch": "unrecorded",
+        "multithreaded_cross_origin_isolated": "unrecorded",
         "non_english": "unrecorded",
         "offsets_original_text": "unrecorded",
         "option_isolation": "unrecorded",
@@ -2220,6 +2579,7 @@
         "probability_rounding": "unrecorded",
         "prompts_query_document": "unrecorded",
         "prompts_task": "unrecorded",
+        "proxy_worker": "unrecorded",
         "quantized": "unrecorded",
         "query_instruction": "unrecorded",
         "question_isolation": "unrecorded",
@@ -2228,6 +2588,7 @@
         "relation_extraction": "unrecorded",
         "request_isolation": "unrecorded",
         "sampling_seeded": "unrecorded",
+        "single_thread_without_isolation": "unrecorded",
         "state_cache_within_request": "unrecorded",
         "state_json_rendering": "unrecorded",
         "state_over_8192_tokens": "unrecorded",
@@ -2240,8 +2601,12 @@
         "text": "unrecorded",
         "text_only_inputs": "supported",
         "tf32": "unrecorded",
+        "timestamps": "unrecorded",
         "tokenizer_owned": "unrecorded",
         "tool_calling": "unrecorded",
+        "transcription": "unrecorded",
+        "transcription_cuda": "unrecorded",
+        "translation": "unrecorded",
         "usage": "unrecorded",
         "usage_output_tokens": "unrecorded",
         "video": "supported",
@@ -2265,7 +2630,9 @@
         "video_prompts": "supported",
         "video_timestamps": "unsupported",
         "video_variable_frame_rate": "experimental",
-        "vision": "unrecorded"
+        "vision": "unrecorded",
+        "wasm_aot": "unrecorded",
+        "wasm_interpreter": "unrecorded"
       },
       "compatibility": {
         "linux-x64 cpu": {
@@ -2275,10 +2642,34 @@
         "linux-x64 cuda": {
           "status": "unrecorded"
         },
+        "linux-x64 wasm chromium-153": {
+          "status": "unrecorded"
+        },
+        "linux-x64 wasm firefox": {
+          "status": "unrecorded"
+        },
+        "linux-x64 webgpu chromium-153": {
+          "status": "unrecorded"
+        },
+        "linux-x64 webgpu firefox": {
+          "status": "unrecorded"
+        },
+        "macos-arm64 wasm safari": {
+          "status": "unrecorded"
+        },
+        "macos-arm64 webgpu safari": {
+          "status": "unrecorded"
+        },
         "windows-x64 cpu": {
           "status": "untested"
         },
         "windows-x64 cuda": {
+          "status": "unrecorded"
+        },
+        "windows-x64 wasm chromium": {
+          "status": "unrecorded"
+        },
+        "windows-x64 webgpu chromium": {
           "status": "unrecorded"
         }
       },
@@ -2381,6 +2772,7 @@
         "aot": "experimental",
         "extensions_ai": "experimental",
         "mlnet": "unsupported",
+        "asset_acquisition": "unrecorded",
         "asset_acquisition_download": "unrecorded",
         "asset_verification_offline": "unrecorded",
         "audio": "unsupported",
@@ -2389,11 +2781,13 @@
         "bf16": "unrecorded",
         "built_in_profile": "unrecorded",
         "bundle_lock_verification": "unrecorded",
+        "cache_storage": "unrecorded",
         "calibrated_temperature": "unrecorded",
         "calibration_fitting": "unrecorded",
         "cancellation_inside_a_step": "unrecorded",
         "chat_template_owned_text": "unrecorded",
         "chunked_prefill": "unrecorded",
+        "chunking": "unrecorded",
         "classification": "unrecorded",
         "concurrent_calls": "supported",
         "concurrent_calls_unserialized": "unrecorded",
@@ -2434,12 +2828,14 @@
         "input_over_8192_tokens": "unsupported",
         "input_up_to_2049_tokens": "unrecorded",
         "label_descriptions": "unrecorded",
+        "language_detection": "unrecorded",
         "long_context": "unrecorded",
         "long_context_1667_to_8192_tokens": "unrecorded",
         "long_context_over_8192_tokens": "unrecorded",
         "matryoshka": "unrecorded",
         "max_new_tokens": "unrecorded",
         "mixed_label_sets_in_batch": "unrecorded",
+        "multithreaded_cross_origin_isolated": "unrecorded",
         "non_english": "unrecorded",
         "offsets_original_text": "unrecorded",
         "option_isolation": "unrecorded",
@@ -2447,6 +2843,7 @@
         "probability_rounding": "unrecorded",
         "prompts_query_document": "unrecorded",
         "prompts_task": "unrecorded",
+        "proxy_worker": "unrecorded",
         "quantized": "unrecorded",
         "query_instruction": "unrecorded",
         "question_isolation": "unrecorded",
@@ -2455,6 +2852,7 @@
         "relation_extraction": "unrecorded",
         "request_isolation": "unrecorded",
         "sampling_seeded": "unrecorded",
+        "single_thread_without_isolation": "unrecorded",
         "state_cache_within_request": "unrecorded",
         "state_json_rendering": "unrecorded",
         "state_over_8192_tokens": "unrecorded",
@@ -2467,8 +2865,12 @@
         "text": "unrecorded",
         "text_only_inputs": "supported",
         "tf32": "unrecorded",
+        "timestamps": "unrecorded",
         "tokenizer_owned": "unrecorded",
         "tool_calling": "unrecorded",
+        "transcription": "unrecorded",
+        "transcription_cuda": "unrecorded",
+        "translation": "unrecorded",
         "usage": "unrecorded",
         "usage_output_tokens": "unrecorded",
         "video": "supported",
@@ -2492,7 +2894,9 @@
         "video_prompts": "supported",
         "video_timestamps": "unsupported",
         "video_variable_frame_rate": "experimental",
-        "vision": "unrecorded"
+        "vision": "unrecorded",
+        "wasm_aot": "unrecorded",
+        "wasm_interpreter": "unrecorded"
       },
       "compatibility": {
         "linux-x64 cpu": {
@@ -2502,11 +2906,35 @@
           "status": "supported",
           "verified": "2026-10-17"
         },
+        "linux-x64 wasm chromium-153": {
+          "status": "unrecorded"
+        },
+        "linux-x64 wasm firefox": {
+          "status": "unrecorded"
+        },
+        "linux-x64 webgpu chromium-153": {
+          "status": "unrecorded"
+        },
+        "linux-x64 webgpu firefox": {
+          "status": "unrecorded"
+        },
+        "macos-arm64 wasm safari": {
+          "status": "unrecorded"
+        },
+        "macos-arm64 webgpu safari": {
+          "status": "unrecorded"
+        },
         "windows-x64 cpu": {
           "status": "unrecorded"
         },
         "windows-x64 cuda": {
           "status": "untested"
+        },
+        "windows-x64 wasm chromium": {
+          "status": "unrecorded"
+        },
+        "windows-x64 webgpu chromium": {
+          "status": "unrecorded"
         }
       },
       "stable_readiness": {
@@ -2601,6 +3029,7 @@
         "aot": "supported",
         "extensions_ai": "unsupported",
         "mlnet": "unsupported",
+        "asset_acquisition": "unrecorded",
         "asset_acquisition_download": "unrecorded",
         "asset_verification_offline": "unrecorded",
         "audio": "unrecorded",
@@ -2609,11 +3038,13 @@
         "bf16": "unrecorded",
         "built_in_profile": "unrecorded",
         "bundle_lock_verification": "unrecorded",
+        "cache_storage": "unrecorded",
         "calibrated_temperature": "unrecorded",
         "calibration_fitting": "unrecorded",
         "cancellation_inside_a_step": "unrecorded",
         "chat_template_owned_text": "unrecorded",
         "chunked_prefill": "unrecorded",
+        "chunking": "unrecorded",
         "classification": "unsupported",
         "concurrent_calls": "supported",
         "concurrent_calls_unserialized": "unrecorded",
@@ -2654,12 +3085,14 @@
         "input_over_8192_tokens": "unrecorded",
         "input_up_to_2049_tokens": "unrecorded",
         "label_descriptions": "experimental",
+        "language_detection": "unrecorded",
         "long_context": "unrecorded",
         "long_context_1667_to_8192_tokens": "unrecorded",
         "long_context_over_8192_tokens": "unrecorded",
         "matryoshka": "unrecorded",
         "max_new_tokens": "unrecorded",
         "mixed_label_sets_in_batch": "unsupported",
+        "multithreaded_cross_origin_isolated": "unrecorded",
         "non_english": "unrecorded",
         "offsets_original_text": "supported",
         "option_isolation": "unrecorded",
@@ -2667,6 +3100,7 @@
         "probability_rounding": "unrecorded",
         "prompts_query_document": "unrecorded",
         "prompts_task": "unrecorded",
+        "proxy_worker": "unrecorded",
         "quantized": "unrecorded",
         "query_instruction": "unrecorded",
         "question_isolation": "unrecorded",
@@ -2675,6 +3109,7 @@
         "relation_extraction": "unsupported",
         "request_isolation": "unrecorded",
         "sampling_seeded": "unrecorded",
+        "single_thread_without_isolation": "unrecorded",
         "state_cache_within_request": "unrecorded",
         "state_json_rendering": "unrecorded",
         "state_over_8192_tokens": "unrecorded",
@@ -2687,8 +3122,12 @@
         "text": "unrecorded",
         "text_only_inputs": "unrecorded",
         "tf32": "unrecorded",
+        "timestamps": "unrecorded",
         "tokenizer_owned": "unrecorded",
         "tool_calling": "unrecorded",
+        "transcription": "unrecorded",
+        "transcription_cuda": "unrecorded",
+        "translation": "unrecorded",
         "usage": "unrecorded",
         "usage_output_tokens": "unrecorded",
         "video": "unrecorded",
@@ -2712,7 +3151,9 @@
         "video_prompts": "unrecorded",
         "video_timestamps": "unrecorded",
         "video_variable_frame_rate": "unrecorded",
-        "vision": "unrecorded"
+        "vision": "unrecorded",
+        "wasm_aot": "unrecorded",
+        "wasm_interpreter": "unrecorded"
       },
       "compatibility": {
         "linux-x64 cpu": {
@@ -2723,11 +3164,35 @@
           "status": "supported",
           "verified": "2026-10-16"
         },
+        "linux-x64 wasm chromium-153": {
+          "status": "unrecorded"
+        },
+        "linux-x64 wasm firefox": {
+          "status": "unrecorded"
+        },
+        "linux-x64 webgpu chromium-153": {
+          "status": "unrecorded"
+        },
+        "linux-x64 webgpu firefox": {
+          "status": "unrecorded"
+        },
+        "macos-arm64 wasm safari": {
+          "status": "unrecorded"
+        },
+        "macos-arm64 webgpu safari": {
+          "status": "unrecorded"
+        },
         "windows-x64 cpu": {
           "status": "experimental",
           "verified": "2026-10-15"
         },
         "windows-x64 cuda": {
+          "status": "unrecorded"
+        },
+        "windows-x64 wasm chromium": {
+          "status": "unrecorded"
+        },
+        "windows-x64 webgpu chromium": {
           "status": "unrecorded"
         }
       },
@@ -2828,6 +3293,7 @@
         "aot": "experimental",
         "extensions_ai": "unsupported",
         "mlnet": "unsupported",
+        "asset_acquisition": "unrecorded",
         "asset_acquisition_download": "unrecorded",
         "asset_verification_offline": "unrecorded",
         "audio": "unrecorded",
@@ -2836,11 +3302,13 @@
         "bf16": "unrecorded",
         "built_in_profile": "unrecorded",
         "bundle_lock_verification": "unrecorded",
+        "cache_storage": "unrecorded",
         "calibrated_temperature": "unrecorded",
         "calibration_fitting": "unrecorded",
         "cancellation_inside_a_step": "unrecorded",
         "chat_template_owned_text": "unrecorded",
         "chunked_prefill": "unrecorded",
+        "chunking": "unrecorded",
         "classification": "unsupported",
         "concurrent_calls": "supported",
         "concurrent_calls_unserialized": "unsupported",
@@ -2881,12 +3349,14 @@
         "input_over_8192_tokens": "unrecorded",
         "input_up_to_2049_tokens": "unrecorded",
         "label_descriptions": "experimental",
+        "language_detection": "unrecorded",
         "long_context": "unrecorded",
         "long_context_1667_to_8192_tokens": "unrecorded",
         "long_context_over_8192_tokens": "unrecorded",
         "matryoshka": "unrecorded",
         "max_new_tokens": "unrecorded",
         "mixed_label_sets_in_batch": "unsupported",
+        "multithreaded_cross_origin_isolated": "unrecorded",
         "non_english": "unrecorded",
         "offsets_original_text": "supported",
         "option_isolation": "unrecorded",
@@ -2894,6 +3364,7 @@
         "probability_rounding": "unrecorded",
         "prompts_query_document": "unrecorded",
         "prompts_task": "unrecorded",
+        "proxy_worker": "unrecorded",
         "quantized": "unrecorded",
         "query_instruction": "unrecorded",
         "question_isolation": "unrecorded",
@@ -2902,6 +3373,7 @@
         "relation_extraction": "unsupported",
         "request_isolation": "unrecorded",
         "sampling_seeded": "unrecorded",
+        "single_thread_without_isolation": "unrecorded",
         "state_cache_within_request": "unrecorded",
         "state_json_rendering": "unrecorded",
         "state_over_8192_tokens": "unrecorded",
@@ -2914,8 +3386,12 @@
         "text": "unrecorded",
         "text_only_inputs": "unrecorded",
         "tf32": "unrecorded",
+        "timestamps": "unrecorded",
         "tokenizer_owned": "unrecorded",
         "tool_calling": "unrecorded",
+        "transcription": "unrecorded",
+        "transcription_cuda": "unrecorded",
+        "translation": "unrecorded",
         "usage": "unrecorded",
         "usage_output_tokens": "unrecorded",
         "video": "unrecorded",
@@ -2939,7 +3415,9 @@
         "video_prompts": "unrecorded",
         "video_timestamps": "unrecorded",
         "video_variable_frame_rate": "unrecorded",
-        "vision": "unrecorded"
+        "vision": "unrecorded",
+        "wasm_aot": "unrecorded",
+        "wasm_interpreter": "unrecorded"
       },
       "compatibility": {
         "linux-x64 cpu": {
@@ -2949,11 +3427,35 @@
           "status": "supported",
           "verified": "2026-10-16"
         },
+        "linux-x64 wasm chromium-153": {
+          "status": "unrecorded"
+        },
+        "linux-x64 wasm firefox": {
+          "status": "unrecorded"
+        },
+        "linux-x64 webgpu chromium-153": {
+          "status": "unrecorded"
+        },
+        "linux-x64 webgpu firefox": {
+          "status": "unrecorded"
+        },
+        "macos-arm64 wasm safari": {
+          "status": "unrecorded"
+        },
+        "macos-arm64 webgpu safari": {
+          "status": "unrecorded"
+        },
         "windows-x64 cpu": {
           "status": "unrecorded"
         },
         "windows-x64 cuda": {
           "status": "untested"
+        },
+        "windows-x64 wasm chromium": {
+          "status": "unrecorded"
+        },
+        "windows-x64 webgpu chromium": {
+          "status": "unrecorded"
         }
       },
       "stable_readiness": {
@@ -3025,6 +3527,7 @@
         "aot": "untested",
         "extensions_ai": "unsupported",
         "mlnet": "unsupported",
+        "asset_acquisition": "unrecorded",
         "asset_acquisition_download": "experimental",
         "asset_verification_offline": "experimental",
         "audio": "unrecorded",
@@ -3033,11 +3536,13 @@
         "bf16": "unsupported",
         "built_in_profile": "unrecorded",
         "bundle_lock_verification": "unrecorded",
+        "cache_storage": "unrecorded",
         "calibrated_temperature": "experimental",
         "calibration_fitting": "unsupported",
         "cancellation_inside_a_step": "unrecorded",
         "chat_template_owned_text": "unrecorded",
         "chunked_prefill": "unrecorded",
+        "chunking": "unrecorded",
         "classification": "unrecorded",
         "concurrent_calls": "experimental",
         "concurrent_calls_unserialized": "unrecorded",
@@ -3078,12 +3583,14 @@
         "input_over_8192_tokens": "unrecorded",
         "input_up_to_2049_tokens": "unrecorded",
         "label_descriptions": "unrecorded",
+        "language_detection": "unrecorded",
         "long_context": "unrecorded",
         "long_context_1667_to_8192_tokens": "unrecorded",
         "long_context_over_8192_tokens": "unrecorded",
         "matryoshka": "unrecorded",
         "max_new_tokens": "unrecorded",
         "mixed_label_sets_in_batch": "unrecorded",
+        "multithreaded_cross_origin_isolated": "unrecorded",
         "non_english": "unsupported",
         "offsets_original_text": "unrecorded",
         "option_isolation": "unsupported",
@@ -3091,6 +3598,7 @@
         "probability_rounding": "unsupported",
         "prompts_query_document": "unrecorded",
         "prompts_task": "unrecorded",
+        "proxy_worker": "unrecorded",
         "quantized": "unsupported",
         "query_instruction": "unrecorded",
         "question_isolation": "experimental",
@@ -3099,6 +3607,7 @@
         "relation_extraction": "unrecorded",
         "request_isolation": "unrecorded",
         "sampling_seeded": "unrecorded",
+        "single_thread_without_isolation": "unrecorded",
         "state_cache_within_request": "experimental",
         "state_json_rendering": "experimental",
         "state_over_8192_tokens": "unsupported",
@@ -3111,8 +3620,12 @@
         "text": "unrecorded",
         "text_only_inputs": "unrecorded",
         "tf32": "unrecorded",
+        "timestamps": "unrecorded",
         "tokenizer_owned": "unrecorded",
         "tool_calling": "unrecorded",
+        "transcription": "unrecorded",
+        "transcription_cuda": "unrecorded",
+        "translation": "unrecorded",
         "usage": "unrecorded",
         "usage_output_tokens": "unsupported",
         "video": "unrecorded",
@@ -3136,7 +3649,9 @@
         "video_prompts": "unrecorded",
         "video_timestamps": "unrecorded",
         "video_variable_frame_rate": "unrecorded",
-        "vision": "unrecorded"
+        "vision": "unrecorded",
+        "wasm_aot": "unrecorded",
+        "wasm_interpreter": "unrecorded"
       },
       "compatibility": {
         "linux-x64 cpu": {
@@ -3147,10 +3662,34 @@
           "status": "experimental",
           "verified": "2026-10-17"
         },
+        "linux-x64 wasm chromium-153": {
+          "status": "unrecorded"
+        },
+        "linux-x64 wasm firefox": {
+          "status": "unrecorded"
+        },
+        "linux-x64 webgpu chromium-153": {
+          "status": "unrecorded"
+        },
+        "linux-x64 webgpu firefox": {
+          "status": "unrecorded"
+        },
+        "macos-arm64 wasm safari": {
+          "status": "unrecorded"
+        },
+        "macos-arm64 webgpu safari": {
+          "status": "unrecorded"
+        },
         "windows-x64 cpu": {
           "status": "untested"
         },
         "windows-x64 cuda": {
+          "status": "unrecorded"
+        },
+        "windows-x64 wasm chromium": {
+          "status": "unrecorded"
+        },
+        "windows-x64 webgpu chromium": {
           "status": "unrecorded"
         }
       },
@@ -3237,6 +3776,7 @@
         "aot": "untested",
         "extensions_ai": "unsupported",
         "mlnet": "unsupported",
+        "asset_acquisition": "unrecorded",
         "asset_acquisition_download": "experimental",
         "asset_verification_offline": "experimental",
         "audio": "unrecorded",
@@ -3245,11 +3785,13 @@
         "bf16": "unsupported",
         "built_in_profile": "unrecorded",
         "bundle_lock_verification": "unrecorded",
+        "cache_storage": "unrecorded",
         "calibrated_temperature": "experimental",
         "calibration_fitting": "unsupported",
         "cancellation_inside_a_step": "unrecorded",
         "chat_template_owned_text": "unrecorded",
         "chunked_prefill": "unrecorded",
+        "chunking": "unrecorded",
         "classification": "unrecorded",
         "concurrent_calls": "experimental",
         "concurrent_calls_unserialized": "untested",
@@ -3290,12 +3832,14 @@
         "input_over_8192_tokens": "unrecorded",
         "input_up_to_2049_tokens": "unrecorded",
         "label_descriptions": "unrecorded",
+        "language_detection": "unrecorded",
         "long_context": "unrecorded",
         "long_context_1667_to_8192_tokens": "unrecorded",
         "long_context_over_8192_tokens": "unrecorded",
         "matryoshka": "unrecorded",
         "max_new_tokens": "unrecorded",
         "mixed_label_sets_in_batch": "unrecorded",
+        "multithreaded_cross_origin_isolated": "unrecorded",
         "non_english": "unsupported",
         "offsets_original_text": "unrecorded",
         "option_isolation": "unsupported",
@@ -3303,6 +3847,7 @@
         "probability_rounding": "unsupported",
         "prompts_query_document": "unrecorded",
         "prompts_task": "unrecorded",
+        "proxy_worker": "unrecorded",
         "quantized": "unsupported",
         "query_instruction": "unrecorded",
         "question_isolation": "experimental",
@@ -3311,6 +3856,7 @@
         "relation_extraction": "unrecorded",
         "request_isolation": "unrecorded",
         "sampling_seeded": "unrecorded",
+        "single_thread_without_isolation": "unrecorded",
         "state_cache_within_request": "experimental",
         "state_json_rendering": "experimental",
         "state_over_8192_tokens": "unsupported",
@@ -3323,8 +3869,12 @@
         "text": "unrecorded",
         "text_only_inputs": "unrecorded",
         "tf32": "unsupported",
+        "timestamps": "unrecorded",
         "tokenizer_owned": "unrecorded",
         "tool_calling": "unrecorded",
+        "transcription": "unrecorded",
+        "transcription_cuda": "unrecorded",
+        "translation": "unrecorded",
         "usage": "unrecorded",
         "usage_output_tokens": "unsupported",
         "video": "unrecorded",
@@ -3348,7 +3898,9 @@
         "video_prompts": "unrecorded",
         "video_timestamps": "unrecorded",
         "video_variable_frame_rate": "unrecorded",
-        "vision": "unrecorded"
+        "vision": "unrecorded",
+        "wasm_aot": "unrecorded",
+        "wasm_interpreter": "unrecorded"
       },
       "compatibility": {
         "linux-x64 cpu": {
@@ -3358,11 +3910,35 @@
           "status": "experimental",
           "verified": "2026-10-17"
         },
+        "linux-x64 wasm chromium-153": {
+          "status": "unrecorded"
+        },
+        "linux-x64 wasm firefox": {
+          "status": "unrecorded"
+        },
+        "linux-x64 webgpu chromium-153": {
+          "status": "unrecorded"
+        },
+        "linux-x64 webgpu firefox": {
+          "status": "unrecorded"
+        },
+        "macos-arm64 wasm safari": {
+          "status": "unrecorded"
+        },
+        "macos-arm64 webgpu safari": {
+          "status": "unrecorded"
+        },
         "windows-x64 cpu": {
           "status": "unrecorded"
         },
         "windows-x64 cuda": {
           "status": "untested"
+        },
+        "windows-x64 wasm chromium": {
+          "status": "unrecorded"
+        },
+        "windows-x64 webgpu chromium": {
+          "status": "unrecorded"
         }
       },
       "stable_readiness": {
@@ -3445,6 +4021,7 @@
         "aot": "untested",
         "extensions_ai": "unsupported",
         "mlnet": "unsupported",
+        "asset_acquisition": "unrecorded",
         "asset_acquisition_download": "experimental",
         "asset_verification_offline": "experimental",
         "audio": "unrecorded",
@@ -3453,11 +4030,13 @@
         "bf16": "unsupported",
         "built_in_profile": "unrecorded",
         "bundle_lock_verification": "unrecorded",
+        "cache_storage": "unrecorded",
         "calibrated_temperature": "experimental",
         "calibration_fitting": "unsupported",
         "cancellation_inside_a_step": "unrecorded",
         "chat_template_owned_text": "unrecorded",
         "chunked_prefill": "unrecorded",
+        "chunking": "unrecorded",
         "classification": "unrecorded",
         "concurrent_calls": "experimental",
         "concurrent_calls_unserialized": "unrecorded",
@@ -3498,12 +4077,14 @@
         "input_over_8192_tokens": "unrecorded",
         "input_up_to_2049_tokens": "unrecorded",
         "label_descriptions": "unrecorded",
+        "language_detection": "unrecorded",
         "long_context": "unrecorded",
         "long_context_1667_to_8192_tokens": "unrecorded",
         "long_context_over_8192_tokens": "unrecorded",
         "matryoshka": "unrecorded",
         "max_new_tokens": "unrecorded",
         "mixed_label_sets_in_batch": "unrecorded",
+        "multithreaded_cross_origin_isolated": "unrecorded",
         "non_english": "unsupported",
         "offsets_original_text": "unrecorded",
         "option_isolation": "unsupported",
@@ -3511,6 +4092,7 @@
         "probability_rounding": "unsupported",
         "prompts_query_document": "unrecorded",
         "prompts_task": "unrecorded",
+        "proxy_worker": "unrecorded",
         "quantized": "unsupported",
         "query_instruction": "unrecorded",
         "question_isolation": "experimental",
@@ -3519,6 +4101,7 @@
         "relation_extraction": "unrecorded",
         "request_isolation": "unrecorded",
         "sampling_seeded": "unrecorded",
+        "single_thread_without_isolation": "unrecorded",
         "state_cache_within_request": "experimental",
         "state_json_rendering": "experimental",
         "state_over_8192_tokens": "unsupported",
@@ -3531,8 +4114,12 @@
         "text": "unrecorded",
         "text_only_inputs": "unrecorded",
         "tf32": "unrecorded",
+        "timestamps": "unrecorded",
         "tokenizer_owned": "unrecorded",
         "tool_calling": "unrecorded",
+        "transcription": "unrecorded",
+        "transcription_cuda": "unrecorded",
+        "translation": "unrecorded",
         "usage": "unrecorded",
         "usage_output_tokens": "unsupported",
         "video": "unrecorded",
@@ -3556,7 +4143,9 @@
         "video_prompts": "unrecorded",
         "video_timestamps": "unrecorded",
         "video_variable_frame_rate": "unrecorded",
-        "vision": "unrecorded"
+        "vision": "unrecorded",
+        "wasm_aot": "unrecorded",
+        "wasm_interpreter": "unrecorded"
       },
       "compatibility": {
         "linux-x64 cpu": {
@@ -3567,10 +4156,34 @@
           "status": "experimental",
           "verified": "2026-10-17"
         },
+        "linux-x64 wasm chromium-153": {
+          "status": "unrecorded"
+        },
+        "linux-x64 wasm firefox": {
+          "status": "unrecorded"
+        },
+        "linux-x64 webgpu chromium-153": {
+          "status": "unrecorded"
+        },
+        "linux-x64 webgpu firefox": {
+          "status": "unrecorded"
+        },
+        "macos-arm64 wasm safari": {
+          "status": "unrecorded"
+        },
+        "macos-arm64 webgpu safari": {
+          "status": "unrecorded"
+        },
         "windows-x64 cpu": {
           "status": "untested"
         },
         "windows-x64 cuda": {
+          "status": "unrecorded"
+        },
+        "windows-x64 wasm chromium": {
+          "status": "unrecorded"
+        },
+        "windows-x64 webgpu chromium": {
           "status": "unrecorded"
         }
       },
@@ -3657,6 +4270,7 @@
         "aot": "untested",
         "extensions_ai": "unsupported",
         "mlnet": "unsupported",
+        "asset_acquisition": "unrecorded",
         "asset_acquisition_download": "experimental",
         "asset_verification_offline": "experimental",
         "audio": "unrecorded",
@@ -3665,11 +4279,13 @@
         "bf16": "unsupported",
         "built_in_profile": "unrecorded",
         "bundle_lock_verification": "unrecorded",
+        "cache_storage": "unrecorded",
         "calibrated_temperature": "experimental",
         "calibration_fitting": "unsupported",
         "cancellation_inside_a_step": "unrecorded",
         "chat_template_owned_text": "unrecorded",
         "chunked_prefill": "unrecorded",
+        "chunking": "unrecorded",
         "classification": "unrecorded",
         "concurrent_calls": "experimental",
         "concurrent_calls_unserialized": "untested",
@@ -3710,12 +4326,14 @@
         "input_over_8192_tokens": "unrecorded",
         "input_up_to_2049_tokens": "unrecorded",
         "label_descriptions": "unrecorded",
+        "language_detection": "unrecorded",
         "long_context": "unrecorded",
         "long_context_1667_to_8192_tokens": "unrecorded",
         "long_context_over_8192_tokens": "unrecorded",
         "matryoshka": "unrecorded",
         "max_new_tokens": "unrecorded",
         "mixed_label_sets_in_batch": "unrecorded",
+        "multithreaded_cross_origin_isolated": "unrecorded",
         "non_english": "unsupported",
         "offsets_original_text": "unrecorded",
         "option_isolation": "unsupported",
@@ -3723,6 +4341,7 @@
         "probability_rounding": "unsupported",
         "prompts_query_document": "unrecorded",
         "prompts_task": "unrecorded",
+        "proxy_worker": "unrecorded",
         "quantized": "unsupported",
         "query_instruction": "unrecorded",
         "question_isolation": "experimental",
@@ -3731,6 +4350,7 @@
         "relation_extraction": "unrecorded",
         "request_isolation": "unrecorded",
         "sampling_seeded": "unrecorded",
+        "single_thread_without_isolation": "unrecorded",
         "state_cache_within_request": "experimental",
         "state_json_rendering": "experimental",
         "state_over_8192_tokens": "unsupported",
@@ -3743,8 +4363,12 @@
         "text": "unrecorded",
         "text_only_inputs": "unrecorded",
         "tf32": "unsupported",
+        "timestamps": "unrecorded",
         "tokenizer_owned": "unrecorded",
         "tool_calling": "unrecorded",
+        "transcription": "unrecorded",
+        "transcription_cuda": "unrecorded",
+        "translation": "unrecorded",
         "usage": "unrecorded",
         "usage_output_tokens": "unsupported",
         "video": "unrecorded",
@@ -3768,7 +4392,9 @@
         "video_prompts": "unrecorded",
         "video_timestamps": "unrecorded",
         "video_variable_frame_rate": "unrecorded",
-        "vision": "unrecorded"
+        "vision": "unrecorded",
+        "wasm_aot": "unrecorded",
+        "wasm_interpreter": "unrecorded"
       },
       "compatibility": {
         "linux-x64 cpu": {
@@ -3778,11 +4404,35 @@
           "status": "experimental",
           "verified": "2026-10-17"
         },
+        "linux-x64 wasm chromium-153": {
+          "status": "unrecorded"
+        },
+        "linux-x64 wasm firefox": {
+          "status": "unrecorded"
+        },
+        "linux-x64 webgpu chromium-153": {
+          "status": "unrecorded"
+        },
+        "linux-x64 webgpu firefox": {
+          "status": "unrecorded"
+        },
+        "macos-arm64 wasm safari": {
+          "status": "unrecorded"
+        },
+        "macos-arm64 webgpu safari": {
+          "status": "unrecorded"
+        },
         "windows-x64 cpu": {
           "status": "unrecorded"
         },
         "windows-x64 cuda": {
           "status": "untested"
+        },
+        "windows-x64 wasm chromium": {
+          "status": "unrecorded"
+        },
+        "windows-x64 webgpu chromium": {
+          "status": "unrecorded"
         }
       },
       "stable_readiness": {
@@ -3863,6 +4513,7 @@
         "aot": "untested",
         "extensions_ai": "unsupported",
         "mlnet": "unsupported",
+        "asset_acquisition": "unrecorded",
         "asset_acquisition_download": "unrecorded",
         "asset_verification_offline": "experimental",
         "audio": "unrecorded",
@@ -3871,11 +4522,13 @@
         "bf16": "unrecorded",
         "built_in_profile": "experimental",
         "bundle_lock_verification": "unrecorded",
+        "cache_storage": "unrecorded",
         "calibrated_temperature": "unrecorded",
         "calibration_fitting": "unrecorded",
         "cancellation_inside_a_step": "unrecorded",
         "chat_template_owned_text": "unrecorded",
         "chunked_prefill": "unrecorded",
+        "chunking": "unrecorded",
         "classification": "unrecorded",
         "concurrent_calls": "unrecorded",
         "concurrent_calls_unserialized": "unrecorded",
@@ -3916,12 +4569,14 @@
         "input_over_8192_tokens": "unrecorded",
         "input_up_to_2049_tokens": "unrecorded",
         "label_descriptions": "unrecorded",
+        "language_detection": "unrecorded",
         "long_context": "unrecorded",
         "long_context_1667_to_8192_tokens": "unrecorded",
         "long_context_over_8192_tokens": "unrecorded",
         "matryoshka": "unrecorded",
         "max_new_tokens": "unrecorded",
         "mixed_label_sets_in_batch": "unrecorded",
+        "multithreaded_cross_origin_isolated": "unrecorded",
         "non_english": "unrecorded",
         "offsets_original_text": "unrecorded",
         "option_isolation": "unrecorded",
@@ -3929,6 +4584,7 @@
         "probability_rounding": "unrecorded",
         "prompts_query_document": "unrecorded",
         "prompts_task": "unrecorded",
+        "proxy_worker": "unrecorded",
         "quantized": "unrecorded",
         "query_instruction": "unrecorded",
         "question_isolation": "unrecorded",
@@ -3937,6 +4593,7 @@
         "relation_extraction": "unrecorded",
         "request_isolation": "unrecorded",
         "sampling_seeded": "unrecorded",
+        "single_thread_without_isolation": "unrecorded",
         "state_cache_within_request": "unrecorded",
         "state_json_rendering": "unrecorded",
         "state_over_8192_tokens": "unrecorded",
@@ -3949,8 +4606,12 @@
         "text": "experimental",
         "text_only_inputs": "unrecorded",
         "tf32": "unrecorded",
+        "timestamps": "unrecorded",
         "tokenizer_owned": "unrecorded",
         "tool_calling": "unrecorded",
+        "transcription": "unrecorded",
+        "transcription_cuda": "unrecorded",
+        "translation": "unrecorded",
         "usage": "unrecorded",
         "usage_output_tokens": "unrecorded",
         "video": "unrecorded",
@@ -3974,7 +4635,9 @@
         "video_prompts": "unrecorded",
         "video_timestamps": "unrecorded",
         "video_variable_frame_rate": "unrecorded",
-        "vision": "unrecorded"
+        "vision": "unrecorded",
+        "wasm_aot": "unrecorded",
+        "wasm_interpreter": "unrecorded"
       },
       "compatibility": {
         "linux-x64 cpu": {
@@ -3983,10 +4646,34 @@
         "linux-x64 cuda": {
           "status": "unrecorded"
         },
+        "linux-x64 wasm chromium-153": {
+          "status": "unrecorded"
+        },
+        "linux-x64 wasm firefox": {
+          "status": "unrecorded"
+        },
+        "linux-x64 webgpu chromium-153": {
+          "status": "unrecorded"
+        },
+        "linux-x64 webgpu firefox": {
+          "status": "unrecorded"
+        },
+        "macos-arm64 wasm safari": {
+          "status": "unrecorded"
+        },
+        "macos-arm64 webgpu safari": {
+          "status": "unrecorded"
+        },
         "windows-x64 cpu": {
           "status": "untested"
         },
         "windows-x64 cuda": {
+          "status": "unrecorded"
+        },
+        "windows-x64 wasm chromium": {
+          "status": "unrecorded"
+        },
+        "windows-x64 webgpu chromium": {
           "status": "unrecorded"
         }
       },
@@ -4093,6 +4780,7 @@
         "aot": "supported",
         "extensions_ai": "supported",
         "mlnet": "supported",
+        "asset_acquisition": "unrecorded",
         "asset_acquisition_download": "unrecorded",
         "asset_verification_offline": "unrecorded",
         "audio": "unrecorded",
@@ -4101,11 +4789,13 @@
         "bf16": "unrecorded",
         "built_in_profile": "unrecorded",
         "bundle_lock_verification": "unrecorded",
+        "cache_storage": "unrecorded",
         "calibrated_temperature": "unrecorded",
         "calibration_fitting": "unrecorded",
         "cancellation_inside_a_step": "unrecorded",
         "chat_template_owned_text": "unrecorded",
         "chunked_prefill": "unrecorded",
+        "chunking": "unrecorded",
         "classification": "unrecorded",
         "concurrent_calls": "unrecorded",
         "concurrent_calls_unserialized": "unrecorded",
@@ -4146,12 +4836,14 @@
         "input_over_8192_tokens": "unrecorded",
         "input_up_to_2049_tokens": "unrecorded",
         "label_descriptions": "unrecorded",
+        "language_detection": "unrecorded",
         "long_context": "unrecorded",
         "long_context_1667_to_8192_tokens": "unrecorded",
         "long_context_over_8192_tokens": "unrecorded",
         "matryoshka": "unrecorded",
         "max_new_tokens": "unrecorded",
         "mixed_label_sets_in_batch": "unrecorded",
+        "multithreaded_cross_origin_isolated": "unrecorded",
         "non_english": "unrecorded",
         "offsets_original_text": "unrecorded",
         "option_isolation": "unrecorded",
@@ -4159,6 +4851,7 @@
         "probability_rounding": "unrecorded",
         "prompts_query_document": "unrecorded",
         "prompts_task": "unrecorded",
+        "proxy_worker": "unrecorded",
         "quantized": "unrecorded",
         "query_instruction": "unrecorded",
         "question_isolation": "unrecorded",
@@ -4167,6 +4860,7 @@
         "relation_extraction": "unrecorded",
         "request_isolation": "unrecorded",
         "sampling_seeded": "unrecorded",
+        "single_thread_without_isolation": "unrecorded",
         "state_cache_within_request": "unrecorded",
         "state_json_rendering": "unrecorded",
         "state_over_8192_tokens": "unrecorded",
@@ -4179,8 +4873,12 @@
         "text": "unrecorded",
         "text_only_inputs": "unrecorded",
         "tf32": "unrecorded",
+        "timestamps": "unrecorded",
         "tokenizer_owned": "unrecorded",
         "tool_calling": "unrecorded",
+        "transcription": "unrecorded",
+        "transcription_cuda": "unrecorded",
+        "translation": "unrecorded",
         "usage": "unrecorded",
         "usage_output_tokens": "unrecorded",
         "video": "unrecorded",
@@ -4204,7 +4902,9 @@
         "video_prompts": "unrecorded",
         "video_timestamps": "unrecorded",
         "video_variable_frame_rate": "unrecorded",
-        "vision": "unrecorded"
+        "vision": "unrecorded",
+        "wasm_aot": "unrecorded",
+        "wasm_interpreter": "unrecorded"
       },
       "compatibility": {
         "linux-x64 cpu": {
@@ -4214,11 +4914,35 @@
         "linux-x64 cuda": {
           "status": "unrecorded"
         },
+        "linux-x64 wasm chromium-153": {
+          "status": "unrecorded"
+        },
+        "linux-x64 wasm firefox": {
+          "status": "unrecorded"
+        },
+        "linux-x64 webgpu chromium-153": {
+          "status": "unrecorded"
+        },
+        "linux-x64 webgpu firefox": {
+          "status": "unrecorded"
+        },
+        "macos-arm64 wasm safari": {
+          "status": "unrecorded"
+        },
+        "macos-arm64 webgpu safari": {
+          "status": "unrecorded"
+        },
         "windows-x64 cpu": {
           "status": "experimental",
           "verified": "2026-10-15"
         },
         "windows-x64 cuda": {
+          "status": "unrecorded"
+        },
+        "windows-x64 wasm chromium": {
+          "status": "unrecorded"
+        },
+        "windows-x64 webgpu chromium": {
           "status": "unrecorded"
         }
       },
@@ -4317,6 +5041,7 @@
         "aot": "experimental",
         "extensions_ai": "supported",
         "mlnet": "supported",
+        "asset_acquisition": "unrecorded",
         "asset_acquisition_download": "unrecorded",
         "asset_verification_offline": "unrecorded",
         "audio": "unrecorded",
@@ -4325,11 +5050,13 @@
         "bf16": "unrecorded",
         "built_in_profile": "unrecorded",
         "bundle_lock_verification": "unrecorded",
+        "cache_storage": "unrecorded",
         "calibrated_temperature": "unrecorded",
         "calibration_fitting": "unrecorded",
         "cancellation_inside_a_step": "unrecorded",
         "chat_template_owned_text": "unrecorded",
         "chunked_prefill": "unrecorded",
+        "chunking": "unrecorded",
         "classification": "unrecorded",
         "concurrent_calls": "unrecorded",
         "concurrent_calls_unserialized": "unrecorded",
@@ -4370,12 +5097,14 @@
         "input_over_8192_tokens": "unrecorded",
         "input_up_to_2049_tokens": "unrecorded",
         "label_descriptions": "unrecorded",
+        "language_detection": "unrecorded",
         "long_context": "unrecorded",
         "long_context_1667_to_8192_tokens": "unrecorded",
         "long_context_over_8192_tokens": "unrecorded",
         "matryoshka": "unrecorded",
         "max_new_tokens": "unrecorded",
         "mixed_label_sets_in_batch": "unrecorded",
+        "multithreaded_cross_origin_isolated": "unrecorded",
         "non_english": "unrecorded",
         "offsets_original_text": "unrecorded",
         "option_isolation": "unrecorded",
@@ -4383,6 +5112,7 @@
         "probability_rounding": "unrecorded",
         "prompts_query_document": "unrecorded",
         "prompts_task": "unrecorded",
+        "proxy_worker": "unrecorded",
         "quantized": "unrecorded",
         "query_instruction": "unrecorded",
         "question_isolation": "unrecorded",
@@ -4391,6 +5121,7 @@
         "relation_extraction": "unrecorded",
         "request_isolation": "unrecorded",
         "sampling_seeded": "unrecorded",
+        "single_thread_without_isolation": "unrecorded",
         "state_cache_within_request": "unrecorded",
         "state_json_rendering": "unrecorded",
         "state_over_8192_tokens": "unrecorded",
@@ -4403,8 +5134,12 @@
         "text": "unrecorded",
         "text_only_inputs": "unrecorded",
         "tf32": "unrecorded",
+        "timestamps": "unrecorded",
         "tokenizer_owned": "unrecorded",
         "tool_calling": "unrecorded",
+        "transcription": "unrecorded",
+        "transcription_cuda": "unrecorded",
+        "translation": "unrecorded",
         "usage": "unrecorded",
         "usage_output_tokens": "unrecorded",
         "video": "unrecorded",
@@ -4428,7 +5163,9 @@
         "video_prompts": "unrecorded",
         "video_timestamps": "unrecorded",
         "video_variable_frame_rate": "unrecorded",
-        "vision": "unrecorded"
+        "vision": "unrecorded",
+        "wasm_aot": "unrecorded",
+        "wasm_interpreter": "unrecorded"
       },
       "compatibility": {
         "linux-x64 cpu": {
@@ -4438,17 +5175,1037 @@
           "status": "supported",
           "verified": "2026-10-16"
         },
+        "linux-x64 wasm chromium-153": {
+          "status": "unrecorded"
+        },
+        "linux-x64 wasm firefox": {
+          "status": "unrecorded"
+        },
+        "linux-x64 webgpu chromium-153": {
+          "status": "unrecorded"
+        },
+        "linux-x64 webgpu firefox": {
+          "status": "unrecorded"
+        },
+        "macos-arm64 wasm safari": {
+          "status": "unrecorded"
+        },
+        "macos-arm64 webgpu safari": {
+          "status": "unrecorded"
+        },
         "windows-x64 cpu": {
           "status": "unrecorded"
         },
         "windows-x64 cuda": {
           "status": "untested"
+        },
+        "windows-x64 wasm chromium": {
+          "status": "unrecorded"
+        },
+        "windows-x64 webgpu chromium": {
+          "status": "unrecorded"
         }
       },
       "stable_readiness": {
         "ready": true,
         "gates_not_passed": [],
         "untested_capabilities": []
+      },
+      "scheduled_regression": false
+    },
+    {
+      "id": "multilingual-e5-small/onnx-fp32-wasm",
+      "family": "multilingual-e5-small",
+      "profile": "onnx-fp32-wasm",
+      "manifest": "model-pipeline/registry/multilingual-e5-small/onnx-fp32-wasm/manifest.yaml",
+      "maturity": "experimental",
+      "tasks": [
+        "embedding"
+      ],
+      "owner": "Mark",
+      "review_date": "2027-01-23",
+      "last_checked": "2026-10-23",
+      "known_issues": [
+        "No CI browser job yet (follow-up plan W6): the evidence is one local run of headless Chrome for Testing 153.",
+        "Without cross-origin isolation (COOP/COEP) onnxruntime-web runs one thread, 3.2x to 3.7x slower in the int8-embed evidence; asking for more than one thread then fails with NotSupportedException.",
+        "An interpreter publish that reuses an obj/ left by an AOT publish can ship IL-stripped assemblies, and the Mono interpreter then aborts (browser/conformance/README.md). Publish each build mode from a clean obj/."
+      ],
+      "execution": {
+        "runtime": "onnxruntime-web",
+        "runtime_version": "1.30.0",
+        "binding": "Starlings.Runtime.OnnxWeb",
+        "binding_version": null,
+        "precision": "fp32",
+        "variant": "reference"
+      },
+      "gates": {
+        "G0": {
+          "status": "not-run"
+        },
+        "G1": {
+          "status": "passed",
+          "evidence": "docs/evidence/browser-e5-package-2026-10-23/gates/README.md",
+          "evidence_found": true,
+          "date": "2026-10-23"
+        },
+        "G2": {
+          "status": "passed",
+          "evidence": "docs/evidence/browser-e5-package-2026-10-23/gates/README.md",
+          "evidence_found": true,
+          "date": "2026-10-23"
+        },
+        "G3": {
+          "status": "not-run"
+        },
+        "G4": {
+          "status": "not-run"
+        },
+        "G5": {
+          "status": "not-run"
+        },
+        "G6": {
+          "status": "not-run"
+        },
+        "G7": {
+          "status": "not-run"
+        }
+      },
+      "capabilities": {
+        "batch": "experimental",
+        "streaming": "unsupported",
+        "cancellation": "experimental",
+        "persistence": "unsupported",
+        "training": "unsupported",
+        "aot": "unsupported",
+        "extensions_ai": "experimental",
+        "mlnet": "unsupported",
+        "asset_acquisition": "unrecorded",
+        "asset_acquisition_download": "unrecorded",
+        "asset_verification_offline": "unrecorded",
+        "audio": "unrecorded",
+        "batch_sort_by_length": "unrecorded",
+        "batch_token_budget": "unrecorded",
+        "bf16": "unrecorded",
+        "built_in_profile": "unrecorded",
+        "bundle_lock_verification": "unrecorded",
+        "cache_storage": "untested",
+        "calibrated_temperature": "unrecorded",
+        "calibration_fitting": "unrecorded",
+        "cancellation_inside_a_step": "unrecorded",
+        "chat_template_owned_text": "unrecorded",
+        "chunked_prefill": "unrecorded",
+        "chunking": "unrecorded",
+        "classification": "unrecorded",
+        "concurrent_calls": "unrecorded",
+        "concurrent_calls_unserialized": "unrecorded",
+        "concurrent_requests": "unrecorded",
+        "conversation_state_reuse": "unrecorded",
+        "count_gate_closed": "unrecorded",
+        "date_facts": "unrecorded",
+        "decision_choice": "unrecorded",
+        "decision_noul": "unrecorded",
+        "decision_score": "unrecorded",
+        "delimiter_escaping": "unrecorded",
+        "embedding_pretokenized": "experimental",
+        "embedding_text": "experimental",
+        "enable_thinking": "unrecorded",
+        "entity_extraction": "unrecorded",
+        "fp16": "unrecorded",
+        "generation": "unrecorded",
+        "gpu": "unrecorded",
+        "greedy_generation": "unrecorded",
+        "http_server": "unrecorded",
+        "image": "unrecorded",
+        "image_16_bit": "unrecorded",
+        "image_alpha_compositing": "unrecorded",
+        "image_batch": "unrecorded",
+        "image_budget_280": "unrecorded",
+        "image_budget_other": "unrecorded",
+        "image_decode_gif_bmp_webp": "unrecorded",
+        "image_decode_gif_transparency": "unrecorded",
+        "image_decode_png_jpeg": "unrecorded",
+        "image_exif_orientation_opt_in": "unrecorded",
+        "image_interleaved_text": "unrecorded",
+        "image_matryoshka": "unrecorded",
+        "image_multiple_per_input": "unrecorded",
+        "image_over_default_pixel_limit_with_option": "unrecorded",
+        "image_prompts": "unrecorded",
+        "input_2050_to_8192_tokens": "unrecorded",
+        "input_over_512_tokens": "unrecorded",
+        "input_over_8192_tokens": "unrecorded",
+        "input_up_to_2049_tokens": "unrecorded",
+        "label_descriptions": "unrecorded",
+        "language_detection": "unrecorded",
+        "long_context": "unrecorded",
+        "long_context_1667_to_8192_tokens": "unrecorded",
+        "long_context_over_8192_tokens": "unrecorded",
+        "matryoshka": "unrecorded",
+        "max_new_tokens": "unrecorded",
+        "mixed_label_sets_in_batch": "unrecorded",
+        "multithreaded_cross_origin_isolated": "experimental",
+        "non_english": "unrecorded",
+        "offsets_original_text": "unrecorded",
+        "option_isolation": "unrecorded",
+        "plain_deduplicated_output": "unrecorded",
+        "probability_rounding": "unrecorded",
+        "prompts_query_document": "unrecorded",
+        "prompts_task": "unrecorded",
+        "proxy_worker": "untested",
+        "quantized": "unrecorded",
+        "query_instruction": "unrecorded",
+        "question_isolation": "unrecorded",
+        "raw_probabilities": "unrecorded",
+        "reasoning_split": "unrecorded",
+        "relation_extraction": "unrecorded",
+        "request_isolation": "unrecorded",
+        "sampling_seeded": "unrecorded",
+        "single_thread_without_isolation": "untested",
+        "state_cache_within_request": "unrecorded",
+        "state_json_rendering": "unrecorded",
+        "state_over_8192_tokens": "unrecorded",
+        "state_prefix_reuse_across_requests": "unrecorded",
+        "step0_logits": "unrecorded",
+        "stop_sequences": "unrecorded",
+        "stop_tokens": "unrecorded",
+        "structured_extraction": "unrecorded",
+        "structured_output": "unrecorded",
+        "text": "unrecorded",
+        "text_only_inputs": "unrecorded",
+        "tf32": "unrecorded",
+        "timestamps": "unrecorded",
+        "tokenizer_owned": "experimental",
+        "tool_calling": "unrecorded",
+        "transcription": "unrecorded",
+        "transcription_cuda": "unrecorded",
+        "translation": "unrecorded",
+        "usage": "unrecorded",
+        "usage_output_tokens": "unrecorded",
+        "video": "unrecorded",
+        "video_audio_track": "unrecorded",
+        "video_batch": "unrecorded",
+        "video_decode_ffmpeg8": "unrecorded",
+        "video_decode_ffmpeg9": "unrecorded",
+        "video_decode_rotation_90": "unrecorded",
+        "video_decode_rotation_other": "unrecorded",
+        "video_decode_streams": "unrecorded",
+        "video_decoded_frames_with_timing": "unrecorded",
+        "video_frames_without_timing": "unrecorded",
+        "video_frames_without_timing_opt_in": "unrecorded",
+        "video_hdr": "unrecorded",
+        "video_interlaced": "unrecorded",
+        "video_interleaved_image": "unrecorded",
+        "video_interleaved_text": "unrecorded",
+        "video_matryoshka": "unrecorded",
+        "video_multiple_per_input": "unrecorded",
+        "video_pre_sampled_frames": "unrecorded",
+        "video_prompts": "unrecorded",
+        "video_timestamps": "unrecorded",
+        "video_variable_frame_rate": "unrecorded",
+        "vision": "unrecorded",
+        "wasm_aot": "experimental",
+        "wasm_interpreter": "experimental"
+      },
+      "compatibility": {
+        "linux-x64 cpu": {
+          "status": "unrecorded"
+        },
+        "linux-x64 cuda": {
+          "status": "unrecorded"
+        },
+        "linux-x64 wasm chromium-153": {
+          "status": "experimental",
+          "verified": "2026-10-23"
+        },
+        "linux-x64 wasm firefox": {
+          "status": "untested"
+        },
+        "linux-x64 webgpu chromium-153": {
+          "status": "unrecorded"
+        },
+        "linux-x64 webgpu firefox": {
+          "status": "unrecorded"
+        },
+        "macos-arm64 wasm safari": {
+          "status": "untested"
+        },
+        "macos-arm64 webgpu safari": {
+          "status": "unrecorded"
+        },
+        "windows-x64 cpu": {
+          "status": "unrecorded"
+        },
+        "windows-x64 cuda": {
+          "status": "unrecorded"
+        },
+        "windows-x64 wasm chromium": {
+          "status": "untested"
+        },
+        "windows-x64 webgpu chromium": {
+          "status": "unrecorded"
+        }
+      },
+      "stable_readiness": {
+        "ready": false,
+        "gates_not_passed": [
+          "G0",
+          "G3",
+          "G4",
+          "G5",
+          "G6",
+          "G7"
+        ],
+        "untested_capabilities": [
+          "cache_storage",
+          "proxy_worker",
+          "single_thread_without_isolation"
+        ]
+      },
+      "scheduled_regression": false
+    },
+    {
+      "id": "multilingual-e5-small/onnx-fp32-webgpu",
+      "family": "multilingual-e5-small",
+      "profile": "onnx-fp32-webgpu",
+      "manifest": "model-pipeline/registry/multilingual-e5-small/onnx-fp32-webgpu/manifest.yaml",
+      "maturity": "experimental",
+      "tasks": [
+        "embedding"
+      ],
+      "owner": "Mark",
+      "review_date": "2027-01-23",
+      "last_checked": "2026-10-23",
+      "known_issues": [
+        "No CI browser job yet (follow-up plan W6): WebGPU stays local evidence (one run, headless Chrome for Testing 153, one NVIDIA GPU).",
+        "Without cross-origin isolation (COOP/COEP) onnxruntime-web runs one thread, 3.2x to 3.7x slower (WASM) in the int8-embed evidence; asking for more than one thread then fails with NotSupportedException.",
+        "An interpreter publish that reuses an obj/ left by an AOT publish can ship IL-stripped assemblies, and the Mono interpreter then aborts (browser/conformance/README.md). Publish each build mode from a clean obj/."
+      ],
+      "execution": {
+        "runtime": "onnxruntime-web",
+        "runtime_version": "1.30.0",
+        "binding": "Starlings.Runtime.OnnxWeb.WebGpu",
+        "binding_version": null,
+        "precision": "fp32",
+        "variant": "reference"
+      },
+      "gates": {
+        "G0": {
+          "status": "not-run"
+        },
+        "G1": {
+          "status": "passed",
+          "evidence": "docs/evidence/browser-e5-package-2026-10-23/gates/README.md",
+          "evidence_found": true,
+          "date": "2026-10-23"
+        },
+        "G2": {
+          "status": "passed",
+          "evidence": "docs/evidence/browser-e5-package-2026-10-23/gates/README.md",
+          "evidence_found": true,
+          "date": "2026-10-23"
+        },
+        "G3": {
+          "status": "not-run"
+        },
+        "G4": {
+          "status": "not-run"
+        },
+        "G5": {
+          "status": "not-run"
+        },
+        "G6": {
+          "status": "not-run"
+        },
+        "G7": {
+          "status": "not-run"
+        }
+      },
+      "capabilities": {
+        "batch": "experimental",
+        "streaming": "unsupported",
+        "cancellation": "experimental",
+        "persistence": "unsupported",
+        "training": "unsupported",
+        "aot": "unsupported",
+        "extensions_ai": "experimental",
+        "mlnet": "unsupported",
+        "asset_acquisition": "unrecorded",
+        "asset_acquisition_download": "unrecorded",
+        "asset_verification_offline": "unrecorded",
+        "audio": "unrecorded",
+        "batch_sort_by_length": "unrecorded",
+        "batch_token_budget": "unrecorded",
+        "bf16": "unrecorded",
+        "built_in_profile": "unrecorded",
+        "bundle_lock_verification": "unrecorded",
+        "cache_storage": "untested",
+        "calibrated_temperature": "unrecorded",
+        "calibration_fitting": "unrecorded",
+        "cancellation_inside_a_step": "unrecorded",
+        "chat_template_owned_text": "unrecorded",
+        "chunked_prefill": "unrecorded",
+        "chunking": "unrecorded",
+        "classification": "unrecorded",
+        "concurrent_calls": "unrecorded",
+        "concurrent_calls_unserialized": "unrecorded",
+        "concurrent_requests": "unrecorded",
+        "conversation_state_reuse": "unrecorded",
+        "count_gate_closed": "unrecorded",
+        "date_facts": "unrecorded",
+        "decision_choice": "unrecorded",
+        "decision_noul": "unrecorded",
+        "decision_score": "unrecorded",
+        "delimiter_escaping": "unrecorded",
+        "embedding_pretokenized": "experimental",
+        "embedding_text": "experimental",
+        "enable_thinking": "unrecorded",
+        "entity_extraction": "unrecorded",
+        "fp16": "unrecorded",
+        "generation": "unrecorded",
+        "gpu": "unrecorded",
+        "greedy_generation": "unrecorded",
+        "http_server": "unrecorded",
+        "image": "unrecorded",
+        "image_16_bit": "unrecorded",
+        "image_alpha_compositing": "unrecorded",
+        "image_batch": "unrecorded",
+        "image_budget_280": "unrecorded",
+        "image_budget_other": "unrecorded",
+        "image_decode_gif_bmp_webp": "unrecorded",
+        "image_decode_gif_transparency": "unrecorded",
+        "image_decode_png_jpeg": "unrecorded",
+        "image_exif_orientation_opt_in": "unrecorded",
+        "image_interleaved_text": "unrecorded",
+        "image_matryoshka": "unrecorded",
+        "image_multiple_per_input": "unrecorded",
+        "image_over_default_pixel_limit_with_option": "unrecorded",
+        "image_prompts": "unrecorded",
+        "input_2050_to_8192_tokens": "unrecorded",
+        "input_over_512_tokens": "unrecorded",
+        "input_over_8192_tokens": "unrecorded",
+        "input_up_to_2049_tokens": "unrecorded",
+        "label_descriptions": "unrecorded",
+        "language_detection": "unrecorded",
+        "long_context": "unrecorded",
+        "long_context_1667_to_8192_tokens": "unrecorded",
+        "long_context_over_8192_tokens": "unrecorded",
+        "matryoshka": "unrecorded",
+        "max_new_tokens": "unrecorded",
+        "mixed_label_sets_in_batch": "unrecorded",
+        "multithreaded_cross_origin_isolated": "experimental",
+        "non_english": "unrecorded",
+        "offsets_original_text": "unrecorded",
+        "option_isolation": "unrecorded",
+        "plain_deduplicated_output": "unrecorded",
+        "probability_rounding": "unrecorded",
+        "prompts_query_document": "unrecorded",
+        "prompts_task": "unrecorded",
+        "proxy_worker": "untested",
+        "quantized": "unrecorded",
+        "query_instruction": "unrecorded",
+        "question_isolation": "unrecorded",
+        "raw_probabilities": "unrecorded",
+        "reasoning_split": "unrecorded",
+        "relation_extraction": "unrecorded",
+        "request_isolation": "unrecorded",
+        "sampling_seeded": "unrecorded",
+        "single_thread_without_isolation": "untested",
+        "state_cache_within_request": "unrecorded",
+        "state_json_rendering": "unrecorded",
+        "state_over_8192_tokens": "unrecorded",
+        "state_prefix_reuse_across_requests": "unrecorded",
+        "step0_logits": "unrecorded",
+        "stop_sequences": "unrecorded",
+        "stop_tokens": "unrecorded",
+        "structured_extraction": "unrecorded",
+        "structured_output": "unrecorded",
+        "text": "unrecorded",
+        "text_only_inputs": "unrecorded",
+        "tf32": "unrecorded",
+        "timestamps": "unrecorded",
+        "tokenizer_owned": "experimental",
+        "tool_calling": "unrecorded",
+        "transcription": "unrecorded",
+        "transcription_cuda": "unrecorded",
+        "translation": "unrecorded",
+        "usage": "unrecorded",
+        "usage_output_tokens": "unrecorded",
+        "video": "unrecorded",
+        "video_audio_track": "unrecorded",
+        "video_batch": "unrecorded",
+        "video_decode_ffmpeg8": "unrecorded",
+        "video_decode_ffmpeg9": "unrecorded",
+        "video_decode_rotation_90": "unrecorded",
+        "video_decode_rotation_other": "unrecorded",
+        "video_decode_streams": "unrecorded",
+        "video_decoded_frames_with_timing": "unrecorded",
+        "video_frames_without_timing": "unrecorded",
+        "video_frames_without_timing_opt_in": "unrecorded",
+        "video_hdr": "unrecorded",
+        "video_interlaced": "unrecorded",
+        "video_interleaved_image": "unrecorded",
+        "video_interleaved_text": "unrecorded",
+        "video_matryoshka": "unrecorded",
+        "video_multiple_per_input": "unrecorded",
+        "video_pre_sampled_frames": "unrecorded",
+        "video_prompts": "unrecorded",
+        "video_timestamps": "unrecorded",
+        "video_variable_frame_rate": "unrecorded",
+        "vision": "unrecorded",
+        "wasm_aot": "experimental",
+        "wasm_interpreter": "untested"
+      },
+      "compatibility": {
+        "linux-x64 cpu": {
+          "status": "unrecorded"
+        },
+        "linux-x64 cuda": {
+          "status": "unrecorded"
+        },
+        "linux-x64 wasm chromium-153": {
+          "status": "unrecorded"
+        },
+        "linux-x64 wasm firefox": {
+          "status": "unrecorded"
+        },
+        "linux-x64 webgpu chromium-153": {
+          "status": "experimental",
+          "verified": "2026-10-23"
+        },
+        "linux-x64 webgpu firefox": {
+          "status": "untested"
+        },
+        "macos-arm64 wasm safari": {
+          "status": "unrecorded"
+        },
+        "macos-arm64 webgpu safari": {
+          "status": "untested"
+        },
+        "windows-x64 cpu": {
+          "status": "unrecorded"
+        },
+        "windows-x64 cuda": {
+          "status": "unrecorded"
+        },
+        "windows-x64 wasm chromium": {
+          "status": "unrecorded"
+        },
+        "windows-x64 webgpu chromium": {
+          "status": "untested"
+        }
+      },
+      "stable_readiness": {
+        "ready": false,
+        "gates_not_passed": [
+          "G0",
+          "G3",
+          "G4",
+          "G5",
+          "G6",
+          "G7"
+        ],
+        "untested_capabilities": [
+          "cache_storage",
+          "proxy_worker",
+          "single_thread_without_isolation",
+          "wasm_interpreter"
+        ]
+      },
+      "scheduled_regression": false
+    },
+    {
+      "id": "multilingual-e5-small/onnx-int8embed-wasm",
+      "family": "multilingual-e5-small",
+      "profile": "onnx-int8embed-wasm",
+      "manifest": "model-pipeline/registry/multilingual-e5-small/onnx-int8embed-wasm/manifest.yaml",
+      "maturity": "experimental",
+      "tasks": [
+        "embedding"
+      ],
+      "owner": "Mark",
+      "review_date": "2027-01-23",
+      "last_checked": "2026-10-23",
+      "known_issues": [
+        "No CI browser job yet (follow-up plan W6): the evidence is local runs of headless Chrome for Testing 153.",
+        "The int8-embed graph has no public URL yet: users build it with quantize_e5_browser.py and host it themselves.",
+        "Without cross-origin isolation (COOP/COEP) onnxruntime-web runs one thread, 3.2x to 3.7x slower; asking for more than one thread then fails with NotSupportedException.",
+        "An interpreter publish that reuses an obj/ left by an AOT publish can ship IL-stripped assemblies, and the Mono interpreter then aborts (browser/conformance/README.md). Publish each build mode from a clean obj/."
+      ],
+      "execution": {
+        "runtime": "onnxruntime-web",
+        "runtime_version": "1.30.0",
+        "binding": "Starlings.Runtime.OnnxWeb",
+        "binding_version": null,
+        "precision": "mixed",
+        "variant": "quantized"
+      },
+      "gates": {
+        "G0": {
+          "status": "not-run"
+        },
+        "G1": {
+          "status": "passed",
+          "evidence": "docs/evidence/browser-e5-package-2026-10-23/gates/README.md",
+          "evidence_found": true,
+          "date": "2026-10-23"
+        },
+        "G2": {
+          "status": "passed",
+          "evidence": "docs/evidence/browser-e5-package-2026-10-23/gates/README.md",
+          "evidence_found": true,
+          "date": "2026-10-23"
+        },
+        "G3": {
+          "status": "not-run"
+        },
+        "G4": {
+          "status": "not-run"
+        },
+        "G5": {
+          "status": "not-run"
+        },
+        "G6": {
+          "status": "not-run"
+        },
+        "G7": {
+          "status": "not-run"
+        }
+      },
+      "capabilities": {
+        "batch": "experimental",
+        "streaming": "unsupported",
+        "cancellation": "experimental",
+        "persistence": "unsupported",
+        "training": "unsupported",
+        "aot": "unsupported",
+        "extensions_ai": "experimental",
+        "mlnet": "unsupported",
+        "asset_acquisition": "unrecorded",
+        "asset_acquisition_download": "unrecorded",
+        "asset_verification_offline": "unrecorded",
+        "audio": "unrecorded",
+        "batch_sort_by_length": "unrecorded",
+        "batch_token_budget": "unrecorded",
+        "bf16": "unrecorded",
+        "built_in_profile": "unrecorded",
+        "bundle_lock_verification": "unrecorded",
+        "cache_storage": "experimental",
+        "calibrated_temperature": "unrecorded",
+        "calibration_fitting": "unrecorded",
+        "cancellation_inside_a_step": "unrecorded",
+        "chat_template_owned_text": "unrecorded",
+        "chunked_prefill": "unrecorded",
+        "chunking": "unrecorded",
+        "classification": "unrecorded",
+        "concurrent_calls": "unrecorded",
+        "concurrent_calls_unserialized": "unrecorded",
+        "concurrent_requests": "unrecorded",
+        "conversation_state_reuse": "unrecorded",
+        "count_gate_closed": "unrecorded",
+        "date_facts": "unrecorded",
+        "decision_choice": "unrecorded",
+        "decision_noul": "unrecorded",
+        "decision_score": "unrecorded",
+        "delimiter_escaping": "unrecorded",
+        "embedding_pretokenized": "experimental",
+        "embedding_text": "experimental",
+        "enable_thinking": "unrecorded",
+        "entity_extraction": "unrecorded",
+        "fp16": "unrecorded",
+        "generation": "unrecorded",
+        "gpu": "unrecorded",
+        "greedy_generation": "unrecorded",
+        "http_server": "unrecorded",
+        "image": "unrecorded",
+        "image_16_bit": "unrecorded",
+        "image_alpha_compositing": "unrecorded",
+        "image_batch": "unrecorded",
+        "image_budget_280": "unrecorded",
+        "image_budget_other": "unrecorded",
+        "image_decode_gif_bmp_webp": "unrecorded",
+        "image_decode_gif_transparency": "unrecorded",
+        "image_decode_png_jpeg": "unrecorded",
+        "image_exif_orientation_opt_in": "unrecorded",
+        "image_interleaved_text": "unrecorded",
+        "image_matryoshka": "unrecorded",
+        "image_multiple_per_input": "unrecorded",
+        "image_over_default_pixel_limit_with_option": "unrecorded",
+        "image_prompts": "unrecorded",
+        "input_2050_to_8192_tokens": "unrecorded",
+        "input_over_512_tokens": "unrecorded",
+        "input_over_8192_tokens": "unrecorded",
+        "input_up_to_2049_tokens": "unrecorded",
+        "label_descriptions": "unrecorded",
+        "language_detection": "unrecorded",
+        "long_context": "unrecorded",
+        "long_context_1667_to_8192_tokens": "unrecorded",
+        "long_context_over_8192_tokens": "unrecorded",
+        "matryoshka": "unrecorded",
+        "max_new_tokens": "unrecorded",
+        "mixed_label_sets_in_batch": "unrecorded",
+        "multithreaded_cross_origin_isolated": "experimental",
+        "non_english": "unrecorded",
+        "offsets_original_text": "unrecorded",
+        "option_isolation": "unrecorded",
+        "plain_deduplicated_output": "unrecorded",
+        "probability_rounding": "unrecorded",
+        "prompts_query_document": "unrecorded",
+        "prompts_task": "unrecorded",
+        "proxy_worker": "experimental",
+        "quantized": "unrecorded",
+        "query_instruction": "unrecorded",
+        "question_isolation": "unrecorded",
+        "raw_probabilities": "unrecorded",
+        "reasoning_split": "unrecorded",
+        "relation_extraction": "unrecorded",
+        "request_isolation": "unrecorded",
+        "sampling_seeded": "unrecorded",
+        "single_thread_without_isolation": "experimental",
+        "state_cache_within_request": "unrecorded",
+        "state_json_rendering": "unrecorded",
+        "state_over_8192_tokens": "unrecorded",
+        "state_prefix_reuse_across_requests": "unrecorded",
+        "step0_logits": "unrecorded",
+        "stop_sequences": "unrecorded",
+        "stop_tokens": "unrecorded",
+        "structured_extraction": "unrecorded",
+        "structured_output": "unrecorded",
+        "text": "unrecorded",
+        "text_only_inputs": "unrecorded",
+        "tf32": "unrecorded",
+        "timestamps": "unrecorded",
+        "tokenizer_owned": "experimental",
+        "tool_calling": "unrecorded",
+        "transcription": "unrecorded",
+        "transcription_cuda": "unrecorded",
+        "translation": "unrecorded",
+        "usage": "unrecorded",
+        "usage_output_tokens": "unrecorded",
+        "video": "unrecorded",
+        "video_audio_track": "unrecorded",
+        "video_batch": "unrecorded",
+        "video_decode_ffmpeg8": "unrecorded",
+        "video_decode_ffmpeg9": "unrecorded",
+        "video_decode_rotation_90": "unrecorded",
+        "video_decode_rotation_other": "unrecorded",
+        "video_decode_streams": "unrecorded",
+        "video_decoded_frames_with_timing": "unrecorded",
+        "video_frames_without_timing": "unrecorded",
+        "video_frames_without_timing_opt_in": "unrecorded",
+        "video_hdr": "unrecorded",
+        "video_interlaced": "unrecorded",
+        "video_interleaved_image": "unrecorded",
+        "video_interleaved_text": "unrecorded",
+        "video_matryoshka": "unrecorded",
+        "video_multiple_per_input": "unrecorded",
+        "video_pre_sampled_frames": "unrecorded",
+        "video_prompts": "unrecorded",
+        "video_timestamps": "unrecorded",
+        "video_variable_frame_rate": "unrecorded",
+        "vision": "unrecorded",
+        "wasm_aot": "experimental",
+        "wasm_interpreter": "experimental"
+      },
+      "compatibility": {
+        "linux-x64 cpu": {
+          "status": "unrecorded"
+        },
+        "linux-x64 cuda": {
+          "status": "unrecorded"
+        },
+        "linux-x64 wasm chromium-153": {
+          "status": "experimental",
+          "verified": "2026-10-23"
+        },
+        "linux-x64 wasm firefox": {
+          "status": "untested"
+        },
+        "linux-x64 webgpu chromium-153": {
+          "status": "unrecorded"
+        },
+        "linux-x64 webgpu firefox": {
+          "status": "unrecorded"
+        },
+        "macos-arm64 wasm safari": {
+          "status": "untested"
+        },
+        "macos-arm64 webgpu safari": {
+          "status": "unrecorded"
+        },
+        "windows-x64 cpu": {
+          "status": "unrecorded"
+        },
+        "windows-x64 cuda": {
+          "status": "unrecorded"
+        },
+        "windows-x64 wasm chromium": {
+          "status": "untested"
+        },
+        "windows-x64 webgpu chromium": {
+          "status": "unrecorded"
+        }
+      },
+      "stable_readiness": {
+        "ready": false,
+        "gates_not_passed": [
+          "G0",
+          "G3",
+          "G4",
+          "G5",
+          "G6",
+          "G7"
+        ],
+        "untested_capabilities": []
+      },
+      "scheduled_regression": false
+    },
+    {
+      "id": "multilingual-e5-small/onnx-int8embed-webgpu",
+      "family": "multilingual-e5-small",
+      "profile": "onnx-int8embed-webgpu",
+      "manifest": "model-pipeline/registry/multilingual-e5-small/onnx-int8embed-webgpu/manifest.yaml",
+      "maturity": "experimental",
+      "tasks": [
+        "embedding"
+      ],
+      "owner": "Mark",
+      "review_date": "2027-01-23",
+      "last_checked": "2026-10-23",
+      "known_issues": [
+        "No CI browser job yet (follow-up plan W6): WebGPU stays local evidence (one run, headless Chrome for Testing 153, one NVIDIA GPU).",
+        "The int8-embed graph has no public URL yet: users build it with quantize_e5_browser.py and host it themselves.",
+        "Without cross-origin isolation (COOP/COEP) onnxruntime-web runs one thread, 3.2x to 3.7x slower on WASM; asking for more than one thread then fails with NotSupportedException.",
+        "An interpreter publish that reuses an obj/ left by an AOT publish can ship IL-stripped assemblies, and the Mono interpreter then aborts (browser/conformance/README.md). Publish each build mode from a clean obj/."
+      ],
+      "execution": {
+        "runtime": "onnxruntime-web",
+        "runtime_version": "1.30.0",
+        "binding": "Starlings.Runtime.OnnxWeb.WebGpu",
+        "binding_version": null,
+        "precision": "mixed",
+        "variant": "quantized"
+      },
+      "gates": {
+        "G0": {
+          "status": "not-run"
+        },
+        "G1": {
+          "status": "passed",
+          "evidence": "docs/evidence/browser-e5-package-2026-10-23/gates/README.md",
+          "evidence_found": true,
+          "date": "2026-10-23"
+        },
+        "G2": {
+          "status": "passed",
+          "evidence": "docs/evidence/browser-e5-package-2026-10-23/gates/README.md",
+          "evidence_found": true,
+          "date": "2026-10-23"
+        },
+        "G3": {
+          "status": "not-run"
+        },
+        "G4": {
+          "status": "not-run"
+        },
+        "G5": {
+          "status": "not-run"
+        },
+        "G6": {
+          "status": "not-run"
+        },
+        "G7": {
+          "status": "not-run"
+        }
+      },
+      "capabilities": {
+        "batch": "experimental",
+        "streaming": "unsupported",
+        "cancellation": "experimental",
+        "persistence": "unsupported",
+        "training": "unsupported",
+        "aot": "unsupported",
+        "extensions_ai": "experimental",
+        "mlnet": "unsupported",
+        "asset_acquisition": "unrecorded",
+        "asset_acquisition_download": "unrecorded",
+        "asset_verification_offline": "unrecorded",
+        "audio": "unrecorded",
+        "batch_sort_by_length": "unrecorded",
+        "batch_token_budget": "unrecorded",
+        "bf16": "unrecorded",
+        "built_in_profile": "unrecorded",
+        "bundle_lock_verification": "unrecorded",
+        "cache_storage": "untested",
+        "calibrated_temperature": "unrecorded",
+        "calibration_fitting": "unrecorded",
+        "cancellation_inside_a_step": "unrecorded",
+        "chat_template_owned_text": "unrecorded",
+        "chunked_prefill": "unrecorded",
+        "chunking": "unrecorded",
+        "classification": "unrecorded",
+        "concurrent_calls": "unrecorded",
+        "concurrent_calls_unserialized": "unrecorded",
+        "concurrent_requests": "unrecorded",
+        "conversation_state_reuse": "unrecorded",
+        "count_gate_closed": "unrecorded",
+        "date_facts": "unrecorded",
+        "decision_choice": "unrecorded",
+        "decision_noul": "unrecorded",
+        "decision_score": "unrecorded",
+        "delimiter_escaping": "unrecorded",
+        "embedding_pretokenized": "experimental",
+        "embedding_text": "experimental",
+        "enable_thinking": "unrecorded",
+        "entity_extraction": "unrecorded",
+        "fp16": "unrecorded",
+        "generation": "unrecorded",
+        "gpu": "unrecorded",
+        "greedy_generation": "unrecorded",
+        "http_server": "unrecorded",
+        "image": "unrecorded",
+        "image_16_bit": "unrecorded",
+        "image_alpha_compositing": "unrecorded",
+        "image_batch": "unrecorded",
+        "image_budget_280": "unrecorded",
+        "image_budget_other": "unrecorded",
+        "image_decode_gif_bmp_webp": "unrecorded",
+        "image_decode_gif_transparency": "unrecorded",
+        "image_decode_png_jpeg": "unrecorded",
+        "image_exif_orientation_opt_in": "unrecorded",
+        "image_interleaved_text": "unrecorded",
+        "image_matryoshka": "unrecorded",
+        "image_multiple_per_input": "unrecorded",
+        "image_over_default_pixel_limit_with_option": "unrecorded",
+        "image_prompts": "unrecorded",
+        "input_2050_to_8192_tokens": "unrecorded",
+        "input_over_512_tokens": "unrecorded",
+        "input_over_8192_tokens": "unrecorded",
+        "input_up_to_2049_tokens": "unrecorded",
+        "label_descriptions": "unrecorded",
+        "language_detection": "unrecorded",
+        "long_context": "unrecorded",
+        "long_context_1667_to_8192_tokens": "unrecorded",
+        "long_context_over_8192_tokens": "unrecorded",
+        "matryoshka": "unrecorded",
+        "max_new_tokens": "unrecorded",
+        "mixed_label_sets_in_batch": "unrecorded",
+        "multithreaded_cross_origin_isolated": "experimental",
+        "non_english": "unrecorded",
+        "offsets_original_text": "unrecorded",
+        "option_isolation": "unrecorded",
+        "plain_deduplicated_output": "unrecorded",
+        "probability_rounding": "unrecorded",
+        "prompts_query_document": "unrecorded",
+        "prompts_task": "unrecorded",
+        "proxy_worker": "untested",
+        "quantized": "unrecorded",
+        "query_instruction": "unrecorded",
+        "question_isolation": "unrecorded",
+        "raw_probabilities": "unrecorded",
+        "reasoning_split": "unrecorded",
+        "relation_extraction": "unrecorded",
+        "request_isolation": "unrecorded",
+        "sampling_seeded": "unrecorded",
+        "single_thread_without_isolation": "untested",
+        "state_cache_within_request": "unrecorded",
+        "state_json_rendering": "unrecorded",
+        "state_over_8192_tokens": "unrecorded",
+        "state_prefix_reuse_across_requests": "unrecorded",
+        "step0_logits": "unrecorded",
+        "stop_sequences": "unrecorded",
+        "stop_tokens": "unrecorded",
+        "structured_extraction": "unrecorded",
+        "structured_output": "unrecorded",
+        "text": "unrecorded",
+        "text_only_inputs": "unrecorded",
+        "tf32": "unrecorded",
+        "timestamps": "unrecorded",
+        "tokenizer_owned": "experimental",
+        "tool_calling": "unrecorded",
+        "transcription": "unrecorded",
+        "transcription_cuda": "unrecorded",
+        "translation": "unrecorded",
+        "usage": "unrecorded",
+        "usage_output_tokens": "unrecorded",
+        "video": "unrecorded",
+        "video_audio_track": "unrecorded",
+        "video_batch": "unrecorded",
+        "video_decode_ffmpeg8": "unrecorded",
+        "video_decode_ffmpeg9": "unrecorded",
+        "video_decode_rotation_90": "unrecorded",
+        "video_decode_rotation_other": "unrecorded",
+        "video_decode_streams": "unrecorded",
+        "video_decoded_frames_with_timing": "unrecorded",
+        "video_frames_without_timing": "unrecorded",
+        "video_frames_without_timing_opt_in": "unrecorded",
+        "video_hdr": "unrecorded",
+        "video_interlaced": "unrecorded",
+        "video_interleaved_image": "unrecorded",
+        "video_interleaved_text": "unrecorded",
+        "video_matryoshka": "unrecorded",
+        "video_multiple_per_input": "unrecorded",
+        "video_pre_sampled_frames": "unrecorded",
+        "video_prompts": "unrecorded",
+        "video_timestamps": "unrecorded",
+        "video_variable_frame_rate": "unrecorded",
+        "vision": "unrecorded",
+        "wasm_aot": "experimental",
+        "wasm_interpreter": "untested"
+      },
+      "compatibility": {
+        "linux-x64 cpu": {
+          "status": "unrecorded"
+        },
+        "linux-x64 cuda": {
+          "status": "unrecorded"
+        },
+        "linux-x64 wasm chromium-153": {
+          "status": "unrecorded"
+        },
+        "linux-x64 wasm firefox": {
+          "status": "unrecorded"
+        },
+        "linux-x64 webgpu chromium-153": {
+          "status": "experimental",
+          "verified": "2026-10-23"
+        },
+        "linux-x64 webgpu firefox": {
+          "status": "untested"
+        },
+        "macos-arm64 wasm safari": {
+          "status": "unrecorded"
+        },
+        "macos-arm64 webgpu safari": {
+          "status": "untested"
+        },
+        "windows-x64 cpu": {
+          "status": "unrecorded"
+        },
+        "windows-x64 cuda": {
+          "status": "unrecorded"
+        },
+        "windows-x64 wasm chromium": {
+          "status": "unrecorded"
+        },
+        "windows-x64 webgpu chromium": {
+          "status": "untested"
+        }
+      },
+      "stable_readiness": {
+        "ready": false,
+        "gates_not_passed": [
+          "G0",
+          "G3",
+          "G4",
+          "G5",
+          "G6",
+          "G7"
+        ],
+        "untested_capabilities": [
+          "cache_storage",
+          "proxy_worker",
+          "single_thread_without_isolation",
+          "wasm_interpreter"
+        ]
       },
       "scheduled_regression": false
     },
@@ -4511,6 +6268,7 @@
         "aot": "untested",
         "extensions_ai": "unsupported",
         "mlnet": "unsupported",
+        "asset_acquisition": "unrecorded",
         "asset_acquisition_download": "unrecorded",
         "asset_verification_offline": "experimental",
         "audio": "unrecorded",
@@ -4519,11 +6277,13 @@
         "bf16": "unrecorded",
         "built_in_profile": "experimental",
         "bundle_lock_verification": "unrecorded",
+        "cache_storage": "unrecorded",
         "calibrated_temperature": "unrecorded",
         "calibration_fitting": "unrecorded",
         "cancellation_inside_a_step": "unrecorded",
         "chat_template_owned_text": "unrecorded",
         "chunked_prefill": "unrecorded",
+        "chunking": "unrecorded",
         "classification": "unrecorded",
         "concurrent_calls": "unrecorded",
         "concurrent_calls_unserialized": "unrecorded",
@@ -4564,12 +6324,14 @@
         "input_over_8192_tokens": "unrecorded",
         "input_up_to_2049_tokens": "unrecorded",
         "label_descriptions": "unrecorded",
+        "language_detection": "unrecorded",
         "long_context": "unrecorded",
         "long_context_1667_to_8192_tokens": "unrecorded",
         "long_context_over_8192_tokens": "unrecorded",
         "matryoshka": "unrecorded",
         "max_new_tokens": "unrecorded",
         "mixed_label_sets_in_batch": "unrecorded",
+        "multithreaded_cross_origin_isolated": "unrecorded",
         "non_english": "unrecorded",
         "offsets_original_text": "unrecorded",
         "option_isolation": "unrecorded",
@@ -4577,6 +6339,7 @@
         "probability_rounding": "unrecorded",
         "prompts_query_document": "unrecorded",
         "prompts_task": "unrecorded",
+        "proxy_worker": "unrecorded",
         "quantized": "unrecorded",
         "query_instruction": "unrecorded",
         "question_isolation": "unrecorded",
@@ -4585,6 +6348,7 @@
         "relation_extraction": "unrecorded",
         "request_isolation": "unrecorded",
         "sampling_seeded": "unrecorded",
+        "single_thread_without_isolation": "unrecorded",
         "state_cache_within_request": "unrecorded",
         "state_json_rendering": "unrecorded",
         "state_over_8192_tokens": "unrecorded",
@@ -4597,8 +6361,12 @@
         "text": "experimental",
         "text_only_inputs": "unrecorded",
         "tf32": "unrecorded",
+        "timestamps": "unrecorded",
         "tokenizer_owned": "unrecorded",
         "tool_calling": "unrecorded",
+        "transcription": "unrecorded",
+        "transcription_cuda": "unrecorded",
+        "translation": "unrecorded",
         "usage": "unrecorded",
         "usage_output_tokens": "unrecorded",
         "video": "unrecorded",
@@ -4622,7 +6390,9 @@
         "video_prompts": "unrecorded",
         "video_timestamps": "unrecorded",
         "video_variable_frame_rate": "unrecorded",
-        "vision": "unrecorded"
+        "vision": "unrecorded",
+        "wasm_aot": "unrecorded",
+        "wasm_interpreter": "unrecorded"
       },
       "compatibility": {
         "linux-x64 cpu": {
@@ -4631,10 +6401,34 @@
         "linux-x64 cuda": {
           "status": "unrecorded"
         },
+        "linux-x64 wasm chromium-153": {
+          "status": "unrecorded"
+        },
+        "linux-x64 wasm firefox": {
+          "status": "unrecorded"
+        },
+        "linux-x64 webgpu chromium-153": {
+          "status": "unrecorded"
+        },
+        "linux-x64 webgpu firefox": {
+          "status": "unrecorded"
+        },
+        "macos-arm64 wasm safari": {
+          "status": "unrecorded"
+        },
+        "macos-arm64 webgpu safari": {
+          "status": "unrecorded"
+        },
         "windows-x64 cpu": {
           "status": "untested"
         },
         "windows-x64 cuda": {
+          "status": "unrecorded"
+        },
+        "windows-x64 wasm chromium": {
+          "status": "unrecorded"
+        },
+        "windows-x64 webgpu chromium": {
           "status": "unrecorded"
         }
       },
@@ -4716,6 +6510,7 @@
         "aot": "untested",
         "extensions_ai": "unsupported",
         "mlnet": "unsupported",
+        "asset_acquisition": "unrecorded",
         "asset_acquisition_download": "unrecorded",
         "asset_verification_offline": "unrecorded",
         "audio": "unrecorded",
@@ -4724,11 +6519,13 @@
         "bf16": "unrecorded",
         "built_in_profile": "unrecorded",
         "bundle_lock_verification": "experimental",
+        "cache_storage": "unrecorded",
         "calibrated_temperature": "unrecorded",
         "calibration_fitting": "unrecorded",
         "cancellation_inside_a_step": "unsupported",
         "chat_template_owned_text": "experimental",
         "chunked_prefill": "experimental",
+        "chunking": "unrecorded",
         "classification": "unrecorded",
         "concurrent_calls": "unrecorded",
         "concurrent_calls_unserialized": "unrecorded",
@@ -4769,12 +6566,14 @@
         "input_over_8192_tokens": "unrecorded",
         "input_up_to_2049_tokens": "unrecorded",
         "label_descriptions": "unrecorded",
+        "language_detection": "unrecorded",
         "long_context": "untested",
         "long_context_1667_to_8192_tokens": "unrecorded",
         "long_context_over_8192_tokens": "unrecorded",
         "matryoshka": "unrecorded",
         "max_new_tokens": "experimental",
         "mixed_label_sets_in_batch": "unrecorded",
+        "multithreaded_cross_origin_isolated": "unrecorded",
         "non_english": "unrecorded",
         "offsets_original_text": "unrecorded",
         "option_isolation": "unrecorded",
@@ -4782,6 +6581,7 @@
         "probability_rounding": "unrecorded",
         "prompts_query_document": "unrecorded",
         "prompts_task": "unrecorded",
+        "proxy_worker": "unrecorded",
         "quantized": "unrecorded",
         "query_instruction": "unrecorded",
         "question_isolation": "unrecorded",
@@ -4790,6 +6590,7 @@
         "relation_extraction": "unrecorded",
         "request_isolation": "experimental",
         "sampling_seeded": "unsupported",
+        "single_thread_without_isolation": "unrecorded",
         "state_cache_within_request": "unrecorded",
         "state_json_rendering": "unrecorded",
         "state_over_8192_tokens": "unrecorded",
@@ -4802,8 +6603,12 @@
         "text": "unrecorded",
         "text_only_inputs": "unrecorded",
         "tf32": "unrecorded",
+        "timestamps": "unrecorded",
         "tokenizer_owned": "experimental",
         "tool_calling": "unsupported",
+        "transcription": "unrecorded",
+        "transcription_cuda": "unrecorded",
+        "translation": "unrecorded",
         "usage": "experimental",
         "usage_output_tokens": "unrecorded",
         "video": "unrecorded",
@@ -4827,7 +6632,9 @@
         "video_prompts": "unrecorded",
         "video_timestamps": "unrecorded",
         "video_variable_frame_rate": "unrecorded",
-        "vision": "unsupported"
+        "vision": "unsupported",
+        "wasm_aot": "unrecorded",
+        "wasm_interpreter": "unrecorded"
       },
       "compatibility": {
         "linux-x64 cpu": {
@@ -4837,10 +6644,34 @@
         "linux-x64 cuda": {
           "status": "unrecorded"
         },
+        "linux-x64 wasm chromium-153": {
+          "status": "unrecorded"
+        },
+        "linux-x64 wasm firefox": {
+          "status": "unrecorded"
+        },
+        "linux-x64 webgpu chromium-153": {
+          "status": "unrecorded"
+        },
+        "linux-x64 webgpu firefox": {
+          "status": "unrecorded"
+        },
+        "macos-arm64 wasm safari": {
+          "status": "unrecorded"
+        },
+        "macos-arm64 webgpu safari": {
+          "status": "unrecorded"
+        },
         "windows-x64 cpu": {
           "status": "untested"
         },
         "windows-x64 cuda": {
+          "status": "unrecorded"
+        },
+        "windows-x64 wasm chromium": {
+          "status": "unrecorded"
+        },
+        "windows-x64 webgpu chromium": {
           "status": "unrecorded"
         }
       },
@@ -4924,6 +6755,7 @@
         "aot": "untested",
         "extensions_ai": "unsupported",
         "mlnet": "unsupported",
+        "asset_acquisition": "unrecorded",
         "asset_acquisition_download": "unrecorded",
         "asset_verification_offline": "unrecorded",
         "audio": "unrecorded",
@@ -4932,11 +6764,13 @@
         "bf16": "unrecorded",
         "built_in_profile": "unrecorded",
         "bundle_lock_verification": "experimental",
+        "cache_storage": "unrecorded",
         "calibrated_temperature": "unrecorded",
         "calibration_fitting": "unrecorded",
         "cancellation_inside_a_step": "unsupported",
         "chat_template_owned_text": "experimental",
         "chunked_prefill": "experimental",
+        "chunking": "unrecorded",
         "classification": "unrecorded",
         "concurrent_calls": "unrecorded",
         "concurrent_calls_unserialized": "unrecorded",
@@ -4977,12 +6811,14 @@
         "input_over_8192_tokens": "unrecorded",
         "input_up_to_2049_tokens": "unrecorded",
         "label_descriptions": "unrecorded",
+        "language_detection": "unrecorded",
         "long_context": "untested",
         "long_context_1667_to_8192_tokens": "unrecorded",
         "long_context_over_8192_tokens": "unrecorded",
         "matryoshka": "unrecorded",
         "max_new_tokens": "experimental",
         "mixed_label_sets_in_batch": "unrecorded",
+        "multithreaded_cross_origin_isolated": "unrecorded",
         "non_english": "unrecorded",
         "offsets_original_text": "unrecorded",
         "option_isolation": "unrecorded",
@@ -4990,6 +6826,7 @@
         "probability_rounding": "unrecorded",
         "prompts_query_document": "unrecorded",
         "prompts_task": "unrecorded",
+        "proxy_worker": "unrecorded",
         "quantized": "unrecorded",
         "query_instruction": "unrecorded",
         "question_isolation": "unrecorded",
@@ -4998,6 +6835,7 @@
         "relation_extraction": "unrecorded",
         "request_isolation": "experimental",
         "sampling_seeded": "unsupported",
+        "single_thread_without_isolation": "unrecorded",
         "state_cache_within_request": "unrecorded",
         "state_json_rendering": "unrecorded",
         "state_over_8192_tokens": "unrecorded",
@@ -5010,8 +6848,12 @@
         "text": "unrecorded",
         "text_only_inputs": "unrecorded",
         "tf32": "unrecorded",
+        "timestamps": "unrecorded",
         "tokenizer_owned": "experimental",
         "tool_calling": "unsupported",
+        "transcription": "unrecorded",
+        "transcription_cuda": "unrecorded",
+        "translation": "unrecorded",
         "usage": "experimental",
         "usage_output_tokens": "unrecorded",
         "video": "unrecorded",
@@ -5035,7 +6877,9 @@
         "video_prompts": "unrecorded",
         "video_timestamps": "unrecorded",
         "video_variable_frame_rate": "unrecorded",
-        "vision": "unsupported"
+        "vision": "unsupported",
+        "wasm_aot": "unrecorded",
+        "wasm_interpreter": "unrecorded"
       },
       "compatibility": {
         "linux-x64 cpu": {
@@ -5045,10 +6889,34 @@
         "linux-x64 cuda": {
           "status": "unrecorded"
         },
+        "linux-x64 wasm chromium-153": {
+          "status": "unrecorded"
+        },
+        "linux-x64 wasm firefox": {
+          "status": "unrecorded"
+        },
+        "linux-x64 webgpu chromium-153": {
+          "status": "unrecorded"
+        },
+        "linux-x64 webgpu firefox": {
+          "status": "unrecorded"
+        },
+        "macos-arm64 wasm safari": {
+          "status": "unrecorded"
+        },
+        "macos-arm64 webgpu safari": {
+          "status": "unrecorded"
+        },
         "windows-x64 cpu": {
           "status": "untested"
         },
         "windows-x64 cuda": {
+          "status": "unrecorded"
+        },
+        "windows-x64 wasm chromium": {
+          "status": "unrecorded"
+        },
+        "windows-x64 webgpu chromium": {
           "status": "unrecorded"
         }
       },
@@ -5160,6 +7028,7 @@
         "aot": "experimental",
         "extensions_ai": "supported",
         "mlnet": "unsupported",
+        "asset_acquisition": "unrecorded",
         "asset_acquisition_download": "unrecorded",
         "asset_verification_offline": "unrecorded",
         "audio": "unrecorded",
@@ -5168,11 +7037,13 @@
         "bf16": "unrecorded",
         "built_in_profile": "unrecorded",
         "bundle_lock_verification": "unrecorded",
+        "cache_storage": "unrecorded",
         "calibrated_temperature": "unrecorded",
         "calibration_fitting": "unrecorded",
         "cancellation_inside_a_step": "unsupported",
         "chat_template_owned_text": "supported",
         "chunked_prefill": "supported",
+        "chunking": "unrecorded",
         "classification": "unrecorded",
         "concurrent_calls": "unrecorded",
         "concurrent_calls_unserialized": "unrecorded",
@@ -5213,12 +7084,14 @@
         "input_over_8192_tokens": "unrecorded",
         "input_up_to_2049_tokens": "unrecorded",
         "label_descriptions": "unrecorded",
+        "language_detection": "unrecorded",
         "long_context": "unrecorded",
         "long_context_1667_to_8192_tokens": "experimental",
         "long_context_over_8192_tokens": "unsupported",
         "matryoshka": "unrecorded",
         "max_new_tokens": "supported",
         "mixed_label_sets_in_batch": "unrecorded",
+        "multithreaded_cross_origin_isolated": "unrecorded",
         "non_english": "unrecorded",
         "offsets_original_text": "unrecorded",
         "option_isolation": "unrecorded",
@@ -5226,6 +7099,7 @@
         "probability_rounding": "unrecorded",
         "prompts_query_document": "unrecorded",
         "prompts_task": "unrecorded",
+        "proxy_worker": "unrecorded",
         "quantized": "unrecorded",
         "query_instruction": "unrecorded",
         "question_isolation": "unrecorded",
@@ -5234,6 +7108,7 @@
         "relation_extraction": "unrecorded",
         "request_isolation": "unrecorded",
         "sampling_seeded": "supported",
+        "single_thread_without_isolation": "unrecorded",
         "state_cache_within_request": "unrecorded",
         "state_json_rendering": "unrecorded",
         "state_over_8192_tokens": "unrecorded",
@@ -5246,8 +7121,12 @@
         "text": "unrecorded",
         "text_only_inputs": "unrecorded",
         "tf32": "unrecorded",
+        "timestamps": "unrecorded",
         "tokenizer_owned": "supported",
         "tool_calling": "experimental",
+        "transcription": "unrecorded",
+        "transcription_cuda": "unrecorded",
+        "translation": "unrecorded",
         "usage": "supported",
         "usage_output_tokens": "unrecorded",
         "video": "unrecorded",
@@ -5271,7 +7150,9 @@
         "video_prompts": "unrecorded",
         "video_timestamps": "unrecorded",
         "video_variable_frame_rate": "unrecorded",
-        "vision": "unsupported"
+        "vision": "unsupported",
+        "wasm_aot": "unrecorded",
+        "wasm_interpreter": "unrecorded"
       },
       "compatibility": {
         "linux-x64 cpu": {
@@ -5281,11 +7162,35 @@
           "status": "supported",
           "verified": "2026-10-16"
         },
+        "linux-x64 wasm chromium-153": {
+          "status": "unrecorded"
+        },
+        "linux-x64 wasm firefox": {
+          "status": "unrecorded"
+        },
+        "linux-x64 webgpu chromium-153": {
+          "status": "unrecorded"
+        },
+        "linux-x64 webgpu firefox": {
+          "status": "unrecorded"
+        },
+        "macos-arm64 wasm safari": {
+          "status": "unrecorded"
+        },
+        "macos-arm64 webgpu safari": {
+          "status": "unrecorded"
+        },
         "windows-x64 cpu": {
           "status": "unrecorded"
         },
         "windows-x64 cuda": {
           "status": "untested"
+        },
+        "windows-x64 wasm chromium": {
+          "status": "unrecorded"
+        },
+        "windows-x64 webgpu chromium": {
+          "status": "unrecorded"
         }
       },
       "stable_readiness": {
@@ -5380,6 +7285,7 @@
         "aot": "supported",
         "extensions_ai": "supported",
         "mlnet": "unsupported",
+        "asset_acquisition": "unrecorded",
         "asset_acquisition_download": "unrecorded",
         "asset_verification_offline": "unrecorded",
         "audio": "unrecorded",
@@ -5388,11 +7294,13 @@
         "bf16": "unrecorded",
         "built_in_profile": "unrecorded",
         "bundle_lock_verification": "unrecorded",
+        "cache_storage": "unrecorded",
         "calibrated_temperature": "unrecorded",
         "calibration_fitting": "unrecorded",
         "cancellation_inside_a_step": "unsupported",
         "chat_template_owned_text": "supported",
         "chunked_prefill": "supported",
+        "chunking": "unrecorded",
         "classification": "unrecorded",
         "concurrent_calls": "unrecorded",
         "concurrent_calls_unserialized": "unrecorded",
@@ -5433,12 +7341,14 @@
         "input_over_8192_tokens": "unrecorded",
         "input_up_to_2049_tokens": "unrecorded",
         "label_descriptions": "unrecorded",
+        "language_detection": "unrecorded",
         "long_context": "unrecorded",
         "long_context_1667_to_8192_tokens": "experimental",
         "long_context_over_8192_tokens": "unsupported",
         "matryoshka": "unrecorded",
         "max_new_tokens": "supported",
         "mixed_label_sets_in_batch": "unrecorded",
+        "multithreaded_cross_origin_isolated": "unrecorded",
         "non_english": "unrecorded",
         "offsets_original_text": "unrecorded",
         "option_isolation": "unrecorded",
@@ -5446,6 +7356,7 @@
         "probability_rounding": "unrecorded",
         "prompts_query_document": "unrecorded",
         "prompts_task": "unrecorded",
+        "proxy_worker": "unrecorded",
         "quantized": "unrecorded",
         "query_instruction": "unrecorded",
         "question_isolation": "unrecorded",
@@ -5454,6 +7365,7 @@
         "relation_extraction": "unrecorded",
         "request_isolation": "unrecorded",
         "sampling_seeded": "supported",
+        "single_thread_without_isolation": "unrecorded",
         "state_cache_within_request": "unrecorded",
         "state_json_rendering": "unrecorded",
         "state_over_8192_tokens": "unrecorded",
@@ -5466,8 +7378,12 @@
         "text": "unrecorded",
         "text_only_inputs": "unrecorded",
         "tf32": "unrecorded",
+        "timestamps": "unrecorded",
         "tokenizer_owned": "supported",
         "tool_calling": "experimental",
+        "transcription": "unrecorded",
+        "transcription_cuda": "unrecorded",
+        "translation": "unrecorded",
         "usage": "supported",
         "usage_output_tokens": "unrecorded",
         "video": "unrecorded",
@@ -5491,7 +7407,9 @@
         "video_prompts": "unrecorded",
         "video_timestamps": "unrecorded",
         "video_variable_frame_rate": "unrecorded",
-        "vision": "unsupported"
+        "vision": "unsupported",
+        "wasm_aot": "unrecorded",
+        "wasm_interpreter": "unrecorded"
       },
       "compatibility": {
         "linux-x64 cpu": {
@@ -5501,10 +7419,34 @@
         "linux-x64 cuda": {
           "status": "unrecorded"
         },
+        "linux-x64 wasm chromium-153": {
+          "status": "unrecorded"
+        },
+        "linux-x64 wasm firefox": {
+          "status": "unrecorded"
+        },
+        "linux-x64 webgpu chromium-153": {
+          "status": "unrecorded"
+        },
+        "linux-x64 webgpu firefox": {
+          "status": "unrecorded"
+        },
+        "macos-arm64 wasm safari": {
+          "status": "unrecorded"
+        },
+        "macos-arm64 webgpu safari": {
+          "status": "unrecorded"
+        },
         "windows-x64 cpu": {
           "status": "untested"
         },
         "windows-x64 cuda": {
+          "status": "unrecorded"
+        },
+        "windows-x64 wasm chromium": {
+          "status": "unrecorded"
+        },
+        "windows-x64 webgpu chromium": {
           "status": "unrecorded"
         }
       },
@@ -5603,6 +7545,7 @@
         "aot": "experimental",
         "extensions_ai": "supported",
         "mlnet": "unsupported",
+        "asset_acquisition": "unrecorded",
         "asset_acquisition_download": "unrecorded",
         "asset_verification_offline": "unrecorded",
         "audio": "unrecorded",
@@ -5611,11 +7554,13 @@
         "bf16": "unrecorded",
         "built_in_profile": "unrecorded",
         "bundle_lock_verification": "unrecorded",
+        "cache_storage": "unrecorded",
         "calibrated_temperature": "unrecorded",
         "calibration_fitting": "unrecorded",
         "cancellation_inside_a_step": "unsupported",
         "chat_template_owned_text": "supported",
         "chunked_prefill": "supported",
+        "chunking": "unrecorded",
         "classification": "unrecorded",
         "concurrent_calls": "unrecorded",
         "concurrent_calls_unserialized": "unrecorded",
@@ -5656,12 +7601,14 @@
         "input_over_8192_tokens": "unrecorded",
         "input_up_to_2049_tokens": "unrecorded",
         "label_descriptions": "unrecorded",
+        "language_detection": "unrecorded",
         "long_context": "unrecorded",
         "long_context_1667_to_8192_tokens": "experimental",
         "long_context_over_8192_tokens": "unsupported",
         "matryoshka": "unrecorded",
         "max_new_tokens": "supported",
         "mixed_label_sets_in_batch": "unrecorded",
+        "multithreaded_cross_origin_isolated": "unrecorded",
         "non_english": "unrecorded",
         "offsets_original_text": "unrecorded",
         "option_isolation": "unrecorded",
@@ -5669,6 +7616,7 @@
         "probability_rounding": "unrecorded",
         "prompts_query_document": "unrecorded",
         "prompts_task": "unrecorded",
+        "proxy_worker": "unrecorded",
         "quantized": "unrecorded",
         "query_instruction": "unrecorded",
         "question_isolation": "unrecorded",
@@ -5677,6 +7625,7 @@
         "relation_extraction": "unrecorded",
         "request_isolation": "unrecorded",
         "sampling_seeded": "supported",
+        "single_thread_without_isolation": "unrecorded",
         "state_cache_within_request": "unrecorded",
         "state_json_rendering": "unrecorded",
         "state_over_8192_tokens": "unrecorded",
@@ -5689,8 +7638,12 @@
         "text": "unrecorded",
         "text_only_inputs": "unrecorded",
         "tf32": "unrecorded",
+        "timestamps": "unrecorded",
         "tokenizer_owned": "supported",
         "tool_calling": "experimental",
+        "transcription": "unrecorded",
+        "transcription_cuda": "unrecorded",
+        "translation": "unrecorded",
         "usage": "supported",
         "usage_output_tokens": "unrecorded",
         "video": "unrecorded",
@@ -5714,7 +7667,9 @@
         "video_prompts": "unrecorded",
         "video_timestamps": "unrecorded",
         "video_variable_frame_rate": "unrecorded",
-        "vision": "unsupported"
+        "vision": "unsupported",
+        "wasm_aot": "unrecorded",
+        "wasm_interpreter": "unrecorded"
       },
       "compatibility": {
         "linux-x64 cpu": {
@@ -5724,11 +7679,35 @@
           "status": "supported",
           "verified": "2026-10-16"
         },
+        "linux-x64 wasm chromium-153": {
+          "status": "unrecorded"
+        },
+        "linux-x64 wasm firefox": {
+          "status": "unrecorded"
+        },
+        "linux-x64 webgpu chromium-153": {
+          "status": "unrecorded"
+        },
+        "linux-x64 webgpu firefox": {
+          "status": "unrecorded"
+        },
+        "macos-arm64 wasm safari": {
+          "status": "unrecorded"
+        },
+        "macos-arm64 webgpu safari": {
+          "status": "unrecorded"
+        },
         "windows-x64 cpu": {
           "status": "unrecorded"
         },
         "windows-x64 cuda": {
           "status": "untested"
+        },
+        "windows-x64 wasm chromium": {
+          "status": "unrecorded"
+        },
+        "windows-x64 webgpu chromium": {
+          "status": "unrecorded"
         }
       },
       "stable_readiness": {
@@ -5737,6 +7716,253 @@
         "untested_capabilities": []
       },
       "scheduled_regression": false
+    },
+    {
+      "id": "whisper-large-v3-turbo/onnx-fp16-cpu",
+      "family": "whisper-large-v3-turbo",
+      "profile": "onnx-fp16-cpu",
+      "manifest": "model-pipeline/registry/whisper-large-v3-turbo/onnx-fp16-cpu/manifest.yaml",
+      "maturity": "experimental",
+      "tasks": [
+        "transcription"
+      ],
+      "owner": "Mark",
+      "review_date": "2027-01-23",
+      "last_checked": "2026-10-23",
+      "known_issues": [
+        "No reference fixtures are adopted into protected/ and no gate has run; every capability is at most experimental.",
+        "The evidence covers English only (four LibriSpeech clips, 1.6 s to 12.5 s); other languages are untested.",
+        "Decoding re-runs the full decoder over the prefix at every step (no KV cache), so long transcripts are slow.",
+        "The export repository has no license tag; see rights.notes."
+      ],
+      "execution": {
+        "runtime": "onnxruntime",
+        "runtime_version": "1.30.0",
+        "binding": "Microsoft.ML.OnnxRuntime",
+        "binding_version": null,
+        "precision": "fp16",
+        "variant": "reference"
+      },
+      "gates": {
+        "G0": {
+          "status": "not-run"
+        },
+        "G1": {
+          "status": "not-run"
+        },
+        "G2": {
+          "status": "not-run"
+        },
+        "G3": {
+          "status": "not-run"
+        },
+        "G4": {
+          "status": "not-run"
+        },
+        "G5": {
+          "status": "not-run"
+        },
+        "G6": {
+          "status": "not-run"
+        },
+        "G7": {
+          "status": "not-run"
+        }
+      },
+      "capabilities": {
+        "batch": "unsupported",
+        "streaming": "unsupported",
+        "cancellation": "experimental",
+        "persistence": "unsupported",
+        "training": "unsupported",
+        "aot": "untested",
+        "extensions_ai": "unsupported",
+        "mlnet": "unsupported",
+        "asset_acquisition": "experimental",
+        "asset_acquisition_download": "unrecorded",
+        "asset_verification_offline": "unrecorded",
+        "audio": "unrecorded",
+        "batch_sort_by_length": "unrecorded",
+        "batch_token_budget": "unrecorded",
+        "bf16": "unrecorded",
+        "built_in_profile": "unrecorded",
+        "bundle_lock_verification": "unrecorded",
+        "cache_storage": "unrecorded",
+        "calibrated_temperature": "unrecorded",
+        "calibration_fitting": "unrecorded",
+        "cancellation_inside_a_step": "unrecorded",
+        "chat_template_owned_text": "unrecorded",
+        "chunked_prefill": "unrecorded",
+        "chunking": "unsupported",
+        "classification": "unrecorded",
+        "concurrent_calls": "untested",
+        "concurrent_calls_unserialized": "unrecorded",
+        "concurrent_requests": "unrecorded",
+        "conversation_state_reuse": "unrecorded",
+        "count_gate_closed": "unrecorded",
+        "date_facts": "unrecorded",
+        "decision_choice": "unrecorded",
+        "decision_noul": "unrecorded",
+        "decision_score": "unrecorded",
+        "delimiter_escaping": "unrecorded",
+        "embedding_pretokenized": "unrecorded",
+        "embedding_text": "unrecorded",
+        "enable_thinking": "unrecorded",
+        "entity_extraction": "unrecorded",
+        "fp16": "unrecorded",
+        "generation": "unrecorded",
+        "gpu": "unrecorded",
+        "greedy_generation": "unrecorded",
+        "http_server": "unrecorded",
+        "image": "unrecorded",
+        "image_16_bit": "unrecorded",
+        "image_alpha_compositing": "unrecorded",
+        "image_batch": "unrecorded",
+        "image_budget_280": "unrecorded",
+        "image_budget_other": "unrecorded",
+        "image_decode_gif_bmp_webp": "unrecorded",
+        "image_decode_gif_transparency": "unrecorded",
+        "image_decode_png_jpeg": "unrecorded",
+        "image_exif_orientation_opt_in": "unrecorded",
+        "image_interleaved_text": "unrecorded",
+        "image_matryoshka": "unrecorded",
+        "image_multiple_per_input": "unrecorded",
+        "image_over_default_pixel_limit_with_option": "unrecorded",
+        "image_prompts": "unrecorded",
+        "input_2050_to_8192_tokens": "unrecorded",
+        "input_over_512_tokens": "unrecorded",
+        "input_over_8192_tokens": "unrecorded",
+        "input_up_to_2049_tokens": "unrecorded",
+        "label_descriptions": "unrecorded",
+        "language_detection": "untested",
+        "long_context": "unrecorded",
+        "long_context_1667_to_8192_tokens": "unrecorded",
+        "long_context_over_8192_tokens": "unrecorded",
+        "matryoshka": "unrecorded",
+        "max_new_tokens": "unrecorded",
+        "mixed_label_sets_in_batch": "unrecorded",
+        "multithreaded_cross_origin_isolated": "unrecorded",
+        "non_english": "unrecorded",
+        "offsets_original_text": "unrecorded",
+        "option_isolation": "unrecorded",
+        "plain_deduplicated_output": "unrecorded",
+        "probability_rounding": "unrecorded",
+        "prompts_query_document": "unrecorded",
+        "prompts_task": "unrecorded",
+        "proxy_worker": "unrecorded",
+        "quantized": "unsupported",
+        "query_instruction": "unrecorded",
+        "question_isolation": "unrecorded",
+        "raw_probabilities": "unrecorded",
+        "reasoning_split": "unrecorded",
+        "relation_extraction": "unrecorded",
+        "request_isolation": "unrecorded",
+        "sampling_seeded": "unrecorded",
+        "single_thread_without_isolation": "unrecorded",
+        "state_cache_within_request": "unrecorded",
+        "state_json_rendering": "unrecorded",
+        "state_over_8192_tokens": "unrecorded",
+        "state_prefix_reuse_across_requests": "unrecorded",
+        "step0_logits": "unrecorded",
+        "stop_sequences": "unrecorded",
+        "stop_tokens": "unrecorded",
+        "structured_extraction": "unrecorded",
+        "structured_output": "unrecorded",
+        "text": "unrecorded",
+        "text_only_inputs": "unrecorded",
+        "tf32": "unrecorded",
+        "timestamps": "unsupported",
+        "tokenizer_owned": "unrecorded",
+        "tool_calling": "unrecorded",
+        "transcription": "experimental",
+        "transcription_cuda": "untested",
+        "translation": "unsupported",
+        "usage": "unrecorded",
+        "usage_output_tokens": "unrecorded",
+        "video": "unrecorded",
+        "video_audio_track": "unrecorded",
+        "video_batch": "unrecorded",
+        "video_decode_ffmpeg8": "unrecorded",
+        "video_decode_ffmpeg9": "unrecorded",
+        "video_decode_rotation_90": "unrecorded",
+        "video_decode_rotation_other": "unrecorded",
+        "video_decode_streams": "unrecorded",
+        "video_decoded_frames_with_timing": "unrecorded",
+        "video_frames_without_timing": "unrecorded",
+        "video_frames_without_timing_opt_in": "unrecorded",
+        "video_hdr": "unrecorded",
+        "video_interlaced": "unrecorded",
+        "video_interleaved_image": "unrecorded",
+        "video_interleaved_text": "unrecorded",
+        "video_matryoshka": "unrecorded",
+        "video_multiple_per_input": "unrecorded",
+        "video_pre_sampled_frames": "unrecorded",
+        "video_prompts": "unrecorded",
+        "video_timestamps": "unrecorded",
+        "video_variable_frame_rate": "unrecorded",
+        "vision": "unrecorded",
+        "wasm_aot": "unrecorded",
+        "wasm_interpreter": "unrecorded"
+      },
+      "compatibility": {
+        "linux-x64 cpu": {
+          "status": "experimental",
+          "verified": "2026-10-23"
+        },
+        "linux-x64 cuda": {
+          "status": "untested"
+        },
+        "linux-x64 wasm chromium-153": {
+          "status": "unrecorded"
+        },
+        "linux-x64 wasm firefox": {
+          "status": "unrecorded"
+        },
+        "linux-x64 webgpu chromium-153": {
+          "status": "unrecorded"
+        },
+        "linux-x64 webgpu firefox": {
+          "status": "unrecorded"
+        },
+        "macos-arm64 wasm safari": {
+          "status": "unrecorded"
+        },
+        "macos-arm64 webgpu safari": {
+          "status": "unrecorded"
+        },
+        "windows-x64 cpu": {
+          "status": "untested"
+        },
+        "windows-x64 cuda": {
+          "status": "unrecorded"
+        },
+        "windows-x64 wasm chromium": {
+          "status": "unrecorded"
+        },
+        "windows-x64 webgpu chromium": {
+          "status": "unrecorded"
+        }
+      },
+      "stable_readiness": {
+        "ready": false,
+        "gates_not_passed": [
+          "G0",
+          "G1",
+          "G2",
+          "G3",
+          "G4",
+          "G5",
+          "G6",
+          "G7"
+        ],
+        "untested_capabilities": [
+          "aot",
+          "concurrent_calls",
+          "language_detection",
+          "transcription_cuda"
+        ]
+      },
+      "scheduled_regression": true
     }
   ]
 }

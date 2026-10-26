@@ -1,0 +1,65 @@
+<Project>
+  <!--
+    onnxruntime-web dist files as static web assets of a Razor class library (Starlings.Runtime.OnnxWeb and its WebGPU
+    adapter). The npm pin is package.json and package-lock.json next to this file (onnxruntime-web 1.30.0, integrity
+    checked by npm ci). Nothing from node_modules is committed: before static web assets are resolved, this target runs
+    `npm ci` here when the package is missing, copies the files listed in @(StarlingsOrtWebFile) (paths relative to
+    node_modules/onnxruntime-web/dist) to wwwroot/ort/ (ignored by Git), and adds them as Content so the Razor SDK
+    serves them under _content/<PackageId>/ort/ and packs them into the package's staticwebassets folder.
+
+    A project imports this file and lists its files:
+      <ItemGroup><StarlingsOrtWebFile Include="ort.wasm.min.mjs" /></ItemGroup>
+    StarlingsOrtWebNpmCi=false skips npm ci (the files must then already be in node_modules).
+  -->
+  <PropertyGroup>
+    <StarlingsOrtWebRoot>$(MSBuildThisFileDirectory)</StarlingsOrtWebRoot>
+    <StarlingsOrtWebDist>$(StarlingsOrtWebRoot)node_modules/onnxruntime-web/dist/</StarlingsOrtWebDist>
+    <StarlingsOrtWebVersion>1.30.0</StarlingsOrtWebVersion>
+    <StarlingsOrtWebNpmCi Condition="'$(StarlingsOrtWebNpmCi)' == ''">true</StarlingsOrtWebNpmCi>
+  </PropertyGroup>
+
+  <!--
+    onnxruntime's MIT license and its ThirdPartyNotices.txt (the components compiled into the .wasm binaries), both from
+    microsoft/onnxruntime at f2c39fe2f838cf35ce7da92824f5a5e3ee6e88a7 (v1.30.0), committed next to this file: packed at
+    the package root and served next to the binaries under ort/, so an app that deploys the binaries deploys them too.
+  -->
+  <ItemGroup>
+    <StarlingsOrtWebNotice Include="$(MSBuildThisFileDirectory)LICENSE-onnxruntime.txt;$(MSBuildThisFileDirectory)ThirdPartyNotices-onnxruntime.txt" />
+    <None Include="@(StarlingsOrtWebNotice)" Pack="true" PackagePath="" Visible="false" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- The copies are build outputs: keep them out of the default globs so the target alone decides what is served. -->
+    <Content Remove="wwwroot/ort/**" />
+    <None Remove="wwwroot/ort/**" />
+  </ItemGroup>
+
+  <Target Name="StarlingsRestoreOrtWeb" Condition="!Exists('$(StarlingsOrtWebDist)../package.json')">
+    <Error Condition="'$(StarlingsOrtWebNpmCi)' != 'true'"
+           Text="onnxruntime-web $(StarlingsOrtWebVersion) is not installed in $(StarlingsOrtWebRoot)node_modules. Run: npm ci --prefix $(StarlingsOrtWebRoot)" />
+    <Exec Command="npm ci --no-audit --no-fund --ignore-scripts" WorkingDirectory="$(StarlingsOrtWebRoot)" />
+  </Target>
+
+  <Target Name="StarlingsCopyOrtWeb"
+          DependsOnTargets="StarlingsRestoreOrtWeb"
+          BeforeTargets="ResolveProjectStaticWebAssets;AssignTargetPaths">
+    <ReadLinesFromFile File="$(StarlingsOrtWebDist)../package.json">
+      <Output TaskParameter="Lines" ItemName="_StarlingsOrtWebPackageJson" />
+    </ReadLinesFromFile>
+    <PropertyGroup>
+      <_StarlingsOrtWebPackageText>@(_StarlingsOrtWebPackageJson, ' ')</_StarlingsOrtWebPackageText>
+    </PropertyGroup>
+    <Error Condition="!$(_StarlingsOrtWebPackageText.Contains('&quot;version&quot;: &quot;$(StarlingsOrtWebVersion)&quot;'))"
+           Text="$(StarlingsOrtWebRoot)node_modules holds another onnxruntime-web than $(StarlingsOrtWebVersion). Run: npm ci --prefix $(StarlingsOrtWebRoot)" />
+    <ItemGroup>
+      <_StarlingsOrtWebSource Include="@(StarlingsOrtWebFile->'$(StarlingsOrtWebDist)%(Identity)')" />
+    </ItemGroup>
+    <Error Condition="!Exists('%(_StarlingsOrtWebSource.FullPath)')" Text="onnxruntime-web dist file missing: %(_StarlingsOrtWebSource.FullPath)" />
+    <Copy SourceFiles="@(_StarlingsOrtWebSource);@(StarlingsOrtWebNotice)" DestinationFolder="$(MSBuildProjectDirectory)/wwwroot/ort/" SkipUnchangedFiles="true" />
+    <ItemGroup>
+      <Content Remove="wwwroot/ort/**" />
+      <Content Include="@(StarlingsOrtWebFile->'wwwroot/ort/%(Identity)')" CopyToOutputDirectory="Never" CopyToPublishDirectory="PreserveNewest" />
+      <Content Include="@(StarlingsOrtWebNotice->'wwwroot/ort/%(Filename)%(Extension)')" CopyToOutputDirectory="Never" CopyToPublishDirectory="PreserveNewest" />
+    </ItemGroup>
+  </Target>
+</Project>

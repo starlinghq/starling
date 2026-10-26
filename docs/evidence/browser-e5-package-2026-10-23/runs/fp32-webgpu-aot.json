@@ -1,0 +1,432 @@
+{
+ "label": "aot",
+ "variant": "fp32",
+ "provider": "webgpu",
+ "isolation": true,
+ "gpu_before": "0, NVIDIA GeForce RTX 3090, 298 MiB, 0 %\n1, NVIDIA GeForce RTX 4060 Ti, 502 MiB, 3 %",
+ "browser_version": "153.0.8010.12",
+ "startup_ms": 861.4874209997652,
+ "startup_download": {
+  "/": {
+   "bytes": 519,
+   "uncompressed": 1732,
+   "encoding": "br"
+  },
+  "/_framework/blazor.webassembly.w3qd1tpl0e.js": {
+   "bytes": 16754,
+   "uncompressed": 60682,
+   "encoding": "br"
+  },
+  "/_framework/dotnet.jwwukjjnbf.js": {
+   "bytes": 14032,
+   "uncompressed": 52892,
+   "encoding": "br"
+  },
+  "/_framework/dotnet.native.eh24b2xw69.js": {
+   "bytes": 50899,
+   "uncompressed": 266311,
+   "encoding": "br"
+  },
+  "/_framework/dotnet.runtime.v06hirbjsv.js": {
+   "bytes": 47894,
+   "uncompressed": 198480,
+   "encoding": "br"
+  },
+  "/_framework/Microsoft.AspNetCore.Components.WebAssembly.0ilzv5jqtj.wasm": {
+   "bytes": 33404,
+   "uncompressed": 118549,
+   "encoding": "br"
+  },
+  "/_framework/Microsoft.AspNetCore.Components.7w7m3fwxrv.wasm": {
+   "bytes": 50010,
+   "uncompressed": 172309,
+   "encoding": "br"
+  },
+  "/_framework/Microsoft.AspNetCore.Components.Web.47dz9hse4m.wasm": {
+   "bytes": 16522,
+   "uncompressed": 56085,
+   "encoding": "br"
+  },
+  "/_framework/Microsoft.Extensions.Configuration.tg4ht29ydd.wasm": {
+   "bytes": 3482,
+   "uncompressed": 8981,
+   "encoding": "br"
+  },
+  "/_framework/Microsoft.Extensions.AI.Abstractions.ny76my4xnp.wasm": {
+   "bytes": 4258,
+   "uncompressed": 11029,
+   "encoding": "br"
+  },
+  "/_framework/Microsoft.Extensions.Configuration.Json.67m37tob8g.wasm": {
+   "bytes": 3995,
+   "uncompressed": 10517,
+   "encoding": "br"
+  },
+  "/_framework/Microsoft.Extensions.Configuration.Abstractions.7c61r60qh9.wasm": {
+   "bytes": 2334,
+   "uncompressed": 6933,
+   "encoding": "br"
+  },
+  "/_framework/Microsoft.Extensions.DependencyInjection.esd6sux8jj.wasm": {
+   "bytes": 16326,
+   "uncompressed": 46869,
+   "encoding": "br"
+  },
+  "/_framework/Microsoft.Extensions.Logging.ujdi1jub81.wasm": {
+   "bytes": 6945,
+   "uncompressed": 17685,
+   "encoding": "br"
+  },
+  "/_framework/Microsoft.Extensions.DependencyInjection.Abstractions.n4zzpfnvjp.wasm": {
+   "bytes": 7954,
+   "uncompressed": 26389,
+   "encoding": "br"
+  },
+  "/_framework/Microsoft.Extensions.Logging.Abstractions.z341bfijf3.wasm": {
+   "bytes": 9779,
+   "uncompressed": 27413,
+   "encoding": "br"
+  },
+  "/_framework/Microsoft.Extensions.Options.x4twoaf8xg.wasm": {
+   "bytes": 7055,
+   "uncompressed": 16661,
+   "encoding": "br"
+  },
+  "/_framework/Microsoft.Extensions.Primitives.xlxo9m8p3j.wasm": {
+   "bytes": 3305,
+   "uncompressed": 8981,
+   "encoding": "br"
+  },
+  "/_framework/Microsoft.JSInterop.76d6culo5q.wasm": {
+   "bytes": 16402,
+   "uncompressed": 45845,
+   "encoding": "br"
+  },
+  "/_framework/Microsoft.JSInterop.WebAssembly.vjcfjtelwd.wasm": {
+   "bytes": 4891,
+   "uncompressed": 12053,
+   "encoding": "br"
+  },
+  "/_framework/Microsoft.ML.OnnxRuntime.yammv838hr.wasm": {
+   "bytes": 63036,
+   "uncompressed": 231701,
+   "encoding": "br"
+  },
+  "/_framework/Starlings.Tokenizers.qxgssaml23.wasm": {
+   "bytes": 59398,
+   "uncompressed": 227605,
+   "encoding": "br"
+  },
+  "/_framework/System.Numerics.Tensors.f8ss3a3gav.wasm": {
+   "bytes": 12154,
+   "uncompressed": 49429,
+   "encoding": "br"
+  },
+  "/_framework/System.Collections.Concurrent.xq86zx85sq.wasm": {
+   "bytes": 9678,
+   "uncompressed": 24341,
+   "encoding": "br"
+  },
+  "/_framework/System.Collections.Immutable.unyup48x3c.wasm": {
+   "bytes": 19455,
+   "uncompressed": 56597,
+   "encoding": "br"
+  },
+  "/_framework/System.ComponentModel.iv4cyr9ulo.wasm": {
+   "bytes": 1721,
+   "uncompressed": 4885,
+   "encoding": "br"
+  },
+  "/_framework/System.Diagnostics.DiagnosticSource.itvz6wwc64.wasm": {
+   "bytes": 13662,
+   "uncompressed": 40213,
+   "encoding": "br"
+  },
+  "/_framework/System.Console.45akag4u7s.wasm": {
+   "bytes": 5824,
+   "uncompressed": 15125,
+   "encoding": "br"
+  },
+  "/_framework/System.Collections.yaffzay0ng.wasm": {
+   "bytes": 11201,
+   "uncompressed": 31509,
+   "encoding": "br"
+  },
+  "/_framework/System.Diagnostics.TraceSource.91gzj6v2lb.wasm": {
+   "bytes": 4467,
+   "uncompressed": 11541,
+   "encoding": "br"
+  },
+  "/_framework/System.IO.Pipelines.syhqffnboi.wasm": {
+   "bytes": 2337,
+   "uncompressed": 5909,
+   "encoding": "br"
+  },
+  "/_framework/System.Net.Http.dsplcwl7zz.wasm": {
+   "bytes": 38695,
+   "uncompressed": 139541,
+   "encoding": "br"
+  },
+  "/_framework/System.Memory.sucol9jcy8.wasm": {
+   "bytes": 6852,
+   "uncompressed": 16149,
+   "encoding": "br"
+  },
+  "/_framework/System.Linq.oq1grkpc0d.wasm": {
+   "bytes": 20426,
+   "uncompressed": 53525,
+   "encoding": "br"
+  },
+  "/_framework/System.Net.Primitives.lt870ub8vp.wasm": {
+   "bytes": 2815,
+   "uncompressed": 7445,
+   "encoding": "br"
+  },
+  "/_framework/System.Private.Uri.81sfi1c25u.wasm": {
+   "bytes": 15741,
+   "uncompressed": 66837,
+   "encoding": "br"
+  },
+  "/_framework/System.Runtime.InteropServices.JavaScript.8j9l3aku2l.wasm": {
+   "bytes": 15005,
+   "uncompressed": 49941,
+   "encoding": "br"
+  },
+  "/_framework/System.Runtime.21dfh8gy56.wasm": {
+   "bytes": 3073,
+   "uncompressed": 10005,
+   "encoding": "br"
+  },
+  "/_framework/System.Runtime.InteropServices.1sk8xnkvn6.wasm": {
+   "bytes": 2970,
+   "uncompressed": 8981,
+   "encoding": "br"
+  },
+  "/_framework/System.Security.Cryptography.f9lnsns4ds.wasm": {
+   "bytes": 5653,
+   "uncompressed": 20757,
+   "encoding": "br"
+  },
+  "/_framework/System.Text.Json.xfd0j4rtzx.wasm": {
+   "bytes": 93355,
+   "uncompressed": 382741,
+   "encoding": "br"
+  },
+  "/_framework/System.Text.Encoding.Extensions.ajdtrmih3n.wasm": {
+   "bytes": 1683,
+   "uncompressed": 4885,
+   "encoding": "br"
+  },
+  "/_framework/System.Text.RegularExpressions.5yyk1kytu6.wasm": {
+   "bytes": 5503,
+   "uncompressed": 15125,
+   "encoding": "br"
+  },
+  "/_framework/System.Text.Encodings.Web.kwy3qekb07.wasm": {
+   "bytes": 7100,
+   "uncompressed": 29461,
+   "encoding": "br"
+  },
+  "/_framework/System.Private.CoreLib.ekb2bbnoyb.wasm": {
+   "bytes": 371974,
+   "uncompressed": 1675029,
+   "encoding": "br"
+  },
+  "/_framework/Starlings.Models.E5.Extensions.AI.7pgvefs4xt.wasm": {
+   "bytes": 3458,
+   "uncompressed": 9493,
+   "encoding": "br"
+  },
+  "/_framework/Starlings.Models.E5.dzk0934blf.wasm": {
+   "bytes": 7205,
+   "uncompressed": 23317,
+   "encoding": "br"
+  },
+  "/_framework/Starlings.Models.E5.Browser.9ph4o1fa1e.wasm": {
+   "bytes": 13729,
+   "uncompressed": 39189,
+   "encoding": "br"
+  },
+  "/_framework/Starlings.Runtime.OnnxWeb.WebGpu.9exnwiyasl.wasm": {
+   "bytes": 2047,
+   "uncompressed": 5909,
+   "encoding": "br"
+  },
+  "/_framework/Starlings.Runtime.OnnxWeb.lhkc2n0744.wasm": {
+   "bytes": 16441,
+   "uncompressed": 52501,
+   "encoding": "br"
+  },
+  "/_framework/Starlings.Runtime.Onnx.3rhgkcaelp.wasm": {
+   "bytes": 3585,
+   "uncompressed": 11541,
+   "encoding": "br"
+  },
+  "/_framework/E5Conformance.f8rakn40xc.wasm": {
+   "bytes": 13386,
+   "uncompressed": 35605,
+   "encoding": "br"
+  },
+  "/favicon.ico": {
+   "bytes": 0,
+   "uncompressed": 0,
+   "status": 404
+  },
+  "/_framework/icudt_EFIGS.tptq2av103.dat": {
+   "bytes": 143983,
+   "uncompressed": 550832,
+   "encoding": "br"
+  },
+  "/_framework/dotnet.native.d0il2h2gun.wasm": {
+   "bytes": 3722933,
+   "uncompressed": 17245419,
+   "encoding": "br"
+  }
+ },
+ "cross_origin_isolated": true,
+ "run": {
+  "runtime": ".NET 10.0.12 (interpreter)",
+  "variant": "Fp32",
+  "provider": "webgpu",
+  "load": {
+   "Runtime_until_ms": 56.335,
+   "Tokenizer_until_ms": 815.13,
+   "Model_until_ms": 3055.815,
+   "Session_until_ms": 5802.495,
+   "Done_until_ms": 5803.39,
+   "session_create_ms": 2731.095,
+   "model_bytes": 470268510,
+   "model_sha256": "ca456c06b3a9505ddfd9131408916dd79290368331e7d76bb621f1cba6bc8665"
+  },
+  "profile": "multilingual-e5-small/onnx-fp32-webgpu",
+  "dimension": 384,
+  "onnxruntime_web": {
+   "version": "1.30.0",
+   "bundle": "webgpu",
+   "cross_origin_isolated": true,
+   "hardware_concurrency": 12,
+   "num_threads": 4,
+   "proxy": false,
+   "webgpu_exposed": true
+  },
+  "e5_tokenizer": "<46 entries, removed>",
+  "tokenizer": "<46 entries, removed>",
+  "first_run_ms": 234.3049,
+  "embeddings": "<46 entries, removed>",
+  "batch8": "<8 entries, removed>",
+  "generator_input_tokens": 1689,
+  "generator_embeddings": "<46 entries, removed>",
+  "latency_ms": {
+   "passage34_b1": {
+    "median": 18.3049,
+    "samples": [
+     16.505,
+     16.67,
+     17,
+     17.635,
+     18.055,
+     18.305,
+     18.795,
+     18.92,
+     20.335,
+     22.65
+    ]
+   },
+   "short_b8": {
+    "median": 17.26,
+    "samples": [
+     16.98,
+     16.985,
+     17.055,
+     17.13,
+     17.15,
+     17.26,
+     18.275,
+     18.31,
+     18.84,
+     19.75
+    ]
+   },
+   "long512_b1": {
+    "median": 17.8449,
+    "samples": [
+     17.46,
+     17.69,
+     17.845,
+     17.88,
+     21.89
+    ]
+   },
+   "generator_text_e5-passage-prefix_b1": {
+    "median": 17.64,
+    "samples": [
+     17.055,
+     17.235,
+     17.34,
+     17.375,
+     17.525,
+     17.64,
+     17.89,
+     17.96,
+     18.075,
+     18.82
+    ]
+   }
+  }
+ },
+ "run_download": {
+  "/_content/Starlings.Runtime.OnnxWeb/starlings-onnxweb.js": {
+   "bytes": 3128,
+   "uncompressed": 9947,
+   "encoding": "br"
+  },
+  "/_content/Starlings.Runtime.OnnxWeb.WebGpu/ort/ort.webgpu.min.mjs": {
+   "bytes": 18293,
+   "uncompressed": 66349,
+   "encoding": "br"
+  },
+  "/data/tok/intfloat/multilingual-e5-small/614241f622f53c4eeff9890bdc4f31cfecc418b3/tokenizer.json": {
+   "bytes": 34165460,
+   "uncompressed": 34165460,
+   "encoding": null
+  },
+  "/data/models/model-fp32.onnx": {
+   "bytes": 470268510,
+   "uncompressed": 470268510,
+   "encoding": null
+  },
+  "/_content/Starlings.Runtime.OnnxWeb.WebGpu/ort/ort-wasm-simd-threaded.asyncify.mjs": {
+   "bytes": 66356,
+   "uncompressed": 212228,
+   "encoding": "br"
+  },
+  "/_content/Starlings.Runtime.OnnxWeb.WebGpu/ort/ort-wasm-simd-threaded.asyncify.wasm": {
+   "bytes": 3992333,
+   "uncompressed": 26781914,
+   "encoding": "br"
+  },
+  "/data/fixtures/multilingual-e5-small/onnx-fp32-cpu/embeddings.jsonl": {
+   "bytes": 224774,
+   "uncompressed": 224774,
+   "encoding": null
+  },
+  "/data/fixtures/multilingual-e5-small/onnx-fp32-cpu/tokenizer.jsonl": {
+   "bytes": 338568,
+   "uncompressed": 338568,
+   "encoding": null
+  }
+ },
+ "peak_rss_tree_bytes": 4578852864,
+ "peak_rss_renderer_bytes": 3187675136,
+ "gpu_after": "0, NVIDIA GeForce RTX 3090, 298 MiB, 0 %\n1, NVIDIA GeForce RTX 4060 Ti, 508 MiB, 0 %",
+ "console": [
+  "error: Failed to load resource: the server responded with a status of 404 (Not Found)",
+  "error: \u001b[0;93m2026-10-23 16:13:44.130854 [W:onnxruntime:, session_state.cc:1397 VerifyEachNodeIsAssignedToAnEp] Some nodes were not assigned to the preferred execution providers which may or may not have an negative impact on performance. e.g. ORT explicitly assigns shape related ops to CPU to improve perf.\u001b[m",
+  "error: \u001b[0;93m2026-10-23 16:13:44.136153 [W:onnxruntime:, session_state.cc:1399 VerifyEachNodeIsAssignedToAnEp] Rerunning with verbose output on a non-minimal build will show node assignments.\u001b[m",
+  "log: conformance stage: tokenizer",
+  "log: conformance stage: embeddings",
+  "log: conformance stage: batch8",
+  "log: conformance stage: generator",
+  "log: conformance stage: latency"
+ ]
+}
