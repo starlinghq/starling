@@ -83,6 +83,18 @@ public sealed record OnnxSessionDiagnostics
     /// <summary>Graph optimization level applied at session creation.</summary>
     public required string GraphOptimizationLevel { get; init; }
 
+    /// <summary>Node scheduling configured on the session (<see cref="OnnxSessionOptions.ExecutionMode"/>).</summary>
+    public OnnxExecutionMode ExecutionMode { get; init; }
+
+    /// <summary>Full path the optimized graph was written to (<see cref="OnnxSessionOptions.OptimizedModelFilePath"/>), or <see langword="null"/>.</summary>
+    public string? OptimizedModelFilePath { get; init; }
+
+    /// <summary>Logger id of the session's ONNX Runtime messages (<see cref="OnnxSessionOptions.LogId"/>), or <see langword="null"/>.</summary>
+    public string? LogId { get; init; }
+
+    /// <summary>Lowest severity of the session's ONNX Runtime messages that are logged (<see cref="OnnxSessionOptions.LogSeverity"/>).</summary>
+    public OnnxLogSeverity LogSeverity { get; init; } = OnnxLogSeverity.Error;
+
     /// <summary>Model file path, or <c>&lt;memory&gt;</c> for a model loaded from bytes.</summary>
     public required string ModelSource { get; init; }
 

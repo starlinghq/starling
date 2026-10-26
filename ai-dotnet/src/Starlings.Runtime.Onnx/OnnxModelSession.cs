@@ -1,6 +1,7 @@
-using System.Globalization;
+using System.Diagnostics;
 using System.Security.Cryptography;
 using Microsoft.ML.OnnxRuntime;
+using Microsoft.ML.OnnxRuntime.Tensors;
 
 namespace Starlings.Runtime.Onnx;
 
@@ -39,6 +40,7 @@ public sealed class OnnxModelSession : IDisposable
     private readonly InferenceSession _session;
     private readonly SessionOptions _sessionOptions;
     private readonly OrtCUDAProviderOptions? _cudaOptions;
+    private readonly int _cudaDeviceId;
     private readonly bool _trimOnRelease;
     private readonly bool _dedicatedRunThreads;
     private readonly bool _trimAfterRun;
@@ -54,6 +56,7 @@ public sealed class OnnxModelSession : IDisposable
         InferenceSession session,
         SessionOptions sessionOptions,
         OrtCUDAProviderOptions? cudaOptions,
+        int cudaDeviceId,
         OnnxSessionDiagnostics diagnostics,
         bool capturePlacement)
     {
@@ -63,6 +66,7 @@ public sealed class OnnxModelSession : IDisposable
         _session = session;
         _sessionOptions = sessionOptions;
         _cudaOptions = cudaOptions;
+        _cudaDeviceId = cudaDeviceId;
         Diagnostics = diagnostics;
         _placementPending = capturePlacement;
     }
@@ -180,6 +184,168 @@ public sealed class OnnxModelSession : IDisposable
     }
 
     /// <summary>
+    /// Runs the model with inputs keyed by graph input name and returns outputs allocated by ONNX Runtime, in the order
+    /// of <paramref name="outputNames"/> (or of <see cref="Outputs"/> when it is <see langword="null"/>). The caller owns
+    /// and must dispose the result; input values stay owned by the caller. Same cancellation and lifetime rules as
+    /// <see cref="Run(IReadOnlyCollection{string}, IReadOnlyCollection{OrtValue}, IReadOnlyCollection{string}, CancellationToken)"/>.
+    /// </summary>
+    /// <exception cref="OperationCanceledException">The token was cancelled before or during the run.</exception>
+    /// <exception cref="ObjectDisposedException">The session was disposed.</exception>
+    public IDisposableReadOnlyCollection<OrtValue> Run(
+        IReadOnlyDictionary<string, OrtValue> inputs,
+        IReadOnlyCollection<string>? outputNames = null,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(inputs);
+        IReadOnlyCollection<string> names = outputNames ?? Diagnostics.Outputs.Select(o => o.Name).ToArray();
+        IDisposableReadOnlyCollection<OrtValue>? result = null;
+        try
+        {
+            Execute(runOptions => result = _session.Run(runOptions, inputs, names), cancellationToken);
+        }
+        catch
+        {
+            result?.Dispose();
+            throw;
+        }
+
+        return result!;
+    }
+
+    /// <summary>
+    /// Creates an ONNX Runtime I/O binding for this session. Bind inputs and outputs on it (for CUDA, values already in
+    /// device memory, or outputs left on the device with <c>BindOutputToDevice</c> and
+    /// <see cref="CreateDeviceMemoryInfo"/>), then run with <see cref="RunWithBinding"/>, so inputs are not copied per
+    /// run. The caller owns the binding and must dispose it before disposing the session. A binding is not thread-safe:
+    /// use one per concurrent caller. On CUDA this path is untested (no GPU evidence).
+    /// </summary>
+    /// <exception cref="ObjectDisposedException">The session was disposed.</exception>
+    public OrtIoBinding CreateIoBinding()
+    {
+        ObjectDisposedException.ThrowIf(IsDisposed, this);
+        return _session.CreateIoBinding();
+    }
+
+    /// <summary>
+    /// Memory description of the session's device for <c>OrtIoBinding.BindOutputToDevice</c> and device tensors: the
+    /// CUDA device of <see cref="OnnxSessionOptions.CudaDeviceId"/> for a CUDA session, CPU memory otherwise. The caller
+    /// owns and must dispose it.
+    /// </summary>
+    public OrtMemoryInfo CreateDeviceMemoryInfo() => _cudaOptions is not null
+        ? new OrtMemoryInfo(OrtMemoryInfo.allocatorCUDA, OrtAllocatorType.DeviceAllocator, _cudaDeviceId, OrtMemType.Default)
+        : new OrtMemoryInfo(OrtMemoryInfo.allocatorCPU, OrtAllocatorType.DeviceAllocator, 0, OrtMemType.Default);
+
+    /// <summary>
+    /// Runs the model on the inputs and outputs bound in <paramref name="binding"/> (from <see cref="CreateIoBinding"/>).
+    /// Outputs bound to a device are read afterwards with <c>OrtIoBinding.GetOutputValues</c>. Same cancellation,
+    /// placement capture and lifetime rules as the other runs; bound values must stay alive for the duration of the call.
+    /// </summary>
+    /// <exception cref="OperationCanceledException">The token was cancelled before or during the run.</exception>
+    /// <exception cref="ObjectDisposedException">The session was disposed.</exception>
+    public void RunWithBinding(OrtIoBinding binding, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(binding);
+        Execute(runOptions => _session.RunWithBinding(runOptions, binding), cancellationToken);
+    }
+
+    /// <summary>
+    /// Runs the model <paramref name="runs"/> times on the given inputs and discards the outputs, so first-run costs
+    /// (allocator growth, kernel selection, cuDNN algorithm search, CUDA graph capture) are paid before serving. With
+    /// <see cref="OnnxSessionOptions.CapturePlacement"/> the first warmup run is the profiled one.
+    /// </summary>
+    /// <param name="inputs">Inputs keyed by graph input name; owned by the caller.</param>
+    /// <param name="runs">Number of runs, at least 1. Default 1.</param>
+    /// <param name="cancellationToken">Checked before each run, and during it as for <see cref="Run(IReadOnlyDictionary{string, OrtValue}, IReadOnlyCollection{string}?, CancellationToken)"/>.</param>
+    /// <returns>The wall-clock duration of each run.</returns>
+    /// <exception cref="OperationCanceledException">The token was cancelled.</exception>
+    /// <exception cref="ObjectDisposedException">The session was disposed.</exception>
+    public IReadOnlyList<TimeSpan> Warmup(IReadOnlyDictionary<string, OrtValue> inputs, int runs = 1, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(inputs);
+        ArgumentOutOfRangeException.ThrowIfLessThan(runs, 1);
+        var durations = new TimeSpan[runs];
+        for (int i = 0; i < runs; i++)
+        {
+            long start = Stopwatch.GetTimestamp();
+            using (Run(inputs, null, cancellationToken))
+            {
+            }
+
+            durations[i] = Stopwatch.GetElapsedTime(start);
+        }
+
+        return durations;
+    }
+
+    /// <summary>
+    /// <see cref="Warmup(IReadOnlyDictionary{string, OrtValue}, int, CancellationToken)"/> with zero-filled inputs built
+    /// from <see cref="Inputs"/>: each symbolic dimension takes its value from <paramref name="symbolicDimensions"/>
+    /// (by dimension name) or 1. Zeros are valid token ids and masks for most graphs but not for every one; a graph that
+    /// needs meaningful values (or has string or non-tensor inputs, which throw <see cref="NotSupportedException"/>)
+    /// takes the overload with explicit inputs. Warm up with the shapes that will be served: allocator growth and
+    /// kernel selection depend on them.
+    /// </summary>
+    /// <param name="symbolicDimensions">Values of symbolic dimensions by name, for example <c>batch</c> and <c>sequence</c>; each positive.</param>
+    /// <param name="runs">Number of runs, at least 1. Default 1.</param>
+    /// <param name="cancellationToken">As for the other overload.</param>
+    /// <returns>The wall-clock duration of each run.</returns>
+    /// <exception cref="NotSupportedException">A graph input is not a numeric or boolean tensor.</exception>
+    /// <exception cref="OperationCanceledException">The token was cancelled.</exception>
+    /// <exception cref="ObjectDisposedException">The session was disposed.</exception>
+    public IReadOnlyList<TimeSpan> WarmupWithZeroInputs(
+        IReadOnlyDictionary<string, long>? symbolicDimensions = null,
+        int runs = 1,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentOutOfRangeException.ThrowIfLessThan(runs, 1);
+        if (symbolicDimensions is not null)
+        {
+            foreach (var (name, value) in symbolicDimensions)
+            {
+                if (value <= 0)
+                {
+                    throw new ArgumentOutOfRangeException(nameof(symbolicDimensions), value, $"Dimension '{name}' must be positive.");
+                }
+            }
+        }
+
+        ObjectDisposedException.ThrowIf(IsDisposed, this);
+        var inputs = new Dictionary<string, OrtValue>(StringComparer.Ordinal);
+        try
+        {
+            foreach (var (name, metadata) in _session.InputMetadata)
+            {
+                if (metadata.OnnxValueType != OnnxValueType.ONNX_TYPE_TENSOR || metadata.ElementDataType == TensorElementType.String)
+                {
+                    throw new NotSupportedException(
+                        $"Input '{name}' is not a numeric or boolean tensor ({metadata.OnnxValueType}, {metadata.ElementDataType}); warm up with explicit inputs.");
+                }
+
+                long[] shape = new long[metadata.Dimensions.Length];
+                for (int d = 0; d < shape.Length; d++)
+                {
+                    shape[d] = metadata.Dimensions[d] >= 0
+                        ? metadata.Dimensions[d]
+                        : symbolicDimensions is not null && symbolicDimensions.TryGetValue(metadata.SymbolicDimensions[d], out long v) ? v : 1;
+                }
+
+                var value = OrtValue.CreateAllocatedTensorValue(OrtAllocator.DefaultInstance, metadata.ElementDataType, shape);
+                inputs.Add(name, value);
+                value.GetTensorMutableRawData().Clear();
+            }
+
+            return Warmup(inputs, runs, cancellationToken);
+        }
+        finally
+        {
+            foreach (var value in inputs.Values)
+            {
+                value.Dispose();
+            }
+        }
+    }
+
+    /// <summary>
     /// Releases the native session once no run is executing. Idempotent. Runs already executing complete first. A
     /// placement profile that was started (<see cref="OnnxSessionOptions.CapturePlacement"/>) but never read, because no
     /// run completed, is ended and its temporary file deleted.
@@ -210,20 +376,34 @@ public sealed class OnnxModelSession : IDisposable
         bool cuda = options.Provider == OnnxExecutionProvider.Cuda;
         if (cuda && !available.Contains(OnnxRuntimeInfo.CudaProviderName, StringComparer.Ordinal))
         {
-            throw new OnnxProviderUnavailableException(
-                $"The loaded ONNX Runtime {env.GetVersionString()} native library has no CUDA execution provider (available: {string.Join(", ", available)}). " +
-                $"Reference Microsoft.ML.OnnxRuntime.Gpu.Linux {OnnxRuntimeInfo.ManagedVersion} instead of Microsoft.ML.OnnxRuntime.");
+            throw new OnnxProviderUnavailableException(OnnxRuntimeInfo.NoCudaProvider(env.GetVersionString(), available));
+        }
+
+        string? optimizedModelPath = options.OptimizedModelFilePath is { } optimized ? Path.GetFullPath(optimized) : null;
+        if (optimizedModelPath is not null && string.Equals(optimizedModelPath, source, OperatingSystem.IsLinux() ? StringComparison.Ordinal : StringComparison.OrdinalIgnoreCase))
+        {
+            throw new ArgumentException("The optimized model path must not be the model file being loaded.", nameof(options));
         }
 
         var sessionOptions = new SessionOptions
         {
-            LogSeverityLevel = OrtLoggingLevel.ORT_LOGGING_LEVEL_ERROR,
-            ExecutionMode = ExecutionMode.ORT_SEQUENTIAL,
-            GraphOptimizationLevel = GraphOptimizationLevel.ORT_ENABLE_ALL,
+            LogSeverityLevel = OnnxLogging.ToOrt(options.LogSeverity),
+            ExecutionMode = options.ExecutionMode == OnnxExecutionMode.Parallel ? ExecutionMode.ORT_PARALLEL : ExecutionMode.ORT_SEQUENTIAL,
+            GraphOptimizationLevel = ToOrt(options.GraphOptimizationLevel),
         };
         if (options.CpuMemoryArena is bool arena)
         {
             sessionOptions.EnableCpuMemArena = arena;
+        }
+
+        if (options.LogId is { } logId)
+        {
+            sessionOptions.LogId = logId;
+        }
+
+        if (optimizedModelPath is not null)
+        {
+            sessionOptions.OptimizedModelFilePath = optimizedModelPath;
         }
 
         OrtCUDAProviderOptions? cudaOptions = null;
@@ -237,7 +417,7 @@ public sealed class OnnxModelSession : IDisposable
                 sessionOptions.IntraOpNumThreads = intra;
             }
 
-            // Execution is sequential, so ONNX Runtime creates no inter-op pool; the value only matters if set.
+            // ONNX Runtime creates an inter-op pool only in parallel execution mode; in sequential mode the value is recorded only.
             if (options.InterOpNumThreads is int inter)
             {
                 sessionOptions.InterOpNumThreads = inter;
@@ -256,22 +436,15 @@ public sealed class OnnxModelSession : IDisposable
             if (cuda)
             {
                 // Creating or updating the provider options already loads libonnxruntime_providers_cuda and its CUDA
-                // dependencies, so failures can surface at any of these three calls.
+                // dependencies, so failures can surface at any of these calls.
+                cudaOptions = OnnxCudaProviderOptions.CreateNative(options.CudaDeviceId, options.Cuda);
                 try
                 {
-                    cudaOptions = new OrtCUDAProviderOptions();
-                    cudaOptions.UpdateOptions(new Dictionary<string, string>
-                    {
-                        ["device_id"] = options.CudaDeviceId.ToString(CultureInfo.InvariantCulture),
-
-                        // fp32 profile: TF32 rounds matmul inputs to a 10-bit mantissa (docs/m0/e5-gpu.md). ORT 1.30 defaults to 1.
-                        ["use_tf32"] = "0",
-                    });
                     sessionOptions.AppendExecutionProvider_CUDA(cudaOptions);
                 }
                 catch (OnnxRuntimeException ex)
                 {
-                    throw CudaUnavailable(ex);
+                    throw OnnxCudaProviderOptions.CudaUnavailable(ex);
                 }
 
                 providerOptions = ParseProviderOptions(cudaOptions.GetOptions());
@@ -287,7 +460,7 @@ public sealed class OnnxModelSession : IDisposable
             }
             catch (OnnxRuntimeException ex) when (cuda)
             {
-                throw CudaUnavailable(ex);
+                throw OnnxCudaProviderOptions.CudaUnavailable(ex);
             }
 
             // Session creation frees much of what it allocates (graph transformation, initializer copies); on the
@@ -311,6 +484,10 @@ public sealed class OnnxModelSession : IDisposable
                 CpuMemoryArena = sessionOptions.EnableCpuMemArena,
                 DedicatedRunThreads = options.DedicatedRunThreads ?? false,
                 GraphOptimizationLevel = sessionOptions.GraphOptimizationLevel.ToString(),
+                ExecutionMode = options.ExecutionMode,
+                OptimizedModelFilePath = optimizedModelPath,
+                LogId = options.LogId,
+                LogSeverity = options.LogSeverity,
                 ModelSource = source,
                 ModelSizeBytes = size,
                 ModelSha256 = sha,
@@ -319,7 +496,7 @@ public sealed class OnnxModelSession : IDisposable
                 Inputs = ReadTensorInfo(session.InputMetadata),
                 Outputs = ReadTensorInfo(session.OutputMetadata),
             };
-            return new OnnxModelSession(session, sessionOptions, cudaOptions, diagnostics, options.CapturePlacement);
+            return new OnnxModelSession(session, sessionOptions, cudaOptions, options.CudaDeviceId, diagnostics, options.CapturePlacement);
         }
         catch
         {
@@ -330,12 +507,14 @@ public sealed class OnnxModelSession : IDisposable
         }
     }
 
-    private static OnnxProviderUnavailableException CudaUnavailable(OnnxRuntimeException ex) => new(
-        "The CUDA execution provider could not be initialized: " + ex.Message +
-        " It needs libonnxruntime_providers_cuda from Microsoft.ML.OnnxRuntime.Gpu.Linux next to libonnxruntime, the CUDA 13 runtime " +
-        "(libcudart, libcublas, libcublasLt) and cuDNN 9 on the native loader path (LD_LIBRARY_PATH or the ldconfig cache on Linux), " +
-        "a compatible NVIDIA driver, and a visible device. No CPU fallback was attempted.",
-        ex);
+    private static GraphOptimizationLevel ToOrt(OnnxGraphOptimizationLevel level) => level switch
+    {
+        OnnxGraphOptimizationLevel.None => GraphOptimizationLevel.ORT_DISABLE_ALL,
+        OnnxGraphOptimizationLevel.Basic => GraphOptimizationLevel.ORT_ENABLE_BASIC,
+        OnnxGraphOptimizationLevel.Extended => GraphOptimizationLevel.ORT_ENABLE_EXTENDED,
+        OnnxGraphOptimizationLevel.Layout => GraphOptimizationLevel.ORT_ENABLE_LAYOUT,
+        _ => GraphOptimizationLevel.ORT_ENABLE_ALL,
+    };
 
     private static Dictionary<string, string> ParseProviderOptions(string options)
     {
