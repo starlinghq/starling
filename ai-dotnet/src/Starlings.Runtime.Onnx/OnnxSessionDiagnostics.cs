@@ -83,14 +83,36 @@ public sealed record OnnxSessionDiagnostics
     /// <summary>Graph optimization level applied at session creation.</summary>
     public required string GraphOptimizationLevel { get; init; }
 
+    /// <summary>Node scheduling configured on the session (<see cref="OnnxSessionOptions.ExecutionMode"/>).</summary>
+    public OnnxExecutionMode ExecutionMode { get; init; }
+
+    /// <summary>Full path the optimized graph was written to (<see cref="OnnxSessionOptions.OptimizedModelFilePath"/>), or <see langword="null"/>.</summary>
+    public string? OptimizedModelFilePath { get; init; }
+
+    /// <summary>Logger id of the session's ONNX Runtime messages (<see cref="OnnxSessionOptions.LogId"/>), or <see langword="null"/>.</summary>
+    public string? LogId { get; init; }
+
+    /// <summary>Lowest severity of the session's ONNX Runtime messages that are logged (<see cref="OnnxSessionOptions.LogSeverity"/>).</summary>
+    public OnnxLogSeverity LogSeverity { get; init; } = OnnxLogSeverity.Error;
+
     /// <summary>Model file path, or <c>&lt;memory&gt;</c> for a model loaded from bytes.</summary>
     public required string ModelSource { get; init; }
 
     /// <summary>Model size in bytes.</summary>
     public required long ModelSizeBytes { get; init; }
 
-    /// <summary>Lowercase hex SHA-256 of the model bytes, or <see langword="null"/> when not computed.</summary>
+    /// <summary>
+    /// Lowercase hex SHA-256 of the model bytes, or <see langword="null"/> when neither computed nor supplied
+    /// (<see cref="ModelSha256Source"/> says which).
+    /// </summary>
     public string? ModelSha256 { get; init; }
+
+    /// <summary>
+    /// Where <see cref="ModelSha256"/> came from: hashed at load (<see cref="OnnxModelDigestSource.Computed"/>) or
+    /// supplied as <see cref="OnnxSessionOptions.KnownModelSha256"/> (<see cref="OnnxModelDigestSource.Known"/>);
+    /// <see langword="null"/> when there is no digest.
+    /// </summary>
+    public OnnxModelDigestSource? ModelSha256Source { get; init; }
 
     /// <summary>Metadata stored in the model.</summary>
     public required OnnxModelMetadata Model { get; init; }
@@ -113,3 +135,16 @@ public sealed record OnnxPlacementReport(
     IReadOnlyDictionary<string, int> NodesByProvider,
     IReadOnlyDictionary<string, IReadOnlyDictionary<string, int>> OperatorsByProvider,
     IReadOnlyDictionary<string, IReadOnlyList<string>> NodeNamesByProvider);
+
+/// <summary>Origin of <see cref="OnnxSessionDiagnostics.ModelSha256"/>.</summary>
+public enum OnnxModelDigestSource
+{
+    /// <summary>The session hashed the model bytes at load.</summary>
+    Computed,
+
+    /// <summary>
+    /// The caller supplied the digest (<see cref="OnnxSessionOptions.KnownModelSha256"/>), for example from an acquisition
+    /// snapshot verified with SHA-256; the model was not read for hashing.
+    /// </summary>
+    Known,
+}

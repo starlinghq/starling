@@ -70,6 +70,37 @@ public sealed record ModelAssetFile
 }
 
 /// <summary>
+/// Where the bytes of a lock's Hub-layout files are hosted when that is not the lock's own repository, for example a
+/// repository of converted files: a Hub repository pinned by full commit SHA.
+/// </summary>
+public sealed record ModelAssetHosting
+{
+    /// <summary>Creates the hosting entry and validates it.</summary>
+    /// <param name="repository">Hub repository id that hosts the files, <c>owner/name</c>.</param>
+    /// <param name="revision">Full 40-character commit SHA of that repository.</param>
+    public ModelAssetHosting(string repository, string revision)
+    {
+        ArgumentNullException.ThrowIfNull(repository);
+        ArgumentNullException.ThrowIfNull(revision);
+        LockValidation.ValidateRepository(repository);
+        if (!LockValidation.IsLowerHex(revision, 40))
+        {
+            throw new ArgumentException(
+                $"The hosting revision must be a full 40-character lowercase commit SHA, not a branch or tag name: '{revision}'.", nameof(revision));
+        }
+
+        Repository = repository;
+        Revision = revision;
+    }
+
+    /// <summary>Hub repository id that hosts the files.</summary>
+    public string Repository { get; }
+
+    /// <summary>Full commit SHA of <see cref="Repository"/>.</summary>
+    public string Revision { get; }
+}
+
+/// <summary>
 /// An immutable asset lock (plan sections 9 and 10, gate G0): a Hub repository pinned by full commit SHA and the exact
 /// files, sizes and digests a model needs. A lock is data, not weights; it is safe to ship in a code package.
 /// Files not in the Hub repository (for example a converted ONNX graph hosted elsewhere) carry an explicit
@@ -79,13 +110,17 @@ public sealed class ModelAssetLock
 {
     /// <summary>
     /// Highest version of the JSON lock format this library reads and writes. Version 2 adds the optional per-file
-    /// <c>url</c> (<see cref="ModelAssetFile.Source"/>). <see cref="ToJson"/> writes version 1 when no file has an
-    /// explicit source, so such locks stay readable by earlier versions of this library.
+    /// <c>url</c> (<see cref="ModelAssetFile.Source"/>); version 3 adds the optional <c>display_name</c>
+    /// (<see cref="DisplayName"/>) and <c>hosting</c> (<see cref="Hosting"/>). <see cref="ToJson"/> writes the lowest
+    /// version that holds the lock, so a lock that uses no newer field stays readable by earlier versions of this library.
     /// </summary>
-    public const int SchemaVersion = 2;
+    public const int SchemaVersion = 3;
 
     /// <summary>The JSON lock format version without explicit sources.</summary>
     public const int HubOnlySchemaVersion = 1;
+
+    /// <summary>The JSON lock format version with per-file explicit sources and no version 3 field.</summary>
+    public const int SourcesSchemaVersion = 2;
 
     /// <summary>Creates a lock and validates it.</summary>
     /// <param name="name">Short human-readable name used in messages (for example <c>multilingual-e5-small</c>).</param>
@@ -139,6 +174,38 @@ public sealed class ModelAssetLock
     /// <summary>Pinned files.</summary>
     public IReadOnlyList<ModelAssetFile> Files { get; }
 
+    /// <summary>
+    /// Optional name for people (a product or model name with spaces and capitals); <see cref="Name"/> stays the short
+    /// identifier used in messages and tool commands. Not used for any path. JSON format version 3.
+    /// </summary>
+    public string? DisplayName
+    {
+        get;
+        init
+        {
+            if (value is not null && (string.IsNullOrWhiteSpace(value) || value.Any(char.IsControl)))
+            {
+                throw new ArgumentException("DisplayName must be non-blank text without control characters.", nameof(value));
+            }
+
+            field = value;
+        }
+    }
+
+    /// <summary>
+    /// Optional hosting repository: when set, files without an explicit <see cref="ModelAssetFile.Source"/> are downloaded
+    /// from <c>{Endpoint}/{Hosting.Repository}/resolve/{Hosting.Revision}/{path}</c> instead of the lock's own
+    /// <see cref="Repository"/> and <see cref="Revision"/>, which stay the identity of the model: the cache directory,
+    /// <see cref="ModelAssetStore.GetSnapshotDirectory"/> and messages use them. JSON format version 3.
+    /// </summary>
+    public ModelAssetHosting? Hosting { get; init; }
+
+    /// <summary>The repository the Hub-layout files are downloaded from: <see cref="Hosting"/>'s, else <see cref="Repository"/>.</summary>
+    public string HostingRepository => Hosting?.Repository ?? Repository;
+
+    /// <summary>The commit the Hub-layout files are downloaded from: <see cref="Hosting"/>'s, else <see cref="Revision"/>.</summary>
+    public string HostingRevision => Hosting?.Revision ?? Revision;
+
     /// <summary>Total size of all files in bytes.</summary>
     public long TotalSize => Files.Sum(f => f.Size);
 
@@ -157,9 +224,9 @@ public sealed class ModelAssetLock
             using var doc = JsonDocument.Parse(json);
             var root = doc.RootElement;
             int version = root.GetProperty("schema_version").GetInt32();
-            if (version is not (HubOnlySchemaVersion or SchemaVersion))
+            if (version is < HubOnlySchemaVersion or > SchemaVersion)
             {
-                throw new FormatException($"Unsupported lock schema_version {version}; expected {HubOnlySchemaVersion} or {SchemaVersion}.");
+                throw new FormatException($"Unsupported lock schema_version {version}; expected {HubOnlySchemaVersion} to {SchemaVersion}.");
             }
 
             var files = root.GetProperty("files").EnumerateArray().Select(f =>
@@ -169,7 +236,7 @@ public sealed class ModelAssetLock
                 {
                     if (version == HubOnlySchemaVersion)
                     {
-                        throw new FormatException($"A schema_version {HubOnlySchemaVersion} lock cannot carry file urls; use schema_version {SchemaVersion}.");
+                        throw new FormatException($"A schema_version {HubOnlySchemaVersion} lock cannot carry file urls; use schema_version {SourcesSchemaVersion} or later.");
                     }
 
                     source = new Uri(url.GetString()!, UriKind.Absolute);
@@ -181,11 +248,26 @@ public sealed class ModelAssetLock
                     f.GetProperty("sha256").GetString()!,
                     source);
             }).ToList();
+            bool hasDisplayName = root.TryGetProperty("display_name", out var displayElement);
+            bool hasHosting = root.TryGetProperty("hosting", out var hostingElement);
+            if ((hasDisplayName || hasHosting) && version < SchemaVersion)
+            {
+                throw new FormatException($"Only a schema_version {SchemaVersion} lock can carry display_name or hosting.");
+            }
+
+            string? displayName = hasDisplayName ? displayElement.GetString() ?? throw new FormatException("display_name must be a string.") : null;
+            ModelAssetHosting? hosting = hasHosting
+                ? new ModelAssetHosting(hostingElement.GetProperty("repository").GetString()!, hostingElement.GetProperty("revision").GetString()!)
+                : null;
             return new ModelAssetLock(
                 root.GetProperty("name").GetString()!,
                 root.GetProperty("repository").GetString()!,
                 root.GetProperty("revision").GetString()!,
-                files);
+                files)
+            {
+                DisplayName = displayName,
+                Hosting = hosting,
+            };
         }
         catch (Exception ex) when (ex is JsonException or KeyNotFoundException or InvalidOperationException or ArgumentException or UriFormatException)
         {
@@ -197,8 +279,9 @@ public sealed class ModelAssetLock
     public static ModelAssetLock Load(string path) => Parse(File.ReadAllText(path));
 
     /// <summary>
-    /// Serializes the lock as indented JSON: format version <see cref="HubOnlySchemaVersion"/> when no file has an
-    /// explicit source, otherwise <see cref="SchemaVersion"/> with a <c>url</c> on those files.
+    /// Serializes the lock as indented JSON in the lowest format version that holds it: <see cref="SchemaVersion"/> (3)
+    /// when <see cref="DisplayName"/> or <see cref="Hosting"/> is set, else <see cref="SourcesSchemaVersion"/> (2) when a
+    /// file has an explicit source (a <c>url</c> on those files), else <see cref="HubOnlySchemaVersion"/> (1).
     /// </summary>
     public string ToJson()
     {
@@ -206,10 +289,26 @@ public sealed class ModelAssetLock
         using (var writer = new Utf8JsonWriter(buffer, new JsonWriterOptions { Indented = true }))
         {
             writer.WriteStartObject();
-            writer.WriteNumber("schema_version", Files.Any(f => f.Source is not null) ? SchemaVersion : HubOnlySchemaVersion);
+            int version = DisplayName is not null || Hosting is not null ? SchemaVersion
+                : Files.Any(f => f.Source is not null) ? SourcesSchemaVersion
+                : HubOnlySchemaVersion;
+            writer.WriteNumber("schema_version", version);
             writer.WriteString("name", Name);
+            if (DisplayName is not null)
+            {
+                writer.WriteString("display_name", DisplayName);
+            }
+
             writer.WriteString("repository", Repository);
             writer.WriteString("revision", Revision);
+            if (Hosting is not null)
+            {
+                writer.WriteStartObject("hosting");
+                writer.WriteString("repository", Hosting.Repository);
+                writer.WriteString("revision", Hosting.Revision);
+                writer.WriteEndObject();
+            }
+
             writer.WriteStartArray("files");
             foreach (var file in Files)
             {

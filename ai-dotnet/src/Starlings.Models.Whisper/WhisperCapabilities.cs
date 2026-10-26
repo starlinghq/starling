@@ -23,8 +23,12 @@ public enum CapabilityStatus
 /// </remarks>
 public static class WhisperCapabilities
 {
-    /// <summary>The profile of this package's Stable contract (see README).</summary>
-    public const string StableProfile = "whisper-large-v3-turbo/onnx-fp16-cpu";
+    /// <summary>The registered profile of this package: fp16 graphs on the CPU provider. Experimental, not Stable.</summary>
+    public const string CpuProfile = "whisper-large-v3-turbo/onnx-fp16-cpu";
+
+    /// <summary>The registered profile, under its old name; the profile is Experimental, not Stable.</summary>
+    [Obsolete("Use CpuProfile; removed in the next minor version.")]
+    public const string StableProfile = CpuProfile;
 
     /// <summary>Status per capability.</summary>
     public static IReadOnlyDictionary<string, CapabilityStatus> All { get; } = new Dictionary<string, CapabilityStatus>(StringComparer.Ordinal)

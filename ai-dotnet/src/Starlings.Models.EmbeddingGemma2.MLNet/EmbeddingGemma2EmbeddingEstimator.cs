@@ -1,4 +1,5 @@
 using Microsoft.ML;
+using Starlings.Models.MLNet;
 
 namespace Starlings.Models.EmbeddingGemma2.MLNet;
 
@@ -13,10 +14,10 @@ public sealed class EmbeddingGemma2EmbeddingEstimator : IEstimator<EmbeddingGemm
     private readonly EmbeddingGemma2TextEmbedder? _embedder;
     private readonly EmbeddingGemma2ModelFiles? _files;
     private readonly IEmbeddingGemma2Tokenizer? _tokenizer;
-    private readonly EmbeddingGemma2ColumnNames _names;
+    private readonly TextEmbeddingColumnNames _names;
     private readonly EmbeddingGemma2EmbeddingOptions _options;
 
-    internal EmbeddingGemma2EmbeddingEstimator(EmbeddingGemma2TextEmbedder embedder, EmbeddingGemma2ColumnNames names, EmbeddingGemma2EmbeddingOptions options)
+    internal EmbeddingGemma2EmbeddingEstimator(EmbeddingGemma2TextEmbedder embedder, TextEmbeddingColumnNames names, EmbeddingGemma2EmbeddingOptions options)
     {
         ArgumentNullException.ThrowIfNull(embedder);
         options.Validate();
@@ -25,7 +26,7 @@ public sealed class EmbeddingGemma2EmbeddingEstimator : IEstimator<EmbeddingGemm
         _options = options;
     }
 
-    internal EmbeddingGemma2EmbeddingEstimator(EmbeddingGemma2ModelFiles files, IEmbeddingGemma2Tokenizer tokenizer, EmbeddingGemma2ColumnNames names, EmbeddingGemma2EmbeddingOptions options)
+    internal EmbeddingGemma2EmbeddingEstimator(EmbeddingGemma2ModelFiles files, IEmbeddingGemma2Tokenizer tokenizer, TextEmbeddingColumnNames names, EmbeddingGemma2EmbeddingOptions options)
     {
         ArgumentNullException.ThrowIfNull(files);
         ArgumentNullException.ThrowIfNull(tokenizer);
@@ -44,7 +45,7 @@ public sealed class EmbeddingGemma2EmbeddingEstimator : IEstimator<EmbeddingGemm
     public EmbeddingGemma2EmbeddingTransformer Fit(IDataView input)
     {
         ArgumentNullException.ThrowIfNull(input);
-        EmbeddingGemma2Bindings.Create(input.Schema, _names, Dimension);
+        TextEmbeddingBindings.Create(input.Schema, _names, Dimension);
         return _embedder is not null
             ? new EmbeddingGemma2EmbeddingTransformer(_embedder, _names, _options, ownedEncoder: null)
             : EmbeddingGemma2EmbeddingTransformer.Create(_files!, _tokenizer!, _names, _options);
@@ -52,7 +53,7 @@ public sealed class EmbeddingGemma2EmbeddingEstimator : IEstimator<EmbeddingGemm
 
     /// <summary>The input shape plus the embedding column (vector of Single, known size) and the optional token-count column.</summary>
     /// <exception cref="ArgumentOutOfRangeException">The text column is missing or is not a scalar text column.</exception>
-    public SchemaShape GetOutputSchema(SchemaShape inputSchema) => EmbeddingGemma2Bindings.CreateShape(inputSchema, _names, Dimension);
+    public SchemaShape GetOutputSchema(SchemaShape inputSchema) => TextEmbeddingBindings.CreateShape(inputSchema, _names, Dimension);
 }
 
 /// <summary>Creates the EmbeddingGemma 2 embedding estimator from <c>mlContext.Transforms</c>.</summary>
@@ -71,7 +72,7 @@ public static class EmbeddingGemma2EmbeddingCatalogExtensions
         this TransformsCatalog catalog, EmbeddingGemma2TextEmbedder embedder, string outputColumnName, string? inputColumnName = null, EmbeddingGemma2EmbeddingOptions? options = null)
     {
         ArgumentNullException.ThrowIfNull(catalog);
-        return new EmbeddingGemma2EmbeddingEstimator(embedder, EmbeddingGemma2ColumnNames.Create(outputColumnName, inputColumnName, options?.TokenCountColumnName), options ?? new EmbeddingGemma2EmbeddingOptions());
+        return new EmbeddingGemma2EmbeddingEstimator(embedder, TextEmbeddingColumnNames.Create(outputColumnName, inputColumnName, options?.TokenCountColumnName), options ?? new EmbeddingGemma2EmbeddingOptions());
     }
 
     /// <summary>
@@ -90,7 +91,7 @@ public static class EmbeddingGemma2EmbeddingCatalogExtensions
         ArgumentNullException.ThrowIfNull(catalog);
         ArgumentNullException.ThrowIfNull(files);
         var tokenizer = EmbeddingGemma2Tokenizer.FromFile(files.TokenizerPath, EmbeddingGemma2ModelAssets.TokenizerSha256);
-        return new EmbeddingGemma2EmbeddingEstimator(files, tokenizer, EmbeddingGemma2ColumnNames.Create(outputColumnName, inputColumnName, options?.TokenCountColumnName), options ?? new EmbeddingGemma2EmbeddingOptions());
+        return new EmbeddingGemma2EmbeddingEstimator(files, tokenizer, TextEmbeddingColumnNames.Create(outputColumnName, inputColumnName, options?.TokenCountColumnName), options ?? new EmbeddingGemma2EmbeddingOptions());
     }
 
     /// <summary>
@@ -107,6 +108,6 @@ public static class EmbeddingGemma2EmbeddingCatalogExtensions
         this TransformsCatalog catalog, EmbeddingGemma2ModelFiles files, IEmbeddingGemma2Tokenizer tokenizer, string outputColumnName, string? inputColumnName = null, EmbeddingGemma2EmbeddingOptions? options = null)
     {
         ArgumentNullException.ThrowIfNull(catalog);
-        return new EmbeddingGemma2EmbeddingEstimator(files, tokenizer, EmbeddingGemma2ColumnNames.Create(outputColumnName, inputColumnName, options?.TokenCountColumnName), options ?? new EmbeddingGemma2EmbeddingOptions());
+        return new EmbeddingGemma2EmbeddingEstimator(files, tokenizer, TextEmbeddingColumnNames.Create(outputColumnName, inputColumnName, options?.TokenCountColumnName), options ?? new EmbeddingGemma2EmbeddingOptions());
     }
 }

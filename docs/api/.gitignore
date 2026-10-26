@@ -1,0 +1,3 @@
+# Written by `dotnet docfx docs/docfx.json` (docfx metadata from the projects' XML docs); never committed.
+*.yml
+.manifest

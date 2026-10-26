@@ -113,8 +113,8 @@ public sealed class BrowserEncoderTests
             _ => new EncoderInput(new long[] { 0, 2 }, new long[] { 0, 0 }),
         };
 
-        await Assert.ThrowsAsync<ArgumentException>(() => encoder.EmbedBatchAsync([Input(0, 2), bad], TestContext.Current.CancellationToken));
-        Assert.Throws<ArgumentException>(() => encoder.Validate(bad));
+        await Assert.ThrowsAnyAsync<ArgumentException>(() => encoder.EmbedBatchAsync([Input(0, 2), bad], TestContext.Current.CancellationToken));
+        Assert.ThrowsAny<ArgumentException>(() => encoder.Validate(bad));
         Assert.Empty(runner.Calls);
     }
 

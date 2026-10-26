@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "name": "tiny",
+  "repository": "acme/tiny-model",
+  "revision": "0123456789abcdef0123456789abcdef01234567",
+  "files": [
+    {
+      "path": "onnx/model.onnx",
+      "size": 300000,
+      "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    },
+    {
+      "path": "tokenizer.json",
+      "size": 10000,
+      "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+    }
+  ]
+}

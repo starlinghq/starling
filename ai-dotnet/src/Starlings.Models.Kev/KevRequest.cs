@@ -159,8 +159,14 @@ public sealed class KevRequest
     public KevRequest(KevContent state, IEnumerable<KeyValuePair<string, KevQuestion>> questions)
     {
         ArgumentNullException.ThrowIfNull(state);
-        ArgumentNullException.ThrowIfNull(questions);
         State = state;
+        Questions = CheckQuestions(questions);
+    }
+
+    /// <summary>Questions as a request takes them: ids unique and not null, at least one.</summary>
+    internal static ReadOnlyCollection<KeyValuePair<string, KevQuestion>> CheckQuestions(IEnumerable<KeyValuePair<string, KevQuestion>> questions)
+    {
+        ArgumentNullException.ThrowIfNull(questions);
         var list = new List<KeyValuePair<string, KevQuestion>>();
         var seen = new HashSet<string>(StringComparer.Ordinal);
         foreach (var pair in questions)
@@ -180,7 +186,7 @@ public sealed class KevRequest
             throw new ArgumentException("A request needs at least one question.", nameof(questions));
         }
 
-        Questions = new ReadOnlyCollection<KeyValuePair<string, KevQuestion>>(list);
+        return new ReadOnlyCollection<KeyValuePair<string, KevQuestion>>(list);
     }
 
     /// <summary>
@@ -255,9 +261,10 @@ public sealed class KevRequest
     public IReadOnlyList<KeyValuePair<string, KevQuestion>> Questions { get; }
 
     /// <summary><c>to_record</c>: the internal record the encoder reads.</summary>
-    public KevRecord ToRecord() => new(
-        State.Render(),
-        Questions.Select(q => new KevRecordQuestion(q.Key, q.Value.Instructions?.Render() ?? string.Empty, q.Value.Options)).ToArray());
+    public KevRecord ToRecord() => new(State.Render(), RecordQuestions(Questions));
+
+    internal static KevRecordQuestion[] RecordQuestions(IReadOnlyList<KeyValuePair<string, KevQuestion>> questions) =>
+        [.. questions.Select(q => new KevRecordQuestion(q.Key, q.Value.Instructions?.Render() ?? string.Empty, q.Value.Options))];
 }
 
 /// <summary>Kev's internal record (the input of <c>kev.model.encode</c>): rendered state and per-question instruction and options.</summary>

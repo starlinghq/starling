@@ -1,4 +1,6 @@
+using System.Runtime.CompilerServices;
 using Microsoft.Extensions.AI;
+using Starlings.Models.ExtensionsAI;
 using Starlings.Runtime.Onnx.Batching;
 
 namespace Starlings.Models.EmbeddingGemma2.Extensions.AI;
@@ -11,10 +13,21 @@ namespace Starlings.Models.EmbeddingGemma2.Extensions.AI;
 /// </summary>
 /// <remarks>
 /// <para>
-/// <b>Synchronous execution (plan 5.1).</b> <see cref="GenerateAsync"/> tokenizes and runs ONNX Runtime on the
-/// calling thread and returns an already-completed task. A caller that must not block wraps the call in
-/// <c>Task.Run</c> itself. Failures are never thrown synchronously: they are in the returned task (faulted, or
-/// cancelled when the token was cancelled).
+/// <b>Execution: inline unless a scheduler is set (plan 5.1).</b> By default
+/// (<see cref="EmbeddingGemma2EmbeddingGeneratorOptions.ExecutionScheduler"/> null) <see cref="GenerateAsync"/>
+/// tokenizes and runs ONNX Runtime on the calling thread and returns an already-completed task. With a scheduler set
+/// (Experimental, capability <c>extensions_ai.execution_scheduler</c>), the call returns at once and the same work runs
+/// as one task on that scheduler (<see cref="TaskScheduler.Default"/> for the thread pool, or the caller's own).
+/// Failures are never thrown synchronously: they are in the returned task (faulted, or cancelled when the token was
+/// cancelled).
+/// </para>
+/// <para>
+/// <b>Streaming (Experimental, capability <c>extensions_ai.stream</c>).</b> <see cref="EmbedStreamAsync"/> takes an
+/// <see cref="IAsyncEnumerable{T}"/> of texts and yields one embedding per text in input order, without materializing
+/// the source, grouped as the encoder groups an explicit batch (<see cref="EmbeddingGemma2EncoderOptions.MaxBatchSize"/>
+/// rows and <see cref="EmbeddingGemma2EncoderOptions.MaxBatchTokens"/> padded cells). With
+/// <see cref="EmbeddingGemma2EncoderOptions.SortByLength"/> off the embeddings equal those of one
+/// <see cref="GenerateAsync"/> call over the same values bit for bit.
 /// </para>
 /// <para>
 /// <b>Prompts.</b> Explicit only: <see cref="EmbeddingGemma2EmbeddingGeneratorOptions.Prompt"/> (default
@@ -146,7 +159,11 @@ public sealed class EmbeddingGemma2EmbeddingGenerator : IEmbeddingGenerator<stri
         var encoderOptions = options.Encoder with
         {
             Dimension = EmbeddingGemma2Encoder.NativeDimension,
-            Session = options.Encoder.Session with { ExpectedModelSha256 = EmbeddingGemma2ModelAssets.ModelSha256 },
+            Session = options.Encoder.Session with
+            {
+                ExpectedModelSha256 = EmbeddingGemma2ModelAssets.ModelSha256,
+                KnownModelSha256 = options.Encoder.Session.KnownModelSha256 ?? files.ModelSha256,
+            },
         };
         var encoder = EmbeddingGemma2Encoder.Create(files.ModelPath, encoderOptions);
         try
@@ -162,31 +179,60 @@ public sealed class EmbeddingGemma2EmbeddingGenerator : IEmbeddingGenerator<stri
 
     /// <inheritdoc />
     /// <remarks>
-    /// Runs synchronously and returns a completed task, except a one-value call with micro-batching on; see the class
-    /// remarks for prompts, dimensions, batching, micro-batching and cancellation.
+    /// Runs inline unless a scheduler is set: with <see cref="EmbeddingGemma2EmbeddingGeneratorOptions.ExecutionScheduler"/>
+    /// null it runs synchronously on the calling thread and returns a completed task, except a one-value call with
+    /// micro-batching on; with a scheduler, the work (tokenizing, and the run or the queueing) is one task on it. The
+    /// values are enumerated on the thread that does the work. See the class remarks for prompts, dimensions, batching,
+    /// micro-batching and cancellation.
     /// </remarks>
     public Task<GeneratedEmbeddings<Embedding<float>>> GenerateAsync(
         IEnumerable<string> values,
         EmbeddingGenerationOptions? options = null,
         CancellationToken cancellationToken = default)
     {
-        try
+        return EmbeddingGeneratorCore.Run(() =>
         {
             var (texts, prompt, dimensions) = Prepare(values, options, cancellationToken);
             return _batcher is not null && texts.Count == 1
                 ? GenerateQueuedAsync(_batcher, texts[0], prompt, dimensions, cancellationToken)
                 : Task.FromResult(Generate(texts, prompt, dimensions, cancellationToken));
-        }
-        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
-        {
-            return Task.FromCanceled<GeneratedEmbeddings<Embedding<float>>>(cancellationToken);
-        }
-#pragma warning disable CA1031 // Every failure is reported through the returned task, never thrown synchronously.
-        catch (Exception ex)
-#pragma warning restore CA1031
-        {
-            return Task.FromException<GeneratedEmbeddings<Embedding<float>>>(ex);
-        }
+        }, _options.ExecutionScheduler, cancellationToken);
+    }
+
+    /// <summary>
+    /// Embeds a stream of texts and yields one embedding per text, in input order, without materializing the source.
+    /// Experimental (capability <c>extensions_ai.stream</c>).
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Request options (prompt, dimensions, model id) are resolved once, before the first value, with the rules of
+    /// <see cref="GenerateAsync"/>. Each value is tokenized with the prompt as it arrives, on the thread that enumerates,
+    /// and checked against the 8,192-token limit: an input above it fails the enumeration with
+    /// <see cref="EmbeddingGemma2InputTooLongException"/> (its <see cref="InputTooLongException.InputIndex"/> is the
+    /// position in the stream; text whose length alone proves it too long is not tokenized), and any other invalid input
+    /// (a media token, for example) with <see cref="ArgumentException"/> naming its position. Values are grouped as the
+    /// encoder groups an explicit batch in input order (<see cref="EmbeddingGemma2EncoderOptions.MaxBatchSize"/> rows,
+    /// <see cref="EmbeddingGemma2EncoderOptions.MaxBatchTokens"/> padded cells); each group runs as one encoder call when
+    /// the next value does not fit or the source ends, and its embeddings are then yielded. With
+    /// <see cref="EmbeddingGemma2EncoderOptions.SortByLength"/> off the embeddings equal one <see cref="GenerateAsync"/>
+    /// call over the same values bit for bit.
+    /// </para>
+    /// <para>
+    /// Runs inline unless a scheduler is set: each group's encoder run is on the enumerating thread, or on
+    /// <see cref="EmbeddingGemma2EmbeddingGeneratorOptions.ExecutionScheduler"/> when set. Micro-batching does not apply.
+    /// There is no per-embedding usage. Embeddings of earlier groups have been yielded when a later value fails.
+    /// </para>
+    /// </remarks>
+    /// <param name="values">The texts.</param>
+    /// <param name="options">Request options, as for <see cref="GenerateAsync"/>.</param>
+    /// <param name="cancellationToken">Cancels the enumeration.</param>
+    public IAsyncEnumerable<Embedding<float>> EmbedStreamAsync(
+        IAsyncEnumerable<string> values,
+        EmbeddingGenerationOptions? options = null,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(values);
+        return EmbedStreamCoreAsync(values, options, cancellationToken);
     }
 
     /// <inheritdoc />
@@ -240,51 +286,55 @@ public sealed class EmbeddingGemma2EmbeddingGenerator : IEmbeddingGenerator<stri
         cancellationToken.ThrowIfCancellationRequested();
         var (prompt, dimensions) = Resolve(options);
 
-        var texts = new List<string>(values is ICollection<string> c ? c.Count : 0);
-        foreach (string? value in values)
-        {
-            texts.Add(value ?? throw new ArgumentException($"Value {texts.Count} is null.", nameof(values)));
-        }
+        return (EmbeddingGeneratorCore.Texts(values), prompt, dimensions);
+    }
 
-        return (texts, prompt, dimensions);
+    private async IAsyncEnumerable<Embedding<float>> EmbedStreamCoreAsync(
+        IAsyncEnumerable<string> values, EmbeddingGenerationOptions? options, [EnumeratorCancellation] CancellationToken cancellationToken)
+    {
+        ObjectDisposedException.ThrowIf(Volatile.Read(ref _disposed) != 0, this);
+        cancellationToken.ThrowIfCancellationRequested();
+        var (prompt, dimensions) = Resolve(options);
+        var embedder = _embedder;
+        var encoder = embedder.Encoder;
+        await foreach (var embedding in EmbeddingGeneratorCore.Stream(
+            values,
+            (text, index) =>
+            {
+                var input = embedder.Tokenize(text, prompt, index);
+                encoder.Validate(input);
+                return input;
+            },
+            static input => input.Length,
+            encoder.Options.MaxBatchSize,
+            encoder.Options.MaxBatchTokens,
+            (inputs, token) => encoder.EmbedBatch(inputs, token),
+            vector => vector.Length == dimensions ? vector : EmbeddingGemma2Encoder.Truncate(vector, dimensions),
+            _options.ModelId,
+            _options.ExecutionScheduler,
+            cancellationToken).ConfigureAwait(false))
+        {
+            yield return embedding;
+        }
     }
 
     private async Task<GeneratedEmbeddings<Embedding<float>>> GenerateQueuedAsync(
         MicroBatcher<EmbeddingGemma2Input, float[]> batcher, string text, EmbeddingGemma2Prompt prompt, int dimensions, CancellationToken cancellationToken)
     {
         // Validated here, so an invalid value fails this call alone and never the batch it would have joined.
-        var input = _embedder.Tokenizer.Tokenize(prompt.Apply(text));
+        var input = _embedder.Tokenize(text, prompt);
         _embedder.Encoder.Validate(input);
         float[] vector = await batcher.EnqueueAsync(input, cancellationToken).ConfigureAwait(false);
         float[] output = vector.Length == dimensions ? vector : EmbeddingGemma2Encoder.Truncate(vector, dimensions);
-        var result = new GeneratedEmbeddings<Embedding<float>>(1)
-        {
-            new Embedding<float>(output) { ModelId = _options.ModelId, CreatedAt = DateTimeOffset.UtcNow },
-        };
-        result.Usage = new UsageDetails { InputTokenCount = input.Length, TotalTokenCount = input.Length };
-        return result;
+        return EmbeddingGeneratorCore.Single(output, input.Length, _options.ModelId);
     }
 
     private GeneratedEmbeddings<Embedding<float>> Generate(List<string> texts, EmbeddingGemma2Prompt prompt, int dimensions, CancellationToken cancellationToken)
     {
         var tokenCounts = new int[texts.Count];
         float[][] vectors = _embedder.EmbedBatch(texts, prompt, tokenCounts, cancellationToken);
-        var createdAt = DateTimeOffset.UtcNow;
-        var result = new GeneratedEmbeddings<Embedding<float>>(vectors.Length);
-        foreach (float[] vector in vectors)
-        {
-            float[] output = vector.Length == dimensions ? vector : EmbeddingGemma2Encoder.Truncate(vector, dimensions);
-            result.Add(new Embedding<float>(output) { ModelId = _options.ModelId, CreatedAt = createdAt });
-        }
-
-        long tokens = 0;
-        foreach (int count in tokenCounts)
-        {
-            tokens += count;
-        }
-
-        result.Usage = new UsageDetails { InputTokenCount = tokens, TotalTokenCount = tokens };
-        return result;
+        return EmbeddingGeneratorCore.Result(vectors, tokenCounts, _options.ModelId,
+            vector => vector.Length == dimensions ? vector : EmbeddingGemma2Encoder.Truncate(vector, dimensions));
     }
 
     private (EmbeddingGemma2Prompt Prompt, int Dimensions) Resolve(EmbeddingGenerationOptions? options)
@@ -310,33 +360,15 @@ public sealed class EmbeddingGemma2EmbeddingGenerator : IEmbeddingGenerator<stri
             dimensions = requested;
         }
 
-        if (options.ModelId is { } modelId && !string.Equals(modelId, _options.ModelId, StringComparison.Ordinal))
-        {
-            throw new NotSupportedException($"EmbeddingGenerationOptions.ModelId = '{modelId}' is not supported: this generator serves only '{_options.ModelId}'.");
-        }
-
-        if (options.RawRepresentationFactory is not null)
-        {
-            throw new NotSupportedException("EmbeddingGenerationOptions.RawRepresentationFactory is not supported: this generator has no provider-specific options object.");
-        }
-
         var prompt = _options.Prompt;
-        if (options.AdditionalProperties is { Count: > 0 } properties)
+        if (EmbeddingGeneratorCore.CheckOptions(options, _options.ModelId, PromptPropertyName, out object? value))
         {
-            foreach (var (key, value) in properties)
+            prompt = value switch
             {
-                if (!string.Equals(key, PromptPropertyName, StringComparison.Ordinal))
-                {
-                    throw new NotSupportedException($"EmbeddingGenerationOptions.AdditionalProperties['{key}'] is not supported; the only supported key is '{PromptPropertyName}'.");
-                }
-
-                prompt = value switch
-                {
-                    EmbeddingGemma2Prompt p => p,
-                    string name when EmbeddingGemma2Prompt.TryFromName(name, out var p) => p,
-                    _ => throw new ArgumentException($"AdditionalProperties['{PromptPropertyName}'] = '{value}' is not an EmbeddingGemma 2 prompt; expected an EmbeddingGemma2Prompt, 'none' or one of: {string.Join(", ", EmbeddingGemma2Prompt.Named.Keys)} (case-sensitive)."),
-                };
-            }
+                EmbeddingGemma2Prompt p => p,
+                string name when EmbeddingGemma2Prompt.TryFromName(name, out var p) => p,
+                _ => throw new ArgumentException($"AdditionalProperties['{PromptPropertyName}'] = '{value}' is not an EmbeddingGemma 2 prompt; expected an EmbeddingGemma2Prompt, 'none' or one of: {string.Join(", ", EmbeddingGemma2Prompt.Named.Keys)} (case-sensitive)."),
+            };
         }
 
         return (prompt, dimensions);

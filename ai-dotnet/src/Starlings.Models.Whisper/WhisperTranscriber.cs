@@ -21,22 +21,38 @@ public sealed class WhisperTranscriber : IDisposable
         _ownsModel = ownsModel;
     }
 
-    /// <summary>Loads the encoder, decoder and tokenizer and owns them.</summary>
+    /// <summary>
+    /// Loads the encoder, decoder and tokenizer of verified files (<see cref="WhisperModelAssets.OpenLocal"/>) and owns
+    /// them. The tokenizer must be the pinned file (<see cref="WhisperModelAssets.TokenizerSha256"/>); it is checked before
+    /// the graphs load. Graph digests the snapshot already verified are passed to the sessions
+    /// (<see cref="WhisperModel.Create(WhisperModelFiles, WhisperOptions?)"/>), so the graphs are not read again.
+    /// </summary>
+    /// <exception cref="InvalidDataException">The tokenizer file is not the pinned one.</exception>
+    /// <exception cref="WhisperUnsupportedLanguageException"><see cref="WhisperOptions.Language"/> is not a language code of the model.</exception>
+    public static WhisperTranscriber Create(WhisperModelFiles files, WhisperOptions? options = null)
+    {
+        ArgumentNullException.ThrowIfNull(files);
+        options ??= new WhisperOptions();
+        options.Validate();
+        var tokenizer = WhisperTokenizer.FromFile(files.TokenizerPath, WhisperModelAssets.TokenizerSha256);
+        var model = WhisperModel.Create(files, options);
+        return new WhisperTranscriber(model, tokenizer, options, ownsModel: true);
+    }
+
+    /// <summary>
+    /// Loads the encoder, decoder and tokenizer and owns them. The tokenizer must be the pinned file
+    /// (<see cref="WhisperModelAssets.TokenizerSha256"/>); it is checked before the graphs load. The graphs are checked
+    /// only when <see cref="Starlings.Runtime.Onnx.OnnxSessionOptions.ExpectedModelSha256"/> is set on the session options.
+    /// </summary>
+    /// <exception cref="InvalidDataException">The tokenizer file is not the pinned one.</exception>
+    /// <exception cref="WhisperUnsupportedLanguageException"><see cref="WhisperOptions.Language"/> is not a language code of the model.</exception>
     public static WhisperTranscriber Create(string encoderPath, string decoderPath, string tokenizerPath, WhisperOptions? options = null)
     {
         options ??= new WhisperOptions();
         options.Validate();
+        var tokenizer = WhisperTokenizer.FromFile(tokenizerPath, WhisperModelAssets.TokenizerSha256);
         var model = WhisperModel.Create(encoderPath, decoderPath, options);
-        try
-        {
-            var tokenizer = WhisperTokenizer.FromFile(tokenizerPath);
-            return new WhisperTranscriber(model, tokenizer, options, ownsModel: true);
-        }
-        catch
-        {
-            model.Dispose();
-            throw;
-        }
+        return new WhisperTranscriber(model, tokenizer, options, ownsModel: true);
     }
 
     /// <summary>Transcribes one 16 kHz float32 clip of up to 30 s (at most 480,000 samples; shorter clips are zero-padded).</summary>

@@ -61,6 +61,59 @@ public class SessionTests
     }
 
     [Fact]
+    public void KnownDigestReplacesTheReadAndSatisfiesTheExpectedDigest()
+    {
+        string actual = Convert.ToHexStringLower(SHA256.HashData(TestModels.Add));
+        using (var computed = OnnxModelSession.Create(TestModels.Add))
+        {
+            Assert.Equal(OnnxModelDigestSource.Computed, computed.Diagnostics.ModelSha256Source);
+        }
+
+        // A digest the caller vouches for is reported as given: the bytes are not hashed (a different digest shows it).
+        string other = new('a', 64);
+        using (var known = OnnxModelSession.Create(TestModels.Add, new OnnxSessionOptions { KnownModelSha256 = other }))
+        {
+            Assert.Equal(other, known.Diagnostics.ModelSha256);
+            Assert.Equal(OnnxModelDigestSource.Known, known.Diagnostics.ModelSha256Source);
+        }
+
+        using (var expected = OnnxModelSession.Create(TestModels.Add, new OnnxSessionOptions { KnownModelSha256 = actual, ExpectedModelSha256 = actual }))
+        {
+            Assert.Equal(actual, expected.Diagnostics.ModelSha256);
+            Assert.Equal(OnnxModelDigestSource.Known, expected.Diagnostics.ModelSha256Source);
+        }
+
+        var mismatch = Assert.Throws<OnnxModelIntegrityException>(() => OnnxModelSession.Create(
+            TestModels.Add, new OnnxSessionOptions { KnownModelSha256 = other, ExpectedModelSha256 = actual }));
+        Assert.Contains("KnownModelSha256", mismatch.Message, StringComparison.Ordinal);
+        Assert.Throws<ArgumentException>(() => OnnxModelSession.Create(TestModels.Add, new OnnxSessionOptions { KnownModelSha256 = "ABC" }));
+
+        using (var none = OnnxModelSession.Create(TestModels.Add, new OnnxSessionOptions { ComputeModelSha256 = false }))
+        {
+            Assert.Null(none.Diagnostics.ModelSha256Source);
+        }
+    }
+
+    [Fact]
+    public void KnownDigestSkipsReadingTheFile()
+    {
+        string path = Path.Combine(Path.GetTempPath(), $"starlings-add-{Guid.NewGuid():N}.onnx");
+        File.WriteAllBytes(path, TestModels.Add);
+        // Not the file's digest: had the file been hashed, the session would report the real one.
+        string known = new('b', 64);
+        try
+        {
+            using var session = OnnxModelSession.Create(path, new OnnxSessionOptions { KnownModelSha256 = known, ExpectedModelSha256 = known });
+            Assert.Equal(known, session.Diagnostics.ModelSha256);
+            Assert.Equal(OnnxModelDigestSource.Known, session.Diagnostics.ModelSha256Source);
+        }
+        finally
+        {
+            File.Delete(path);
+        }
+    }
+
+    [Fact]
     public void FileModelIsHashedFromDisk()
     {
         string path = Path.Combine(Path.GetTempPath(), $"starlings-add-{Guid.NewGuid():N}.onnx");
@@ -152,11 +205,24 @@ public class SessionTests
     }
 
     [Fact]
+    public void WarmupRunIsTheProfiledRun()
+    {
+        // In this class, not with the other warmup tests: profiling writes a temporary file that the concurrent-sessions
+        // test below expects to be gone, and tests of one class do not run in parallel.
+        using var session = OnnxModelSession.Create(TestModels.Add, new OnnxSessionOptions { CapturePlacement = true });
+        session.WarmupWithZeroInputs(cancellationToken: TestContext.Current.CancellationToken);
+        Assert.Equal(1, session.Placement?.NodesByProvider[OnnxRuntimeInfo.CpuProviderName]);
+    }
+
+    [Fact]
     public void ConcurrentSessionsCapturePlacementFromTheirOwnProfileFiles()
     {
         // Each session's profile goes to its own temporary prefix, never ONNX Runtime's default name in the working
         // directory: that name only has millisecond resolution, so sessions started together shared (and deleted) one file.
         string[] before = Directory.GetFiles(Environment.CurrentDirectory, "onnxruntime_profile_*");
+
+        // Only this test's files: the temporary directory can hold profiles another process left behind.
+        string[] profilesBefore = Directory.GetFiles(Path.GetTempPath(), "starlings-ort-placement-*");
         Parallel.For(0, 16, new ParallelOptions { MaxDegreeOfParallelism = 16 }, _ =>
         {
             using var session = OnnxModelSession.Create(TestModels.Add, new OnnxSessionOptions { CapturePlacement = true });
@@ -164,7 +230,7 @@ public class SessionTests
             Assert.NotNull(session.Placement);
         });
         Assert.Equal(before, Directory.GetFiles(Environment.CurrentDirectory, "onnxruntime_profile_*"));
-        Assert.Empty(Directory.GetFiles(Path.GetTempPath(), "starlings-ort-placement-*"));
+        Assert.Empty(Directory.GetFiles(Path.GetTempPath(), "starlings-ort-placement-*").Except(profilesBefore, StringComparer.Ordinal));
     }
 
     [Fact]

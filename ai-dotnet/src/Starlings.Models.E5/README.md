@@ -62,13 +62,23 @@ e5 expects `"query: "` or `"passage: "` at the start of every text; nothing is a
 
 The defaults are the qualified behavior and give the same outputs as before these options existed, bit for bit. With `SortByLength`, which rows share a call depends on the whole batch, so a row's embedding can differ from the default by up to the profile's padded-batch-vs-single bound (`padded_batch_vs_single_embedding_max_abs`; on ONNX Runtime CPU the tests saw no difference). If a call is cancelled, the `Span<float>` overload may already hold the rows of the chunks that completed: a prefix of the rows by default, the shortest rows with `SortByLength`.
 
+## Token counting and chunking (experimental)
+
+`E5TextEmbedder.CountTokens(text)` and `CountTokens(texts)` count tokens without embedding, `<s>` and `</s>` included, before truncation: text that is embedded truncated to 512 tokens reports its full count. `Validate(text)` returns a `TokenLimitCheck` whose `ExceedsLimit` says the text would be truncated. With an `IEncoderTokenizer` other than `E5Tokenizer` (one that does not implement `IChunkingTokenizer`), the count is the length of that tokenizer's output. `E5Tokenizer` is an `IChunkingTokenizer` (`E5TextEmbedder.ChunkingTokenizer`), so `TextChunker` of `Starlings.Models.Abstractions` can split long documents into 512-token windows (pass the `"passage: "` prefix as `TextChunkerOptions.Prefix`). Pooled chunk vectors carry no parity claim. Capabilities `token_counting` and `chunking`: experimental (weight-free tests on the pinned `tokenizer.json`).
+
+## Shared types
+
+A snapshot verified with `CacheVerification.Sha256` (the default) carries its digests: `E5ModelFiles.ModelSha256` is the graph's SHA-256 then, and `E5TextEmbedder.Create(files)`, `E5EmbeddingGenerator.Create(files)` and the ML.NET transform pass it to the session as `OnnxSessionOptions.KnownModelSha256`, so the graph is read once at startup, by the verification, not again by the session. With `CacheVerification.Size` it is null and the session hashes the graph as before.
+
+The package uses the backend-neutral types of `Starlings.Models.Abstractions`. `E5TextEmbedder` is an `ITextEmbedder` (`Dimension`, `MaxSequenceLength`, `EmbedBatch(texts, tokenCounts)`). `E5ModelAssets.Assets` is the lock and acquisition as an `IModelAssets<E5ModelFiles>`. An id sequence above `E5EncoderOptions.MaxSequenceLength` throws `InputTooLongException` (an `ArgumentException`, with `InputIndex`, `TokenCount` and `MaxTokens`); text through `E5Tokenizer` is truncated to the limit first, so it never reaches the check. `E5Capabilities.Statuses` is the package-wide capability table in `Starlings.Models.CapabilityStatus`, and `E5Capabilities.ProfileCapabilities` holds each profile's capability record (`ModelProfileCapabilities`), generated from its registry manifest. `E5Capabilities.All`, `E5Capabilities.Profiles` and the enum `Starlings.Models.E5.CapabilityStatus` are obsolete and are removed in the next minor version.
+
 ## Status
 
 Profile `multilingual-e5-small/onnx-fp32-cpu` (Linux x64 CPU) is Stable since 2026-10-15: it passed every qualification gate, G0 to G7, and the weekly qualification workflow reruns G1 to G3 on the release sets and a one-hour soak, green. The hosted soak that failed on 2026-10-15 (about 50 MB/h) did so because of glibc retention after unloading and transparent huge pages set to `always` on the runner image, not a leak ([evidence](https://github.com/starlinghq/starling/blob/main/docs/evidence/scheduled-regression-fix/README.md)). On 2026-10-16 one hosted soak in six failed again (58 MiB of unloaded growth against 32): requests from rotating thread-pool threads left freed memory resident in more and more glibc heaps. With dedicated run threads on CPU (below), those heaps stay at 14 to 62 MiB after unloading ([evidence](https://github.com/starlinghq/starling/blob/main/docs/evidence/e5-soak-reliability/README.md)). Profile `multilingual-e5-small/onnx-fp32-cuda` (Linux x64, NVIDIA GeForce RTX 3090) is Stable since 2026-10-16 ([Stable contract: CUDA](#stable-contract-cuda)): every gate passed, and the per-release GPU regression run was green for it. GPU regression runs for every release and on demand, on an RTX 3090 only (the qualification workflow's `cuda (runpod)` job); CPU regression runs weekly. Gate evidence: the [catalog](https://github.com/starlinghq/starling/blob/main/docs/catalog/README.md). Model license: MIT, stated only in the model card.
 
 ## Stable contract
 
-This is the contract of profile `multilingual-e5-small/onnx-fp32-cpu`. Its Stable label (since 2026-10-15) commits to it under the [support policy](https://github.com/starlinghq/starling/blob/main/docs/support-policy.md). The statuses are the registry manifest's and `E5Capabilities.Profiles`, which a test keeps equal key for key.
+This is the contract of profile `multilingual-e5-small/onnx-fp32-cpu`. Its Stable label (since 2026-10-15) commits to it under the [support policy](https://github.com/starlinghq/starling/blob/main/docs/support-policy.md). The statuses are the registry manifest's and `E5Capabilities.ProfileCapabilities` (generated from it), which a test checks key for key.
 
 | Item | Contract |
 | --- | --- |
@@ -90,7 +100,7 @@ This is the contract of profile `multilingual-e5-small/onnx-fp32-cpu`. Its Stabl
 
 ## Stable contract: CUDA
 
-This is the contract of profile `multilingual-e5-small/onnx-fp32-cuda` (Stable since 2026-10-16). It is the CPU contract above, with these differences. The statuses are the registry manifest's and `E5Capabilities.Profiles`, which a test keeps equal key for key.
+This is the contract of profile `multilingual-e5-small/onnx-fp32-cuda` (Stable since 2026-10-16). It is the CPU contract above, with these differences. The statuses are the registry manifest's and `E5Capabilities.ProfileCapabilities` (generated from it), which a test checks key for key.
 
 | Item | Contract |
 | --- | --- |

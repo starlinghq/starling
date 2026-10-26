@@ -71,9 +71,10 @@ public sealed record EmbeddingGemma2EncoderOptions
 /// <summary>
 /// An input has more tokens than the encoder accepts (<see cref="EmbeddingGemma2EncoderOptions.MaxSequenceLength"/>,
 /// at most 8,192 including <c>&lt;bos&gt;</c>, <c>&lt;eos&gt;</c> and the prompt). The input is rejected, not
-/// truncated; nothing was embedded.
+/// truncated; nothing was embedded. An <see cref="InputTooLongException"/>, and through it an
+/// <see cref="ArgumentException"/>; the limit is <see cref="InputTooLongException.MaxTokens"/>.
 /// </summary>
-public sealed class EmbeddingGemma2InputTooLongException : ArgumentException
+public sealed class EmbeddingGemma2InputTooLongException : InputTooLongException
 {
     /// <summary>Creates the exception.</summary>
     public EmbeddingGemma2InputTooLongException()
@@ -94,19 +95,29 @@ public sealed class EmbeddingGemma2InputTooLongException : ArgumentException
 
     /// <summary>Creates the exception for input <paramref name="inputIndex"/> with a descriptive message.</summary>
     public EmbeddingGemma2InputTooLongException(int inputIndex, int tokenCount, int maximumTokens)
-        : base($"Input {inputIndex} has {tokenCount} tokens; the maximum is {maximumTokens} (special tokens and prompt included). EmbeddingGemma 2 rejects longer input instead of truncating it; split or shorten the text.", "inputs")
+        : base($"Input {inputIndex} has {tokenCount} tokens; the maximum is {maximumTokens} (special tokens and prompt included). EmbeddingGemma 2 rejects longer input instead of truncating it; split or shorten the text.", "inputs", inputIndex, tokenCount, maximumTokens)
     {
-        InputIndex = inputIndex;
-        TokenCount = tokenCount;
-        MaximumTokens = maximumTokens;
     }
 
-    /// <summary>Position of the rejected input in the batch.</summary>
-    public int InputIndex { get; init; }
+    /// <summary>
+    /// Creates the exception for input <paramref name="inputIndex"/>; when <paramref name="isLowerBound"/> is true the
+    /// input was rejected from its length alone and <paramref name="tokenCount"/> is a lower bound
+    /// (<see cref="InputTooLongException.TokenCountIsLowerBound"/>).
+    /// </summary>
+    public EmbeddingGemma2InputTooLongException(int inputIndex, int tokenCount, int maximumTokens, bool isLowerBound)
+        : base(isLowerBound
+            ? $"Input {inputIndex} has at least {tokenCount} tokens (from its length alone; it was not tokenized); the maximum is {maximumTokens} (special tokens and prompt included). EmbeddingGemma 2 rejects longer input instead of truncating it; split or shorten the text."
+            : $"Input {inputIndex} has {tokenCount} tokens; the maximum is {maximumTokens} (special tokens and prompt included). EmbeddingGemma 2 rejects longer input instead of truncating it; split or shorten the text.",
+            "inputs", inputIndex, tokenCount, maximumTokens)
+    {
+        TokenCountIsLowerBound = isLowerBound;
+    }
 
-    /// <summary>Tokens in the rejected input.</summary>
-    public int TokenCount { get; init; }
-
-    /// <summary>The limit in effect.</summary>
-    public int MaximumTokens { get; init; }
+    /// <summary>The limit in effect; the same value as <see cref="InputTooLongException.MaxTokens"/>.</summary>
+    [Obsolete("Use MaxTokens; removed in the next minor version.")]
+    public int MaximumTokens
+    {
+        get => MaxTokens;
+        init => MaxTokens = value;
+    }
 }

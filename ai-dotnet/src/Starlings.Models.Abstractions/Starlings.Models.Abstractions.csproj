@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <IsPackable>true</IsPackable>
+    <!-- Trim, AOT and single-file analyzers on (warnings are errors). -->
+    <IsAotCompatible>true</IsAotCompatible>
+    <Description>Backend-neutral types shared by the Starlings model packages: one CapabilityStatus, the ITextEmbedder and IReranker interfaces, IModelAssets for a package's asset lock and explicit acquisition, the InputTooLongException base, and ModelProfileCapabilities, the machine-readable capability record each package generates from its registry manifests. No ONNX Runtime dependency; references only Starlings.Acquisition (BCL only). Maturity is per model profile (Stable, Preview or Experimental): see the README, generated from the model registry.</Description>
+    <PackageTags>embeddings;reranking;model;capabilities;abstractions</PackageTags>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- IModelAssets names the lock and snapshot types of the acquisition library (BCL only, no further dependencies). -->
+    <ProjectReference Include="../Starlings.Acquisition/Starlings.Acquisition.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -30,6 +30,42 @@ public class ModelAcquisitionException : Exception
 
     /// <summary>Path of the asset inside the repository, when the failure concerns one file.</summary>
     public string? AssetPath { get; init; }
+
+    /// <summary>
+    /// With <see cref="ModelAcquisitionOptions.FallbackEndpoints"/>: the failure of each address tried for the file, in
+    /// order, starting with this exception (the failure of <see cref="ModelAcquisitionOptions.Endpoint"/>). Empty otherwise.
+    /// </summary>
+    public IReadOnlyList<ModelAcquisitionException> EndpointFailures { get; internal set; } = [];
+}
+
+/// <summary>
+/// Another downloader held a file's lock for longer than <see cref="ModelAcquisitionOptions.LockWaitTimeout"/>. Nothing
+/// was changed; calling again waits again.
+/// </summary>
+public sealed class ModelAssetLockTimeoutException : ModelAcquisitionException
+{
+    /// <summary>Creates the exception.</summary>
+    public ModelAssetLockTimeoutException()
+    {
+    }
+
+    /// <summary>Creates the exception with a message.</summary>
+    public ModelAssetLockTimeoutException(string message)
+        : base(message)
+    {
+    }
+
+    /// <summary>Creates the exception with a message and the underlying failure.</summary>
+    public ModelAssetLockTimeoutException(string message, Exception innerException)
+        : base(message, innerException)
+    {
+    }
+
+    /// <summary>The lock file that stayed held.</summary>
+    public string? LockFilePath { get; init; }
+
+    /// <summary>How long this call waited.</summary>
+    public TimeSpan Waited { get; init; }
 }
 
 /// <summary>

@@ -69,7 +69,7 @@ public sealed class ImageInputTests(ITestOutputHelper output)
         var ex = Assert.Throws<EmbeddingGemma2InputTooLongException>(() =>
             EmbeddingGemma2MultimodalEmbedder.PrepareCore(tokenizer, new EmbeddingGemma2MultimodalOptions(), input, EmbeddingGemma2Prompt.None, 3));
         Assert.Equal(3, ex.InputIndex);
-        Assert.Equal(8_192, ex.MaximumTokens);
+        Assert.Equal(8_192, ex.MaxTokens);
 
         // 31 images fit: 31 x 258 + 2 = 8,000 tokens.
         var ok = EmbeddingGemma2MultimodalEmbedder.PrepareCore(tokenizer, new EmbeddingGemma2MultimodalOptions(), EmbeddingGemma2MultimodalInput.Create(parts.Take(31)), EmbeddingGemma2Prompt.None, 0);

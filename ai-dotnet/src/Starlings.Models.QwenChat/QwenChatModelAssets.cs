@@ -50,7 +50,7 @@ public static class QwenChatModelAssets
 
     /// <summary>
     /// Explicitly downloads (or verifies already cached) a profile's bundle and returns its directory. See
-    /// <see cref="ModelAssetStore.DownloadAsync"/>.
+    /// <see cref="ModelAssetStore.DownloadAsync(ModelAssetLock, IProgress{ModelAssetProgress}?, CancellationToken)"/>.
     /// </summary>
     public static async Task<string> DownloadAsync(
         QwenChatProfile profile, ModelAcquisitionOptions? options = null, IProgress<ModelAssetProgress>? progress = null, CancellationToken cancellationToken = default)

@@ -19,6 +19,11 @@ public sealed record EmbeddingGemma2ModelFiles(string ModelPath, string Tokenize
             snapshot.GetFilePath(EmbeddingGemma2ModelAssets.PromptConfigFile),
             snapshot);
     }
+
+    /// <summary>
+    /// SHA-256 of <see cref="ModelPath"/> when <see cref="Snapshot"/> hashed it (<see cref="ModelSnapshot.Verification"/> <see cref="CacheVerification.Sha256"/>); otherwise null. The model factories pass it as <c>OnnxSessionOptions.KnownModelSha256</c>, so the graph is not read a second time at load.
+    /// </summary>
+    public string? ModelSha256 => Snapshot?.GetVerifiedSha256(EmbeddingGemma2ModelAssets.ModelFile);
 }
 
 /// <summary>
@@ -108,7 +113,7 @@ public static class EmbeddingGemma2ModelAssets
             new ModelAssetFile(PromptConfigFile, PromptConfigSize, PromptConfigSha256),
         ]);
 
-    /// <summary>Explicitly downloads (or verifies already cached) EmbeddingGemma 2 files. See <see cref="ModelAssetStore.DownloadAsync"/>.</summary>
+    /// <summary>Explicitly downloads (or verifies already cached) EmbeddingGemma 2 files. See <see cref="ModelAssetStore.DownloadAsync(ModelAssetLock, IProgress{ModelAssetProgress}?, CancellationToken)"/>.</summary>
     public static async Task<EmbeddingGemma2ModelFiles> DownloadAsync(
         ModelAcquisitionOptions? options = null, IProgress<ModelAssetProgress>? progress = null, CancellationToken cancellationToken = default)
     {
@@ -131,6 +136,25 @@ public static class EmbeddingGemma2ModelAssets
     /// </summary>
     public static EmbeddingGemma2ModelFiles OpenDirectory(string directory, CacheVerification verification = CacheVerification.Sha256) =>
         EmbeddingGemma2ModelFiles.From(ModelAssetStore.VerifyDirectory(Lock, directory, verification));
+
+    /// <summary>
+    /// The EmbeddingGemma 2 text lock and acquisition members of this class as an <see cref="IModelAssets{TFiles}"/>, for setup code
+    /// that acquires several models the same way. Each member calls the static member of the same name.
+    /// </summary>
+    public static IModelAssets<EmbeddingGemma2ModelFiles> Assets { get; } = new AssetsInstance();
+
+    private sealed class AssetsInstance : IModelAssets<EmbeddingGemma2ModelFiles>
+    {
+        public ModelAssetLock Lock => EmbeddingGemma2ModelAssets.Lock;
+
+        public Task<EmbeddingGemma2ModelFiles> DownloadAsync(ModelAcquisitionOptions? options = null, IProgress<ModelAssetProgress>? progress = null, CancellationToken cancellationToken = default) =>
+            EmbeddingGemma2ModelAssets.DownloadAsync(options, progress, cancellationToken);
+
+        public EmbeddingGemma2ModelFiles OpenLocal(ModelAcquisitionOptions? options = null) => EmbeddingGemma2ModelAssets.OpenLocal(options);
+
+        public EmbeddingGemma2ModelFiles OpenDirectory(string directory, CacheVerification verification = CacheVerification.Sha256) =>
+            EmbeddingGemma2ModelAssets.OpenDirectory(directory, verification);
+    }
 
     /// <summary>Path of the vision graph in the snapshot directory (pixels and patch positions to soft tokens).</summary>
     public const string VisionModelFile = "onnx/embeddinggemma2-vision-fp32.onnx";
@@ -223,4 +247,16 @@ public sealed record EmbeddingGemma2ImageModelFiles(EmbeddingGemma2ModelFiles Te
             snapshot.GetFilePath(EmbeddingGemma2ModelAssets.VisionModelFile),
             snapshot.GetFilePath(EmbeddingGemma2ModelAssets.MultimodalModelFile));
     }
+
+    /// <summary>
+    /// SHA-256 of <see cref="VisionModelPath"/> when the snapshot (<see cref="EmbeddingGemma2ModelFiles.Snapshot"/> of
+    /// <see cref="Text"/>) hashed it; otherwise null. Passed as <c>OnnxSessionOptions.KnownModelSha256</c> at load.
+    /// </summary>
+    public string? VisionModelSha256 => Text.Snapshot?.GetVerifiedSha256(EmbeddingGemma2ModelAssets.VisionModelFile);
+
+    /// <summary>
+    /// SHA-256 of <see cref="MultimodalModelPath"/> when the snapshot hashed it; otherwise null. Passed as
+    /// <c>OnnxSessionOptions.KnownModelSha256</c> at load.
+    /// </summary>
+    public string? MultimodalModelSha256 => Text.Snapshot?.GetVerifiedSha256(EmbeddingGemma2ModelAssets.MultimodalModelFile);
 }

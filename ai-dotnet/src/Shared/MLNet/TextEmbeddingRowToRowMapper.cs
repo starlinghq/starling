@@ -1,10 +1,12 @@
+// Shared by Starlings.Models.E5.MLNet and Starlings.Models.EmbeddingGemma2.MLNet (compiled into each, internal):
+// the ML.NET transform over any ITextEmbedder. Moved from the two packages' copies, which differed only in names.
 using Microsoft.ML;
 using Microsoft.ML.Data;
 
-namespace Starlings.Models.E5.MLNet;
+namespace Starlings.Models.MLNet;
 
 /// <summary>Row-to-row mapping (prediction engines): always row-wise, one inference per row and text.</summary>
-internal sealed class E5RowToRowMapper(E5Bindings bindings, E5Inference inference) : IRowToRowMapper
+internal sealed class TextEmbeddingRowToRowMapper(TextEmbeddingBindings bindings, TextEmbeddingInference inference) : IRowToRowMapper
 {
     public DataViewSchema InputSchema => bindings.InputSchema;
 
@@ -21,17 +23,17 @@ internal sealed class E5RowToRowMapper(E5Bindings bindings, E5Inference inferenc
             throw new ArgumentException("The row's schema is not the schema this mapper was created for.", nameof(input));
         }
 
-        return new E5MappedRow(bindings, bindings.Active(activeColumns), input, inference);
+        return new TextEmbeddingMappedRow(bindings, bindings.Active(activeColumns), input, inference);
     }
 
-    private sealed class E5MappedRow : DataViewRow
+    private sealed class TextEmbeddingMappedRow : DataViewRow
     {
-        private readonly E5Bindings _bindings;
+        private readonly TextEmbeddingBindings _bindings;
         private readonly bool[] _active;
         private readonly DataViewRow _input;
         private readonly RowWiseState? _current;
 
-        public E5MappedRow(E5Bindings bindings, bool[] active, DataViewRow input, E5Inference inference)
+        public TextEmbeddingMappedRow(TextEmbeddingBindings bindings, bool[] active, DataViewRow input, TextEmbeddingInference inference)
         {
             _bindings = bindings;
             _active = active;
@@ -53,6 +55,6 @@ internal sealed class E5RowToRowMapper(E5Bindings bindings, E5Inference inferenc
         public override bool IsColumnActive(DataViewSchema.Column column) => _active[_bindings.CheckColumn(column)];
 
         public override ValueGetter<TValue> GetGetter<TValue>(DataViewSchema.Column column) =>
-            E5Getters.Create<TValue>(_bindings, _active, _input, _current, column);
+            TextEmbeddingGetters.Create<TValue>(_bindings, _active, _input, _current, column);
     }
 }

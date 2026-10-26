@@ -383,3 +383,84 @@ def test_plugin_constructs_bounded_commands_and_deletes_transient_build(tmp_path
     assert not Path(dotnet[dotnet.index("--artifacts-path") + 1]).exists()
     assert commands[2][0][1].endswith("Starlings.Bert.Fidelity.Tool.dll")
     assert all(kwargs["timeout"] == 11 and kwargs["env"]["OMP_NUM_THREADS"] == "2" for _, kwargs in commands)
+
+
+def _contract_table() -> dict:
+    return json.loads(bert.CONTRACTS_PATH.read_text(encoding="utf-8"))
+
+
+def _first(task: str) -> str:
+    """The first repository of the table with the task (the tests name no model)."""
+    return next(repo for repo, spec in bert.CONTRACTS.items() if spec["task"] == task)
+
+
+def test_contract_table_is_the_file_the_dotnet_package_embeds():
+    root = Path(__file__).resolve().parents[2]
+    project = (root / "ai-dotnet/src/Starlings.Models.Bert/Starlings.Models.Bert.csproj").read_text(encoding="utf-8")
+    assert 'Include="../../../model-pipeline/routes/bert-onnx-cpu-v1/contracts.json"' in project
+    assert root / "model-pipeline/routes/bert-onnx-cpu-v1/contracts.json" == bert.CONTRACTS_PATH
+    assert list(bert.CONTRACTS) == list(_contract_table()["contracts"])
+    queries = [spec["prompts"]["query"] for spec in bert.CONTRACTS.values() if "query" in spec["prompts"]]
+    assert queries and set(queries) == {bert.QUERY}
+
+
+@pytest.mark.parametrize(
+    ("key", "value"),
+    [
+        ("task", "classification"),
+        ("pooling", "max"),
+        ("normalize", "l1"),
+        ("tokenizer_profile", "gpt2-bpe"),
+        ("output_name", ""),
+        ("max_tokens", 0),
+        ("pad_token_id", 30522),
+        ("cls_token_id", -1),
+        ("hidden_size", True),
+        ("token_type_ids", 1),
+        ("score_activation_source", "config"),
+        ("unknown_field", 1),
+    ],
+)
+def test_contract_table_rejects_an_embeddings_rule_break(key, value):
+    table = _contract_table()
+    table["contracts"][_first("embeddings")][key] = value
+    with pytest.raises(PipelineError):
+        bert.validate_contracts(table)
+
+
+@pytest.mark.parametrize(("key", "value"), [("pooling", "cls"), ("normalize", "l2"), ("score_activation_source", "x")])
+def test_contract_table_rejects_a_reranking_rule_break(key, value):
+    table = _contract_table()
+    table["contracts"][_first("reranking")][key] = value
+    with pytest.raises(PipelineError):
+        bert.validate_contracts(table)
+
+
+def test_contract_table_rejects_missing_fields_prompts_keys_format_and_duplicates(tmp_path):
+    repo = next(iter(bert.CONTRACTS))
+    missing = _contract_table()
+    del missing["contracts"][repo]["output_name"]
+    prompts = _contract_table()
+    prompts["contracts"][repo]["prompts"] = {"query": "q: "}
+    bad_key = _contract_table()
+    bad_key["contracts"]["not-a-repository"] = bad_key["contracts"][repo]
+    version = _contract_table()
+    version["format_version"] = 2
+    boolean = _contract_table()
+    boolean["format_version"] = True
+    real = _contract_table()
+    real["format_version"] = 1.0
+    for table in (missing, prompts, bad_key, version, boolean, real):
+        with pytest.raises(PipelineError):
+            bert.validate_contracts(table)
+    text = bert.CONTRACTS_PATH.read_text(encoding="utf-8")
+    entry = json.dumps(_contract_table()["contracts"][repo])
+    duplicated = tmp_path / "contracts.json"
+    key = json.dumps(repo) + ": "
+    duplicated.write_text(text.replace(key + "{", f"{key}{entry}, {key}{{", 1), "utf-8")
+    with pytest.raises(PipelineError, match="duplicate"):
+        bert.load_contracts(duplicated)
+    malformed = tmp_path / "malformed.json"
+    malformed.write_text("{", encoding="utf-8")
+    with pytest.raises(PipelineError):
+        bert.load_contracts(malformed)
