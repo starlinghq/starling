@@ -47,6 +47,19 @@ public sealed class E5Encoder : IDisposable
     /// <summary>Graph output name for the last hidden state.</summary>
     public const string LastHiddenStateName = "last_hidden_state";
 
+    /// <summary>
+    /// Embedding dimension of the pinned <c>multilingual-e5-small</c> graph (384). <see cref="Dimension"/> is read from
+    /// the graph at load time and equals this for the pinned graph.
+    /// </summary>
+    public const int NativeDimension = 384;
+
+    /// <summary>
+    /// Tokens per sequence at most, <c>&lt;s&gt;</c> and <c>&lt;/s&gt;</c> included (512: the profile's limit, which the
+    /// reference truncates to). The default of <see cref="E5EncoderOptions.MaxSequenceLength"/> and of the
+    /// <see cref="E5Tokenizer"/> truncation length.
+    /// </summary>
+    public const int MaxSupportedSequenceLength = 512;
+
     private readonly OnnxModelSession _session;
     private readonly bool _ownsSession;
     private readonly E5EncoderOptions _options;
@@ -75,7 +88,7 @@ public sealed class E5Encoder : IDisposable
         _inputNames = _hasTokenTypeIds ? [InputIdsName, AttentionMaskName, TokenTypeIdsName] : [InputIdsName, AttentionMaskName];
     }
 
-    /// <summary>Embedding dimension read from the graph (384 for e5-small).</summary>
+    /// <summary>Embedding dimension read from the graph (<see cref="NativeDimension"/>, 384, for the pinned graph).</summary>
     public int Dimension { get; }
 
     /// <summary>Encoder options in effect.</summary>
@@ -153,7 +166,7 @@ public sealed class E5Encoder : IDisposable
 
         for (int i = 0; i < inputs.Count; i++)
         {
-            Validate(inputs[i], i);
+            Validate(inputs[i], i, _options, nameof(inputs));
         }
 
         var plan = Plan(inputs, _options);
@@ -182,7 +195,7 @@ public sealed class E5Encoder : IDisposable
     /// reject an invalid input on its own before queueing it next to others (micro-batching).
     /// </summary>
     /// <exception cref="ArgumentException">The input is empty, too long, or has an invalid mask or id.</exception>
-    public void Validate(EncoderInput input) => Validate(input, 0);
+    public void Validate(EncoderInput input) => Validate(input, 0, _options, nameof(input));
 
     /// <summary>Disposes the session if this encoder owns it. Idempotent.</summary>
     public void Dispose()
@@ -309,27 +322,29 @@ public sealed class E5Encoder : IDisposable
         return ((int)output.Dimensions[2], hasTypes);
     }
 
-    private void Validate(EncoderInput input, int index) => Validate(input, index, _options);
-
-    /// <summary>The input checks of <see cref="Validate(EncoderInput)"/> against <paramref name="options"/> (shared with the browser encoder).</summary>
-    internal static void Validate(EncoderInput input, int index, E5EncoderOptions options)
+    /// <summary>
+    /// The input checks of <see cref="Validate(EncoderInput)"/> against <paramref name="options"/> (shared with the
+    /// browser encoder). <paramref name="paramName"/> is the caller's parameter that carried the input (the batch for
+    /// <c>EmbedBatch</c>, the input itself for <c>Validate</c>), reported as <see cref="ArgumentException.ParamName"/>.
+    /// </summary>
+    internal static void Validate(EncoderInput input, int index, E5EncoderOptions options, string paramName)
     {
         var ids = input.InputIds.Span;
         if (ids.Length == 0)
         {
-            throw new ArgumentException($"Input {index} has no tokens.", nameof(input));
+            throw new ArgumentException($"Input {index} has no tokens.", paramName);
         }
 
         if (ids.Length > options.MaxSequenceLength)
         {
-            throw new ArgumentException($"Input {index} has {ids.Length} tokens; the maximum is {options.MaxSequenceLength}. Truncate in the tokenizer.", nameof(input));
+            throw new ArgumentException($"Input {index} has {ids.Length} tokens; the maximum is {options.MaxSequenceLength}. Truncate in the tokenizer.", paramName);
         }
 
         foreach (long id in ids)
         {
             if (id < 0 || id >= options.VocabularySize)
             {
-                throw new ArgumentException($"Input {index} contains token id {id}, outside [0, {options.VocabularySize}).", nameof(input));
+                throw new ArgumentException($"Input {index} contains token id {id}, outside [0, {options.VocabularySize}).", paramName);
             }
         }
 
@@ -341,7 +356,7 @@ public sealed class E5Encoder : IDisposable
         var mask = input.AttentionMask.Span;
         if (mask.Length != ids.Length)
         {
-            throw new ArgumentException($"Input {index} has {ids.Length} ids but {mask.Length} mask values.", nameof(input));
+            throw new ArgumentException($"Input {index} has {ids.Length} ids but {mask.Length} mask values.", paramName);
         }
 
         bool any = false;
@@ -349,7 +364,7 @@ public sealed class E5Encoder : IDisposable
         {
             if (m is not (0 or 1))
             {
-                throw new ArgumentException($"Input {index} has attention mask value {m}; expected 0 or 1.", nameof(input));
+                throw new ArgumentException($"Input {index} has attention mask value {m}; expected 0 or 1.", paramName);
             }
 
             any |= m == 1;
@@ -357,7 +372,7 @@ public sealed class E5Encoder : IDisposable
 
         if (!any)
         {
-            throw new ArgumentException($"Input {index} has no attended position (attention mask all zero).", nameof(input));
+            throw new ArgumentException($"Input {index} has no attended position (attention mask all zero).", paramName);
         }
     }
 

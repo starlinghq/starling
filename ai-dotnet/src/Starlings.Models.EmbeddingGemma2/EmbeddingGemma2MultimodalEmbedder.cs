@@ -117,10 +117,11 @@ public sealed class EmbeddingGemma2MultimodalEmbedder : IDisposable
     /// <param name="tokenizer">The owned tokenizer (<see cref="EmbeddingGemma2Tokenizer"/>) or another exact implementation.</param>
     /// <param name="vision">A session over the vision graph.</param>
     /// <param name="multimodalText">A session over the multimodal text graph.</param>
-    /// <param name="textEncoder">An encoder over the released text graph, or null.</param>
+    /// <param name="textEncoder">An encoder over the released text graph, or null. Its <see cref="EmbeddingGemma2EncoderOptions.Dimension"/> and <see cref="EmbeddingGemma2EncoderOptions.MaxSequenceLength"/> must equal the options'.</param>
     /// <param name="options">Options; <see cref="EmbeddingGemma2MultimodalOptions.Session"/> is ignored (the sessions are configured).</param>
     /// <param name="ownsSessions">When true, <see cref="Dispose"/> disposes the two sessions and the text encoder.</param>
     /// <exception cref="NotSupportedException">A session does not have the expected graph signature.</exception>
+    /// <exception cref="ArgumentException"><paramref name="textEncoder"/> has another dimension or another sequence limit than <paramref name="options"/>.</exception>
     public EmbeddingGemma2MultimodalEmbedder(
         IEmbeddingGemma2Tokenizer tokenizer,
         OnnxModelSession vision,
@@ -150,6 +151,13 @@ public sealed class EmbeddingGemma2MultimodalEmbedder : IDisposable
         if (textEncoder is { IsValueCreated: true } && textEncoder.Value.Dimension != options.Dimension)
         {
             throw new ArgumentException($"The text encoder produces {textEncoder.Value.Dimension} dimensions; the options ask for {options.Dimension}.", nameof(textEncoder));
+        }
+
+        // Text-only rows are checked by the text encoder against its own limit, rows with media against
+        // options.MaxSequenceLength; the two must agree or the limit would depend on the row's modality.
+        if (textEncoder is { IsValueCreated: true } && textEncoder.Value.Options.MaxSequenceLength != options.MaxSequenceLength)
+        {
+            throw new ArgumentException($"The text encoder accepts at most {textEncoder.Value.Options.MaxSequenceLength} tokens; the options ask for {options.MaxSequenceLength}. Use the same MaxSequenceLength for both.", nameof(textEncoder));
         }
 
         _tokenizer = tokenizer;
