@@ -82,6 +82,25 @@ public sealed class WhisperModel : IDisposable
         _ownsSessions = ownsSessions;
     }
 
+    /// <summary>
+    /// Loads the encoder and decoder graphs of verified files (<see cref="WhisperModelAssets.OpenLocal"/> or
+    /// <see cref="WhisperModelAssets.OpenDirectory"/>) and owns the resulting sessions. When the snapshot hashed the
+    /// graphs (<see cref="WhisperModelFiles.EncoderSha256"/>, <see cref="WhisperModelFiles.DecoderSha256"/>), each session
+    /// takes that digest as <see cref="OnnxSessionOptions.KnownModelSha256"/> (unless the options set one) instead of
+    /// reading the graph again.
+    /// </summary>
+    public static WhisperModel Create(WhisperModelFiles files, WhisperOptions? options = null)
+    {
+        ArgumentNullException.ThrowIfNull(files);
+        options ??= new WhisperOptions();
+        options = options with
+        {
+            EncoderSession = options.EncoderSession with { KnownModelSha256 = options.EncoderSession.KnownModelSha256 ?? files.EncoderSha256 },
+            DecoderSession = options.DecoderSession with { KnownModelSha256 = options.DecoderSession.KnownModelSha256 ?? files.DecoderSha256 },
+        };
+        return Create(files.EncoderPath, files.DecoderPath, options);
+    }
+
     /// <summary>Loads the encoder and decoder graphs and owns the resulting sessions.</summary>
     public static WhisperModel Create(string encoderPath, string decoderPath, WhisperOptions? options = null)
     {

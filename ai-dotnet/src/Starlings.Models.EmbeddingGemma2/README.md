@@ -155,6 +155,8 @@ Text whose length alone proves it is above the limit is rejected without being t
 
 ## Shared types
 
+A snapshot verified with `CacheVerification.Sha256` (the default) carries its digests: `EmbeddingGemma2ModelFiles.ModelSha256` is the graph's SHA-256 then, and `EmbeddingGemma2TextEmbedder.Create(files)`, the generator, the ML.NET transform and `EmbeddingGemma2MultimodalEmbedder.Create(files)` (with `VisionModelSha256` and `MultimodalModelSha256`) pass it to the session as `OnnxSessionOptions.KnownModelSha256`, so the graph is read once at startup, by the verification, not again by the session. With `CacheVerification.Size` it is null and the session hashes the graph as before.
+
 The package uses the backend-neutral types of `Starlings.Models.Abstractions`. `EmbeddingGemma2TextEmbedder` is an `ITextEmbedder` (no prompt through that interface; pass a prompt with the overloads that take one). `EmbeddingGemma2ModelAssets.Assets` is the text lock and acquisition as an `IModelAssets<EmbeddingGemma2ModelFiles>`. `EmbeddingGemma2InputTooLongException` derives from `InputTooLongException`, whose `MaxTokens` replaces the obsolete `MaximumTokens`. `EmbeddingGemma2Capabilities.Statuses` is the package-wide capability table in `Starlings.Models.CapabilityStatus`, and `EmbeddingGemma2Capabilities.ProfileCapabilities` holds each profile's capability record (`ModelProfileCapabilities`), generated from its registry manifest. `EmbeddingGemma2Capabilities.All`, `EmbeddingGemma2Capabilities.Profiles` and `EmbeddingGemma2CapabilityStatus` are obsolete and are removed in the next minor version.
 
 ## Status

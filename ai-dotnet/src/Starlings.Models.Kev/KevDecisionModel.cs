@@ -1,3 +1,4 @@
+using System.Collections.Immutable;
 using System.Globalization;
 using Microsoft.ML.OnnxRuntime;
 using Starlings.Runtime.Onnx;
@@ -37,6 +38,25 @@ public sealed record KevOptions
     /// <summary>Maximum tokens of one question's row (state plus branch). Default and maximum <see cref="KevModelProfile.MaxRowTokens"/>.</summary>
     public int MaxRowTokens { get; init; } = KevModelProfile.MaxRowTokens;
 
+    /// <summary>
+    /// Maximum tokens of one question's branch alone (<c>&lt;q&gt;</c> through <c>&lt;decide&gt;</c>, the state not
+    /// counted), or null (default) for no branch limit beyond <see cref="MaxRowTokens"/>. A longer branch is over the
+    /// limit like an over-long row (<see cref="KevTokenLimit.Branch"/>): thrown, or declined with
+    /// <see cref="DeclineOverLongQuestions"/>. A budget, not a model limit: the validated context is
+    /// <see cref="MaxRowTokens"/>. At most <see cref="KevModelProfile.MaxRowTokens"/>.
+    /// </summary>
+    public int? MaxBranchTokens { get; init; }
+
+    /// <summary>
+    /// What <see cref="KevDecisionModel.Decide(KevRequest, CancellationToken)"/> and
+    /// <see cref="KevDecisionModel.Encode(KevRecord)"/> do with questions over <see cref="MaxRowTokens"/> or
+    /// <see cref="MaxBranchTokens"/>. False (default): throw <see cref="KevInputTooLongException"/>, which lists every
+    /// such question (<see cref="KevInputTooLongException.OverLongQuestions"/>). True: answer the other questions and
+    /// list the over-long ones in <see cref="KevDecision.Declined"/> (and <see cref="KevEncoding.Declined"/>), all in
+    /// one pass. A state over <see cref="MaxStateTokens"/> always throws. Nothing is truncated either way.
+    /// </summary>
+    public bool DeclineOverLongQuestions { get; init; }
+
     internal void Validate()
     {
         ArgumentNullException.ThrowIfNull(Session);
@@ -49,6 +69,11 @@ public sealed record KevOptions
         ArgumentOutOfRangeException.ThrowIfGreaterThan(MaxStateTokens, KevModelProfile.MaxStateTokens);
         ArgumentOutOfRangeException.ThrowIfLessThan(MaxRowTokens, 2);
         ArgumentOutOfRangeException.ThrowIfGreaterThan(MaxRowTokens, KevModelProfile.MaxRowTokens);
+        if (MaxBranchTokens is { } branch)
+        {
+            ArgumentOutOfRangeException.ThrowIfLessThan(branch, 1, nameof(MaxBranchTokens));
+            ArgumentOutOfRangeException.ThrowIfGreaterThan(branch, KevModelProfile.MaxRowTokens, nameof(MaxBranchTokens));
+        }
     }
 }
 
@@ -72,8 +97,16 @@ public sealed record KevOptions
 /// through host memory between rows.
 /// </para>
 /// <para>
-/// <b>Limits.</b> States above <see cref="KevOptions.MaxStateTokens"/> and rows above <see cref="KevOptions.MaxRowTokens"/>
-/// are rejected (<see cref="KevInputTooLongException"/>). Rows run one at a time. See <see cref="KevCapabilities"/>.
+/// <b>Limits.</b> States above <see cref="KevOptions.MaxStateTokens"/> are rejected
+/// (<see cref="KevInputTooLongException"/>); questions whose row is above <see cref="KevOptions.MaxRowTokens"/> or
+/// whose branch is above <see cref="KevOptions.MaxBranchTokens"/> are rejected together, or declined with
+/// <see cref="KevOptions.DeclineOverLongQuestions"/>. Rows run one at a time. See <see cref="KevCapabilities"/>.
+/// </para>
+/// <para>
+/// <b>State reuse.</b> <see cref="CreateState"/> runs a state once and keeps its cache in a <see cref="KevState"/>;
+/// <see cref="Decide(KevState, IEnumerable{KeyValuePair{string, KevQuestion}}, CancellationToken)"/> answers any
+/// number of question sets against it, with the same probabilities as
+/// <see cref="Decide(KevRequest, CancellationToken)"/> on the same state and questions.
 /// </para>
 /// <para>
 /// <b>Threading and lifetime.</b> Methods are synchronous and hold no per-call state on the model, so they are meant to
@@ -137,6 +170,23 @@ public sealed partial class KevDecisionModel : IDisposable
     /// <summary>The calibration temperature in effect.</summary>
     public double Temperature => _head.Temperature;
 
+    /// <summary>
+    /// True when <see cref="Temperature"/> is the checkpoint's calibrated temperature (<see cref="KevModelProfile.Temperature"/>):
+    /// <see cref="KevOptions.Temperature"/> null or set to that value. Every answer repeats it (<see cref="KevAnswer.IsCalibrated"/>).
+    /// </summary>
+    public bool IsCalibrated => _head.Temperature == Profile.Temperature;
+
+    /// <summary>
+    /// Where this model runs: provider, CUDA device, profile, serialization, and the session's node placement when
+    /// captured. Read from the session, so a consumer does not derive it from <see cref="OnnxSessionOptions"/>.
+    /// </summary>
+    public KevPlacement Placement => new(
+        _onCuda ? OnnxExecutionProvider.Cuda : OnnxExecutionProvider.Cpu,
+        _onCuda ? _options.Session.CudaDeviceId : null,
+        ProfileId,
+        SerializesNativeCalls,
+        _session.Placement);
+
     /// <summary>The underlying session, for diagnostics.</summary>
     public OnnxModelSession Session => _session;
 
@@ -151,6 +201,12 @@ public sealed partial class KevDecisionModel : IDisposable
         if (options.Session is { ExpectedModelSha256: null } session)
         {
             options = options with { Session = session with { ExpectedModelSha256 = KevModelAssets.ModelSha256(files.Profile.Model) } };
+        }
+
+        // A snapshot verified with SHA-256 already hashed the graph: pass the digest instead of reading the file again.
+        if (options.Session is { KnownModelSha256: null } known && files.ModelSha256 is { } verified)
+        {
+            options = options with { Session = known with { KnownModelSha256 = verified } };
         }
 
         return Create(files.Profile, files.ModelPath, files.HeadPath, files.HeadMetadataPath, files.TokenizerPath, options);
@@ -189,32 +245,54 @@ public sealed partial class KevDecisionModel : IDisposable
 
     /// <summary>Answers a request: one calibrated distribution per question, mapped to System One answers.</summary>
     /// <exception cref="KevInputTooLongException">The state or a question's row is over the limits.</exception>
+    /// <exception cref="KevInputTooLongException">
+    /// The state is over the limit, or a question is and <see cref="KevOptions.DeclineOverLongQuestions"/> is false.
+    /// </exception>
     public KevDecision Decide(KevRequest request, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(request);
         var record = request.ToRecord();
         var encoding = Encode(record);
-        var probs = Run(encoding, cancellationToken);
-        var answers = new List<KevAnswer>(probs.Count);
-        for (int i = 0; i < probs.Count; i++)
-        {
-            var (id, question) = request.Questions[i];
-            answers.Add(new KevAnswer(id, question, probs[i]));
-        }
-
-        return new KevDecision(answers, encoding.StateIds.Length, encoding.Rows.Sum(r => r.Ids.Length));
+        var probs = encoding.Rows.Count == 0 ? [] : Run(encoding, cancellationToken);
+        return ToDecision(request.Questions, encoding, probs);
     }
 
-    /// <summary>Probabilities per question of an internal record (Kev's <c>encode</c> input).</summary>
-    public IReadOnlyList<float[]> Score(KevRecord record, CancellationToken cancellationToken = default) =>
-        Run(Encode(record), cancellationToken);
+    /// <summary>
+    /// Probabilities per row of an internal record (Kev's <c>encode</c> input): one per question, or, with
+    /// <see cref="KevOptions.DeclineOverLongQuestions"/>, one per question that is not over a limit (map them with
+    /// <see cref="Encode"/> and <see cref="KevEncoding.QuestionIndices"/>).
+    /// </summary>
+    public IReadOnlyList<float[]> Score(KevRecord record, CancellationToken cancellationToken = default)
+    {
+        var encoding = Encode(record);
+        return encoding.Rows.Count == 0 ? [] : Run(encoding, cancellationToken);
+    }
 
-    /// <summary>Stage 1: Kev's row-form encoding of a record (escaping, tokenization, delimiters, positions, readouts).</summary>
-    /// <exception cref="KevInputTooLongException">The state or a row is over the limits.</exception>
+    /// <summary>
+    /// Stage 1: Kev's row-form encoding of a record (escaping, tokenization, delimiters, positions, readouts). With
+    /// <see cref="KevOptions.DeclineOverLongQuestions"/>, over-long questions are left out and listed in
+    /// <see cref="KevEncoding.Declined"/>; the encoding has no rows when every question is over a limit.
+    /// </summary>
+    /// <exception cref="KevInputTooLongException">
+    /// The state is over the limit, or a question is and <see cref="KevOptions.DeclineOverLongQuestions"/> is false.
+    /// </exception>
     public KevEncoding Encode(KevRecord record)
     {
         ObjectDisposedException.ThrowIf(Volatile.Read(ref _disposed) != 0, this);
-        return _encoder.Encode(record, _options.MaxStateTokens, _options.MaxRowTokens);
+        return _encoder.Encode(record, _options.MaxStateTokens, _options.MaxRowTokens, _options.MaxBranchTokens, _options.DeclineOverLongQuestions);
+    }
+
+    private KevDecision ToDecision(IReadOnlyList<KeyValuePair<string, KevQuestion>> questions, KevEncoding encoding, IReadOnlyList<float[]> probs)
+    {
+        var answers = new List<KevAnswer>(probs.Count);
+        bool calibrated = IsCalibrated;
+        for (int r = 0; r < probs.Count; r++)
+        {
+            var (id, question) = questions[encoding.QuestionIndexOf(r)];
+            answers.Add(new KevAnswer(id, question, probs[r], _head.Temperature, calibrated));
+        }
+
+        return new KevDecision(answers, encoding.StateIds.Length, encoding.Rows.Sum(r => r.Ids.Length)) { Declined = encoding.Declined };
     }
 
     /// <summary>
@@ -238,9 +316,18 @@ public sealed partial class KevDecisionModel : IDisposable
 
     private float[][] RunCached(KevEncoding encoding, CancellationToken cancellationToken)
     {
+        using var cache = RunState(encoding.StateIds, cancellationToken);
+        return RunRows(encoding, [.. cache], cancellationToken);
+    }
+
+    /// <summary>The state pass: the cache (attention keys and values, DeltaNet states) the rows continue from.</summary>
+    private IDisposableReadOnlyCollection<OrtValue> RunState(ImmutableArray<int> stateIds, CancellationToken cancellationToken) =>
+        RunGraph([.. stateIds], Positions(0, stateIds.Length), 0, _emptyPast, _presentNames, cancellationToken);
+
+    /// <summary>Each row from the state's cache <paramref name="past"/>, which no graph run modifies.</summary>
+    private float[][] RunRows(KevEncoding encoding, OrtValue[] past, CancellationToken cancellationToken)
+    {
         int stateLength = encoding.StateIds.Length;
-        using var cache = RunGraph([.. encoding.StateIds], Positions(0, stateLength), 0, _emptyPast, _presentNames, cancellationToken);
-        var past = cache.ToArray();
         var result = new float[encoding.Rows.Count][];
         for (int k = 0; k < result.Length; k++)
         {

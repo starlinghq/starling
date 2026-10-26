@@ -85,7 +85,11 @@ public sealed class OnnxModelSession : IDisposable
     /// <summary><see langword="true"/> after <see cref="Dispose"/>.</summary>
     public bool IsDisposed => Volatile.Read(ref _disposed) != 0;
 
-    /// <summary>Loads a model file.</summary>
+    /// <summary>
+    /// Loads a model file. The file is read once for its SHA-256 when <see cref="OnnxSessionOptions.ComputeModelSha256"/>
+    /// or <see cref="OnnxSessionOptions.ExpectedModelSha256"/> asks for it, unless
+    /// <see cref="OnnxSessionOptions.KnownModelSha256"/> supplies the digest.
+    /// </summary>
     /// <exception cref="OnnxRuntimeUnavailableException">The native runtime is missing or mismatched.</exception>
     /// <exception cref="OnnxProviderUnavailableException">The requested provider cannot be used.</exception>
     /// <exception cref="OnnxModelIntegrityException">The file does not match <see cref="OnnxSessionOptions.ExpectedModelSha256"/>.</exception>
@@ -100,8 +104,9 @@ public sealed class OnnxModelSession : IDisposable
             throw new FileNotFoundException("Model file not found.", modelPath);
         }
 
-        string? sha = null;
-        if (options.ComputeModelSha256 || options.ExpectedModelSha256 is not null)
+        // A digest the caller already established (an acquisition snapshot verified with SHA-256) replaces the read.
+        string? sha = options.KnownModelSha256;
+        if (sha is null && (options.ComputeModelSha256 || options.ExpectedModelSha256 is not null))
         {
             using var stream = file.OpenRead();
             sha = Convert.ToHexStringLower(SHA256.HashData(stream));
@@ -119,9 +124,8 @@ public sealed class OnnxModelSession : IDisposable
         ArgumentNullException.ThrowIfNull(model);
         options ??= new OnnxSessionOptions();
         options.Validate();
-        string? sha = options.ComputeModelSha256 || options.ExpectedModelSha256 is not null
-            ? Convert.ToHexStringLower(SHA256.HashData(model))
-            : null;
+        string? sha = options.KnownModelSha256
+            ?? (options.ComputeModelSha256 || options.ExpectedModelSha256 is not null ? Convert.ToHexStringLower(SHA256.HashData(model)) : null);
         return CreateCore(options, MemorySource, model.LongLength, sha, so => new InferenceSession(model, so));
     }
 
@@ -197,7 +201,8 @@ public sealed class OnnxModelSession : IDisposable
     {
         if (options.ExpectedModelSha256 is { } expected && !string.Equals(expected, sha, StringComparison.Ordinal))
         {
-            throw new OnnxModelIntegrityException($"Model {source} has SHA-256 {sha}; expected {expected}.");
+            string origin = options.KnownModelSha256 is null ? string.Empty : " (the caller's KnownModelSha256, not re-read)";
+            throw new OnnxModelIntegrityException($"Model {source} has SHA-256 {sha}{origin}; expected {expected}.");
         }
 
         var env = OnnxRuntimeInfo.Environment;
@@ -309,6 +314,7 @@ public sealed class OnnxModelSession : IDisposable
                 ModelSource = source,
                 ModelSizeBytes = size,
                 ModelSha256 = sha,
+                ModelSha256Source = sha is null ? null : options.KnownModelSha256 is null ? OnnxModelDigestSource.Computed : OnnxModelDigestSource.Known,
                 Model = ReadModelMetadata(session),
                 Inputs = ReadTensorInfo(session.InputMetadata),
                 Outputs = ReadTensorInfo(session.OutputMetadata),

@@ -89,8 +89,18 @@ public sealed record OnnxSessionDiagnostics
     /// <summary>Model size in bytes.</summary>
     public required long ModelSizeBytes { get; init; }
 
-    /// <summary>Lowercase hex SHA-256 of the model bytes, or <see langword="null"/> when not computed.</summary>
+    /// <summary>
+    /// Lowercase hex SHA-256 of the model bytes, or <see langword="null"/> when neither computed nor supplied
+    /// (<see cref="ModelSha256Source"/> says which).
+    /// </summary>
     public string? ModelSha256 { get; init; }
+
+    /// <summary>
+    /// Where <see cref="ModelSha256"/> came from: hashed at load (<see cref="OnnxModelDigestSource.Computed"/>) or
+    /// supplied as <see cref="OnnxSessionOptions.KnownModelSha256"/> (<see cref="OnnxModelDigestSource.Known"/>);
+    /// <see langword="null"/> when there is no digest.
+    /// </summary>
+    public OnnxModelDigestSource? ModelSha256Source { get; init; }
 
     /// <summary>Metadata stored in the model.</summary>
     public required OnnxModelMetadata Model { get; init; }
@@ -113,3 +123,16 @@ public sealed record OnnxPlacementReport(
     IReadOnlyDictionary<string, int> NodesByProvider,
     IReadOnlyDictionary<string, IReadOnlyDictionary<string, int>> OperatorsByProvider,
     IReadOnlyDictionary<string, IReadOnlyList<string>> NodeNamesByProvider);
+
+/// <summary>Origin of <see cref="OnnxSessionDiagnostics.ModelSha256"/>.</summary>
+public enum OnnxModelDigestSource
+{
+    /// <summary>The session hashed the model bytes at load.</summary>
+    Computed,
+
+    /// <summary>
+    /// The caller supplied the digest (<see cref="OnnxSessionOptions.KnownModelSha256"/>), for example from an acquisition
+    /// snapshot verified with SHA-256; the model was not read for hashing.
+    /// </summary>
+    Known,
+}

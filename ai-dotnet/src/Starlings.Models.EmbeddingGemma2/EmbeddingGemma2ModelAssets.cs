@@ -19,6 +19,11 @@ public sealed record EmbeddingGemma2ModelFiles(string ModelPath, string Tokenize
             snapshot.GetFilePath(EmbeddingGemma2ModelAssets.PromptConfigFile),
             snapshot);
     }
+
+    /// <summary>
+    /// SHA-256 of <see cref="ModelPath"/> when <see cref="Snapshot"/> hashed it (<see cref="ModelSnapshot.Verification"/> <see cref="CacheVerification.Sha256"/>); otherwise null. The model factories pass it as <c>OnnxSessionOptions.KnownModelSha256</c>, so the graph is not read a second time at load.
+    /// </summary>
+    public string? ModelSha256 => Snapshot.GetVerifiedSha256(EmbeddingGemma2ModelAssets.ModelFile);
 }
 
 /// <summary>
@@ -242,4 +247,16 @@ public sealed record EmbeddingGemma2ImageModelFiles(EmbeddingGemma2ModelFiles Te
             snapshot.GetFilePath(EmbeddingGemma2ModelAssets.VisionModelFile),
             snapshot.GetFilePath(EmbeddingGemma2ModelAssets.MultimodalModelFile));
     }
+
+    /// <summary>
+    /// SHA-256 of <see cref="VisionModelPath"/> when the snapshot (<see cref="EmbeddingGemma2ModelFiles.Snapshot"/> of
+    /// <see cref="Text"/>) hashed it; otherwise null. Passed as <c>OnnxSessionOptions.KnownModelSha256</c> at load.
+    /// </summary>
+    public string? VisionModelSha256 => Text.Snapshot.GetVerifiedSha256(EmbeddingGemma2ModelAssets.VisionModelFile);
+
+    /// <summary>
+    /// SHA-256 of <see cref="MultimodalModelPath"/> when the snapshot hashed it; otherwise null. Passed as
+    /// <c>OnnxSessionOptions.KnownModelSha256</c> at load.
+    /// </summary>
+    public string? MultimodalModelSha256 => Text.Snapshot.GetVerifiedSha256(EmbeddingGemma2ModelAssets.MultimodalModelFile);
 }

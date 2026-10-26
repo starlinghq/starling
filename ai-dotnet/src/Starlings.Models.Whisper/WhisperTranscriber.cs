@@ -21,6 +21,29 @@ public sealed class WhisperTranscriber : IDisposable
         _ownsModel = ownsModel;
     }
 
+    /// <summary>
+    /// Loads the encoder, decoder and tokenizer of verified files (<see cref="WhisperModelAssets.OpenLocal"/>) and owns
+    /// them. Graph digests the snapshot already verified are passed to the sessions
+    /// (<see cref="WhisperModel.Create(WhisperModelFiles, WhisperOptions?)"/>), so the graphs are not read again.
+    /// </summary>
+    public static WhisperTranscriber Create(WhisperModelFiles files, WhisperOptions? options = null)
+    {
+        ArgumentNullException.ThrowIfNull(files);
+        options ??= new WhisperOptions();
+        options.Validate();
+        var model = WhisperModel.Create(files, options);
+        try
+        {
+            var tokenizer = WhisperTokenizer.FromFile(files.TokenizerPath);
+            return new WhisperTranscriber(model, tokenizer, options, ownsModel: true);
+        }
+        catch
+        {
+            model.Dispose();
+            throw;
+        }
+    }
+
     /// <summary>Loads the encoder, decoder and tokenizer and owns them.</summary>
     public static WhisperTranscriber Create(string encoderPath, string decoderPath, string tokenizerPath, WhisperOptions? options = null)
     {

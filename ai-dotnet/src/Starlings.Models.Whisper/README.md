@@ -38,13 +38,13 @@ using Starlings.Models.Whisper;
 var files = await WhisperModelAssets.DownloadAsync();
 
 // Load offline at startup.
-using var transcriber = WhisperTranscriber.Create(
-    files.EncoderPath, files.DecoderPath, files.TokenizerPath,
-    new WhisperOptions { Language = "en" });
+using var transcriber = WhisperTranscriber.Create(files, new WhisperOptions { Language = "en" });
 
 // 16 kHz float32 PCM, up to 30 seconds.
 string text = transcriber.Transcribe(waveform);
 ```
+
+`WhisperTranscriber.Create(files)` and `WhisperModel.Create(files)` pass the graph digests a snapshot verified with `CacheVerification.Sha256` already computed (`WhisperModelFiles.EncoderSha256`, `DecoderSha256`) to the sessions as `OnnxSessionOptions.KnownModelSha256`, so the graphs are read once at startup. The path overloads hash each graph as before.
 
 ## Model
 

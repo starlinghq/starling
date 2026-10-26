@@ -37,6 +37,9 @@ internal sealed class BertSession : IChunkingTokenizer, IDisposable
             IntraOpNumThreads = threads,
             InterOpNumThreads = 1,
             ExpectedModelSha256 = profile.RuntimeLock.GetFile(BertModelProfile.GraphFile).Sha256,
+
+            // VerifyDirectory just hashed the graph against the lock; the session does not read it again.
+            KnownModelSha256 = files.GetVerifiedSha256(BertModelProfile.GraphFile),
         });
         try
         {
