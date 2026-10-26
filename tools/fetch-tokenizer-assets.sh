@@ -34,6 +34,8 @@ assets=(
     "BAAI/bge-base-en-v1.5|a5beb1e3e68b9ab74eb54cfd186867f64f240e1a|tokenizer.json|d241a60d5e8f04cc1b2b3e9ef7a4921b27bf526d9f6050ab90f9267a1f9e5c66"
     "BAAI/bge-m3|5617a9f61b028005a4858fdac845db406aefb181|tokenizer.json|21106b6d7dab2952c1d496fb21d5dc9db75c28ed361a05f5020bbba27810dd08"
     "Starlinghq/bge-reranker-v2-m3-onnx|047d4622e93d347828457e8a13bccd997fb6a969|tokenizer.json|69564b696052886ed0ac63fa393e928384e0f8caada38c1f4864a9bfbf379c15"
+    "Qwen/Qwen3-0.6B|c1899de289a04d12100db370d81485cdf75e47ca|tokenizer.json|aeb13307a71acd8fe81861d94ad54ab689df773318809eed3cbe794b4492dae4"
+    "Qwen/Qwen2.5-0.5B-Instruct|7ae557604adf67be50417f59c2c2f167def9a775|tokenizer.json|c0382117ea329cdf097041132f6d735924b697924d6f6fc3945713e96ce87539"
 )
 
 # target repo|commit|path|sha256 <- source repo|commit|path (the source must be in assets above)

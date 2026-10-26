@@ -21,6 +21,9 @@ name: qualification
 #   model-tests    the weight-dependent .NET tests, with the models present
 #   evaluator      the protected staged evaluator on the development fixtures, G1 and G2 required, per CPU profile with
 #                  an onboarding recipe, plus the G3 task-quality evaluator on the public SMOKE example (not gate evidence)
+#   experimental   the onboarding routes of the Experimental CPU profiles of Kev-0.8B, QwenChat (Qwen3, Qwen2.5) and
+#                  Whisper on their candidate contracts: development comparisons that report (step summary, warning,
+#                  artifact) and never gate (continue-on-error); no gate or maturity changes
 #   release-gates  G1, G2 and G3 on the accepted P-030 release sets (tools/release-gates.sh) for the Stable CPU profiles,
 #                  with the commands of docs/evidence/release-set-gates-2026-10-14/; every gate must pass
 #   soak           a one-hour G4 soak per CPU profile (the qualification length; a 10-minute run sits in the allocator's
@@ -292,6 +295,146 @@ jobs:
         with:
           name: qualification-evaluator-${{ strategy.job-index }}
           path: artifacts/qualification/evaluator/
+          if-no-files-found: warn
+
+  # Experimental profiles: report, never gate. The onboarding routes of the Experimental CPU profiles of Kev, QwenChat
+  # and Whisper (model-pipeline/ONBOARDING.md, model-pipeline/FIVE_MODELS.md), run end to end on their candidate
+  # contracts: fresh reference, backend and .NET stages, then the route's evaluator with its predeclared development
+  # policy. These are development comparisons, not gates: no reference is adopted, no gate or maturity changes, and
+  # the job is continue-on-error, so a failure shows in the run (a warning annotation and the step summary) without
+  # failing the workflow. Kev-4B is left out (no binding tolerances, about 16 GB of fp32 weights on CPU). The e5 browser
+  # profiles have their own job (`browser`). Snapshots are acquired anonymously from the candidates' origin.files (and
+  # origin.base) with tools/qualification.py lock-candidate and Starlings.Acquisition.Tool, size and SHA-256 verified.
+  experimental:
+    name: experimental ${{ matrix.id }} (reports, does not gate)
+    if: github.repository == 'starlinghq/starling' && !inputs.soak_only
+    runs-on: qualification
+    timeout-minutes: 180
+    continue-on-error: true
+    strategy:
+      fail-fast: false
+      max-parallel: 1
+      matrix:
+        include:
+          - id: kev-0.8b
+            recipe: model-pipeline/recipes/kev-0.8b-cpu.yaml
+            candidate: model-pipeline/candidates/kev-0.8b/profile.json
+            reference: model-pipeline/reference/kev/requirements.txt
+            python: "3.12"
+            torch_index: https://download.pytorch.org/whl/cpu
+            base: hf-cache
+            kev_code: true
+          - id: qwen3
+            recipe: model-pipeline/recipes/qwen3-cpu.yaml
+            candidate: model-pipeline/candidates/qwen3/profile.json
+            reference: model-pipeline/reference/generation/requirements.txt
+            python: "3.12"
+            torch_index: https://download.pytorch.org/whl/cu130
+          - id: qwen25
+            recipe: model-pipeline/recipes/qwen25-cpu.yaml
+            candidate: model-pipeline/candidates/qwen25/profile.json
+            reference: model-pipeline/reference/generation/requirements.txt
+            python: "3.12"
+            torch_index: https://download.pytorch.org/whl/cu130
+          - id: whisper-large-v3-turbo
+            recipe: model-pipeline/recipes/whisper-large-v3-turbo-cpu.yaml
+            candidate: model-pipeline/candidates/whisper-large-v3-turbo/profile.json
+            reference: model-pipeline/reference/whisper/requirements.txt
+            python: "3.11"
+            torch_index: https://download.pytorch.org/whl/cpu
+            base: plain
+    env:
+      ID: ${{ matrix.id }}
+      CANDIDATE: ${{ matrix.candidate }}
+      BASE: ${{ matrix.base }}
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: "3.11"
+      - run: pip install -e model-pipeline
+      - uses: actions/setup-dotnet@26b0ec14cb23fa6904739307f278c14f94c95bf1 # v5
+        with:
+          global-json-file: global.json
+      - name: Model cache
+        run: echo "STARLING_MODELS=$GITHUB_WORKSPACE/.models" >>"$GITHUB_ENV"
+      # The candidate's snapshot, and its base where the route has one, into $STARLING_MODELS/<repository>/<revision>.
+      - name: Acquire and verify
+        id: acquire
+        run: |
+          locks="$RUNNER_TEMP/locks"
+          mkdir -p "$locks" "$STARLING_MODELS"
+          dotnet build ai-dotnet/tools/Starlings.Acquisition.Tool --configuration Release --nologo -v quiet
+          tool=ai-dotnet/tools/Starlings.Acquisition.Tool/bin/Release/net10.0/Starlings.Acquisition.Tool.dll
+          python3 -I tools/qualification.py lock-candidate "$CANDIDATE" "$locks/snapshot.json"
+          env -u HF_TOKEN dotnet "$tool" download "$locks/snapshot.json" --cache "$STARLING_MODELS"
+          echo "snapshot=$STARLING_MODELS/$(python3 -I tools/qualification.py snapshot "$locks/snapshot.json")" >>"$GITHUB_OUTPUT"
+          if [[ -n "$BASE" ]]; then
+            python3 -I tools/qualification.py lock-candidate "$CANDIDATE" "$locks/base.json" --base
+            env -u HF_TOKEN dotnet "$tool" download "$locks/base.json" --cache "$STARLING_MODELS"
+            base_dir="$STARLING_MODELS/$(python3 -I tools/qualification.py snapshot "$locks/base.json")"
+            if [[ "$BASE" == hf-cache ]]; then
+              # The Kev route loads its base through transformers, offline, from a Hugging Face cache layout:
+              # <cache>/models--<org>--<name>/snapshots/<revision>. Hard links (a copy across file systems) keep every
+              # file inside that cache, as the route requires.
+              repo="$(python3 -I -c 'import json,sys; print(json.load(open(sys.argv[1]))["repository"])' "$locks/base.json")"
+              hf="$RUNNER_TEMP/hf-cache/models--${repo//\//--}/snapshots/$(basename "$base_dir")"
+              mkdir -p "$hf"
+              cp -al "$base_dir/." "$hf/" 2>/dev/null || cp -a "$base_dir/." "$hf/"
+              base_dir="$hf"
+            fi
+            echo "base=$base_dir" >>"$GITHUB_OUTPUT"
+          fi
+      # The route's hash-locked reference environment, plus the pipeline (and for Kev its code at the pinned commit,
+      # installed with --no-deps from a clean checkout, which the route's environment stage verifies).
+      - name: Reference environment
+        env:
+          REFERENCE: ${{ matrix.reference }}
+          PYTHON: ${{ matrix.python }}
+          TORCH_INDEX: ${{ matrix.torch_index }}
+          KEV_CODE: ${{ matrix.kev_code }}
+        run: |
+          pip install uv==0.12.19
+          uv venv --python "$PYTHON" "$RUNNER_TEMP/venv-reference"
+          uv pip install --python "$RUNNER_TEMP/venv-reference/bin/python" --require-hashes -r "$REFERENCE" \
+            --index-url https://pypi.org/simple --extra-index-url "$TORCH_INDEX" --index-strategy unsafe-best-match
+          uv pip install --python "$RUNNER_TEMP/venv-reference/bin/python" -e model-pipeline
+          if [[ "$KEV_CODE" == true ]]; then
+            read -r url rev < <(python3 -I -c 'import json,sys; c=json.load(open(sys.argv[1]))["origin"]["code"]; print(c["repository"], c["revision"])' "$CANDIDATE")
+            git init -q "$RUNNER_TEMP/kev"
+            git -C "$RUNNER_TEMP/kev" fetch -q --depth 1 "$url" "$rev"
+            git -C "$RUNNER_TEMP/kev" checkout -q --detach FETCH_HEAD
+            test "$(git -C "$RUNNER_TEMP/kev" rev-parse HEAD)" = "$rev"
+            uv pip install --python "$RUNNER_TEMP/venv-reference/bin/python" --no-deps -e "$RUNNER_TEMP/kev"
+          fi
+      - name: Onboarding run (development comparison, not a gate)
+        id: run
+        env:
+          RECIPE: ${{ matrix.recipe }}
+          SNAPSHOT: ${{ steps.acquire.outputs.snapshot }}
+          BASE_SNAPSHOT: ${{ steps.acquire.outputs.base }}
+        run: |
+          out="$EVIDENCE/experimental/$ID"
+          base=()
+          if [[ -n "$BASE_SNAPSHOT" ]]; then
+            base=(--base-snapshot "$BASE_SNAPSHOT")
+          fi
+          status=0
+          model-pipeline run "$RECIPE" --snapshot "$SNAPSHOT" "${base[@]}" \
+            --reference-python "$RUNNER_TEMP/venv-reference/bin/python" --out "$out/run" --threads 2 --timeout 3600 \
+            || status=$?
+          if [[ "$status" == 0 ]]; then
+            echo "Experimental \`$ID\`: onboarding run passed its development policy (not a gate)." >>"$GITHUB_STEP_SUMMARY"
+          else
+            echo "::warning title=Experimental $ID::onboarding run exited $status; reported only, no gate changes"
+            echo "Experimental \`$ID\`: onboarding run exited $status (reported, not gating)." >>"$GITHUB_STEP_SUMMARY"
+          fi
+          exit "$status"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: always()
+        with:
+          name: qualification-experimental-${{ matrix.id }}
+          path: artifacts/qualification/experimental/
           if-no-files-found: warn
 
   # Regression support of the Stable CPU profiles: G1, G2 and G3 on the accepted P-030 release sets, with the commands

@@ -88,6 +88,10 @@ The package references only `Microsoft.ML.OnnxRuntime.Managed` (exactly 1.30.0).
 
 Both ship `libonnxruntime` under the same file name. Without a native package, or with a different version, session creation fails with `OnnxRuntimeUnavailableException` naming the package to add.
 
+### Native package check
+
+The package ships MSBuild targets in `buildTransitive/`, so every executable or test project that references it, directly or through a model package, checks its package graph after restore: warning `STARLINGS001` when no ONNX Runtime native package is present, error `STARLINGS002` when both `Microsoft.ML.OnnxRuntime` and a `Microsoft.ML.OnnxRuntime.Gpu*` package are (a GenAI native package counts through the ONNX Runtime package it brings). Class libraries and browser projects (`browser-*` runtime identifiers, or `Starlings.Runtime.OnnxWeb` in the graph) are not checked. Turn it off with `<StarlingsOnnxRuntimeNativeCheck>false</StarlingsOnnxRuntimeNativeCheck>`, for example when the application deploys its own ONNX Runtime library. CUDA build recipe, Linux GPU dependencies and Native AOT status: [native runtimes guide](https://github.com/starlinghq/starling/blob/main/docs/guides/native-runtimes-and-cuda.md).
+
 ## Threads in containers
 
 When `IntraOpNumThreads` is not set and a CPU quota or affinity mask limits the process (`Environment.ProcessorCount` below the host's online CPUs on Linux), the session uses `Environment.ProcessorCount` intra-op threads. ONNX Runtime's own default ignores a container's CPU quota and starts one thread per physical core of the host (147 threads, each with its own glibc malloc arena, for one CUDA e5 session in a 31-CPU container on a 256-CPU host). On an unconstrained host the ONNX Runtime default is kept. `OnnxSessionDiagnostics.IntraOpNumThreads` reports the count used. Evidence: [CUDA soak growth](https://github.com/starlinghq/starling/blob/main/docs/evidence/cuda-soak-growth/README.md).

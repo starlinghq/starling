@@ -1,0 +1,44 @@
+Qwen3-Reranker-0.6B ONNX graph (model.onnx, model.onnx.data)
+Release: qwen3-reranker-0.6b-onnx-r1, hosted at https://huggingface.co/Starlinghq/qwen3-reranker-0.6b-onnx (tag r1)
+
+These files are a derivative of the Qwen3-Reranker-0.6B model weights published by the Qwen team, Alibaba Cloud:
+
+    Model:     Qwen/Qwen3-Reranker-0.6B
+    Source:    https://huggingface.co/Qwen/Qwen3-Reranker-0.6B
+    Revision:  e61197ed45024b0ed8a2d74b80b4d909f1255473
+    Weights:   model.safetensors, SHA-256 27cd75a405b9c1b46b59abfd88aaa209e6fed2a1972cde9b70e7659537c5e65b
+    License:   Apache License, Version 2.0 (model card front matter "license: apache-2.0")
+               https://www.apache.org/licenses/LICENSE-2.0
+
+Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
+the License. You may obtain a copy of the License at
+
+    https://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
+an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
+specific language governing permissions and limitations under the License.
+
+Modifications made by StarlingHq (Apache-2.0, section 4(b)):
+
+  - The Qwen3Model backbone (token embedding, 28 decoder layers, final norm) is exported as one graph that runs the
+    whole input once, without a KV cache and without a position_ids input (positions 0 to sequence - 1). The causal
+    attention mask is built in the graph from the 2-D attention mask as an additive float32 mask (key k is visible to
+    query q when k <= q and the key is not padding).
+  - The language model head is reduced to two rows of the tied embedding matrix, in the order [no = token 2152,
+    yes = token 9693], copied into a 2 x 1024 matrix. Outputs: yes_no_logits (2 per position) and last_hidden_state
+    (1024). Logits over the full 151,669-token vocabulary are not available, so the graph cannot generate text.
+  - The weights were converted from bfloat16 to float32 and exported to ONNX (opset 20) with the PyTorch dynamo
+    exporter (torch 2.14.1, transformers 5.18.0, onnx 1.23.1, onnxscript 0.7.2).
+  - Exporter metadata and doc strings were removed so the files are reproducible; the weights are stored in the
+    external data file model.onnx.data.
+  - The prompt format (system prefix, instruction, query and document, assistant suffix), truncation, the score
+    (yes - no at the last valid position) and its sigmoid are not part of the graph.
+  - tokenizer.json, tokenizer_config.json, config.json, chat_template.jinja and 1_LogitScore/config.json are the
+    original files at the revision above, unchanged.
+
+Reproduction: model-pipeline/reference/qwen3-embedding/export_qwen3_onnx.py --model reranker followed by
+release_qwen3_onnx.py --model reranker in https://github.com/starlinghq/starling (pinned environment
+requirements.txt). The expected sizes and SHA-256 digests are in build-lock.json and SHA256SUMS.
+
+StarlingHq is not affiliated with or endorsed by Alibaba Cloud or the Qwen team.

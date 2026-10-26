@@ -66,16 +66,29 @@ public sealed class QwenChatModel : IDisposable
         }
     }
 
-    /// <summary>Render with the owned text-only template and tokenize without added special tokens.</summary>
-    public QwenChatPrompt CreatePrompt(IReadOnlyList<QwenChatMessage> messages)
+    /// <summary>Render with the owned template and tokenize without added special tokens.</summary>
+    public QwenChatPrompt CreatePrompt(IReadOnlyList<QwenChatMessage> messages) => CreatePrompt(messages, tools: null);
+
+    /// <summary>
+    /// Render with the owned template and the tool definitions (null or empty: no tools block), and tokenize without
+    /// added special tokens. Tool rendering is experimental.
+    /// </summary>
+    public QwenChatPrompt CreatePrompt(IReadOnlyList<QwenChatMessage> messages, IReadOnlyList<QwenChatTool>? tools)
     {
-        string text = QwenChatTemplate.Render(Profile, messages);
+        string text = QwenChatTemplate.Render(Profile, messages, tools);
         return new QwenChatPrompt(text, Tokenizer.Encode(text, addSpecialTokens: false).Ids);
     }
 
-    /// <summary>Generate greedily in a fresh independent request.</summary>
+    /// <summary>
+    /// Generate greedily in a fresh independent request, rendering <see cref="QwenChatOptions.Tools"/> into the prompt.
+    /// The result's text is the raw completion; <see cref="QwenChatToolCallParser.Parse(string)"/> splits out tool calls.
+    /// </summary>
     public GenerationResult Generate(IReadOnlyList<QwenChatMessage> messages, QwenChatOptions? options = null,
-        CancellationToken cancellationToken = default) => Generate(CreatePrompt(messages), options, cancellationToken);
+        CancellationToken cancellationToken = default)
+    {
+        options ??= new QwenChatOptions();
+        return Generate(CreatePrompt(messages, options.Tools), options, cancellationToken);
+    }
 
     /// <summary>Generate from a prepared prompt.</summary>
     public GenerationResult Generate(QwenChatPrompt prompt, QwenChatOptions? options = null,

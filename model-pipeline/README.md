@@ -20,6 +20,7 @@ The delivery system: model registry, manifest schema, admission records, referen
 | `src/model_pipeline/` | CLI and stage implementations: `manifest.py` (validation), `asset_lock.py` (JSON asset lock validation), `fixtures.py` (fixture format), `results.py` (stage results format), `evaluate.py` (staged fidelity evaluator; per task `evaluate_*.py`), `evaluate_task_quality.py` (G3 task metrics), `evaluate_tokenizer_fixtures.py` (G1 on a tokenizer fixture file), `protection.py` (protected evidence rules), `evaluate_decision.py` (Kev development parity for the `kev-onnx-cpu-v1` route), `onboarding_*.py` (recipes, runner, plugins, workflows), `benchmarks.py` and `g5.py` (raw benchmark summaries and G5 budgets), `upstream.py` (upstream change detection). | P-002 onward |
 | `tests/` | Pipeline tests with synthetic fixtures. | |
 | `src/model_pipeline/catalog.py` | Generates `docs/catalog/` (README, compatibility matrix, `catalog.json`) from the registry; `model-pipeline catalog --check` runs in CI. | P-021 |
+| `src/model_pipeline/evidence_index.py` | Generates `docs/evidence/README.md`, the index of the evidence directories (date, title, the profiles and gates whose manifest records each as gate evidence, other citing profiles), from `docs/evidence/` and the registry; `model-pipeline evidence-index --check` runs in CI. | review 2026-10-25, G4 |
 
 ## Commands
 
@@ -33,6 +34,7 @@ pip install -e '.[dev]'
 model-pipeline validate registry
 model-pipeline validate-lock <lock.json>...  # JSON asset locks against schemas/asset-lock.schema.json (versions 1 to 3)
 model-pipeline catalog [--check]            # P-021: regenerate docs/catalog (or fail if stale)
+model-pipeline evidence-index [--check]     # regenerate docs/evidence/README.md (or fail if stale)
 model-pipeline bench validate <raw.jsonl>    # P-008: check raw files against schemas/benchmark-raw.schema.json
 model-pipeline bench summarize <raw.jsonl>   # P-008: medians, p5-p95, bootstrap CIs, C# vs Python
 model-pipeline bench g5 <raw files of both sides> [--profile <id>] [--budgets <file>]   # G5 budgets

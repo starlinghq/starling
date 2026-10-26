@@ -724,6 +724,111 @@ def _tokenizer_components(tokenizer: dict[str, Any]) -> list[dict[str, Any]]:
     return components
 
 
+_POOLING_MODES = (
+    "pooling_mode_cls_token",
+    "pooling_mode_mean_tokens",
+    "pooling_mode_max_tokens",
+    "pooling_mode_mean_sqrt_len_tokens",
+)
+# Encoder families the bert-onnx-cpu-v1 route runs (WordPiece BERT, XLM-R Unigram, nomic-bert through its ONNX graph).
+_BERT_MODEL_TYPES = {"bert", "xlm-roberta", "nomic_bert"}
+_BERT_RERANKER_ARCHITECTURES = {"BertForSequenceClassification", "XLMRobertaForSequenceClassification"}
+# Decoder families the qwen-genai-cpu-v1 route builds GenAI bundles for (onboarding_generation.CONFIG_CONTRACT).
+_QWEN_ARCHITECTURES = {"qwen2": "Qwen2ForCausalLM", "qwen3": "Qwen3ForCausalLM"}
+_NO_ROUTE = "No plugin route can be inferred from these observed facts."
+
+
+def _unknown_route(reason: str = _NO_ROUTE) -> dict[str, Any]:
+    return {"id": "unknown", "status": "unknown", "reason": reason}
+
+
+def _suggest_route(
+    model: dict[str, Any],
+    config: dict[str, Any],
+    tokenizer_model: str,
+    tokenizer_known: bool,
+    modules_status: str,
+    module_types: set[str],
+    pooling: dict[str, Any],
+) -> dict[str, Any]:
+    """Recommend bert-onnx-cpu-v1 or qwen-genai-cpu-v1 from config.json, tokenizer.json and modules.json facts.
+
+    A recommendation is a candidate route, never a support claim: each plugin still accepts only the
+    repositories its contract table pins and refuses everything else.
+    """
+    if model["status"] != "observed":
+        return _unknown_route()
+    model_type, architectures = model["model_type"], model["architectures"]
+    if model_type in _QWEN_ARCHITECTURES:
+        expected = _QWEN_ARCHITECTURES[model_type]
+        if architectures != [expected] or tokenizer_model != "BPE" or not tokenizer_known:
+            return _unknown_route(
+                f"config.json declares {model_type}, but qwen-genai-cpu-v1 needs architectures [{expected}] and a "
+                "BPE tokenizer.json whose every component this checkout implements."
+            )
+        return {
+            "id": "qwen-genai-cpu-v1",
+            "status": "candidate",
+            "task": "generation",
+            "reason": f"Observed a {expected} decoder with a supported BPE tokenizer; the plugin accepts only the "
+            "pinned repositories and geometries of its contract (onboarding_generation.py) and still requires "
+            "its own validation.",
+        }
+    if model_type not in _BERT_MODEL_TYPES:
+        return _unknown_route()
+    if tokenizer_model not in {"WordPiece", "Unigram"} or not tokenizer_known:
+        return _unknown_route(
+            f"config.json declares {model_type}, but bert-onnx-cpu-v1 needs a WordPiece or Unigram tokenizer.json "
+            "whose every component this checkout implements."
+        )
+    facts = {
+        "hidden_size": model["hidden_size"],
+        "max_position_embeddings": model["max_position_embeddings"],
+    }
+    if modules_status == "observed" and "Pooling" in module_types:
+        modes = pooling.get("facts", {}) if pooling.get("status") == "observed" else {}
+        enabled = [mode for mode in _POOLING_MODES if modes.get(mode) is True]
+        if enabled not in (["pooling_mode_cls_token"], ["pooling_mode_mean_tokens"]) or not all(
+            modes.get(mode) is False for mode in _POOLING_MODES if mode not in enabled
+        ):
+            return _unknown_route(
+                "modules.json declares a Pooling module, but bert-onnx-cpu-v1 implements exactly one of mean or "
+                "CLS pooling, with every other mode false."
+            )
+        pooling_name = "cls" if enabled == ["pooling_mode_cls_token"] else "mean"
+        normalize = "l2" if "Normalize" in module_types else "none"
+        return {
+            "id": "bert-onnx-cpu-v1",
+            "status": "candidate",
+            "task": "embeddings",
+            "facts": {**facts, "pooling": pooling_name, "normalize": normalize},
+            "reason": f"Observed a {model_type} encoder, a supported {tokenizer_model} tokenizer and sentence-"
+            f"transformers {pooling_name} pooling ({normalize} normalization). A new repository needs an entry in "
+            "routes/bert-onnx-cpu-v1/contracts.json (model-pipeline scaffold) and its own validation.",
+        }
+    labels = config.get("id2label")
+    num_labels = config.get("num_labels", len(labels) if isinstance(labels, dict) else None)
+    if (
+        isinstance(architectures, list)
+        and len(architectures) == 1
+        and architectures[0] in _BERT_RERANKER_ARCHITECTURES
+        and num_labels == 1
+    ):
+        return {
+            "id": "bert-onnx-cpu-v1",
+            "status": "candidate",
+            "task": "reranking",
+            "facts": {**facts, "pooling": "none", "normalize": "none"},
+            "reason": f"Observed a single-logit {architectures[0]} cross-encoder with a supported {tokenizer_model} "
+            "tokenizer. A new repository needs an entry in routes/bert-onnx-cpu-v1/contracts.json "
+            "(model-pipeline scaffold) and its own validation.",
+        }
+    return _unknown_route(
+        f"config.json declares {model_type}, but neither a sentence-transformers Pooling module (embeddings) nor a "
+        "single-logit sequence-classification head (reranking) was observed."
+    )
+
+
 def inspect_snapshot(snapshot: Path) -> dict[str, Any]:
     """Inspect local JSON metadata only. Never imports, executes, or downloads snapshot code."""
     try:
@@ -843,16 +948,24 @@ def inspect_snapshot(snapshot: Path) -> dict[str, Any]:
             "modules": modules,
             "pooling": pooling,
         },
-        "plugin_route": {
-            "id": "e5-onnx-cpu-v1" if route_match else "unknown",
-            "status": "candidate" if route_match else "unknown",
-            "reason": (
-                "Observed the E5-sized BERT, Unigram tokenizer, mean-pooling, normalization module contract; "
-                "plugin compatibility still requires its own validation."
-                if route_match
-                else "No plugin route can be inferred from these observed facts."
-            ),
-        },
+        "plugin_route": (
+            {
+                "id": "e5-onnx-cpu-v1",
+                "status": "candidate",
+                "reason": "Observed the E5-sized BERT, Unigram tokenizer, mean-pooling, normalization module contract; "
+                "plugin compatibility still requires its own validation.",
+            }
+            if route_match
+            else _suggest_route(
+                model_facts,
+                config_obj,
+                tokenizer_report["model_type"],
+                tokenizer_pipeline_known,
+                modules_status,
+                module_types,
+                pooling,
+            )
+        ),
     }
     result["missing"] = sorted(
         path

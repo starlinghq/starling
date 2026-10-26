@@ -34,7 +34,8 @@ public sealed record Qwen35ChatOptions
     /// <summary>
     /// The template's <c>enable_thinking</c>. Default false (the template default: an empty think block, the model
     /// answers directly). True: the model writes its reasoning, then <c>&lt;/think&gt;</c>, then the answer; the
-    /// completion text contains all of it (reasoning is not split out by this package version).
+    /// completion text contains all of it (this package does not split it; the opt-in
+    /// <c>Qwen35ChatClientOptions.SplitReasoning</c> of Starlings.Models.Qwen35.Extensions.AI does).
     /// </summary>
     public bool EnableThinking { get; init; }
 
@@ -82,6 +83,19 @@ public sealed record Qwen35ChatOptions
     /// <summary>Prefill chunk size used on CUDA when <see cref="PrefillChunkTokens"/> is null.</summary>
     public const int DefaultCudaPrefillChunkTokens = 512;
 
+    /// <summary>
+    /// Opt-in: per-token log probabilities in <see cref="GenerationUpdate.Logprobs"/> and
+    /// <see cref="GenerationResult.Logprobs"/> (see <see cref="GenerationOptions.ReturnLogprobs"/>). Default false.
+    /// Experimental: scripted sequences, and one real-model test on CPU (greedy tokens are each step's most likely).
+    /// </summary>
+    public bool ReturnLogprobs { get; init; }
+
+    /// <summary>
+    /// With <see cref="ReturnLogprobs"/>: the most likely tokens returned per step, 0 (default) to
+    /// <see cref="GenerationOptions.MaxTopLogprobs"/> (see <see cref="GenerationOptions.TopLogprobs"/>).
+    /// </summary>
+    public int TopLogprobs { get; init; }
+
     internal GenerationOptions ToGenerationOptions(GenAIExecutionProvider provider = GenAIExecutionProvider.Cpu) => new()
     {
         MaxNewTokens = MaxNewTokens,
@@ -91,6 +105,8 @@ public sealed record Qwen35ChatOptions
             : AdditionalStopTokenIds,
         Sampling = Sampling,
         PrefillChunkTokens = PrefillChunkTokens ?? (provider == GenAIExecutionProvider.Cuda ? DefaultCudaPrefillChunkTokens : null),
+        ReturnLogprobs = ReturnLogprobs,
+        TopLogprobs = TopLogprobs,
     };
 }
 
