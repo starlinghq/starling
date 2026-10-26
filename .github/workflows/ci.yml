@@ -244,6 +244,13 @@ jobs:
       - uses: actions/setup-dotnet@v5
         with:
           global-json-file: global.json
+      # docfx loads the projects through MSBuild, and Starlings.Runtime.OnnxWeb's build runs npm ci for its
+      # onnxruntime-web static web assets (ai-dotnet/src/Shared/OnnxWeb/OrtWebAssets.targets), as in ai-dotnet.
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: ai-dotnet/src/Shared/OnnxWeb/package-lock.json
       # docfx is a local tool pinned in .config/dotnet-tools.json.
       - run: dotnet tool restore
       - name: Build the site

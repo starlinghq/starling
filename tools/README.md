@@ -18,7 +18,7 @@ python3 -I tools/check-boundary.py --all-history    # tracked files and names; e
 
 Files and file names are always scanned in full. Commits (author, committer and message) are scanned from a baseline on, because a published commit cannot be corrected without rewriting history: the baseline is the full commit SHA in `tools/check-boundary.baseline`, and the commits reachable from HEAD but not from it are scanned. The baseline and its ancestors passed the full-history scan when it was recorded; only the maintainer moves it. Without the file every commit reachable from HEAD is scanned. A baseline the clone does not hold (a shallow checkout) or a range that does not resolve is an error (exit 2), never a pass. Exit 1 when a term is found.
 
-To add a term, append the SHA-256 of its lowercase alphanumeric form under its length in `FORBIDDEN`. starlinghq/roost keeps a byte-identical copy of the script with its own baseline file.
+To add a term, append the SHA-256 of its lowercase alphanumeric form under its length in `FORBIDDEN`. starlinghq/roost keeps a copy of the script; it stays byte-identical to this one once roost adopts this version and records its own baseline file.
 
 Tests: `python3 -I -m unittest discover -s tools/tests -v` (`tools/tests/test_check_boundary.py`: matching, the full-tree file scan, the baseline and range selection, in temporary repositories with a made-up term).
 
