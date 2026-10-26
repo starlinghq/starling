@@ -19,6 +19,13 @@
         `source`, and for a `hosting.source_base` the runtime files the package downloads from there (the same rule as
         tools/check-provenance.py). Only public Hub origins are supported; anything else is an error, never a guess.
 
+    python3 -I tools/qualification.py lock-candidate <profile.json> <out.json> [--base]
+        Writes the same kind of lock (schema_version 1) for an onboarding candidate contract
+        (model-pipeline/candidates/<name>/profile.json): every file of `origin.files` at `origin.repo` and
+        `origin.revision`, or with --base every file of `origin.base` (the pinned base model of the Kev and Whisper
+        routes). These are the snapshots the onboarding recipes verify in their `assets` stage. Only Hugging Face
+        repositories pinned by a full commit SHA are supported.
+
     python3 -I tools/qualification.py snapshot <lock.json>
         Prints the lock's snapshot directory relative to the cache root: <repository>/<revision>.
 
@@ -142,6 +149,40 @@ def lock(manifest: Path, out: Path, reference_environment: Path | None = None) -
     return 0
 
 
+def lock_candidate(profile: Path, out: Path, base: bool = False) -> int:
+    data = json.loads(profile.read_text(encoding="utf-8"))
+    origin = data.get("origin") or {}
+    source = origin.get("base") if base else origin
+    what = "origin.base" if base else "origin"
+    if not isinstance(source, dict):
+        print(f"error: {profile}: no {what}", file=sys.stderr)
+        return 2
+    repository, revision, files = str(source.get("repo", "")), str(source.get("revision", "")), source.get("files")
+    if not re.match(r"^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$", repository) or not SHA.match(revision) or not files:
+        print(
+            f"error: {profile}: {what} must name a Hugging Face repository, a full commit SHA and its files",
+            file=sys.stderr,
+        )
+        return 2
+    entries = []
+    for f in files:
+        if not isinstance(f, dict) or set(f) != {"path", "sha256", "size"}:
+            print(f"error: {profile}: unsupported {what}.files entry {f!r}", file=sys.stderr)
+            return 2
+        entries.append({"path": str(f["path"]), "size": int(f["size"]), "sha256": str(f["sha256"])})
+    document = {
+        "schema_version": 1,
+        "name": str(data["id"]).replace("/", "-") + ("-base" if base else "") + "-snapshot",
+        "repository": repository,
+        "revision": revision,
+        "files": entries,
+    }
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text(json.dumps(document, indent=2) + "\n", encoding="utf-8")
+    print(f"{out}: {repository}@{revision[:8]}, {len(entries)} files, {sum(e['size'] for e in entries)} bytes")
+    return 0
+
+
 def snapshot(lock_file: Path) -> int:
     document = json.loads(lock_file.read_text(encoding="utf-8"))
     print(f"{document['repository']}/{document['revision']}")
@@ -157,6 +198,8 @@ def main(argv: list[str]) -> int:
         return lock(Path(argv[1]), Path(argv[2]))
     if len(argv) == 5 and argv[0] == "lock" and argv[3] == "--reference-environment":
         return lock(Path(argv[1]), Path(argv[2]), Path(argv[4]))
+    if len(argv) in (3, 4) and argv[0] == "lock-candidate" and argv[3:] in ([], ["--base"]):
+        return lock_candidate(Path(argv[1]), Path(argv[2]), base=len(argv) == 4)
     print(__doc__, file=sys.stderr)
     return 2
 

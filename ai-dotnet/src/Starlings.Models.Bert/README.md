@@ -38,7 +38,9 @@ persistence, AOT, GPU providers, and unlisted model contracts are unsupported or
 The candidate contracts live in the repository, not in the package:
 `model-pipeline/candidates/<name>/profile.json`. `BertModelProfile.Parse` accepts only these seven
 repositories, ONNX Runtime 1.30.0 on `CPUExecutionProvider` in fp32, and the exact values below; anything
-else throws `NotSupportedException`.
+else throws `NotSupportedException`. The per-repository values come from the route contract table
+`model-pipeline/routes/bert-onnx-cpu-v1/contracts.json`, which the package embeds and validates on first use and the
+Python allow-list of the onboarding route reads too; `BertModelProfile.SupportedRepositories` lists its repositories.
 
 | Candidate | Profile id | Task | Max tokens | Pooling | Width | Normalize | Prompts |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -86,7 +88,8 @@ directory by size and SHA-256 (`ModelAssetStore.VerifyDirectory`) and never down
 - `BertModelProfile`: `Load(path)`, `Parse(json)`, `Id`, `Task` (`BertTask.Embeddings` or `BertTask.Reranking`),
   `MaxTokens` (including special tokens and the prompt), `Pooling`, `HiddenSize`, `Normalize`, `Prompts`,
   `VocabularySize`, `ClsTokenId`, `SepTokenId`, `PadTokenId`, `OutputName`, `TokenizerProfile`, `TokenTypeIds`,
-  `SourceLock`, `RuntimeLock`, and the constants `BgeQueryInstruction`, `GraphFile`, `GraphDataFile`, `TokenizerFile`.
+  `SourceLock`, `RuntimeLock`, the static `SupportedRepositories`, and the constants `BgeQueryInstruction`, `GraphFile`,
+  `GraphDataFile`, `TokenizerFile`.
 - `BertTextEmbedder.Create(profile, snapshot, threads = 2, maxBatchSize = 32)`: `Embed`, `EmbedBatch`
   (input order), `EmbedTokens`, `Tokenize`, `Dimension`, `Profile`, `Diagnostics`, and the owned
   `Session` (advanced).

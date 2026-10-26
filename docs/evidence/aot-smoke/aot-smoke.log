@@ -1,0 +1,111 @@
+
+== 0. Inputs
+commit:   a691d5cd70bdd8762672b8c49c683563751b3c07
+dotnet:   10.0.113, RID ubuntu.24.04-x64
+offline:  network namespace without interfaces (unshare -rn)
+linker:   /usr/bin/clang
+
+== 1. Packages from <feed>
+version: 0.3.0
+
+== AOT smoke Starlings.Acquisition
+publish: yes; warnings: 0 in Starlings.* code, 0 elsewhere (details: <out>/Starlings.Acquisition/warnings.txt)
+run: Starlings.Acquisition 0.3.0.0; verdict: AOT-clean
+
+== AOT smoke Starlings.Runtime.Onnx
+publish: yes; warnings: 0 in Starlings.* code, 0 elsewhere (details: <out>/Starlings.Runtime.Onnx/warnings.txt)
+run: Starlings.Runtime.Onnx 0.3.0.0; verdict: AOT-clean
+
+== AOT smoke Starlings.Models.E5
+publish: yes; warnings: 0 in Starlings.* code, 0 elsewhere (details: <out>/Starlings.Models.E5/warnings.txt)
+run: Starlings.Models.E5 0.3.0.0; verdict: AOT-clean
+
+== AOT smoke Starlings.Models.E5.Extensions.AI
+publish: yes; warnings: 0 in Starlings.* code, 0 elsewhere (details: <out>/Starlings.Models.E5.Extensions.AI/warnings.txt)
+run: Starlings.Models.E5.Extensions.AI 0.3.0.0; verdict: AOT-clean
+
+== AOT smoke Starlings.Models.E5.MLNet
+publish: yes; warnings: 0 in Starlings.* code, 8 elsewhere (details: <out>/Starlings.Models.E5.MLNet/warnings.txt)
+run: Starlings.Models.E5.MLNet 0.3.0.0; verdict: clean in Starlings.*
+
+== AOT smoke Starlings.Models.Gliner2
+publish: yes; warnings: 0 in Starlings.* code, 0 elsewhere (details: <out>/Starlings.Models.Gliner2/warnings.txt)
+run: Starlings.Models.Gliner2 0.3.0.0; verdict: AOT-clean
+
+== AOT smoke Starlings.Models.EmbeddingGemma2
+publish: yes; warnings: 0 in Starlings.* code, 0 elsewhere (details: <out>/Starlings.Models.EmbeddingGemma2/warnings.txt)
+run: Starlings.Models.EmbeddingGemma2 0.3.0.0; verdict: AOT-clean
+
+== AOT smoke Starlings.Models.EmbeddingGemma2.Extensions.AI
+publish: yes; warnings: 0 in Starlings.* code, 0 elsewhere (details: <out>/Starlings.Models.EmbeddingGemma2.Extensions.AI/warnings.txt)
+run: Starlings.Models.EmbeddingGemma2.Extensions.AI 0.3.0.0; verdict: AOT-clean
+
+== AOT smoke Starlings.Models.EmbeddingGemma2.MLNet
+publish: yes; warnings: 0 in Starlings.* code, 8 elsewhere (details: <out>/Starlings.Models.EmbeddingGemma2.MLNet/warnings.txt)
+run: Starlings.Models.EmbeddingGemma2.MLNet 0.3.0.0; verdict: clean in Starlings.*
+
+== AOT smoke Starlings.Models.EmbeddingGemma2.Imaging.SkiaSharp
+publish: yes; warnings: 0 in Starlings.* code, 0 elsewhere (details: <out>/Starlings.Models.EmbeddingGemma2.Imaging.SkiaSharp/warnings.txt)
+run: Starlings.Models.EmbeddingGemma2.Imaging.SkiaSharp 0.3.0.0; verdict: AOT-clean
+
+== AOT smoke Starlings.Models.EmbeddingGemma2.Video.FFmpeg
+publish: yes; warnings: 0 in Starlings.* code, 0 elsewhere (details: <out>/Starlings.Models.EmbeddingGemma2.Video.FFmpeg/warnings.txt)
+run: Starlings.Models.EmbeddingGemma2.Video.FFmpeg 0.3.0.0; verdict: AOT-clean
+
+== AOT smoke Starlings.Models.EmbeddingGemma2.Video.FFmpeg9
+publish: yes; warnings: 0 in Starlings.* code, 0 elsewhere (details: <out>/Starlings.Models.EmbeddingGemma2.Video.FFmpeg9/warnings.txt)
+run: Starlings.Models.EmbeddingGemma2.Video.FFmpeg9 0.3.0.0; verdict: AOT-clean
+
+== AOT smoke Starlings.Generation.OnnxGenAI
+publish: yes; warnings: 0 in Starlings.* code, 0 elsewhere (details: <out>/Starlings.Generation.OnnxGenAI/warnings.txt)
+run: Starlings.Generation.OnnxGenAI 0.3.0.0; verdict: AOT-clean
+
+== AOT smoke Starlings.Models.Qwen35
+publish: yes; warnings: 0 in Starlings.* code, 0 elsewhere (details: <out>/Starlings.Models.Qwen35/warnings.txt)
+run: Starlings.Models.Qwen35 0.3.0.0; verdict: AOT-clean
+
+== AOT smoke Starlings.Models.Qwen35.Extensions.AI
+publish: yes; warnings: 0 in Starlings.* code, 0 elsewhere (details: <out>/Starlings.Models.Qwen35.Extensions.AI/warnings.txt)
+run: Starlings.Models.Qwen35.Extensions.AI 0.3.0.0; verdict: AOT-clean
+
+== AOT smoke Starlings.Models.Kev
+publish: yes; warnings: 0 in Starlings.* code, 0 elsewhere (details: <out>/Starlings.Models.Kev/warnings.txt)
+run: Starlings.Models.Kev 0.3.0.0; verdict: AOT-clean
+
+== AOT smoke Starlings.Models.QwenChat
+publish: yes; warnings: 0 in Starlings.* code, 0 elsewhere (details: <out>/Starlings.Models.QwenChat/warnings.txt)
+run: Starlings.Models.QwenChat 0.3.0.0; verdict: AOT-clean
+
+== AOT smoke Starlings.Models.Bert
+publish: yes; warnings: 0 in Starlings.* code, 0 elsewhere (details: <out>/Starlings.Models.Bert/warnings.txt)
+run: Starlings.Models.Bert 0.3.0.0; verdict: AOT-clean
+
+== AOT smoke Starlings.Models.Whisper
+publish: yes; warnings: 0 in Starlings.* code, 0 elsewhere (details: <out>/Starlings.Models.Whisper/warnings.txt)
+run: Starlings.Models.Whisper 0.3.0.0; verdict: AOT-clean
+
+== Summary (<out>/summary.md)
+Native AOT smoke check (ubuntu.24.04-x64, Starlings 0.3.0, commit a691d5c); tools/aot-smoke-ai.sh.
+
+| Package | Starlings.* warnings | Other warnings | AOT publish | AOT run | Verdict |
+| --- | --- | --- | --- | --- | --- |
+| Starlings.Acquisition | 0 | 0 | ok | ok | AOT-clean |
+| Starlings.Runtime.Onnx | 0 | 0 | ok | ok | AOT-clean |
+| Starlings.Models.E5 | 0 | 0 | ok | ok | AOT-clean |
+| Starlings.Models.E5.Extensions.AI | 0 | 0 | ok | ok | AOT-clean |
+| Starlings.Models.E5.MLNet | 0 | 8 | ok | ok | clean in Starlings.* (recorded AOT unsupported) |
+| Starlings.Models.Gliner2 | 0 | 0 | ok | ok | AOT-clean |
+| Starlings.Models.EmbeddingGemma2 | 0 | 0 | ok | ok | AOT-clean |
+| Starlings.Models.EmbeddingGemma2.Extensions.AI | 0 | 0 | ok | ok | AOT-clean |
+| Starlings.Models.EmbeddingGemma2.MLNet | 0 | 8 | ok | ok | clean in Starlings.* (recorded AOT unsupported) |
+| Starlings.Models.EmbeddingGemma2.Imaging.SkiaSharp | 0 | 0 | ok | ok | AOT-clean |
+| Starlings.Models.EmbeddingGemma2.Video.FFmpeg | 0 | 0 | ok | ok | AOT-clean |
+| Starlings.Models.EmbeddingGemma2.Video.FFmpeg9 | 0 | 0 | ok | ok | AOT-clean |
+| Starlings.Generation.OnnxGenAI | 0 | 0 | ok | ok | AOT-clean |
+| Starlings.Models.Qwen35 | 0 | 0 | ok | ok | AOT-clean |
+| Starlings.Models.Qwen35.Extensions.AI | 0 | 0 | ok | ok | AOT-clean |
+| Starlings.Models.Kev | 0 | 0 | ok | ok | AOT-clean |
+| Starlings.Models.QwenChat | 0 | 0 | ok | ok | AOT-clean |
+| Starlings.Models.Bert | 0 | 0 | ok | ok | AOT-clean |
+| Starlings.Models.Whisper | 0 | 0 | ok | ok | AOT-clean |
+AOT SMOKE PASS

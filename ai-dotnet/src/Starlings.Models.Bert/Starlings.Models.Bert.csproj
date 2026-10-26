@@ -13,6 +13,13 @@
     <InternalsVisibleTo Include="Starlings.Models.Bert.Tests" />
   </ItemGroup>
   <ItemGroup>
+    <!--
+      The route's per-repository contract table, shared with the Python allow-list (model-pipeline/src/model_pipeline/
+      onboarding_bert.py): linked, not copied, so the two cannot drift. BertModelProfile validates it on first use.
+    -->
+    <EmbeddedResource Include="../../../model-pipeline/routes/bert-onnx-cpu-v1/contracts.json" Link="Contracts/contracts.json" LogicalName="Starlings.Models.Bert.Contracts.json" />
+  </ItemGroup>
+  <ItemGroup>
     <!-- Length-aware chunk planning shared by the explicit-batch encoders (internal). -->
     <Compile Include="../Shared/Batching/*.cs" Link="Shared/%(Filename)%(Extension)" />
   </ItemGroup>

@@ -18,6 +18,7 @@ Shared helpers live in `src/model_pipeline/fixtures.py` (pure Python, tested in 
 | `gliner2/export_gliner2_onnx.py`, `gliner2/parity_gliner2_ort.py`, `gliner2/dump_gliner2_ort.py` | same | `requirements-export.txt`; GPU: `gliner2/requirements-cuda.txt` (torch 2.14.1 CUDA 13.0, onnxruntime-gpu 1.30.0) | export attempts, ORT CPU/CUDA parity and placement, Python ORT outputs for the C# comparison (`docs/m0/gliner2-p014.md`) |
 | `embeddinggemma2/run_embeddinggemma2.py` | `google/embeddinggemma-2` at `914f7f89`, admission spike, text path | `embeddinggemma2/requirements.txt` (torch 2.14.1 CPU, transformers 5.19.0, sentence-transformers 6.1.0, tokenizers 0.23.3, onnxruntime 1.30.0, onnx 1.23.1, onnxscript 0.7.2; Pillow and torchvision because sentence-transformers loads the multimodal processor) | tokenizer fixtures, sentence-transformers embeddings with and without prompts, tokenizer implementation check, reference stability; proposed `protected/embeddinggemma-2/` |
 | `embeddinggemma2/eg2_text.py`, `export_embeddinggemma2_onnx.py`, `parity_embeddinggemma2_ort.py`, `compare_embeddinggemma2_csharp.py` | same | `requirements.txt`; GPU: `embeddinggemma2/requirements-cuda.txt` (torch 2.14.1 CUDA 13.0, onnxruntime-gpu 1.30.0) | exportable text path, ONNX export (dynamo, TorchScript), ORT CPU/CUDA parity, placement, batch and sliding-window checks, C# comparison (`docs/m0/embeddinggemma2-spike.md`) |
+| `qwen3-embedding/qwen3_graph.py`, `export_qwen3_onnx.py`, `release_qwen3_onnx.py`, `verify_qwen3_onnx.py` | `Qwen/Qwen3-Embedding-0.6B` at `97b0c614`, `Qwen/Qwen3-Reranker-0.6B` at `e61197ed` (design issue #144) | `qwen3-embedding/requirements.txt` (torch 2.14.1 CPU, transformers 5.18.0, sentence-transformers 6.1.0, tokenizers 0.23.3, onnx 1.23.1, onnxscript 0.7.2, onnx-ir 1.0.0, onnxruntime 1.30.0) | exportable non-autoregressive Qwen3 graphs (embedding: `last_hidden_state`; reranker: `yes_no_logits` and `last_hidden_state`), dynamo ONNX export, the reproducible release (`model.onnx` + `model.onnx.data`, `build-lock.json`) hosted as `Starlinghq/qwen3-embedding-0.6b-onnx` and `Starlinghq/qwen3-reranker-0.6b-onnx` with `NOTICE-qwen3-{embedding,reranker}-onnx.txt`, and the ONNX Runtime-against-PyTorch check; evidence, not fixtures |
 | `bench/bench_eg2_matched.py`, `bench/bench_gliner2_matched.py`, `bench/bench_qwen35_matched.py` (core `bench/matched_core.py`, also used by `encoder/bench_e5_matched.py`) | the pinned graphs and bundle of each profile | EmbeddingGemma 2 text and GLiNER2: `encoder/requirements-bench.txt` (CUDA: `requirements-bench-cuda.txt`); EmbeddingGemma 2 image: `embeddinggemma2/requirements.txt` (CUDA: `requirements-cuda.txt`); Qwen: `bench/requirements-genai.txt` (onnxruntime-genai 0.17.1, onnxruntime 1.30.0; CUDA: `requirements-genai-cuda.txt`) | Python same-backend G5 timing, `starlings-bench-raw/1` (`docs/benchmarks/PROTOCOL.md`); not fixtures |
 | `encoder/quantize_e5_browser.py`, `encoder/drift_e5_browser.py` | `intfloat/multilingual-e5-small` | `encoder/requirements-browser.txt` (onnxruntime 1.30.0, onnx 1.23.1, Playwright 1.63.0; no torch) | browser spike (`docs/m0/browser-wasm-spike.md`): fp16 and int8 variants of the ONNX graph with hashes, their drift against the protected fp32 embeddings natively and from browser runs (`browser/spike/harness/`); exploratory, not fixtures |
 | `compare_tokenizers.py` | any snapshot with `tokenizer.json` | either environment | tokenizer implementation differences against `tokenizer.json` |
@@ -161,6 +162,23 @@ $P parity_embeddinggemma2_ort.py --model-dir $M --graph <onnx dir>/eg2-text-dyna
 # GPU (requirements-cuda.txt environment; select the GPU by PCI order):
 CUDA_DEVICE_ORDER=PCI_BUS_ID CUDA_VISIBLE_DEVICES=<n> <cuda venv>/bin/python parity_embeddinggemma2_ort.py --provider cuda --cuda-tf32 0 \
   --model-dir $M --graph <onnx dir>/eg2-text-dynamo-sdpa.onnx --reference <ref dir> --out parity-cuda.json --dump ort-cuda.npz
+```
+
+Qwen3 Embedding series 0.6B graphs (design issue #144; snapshots downloaded by commit SHA). Export one model at a time;
+each release is byte-reproducible, so a second export must match the first one's digests:
+
+```sh
+uv venv -p 3.11 .models/venv-qwen3-embedding
+VIRTUAL_ENV=.models/venv-qwen3-embedding uv pip install --require-hashes -r model-pipeline/reference/qwen3-embedding/requirements.txt \
+  --index-url https://pypi.org/simple --extra-index-url https://download.pytorch.org/whl/cpu --index-strategy unsafe-best-match
+cd model-pipeline/reference/qwen3-embedding
+P=../../../.models/venv-qwen3-embedding/bin/python
+M=<Qwen/Qwen3-Embedding-0.6B snapshot at 97b0c614be4d77ee51c0cef4e5f07c00f9eb65b3>   # reranker: e61197ed45024b0ed8a2d74b80b4d909f1255473
+$P export_qwen3_onnx.py --model embedding --model-dir $M --out <export dir>       # --model reranker for the reranker
+$P release_qwen3_onnx.py --model embedding --model-dir $M --export <export dir>/model.onnx --out <release dir> \
+  [--expect-sha256 <model.onnx digest> --expect-data-sha256 <model.onnx.data digest>]
+$P verify_qwen3_onnx.py --model embedding --model-dir $M --graph <release dir>/model.onnx \
+  --corpus ../corpus/tokenizer-corpus-v1.jsonl --out verify.json --threads 12
 ```
 
 EmbeddingGemma 2 video spike (`docs/m0/embeddinggemma2-video-spike.md`; the text environment plus torchcodec, PyAV and OpenCV, and a pinned FFmpeg build):
