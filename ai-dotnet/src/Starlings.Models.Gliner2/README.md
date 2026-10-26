@@ -116,7 +116,7 @@ Evidence: [GLiNER2 soak growth](https://github.com/starlinghq/starling/blob/main
 
 ## Shared types
 
-A snapshot verified with `CacheVerification.Sha256` (the default) carries its digests: `Gliner2ModelFiles.ModelSha256` is the graph's SHA-256 then, and `Gliner2EntityExtractor.Create(files)` pass it to the session as `OnnxSessionOptions.KnownModelSha256`, so the graph is read once at startup, by the verification, not again by the session. With `CacheVerification.Size` it is null and the session hashes the graph as before.
+A snapshot verified with `CacheVerification.Sha256` (the default) carries its digests: `Gliner2ModelFiles.ModelSha256` is the graph's SHA-256 then, and `Gliner2EntityExtractor.Create(files)` passes it to the session as `OnnxSessionOptions.KnownModelSha256`, so the graph is read once at startup, by the verification, not again by the session. With `CacheVerification.Size` it is null and the session hashes the graph as before.
 
 The package uses the backend-neutral types of `Starlings.Models.Abstractions`. `Gliner2InputTooLongException` derives from `InputTooLongException` (`InputIndex`, `TokenCount`, `MaxTokens`). `Gliner2ModelAssets.Assets` is the lock and acquisition as an `IModelAssets<Gliner2ModelFiles>`. `Gliner2Capabilities.Statuses` is the package-wide capability table in `Starlings.Models.CapabilityStatus`, and `Gliner2Capabilities.ProfileCapabilities` holds each profile's capability record (`ModelProfileCapabilities`), generated from its registry manifest. `Gliner2Capabilities.All`, `Gliner2Capabilities.Profiles` and `Gliner2CapabilityStatus` are obsolete and are removed in the next minor version.
 

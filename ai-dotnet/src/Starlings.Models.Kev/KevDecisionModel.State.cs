@@ -47,6 +47,9 @@ public sealed partial class KevDecisionModel
             throw new ArgumentException("The state was created by another model.", nameof(state));
         }
 
+        // Checked here as well as in Acquire, so a disposed state is refused even when every question is declined.
+        ObjectDisposedException.ThrowIf(state.IsDisposed, state);
+
         var checkedQuestions = KevRequest.CheckQuestions(questions);
         var encoding = _encoder.EncodeRows(
             state.StateIds, KevRequest.RecordQuestions(checkedQuestions), _options.MaxRowTokens, _options.MaxBranchTokens, _options.DeclineOverLongQuestions);

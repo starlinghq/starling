@@ -244,7 +244,6 @@ public sealed partial class KevDecisionModel : IDisposable
     }
 
     /// <summary>Answers a request: one calibrated distribution per question, mapped to System One answers.</summary>
-    /// <exception cref="KevInputTooLongException">The state or a question's row is over the limits.</exception>
     /// <exception cref="KevInputTooLongException">
     /// The state is over the limit, or a question is and <see cref="KevOptions.DeclineOverLongQuestions"/> is false.
     /// </exception>
