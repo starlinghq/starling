@@ -66,7 +66,7 @@ public sealed class E5EmbeddingGenerator : IEmbeddingGenerator<string, Embedding
     public const string InputTypePropertyName = "e5_input_type";
 
     private readonly E5TextEmbedder _embedder;
-    private readonly E5Encoder? _ownedEncoder;
+    private readonly bool _ownsEmbedder;
     private readonly E5EmbeddingGeneratorOptions _options;
     private readonly EmbeddingGeneratorMetadata _metadata;
     private readonly MicroBatcher<EncoderInput, float[]>? _batcher;
@@ -74,17 +74,17 @@ public sealed class E5EmbeddingGenerator : IEmbeddingGenerator<string, Embedding
 
     /// <summary>Wraps an existing embedder. Neither it nor its encoder is owned or disposed by this instance.</summary>
     public E5EmbeddingGenerator(E5TextEmbedder embedder, E5EmbeddingGeneratorOptions? options = null)
-        : this(embedder, options ?? new E5EmbeddingGeneratorOptions(), ownedEncoder: null)
+        : this(embedder, options ?? new E5EmbeddingGeneratorOptions(), ownsEmbedder: false)
     {
     }
 
-    private E5EmbeddingGenerator(E5TextEmbedder embedder, E5EmbeddingGeneratorOptions options, E5Encoder? ownedEncoder)
+    private E5EmbeddingGenerator(E5TextEmbedder embedder, E5EmbeddingGeneratorOptions options, bool ownsEmbedder)
     {
         ArgumentNullException.ThrowIfNull(embedder);
         options.Validate();
         _embedder = embedder;
         _options = options;
-        _ownedEncoder = ownedEncoder;
+        _ownsEmbedder = ownsEmbedder;
         _metadata = new EmbeddingGeneratorMetadata(ProviderName, providerUri: null, options.ModelId, embedder.Encoder.Dimension);
         if (options.MicroBatching is { } microBatching)
         {
@@ -105,8 +105,9 @@ public sealed class E5EmbeddingGenerator : IEmbeddingGenerator<string, Embedding
 
     /// <summary>
     /// Loads the pinned model and tokenizer from verified local files (<see cref="E5ModelAssets.OpenLocal"/> or
-    /// <see cref="E5ModelAssets.OpenDirectory"/>; never downloads) and owns the resulting encoder and session. The
-    /// model's SHA-256 (<see cref="E5ModelAssets.ModelSha256"/>) and the tokenizer's
+    /// <see cref="E5ModelAssets.OpenDirectory"/>; never downloads) through
+    /// <see cref="E5TextEmbedder.Create(E5ModelFiles, E5EncoderOptions?)"/> and owns the resulting embedder, encoder
+    /// and session. The model's SHA-256 (<see cref="E5ModelAssets.ModelSha256"/>) and the tokenizer's
     /// (<see cref="E5ModelAssets.TokenizerSha256"/>) are enforced.
     /// </summary>
     public static E5EmbeddingGenerator Create(E5ModelFiles files, E5EmbeddingGeneratorOptions? options = null)
@@ -114,19 +115,14 @@ public sealed class E5EmbeddingGenerator : IEmbeddingGenerator<string, Embedding
         ArgumentNullException.ThrowIfNull(files);
         options ??= new E5EmbeddingGeneratorOptions();
         options.Validate();
-        var tokenizer = E5Tokenizer.FromFile(files.TokenizerPath, E5ModelAssets.TokenizerSha256, options.Encoder.MaxSequenceLength);
-        var encoderOptions = options.Encoder with
-        {
-            Session = options.Encoder.Session with { ExpectedModelSha256 = E5ModelAssets.ModelSha256 },
-        };
-        var encoder = E5Encoder.Create(files.ModelPath, encoderOptions);
+        var embedder = E5TextEmbedder.Create(files, options.Encoder);
         try
         {
-            return new E5EmbeddingGenerator(new E5TextEmbedder(tokenizer, encoder), options, encoder);
+            return new E5EmbeddingGenerator(embedder, options, ownsEmbedder: true);
         }
         catch
         {
-            encoder.Dispose();
+            embedder.Dispose();
             throw;
         }
     }
@@ -194,7 +190,10 @@ public sealed class E5EmbeddingGenerator : IEmbeddingGenerator<string, Embedding
         {
             // Queued calls fault; a running batch finishes before the encoder goes.
             _batcher?.Dispose();
-            _ownedEncoder?.Dispose();
+            if (_ownsEmbedder)
+            {
+                _embedder.Dispose();
+            }
         }
     }
 
