@@ -188,6 +188,12 @@ internal static class Qwen35ChatRequestMapper
 
                 mapped = mapped with { TopLogprobs = top };
             }
+            else if (!mapped.ReturnLogprobs)
+            {
+                // A request that turns log probabilities off also drops the defaults' top-k, which would otherwise be
+                // rejected without them.
+                mapped = mapped with { TopLogprobs = 0 };
+            }
         }
 
         return mapped;

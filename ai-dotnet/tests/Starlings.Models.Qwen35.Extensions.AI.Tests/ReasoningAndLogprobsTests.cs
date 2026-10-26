@@ -239,5 +239,11 @@ public sealed class ReasoningAndLogprobsTests
         using var defaults = new Qwen35ChatClient(Backend("Hi.").Model, new Qwen35ChatClientOptions { Defaults = new Qwen35ChatOptions { ReturnLogprobs = true } });
         Assert.NotNull((await defaults.GetResponseAsync(Question, cancellationToken: Ct)).AdditionalProperties);
         Assert.Null((await defaults.GetResponseAsync(Question, With(Qwen35ChatClient.LogprobsPropertyName, false), Ct)).AdditionalProperties);
+
+        // Also when the defaults ask for top alternatives: turning log probabilities off drops them too.
+        using var topDefaults = new Qwen35ChatClient(Backend("Hi.").Model, new Qwen35ChatClientOptions { Defaults = new Qwen35ChatOptions { ReturnLogprobs = true, TopLogprobs = 3 } });
+        Assert.Null((await topDefaults.GetResponseAsync(Question, With(Qwen35ChatClient.LogprobsPropertyName, false), Ct)).AdditionalProperties);
+        var top = (IReadOnlyList<TokenLogprob>)(await topDefaults.GetResponseAsync(Question, cancellationToken: Ct)).AdditionalProperties![Qwen35ChatClient.LogprobsPropertyName]!;
+        Assert.All(top, l => Assert.Equal(3, l.TopLogprobs.Length));
     }
 }

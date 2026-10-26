@@ -104,7 +104,8 @@ public sealed class Qwen35ChatClient : IChatClient
     /// <summary>
     /// Key of the per-token log probabilities (experimental, opt-in). In <see cref="ChatOptions.AdditionalProperties"/>:
     /// a <see cref="bool"/> (or a JSON <c>true</c>/<c>false</c>) that turns them on for one request, overriding
-    /// <see cref="Qwen35ChatOptions.ReturnLogprobs"/> of <see cref="Qwen35ChatClientOptions.Defaults"/>. In the
+    /// <see cref="Qwen35ChatOptions.ReturnLogprobs"/> of <see cref="Qwen35ChatClientOptions.Defaults"/> (false also drops
+    /// the defaults' <see cref="Qwen35ChatOptions.TopLogprobs"/> unless <see cref="TopLogprobsPropertyName"/> is given). In the
     /// <see cref="ChatResponse.AdditionalProperties"/> of a response and the <see cref="ChatResponseUpdate.AdditionalProperties"/>
     /// of an update: an <see cref="IReadOnlyList{T}"/> of <see cref="TokenLogprob"/> (token id, text, log probability and
     /// the top alternatives), one entry per completion token in order (the stop token has none). A response carries every

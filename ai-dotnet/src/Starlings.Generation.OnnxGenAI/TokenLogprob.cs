@@ -31,7 +31,7 @@ public sealed record TokenLogprob(int TokenId, string Text, double Logprob, Immu
         TopLogprobs.AsSpan().SequenceEqual(other.TopLogprobs.AsSpan());
 
     /// <inheritdoc />
-    public override int GetHashCode() => HashCode.Combine(TokenId, Text, Logprob, TopLogprobs.Length);
+    public override int GetHashCode() => HashCode.Combine(TokenId, Text, Logprob, TopLogprobs.IsDefault ? 0 : TopLogprobs.Length);
 }
 
 /// <summary>One of the most likely tokens of a step (<see cref="TokenLogprob.TopLogprobs"/>).</summary>
