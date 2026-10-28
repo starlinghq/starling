@@ -1,0 +1,28 @@
+{
+  "stage": "template",
+  "checkpoint": {
+    "repo": "Diffuspace/Clover-35B-A3B-Preview",
+    "revision": "4b0402b65e523d0183a14c431955438714cb16ff"
+  },
+  "tokenizer_class": "Qwen2Tokenizer",
+  "chat_template_sha256": "01094df7cd8905d1220ea8b31e4f1086dc9bedf0305d3c2fa6578b5fa33b6815",
+  "tokenizer_sha256": "7c62ba7d8bb13291c94459896cd27537858beb58a88a037b09a150e213420988",
+  "tokenizer_config_sha256": "3399c8d380151f9c1bf562257c0063665b74def51735f4d0b01086e63266950e",
+  "corpora": [
+    {
+      "path": "corpora/five-models/chat.jsonl",
+      "sha256": "f6c7ef00b69576bbaf291d1cc59768969ea59850df39519f810bab826b925bf6"
+    },
+    {
+      "path": "corpora/clover/chat.jsonl",
+      "sha256": "d278c406018eeea8e4b50f6b077d95d97c7783c5519561093c7d968ea6b27f62"
+    }
+  ],
+  "cases": 30,
+  "python": "3.12.3",
+  "platform": "Linux-6.18.44-fc-v180-x86_64-with-glibc2.39",
+  "packages": {
+    "transformers": "5.19.0",
+    "tokenizers": "0.23.3"
+  }
+}

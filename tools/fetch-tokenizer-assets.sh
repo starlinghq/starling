@@ -36,6 +36,7 @@ assets=(
     "Starlinghq/bge-reranker-v2-m3-onnx|047d4622e93d347828457e8a13bccd997fb6a969|tokenizer.json|69564b696052886ed0ac63fa393e928384e0f8caada38c1f4864a9bfbf379c15"
     "Qwen/Qwen3-0.6B|c1899de289a04d12100db370d81485cdf75e47ca|tokenizer.json|aeb13307a71acd8fe81861d94ad54ab689df773318809eed3cbe794b4492dae4"
     "Qwen/Qwen2.5-0.5B-Instruct|7ae557604adf67be50417f59c2c2f167def9a775|tokenizer.json|c0382117ea329cdf097041132f6d735924b697924d6f6fc3945713e96ce87539"
+    "Diffuspace/Clover-35B-A3B-Preview|4b0402b65e523d0183a14c431955438714cb16ff|tokenizer.json|7c62ba7d8bb13291c94459896cd27537858beb58a88a037b09a150e213420988"
 )
 
 # target repo|commit|path|sha256 <- source repo|commit|path (the source must be in assets above)
