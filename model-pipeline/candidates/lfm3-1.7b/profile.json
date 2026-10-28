@@ -1,0 +1,190 @@
+{
+  "format_version": 1,
+  "id": "lfm3-1.7b/onnx-fp32-cpu",
+  "task": "generation",
+  "origin": {
+    "repo": "LiquidAI/LFM3-1.7B-ONNX",
+    "revision": "c680759afee1ce8310c90d6c621f4558200dee77",
+    "files": [
+      {
+        "path": "chat_template.jinja",
+        "size": 12129,
+        "sha256": "f45005c50cd2a97329722bf3a2dee9f16c04cdf825a589b280fb7e99e6827818"
+      },
+      {
+        "path": "config.json",
+        "size": 1657,
+        "sha256": "09b5a4ee2057e03f7773f19181415d7e701030e14e66c594afd1c8d0a476d176"
+      },
+      {
+        "path": "onnx/model.onnx",
+        "size": 274961,
+        "sha256": "add6653fc8b3cf2c7ee9fa0205a4a9a833fcb85d3449a5fea06f8aa494b5ef77"
+      },
+      {
+        "path": "onnx/model.onnx_data",
+        "size": 2122694656,
+        "sha256": "bf44fe98d130ad2bca747e9b62f28b18a3277d45bf1367da15a478538c849057"
+      },
+      {
+        "path": "onnx/model.onnx_data_1",
+        "size": 2140200960,
+        "sha256": "bb631a02237e4f8a491e12b25c333849046332b6db60fe0a2120f278c982fa76"
+      },
+      {
+        "path": "onnx/model.onnx_data_2",
+        "size": 2135916544,
+        "sha256": "ad39ed4b378c9c1b34c1a3cdb879880c7e110061070ff29fca118e8dd0b48010"
+      },
+      {
+        "path": "onnx/model.onnx_data_3",
+        "size": 784818176,
+        "sha256": "1538827aa1c279442457028c4e3d784b7ea82bcf03abd4b55e45fa4facf9fe62"
+      },
+      {
+        "path": "tokenizer.json",
+        "size": 17908634,
+        "sha256": "41927bd314d17d7d7fadb44e10cd0919f7b71528d7741596d8cbd15c6945ec44"
+      }
+    ],
+    "base": {
+      "repo": "LiquidAI/LFM3-1.7B",
+      "revision": "40ebe0aa6662c9d40389c2f5d565b6a2c6aebacd",
+      "files": [
+        {
+          "path": "chat_template.jinja",
+          "size": 12129,
+          "sha256": "f45005c50cd2a97329722bf3a2dee9f16c04cdf825a589b280fb7e99e6827818"
+        },
+        {
+          "path": "config.json",
+          "size": 1454,
+          "sha256": "8c6ae8b8f6d88c87cfb98cf4b5e34e943d0ee07e24215c4121b3159a46e1399d"
+        },
+        {
+          "path": "configuration_lfm3.py",
+          "size": 6113,
+          "sha256": "176cced35657aedfea7d7002221360582d1c05fcaca882c21508bc3a73b282e5"
+        },
+        {
+          "path": "generation_config.json",
+          "size": 328,
+          "sha256": "0095ba7158e938b1e2d3082d412f00d8be85e42cbbd7608b63866f7a081cf270"
+        },
+        {
+          "path": "lfm3_conv.py",
+          "size": 8532,
+          "sha256": "80d4a985382a22774212759248a6b4c737bfbf9c2a47b3dd7f797dda748e4bb4"
+        },
+        {
+          "path": "model.safetensors",
+          "size": 3457635448,
+          "sha256": "135922caef64e81e52af88ede8b7c3ddaa9d6da220a9737fb3065275dbfb4330"
+        },
+        {
+          "path": "modeling_lfm3.py",
+          "size": 42359,
+          "sha256": "e8cd5254ea99ce6bd731b57b10908c2e8b5010ce8315341f895a38484885eeab"
+        },
+        {
+          "path": "special_tokens_map.json",
+          "size": 92,
+          "sha256": "7946f864cbfb62a1b041bda937244210a1a87f4a6cab3a48b791131b2cd57f88"
+        },
+        {
+          "path": "tokenizer.json",
+          "size": 17908635,
+          "sha256": "7e226e34bface23ccf6e495d157bf77186c1c30a7659880e1a8994db528c3701"
+        },
+        {
+          "path": "tokenizer_config.json",
+          "size": 1545,
+          "sha256": "bf028f813efc6137bc07ed045cafe71820df9a5e26a38e39954706ed1e30a457"
+        }
+      ]
+    }
+  },
+  "runtime": {
+    "backend": "onnx",
+    "version": "1.30.0",
+    "provider": "CPUExecutionProvider",
+    "precision": "fp32"
+  },
+  "behavior": {
+    "architecture": "Lfm3ForCausalLM",
+    "model_file": "onnx/model.onnx",
+    "layer_types": [
+      "conv",
+      "conv",
+      "full_attention",
+      "conv",
+      "sliding_attention",
+      "conv",
+      "full_attention",
+      "conv",
+      "sliding_attention",
+      "conv",
+      "full_attention",
+      "conv",
+      "sliding_attention",
+      "conv",
+      "full_attention",
+      "conv",
+      "sliding_attention",
+      "conv",
+      "full_attention",
+      "conv",
+      "sliding_attention",
+      "conv",
+      "full_attention",
+      "conv"
+    ],
+    "hidden_size": 2048,
+    "head_size": 128,
+    "key_value_heads": 4,
+    "conv_cache_length": 7,
+    "sliding_window": 256,
+    "vocabulary_size": 128000,
+    "context_length": 32768,
+    "decoding": "greedy",
+    "logits_to_keep": 1,
+    "eos_token_ids": [
+      124900
+    ],
+    "tokenizer_profile": "lfm3-bpe-chat",
+    "chat_template_sha256": "f45005c50cd2a97329722bf3a2dee9f16c04cdf825a589b280fb7e99e6827818",
+    "template": {
+      "roles": [
+        "system",
+        "user",
+        "assistant"
+      ],
+      "enable_thinking": [
+        true,
+        false
+      ],
+      "preserve_thinking": [
+        true,
+        false
+      ],
+      "tools": false,
+      "multimodal": false
+    },
+    "reference_generation": {
+      "do_sample": false,
+      "repetition_penalty": 1.0
+    }
+  },
+  "evaluation": {
+    "status": "proposed",
+    "policy": {
+      "template_text": "exact",
+      "prompt_ids": "exact",
+      "same_backend_generated_ids": "exact",
+      "same_backend_step0_logits_max_abs": 0.0001,
+      "reference_generated_ids": "exact",
+      "reference_step0_logits_max_abs": 0.005,
+      "non_finite": "reject"
+    }
+  }
+}

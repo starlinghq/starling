@@ -1,0 +1,5 @@
+{"id": "thinking-default", "messages": [{"role": "user", "content": "Is 91 a prime number? Answer yes or no."}], "enable_thinking": true, "max_new_tokens": 48}
+{"id": "thinking-digits", "messages": [{"role": "user", "content": "Add 12345 and 67890."}], "enable_thinking": true, "max_new_tokens": 48}
+{"id": "preserve-thinking", "messages": [{"role": "user", "content": "Compute 1+1."}, {"role": "assistant", "content": "2", "reasoning_content": "One and one make two."}, {"role": "user", "content": "Now 2+1?"}], "enable_thinking": false, "preserve_thinking": true, "max_new_tokens": 16}
+{"id": "multilingual", "messages": [{"role": "user", "content": "Traduis en français : the river is wide."}], "enable_thinking": false, "max_new_tokens": 24}
+{"id": "longer-answer", "messages": [{"role": "system", "content": "You are a concise assistant."}, {"role": "user", "content": "List three uses of a heat pump."}], "enable_thinking": false, "max_new_tokens": 64}
