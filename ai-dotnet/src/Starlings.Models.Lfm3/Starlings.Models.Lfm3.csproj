@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <!-- Source only until the admission decision (model-pipeline/admissions/lfm3.md) and a registry profile exist. -->
+    <IsPackable>false</IsPackable>
+    <IsAotCompatible>true</IsAotCompatible>
+    <Description>LiquidAI/LFM3-1.7B text generation on ONNX Runtime (Liquid's ONNX export LiquidAI/LFM3-1.7B-ONNX, revision c680759a): the LFM3 chat template for text turns, a managed decode loop over the export's step graph with its convolution and attention caches, and the owned tokenizer (Starlings.Tokenizers profile lfm3-bpe-chat). Experimental. Ships the asset lock, not the weights; acquire them explicitly. The weights are under the LFM Open License v1.0. The application adds the ONNX Runtime native package.</Description>
+    <PackageTags>lfm3;liquid;llm;chat;onnxruntime;text-generation</PackageTags>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../Starlings.Runtime.Onnx/Starlings.Runtime.Onnx.csproj" />
+    <ProjectReference Include="../Starlings.Acquisition/Starlings.Acquisition.csproj" />
+    <ProjectReference Include="../Starlings.Generation.Abstractions/Starlings.Generation.Abstractions.csproj" />
+    <PackageReference Include="Starlings.Tokenizers" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Starlings.Models.Lfm3.Tests" />
+  </ItemGroup>
+
+</Project>
