@@ -1,0 +1,2 @@
+long-4096            prompt  4112 gen   32 length exact render eq ids eq stream ok 48.41s+6.39s
+command: --modes parity --prefill-chunk 1024 ; start 2026-10-26T06:38:15Z ; end 2026-10-26T06:39:21Z ; exit 0

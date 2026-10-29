@@ -42,6 +42,8 @@
   <!--
     Microsoft.Extensions.AI (P-011). The adapter library references only the abstractions and the DI abstractions;
     the Microsoft.Extensions.AI middleware package and the DI container are test-only (pipeline compatibility tests).
+    Starlings.Generation.Abstractions references the abstractions too, so every generation package resolves this one
+    version (Microsoft.ML.OnnxRuntimeGenAI.Managed 0.17.1 asks for 9.8.0 or later).
   -->
   <ItemGroup>
     <PackageVersion Include="Microsoft.Extensions.AI.Abstractions" Version="10.10.1" />

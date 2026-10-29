@@ -1,5 +1,6 @@
 using Microsoft.ML;
 using Microsoft.ML.Data;
+using Starlings.Models.MLNet;
 
 namespace Starlings.Models.E5.MLNet;
 
@@ -45,8 +46,9 @@ namespace Starlings.Models.E5.MLNet;
 public sealed class E5EmbeddingTransformer : ITransformer, IDisposable
 {
     private readonly E5Encoder? _ownedEncoder;
-    private readonly E5ColumnNames _names;
-    private readonly E5Inference _inference;
+    private readonly TextEmbeddingColumnNames _names;
+    private readonly E5TextEmbedder _embedder;
+    private readonly TextEmbeddingInference _inference;
     private int _disposed;
 
     /// <summary>
@@ -57,18 +59,19 @@ public sealed class E5EmbeddingTransformer : ITransformer, IDisposable
     /// <param name="inputColumnName">Name of the text column; defaults to <paramref name="outputColumnName"/> (which then hides it).</param>
     /// <param name="options">Prefix, batching, token-count column; defaults to none, 1, none.</param>
     public E5EmbeddingTransformer(E5TextEmbedder embedder, string outputColumnName, string? inputColumnName = null, E5EmbeddingOptions? options = null)
-        : this(embedder, E5ColumnNames.Create(outputColumnName, inputColumnName, options?.TokenCountColumnName), options ?? new E5EmbeddingOptions(), ownedEncoder: null)
+        : this(embedder, TextEmbeddingColumnNames.Create(outputColumnName, inputColumnName, options?.TokenCountColumnName), options ?? new E5EmbeddingOptions(), ownedEncoder: null)
     {
     }
 
-    internal E5EmbeddingTransformer(E5TextEmbedder embedder, E5ColumnNames names, E5EmbeddingOptions options, E5Encoder? ownedEncoder, Action<int>? inferenceObserver = null)
+    internal E5EmbeddingTransformer(E5TextEmbedder embedder, TextEmbeddingColumnNames names, E5EmbeddingOptions options, E5Encoder? ownedEncoder, Action<int>? inferenceObserver = null)
     {
         ArgumentNullException.ThrowIfNull(embedder);
         options.Validate();
         _names = names;
         _ownedEncoder = ownedEncoder;
         Options = options;
-        _inference = new E5Inference(embedder, options.PrefixText, inferenceObserver);
+        _embedder = embedder;
+        _inference = new TextEmbeddingInference(new PrefixedTextEmbedder(embedder, options.PrefixText), inferenceObserver);
     }
 
     /// <summary>Name of the text column read.</summary>
@@ -81,10 +84,10 @@ public sealed class E5EmbeddingTransformer : ITransformer, IDisposable
     public E5EmbeddingOptions Options { get; }
 
     /// <summary>Embedding dimension (384 for multilingual-e5-small).</summary>
-    public int Dimension => _inference.Embedder.Encoder.Dimension;
+    public int Dimension => _embedder.Encoder.Dimension;
 
     /// <summary>The underlying embedder.</summary>
-    public E5TextEmbedder Embedder => _inference.Embedder;
+    public E5TextEmbedder Embedder => _embedder;
 
     /// <summary>Always <see langword="true"/>: the transform maps each row on its own (prediction engines work).</summary>
     public bool IsRowToRowMapper => true;
@@ -96,18 +99,22 @@ public sealed class E5EmbeddingTransformer : ITransformer, IDisposable
     /// </summary>
     public static E5EmbeddingTransformer Create(E5ModelFiles files, string outputColumnName, string? inputColumnName = null, E5EmbeddingOptions? options = null)
     {
-        var names = E5ColumnNames.Create(outputColumnName, inputColumnName, options?.TokenCountColumnName);
+        var names = TextEmbeddingColumnNames.Create(outputColumnName, inputColumnName, options?.TokenCountColumnName);
         return Create(files, names, options ?? new E5EmbeddingOptions());
     }
 
-    internal static E5EmbeddingTransformer Create(E5ModelFiles files, E5ColumnNames names, E5EmbeddingOptions options)
+    internal static E5EmbeddingTransformer Create(E5ModelFiles files, TextEmbeddingColumnNames names, E5EmbeddingOptions options)
     {
         ArgumentNullException.ThrowIfNull(files);
         options.Validate();
         var tokenizer = E5Tokenizer.FromFile(files.TokenizerPath, E5ModelAssets.TokenizerSha256, options.Encoder.MaxSequenceLength);
         var encoderOptions = options.Encoder with
         {
-            Session = options.Encoder.Session with { ExpectedModelSha256 = E5ModelAssets.ModelSha256 },
+            Session = options.Encoder.Session with
+            {
+                ExpectedModelSha256 = E5ModelAssets.ModelSha256,
+                KnownModelSha256 = options.Encoder.Session.KnownModelSha256 ?? files.ModelSha256,
+            },
         };
         var encoder = E5Encoder.Create(files.ModelPath, encoderOptions);
         try
@@ -133,14 +140,14 @@ public sealed class E5EmbeddingTransformer : ITransformer, IDisposable
     {
         ArgumentNullException.ThrowIfNull(input);
         ObjectDisposedException.ThrowIf(Volatile.Read(ref _disposed) != 0, this);
-        return new E5EmbeddingDataView(input, Bind(input.Schema), _inference, Options.BatchSize);
+        return new TextEmbeddingDataView(input, Bind(input.Schema), _inference, Options.BatchSize);
     }
 
     /// <summary>A row-wise mapper (no look-ahead batching), used by prediction engines.</summary>
     public IRowToRowMapper GetRowToRowMapper(DataViewSchema inputSchema)
     {
         ObjectDisposedException.ThrowIf(Volatile.Read(ref _disposed) != 0, this);
-        return new E5RowToRowMapper(Bind(inputSchema), _inference);
+        return new TextEmbeddingRowToRowMapper(Bind(inputSchema), _inference);
     }
 
     /// <summary>Unsupported: always throws. See the class remarks, "Persistence is unsupported".</summary>
@@ -163,9 +170,9 @@ public sealed class E5EmbeddingTransformer : ITransformer, IDisposable
         "and, after loading it, append mlContext.Transforms.ApplyE5Embedding(E5ModelAssets.OpenLocal(), ...) with the same " +
         "column names and options.";
 
-    private E5Bindings Bind(DataViewSchema inputSchema)
+    private TextEmbeddingBindings Bind(DataViewSchema inputSchema)
     {
         ArgumentNullException.ThrowIfNull(inputSchema);
-        return E5Bindings.Create(inputSchema, _names, Dimension);
+        return TextEmbeddingBindings.Create(inputSchema, _names, Dimension);
     }
 }

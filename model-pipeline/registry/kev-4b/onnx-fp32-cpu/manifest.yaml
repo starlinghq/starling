@@ -1,5 +1,5 @@
 # Kev decision model (P-027): jaredpalmer/kev-4b (Kev 1.0, a LoRA adapter and pointer head on Qwen/Qwen3.5-4B-Base)
-# on ONNX Runtime 1.30.0, CPU provider, through ai-dotnet/src/Starlings.Models.Kev (KevModelAssets.Kev4BLock pins the
+# on ONNX Runtime 1.30.0, CPU provider, through ai-dotnet/src/Starlings.Models.Kev.Onnx (KevModelAssets.Kev4BLock pins the
 # same bundle files; KevModelProfile.Kev4B the same revisions and dimensions). Admission:
 # model-pipeline/admissions/kev.md (family admitted at Experimental, Mark, 2026-10-08, PR #4; Kev-4B is listed there as
 # a Kev 1.0 checkpoint). Candidate contract: model-pipeline/candidates/kev-4b/profile.json (onboarding route
@@ -226,7 +226,7 @@ execution:
       - { name: "present.%d.*", type: cache, shape: "the matching state after the input" }
 
 capabilities:
-  # Starlings.Models.Kev (KevCapabilities); evidence in the package README ("Evidence"). Statuses follow
+  # Starlings.Models.Kev.Onnx (KevCapabilities); evidence in the package README ("Evidence"). Statuses follow
   # KevCapabilities.All for the CPU provider (both sizes have the same statuses): experimental where the C# package was
   # compared with Kev's PyTorch fp32 path on the proposed corpus and fixtures (no adopted reference, no binding bound
   # for this checkpoint, no gate), unsupported where the package refuses or does not offer it, untested where no
@@ -234,7 +234,7 @@ capabilities:
   batch: unsupported  # one request per call; rows are not batched
   streaming: unsupported  # one probability vector per question, nothing to stream
   cancellation: experimental
-  persistence: unsupported  # the state cache lives for one request
+  persistence: unsupported  # nothing is saved; KevState keeps a state cache in memory across calls (package README)
   training: unsupported
   aot: untested
   extensions_ai: unsupported

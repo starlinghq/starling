@@ -44,10 +44,18 @@ var embeddings = await generator.GenerateAsync(["how much protein should a femal
 - Prompts are explicit: `Prompt` per generator, or per request with `AdditionalProperties["embeddinggemma2_prompt"]` (an `EmbeddingGemma2Prompt`, `"none"`, or one of the 20 names in the model's `config_sentence_transformers.json`, case-sensitive).
 - `Dimensions` maps to the Matryoshka sizes 768, 512, 256 and 128 (truncate, then normalize again); other values fail with `NotSupportedException`.
 - Inputs above 8,192 tokens fail with `EmbeddingGemma2InputTooLongException`; nothing is truncated.
-- `GenerateAsync` runs synchronously on the calling thread and returns a completed task.
+- `GenerateAsync` runs inline unless a scheduler is set: by default it runs synchronously on the calling thread and returns a completed task; with `ExecutionScheduler` set (text and multimodal options) it runs as one task on that scheduler (below).
 - Unsupported options (another `ModelId`, `RawRepresentationFactory`, unknown additional properties) fail with `NotSupportedException` instead of being ignored.
 
 Status: the text generator passed G7 on the `embeddinggemma-2/onnx-fp32-cpu` profile (Linux x64 CPU), including Matryoshka dimensions, and is supported there and over CUDA sessions on the Stable `onnx-fp32-cuda` profile (Linux x64, RTX 3090) under those profiles' Stable contracts (`Starlings.Models.EmbeddingGemma2` README). The multimodal generator is supported for images and videos on the Stable `image-fp32-cpu` and `video-fp32-cpu` profiles; over CUDA sessions it is experimental (its CUDA test is skipped by the per-release GPU run).
+
+## Streaming (experimental)
+
+`EmbeddingGemma2EmbeddingGenerator.EmbedStreamAsync(IAsyncEnumerable<string>, options, cancellationToken)` embeds a stream of texts without materializing it and yields one embedding per text in input order. Request options (prompt, `Dimensions`) are resolved once, before the first value. Each value is tokenized with the prompt as it arrives; an input above 8,192 tokens fails the enumeration with `EmbeddingGemma2InputTooLongException` whose `InputIndex` is its position in the stream, and any other invalid input (a media token, for example) fails it with `ArgumentException` naming its position, when the value arrives. Values are grouped as the encoder groups an explicit batch (`MaxBatchSize` rows, `MaxBatchTokens` padded cells), so with `SortByLength` off the embeddings equal one `GenerateAsync` call over the same values bit for bit. There is no per-embedding usage, and micro-batching does not apply. The multimodal generator has no stream method. Status: experimental (capability `extensions_ai.stream`; weight-free tests). The profile capability `streaming` stays unsupported.
+
+## Execution scheduler (experimental, opt-in)
+
+`ExecutionScheduler` (a `TaskScheduler`, null by default) on `EmbeddingGemma2EmbeddingGeneratorOptions` and `EmbeddingGemma2MultimodalEmbeddingGeneratorOptions` chooses where `GenerateAsync` (and the text stream's encoder runs) execute. Null keeps the inline behavior. `TaskScheduler.Default` offloads to the thread pool; an application's own scheduler can serialize or place the work. The numbers do not change. Status: experimental (capability `extensions_ai.execution_scheduler`; weight-free tests).
 
 ## Micro-batching (experimental, opt-in)
 

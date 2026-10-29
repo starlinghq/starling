@@ -21,11 +21,18 @@ namespace Starlings.Generation.OnnxGenAI;
 /// Disposal is reference-counted: <see cref="Dispose"/> stops new sequences; sequences already created keep the native
 /// model alive until they are disposed, so native memory is never freed under an active request.
 /// </para>
+/// <para>
+/// Disposal is the way to release native memory. As a safety net, a sequence or model that becomes unreachable without
+/// disposal is released after a garbage collection finds it: its finalizer queues the same release to a thread-pool
+/// thread (never running native destruction or the reference count on the finalizer thread), so an abandoned request
+/// no longer pins the model, and the native model is destroyed only after its last generator.
+/// </para>
 /// </remarks>
 public sealed class GenAIModel : IDisposable
 {
     private readonly Config _config;
     private readonly Model _model;
+    private readonly NativeLifetime _lifetime;
     private int _references = 1;
     private int _disposed;
 
@@ -44,6 +51,17 @@ public sealed class GenAIModel : IDisposable
         AppliedOverlays = overlays;
         ProviderOptions = providerOptions;
         NativeCallLock = options.EffectiveSerializeNativeCalls ? new Lock() : null;
+        GuidanceDirectory = summary.TokenizerDirectory is { Length: > 0 } tokenizerDirectory
+            ? Path.GetFullPath(tokenizerDirectory, directory)
+            : directory;
+        GuidanceMissingFiles = [.. GuidanceFiles.Where(f => !File.Exists(Path.Combine(GuidanceDirectory, f)))];
+
+        // GenAI's own finalizers would destroy the native model on the finalizer thread, possibly before a generator
+        // created from it; the reference count releases it instead, and the model's own reference is owned by
+        // NativeLifetime (Dispose, or a thread-pool release when this instance is collected undisposed).
+        NativeLifetime.TakeOverFinalization(model);
+        NativeLifetime.TakeOverFinalization(config);
+        _lifetime = new NativeLifetime(Release);
     }
 
     /// <summary>Absolute path of the model directory.</summary>
@@ -79,7 +97,40 @@ public sealed class GenAIModel : IDisposable
     /// <summary>True when the native work of this model's sequences runs one call at a time (see <see cref="GenAIModelOptions.SerializeNativeCalls"/>).</summary>
     public bool SerializesNativeCalls => NativeCallLock is not null;
 
+    /// <summary>
+    /// The files ONNX Runtime GenAI reads to build the token table of a <see cref="GenerationGuidance"/> constraint:
+    /// <c>tokenizer.json</c> and <c>tokenizer_config.json</c>, in <see cref="GuidanceDirectory"/>.
+    /// </summary>
+    public static IReadOnlyList<string> GuidanceFiles { get; } = ["tokenizer.json", "tokenizer_config.json"];
+
+    /// <summary>
+    /// Where GenAI looks for <see cref="GuidanceFiles"/>: <c>model.tokenizer_dir</c> of <c>genai_config.json</c>
+    /// (relative to the model directory) when set, else the model directory.
+    /// </summary>
+    public string GuidanceDirectory { get; }
+
+    /// <summary>
+    /// The <see cref="GuidanceFiles"/> missing from <see cref="GuidanceDirectory"/> when the model was loaded; empty when
+    /// guided requests can be served. A request with <see cref="GenerationOptions.Guidance"/> on a model with missing
+    /// files fails with <see cref="NotSupportedException"/>.
+    /// </summary>
+    public IReadOnlyList<string> GuidanceMissingFiles { get; }
+
+    /// <summary>The message of the <see cref="NotSupportedException"/> a guided request gets when files are missing.</summary>
+    /// <param name="directory">The directory searched.</param>
+    /// <param name="missingFiles">The missing file names.</param>
+    public static string GuidanceUnavailableMessage(string directory, IReadOnlyList<string> missingFiles)
+    {
+        ArgumentNullException.ThrowIfNull(missingFiles);
+        return $"Guided decoding is not available for {directory}: ONNX Runtime GenAI builds the constraint's token table from " +
+               $"{string.Join(" and ", GuidanceFiles)} in the model directory, and {string.Join(" and ", missingFiles)} " +
+               (missingFiles.Count == 1 ? "is" : "are") + " missing there.";
+    }
+
     internal Lock? NativeCallLock { get; }
+
+    /// <summary>Live references on the native model: one for this instance until disposed, one per undisposed sequence.</summary>
+    internal int References => Volatile.Read(ref _references);
 
     /// <summary>True after <see cref="Dispose"/>.</summary>
     public bool IsDisposed => Volatile.Read(ref _disposed) != 0;
@@ -174,6 +225,13 @@ public sealed class GenAIModel : IDisposable
             throw new ArgumentOutOfRangeException(nameof(options), options.MaxLength, $"MaxLength exceeds the context length {ContextLength}.");
         }
 
+        if (options.Guidance is not null && GuidanceMissingFiles.Count > 0)
+        {
+            // Checked here rather than left to GenAI, which fails generator creation with a file error for each missing
+            // file (and was seen to abort the process at native teardown after that error).
+            throw new NotSupportedException(GuidanceUnavailableMessage(GuidanceDirectory, GuidanceMissingFiles));
+        }
+
         Acquire();
         GeneratorParams? parameters = null;
         try
@@ -191,6 +249,11 @@ public sealed class GenAIModel : IDisposable
             else
             {
                 parameters.SetSearchOption("do_sample", false);
+            }
+
+            if (options.Guidance is { } guidance)
+            {
+                parameters.SetGuidance(guidance.NativeType, guidance.Data, guidance.FastForward);
             }
 
             Generator generator;
@@ -230,7 +293,7 @@ public sealed class GenAIModel : IDisposable
     {
         if (Interlocked.Exchange(ref _disposed, 1) == 0)
         {
-            Release();
+            _lifetime.Dispose();
         }
     }
 
@@ -271,6 +334,9 @@ public sealed class GenAIModel : IDisposable
 /// <summary>The fields of <c>genai_config.json</c> the adapter reads before loading.</summary>
 internal sealed record GenAIConfigSummary(string ModelType, int ContextLength, int VocabularySize, ImmutableArray<int> EosTokenIds, int? PadTokenId)
 {
+    /// <summary><c>model.tokenizer_dir</c>, or null when not set.</summary>
+    public string? TokenizerDirectory { get; init; }
+
     public static GenAIConfigSummary Read(string path)
     {
         try
@@ -287,11 +353,29 @@ internal sealed record GenAIConfigSummary(string ModelType, int ContextLength, i
                 model.GetProperty("context_length").GetInt32(),
                 model.GetProperty("vocab_size").GetInt32(),
                 eosIds,
-                pad);
+                pad)
+            {
+                TokenizerDirectory = model.TryGetProperty("tokenizer_dir", out var t) && t.ValueKind == JsonValueKind.String ? t.GetString() : null,
+            };
         }
         catch (Exception ex) when (ex is JsonException or KeyNotFoundException or InvalidOperationException or FormatException)
         {
             throw new GenAIModelException($"{path} is not a valid genai_config.json: {ex.Message}", ex);
         }
+    }
+}
+
+/// <summary>The type strings GenAI's <c>SetGuidance</c> takes.</summary>
+internal static class GuidanceNativeTypes
+{
+    extension(GenerationGuidance guidance)
+    {
+        /// <summary>The type string of the guidance's <see cref="GenerationGuidance.Kind"/>.</summary>
+        public string NativeType => guidance.Kind switch
+        {
+            GenerationGuidanceKind.JsonSchema => "json_schema",
+            GenerationGuidanceKind.Lark => "lark_grammar",
+            _ => "regex",
+        };
     }
 }

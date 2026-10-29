@@ -1,5 +1,6 @@
 using System.Collections.Immutable;
 using Starlings.Acquisition;
+using Starlings.Generation;
 using Starlings.Generation.OnnxGenAI;
 using Starlings.TestSupport;
 

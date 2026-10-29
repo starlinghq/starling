@@ -17,6 +17,11 @@ public sealed record E5ModelFiles(string ModelPath, string TokenizerPath, ModelS
             snapshot.GetFilePath(E5ModelAssets.TokenizerFile),
             snapshot);
     }
+
+    /// <summary>
+    /// SHA-256 of <see cref="ModelPath"/> when <see cref="Snapshot"/> hashed it (<see cref="ModelSnapshot.Verification"/> <see cref="CacheVerification.Sha256"/>); otherwise null. The model factories pass it as <c>OnnxSessionOptions.KnownModelSha256</c>, so the graph is not read a second time at load.
+    /// </summary>
+    public string? ModelSha256 => Snapshot?.GetVerifiedSha256(E5ModelAssets.ModelFile);
 }
 
 /// <summary>
@@ -60,7 +65,7 @@ public static class E5ModelAssets
             new ModelAssetFile(TokenizerFile, TokenizerSize, TokenizerSha256),
         ]);
 
-    /// <summary>Explicitly downloads (or verifies already cached) e5 files. See <see cref="ModelAssetStore.DownloadAsync"/>.</summary>
+    /// <summary>Explicitly downloads (or verifies already cached) e5 files. See <see cref="ModelAssetStore.DownloadAsync(ModelAssetLock, IProgress{ModelAssetProgress}?, CancellationToken)"/>.</summary>
     public static async Task<E5ModelFiles> DownloadAsync(
         ModelAcquisitionOptions? options = null, IProgress<ModelAssetProgress>? progress = null, CancellationToken cancellationToken = default)
     {
@@ -82,4 +87,23 @@ public static class E5ModelAssets
     /// <summary>Verifies an existing snapshot directory (for example a Hub snapshot) against the lock. Never downloads.</summary>
     public static E5ModelFiles OpenDirectory(string directory, CacheVerification verification = CacheVerification.Sha256) =>
         E5ModelFiles.From(ModelAssetStore.VerifyDirectory(Lock, directory, verification));
+
+    /// <summary>
+    /// The e5 lock and acquisition members of this class as an <see cref="IModelAssets{TFiles}"/>, for setup code
+    /// that acquires several models the same way. Each member calls the static member of the same name.
+    /// </summary>
+    public static IModelAssets<E5ModelFiles> Assets { get; } = new AssetsInstance();
+
+    private sealed class AssetsInstance : IModelAssets<E5ModelFiles>
+    {
+        public ModelAssetLock Lock => E5ModelAssets.Lock;
+
+        public Task<E5ModelFiles> DownloadAsync(ModelAcquisitionOptions? options = null, IProgress<ModelAssetProgress>? progress = null, CancellationToken cancellationToken = default) =>
+            E5ModelAssets.DownloadAsync(options, progress, cancellationToken);
+
+        public E5ModelFiles OpenLocal(ModelAcquisitionOptions? options = null) => E5ModelAssets.OpenLocal(options);
+
+        public E5ModelFiles OpenDirectory(string directory, CacheVerification verification = CacheVerification.Sha256) =>
+            E5ModelAssets.OpenDirectory(directory, verification);
+    }
 }

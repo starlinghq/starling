@@ -41,8 +41,10 @@ namespace Starlings.Models.EmbeddingGemma2.Extensions.AI;
 /// <b>Prompts, dimensions, options, usage, cancellation, threading</b>: as <see cref="EmbeddingGemma2EmbeddingGenerator"/>
 /// (default prompt <see cref="EmbeddingGemma2Prompt.None"/>, which the model card recommends for images;
 /// <see cref="EmbeddingGemma2EmbeddingGenerator.PromptPropertyName"/> per request; Matryoshka sizes 768, 512, 256 and
-/// 128; usage counts image tokens). <see cref="GenerateAsync(IEnumerable{DataContent}, EmbeddingGenerationOptions?, CancellationToken)"/>
-/// runs synchronously and returns a completed task.
+/// 128; usage counts image tokens). Execution is inline unless a scheduler is set: both <c>GenerateAsync</c> methods run
+/// synchronously on the calling thread and return a completed task, or, with
+/// <see cref="EmbeddingGemma2MultimodalEmbeddingGeneratorOptions.ExecutionScheduler"/> set (Experimental), run as one task
+/// on that scheduler.
 /// </para>
 /// </remarks>
 public sealed class EmbeddingGemma2MultimodalEmbeddingGenerator :
@@ -111,7 +113,10 @@ public sealed class EmbeddingGemma2MultimodalEmbeddingGenerator :
     }
 
     /// <inheritdoc />
-    /// <remarks>Each value is one image embedded alone. Runs synchronously and returns a completed task.</remarks>
+    /// <remarks>
+    /// Each value is one image or video embedded alone. Runs inline unless a scheduler is set: synchronously on the calling
+    /// thread with a completed task, or as one task on <see cref="EmbeddingGemma2MultimodalEmbeddingGeneratorOptions.ExecutionScheduler"/>.
+    /// </remarks>
     public Task<GeneratedEmbeddings<Embedding<float>>> GenerateAsync(
         IEnumerable<DataContent> values,
         EmbeddingGenerationOptions? options = null,
@@ -133,7 +138,10 @@ public sealed class EmbeddingGemma2MultimodalEmbeddingGenerator :
         }, options, cancellationToken);
 
     /// <inheritdoc />
-    /// <remarks>Each value is one input of text and image parts in order. Runs synchronously and returns a completed task.</remarks>
+    /// <remarks>
+    /// Each value is one input of text and media parts in order. Runs inline unless a scheduler is set: synchronously on
+    /// the calling thread with a completed task, or as one task on <see cref="EmbeddingGemma2MultimodalEmbeddingGeneratorOptions.ExecutionScheduler"/>.
+    /// </remarks>
     public Task<GeneratedEmbeddings<Embedding<float>>> GenerateAsync(
         IEnumerable<IEnumerable<AIContent>> values,
         EmbeddingGenerationOptions? options = null,
@@ -214,7 +222,12 @@ public sealed class EmbeddingGemma2MultimodalEmbeddingGenerator :
         return decoder(data.Data, data.MediaType) ?? throw new InvalidOperationException($"Value {index}: the image decoder returned null.");
     }
 
-    private Task<GeneratedEmbeddings<Embedding<float>>> Run(Func<List<EmbeddingGemma2MultimodalInput>> build, EmbeddingGenerationOptions? options, CancellationToken cancellationToken)
+    private Task<GeneratedEmbeddings<Embedding<float>>> Run(Func<List<EmbeddingGemma2MultimodalInput>> build, EmbeddingGenerationOptions? options, CancellationToken cancellationToken) =>
+        _options.ExecutionScheduler is { } scheduler
+            ? Task.Factory.StartNew(() => RunInline(build, options, cancellationToken), cancellationToken, TaskCreationOptions.DenyChildAttach, scheduler).Unwrap()
+            : RunInline(build, options, cancellationToken);
+
+    private Task<GeneratedEmbeddings<Embedding<float>>> RunInline(Func<List<EmbeddingGemma2MultimodalInput>> build, EmbeddingGenerationOptions? options, CancellationToken cancellationToken)
     {
         try
         {
@@ -333,6 +346,14 @@ public sealed record EmbeddingGemma2MultimodalEmbeddingGeneratorOptions
     /// batch, limits). The dimension is always 768 and the graphs' SHA-256 always checked.
     /// </summary>
     public EmbeddingGemma2MultimodalOptions Embedder { get; init; } = new();
+
+    /// <summary>
+    /// Where both <c>GenerateAsync</c> methods execute (decoding, preprocessing and the graph runs; Experimental,
+    /// capability <c>extensions_ai.execution_scheduler</c>), or null (default): inline on the calling thread, a completed
+    /// task, as without this option. <see cref="TaskScheduler.Default"/> offloads to the thread pool. The scheduler
+    /// changes only where the work runs, not the numbers.
+    /// </summary>
+    public TaskScheduler? ExecutionScheduler { get; init; }
 
     internal void Validate()
     {

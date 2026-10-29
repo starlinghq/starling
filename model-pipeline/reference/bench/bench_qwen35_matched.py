@@ -11,7 +11,8 @@ the same load and request settings as `GenAIModel.Load` and `TextGenerator`:
   overlays `{"model":{"decoder":{"session_options":{"intra_op_num_threads":N}}}}` and
   `{"model":{"pad_token_id":248319}}` (Qwen35ChatModel.PadTokenIdOverlay), in that order;
 - per request a fresh generator, `do_sample=False`, `max_length` = prompt + max_new_tokens; the prompt appended in
-  one call on CPU and in chunks of 512 tokens on CUDA (Qwen35ChatOptions.DefaultCudaPrefillChunkTokens);
+  chunks of 1,024 tokens on CPU (Qwen35ChatOptions.DefaultCpuPrefillChunkTokens: one call up to 1,024 tokens) and of
+  512 tokens on CUDA (Qwen35ChatOptions.DefaultCudaPrefillChunkTokens);
   `--prefill-chunk` overrides; stop at `<|endoftext|>` (248044) or `<|im_end|>` (248046) or max_new_tokens.
 
 Stages and metrics per sample (as the C# harness): `template` (text path: chat template and tokenizer; 0 on the ids
@@ -52,6 +53,7 @@ FIXTURE = PROTECTED / "reference" / "generation.jsonl"
 PAD_OVERLAY = 248319
 STOP_IDS = {248044, 248046}
 CUDA_PREFILL_CHUNK = 512
+CPU_PREFILL_CHUNK = 1024
 GENAI_VERSION = "0.17.1"
 STAGES = ["template", "prefill", "decode"]
 METRICS = ["ttft_ms", "prompt_tokens", "completion_tokens", "prefill_tokens_per_s", "decode_tokens_per_s"]
@@ -118,7 +120,7 @@ class QwenRun(core.LoadedRun):
         self.decoders = tokenizers.decoders
         stages["tokenizer_load"] = core.ms_since(t)
         self.load_stages = stages
-        self.chunk = args.prefill_chunk or (CUDA_PREFILL_CHUNK if args.provider == "cuda" else None)
+        self.chunk = args.prefill_chunk or (CUDA_PREFILL_CHUNK if args.provider == "cuda" else CPU_PREFILL_CHUNK)
         self.tolerance_file = PROTECTED / f"ortgenai-{args.variant}-{args.provider}" / "tolerances.yaml"
         self.near_tie = near_tie_margin(self.tolerance_file)
         self.settings = {
@@ -333,7 +335,7 @@ class QwenDriver(core.Driver):
 
     def add_arguments(self, parser: argparse.ArgumentParser, command: str) -> None:
         parser.add_argument("--variant", choices=["fp32x", "fp16x"], default="fp32x")
-        parser.add_argument("--prefill-chunk", type=int, default=None, help="default: one call on CPU, 512 on CUDA")
+        parser.add_argument("--prefill-chunk", type=int, default=None, help="default: 1024 on CPU, 512 on CUDA")
         parser.add_argument("--allow-genai-version", action="store_true", help="run another onnxruntime-genai version")
 
     def forwarded(self, args: argparse.Namespace) -> list[str]:

@@ -1,0 +1,19 @@
+{
+  "schema_version": 2,
+  "name": "tiny",
+  "repository": "acme/tiny-model",
+  "revision": "0123456789abcdef0123456789abcdef01234567",
+  "files": [
+    {
+      "path": "onnx/converted.onnx",
+      "size": 300000,
+      "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "url": "https://github.com/acme/models/releases/download/tiny-v1/converted.onnx"
+    },
+    {
+      "path": "tokenizer.json",
+      "size": 10000,
+      "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+    }
+  ]
+}

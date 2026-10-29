@@ -62,7 +62,10 @@ embedded copy of `model-pipeline/candidates/<name>/profile.json` at the packed c
 package cannot drift from the repository), and `BertModelProfile.BuiltInIds` lists the names. `BertModelProfile.Load(path)`
 and `Parse(json)` still read a contract file or string. Every path accepts only these seven repositories, ONNX Runtime
 1.30.0 on `CPUExecutionProvider` in fp32, and the exact values below; anything else throws `NotSupportedException`.
-Each profile's maturity is in the table above (all Experimental; registry manifests under `model-pipeline/registry/`).
+The per-repository values come from the route contract table `model-pipeline/routes/bert-onnx-cpu-v1/contracts.json`,
+which the package embeds and validates on first use and the Python allow-list of the onboarding route reads too;
+`BertModelProfile.SupportedRepositories` lists its repositories. Each profile's maturity is in the table above (all
+Experimental; registry manifests under `model-pipeline/registry/`).
 
 | Built-in name | Profile id | Task | Max tokens | Pooling | Width | Normalize | Prompts |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -115,13 +118,18 @@ directory by size and SHA-256 (`ModelAssetStore.VerifyDirectory`) and never down
 - `BertModelProfile`: `BuiltIn(name)`, `BuiltInIds`, `Load(path)`, `Parse(json)`, `Id`, `Task` (`BertTask.Embeddings` or `BertTask.Reranking`),
   `MaxTokens` (including special tokens and the prompt), `Pooling`, `HiddenSize`, `Normalize`, `Prompts`,
   `VocabularySize`, `ClsTokenId`, `SepTokenId`, `PadTokenId`, `OutputName`, `TokenizerProfile`, `TokenTypeIds`,
-  `SourceLock`, `RuntimeLock`, and the constants `BgeQueryInstruction`, `GraphFile`, `GraphDataFile`, `TokenizerFile`.
+  `SourceLock`, `RuntimeLock`, the static `SupportedRepositories`, and the constants `BgeQueryInstruction`, `GraphFile`,
+  `GraphDataFile`, `TokenizerFile`.
 - `BertTextEmbedder.Create(profile, snapshot, threads = 2, maxBatchSize = 32)`: `Embed`, `EmbedBatch`
-  (input order), `EmbedTokens`, `Tokenize`, `Dimension`, `Profile`, `Diagnostics`, and the owned
-  `Session` (advanced).
+  (input order), `EmbedTokens`, `Tokenize`, `Dimension`, `MaxSequenceLength`, `Profile`, `Diagnostics`, and the owned
+  `Session` (advanced). It is an `ITextEmbedder` (`Starlings.Models.Abstractions`): `EmbedBatch(texts, tokenCounts)`
+  embeds with the prompt `none` and reports each text's token count. `CountTokens(text)`, `CountTokens(texts)` and
+  `Validate(text)` count before truncation without embedding, and `ChunkingTokenizer` (the profile's tokenizer without
+  truncation) feeds `TextChunker`; both experimental (`BertCapabilities.TokenCounting`).
 - `BertReranker.Create(profile, snapshot, threads = 2, maxBatchSize = 32)`: `Score(BertPair)`, `ScoreBatch`,
   `ScoreTokens`, `Tokenize`, and `Rank(query, documents)`, which returns `BertRankedDocument(Index, Document, Score)`
-  by descending score, ties in original order.
+  by descending score, ties in original order. It is an `IReranker`: `Score(query, documents)` returns the raw logits
+  of `ScoreBatch` in document order.
 - `BertInput(InputIds, AttentionMask, TokenTypeIds)` for pre-tokenized rows: equal lengths from 2 to `MaxTokens`,
   the profile's CLS id first and SEP id as the last visible token, right padding with the profile's pad id and mask 0.
 - `BertCapabilities`: text, batch and cancellation `experimental`; streaming, persistence and training

@@ -1,4 +1,5 @@
 using Microsoft.ML;
+using Starlings.Models.MLNet;
 
 namespace Starlings.Models.E5.MLNet;
 
@@ -14,10 +15,10 @@ public sealed class E5EmbeddingEstimator : IEstimator<E5EmbeddingTransformer>
 
     private readonly E5TextEmbedder? _embedder;
     private readonly E5ModelFiles? _files;
-    private readonly E5ColumnNames _names;
+    private readonly TextEmbeddingColumnNames _names;
     private readonly E5EmbeddingOptions _options;
 
-    internal E5EmbeddingEstimator(E5TextEmbedder embedder, E5ColumnNames names, E5EmbeddingOptions options)
+    internal E5EmbeddingEstimator(E5TextEmbedder embedder, TextEmbeddingColumnNames names, E5EmbeddingOptions options)
     {
         ArgumentNullException.ThrowIfNull(embedder);
         options.Validate();
@@ -26,7 +27,7 @@ public sealed class E5EmbeddingEstimator : IEstimator<E5EmbeddingTransformer>
         _options = options;
     }
 
-    internal E5EmbeddingEstimator(E5ModelFiles files, E5ColumnNames names, E5EmbeddingOptions options)
+    internal E5EmbeddingEstimator(E5ModelFiles files, TextEmbeddingColumnNames names, E5EmbeddingOptions options)
     {
         ArgumentNullException.ThrowIfNull(files);
         options.Validate();
@@ -44,7 +45,7 @@ public sealed class E5EmbeddingEstimator : IEstimator<E5EmbeddingTransformer>
     public E5EmbeddingTransformer Fit(IDataView input)
     {
         ArgumentNullException.ThrowIfNull(input);
-        E5Bindings.Create(input.Schema, _names, Dimension);
+        TextEmbeddingBindings.Create(input.Schema, _names, Dimension);
         if (_embedder is not null)
         {
             return new E5EmbeddingTransformer(_embedder, _names, _options, ownedEncoder: null);
@@ -62,7 +63,7 @@ public sealed class E5EmbeddingEstimator : IEstimator<E5EmbeddingTransformer>
 
     /// <summary>The input shape plus the embedding column (vector of Single, known size) and the optional token-count column.</summary>
     /// <exception cref="ArgumentOutOfRangeException">The text column is missing or is not a scalar text column.</exception>
-    public SchemaShape GetOutputSchema(SchemaShape inputSchema) => E5Bindings.CreateShape(inputSchema, _names, Dimension);
+    public SchemaShape GetOutputSchema(SchemaShape inputSchema) => TextEmbeddingBindings.CreateShape(inputSchema, _names, Dimension);
 }
 
 /// <summary>Creates the e5 embedding estimator from <c>mlContext.Transforms</c>.</summary>
@@ -81,7 +82,7 @@ public static class E5EmbeddingCatalogExtensions
         this TransformsCatalog catalog, E5TextEmbedder embedder, string outputColumnName, string? inputColumnName = null, E5EmbeddingOptions? options = null)
     {
         ArgumentNullException.ThrowIfNull(catalog);
-        return new E5EmbeddingEstimator(embedder, E5ColumnNames.Create(outputColumnName, inputColumnName, options?.TokenCountColumnName), options ?? new E5EmbeddingOptions());
+        return new E5EmbeddingEstimator(embedder, TextEmbeddingColumnNames.Create(outputColumnName, inputColumnName, options?.TokenCountColumnName), options ?? new E5EmbeddingOptions());
     }
 
     /// <summary>
@@ -98,6 +99,6 @@ public static class E5EmbeddingCatalogExtensions
         this TransformsCatalog catalog, E5ModelFiles files, string outputColumnName, string? inputColumnName = null, E5EmbeddingOptions? options = null)
     {
         ArgumentNullException.ThrowIfNull(catalog);
-        return new E5EmbeddingEstimator(files, E5ColumnNames.Create(outputColumnName, inputColumnName, options?.TokenCountColumnName), options ?? new E5EmbeddingOptions());
+        return new E5EmbeddingEstimator(files, TextEmbeddingColumnNames.Create(outputColumnName, inputColumnName, options?.TokenCountColumnName), options ?? new E5EmbeddingOptions());
     }
 }

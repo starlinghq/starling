@@ -4,7 +4,7 @@
     <IsPackable>true</IsPackable>
     <!-- Trim, AOT and single-file analyzers on (warnings are errors); Native AOT evidence: docs/evidence/aot/. -->
     <IsAotCompatible>true</IsAotCompatible>
-    <Description>Text generation on ONNX Runtime GenAI 0.17.1 behind a Starling adapter: model loading with explicit provider selection (no silent fallback, TF32 off by default), runtime config overlays, reference-counted disposal, and an owned decode loop over pre-tokenized ids (greedy or seeded sampling, max new tokens, stop token ids and stop strings, streaming with UTF-8-safe incremental detokenization through the owned tokenizer Starlings.Tokenizers, cancellation between decode steps, usage accounting). References only Microsoft.ML.OnnxRuntimeGenAI.Managed: the application adds Microsoft.ML.OnnxRuntimeGenAI (CPU) or Microsoft.ML.OnnxRuntimeGenAI.Cuda. Maturity is per model profile (Stable, Preview or Experimental): see the README, generated from the model registry.</Description>
+    <Description>Text generation on ONNX Runtime GenAI 0.17.1 behind a Starling adapter: model loading with explicit provider selection (no silent fallback, TF32 off by default), runtime config overlays, reference-counted disposal, and an owned decode loop over pre-tokenized ids (greedy or seeded sampling, max new tokens, stop token ids and stop strings, streaming with UTF-8-safe incremental detokenization through the owned tokenizer Starlings.Tokenizers, cancellation between decode steps, usage accounting). The backend-neutral options, results, stop matcher and detokenizer are in Starlings.Generation.Abstractions. References only Microsoft.ML.OnnxRuntimeGenAI.Managed: the application adds Microsoft.ML.OnnxRuntimeGenAI (CPU) or Microsoft.ML.OnnxRuntimeGenAI.Cuda. Maturity is per model profile (Stable, Preview or Experimental): see the README, generated from the model registry.</Description>
     <PackageTags>llm;text-generation;onnxruntime-genai;onnxruntime;streaming</PackageTags>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageReleaseNotes>https://github.com/starlinghq/starling/blob/main/ai-dotnet/README.md#generation-backend-and-pilot-llm-p-016</PackageReleaseNotes>
@@ -12,6 +12,8 @@
 
   <ItemGroup>
     <None Include="README.md" Pack="true" PackagePath="" />
+    <!-- Build-time native package check for every consumer, direct or transitive (README, "Native package check"). -->
+    <None Include="buildTransitive/Starlings.Generation.OnnxGenAI.targets" Pack="true" PackagePath="buildTransitive/" />
   </ItemGroup>
 
   <ItemGroup>
@@ -21,12 +23,15 @@
 
   <ItemGroup>
     <!--
-      Managed binding only (it brings Microsoft.Extensions.AI.Abstractions for its own IChatClient, which this package
-      does not use). The native runtime is the application's choice: Microsoft.ML.OnnxRuntimeGenAI (CPU, brings
+      Managed binding only (it brings Microsoft.Extensions.AI.Abstractions >= 9.8.0 for its own IChatClient, which this
+      package does not use; Starlings.Generation.Abstractions lifts it to 10.10.1). The native runtime is the application's choice: Microsoft.ML.OnnxRuntimeGenAI (CPU, brings
       Microsoft.ML.OnnxRuntime) or Microsoft.ML.OnnxRuntimeGenAI.Cuda (brings Microsoft.ML.OnnxRuntime.Gpu).
     -->
     <PackageReference Include="Microsoft.ML.OnnxRuntimeGenAI.Managed" />
     <PackageReference Include="Starlings.Tokenizers" />
+    <!-- Options, results, stop matching and detokenization; its Microsoft.Extensions.AI.Abstractions 10.10.1 reference
+         lifts the version GenAI.Managed asks for (>= 9.8.0). -->
+    <ProjectReference Include="../Starlings.Generation.Abstractions/Starlings.Generation.Abstractions.csproj" />
   </ItemGroup>
 
   <ItemGroup>

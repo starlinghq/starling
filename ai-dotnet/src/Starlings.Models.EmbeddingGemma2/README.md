@@ -145,6 +145,20 @@ With default glibc settings, a process that loads and unloads the multimodal emb
 
 In a container whose CPU quota is below the host's CPU count, the session now uses .NET's container-aware processor count for its intra-op threads when none is set (ONNX Runtime's own default started one thread, and one malloc arena, per physical core of the host). Evidence: [CUDA soak growth](https://github.com/starlinghq/starling/blob/main/docs/evidence/cuda-soak-growth/README.md).
 
+## Token counting, cheap rejection and chunking (experimental)
+
+`EmbeddingGemma2TextEmbedder.CountTokens(text[, prompt])` and `CountTokens(texts[, prompt])` count tokens without embedding, `<bos>`, `<eos>` and prompt included. `Validate(text[, prompt])` returns a `TokenLimitCheck` and never throws. `Tokenize(text, prompt)` tokenizes with the limit check every embedding method applies.
+
+Text whose length alone proves it is above the limit is rejected without being tokenized. No token of the pinned `tokenizer.json` covers more than 31 UTF-16 code units (`EmbeddingGemma2Tokenizer.MaxCharactersPerToken`, computed from the file at load), so a text of `n` code units needs at least `2 + ceil(n / 31)` tokens. With the default limit of 8,192 tokens, text above 253,890 code units (a 1 MB document, for example) fails with `EmbeddingGemma2InputTooLongException` at once, with `TokenCountIsLowerBound` true and the bound as `TokenCount`; `Validate` reports the same bound. Shorter text is tokenized and checked exactly, as before. The bound is off for a `tokenizer.json` whose pipeline could drop characters.
+
+`EmbeddingGemma2Tokenizer` is an `IChunkingTokenizer` (`EmbeddingGemma2TextEmbedder.ChunkingTokenizer`), so `TextChunker` of `Starlings.Models.Abstractions` can split long documents into windows that fit the limit; pass the prompt's `Text` as `TextChunkerOptions.Prefix`. Pooled chunk vectors carry no parity claim. Capabilities `token_counting` and `chunking`: experimental (weight-free tests on the pinned `tokenizer.json`).
+
+## Shared types
+
+A snapshot verified with `CacheVerification.Sha256` (the default) carries its digests: `EmbeddingGemma2ModelFiles.ModelSha256` is the graph's SHA-256 then, and `EmbeddingGemma2TextEmbedder.Create(files)`, the generator, the ML.NET transform and `EmbeddingGemma2MultimodalEmbedder.Create(files)` (with `VisionModelSha256` and `MultimodalModelSha256`) pass it to the session as `OnnxSessionOptions.KnownModelSha256`, so the graph is read once at startup, by the verification, not again by the session. With `CacheVerification.Size` it is null and the session hashes the graph as before.
+
+The package uses the backend-neutral types of `Starlings.Models.Abstractions`. `EmbeddingGemma2TextEmbedder` is an `ITextEmbedder` (no prompt through that interface; pass a prompt with the overloads that take one). `EmbeddingGemma2ModelAssets.Assets` is the text lock and acquisition as an `IModelAssets<EmbeddingGemma2ModelFiles>`. `EmbeddingGemma2InputTooLongException` derives from `InputTooLongException`, whose `MaxTokens` replaces the obsolete `MaximumTokens`. `EmbeddingGemma2Capabilities.Statuses` is the package-wide capability table in `Starlings.Models.CapabilityStatus`, and `EmbeddingGemma2Capabilities.ProfileCapabilities` holds each profile's capability record (`ModelProfileCapabilities`), generated from its registry manifest. `EmbeddingGemma2Capabilities.All`, `EmbeddingGemma2Capabilities.Profiles` and `EmbeddingGemma2CapabilityStatus` are obsolete and are removed in the next minor version.
+
 ## Status
 
 Every profile of this package is Stable. On Linux x64 CPU: text (`embeddinggemma-2/onnx-fp32-cpu`) since 2026-10-15, images (`image-fp32-cpu`) since 2026-10-16 and videos (`video-fp32-cpu`) since 2026-10-17. On Linux x64 CUDA with an NVIDIA GeForce RTX 3090: text (`onnx-fp32-cuda`) and images (`image-fp32-cuda`) since 2026-10-16 and videos (`video-fp32-cuda`) since 2026-10-17. Each passed every qualification gate, G0 to G7. The weekly qualification workflow reruns the CPU profiles' G1 to G3 on the release sets and a one-hour soak. For text, G2 reads the reference embeddings committed under `model-pipeline/protected/`. For images and videos, G2 reads the accepted reference tensors hosted at [`Starlinghq/starling-release-references`](https://huggingface.co/datasets/Starlinghq/starling-release-references). Those are pinned by commit and SHA-256 in the release set's protected `hosted-reference.json`, and every array is checked against the set's `tensors.json`. GPU regression runs for every release (an `ai-v*` tag) and on demand, on an RTX 3090 only, in the qualification workflow's `cuda (runpod)` job: it reruns the CUDA tests, G1 to G3 on the release sets and a soak smoke test.
@@ -153,13 +167,13 @@ Videos were the last profiles promoted. Two blockers were fixed first. The hoste
 
 Text (`onnx-fp32-cpu`): release sets of 232 tokenizer rows (ids exact) and 696 embedding rows (no prompt, `query` and `document`; within 5.1e-7 of the PyTorch reference, binding bound 5e-6), MIRACL nDCG@10 0.8325; development fixtures of 138 rows up to 1,750 tokens (within 3.7e-7).
 
-Images (`image-fp32-cpu` and `image-fp32-cuda` stable), Linux x64, from decoded RGB (42 protected rows: 28 images alone, 6 interleaved or prompted, 8 text queries): rendered ids exact; resized bytes, pixel values and positions bit-exact on the 28 supported images; embeddings within 2.3e-6 (CPU) and 1.0e-6 (CUDA) of the PyTorch reference, binding bound 1e-5, min cosine 0.9999995. Audio: unsupported. `EmbeddingGemma2Capabilities.All` lists every capability with its status.
+Images (`image-fp32-cpu` and `image-fp32-cuda` stable), Linux x64, from decoded RGB (42 protected rows: 28 images alone, 6 interleaved or prompted, 8 text queries): rendered ids exact; resized bytes, pixel values and positions bit-exact on the 28 supported images; embeddings within 2.3e-6 (CPU) and 1.0e-6 (CUDA) of the PyTorch reference, binding bound 1e-5, min cosine 0.9999995. Audio: unsupported. `EmbeddingGemma2Capabilities.Statuses` lists every capability with its status.
 
 Videos (`video-fp32-cpu` and `video-fp32-cuda` stable), Linux x64, from decoded RGB frames (35 protected rows: 22 videos alone, 6 interleaved or prompted, 2 input forms, 5 text queries; synthetic H.264, HEVC, VP9 and AV1 clips of 0.5 to 40 s): sampled indices exact (and on 20,849 upstream cases), rendered ids exact; decoded frames (FFmpeg adapter), resized frames, pixel values and positions bit-exact on all 32 video inputs; embeddings within 1.7e-6 (CPU) and 3.3e-6 (CUDA) of the PyTorch reference, binding bound 1e-5, min cosine 0.9999995. Frames without timing: rejected by default (upstream behaviour on opt-in reproduces its row within 1.2e-7). Timestamps, other sampling settings and audio tracks: unsupported.
 
 ## Stable contract
 
-This is the contract of profile `embeddinggemma-2/onnx-fp32-cpu` (text embeddings). Its Stable label (since 2026-10-15) commits to it under the [support policy](https://github.com/starlinghq/starling/blob/main/docs/support-policy.md). The statuses are the registry manifest's and `EmbeddingGemma2Capabilities.Profiles`, which a test keeps equal key for key. Images and videos are the profiles of the contracts that follow.
+This is the contract of profile `embeddinggemma-2/onnx-fp32-cpu` (text embeddings). Its Stable label (since 2026-10-15) commits to it under the [support policy](https://github.com/starlinghq/starling/blob/main/docs/support-policy.md). The statuses are the registry manifest's and `EmbeddingGemma2Capabilities.ProfileCapabilities`, which a test keeps equal key for key. Images and videos are the profiles of the contracts that follow.
 
 | Item | Contract |
 | --- | --- |
@@ -181,7 +195,7 @@ This is the contract of profile `embeddinggemma-2/onnx-fp32-cpu` (text embedding
 
 ## Stable contract: images
 
-This is the contract of profile `embeddinggemma-2/image-fp32-cpu` (image and interleaved text-and-image embeddings). Its Stable label (since 2026-10-16) commits to it under the [support policy](https://github.com/starlinghq/starling/blob/main/docs/support-policy.md). The statuses are the registry manifest's and `EmbeddingGemma2Capabilities.Profiles`, which a test keeps equal key for key.
+This is the contract of profile `embeddinggemma-2/image-fp32-cpu` (image and interleaved text-and-image embeddings). Its Stable label (since 2026-10-16) commits to it under the [support policy](https://github.com/starlinghq/starling/blob/main/docs/support-policy.md). The statuses are the registry manifest's and `EmbeddingGemma2Capabilities.ProfileCapabilities`, which a test keeps equal key for key.
 
 | Item | Contract |
 | --- | --- |
@@ -203,7 +217,7 @@ This is the contract of profile `embeddinggemma-2/image-fp32-cpu` (image and int
 
 ## Stable contract: videos
 
-This is the contract of profile `embeddinggemma-2/video-fp32-cpu` (video and interleaved text, image and video embeddings). Its Stable label (since 2026-10-17) commits to it under the [support policy](https://github.com/starlinghq/starling/blob/main/docs/support-policy.md). The statuses are the registry manifest's and `EmbeddingGemma2Capabilities.Profiles`, which a test keeps equal key for key.
+This is the contract of profile `embeddinggemma-2/video-fp32-cpu` (video and interleaved text, image and video embeddings). Its Stable label (since 2026-10-17) commits to it under the [support policy](https://github.com/starlinghq/starling/blob/main/docs/support-policy.md). The statuses are the registry manifest's and `EmbeddingGemma2Capabilities.ProfileCapabilities`, which a test keeps equal key for key.
 
 | Item | Contract |
 | --- | --- |
@@ -226,7 +240,7 @@ This is the contract of profile `embeddinggemma-2/video-fp32-cpu` (video and int
 
 ## Stable contract: CUDA
 
-These are the contracts of profiles `embeddinggemma-2/onnx-fp32-cuda` (text) and `embeddinggemma-2/image-fp32-cuda` (images), Stable since 2026-10-16, and `embeddinggemma-2/video-fp32-cuda` (videos), Stable since 2026-10-17. Each is its CPU contract above, with these differences. The statuses are the registry manifests' and `EmbeddingGemma2Capabilities.Profiles`, which a test keeps equal key for key.
+These are the contracts of profiles `embeddinggemma-2/onnx-fp32-cuda` (text) and `embeddinggemma-2/image-fp32-cuda` (images), Stable since 2026-10-16, and `embeddinggemma-2/video-fp32-cuda` (videos), Stable since 2026-10-17. Each is its CPU contract above, with these differences. The statuses are the registry manifests' and `EmbeddingGemma2Capabilities.ProfileCapabilities`, which a test keeps equal key for key.
 
 | Item | Contract |
 | --- | --- |

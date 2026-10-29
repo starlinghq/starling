@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Throwaway consumer for the release drill's native package check: the buildTransitive targets of
+    Starlings.Runtime.Onnx (STARLINGS001, STARLINGS002) and Starlings.Generation.OnnxGenAI (STARLINGS003, STARLINGS004).
+    The drill copies this file outside the repository once per case and replaces @VERSION@, @PACKAGE@ and @NATIVES@
+    (zero, one or two native PackageReference items), then builds it and checks the diagnostic it expects.
+  -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="@PACKAGE@" Version="[@VERSION@]" />
+    @NATIVES@
+  </ItemGroup>
+
+</Project>

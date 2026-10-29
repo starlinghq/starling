@@ -210,17 +210,19 @@ public sealed class EmbeddingGemma2MultimodalEmbedder : IDisposable
             vision = OnnxModelSession.Create(files.VisionModelPath, EmbeddingGemma2Encoder.SessionDefaults(options.Session) with
             {
                 ExpectedModelSha256 = verify ? EmbeddingGemma2ModelAssets.VisionModelSha256 : null,
+                KnownModelSha256 = files.VisionModelSha256,
                 TrimNativeHeapAfterLoad = trimAfterLoad,
                 TrimNativeHeapAfterRun = trimAfterRun,
             });
             multimodal = OnnxModelSession.Create(files.MultimodalModelPath, EmbeddingGemma2Encoder.SessionDefaults(options.Session) with
             {
                 ExpectedModelSha256 = verify ? EmbeddingGemma2ModelAssets.MultimodalModelSha256 : null,
+                KnownModelSha256 = files.MultimodalModelSha256,
                 TrimNativeHeapAfterLoad = trimAfterLoad,
                 TrimNativeHeapAfterRun = trimAfterRun,
             });
             string textPath = files.Text.ModelPath;
-            var textOptions = options.ToTextEncoderOptions(verify ? EmbeddingGemma2ModelAssets.ModelSha256 : null);
+            var textOptions = options.ToTextEncoderOptions(verify ? EmbeddingGemma2ModelAssets.ModelSha256 : null, files.Text.ModelSha256);
             var lazy = new Lazy<EmbeddingGemma2Encoder>(() => EmbeddingGemma2Encoder.Create(textPath, textOptions), LazyThreadSafetyMode.ExecutionAndPublication);
             return new EmbeddingGemma2MultimodalEmbedder(tokenizer, vision, multimodal, lazy, options, ownsSessions: true);
         }

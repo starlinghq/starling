@@ -8,6 +8,8 @@
   <ItemGroup>
     <None Include="README.md" Pack="true" PackagePath="" />
     <ProjectReference Include="../Starlings.Runtime.Onnx/Starlings.Runtime.Onnx.csproj" />
+    <!-- CapabilityStatus, ModelProfileCapabilities, ITextEmbedder and the InputTooLongException base (no ONNX Runtime dependency). -->
+    <ProjectReference Include="../Starlings.Models.Abstractions/Starlings.Models.Abstractions.csproj" />
     <ProjectReference Include="../Starlings.Acquisition/Starlings.Acquisition.csproj" />
     <PackageReference Include="Starlings.Tokenizers" />
     <InternalsVisibleTo Include="Starlings.Models.Bert.Tests" />
@@ -24,6 +26,11 @@
     <EmbeddedResource Include="../../../model-pipeline/candidates/minilm/profile.json" Link="Profiles/minilm.json" LogicalName="Starlings.Models.Bert.Profiles.minilm.json" />
     <EmbeddedResource Include="../../../model-pipeline/candidates/ms-marco/profile.json" Link="Profiles/ms-marco.json" LogicalName="Starlings.Models.Bert.Profiles.ms-marco.json" />
     <EmbeddedResource Include="../../../model-pipeline/candidates/nomic-embed/profile.json" Link="Profiles/nomic-embed.json" LogicalName="Starlings.Models.Bert.Profiles.nomic-embed.json" />
+    <!--
+      The route's per-repository contract table, shared with the Python allow-list (model-pipeline/src/model_pipeline/
+      onboarding_bert.py): linked, not copied, so the two cannot drift. BertModelProfile validates it on first use.
+    -->
+    <EmbeddedResource Include="../../../model-pipeline/routes/bert-onnx-cpu-v1/contracts.json" Link="Contracts/contracts.json" LogicalName="Starlings.Models.Bert.Contracts.json" />
   </ItemGroup>
   <ItemGroup>
     <!-- Length-aware chunk planning shared by the explicit-batch encoders (internal). -->

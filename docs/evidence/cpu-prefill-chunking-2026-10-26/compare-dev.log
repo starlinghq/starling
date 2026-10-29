@@ -1,0 +1,26 @@
+baseline  dev-one-call: prefill_chunk_tokens=None
+candidate dev-chunk1024: prefill_chunk_tokens=1024
+case                   prompt ids_eq finish_eq ref_exact step0_bytes_eq step0_max_abs prefill_ms_a prefill_ms_b
+en-short                   24   True      True      True           True     0.000e+00        408.6        386.3
+en-list                    22   True      True      True           True     0.000e+00        352.2        324.2
+en-math                    40   True      True      True           True     0.000e+00        582.1        485.3
+system-pirate              36   True      True      True           True     0.000e+00        454.9        488.3
+multi-turn                 61   True      True      True           True     0.000e+00        723.3        721.1
+zh                         18   True      True      True           True     0.000e+00        288.1        394.7
+ja                         20   True      True      True           True     0.000e+00        325.6        391.6
+ar                         23   True      True      True           True     0.000e+00        470.3        363.2
+hi                         31   True      True      True           True     0.000e+00        506.9        425.5
+th                         21   True      True      True           True     0.000e+00        374.6        350.3
+ru-de-mix                  48   True      True      True           True     0.000e+00        698.8        620.8
+emoji                      45   True      True      True           True     0.000e+00        641.7        576.3
+code-py                    29   True      True      True           True     0.000e+00        410.4        416.8
+code-cs                    80   True      True      True           True     0.000e+00        806.7        887.2
+code-sql                   43   True      True      True           True     0.000e+00        532.7        563.8
+special-imend              24   True      True      True           True     0.000e+00        372.7        345.0
+special-endoftext          24   True      True      True           True     0.000e+00        406.9        362.8
+special-think-tool         32   True      True      True           True     0.000e+00        459.7        467.7
+special-broken             40   True      True      True           True     0.000e+00        488.8        508.4
+thinking-on                18   True      True      True           True     0.000e+00        322.6        330.2
+tools                     286   True      True      True           True     0.000e+00       3031.9       3537.1
+long-license             1666   True      True      True           True     0.000e+00      18628.5      18838.6
+cases 22; ids and finish equal on all: True; step0 byte-identical on all: True; max abs step0 difference 0.000e+00

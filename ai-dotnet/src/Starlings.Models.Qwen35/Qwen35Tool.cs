@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Starlings.Generation;
 
 namespace Starlings.Models.Qwen35;
 
@@ -87,6 +88,17 @@ public sealed class Qwen35Tool
         return new Qwen35Tool(json.Clone(), n, parameters);
     }
 
+    /// <summary>The definition of a backend-neutral <see cref="ToolDefinition"/>, rendered from its JSON (<see cref="FromJson"/>).</summary>
+    /// <exception cref="ArgumentException">The name cannot appear in the template's call format.</exception>
+    public static Qwen35Tool FromDefinition(ToolDefinition definition)
+    {
+        ArgumentNullException.ThrowIfNull(definition);
+        return FromJson(definition.Json);
+    }
+
+    /// <summary>This definition as a backend-neutral <see cref="ToolDefinition"/> (the same JSON).</summary>
+    public ToolDefinition ToDefinition() => ToolDefinition.FromJson(Json);
+
     /// <summary>The schema of one parameter (<c>parameters.properties[name]</c>), or an undefined element.</summary>
     internal JsonElement ParameterSchema(string parameter) =>
         Parameters.ValueKind == JsonValueKind.Object && Parameters.TryGetProperty("properties", out var properties) &&
@@ -133,4 +145,14 @@ public sealed record Qwen35ToolCall(string Name, JsonElement Arguments)
         using var document = JsonDocument.Parse(stream.ToArray());
         return new Qwen35ToolCall(name, document.RootElement.Clone());
     }
+
+    /// <summary>The call of a backend-neutral <see cref="Starlings.Generation.ToolCall"/>.</summary>
+    public static Qwen35ToolCall FromToolCall(ToolCall call)
+    {
+        ArgumentNullException.ThrowIfNull(call);
+        return new Qwen35ToolCall(call.Name, call.Arguments);
+    }
+
+    /// <summary>This call as a backend-neutral <see cref="Starlings.Generation.ToolCall"/>.</summary>
+    public ToolCall ToToolCall() => new(Name, Arguments);
 }

@@ -1,3 +1,5 @@
+using Starlings.Generation;
+
 namespace Starlings.Models.Qwen35;
 
 /// <summary>Role of a chat message.</summary>
@@ -53,4 +55,39 @@ public sealed record Qwen35Message(Qwen35Role Role, string Content, string? Reas
 
     /// <summary>A tool result message.</summary>
     public static Qwen35Message Tool(string content) => new(Qwen35Role.Tool, content);
+
+    /// <summary>The message of a backend-neutral <see cref="ChatTurn"/> (role, content, reasoning and tool calls).</summary>
+    public static Qwen35Message FromChatTurn(ChatTurn turn)
+    {
+        ArgumentNullException.ThrowIfNull(turn);
+        Qwen35Role role = turn.Role switch
+        {
+            ChatTurnRole.System => Qwen35Role.System,
+            ChatTurnRole.User => Qwen35Role.User,
+            ChatTurnRole.Assistant => Qwen35Role.Assistant,
+            ChatTurnRole.Tool => Qwen35Role.Tool,
+            _ => throw new ArgumentOutOfRangeException(nameof(turn), turn.Role, "Unknown role."),
+        };
+        return new Qwen35Message(role, turn.Content, turn.ReasoningContent)
+        {
+            ToolCalls = turn.ToolCalls is null ? null : [.. turn.ToolCalls.Select(Qwen35ToolCall.FromToolCall)],
+        };
+    }
+
+    /// <summary>This message as a backend-neutral <see cref="ChatTurn"/>.</summary>
+    public ChatTurn ToChatTurn()
+    {
+        ChatTurnRole role = Role switch
+        {
+            Qwen35Role.System => ChatTurnRole.System,
+            Qwen35Role.User => ChatTurnRole.User,
+            Qwen35Role.Assistant => ChatTurnRole.Assistant,
+            Qwen35Role.Tool => ChatTurnRole.Tool,
+            _ => throw new InvalidOperationException($"Unknown role {Role}."),
+        };
+        return new ChatTurn(role, Content, ReasoningContent)
+        {
+            ToolCalls = ToolCalls is null ? null : [.. ToolCalls.Select(c => c.ToToolCall())],
+        };
+    }
 }

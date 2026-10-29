@@ -1,5 +1,5 @@
 # Pilot LLM profile (P-016): Qwen/Qwen3.5-0.8B on ONNX Runtime GenAI 0.17.1, variant fp16x on the CUDA provider,
-# through ai-dotnet/src/Starlings.Models.Qwen35 (Qwen35ModelAssets pins the same files). Backend decision:
+# through ai-dotnet/src/Starlings.Models.Qwen35.OnnxGenAI (Qwen35ModelAssets pins the same files). Backend decision:
 # docs/kickoff.md (settled 2026-10-08) and docs/m0/generation-backend-check.md. The Hub repository ships no GenAI build:
 # the graph is Starling's reproducible build (model-pipeline/reference/generation/build_ortgenai_bundle.py: float32
 # config overlay, builder -p fp16 -e cuda, exclude_mtp=true), listed in origin.files with its digests. Development fixtures
@@ -8,7 +8,7 @@ schema_version: 1
 id: qwen3.5-0.8b/ortgenai-fp16x-cuda
 # Stable since 2026-10-16 (maintainer's delegated promotion; docs/kickoff.md, "Stable CUDA profiles, first round"):
 # every gate G0 to G7 passed (G4 and G5 in the binding RTX 3090 round, docs/evidence/qualification-2026-10-16-cuda/),
-# the contract is the Starlings.Models.Qwen35 README's "Stable contract: CUDA" (fp32x and fp16x, Linux x64, RTX 3090;
+# the contract is the Starlings.Models.Qwen35.OnnxGenAI README's "Stable contract: CUDA" (fp32x and fp16x, Linux x64, RTX 3090;
 # fp16x under its protected near-tie rule), and the per-release GPU regression (qualification workflow, job cuda
 # (runpod), pinned to the RTX 3090) reruns the CUDA tests, G1 to G3 on the release sets and a soak smoke test. Every
 # check of this profile passed in its first run, 38857860186 (on an RTX 4090, before the pin;
@@ -93,7 +93,7 @@ behavior:
       returned; the tokens that produced it stay in the completion ids and the usage count.
     usage: prompt tokens = ids fed to the model; completion tokens = generated ids excluding a stop token id.
     cancellation: checked before the prefill, between prefill chunks and between decode steps; a running chunk or step is not interrupted.
-    prefill_chunk_tokens: "512 on CUDA, one call on CPU (Qwen35ChatOptions default); a one-call prefill allocates about 1 MB of fp32 logits per prompt token"
+    prefill_chunk_tokens: "512 on CUDA; on CPU one call up to 1,024 prompt tokens and 1,024-token chunks above (Qwen35ChatOptions default); a one-call prefill allocates about 1 MB of fp32 logits per prompt token"
     concurrency: >-
       serialized: on CUDA the native work of concurrent requests runs one call at a time (requests interleave step by step). Unserialized concurrent ONNX Runtime GenAI 0.17.1 generators on the CUDA provider produced wrong tokens (docs/evidence/p016-qwen35/README.md); that mode is unsupported.
     request_state: >-
@@ -181,7 +181,7 @@ execution:
     device_id: 0
 
 capabilities:
-  # Starlings.Models.Qwen35 (Qwen35Capabilities); evidence in docs/evidence/p016-qwen35/README.md and the release-set
+  # Starlings.Models.Qwen35.OnnxGenAI (Qwen35Capabilities); evidence in docs/evidence/p016-qwen35/README.md and the release-set
   # gates. Statuses follow the README's "Stable contract: CUDA": supported where the P-030 release sets (G1, G2 under
   # the protected near-tie rule, G3), the accepted development fixtures, G4 to G7 and the CUDA test project
   # (Fp16xCudaTests, Fp16xCudaChatClientTests, run by the per-release GPU regression) cover it on an RTX 3090;

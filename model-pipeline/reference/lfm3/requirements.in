@@ -1,0 +1,9 @@
+# LFM3 reference: transformers (trust_remote_code at the pinned checkpoint revision, PyTorch fp32 on CPU) and the
+# pinned ONNX export on ONNX Runtime 1.30.0 (the version Starlings.Runtime.Onnx pins).
+# torch from the CPU index (download.pytorch.org/whl/cpu); see ../README.md.
+torch==2.14.1
+transformers==5.21.0
+tokenizers==0.23.3
+onnxruntime==1.30.0
+numpy==2.4.6
+safetensors==0.8.0

@@ -16,8 +16,11 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <!-- Brings Starlings.Generation.OnnxGenAI, .Acquisition and .Tokenizers at their pinned versions. -->
-    <PackageReference Include="Starlings.Models.Qwen35" Version="$(StarlingsVersion)" />
+    <!--
+      Brings the model definition Starlings.Models.Qwen35, Starlings.Generation.OnnxGenAI and .Abstractions, .Acquisition
+      and .Tokenizers at their pinned versions.
+    -->
+    <PackageReference Include="Starlings.Models.Qwen35.OnnxGenAI" Version="$(StarlingsVersion)" />
     <!-- The Microsoft.Extensions.AI IChatClient adapter, used with the chat-client option. -->
     <PackageReference Include="Starlings.Models.Qwen35.Extensions.AI" Version="$(StarlingsVersion)" />
     <!-- The application picks the ONNX Runtime GenAI natives (CPU here; Microsoft.ML.OnnxRuntimeGenAI.Cuda for CUDA). -->

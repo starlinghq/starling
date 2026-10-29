@@ -23,9 +23,11 @@ public sealed class SoakRunTests : IDisposable
     [Fact]
     public void ARunWithSeveralCheckpointsFinishesAndCanBeReanalysed()
     {
+        // The loop is bounded by wall-clock time only. A fake cycle takes about 0.2 s on an idle machine and up to 2 s on a
+        // loaded CI runner (2 cycles in 4 s observed), so the run gets enough time for at least 4 cycles on a loaded runner.
         var options = new SoakOptions
         {
-            Duration = TimeSpan.FromSeconds(4),
+            Duration = TimeSpan.FromSeconds(12),
             Out = _dir,
             CheckpointInterval = TimeSpan.FromMilliseconds(200),
             SampleInterval = TimeSpan.FromMilliseconds(200),

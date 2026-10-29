@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using System.Collections.Immutable;
+using Starlings.Generation;
 using Starlings.Generation.OnnxGenAI;
 using Starlings.Tokenizers;
 
@@ -13,7 +14,7 @@ internal sealed class ScriptedBackend
 {
     public const int ContextLength = 262144;
 
-    public ScriptedBackend(Tokenizer tokenizer, Func<int[], IReadOnlyList<int>> script)
+    public ScriptedBackend(Tokenizer tokenizer, Func<int[], IReadOnlyList<int>> script, Qwen35ModelInfo? info = null)
     {
         Tokenizer = tokenizer;
         Script = script;
@@ -23,7 +24,7 @@ internal sealed class ScriptedBackend
             [Qwen35ChatModel.EndOfTextTokenId, Qwen35ChatModel.ImEndTokenId],
             ContextLength,
             Qwen35ChatModel.PadTokenIdOverlay);
-        Model = Qwen35ChatModel.CreateWithoutBackend(generator, Info);
+        Model = Qwen35ChatModel.CreateWithoutBackend(generator, info ?? Info);
     }
 
     public static Qwen35ModelInfo Info { get; } = new()
@@ -42,6 +43,9 @@ internal sealed class ScriptedBackend
         ContextLength = ContextLength,
         StopTokenIds = [],
     };
+
+    /// <summary><see cref="Info"/> of a directory with ONNX Runtime GenAI's guidance files (guided requests are served).</summary>
+    public static Qwen35ModelInfo GuidedInfo { get; } = Info with { GuidanceMissingFiles = [] };
 
     public Tokenizer Tokenizer { get; }
 
@@ -67,7 +71,7 @@ internal sealed class ScriptedBackend
 }
 
 /// <summary>One request's scripted sequence: records the prompt, chunks, steps, threads and disposal.</summary>
-internal sealed class ScriptedSequence(GenAISequenceOptions options, ScriptedBackend backend) : IGenerationSequence
+internal sealed class ScriptedSequence(GenAISequenceOptions options, ScriptedBackend backend) : IDecodeSequence
 {
     private readonly List<int> _prompt = [];
     private IReadOnlyList<int>? _script;

@@ -1,4 +1,5 @@
 using Starlings.Acquisition;
+using Starlings.Generation;
 using Starlings.Generation.OnnxGenAI;
 using Starlings.Models.Qwen35;
 using Starlings.TestSupport;
@@ -174,6 +175,21 @@ public sealed class AssetAndCapabilityTests
         Assert.Equal(["x"], g.StopSequences);
         Assert.Equal([5], g.AdditionalStopTokenIds);
         Assert.Equal(2, g.Sampling!.Seed);
+    }
+
+    [Fact]
+    public void PrefillChunkDefaultsDependOnTheProvider()
+    {
+        // CPU: prompts up to 1,024 tokens take one call, longer ones 1,024-token chunks; CUDA: 512-token chunks.
+        Assert.Equal(1024, Qwen35ChatOptions.DefaultCpuPrefillChunkTokens);
+        Assert.Equal(Qwen35ChatOptions.DefaultCpuPrefillChunkTokens, new Qwen35ChatOptions().ToGenerationOptions().PrefillChunkTokens);
+        Assert.Equal(Qwen35ChatOptions.DefaultCpuPrefillChunkTokens, new Qwen35ChatOptions().ToGenerationOptions(GenAIExecutionProvider.Cpu).PrefillChunkTokens);
+        Assert.Equal(Qwen35ChatOptions.DefaultCudaPrefillChunkTokens, new Qwen35ChatOptions().ToGenerationOptions(GenAIExecutionProvider.Cuda).PrefillChunkTokens);
+
+        // A request value wins on both providers; int.MaxValue keeps the one-call prefill.
+        Assert.Equal(64, new Qwen35ChatOptions { PrefillChunkTokens = 64 }.ToGenerationOptions(GenAIExecutionProvider.Cpu).PrefillChunkTokens);
+        Assert.Equal(int.MaxValue, new Qwen35ChatOptions { PrefillChunkTokens = int.MaxValue }.ToGenerationOptions(GenAIExecutionProvider.Cpu).PrefillChunkTokens);
+        Assert.Equal(64, new Qwen35ChatOptions { PrefillChunkTokens = 64 }.ToGenerationOptions(GenAIExecutionProvider.Cuda).PrefillChunkTokens);
     }
 
     [Fact]

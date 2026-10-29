@@ -1,0 +1,194 @@
+oasst1-330fc1cf      prompt    92 gen   64 length exact render eq ids eq stream ok 1.20s+15.70s
+oasst1-227890b8      prompt    26 gen   64 length exact render eq ids eq stream ok 0.64s+13.12s
+oasst1-26fe386a      prompt    76 gen   64 length exact render eq ids eq stream ok 1.94s+15.61s
+oasst1-c264ed9b      prompt    22 gen   64 length exact render eq ids eq stream ok 0.44s+11.54s
+oasst1-7c61baf1      prompt    59 gen   64 length exact render eq ids eq stream ok 0.75s+11.91s
+oasst1-33f4b2f8      prompt    38 gen   64 length exact render eq ids eq stream ok 0.66s+11.85s
+oasst1-db160030      prompt    32 gen   64 length exact render eq ids eq stream ok 0.46s+12.07s
+oasst1-68a06244      prompt    23 gen   64 length exact render eq ids eq stream ok 0.36s+13.47s
+oasst1-496a8740      prompt    29 gen   64 length exact render eq ids eq stream ok 0.69s+13.80s
+oasst1-122116c5      prompt    49 gen   64 length exact render eq ids eq stream ok 0.75s+12.21s
+oasst1-caa0af31      prompt    74 gen   64 length exact render eq ids eq stream ok 0.83s+11.24s
+oasst1-42cc9fee      prompt    32 gen   64 length exact render eq ids eq stream ok 0.57s+11.25s
+oasst1-e16db2f9      prompt    17 gen   64 length exact render eq ids eq stream ok 0.33s+11.43s
+oasst1-52213740      prompt    76 gen   64 length exact render eq ids eq stream ok 0.96s+11.25s
+oasst1-b426a32f      prompt    65 gen   64 length exact render eq ids eq stream ok 0.89s+11.33s
+oasst1-c2883e98      prompt    24 gen   64 length exact render eq ids eq stream ok 0.37s+11.35s
+oasst1-1f2eb40e      prompt    17 gen   64 length exact render eq ids eq stream ok 0.32s+11.78s
+oasst1-b3321bbb      prompt    47 gen   64 length exact render eq ids eq stream ok 0.66s+11.38s
+oasst1-b30fb622      prompt    25 gen   64 length exact render eq ids eq stream ok 0.45s+11.00s
+oasst1-0514ed04      prompt    21 gen   64 length exact render eq ids eq stream ok 0.39s+11.42s
+oasst1-4bde8859      prompt    27 gen   64 length exact render eq ids eq stream ok 0.46s+12.09s
+oasst1-48d9d271      prompt    37 gen   64 length exact render eq ids eq stream ok 0.58s+11.74s
+oasst1-e4c5240b      prompt    18 gen   64 length exact render eq ids eq stream ok 0.34s+11.49s
+oasst1-78aeda3c      prompt    25 gen   64 length exact render eq ids eq stream ok 0.49s+11.51s
+oasst1-1686dff3      prompt    26 gen   64 length exact render eq ids eq stream ok 0.39s+12.59s
+oasst1-a8efa903      prompt    26 gen   64 length exact render eq ids eq stream ok 0.49s+22.64s
+oasst1-242d95ac      prompt    26 gen   64 length exact render eq ids eq stream ok 0.64s+17.12s
+oasst1-889c27c2      prompt    26 gen   64 length exact render eq ids eq stream ok 0.49s+13.53s
+oasst1-53af5b24      prompt    24 gen   64 length exact render eq ids eq stream ok 0.65s+12.98s
+oasst1-a02d5c29      prompt    74 gen   64 length exact render eq ids eq stream ok 0.97s+13.88s
+oasst1-3c5b52fd      prompt    83 gen   64 length exact render eq ids eq stream ok 1.26s+11.70s
+oasst1-63dd4769      prompt    48 gen   64 length exact render eq ids eq stream ok 0.58s+11.99s
+{
+  "selection": {
+    "rule": "cached_vs_uncached: largest min reference step_margin over steps 0-11; concurrency: six largest min step_margin over steps 0-23 (4 parallel on 2 threads, 2 interleaved); chunked_prefill: longest prompt (chunks 64, 32) and second longest (chunk 7); ties to fixture order",
+    "cached_vs_uncached": {
+      "case": "oasst1-68a06244",
+      "min_margin_12_steps": 1.4916419982910156
+    },
+    "concurrency_parallel": [
+      {
+        "case": "oasst1-0514ed04",
+        "min_margin_24_steps": 0.47747039794921875
+      },
+      {
+        "case": "oasst1-c2883e98",
+        "min_margin_24_steps": 0.4056110382080078
+      },
+      {
+        "case": "oasst1-e4c5240b",
+        "min_margin_24_steps": 0.2598762512207031
+      },
+      {
+        "case": "oasst1-b426a32f",
+        "min_margin_24_steps": 0.2390613555908203
+      }
+    ],
+    "concurrency_interleaved": [
+      {
+        "case": "oasst1-b30fb622",
+        "min_margin_24_steps": 0.2062835693359375
+      },
+      {
+        "case": "oasst1-68a06244",
+        "min_margin_24_steps": 0.16530799865722656
+      }
+    ],
+    "chunked_prefill": [
+      {
+        "case": "oasst1-330fc1cf",
+        "chunk": 64,
+        "prompt_tokens": 92
+      },
+      {
+        "case": "oasst1-330fc1cf",
+        "chunk": 32,
+        "prompt_tokens": 92
+      },
+      {
+        "case": "oasst1-3c5b52fd",
+        "chunk": 7,
+        "prompt_tokens": 83
+      }
+    ]
+  },
+  "cached_vs_uncached": {
+    "prompt": "oasst1-68a06244",
+    "steps": 12,
+    "tokens_equal_uncached_argmax": 12,
+    "max_abs_logprob": 2.86102294921875E-05,
+    "generated_equals_reference_prefix": true,
+    "per_step": [
+      {
+        "step": 1,
+        "max_abs_logprob": 0,
+        "aligned_with": "prefix before token k"
+      },
+      {
+        "step": 2,
+        "max_abs_logprob": 2.6702880859375E-05,
+        "aligned_with": "prefix before token k"
+      },
+      {
+        "step": 3,
+        "max_abs_logprob": 2.288818359375E-05,
+        "aligned_with": "prefix before token k"
+      },
+      {
+        "step": 4,
+        "max_abs_logprob": 1.9073486328125E-05,
+        "aligned_with": "prefix before token k"
+      },
+      {
+        "step": 5,
+        "max_abs_logprob": 2.6702880859375E-05,
+        "aligned_with": "prefix before token k"
+      },
+      {
+        "step": 6,
+        "max_abs_logprob": 1.9073486328125E-05,
+        "aligned_with": "prefix before token k"
+      },
+      {
+        "step": 7,
+        "max_abs_logprob": 1.52587890625E-05,
+        "aligned_with": "prefix before token k"
+      },
+      {
+        "step": 8,
+        "max_abs_logprob": 1.52587890625E-05,
+        "aligned_with": "prefix before token k"
+      },
+      {
+        "step": 9,
+        "max_abs_logprob": 2.86102294921875E-05,
+        "aligned_with": "prefix before token k"
+      },
+      {
+        "step": 10,
+        "max_abs_logprob": 2.288818359375E-05,
+        "aligned_with": "prefix before token k"
+      },
+      {
+        "step": 11,
+        "max_abs_logprob": 1.71661376953125E-05,
+        "aligned_with": "prefix before token k"
+      },
+      {
+        "step": 12,
+        "max_abs_logprob": 2.47955322265625E-05,
+        "aligned_with": "prefix before token k"
+      }
+    ]
+  },
+  "concurrency": {
+    "parallel_two_threads_prefix_equal": {
+      "oasst1-e4c5240b": true,
+      "oasst1-c2883e98": true,
+      "oasst1-b426a32f": true,
+      "oasst1-0514ed04": true
+    },
+    "interleaved_streams_prefix_equal": {
+      "oasst1-b30fb622": true,
+      "oasst1-68a06244": true
+    }
+  },
+  "chunked_prefill": {
+    "oasst1-330fc1cf/64": {
+      "whole_prefill_error": null,
+      "tokens_equal_whole": true,
+      "equal_reference_prefix": true,
+      "step0_max_abs_logprob_vs_whole": 2.09808349609375E-05,
+      "prefill_ms_whole": 1050.7706,
+      "prefill_ms_chunked": 1273.8615
+    },
+    "oasst1-330fc1cf/32": {
+      "whole_prefill_error": null,
+      "tokens_equal_whole": true,
+      "equal_reference_prefix": true,
+      "step0_max_abs_logprob_vs_whole": 2.09808349609375E-05,
+      "prefill_ms_whole": 1008.2422,
+      "prefill_ms_chunked": 1312.974
+    },
+    "oasst1-3c5b52fd/7": {
+      "whole_prefill_error": null,
+      "tokens_equal_whole": true,
+      "equal_reference_prefix": true,
+      "step0_max_abs_logprob_vs_whole": 1.71661376953125E-05,
+      "prefill_ms_whole": 957.7172,
+      "prefill_ms_chunked": 2972.3369
+    }
+  }
+}
+command: --modes parity,fixture-semantics --prefill-chunk 1024 ; start 2026-10-26T06:49:46Z ; end 2026-10-26T06:58:33Z ; exit 0

@@ -434,7 +434,7 @@ One table per family, one column per profile. Rows are every capability any prof
 | stop_sequences | experimental |
 | stop_tokens | experimental |
 | tokenizer_owned | experimental |
-| tool_calling | unsupported |
+| tool_calling | experimental |
 | usage | experimental |
 | vision | unsupported |
 
@@ -465,7 +465,7 @@ One table per family, one column per profile. Rows are every capability any prof
 | stop_sequences | experimental |
 | stop_tokens | experimental |
 | tokenizer_owned | experimental |
-| tool_calling | unsupported |
+| tool_calling | experimental |
 | usage | experimental |
 | vision | unsupported |
 

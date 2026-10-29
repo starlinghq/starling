@@ -1,6 +1,6 @@
 # Kev decision model (P-027): jaredpalmer/kev-0.8b (Kev 1.0, a LoRA adapter and pointer head on
 # Qwen/Qwen3.5-0.8B-Base) on ONNX Runtime 1.30.0, CUDA provider with use_tf32 0, through
-# ai-dotnet/src/Starlings.Models.Kev (KevModelProfile.Kev08B.CudaId). Same bundle, lock and reference as
+# ai-dotnet/src/Starlings.Models.Kev.Onnx (KevModelProfile.Kev08B.CudaId). Same bundle, lock and reference as
 # kev-0.8b/onnx-fp32-cpu: the builder's CPU export run on the CUDA execution provider. The builder's own CUDA graph
 # (-e cuda -p fp32) did not load unpatched with ONNX Runtime GenAI 0.17.1 (admissions/kev.md, "GPU results") and is not
 # this profile. (KevModelAssets.Kev08BLock pins the bundle files; KevModelProfile.Kev08B the revisions and dimensions.)
@@ -242,7 +242,7 @@ execution:
     use_tf32: 0
 
 capabilities:
-  # Starlings.Models.Kev (KevCapabilities) over a CUDA session (use_tf32 0); evidence in the package README ("CUDA",
+  # Starlings.Models.Kev.Onnx (KevCapabilities) over a CUDA session (use_tf32 0); evidence in the package README ("CUDA",
   # "Evidence"). Statuses follow KevCapabilities.All for the CUDA provider (the .cuda keys where they exist):
   # experimental where the CUDA tests (ai-dotnet/tests/Starlings.Models.Kev.Tests.Cuda, local RTX 3090) compared the
   # package with Kev's PyTorch fp32 probabilities within the CPU bounds, unsupported where the package refuses or does
@@ -251,7 +251,7 @@ capabilities:
   batch: unsupported  # one request per call; rows are not batched
   streaming: unsupported  # one probability vector per question, nothing to stream
   cancellation: experimental
-  persistence: unsupported  # the state cache lives for one request
+  persistence: unsupported  # nothing is saved; KevState keeps a state cache in memory across calls (package README)
   training: unsupported
   aot: untested
   extensions_ai: unsupported

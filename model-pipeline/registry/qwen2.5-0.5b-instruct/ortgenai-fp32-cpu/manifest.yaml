@@ -1,4 +1,4 @@
-# Qwen text chat (Starlings.Models.QwenChat): Qwen/Qwen2.5-0.5B-Instruct on ONNX Runtime GenAI 0.17.1, fp32 on the CPU
+# Qwen text chat (Starlings.Models.QwenChat.OnnxGenAI): Qwen/Qwen2.5-0.5B-Instruct on ONNX Runtime GenAI 0.17.1, fp32 on the CPU
 # provider. Admission: model-pipeline/admissions/qwen-chat.md (proposed at Experimental, #124). Candidate contract:
 # model-pipeline/candidates/qwen25/profile.json (onboarding route qwen-genai-cpu-v1, recipes/qwen25-cpu.yaml). The Hub
 # repository ships no GenAI build: the graph is Starling's build of the pinned original
@@ -104,7 +104,6 @@ behavior:
       151935 (the unused last embedding row) instead of 151643, because ONNX Runtime GenAI masks prompt positions equal
       to pad_token_id and 151643 is <|endoftext|>, which users can type.
   unsupported:
-    - tool definitions, tool calls and tool messages (rejected by QwenChatTemplate)
     - image, audio and video content
     - reasoning content (the template has no reasoning block; ReasoningContent on assistant history is not rendered)
     - sampling (greedy only; QwenChatOptions has no sampling settings)
@@ -134,8 +133,9 @@ processing:
       path: chat_template.jinja
       sha256: "cd8e9439f0570856fd70470bf8889ebd8b5d1107207f67a5efb46e342330527f"
       size: 2507
-    # C# port of the pinned template for text conversations (QwenChatTemplate, qwen25-text-v1); equal to
-    # transformers apply_chat_template on the 14 corpus conversations (prompt text and ids).
+    # C# port of the pinned template for text and tool-calling conversations (QwenChatTemplate, qwen25-text-v1); equal to
+    # transformers apply_chat_template on the 14 corpus conversations (prompt text and ids) and on the render cases
+    # of the proposed template corpus (model-pipeline/proposed/qwen2.5-0.5b-instruct/template/, 42 cases, tools included).
     renderer: owned
   decoding:
     loop: Starlings.Generation.OnnxGenAI TextGenerator over the GenAI Generator (AppendTokens, GenerateNextToken)
@@ -180,7 +180,7 @@ execution:
         - model-pipeline/reference/qwen-chat/build_bundle.py (ONNX Runtime GenAI 0.17.1 builder, -p fp32 -e cpu)
 
 capabilities:
-  # Starlings.Models.QwenChat; evidence: docs/evidence/qwenchat-onboarding-2026-10-18/README.md. Experimental where the
+  # Starlings.Models.QwenChat.OnnxGenAI; evidence: docs/evidence/qwenchat-onboarding-2026-10-18/README.md. Experimental where the
   # onboarding route compared the C# package with transformers and Python GenAI on the proposed corpus (no adopted
   # reference, no gate); unsupported where the package refuses or does not offer it; untested where no evidence exists.
   batch: unsupported
@@ -206,7 +206,12 @@ capabilities:
   bundle_lock_verification: experimental
   cancellation_inside_a_step: unsupported
   conversation_state_reuse: unsupported
-  tool_calling: unsupported
+  # Tools block, assistant tool calls and tool messages of the owned template equal transformers 5.18.0
+  # apply_chat_template on the 42 render cases of the proposed corpus
+  # (model-pipeline/proposed/qwen2.5-0.5b-instruct/template/, text and prompt ids); QwenChatToolCallParser reads the template's
+  # JSON call form (scripted tests in CI). One greedy CPU run on 2026-10-26 called the tool and answered from its
+  # result (docs/evidence/qwenchat-tool-calling-2026-10-26/). The model's choice of tools is not qualified.
+  tool_calling: experimental
   vision: unsupported
   long_context: untested
 

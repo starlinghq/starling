@@ -4,6 +4,7 @@ using System.Reflection;
 using System.Runtime;
 using System.Runtime.InteropServices;
 using System.Text.Json.Nodes;
+using Starlings.Generation;
 using Starlings.Generation.OnnxGenAI;
 using Starlings.Runtime.Onnx;
 

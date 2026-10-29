@@ -1,5 +1,6 @@
 using Starlings.Runtime.Onnx;
 using Starlings.TestSupport;
+using Status = Starlings.Models.CapabilityStatus;
 
 namespace Starlings.Models.E5.Tests;
 
@@ -173,7 +174,7 @@ public class EncoderBehaviorTests
         var bad = mask is null ? new EncoderInput(ids) : new EncoderInput(ids, mask);
         var destination = new float[8];
 
-        var batch = Assert.Throws<ArgumentException>(() => encoder.EmbedBatch([new EncoderInput(new long[] { 0, 3, 2 }), bad], destination, TestContext.Current.CancellationToken));
+        var batch = Assert.ThrowsAny<ArgumentException>(() => encoder.EmbedBatch([new EncoderInput(new long[] { 0, 3, 2 }), bad], destination, TestContext.Current.CancellationToken));
 
         // The valid first row would have been written by the first chunk if validation ran lazily.
         Assert.All(destination, v => Assert.Equal(0f, v));
@@ -181,7 +182,7 @@ public class EncoderBehaviorTests
         // ParamName names the caller's parameter: the batch for EmbedBatch, the input for Validate.
         Assert.Equal("inputs", batch.ParamName);
         Assert.StartsWith("Input 1 ", batch.Message, StringComparison.Ordinal);
-        var single = Assert.Throws<ArgumentException>(() => encoder.Validate(bad));
+        var single = Assert.ThrowsAny<ArgumentException>(() => encoder.Validate(bad));
         Assert.Equal("input", single.ParamName);
         Assert.StartsWith("Input 0 ", single.Message, StringComparison.Ordinal);
     }
@@ -284,13 +285,13 @@ public class EncoderBehaviorTests
     [Fact]
     public void EveryCapabilityHasAnExplicitStatus()
     {
-        var all = E5Capabilities.All;
+        var all = E5Capabilities.Statuses;
         Assert.All(all.Values, s => Assert.True(Enum.IsDefined(s)));
-        Assert.Equal(CapabilityStatus.Supported, all["embedding.text"]);
-        Assert.Equal(CapabilityStatus.Unsupported, all["tf32"]);
-        Assert.Equal(CapabilityStatus.Unsupported, all["streaming"]);
-        Assert.Equal(CapabilityStatus.Unsupported, all["truncation"]);
-        Assert.Equal(CapabilityStatus.Supported, all["extensions_ai.embedding_generator"]);
-        Assert.Equal(CapabilityStatus.Unsupported, all["extensions_ai.dimensions_truncation"]);
+        Assert.Equal(Status.Supported, all["embedding.text"]);
+        Assert.Equal(Status.Unsupported, all["tf32"]);
+        Assert.Equal(Status.Unsupported, all["streaming"]);
+        Assert.Equal(Status.Unsupported, all["truncation"]);
+        Assert.Equal(Status.Supported, all["extensions_ai.embedding_generator"]);
+        Assert.Equal(Status.Unsupported, all["extensions_ai.dimensions_truncation"]);
     }
 }

@@ -49,6 +49,7 @@ using Microsoft.ML;
 using Microsoft.ML.Data;
 #endif
 #if AOT_QWEN35 || AOT_QWEN35_MEAI
+using Starlings.Generation;
 using Starlings.Generation.OnnxGenAI;
 using Starlings.Models.Qwen35;
 #endif

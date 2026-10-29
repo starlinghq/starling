@@ -92,7 +92,7 @@ public sealed class RealModelTests(Qwen35ChatClientFixture fixture) : IClassFixt
         Assert.Equal(c.PromptIds, Client.Model.CreatePrompt(c.Messages!, c.Tools).TokenIds);
 
         var response = await Client.GetResponseAsync(ChatClientModelChecks.ToChatMessages(c), options, Ct);
-        var raw = Assert.IsType<Starlings.Generation.OnnxGenAI.GenerationResult>(response.RawRepresentation);
+        var raw = Assert.IsType<Starlings.Generation.GenerationResult>(response.RawRepresentation);
         Assert.Equal(c.PromptIds.Length, response.Usage!.InputTokenCount);
         Assert.Equal(c.ContentIds, raw.TokenIds);
         var call = Assert.IsType<FunctionCallContent>(Assert.Single(response.Messages.Single().Contents));
@@ -163,5 +163,34 @@ public sealed class RealModelTests(Qwen35ChatClientFixture fixture) : IClassFixt
     {
         Assert.False(Client.Model.Info.SerializesNativeCalls);
         await ChatClientModelChecks.ConcurrentResponsesEqualSequential(Client, Client.Model, [Case("zh"), Case("code-py"), Case("ja"), Case("en-math")], 12, rounds: 2, Ct);
+    }
+
+    /// <summary>
+    /// The opt-in reasoning split on the real model with thinking on: the split contents are the unsplit completion
+    /// (reasoning, then the answer after the first <c>&lt;/think&gt;</c>, or reasoning only when the tag is not reached),
+    /// and the streamed reasoning and answer equal the non-streamed ones.
+    /// </summary>
+    [Fact]
+    public async Task ReasoningSplitPartitionsTheUnsplitCompletion()
+    {
+        using var split = new Qwen35ChatClient(Client.Model, new Qwen35ChatClientOptions { SplitReasoning = true });
+        ChatMessage[] question = [new(ChatRole.User, "Is 17 a prime number? Answer in one word.")];
+        ChatOptions Options() => new() { MaxOutputTokens = Math.Max(Tokens, 96), AdditionalProperties = new() { [Qwen35ChatClient.EnableThinkingPropertyName] = true } };
+
+        string unsplit = (await Client.GetResponseAsync(question, Options(), Ct)).Text;
+        var response = await split.GetResponseAsync(question, Options(), Ct);
+        var contents = Assert.Single(response.Messages).Contents;
+        string reasoning = string.Concat(contents.OfType<TextReasoningContent>().Select(r => r.Text));
+        string answer = string.Concat(contents.OfType<TextContent>().Select(t => t.Text));
+        Assert.Equal(unsplit, unsplit.Contains("</think>", StringComparison.Ordinal) ? reasoning + "</think>" + answer : reasoning);
+
+        var updates = new List<ChatResponseUpdate>();
+        await foreach (var update in split.GetStreamingResponseAsync(question, Options(), Ct))
+        {
+            updates.Add(update);
+        }
+
+        Assert.Equal(reasoning, string.Concat(updates.SelectMany(u => u.Contents).OfType<TextReasoningContent>().Select(r => r.Text)));
+        Assert.Equal(answer, string.Concat(updates.SelectMany(u => u.Contents).OfType<TextContent>().Select(t => t.Text)));
     }
 }

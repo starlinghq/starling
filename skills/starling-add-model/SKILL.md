@@ -48,18 +48,18 @@ uvx --from huggingface_hub hf download <org>/<model> \
 .venv/bin/model-pipeline inspect .models/snapshots/<name>
 ```
 
-`inspect` is read-only and only ever suggests `e5-onnx-cpu-v1` or `unknown`, so decide the route yourself:
+`inspect` is read-only. From `config.json`, `tokenizer.json` and `modules.json` its `plugin_route` suggests `e5-onnx-cpu-v1` (the pinned e5 geometry), `bert-onnx-cpu-v1` (a BERT, XLM-R or nomic-bert encoder with a tokenizer this checkout implements, plus sentence-transformers mean or CLS pooling, or a single-logit sequence-classification head), `qwen-genai-cpu-v1` (a `Qwen2ForCausalLM` or `Qwen3ForCausalLM` decoder with a supported BPE tokenizer) or `unknown`, with the reason. A suggestion is a candidate route, not a fit: check it against the table:
 
 | Route (plugin) | Fits when the model is... | Code to extend |
 | --- | --- | --- |
-| `bert-onnx-cpu-v1` | A BERT encoder, uncased WordPiece (vocab 30,522), right padding, ONNX Runtime 1.30.0 CPU fp32, whose Hub repo ships `onnx/model.onnx`; embeddings (mean or CLS pooling, L2 or no normalization) or a cross-encoder reranker. Hidden size, `max_tokens`, pooling and normalization are set per model (admitted so far: 384 or 768 wide, 256 to 8,192 tokens) | `model-pipeline/src/model_pipeline/onboarding_bert.py`, `ai-dotnet/src/Starlings.Models.Bert/` |
-| `qwen-genai-cpu-v1` | A Qwen-family decoder for ONNX Runtime GenAI 0.17.1, CPU fp32 | `model-pipeline/src/model_pipeline/onboarding_generation.py`, `ai-dotnet/src/Starlings.Models.QwenChat/` |
-| `kev-onnx-cpu-v1` | Exactly the pinned Kev-0.8B or Kev-4B decision checkpoint on its pinned Qwen3.5 base (run with `--base-snapshot`; see "Kev route" in `model-pipeline/ONBOARDING.md`) | `model-pipeline/src/model_pipeline/onboarding_kev.py`, `ai-dotnet/src/Starlings.Models.Kev/` |
+| `bert-onnx-cpu-v1` | A BERT encoder, uncased WordPiece (vocab 30,522), right padding, ONNX Runtime 1.30.0 CPU fp32, whose Hub repo ships `onnx/model.onnx`; embeddings (mean or CLS pooling, L2 or no normalization) or a cross-encoder reranker. Hidden size, `max_tokens`, pooling and normalization are set per model (admitted so far: 384 or 768 wide, 256 to 8,192 tokens) | `model-pipeline/routes/bert-onnx-cpu-v1/contracts.json` (read by `onboarding_bert.py` and `ai-dotnet/src/Starlings.Models.Bert/`) |
+| `qwen-genai-cpu-v1` | A Qwen-family decoder for ONNX Runtime GenAI 0.17.1, CPU fp32 | `model-pipeline/src/model_pipeline/onboarding_generation.py`, `ai-dotnet/src/Starlings.Models.QwenChat/` (definition) and `ai-dotnet/src/Starlings.Models.QwenChat.OnnxGenAI/` (runtime) |
+| `kev-onnx-cpu-v1` | Exactly the pinned Kev-0.8B or Kev-4B decision checkpoint on its pinned Qwen3.5 base (run with `--base-snapshot`; see "Kev route" in `model-pipeline/ONBOARDING.md`) | `model-pipeline/src/model_pipeline/onboarding_kev.py`, `ai-dotnet/src/Starlings.Models.Kev/` (definition) and `ai-dotnet/src/Starlings.Models.Kev.Onnx/` (runtime) |
 | `whisper-onnx-cpu-v1` | Exactly the pinned whisper-large-v3-turbo fp16 ONNX graphs on their pinned PyTorch checkpoint (run with `--base-snapshot`; see "Whisper route" in `model-pipeline/ONBOARDING.md`) | `model-pipeline/src/model_pipeline/onboarding_whisper.py`, `ai-dotnet/src/Starlings.Models.Whisper/` |
 | `e5-onnx-cpu-v1` | Exactly the pinned multilingual-e5-small (the registry route) | none; it refuses other models by design |
 | none | Anything else: a different architecture, hidden size, tokenizer, runtime or precision | a new plugin (step 6) |
 
-Every route is an explicit allow-list: each contract is checked field by field in Python **and** in C#, and anything not listed is refused. That is deliberate. Adding a model is a code change, not a config change.
+Every route is an explicit allow-list: each contract is checked field by field in Python **and** in C#, and anything not listed is refused. That is deliberate. For the BERT route both sides read one table, `model-pipeline/routes/bert-onnx-cpu-v1/contracts.json` (`onboarding_bert.py` loads it; `Starlings.Models.Bert` embeds it and validates it with the same rules), so adding a model there is one reviewed table entry, not two hand-kept copies.
 
 ## 3. Add a model to an existing route (BERT example)
 
@@ -72,15 +72,18 @@ Use the existing MiniLM files as templates. To find every place they are registe
    - Keep `evaluation.status: "proposed"` and start from the template's `evaluation.policy`. The token checks, `same_backend_max_abs`, `padded_batch_max_abs`, `non_finite` and `required_paths` are fixed; the route refuses any other value. Only the export-fidelity bounds `hidden_max_abs`, `embedding_max_abs` and `score_max_abs` may differ per model, and only up to 1e-3 (`FIDELITY_CAPS` in `onboarding_bert.py`; nomic-embed uses `hidden_max_abs` 1e-3 and `embedding_max_abs` 5e-5). Do not raise a bound to make a failing run pass.
 
    The candidate has no license fields. State the code license, weights license and tokenizer terms in the issue and in the PR description.
-2. **`model-pipeline/recipes/<name>-cpu.yaml`**: copy `recipes/minilm-cpu.yaml` and point `manifest` at your candidate. Reuse the shared corpus unless the task needs another one.
-3. **`model-pipeline/src/model_pipeline/onboarding_bert.py`**: add the repo to `CONTRACTS` as `(task, max_tokens, pooling, hidden_size, normalize)`. If it needs a prompt, extend the `prompts` rule.
-4. **`ai-dotnet/src/Starlings.Models.Bert/BertModelProfile.cs`**: add the same repo to the `repository switch`, with the same five values. Python and C# must agree exactly.
-5. **Tests:**
-   - `model-pipeline/tests/test_onboarding_bert.py`: accept the new contract and refuse a near-miss, for example a wrong pooling.
-   - `ai-dotnet/tests/Starlings.Models.Bert.Tests/ContractTests.cs`: add an `InlineData` row and a near-miss case. Also update the `ProfileData` helper, which builds each test profile's `max_tokens`, `hidden_size`, `pooling`, `normalize` and `prompts` per repository.
-6. **`tools/fetch-tokenizer-assets.sh`**: add `"<repo>|<sha>|tokenizer.json|<sha256>"`, so the pinned asset list stays complete, the same as the existing BERT entries.
-7. **`ai-dotnet/src/Starlings.Models.Bert/README.md`**: list the model, its status and anything it doesn't support.
-8. **Optionally, `model-pipeline/workflows/*.json`**: add the model to a workflow only if it belongs to that group.
+2. **Generate the rest with `model-pipeline scaffold <name>`.** It reads the candidate and prints, as JSON, every other input the route needs; `--write` applies them (pieces already present are reported as `unchanged`, and a candidate that contradicts an existing table entry is refused):
+   - `model-pipeline/recipes/<name>-cpu.yaml`, with the task's five-model corpus (`--corpus <path>` for another one);
+   - the entry for the repo in `model-pipeline/routes/bert-onnx-cpu-v1/contracts.json` (task, `max_tokens`, pooling, width, normalization, vocabulary and special ids, output name, tokenizer profile, prompts). The cls and sep ids and the segment-id input come from the tokenizer profile (`bert-wordpiece-uncased`: 101, 102, with `token_type_ids`; `xlmr-unigram`: 0, 2, without); check them against the model's `tokenizer.json`;
+   - the `tools/fetch-tokenizer-assets.sh` line (`"<repo>|<sha>|tokenizer.json|<sha256>"`);
+   - the profile row of the table in `ai-dotnet/src/Starlings.Models.Bert/README.md`;
+   - the `InlineData` row of `ContractTests.ParsesOnlyDeclaredTaskContracts` (the test helper builds each profile from the contract table, so nothing else in it changes);
+   - a C# `ModelAssetLock` of the runtime files (printed only; `Starlings.Models.Bert` derives its locks from `profile.json`).
+
+   `test_onboarding_bert.py` is parametrized over the contract table, so the new entry is tested without a new row. Review every generated piece; the scaffold changes no gate, tolerance, protected file or maturity.
+3. **Tests you still write:** a near-miss case for anything model-specific (for example a wrong pooling) in `test_onboarding_bert.py` and `ContractTests.cs`.
+4. **`ai-dotnet/src/Starlings.Models.Bert/README.md`**: besides the generated row, state the model's status and anything it doesn't support.
+5. **Optionally, `model-pipeline/workflows/*.json`**: add the model to a workflow only if it belongs to that group.
 
 For the Qwen route, the pattern is the same with `onboarding_generation.py` and the generation reference environment.
 

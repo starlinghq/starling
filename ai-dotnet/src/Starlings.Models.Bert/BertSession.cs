@@ -2,16 +2,17 @@ using Starlings.Acquisition;
 using Starlings.Batching;
 using Starlings.Runtime.Onnx;
 using Starlings.Tokenizers;
-using Microsoft.ML.OnnxRuntime;
 
 namespace Starlings.Models.Bert;
 
-internal sealed class BertSession : IDisposable
+internal sealed class BertSession : IChunkingTokenizer, IDisposable
 {
     private readonly Tokenizer _tokenizer;
+    private readonly Tokenizer _untruncated;
     private readonly int _maxBatchSize;
     private readonly int? _maxBatchTokens;
     private readonly bool _sortByLength;
+    private readonly EncoderCore _core;
     private int _disposed;
 
     public BertSession(BertModelProfile profile, string snapshot, int threads, int maxBatchSize, int? maxBatchTokens = null, bool sortByLength = false)
@@ -29,16 +30,22 @@ internal sealed class BertSession : IDisposable
         // library's default, which is the same strategy and direction.
         _tokenizer = Tokenizer.FromFile(files.GetFilePath(BertModelProfile.TokenizerFile))
             .WithPadding(null).WithTruncation(new TruncationOptions(profile.MaxTokens, TruncationStrategy.LongestFirst, TruncationDirection.Right));
+        _untruncated = _tokenizer.WithTruncation(null);
+        SpecialTokenCount = _untruncated.Encode(string.Empty).Count;
         Session = OnnxModelSession.Create(files.GetFilePath(BertModelProfile.GraphFile), new OnnxSessionOptions
         {
             IntraOpNumThreads = threads,
             InterOpNumThreads = 1,
             ExpectedModelSha256 = profile.RuntimeLock.GetFile(BertModelProfile.GraphFile).Sha256,
+
+            // VerifyDirectory just hashed the graph against the lock; the session does not read it again.
+            KnownModelSha256 = files.GetVerifiedSha256(BertModelProfile.GraphFile),
         });
         try
         {
             ValidateSignature(Session.Inputs, Session.Outputs, profile.Task, profile.HiddenSize,
                 profile.OutputName, profile.TokenTypeIds);
+            _core = new EncoderCore(Session, "input_ids", "attention_mask", profile.TokenTypeIds ? "token_type_ids" : null, profile.OutputName);
         }
         catch
         {
@@ -49,6 +56,33 @@ internal sealed class BertSession : IDisposable
 
     public BertModelProfile Profile { get; }
     public OnnxModelSession Session { get; }
+
+    /// <summary>Tokens the profile's post-processor adds around one sequence.</summary>
+    public int SpecialTokenCount { get; }
+
+    /// <summary>Tokens of one sequence before truncation, special tokens included.</summary>
+    public int CountTokens(string text)
+    {
+        ThrowIfDisposed();
+        ArgumentNullException.ThrowIfNull(text);
+        return _untruncated.Encode(text).Count;
+    }
+
+    /// <summary>Spans of the text's own tokens (no special tokens), before truncation.</summary>
+    public IReadOnlyList<TokenSpan> GetTokenSpans(string text)
+    {
+        ThrowIfDisposed();
+        ArgumentNullException.ThrowIfNull(text);
+        var encoding = _untruncated.Encode(text, addSpecialTokens: false);
+        var spans = new TokenSpan[encoding.Count];
+        for (int i = 0; i < spans.Length; i++)
+        {
+            var offset = encoding.Offsets[i];
+            spans[i] = new TokenSpan(offset.Start, offset.End);
+        }
+
+        return spans;
+    }
 
     public BertInput Tokenize(string text, string? pair = null)
     {
@@ -69,19 +103,7 @@ internal sealed class BertSession : IDisposable
                 Profile.ClsTokenId, Profile.SepTokenId);
         }
 
-        return RunPlanned(inputs, Plan(inputs, _maxBatchSize, _maxBatchTokens, _sortByLength), (chunk, width) =>
-        {
-            float[] raw = Run(chunk, cancellationToken);
-            var rows = new float[chunk.Length][];
-            for (int row = 0; row < chunk.Length; row++)
-            {
-                rows[row] = Profile.Task == BertTask.Reranking ? [raw[row]]
-                    : Pool(raw.AsSpan(row * width * Profile.HiddenSize, width * Profile.HiddenSize),
-                        PadMask(chunk[row], width), Profile.Pooling, Profile.HiddenSize, Profile.Normalize);
-            }
-
-            return rows;
-        }, cancellationToken);
+        return RunPlanned(inputs, Plan(inputs, _maxBatchSize, _maxBatchTokens, _sortByLength), (chunk, width) => Run(chunk, width, cancellationToken), cancellationToken);
     }
 
     /// <summary>
@@ -137,54 +159,46 @@ internal sealed class BertSession : IDisposable
         }
     }
 
-    private static long[] PadMask(BertInput input, int width)
-    {
-        var mask = new long[width];
-        input.AttentionMask.Span.CopyTo(mask);
-        return mask;
-    }
-
-    private float[] Run(BertInput[] inputs, CancellationToken cancellationToken)
+    /// <summary>
+    /// Runs one chunk (its inputs in call order, right-padded to <paramref name="width"/>) and returns one result per
+    /// input: the pooled embedding, or the reranker's logit as a one-element array. Padded positions get id 0, mask 0
+    /// and type 0, as before the move to <see cref="EncoderCore"/>, whatever the profile's pad id (they are masked).
+    /// </summary>
+    private float[][] Run(BertInput[] inputs, int width, CancellationToken cancellationToken)
     {
         int count = inputs.Length;
-        int width = inputs.Max(i => i.Length);
-        int cells = checked(count * width);
-        var ids = new long[cells];
-        var mask = new long[cells];
-        var types = new long[cells];
-        for (int i = 0; i < count; i++)
+        bool embeddings = Profile.Task == BertTask.Embeddings;
+        long[] outputShape = embeddings ? [count, width, Profile.HiddenSize] : [count, 1];
+        Span<int> rows = count <= 256 ? stackalloc int[count] : new int[count];
+        for (int r = 0; r < count; r++)
         {
-            var input = inputs[i];
-            input.InputIds.Span.CopyTo(ids.AsSpan(i * width, input.Length));
-            input.AttentionMask.Span.CopyTo(mask.AsSpan(i * width, input.Length));
-            input.TokenTypeIds.Span.CopyTo(types.AsSpan(i * width, input.Length));
+            rows[r] = r;
         }
 
-        long[] shape = [count, width];
-        using var idsValue = OrtValue.CreateTensorValueFromMemory(ids, shape);
-        using var maskValue = OrtValue.CreateTensorValueFromMemory(mask, shape);
-        using var typesValue = OrtValue.CreateTensorValueFromMemory(types, shape);
-        int length = Profile.Task == BertTask.Embeddings ? checked(cells * Profile.HiddenSize) : count;
-        var values = new float[length];
-        long[] outputShape = Profile.Task == BertTask.Embeddings ? [count, width, Profile.HiddenSize] : [count, 1];
-        using var output = OrtValue.CreateTensorValueFromMemory(values, outputShape);
-        if (Profile.TokenTypeIds)
+        var results = new float[count][];
+        _core.RunChunk(inputs, rows, width, ReadRow, padId: 0, outputShape, (output, mask) =>
         {
-            Session.Run(["input_ids", "attention_mask", "token_type_ids"], [idsValue, maskValue, typesValue],
-                [Profile.OutputName], [output], cancellationToken);
-        }
-        else
-        {
-            Session.Run(["input_ids", "attention_mask"], [idsValue, maskValue],
-                [Profile.OutputName], [output], cancellationToken);
-        }
-        if (values.Any(v => !float.IsFinite(v)))
-        {
-            throw new InvalidDataException("BERT graph returned a NaN or infinite value.");
-        }
+            foreach (float value in output)
+            {
+                if (!float.IsFinite(value))
+                {
+                    throw new InvalidDataException("BERT graph returned a NaN or infinite value.");
+                }
+            }
 
-        return values;
+            for (int row = 0; row < count; row++)
+            {
+                results[row] = embeddings
+                    ? Pool(output.Slice(row * width * Profile.HiddenSize, width * Profile.HiddenSize),
+                        mask.Slice(row * width, width), Profile.Pooling, Profile.HiddenSize, Profile.Normalize)
+                    : [output[row]];
+            }
+        }, cancellationToken);
+        return results;
     }
+
+    /// <summary>A row as <see cref="EncoderCore"/> packs it: ids, mask and segment ids, all of the row's length.</summary>
+    private static EncoderRow ReadRow(BertInput input) => new(input.InputIds, input.AttentionMask, input.TokenTypeIds);
 
     internal static void ValidateSignature(IReadOnlyList<OnnxTensorInfo> inputs, IReadOnlyList<OnnxTensorInfo> outputs,
         BertTask task, int hiddenSize, string outputName, bool tokenTypeIds)
@@ -237,6 +251,10 @@ internal sealed class BertSession : IDisposable
         }
     }
 
+    /// <summary>
+    /// Mean (over mask 1) or CLS pooling of one row, optionally L2-normalized: <see cref="EncoderCore.Pool"/>, with the
+    /// BERT route's checks (shape and mode, a visible token for mean pooling, a finite result).
+    /// </summary>
     internal static float[] Pool(ReadOnlySpan<float> hidden, ReadOnlySpan<long> mask, string pooling, int width, string normalize)
     {
         if (hidden.Length != mask.Length * width || mask.IsEmpty || pooling is not ("mean" or "cls"))
@@ -244,66 +262,14 @@ internal sealed class BertSession : IDisposable
             throw new ArgumentException("Invalid BERT pooling shape or mode.", nameof(hidden));
         }
 
-        Span<double> values = stackalloc double[width];
-        values.Clear();
-        if (pooling == "cls")
+        var mode = pooling == "cls" ? EncoderPooling.Cls : EncoderPooling.Mean;
+        if (mode == EncoderPooling.Mean && !mask.ContainsAnyExcept(0L))
         {
-            for (int d = 0; d < width; d++)
-            {
-                values[d] = hidden[d];
-            }
-        }
-        else
-        {
-            long count = 0;
-            for (int token = 0; token < mask.Length; token++)
-            {
-                if (mask[token] == 0)
-                {
-                    continue;
-                }
-
-                count++;
-                for (int d = 0; d < width; d++)
-                {
-                    values[d] += hidden[token * width + d];
-                }
-            }
-
-            if (count == 0)
-            {
-                throw new ArgumentException("Mean pooling needs a visible token.", nameof(mask));
-            }
-
-            for (int d = 0; d < width; d++)
-            {
-                values[d] /= count;
-            }
+            throw new ArgumentException("Mean pooling needs a visible token.", nameof(mask));
         }
 
         var result = new float[width];
-        if (normalize == "l2")
-        {
-            double norm = 0;
-            for (int d = 0; d < width; d++)
-            {
-                norm += values[d] * values[d];
-            }
-
-            norm = Math.Max(Math.Sqrt(norm), 1e-12);
-            for (int d = 0; d < width; d++)
-            {
-                result[d] = (float)(values[d] / norm);
-            }
-        }
-        else
-        {
-            for (int d = 0; d < width; d++)
-            {
-                result[d] = (float)values[d];
-            }
-        }
-
+        EncoderCore.Pool(hidden, mask, width, width, mode, normalize == "l2", result);
         for (int d = 0; d < width; d++)
         {
             if (!float.IsFinite(result[d]))

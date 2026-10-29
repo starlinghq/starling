@@ -19,6 +19,12 @@ namespace Starlings.Generation.OnnxGenAI;
 /// at a stop sequence (cut before the match).
 /// </para>
 /// <para>
+/// With <see cref="GenerationOptions.Guidance"/> (experimental, opt-in), GenAI masks the tokens the constraint does not
+/// allow before it selects each one. With fast-forward guidance a step can also append the tokens the constraint
+/// forces; the loop takes them in order, before the step's selected token, through the same checks (maximum tokens,
+/// stop ids, detokenization, stop sequences). Without guidance the loop is unchanged.
+/// </para>
+/// <para>
 /// Cancellation is checked before the prefill and between decode steps. A token passed in cancels at the next check:
 /// the call throws <see cref="OperationCanceledException"/> and the native generator is released. It cannot interrupt
 /// a prefill or a step already running.
@@ -31,7 +37,7 @@ namespace Starlings.Generation.OnnxGenAI;
 public sealed class TextGenerator
 {
     private readonly HashSet<int> _stopIds;
-    private readonly Func<GenAISequenceOptions, IGenerationSequence> _createSequence;
+    private readonly Func<GenAISequenceOptions, IDecodeSequence> _createSequence;
     private readonly int? _padTokenId;
     private readonly int _contextLength;
 
@@ -53,7 +59,7 @@ public sealed class TextGenerator
     }
 
     /// <summary>Test seam: the decode loop over any sequence implementation (no native model).</summary>
-    internal TextGenerator(Func<GenAISequenceOptions, IGenerationSequence> createSequence, Tokenizer tokenizer, IEnumerable<int> eosTokenIds, int contextLength, int? padTokenId)
+    internal TextGenerator(Func<GenAISequenceOptions, IDecodeSequence> createSequence, Tokenizer tokenizer, IEnumerable<int> eosTokenIds, int contextLength, int? padTokenId)
     {
         Model = null!;
         Tokenizer = tokenizer;
@@ -93,10 +99,10 @@ public sealed class TextGenerator
     /// early releases the native generator.
     /// </summary>
     /// <remarks>
-    /// The enumerator must be disposed (<c>foreach</c> and <c>await foreach</c> do): the native sequence is released by
-    /// the iterator's <c>using</c> when the enumeration completes or the enumerator is disposed, and
-    /// <see cref="GenAISequence"/> has no finalizer, so an enumerator that is abandoned after its first <c>MoveNext</c>
-    /// without disposal keeps the sequence, and with it the model's native reference count, alive until the process ends.
+    /// Dispose the enumerator (<c>foreach</c> does): that releases the native generator and its reference on the model at
+    /// once, on the disposing thread. An enumerator abandoned after its first <c>MoveNext</c> without disposal is a
+    /// safety-net case: its <see cref="GenAISequence"/> is released on a thread-pool thread after a garbage collection
+    /// finds it unreachable, so it no longer pins the model, but the native memory stays allocated until then.
     /// </remarks>
     public IEnumerable<GenerationUpdate> GenerateStreaming(IReadOnlyList<int> promptIds, GenerationOptions? options = null, CancellationToken cancellationToken = default) =>
         GenerateStreamingCore(promptIds, options, null, cancellationToken);
@@ -123,11 +129,14 @@ public sealed class TextGenerator
                 nameof(promptIds));
         }
 
-        long total = (long)prompt.Length + options.MaxNewTokens;
+        int headroom = options.Guidance?.MaxFastForwardTokens ?? 0;
+        long total = (long)prompt.Length + options.MaxNewTokens + headroom;
         if (total > _contextLength)
         {
             throw new GenerationContextLengthException(
-                $"{prompt.Length} prompt tokens plus {options.MaxNewTokens} new tokens exceed the context length {_contextLength}.")
+                headroom == 0
+                    ? $"{prompt.Length} prompt tokens plus {options.MaxNewTokens} new tokens exceed the context length {_contextLength}."
+                    : $"{prompt.Length} prompt tokens plus {options.MaxNewTokens} new tokens plus {headroom} tokens of fast-forward headroom exceed the context length {_contextLength}.")
             {
                 PromptTokens = prompt.Length,
                 MaxNewTokens = options.MaxNewTokens,
@@ -144,10 +153,15 @@ public sealed class TextGenerator
     private IEnumerable<GenerationUpdate> Run(int[] prompt, GenerationOptions options, HashSet<int> stopIds, Action<float[]>? step0Logits, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
-        using IGenerationSequence sequence = _createSequence(new GenAISequenceOptions
+        // Fast-forward guidance appends forced tokens without checking GenAI's maximum length, so the sequence gets room
+        // for one step's forced tokens beyond MaxNewTokens; the loop never returns more than MaxNewTokens tokens.
+        int fastForwardHeadroom = options.Guidance?.MaxFastForwardTokens ?? 0;
+        Queue<int>? forced = options.Guidance is { FastForward: true } ? new Queue<int>() : null;
+        using IDecodeSequence sequence = _createSequence(new GenAISequenceOptions
         {
-            MaxLength = prompt.Length + options.MaxNewTokens,
+            MaxLength = prompt.Length + options.MaxNewTokens + fastForwardHeadroom,
             Sampling = options.Sampling,
+            Guidance = options.Guidance,
         });
 
         var clock = Stopwatch.StartNew();
@@ -175,6 +189,9 @@ public sealed class TextGenerator
         var stops = new StopSequenceMatcher(options.StopSequences);
         var all = ImmutableArray.CreateBuilder<int>();
         var pendingIds = ImmutableArray.CreateBuilder<int>();
+        LogprobCalculator? logprobs = options.ReturnLogprobs ? new LogprobCalculator(Tokenizer, sequence.VocabularySize, options.TopLogprobs) : null;
+        var allLogprobs = ImmutableArray.CreateBuilder<TokenLogprob>();
+        var pendingLogprobs = ImmutableArray.CreateBuilder<TokenLogprob>();
         var text = new StringBuilder();
         GenerationFinishReason finish;
         int? stopTokenId = null;
@@ -189,14 +206,44 @@ public sealed class TextGenerator
                 break;
             }
 
-            if (sequence.IsDone)
+            int id;
+            if (forced is { Count: > 0 })
             {
-                // GenAI ends a sequence only at its end-of-sequence ids (handled below) or at its maximum length, which
-                // is the prompt plus MaxNewTokens (handled above).
-                throw new GenAIModelException($"ONNX Runtime GenAI ended the sequence unexpectedly after {all.Count} tokens.");
+                // The rest of a fast-forward step: its tokens go through the same checks one at a time, the selected
+                // token last.
+                id = forced.Dequeue();
+            }
+            else
+            {
+                if (sequence.IsDone)
+                {
+                    // GenAI ends a sequence only at its end-of-sequence ids (handled below) or at its maximum length, which
+                    // is the prompt plus MaxNewTokens plus the fast-forward headroom (handled above).
+                    throw new GenAIModelException($"ONNX Runtime GenAI ended the sequence unexpectedly after {all.Count} tokens.");
+                }
+
+                if (forced is null)
+                {
+                    id = sequence.GenerateNextToken();
+                }
+                else
+                {
+                    int[] appended = sequence.GenerateNextTokens();
+                    if (appended.Length == 0 || appended.Length > fastForwardHeadroom + 1)
+                    {
+                        // GenAI has already written the tokens; the bound is the caller's (GenerationGuidance.WithFastForward).
+                        throw new GenAIModelException(
+                            $"A fast-forward step appended {appended.Length} tokens; the guidance allows at most {fastForwardHeadroom} forced tokens and the selected one.");
+                    }
+
+                    id = appended[0];
+                    for (int i = 1; i < appended.Length; i++)
+                    {
+                        forced.Enqueue(appended[i]);
+                    }
+                }
             }
 
-            int id = sequence.GenerateNextToken();
             if (stopIds.Contains(id))
             {
                 finish = GenerationFinishReason.Stop;
@@ -206,6 +253,16 @@ public sealed class TextGenerator
 
             all.Add(id);
             pendingIds.Add(id);
+            if (logprobs is not null)
+            {
+                // GenAI runs the model on a selected token only at the next step, so the logits read now are those of
+                // the step that selected id (GenAISequence.CopyLastLogits; measured with ONNX Runtime GenAI 0.17.1).
+                sequence.CopyLastLogits(logprobs.Logits);
+                TokenLogprob entry = logprobs.Compute(id);
+                allLogprobs.Add(entry);
+                pendingLogprobs.Add(entry);
+            }
+
             var (emit, matched) = stops.Push(detokenizer.Push(id));
             if (matched is not null)
             {
@@ -218,8 +275,9 @@ public sealed class TextGenerator
             if (emit.Length > 0)
             {
                 text.Append(emit);
-                yield return new GenerationUpdate { Text = emit, TokenIds = pendingIds.ToImmutable() };
+                yield return new GenerationUpdate { Text = emit, TokenIds = pendingIds.ToImmutable(), Logprobs = pendingLogprobs.ToImmutable() };
                 pendingIds.Clear();
+                pendingLogprobs.Clear();
             }
         }
 
@@ -251,7 +309,8 @@ public sealed class TextGenerator
             StopSequence = stopSequence,
             Usage = new GenerationUsage(prompt.Length, all.Count),
             Timings = new GenerationTimings(prefill, clock.Elapsed - prefill),
+            Logprobs = allLogprobs.ToImmutable(),
         };
-        yield return new GenerationUpdate { Text = finalText, TokenIds = pendingIds.ToImmutable(), Result = result };
+        yield return new GenerationUpdate { Text = finalText, TokenIds = pendingIds.ToImmutable(), Logprobs = pendingLogprobs.ToImmutable(), Result = result };
     }
 }

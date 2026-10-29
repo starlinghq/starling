@@ -53,6 +53,16 @@ public sealed record EmbeddingGemma2EmbeddingGeneratorOptions
     /// </summary>
     public MicroBatchingOptions? MicroBatching { get; init; }
 
+    /// <summary>
+    /// Where <see cref="EmbeddingGemma2EmbeddingGenerator.GenerateAsync"/> and the encoder runs of
+    /// <see cref="EmbeddingGemma2EmbeddingGenerator.EmbedStreamAsync"/> execute (Experimental, capability
+    /// <c>extensions_ai.execution_scheduler</c>), or null (default): inline on the calling thread, a completed task, as
+    /// without this option. <see cref="TaskScheduler.Default"/> offloads to the thread pool; a caller's own scheduler (for
+    /// example one thread per device) serializes or places the work. The scheduler changes only where the work runs, not
+    /// the numbers.
+    /// </summary>
+    public TaskScheduler? ExecutionScheduler { get; init; }
+
     internal void Validate()
     {
         ArgumentNullException.ThrowIfNull(Prompt);

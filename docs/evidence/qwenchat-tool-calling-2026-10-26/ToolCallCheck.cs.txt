@@ -1,0 +1,41 @@
+using System.Text.Json;
+using Starlings.Acquisition;
+using Starlings.Models.QwenChat;
+
+QwenChatProfile profile = QwenChatProfile.FromId(args[0]);
+var acquisition = new ModelAcquisitionOptions { CacheDirectory = args[1], UseEnvironmentToken = false };
+string bundle = await QwenChatModelAssets.DownloadAsync(profile, acquisition);
+using var model = QwenChatModel.Load(profile, bundle);
+var weather = QwenChatTool.Function("get_weather", "Current weather for a city.",
+    JsonDocument.Parse("""{"type": "object", "properties": {"city": {"type": "string", "description": "City name."}}, "required": ["city"]}""").RootElement);
+var options = new QwenChatOptions { MaxNewTokens = 64, Tools = [weather] };
+var messages = new List<QwenChatMessage> { new(QwenChatRole.User, "What is the weather in Paris right now?") };
+var first = model.Generate(messages, options);
+Console.WriteLine($"turn1 finish={first.FinishReason} prompt={first.Usage.PromptTokens} completion={first.Usage.CompletionTokens}");
+Console.WriteLine("turn1 text=" + JsonSerializer.Serialize(first.Text));
+var parsed = QwenChatToolCallParser.Parse(first.Text);
+foreach (var call in parsed.ToolCalls)
+{
+    Console.WriteLine($"turn1 call={call.Name} args={call.Arguments.GetRawText()}");
+}
+
+// Streaming gives the same parts.
+var parser = new QwenChatToolCallParser();
+var streamed = new List<QwenChatOutputPart>();
+foreach (var update in model.GenerateStreaming(model.CreatePrompt(messages, options.Tools), options))
+{
+    streamed.AddRange(parser.Append(update.Text ?? string.Empty));
+}
+
+streamed.AddRange(parser.Complete());
+Console.WriteLine("streamed calls=" + streamed.Count(p => p.ToolCall is not null));
+
+if (parsed.ToolCalls.Count > 0)
+{
+    messages.Add(parsed.ToAssistantMessage());
+    messages.Add(new(QwenChatRole.Tool, """{"temperature_c": 18, "sky": "sunny"}"""));
+    var second = model.Generate(messages, options);
+    Console.WriteLine($"turn2 finish={second.FinishReason} prompt={second.Usage.PromptTokens} completion={second.Usage.CompletionTokens}");
+    Console.WriteLine("turn2 text=" + JsonSerializer.Serialize(second.Text));
+    Console.WriteLine("turn2 calls=" + QwenChatToolCallParser.Parse(second.Text).ToolCalls.Count);
+}

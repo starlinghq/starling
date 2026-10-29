@@ -340,7 +340,7 @@ internal static class EmbeddingGemma2ParityChecks
             encoder.EmbedBatch([new EmbeddingGemma2Input(ok), new EmbeddingGemma2Input(tooLong)], TestContext.Current.CancellationToken));
         Assert.Equal(1, ex.InputIndex);
         Assert.Equal(8193, ex.TokenCount);
-        Assert.Equal(8192, ex.MaximumTokens);
+        Assert.Equal(8192, ex.MaxTokens);
         output.WriteLine($"8,193 tokens rejected before inference: {ex.Message}");
     }
 

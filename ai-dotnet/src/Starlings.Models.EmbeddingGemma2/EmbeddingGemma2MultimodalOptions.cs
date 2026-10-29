@@ -12,7 +12,8 @@ public sealed record EmbeddingGemma2MultimodalOptions
     /// Session settings for all three graphs (provider, threads). CUDA always runs with TF32 disabled
     /// (<c>use_tf32=0</c>, enforced by <c>Starlings.Runtime.Onnx</c>): with TF32 the image embeddings drift by
     /// up to 1.4e-3 and fail the profile's bound. <see cref="OnnxSessionOptions.ExpectedModelSha256"/> is ignored here;
-    /// see <see cref="VerifyModelSha256"/>.
+    /// see <see cref="VerifyModelSha256"/>. <see cref="OnnxSessionOptions.KnownModelSha256"/> is ignored too: each graph
+    /// takes its own digest from the files when their snapshot hashed them.
     /// </summary>
     public OnnxSessionOptions Session { get; init; } = new();
 
@@ -103,9 +104,9 @@ public sealed record EmbeddingGemma2MultimodalOptions
     public bool AllowVideosWithoutTiming { get; init; }
 
     /// <summary>Encoder options of the released text graph for text-only inputs.</summary>
-    internal EmbeddingGemma2EncoderOptions ToTextEncoderOptions(string? expectedSha256) => new()
+    internal EmbeddingGemma2EncoderOptions ToTextEncoderOptions(string? expectedSha256, string? knownSha256 = null) => new()
     {
-        Session = Session with { ExpectedModelSha256 = expectedSha256 },
+        Session = Session with { ExpectedModelSha256 = expectedSha256, KnownModelSha256 = knownSha256 },
         Dimension = Dimension,
         MaxSequenceLength = MaxSequenceLength,
         MaxBatchSize = MaxBatchSize,

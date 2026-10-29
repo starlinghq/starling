@@ -1,5 +1,6 @@
 using System.Text;
 using System.Text.Json;
+using Starlings.Generation;
 using Starlings.Generation.OnnxGenAI;
 using Microsoft.Extensions.AI;
 
@@ -102,7 +103,15 @@ public static class Qwen35ChatRequestMapper
     /// </summary>
     /// <exception cref="NotSupportedException">An option the model cannot honor is set.</exception>
     /// <exception cref="ArgumentOutOfRangeException">A value is out of range (<c>MaxOutputTokens</c>, <c>Temperature</c>, <c>Seed</c>).</exception>
-    public static Qwen35ChatOptions MapOptions(ChatOptions? options, Qwen35ChatOptions defaults, string modelId)
+    public static Qwen35ChatOptions MapOptions(ChatOptions? options, Qwen35ChatOptions defaults, string modelId) =>
+        MapOptions(options, defaults, modelId, Unguided);
+
+    /// <summary>
+    /// Maps the options. <paramref name="guidance"/> says whether the loaded model can serve guided decoding; it decides
+    /// whether <see cref="ChatToolMode.RequireAny"/>, a required function and a JSON <see cref="ChatOptions.ResponseFormat"/>
+    /// map to a grammar or fail with <see cref="NotSupportedException"/>.
+    /// </summary>
+    internal static Qwen35ChatOptions MapOptions(ChatOptions? options, Qwen35ChatOptions defaults, string modelId, GuidanceSupport guidance)
     {
         ArgumentNullException.ThrowIfNull(defaults);
         ArgumentNullException.ThrowIfNull(modelId);
@@ -116,21 +125,69 @@ public static class Qwen35ChatRequestMapper
             throw new NotSupportedException($"ChatOptions.ModelId = '{requested}' is not supported: this client serves only '{modelId}'.");
         }
 
+        List<Qwen35Tool> tools = options.ToolMode is NoneChatToolMode ? [] : MapTools(options.Tools);
+        GenerationGuidance? constraint = null;
+        string? constrainedBy = null;
         if (options.ToolMode is RequiredChatToolMode required)
         {
+            constrainedBy = $"ChatOptions.ToolMode = {(required.RequiredFunctionName is { } n ? $"RequireSpecific('{n}')" : "RequireAny")}";
+            guidance.ThrowIfUnavailable(constrainedBy, "the chat template has no way to require a tool call, so it needs a grammar-constrained decode");
+            if (tools.Count == 0)
+            {
+                throw new NotSupportedException($"{constrainedBy} needs at least one function in ChatOptions.Tools.");
+            }
+
+            List<Qwen35Tool> allowed = tools;
+            if (required.RequiredFunctionName is { } name)
+            {
+                allowed = tools.FindAll(t => string.Equals(t.Name, name, StringComparison.Ordinal));
+                if (allowed.Count == 0)
+                {
+                    throw new NotSupportedException($"{constrainedBy}: ChatOptions.Tools has no function named '{name}'.");
+                }
+            }
+
+            try
+            {
+                constraint = Qwen35ToolGrammar.Build(allowed, new Qwen35ToolGrammarOptions
+                {
+                    AllowMultipleCalls = options.AllowMultipleToolCalls != false,
+                    FastForward = guidance.FastForward,
+                });
+            }
+            catch (ArgumentException ex)
+            {
+                throw new NotSupportedException($"{constrainedBy}: {ex.Message}", ex);
+            }
+        }
+        else if (tools.Count > 0 && options.AllowMultipleToolCalls == false)
+        {
             throw new NotSupportedException(
-                $"ChatOptions.ToolMode = {(required.RequiredFunctionName is { } name ? $"RequireSpecific('{name}')" : "RequireAny")} is not supported: the chat template has no way to require a tool call and decoding is not constrained. Use ChatToolMode.Auto (or None).");
+                "ChatOptions.AllowMultipleToolCalls = false is supported only with ChatToolMode.RequireAny or RequireSpecific: with ChatToolMode.Auto the chat template lets the model call several tools in one turn and decoding is not constrained.");
         }
 
-        List<Qwen35Tool> tools = options.ToolMode is NoneChatToolMode ? [] : MapTools(options.Tools);
-        if (tools.Count > 0 && options.AllowMultipleToolCalls == false)
+        if (options.ResponseFormat is ChatResponseFormatJson json)
         {
-            throw new NotSupportedException(
-                "ChatOptions.AllowMultipleToolCalls = false is not supported: the chat template lets the model call several tools in one turn and decoding is not constrained.");
+            const string What = "ChatOptions.ResponseFormat = Json";
+            guidance.ThrowIfUnavailable(What, "structured (JSON) output needs a schema-constrained decode");
+            if (constraint is not null)
+            {
+                throw new NotSupportedException($"{What} cannot be combined with {constrainedBy}.");
+            }
+
+            if (tools.Count > 0)
+            {
+                throw new NotSupportedException(
+                    $"{What} cannot be combined with offered tools: output constrained to JSON cannot hold a tool call. Use ChatToolMode.None or no tools.");
+            }
+
+            // Without a schema, the OpenAI-style JSON mode: one JSON object.
+            constraint = GenerationGuidance.JsonSchema(json.Schema is { } schema ? schema.GetRawText() : """{"type": "object"}""");
+            constrainedBy = What;
         }
-        if (options.ResponseFormat is not (null or ChatResponseFormatText))
+        else if (options.ResponseFormat is not (null or ChatResponseFormatText))
         {
-            throw new NotSupportedException("ChatOptions.ResponseFormat other than text is not supported: structured (JSON) output is unsupported (Qwen35Capabilities: structured_output).");
+            throw new NotSupportedException($"ChatOptions.ResponseFormat {options.ResponseFormat.GetType().Name} is not supported; text and JSON are.");
         }
 
         if (options.ConversationId is not null)
@@ -151,7 +208,7 @@ public static class Qwen35ChatRequestMapper
         if (options.Reasoning is not null)
         {
             throw new NotSupportedException(
-                $"ChatOptions.Reasoning is not supported: the model has no reasoning effort levels and its reasoning is not split from the answer. Use AdditionalProperties['{Qwen35ChatClient.EnableThinkingPropertyName}'] = true or false to switch the template's thinking mode.");
+                $"ChatOptions.Reasoning is not supported: the model has no reasoning effort levels. Use AdditionalProperties['{Qwen35ChatClient.EnableThinkingPropertyName}'] = true or false to switch the template's thinking mode, and Qwen35ChatClientOptions.SplitReasoning to return the reasoning as TextReasoningContent.");
         }
 
         if (options.AllowBackgroundResponses == true || options.ContinuationToken is not null)
@@ -165,6 +222,10 @@ public static class Qwen35ChatRequestMapper
         }
 
         var mapped = defaults with { Tools = tools };
+        if (constraint is not null)
+        {
+            mapped = mapped with { Guidance = constraint };
+        }
         if (options.MaxOutputTokens is { } max)
         {
             ArgumentOutOfRangeException.ThrowIfNegativeOrZero(max, "ChatOptions.MaxOutputTokens");
@@ -180,19 +241,98 @@ public static class Qwen35ChatRequestMapper
 
         if (options.AdditionalProperties is { Count: > 0 } properties)
         {
+            int? topLogprobs = null;
             foreach (var (key, value) in properties)
             {
-                if (!string.Equals(key, Qwen35ChatClient.EnableThinkingPropertyName, StringComparison.Ordinal))
+                switch (key)
                 {
-                    throw new NotSupportedException(
-                        $"ChatOptions.AdditionalProperties['{key}'] is not supported; the only supported key is '{Qwen35ChatClient.EnableThinkingPropertyName}'.");
+                    case Qwen35ChatClient.EnableThinkingPropertyName:
+                        mapped = mapped with { EnableThinking = ParseBoolean(key, value) };
+                        break;
+                    case Qwen35ChatClient.LogprobsPropertyName:
+                        mapped = mapped with { ReturnLogprobs = ParseBoolean(key, value) };
+                        break;
+                    case Qwen35ChatClient.TopLogprobsPropertyName:
+                        topLogprobs = ParseTopLogprobs(value);
+                        break;
+                    default:
+                        throw new NotSupportedException(
+                            $"ChatOptions.AdditionalProperties['{key}'] is not supported; the supported keys are '{Qwen35ChatClient.EnableThinkingPropertyName}', '{Qwen35ChatClient.LogprobsPropertyName}' and '{Qwen35ChatClient.TopLogprobsPropertyName}'.");
+                }
+            }
+
+            if (topLogprobs is int top)
+            {
+                if (top > 0 && !mapped.ReturnLogprobs)
+                {
+                    throw new ArgumentException(
+                        $"AdditionalProperties['{Qwen35ChatClient.TopLogprobsPropertyName}'] needs AdditionalProperties['{Qwen35ChatClient.LogprobsPropertyName}'] = true.");
                 }
 
-                mapped = mapped with { EnableThinking = ParseBoolean(value) };
+                mapped = mapped with { TopLogprobs = top };
+            }
+            else if (!mapped.ReturnLogprobs)
+            {
+                // A request that turns log probabilities off also drops the defaults' top-k, which would otherwise be
+                // rejected without them.
+                mapped = mapped with { TopLogprobs = 0 };
+            }
+        }
+
+        if (constraint is not null)
+        {
+            if (mapped.EnableThinking)
+            {
+                throw new NotSupportedException(
+                    $"{constrainedBy} is not supported with '{Qwen35ChatClient.EnableThinkingPropertyName}' = true: the constraint applies from the first completion token, which would be reasoning text.");
+            }
+
+            if (mapped.ReturnLogprobs)
+            {
+                throw new NotSupportedException(
+                    $"{constrainedBy} cannot be combined with AdditionalProperties['{Qwen35ChatClient.LogprobsPropertyName}'] = true: log probabilities are not offered for guided decoding.");
             }
         }
 
         return mapped;
+    }
+
+    private static readonly GuidanceSupport Unguided = new(GenAIModel.GuidanceFiles, "the model directory", FastForward: false);
+
+    /// <summary>Whether the loaded model can serve guided decoding, and how the mapper should build constraints.</summary>
+    /// <param name="MissingFiles">GenAI's guidance files missing from the model directory (empty: available).</param>
+    /// <param name="ModelDirectory">The model directory, for the error message.</param>
+    /// <param name="FastForward">Build tool grammars with fast-forward tokens (<see cref="Qwen35ChatClientOptions.GuidanceFastForward"/>).</param>
+    internal sealed record GuidanceSupport(IReadOnlyList<string> MissingFiles, string ModelDirectory, bool FastForward)
+    {
+        public void ThrowIfUnavailable(string what, string why)
+        {
+            if (MissingFiles.Count > 0)
+            {
+                throw new NotSupportedException(
+                    $"{what} is not supported by this model directory: {why}, and ONNX Runtime GenAI builds the constraint's token table from " +
+                    $"{string.Join(" and ", GenAIModel.GuidanceFiles)} in {ModelDirectory}, where {string.Join(" and ", MissingFiles)} " +
+                    (MissingFiles.Count == 1 ? "is" : "are") + " missing (Qwen35ModelInfo.GuidanceMissingFiles).");
+            }
+        }
+    }
+
+    private static int ParseTopLogprobs(object? value)
+    {
+        int? top = value switch
+        {
+            int i => i,
+            long l when l is >= int.MinValue and <= int.MaxValue => (int)l,
+            JsonElement { ValueKind: JsonValueKind.Number } e when e.TryGetInt32(out int i) => i,
+            _ => null,
+        };
+        if (top is not int n || n < 0 || n > GenerationOptions.MaxTopLogprobs)
+        {
+            throw new ArgumentException(
+                $"AdditionalProperties['{Qwen35ChatClient.TopLogprobsPropertyName}'] = '{value}' is not an integer in [0, {GenerationOptions.MaxTopLogprobs}].");
+        }
+
+        return n;
     }
 
     private static Qwen35Role MapRole(ChatRole role, int index)
@@ -379,12 +519,11 @@ public static class Qwen35ChatRequestMapper
         };
     }
 
-    private static bool ParseBoolean(object? value) => value switch
+    private static bool ParseBoolean(string key, object? value) => value switch
     {
         bool b => b,
         JsonElement { ValueKind: JsonValueKind.True } => true,
         JsonElement { ValueKind: JsonValueKind.False } => false,
-        _ => throw new ArgumentException(
-            $"AdditionalProperties['{Qwen35ChatClient.EnableThinkingPropertyName}'] = '{value}' is not a Boolean; expected true or false."),
+        _ => throw new ArgumentException($"AdditionalProperties['{key}'] = '{value}' is not a Boolean; expected true or false."),
     };
 }

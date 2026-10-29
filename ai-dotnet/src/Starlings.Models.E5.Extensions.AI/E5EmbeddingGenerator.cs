@@ -1,4 +1,6 @@
+using System.Runtime.CompilerServices;
 using Microsoft.Extensions.AI;
+using Starlings.Models.ExtensionsAI;
 using Starlings.Runtime.Onnx.Batching;
 
 namespace Starlings.Models.E5.Extensions.AI;
@@ -10,10 +12,21 @@ namespace Starlings.Models.E5.Extensions.AI;
 /// </summary>
 /// <remarks>
 /// <para>
-/// <b>Synchronous execution (plan 5.1).</b> <see cref="GenerateAsync"/> tokenizes and runs ONNX Runtime on the
-/// calling thread and returns an already-completed task. It does not offload to the thread pool; a caller that must
-/// not block wraps the call in <c>Task.Run</c> itself. Failures are never thrown synchronously: they are in the
-/// returned task (faulted, or cancelled when the token was cancelled).
+/// <b>Execution: inline unless a scheduler is set (plan 5.1).</b> By default
+/// (<see cref="E5EmbeddingGeneratorOptions.ExecutionScheduler"/> null) <see cref="GenerateAsync"/> tokenizes and runs
+/// ONNX Runtime on the calling thread and returns an already-completed task; it does not offload to the thread pool.
+/// With a scheduler set (Experimental, capability <c>extensions_ai.execution_scheduler</c>), the call returns at once
+/// and the same work runs as one task on that scheduler (<see cref="TaskScheduler.Default"/> for the thread pool, or the
+/// caller's own, for example one thread per device). Failures are never thrown synchronously: they are in the returned
+/// task (faulted, or cancelled when the token was cancelled).
+/// </para>
+/// <para>
+/// <b>Streaming (Experimental, capability <c>extensions_ai.stream</c>).</b>
+/// <see cref="EmbedStreamAsync"/> takes an <see cref="IAsyncEnumerable{T}"/> of texts and yields one embedding per text
+/// in input order, without materializing the source. Values are tokenized as they arrive and grouped as the encoder
+/// groups an explicit batch (<see cref="E5EncoderOptions.MaxBatchSize"/> rows, and <see cref="E5EncoderOptions.MaxBatchTokens"/>
+/// padded cells when set), so with <see cref="E5EncoderOptions.SortByLength"/> off the embeddings equal those of one
+/// <see cref="GenerateAsync"/> call over the same values bit for bit. A group runs when it is full or the source ends.
 /// </para>
 /// <para>
 /// <b>Batching.</b> One call embeds all values in order with one <see cref="E5TextEmbedder.EmbedBatch(IReadOnlyList{string}, Span{int}, CancellationToken)"/>
@@ -129,31 +142,58 @@ public sealed class E5EmbeddingGenerator : IEmbeddingGenerator<string, Embedding
 
     /// <inheritdoc />
     /// <remarks>
-    /// Runs synchronously and returns a completed task, except a one-value call with micro-batching on; see the class
-    /// remarks for batching, micro-batching, cancellation and options.
+    /// Runs inline unless a scheduler is set: with <see cref="E5EmbeddingGeneratorOptions.ExecutionScheduler"/> null it
+    /// runs synchronously on the calling thread and returns a completed task, except a one-value call with
+    /// micro-batching on; with a scheduler, the work (tokenizing, and the run or the queueing) is one task on it. The
+    /// values are enumerated on the thread that does the work. See the class remarks for batching, micro-batching,
+    /// cancellation and options.
     /// </remarks>
     public Task<GeneratedEmbeddings<Embedding<float>>> GenerateAsync(
         IEnumerable<string> values,
         EmbeddingGenerationOptions? options = null,
         CancellationToken cancellationToken = default)
     {
-        try
+        return EmbeddingGeneratorCore.Run(() =>
         {
             var texts = Prepare(values, options, cancellationToken);
             return _batcher is not null && texts.Count == 1
                 ? GenerateQueuedAsync(_batcher, texts[0], cancellationToken)
                 : Task.FromResult(Generate(texts, cancellationToken));
-        }
-        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
-        {
-            return Task.FromCanceled<GeneratedEmbeddings<Embedding<float>>>(cancellationToken);
-        }
-#pragma warning disable CA1031 // Every failure is reported through the returned task, never thrown synchronously.
-        catch (Exception ex)
-#pragma warning restore CA1031
-        {
-            return Task.FromException<GeneratedEmbeddings<Embedding<float>>>(ex);
-        }
+        }, _options.ExecutionScheduler, cancellationToken);
+    }
+
+    /// <summary>
+    /// Embeds a stream of texts and yields one embedding per text, in input order, without materializing the source.
+    /// Experimental (capability <c>extensions_ai.stream</c>).
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Request options are resolved once, before the first value, with the rules of <see cref="GenerateAsync"/>. Each
+    /// value is tokenized (with the input type's prefix) as it arrives, on the thread that enumerates. Values are grouped
+    /// as the encoder groups an explicit batch in input order (<see cref="E5EncoderOptions.MaxBatchSize"/> rows and, when
+    /// set, <see cref="E5EncoderOptions.MaxBatchTokens"/> padded cells); each group runs as one encoder call when the next
+    /// value does not fit or the source ends, and its embeddings are then yielded. With
+    /// <see cref="E5EncoderOptions.SortByLength"/> off the embeddings equal one <see cref="GenerateAsync"/> call over the
+    /// same values bit for bit; with it on, a group is sorted only within itself (within the padded-batch tolerance).
+    /// </para>
+    /// <para>
+    /// Runs inline unless a scheduler is set: each group's encoder run is on the enumerating thread, or on
+    /// <see cref="E5EmbeddingGeneratorOptions.ExecutionScheduler"/> when set. Micro-batching does not apply. There is no
+    /// per-embedding usage. A null value fails the enumeration with <see cref="ArgumentException"/> naming its position;
+    /// embeddings of earlier groups have been yielded by then. Cancellation is checked before each value and inside a
+    /// run, as for <see cref="GenerateAsync"/>.
+    /// </para>
+    /// </remarks>
+    /// <param name="values">The texts.</param>
+    /// <param name="options">Request options (input type, dimensions, model id), as for <see cref="GenerateAsync"/>.</param>
+    /// <param name="cancellationToken">Cancels the enumeration.</param>
+    public IAsyncEnumerable<Embedding<float>> EmbedStreamAsync(
+        IAsyncEnumerable<string> values,
+        EmbeddingGenerationOptions? options = null,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(values);
+        return EmbedStreamCoreAsync(values, options, cancellationToken);
     }
 
     /// <inheritdoc />
@@ -215,18 +255,41 @@ public sealed class E5EmbeddingGenerator : IEmbeddingGenerator<string, Embedding
             _ => string.Empty,
         };
 
-        var texts = new List<string>(values is ICollection<string> c ? c.Count : 0);
-        foreach (string? value in values)
+        return EmbeddingGeneratorCore.Texts(values, prefix);
+    }
+
+    private async IAsyncEnumerable<Embedding<float>> EmbedStreamCoreAsync(
+        IAsyncEnumerable<string> values, EmbeddingGenerationOptions? options, [EnumeratorCancellation] CancellationToken cancellationToken)
+    {
+        ObjectDisposedException.ThrowIf(Volatile.Read(ref _disposed) != 0, this);
+        cancellationToken.ThrowIfCancellationRequested();
+        string prefix = ResolveInputType(options) switch
         {
-            if (value is null)
+            E5InputType.Query => E5TextEmbedder.QueryPrefix,
+            E5InputType.Passage => E5TextEmbedder.PassagePrefix,
+            _ => string.Empty,
+        };
+        var encoder = _embedder.Encoder;
+        var tokenizer = _embedder.Tokenizer;
+        await foreach (var embedding in EmbeddingGeneratorCore.Stream(
+            values,
+            (text, _) =>
             {
-                throw new ArgumentException($"Value {texts.Count} is null.", nameof(values));
-            }
-
-            texts.Add(prefix.Length == 0 ? value : prefix + value);
+                var input = tokenizer.Tokenize(prefix.Length == 0 ? text : prefix + text);
+                encoder.Validate(input);
+                return input;
+            },
+            static input => input.Length,
+            encoder.Options.MaxBatchSize,
+            encoder.Options.MaxBatchTokens,
+            (inputs, token) => encoder.EmbedBatch(inputs, token),
+            static vector => vector,
+            _options.ModelId,
+            _options.ExecutionScheduler,
+            cancellationToken).ConfigureAwait(false))
+        {
+            yield return embedding;
         }
-
-        return texts;
     }
 
     private async Task<GeneratedEmbeddings<Embedding<float>>> GenerateQueuedAsync(MicroBatcher<EncoderInput, float[]> batcher, string text, CancellationToken cancellationToken)
@@ -235,33 +298,14 @@ public sealed class E5EmbeddingGenerator : IEmbeddingGenerator<string, Embedding
         var input = _embedder.Tokenizer.Tokenize(text);
         _embedder.Encoder.Validate(input);
         float[] vector = await batcher.EnqueueAsync(input, cancellationToken).ConfigureAwait(false);
-        var result = new GeneratedEmbeddings<Embedding<float>>(1)
-        {
-            new Embedding<float>(vector) { ModelId = _options.ModelId, CreatedAt = DateTimeOffset.UtcNow },
-        };
-        result.Usage = new UsageDetails { InputTokenCount = input.Length, TotalTokenCount = input.Length };
-        return result;
+        return EmbeddingGeneratorCore.Single(vector, input.Length, _options.ModelId);
     }
 
     private GeneratedEmbeddings<Embedding<float>> Generate(List<string> texts, CancellationToken cancellationToken)
     {
         var tokenCounts = new int[texts.Count];
         float[][] vectors = _embedder.EmbedBatch(texts, tokenCounts, cancellationToken);
-        var createdAt = DateTimeOffset.UtcNow;
-        var result = new GeneratedEmbeddings<Embedding<float>>(vectors.Length);
-        foreach (float[] vector in vectors)
-        {
-            result.Add(new Embedding<float>(vector) { ModelId = _options.ModelId, CreatedAt = createdAt });
-        }
-
-        long tokens = 0;
-        foreach (int count in tokenCounts)
-        {
-            tokens += count;
-        }
-
-        result.Usage = new UsageDetails { InputTokenCount = tokens, TotalTokenCount = tokens };
-        return result;
+        return EmbeddingGeneratorCore.Result(vectors, tokenCounts, _options.ModelId, static vector => vector);
     }
 
     private E5InputType ResolveInputType(EmbeddingGenerationOptions? options) =>
@@ -283,31 +327,9 @@ public sealed class E5EmbeddingGenerator : IEmbeddingGenerator<string, Embedding
             throw new NotSupportedException($"EmbeddingGenerationOptions.Dimensions = {dimensions} is not supported: {generatorModelId} produces {dimension} dimensions and has no truncation (Matryoshka) support.");
         }
 
-        if (options.ModelId is { } modelId && !string.Equals(modelId, generatorModelId, StringComparison.Ordinal))
-        {
-            throw new NotSupportedException($"EmbeddingGenerationOptions.ModelId = '{modelId}' is not supported: this generator serves only '{generatorModelId}'.");
-        }
-
-        if (options.RawRepresentationFactory is not null)
-        {
-            throw new NotSupportedException("EmbeddingGenerationOptions.RawRepresentationFactory is not supported: this generator has no provider-specific options object.");
-        }
-
-        var inputType = defaultInputType;
-        if (options.AdditionalProperties is { Count: > 0 } properties)
-        {
-            foreach (var (key, value) in properties)
-            {
-                if (!string.Equals(key, InputTypePropertyName, StringComparison.Ordinal))
-                {
-                    throw new NotSupportedException($"EmbeddingGenerationOptions.AdditionalProperties['{key}'] is not supported; the only supported key is '{InputTypePropertyName}'.");
-                }
-
-                inputType = ParseInputType(value);
-            }
-        }
-
-        return inputType;
+        return EmbeddingGeneratorCore.CheckOptions(options, generatorModelId, InputTypePropertyName, out object? value)
+            ? ParseInputType(value)
+            : defaultInputType;
     }
 
     private static E5InputType ParseInputType(object? value) => value switch

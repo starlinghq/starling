@@ -1,16 +1,15 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <IsPackable>true</IsPackable>
-    <Description>Qwen/Qwen3-0.6B (revision c1899de2, thinking disabled) and Qwen/Qwen2.5-0.5B-Instruct (revision 7ae55760) text chat generation in-process on ONNX Runtime GenAI 0.17.1: the pinned chat templates rendered in C# for system, user and assistant messages (tools and multimodal input rejected), prompt ids from the owned tokenizer (Starlings.Tokenizers: no Microsoft.ML.Tokenizers, no GenAI tokenizer), and Starling's decode loop (greedy, stop tokens and strings, streaming, cancellation between steps, usage). Ships no weights: QwenChatModelAssets downloads the profile's bundle explicitly from Starling's public Hugging Face hosting (or it is built locally from the pinned original), and Load verifies every file against the profile's digests. Profiles qwen3-0.6b/ortgenai-fp32-cpu and qwen2.5-0.5b-instruct/ortgenai-fp32-cpu, Linux x64. The application adds Microsoft.ML.OnnxRuntimeGenAI. Maturity is per model profile (Stable, Preview or Experimental): see the README, generated from the model registry.</Description>
-    <PackageTags>llm;chat;qwen;qwen3;qwen2.5;text-generation;onnxruntime-genai;streaming</PackageTags>
+    <Description>Qwen/Qwen3-0.6B (revision c1899de2, thinking disabled) and Qwen/Qwen2.5-0.5B-Instruct (revision 7ae55760) model definitions without a runtime: the pinned chat templates rendered in C# for system, user, assistant and tool messages with tool definitions and calls (tool calling experimental; multimodal input rejected), a parser for the templates' JSON tool-call format (whole or streamed), per-request chat options, and each checkpoint's identity and decoder shape (QwenChatCheckpoint, ModelProfile) with tokenizer verification through the owned tokenizer Starlings.Tokenizers. No ONNX Runtime dependency. To run the models in-process on ONNX Runtime GenAI, reference Starlings.Models.QwenChat.OnnxGenAI. Maturity is per model profile (Stable, Preview or Experimental): see the README, generated from the model registry.</Description>
+    <PackageTags>llm;chat;qwen;qwen3;qwen2.5;chat-template;tool-calling</PackageTags>
     <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
   <ItemGroup>
     <None Include="README.md" Pack="true" PackagePath="" />
     <None Include="THIRD-PARTY-NOTICES.md" Pack="true" PackagePath="" />
     <None Include="LICENSE.Qwen.txt" Pack="true" PackagePath="" />
-    <ProjectReference Include="../Starlings.Acquisition/Starlings.Acquisition.csproj" />
-    <ProjectReference Include="../Starlings.Generation.OnnxGenAI/Starlings.Generation.OnnxGenAI.csproj" />
+    <ProjectReference Include="../Starlings.Generation.Abstractions/Starlings.Generation.Abstractions.csproj" />
     <PackageReference Include="Starlings.Tokenizers" />
   </ItemGroup>
 </Project>

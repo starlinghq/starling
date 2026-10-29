@@ -1,6 +1,7 @@
 using Starlings.Runtime.Onnx;
 using Starlings.Runtime.Onnx.Batching;
 using Starlings.TestSupport;
+using Status = Starlings.Models.CapabilityStatus;
 
 namespace Starlings.Models.E5.Extensions.AI.Tests;
 
@@ -98,7 +99,7 @@ public sealed class MicroBatchingTests : IDisposable
         using var generator = Generator(FillTwo);
         // 600 code points: 602 tokens, above the encoder's 512 (the stand-in tokenizer does not truncate).
         var invalid = generator.GenerateAsync([new string('x', 600)], cancellationToken: Ct);
-        await Assert.ThrowsAsync<ArgumentException>(() => Within(invalid));
+        await Assert.ThrowsAsync<InputTooLongException>(() => Within(invalid));
         var valid = new[] { generator.GenerateAsync(["a"], cancellationToken: Ct), generator.GenerateAsync(["b"], cancellationToken: Ct) };
         await Within(Task.WhenAll(valid));
         var stats = generator.MicroBatchingStatistics!.Value;
@@ -135,7 +136,7 @@ public sealed class MicroBatchingTests : IDisposable
 
     [Fact]
     public void CapabilityIsExperimental() =>
-        Assert.Equal(CapabilityStatus.Experimental, E5Capabilities.All["extensions_ai.micro_batching"]);
+        Assert.Equal(Status.Experimental, E5Capabilities.Statuses["extensions_ai.micro_batching"]);
 
     private sealed class CodePointTokenizer : IEncoderTokenizer
     {
