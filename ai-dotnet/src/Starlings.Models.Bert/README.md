@@ -67,7 +67,7 @@ which the package embeds and validates on first use and the Python allow-list of
 `BertModelProfile.SupportedRepositories` lists its repositories. Each profile's maturity is in the table above (all
 Experimental; registry manifests under `model-pipeline/registry/`).
 
-| Built-in name | Profile id | Task | Max tokens | Pooling | Width | Normalize | Prompts |
+| Candidate | Profile id | Task | Max tokens | Pooling | Width | Normalize | Prompts |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | `minilm` | `all-minilm-l6-v2/onnx-fp32-cpu` | embeddings | 256 | mean | 384 | l2 | `none` |
 | `bge-small` | `bge-small-en-v1.5/onnx-fp32-cpu` | embeddings | 512 | cls | 384 | l2 | `none`, `query` |
