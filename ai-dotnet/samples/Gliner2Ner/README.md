@@ -14,6 +14,6 @@ The graph downloads from the public Hugging Face repository `Starlinghq/gliner2-
 
 Without `--cache` the files go to `$STARLING_MODELS` or the user cache directory (`~/.cache/starlings/models` on Linux). `--labels` takes a comma-separated list; arguments that are not options are the texts.
 
-The sample uses `PackageReference`s only, no project references: `Starlings.Models.Gliner2` 0.3.0 (the `StarlingsVersion` property) restores from nuget.org. `tools/release-drill-ai.sh` also packs the packages into a local feed and builds this sample from a copy outside the repository.
+The sample uses `PackageReference`s only, no project references: `Starlings.Models.Gliner2` 0.4.0 (the `StarlingsVersion` property) restores from nuget.org. `tools/release-drill-ai.sh` also packs the packages into a local feed and builds this sample from a copy outside the repository.
 
 For CUDA on Linux x64, replace `Microsoft.ML.OnnxRuntime` with `Microsoft.ML.OnnxRuntime.Gpu.Linux` 1.30.0 and set `Provider = OnnxExecutionProvider.Cuda` on the `OnnxSessionOptions` in `Program.cs`; the sample has no CUDA flag, and the CUDA 13 runtime must be on the loader path. A Linux process that runs GLiNER2 in deployment needs `MALLOC_MMAP_THRESHOLD_=65536` in its environment, on CPU and CUDA (the `Starlings.Models.Gliner2` README, "Memory on Linux").

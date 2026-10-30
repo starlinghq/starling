@@ -1,0 +1,6 @@
+# Clover-35B-A3B-Preview template reference: the checkpoint's chat template rendered by transformers
+# apply_chat_template, and the prompt ids of its tokenizer. transformers 5.19.0 is the version the model card
+# names; no torch (the model itself does not run here).
+transformers==5.19.0
+tokenizers==0.23.3
+jinja2==3.1.6
