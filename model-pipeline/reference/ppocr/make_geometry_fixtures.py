@@ -81,10 +81,14 @@ def warp_cases(rng: np.random.Generator) -> list[dict]:
             height, width = 60, 700  # wider than one remap block row, so block origins matter
         if index == 1:
             height, width = 520, 300  # more than 65,536 output pixels: several parallel stripes
+        if index == 2:
+            height, width = 40, 5200  # a crop over 4,096 px wide in stripes under 16 rows: blocks follow dst.rows
         source = image(2000 + index, height, width)
         points = quad(rng, height, width)
         if index % 5 == 0:
             points = np.float32([[3, 4], [width - 5, 4], [width - 5, height - 6], [3, height - 6]])
+        if index == 2:
+            points = np.float32([[5.3, 3.1], [5170.6, 9.4], [5160.2, 31.7], [2.9, 26.2]])
         crop_w = int(max(np.linalg.norm(points[0] - points[1]), np.linalg.norm(points[2] - points[3])))
         crop_h = int(max(np.linalg.norm(points[0] - points[3]), np.linalg.norm(points[1] - points[2])))
         target = np.float32([[0, 0], [crop_w, 0], [crop_w, crop_h], [0, crop_h]])

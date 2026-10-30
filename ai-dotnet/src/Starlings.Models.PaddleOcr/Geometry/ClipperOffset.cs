@@ -1,4 +1,4 @@
-// Adapted from Clipper 6.4.2 (http://www.angusj.com/delphi/clipper.php), clipper.cpp, ClipperOffset.
+// Adapted from Clipper 6.4.2 (clipper.cpp, ClipperOffset) as vendored by pyclipper at f998920369565dca56d346bb30c5741e273f0b9b (tag v1.4.0).
 // Copyright (c) Angus Johnson 2010-2017. Modified: translated to C#, reduced to one closed path with round joins.
 // See ai-dotnet/THIRD-PARTY-NOTICES.md and ai-dotnet/PROVENANCE.md.
 //

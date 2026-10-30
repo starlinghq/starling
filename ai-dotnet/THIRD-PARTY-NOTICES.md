@@ -83,8 +83,8 @@ The full PyTorch notice (including the Caffe2 contributors) is the `LICENSE` fil
 
 `Starlings.Models.PaddleOcr` restates, in C#, the image and geometry operations PaddleOCR's text pipeline calls, so its tensors and boxes equal the Python reference ([`PROVENANCE.md`](PROVENANCE.md) lists each file):
 
-- OpenCV 4.10.0 (`cv::resize` INTER_LINEAR on 8-bit images, `cv::getPerspectiveTransform`, `cv::warpPerspective` INTER_CUBIC with BORDER_REPLICATE, `cv::findContours` RETR_LIST / CHAIN_APPROX_SIMPLE, `cv::convexHull`, `cv::minAreaRect`, `cv::boxPoints`, `cv::contourArea`, `cv::arcLength`, `cv::fillPoly` LINE_8 with `cv::clipLine`), files under `src/Starlings.Models.PaddleOcr/Geometry/`. Copyright (C) 2000-2024 the OpenCV contributors (Intel Corporation, Willow Garage, Itseez, OpenCV Foundation, Xperience AI and others). Licensed under the Apache License, Version 2.0; the C# files are modified works (ports) and say so in their headers.
-- Clipper 6.4.2 (`ClipperOffset` with round joins on a closed polygon, as pyclipper 1.4.0 wraps it), `src/Starlings.Models.PaddleOcr/Geometry/ClipperOffset.cs`. Copyright (c) Angus Johnson 2010-2017. Licensed under the Boost Software License 1.0, whose full text the C# file carries and which follows here:
+- OpenCV 4.10.0 (`cv::resize` INTER_LINEAR on 8-bit images, `cv::getPerspectiveTransform`, `cv::warpPerspective` INTER_CUBIC with BORDER_REPLICATE, `cv::findContours` RETR_LIST / CHAIN_APPROX_SIMPLE, `cv::convexHull`, `cv::minAreaRect`, `cv::boxPoints`, `cv::contourArea`, `cv::arcLength`, `cv::fillPoly` LINE_8 with `cv::clipLine`) at commit `71d3237a093b60a27601c20e9ee6c3e52154e8b1` (tag 4.10.0), files under `src/Starlings.Models.PaddleOcr/Geometry/`. Copyright (C) 2000-2024 the OpenCV contributors (Intel Corporation, Willow Garage, Itseez, OpenCV Foundation, Xperience AI and others). Licensed under the Apache License, Version 2.0; the C# files are modified works (ports) and say so in their headers.
+- Clipper 6.4.2 (`ClipperOffset` with round joins on a closed polygon, as vendored by pyclipper at commit `f998920369565dca56d346bb30c5741e273f0b9b`, tag v1.4.0), `src/Starlings.Models.PaddleOcr/Geometry/ClipperOffset.cs`. Copyright (c) Angus Johnson 2010-2017. Licensed under the Boost Software License 1.0, whose full text the C# file carries and which follows here:
 
 ```
 Boost Software License - Version 1.0 - August 17th, 2003
@@ -112,8 +112,8 @@ ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 DEALINGS IN THE SOFTWARE.
 ```
 
-- PaddleOCR / PaddleX 3.7.2 (`DetResizeForTest`, `NormalizeImage`, `DBPostProcess`, `SortQuadBoxes`, `CropByPolys`, `OCRReisizeNormImg`, `CTCLabelDecode`), restated behaviour in `src/Starlings.Models.PaddleOcr/PaddleOcrProcessing.cs`. Copyright (c) 2024 PaddlePaddle Authors. Licensed under the Apache License, Version 2.0.
-- NumPy (`pairwise_sum` of `np.mean` on float32, for the line confidence), restated behaviour. Copyright (c) 2005-2025, NumPy Developers. Licensed under the BSD 3-Clause license.
+- PaddleOCR / PaddleX 3.7.2 (commit `ffb64904d23708863ff5b8da312a5cbd52a7f462`, tag v3.7.2; `DetResizeForTest`, `NormalizeImage`, `DBPostProcess`, `SortQuadBoxes`, `CropByPolys`, `OCRReisizeNormImg`, `CTCLabelDecode`), restated behaviour in `src/Starlings.Models.PaddleOcr/PaddleOcrProcessing.cs`. Copyright (c) 2024 PaddlePaddle Authors. Licensed under the Apache License, Version 2.0.
+- NumPy 2.3.5 (commit `c3d60fc8393f3ca3306b8ce8b6453d43737e3d90`, tag v2.3.5; `pairwise_sum` of `np.mean` on float32, for the line confidence), restated behaviour. Copyright (c) 2005-2025, NumPy Developers. Licensed under the BSD 3-Clause license.
 
 The PP-OCRv5 graphs and their `inference.yml` files are not redistributed: the package pins them and downloads them from PaddlePaddle's Hugging Face repositories (Apache-2.0).
 

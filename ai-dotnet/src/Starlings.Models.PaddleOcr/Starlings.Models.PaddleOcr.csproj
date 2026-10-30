@@ -16,6 +16,7 @@
   <ItemGroup>
     <ProjectReference Include="../Starlings.Runtime.Onnx/Starlings.Runtime.Onnx.csproj" />
     <ProjectReference Include="../Starlings.Acquisition/Starlings.Acquisition.csproj" />
+    <ProjectReference Include="../Starlings.Models.Abstractions/Starlings.Models.Abstractions.csproj" />
   </ItemGroup>
 
   <ItemGroup>

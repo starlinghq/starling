@@ -79,6 +79,8 @@ tests (`TestData/opencv-geometry-v1.json`).
 - English and Simplified Chinese are covered by the evidence; Traditional Chinese and Japanese are in the dictionary
   but untested.
 - Rotated and perspective-skewed lines (the crop warps them upright); sideways lines through the tall-crop rule.
+- Images up to 32,767 pixels per side and 64 Mpx in total; larger ones are refused with
+  `PaddleOcrImageTooLargeException` (upstream stores box corners as int16, so they would wrap there).
 - Cancellation between lines; a cancelled token runs nothing.
 - The asset locks and explicit acquisition (`PaddleOcrModelAssets`).
 
@@ -91,7 +93,8 @@ safe for concurrent calls.
 
 ## Capabilities
 
-See `PaddleOcrCapabilities`: every capability has an explicit status, and none is `Supported`. The proposed profile
+See `PaddleOcrCapabilities` (statuses are the shared `Starlings.Models.CapabilityStatus`): every capability has an
+explicit status, and none is `Supported`. The proposed profile
 is `PaddleOcrCapabilities.CpuProfile` (`ppocrv5-mobile/onnx-fp32-cpu`).
 
 ## Third-party code

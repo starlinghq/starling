@@ -301,6 +301,30 @@ public sealed class ProcessingTests
         Assert.InRange(bottom, 68, 70);
     }
 
+    [Theory]
+    [InlineData(32768, 1)]
+    [InlineData(1, 32768)]
+    [InlineData(40000, 1000)]
+    [InlineData(1, 70000)]
+    [InlineData(8193, 8193)] // under the side limit, over 64 Mpx
+    public void ImagesBeyondTheInt16CornerRangeOrPixelBudgetAreRefused(int width, int height)
+    {
+        // The buffer is never read: the size is refused first.
+        var error = Assert.Throws<PaddleOcrImageTooLargeException>(() => PaddleOcrImage.FromBgr24(width, height, []));
+        Assert.Equal((width, height), (error.Width, error.Height));
+        Assert.Throws<PaddleOcrImageTooLargeException>(() => PaddleOcrImage.FromRgba32(width, height, []));
+    }
+
+    [Fact]
+    public void TheLongestAcceptedSideKeepsBoxCornersInRange()
+    {
+        // 32,767 x 1 is accepted; its corners fit int16, the type upstream stores them in.
+        var image = PaddleOcrImage.FromBgr24(PaddleOcrContract.MaxSide, 1, new byte[PaddleOcrContract.MaxSide * 3]);
+        Assert.Equal(PaddleOcrContract.MaxSide, image.Width);
+        var input = PaddleOcrProcessing.Detector(image);
+        Assert.Equal(960, input.Width);
+    }
+
     [Fact]
     public void ImageFactoriesConvertToBgr()
     {
@@ -309,6 +333,7 @@ public sealed class ProcessingTests
         Assert.Equal(new byte[] { 3, 2, 1, 7, 6, 5 }, PaddleOcrImage.FromRgba32(1, 2, [1, 2, 3, 0, 9, 9, 9, 9, 5, 6, 7, 255], 8).Bgr);
         Assert.Throws<ArgumentException>(() => PaddleOcrImage.FromRgb24(2, 2, new byte[5]));
         Assert.Throws<ArgumentOutOfRangeException>(() => PaddleOcrImage.FromRgb24(0, 2, []));
+        Assert.IsNotType<PaddleOcrImageTooLargeException>(Record.Exception(() => PaddleOcrImage.FromRgb24(0, 2, [])));
     }
 }
 

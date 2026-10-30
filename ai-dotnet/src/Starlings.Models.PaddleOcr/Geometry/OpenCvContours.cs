@@ -1,4 +1,4 @@
-// Ported from OpenCV 4.10.0 (https://github.com/opencv/opencv, modules/imgproc and modules/core), Copyright (C) 2000-2024
+// Ported from OpenCV at 71d3237a093b60a27601c20e9ee6c3e52154e8b1 (tag 4.10.0; modules/imgproc, modules/core), Copyright (C) 2000-2024
 // the OpenCV contributors, licensed under the Apache License, Version 2.0. Modified: translated to C# and reduced to the
 // cases PP-OCRv5 uses. See ai-dotnet/THIRD-PARTY-NOTICES.md and ai-dotnet/PROVENANCE.md.
 namespace Starlings.Models.PaddleOcr.Geometry;

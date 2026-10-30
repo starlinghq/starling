@@ -38,6 +38,44 @@ public readonly record struct TextQuad(TextPoint TopLeft, TextPoint TopRight, Te
 /// <param name="DetectionScore">The DB box score: mean detector probability inside the box, 0 to 1.</param>
 public sealed record TextLine(TextQuad Box, string Text, float Confidence, float DetectionScore);
 
+/// <summary>
+/// The image is larger than the package accepts: a side above 32,767 pixels (box corners are int16 upstream, so they
+/// would wrap) or more than 64 Mpx in total.
+/// </summary>
+public sealed class PaddleOcrImageTooLargeException : ArgumentOutOfRangeException
+{
+    /// <summary>Creates the exception.</summary>
+    public PaddleOcrImageTooLargeException()
+    {
+    }
+
+    /// <summary>Creates the exception with a message.</summary>
+    public PaddleOcrImageTooLargeException(string message)
+        : base(message)
+    {
+    }
+
+    /// <summary>Creates the exception with a message and inner exception.</summary>
+    public PaddleOcrImageTooLargeException(string message, Exception innerException)
+        : base(message, innerException)
+    {
+    }
+
+    /// <summary>Creates the exception for an image size.</summary>
+    public PaddleOcrImageTooLargeException(int width, int height)
+        : base("image", $"The image is {width} x {height}; each side may be at most {PaddleOcrContract.MaxSide} pixels and the image at most {PaddleOcrContract.MaxPixels} pixels.")
+    {
+        Width = width;
+        Height = height;
+    }
+
+    /// <summary>Requested width.</summary>
+    public int Width { get; }
+
+    /// <summary>Requested height.</summary>
+    public int Height { get; }
+}
+
 /// <summary>A pinned configuration file differs from the contract this package implements.</summary>
 public sealed class PaddleOcrConfigurationException : FormatException
 {

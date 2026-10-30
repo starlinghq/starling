@@ -183,6 +183,7 @@
         "type": "Project",
         "dependencies": {
           "Starlings.Acquisition": "[0.4.0, )",
+          "Starlings.Models.Abstractions": "[0.4.0, )",
           "Starlings.Runtime.Onnx": "[0.4.0, )"
         }
       },

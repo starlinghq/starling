@@ -3,7 +3,8 @@ namespace Starlings.Models.PaddleOcr;
 /// <summary>
 /// A decoded 8-bit image as PP-OCRv5 reads it: tightly packed BGR, three bytes per pixel, row-major (the channel order
 /// of the pinned <c>inference.yml</c>, <c>DecodeImage img_mode: BGR</c>). Build it from RGB, BGR or RGBA pixels; the
-/// package decodes no file format (see the README for decoding with SkiaSharp).
+/// package decodes no file format (see the README for decoding with SkiaSharp). Each side is at most 32,767 pixels
+/// and the image at most 64 Mpx (<see cref="PaddleOcrImageTooLargeException"/>).
 /// </summary>
 public sealed class PaddleOcrImage
 {
@@ -83,9 +84,9 @@ public sealed class PaddleOcrImage
     {
         ArgumentOutOfRangeException.ThrowIfLessThan(width, 1);
         ArgumentOutOfRangeException.ThrowIfLessThan(height, 1);
-        if ((long)width * height > PaddleOcrContract.MaxPixels)
+        if (width > PaddleOcrContract.MaxSide || height > PaddleOcrContract.MaxSide || (long)width * height > PaddleOcrContract.MaxPixels)
         {
-            throw new ArgumentOutOfRangeException(nameof(width), $"Images are limited to {PaddleOcrContract.MaxPixels} pixels.");
+            throw new PaddleOcrImageTooLargeException(width, height);
         }
     }
 }

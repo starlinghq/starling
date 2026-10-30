@@ -2,25 +2,9 @@ using Starlings.Runtime.Onnx;
 
 namespace Starlings.Models.PaddleOcr;
 
-/// <summary>Support status of one capability. A missing entry never means supported.</summary>
-public enum CapabilityStatus
-{
-    /// <summary>Qualified for the advertised maturity.</summary>
-    Supported,
-
-    /// <summary>Not available; requests for it are rejected.</summary>
-    Unsupported,
-
-    /// <summary>Implemented and compared against the proposed reference evidence, not yet qualified.</summary>
-    Experimental,
-
-    /// <summary>May work, but no evidence exists.</summary>
-    Untested,
-}
-
 /// <summary>Capability descriptor for this package version.</summary>
 /// <remarks>
-/// PP-OCRv5 is new and not qualified: the CPU OCR path is Experimental (proposed evidence from the
+/// Statuses use the shared <see cref="Starlings.Models.CapabilityStatus"/>. PP-OCRv5 is new and not qualified: the CPU OCR path is Experimental (proposed evidence from the
 /// <c>ppocr-onnx-cpu-v1</c> onboarding route) and everything not listed here is Unsupported.
 /// </remarks>
 public static class PaddleOcrCapabilities

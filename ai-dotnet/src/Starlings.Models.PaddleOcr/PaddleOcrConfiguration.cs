@@ -49,6 +49,12 @@ internal static class PaddleOcrContract
 
     /// <summary>Largest accepted input image (pixels), a guard against unbounded allocations.</summary>
     public const long MaxPixels = 64L * 1024 * 1024;
+
+    /// <summary>
+    /// Longest accepted image side. Upstream stores box corners as int16 (<c>DBPostProcess</c>: <c>astype(np.int16)</c>),
+    /// so a corner past 32,767 wraps there; this package refuses such images instead of returning wrapped boxes.
+    /// </summary>
+    public const int MaxSide = short.MaxValue;
 }
 
 /// <summary>The recognizer dictionary and the checked constants of the two pinned <c>inference.yml</c> files.</summary>
