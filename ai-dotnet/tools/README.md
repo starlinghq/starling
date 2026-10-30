@@ -13,6 +13,7 @@ Command-line tools for acquisition, fidelity stage results, operational qualific
 | [`Starlings.Generation.Fidelity`](#starlingsgenerationfidelity) | The .NET stage of the `qwen-genai-cpu-v1` onboarding route (QwenChat). | yes |
 | [`Starlings.Kev.Fidelity.Tool`](#starlingskevfidelitytool) | The .NET stage of the `kev-onnx-cpu-v1` onboarding route. | yes |
 | [`Starlings.Whisper.Fidelity.Tool`](#starlingswhisperfidelitytool) | The .NET stage of the `whisper-onnx-cpu-v1` onboarding route. | yes |
+| [`Starlings.PaddleOcr.Fidelity.Tool`](#starlingspaddleocrfidelitytool) | The .NET stage of the `ppocr-onnx-cpu-v1` onboarding route. | yes |
 | [`Starlings.Soak.Tool`](#starlingssoaktool) | Gate G4 soak for every model profile. | yes |
 | [`Starlings.Gliner2.CudaStress`](#starlingsgliner2cudastress) | Local reproducer for the GLiNER2 CUDA wrong output. | no (local) |
 | [`Shared/ToolMain.cs`](#sharedtoolmaincs) | Common entry-point wrapper. | n/a (source) |
@@ -98,6 +99,14 @@ Starlings.Whisper.Fidelity.Tool --profile <candidate.json> --snapshot <dir> --co
 
 The .NET stage of the `whisper-onnx-cpu-v1` onboarding route (`model-pipeline/src/model_pipeline/onboarding_whisper.py`). It checks the candidate contract against the library's constants, then for every reference clip runs `Starlings.Models.Whisper` from the reference log-mel spectrogram (encoder hidden state, greedy ids, decoder logits teacher-forced on the reference ids, transcript) and from the clip's WAV samples (the .NET mel and the public `WhisperTranscriber.Transcribe` path), and writes `dotnet.json` plus a float32 tensor sidecar. Exit 2 on a usage error.
 
+
+## Starlings.PaddleOcr.Fidelity.Tool
+
+```sh
+Starlings.PaddleOcr.Fidelity.Tool --profile <candidate.json> --snapshot <dir with det/ and rec/> --corpus <ocr-corpus.jsonl> --reference <reference.json> --out <dir> [--threads 2]
+```
+
+The .NET stage of the `ppocr-onnx-cpu-v1` onboarding route (`model-pipeline/src/model_pipeline/onboarding_ppocr.py`). It checks the candidate contract against the library's constants and asset locks, then for every corpus image decodes the PNG (through `Starlings.Models.EmbeddingGemma2.Imaging.SkiaSharp`) and records: the detector input and the public `PaddleOcrEngine.Recognize` lines; the probability map and recognizer probabilities of the reference's own inputs and the CTC text of those probabilities; the owned DB post-processing of the reference probability map; and the recognizer input cropped from each reference box. Writes `dotnet.json` plus a float32 tensor sidecar. Exit 2 on a usage error.
 ## Starlings.Kev.Fidelity.Tool
 
 ```sh

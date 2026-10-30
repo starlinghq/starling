@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup><OutputType>Exe</OutputType><GenerateDocumentationFile>false</GenerateDocumentationFile></PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.ML.OnnxRuntime" />
+    <ProjectReference Include="../../src/Starlings.Models.PaddleOcr/Starlings.Models.PaddleOcr.csproj" />
+    <!-- PNG decoding for the corpus images (decoded RGB equal to PIL's, which equals OpenCV's imread for 8-bit PNG). -->
+    <ProjectReference Include="../../src/Starlings.Models.EmbeddingGemma2.Imaging.SkiaSharp/Starlings.Models.EmbeddingGemma2.Imaging.SkiaSharp.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- Entry-point wrapper: an escaping exception gives "error:" and exit code 70, not an abort and core dump. -->
+    <Compile Include="../Shared/ToolMain.cs" Link="Shared/ToolMain.cs" />
+  </ItemGroup>
+
+</Project>
