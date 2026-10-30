@@ -170,6 +170,7 @@ POLICY = {
     "same_backend_max_abs": 1e-5,
     "prob_map_max_abs": 1e-3,
     "rec_probs_max_abs": 2e-4,
+    "rec_score_max_abs": 2e-4,
     "box_iou_min": 0.9,
     "box_score_max_abs": 1e-3,
     "box_flip_margin": 0.01,
@@ -186,10 +187,22 @@ POLICY = {
         "dotnet-image",
     ],
 }
+# Check-id prefix of each required evidence path; every one must produce checks (`required_paths`).
+REQUIRED_PATH_PREFIXES = {
+    "reference": "reference/",
+    "python-onnx": "onnx/",
+    "dotnet-tensors": "dotnet-tensors/",
+    "dotnet-postprocess": "dotnet-postprocess/",
+    "dotnet-crop": "dotnet-crop/",
+    "dotnet-image": "dotnet-image/",
+}
+# The reference engine identity the evaluator requires (the pins of reference/ppocr/requirements.txt).
+REFERENCE_PACKAGES = {"paddle": "3.3.1", "paddleocr": "3.7.0", "paddlex": "3.7.2"}
 # Correctness bounds are fixed: preprocessing and cropping restate OpenCV's fixed-point uint8 kernels (exact), .NET
 # against Python ONNX Runtime runs the same graphs, and line text must be identical. Only the bounds that cover the
-# Paddle-to-ONNX export (graph outputs against the Paddle inference engine) and the owned DB geometry (IoU, box score,
-# the threshold margin within which a box may appear on one side only) may be proposed per model, up to these caps.
+# Paddle-to-ONNX export (graph outputs and line confidences against the Paddle inference engine) and the owned DB
+# geometry (IoU, box score, the threshold margin within which a box may appear on one side only) may be proposed per
+# model, up to these caps. line_text, pipeline_match, non_finite and required_paths are enforced by the evaluator.
 FIXED_POLICY_KEYS = {
     key: POLICY[key]
     for key in (
@@ -206,6 +219,7 @@ FIXED_POLICY_KEYS = {
 FIDELITY_CAPS = {
     "prob_map_max_abs": 1e-2,
     "rec_probs_max_abs": 1e-2,
+    "rec_score_max_abs": 1e-2,
     "box_score_max_abs": 1e-2,
     "box_flip_margin": 0.05,
 }
@@ -569,6 +583,22 @@ def _lines(rows, stage: str, where: str) -> list[dict]:
     return [_line(row, stage, f"{where}[{index}]") for index, row in enumerate(rows)]
 
 
+def _forced(rows, stage: str, identifier: str) -> list[dict]:
+    """Forced recognition rows: one {text, score} per reference line, text a string, score a finite number."""
+    if not isinstance(rows, list):
+        raise PipelineError(f"{stage}/{identifier}: forced recognition rows missing")
+    for index, row in enumerate(rows):
+        if (
+            not isinstance(row, dict)
+            or set(row) != {"text", "score"}
+            or not isinstance(row["text"], str)
+            or type(row["score"]) not in (int, float)
+            or not math.isfinite(row["score"])
+        ):
+            raise PipelineError(f"{stage}/{identifier}/forced[{index}]: needs a text string and a finite score")
+    return rows
+
+
 def _document(path: Path, candidate: dict, digest: str, stage: str) -> tuple[dict, dict[str, dict]]:
     try:
         data = json.loads(path.read_text(encoding="utf-8"))
@@ -599,8 +629,19 @@ def _document(path: Path, candidate: dict, digest: str, stage: str) -> tuple[dic
         if len(assets) != len(expected_assets) or {e["path"]: e["sha256"] for e in assets} != expected_assets:
             raise PipelineError(f"{stage}: asset identities differ from the candidate")
         environment = data["environment"]
-        if environment["provider"] != "CPUExecutionProvider" or (
-            stage != "reference" and environment["onnxruntime"] != candidate["runtime"]["version"]
+        if stage == "reference":
+            # The Paddle inference engine on the CPU with oneDNN off, at the pinned paddle/paddleocr/paddlex versions.
+            if (
+                data.get("engine") != "paddle"
+                or environment["provider"] != "paddle-cpu"
+                or environment["paddle_onednn"] is not False
+                or {key: environment[key] for key in REFERENCE_PACKAGES} != REFERENCE_PACKAGES
+            ):
+                raise PipelineError(f"{stage}: engine identity differs from the Paddle reference contract")
+        elif (
+            (stage == "onnx" and data.get("engine") != "onnxruntime")
+            or environment["provider"] != "CPUExecutionProvider"
+            or environment["onnxruntime"] != candidate["runtime"]["version"]
         ):
             raise PipelineError(f"{stage}: runtime/provider identity differs from the candidate")
         records = data["cases"]
@@ -619,22 +660,22 @@ def _document(path: Path, candidate: dict, digest: str, stage: str) -> tuple[dic
                 if not isinstance(pipeline, dict) or set(pipeline) != {"boxes", "texts", "scores_max_abs"}:
                     raise PipelineError(f"{stage}/{identifier}: the PaddleOCR pipeline cross-check is missing")
             if stage == "onnx":
-                if not isinstance(row["forced"], list):
-                    raise PipelineError(f"{stage}/{identifier}: forced recognition rows missing")
+                row["forced"] = _forced(row["forced"], stage, identifier)
                 pipeline = row["pipeline"]
                 if not isinstance(pipeline, dict) or set(pipeline) != {"boxes", "texts", "scores_max_abs"}:
                     raise PipelineError(f"{stage}/{identifier}: the PaddleOCR pipeline cross-check is missing")
             if stage == "dotnet":
                 row["postprocess_lines"] = _lines(row["postprocess_lines"], stage, f"{identifier}/postprocess")
-                if not isinstance(row["forced"], list):
-                    raise PipelineError(f"{stage}/{identifier}: forced recognition rows missing")
+                row["forced"] = _forced(row["forced"], stage, identifier)
             cases[identifier] = row
     except (KeyError, TypeError, ValueError) as exc:
         raise PipelineError(f"{stage}: incomplete or malformed required evidence: {exc}") from exc
     return data, cases
 
 
-def _tensors(path: Path, document: dict, cases: dict[str, dict], stage: str, line_counts: dict[str, int]) -> dict:
+def _tensors(
+    path: Path, document: dict, cases: dict[str, dict], stage: str, line_counts: dict[str, int], non_finite: str
+) -> dict:
     """The stage's float32 sidecar split into named tensors (shape checked), with no missing or unreferenced value."""
     try:
         specification = document["tensors"]
@@ -651,7 +692,8 @@ def _tensors(path: Path, document: dict, cases: dict[str, dict], stage: str, lin
         values.frombytes(blob)
         if sys.byteorder != "little":
             values.byteswap()
-        if any(not math.isfinite(value) for value in values):
+        # policy non_finite "fail" (the only value the route accepts): any NaN or infinity refuses the evidence.
+        if non_finite == "fail" and any(not math.isfinite(value) for value in values):
             raise PipelineError("tensor sidecar contains non-finite values")
         expected_keys = {(identifier, name, None) for identifier in cases for name in STAGE_TENSORS[stage]}
         expected_keys |= {
@@ -734,6 +776,11 @@ def compare_boxes(actual: list[dict], expected: list[dict], policy: dict, box_th
             violations.append(f"box {j} IoU {value:.4f} < {policy['box_iou_min']}")
     if score > policy["box_score_max_abs"]:
         violations.append(f"box score difference {score:.3g} > {policy['box_score_max_abs']}")
+    # Reading order: with no one-sided box the matched actual indices must be exactly 0..n-1 in reference order;
+    # with flips they must still increase with the reference index.
+    order = [i for i, _, _ in matches]
+    if order != sorted(order):
+        violations.append(f"line order differs from the reference: {order}")
     flips = []
     for side, rows, used in (
         ("dropped", expected, {j for _, j, _ in matches}),
@@ -746,6 +793,8 @@ def compare_boxes(actual: list[dict], expected: list[dict], policy: dict, box_th
             flips.append({"side": side, "index": index, "box_score": row["box_score"], "margin": margin})
             if margin > policy["box_flip_margin"]:
                 violations.append(f"box {index} {side}: score {row['box_score']:.4f} is {margin:.3g} from threshold")
+    if not flips and order != list(range(len(expected))):
+        violations.append(f"line order differs from the reference: {order}")
     return {
         "id": where,
         "status": "failed" if violations else "passed",
@@ -765,7 +814,9 @@ def compare_boxes(actual: list[dict], expected: list[dict], policy: dict, box_th
     }
 
 
-def _text_checks(actual: list[dict], expected: list[dict], matches, where: str) -> list[dict]:
+def _text_checks(actual: list[dict], expected: list[dict], matches, where: str, line_text: str) -> list[dict]:
+    if line_text != "exact":
+        raise PipelineError(f"unsupported line_text comparison {line_text!r}")
     return [_exact(actual[i]["text"], expected[j]["text"], f"{where}/{j}/text_vs_reference") for i, j in matches]
 
 
@@ -811,15 +862,17 @@ def evaluate_development(
             if len(row["forced"]) != line_counts[identifier]:
                 raise PipelineError(f"{stage}/{identifier}: forced recognition must cover every reference line")
     tensors = {
-        "reference": _tensors(reference_path, reference, expected, "reference", line_counts),
-        "onnx": _tensors(onnx_path, onnx, python_cases, "onnx", line_counts),
-        "dotnet": _tensors(dotnet_path, dotnet, dotnet_cases, "dotnet", line_counts),
+        "reference": _tensors(reference_path, reference, expected, "reference", line_counts, policy["non_finite"]),
+        "onnx": _tensors(onnx_path, onnx, python_cases, "onnx", line_counts, policy["non_finite"]),
+        "dotnet": _tensors(dotnet_path, dotnet, dotnet_cases, "dotnet", line_counts, policy["non_finite"]),
     }
     reference_tensors, python_tensors, dotnet_tensors = (tensors[name] for name in ("reference", "onnx", "dotnet"))
     checks = []
     for identifier, row in expected.items():
         python_row, dotnet_row = python_cases[identifier], dotnet_cases[identifier]
         lines = row["lines"]
+        if policy["pipeline_match"] != "exact":
+            raise PipelineError(f"unsupported pipeline_match comparison {policy['pipeline_match']!r}")
         for stage, pipeline in (("reference", row["pipeline"]), ("onnx", python_row["pipeline"])):
             checks.append(
                 _exact(
@@ -848,6 +901,7 @@ def evaluate_development(
                 f"dotnet-tensors/{identifier}/prob_map_vs_python",
             ),
         ]
+        matched = {}
         for stage, actual in (
             ("dotnet-postprocess", dotnet_row["postprocess_lines"]),
             ("onnx", python_row["lines"]),
@@ -855,8 +909,44 @@ def evaluate_development(
         ):
             comparison = compare_boxes(actual, lines, policy, box_thresh, f"{stage}/{identifier}/boxes_vs_reference")
             checks.append(comparison)
+            matched[stage] = {j: actual[i] for i, j in comparison["matches"]}
             if stage != "dotnet-postprocess":
-                checks += _text_checks(actual, lines, comparison["matches"], f"{stage}/{identifier}")
+                checks += _text_checks(
+                    actual, lines, comparison["matches"], f"{stage}/{identifier}", policy["line_text"]
+                )
+        # End-to-end line confidences: Python ONNX Runtime against Paddle; .NET against Python where both matched.
+        for j, python_line in matched["onnx"].items():
+            checks.append(
+                _rate(
+                    abs(python_line["score"] - lines[j]["score"]),
+                    policy["rec_score_max_abs"],
+                    f"onnx/{identifier}/{j}/score_vs_reference",
+                )
+            )
+            if j in matched["dotnet-image"]:
+                checks.append(
+                    _rate(
+                        abs(matched["dotnet-image"][j]["score"] - python_line["score"]),
+                        policy["same_backend_max_abs"],
+                        f"dotnet-image/{identifier}/{j}/score_vs_python",
+                    )
+                )
+        # Per image: an image with drawn text must yield reference lines within the CER bound; a text-free one none.
+        truth = images[identifier]["lines"]
+        if truth:
+            text = "\n".join(line["text"] for line in lines)
+            reference_errors = edit_distance(text, "\n".join(truth))
+            checks.append(
+                _rate(
+                    reference_errors / len("\n".join(truth)),
+                    policy["ground_truth_cer_max"],
+                    f"reference/{identifier}/cer_vs_ground_truth",
+                    lines=len(lines),
+                    errors=reference_errors,
+                )
+            )
+        else:
+            checks.append(_exact(len(lines), 0, f"reference/{identifier}/no_lines_without_text"))
         for index, line in enumerate(lines):
             python_forced, dotnet_forced = python_row["forced"][index], dotnet_row["forced"][index]
             checks += [
@@ -887,6 +977,11 @@ def evaluate_development(
                     policy["same_backend_max_abs"],
                     f"dotnet-tensors/{identifier}/{index}/confidence_vs_python",
                 ),
+                _rate(
+                    abs(python_forced["score"] - line["score"]),
+                    policy["rec_score_max_abs"],
+                    f"onnx/{identifier}/{index}/forced_score_vs_reference",
+                ),
             ]
     errors = sum(
         edit_distance("\n".join(line["text"] for line in row["lines"]), "\n".join(images[identifier]["lines"]))
@@ -902,6 +997,10 @@ def evaluate_development(
             characters=total,
         )
     )
+    for path in policy["required_paths"]:
+        prefix = REQUIRED_PATH_PREFIXES.get(path)
+        if prefix is None or not any(check["id"].startswith(prefix) for check in checks):
+            raise PipelineError(f"required evidence path {path!r} produced no checks")
     if dotnet.get("checks", {}).get("pre_cancelled_request") is not True:
         raise PipelineError(".NET cancellation evidence is missing or failed")
     failed = [check["id"] for check in checks if check["status"] != "passed"]

@@ -402,6 +402,11 @@ def write_stage(directory: Path, stage: str, candidate: dict, digest: str, refer
         "environment": {"machine": "test-host", "provider": "CPUExecutionProvider", "onnxruntime": "1.30.0"},
         "cases": cases,
     }
+    if stage == "reference":
+        document["engine"] = "paddle"
+        document["environment"].update(provider="paddle-cpu", paddle_onednn=False, **ppocr.REFERENCE_PACKAGES)
+    elif stage == "onnx":
+        document["engine"] = "onnxruntime"
     if reference_sha:
         document["reference_sha256"] = reference_sha
     if stage == "dotnet":
@@ -499,6 +504,14 @@ def _set(path: tuple, value):
     return edit
 
 
+def _swap_lines(key: str):
+    def edit(document, blob):
+        lines = document["cases"][0][key]
+        lines[0], lines[1] = lines[1], lines[0]
+
+    return edit
+
+
 @pytest.mark.parametrize(
     ("stage", "edit", "failed"),
     [
@@ -521,6 +534,12 @@ def _set(path: tuple, value):
         ("reference", _set(("cases", 0, "pipeline", "texts"), False), "reference/text/stepwise_vs_paddleocr_pipeline"),
         ("onnx", _set(("cases", 1, "pipeline", "scores_max_abs"), 1e-9), "onnx/empty/stepwise_vs_paddleocr_pipeline"),
         ("reference", _set(("cases", 0, "lines", 1, "text"), "文本"), "reference/corpus/cer_vs_ground_truth"),
+        ("reference", _set(("cases", 0, "lines", 1, "text"), "文本"), "reference/text/cer_vs_ground_truth"),
+        ("dotnet", _swap_lines("lines"), "dotnet-image/text/boxes_vs_reference"),
+        ("onnx", _swap_lines("lines"), "onnx/text/boxes_vs_reference"),
+        ("onnx", _set(("cases", 0, "lines", 1, "score"), 0.951), "onnx/text/1/score_vs_reference"),
+        ("dotnet", _set(("cases", 0, "lines", 0, "score"), 0.9801), "dotnet-image/text/0/score_vs_python"),
+        ("onnx", _set(("cases", 0, "forced", 1, "score"), 0.951), "onnx/text/1/forced_score_vs_reference"),
     ],
 )
 def test_differences_produce_named_failed_checks(tmp_path, stage, edit, failed):
@@ -540,6 +559,15 @@ def test_differences_produce_named_failed_checks(tmp_path, stage, edit, failed):
         ("reference", _set(("assets", 0, "sha256"), "f" * 64), "asset identities"),
         ("dotnet", _set(("cases", 0, "image_sha256"), "0" * 64), "image differs"),
         ("dotnet", _set(("cases", 0, "forced"), []), "every reference line"),
+        ("dotnet", _set(("cases", 0, "forced", 0), {"text": "Hello"}), "forced"),
+        ("onnx", _set(("cases", 0, "forced", 0, "score"), "high"), "forced"),
+        ("onnx", _set(("cases", 0, "forced", 1, "score"), float("inf")), "forced"),
+        ("reference", _set(("engine",), "onnxruntime"), "engine identity"),
+        ("reference", _set(("environment", "paddle_onednn"), True), "engine identity"),
+        ("reference", _set(("environment", "paddlex"), "3.7.1"), "engine identity"),
+        ("reference", _set(("environment", "provider"), "CPUExecutionProvider"), "engine identity"),
+        ("onnx", _set(("engine",), "paddle"), "runtime/provider"),
+        ("dotnet", _set(("environment", "provider"), "CUDAExecutionProvider"), "runtime/provider"),
         ("reference", _set(("cases", 0, "lines", 0, "box"), [[0, 0], [1, 1]]), "invalid line"),
         ("reference", _set(("cases", 0, "lines", 0, "score"), float("nan")), "invalid line"),
         ("reference", lambda document, blob: document["cases"][0].pop("pipeline"), "pipeline"),
@@ -551,6 +579,33 @@ def test_differences_produce_named_failed_checks(tmp_path, stage, edit, failed):
 def test_incomplete_or_wrong_evidence_is_refused(tmp_path, stage, edit, message):
     with pytest.raises(PipelineError, match=message):
         ppocr.evaluate_development(**evidence(tmp_path, {stage: edit}))
+
+
+def test_each_image_is_checked_against_its_own_ground_truth(tmp_path):
+    # An image with drawn text must give reference lines; a text-free image must give none.
+    corpus = synthetic_corpus()
+    corpus[1]["lines"] = ["Hello"]
+    (tmp_path / "b").mkdir()
+    report = ppocr.evaluate_development(**evidence(tmp_path / "b", corpus=corpus))
+    assert "reference/empty/cer_vs_ground_truth" in report["failed_checks"]
+    corpus = synthetic_corpus()
+    corpus[0]["lines"] = []
+    (tmp_path / "c").mkdir()
+    report = ppocr.evaluate_development(**evidence(tmp_path / "c", corpus=corpus))
+    assert "reference/text/no_lines_without_text" in report["failed_checks"]
+
+
+def test_every_required_path_must_produce_checks(tmp_path, monkeypatch):
+    monkeypatch.setitem(ppocr.REQUIRED_PATH_PREFIXES, "dotnet-crop", "missing/")
+    with pytest.raises(PipelineError, match="dotnet-crop"):
+        ppocr.evaluate_development(**evidence(tmp_path))
+
+
+def test_reference_packages_match_the_lock():
+    lock = (REPO / "model-pipeline/reference/ppocr/requirements.txt").read_text(encoding="utf-8")
+    names = {"paddle": "paddlepaddle", "paddleocr": "paddleocr", "paddlex": "paddlex"}
+    for key, version in ppocr.REFERENCE_PACKAGES.items():
+        assert f"\n{names[key]}=={version} " in lock
 
 
 def test_reference_must_cover_exactly_the_corpus(tmp_path):

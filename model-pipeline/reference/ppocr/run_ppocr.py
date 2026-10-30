@@ -54,6 +54,21 @@ class Tensors:
         return {"file": self.path.name, "sha256": fixtures.sha256_file(self.path), "cases": self.layout}
 
 
+def engine_identity(detector_runner, recognizer_runner, engine: str) -> tuple[str, bool | None]:
+    """The execution provider both sessions actually use, read from the runners (not assumed), and oneDNN for Paddle."""
+    identities = set()
+    for runner in (detector_runner, recognizer_runner):
+        if engine == "onnxruntime":
+            providers = runner.session.get_providers()
+            identities.add((providers[0] if len(providers) == 1 else ",".join(providers), None))
+        else:
+            config = runner._config
+            identities.add((f"paddle-{config['device_type']}", str(config["run_mode"]).startswith("mkldnn")))
+    if len(identities) != 1:
+        raise ValueError(f"detector and recognizer run on different engines: {sorted(identities)}")
+    return identities.pop()
+
+
 def sort_order(boxes: np.ndarray, tolerance: int) -> list[int]:
     """Indices of paddlex SortQuadBoxes: by (top-left y, x), then a bubble pass swapping same-row boxes by x."""
     order = sorted(range(len(boxes)), key=lambda i: (boxes[i][0][1], boxes[i][0][0]))
@@ -125,6 +140,7 @@ def main() -> int:
     ).paddlex_predictor
     recognizer = TextRecognition(model_name=behavior["recognizer_model"], model_dir=rec_dir, device="cpu", **options)
     recognizer = recognizer.paddlex_predictor
+    provider, onednn = engine_identity(detector.runner, recognizer.runner, engine)
     pipeline = PaddleOCR(
         text_detection_model_name=behavior["detector_model"],
         text_detection_model_dir=det_dir,
@@ -173,7 +189,14 @@ def main() -> int:
         reference = json.loads(args.reference.read_text(encoding="utf-8"))
         if reference["candidate_sha256"] != profile_hash or reference["profile"] != candidate["id"]:
             raise ValueError("reference identity differs from the selected candidate")
-        blob = np.fromfile(args.reference.parent / reference["tensors"]["file"], dtype="<f4")
+        # The reference stage's own sidecar, under the evaluator's rules: one path component, pinned by SHA-256.
+        sidecar = Path(reference["tensors"]["file"])
+        if sidecar.is_absolute() or len(sidecar.parts) != 1 or sidecar.name in {".", ".."}:
+            raise ValueError("unsafe reference tensor sidecar path")
+        sidecar = args.reference.parent / sidecar
+        if sidecar.is_symlink() or fixtures.sha256_file(sidecar) != reference["tensors"]["sha256"]:
+            raise ValueError("reference tensor sidecar differs from its recorded SHA-256")
+        blob = np.fromfile(sidecar, dtype="<f4")
         reference_cases = {row["id"]: row for row in reference["cases"]}
     tensors = Tensors(args.out / f"{args.stage}-tensors.f32")
     cases = []
@@ -288,10 +311,10 @@ def main() -> int:
             "paddlex": paddlex.__version__,
             "opencv": cv2.__version__,
             "machine": platform.node(),
-            "provider": "CPUExecutionProvider",
+            "provider": provider,
             "threads": args.threads,
             "onnxruntime": onnxruntime.__version__,
-            "paddle_onednn": False if args.stage == "reference" else None,
+            "paddle_onednn": onednn,
         },
         "cases": cases,
         "tensors": tensors.close(),

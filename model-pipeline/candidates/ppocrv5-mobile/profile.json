@@ -87,6 +87,7 @@
       "preprocess_max_abs": 0.0,
       "prob_map_max_abs": 0.001,
       "rec_probs_max_abs": 0.0002,
+      "rec_score_max_abs": 0.0002,
       "required_paths": [
         "reference",
         "python-onnx",

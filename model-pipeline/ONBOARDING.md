@@ -217,8 +217,10 @@ accepts only the pinned official ONNX exports `PaddlePaddle/PP-OCRv5_mobile_det_
   probabilities, .NET against Python ONNX Runtime on the same inputs (`same_backend_max_abs`), Python ONNX Runtime
   against Paddle (bounded). Geometry: boxes matched one-to-one by IoU, from the .NET DB post-processing on the reference
   probability map, and end to end from the image; a box may appear on one side only when its box score lies within
-  `box_flip_margin` of the box threshold. Text: CTC text exact on every matched box, and a corpus-level character error
-  rate against the drawn text as a sanity bound.
+  `box_flip_margin` of the box threshold, and the matched lines must keep the reference's reading order. Text: CTC text
+  exact on every matched box; line confidences bounded (Python ONNX Runtime against Paddle, .NET against Python); and,
+  per image and over the corpus, a character error rate against the drawn text as a sanity bound (a text-free image
+  must give no line). The reference stage must name the Paddle engine, CPU, oneDNN off and the pinned versions.
 - `--distribution` is refused, and the workflow command takes no extra snapshots, so PP-OCRv5 runs only through `run`.
 
 References and the comparison policy are proposals; no protected tolerances or fixtures exist for this profile, and
