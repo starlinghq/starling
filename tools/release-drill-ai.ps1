@@ -264,7 +264,10 @@ try {
             if ($nuspec -notmatch '<license type="file">LICENSE.txt</license>') { Fail "${id}: nuspec license file" }
             if ($nuspec -notmatch '<requireLicenseAcceptance>true</requireLicenseAcceptance>') { Fail "${id}: license acceptance not required" }
             if ($nuspec -notmatch '<description>MODEL LICENSE: LFM Open License v1.0') { Fail "${id}: description does not open with the model license" }
-            if ((Read-Entry $nupkg 'LICENSE.txt') -notmatch 'USD 10,000,000') { Fail "${id}: packed LICENSE.txt lacks the revenue condition" }
+            $licenseText = Read-Entry $nupkg 'LICENSE.txt'
+            if ($licenseText -notmatch 'USD 10,000,000') { Fail "${id}: packed LICENSE.txt lacks the revenue condition" }
+            if ($licenseText -notmatch '(?m)^END OF TERMS AND CONDITIONS') { Fail "${id}: packed LICENSE.txt lacks the full license text" }
+            if ($contents -notcontains 'THIRD-PARTY-NOTICES.md') { Fail "${id}: package lacks THIRD-PARTY-NOTICES.md" }
         } elseif ($nuspec -notmatch '<license type="expression">MIT OR Apache-2.0</license>') { Fail "${id}: nuspec license" }
         if ($nuspec -notmatch '<readme>README.md</readme>') { Fail "${id}: nuspec readme" }
         if ($nuspec -notmatch "url=`"https://github.com/starlinghq/starling`".*commit=`"$sha`"") { Fail "${id}: nuspec repository commit" }
