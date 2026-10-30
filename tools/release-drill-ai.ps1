@@ -196,7 +196,8 @@ try {
         'Starlings.Models.EmbeddingGemma2.Imaging.SkiaSharp', 'Starlings.Models.EmbeddingGemma2.Video.FFmpeg',
         'Starlings.Generation.Abstractions', 'Starlings.Generation.OnnxGenAI', 'Starlings.Models.Qwen35',
         'Starlings.Models.Qwen35.OnnxGenAI', 'Starlings.Models.Qwen35.Extensions.AI', 'Starlings.Models.Kev',
-        'Starlings.Models.Kev.Onnx', 'Starlings.Models.QwenChat', 'Starlings.Models.QwenChat.OnnxGenAI', 'Starlings.Models.Bert')
+        'Starlings.Models.Kev.Onnx', 'Starlings.Models.QwenChat', 'Starlings.Models.QwenChat.OnnxGenAI', 'Starlings.Models.Bert',
+        'Starlings.Models.Lfm3')
     $env:CI = 'true'
     Push-Location $src
     foreach ($id in $projects) {
@@ -233,6 +234,7 @@ try {
         'Starlings.Models.QwenChat'                          = @("Starlings.Generation.Abstractions [$aiVersion]", "Starlings.Tokenizers [$tokVersion]")
         'Starlings.Models.QwenChat.OnnxGenAI'                = @("Starlings.Acquisition [$aiVersion]", "Starlings.Generation.OnnxGenAI [$aiVersion]", "Starlings.Models.QwenChat [$aiVersion]", "Starlings.Tokenizers [$tokVersion]")
         'Starlings.Models.Bert'                              = @("Starlings.Acquisition [$aiVersion]", "Starlings.Models.Abstractions [$aiVersion]", "Starlings.Runtime.Onnx [$aiVersion]", "Starlings.Tokenizers [$tokVersion]")
+        'Starlings.Models.Lfm3'                              = @("Starlings.Acquisition [$aiVersion]", "Starlings.Generation.Abstractions [$aiVersion]", "Starlings.Runtime.Onnx [$aiVersion]", "Starlings.Tokenizers [$tokVersion]")
     }
     Add-Type -AssemblyName System.IO.Compression.FileSystem
     function Read-Entry([string]$Zip, [string]$Name) {
@@ -257,7 +259,16 @@ try {
         $nuspec = Read-Entry $nupkg "$id.nuspec"
         $contents = Get-Entries $nupkg
         if ($nuspec -notmatch "<version>$([regex]::Escape($aiVersion))</version>") { Fail "${id}: nuspec version" }
-        if ($nuspec -notmatch '<license type="expression">MIT OR Apache-2.0</license>') { Fail "${id}: nuspec license" }
+        if ($id -eq 'Starlings.Models.Lfm3') {
+            # The LFM Open License v1.0 is this package's license file, with acceptance required (admissions/lfm3.md).
+            if ($nuspec -notmatch '<license type="file">LICENSE.txt</license>') { Fail "${id}: nuspec license file" }
+            if ($nuspec -notmatch '<requireLicenseAcceptance>true</requireLicenseAcceptance>') { Fail "${id}: license acceptance not required" }
+            if ($nuspec -notmatch '<description>MODEL LICENSE: LFM Open License v1.0') { Fail "${id}: description does not open with the model license" }
+            $licenseText = Read-Entry $nupkg 'LICENSE.txt'
+            if ($licenseText -notmatch 'USD 10,000,000') { Fail "${id}: packed LICENSE.txt lacks the revenue condition" }
+            if ($licenseText -notmatch '(?m)^END OF TERMS AND CONDITIONS') { Fail "${id}: packed LICENSE.txt lacks the full license text" }
+            if ($contents -notcontains 'THIRD-PARTY-NOTICES.md') { Fail "${id}: package lacks THIRD-PARTY-NOTICES.md" }
+        } elseif ($nuspec -notmatch '<license type="expression">MIT OR Apache-2.0</license>') { Fail "${id}: nuspec license" }
         if ($nuspec -notmatch '<readme>README.md</readme>') { Fail "${id}: nuspec readme" }
         if ($nuspec -notmatch "url=`"https://github.com/starlinghq/starling`".*commit=`"$sha`"") { Fail "${id}: nuspec repository commit" }
         # Maturity is per profile: the description points to the README's generated maturity block. No blanket Preview label.
@@ -277,7 +288,8 @@ try {
         if ($contents | Where-Object { $_ -match '(?i)\.(onnx|safetensors|bin|gguf)$|tokenizer\.json$' }) { Fail "${id}: package contains model assets" }
         $pdb = Read-Entry $snupkg "lib/net10.0/$id.pdb"
         if (-not $pdb -or -not $pdb.Contains("raw.githubusercontent.com/starlinghq/starling/$sha/*")) { Fail "${id}: symbols lack SourceLink to $sha" }
-        Write-Host "ok:   $id ${aiVersion}: MIT OR Apache-2.0, per-profile maturity, repository commit, SourceLink; dependencies: $(if ($expected) { $expected -join ', ' } else { 'none' })"
+        $licenseLabel = if ($id -eq 'Starlings.Models.Lfm3') { 'LFM Open License v1.0 (license file, acceptance required)' } else { 'MIT OR Apache-2.0' }
+        Write-Host "ok:   $id ${aiVersion}: $licenseLabel, per-profile maturity, repository commit, SourceLink; dependencies: $(if ($expected) { $expected -join ', ' } else { 'none' })"
         Write-Host "      sha256 $((Get-FileHash $nupkg -Algorithm SHA256).Hash.ToLowerInvariant())"
     }
 

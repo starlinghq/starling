@@ -56,6 +56,9 @@ public static class Lfm3Capabilities
         ["batch"] = CapabilityStatus.Unsupported,
         ["quantized"] = CapabilityStatus.Unsupported,
         ["extensions_ai"] = CapabilityStatus.Unsupported,
+        ["mlnet"] = CapabilityStatus.Unsupported,
+        ["persistence"] = CapabilityStatus.Unsupported,
+        ["training"] = CapabilityStatus.Unsupported,
         ["aot"] = CapabilityStatus.Untested,
     };
 }

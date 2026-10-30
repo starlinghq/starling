@@ -29,9 +29,11 @@ concurrency:
 env:
   DOTNET_NOLOGO: true
   DOTNET_CLI_TELEMETRY_OPTOUT: true
-  # Package ids (space-separated) that are built and drilled but never published. Empty: the FFmpeg video adapters'
-  # legal review (decision D2) was cleared on 2026-10-15 (docs/kickoff.md, EmbeddingGemma 2 admission), so nothing is held.
-  HELD: ""
+  # Package ids (space-separated) that are built and drilled but never published. The FFmpeg video adapters' legal
+  # review (decision D2) was cleared on 2026-10-15 (docs/kickoff.md, EmbeddingGemma 2 admission), so they are not held.
+  # Starlings.Models.Lfm3 needs Starlings.Tokenizers 0.3.3 (lfm3-bpe-chat); 0.3.2, the current pin, rejects its
+  # tokenizer. Remove it here in the change that raises the pin.
+  HELD: "Starlings.Models.Lfm3"
 
 jobs:
   candidate:
@@ -144,7 +146,7 @@ jobs:
             Starlings.Acquisition Starlings.Runtime.Onnx Starlings.Models.Abstractions Starlings.Generation.Abstractions
             Starlings.Generation.OnnxGenAI Starlings.Runtime.OnnxWeb Starlings.Models.E5 Starlings.Models.E5.Extensions.AI
             Starlings.Models.Gliner2 Starlings.Models.EmbeddingGemma2 Starlings.Models.Qwen35 Starlings.Models.Qwen35.OnnxGenAI
-            Starlings.Models.Kev Starlings.Models.QwenChat Starlings.Models.Bert
+            Starlings.Models.Kev Starlings.Models.QwenChat Starlings.Models.Bert Starlings.Models.Lfm3
           )
           pushed=()
           push() {

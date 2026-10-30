@@ -10,8 +10,9 @@
 #      Models.Qwen35, Models.Qwen35.OnnxGenAI, Models.EmbeddingGemma2, Models.EmbeddingGemma2.Extensions.AI,
 #      Models.EmbeddingGemma2.MLNet, Models.EmbeddingGemma2.Imaging.SkiaSharp, Models.EmbeddingGemma2.Video.FFmpeg,
 #      Models.EmbeddingGemma2.Video.FFmpeg9, Models.Qwen35.Extensions.AI, Models.Kev, Models.Kev.Onnx, Models.QwenChat,
-#      Models.QwenChat.OnnxGenAI, Models.Bert), locked restore, empty private NuGet cache,
-#   2. inspects every nuspec (version, MIT OR Apache-2.0, readme, repository commit, exact dependency list: no native ONNX Runtime or
+#      Models.QwenChat.OnnxGenAI, Models.Bert, Models.Lfm3), locked restore, empty private NuGet cache,
+#   2. inspects every nuspec (version, MIT OR Apache-2.0 or, for Models.Lfm3, the packed LFM Open License file with
+#      license acceptance required, readme, repository commit, exact dependency list: no native ONNX Runtime or
 #      ONNX Runtime GenAI, no Microsoft.ML.Tokenizers, no FFmpeg bindings package), the packed files (no
 #      model assets, no FFmpeg library) and the symbol packages
 #      (SourceLink to the commit),
@@ -349,6 +350,7 @@ projects=(
     ai-dotnet/src/Starlings.Models.QwenChat
     ai-dotnet/src/Starlings.Models.QwenChat.OnnxGenAI
     ai-dotnet/src/Starlings.Models.Bert
+    ai-dotnet/src/Starlings.Models.Lfm3
 )
 pack_sha="$sha"
 if [[ -z "$packages_from" ]]; then
@@ -464,6 +466,11 @@ expect_deps() {
             echo "Starlings.Models.Abstractions [$ai_version]"
             echo "Starlings.Runtime.Onnx [$ai_version]"
             echo "Starlings.Tokenizers [$tok_version]" ;;
+        Starlings.Models.Lfm3)
+            echo "Starlings.Acquisition [$ai_version]"
+            echo "Starlings.Generation.Abstractions [$ai_version]"
+            echo "Starlings.Runtime.Onnx [$ai_version]"
+            echo "Starlings.Tokenizers [$tok_version]" ;;
     esac
 }
 for proj in "${projects[@]}"; do
@@ -476,7 +483,18 @@ for proj in "${projects[@]}"; do
     nuspec="$(unzip -p "$nupkg" "$id.nuspec")"
     contents="$(unzip -Z1 "$nupkg")"
     grep -q "<version>$version</version>" <<<"$nuspec" || fail "$id: nuspec version"
-    grep -q '<license type="expression">MIT OR Apache-2.0</license>' <<<"$nuspec" || fail "$id: nuspec license"
+    if [[ "$id" == Starlings.Models.Lfm3 ]]; then
+        # The model's license governs this package: the LFM Open License v1.0 is its license file, acceptance is
+        # required, and the revenue condition opens the file and the description (model-pipeline/admissions/lfm3.md).
+        grep -q '<license type="file">LICENSE.txt</license>' <<<"$nuspec" || fail "$id: nuspec license file"
+        grep -q '<requireLicenseAcceptance>true</requireLicenseAcceptance>' <<<"$nuspec" || fail "$id: license acceptance not required"
+        grep -q '<description>MODEL LICENSE: LFM Open License v1.0' <<<"$nuspec" || fail "$id: description does not open with the model license"
+        unzip -p "$nupkg" LICENSE.txt | grep -q 'USD 10,000,000' || fail "$id: packed LICENSE.txt lacks the revenue condition"
+        unzip -p "$nupkg" LICENSE.txt | grep -q '^END OF TERMS AND CONDITIONS' || fail "$id: packed LICENSE.txt lacks the full license text"
+        unzip -Z1 "$nupkg" | grep -qx 'THIRD-PARTY-NOTICES.md' || fail "$id: package lacks THIRD-PARTY-NOTICES.md"
+    else
+        grep -q '<license type="expression">MIT OR Apache-2.0</license>' <<<"$nuspec" || fail "$id: nuspec license"
+    fi
     grep -q '<readme>README.md</readme>' <<<"$nuspec" || fail "$id: nuspec readme"
     grep -q "url=\"https://github.com/starlinghq/starling\".*commit=\"$pack_sha\"" <<<"$nuspec" || fail "$id: nuspec repository commit"
     if [[ "$id" != Starlings.Tokenizers ]]; then
@@ -515,7 +533,9 @@ $expected"
     label="per-profile maturity in README and description"
     # The tokenizer is released on its own (P-025), with its own README and version.
     [[ "$id" == Starlings.Tokenizers ]] && label="README, own version"
-    echo "ok:   $id $version: MIT OR Apache-2.0, $label, repository commit, SourceLink to the commit; dependencies: ${expected:-none}" | tr '\n' ' '
+    license_label="MIT OR Apache-2.0"
+    [[ "$id" == Starlings.Models.Lfm3 ]] && license_label="LFM Open License v1.0 (license file, acceptance required)"
+    echo "ok:   $id $version: $license_label, $label, repository commit, SourceLink to the commit; dependencies: ${expected:-none}" | tr '\n' ' '
     echo
     echo "      sha256 $(sha256sum "$nupkg" | cut -d' ' -f1)"
 done

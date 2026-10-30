@@ -1,0 +1,212 @@
+# LFM3 text generation (Starlings.Models.Lfm3, #217): LiquidAI/LFM3-1.7B through Liquid's own fp32 ONNX export
+# (LiquidAI/LFM3-1.7B-ONNX) on ONNX Runtime 1.30.0, CPU provider, with an owned greedy decode loop over the step graph.
+# Admission: model-pipeline/admissions/lfm3.md (Experimental, 2026-10-30). Candidate contract:
+# model-pipeline/candidates/lfm3-1.7b/profile.json. Development evidence: docs/evidence/lfm3-onboarding-2026-10-28/
+# (template, prompt ids, greedy ids and step-0 logits equal to Python ONNX Runtime on 19 cases). No PyTorch reference
+# run, nothing adopted into protected/, no gate.
+schema_version: 1
+id: lfm3-1.7b/onnx-fp32-cpu
+# Experimental: same-graph development parity only; no gate ran.
+maturity: experimental
+
+origin:
+  code:
+    # The checkpoint, its modeling code (modeling_lfm3.py, run by the reference with trust_remote_code) and the
+    # chat template the C# renderer ports (candidates/lfm3-1.7b/profile.json, origin.base).
+    url: https://huggingface.co/LiquidAI/LFM3-1.7B
+    revision: "40ebe0aa6662c9d40389c2f5d565b6a2c6aebacd"
+  weights:
+    # The fp32 ONNX export the package runs, downloaded from this repository at the pinned commit (Lfm3ModelAssets.Fp32Lock).
+    url: https://huggingface.co/LiquidAI/LFM3-1.7B-ONNX
+    revision: "c680759afee1ce8310c90d6c621f4558200dee77"
+  files:
+    # LiquidAI/LFM3-1.7B-ONNX at the pinned commit (candidates/lfm3-1.7b/profile.json, origin.files).
+    - path: chat_template.jinja
+      sha256: "f45005c50cd2a97329722bf3a2dee9f16c04cdf825a589b280fb7e99e6827818"
+      size: 12129
+    - path: config.json
+      sha256: "09b5a4ee2057e03f7773f19181415d7e701030e14e66c594afd1c8d0a476d176"
+      size: 1657
+    - path: onnx/model.onnx
+      sha256: "add6653fc8b3cf2c7ee9fa0205a4a9a833fcb85d3449a5fea06f8aa494b5ef77"
+      size: 274961
+    - path: onnx/model.onnx_data
+      sha256: "bf44fe98d130ad2bca747e9b62f28b18a3277d45bf1367da15a478538c849057"
+      size: 2122694656
+    - path: onnx/model.onnx_data_1
+      sha256: "bb631a02237e4f8a491e12b25c333849046332b6db60fe0a2120f278c982fa76"
+      size: 2140200960
+    - path: onnx/model.onnx_data_2
+      sha256: "ad39ed4b378c9c1b34c1a3cdb879880c7e110061070ff29fca118e8dd0b48010"
+      size: 2135916544
+    - path: onnx/model.onnx_data_3
+      sha256: "1538827aa1c279442457028c4e3d784b7ea82bcf03abd4b55e45fa4facf9fe62"
+      size: 784818176
+    - path: tokenizer.json
+      sha256: "41927bd314d17d7d7fadb44e10cd0919f7b71528d7741596d8cbd15c6945ec44"
+      size: 17908634
+  attribution: >-
+    LFM3-1.7B and its ONNX export by Liquid AI, Inc. (LiquidAI/LFM3-1.7B, LiquidAI/LFM3-1.7B-ONNX), LFM Open License v1.0.
+
+rights:
+  code_license: "MIT OR Apache-2.0"
+  weights_license: "custom: https://huggingface.co/LiquidAI/LFM3-1.7B/blob/40ebe0aa6662c9d40389c2f5d565b6a2c6aebacd/LICENSE"
+  tokenizer_terms: "custom: https://huggingface.co/LiquidAI/LFM3-1.7B/blob/40ebe0aa6662c9d40389c2f5d565b6a2c6aebacd/LICENSE"
+  redistribution: download
+  notes: >-
+    Weights, tokenizer and chat template: LFM Open License v1.0 (Liquid AI). Commercial use is licensed only to a legal
+    entity below 10 million USD annual revenue (section 5); qualified non-profits are exempt for non-commercial or
+    research use. Starling does not redistribute the weights or the tokenizer: Lfm3ModelAssets downloads them from the
+    export repository on request. The package's Lfm3ChatTemplate.cs ports the chat template and is a derivative work
+    under the same license; the package's license file (LICENSE.txt, acceptance required on install) is the LFM Open
+    License v1.0 with that split stated, and the condition opens the package description and README (decision
+    2026-10-30, admissions/lfm3.md). code_license names the rest of the package's code.
+
+behavior:
+  tasks: [generation]
+  # Lfm3Options.ContextLength (default 32,768; at most the checkpoint's 262,144 positions). Prompt plus max_new_tokens
+  # above it raise GenerationContextLengthException before the graph runs. The evidence covers prompts up to 368 tokens.
+  max_input_tokens: 32768
+  offsets_unit: none
+  truncation: error
+  defaults:
+    decoding: greedy (first maximum of the logits; logits_to_keep 1)
+    max_new_tokens: 512                # GenerationOptions default
+    stop_token_ids: [124900]           # <|im_end|>; never part of the completion or the usage count
+    enable_thinking: true              # the template's default; Lfm3ChatModel.Chat takes enableThinking
+    template: "lfm3-text-v1: text system, user and assistant turns, enable_thinking and preserve_thinking"
+    request_state: one Lfm3Sequence (convolution and attention caches) per request; requests share the weights only.
+  unsupported:
+    - sampling, including the card's temperature 0.1, top_k 50, repetition_penalty 1.1
+    - logprobs and guided decoding
+    - tools, tool calls and tool turns; deferred tools
+    - image, video and audio input
+    - prefix or conversation state reuse across requests
+    - batching several prompts in one call
+    - the quantized and fp16 graphs on this profile; CUDA (untested)
+
+processing:
+  tokenizer:
+    package: Starlings.Tokenizers
+    # The repository pin (every manifest names it; the release drills check). 0.3.2 rejects the LFM3 split regex: the
+    # pin and this line move to 0.3.3, the first version with lfm3-bpe-chat, before any release ships this package.
+    version: 0.3.2
+    # The export's tokenizer.json (the checkpoint's file without its final newline: the same JSON) through the
+    # lfm3-bpe-chat profile (byte-level BPE, Llama 3 split regex, ignore_merges).
+    profile_id: lfm3-bpe-chat
+    algorithm: byte-level-bpe
+    assets:
+      - path: tokenizer.json
+        sha256: "41927bd314d17d7d7fadb44e10cd0919f7b71528d7741596d8cbd15c6945ec44"
+        size: 17908634
+    backend_tokenizer_dependency: false
+  template:
+    asset:
+      path: chat_template.jinja
+      sha256: "f45005c50cd2a97329722bf3a2dee9f16c04cdf825a589b280fb7e99e6827818"
+      size: 12129
+    # C# port (Lfm3ChatTemplate); equal to transformers 5.21.0 apply_chat_template on 19 corpus conversations.
+    renderer: owned
+  decoding:
+    loop: Starlings.Models.Lfm3 Lfm3ChatModel over Lfm3Sequence (one step graph for prefill and decode)
+    detokenization: incremental through the owned ByteLevel decoder; text is held back until a UTF-8 sequence completes
+    token_selection: greedy argmax in managed code
+
+execution:
+  backend:
+    name: onnxruntime
+    version: 1.30.0
+    binding: Microsoft.ML.OnnxRuntime
+  precision: fp32
+  variant: reference
+  graph:
+    inputs:
+      - { name: input_ids, type: int64, shape: [batch_size, sequence_length] }
+      - { name: attention_mask, type: int64, shape: [batch_size, total_sequence_length] }
+      - { name: position_ids, type: int64, shape: [batch_size, sequence_length] }
+      - { name: logits_to_keep, type: int64, shape: [1] }
+      - { name: "past_conv.N (13 convolution layers)", type: float32, shape: [batch_size, 2048, 7] }
+      - { name: "past_key_values.N.key and .value (11 attention layers)", type: float32, shape: [batch_size, 4, past_sequence_length, 128] }
+    outputs:
+      - { name: logits, type: float32, shape: [batch_size, num_logits, 128000] }
+      - { name: "present_conv.N, present.N.key and .value", type: float32, shape: as the past inputs, with total_sequence_length }
+
+capabilities:
+  # Starlings.Models.Lfm3 (Lfm3Capabilities.All, same statuses; ai-dotnet/tests/Starlings.Models.Lfm3.Tests
+  # RegistryContractTests keeps them equal; a package key's "." is "_" here).
+  generation_greedy: experimental
+  generation_fp16: untested
+  generation_cuda: untested
+  chat_template_text: experimental
+  chat_template_thinking_switch: experimental
+  streaming: experimental
+  stop_sequences: experimental
+  prefill_chunking: experimental
+  cancellation: experimental
+  concurrent_calls: untested
+  asset_acquisition: experimental
+  long_context: untested
+  sampling: unsupported
+  logprobs: unsupported
+  guided_decoding: unsupported
+  tool_calling: unsupported
+  reasoning_parsing: unsupported
+  vision: unsupported
+  audio: unsupported
+  prefix_reuse: unsupported
+  batch: unsupported
+  quantized: unsupported
+  extensions_ai: unsupported
+  mlnet: unsupported
+  persistence: unsupported
+  training: unsupported
+  aot: untested
+
+compatibility:
+  # Linux x64 CPU: development evidence on 2026-10-28 (4 vCPUs). No gate.
+  - os: linux
+    arch: x64
+    provider: cpu
+    status: experimental
+    verified: 2026-10-28
+  - os: windows
+    arch: x64
+    provider: cpu
+    status: untested
+  - os: linux
+    arch: x64
+    provider: cuda
+    status: untested
+
+qualification:
+  reference_runner: model-pipeline/reference/lfm3/run_lfm3.py
+  # No protected fixtures: the corpus below (19 conversations) with the runner's template and onnx stages.
+  fixtures: model-pipeline/corpora/lfm3/chat.jsonl
+  # No protected tolerances: the predeclared candidate policy (exact template, prompt and greedy ids; same-backend
+  # step-0 logits within 1e-4; reference bounds unchecked, the PyTorch stage has not run).
+  tolerances: model-pipeline/candidates/lfm3-1.7b/profile.json
+  gates:
+    G0: { status: not-run }
+    G1: { status: not-run }
+    G2: { status: not-run }
+    G3: { status: not-run }
+    G4: { status: not-run }
+    G5: { status: not-run }
+    G6: { status: not-run }
+    G7: { status: not-run }
+
+maintenance:
+  owner: Mark
+  latest_known_upstream_revision: "c680759afee1ce8310c90d6c621f4558200dee77"
+  latest_verified_upstream_revision: "c680759afee1ce8310c90d6c621f4558200dee77"
+  last_checked: 2026-10-28
+  review_date: 2027-01-28
+  known_issues:
+    - >-
+      The export's fidelity to the PyTorch checkpoint is unmeasured: run_lfm3.py reference executes the checkpoint's
+      own modeling code and has not run. The evidence compares the .NET loop with Python ONNX Runtime on the same graph.
+    - >-
+      No reference fixtures are adopted into protected/ and no gate has run; every capability is at most experimental.
+    - >-
+      The weights are under the LFM Open License v1.0: commercial use is licensed only below 10 million USD annual
+      revenue.

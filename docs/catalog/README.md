@@ -29,6 +29,7 @@ Gate cells link to the evidence the manifest records. The Stable readiness colum
 | [kev-0.8b/onnx-fp32-cuda](../../model-pipeline/registry/kev-0.8b/onnx-fp32-cuda/manifest.yaml) | decision | experimental | Mark | 2027-01-05 | not-run | not-run | not-run | not-run | not-run | not-run | not-run | not-run | gates not passed: G0, G1, G2, G3, G4, G5, G6, G7; untested: aot, concurrent_calls_unserialized; promotion also awaits a green per-release GPU regression run |
 | [kev-4b/onnx-fp32-cpu](../../model-pipeline/registry/kev-4b/onnx-fp32-cpu/manifest.yaml) | decision | experimental | Mark | 2027-01-05 | not-run | not-run | not-run | not-run | not-run | not-run | not-run | not-run | gates not passed: G0, G1, G2, G3, G4, G5, G6, G7; untested: aot |
 | [kev-4b/onnx-fp32-cuda](../../model-pipeline/registry/kev-4b/onnx-fp32-cuda/manifest.yaml) | decision | experimental | Mark | 2027-01-05 | not-run | not-run | not-run | not-run | not-run | not-run | not-run | not-run | gates not passed: G0, G1, G2, G3, G4, G5, G6, G7; untested: aot, concurrent_calls_unserialized; promotion also awaits a green per-release GPU regression run |
+| [lfm3-1.7b/onnx-fp32-cpu](../../model-pipeline/registry/lfm3-1.7b/onnx-fp32-cpu/manifest.yaml) | generation | experimental | Mark | 2027-01-28 | not-run | not-run | not-run | not-run | not-run | not-run | not-run | not-run | gates not passed: G0, G1, G2, G3, G4, G5, G6, G7; untested: aot, concurrent_calls, generation_cuda, generation_fp16, long_context |
 | [ms-marco-minilm-l6-v2/onnx-fp32-cpu](../../model-pipeline/registry/ms-marco-minilm-l6-v2/onnx-fp32-cpu/manifest.yaml) | reranking | experimental | Mark | 2027-01-23 | not-run | not-run | not-run | not-run | not-run | not-run | not-run | not-run | gates not passed: G0, G1, G2, G3, G4, G5, G6, G7; untested: aot |
 | [multilingual-e5-small/onnx-fp32-cpu](../../model-pipeline/registry/multilingual-e5-small/onnx-fp32-cpu/manifest.yaml) | embedding | stable | Mark | 2027-01-05 | [passed](../releases/e5-0.1.0-preview.1.md) | [passed](../evidence/release-set-gates-2026-10-14/e5-onnx-fp32-cpu/README.md) | [passed](../evidence/release-set-gates-2026-10-14/e5-onnx-fp32-cpu/README.md) | [passed](../evidence/release-set-gates-2026-10-14/e5-onnx-fp32-cpu/README.md) | [passed](../evidence/g4-soak-1h-2026-10-14/README.md) | [passed](../evidence/qualification-2026-10-15/README.md) | [passed](../evidence/g6-distribution-2026-10-14/README.md) | [passed](../evidence/g7-integration-2026-10-14/README.md) | stable: meets the validator's Stable rules |
 | [multilingual-e5-small/onnx-fp32-cuda](../../model-pipeline/registry/multilingual-e5-small/onnx-fp32-cuda/manifest.yaml) | embedding | stable | Mark | 2027-01-05 | [passed](../evidence/g0-provenance-2026-10-14/README.md) | [passed](../evidence/release-set-gates-2026-10-14/e5-onnx-fp32-cuda/README.md) | [passed](../evidence/release-set-gates-2026-10-14/e5-onnx-fp32-cuda/README.md) | [passed](../evidence/release-set-gates-2026-10-14/e5-onnx-fp32-cuda/README.md) | [passed](../evidence/qualification-2026-10-16-cuda/README.md) | [passed](../evidence/qualification-2026-10-16-cuda/README.md) | [passed](../evidence/g6-distribution-2026-10-14/README.md) | [passed](../evidence/g7-integration-2026-10-14/README.md) | stable: meets the validator's Stable rules |
@@ -65,6 +66,7 @@ Gate cells link to the evidence the manifest records. The Stable readiness colum
 | kev-0.8b/onnx-fp32-cuda | onnxruntime 1.30.0 | Microsoft.ML.OnnxRuntime.Gpu.Linux 1.30.0 | fp32 | reference |
 | kev-4b/onnx-fp32-cpu | onnxruntime 1.30.0 | Microsoft.ML.OnnxRuntime | fp32 | reference |
 | kev-4b/onnx-fp32-cuda | onnxruntime 1.30.0 | Microsoft.ML.OnnxRuntime.Gpu.Linux 1.30.0 | fp32 | reference |
+| lfm3-1.7b/onnx-fp32-cpu | onnxruntime 1.30.0 | Microsoft.ML.OnnxRuntime | fp32 | reference |
 | ms-marco-minilm-l6-v2/onnx-fp32-cpu | onnxruntime 1.30.0 | Microsoft.ML.OnnxRuntime | fp32 | reference |
 | multilingual-e5-small/onnx-fp32-cpu | onnxruntime 1.30.0 | Microsoft.ML.OnnxRuntime | fp32 | reference |
 | multilingual-e5-small/onnx-fp32-cuda | onnxruntime 1.30.0 | Microsoft.ML.OnnxRuntime.Gpu 1.30.0 | fp32 | reference |
@@ -347,6 +349,38 @@ One table per family, one column per profile. Rows are every capability any prof
 | tf32 | unrecorded | unsupported |
 | usage_output_tokens | unsupported | unsupported |
 
+### lfm3-1.7b
+
+| Capability | onnx-fp32-cpu |
+| --- | --- |
+| batch | unsupported |
+| streaming | experimental |
+| cancellation | experimental |
+| persistence | unsupported |
+| training | unsupported |
+| aot | untested |
+| extensions_ai | unsupported |
+| mlnet | unsupported |
+| asset_acquisition | experimental |
+| audio | unsupported |
+| chat_template_text | experimental |
+| chat_template_thinking_switch | experimental |
+| concurrent_calls | untested |
+| generation_cuda | untested |
+| generation_fp16 | untested |
+| generation_greedy | experimental |
+| guided_decoding | unsupported |
+| logprobs | unsupported |
+| long_context | untested |
+| prefill_chunking | experimental |
+| prefix_reuse | unsupported |
+| quantized | unsupported |
+| reasoning_parsing | unsupported |
+| sampling | unsupported |
+| stop_sequences | experimental |
+| tool_calling | unsupported |
+| vision | unsupported |
+
 ### ms-marco-minilm-l6-v2
 
 | Capability | onnx-fp32-cpu |
@@ -616,6 +650,9 @@ One table per family, one column per profile. Rows are every capability any prof
 - `kev-4b/onnx-fp32-cuda`: model.onnx.data is not byte-reproducible across builds (the fp32 LoRA merge; see execution.graph). The lock pins the measured bundle; a rebuilt bundle needs its own digests and its own evidence (KevDecisionModel.Create with explicit paths).
 - `kev-4b/onnx-fp32-cuda`: The references are proposed, not adopted into protected/, and no gate has run; every capability is at most experimental. The full decision-v7 development run for 4B (1,468 questions) was stopped for memory before it finished and is not reported.
 - `kev-4b/onnx-fp32-cuda`: Device memory: the weights take about 17 GB, so Kev-4B needs a 24 GB card.
+- `lfm3-1.7b/onnx-fp32-cpu`: The export's fidelity to the PyTorch checkpoint is unmeasured: run_lfm3.py reference executes the checkpoint's own modeling code and has not run. The evidence compares the .NET loop with Python ONNX Runtime on the same graph.
+- `lfm3-1.7b/onnx-fp32-cpu`: No reference fixtures are adopted into protected/ and no gate has run; every capability is at most experimental.
+- `lfm3-1.7b/onnx-fp32-cpu`: The weights are under the LFM Open License v1.0: commercial use is licensed only below 10 million USD annual revenue.
 - `ms-marco-minilm-l6-v2/onnx-fp32-cpu`: The references are proposed, not adopted into protected/, and no gate has run; every capability is at most experimental.
 - `ms-marco-minilm-l6-v2/onnx-fp32-cpu`: Scores are raw logits, not calibrated probabilities.
 - `multilingual-e5-small/onnx-fp32-cpu`: Linux memory: the hosted soak's growth of 2026-10-15 (about 50 MB/h, run 38793842060) was glibc retention after unloading plus transparent huge pages set to `always` on the runner image, not a leak (docs/evidence/scheduled-regression-fix/). Starlings.Runtime.Onnx calls malloc_trim on session release (on by default; opt out per session or per process), and the qualification soak runs with THP `madvise`. On `always` hosts resident memory can look larger without any leak.
