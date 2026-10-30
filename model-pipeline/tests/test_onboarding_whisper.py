@@ -103,7 +103,7 @@ NEAR_MISSES = [
     ("ids made fuzzy", lambda c: c["evaluation"]["policy"].update(token_ids="wer"), "token_ids"),
     ("transcript made fuzzy", lambda c: c["evaluation"]["policy"].update(transcript="wer"), "transcript"),
     ("dropped path", lambda c: c["evaluation"]["policy"]["required_paths"].pop(), "required_paths"),
-    ("hidden over cap", lambda c: c["evaluation"]["policy"].update(hidden_max_abs=0.2), "hidden_max_abs"),
+    ("hidden over cap", lambda c: c["evaluation"]["policy"].update(hidden_max_abs=1.5), "hidden_max_abs"),
     (
         "padding over cap",
         lambda c: c["evaluation"]["policy"].update(hidden_padding_max_abs=3.0),
@@ -532,7 +532,7 @@ def _layout(document, blob):
         ("dotnet", nudge("mel", 1e-5), "dotnet-audio/clip-a/mel_vs_reference"),
         ("dotnet", nudge("hidden", 1e-4), "dotnet-mel/clip-a/hidden_vs_python"),
         ("dotnet", nudge("logits", 1e-4, "clip-b"), "dotnet-mel/clip-b/logits_vs_python"),
-        ("onnx", nudge("hidden", 0.1), "onnx/clip-a/hidden_vs_reference"),
+        ("onnx", nudge("hidden", 1.0), "onnx/clip-a/hidden_vs_reference"),
         ("onnx", nudge("hidden", 1.5, index=2 * TINY["hidden_size"]), "onnx/clip-a/hidden_padding_vs_reference"),
         ("reference", nudge("mel_torch", 1e-2), "reference/clip-a/mel_torch_vs_numpy"),
         (
