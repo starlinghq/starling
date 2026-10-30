@@ -1,0 +1,13 @@
+{
+  "font_packages": "Arch Linux noto-fonts 1:2026.10.01-1, noto-fonts-cjk (system fonts; SIL Open Font License 1.1)",
+  "fonts": {
+    "/usr/share/fonts/noto-cjk/NotoSansCJK-Regular.ttc": "b76b0433203017ca80401b2ee0dd69350349871c4b19d504c34dbdd80541690a",
+    "/usr/share/fonts/noto/NotoSans-Bold.ttf": "1df075a380fc7cb898acf64c1f7b3b4dd780de3caa860178bf929de35817a913",
+    "/usr/share/fonts/noto/NotoSans-Regular.ttf": "478c558ea716033cd60c03438f628dfa75694dcf6b5f6d505a2f05fd2b4f3823",
+    "/usr/share/fonts/noto/NotoSansMono-Regular.ttf": "65b5e2b2c4a1fba9ae8be1f026cb35b03dcb8886d9b2a4147054fde12f7e767d",
+    "/usr/share/fonts/noto/NotoSerif-Regular.ttf": "19e72cd8d595fae5bd74a5206f5d938512e1183d4fed7abb1ec1be1d7efa5f88"
+  },
+  "freetype": "2.14.3",
+  "numpy": "2.3.5",
+  "pillow": "13.0.0"
+}

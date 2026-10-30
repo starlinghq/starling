@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <IsPackable>true</IsPackable>
+    <IsAotCompatible>true</IsAotCompatible>
+    <Description>PP-OCRv5 mobile text detection and recognition on ONNX Runtime (the official PaddlePaddle ONNX exports PaddlePaddle/PP-OCRv5_mobile_det_onnx, revision e6f4fa85, and PaddlePaddle/PP-OCRv5_mobile_rec_onnx, revision ed152b8b): the DB text detector with owned post-processing (no OpenCV), perspective crops, and the CTC line recognizer with the dictionary of the pinned inference.yml. Input is decoded RGB, BGR or RGBA pixels; output is text lines with their quadrilateral and confidence. Ships the asset lock, not the weights; acquire them explicitly. The application adds the ONNX Runtime native package. Experimental.</Description>
+    <PackageTags>ocr;paddleocr;pp-ocrv5;text-detection;text-recognition;onnxruntime</PackageTags>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="" />
+    <None Include="../../THIRD-PARTY-NOTICES.md" Pack="true" PackagePath="" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../Starlings.Runtime.Onnx/Starlings.Runtime.Onnx.csproj" />
+    <ProjectReference Include="../Starlings.Acquisition/Starlings.Acquisition.csproj" />
+    <ProjectReference Include="../Starlings.Models.Abstractions/Starlings.Models.Abstractions.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Starlings.Models.PaddleOcr.Tests" />
+    <InternalsVisibleTo Include="Starlings.PaddleOcr.Fidelity.Tool" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,6 @@
+recipe_version: 1
+id: ppocrv5-mobile-cpu
+plugin: ppocr-onnx-cpu-v1
+manifest: model-pipeline/candidates/ppocrv5-mobile/profile.json
+reference_corpus: model-pipeline/reference/corpus/ocr-corpus-v1.jsonl
+reference_environment: model-pipeline/reference/ppocr/requirements.txt

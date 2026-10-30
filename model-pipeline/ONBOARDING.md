@@ -183,6 +183,49 @@ candidate policy to equal them. References stay proposals: no reference fixtures
 (`registry/whisper-large-v3-turbo/onnx-fp16-cpu/`) is Experimental with every gate `not-run`; this route's reports do not
 change it.
 
+## PP-OCRv5 route
+
+The `ppocr-onnx-cpu-v1` plugin (`src/model_pipeline/onboarding_ppocr.py`) runs `recipes/ppocrv5-mobile-cpu.yaml`. It
+accepts only the pinned official ONNX exports `PaddlePaddle/PP-OCRv5_mobile_det_onnx` and
+`PaddlePaddle/PP-OCRv5_mobile_rec_onnx` and the pinned Paddle inference models they were exported from
+(`PaddlePaddle/PP-OCRv5_mobile_det`, `PaddlePaddle/PP-OCRv5_mobile_rec`), listed as `origin.components` of
+`candidates/ppocrv5-mobile/`. Stages: `assets`, `environment`, `reference`, `onnx`, `dotnet`, `evaluate`, `review`.
+
+```sh
+.venv/bin/model-pipeline run model-pipeline/recipes/ppocrv5-mobile-cpu.yaml \
+  --snapshot "$PWD/.models/snapshots/ppocrv5-mobile" \
+  --reference-python "$PWD/.models/venv-ppocr/bin/python" \
+  --out "$PWD/artifacts/onboarding/ppocrv5-mobile" --threads 2 --timeout 1800
+```
+
+- `--snapshot` is one directory holding the four repositories as `det/`, `rec/` (ONNX) and `det-paddle/`,
+  `rec-paddle/` (Paddle). The `assets` stage verifies every pin and checks all four `inference.yml` files field by field
+  against the contract: the preprocessing operators and their constants, the DB post-processing constants, and the
+  recognizer dictionary (18,383 entries, by SHA-256).
+- The reference environment is `reference/ppocr/requirements.txt` (Python 3.12: paddlepaddle 3.3.1 CPU, paddleocr
+  3.7.0, paddlex 3.7.2, onnxruntime 1.30.0); install it with `uv venv --python 3.12 .models/venv-ppocr`, then
+  `uv pip install --require-hashes -r model-pipeline/reference/ppocr/requirements.txt`, then `-e model-pipeline`. The
+  corpus is `reference/corpus/ocr-corpus-v1.jsonl`: ten rendered images with known text, pinned by SHA-256.
+- The reference is PaddleOCR on the Paddle inference engine with oneDNN off (paddlepaddle 3.3.1 fails these graphs
+  under oneDNN). The runner calls PaddleOCR's own preprocessing, DB post-processing, crop and CTC operators step by step
+  to record every intermediate, and checks that the steps equal `PaddleOCR.predict` on each image. The `onnx` stage
+  repeats this with `engine="onnxruntime"` and also runs the graphs on the reference's own detector and recognizer
+  inputs.
+- Evidence is checked at four levels. Preprocessing: the .NET detector input from the image, and the .NET recognizer
+  input cropped from each reference box, exactly equal to the reference (both restate OpenCV's fixed-point uint8
+  `INTER_LINEAR` resize and `INTER_CUBIC` perspective warp). Graph outputs: probability map and recognizer
+  probabilities, .NET against Python ONNX Runtime on the same inputs (`same_backend_max_abs`), Python ONNX Runtime
+  against Paddle (bounded). Geometry: boxes matched one-to-one by IoU, from the .NET DB post-processing on the reference
+  probability map, and end to end from the image; a box may appear on one side only when its box score lies within
+  `box_flip_margin` of the box threshold, and the matched lines must keep the reference's reading order. Text: CTC text
+  exact on every matched box; line confidences bounded (Python ONNX Runtime against Paddle, .NET against Python); and,
+  per image and over the corpus, a character error rate against the drawn text as a sanity bound (a text-free image
+  must give no line). The reference stage must name the Paddle engine, CPU, oneDNN off and the pinned versions.
+- `--distribution` is refused, and the workflow command takes no extra snapshots, so PP-OCRv5 runs only through `run`.
+
+References and the comparison policy are proposals; no protected tolerances or fixtures exist for this profile, and
+there is no registry manifest yet (the maintainer adds it with the adopted tolerances).
+
 ## Add another execution plugin
 
 1. Specify the upstream behavior contract and exact source assets in a reviewed registry manifest or proposed candidate contract. Reuse existing tokenizer/runtime components only where their supported parameters match.

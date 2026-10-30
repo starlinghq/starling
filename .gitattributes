@@ -5,6 +5,8 @@
 *.json text
 # Audio corpus clips (16-bit PCM WAV), byte-exact against their recorded SHA-256.
 *.wav binary
+# OCR corpus images (8-bit RGB PNG), byte-exact against their recorded SHA-256.
+*.png binary
 # Conformance fixtures must not be normalized: byte-exact expectations.
 model-pipeline/protected/** -text
 # Staged (unprotected) pilot LLM generation fixture: byte-exact as make_generation_fixture.py wrote it.
