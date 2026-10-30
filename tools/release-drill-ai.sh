@@ -533,7 +533,9 @@ $expected"
     label="per-profile maturity in README and description"
     # The tokenizer is released on its own (P-025), with its own README and version.
     [[ "$id" == Starlings.Tokenizers ]] && label="README, own version"
-    echo "ok:   $id $version: MIT OR Apache-2.0, $label, repository commit, SourceLink to the commit; dependencies: ${expected:-none}" | tr '\n' ' '
+    license_label="MIT OR Apache-2.0"
+    [[ "$id" == Starlings.Models.Lfm3 ]] && license_label="LFM Open License v1.0 (license file, acceptance required)"
+    echo "ok:   $id $version: $license_label, $label, repository commit, SourceLink to the commit; dependencies: ${expected:-none}" | tr '\n' ' '
     echo
     echo "      sha256 $(sha256sum "$nupkg" | cut -d' ' -f1)"
 done

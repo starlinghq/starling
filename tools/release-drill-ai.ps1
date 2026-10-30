@@ -288,7 +288,8 @@ try {
         if ($contents | Where-Object { $_ -match '(?i)\.(onnx|safetensors|bin|gguf)$|tokenizer\.json$' }) { Fail "${id}: package contains model assets" }
         $pdb = Read-Entry $snupkg "lib/net10.0/$id.pdb"
         if (-not $pdb -or -not $pdb.Contains("raw.githubusercontent.com/starlinghq/starling/$sha/*")) { Fail "${id}: symbols lack SourceLink to $sha" }
-        Write-Host "ok:   $id ${aiVersion}: MIT OR Apache-2.0, per-profile maturity, repository commit, SourceLink; dependencies: $(if ($expected) { $expected -join ', ' } else { 'none' })"
+        $licenseLabel = if ($id -eq 'Starlings.Models.Lfm3') { 'LFM Open License v1.0 (license file, acceptance required)' } else { 'MIT OR Apache-2.0' }
+        Write-Host "ok:   $id ${aiVersion}: $licenseLabel, per-profile maturity, repository commit, SourceLink; dependencies: $(if ($expected) { $expected -join ', ' } else { 'none' })"
         Write-Host "      sha256 $((Get-FileHash $nupkg -Algorithm SHA256).Hash.ToLowerInvariant())"
     }
 
