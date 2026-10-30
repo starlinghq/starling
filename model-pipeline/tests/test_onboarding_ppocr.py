@@ -43,6 +43,22 @@ def test_shipped_candidate_passes_schema_and_exact_contract():
     assert ctc["classes"] == ctc["dictionary_size"] + 2 == 18385
 
 
+def test_graph_pins_match_the_dotnet_asset_locks():
+    source = (REPO / "ai-dotnet/src/Starlings.Models.PaddleOcr/PaddleOcrModelAssets.cs").read_text(encoding="utf-8")
+    contract = ppocr.CONTRACTS[DETECTOR]
+    repo, revision, pins = contract["components"]["rec"]
+    assert f'DetectorRevision = "{contract["revision"]}"' in source
+    assert f'RecognizerRevision = "{revision}"' in source
+    for size, sha256 in [*contract["pins"].values(), *pins.values()]:
+        assert f'"{sha256}"' in source and f"{size}, " in source
+
+
+def test_dictionary_digest_matches_the_dotnet_contract():
+    source = (REPO / "ai-dotnet/src/Starlings.Models.PaddleOcr/PaddleOcrConfiguration.cs").read_text(encoding="utf-8")
+    assert f'DictionarySha256 = "{ppocr.DICTIONARY_SHA256}"' in source
+    assert f"DictionarySize = {ppocr.DICTIONARY_SIZE};" in source
+
+
 def test_policy_keeps_correctness_bounds_fixed():
     policy = profile()["evaluation"]["policy"]
     assert policy["preprocess_max_abs"] == policy["crop_max_abs"] == 0.0

@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="xunit.v3" />
+    <!-- CPU native runtime. -->
+    <PackageReference Include="Microsoft.ML.OnnxRuntime" />
+    <Using Include="Xunit" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="TestData/**" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../src/Starlings.Models.PaddleOcr/Starlings.Models.PaddleOcr.csproj" />
+    <!-- Decodes the corpus PNGs for the model-gated end-to-end test. -->
+    <ProjectReference Include="../../src/Starlings.Models.EmbeddingGemma2.Imaging.SkiaSharp/Starlings.Models.EmbeddingGemma2.Imaging.SkiaSharp.csproj" />
+  </ItemGroup>
+
+</Project>
