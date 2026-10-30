@@ -40,7 +40,13 @@ SAMPLE_RATE = 16000
 # Composite clips (asr-corpus-v2): consecutive utterances of one chapter, each composite at most 30 s.
 COMPOSITES = {
     "librispeech-1272-135031-0003-0008": tuple(f"1272-135031-{index:04d}" for index in range(3, 9)),
+    # Cut at exactly 30 s, inside the third utterance: speech runs into the window's end, so the decode ends inside a
+    # segment and transformers decodes again from the last closing timestamp (a second, shorter window).
+    "librispeech-1272-128104-0009-0011-cut30": tuple(f"1272-128104-{index:04d}" for index in range(9, 12)),
 }
+# Composites cut to this many samples; their text is the full utterances' (more than is spoken), so the route leaves
+# them out of the ground-truth sanity bound.
+TRUNCATED = {"librispeech-1272-128104-0009-0011-cut30": 30 * SAMPLE_RATE}
 GAP_SAMPLES = SAMPLE_RATE // 2
 MAX_SAMPLES = 30 * SAMPLE_RATE
 
@@ -110,6 +116,8 @@ def main() -> int:
         gap = numpy.zeros(GAP_SAMPLES, dtype=numpy.int16)
         parts = [decode(rows, utterance) for utterance in utterances]
         samples = numpy.concatenate([piece for part in parts for piece in (part, gap)][:-1])
+        if identifier in TRUNCATED:
+            samples = samples[: TRUNCATED[identifier]]
         if len(samples) > MAX_SAMPLES:
             raise SystemExit(f"{identifier}: {len(samples)} samples exceed 30 s")
         data = wav(samples)
@@ -123,7 +131,12 @@ def main() -> int:
                 "samples": len(samples),
                 "language": "en",
                 "text": " ".join(rows[utterance]["text"] for utterance in utterances),
-                "source": {**source, "utterances": list(utterances), "gap_samples": GAP_SAMPLES},
+                "source": {
+                    **source,
+                    "utterances": list(utterances),
+                    "gap_samples": GAP_SAMPLES,
+                    **({"truncated_to_samples": TRUNCATED[identifier]} if identifier in TRUNCATED else {}),
+                },
                 "license": "CC-BY-4.0",
             }
         )

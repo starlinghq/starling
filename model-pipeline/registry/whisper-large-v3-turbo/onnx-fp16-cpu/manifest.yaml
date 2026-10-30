@@ -84,7 +84,9 @@ behavior:
       seek loop of generate(return_timestamps=True), greedy, no temperature fallback, no conditioning on earlier
       windows, no thresholds; segment times are multiples of 0.02 s
     decoding: greedy, with generation_config.json's suppress_tokens on every step and begin_suppress_tokens on the first
-    max_new_tokens: 444 (448 decoder positions, WhisperModel.MaxTargetPositions, less the four-token prompt)
+    max_new_tokens: >-
+      444 without timestamps, 445 per window with timestamps (448 decoder positions, WhisperModel.MaxTargetPositions,
+      less the four- or three-token prompt)
     decoder: full-context decoder_model_fp16.onnx, no KV cache (each step re-runs the decoder over the prefix)
   unsupported:
     - translation (<|translate|>)
@@ -154,7 +156,7 @@ capabilities:
   aot: untested
   extensions_ai: unsupported
   mlnet: unsupported
-  transcription: experimental  # 5 LibriSpeech clips (1.6 s to 27.9 s): transcripts equal the PyTorch fp32 reference word for word
+  transcription: experimental  # 6 LibriSpeech clips (1.6 s to 30 s): transcripts equal the PyTorch fp32 reference word for word
   transcription_cuda: untested
   language_detection: untested  # <|startoflm|> prompting differs from transformers' language-token detection
   concurrent_calls: untested
@@ -212,14 +214,14 @@ maintenance:
       No reference fixtures are adopted into protected/ and no gate has run; every capability is at most
       experimental.
     - >-
-      The evidence covers English only (five LibriSpeech clips, 1.6 s to 27.9 s, asr-corpus-v2); other languages are
+      The evidence covers English only (six LibriSpeech clips, 1.6 s to 30 s, asr-corpus-v2); other languages are
       untested.
     - >-
       The fp16 encoder's hidden state drifts from the fp32 reference by more than the adopted hidden_max_abs (0.05)
-      on audio positions of clips past roughly 18 s: 0.110 on the 27.9 s composite of asr-corpus-v2, 0.173 on a
-      single 29.4 s LibriSpeech utterance, against 0.013 to 0.025 on 14 to 18 s clips. Teacher-forced logits stay
-      within logits_max_abs (0.030 against 0.1), and ids, transcripts and segment timestamps equal the reference. The
-      bound needs re-adoption by the maintainer; the route's run fails that one check until then.
+      on audio positions of 20 to 30 s clips: up to 0.498 in the #229 diagnostic (0.110 on the 27.9 s composite of
+      asr-corpus-v2), against 0.013 to 0.025 on 14 to 18 s clips. Teacher-forced logits stay within logits_max_abs,
+      and ids, transcripts and segment timestamps equal the reference. #229 re-adopts the bound at 0.6; until it
+      lands, the route's run fails that check.
     - >-
       Decoding re-runs the full decoder over the prefix at every step (no KV cache), so long transcripts are slow.
     - >-

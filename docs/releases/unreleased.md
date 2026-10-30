@@ -19,5 +19,7 @@ Changes merged to `main` after the last release record, collected here for the n
 - `WhisperTokenizer.Decode` drops timestamp tokens (ids from 50365), as transformers `WhisperTokenizer.decode` does.
 - `WhisperOptions.NoTimestamps = false` now makes `Transcribe` return the timestamped decode's text, instead of
   prompting without `<|notimestamps|>` and decoding without the timestamp rules.
-- The Whisper onboarding route reads `asr-corpus-v2.jsonl`: the four clips of v1 plus a 27.9 s composite of six
-  consecutive LibriSpeech utterances, and checks the timestamped decode of every clip.
+- The Whisper onboarding route reads `asr-corpus-v2.jsonl`: the four clips of v1, a 27.9 s composite of six
+  consecutive LibriSpeech utterances, and a composite cut at 30 s inside its last utterance (its decode ends inside a
+  segment and is decoded again from the last closing timestamp). It checks the timestamped decode of every clip and
+  that the corpus exercises a timestamp pair and that re-decode.

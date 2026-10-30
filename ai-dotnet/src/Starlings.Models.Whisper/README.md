@@ -72,10 +72,17 @@ foreach (WhisperSegment segment in result.Segments)
   (`WhisperMelSpectrogram.ExtractChunk`, as the feature extractor pads); longer clips are refused, not truncated.
 - Segment timestamps (experimental): `WhisperTranscriber.TranscribeWithTimestamps` (or `TranscribeMelWithTimestamps`)
   returns a `WhisperTranscription`: the text, the segments (`Start`, `End` in seconds, `Text`, token `Ids`) and the
-  decoded windows. It matches transformers 5.18.0 `generate(return_timestamps=True)` with greedy decoding: the
+  decoded windows. The segments are those transformers 5.18.0 `generate(return_timestamps=True, return_segments=True)`
+  returns with greedy decoding (not the tokenizer's `decode(output_offsets=True)`, a different algorithm): the
   `WhisperTimeStampLogitsProcessor` rules with `generation_config.json`'s values (`WhisperModel.GenerateWithTimestamps`)
   and its sequential seek loop, which decodes again from the last closing timestamp when a window ends inside a
-  segment. `WhisperOptions.NoTimestamps = false` makes `Transcribe` return that text.
+  segment. The route's corpus exercises a timestamp pair and that re-decode (a clip cut at 30 s, two windows); the
+  448-position cut-off and a window that closes no segment are covered by unit tests only.
+  `WhisperOptions.NoTimestamps = false` makes `Transcribe` return that text.
+- The timestamp-or-text decision compares the timestamps' summed log-probability with the best text token's in double
+  precision; transformers computes it in float32. On a near-tie the two can pick differently (a timestamp against a
+  text token); the route's replay of every reference window found no such tie on its corpus, but it is not a
+  bit-for-bit guarantee.
 - Explicit language, a code of `WhisperModel.LanguageToId` (case-insensitive). `WhisperOptions.Language` defaults to
   `"en"` (`WhisperOptions.DefaultLanguage`), the language the onboarding evidence covers. An unknown code throws
   `WhisperUnsupportedLanguageException` (an `ArgumentException` that carries the code), from `WhisperTranscriber.Create`

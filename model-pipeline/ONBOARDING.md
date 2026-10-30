@@ -167,7 +167,8 @@ checkpoint they were exported from (`candidates/whisper-large-v3-turbo/`). Stage
   the contract.
 - The reference environment is `reference/whisper/requirements.txt` (Python 3.11, torch 2.14.1 CPU, transformers
   5.18.0, onnxruntime 1.30.0). The corpus is `reference/corpus/asr-corpus-v2.jsonl`: LibriSpeech WAV clips pinned by
-  SHA-256 (the four single utterances of `asr-corpus-v1.jsonl` and a 27.9 s composite of six consecutive utterances).
+  SHA-256 (the four single utterances of `asr-corpus-v1.jsonl`, a 27.9 s composite of six consecutive utterances, and
+  a composite cut at 30 s inside its last utterance, which the ground-truth sanity bound leaves out).
 - Evidence is checked at three levels. Intermediate tensors: the .NET mel against the reference mel; the fp16 encoder
   hidden state (separately on the positions that cover audio and on the zero-padded tail) and the decoder logits,
   teacher-forced on the reference ids, against the fp32 PyTorch reference. Same backend: .NET against Python ONNX
@@ -180,7 +181,9 @@ checkpoint they were exported from (`candidates/whisper-large-v3-turbo/`). Stage
   replays each window through the numpy rules on teacher-forced logits and refuses any difference from `generate()`'s
   ids or segments. Window ids and segment times are compared exactly against the reference, and window ids, segments
   and texts exactly between .NET and Python ONNX Runtime; these are correctness checks under the binding
-  `token_ids: exact` and `transcript: exact`, with no new tolerance.
+  `token_ids: exact` and `transcript: exact`, with no new tolerance. Two corpus-level checks require that some clip
+  emits a timestamp pair and that some clip's decode ends inside a segment and is decoded again from the last closing
+  timestamp, so the window-level checks cannot pass without exercising those branches.
 - The reference stage records the mel on both of `WhisperFeatureExtractor`'s paths (numpy, which the library
   restates, and the default torch path) and checks that the default path yields the same ids.
 - `--distribution` is refused, and the workflow command takes no base snapshot, so Whisper runs only through `run`.

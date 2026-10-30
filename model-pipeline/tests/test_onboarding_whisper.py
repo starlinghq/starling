@@ -359,13 +359,27 @@ def tensor_values(seed: int, count: int) -> list[float]:
     return [((seed * 7919 + index * 104729) % 2001 - 1000) / 250.0 for index in range(count)]
 
 
-def timestamped(candidate: dict, generated: list[int], text: str) -> dict:
-    """One window: <|0.00|> text <|1.00|> end of text, a single segment."""
+def timestamped(candidate: dict, generated: list[int], text: str, redecoded: bool = False) -> dict:
+    """One window: <|0.00|> text <|1.00|> end of text, a single segment. `redecoded`: the window closes that segment
+    with a timestamp pair and ends inside the next, so a second window starts at its closing timestamp."""
+    start = whisper.prompt(candidate, "en", timestamps=True)
     tokens = [50365, *generated, 50415]
+    if not redecoded:
+        return {
+            "windows": [{"seek": 0, "ids": start + tokens + [50257]}],
+            "segments": [{"start": 0.0, "end": 1.0, "ids": tokens, "text": text}],
+            "transcript": text,
+        }
     return {
-        "windows": [{"seek": 0, "ids": whisper.prompt(candidate, "en", timestamps=True) + tokens + [50257]}],
-        "segments": [{"start": 0.0, "end": 1.0, "ids": tokens, "text": text}],
-        "transcript": text,
+        "windows": [
+            {"seek": 0, "ids": start + tokens + [50415, 440, 50257]},
+            {"seek": 100, "ids": start + [50365, 1029, 50380, 50257]},
+        ],
+        "segments": [
+            {"start": 0.0, "end": 1.0, "ids": [*tokens, 50415], "text": text},
+            {"start": 1.0, "end": 1.3, "ids": [50365, 1029, 50380], "text": " more"},
+        ],
+        "transcript": text + " more",
     }
 
 
@@ -400,10 +414,10 @@ def write_stage(
             row.update(text=f"WORDS OF {identifier.upper()}", samples=SAMPLES[identifier], default_path_ids=ids)
         else:
             row["forced_ids"] = ids
-        row["timestamped"] = timestamped(candidate, generated, row["transcript"])
+        row["timestamped"] = timestamped(candidate, generated, row["transcript"], identifier == "clip-b")
         if stage == "dotnet":
             row["audio_transcript"] = row["transcript"]
-            row["audio_timestamped"] = timestamped(candidate, generated, row["transcript"])
+            row["audio_timestamped"] = timestamped(candidate, generated, row["transcript"], identifier == "clip-b")
         cases.append(row)
         for name in whisper.TENSORS[stage]:
             shape = shapes.get(name) or [len(ids) - 1, behavior["vocabulary_size"]]
@@ -498,7 +512,11 @@ def test_complete_evidence_passes_and_never_adopts_protected_gates(tmp_path, tin
         "dotnet-audio/*/segments_vs_python",
         "dotnet-audio/*/timestamp_transcript_vs_python",
     }
-    assert report["checks"][-1]["id"] == "reference/corpus/wer_vs_ground_truth"
+    assert [check["id"] for check in report["checks"][-3:]] == [
+        "reference/corpus/wer_vs_ground_truth",
+        "reference/corpus/timestamp_pair_coverage",
+        "reference/corpus/redecode_coverage",
+    ]
 
 
 def nudge(name: str, delta: float, clip: str = "clip-a", index: int = 0):
@@ -785,3 +803,34 @@ def test_stage_graph_declares_audio_inputs_and_order(tmp_path, monkeypatch):
     assert len(audio) == len(fixtures.read_jsonl(CORPUS))
     assert "ai-dotnet/src/Starlings.Models.Whisper/WhisperModel.cs" in by_name["dotnet"].inputs
     assert "model-pipeline/reference/whisper/run_whisper.py" in by_name["reference"].inputs
+
+
+@pytest.mark.parametrize(
+    ("edit", "failed"),
+    [
+        (
+            lambda document, blob: document["cases"][1].update(
+                timestamped=timestamped(profile(), GENERATED["clip-b"], document["cases"][1]["transcript"])
+            ),
+            "reference/corpus/redecode_coverage",
+        ),
+        (
+            lambda document, blob: [
+                row["timestamped"]["windows"][0]["ids"].__setitem__(-3, 440) for row in document["cases"][1:2]
+            ],
+            "reference/corpus/timestamp_pair_coverage",
+        ),
+    ],
+    ids=["no re-decoded window", "no timestamp pair"],
+)
+def test_the_corpus_must_cover_the_timestamp_branches(tmp_path, tiny, edit, failed):
+    report = whisper.evaluate_development(**evidence(tmp_path, tiny, {"reference": edit}))
+    assert failed in report["failed_checks"]
+
+
+def test_a_truncated_clip_is_left_out_of_the_ground_truth_bound(tmp_path, tiny):
+    corpus = synthetic_corpus()
+    corpus[0].update(text="SOMETHING ELSE WAS SAID HERE", source={"truncated_to_samples": 1})
+    report = whisper.evaluate_development(**evidence(tmp_path, tiny, corpus=corpus))
+    check = next(check for check in report["checks"] if check["id"] == "reference/corpus/wer_vs_ground_truth")
+    assert check["status"] == "passed" and check["excluded"] == ["clip-a"]

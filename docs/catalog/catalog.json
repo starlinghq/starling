@@ -5010,7 +5010,8 @@
         "video_variable_frame_rate": "unrecorded",
         "vision": "unsupported",
         "wasm_aot": "unrecorded",
-        "wasm_interpreter": "unrecorded"
+        "wasm_interpreter": "unrecorded",
+        "word_timestamps": "unrecorded"
       },
       "compatibility": {
         "linux-x64 cpu": {
@@ -8629,8 +8630,8 @@
       "last_checked": "2026-10-23",
       "known_issues": [
         "No reference fixtures are adopted into protected/ and no gate has run; every capability is at most experimental.",
-        "The evidence covers English only (five LibriSpeech clips, 1.6 s to 27.9 s, asr-corpus-v2); other languages are untested.",
-        "The fp16 encoder's hidden state drifts from the fp32 reference by more than the adopted hidden_max_abs (0.05) on audio positions of clips past roughly 18 s: 0.110 on the 27.9 s composite of asr-corpus-v2, 0.173 on a single 29.4 s LibriSpeech utterance, against 0.013 to 0.025 on 14 to 18 s clips. Teacher-forced logits stay within logits_max_abs (0.030 against 0.1), and ids, transcripts and segment timestamps equal the reference. The bound needs re-adoption by the maintainer; the route's run fails that one check until then.",
+        "The evidence covers English only (six LibriSpeech clips, 1.6 s to 30 s, asr-corpus-v2); other languages are untested.",
+        "The fp16 encoder's hidden state drifts from the fp32 reference by more than the adopted hidden_max_abs (0.05) on audio positions of 20 to 30 s clips: up to 0.498 in the #229 diagnostic (0.110 on the 27.9 s composite of asr-corpus-v2), against 0.013 to 0.025 on 14 to 18 s clips. Teacher-forced logits stay within logits_max_abs, and ids, transcripts and segment timestamps equal the reference. #229 re-adopts the bound at 0.6; until it lands, the route's run fails that check.",
         "Decoding re-runs the full decoder over the prefix at every step (no KV cache), so long transcripts are slow.",
         "The export repository has no license tag; see rights.notes."
       ],

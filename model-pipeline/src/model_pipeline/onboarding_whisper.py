@@ -677,6 +677,42 @@ def _timestamp_checks(identifier: str, reference: dict, python: dict, dotnet: di
     ]
 
 
+def truncated(clip: dict) -> bool:
+    """A corpus clip cut short of its source utterances: its ground-truth text covers more than is spoken."""
+    source = clip.get("source")
+    return isinstance(source, dict) and "truncated_to_samples" in source
+
+
+def coverage_checks(expected: dict[str, dict]) -> list[dict]:
+    """The corpus must exercise the timestamped decode's branches, so the exact checks cannot pass vacuously:
+    a timestamp pair (two timestamps in a row, a segment split inside a window), and a clip of up to 30 s whose first
+    window ends inside a segment, so the decode starts again from the last closing timestamp (a window at seek > 0)."""
+    pairs = sorted(
+        identifier
+        for identifier, row in expected.items()
+        if any(
+            first >= TIMESTAMPS["timestamp_begin"] and second >= TIMESTAMPS["timestamp_begin"]
+            for window in row["timestamped"]["windows"]
+            for first, second in zip(window["ids"], window["ids"][1:], strict=False)
+        )
+    )
+    redecoded = sorted(identifier for identifier, row in expected.items() if len(row["timestamped"]["windows"]) > 1)
+    return [
+        {
+            "id": "reference/corpus/timestamp_pair_coverage",
+            "status": "passed" if pairs else "failed",
+            "bound": "at least one clip",
+            "clips": pairs,
+        },
+        {
+            "id": "reference/corpus/redecode_coverage",
+            "status": "passed" if redecoded else "failed",
+            "bound": "at least one clip",
+            "clips": redecoded,
+        },
+    ]
+
+
 def _rate(value: float, bound: float, where: str, **details) -> dict:
     return {"id": where, "status": "passed" if value <= bound else "failed", "bound": bound, "value": value, **details}
 
@@ -807,11 +843,13 @@ def evaluate_development(
             ),
             *_timestamp_checks(identifier, row["timestamped"], python_row["timestamped"], dotnet_row, policy),
         ]
+    # A clip cut short of its utterances (source.truncated_to_samples) has no exact ground truth for its last words.
+    scored = [identifier for identifier in expected if not truncated(clips[identifier])]
     errors = sum(
-        edit_distance(words(row["transcript"]), words(clips[identifier]["text"]))
-        for identifier, row in expected.items()
+        edit_distance(words(expected[identifier]["transcript"]), words(clips[identifier]["text"]))
+        for identifier in scored
     )
-    total = sum(len(words(clip["text"])) for clip in clips.values())
+    total = sum(len(words(clips[identifier]["text"])) for identifier in scored)
     checks.append(
         _rate(
             errors / total if total else 1.0,
@@ -819,8 +857,10 @@ def evaluate_development(
             "reference/corpus/wer_vs_ground_truth",
             errors=errors,
             words=total,
+            excluded=sorted(set(expected) - set(scored)),
         )
     )
+    checks += coverage_checks(expected)
     if dotnet.get("checks", {}).get("pre_cancelled_request") is not True:
         raise PipelineError(".NET cancellation evidence is missing or failed")
     failed = [check["id"] for check in checks if check["status"] != "passed"]
