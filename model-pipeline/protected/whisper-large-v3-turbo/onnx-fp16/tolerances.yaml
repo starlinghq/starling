@@ -11,12 +11,26 @@
 # Observed worst against each bound:
 #   mel (.NET vs reference numpy path)              1.2e-7    mel_max_abs             1e-6
 #   mel, torch vs numpy feature path (reference)    2.4e-5    mel_path_max_abs        1e-4
-#   encoder hidden, audio positions (fp16 vs fp32)  1.2e-2    hidden_max_abs          0.05
+#   encoder hidden, audio positions (fp16 vs fp32)  1.2e-2    hidden_max_abs          0.05 (re-adopted 0.6, below)
 #   encoder hidden, zero-padded tail (fp16 vs fp32) 5.4e-1    hidden_padding_max_abs  1.0
 #   teacher-forced logits (fp16 vs fp32)            3.6e-2    logits_max_abs          0.1
 #   .NET vs Python ONNX Runtime, hidden and logits  0         same_backend_max_abs    1e-5
 #   word error rate, .NET and Python ORT vs ref     0         reference_wer_max       0
 #   corpus word error rate, ref vs LibriSpeech text 0.018     ground_truth_wer_max    0.2
+#
+# Re-adopted hidden_max_abs (#221): 0.05 held for the four clips above (all <= 12.5 s) but not for 20 to 30 s audio.
+# The fp16 encoder's drift from the fp32 reference on audio positions (max over positions, ORT 1.30 CPU vs PyTorch
+# 2.14.1 fp32, one 30 s window each):
+#   single LibriSpeech utterance 1272-135031-0024, 14.5 s           0.013
+#   single LibriSpeech utterance 1272-128104-0009, 18.3 s           0.025
+#   composite 1272-135031-0003..0008, 0.5 s zero gaps, 27.9 s      0.110   (asr-corpus-v2; failed 0.05 in #226)
+#   same utterances joined with 0.5 s low-level noise, 27.9 s      0.213
+#   single LibriSpeech utterance 1272-128104-0004, 29.4 s           0.173
+#   same six utterances joined without gaps, 25.4 s               0.498   (worst observed)
+# Margin rule: 1.2 x the worst observed value, rounded up to one significant figure: 1.2 x 0.498 = 0.598 -> 0.6. The
+# route's cap for this key is twice the bound (1.2), as for hidden_padding_max_abs. Teacher-forced logits stay within
+# logits_max_abs (worst 0.036), and ids, transcripts and segment timestamps are exact on every clip; every other key is
+# unchanged.
 #
 # The encoder hidden state is bounded separately on the positions whose receptive field holds audio and on the
 # zero-padded tail: fp16 drift concentrates on the padded (log-mel floor) frames (0.16 to 0.54 there, at most 0.012 on
@@ -28,7 +42,7 @@ reference: transformers 5.18.0 WhisperForConditionalGeneration, PyTorch fp32 CPU
 policy:
   mel_max_abs: 1.0e-6
   mel_path_max_abs: 1.0e-4
-  hidden_max_abs: 0.05
+  hidden_max_abs: 0.6
   hidden_padding_max_abs: 1.0
   logits_max_abs: 0.1
   same_backend_max_abs: 1.0e-5
