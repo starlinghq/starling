@@ -1,0 +1,200 @@
+{
+  "behavior": {
+    "color_order": "BGR",
+    "config_file": "inference.yml",
+    "crop": {
+      "border": "replicate",
+      "interpolation": "opencv-inter-cubic-u8",
+      "method": "min-area-rect-perspective",
+      "tall_ratio": 1.5
+    },
+    "ctc": {
+      "blank": 0,
+      "classes": 18385,
+      "confidence": "mean-max-probability",
+      "decoding": "greedy",
+      "dictionary_sha256": "17665d27ed39f0deb82007859992d626d3105d0ee4578c120b7c72138dc04d05",
+      "dictionary_size": 18383,
+      "use_space_char": true
+    },
+    "db": {
+      "box_thresh": 0.6,
+      "box_type": "quad",
+      "max_candidates": 1000,
+      "min_size": 3,
+      "score_mode": "fast",
+      "thresh": 0.3,
+      "unclip_ratio": 1.5,
+      "use_dilation": false
+    },
+    "detector": {
+      "input": "x",
+      "normalize": {
+        "mean": [
+          0.485,
+          0.456,
+          0.406
+        ],
+        "order": "hwc",
+        "scale": "1./255.",
+        "std": [
+          0.229,
+          0.224,
+          0.225
+        ]
+      },
+      "output": "fetch_name_0",
+      "resize": {
+        "interpolation": "opencv-inter-linear-u8",
+        "limit_side_len": 960,
+        "limit_type": "max",
+        "max_side_limit": 4000,
+        "multiple": 32,
+        "rounding": "half-even"
+      }
+    },
+    "detector_model": "PP-OCRv5_mobile_det",
+    "graph_file": "inference.onnx",
+    "pipeline": {
+      "document_preprocessing": false,
+      "rec_score_thresh": 0.0,
+      "sort_row_tolerance": 10,
+      "textline_orientation": false
+    },
+    "recognizer": {
+      "batch_size": 1,
+      "image_shape": [
+        3,
+        48,
+        320
+      ],
+      "input": "x",
+      "max_width": 3200,
+      "output": "fetch_name_0"
+    },
+    "recognizer_model": "PP-OCRv5_mobile_rec"
+  },
+  "evaluation": {
+    "policy": {
+      "box_flip_margin": 0.01,
+      "box_iou_min": 0.9,
+      "box_score_max_abs": 0.001,
+      "crop_max_abs": 0.0,
+      "ground_truth_cer_max": 0.05,
+      "line_text": "exact",
+      "non_finite": "fail",
+      "pipeline_match": "exact",
+      "preprocess_max_abs": 0.0,
+      "prob_map_max_abs": 0.001,
+      "rec_probs_max_abs": 0.0002,
+      "required_paths": [
+        "reference",
+        "python-onnx",
+        "dotnet-tensors",
+        "dotnet-postprocess",
+        "dotnet-crop",
+        "dotnet-image"
+      ],
+      "same_backend_max_abs": 1e-05
+    },
+    "status": "proposed"
+  },
+  "format_version": 1,
+  "id": "ppocrv5-mobile/onnx-fp32-cpu",
+  "origin": {
+    "components": [
+      {
+        "files": [
+          {
+            "path": "inference.onnx",
+            "sha256": "da72dc72ca4dc220df0dfde68c1dedc31c58d3e76a25871122e5056227d50092",
+            "size": 16534782
+          },
+          {
+            "path": "inference.yml",
+            "sha256": "5dfeb2777f6d0db8177d8128a8acfcf6e6276dc4ac73ea3bf0dc06d6a5e85d8e",
+            "size": 148345
+          }
+        ],
+        "repo": "PaddlePaddle/PP-OCRv5_mobile_rec_onnx",
+        "revision": "ed152b8b495f84de93cda5709d768548a9127622",
+        "role": "rec"
+      },
+      {
+        "files": [
+          {
+            "path": "config.json",
+            "sha256": "7ac1c33f377ba58561f4b89d3180b6add2b7c5c60a4edac90fa4e0ceccdc6665",
+            "size": 2871
+          },
+          {
+            "path": "inference.json",
+            "sha256": "05feef1acb00aa4cd7362b15f7f501fc4f99d7b1fa73c1c871e0c7b1504b0f5c",
+            "size": 229777
+          },
+          {
+            "path": "inference.pdiparams",
+            "sha256": "afa1820cb16c1fd0dad589d0f8b389139061c1ef6d68019685fd07be997dda5b",
+            "size": 4692937
+          },
+          {
+            "path": "inference.yml",
+            "sha256": "98069072e1b6b37d727fd9d9f11725faa46d6ea0de012f2ed26caea011c37699",
+            "size": 903
+          }
+        ],
+        "repo": "PaddlePaddle/PP-OCRv5_mobile_det",
+        "revision": "0d63e78e2b680928f6b1747d76a08db6e645efb7",
+        "role": "det-paddle"
+      },
+      {
+        "files": [
+          {
+            "path": "config.json",
+            "sha256": "6df1587ae056f0b987125fc894b17f62ae3a12644fa2488d108f19377da9c1a8",
+            "size": 352253
+          },
+          {
+            "path": "inference.json",
+            "sha256": "24587345250c7332d0fc6f9a44e794d078cdaeb64c302fef906f325619de2569",
+            "size": 217724
+          },
+          {
+            "path": "inference.pdiparams",
+            "sha256": "2460da90875937c94db97eba74ae3d9e5d4c4c57c42f1f41531c09a26bcc771a",
+            "size": 16458665
+          },
+          {
+            "path": "inference.yml",
+            "sha256": "5dfeb2777f6d0db8177d8128a8acfcf6e6276dc4ac73ea3bf0dc06d6a5e85d8e",
+            "size": 148345
+          }
+        ],
+        "repo": "PaddlePaddle/PP-OCRv5_mobile_rec",
+        "revision": "682f20538d8c086cb2128e5cfac775e6c4904e85",
+        "role": "rec-paddle"
+      }
+    ],
+    "files": [
+      {
+        "path": "inference.onnx",
+        "sha256": "a431985659dc921974177a95adcfbb90fd9e51989a5e04d70d0b75f597b6e61d",
+        "size": 4826518
+      },
+      {
+        "path": "inference.yml",
+        "sha256": "98069072e1b6b37d727fd9d9f11725faa46d6ea0de012f2ed26caea011c37699",
+        "size": 903
+      }
+    ],
+    "repo": "PaddlePaddle/PP-OCRv5_mobile_det_onnx",
+    "revision": "e6f4fa85f00e168c862bc462aebca69eef9b3d3d"
+  },
+  "runtime": {
+    "backend": "onnx",
+    "precision": "fp32",
+    "provider": "CPUExecutionProvider",
+    "version": "1.30.0"
+  },
+  "task": "ocr"
+}
