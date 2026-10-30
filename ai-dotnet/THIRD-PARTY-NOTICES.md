@@ -57,7 +57,7 @@ The full PyTorch notice (including the Caffe2 contributors) is the `LICENSE` fil
 
 ## LFM3 chat template (ported source)
 
-`Starlings.Models.Lfm3` (`Lfm3ChatTemplate.cs`; experimental, source only) is a C# port of the text sections of the `chat_template.jinja` of `LiquidAI/LFM3-1.7B` at commit `40ebe0aa6662c9d40389c2f5d565b6a2c6aebacd`, by Liquid AI, Inc., licensed under the LFM Open License v1.0 (https://huggingface.co/LiquidAI/LFM3-1.7B/blob/40ebe0aa6662c9d40389c2f5d565b6a2c6aebacd/LICENSE). The license conditions commercial use on the user's legal entity staying below 10 million USD annual revenue (section 5). The file carries a modification notice. The LFM3 weights and tokenizer are not redistributed by the package.
+`Starlings.Models.Lfm3` (`Lfm3ChatTemplate.cs`; experimental) is a C# port of the text sections of the `chat_template.jinja` of `LiquidAI/LFM3-1.7B` at commit `40ebe0aa6662c9d40389c2f5d565b6a2c6aebacd`, by Liquid AI, Inc., licensed under the LFM Open License v1.0 (https://huggingface.co/LiquidAI/LFM3-1.7B/blob/40ebe0aa6662c9d40389c2f5d565b6a2c6aebacd/LICENSE). The license conditions commercial use on the user's legal entity staying below 10 million USD annual revenue (section 5). The file carries a modification notice. The package ships the full license text as its license file (`LICENSE.txt`, acceptance required on install) and its own `THIRD-PARTY-NOTICES.md`. The LFM3 weights and tokenizer are not redistributed by the package.
 
 ## Qwen3.5-0.8B chat template and transformers (ported source)
 

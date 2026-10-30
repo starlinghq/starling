@@ -10,8 +10,8 @@ Model request #217. Plan section 7, pipeline stage 1. Facts were read from the H
 | Requested by / demand evidence | #217. Released 2026-10-27; 6,311 downloads and 155 likes on the first day. The card reports LiveClaw 45.6 (Qwen3.5-4B 19.9, Qwen3.5-9B 35.8), relevant to the tool-calling gap in #181. |
 | Proposed owner | Unassigned |
 | Proposed maturity at first release | Experimental |
-| Decision | **Pending maintainer decision** (license, below). Development work in the same pull request is Experimental and source only; nothing is registered or published. |
-| Decided by and date | |
+| Decision | Admitted at maturity Experimental, to be published on nuget.org with the LFM Open License v1.0 as the package's license file and license acceptance required on install (`Starlings.Models.Lfm3`, `LICENSE.txt`); the revenue condition opens the package description and README. Registry profile `lfm3-1.7b/onnx-fp32-cpu`. |
+| Decided by and date | The maintainer, 2026-10-30: "make sure that license is attached and prominent in the NuGet package for that model" |
 
 ## Rights (hard blockers)
 
@@ -23,7 +23,7 @@ Model request #217. Plan section 7, pipeline stage 1. Facts were read from the H
 | Chat template | Same repository, same license | Ported to C# (`Lfm3ChatTemplate.cs`), recorded in `ai-dotnet/THIRD-PARTY-NOTICES.md` and `ai-dotnet/PROVENANCE.md`. |
 | Evaluation data | `corpora/five-models/chat.jsonl` (existing) and `corpora/lfm3/chat.jsonl` (written for this admission) | Repository content. |
 
-Decision needed: whether a model whose license limits commercial use by revenue can be offered by Starling at all, and if so how the package states it. The EmbeddingGemma 2 precedent repeats the upstream policy sentence in the README and the asset notice; the same is drafted here (`Starlings.Models.Lfm3` README, "License").
+Decided 2026-10-30: Starling offers the model, and the package states the condition where a user meets it first. The license text is the package's license file (NuGet shows it and asks for acceptance on install). The revenue condition opens the package description and the README. The ported template is named as a derivative work under that license. This goes further than the EmbeddingGemma 2 precedent, which repeats the upstream policy sentence in the README and the asset notice.
 
 ## Score
 
@@ -64,7 +64,6 @@ fp32: 7.2 GB of weights; about 7.5 GB resident on CPU; attention caches 44 KB pe
 
 ## Open risks
 
-- The license decision above.
 - The export's fidelity to the checkpoint is unmeasured until `run_lfm3.py reference` runs.
 - The convolution caches make prefix reuse (#161) a hybrid-family problem, as for Qwen3.5 (`docs/plan/prefix-state-reuse.md`).
 - One-day-old upstream: revisions may move quickly; everything is pinned by full SHA.

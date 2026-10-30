@@ -31,7 +31,7 @@ all_packages=(
     Starlings.Models.EmbeddingGemma2.Video.FFmpeg9 Starlings.Generation.Abstractions Starlings.Generation.OnnxGenAI
     Starlings.Models.Qwen35 Starlings.Models.Qwen35.OnnxGenAI Starlings.Models.Qwen35.Extensions.AI Starlings.Models.Kev
     Starlings.Models.Kev.Onnx Starlings.Models.QwenChat Starlings.Models.QwenChat.OnnxGenAI Starlings.Models.Bert
-    Starlings.Models.Whisper
+    Starlings.Models.Whisper Starlings.Models.Lfm3
 )
 # AOT unsupported with the reason in docs/evidence/aot/README.md (Microsoft.ML builds its row getters with
 # Reflection.Emit): a failure there is the recorded status and does not fail the check.
