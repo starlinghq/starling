@@ -8,6 +8,11 @@ Platform (OS, architecture) by runtime and execution provider by profile. A cell
 
 | Profile | Runtime version | Maturity | linux-x64 cpu | linux-x64 cuda | linux-x64 wasm chromium-153 | linux-x64 wasm firefox | linux-x64 webgpu chromium-153 | linux-x64 webgpu firefox | macos-arm64 wasm safari | macos-arm64 webgpu safari | windows-x64 cpu | windows-x64 cuda | windows-x64 wasm chromium | windows-x64 webgpu chromium |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| all-minilm-l6-v2/onnx-fp32-cpu | 1.30.0 | experimental | experimental | unrecorded | unrecorded | unrecorded | unrecorded | unrecorded | unrecorded | unrecorded | untested | unrecorded | unrecorded | unrecorded |
+| bge-base-en-v1.5/onnx-fp32-cpu | 1.30.0 | experimental | experimental | unrecorded | unrecorded | unrecorded | unrecorded | unrecorded | unrecorded | unrecorded | untested | unrecorded | unrecorded | unrecorded |
+| bge-m3/onnx-fp32-cpu | 1.30.0 | experimental | experimental | unrecorded | unrecorded | unrecorded | unrecorded | unrecorded | unrecorded | unrecorded | untested | unrecorded | unrecorded | unrecorded |
+| bge-reranker-v2-m3/onnx-fp32-cpu | 1.30.0 | experimental | experimental | unrecorded | unrecorded | unrecorded | unrecorded | unrecorded | unrecorded | unrecorded | untested | unrecorded | unrecorded | unrecorded |
+| bge-small-en-v1.5/onnx-fp32-cpu | 1.30.0 | experimental | experimental | unrecorded | unrecorded | unrecorded | unrecorded | unrecorded | unrecorded | unrecorded | untested | unrecorded | unrecorded | unrecorded |
 | embeddinggemma-2/image-fp32-cpu | 1.30.0 | stable | supported (2026-10-16) | unrecorded | unrecorded | unrecorded | unrecorded | unrecorded | unrecorded | unrecorded | untested | unrecorded | unrecorded | unrecorded |
 | embeddinggemma-2/image-fp32-cuda | 1.30.0 | stable | unrecorded | supported (2026-10-16) | unrecorded | unrecorded | unrecorded | unrecorded | unrecorded | unrecorded | unrecorded | untested | unrecorded | unrecorded |
 | embeddinggemma-2/onnx-fp32-cpu | 1.30.0 | stable | supported (2026-10-15) | unrecorded | unrecorded | unrecorded | unrecorded | unrecorded | unrecorded | unrecorded | experimental (2026-10-15) | unrecorded | unrecorded | unrecorded |
@@ -20,8 +25,10 @@ Platform (OS, architecture) by runtime and execution provider by profile. A cell
 | kev-0.8b/onnx-fp32-cuda | 1.30.0 | experimental | unrecorded | experimental (2026-10-17) | unrecorded | unrecorded | unrecorded | unrecorded | unrecorded | unrecorded | unrecorded | untested | unrecorded | unrecorded |
 | kev-4b/onnx-fp32-cpu | 1.30.0 | experimental | experimental (2026-10-16) | experimental (2026-10-17) | unrecorded | unrecorded | unrecorded | unrecorded | unrecorded | unrecorded | untested | unrecorded | unrecorded | unrecorded |
 | kev-4b/onnx-fp32-cuda | 1.30.0 | experimental | unrecorded | experimental (2026-10-17) | unrecorded | unrecorded | unrecorded | unrecorded | unrecorded | unrecorded | unrecorded | untested | unrecorded | unrecorded |
+| ms-marco-minilm-l6-v2/onnx-fp32-cpu | 1.30.0 | experimental | experimental | unrecorded | unrecorded | unrecorded | unrecorded | unrecorded | unrecorded | unrecorded | untested | unrecorded | unrecorded | unrecorded |
 | multilingual-e5-small/onnx-fp32-cpu | 1.30.0 | stable | supported (2026-10-15) | unrecorded | unrecorded | unrecorded | unrecorded | unrecorded | unrecorded | unrecorded | experimental (2026-10-15) | unrecorded | unrecorded | unrecorded |
 | multilingual-e5-small/onnx-fp32-cuda | 1.30.0 | stable | unrecorded | supported (2026-10-16) | unrecorded | unrecorded | unrecorded | unrecorded | unrecorded | unrecorded | unrecorded | untested | unrecorded | unrecorded |
+| nomic-embed-text-v1.5/onnx-fp32-cpu | 1.30.0 | experimental | experimental | unrecorded | unrecorded | unrecorded | unrecorded | unrecorded | unrecorded | unrecorded | untested | unrecorded | unrecorded | unrecorded |
 | whisper-large-v3-turbo/onnx-fp16-cpu | 1.30.0 | experimental | experimental (2026-10-23) | untested | unrecorded | unrecorded | unrecorded | unrecorded | unrecorded | unrecorded | untested | unrecorded | unrecorded | unrecorded |
 
 ## onnxruntime-genai

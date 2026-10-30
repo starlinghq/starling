@@ -1,0 +1,183 @@
+# BERT route (Starlings.Models.Bert): BAAI/bge-base-en-v1.5 on ONNX Runtime 1.30.0, fp32 on the CPU provider. Candidate
+# contract: model-pipeline/candidates/bge-base/profile.json (onboarding route bert-onnx-cpu-v1,
+# recipes/bge-base-cpu.yaml), admitted to the route in #121; BertModelProfile.BuiltIn("bge-base") embeds the same
+# file. Registry manifest added at Experimental in the ai-dotnet 0.4.0 release candidate at the maintainer's request, so
+# the package README states its maturity. No admission record exists for the BERT route; the references are proposed,
+# not adopted into protected/, and no gate has run.
+schema_version: 1
+id: bge-base-en-v1.5/onnx-fp32-cpu
+# Experimental: development parity on the onboarding route only (proposed references, predeclared candidate policy); no gate ran.
+maturity: experimental
+
+origin:
+  code:
+    # No separate inference code is pinned: the C# package reimplements the pipeline (tokenization, pooling,
+    # normalization) from this repository's configuration at the same commit.
+    url: https://huggingface.co/BAAI/bge-base-en-v1.5
+    revision: "a5beb1e3e68b9ab74eb54cfd186867f64f240e1a"
+  weights:
+    url: https://huggingface.co/BAAI/bge-base-en-v1.5
+    revision: "a5beb1e3e68b9ab74eb54cfd186867f64f240e1a"
+  files:
+    # BAAI/bge-base-en-v1.5 at the pinned commit (candidates/bge-base/profile.json, origin.files), verified on download.
+    - path: 1_Pooling/config.json
+      sha256: "c9bef85e8bbf4b2eab4941b3fb62bd33f88686748b478f2e264d256472d9643b"
+      size: 190
+    - path: README.md
+      sha256: "fd29e6117a8c2bc83f8eafb73f261d35341702dcd95c9cc0b34f5be75afa8231"
+      size: 94551
+    - path: config.json
+      sha256: "bc00af31a4a31b74040d73370aa83b62da34c90b75eb77bfa7db039d90abd591"
+      size: 777
+    - path: config_sentence_transformers.json
+      sha256: "940d5f50db195fa6e5e6a4f122c095f77880de259d74b14a65779ed48bdd7c56"
+      size: 124
+    - path: model.safetensors
+      sha256: "c7c1988aae201f80cf91a5dbbd5866409503b89dcaba877ca6dba7dd0a5167d7"
+      size: 437955512
+    - path: modules.json
+      sha256: "84e40c8e006c9b1d6c122e02cba9b02458120b5fb0c87b746c41e0207cf642cf"
+      size: 349
+    - path: onnx/model.onnx
+      sha256: "9bc579acdba21c253c62a9bf866891355a63ffa3442b52c8a37d75b2ccb91848"
+      size: 435811539
+    - path: sentence_bert_config.json
+      sha256: "84e39fda68ccbff05bfa723ae9c0e70e23e2ec373b76e0f8c6e71af72a693cbf"
+      size: 52
+    - path: special_tokens_map.json
+      sha256: "b6d346be366a7d1d48332dbc9fdf3bf8960b5d879522b7799ddba59e76237ee3"
+      size: 125
+    - path: tokenizer.json
+      sha256: "d241a60d5e8f04cc1b2b3e9ef7a4921b27bf526d9f6050ab90f9267a1f9e5c66"
+      size: 711396
+    - path: tokenizer_config.json
+      sha256: "9261e7d79b44c8195c1cada2b453e55b00aeb81e907a6664974b4d7776172ab3"
+      size: 366
+    - path: vocab.txt
+      sha256: "07eced375cec144d27c900241f3e339478dec958f92fddbc551f295c992038a3"
+      size: 231508
+  attribution: >-
+    bge-base-en-v1.5 by BAAI (BAAI/bge-base-en-v1.5, MIT).
+
+rights:
+  code_license: MIT OR Apache-2.0
+  weights_license: MIT
+  tokenizer_terms: MIT
+  redistribution: download
+  notes: >-
+    Weights and tokenizer: MIT (license: mit in the model card front matter at the pinned commit). code_license is this repository's (the C# package
+    reimplements the pipeline; no upstream source is copied). Nothing is bundled in the package: the application
+    downloads the pinned files explicitly (ModelAssetStore.DownloadAsync(profile.RuntimeLock)) from the public upstream repository, verified by size and SHA-256.
+
+behavior:
+  tasks: [embedding]
+  # Including special tokens and the prompt (BertModelProfile.MaxTokens).
+  max_input_tokens: 512
+  offsets_unit: none
+  # Longest-first truncation by the pinned tokenizer (candidate behavior.truncation longest_first): a single text loses its
+  # right end.
+  truncation: truncate-right
+  defaults:
+    pooling: cls
+    normalize: l2
+    dimension: 768
+    prompts: "none = '', query = 'Represent this sentence for searching relevant passages: '; never applied implicitly"
+    truncation: right, special tokens and the prompt included
+    batching: right padding with mask 0, maxBatchSize rows per call (default 32); maxBatchTokens and sortByLength opt-in (experimental)
+    threads: two intra-op, one inter-op (Create threads argument)
+  unsupported:
+    - "GPU execution providers (CUDA, DirectML, CoreML)"
+    - "fp16, bf16 and quantized graphs"
+    - "streaming"
+    - "training and fine-tuning"
+    - "Microsoft.Extensions.AI and ML.NET adapters"
+
+processing:
+  tokenizer:
+    # The owned tokenizer pinned in ai-dotnet/Directory.Packages.props; ONNX Runtime receives ids only.
+    package: Starlings.Tokenizers
+    version: 0.3.2
+    profile_id: bert-wordpiece-uncased
+    algorithm: wordpiece
+    assets:
+      - path: tokenizer.json
+        sha256: "d241a60d5e8f04cc1b2b3e9ef7a4921b27bf526d9f6050ab90f9267a1f9e5c66"
+        size: 711396
+    backend_tokenizer_dependency: false
+
+execution:
+  backend:
+    name: onnxruntime
+    version: 1.30.0
+    binding: Microsoft.ML.OnnxRuntime
+  precision: fp32
+  variant: reference
+  graph:
+    # BertModelProfile.RuntimeLock: these graph files and tokenizer.json at the pinned revision.
+    assets:
+      - path: onnx/model.onnx
+        sha256: "9bc579acdba21c253c62a9bf866891355a63ffa3442b52c8a37d75b2ccb91848"
+        size: 435811539
+    inputs:
+      - { name: input_ids, type: int64, shape: [batch, sequence] }
+      - { name: attention_mask, type: int64, shape: [batch, sequence] }
+      - { name: token_type_ids, type: int64, shape: [batch, sequence] }
+    outputs:
+      - { name: last_hidden_state, type: float32, shape: [batch, sequence, 768] }
+
+capabilities:
+  # Starlings.Models.Bert (BertCapabilities). Experimental where the onboarding route compared the C# package with the
+  # framework reference on the proposed corpus (no adopted reference, no gate); unsupported where the package does not
+  # offer it; untested where no evidence exists.
+  batch: experimental
+  streaming: unsupported
+  cancellation: experimental  # between batch chunks and at ONNX Runtime graph-node boundaries
+  persistence: unsupported
+  training: unsupported
+  aot: untested
+  extensions_ai: unsupported
+  mlnet: unsupported
+  text: experimental
+  batch_token_budget: experimental  # maxBatchTokens, off by default
+  batch_sort_by_length: experimental  # sortByLength, off by default
+  asset_verification_offline: experimental
+  built_in_profile: experimental  # BertModelProfile.BuiltIn("bge-base")
+  gpu: unsupported
+  query_instruction: experimental  # Embed(text, "query")
+
+compatibility:
+  # Linux x64 CPU: development evidence from the onboarding route (#121). No gate.
+  - os: linux
+    arch: x64
+    provider: cpu
+    status: experimental
+  - os: windows
+    arch: x64
+    provider: cpu
+    status: untested
+
+qualification:
+  reference_runner: model-pipeline/reference/bert/run_bert.py
+  # No protected fixtures exist for this profile: the proposed corpus the recipe runs (recipes/bge-base-cpu.yaml).
+  fixtures: model-pipeline/corpora/five-models/embeddings.jsonl
+  # No protected tolerances: the predeclared candidate policy (evaluation.policy, status proposed). Adoption into
+  # protected/ is a separate change.
+  tolerances: model-pipeline/candidates/bge-base/profile.json
+  gates:
+    G0: { status: not-run }
+    G1: { status: not-run }
+    G2: { status: not-run }
+    G3: { status: not-run }
+    G4: { status: not-run }
+    G5: { status: not-run }
+    G6: { status: not-run }
+    G7: { status: not-run }
+
+maintenance:
+  owner: Mark
+  latest_verified_upstream_revision: "a5beb1e3e68b9ab74eb54cfd186867f64f240e1a"
+  review_date: 2027-01-23
+  known_issues:
+    - >-
+      The references are proposed, not adopted into protected/, and no gate has run; every capability is at most
+      experimental.

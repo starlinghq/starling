@@ -15,7 +15,7 @@
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <!-- Follows the repository version, like the other samples (set it to the version you consume from nuget.org). -->
-    <StarlingsVersion>0.3.0</StarlingsVersion>
+    <StarlingsVersion>0.4.0</StarlingsVersion>
   </PropertyGroup>
 
   <ItemGroup>

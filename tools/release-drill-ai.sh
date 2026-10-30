@@ -10,13 +10,14 @@
 #      Models.Qwen35, Models.Qwen35.OnnxGenAI, Models.EmbeddingGemma2, Models.EmbeddingGemma2.Extensions.AI,
 #      Models.EmbeddingGemma2.MLNet, Models.EmbeddingGemma2.Imaging.SkiaSharp, Models.EmbeddingGemma2.Video.FFmpeg,
 #      Models.EmbeddingGemma2.Video.FFmpeg9, Models.Qwen35.Extensions.AI, Models.Kev, Models.Kev.Onnx, Models.QwenChat,
-#      Models.QwenChat.OnnxGenAI), locked restore, empty private NuGet cache,
+#      Models.QwenChat.OnnxGenAI, Models.Bert), locked restore, empty private NuGet cache,
 #   2. inspects every nuspec (version, MIT OR Apache-2.0, readme, repository commit, exact dependency list: no native ONNX Runtime or
 #      ONNX Runtime GenAI, no Microsoft.ML.Tokenizers, no FFmpeg bindings package), the packed files (no
 #      model assets, no FFmpeg library) and the symbol packages
 #      (SourceLink to the commit),
 #   3. pushes them to a local folder feed only (never nuget.org),
-#   4. copies the samples (ai-dotnet/samples/E5Search, Gliner2Ner, QwenChat, EmbeddingGemma2Search) and a checker (tools/release-drill/ai-consumer) to a temporary
+#   4. copies the samples (ai-dotnet/samples/E5Search, Gliner2Ner, QwenChat, EmbeddingGemma2Search) and the checkers (tools/release-drill/ai-consumer,
+#      bert-consumer: the built-in BERT profiles from the package alone, offline) to a temporary
 #      directory outside the repository, whose NuGet.config knows only that feed (Starlings.*) and nuget.org
 #      (Starlings.Tokenizers, ONNX Runtime, Microsoft.Extensions.*), with no fallback folders and an isolated empty package cache,
 #   5. proves the restore graph holds only packages (no project references), that the Starlings packages are
@@ -347,6 +348,7 @@ projects=(
     ai-dotnet/src/Starlings.Models.Kev.Onnx
     ai-dotnet/src/Starlings.Models.QwenChat
     ai-dotnet/src/Starlings.Models.QwenChat.OnnxGenAI
+    ai-dotnet/src/Starlings.Models.Bert
 )
 pack_sha="$sha"
 if [[ -z "$packages_from" ]]; then
@@ -363,7 +365,7 @@ else
     done
     pack_sha="$(unzip -p "$pack/Starlings.Models.E5.$ai_version.nupkg" Starlings.Models.E5.nuspec | sed -n 's:.*<repository [^>]*commit="\([0-9a-f]*\)".*:\1:p')"
     git -C "$src" cat-file -e "$pack_sha^{commit}" 2>/dev/null || fail "--packages-from: packed commit $pack_sha is not in the history of $sha"
-    packed_paths=(ai-dotnet/src model-pipeline/routes ai-dotnet/Directory.Build.props ai-dotnet/Directory.Build.targets ai-dotnet/Directory.Packages.props Directory.Build.props .editorconfig global.json LICENSE-APACHE LICENSE-MIT)
+    packed_paths=(ai-dotnet/src model-pipeline/routes model-pipeline/candidates ai-dotnet/Directory.Build.props ai-dotnet/Directory.Build.targets ai-dotnet/Directory.Packages.props Directory.Build.props .editorconfig global.json LICENSE-APACHE LICENSE-MIT)
     if ! git -C "$src" diff --quiet "$pack_sha" "$sha" -- "${packed_paths[@]}"; then
         git -C "$src" diff --stat "$pack_sha" "$sha" -- "${packed_paths[@]}"
         fail "--packages-from: the packages were built from $pack_sha, which differs from $sha in packed sources"
@@ -457,6 +459,11 @@ expect_deps() {
             echo "Starlings.Generation.OnnxGenAI [$ai_version]"
             echo "Starlings.Models.QwenChat [$ai_version]"
             echo "Starlings.Tokenizers [$tok_version]" ;;
+        Starlings.Models.Bert)
+            echo "Starlings.Acquisition [$ai_version]"
+            echo "Starlings.Models.Abstractions [$ai_version]"
+            echo "Starlings.Runtime.Onnx [$ai_version]"
+            echo "Starlings.Tokenizers [$tok_version]" ;;
     esac
 }
 for proj in "${projects[@]}"; do
@@ -523,7 +530,7 @@ ls "$feed"
 
 step "6. Clean consumers outside the repository"
 apps="$work/apps"
-mkdir -p "$apps/E5Search" "$apps/Gliner2Ner" "$apps/QwenChat" "$apps/EmbeddingGemma2Search" "$apps/EmbeddingGemma2SearchFFmpeg9" "$apps/AiConsumer" "$apps/MlNetConsumer" "$work/fixtures"
+mkdir -p "$apps/E5Search" "$apps/Gliner2Ner" "$apps/QwenChat" "$apps/EmbeddingGemma2Search" "$apps/EmbeddingGemma2SearchFFmpeg9" "$apps/AiConsumer" "$apps/MlNetConsumer" "$apps/BertConsumer" "$work/fixtures"
 # Only the sample's sources and project file; nothing above it (its Directory.Build.* files exist only to stop
 # repository imports inside the checkout).
 cp "$src/ai-dotnet/samples/E5Search/Program.cs" "$src/ai-dotnet/samples/E5Search/E5Search.csproj" "$apps/E5Search/"
@@ -534,6 +541,8 @@ cp "$src/tools/release-drill/ai-consumer/Program.cs" "$apps/AiConsumer/"
 sed "s/@VERSION@/$ai_version/" "$src/tools/release-drill/ai-consumer/AiConsumer.csproj.in" >"$apps/AiConsumer/AiConsumer.csproj"
 cp "$src/tools/release-drill/mlnet-consumer/Program.cs" "$apps/MlNetConsumer/"
 sed "s/@VERSION@/$ai_version/" "$src/tools/release-drill/mlnet-consumer/MlNetConsumer.csproj.in" >"$apps/MlNetConsumer/MlNetConsumer.csproj"
+cp "$src/tools/release-drill/bert-consumer/Program.cs" "$apps/BertConsumer/"
+sed "s/@VERSION@/$ai_version/" "$src/tools/release-drill/bert-consumer/BertConsumer.csproj.in" >"$apps/BertConsumer/BertConsumer.csproj"
 cp "$src/$fixtures_rel/embeddings.jsonl" "$src/$fixtures_rel/tokenizer.jsonl" "$work/fixtures/"
 # The sample on the FFmpeg 9 adapter: the same code with the package id and namespace of Starlings.Models.EmbeddingGemma2.Video.FFmpeg9.
 sed 's|using Starlings.Models.EmbeddingGemma2.Video.FFmpeg;|using Starlings.Models.EmbeddingGemma2.Video.FFmpeg9;|' \
@@ -543,7 +552,7 @@ sed 's|<PackageReference Include="Starlings.Models.EmbeddingGemma2.Video.FFmpeg"
 grep -q '^using Starlings.Models.EmbeddingGemma2.Video.FFmpeg9;$' "$apps/EmbeddingGemma2SearchFFmpeg9/Program.cs" \
     && grep -q '<PackageReference Include="Starlings.Models.EmbeddingGemma2.Video.FFmpeg9" ' "$apps/EmbeddingGemma2SearchFFmpeg9/EmbeddingGemma2SearchFFmpeg9.csproj" \
     || fail "EmbeddingGemma2SearchFFmpeg9: could not swap the FFmpeg 8 adapter for Starlings.Models.EmbeddingGemma2.Video.FFmpeg9"
-consumer_apps=(E5Search Gliner2Ner QwenChat EmbeddingGemma2Search EmbeddingGemma2SearchFFmpeg9 AiConsumer MlNetConsumer)
+consumer_apps=(E5Search Gliner2Ner QwenChat EmbeddingGemma2Search EmbeddingGemma2SearchFFmpeg9 AiConsumer MlNetConsumer BertConsumer)
 if [[ -n "$cuda_device" ]]; then
     # The CUDA consumers: the GPU native packages in place of the CPU ones, never both (two libonnxruntime.so copies).
     mkdir -p "$apps/CudaConsumer" "$apps/QwenChatCuda" "$apps/EmbeddingGemma2SearchCuda"
@@ -664,7 +673,12 @@ for path in sys.argv[5:]:
                         "SkiaSharp", "SkiaSharp.NativeAssets.Linux.NoDependencies", want_adapter] if app in eg2_search
                   else ["Starlings.Models.E5", "Starlings.Models.E5.MLNet", "Starlings.Models.EmbeddingGemma2",
                         "Starlings.Models.EmbeddingGemma2.MLNet", "Microsoft.ML"] if app == "MlNetConsumer"
+                  else ["Starlings.Models.Bert"] if app == "BertConsumer"
                   else ["Starlings.Models.E5", "Starlings.Models.E5.Extensions.AI"])
+    if app == "BertConsumer":
+        # Starlings.Models.Bert alone: its four sibling dependencies and the CPU natives, no other model package.
+        others = [n for n in names if n.startswith("Starlings.") and n.split("/")[0] not in common + models]
+        assert not others, f"BertConsumer restored other Starlings packages: {others}"
     if app == "AiConsumer":
         # The checker also consumes the ML.NET adapter: Microsoft.ML must come without any tokenizer package.
         models += ["Starlings.Models.E5.MLNet", "Microsoft.ML"]
@@ -780,8 +794,15 @@ eg2_sample=(dotnet "$apps/EmbeddingGemma2Search/bin/Release/net10.0/EmbeddingGem
 qwen_sample=(dotnet "$apps/QwenChat/bin/Release/net10.0/QwenChat.dll")
 checker=(dotnet "$apps/AiConsumer/bin/Release/net10.0/AiConsumer.dll")
 mlnet_checker=(dotnet "$apps/MlNetConsumer/bin/Release/net10.0/MlNetConsumer.dll")
+bert_checker=(dotnet "$apps/BertConsumer/bin/Release/net10.0/BertConsumer.dll")
 models="$work/models"
 mkdir -p "$models"
+
+# Every mode: the built-in BERT profiles from the packed package, offline (no model; the snapshot directory is empty).
+mkdir -p "$work/bert-empty"
+offline "${bert_checker[@]}" "$work/bert-empty" | tee "$work/consumer-bert.log" || fail "BERT checker failed"
+grep -qx 'RESULT: PASS' "$work/consumer-bert.log" || fail "BERT checker did not pass"
+echo "ok:   Starlings.Models.Bert: the seven built-in profiles parse from the package alone, offline; Create verifies before loading"
 
 if [[ "$cuda_only" == 1 ]]; then
     echo "note: --cuda-only: the CPU runs (steps 7 to 10 and 12) were skipped; the CPU consumers were restored and built"

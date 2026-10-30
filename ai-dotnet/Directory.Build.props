@@ -3,13 +3,13 @@
 
   <PropertyGroup>
     <!--
-      The ai-dotnet packages (the publishable set in docs/releases/ai-0.3.0.md and tools/release-drill-ai.sh) share one version and
+      The ai-dotnet packages (the publishable set in docs/releases/ai-0.4.0.md and tools/release-drill-ai.sh) share one version and
       release together from one commit (P-010). Scheme (docs/kickoff.md, "ai-dotnet package versions and maturity"): SemVer 2,
       0.MINOR.PATCH, with 0.MINOR.PATCH-preview.N for candidates before a release; a 0.x major keeps the API-stability signal
-      honest, and maturity (Experimental, Preview, Stable) is per model profile in each README, not a package label. The current
-      version is 0.3.0 (published 2026-10-19 from tag ai-v0.3.0); the next is set by its release-candidate change. A published version is immutable. The tokenizer keeps its own version and cadence; Directory.Packages.props pins it exactly.
+      honest, and maturity (Experimental, Preview, Stable) is per model profile in each README, not a package label. The last
+      published version is 0.3.0 (2026-10-19, tag ai-v0.3.0); this is the 0.4.0 release candidate. A published version is immutable. The tokenizer keeps its own version and cadence; Directory.Packages.props pins it exactly.
     -->
-    <VersionPrefix>0.3.0</VersionPrefix>
-    <PackageReleaseNotes>https://github.com/starlinghq/starling/blob/main/docs/releases/ai-0.3.0.md</PackageReleaseNotes>
+    <VersionPrefix>0.4.0</VersionPrefix>
+    <PackageReleaseNotes>https://github.com/starlinghq/starling/blob/main/docs/releases/ai-0.4.0.md</PackageReleaseNotes>
   </PropertyGroup>
 </Project>

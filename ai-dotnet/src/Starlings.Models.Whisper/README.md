@@ -24,6 +24,8 @@ Maturity is per profile, generated from the registry manifests by `model-pipelin
 
 ## Install
 
+Not published to nuget.org yet: the package is not in the 0.4.0 publishable set (`docs/releases/ai-0.4.0.md`, "Not published"), because it is not in the release drill's package set and its description lacks the per-profile maturity line. Build it from this repository (a `ProjectReference` to `ai-dotnet/src/Starlings.Models.Whisper/Starlings.Models.Whisper.csproj`). Once published:
+
 ```
 dotnet add package Starlings.Models.Whisper
 dotnet add package Microsoft.ML.OnnxRuntime     # CPU native runtime

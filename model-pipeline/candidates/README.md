@@ -1,6 +1,6 @@
 # Candidate contracts
 
-Each subdirectory holds one `profile.json`: a proposed contract for a model that is onboarded through a recipe ([`../recipes/README.md`](../recipes/README.md)). Only the Kev candidates also have registry manifests (`../registry/kev-0.8b/`, `../registry/kev-4b/`, Experimental); the others have none. A candidate pins the exact source files, the runtime, the behavior the route implements and the development comparison policy. It is not a support claim and grants no gate or maturity. Registry profiles are under [`../registry/`](../registry/README.md).
+Each subdirectory holds one `profile.json`: a proposed contract for a model that is onboarded through a recipe ([`../recipes/README.md`](../recipes/README.md)). The Kev, Qwen chat and BERT-route candidates also have registry manifests under `../registry/` (Experimental; the BERT ones since the ai-dotnet 0.4.0 release candidate, so `Starlings.Models.Bert` can state per-profile maturity); Whisper has none. A candidate pins the exact source files, the runtime, the behavior the route implements and the development comparison policy. It is not a support claim and grants no gate or maturity. Registry profiles are under [`../registry/`](../registry/README.md).
 
 Format: [`../schemas/onboarding-candidate.schema.json`](../schemas/onboarding-candidate.schema.json).
 

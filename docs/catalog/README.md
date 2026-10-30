@@ -12,6 +12,11 @@ Gate cells link to the evidence the manifest records. The Stable readiness colum
 
 | Profile | Task | Maturity | Owner | Review date | G0 | G1 | G2 | G3 | G4 | G5 | G6 | G7 | Stable readiness |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| [all-minilm-l6-v2/onnx-fp32-cpu](../../model-pipeline/registry/all-minilm-l6-v2/onnx-fp32-cpu/manifest.yaml) | embedding | experimental | Mark | 2027-01-23 | not-run | not-run | not-run | not-run | not-run | not-run | not-run | not-run | gates not passed: G0, G1, G2, G3, G4, G5, G6, G7; untested: aot |
+| [bge-base-en-v1.5/onnx-fp32-cpu](../../model-pipeline/registry/bge-base-en-v1.5/onnx-fp32-cpu/manifest.yaml) | embedding | experimental | Mark | 2027-01-23 | not-run | not-run | not-run | not-run | not-run | not-run | not-run | not-run | gates not passed: G0, G1, G2, G3, G4, G5, G6, G7; untested: aot |
+| [bge-m3/onnx-fp32-cpu](../../model-pipeline/registry/bge-m3/onnx-fp32-cpu/manifest.yaml) | embedding | experimental | Mark | 2027-01-23 | not-run | not-run | not-run | not-run | not-run | not-run | not-run | not-run | gates not passed: G0, G1, G2, G3, G4, G5, G6, G7; untested: aot |
+| [bge-reranker-v2-m3/onnx-fp32-cpu](../../model-pipeline/registry/bge-reranker-v2-m3/onnx-fp32-cpu/manifest.yaml) | reranking | experimental | Mark | 2027-01-23 | not-run | not-run | not-run | not-run | not-run | not-run | not-run | not-run | gates not passed: G0, G1, G2, G3, G4, G5, G6, G7; untested: aot |
+| [bge-small-en-v1.5/onnx-fp32-cpu](../../model-pipeline/registry/bge-small-en-v1.5/onnx-fp32-cpu/manifest.yaml) | embedding | experimental | Mark | 2027-01-23 | not-run | not-run | not-run | not-run | not-run | not-run | not-run | not-run | gates not passed: G0, G1, G2, G3, G4, G5, G6, G7; untested: aot |
 | [embeddinggemma-2/image-fp32-cpu](../../model-pipeline/registry/embeddinggemma-2/image-fp32-cpu/manifest.yaml) | image-embedding | stable | Mark | 2027-01-05 | [passed](../evidence/g0-provenance-2026-10-14/README.md) | [passed](../evidence/release-set-gates-2026-10-14/embeddinggemma2-image-fp32-cpu/README.md) | [passed](../evidence/release-set-gates-2026-10-14/embeddinggemma2-image-fp32-cpu/README.md) | [passed](../evidence/release-set-gates-2026-10-14/embeddinggemma2-image-fp32-cpu/README.md) | [passed](../evidence/qualification-2026-10-15/README.md) | [passed](../evidence/qualification-2026-10-15/README.md) | [passed](../evidence/g6-distribution-2026-10-14/README.md) | [passed](../evidence/g7-integration-2026-10-14/README.md) | stable: meets the validator's Stable rules |
 | [embeddinggemma-2/image-fp32-cuda](../../model-pipeline/registry/embeddinggemma-2/image-fp32-cuda/manifest.yaml) | image-embedding | stable | Mark | 2027-01-05 | [passed](../evidence/g0-provenance-2026-10-14/README.md) | [passed](../evidence/release-set-gates-2026-10-14/embeddinggemma2-image-fp32-cuda/README.md) | [passed](../evidence/release-set-gates-2026-10-14/embeddinggemma2-image-fp32-cuda/README.md) | [passed](../evidence/release-set-gates-2026-10-14/embeddinggemma2-image-fp32-cuda/README.md) | [passed](../evidence/qualification-2026-10-16-cuda/README.md) | [passed](../evidence/qualification-2026-10-16-cuda/README.md) | [passed](../evidence/g6-distribution-2026-10-14/README.md) | [passed](../evidence/g7-integration-2026-10-14/README.md) | stable: meets the validator's Stable rules |
 | [embeddinggemma-2/onnx-fp32-cpu](../../model-pipeline/registry/embeddinggemma-2/onnx-fp32-cpu/manifest.yaml) | embedding | stable | Mark | 2027-01-05 | [passed](../evidence/g0-provenance-2026-10-14/README.md) | [passed](../evidence/release-set-gates-2026-10-14/embeddinggemma2-onnx-fp32-cpu/README.md) | [passed](../evidence/release-set-gates-2026-10-14/embeddinggemma2-onnx-fp32-cpu/README.md) | [passed](../evidence/release-set-gates-2026-10-14/embeddinggemma2-onnx-fp32-cpu/README.md) | [passed](../evidence/g4-soak-1h-2026-10-14/README.md) | [passed](../evidence/qualification-2026-10-15/README.md) | [passed](../evidence/g6-distribution-2026-10-14/README.md) | [passed](../evidence/g7-integration-2026-10-14/README.md) | stable: meets the validator's Stable rules |
@@ -24,12 +29,14 @@ Gate cells link to the evidence the manifest records. The Stable readiness colum
 | [kev-0.8b/onnx-fp32-cuda](../../model-pipeline/registry/kev-0.8b/onnx-fp32-cuda/manifest.yaml) | decision | experimental | Mark | 2027-01-05 | not-run | not-run | not-run | not-run | not-run | not-run | not-run | not-run | gates not passed: G0, G1, G2, G3, G4, G5, G6, G7; untested: aot, concurrent_calls_unserialized; promotion also awaits a green per-release GPU regression run |
 | [kev-4b/onnx-fp32-cpu](../../model-pipeline/registry/kev-4b/onnx-fp32-cpu/manifest.yaml) | decision | experimental | Mark | 2027-01-05 | not-run | not-run | not-run | not-run | not-run | not-run | not-run | not-run | gates not passed: G0, G1, G2, G3, G4, G5, G6, G7; untested: aot |
 | [kev-4b/onnx-fp32-cuda](../../model-pipeline/registry/kev-4b/onnx-fp32-cuda/manifest.yaml) | decision | experimental | Mark | 2027-01-05 | not-run | not-run | not-run | not-run | not-run | not-run | not-run | not-run | gates not passed: G0, G1, G2, G3, G4, G5, G6, G7; untested: aot, concurrent_calls_unserialized; promotion also awaits a green per-release GPU regression run |
+| [ms-marco-minilm-l6-v2/onnx-fp32-cpu](../../model-pipeline/registry/ms-marco-minilm-l6-v2/onnx-fp32-cpu/manifest.yaml) | reranking | experimental | Mark | 2027-01-23 | not-run | not-run | not-run | not-run | not-run | not-run | not-run | not-run | gates not passed: G0, G1, G2, G3, G4, G5, G6, G7; untested: aot |
 | [multilingual-e5-small/onnx-fp32-cpu](../../model-pipeline/registry/multilingual-e5-small/onnx-fp32-cpu/manifest.yaml) | embedding | stable | Mark | 2027-01-05 | [passed](../releases/e5-0.1.0-preview.1.md) | [passed](../evidence/release-set-gates-2026-10-14/e5-onnx-fp32-cpu/README.md) | [passed](../evidence/release-set-gates-2026-10-14/e5-onnx-fp32-cpu/README.md) | [passed](../evidence/release-set-gates-2026-10-14/e5-onnx-fp32-cpu/README.md) | [passed](../evidence/g4-soak-1h-2026-10-14/README.md) | [passed](../evidence/qualification-2026-10-15/README.md) | [passed](../evidence/g6-distribution-2026-10-14/README.md) | [passed](../evidence/g7-integration-2026-10-14/README.md) | stable: meets the validator's Stable rules |
 | [multilingual-e5-small/onnx-fp32-cuda](../../model-pipeline/registry/multilingual-e5-small/onnx-fp32-cuda/manifest.yaml) | embedding | stable | Mark | 2027-01-05 | [passed](../evidence/g0-provenance-2026-10-14/README.md) | [passed](../evidence/release-set-gates-2026-10-14/e5-onnx-fp32-cuda/README.md) | [passed](../evidence/release-set-gates-2026-10-14/e5-onnx-fp32-cuda/README.md) | [passed](../evidence/release-set-gates-2026-10-14/e5-onnx-fp32-cuda/README.md) | [passed](../evidence/qualification-2026-10-16-cuda/README.md) | [passed](../evidence/qualification-2026-10-16-cuda/README.md) | [passed](../evidence/g6-distribution-2026-10-14/README.md) | [passed](../evidence/g7-integration-2026-10-14/README.md) | stable: meets the validator's Stable rules |
 | [multilingual-e5-small/onnx-fp32-wasm](../../model-pipeline/registry/multilingual-e5-small/onnx-fp32-wasm/manifest.yaml) | embedding | experimental | Mark | 2027-01-23 | not-run | [passed](../evidence/browser-e5-package-2026-10-23/gates/README.md) | [passed](../evidence/browser-e5-package-2026-10-23/gates/README.md) | not-run | not-run | not-run | not-run | not-run | gates not passed: G0, G3, G4, G5, G6, G7; untested: cache_storage, proxy_worker, single_thread_without_isolation; promotion also awaits a passing history of the qualification job 'browser' (WASM, headless Chromium) |
 | [multilingual-e5-small/onnx-fp32-webgpu](../../model-pipeline/registry/multilingual-e5-small/onnx-fp32-webgpu/manifest.yaml) | embedding | experimental | Mark | 2027-01-23 | not-run | [passed](../evidence/browser-e5-package-2026-10-23/gates/README.md) | [passed](../evidence/browser-e5-package-2026-10-23/gates/README.md) | not-run | not-run | not-run | not-run | not-run | gates not passed: G0, G3, G4, G5, G6, G7; untested: cache_storage, proxy_worker, single_thread_without_isolation, wasm_interpreter; promotion also awaits a passing history of the qualification job 'browser' (WASM, headless Chromium) |
 | [multilingual-e5-small/onnx-int8embed-wasm](../../model-pipeline/registry/multilingual-e5-small/onnx-int8embed-wasm/manifest.yaml) | embedding | experimental | Mark | 2027-01-23 | not-run | [passed](../evidence/browser-e5-package-2026-10-23/gates/README.md) | [passed](../evidence/browser-e5-package-2026-10-23/gates/README.md) | not-run | not-run | not-run | not-run | not-run | gates not passed: G0, G3, G4, G5, G6, G7; promotion also awaits a passing history of the qualification job 'browser' (WASM, headless Chromium) |
 | [multilingual-e5-small/onnx-int8embed-webgpu](../../model-pipeline/registry/multilingual-e5-small/onnx-int8embed-webgpu/manifest.yaml) | embedding | experimental | Mark | 2027-01-23 | not-run | [passed](../evidence/browser-e5-package-2026-10-23/gates/README.md) | [passed](../evidence/browser-e5-package-2026-10-23/gates/README.md) | not-run | not-run | not-run | not-run | not-run | gates not passed: G0, G3, G4, G5, G6, G7; untested: cache_storage, proxy_worker, single_thread_without_isolation, wasm_interpreter; promotion also awaits a passing history of the qualification job 'browser' (WASM, headless Chromium) |
+| [nomic-embed-text-v1.5/onnx-fp32-cpu](../../model-pipeline/registry/nomic-embed-text-v1.5/onnx-fp32-cpu/manifest.yaml) | embedding | experimental | Mark | 2027-01-23 | not-run | not-run | not-run | not-run | not-run | not-run | not-run | not-run | gates not passed: G0, G1, G2, G3, G4, G5, G6, G7; untested: aot |
 | [qwen2.5-0.5b-instruct/ortgenai-fp32-cpu](../../model-pipeline/registry/qwen2.5-0.5b-instruct/ortgenai-fp32-cpu/manifest.yaml) | generation | experimental | Mark | 2027-01-18 | not-run | not-run | not-run | not-run | not-run | not-run | not-run | not-run | gates not passed: G0, G1, G2, G3, G4, G5, G6, G7; untested: aot, concurrent_requests, long_context |
 | [qwen3-0.6b/ortgenai-fp32-cpu](../../model-pipeline/registry/qwen3-0.6b/ortgenai-fp32-cpu/manifest.yaml) | generation | experimental | Mark | 2027-01-18 | not-run | not-run | not-run | not-run | not-run | not-run | not-run | not-run | gates not passed: G0, G1, G2, G3, G4, G5, G6, G7; untested: aot, concurrent_requests, long_context |
 | [qwen3.5-0.8b/ortgenai-fp16x-cuda](../../model-pipeline/registry/qwen3.5-0.8b/ortgenai-fp16x-cuda/manifest.yaml) | generation | stable | Mark | 2027-01-05 | [passed](../evidence/g0-provenance-2026-10-14/README.md) | [passed](../evidence/release-set-gates-2026-10-14/qwen35-ortgenai-fp16x-cuda/README.md) | [passed](../evidence/release-set-gates-2026-10-14/qwen35-ortgenai-fp16x-cuda/README.md) | [passed](../evidence/release-set-gates-2026-10-14/qwen35-ortgenai-fp16x-cuda/README.md) | [passed](../evidence/qualification-2026-10-16-cuda/README.md) | [passed](../evidence/qualification-2026-10-16-cuda/README.md) | [passed](../evidence/g6-distribution-2026-10-14/README.md) | [passed](../evidence/g7-integration-2026-10-14/README.md) | stable: meets the validator's Stable rules |
@@ -41,6 +48,11 @@ Gate cells link to the evidence the manifest records. The Stable readiness colum
 
 | Profile | Runtime | Binding | Precision | Variant |
 | --- | --- | --- | --- | --- |
+| all-minilm-l6-v2/onnx-fp32-cpu | onnxruntime 1.30.0 | Microsoft.ML.OnnxRuntime | fp32 | reference |
+| bge-base-en-v1.5/onnx-fp32-cpu | onnxruntime 1.30.0 | Microsoft.ML.OnnxRuntime | fp32 | reference |
+| bge-m3/onnx-fp32-cpu | onnxruntime 1.30.0 | Microsoft.ML.OnnxRuntime | fp32 | reference |
+| bge-reranker-v2-m3/onnx-fp32-cpu | onnxruntime 1.30.0 | Microsoft.ML.OnnxRuntime | fp32 | reference |
+| bge-small-en-v1.5/onnx-fp32-cpu | onnxruntime 1.30.0 | Microsoft.ML.OnnxRuntime | fp32 | reference |
 | embeddinggemma-2/image-fp32-cpu | onnxruntime 1.30.0 | Microsoft.ML.OnnxRuntime | fp32 | reference |
 | embeddinggemma-2/image-fp32-cuda | onnxruntime 1.30.0 | Microsoft.ML.OnnxRuntime.Gpu.Linux 1.30.0 | fp32 | reference |
 | embeddinggemma-2/onnx-fp32-cpu | onnxruntime 1.30.0 | Microsoft.ML.OnnxRuntime | fp32 | reference |
@@ -53,12 +65,14 @@ Gate cells link to the evidence the manifest records. The Stable readiness colum
 | kev-0.8b/onnx-fp32-cuda | onnxruntime 1.30.0 | Microsoft.ML.OnnxRuntime.Gpu.Linux 1.30.0 | fp32 | reference |
 | kev-4b/onnx-fp32-cpu | onnxruntime 1.30.0 | Microsoft.ML.OnnxRuntime | fp32 | reference |
 | kev-4b/onnx-fp32-cuda | onnxruntime 1.30.0 | Microsoft.ML.OnnxRuntime.Gpu.Linux 1.30.0 | fp32 | reference |
+| ms-marco-minilm-l6-v2/onnx-fp32-cpu | onnxruntime 1.30.0 | Microsoft.ML.OnnxRuntime | fp32 | reference |
 | multilingual-e5-small/onnx-fp32-cpu | onnxruntime 1.30.0 | Microsoft.ML.OnnxRuntime | fp32 | reference |
 | multilingual-e5-small/onnx-fp32-cuda | onnxruntime 1.30.0 | Microsoft.ML.OnnxRuntime.Gpu 1.30.0 | fp32 | reference |
 | multilingual-e5-small/onnx-fp32-wasm | onnxruntime-web 1.30.0 | Starlings.Runtime.OnnxWeb | fp32 | reference |
 | multilingual-e5-small/onnx-fp32-webgpu | onnxruntime-web 1.30.0 | Starlings.Runtime.OnnxWeb.WebGpu | fp32 | reference |
 | multilingual-e5-small/onnx-int8embed-wasm | onnxruntime-web 1.30.0 | Starlings.Runtime.OnnxWeb | mixed | quantized |
 | multilingual-e5-small/onnx-int8embed-webgpu | onnxruntime-web 1.30.0 | Starlings.Runtime.OnnxWeb.WebGpu | mixed | quantized |
+| nomic-embed-text-v1.5/onnx-fp32-cpu | onnxruntime 1.30.0 | Microsoft.ML.OnnxRuntime | fp32 | reference |
 | qwen2.5-0.5b-instruct/ortgenai-fp32-cpu | onnxruntime-genai 0.17.1 | Microsoft.ML.OnnxRuntimeGenAI 0.17.1 | fp32 | reference |
 | qwen3-0.6b/ortgenai-fp32-cpu | onnxruntime-genai 0.17.1 | Microsoft.ML.OnnxRuntimeGenAI 0.17.1 | fp32 | reference |
 | qwen3.5-0.8b/ortgenai-fp16x-cuda | onnxruntime-genai 0.17.1 | Microsoft.ML.OnnxRuntimeGenAI.Cuda 0.17.1 | fp16 | reference |
@@ -69,6 +83,103 @@ Gate cells link to the evidence the manifest records. The Stable readiness colum
 ## Capabilities
 
 One table per family, one column per profile. Rows are every capability any profile of the family records; a profile that records no status for it shows `unrecorded`.
+
+### all-minilm-l6-v2
+
+| Capability | onnx-fp32-cpu |
+| --- | --- |
+| batch | experimental |
+| streaming | unsupported |
+| cancellation | experimental |
+| persistence | unsupported |
+| training | unsupported |
+| aot | untested |
+| extensions_ai | unsupported |
+| mlnet | unsupported |
+| asset_verification_offline | experimental |
+| batch_sort_by_length | experimental |
+| batch_token_budget | experimental |
+| built_in_profile | experimental |
+| gpu | unsupported |
+| text | experimental |
+
+### bge-base-en-v1.5
+
+| Capability | onnx-fp32-cpu |
+| --- | --- |
+| batch | experimental |
+| streaming | unsupported |
+| cancellation | experimental |
+| persistence | unsupported |
+| training | unsupported |
+| aot | untested |
+| extensions_ai | unsupported |
+| mlnet | unsupported |
+| asset_verification_offline | experimental |
+| batch_sort_by_length | experimental |
+| batch_token_budget | experimental |
+| built_in_profile | experimental |
+| gpu | unsupported |
+| query_instruction | experimental |
+| text | experimental |
+
+### bge-m3
+
+| Capability | onnx-fp32-cpu |
+| --- | --- |
+| batch | experimental |
+| streaming | unsupported |
+| cancellation | experimental |
+| persistence | unsupported |
+| training | unsupported |
+| aot | untested |
+| extensions_ai | unsupported |
+| mlnet | unsupported |
+| asset_verification_offline | experimental |
+| batch_sort_by_length | experimental |
+| batch_token_budget | experimental |
+| built_in_profile | experimental |
+| gpu | unsupported |
+| text | experimental |
+
+### bge-reranker-v2-m3
+
+| Capability | onnx-fp32-cpu |
+| --- | --- |
+| batch | experimental |
+| streaming | unsupported |
+| cancellation | experimental |
+| persistence | unsupported |
+| training | unsupported |
+| aot | untested |
+| extensions_ai | unsupported |
+| mlnet | unsupported |
+| asset_verification_offline | experimental |
+| batch_sort_by_length | experimental |
+| batch_token_budget | experimental |
+| built_in_profile | experimental |
+| gpu | unsupported |
+| text | experimental |
+
+### bge-small-en-v1.5
+
+| Capability | onnx-fp32-cpu |
+| --- | --- |
+| batch | experimental |
+| streaming | unsupported |
+| cancellation | experimental |
+| persistence | unsupported |
+| training | unsupported |
+| aot | untested |
+| extensions_ai | unsupported |
+| mlnet | unsupported |
+| asset_verification_offline | experimental |
+| batch_sort_by_length | experimental |
+| batch_token_budget | experimental |
+| built_in_profile | experimental |
+| gpu | unsupported |
+| query_instruction | experimental |
+| text | experimental |
 
 ### embeddinggemma-2
 
@@ -236,6 +347,25 @@ One table per family, one column per profile. Rows are every capability any prof
 | tf32 | unrecorded | unsupported |
 | usage_output_tokens | unsupported | unsupported |
 
+### ms-marco-minilm-l6-v2
+
+| Capability | onnx-fp32-cpu |
+| --- | --- |
+| batch | experimental |
+| streaming | unsupported |
+| cancellation | experimental |
+| persistence | unsupported |
+| training | unsupported |
+| aot | untested |
+| extensions_ai | unsupported |
+| mlnet | unsupported |
+| asset_verification_offline | experimental |
+| batch_sort_by_length | experimental |
+| batch_token_budget | experimental |
+| built_in_profile | experimental |
+| gpu | unsupported |
+| text | experimental |
+
 ### multilingual-e5-small
 
 | Capability | onnx-fp32-cpu | onnx-fp32-cuda | onnx-fp32-wasm | onnx-fp32-webgpu | onnx-int8embed-wasm | onnx-int8embed-webgpu |
@@ -257,6 +387,25 @@ One table per family, one column per profile. Rows are every capability any prof
 | tokenizer_owned | unrecorded | unrecorded | experimental | experimental | experimental | experimental |
 | wasm_aot | unrecorded | unrecorded | experimental | experimental | experimental | experimental |
 | wasm_interpreter | unrecorded | unrecorded | experimental | untested | experimental | untested |
+
+### nomic-embed-text-v1.5
+
+| Capability | onnx-fp32-cpu |
+| --- | --- |
+| batch | experimental |
+| streaming | unsupported |
+| cancellation | experimental |
+| persistence | unsupported |
+| training | unsupported |
+| aot | untested |
+| extensions_ai | unsupported |
+| mlnet | unsupported |
+| asset_verification_offline | experimental |
+| batch_sort_by_length | experimental |
+| batch_token_budget | experimental |
+| built_in_profile | experimental |
+| gpu | unsupported |
+| text | experimental |
 
 ### qwen2.5-0.5b-instruct
 
@@ -377,6 +526,12 @@ One table per family, one column per profile. Rows are every capability any prof
 
 ## Known issues
 
+- `all-minilm-l6-v2/onnx-fp32-cpu`: The references are proposed, not adopted into protected/, and no gate has run; every capability is at most experimental.
+- `bge-base-en-v1.5/onnx-fp32-cpu`: The references are proposed, not adopted into protected/, and no gate has run; every capability is at most experimental.
+- `bge-m3/onnx-fp32-cpu`: The references are proposed, not adopted into protected/, and no gate has run; every capability is at most experimental.
+- `bge-reranker-v2-m3/onnx-fp32-cpu`: The references are proposed, not adopted into protected/, and no gate has run; every capability is at most experimental.
+- `bge-reranker-v2-m3/onnx-fp32-cpu`: Scores are raw logits, not calibrated probabilities.
+- `bge-small-en-v1.5/onnx-fp32-cpu`: The references are proposed, not adopted into protected/, and no gate has run; every capability is at most experimental.
 - `embeddinggemma-2/image-fp32-cpu`: The image release set's reference stage tensors regenerate byte-identical only on the reference CPU at 6 threads; the accepted soft-token and token-embedding arrays are hosted at Starlinghq/starling-release-references (commit and file digests in the protected hosted-reference.json, #71), and the evaluator checks every array against the protected tensors.json, so the scheduled G2 needs no regeneration.
 - `embeddinggemma-2/image-fp32-cpu`: One accepted release image (79 MP) exceeds the default 50,000,000-pixel limit; G1 and G2 pass with the limit raised for it (image_over_default_pixel_limit_with_option, experimental); the default stays a memory bound.
 - `embeddinggemma-2/image-fp32-cpu`: Linux memory: Starlings.Runtime.Onnx calls malloc_trim on session release (on by default); the qualification soak runs with transparent huge pages `madvise`. No MALLOC_* setting is required on CPU; on `always` hosts resident memory can look larger without any leak.
@@ -461,6 +616,8 @@ One table per family, one column per profile. Rows are every capability any prof
 - `kev-4b/onnx-fp32-cuda`: model.onnx.data is not byte-reproducible across builds (the fp32 LoRA merge; see execution.graph). The lock pins the measured bundle; a rebuilt bundle needs its own digests and its own evidence (KevDecisionModel.Create with explicit paths).
 - `kev-4b/onnx-fp32-cuda`: The references are proposed, not adopted into protected/, and no gate has run; every capability is at most experimental. The full decision-v7 development run for 4B (1,468 questions) was stopped for memory before it finished and is not reported.
 - `kev-4b/onnx-fp32-cuda`: Device memory: the weights take about 17 GB, so Kev-4B needs a 24 GB card.
+- `ms-marco-minilm-l6-v2/onnx-fp32-cpu`: The references are proposed, not adopted into protected/, and no gate has run; every capability is at most experimental.
+- `ms-marco-minilm-l6-v2/onnx-fp32-cpu`: Scores are raw logits, not calibrated probabilities.
 - `multilingual-e5-small/onnx-fp32-cpu`: Linux memory: the hosted soak's growth of 2026-10-15 (about 50 MB/h, run 38793842060) was glibc retention after unloading plus transparent huge pages set to `always` on the runner image, not a leak (docs/evidence/scheduled-regression-fix/). Starlings.Runtime.Onnx calls malloc_trim on session release (on by default; opt out per session or per process), and the qualification soak runs with THP `madvise`. On `always` hosts resident memory can look larger without any leak.
 - `multilingual-e5-small/onnx-fp32-cpu`: The pinned tokenizer.json emits a lone "▁" token before special-token literals and for trailing whitespace, where SentencePiece and transformers 5.18 emit none. The owned profile follows tokenizer.json; the difference is recorded, not fixed.
 - `multilingual-e5-small/onnx-fp32-cpu`: tokenizer.json leaves decomposed Hangul jamo uncomposed, while SentencePiece composes them.
@@ -486,6 +643,8 @@ One table per family, one column per profile. Rows are every capability any prof
 - `multilingual-e5-small/onnx-int8embed-webgpu`: The int8-embed graph has no public URL yet: users build it with quantize_e5_browser.py and host it themselves.
 - `multilingual-e5-small/onnx-int8embed-webgpu`: Without cross-origin isolation (COOP/COEP) onnxruntime-web runs one thread, 3.2x to 3.7x slower on WASM; asking for more than one thread then fails with NotSupportedException.
 - `multilingual-e5-small/onnx-int8embed-webgpu`: An interpreter publish that reuses an obj/ left by an AOT publish can ship IL-stripped assemblies, and the Mono interpreter then aborts (browser/conformance/README.md). Publish each build mode from a clean obj/.
+- `nomic-embed-text-v1.5/onnx-fp32-cpu`: The references are proposed, not adopted into protected/, and no gate has run; every capability is at most experimental.
+- `nomic-embed-text-v1.5/onnx-fp32-cpu`: Vectors are not unit length (normalize: none); normalize them before cosine or dot-product comparison.
 - `qwen2.5-0.5b-instruct/ortgenai-fp32-cpu`: The references are proposed, not adopted into protected/, and no gate has run; every capability is at most experimental.
 - `qwen2.5-0.5b-instruct/ortgenai-fp32-cpu`: Bundle reproducibility was shown on one machine (two builds, identical digests) with the hash-locked builder wheel; another builder wheel or platform was not tested. A bundle with other digests is refused.
 - `qwen2.5-0.5b-instruct/ortgenai-fp32-cpu`: QwenChatOptions.MaxNewTokens defaults to 16, the corpus setting.
