@@ -36,16 +36,23 @@ public sealed class WhisperTokenizer
         return new WhisperTokenizer(Tokenizer.FromUtf8Json(bytes));
     }
 
-    /// <summary>Decodes token ids (for example <see cref="WhisperModel.Generate"/> output) to text, skipping special tokens.</summary>
+    /// <summary>
+    /// Decodes token ids (for example <see cref="WhisperModel.Generate"/> output) to text, skipping special tokens and
+    /// timestamp tokens (ids from <see cref="WhisperModel.TimestampBegin"/>). <c>tokenizer.json</c> does not mark the
+    /// timestamp tokens special; transformers <c>WhisperTokenizer.decode</c> removes them from the text, and so does this.
+    /// </summary>
     public string Decode(IReadOnlyList<int> ids)
     {
         ArgumentNullException.ThrowIfNull(ids);
-        var span = new int[ids.Count];
-        for (int i = 0; i < ids.Count; i++)
+        var kept = new List<int>(ids.Count);
+        foreach (int id in ids)
         {
-            span[i] = ids[i];
+            if (id < WhisperModel.TimestampBegin)
+            {
+                kept.Add(id);
+            }
         }
 
-        return _tokenizer.Decode(span, skipSpecialTokens: true);
+        return _tokenizer.Decode(kept.ToArray(), skipSpecialTokens: true);
     }
 }

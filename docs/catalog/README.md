@@ -553,10 +553,11 @@ One table per family, one column per profile. Rows are every capability any prof
 | concurrent_calls | untested |
 | language_detection | untested |
 | quantized | unsupported |
-| timestamps | unsupported |
+| timestamps | experimental |
 | transcription | experimental |
 | transcription_cuda | untested |
 | translation | unsupported |
+| word_timestamps | unsupported |
 
 ## Known issues
 
@@ -707,6 +708,7 @@ One table per family, one column per profile. Rows are every capability any prof
 - `qwen3.5-0.8b/ortgenai-fp32x-cuda`: The fp32x graph was built for the CPU provider; on the CUDA provider it decodes far slower than fp16x (M0: about 22 tokens/s; node placement not inspected, so CPU fallback of the DeltaNet operators is possible). fp32 built for the CUDA provider fails (M0 failure 2).
 - `qwen3.5-0.8b/ortgenai-fp32x-cuda`: Native runtime: Microsoft.ML.OnnxRuntimeGenAI.Cuda 0.17.1 brings Microsoft.ML.OnnxRuntime.Gpu 1.30.0 and needs the CUDA 13 runtime and cuBLAS on the loader path (not shipped). The schema has no field for native runtime, driver or GPU requirements; they are recorded here and in docs/evidence/p016-qwen35/README.md.
 - `whisper-large-v3-turbo/onnx-fp16-cpu`: No reference fixtures are adopted into protected/ and no gate has run; every capability is at most experimental.
-- `whisper-large-v3-turbo/onnx-fp16-cpu`: The evidence covers English only (four LibriSpeech clips, 1.6 s to 12.5 s); other languages are untested.
+- `whisper-large-v3-turbo/onnx-fp16-cpu`: The evidence covers English only (five LibriSpeech clips, 1.6 s to 27.9 s, asr-corpus-v2); other languages are untested.
+- `whisper-large-v3-turbo/onnx-fp16-cpu`: The fp16 encoder's hidden state drifts from the fp32 reference by more than the adopted hidden_max_abs (0.05) on audio positions of clips past roughly 18 s: 0.110 on the 27.9 s composite of asr-corpus-v2, 0.173 on a single 29.4 s LibriSpeech utterance, against 0.013 to 0.025 on 14 to 18 s clips. Teacher-forced logits stay within logits_max_abs (0.030 against 0.1), and ids, transcripts and segment timestamps equal the reference. The bound needs re-adoption by the maintainer; the route's run fails that one check until then.
 - `whisper-large-v3-turbo/onnx-fp16-cpu`: Decoding re-runs the full decoder over the prefix at every step (no KV cache), so long transcripts are slow.
 - `whisper-large-v3-turbo/onnx-fp16-cpu`: The export repository has no license tag; see rights.notes.

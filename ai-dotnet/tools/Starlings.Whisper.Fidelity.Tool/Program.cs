@@ -3,6 +3,8 @@
 //                 logits teacher-forced on the reference ids, and the owned tokenizer's transcript of those ids;
 //   dotnet-audio: the clip's WAV samples through WhisperMelSpectrogram (the .NET mel) and the public
 //                 WhisperTranscriber.Transcribe path.
+// Both paths also decode with segment timestamps (TranscribeMelWithTimestamps from the reference mel,
+// TranscribeWithTimestamps from the WAV samples): windows, segments and transcript.
 // Writes dotnet.json plus a float32 sidecar in the layout run_whisper.py uses; the evaluator compares them.
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
@@ -109,6 +111,8 @@ int ToolBody()
                 ["forced_ids"] = forced,
                 ["transcript"] = tokenizer.Decode(ids),
                 ["audio_transcript"] = transcriber.Transcribe(clip.Waveform),
+                ["timestamped"] = Timestamped(transcriber.TranscribeMelWithTimestamps(referenceMel[id])),
+                ["audio_timestamped"] = Timestamped(transcriber.TranscribeWithTimestamps(clip.Waveform)),
             });
             cancellationClip ??= clip.Waveform;
         }
@@ -165,6 +169,19 @@ int ToolBody()
     File.WriteAllText(Path.Combine(output, "dotnet.json"), JsonSerializer.Serialize(result, ToolSettings.Json) + "\n");
     Console.WriteLine($"wrote {rows.Count} whisper clips (mel and audio paths) to {output}");
     return 0;
+
+    static Dictionary<string, object> Timestamped(WhisperTranscription transcription) => new()
+    {
+        ["windows"] = transcription.Windows.Select(window => new Dictionary<string, object> { ["seek"] = window.SeekFrame, ["ids"] = window.Ids }).ToArray(),
+        ["segments"] = transcription.Segments.Select(segment => new Dictionary<string, object>
+        {
+            ["start"] = segment.Start,
+            ["end"] = segment.End,
+            ["ids"] = segment.Ids,
+            ["text"] = segment.Text,
+        }).ToArray(),
+        ["transcript"] = transcription.Text,
+    };
 
     static void Write(FileStream tensors, List<Dictionary<string, object>> layout, string id, string name, float[] values, int[] shape)
     {
@@ -290,7 +307,13 @@ internal static class Contract
         // Transcribe always prompts with <|transcribe|>; the suppression lists are private to WhisperModel and are compared
         // with the contract from WhisperModel.cs by model-pipeline's tests.
         Same("behavior.task", behavior.GetProperty("task").GetString(), "transcribe");
-        Same("behavior.timestamps", behavior.GetProperty("timestamps").GetBoolean(), false);
+        var timestamps = behavior.GetProperty("timestamps");
+        Same("behavior.timestamps.level", timestamps.GetProperty("level").GetString(), "segment");
+        Same("behavior.timestamps.timestamp_begin", timestamps.GetProperty("timestamp_begin").GetInt32(), WhisperModel.TimestampBegin);
+        Same("behavior.timestamps.max_initial_timestamp_index", timestamps.GetProperty("max_initial_timestamp_index").GetInt32(), WhisperModel.MaxInitialTimestampIndex);
+        Same("behavior.timestamps.time_precision", timestamps.GetProperty("time_precision").GetDouble(), WhisperModel.TimePrecision);
+        Same("behavior.timestamps.feature_precision", timestamps.GetProperty("feature_precision").GetDouble(), 0.01);
+        Same("behavior.timestamps.input_stride", timestamps.GetProperty("input_stride").GetInt32(), 2);
         Same("behavior.decoding", behavior.GetProperty("decoding").GetString(), "greedy");
         var special = behavior.GetProperty("special_tokens");
         Same("special_tokens.end_of_text", special.GetProperty("end_of_text").GetInt32(), WhisperModel.EndOfText);

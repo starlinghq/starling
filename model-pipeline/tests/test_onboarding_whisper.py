@@ -20,7 +20,7 @@ from model_pipeline.onboarding_runner import PipelineError
 REPO = Path(__file__).resolve().parents[2]
 PROFILE = REPO / "model-pipeline/candidates/whisper-large-v3-turbo/profile.json"
 RECIPE = REPO / "model-pipeline/recipes/whisper-large-v3-turbo-cpu.yaml"
-CORPUS = REPO / "model-pipeline/reference/corpus/asr-corpus-v1.jsonl"
+CORPUS = REPO / "model-pipeline/reference/corpus/asr-corpus-v2.jsonl"
 GRAPHS = "onnx-community/whisper-large-v3-turbo-ONNX"
 
 
@@ -40,6 +40,19 @@ def test_shipped_candidate_passes_schema_and_exact_contract():
     assert (behavior["num_mel_bins"], behavior["num_frames"], behavior["encoder_positions"]) == (128, 3000, 1500)
     assert (behavior["vocabulary_size"], behavior["hidden_size"]) == (51866, 1280)
     assert whisper.prompt(candidate, "en") == [50258, 50259, 50360, 50364]
+    assert whisper.prompt(candidate, "en", timestamps=True) == [50258, 50259, 50360]
+    assert behavior["timestamps"]["timestamp_begin"] == behavior["special_tokens"]["no_timestamps"] + 1
+
+
+def test_timestamp_constants_match_the_dotnet_decoder():
+    source = (REPO / "ai-dotnet/src/Starlings.Models.Whisper/WhisperModel.cs").read_text(encoding="utf-8")
+    timestamps = whisper.TIMESTAMPS
+    assert f"TimestampBegin = {timestamps['timestamp_begin']};" in source
+    assert f"MaxInitialTimestampIndex = {timestamps['max_initial_timestamp_index']};" in source
+    assert f"TimePrecision = {timestamps['time_precision']};" in source
+    segmenter = (REPO / "ai-dotnet/src/Starlings.Models.Whisper/WhisperTranscription.cs").read_text(encoding="utf-8")
+    assert f"InputStride = {timestamps['input_stride']};" in segmenter
+    assert f"FeaturePrecision = {timestamps['feature_precision']}f;" in segmenter
 
 
 def test_graph_pins_match_the_dotnet_asset_lock():
@@ -74,7 +87,13 @@ NEAR_MISSES = [
     ("vocabulary", lambda c: c["behavior"].update(vocabulary_size=51865), "behavior.vocabulary_size"),
     ("special token", lambda c: c["behavior"]["special_tokens"].update(transcribe=50359), "behavior.special_tokens"),
     ("other language", lambda c: c["behavior"]["languages"].update(fr=50265), "behavior.languages"),
-    ("timestamps", lambda c: c["behavior"].update(timestamps=True), "behavior.timestamps"),
+    ("timestamps off", lambda c: c["behavior"].update(timestamps=False), "behavior.timestamps"),
+    ("word timestamps", lambda c: c["behavior"]["timestamps"].update(level="word"), "behavior.timestamps"),
+    (
+        "initial timestamp",
+        lambda c: c["behavior"]["timestamps"].update(max_initial_timestamp_index=1),
+        "behavior.timestamps",
+    ),
     ("translation", lambda c: c["behavior"].update(task="translate"), "behavior.task"),
     ("sampling", lambda c: c["behavior"].update(decoding="sample"), "behavior.decoding"),
     ("suppression", lambda c: c["behavior"]["suppress_tokens"].pop(), "behavior.suppress_tokens"),
@@ -213,6 +232,7 @@ def write_configs(directory: Path, behavior: dict) -> None:
         "suppress_tokens": behavior["suppress_tokens"],
         "begin_suppress_tokens": behavior["begin_suppress_tokens"],
         "no_timestamps_token_id": 50364,
+        "max_initial_timestamp_index": 50,
         "task_to_id": {"transcribe": 50360, "translate": 50359},
         "lang_to_id": {"<|en|>": 50259, "<|fr|>": 50265},
         "max_length": 448,
@@ -247,16 +267,37 @@ def test_config_contract_checks_both_repositories(tmp_path):
         whisper.check_configs(candidate, tmp_path / "graphs", tmp_path / "base")
 
 
+def test_config_contract_checks_the_timestamp_settings(tmp_path):
+    candidate = profile()
+    write_configs(tmp_path / "graphs", candidate["behavior"])
+    write_configs(tmp_path / "base", candidate["behavior"])
+    generation = json.loads((tmp_path / "graphs/generation_config.json").read_text())
+    generation["max_initial_timestamp_index"] = 1
+    (tmp_path / "graphs/generation_config.json").write_text(json.dumps(generation))
+    with pytest.raises(PipelineError, match="snapshot generation.max_initial_timestamp_index"):
+        whisper.check_configs(candidate, tmp_path / "graphs", tmp_path / "base")
+
+
 def test_shipped_corpus_is_pinned_and_differently_sized():
     rows = whisper.load_corpus(CORPUS, profile())
-    assert len(rows) >= 4 and len({row["samples"] for row in rows}) == len(rows)
+    assert len(rows) >= 5 and len({row["samples"] for row in rows}) == len(rows)
     assert all(row["language"] == "en" and row["license"] == "CC-BY-4.0" for row in rows)
     assert all(row["source"]["revision"] == "5be91486e11a2d616f4ec5db8d3fd248585ac07a" for row in rows)
+
+
+def test_corpus_v2_extends_v1_unchanged_with_a_composite_clip():
+    first = fixtures.read_jsonl(CORPUS.parent / "asr-corpus-v1.jsonl")
+    second = fixtures.read_jsonl(CORPUS)
+    assert second[: len(first)] == first
+    composite = [row for row in second if "utterances" in row["source"]]
+    assert composite and all(len(row["source"]["utterances"]) > 1 for row in composite)
+    assert all(row["audio"].startswith("asr-v2/") and row["samples"] <= 480000 for row in composite)
 
 
 def corpus_copy(tmp_path: Path, mutate=None) -> Path:
     rows = fixtures.read_jsonl(CORPUS)
     (tmp_path / "asr-v1").mkdir()
+    (tmp_path / "asr-v2").mkdir()
     for row in rows:
         (tmp_path / row["audio"]).write_bytes((CORPUS.parent / row["audio"]).read_bytes())
     if mutate:
@@ -318,6 +359,16 @@ def tensor_values(seed: int, count: int) -> list[float]:
     return [((seed * 7919 + index * 104729) % 2001 - 1000) / 250.0 for index in range(count)]
 
 
+def timestamped(candidate: dict, generated: list[int], text: str) -> dict:
+    """One window: <|0.00|> text <|1.00|> end of text, a single segment."""
+    tokens = [50365, *generated, 50415]
+    return {
+        "windows": [{"seek": 0, "ids": whisper.prompt(candidate, "en", timestamps=True) + tokens + [50257]}],
+        "segments": [{"start": 0.0, "end": 1.0, "ids": tokens, "text": text}],
+        "transcript": text,
+    }
+
+
 def write_stage(
     directory: Path, stage: str, candidate: dict, digest: str, reference_sha: str | None, edit=None
 ) -> Path:
@@ -349,8 +400,10 @@ def write_stage(
             row.update(text=f"WORDS OF {identifier.upper()}", samples=SAMPLES[identifier], default_path_ids=ids)
         else:
             row["forced_ids"] = ids
+        row["timestamped"] = timestamped(candidate, generated, row["transcript"])
         if stage == "dotnet":
             row["audio_transcript"] = row["transcript"]
+            row["audio_timestamped"] = timestamped(candidate, generated, row["transcript"])
         cases.append(row)
         for name in whisper.TENSORS[stage]:
             shape = shapes.get(name) or [len(ids) - 1, behavior["vocabulary_size"]]
@@ -436,6 +489,14 @@ def test_complete_evidence_passes_and_never_adopts_protected_gates(tmp_path, tin
         "dotnet-audio/*/transcript_vs_python",
         "onnx/*/wer_vs_reference",
         "dotnet-audio/*/wer_vs_reference",
+        "onnx/*/timestamp_ids_vs_reference",
+        "onnx/*/segment_times_vs_reference",
+        "onnx/*/timestamp_wer_vs_reference",
+        "dotnet-mel/*/timestamp_ids_vs_python",
+        "dotnet-mel/*/segments_vs_python",
+        "dotnet-mel/*/timestamp_transcript_vs_python",
+        "dotnet-audio/*/segments_vs_python",
+        "dotnet-audio/*/timestamp_transcript_vs_python",
     }
     assert report["checks"][-1]["id"] == "reference/corpus/wer_vs_ground_truth"
 
@@ -503,6 +564,87 @@ def test_differences_produce_named_failed_checks(tmp_path, tiny, stage, edit, fa
     report = whisper.evaluate_development(**evidence(tmp_path, tiny, {stage: edit}))
     assert report["status"] == "failed"
     assert failed in report["failed_checks"]
+
+
+def _segment(stage_key: str, index: int, **values):
+    def edit(document, blob):
+        document["cases"][0][stage_key]["segments"][index].update(values)
+
+    return edit
+
+
+def _window(stage_key: str, ids: list[int]):
+    def edit(document, blob):
+        window = document["cases"][0][stage_key]["windows"][0]
+        window["ids"] = window["ids"][:3] + ids
+
+    return edit
+
+
+@pytest.mark.parametrize(
+    ("stage", "edit", "failed"),
+    [
+        ("onnx", _segment("timestamped", 0, end=1.02), "onnx/clip-a/segment_times_vs_reference"),
+        ("onnx", _window("timestamped", [50365, 440, 50416, 50257]), "onnx/clip-a/timestamp_ids_vs_reference"),
+        ("dotnet", _window("timestamped", [50365, 440, 50416, 50257]), "dotnet-mel/clip-a/timestamp_ids_vs_python"),
+        ("dotnet", _segment("timestamped", 0, start=0.02), "dotnet-mel/clip-a/segments_vs_python"),
+        ("dotnet", _segment("timestamped", 0, text=" Other."), "dotnet-mel/clip-a/segments_vs_python"),
+        ("dotnet", _segment("audio_timestamped", 0, ids=[50365, 50415]), "dotnet-audio/clip-a/segments_vs_python"),
+        (
+            "dotnet",
+            lambda document, blob: document["cases"][0]["audio_timestamped"].update(transcript=" Words."),
+            "dotnet-audio/clip-a/timestamp_transcript_vs_python",
+        ),
+        (
+            "reference",
+            lambda document, blob: document["cases"][0]["timestamped"].update(transcript=" Other words entirely."),
+            "onnx/clip-a/timestamp_wer_vs_reference",
+        ),
+    ],
+    ids=lambda value: value if isinstance(value, str) and "/" in value else "",
+)
+def test_timestamp_differences_produce_named_failed_checks(tmp_path, tiny, stage, edit, failed):
+    report = whisper.evaluate_development(**evidence(tmp_path, tiny, {stage: edit}))
+    assert report["status"] == "failed"
+    assert failed in report["failed_checks"]
+
+
+@pytest.mark.parametrize(
+    ("stage", "edit", "message"),
+    [
+        ("onnx", lambda document, blob: document["cases"][0].pop("timestamped"), "incomplete or malformed"),
+        ("dotnet", lambda document, blob: document["cases"][0].pop("audio_timestamped"), "incomplete or malformed"),
+        ("reference", _window("timestamped", [50364, 50365, 50257]), "invalid timestamped window"),
+        ("onnx", _window("timestamped", [50365, 50257, 50365, 50257]), "invalid timestamped window"),
+        (
+            "onnx",
+            lambda document, blob: document["cases"][0]["timestamped"]["windows"][0].update(seek=160),
+            "frame 0",
+        ),
+        ("dotnet", _segment("timestamped", 0, start=2.0), "invalid segment"),
+        ("dotnet", _segment("timestamped", 0, end=float("nan")), "invalid segment"),
+        ("dotnet", _segment("timestamped", 0, ids=[]), "invalid segment"),
+        (
+            "reference",
+            lambda document, blob: document["cases"][0]["timestamped"].update(segments=[]),
+            "at least one window and one segment",
+        ),
+    ],
+    ids=[
+        "no timestamped decode",
+        "no audio timestamped decode",
+        "no-timestamps prompt",
+        "eos inside a window",
+        "first window not at 0",
+        "start after end",
+        "non-finite end",
+        "empty segment",
+        "no segments",
+    ],
+)
+def test_malformed_timestamp_evidence_is_refused(tmp_path, tiny, stage, edit, message):
+    with pytest.raises(PipelineError, match=message):
+        whisper.evaluate_development(**evidence(tmp_path, tiny, {stage: edit}))
 
 
 def test_transcript_drift_against_the_reference_fails_its_wer_bound(tmp_path, tiny):

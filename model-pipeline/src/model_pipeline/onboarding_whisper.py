@@ -8,7 +8,9 @@ Anything else is refused. Stages:
 
 The fp16 ONNX snapshot is `--snapshot`; the PyTorch checkpoint is `--base-snapshot` (a plain snapshot directory).
 Correctness is proved at three levels: intermediate tensors (mel, encoder hidden state, teacher-forced decoder logits),
-greedy token ids, and transcripts. The fp32 PyTorch reference bounds export fidelity; .NET against Python ONNX Runtime
+greedy token ids, and transcripts. Each clip is decoded twice: without timestamps, and with segment timestamps (the
+transformers timestamp rules and sequential seek loop), whose window ids, segment boundaries and texts are compared
+exactly. The fp32 PyTorch reference bounds export fidelity; .NET against Python ONNX Runtime
 on the same graphs is the tight same-backend canary. Reference outputs are proposals; nothing here adopts protected
 fixtures or changes tolerances.
 """
@@ -83,6 +85,17 @@ SPECIAL_TOKENS = {
     "no_timestamps": 50364,
 }
 LANGUAGES = {"en": 50259}
+# Segment timestamps: generation_config.json's no_timestamps_token_id + 1 is <|0.00|>, timestamps step by
+# time_precision seconds, and the first timestamp is at most max_initial_timestamp_index steps in. One mel frame is
+# feature_precision seconds; the encoder halves the frames (input_stride). Word-level timestamps are not offered.
+TIMESTAMPS = {
+    "level": "segment",
+    "timestamp_begin": 50365,
+    "max_initial_timestamp_index": 50,
+    "time_precision": 0.02,
+    "feature_precision": 0.01,
+    "input_stride": 2,
+}
 BEHAVIOR = {
     "architecture": "WhisperForConditionalGeneration",
     "encoder_file": ENCODER_FILE,
@@ -104,7 +117,7 @@ BEHAVIOR = {
     "special_tokens": SPECIAL_TOKENS,
     "languages": LANGUAGES,
     "task": "transcribe",
-    "timestamps": False,
+    "timestamps": TIMESTAMPS,
     "decoding": "greedy",
     "suppress_tokens": SUPPRESS_TOKENS,
     "begin_suppress_tokens": BEGIN_SUPPRESS_TOKENS,
@@ -318,6 +331,14 @@ def check_configs(candidate: dict, snapshot: Path, base_snapshot: Path) -> dict:
                 generation.get("no_timestamps_token_id"),
                 SPECIAL_TOKENS["no_timestamps"],
             ),
+            "generation.timestamp_begin": (
+                generation.get("no_timestamps_token_id", -2) + 1,
+                behavior["timestamps"]["timestamp_begin"],
+            ),
+            "generation.max_initial_timestamp_index": (
+                generation.get("max_initial_timestamp_index"),
+                behavior["timestamps"]["max_initial_timestamp_index"],
+            ),
             "generation.task_to_id": (
                 generation.get("task_to_id"),
                 {"transcribe": SPECIAL_TOKENS["transcribe"], "translate": SPECIAL_TOKENS["translate"]},
@@ -387,14 +408,60 @@ def load_corpus(corpus: Path, candidate: dict) -> list[dict]:
     return rows
 
 
-def prompt(candidate: dict, language: str) -> list[int]:
+def prompt(candidate: dict, language: str, timestamps: bool = False) -> list[int]:
+    """The decoder prompt; with timestamps it ends at the task token (no <|notimestamps|>)."""
     special = candidate["behavior"]["special_tokens"]
-    return [
-        special["start_of_transcript"],
-        candidate["behavior"]["languages"][language],
-        special["transcribe"],
-        special["no_timestamps"],
-    ]
+    tokens = [special["start_of_transcript"], candidate["behavior"]["languages"][language], special["transcribe"]]
+    return tokens if timestamps else [*tokens, special["no_timestamps"]]
+
+
+def _number(value) -> bool:
+    return type(value) in (int, float) and math.isfinite(value)
+
+
+def _check_timestamped(value, candidate: dict, language: str, where: str) -> None:
+    """The structure of one timestamped decode: windows of ids from the timestamp prompt, then segments and text."""
+    behavior = candidate["behavior"]
+    expected_prompt, eos = prompt(candidate, language, timestamps=True), behavior["special_tokens"]["end_of_text"]
+    if not isinstance(value, dict) or set(value) != {"windows", "segments", "transcript"}:
+        raise PipelineError(f"{where}: timestamped decode must hold exactly windows, segments and transcript")
+    windows, segments = value["windows"], value["segments"]
+    if not isinstance(windows, list) or not windows or not isinstance(segments, list) or not segments:
+        raise PipelineError(f"{where}: timestamped decode needs at least one window and one segment")
+    previous = -1
+    for record in windows:
+        ids = record.get("ids") if isinstance(record, dict) else None
+        if (
+            set(record) != {"seek", "ids"}
+            or type(record["seek"]) is not int
+            or record["seek"] <= previous
+            or not isinstance(ids, list)
+            or not len(expected_prompt) < len(ids) <= behavior["max_target_positions"]
+            or any(type(token) is not int or not 0 <= token < behavior["vocabulary_size"] for token in ids)
+            or ids[: len(expected_prompt)] != expected_prompt
+            or eos in ids[:-1]
+            # The timestamp rules mask <|notimestamps|> on every step.
+            or behavior["special_tokens"]["no_timestamps"] in ids[len(expected_prompt) :]
+        ):
+            raise PipelineError(f"{where}: invalid timestamped window {record!r:.200}")
+        previous = record["seek"]
+    if windows[0]["seek"] != 0:
+        raise PipelineError(f"{where}: the first window must start at frame 0")
+    for segment in segments:
+        if (
+            not isinstance(segment, dict)
+            or set(segment) != {"start", "end", "ids", "text"}
+            or not _number(segment["start"])
+            or not _number(segment["end"])
+            or not 0 <= segment["start"] <= segment["end"]
+            or not isinstance(segment["ids"], list)
+            or not segment["ids"]
+            or any(type(token) is not int for token in segment["ids"])
+            or not isinstance(segment["text"], str)
+        ):
+            raise PipelineError(f"{where}: invalid segment {segment!r:.200}")
+    if not isinstance(value["transcript"], str):
+        raise PipelineError(f"{where}: the timestamped transcript is missing")
 
 
 def words(text: str) -> list[str]:
@@ -484,6 +551,9 @@ def _document(path: Path, candidate: dict, digest: str, stage: str) -> tuple[dic
                 raise PipelineError(f"{stage}/{identifier}: the teacher-forced ids are missing")
             if stage == "dotnet" and not isinstance(row["audio_transcript"], str):
                 raise PipelineError(f"{stage}/{identifier}: the public audio-path transcript is missing")
+            _check_timestamped(row["timestamped"], candidate, row["language"], f"{stage}/{identifier}")
+            if stage == "dotnet":
+                _check_timestamped(row["audio_timestamped"], candidate, row["language"], f"{stage}/{identifier}/audio")
             cases[identifier] = row
     except (KeyError, TypeError, ValueError) as exc:
         raise PipelineError(f"{stage}: incomplete or malformed required evidence: {exc}") from exc
@@ -566,6 +636,43 @@ def audio_positions(samples: int, behavior: dict) -> int:
 
 def _exact(actual, expected, where: str) -> dict:
     return {"id": where, "status": "passed" if actual == expected else "failed", "bound": "exact", "actual": actual}
+
+
+def _boundaries(decode: dict) -> list[list]:
+    return [[segment["start"], segment["end"]] for segment in decode["segments"]]
+
+
+def _segments(decode: dict) -> list[list]:
+    return [[segment["start"], segment["end"], segment["ids"], segment["text"]] for segment in decode["segments"]]
+
+
+def _windows(decode: dict) -> list[list]:
+    return [[record["seek"], record["ids"]] for record in decode["windows"]]
+
+
+def _timestamp_checks(identifier: str, reference: dict, python: dict, dotnet: dict, policy: dict) -> list[dict]:
+    """Timestamped decode: ids and segment boundaries exact against the reference, everything exact across backends.
+
+    These are correctness checks under the binding `token_ids: exact` and `transcript: exact` policy, not fidelity
+    bounds; the transcript's word error rate against the reference reuses `reference_wer_max`.
+    """
+    stamped, audio = dotnet["timestamped"], dotnet["audio_timestamped"]
+    return [
+        _exact(_windows(python), _windows(reference), f"onnx/{identifier}/timestamp_ids_vs_reference"),
+        _exact(_boundaries(python), _boundaries(reference), f"onnx/{identifier}/segment_times_vs_reference"),
+        _rate(
+            word_error_rate(python["transcript"], reference["transcript"]),
+            policy["reference_wer_max"],
+            f"onnx/{identifier}/timestamp_wer_vs_reference",
+            hypothesis=python["transcript"],
+            reference=reference["transcript"],
+        ),
+        _exact(_windows(stamped), _windows(python), f"dotnet-mel/{identifier}/timestamp_ids_vs_python"),
+        _exact(_segments(stamped), _segments(python), f"dotnet-mel/{identifier}/segments_vs_python"),
+        _exact(stamped["transcript"], python["transcript"], f"dotnet-mel/{identifier}/timestamp_transcript_vs_python"),
+        _exact(_segments(audio), _segments(python), f"dotnet-audio/{identifier}/segments_vs_python"),
+        _exact(audio["transcript"], python["transcript"], f"dotnet-audio/{identifier}/timestamp_transcript_vs_python"),
+    ]
 
 
 def _rate(value: float, bound: float, where: str, **details) -> dict:
@@ -696,6 +803,7 @@ def evaluate_development(
                 policy["reference_wer_max"],
                 f"dotnet-audio/{identifier}/wer_vs_reference",
             ),
+            *_timestamp_checks(identifier, row["timestamped"], python_row["timestamped"], dotnet_row, policy),
         ]
     errors = sum(
         edit_distance(words(row["transcript"]), words(clips[identifier]["text"]))
@@ -732,6 +840,19 @@ def evaluate_development(
             }
             for identifier, row in expected.items()
         },
+        "segments": {
+            identifier: {
+                "reference": [
+                    {"start": segment["start"], "end": segment["end"], "text": segment["text"]}
+                    for segment in row["timestamped"]["segments"]
+                ],
+                "dotnet-audio": [
+                    {"start": segment["start"], "end": segment["end"], "text": segment["text"]}
+                    for segment in dotnet_cases[identifier]["audio_timestamped"]["segments"]
+                ],
+            }
+            for identifier, row in expected.items()
+        },
         # References stay proposed; the comparison policy is binding when it came from the protected tolerances.
         "evaluation_status": "proposed",
         "policy": policy,
@@ -761,6 +882,16 @@ def render_report(report: dict, profile: str) -> str:
         *(
             f"| {identifier} | {row['ground_truth']} | {row['reference'].strip()} | {row['dotnet-audio'].strip()} |"
             for identifier, row in report["transcripts"].items()
+        ),
+        "",
+        "Segment timestamps (seconds), PyTorch fp32 reference; .NET from audio is compared exactly:",
+        "",
+        "| Clip | Start | End | Text |",
+        "| --- | ---: | ---: | --- |",
+        *(
+            f"| {identifier} | {segment['start']:.2f} | {segment['end']:.2f} | {segment['text'].strip()} |"
+            for identifier, row in report.get("segments", {}).items()
+            for segment in row["reference"]
         ),
         "",
     ]

@@ -44,6 +44,13 @@ using var transcriber = WhisperTranscriber.Create(files, new WhisperOptions { La
 
 // 16 kHz float32 PCM, up to 30 seconds.
 string text = transcriber.Transcribe(waveform);
+
+// The same clip with segment timestamps (seconds on the clip's timeline).
+WhisperTranscription result = transcriber.TranscribeWithTimestamps(waveform);
+foreach (WhisperSegment segment in result.Segments)
+{
+    Console.WriteLine($"[{segment.Start:0.00} -> {segment.End:0.00}]{segment.Text}");
+}
 ```
 
 `WhisperTranscriber.Create(files)` and `WhisperModel.Create(files)` pass the graph digests a snapshot verified with `CacheVerification.Sha256` already computed (`WhisperModelFiles.EncoderSha256`, `DecoderSha256`) to the sessions as `OnnxSessionOptions.KnownModelSha256`, so the graphs are read once at startup. The path overloads hash each graph as before.
@@ -61,8 +68,14 @@ string text = transcriber.Transcribe(waveform);
 
 ## Supported
 
-- Transcription of up to 30 s of 16 kHz audio, greedy decoding, no timestamps. Shorter clips are zero-padded to 30 s
+- Transcription of up to 30 s of 16 kHz audio, greedy decoding. Shorter clips are zero-padded to 30 s
   (`WhisperMelSpectrogram.ExtractChunk`, as the feature extractor pads); longer clips are refused, not truncated.
+- Segment timestamps (experimental): `WhisperTranscriber.TranscribeWithTimestamps` (or `TranscribeMelWithTimestamps`)
+  returns a `WhisperTranscription`: the text, the segments (`Start`, `End` in seconds, `Text`, token `Ids`) and the
+  decoded windows. It matches transformers 5.18.0 `generate(return_timestamps=True)` with greedy decoding: the
+  `WhisperTimeStampLogitsProcessor` rules with `generation_config.json`'s values (`WhisperModel.GenerateWithTimestamps`)
+  and its sequential seek loop, which decodes again from the last closing timestamp when a window ends inside a
+  segment. `WhisperOptions.NoTimestamps = false` makes `Transcribe` return that text.
 - Explicit language, a code of `WhisperModel.LanguageToId` (case-insensitive). `WhisperOptions.Language` defaults to
   `"en"` (`WhisperOptions.DefaultLanguage`), the language the onboarding evidence covers. An unknown code throws
   `WhisperUnsupportedLanguageException` (an `ArgumentException` that carries the code), from `WhisperTranscriber.Create`
@@ -77,8 +90,10 @@ string text = transcriber.Transcribe(waveform);
 
 ## Unsupported (for now)
 
-Translation, timestamped output, chunking/streaming of clips longer than 30 s, batching, KV-cache decoding,
-CUDA qualification, persistence, training.
+Translation, word-level timestamps (the pinned graphs do not export the alignment heads' cross-attention), chunking
+and streaming of clips longer than 30 s, temperature fallback and the compression-ratio, log-probability and no-speech
+thresholds, conditioning on earlier text or prompts, batching, KV-cache decoding, CUDA qualification, persistence,
+training.
 
 Without a KV cache, every decode step re-runs the decoder over all ids so far. `WhisperModel.Generate` writes the
 `[seq, 51866]` logits of those steps into one buffer per call, which grows by doubling, instead of a new array per step.

@@ -6,8 +6,9 @@ namespace Starlings.Models.Whisper;
 /// <summary>
 /// The <c>openai/whisper-large-v3-turbo</c> encoder and decoder over ONNX Runtime: encodes a log-mel spectrogram
 /// (<see cref="WhisperMelSpectrogram"/>) to <c>last_hidden_state</c>, then greedily decodes token ids with the model's
-/// suppression lists. Full-context decoder (no KV cache) for the first cut: every step re-runs the decoder over all
-/// ids, writing into one logits buffer per <see cref="Generate"/> call. Transcribes at most 30 s of audio.
+/// suppression lists, and optionally the timestamp rules (<see cref="GenerateWithTimestamps"/>). Full-context decoder
+/// (no KV cache) for the first cut: every step re-runs the decoder over all ids, writing into one logits buffer per
+/// call. Decodes one 30 s window.
 /// </summary>
 /// <remarks>
 /// <para><b>Prompt.</b> The decode prompt is <c>[&lt;|startoftranscript|&gt;, language, &lt;|transcribe|&gt;,
@@ -18,6 +19,11 @@ namespace Starlings.Models.Whisper;
 /// <para><b>Suppression.</b> <see cref="SuppressTokens"/> are masked on every step; <see cref="BeginSuppressTokens"/>
 /// ([220, eos]) on the first step only, mirroring transformers <c>SuppressTokensLogitsProcessor</c> +
 /// <c>SuppressTokensAtBeginLogitsProcessor</c>.</para>
+/// <para><b>Timestamps.</b> <see cref="GenerateWithTimestamps"/> then applies transformers 5.18.0
+/// <c>WhisperTimeStampLogitsProcessor</c> with the generation config's values (<see cref="TimestampBegin"/>,
+/// <see cref="MaxInitialTimestampIndex"/>): timestamps come in pairs except directly before end of text, never
+/// decrease, the first generated token is a timestamp of at most <see cref="MaxInitialTimestampIndex"/> steps, and when
+/// the timestamps' summed probability exceeds every text token's, only a timestamp may follow.</para>
 /// </remarks>
 public sealed class WhisperModel : IDisposable
 {
@@ -59,6 +65,12 @@ public sealed class WhisperModel : IDisposable
     public const int NoTimestamps = 50364;
     /// <summary><c>&lt;|en|&gt;</c> language token.</summary>
     public const int English = 50259;
+    /// <summary><c>&lt;|0.00|&gt;</c>, the first timestamp token (<see cref="NoTimestamps"/> + 1); <c>&lt;|30.00|&gt;</c> is 51865.</summary>
+    public const int TimestampBegin = 50365;
+    /// <summary>The first generated timestamp is at most this many <see cref="TimePrecision"/> steps in (1.00 s), from <c>generation_config.json</c>.</summary>
+    public const int MaxInitialTimestampIndex = 50;
+    /// <summary>Seconds per timestamp step (0.02).</summary>
+    public const double TimePrecision = 0.02;
 
     private static readonly int[] SuppressTokens =
     [
@@ -203,56 +215,17 @@ public sealed class WhisperModel : IDisposable
     /// <see cref="MaxTargetPositions"/> tokens in total (the decoder has no position beyond it). Returns ids including the prompt.
     /// </summary>
     /// <exception cref="ArgumentException">The prompt fills every decoder position.</exception>
-    public int[] Generate(float[] encoderHidden, int[] prompt, int maxLength = 448, CancellationToken cancellationToken = default)
-    {
-        ArgumentNullException.ThrowIfNull(prompt);
-        if (prompt.Length is 0 || prompt.Length >= MaxTargetPositions)
-        {
-            throw new ArgumentException($"The prompt must hold 1 to {MaxTargetPositions - 1} tokens, got {prompt.Length}.", nameof(prompt));
-        }
+    public int[] Generate(float[] encoderHidden, int[] prompt, int maxLength = 448, CancellationToken cancellationToken = default) =>
+        GenerateCore(encoderHidden, prompt, maxLength, timestamps: false, cancellationToken);
 
-        ObjectDisposedException.ThrowIf(Volatile.Read(ref _disposed) != 0, this);
-
-        // One ids buffer and one logits buffer per call, instead of fresh [seq, vocab] arrays every step. The logits
-        // buffer grows by doubling up to the last step's length, so it never holds more than twice the rows needed.
-        int maxIds = (int)Math.Min((long)prompt.Length + maxLength, MaxTargetPositions);
-        var ids = new long[MaxTargetPositions];
-        for (int i = 0; i < prompt.Length; i++)
-        {
-            ids[i] = prompt[i];
-        }
-
-        int count = prompt.Length;
-        float[] logits = [];
-        for (int step = 0; step < maxLength && count < MaxTargetPositions; step++)
-        {
-            cancellationToken.ThrowIfCancellationRequested();
-            if (logits.Length < count * VocabSize)
-            {
-                // count < maxIds here, so rows >= count.
-                int rows = Math.Min(count * 2, maxIds);
-                logits = new float[rows * VocabSize];
-            }
-
-            DecodeLogitsInto(ids.AsMemory(0, count), encoderHidden, logits.AsMemory(0, count * VocabSize), cancellationToken);
-            var last = logits.AsSpan((count - 1) * VocabSize, VocabSize);
-            ApplySuppression(last, step == 0);
-            int next = ArgMax(last);
-            ids[count++] = next;
-            if (next == EndOfText)
-            {
-                break;
-            }
-        }
-
-        var result = new int[count];
-        for (int i = 0; i < count; i++)
-        {
-            result[i] = (int)ids[i];
-        }
-
-        return result;
-    }
+    /// <summary>
+    /// As <see cref="Generate"/>, with the timestamp rules applied after suppression on every step (transformers
+    /// <c>WhisperTimeStampLogitsProcessor</c>; its begin index is the prompt length). Use a prompt without
+    /// <see cref="NoTimestamps"/> (<see cref="Prompt"/> with <c>noTimestamps: false</c>). Returns ids including the prompt.
+    /// </summary>
+    /// <exception cref="ArgumentException">The prompt fills every decoder position.</exception>
+    public int[] GenerateWithTimestamps(float[] encoderHidden, int[] prompt, int maxLength = 448, CancellationToken cancellationToken = default) =>
+        GenerateCore(encoderHidden, prompt, maxLength, timestamps: true, cancellationToken);
 
     /// <summary>Disposes the sessions if this model owns them. Idempotent.</summary>
     public void Dispose()
@@ -297,6 +270,92 @@ public sealed class WhisperModel : IDisposable
         }
     }
 
+    /// <summary>
+    /// transformers 5.18.0 <c>WhisperTimeStampLogitsProcessor</c> on one suppressed logits row; <paramref name="generated"/>
+    /// holds the tokens after the prompt. The masks follow the pinned source; its log-softmax test is computed in double
+    /// with left-to-right sums (transformers computes it in float32), the same formula as the route's Python loop.
+    /// </summary>
+    internal static void ApplyTimestampRules(Span<float> logits, ReadOnlySpan<long> generated)
+    {
+        logits[NoTimestamps] = float.NegativeInfinity;
+        bool last = generated.Length >= 1 && generated[^1] >= TimestampBegin;
+        bool penultimate = generated.Length < 2 || generated[^2] >= TimestampBegin;
+        if (last && penultimate)
+        {
+            // Two timestamps in a row (or one at the start): the next token is not a timestamp.
+            logits[TimestampBegin..].Fill(float.NegativeInfinity);
+        }
+        else if (last)
+        {
+            // One timestamp after text: the next token is not text (ids below end of text).
+            logits[..EndOfText].Fill(float.NegativeInfinity);
+        }
+
+        long lastTimestamp = -1;
+        foreach (long token in generated)
+        {
+            if (token >= TimestampBegin)
+            {
+                lastTimestamp = token;
+            }
+        }
+
+        if (lastTimestamp >= 0)
+        {
+            // Timestamps never decrease; after a closed pair the next one must also be later than the last.
+            int limit = (int)(last && !penultimate ? lastTimestamp : lastTimestamp + 1);
+            logits[TimestampBegin..limit].Fill(float.NegativeInfinity);
+        }
+
+        if (generated.Length == 0)
+        {
+            logits[..TimestampBegin].Fill(float.NegativeInfinity);
+            logits[(TimestampBegin + MaxInitialTimestampIndex + 1)..].Fill(float.NegativeInfinity);
+        }
+
+        double peak = double.NegativeInfinity;
+        foreach (float value in logits)
+        {
+            peak = Math.Max(peak, value);
+        }
+
+        double sum = 0;
+        foreach (float value in logits)
+        {
+            sum += Math.Exp(value - peak);
+        }
+
+        double normalizer = peak + Math.Log(sum);
+        double timestampPeak = double.NegativeInfinity;
+        for (int i = TimestampBegin; i < logits.Length; i++)
+        {
+            timestampPeak = Math.Max(timestampPeak, logits[i] - normalizer);
+        }
+
+        double timestampLogProb = double.NegativeInfinity;
+        if (!double.IsNegativeInfinity(timestampPeak))
+        {
+            double timestampSum = 0;
+            for (int i = TimestampBegin; i < logits.Length; i++)
+            {
+                timestampSum += Math.Exp(logits[i] - normalizer - timestampPeak);
+            }
+
+            timestampLogProb = timestampPeak + Math.Log(timestampSum);
+        }
+
+        double textPeak = double.NegativeInfinity;
+        for (int i = 0; i < TimestampBegin; i++)
+        {
+            textPeak = Math.Max(textPeak, logits[i] - normalizer);
+        }
+
+        if (timestampLogProb > textPeak)
+        {
+            logits[..TimestampBegin].Fill(float.NegativeInfinity);
+        }
+    }
+
     internal static int ArgMax(ReadOnlySpan<float> values)
     {
         int best = 0;
@@ -311,6 +370,62 @@ public sealed class WhisperModel : IDisposable
         }
 
         return best;
+    }
+
+    private int[] GenerateCore(float[] encoderHidden, int[] prompt, int maxLength, bool timestamps, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(prompt);
+        if (prompt.Length is 0 || prompt.Length >= MaxTargetPositions)
+        {
+            throw new ArgumentException($"The prompt must hold 1 to {MaxTargetPositions - 1} tokens, got {prompt.Length}.", nameof(prompt));
+        }
+
+        ObjectDisposedException.ThrowIf(Volatile.Read(ref _disposed) != 0, this);
+
+        // One ids buffer and one logits buffer per call, instead of fresh [seq, vocab] arrays every step. The logits
+        // buffer grows by doubling up to the last step's length, so it never holds more than twice the rows needed.
+        int maxIds = (int)Math.Min((long)prompt.Length + maxLength, MaxTargetPositions);
+        var ids = new long[MaxTargetPositions];
+        for (int i = 0; i < prompt.Length; i++)
+        {
+            ids[i] = prompt[i];
+        }
+
+        int count = prompt.Length;
+        float[] logits = [];
+        for (int step = 0; step < maxLength && count < MaxTargetPositions; step++)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            if (logits.Length < count * VocabSize)
+            {
+                // count < maxIds here, so rows >= count.
+                int rows = Math.Min(count * 2, maxIds);
+                logits = new float[rows * VocabSize];
+            }
+
+            DecodeLogitsInto(ids.AsMemory(0, count), encoderHidden, logits.AsMemory(0, count * VocabSize), cancellationToken);
+            var last = logits.AsSpan((count - 1) * VocabSize, VocabSize);
+            ApplySuppression(last, step == 0);
+            if (timestamps)
+            {
+                ApplyTimestampRules(last, ids.AsSpan(prompt.Length, count - prompt.Length));
+            }
+
+            int next = ArgMax(last);
+            ids[count++] = next;
+            if (next == EndOfText)
+            {
+                break;
+            }
+        }
+
+        var result = new int[count];
+        for (int i = 0; i < count; i++)
+        {
+            result[i] = (int)ids[i];
+        }
+
+        return result;
     }
 
     private void DecodeLogitsInto(Memory<long> ids, float[] encoderHidden, Memory<float> logits, CancellationToken cancellationToken)

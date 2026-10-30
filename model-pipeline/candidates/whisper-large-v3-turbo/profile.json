@@ -123,7 +123,14 @@
       50363
     ],
     "task": "transcribe",
-    "timestamps": false,
+    "timestamps": {
+      "feature_precision": 0.01,
+      "input_stride": 2,
+      "level": "segment",
+      "max_initial_timestamp_index": 50,
+      "time_precision": 0.02,
+      "timestamp_begin": 50365
+    },
     "tokenizer_file": "tokenizer.json",
     "tokenizer_profile": "whisper-bpe",
     "vocabulary_size": 51866
