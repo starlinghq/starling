@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <!-- Source only until the admission decision (model-pipeline/admissions/clover.md) and a runtime exist. -->
+    <IsPackable>false</IsPackable>
+    <IsAotCompatible>true</IsAotCompatible>
+    <Description>Diffuspace/Clover-35B-A3B-Preview (revision 4b0402b6) model definition without a runtime: the Clover chat template rendered in C# for text turns (thinking, preserve_thinking and add_non_thinking_prefix switches), the checkpoint's ModelProfile (owned tokenizer profile clover-bpe-chat, template digest, end-of-sequence and mask ids, decoder shape) and the asset lock of the Hub checkpoint. Experimental. No backend in this repository runs Clover's block-diffusion decoder.</Description>
+    <PackageTags>clover;llm;chat;chat-template;diffusion;moe</PackageTags>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../Starlings.Generation.Abstractions/Starlings.Generation.Abstractions.csproj" />
+    <!-- ModelAssetLock of the Hub checkpoint (BCL only). -->
+    <ProjectReference Include="../Starlings.Acquisition/Starlings.Acquisition.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Starlings.Models.Clover.Tests" />
+  </ItemGroup>
+
+</Project>
