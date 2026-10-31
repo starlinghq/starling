@@ -170,7 +170,7 @@ checkpoint they were exported from (`candidates/whisper-large-v3-turbo/`). Stage
   SHA-256 (the four single utterances of `asr-corpus-v1.jsonl`; from v2, a 27.9 s composite of six consecutive
   utterances and a composite cut at 30 s inside its last utterance, which the ground-truth sanity bound leaves out; and
   two long-form composites of 34.5 s and 59.1 s).
-- A clip over 30 s is long-form, as transformers `generate` treats input over 3000 mel frames: one spectrogram over the
+- A clip of more than 3000 mel frames (480,160 samples or more) is long-form, exactly as transformers `generate` decides (`is_shortform = frames <= 3000`; the route, the evaluator and the library all decide by frames): one spectrogram over the
   whole clip (`WhisperFeatureExtractor(truncation=False, padding="longest")`, numpy and torch paths, against
   `WhisperMelSpectrogram.ExtractLongForm`), decoded with timestamps window after window (the contract's `long_form`
   block pins greedy decoding, temperature 0 with no fallback, no conditioning on earlier windows and no thresholds).

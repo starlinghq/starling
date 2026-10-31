@@ -299,12 +299,19 @@ def main() -> int:
         for row in corpus:
             audio = read_audio(row["path"], behavior["sample_rate"])
             timestamp_prompt = prompt(candidate, row["language"], timestamps=True)
-            if len(audio) > behavior["max_samples"]:
+            # Long-form exactly as transformers decides: more than one window of frames (is_shortform: frames <= 3000).
+            if len(audio) // behavior["hop_length"] > behavior["num_frames"]:
                 cases.append(long_form_case(row, audio))
                 continue
-            padded = np.zeros(behavior["max_samples"], dtype=np.float32)
-            padded[: len(audio)] = audio
-            default_mel = extractor(audio, sampling_rate=behavior["sample_rate"], return_tensors="np").input_features[0]
+            if len(audio) > behavior["max_samples"]:
+                # 480,001 to 480,159 samples: still 3000 frames over the whole clip, decoded in one window.
+                padded, call = audio, {"truncation": False, "padding": "longest"}
+            else:
+                padded, call = np.zeros(behavior["max_samples"], dtype=np.float32), {}
+                padded[: len(audio)] = audio
+            default_mel = extractor(
+                audio, sampling_rate=behavior["sample_rate"], return_tensors="np", **call
+            ).input_features[0]
             numpy_mel = extractor._np_extract_fbank_features(padded[None], "cpu")[0].astype(np.float32)
             torch_mel = extractor._torch_extract_fbank_features(padded[None], "cpu")[0].astype(np.float32)
             if not np.array_equal(default_mel, torch_mel):

@@ -24,7 +24,7 @@ public sealed class LongFormMelTests
     [InlineData(551_840, 3449)]
     public void FramesAreSamplesOverTheHop(int samples, int frames)
     {
-        float[] mel = WhisperMelSpectrogram.ExtractLongForm(Tone(samples), out int actual);
+        float[] mel = WhisperMelSpectrogram.ExtractLongForm(Tone(samples), out int actual, TestContext.Current.CancellationToken);
 
         Assert.Equal(frames, actual);
         Assert.Equal(WhisperMelSpectrogram.NumMelBins * frames, mel.Length);
@@ -35,7 +35,7 @@ public sealed class LongFormMelTests
     [InlineData(WhisperMelSpectrogram.MaxSamples)]
     public void ThirtySecondsOrLessIsRefused(int samples)
     {
-        Assert.Throws<ArgumentException>(() => WhisperMelSpectrogram.ExtractLongForm(new float[samples], out _));
+        Assert.Throws<ArgumentException>(() => WhisperMelSpectrogram.ExtractLongForm(new float[samples], out _, TestContext.Current.CancellationToken));
     }
 
     [Fact]
@@ -48,7 +48,7 @@ public sealed class LongFormMelTests
         var clip = new float[WhisperMelSpectrogram.MaxSamples + extra];
         tone.CopyTo(clip, 0);
 
-        float[] longMel = WhisperMelSpectrogram.ExtractLongForm(clip, out int frames);
+        float[] longMel = WhisperMelSpectrogram.ExtractLongForm(clip, out int frames, TestContext.Current.CancellationToken);
         float[] chunk = WhisperMelSpectrogram.Extract(tone);
 
         Assert.Equal(WhisperMelSpectrogram.NumFrames + extra / WhisperMelSpectrogram.HopLength, frames);
@@ -77,9 +77,30 @@ public sealed class LongFormMelTests
         Tone(WhisperMelSpectrogram.MaxSamples).CopyTo(clip, 0);
         Tone(extra, 0.25e-5f).CopyTo(clip, WhisperMelSpectrogram.MaxSamples);
 
-        float[] mel = WhisperMelSpectrogram.ExtractLongForm(clip, out int frames);
+        float[] mel = WhisperMelSpectrogram.ExtractLongForm(clip, out int frames, TestContext.Current.CancellationToken);
         float floor = mel.Min();
 
         Assert.All(Enumerable.Range(3002, frames - 3002), t => Assert.Equal(floor, mel[t]));
+    }
+
+    [Fact]
+    public void ACancelledTokenStopsTheSpectrogram()
+    {
+        using var cancellation = new CancellationTokenSource();
+        cancellation.Cancel();
+
+        Assert.Throws<OperationCanceledException>(
+            () => WhisperMelSpectrogram.ExtractLongForm(Tone(WhisperMelSpectrogram.MaxSamples * 2), out _, cancellation.Token));
+    }
+
+    [Theory]
+    [InlineData(WhisperMelSpectrogram.MaxSamples, false)]
+    [InlineData(WhisperMelSpectrogram.MaxSamples + 1, false)]
+    [InlineData(WhisperMelSpectrogram.MaxSamples + 159, false)]
+    [InlineData(WhisperMelSpectrogram.MaxSamples + 160, true)]
+    public void LongFormStartsPastOneWindowOfFrames(int samples, bool longForm)
+    {
+        // transformers: is_shortform = frames <= 3000, and samples / 160 frames stay 3000 up to 480,159 samples.
+        Assert.Equal(longForm, WhisperTranscriber.IsLongForm(samples));
     }
 }

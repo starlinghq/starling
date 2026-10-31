@@ -73,8 +73,17 @@ public static class WhisperMelSpectrogram
     /// no padding, one STFT over every sample, the clamp to max - 8 taken over the whole clip. Shape [128, frames] with
     /// <paramref name="frames"/> = samples / 160 (rounded down); long-form decoding slices it into 3000-frame windows.
     /// </summary>
+    /// <remarks>
+    /// Cost: the naive DFT (kept because it reproduces the reference's float64 spectrogram bit for bit, which an FFT's
+    /// different summation order would not) does about 160,000 multiply-adds per frame on one thread: measured at about
+    /// 12 s per 10 minutes of audio (about 70 s per hour) on the qualification machine. It allocates about 18 bytes per
+    /// sample (the reflect-padded float64 copy, the float64 log-mel and the float32 result: about 1 GB per hour of
+    /// audio) on top of the caller's 4-byte samples; the float32 result (3.2 bytes per sample) stays alive for the decode.
+    /// <paramref name="cancellationToken"/> is observed every 1024 frames (about 10 s of audio).
+    /// </remarks>
     /// <exception cref="ArgumentException">The clip holds 30 s or less (use <see cref="ExtractChunk"/>).</exception>
-    public static float[] ExtractLongForm(float[] waveform, out int frames)
+    /// <exception cref="OperationCanceledException">The token was cancelled during the spectrogram.</exception>
+    public static float[] ExtractLongForm(float[] waveform, out int frames, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(waveform);
         if (waveform.Length <= MaxSamples)
@@ -84,14 +93,9 @@ public static class WhisperMelSpectrogram
                 nameof(waveform));
         }
 
-        var samples = new double[waveform.Length];
-        for (int i = 0; i < waveform.Length; i++)
-        {
-            samples[i] = waveform[i];
-        }
-
         frames = waveform.Length / HopLength;
-        return Extract(samples, HannWindow, MelFilters, skipSilentFrames: true);
+        // Reflect-pad straight from the float32 input: no intermediate float64 copy of the clip.
+        return Extract(ReflectPad(waveform), HannWindow, MelFilters, skipSilentFrames: true, cancellationToken);
     }
 
     /// <summary>Log-mel spectrogram of one 16 kHz waveform (exactly 480,000 samples), shape [128, 3000].</summary>
@@ -109,7 +113,7 @@ public static class WhisperMelSpectrogram
                 nameof(waveform));
         }
 
-        return Extract(waveform, HannWindow, MelFilters, skipSilentFrames);
+        return Extract(ReflectPad(waveform), HannWindow, MelFilters, skipSilentFrames, CancellationToken.None);
     }
 
     /// <summary>Log-mel spectrogram of one float32 16 kHz waveform (exactly 480,000 samples), shape [128, 3000].</summary>
@@ -209,12 +213,10 @@ public static class WhisperMelSpectrogram
         return freq;
     }
 
-    private static float[] Extract(double[] waveform, double[] window, double[,] melFilters, bool skipSilentFrames)
+    /// <summary>Center padding by n_fft / 2 on each side, reflect mode (numpy <c>np.pad(mode="reflect")</c>), in float64.</summary>
+    private static double[] ReflectPad(double[] waveform)
     {
-        int n = waveform.Length;
-        int pad = Nfft / 2;
-
-        // center pad, reflect (numpy np.pad mode="reflect").
+        int n = waveform.Length, pad = Nfft / 2;
         double[] padded = new double[n + 2 * pad];
         Array.Copy(waveform, 0, padded, pad, n);
         for (int i = 0; i < pad; i++)
@@ -223,6 +225,30 @@ public static class WhisperMelSpectrogram
             padded[n + pad + i] = waveform[n - 2 - i];
         }
 
+        return padded;
+    }
+
+    /// <summary>As <see cref="ReflectPad(double[])"/> from float32 samples (each widened exactly to float64).</summary>
+    private static double[] ReflectPad(float[] waveform)
+    {
+        int n = waveform.Length, pad = Nfft / 2;
+        double[] padded = new double[n + 2 * pad];
+        for (int i = 0; i < n; i++)
+        {
+            padded[pad + i] = waveform[i];
+        }
+
+        for (int i = 0; i < pad; i++)
+        {
+            padded[i] = waveform[pad - i];
+            padded[n + pad + i] = waveform[n - 2 - i];
+        }
+
+        return padded;
+    }
+
+    private static float[] Extract(double[] padded, double[] window, double[,] melFilters, bool skipSilentFrames, CancellationToken cancellationToken)
+    {
         int frameCount = 1 + (padded.Length - Nfft) / HopLength;   // samples / 160 + 1, then the last is dropped
         int frames = frameCount - 1;
 
@@ -235,6 +261,11 @@ public static class WhisperMelSpectrogram
         // power in every bin, so its value is SilentLogMel exactly; skipping its DFT changes no bit of the output.
         for (int t = 0; t < frameCount; t++)
         {
+            if ((t & 1023) == 0)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+            }
+
             int offset = t * HopLength;
             bool silent = skipSilentFrames;
             for (int j = 0; j < Nfft; j++)

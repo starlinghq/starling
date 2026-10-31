@@ -423,8 +423,8 @@ def load_corpus(corpus: Path, candidate: dict) -> list[dict]:
         rows.append({**row, "path": path})
     if len(rows) < 2 or len({row["samples"] for row in rows}) < 2:
         raise PipelineError("ASR corpus must hold at least two differently sized clips")
-    if sum(row["samples"] <= behavior["max_samples"] for row in rows) < 2:
-        raise PipelineError("ASR corpus must hold at least two clips of up to 30 s")
+    if sum(not long_form(row["samples"], behavior) for row in rows) < 2:
+        raise PipelineError("ASR corpus must hold at least two short-form clips (one window of frames)")
     return rows
 
 
@@ -436,8 +436,10 @@ def prompt(candidate: dict, language: str, timestamps: bool = False) -> list[int
 
 
 def long_form(samples: int, behavior: dict) -> bool:
-    """A clip longer than one window is transcribed long-form."""
-    return samples > behavior["max_samples"]
+    """A clip whose spectrogram has more than one window of frames (samples // hop > num_frames, from 480,160 samples)
+    is long-form, as transformers decides (is_shortform = frames <= 3000)."""
+    hop = behavior["hop_length"]
+    return samples // hop > behavior["max_samples"] // hop
 
 
 def mel_frames(samples: int, behavior: dict) -> int:
@@ -580,7 +582,8 @@ def _document(path: Path, candidate: dict, digest: str, stage: str) -> tuple[dic
             if stage == "reference" and (
                 row["default_path_ids"][: len(expected_prompt)] != expected_prompt
                 or type(row["samples"]) is not int
-                or not 0 < row["samples"] <= behavior["max_samples"]
+                or row["samples"] <= 0
+                or long_form(row["samples"], behavior)
             ):
                 raise PipelineError(f"{stage}/{identifier}: invalid default feature-path ids or sample count")
             if stage != "reference" and not isinstance(row["forced_ids"], list):

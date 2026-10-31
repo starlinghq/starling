@@ -76,13 +76,15 @@ behavior:
   truncation: chunk
   defaults:
     audio: >-
-      16 kHz mono float32 PCM; up to 30 s, WhisperMelSpectrogram.ExtractChunk zero-pads the clip to one window; longer
-      clips are long-form
+      16 kHz mono float32 PCM; up to 30 s, WhisperMelSpectrogram.ExtractChunk zero-pads the clip to one window; up to
+      480,159 samples the whole-clip spectrogram still has 3000 frames (one window); more frames are long-form
     long_form: >-
       transformers 5.18.0 sequential long-form generate(return_timestamps=True): a spectrogram over the whole clip
       (WhisperMelSpectrogram.ExtractLongForm, as WhisperFeatureExtractor(truncation=False, padding="longest") computes
       it), 3000-frame windows (the last zero-padded), seek to the last closing timestamp; greedy, temperature 0 with no
-      fallback, condition_on_prev_tokens false, no compression-ratio, log-probability or no-speech threshold
+      fallback, condition_on_prev_tokens false, no compression-ratio, log-probability or no-speech threshold. The
+      whole-clip spectrogram (a naive DFT, kept for bit-exactness) costs about 70 s of one core and about 1 GB of memory
+      per hour of audio; no length limit is imposed, cancellation is observed inside it
     language: explicit two-letter code; the onboarding evidence covers English (en) only
     task: >-
       transcribe (prompt <|startoftranscript|> <|lang|> <|transcribe|> <|notimestamps|>); with segment timestamps

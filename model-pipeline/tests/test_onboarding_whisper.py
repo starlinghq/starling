@@ -303,7 +303,8 @@ def test_each_corpus_version_extends_the_previous_unchanged():
 
 def test_long_form_helpers():
     behavior = whisper.BEHAVIOR
-    assert not whisper.long_form(480000, behavior) and whisper.long_form(480001, behavior)
+    assert not whisper.long_form(480000, behavior) and not whisper.long_form(480159, behavior)
+    assert whisper.long_form(480160, behavior)
     assert whisper.mel_frames(26239, behavior) == 3000
     assert whisper.mel_frames(551840, behavior) == 3449 and whisper.mel_frames(480159, behavior) == 3000
 
@@ -330,7 +331,7 @@ def corpus_copy(tmp_path: Path, mutate=None) -> Path:
         (
             "one short clip",
             lambda d, rows: rows.__setitem__(slice(None), [rows[0], *(row for row in rows if row["samples"] > 480000)]),
-            "two clips of up to 30 s",
+            "two short-form clips",
         ),
         ("other rate", lambda d, rows: rows[0].update(sample_rate=8000), "16 kHz"),
         ("other language", lambda d, rows: rows[0].update(language="fr"), "language"),

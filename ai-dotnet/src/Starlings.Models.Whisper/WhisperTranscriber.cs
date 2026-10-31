@@ -58,25 +58,40 @@ public sealed class WhisperTranscriber : IDisposable
     }
 
     /// <summary>
-    /// Transcribes one 16 kHz float32 clip. Up to 30 s (480,000 samples), shorter clips are zero-padded and decoded in
-    /// one window. Longer clips are long-form: the text of <see cref="TranscribeWithTimestamps"/>, because sequential
-    /// long-form decoding needs the timestamps (transformers enables them for long-form input).
+    /// Transcribes one 16 kHz float32 clip. A clip whose spectrogram fits one window (at most 3000 frames: up to
+    /// 480,159 samples) is decoded in one window: up to 30 s it is zero-padded to 30 s, and the 159 samples past 30 s
+    /// only extend the last frame (<see cref="WhisperMelSpectrogram.ExtractLongForm"/> still yields 3000 frames), as
+    /// transformers treats them (short-form, <c>frames &lt;= 3000</c>). A longer clip is long-form: the text of
+    /// <see cref="TranscribeWithTimestamps"/>, because sequential long-form decoding needs the timestamps (transformers
+    /// enables them for long-form input and refuses <c>return_timestamps=False</c>).
     /// </summary>
     /// <exception cref="ArgumentException">The clip is empty.</exception>
+    /// <exception cref="OperationCanceledException">The token was cancelled, also during a long clip's spectrogram.</exception>
     public string Transcribe(float[] waveform, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(waveform);
         // Refuse before the spectrogram, the costliest CPU step ahead of the encoder.
         ObjectDisposedException.ThrowIf(Volatile.Read(ref _disposed) != 0, this);
         cancellationToken.ThrowIfCancellationRequested();
-        if (waveform.Length > WhisperMelSpectrogram.MaxSamples)
+        if (IsLongForm(waveform.Length))
         {
             return TranscribeWithTimestamps(waveform, cancellationToken).Text;
         }
 
-        var mel = WhisperMelSpectrogram.ExtractChunk(waveform);
-        return TranscribeMel(mel, cancellationToken);
+        return TranscribeMel(Features(waveform, cancellationToken), cancellationToken);
     }
+
+    /// <summary>
+    /// Whether a clip of <paramref name="samples"/> is long-form: its spectrogram has more than one window of frames
+    /// (<c>samples / 160 &gt; 3000</c>, from 480,160 samples), transformers' <c>is_shortform = frames &lt;= 3000</c>.
+    /// </summary>
+    internal static bool IsLongForm(int samples) => samples / WhisperMelSpectrogram.HopLength > WhisperMelSpectrogram.NumFrames;
+
+    /// <summary>The clip's spectrogram: zero-padded to 30 s up to 480,000 samples, otherwise over the whole clip.</summary>
+    private static float[] Features(float[] waveform, CancellationToken cancellationToken) =>
+        waveform.Length > WhisperMelSpectrogram.MaxSamples
+            ? WhisperMelSpectrogram.ExtractLongForm(waveform, out _, cancellationToken)
+            : WhisperMelSpectrogram.ExtractChunk(waveform);
 
     /// <summary>
     /// Transcribes a log-mel spectrogram (<c>[128, 3000]</c>) to text. With <see cref="WhisperOptions.NoTimestamps"/>
@@ -103,15 +118,13 @@ public sealed class WhisperTranscriber : IDisposable
     /// the sequential decode walks in 30 s windows. See <see cref="TranscribeMelWithTimestamps"/>.
     /// </summary>
     /// <exception cref="ArgumentException">The clip is empty.</exception>
+    /// <exception cref="OperationCanceledException">The token was cancelled, also during a long clip's spectrogram.</exception>
     public WhisperTranscription TranscribeWithTimestamps(float[] waveform, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(waveform);
         ObjectDisposedException.ThrowIf(Volatile.Read(ref _disposed) != 0, this);
         cancellationToken.ThrowIfCancellationRequested();
-        var mel = waveform.Length > WhisperMelSpectrogram.MaxSamples
-            ? WhisperMelSpectrogram.ExtractLongForm(waveform, out _)
-            : WhisperMelSpectrogram.ExtractChunk(waveform);
-        return TranscribeMelWithTimestamps(mel, cancellationToken);
+        return TranscribeMelWithTimestamps(Features(waveform, cancellationToken), cancellationToken);
     }
 
     /// <summary>

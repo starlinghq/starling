@@ -12,21 +12,23 @@ Changes merged to `main` after the last release record, collected here for the n
 
 - **Segment timestamps (experimental, #221).** `WhisperTranscriber.TranscribeWithTimestamps` and
   `TranscribeMelWithTimestamps` return a `WhisperTranscription` (text, `WhisperSegment` list with start and end in
-  seconds, text and token ids, and the decoded `WhisperWindow`s) for up to 30 s of audio. `WhisperModel.GenerateWithTimestamps`
+  seconds, text and token ids, and the decoded `WhisperWindow`s); with #222 below, for audio of any length. `WhisperModel.GenerateWithTimestamps`
   applies transformers 5.18.0 `WhisperTimeStampLogitsProcessor`; the transcriber follows `generate(return_timestamps=True)`'s
   sequential seek loop, greedy, without fallbacks. Capability `timestamps` moves from unsupported to experimental; the new
   `word_timestamps` is unsupported.
 - `WhisperTokenizer.Decode` drops timestamp tokens (ids from 50365), as transformers `WhisperTokenizer.decode` does.
 - `WhisperOptions.NoTimestamps = false` now makes `Transcribe` return the timestamped decode's text, instead of
   prompting without `<|notimestamps|>` and decoding without the timestamp rules.
-- **Long-form transcription over 30 s (experimental, #222).** `Transcribe` and `TranscribeWithTimestamps` accept clips
-  longer than 30 s and transcribe them as transformers 5.18.0 sequential long-form `generate` does: the new
+- **Long-form transcription (experimental, #222).** `Transcribe` and `TranscribeWithTimestamps` accept clips
+  of more than 3000 mel frames (480,160 samples or more; up to 480,159 samples stay one window, as in transformers) and
+  transcribe them as transformers 5.18.0 sequential long-form `generate` does: the new
   `WhisperMelSpectrogram.ExtractLongForm` computes one spectrogram over the whole clip, and the timestamped decode walks
   it in 30 s windows, seeking to the last closing timestamp. `TranscribeMelWithTimestamps` takes a spectrogram of any
   number of frames. Greedy only; the temperature fallback, compression-ratio, log-probability and no-speech thresholds
   and conditioning on earlier windows stay unsupported (new capability keys say so). Capability `chunking` moves from
   unsupported to experimental. The Whisper route reads `asr-corpus-v3.jsonl`, which adds a 34.5 s and a 59.1 s
-  composite of consecutive LibriSpeech utterances.
+  composite of consecutive LibriSpeech utterances. `WhisperMelSpectrogram.ExtractLongForm` takes a `CancellationToken`
+  (observed every 1024 frames); the spectrogram costs about 70 s of one core and about 1 GB per hour of audio.
 - The Whisper onboarding route reads `asr-corpus-v2.jsonl`: the four clips of v1, a 27.9 s composite of six
   consecutive LibriSpeech utterances, and a composite cut at 30 s inside its last utterance (its decode ends inside a
   segment and is decoded again from the last closing timestamp). It checks the timestamped decode of every clip and
