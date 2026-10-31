@@ -885,8 +885,9 @@ def _transcript(row: dict) -> str:
 
 
 def _kv_checks(identifier: str, python_row: dict, dotnet_row: dict, tensors: dict, policy: dict, kv_bound: float):
-    """The KV-cache loop: same ids, segments and transcripts as the full-context loop (exact), its logits within the
-    proposed bound of the full-context logits on the same backend, and .NET's KV loop equal to Python's."""
+    """The KV-cache loop: same ids, segments and transcripts as the full-context loop (exact), its logits within
+    `kv_bound` (kv_logits_max_abs, proposed or adopted) of the full-context logits on the same backend, and .NET's KV
+    loop equal to Python's."""
     checks = [
         _exact(
             [_windows(python_row["kv_timestamped"]), _segments(python_row["kv_timestamped"])],
@@ -1151,9 +1152,10 @@ def evaluate_development(
         "evaluation_status": "proposed",
         "policy": policy,
         "policy_source": policy_source,
-        # The candidate's own bounds for checks the binding tolerances do not cover yet (the KV-cache loop).
+        # The candidate's own bounds that the binding tolerances do not hold yet; empty once every adoptable bound
+        # (PROPOSED_POLICY_CAPS) is adopted, and then there is nothing proposed to qualify.
         "proposed_policy": proposed,
-        "proposed_policy_status": "proposed",
+        "proposed_policy_status": "proposed" if proposed else "none",
         # Where the KV-cache logits bound came from: the (binding) policy, or the candidate's proposal.
         "kv_logits_max_abs_source": kv_source,
         "policy_status": "binding" if repo_root is not None else "proposed",

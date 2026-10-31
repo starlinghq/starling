@@ -630,7 +630,9 @@ def test_complete_evidence_passes_and_never_adopts_protected_gates(tmp_path, tin
         "dotnet-mel/*/kv_ids_vs_python",
         "dotnet-mel/*/kv_timestamped_vs_python",
     }
-    assert whisper.kv_bounds(tiny)[0] == 0.02 and report["proposed_policy"] in ({"kv_logits_max_abs": 0.02}, {})
+    bound, source = whisper.kv_bounds(tiny)
+    assert bound == 0.02 and report["kv_logits_max_abs_source"] == source
+    assert report["proposed_policy"] == ({"kv_logits_max_abs": 0.02} if source == "proposed_policy" else {})
     assert [check["id"] for check in report["checks"][-4:]] == [
         "reference/corpus/wer_vs_ground_truth",
         "reference/corpus/timestamp_pair_coverage",
@@ -1144,7 +1146,24 @@ def test_the_binding_check_requires_the_same_adopted_keys():
         whisper.validate_candidate_behavior(other, REPO)
 
 
-def test_the_evaluator_reports_where_the_kv_bound_came_from(tmp_path, tiny):
-    report = whisper.evaluate_development(**evidence(tmp_path, adopted(tiny)))
-    assert report["status"] == "passed" and report["kv_logits_max_abs_source"] == "policy"
-    assert report["proposed_policy"] == {}
+@pytest.mark.parametrize(
+    ("state", "source", "proposal", "status"),
+    [
+        (proposed, "proposed_policy", {"kv_logits_max_abs": 0.02}, "proposed"),
+        (adopted, "policy", {}, "none"),
+    ],
+    ids=["proposed", "adopted"],
+)
+def test_the_evaluator_reports_where_the_kv_bound_came_from(tmp_path, tiny, state, source, proposal, status):
+    report = whisper.evaluate_development(**evidence(tmp_path, state(tiny)))
+    assert report["status"] == "passed" and report["kv_logits_max_abs_source"] == source
+    assert report["proposed_policy"] == proposal and report["proposed_policy_status"] == status
+
+
+@pytest.mark.parametrize("state", [proposed, adopted], ids=["proposed", "adopted"])
+def test_the_kv_bound_gates_the_kv_logits_in_either_state(tmp_path, tiny, state):
+    report = whisper.evaluate_development(
+        **evidence(tmp_path, state(tiny), {"onnx": nudge("kv_logits", 0.05, "clip-b")})
+    )
+    check = next(c for c in report["checks"] if c["id"] == "onnx/clip-b/kv_logits_vs_full_context")
+    assert check["status"] == "failed" and check["bound"] == 0.02
