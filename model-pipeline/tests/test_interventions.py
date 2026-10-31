@@ -349,6 +349,23 @@ def test_no_link_mode_writes_graph_only(bundle, tmp_path):
     result = _compile(bundle, tmp_path / "d", link_external=False)
     assert result.linked_files == ()
     assert sorted(p.name for p in (tmp_path / "d").iterdir()) == ["compiler-manifest.json", "model.onnx"]
+    # The manifest still names the external data the derived graph needs; until it is placed, verification fails.
+    (file,) = result.manifest.derived_files
+    assert file.path == "model.onnx_data"
+    with pytest.raises(InterventionMismatchError, match="does not exist"):
+        contract.verify_artifact_file(result.derived_dir / file.path, file.sha256, file.size)
+
+
+def test_swapped_external_data_next_to_derived_graph_fails_verification(bundle, tmp_path):
+    result = _compile(bundle, tmp_path / "d")
+    (file,) = result.manifest.derived_files
+    link = result.derived_dir / file.path
+    data = bytearray(link.read_bytes())
+    data[0] ^= 1
+    link.unlink()  # never write through the link: that would change the base bundle
+    link.write_bytes(bytes(data))
+    with pytest.raises(InterventionMismatchError, match="SHA-256"):
+        contract.verify_artifact_file(link, file.sha256, file.size)
 
 
 def test_output_inside_base_directory_is_rejected(bundle):
@@ -358,6 +375,10 @@ def test_output_inside_base_directory_is_rejected(bundle):
     with pytest.raises(InterventionCompileError, match="inside the base model directory"):
         _compile(bundle, base_dir)
     assert not (base_dir / "derived").exists()
+    # An output directory that contains the bundle is rejected too: links at out_dir/<location> could land inside it.
+    with pytest.raises(InterventionCompileError, match="inside the output directory"):
+        _compile(bundle, base_dir.parent)
+    assert not (base_dir.parent / "model.onnx").exists()
 
 
 def test_escaping_external_location_is_rejected(tmp_path):
@@ -487,6 +508,27 @@ def test_opset_below_minimum_is_rejected(tmp_path):
         )
 
 
+def test_ir_version_below_four_is_rejected(tmp_path):
+    base_dir = tmp_path / "bundle"
+    model = _build_graph()
+    model.ir_version = 3
+    for init in model.graph.initializer:
+        model.graph.input.append(helper.make_tensor_value_info(init.name, init.data_type, list(init.dims)))
+    graph = _write_base(base_dir, model)
+    profile = write_synthetic_profile(
+        tmp_path / "p", profile_id="ir3", base_model_sha256=_sha(graph), sites=[SyntheticSite(0, HIDDEN, 1)]
+    )
+    with pytest.raises(InterventionCompileError, match="IR version 3"):
+        compile_intervention(
+            base_dir=base_dir,
+            graph="model.onnx",
+            profile=profile.path,
+            out_dir=tmp_path / "d",
+            mapping=_mapping(_sha(graph)),
+        )
+    assert not (tmp_path / "d").exists()
+
+
 # --------------------------------------------------------------------------------------------------------------------
 # Identities and site mappings
 
@@ -572,9 +614,14 @@ def test_manifest_contents(bundle, tmp_path):
     assert manifest.derived_graph.path == "model.onnx"
     assert manifest.derived_graph.sha256 == _sha(result.graph_path)
     assert manifest.derived_graph.size == result.graph_path.stat().st_size
-    assert manifest.derived_files == ()
+    # The hard-linked external data is a derived file: what ONNX Runtime reads next to model.onnx is hash-checked.
+    assert [(f.path, f.sha256, f.size) for f in manifest.derived_files] == [
+        ("model.onnx_data", _sha(data), data.stat().st_size)
+    ]
     contract.verify_manifest_profile(manifest, profile)
     contract.verify_artifact_file(result.graph_path, manifest.derived_graph.sha256, manifest.derived_graph.size)
+    for file in manifest.derived_files:
+        contract.verify_artifact_file(result.derived_dir / file.path, file.sha256, file.size)
     for artifact in manifest.base_artifacts:
         contract.verify_artifact_file(base_dir / artifact.path, artifact.sha256, artifact.size)
 

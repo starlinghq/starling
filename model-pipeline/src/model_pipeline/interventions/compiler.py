@@ -56,6 +56,7 @@ STRENGTH_SHAPE = (1,)
 DERIVED_GRAPH_NAME = "model.onnx"
 MANIFEST_NAME = "compiler-manifest.json"
 MIN_OPSET = 7  # multidirectional broadcasting in Mul and Sub
+MIN_IR_VERSION = 4  # below IR 4 every initializer must also be a graph input, which would add inputs
 
 # Element types a site tensor may have. The projection itself always runs in float32.
 SUPPORTED_SITE_TYPES = {TensorProto.FLOAT: "float32", TensorProto.FLOAT16: "float16"}
@@ -311,8 +312,10 @@ def compile_intervention(
     with no mapping is unsupported. ``out_dir`` must not be inside ``base_dir``: the source bundle is never written.
 
     With ``link_external`` (the default) every external data file is hard-linked into ``out_dir`` under its original
-    location, so ``out_dir/model.onnx`` loads by path in ONNX Runtime. The derived graph, the links and the manifest are
-    written in place; atomic publication into a cache is the caller's job.
+    location, so ``out_dir/model.onnx`` loads by path in ONNX Runtime. The manifest lists those files in
+    ``derived_files`` (path, SHA-256 and size of the bytes the derived graph reads) whether or not they were linked
+    here. The derived graph, the links and the manifest are written in place; atomic publication into a cache is the
+    caller's job.
     """
     base_dir = Path(base_dir).absolute()
     out_dir = Path(out_dir).absolute()
@@ -321,6 +324,9 @@ def compile_intervention(
     graph_path = base_dir.joinpath(*graph.split("/"))
     if _inside(out_dir, base_dir):
         raise InterventionCompileError(f"output directory '{out_dir}' is inside the base model directory '{base_dir}'.")
+    if _inside(base_dir, out_dir):
+        # Links are created at out_dir/<location>, which could then land inside the source bundle.
+        raise InterventionCompileError(f"base model directory '{base_dir}' is inside the output directory '{out_dir}'.")
 
     graph_bytes = graph_path.read_bytes()
     graph_sha = sha256_bytes(graph_bytes)
@@ -342,6 +348,11 @@ def compile_intervention(
     opset = default_opset(base)
     if opset < MIN_OPSET:
         raise InterventionCompileError(f"default-domain opset {opset} is below the supported minimum {MIN_OPSET}.")
+    if base.ir_version < MIN_IR_VERSION:
+        raise InterventionCompileError(
+            f"IR version {base.ir_version} is below the supported minimum {MIN_IR_VERSION} (the inserted initializers "
+            "would have to become graph inputs)."
+        )
     locations = external_data.external_locations(base)
     reserved = {DERIVED_GRAPH_NAME, MANIFEST_NAME}
     if any(location in reserved or location.split("/")[0] in reserved for location in locations):
@@ -365,10 +376,19 @@ def compile_intervention(
         # hardlink attack"), although ONNX Runtime 1.30 loads it. onnx.load(..., load_external_data=True) refuses it
         # too.
 
-    base_artifacts = [
-        BaseArtifact(ARTIFACT_ROLE_GRAPH, graph, graph_sha, len(graph_bytes)),
-        *external_data.base_external_artifacts(graph_path, base_dir, locations),
-    ]
+    external_artifacts = external_data.base_external_artifacts(graph_path, base_dir, locations)
+    base_artifacts = [BaseArtifact(ARTIFACT_ROLE_GRAPH, graph, graph_sha, len(graph_bytes)), *external_artifacts]
+    # The derived graph reads its external data from out_dir/<location>, so those files are derived files: recording
+    # them lets VerifyDerivedFiles check the bytes ONNX Runtime will actually load (a swapped or stale file next to
+    # model.onnx fails). They are listed even with link_external=False; the caller must then place exactly these files.
+    # A link shares the original's inode, so its hash is the one just computed, provided it is still the same file.
+    for link in linked:
+        source = graph_path.parent.joinpath(*link.relative_to(out_dir).parts)
+        if not os.path.samefile(source, link):
+            raise InterventionMismatchError(f"external data file '{source}' was replaced during compilation.")
+    derived_files = tuple(
+        ArtifactFile(location, a.sha256, a.size) for location, a in zip(locations, external_artifacts, strict=True)
+    )
     manifest = InterventionManifest(
         compiler_version=COMPILER_VERSION,
         site_mapping_version=mapping.version,
@@ -381,7 +401,7 @@ def compile_intervention(
         inputs=inputs,
         sites=tuple(SiteBinding(p.site.layer, p.site.target, p.binding.tensor) for p in plans),
         derived_graph=ArtifactFile(DERIVED_GRAPH_NAME, sha256_bytes(derived_bytes), len(derived_bytes)),
-        derived_files=(),
+        derived_files=derived_files,
     ).validate()
     # The base graph must not have changed while we compiled.
     if sha256_file(graph_path) != graph_sha:

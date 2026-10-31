@@ -15,7 +15,7 @@ result = compile_intervention(
     base_dir="bundle",            # base model directory: manifest base_artifacts paths are relative to it
     graph="onnx/model.onnx",      # the base graph, relative to base_dir
     profile="profile/profile.json",
-    out_dir="derived",            # must not be inside base_dir
+    out_dir="derived",            # must not be inside base_dir, nor contain it
 )
 # derived/model.onnx, derived/model.onnx_data (hard link), derived/compiler-manifest.json
 ```
@@ -40,7 +40,7 @@ Run the derived graph with the ordinary inputs plus `intervention_strength`, a f
    A float16 site gets `Cast(y)` to float32 first and `Cast(delta)` back to float16 before the `Sub`. `Q^T`, `Q` and `s` are inline float32 initializers named `intervention/layer<L>/<target>/...`; `alpha` is the graph input `intervention_strength`, shared by every site.
 6. Rewires **only the consumer nodes the site mapping lists** to read `y'`. The inserted nodes read `y`, and so does every unlisted reader, graph outputs included: a graph output that exposes the site tensor keeps reporting the original value. Inserted names that collide with any existing name are rejected.
 7. Validates the derived graph against the base graph: onnx.checker (on a view where external initializers are graph inputs, so no file is opened), topological order (no cycle), non-strict shape inference, inputs equal to the base inputs plus exactly the strength input, outputs unchanged, every base initializer present and byte-identical (for external tensors: same location, offset and length), same IR version and opset imports, every base node still present.
-8. Writes `model.onnx`, hard-links every external-data file of the base graph into the output directory under its original location, and writes `compiler-manifest.json` (canonical form; the C# reader re-serializes it byte for byte).
+8. Writes `model.onnx`, hard-links every external-data file of the base graph into the output directory under its original location, and writes `compiler-manifest.json` (canonical form; the C# reader re-serializes it byte for byte). The manifest lists each of those external-data files in `derived_files` (location, SHA-256, size), so `VerifyDerivedFiles` checks the bytes ONNX Runtime reads next to the derived graph, not only the originals.
 
 The base bundle is only read. The derived graph is deterministic: the same inputs give the same bytes.
 
@@ -49,9 +49,10 @@ The base bundle is only read. The derived graph is deterministic: the same input
 The derived graph keeps the base graph's external-data entries unchanged, so it must sit next to files with those names. ONNX Runtime 1.30 (C# and Python, measured) rejects every location that leaves the graph's directory: parent-relative (`../original/model.onnx_data`), absolute, and symlinked files or directories, which it canonicalizes before the check. A **hard link** next to the derived graph loads and shares the original bytes, so there is no second copy.
 
 - A hard link cannot cross file systems. The compiler raises `ExternalDataLinkError` (`EXDEV`) instead of copying. The derived-artifact cache must live on the bundle's file system. The other route the spike measured is loading the derived graph with the session option `session.model_external_initializers_file_folder_path` set to the bundle directory; that needs a session-level option and is not what the compiler sets up.
-- A link shares the inode. Rewriting the original file in place changes what the derived graph reads, and replacing it by rename leaves the link on the old bytes. A reader re-verifies the external files (`InterventionManifest.VerifyBaseArtifacts`) when it needs that guarantee.
+- A link shares the inode. Rewriting the original file in place changes what the derived graph reads, and replacing it by rename leaves the link on the old bytes. The linked files are in the manifest's `derived_files`, so `InterventionManifest.VerifyDerivedFiles` detects either case (and a file swapped in next to `model.onnx`); it reads the whole weights file, so the caller decides when to pay for it. `VerifyBaseArtifacts` checks the originals in the bundle.
 - onnx 1.23's own path-based checks refuse hard-linked external data ("potential hardlink attack"): `onnx.checker.check_model(path)` and `onnx.load(path)` with external data loading fail on the derived graph, although ONNX Runtime loads it. Use `onnx.load(path, load_external_data=False)` to inspect a derived graph.
-- `link_external=False` writes only the graph and manifest, for a caller that places the external files itself.
+- `link_external=False` writes only the graph and manifest, for a caller that places the external files itself. The manifest still lists them in `derived_files`, so verification fails until exactly those files are in place.
+- The output directory must not be inside the base directory, and must not contain it (a link at `out_dir/<location>` could otherwise land in the bundle).
 
 ## Site mappings
 
@@ -62,6 +63,7 @@ The derived graph keeps the base graph's external-data entries unchanged, so it 
 - Real models: no site mapping ships yet, so every real graph is unsupported.
 - Site tensors inside subgraphs (`If`, `Loop`, `Scan` bodies) and listed consumers inside subgraphs: not supported. An unlisted subgraph reader keeps the original value.
 - Element types other than float32 and float16 at the site, and profile dtypes other than float32.
+- Base graphs below IR version 4 (there every initializer must also be a graph input, which would add inputs) and below default-domain opset 7.
 - Strength 0 is exact for finite activations. An infinite activation at a site gives `inf * 0 = NaN` in the correction.
 - Atomic publication, locking and reuse of derived artifacts belong to the derived-artifact cache.
 - Windows, the CUDA execution provider and graphs over 2 GiB without external data were not tested.
