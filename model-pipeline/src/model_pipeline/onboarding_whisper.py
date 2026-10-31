@@ -8,10 +8,12 @@ Anything else is refused. Stages:
 
 The fp16 ONNX snapshot is `--snapshot`; the PyTorch checkpoint is `--base-snapshot` (a plain snapshot directory).
 Correctness is proved at three levels: intermediate tensors (mel, encoder hidden state, teacher-forced decoder logits),
-greedy token ids, and transcripts. Each clip is decoded twice: without timestamps, and with segment timestamps (the
-transformers timestamp rules and sequential seek loop), whose window ids, segment boundaries and texts are compared
-exactly. The fp32 PyTorch reference bounds export fidelity; .NET against Python ONNX Runtime
-on the same graphs is the tight same-backend canary. Reference outputs are proposals; nothing here adopts protected
+greedy token ids, and transcripts. Each clip up to 30 s is decoded twice: without timestamps, and with segment
+timestamps (the transformers timestamp rules and sequential seek loop), whose window ids, segment boundaries and texts
+are compared exactly. A clip longer than 30 s is long-form: its spectrogram covers the whole clip (compared with the
+reference mel) and it is decoded with timestamps only, window after window; no single-window hidden state or logits
+are compared for it. The fp32 PyTorch reference bounds export fidelity; .NET against Python ONNX Runtime on the same
+graphs is the tight same-backend canary. Reference outputs are proposals; nothing here adopts protected
 fixtures or changes tolerances.
 """
 
@@ -96,6 +98,19 @@ TIMESTAMPS = {
     "feature_precision": 0.01,
     "input_stride": 2,
 }
+# Sequential long-form transcription (audio over 30 s), as transformers generate() runs it: one spectrogram over the
+# whole clip (WhisperFeatureExtractor with truncation=False, padding="longest"), sliced into num_frames windows; greedy,
+# no temperature fallback, no conditioning on earlier windows, no compression-ratio, log-probability or no-speech
+# threshold.
+LONG_FORM = {
+    "strategy": "sequential",
+    "features": "full-clip",
+    "temperature": 0.0,
+    "condition_on_prev_tokens": False,
+    "compression_ratio_threshold": None,
+    "logprob_threshold": None,
+    "no_speech_threshold": None,
+}
 BEHAVIOR = {
     "architecture": "WhisperForConditionalGeneration",
     "encoder_file": ENCODER_FILE,
@@ -118,6 +133,7 @@ BEHAVIOR = {
     "languages": LANGUAGES,
     "task": "transcribe",
     "timestamps": TIMESTAMPS,
+    "long_form": LONG_FORM,
     "decoding": "greedy",
     "suppress_tokens": SUPPRESS_TOKENS,
     "begin_suppress_tokens": BEGIN_SUPPRESS_TOKENS,
@@ -391,11 +407,11 @@ def load_corpus(corpus: Path, candidate: dict) -> list[dict]:
         if (
             row.get("sample_rate") != behavior["sample_rate"]
             or type(samples) is not int
-            or not 0 < samples <= behavior["max_samples"]
+            or samples <= 0
             or row.get("language") not in behavior["languages"]
             or not isinstance(row.get("text"), str)
         ):
-            raise PipelineError(f"{identifier}: needs 16 kHz audio up to 30 s, a contract language, and its text")
+            raise PipelineError(f"{identifier}: needs 16 kHz audio, a contract language, and its text")
         # The indexed count decides where the encoder's audio positions end, so it must be the WAV's own.
         try:
             with wave.open(str(path), "rb") as reader:
@@ -407,6 +423,8 @@ def load_corpus(corpus: Path, candidate: dict) -> list[dict]:
         rows.append({**row, "path": path})
     if len(rows) < 2 or len({row["samples"] for row in rows}) < 2:
         raise PipelineError("ASR corpus must hold at least two differently sized clips")
+    if sum(not long_form(row["samples"], behavior) for row in rows) < 2:
+        raise PipelineError("ASR corpus must hold at least two short-form clips (one window of frames)")
     return rows
 
 
@@ -415,6 +433,18 @@ def prompt(candidate: dict, language: str, timestamps: bool = False) -> list[int
     special = candidate["behavior"]["special_tokens"]
     tokens = [special["start_of_transcript"], candidate["behavior"]["languages"][language], special["transcribe"]]
     return tokens if timestamps else [*tokens, special["no_timestamps"]]
+
+
+def long_form(samples: int, behavior: dict) -> bool:
+    """A clip whose spectrogram has more than one window of frames (samples // hop > num_frames, from 480,160 samples)
+    is long-form, as transformers decides (is_shortform = frames <= 3000)."""
+    hop = behavior["hop_length"]
+    return samples // hop > behavior["max_samples"] // hop
+
+
+def mel_frames(samples: int, behavior: dict) -> int:
+    """Mel frames of a clip: one padded window, or samples // hop for a long-form spectrogram over the whole clip."""
+    return samples // behavior["hop_length"] if long_form(samples, behavior) else behavior["num_frames"]
 
 
 def _number(value) -> bool:
@@ -532,6 +562,12 @@ def _document(path: Path, candidate: dict, digest: str, stage: str) -> tuple[dic
             identifier = row["id"]
             if not isinstance(identifier, str) or not identifier or identifier in cases:
                 raise PipelineError(f"{stage}: duplicate or invalid case id {identifier!r}")
+            if type(row["long_form"]) is not bool or not isinstance(row["audio_sha256"], str):
+                raise PipelineError(f"{stage}/{identifier}: the long-form flag or audio digest is missing")
+            if row["long_form"]:
+                _check_long_form(row, stage, candidate, f"{stage}/{identifier}")
+                cases[identifier] = row
+                continue
             ids, expected_prompt = row["ids"], prompt(candidate, row["language"])
             if (
                 not isinstance(ids, list)
@@ -546,7 +582,8 @@ def _document(path: Path, candidate: dict, digest: str, stage: str) -> tuple[dic
             if stage == "reference" and (
                 row["default_path_ids"][: len(expected_prompt)] != expected_prompt
                 or type(row["samples"]) is not int
-                or not 0 < row["samples"] <= behavior["max_samples"]
+                or row["samples"] <= 0
+                or long_form(row["samples"], behavior)
             ):
                 raise PipelineError(f"{stage}/{identifier}: invalid default feature-path ids or sample count")
             if stage != "reference" and not isinstance(row["forced_ids"], list):
@@ -562,7 +599,35 @@ def _document(path: Path, candidate: dict, digest: str, stage: str) -> tuple[dic
     return data, cases
 
 
-def _tensors(path: Path, document: dict, cases: dict[str, dict], stage: str, behavior: dict, forced: dict) -> dict:
+def _check_long_form(row: dict, stage: str, candidate: dict, where: str) -> None:
+    """A long-form case: no single-window decode, only the timestamped one (and, in .NET, the public audio paths)."""
+    expected = {"id", "language", "audio_sha256", "long_form", "timestamped"}
+    if stage == "reference":
+        expected |= {"samples", "text", "default_path_ids"}
+        if (
+            type(row["samples"]) is not int
+            or not long_form(row["samples"], candidate["behavior"])
+            or not isinstance(row["default_path_ids"], list)
+            or any(type(token) is not int for token in row["default_path_ids"])
+        ):
+            raise PipelineError(f"{where}: invalid long-form sample count or default feature-path ids")
+    if stage == "dotnet":
+        expected |= {"audio_timestamped", "audio_transcript"}
+        if not isinstance(row["audio_transcript"], str):
+            raise PipelineError(f"{where}: the public audio-path transcript is missing")
+        _check_timestamped(row["audio_timestamped"], candidate, row["language"], f"{where}/audio")
+    if set(row) != expected:
+        raise PipelineError(f"{where}: a long-form case holds exactly {sorted(expected)}")
+    _check_timestamped(row["timestamped"], candidate, row["language"], where)
+
+
+# Tensors of a long-form case: its whole-clip mel only (no single-window hidden state or logits).
+LONG_FORM_TENSORS = {"reference": ("mel", "mel_torch"), "onnx": (), "dotnet": ("mel",)}
+
+
+def _tensors(
+    path: Path, document: dict, cases: dict[str, dict], stage: str, behavior: dict, forced: dict, frames: dict
+) -> dict:
     """The stage's float32 sidecar, split into named per-case tensors with checked shapes and no unreferenced values."""
     shapes = {
         "mel": [behavior["num_mel_bins"], behavior["num_frames"]],
@@ -589,9 +654,13 @@ def _tensors(path: Path, document: dict, cases: dict[str, dict], stage: str, beh
         output, position = {}, 0
         for row in specification["cases"]:
             key = (row["id"], row["name"])
-            if row["id"] not in cases or row["name"] not in TENSORS[stage] or key in output:
+            names = LONG_FORM_TENSORS[stage] if cases.get(row["id"], {}).get("long_form") else TENSORS[stage]
+            if row["id"] not in cases or row["name"] not in names or key in output:
                 raise PipelineError(f"unknown or duplicate tensor {key}")
-            expected = shapes.get(row["name"]) or [len(forced[row["id"]]) - 1, behavior["vocabulary_size"]]
+            if row["name"] in ("mel", "mel_torch"):
+                expected = [behavior["num_mel_bins"], frames[row["id"]]]
+            else:
+                expected = shapes.get(row["name"]) or [len(forced[row["id"]]) - 1, behavior["vocabulary_size"]]
             if row["shape"] != expected or row["offset"] != position:
                 raise PipelineError(f"tensor {key} has shape {row['shape']} at {row['offset']}, expected {expected}")
             end = position + math.prod(expected)
@@ -599,7 +668,12 @@ def _tensors(path: Path, document: dict, cases: dict[str, dict], stage: str, beh
                 raise PipelineError("tensor sidecar is truncated")
             output[key] = values[position:end]
             position = end
-        if set(output) != {(identifier, name) for identifier in cases for name in TENSORS[stage]}:
+        required = {
+            (identifier, name)
+            for identifier, case in cases.items()
+            for name in (LONG_FORM_TENSORS[stage] if case["long_form"] else TENSORS[stage])
+        }
+        if set(output) != required:
             raise PipelineError("tensor sidecar is missing required tensors")
         if position != len(values):
             raise PipelineError("tensor sidecar has unreferenced values")
@@ -696,7 +770,17 @@ def coverage_checks(expected: dict[str, dict]) -> list[dict]:
             for first, second in zip(window["ids"], window["ids"][1:], strict=False)
         )
     )
-    redecoded = sorted(identifier for identifier, row in expected.items() if len(row["timestamped"]["windows"]) > 1)
+    redecoded = sorted(
+        identifier
+        for identifier, row in expected.items()
+        if not row["long_form"] and len(row["timestamped"]["windows"]) > 1
+    )
+    # Long-form: some clip over 30 s needs three windows or more, so a window starts at seek > 0 and is itself followed.
+    long_clips = sorted(
+        identifier
+        for identifier, row in expected.items()
+        if row["long_form"] and len(row["timestamped"]["windows"]) > 2
+    )
     return [
         {
             "id": "reference/corpus/timestamp_pair_coverage",
@@ -710,6 +794,49 @@ def coverage_checks(expected: dict[str, dict]) -> list[dict]:
             "bound": "at least one clip",
             "clips": redecoded,
         },
+        {
+            "id": "reference/corpus/long_form_coverage",
+            "status": "passed" if long_clips else "failed",
+            "bound": "at least one clip",
+            "clips": long_clips,
+        },
+    ]
+
+
+def _transcript(row: dict) -> str:
+    """A case's transcript: the single-window decode's, or the timestamped decode's for a long-form clip."""
+    return row["timestamped"]["transcript"] if row["long_form"] else row["transcript"]
+
+
+def _long_form_checks(identifier: str, row: dict, python_row: dict, dotnet_row: dict, tensors: dict, policy: dict):
+    """A long-form clip: the whole-clip mel (both feature paths, and .NET), the default feature path's ids, the
+    timestamped decode against the reference and across backends, and the public plain-text path."""
+    reference_tensors, dotnet_tensors = tensors["reference"], tensors["dotnet"]
+    stamped = row["timestamped"]
+    return [
+        _difference(
+            reference_tensors[identifier, "mel_torch"],
+            reference_tensors[identifier, "mel"],
+            policy["mel_path_max_abs"],
+            f"reference/{identifier}/mel_torch_vs_numpy",
+        ),
+        _exact(
+            row["default_path_ids"],
+            [token for segment in stamped["segments"] for token in segment["ids"]],
+            f"reference/{identifier}/default_path_ids",
+        ),
+        _difference(
+            dotnet_tensors[identifier, "mel"],
+            reference_tensors[identifier, "mel"],
+            policy["mel_max_abs"],
+            f"dotnet-audio/{identifier}/mel_vs_reference",
+        ),
+        *_timestamp_checks(identifier, stamped, python_row["timestamped"], dotnet_row, policy),
+        _exact(
+            dotnet_row["audio_transcript"],
+            python_row["timestamped"]["transcript"],
+            f"dotnet-audio/{identifier}/transcript_vs_python",
+        ),
     ]
 
 
@@ -744,10 +871,11 @@ def evaluate_development(
         raise PipelineError("reference evidence does not cover exactly the pinned corpus clips")
     for identifier, row in expected.items():
         clip = clips[identifier]
-        if (row["audio_sha256"], row["samples"], row["language"]) != (
+        if (row["audio_sha256"], row["samples"], row["language"], row["long_form"]) != (
             clip["sha256"],
             clip["samples"],
             clip["language"],
+            long_form(clip["samples"], behavior),
         ):
             raise PipelineError(
                 f"reference/{identifier}: audio, sample count or language differs from the pinned corpus"
@@ -760,13 +888,18 @@ def evaluate_development(
         raise PipelineError("backend evidence names a different original reference artifact")
     if set(expected) != set(python_cases) or set(expected) != set(dotnet_cases):
         raise PipelineError("backend evidence has missing or unknown required case rows")
-    forced = {identifier: row["ids"] for identifier, row in expected.items()}
+    forced = {identifier: row.get("ids") for identifier, row in expected.items()}
+    frames = {identifier: mel_frames(row["samples"], behavior) for identifier, row in expected.items()}
     for stage, cases in (("onnx", python_cases), ("dotnet", dotnet_cases)):
         for identifier, row in cases.items():
-            if row["audio_sha256"] != expected[identifier]["audio_sha256"] or row["forced_ids"] != forced[identifier]:
+            if (
+                row["audio_sha256"] != expected[identifier]["audio_sha256"]
+                or row["long_form"] != expected[identifier]["long_form"]
+                or row.get("forced_ids") != forced[identifier]
+            ):
                 raise PipelineError(f"{stage}/{identifier}: audio or teacher-forced ids differ from the reference")
     tensors = {
-        stage: _tensors(path, document, cases, stage, behavior, forced)
+        stage: _tensors(path, document, cases, stage, behavior, forced, frames)
         for stage, path, document, cases in (
             ("reference", reference_path, reference, expected),
             ("onnx", onnx_path, onnx, python_cases),
@@ -777,6 +910,9 @@ def evaluate_development(
     checks = []
     for identifier, row in expected.items():
         python_row, dotnet_row = python_cases[identifier], dotnet_cases[identifier]
+        if row["long_form"]:
+            checks += _long_form_checks(identifier, row, python_row, dotnet_row, tensors, policy)
+            continue
         split = audio_positions(row["samples"], behavior) * behavior["hidden_size"]
         checks += [
             _difference(
@@ -846,7 +982,7 @@ def evaluate_development(
     # A clip cut short of its utterances (source.truncated_to_samples) has no exact ground truth for its last words.
     scored = [identifier for identifier in expected if not truncated(clips[identifier])]
     errors = sum(
-        edit_distance(words(expected[identifier]["transcript"]), words(clips[identifier]["text"]))
+        edit_distance(words(_transcript(expected[identifier])), words(clips[identifier]["text"]))
         for identifier in scored
     )
     total = sum(len(words(clips[identifier]["text"])) for identifier in scored)
@@ -876,8 +1012,8 @@ def evaluate_development(
         "transcripts": {
             identifier: {
                 "ground_truth": clips[identifier]["text"],
-                "reference": row["transcript"],
-                "python-onnx": python_cases[identifier]["transcript"],
+                "reference": _transcript(row),
+                "python-onnx": _transcript(python_cases[identifier]),
                 "dotnet-audio": dotnet_cases[identifier]["audio_transcript"],
             }
             for identifier, row in expected.items()

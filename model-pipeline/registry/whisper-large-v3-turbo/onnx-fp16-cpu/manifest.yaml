@@ -66,14 +66,25 @@ rights:
 
 behavior:
   tasks: [transcription]
-  # The model input is a log-mel spectrogram of 3000 frames: up to 30 s of audio (480,000 samples at 16 kHz),
-  # zero-padded to 30 s; longer clips are refused, not chunked or truncated. The transcript is bounded separately by
-  # the decoder's 448 positions (defaults.max_new_tokens).
+  # The encoder input is one window of 3000 mel frames (30 s at 16 kHz). Up to 30 s, the clip is zero-padded to one
+  # window. Longer audio is chunked, not truncated: sequential long-form transcription computes one spectrogram over
+  # the whole clip and decodes it window after window with timestamps, each window starting at the previous one's last
+  # closing timestamp (defaults.long_form). Each window's transcript is bounded by the decoder's 448 positions
+  # (defaults.max_new_tokens).
   max_input_tokens: 3000
   offsets_unit: none
-  truncation: error
+  truncation: chunk
   defaults:
-    audio: 16 kHz mono float32 PCM, up to 30 s; WhisperMelSpectrogram.ExtractChunk zero-pads shorter clips
+    audio: >-
+      16 kHz mono float32 PCM; up to 30 s, WhisperMelSpectrogram.ExtractChunk zero-pads the clip to one window; up to
+      480,159 samples the whole-clip spectrogram still has 3000 frames (one window); more frames are long-form
+    long_form: >-
+      transformers 5.18.0 sequential long-form generate(return_timestamps=True): a spectrogram over the whole clip
+      (WhisperMelSpectrogram.ExtractLongForm, as WhisperFeatureExtractor(truncation=False, padding="longest") computes
+      it), 3000-frame windows (the last zero-padded), seek to the last closing timestamp; greedy, temperature 0 with no
+      fallback, condition_on_prev_tokens false, no compression-ratio, log-probability or no-speech threshold. The
+      whole-clip spectrogram (a naive DFT, kept for bit-exactness) costs about 70 s of one core and about 1 GB of memory
+      per hour of audio; no length limit is imposed, cancellation is observed inside it
     language: explicit two-letter code; the onboarding evidence covers English (en) only
     task: >-
       transcribe (prompt <|startoftranscript|> <|lang|> <|transcribe|> <|notimestamps|>); with segment timestamps
@@ -91,8 +102,9 @@ behavior:
   unsupported:
     - translation (<|translate|>)
     - word-level timestamps (they need the alignment heads' cross-attention weights; the pinned graphs do not export them)
-    - temperature fallback, compression-ratio, log-probability and no-speech thresholds, and conditioning on earlier text
-    - audio longer than 30 s, chunking and streaming
+    - streaming
+    - the long-form temperature fallback, the compression-ratio, log-probability and no-speech thresholds, and
+      conditioning on earlier windows
     - batching several clips in one call
     - beam search and sampling
     - KV-cache decoding (decoder_with_past_model_fp16.onnx, decoder_model_merged_fp16.onnx)
@@ -156,15 +168,20 @@ capabilities:
   aot: untested
   extensions_ai: unsupported
   mlnet: unsupported
-  transcription: experimental  # 6 LibriSpeech clips (1.6 s to 30 s): transcripts equal the PyTorch fp32 reference word for word
+  transcription: experimental  # 8 LibriSpeech clips (1.6 s to 59.1 s): transcripts equal the PyTorch fp32 reference word for word
   transcription_cuda: untested
   language_detection: untested  # <|startoflm|> prompting differs from transformers' language-token detection
   concurrent_calls: untested
   asset_acquisition: experimental  # the shared Starlings.Acquisition download and verification (pinned size and SHA-256)
   translation: unsupported
-  timestamps: experimental  # segment level, one 30 s window: ids, segment times and texts equal the reference (route evidence)
+  timestamps: experimental  # segment level, on the clip's timeline: ids, segment times and texts equal the reference (route evidence)
   word_timestamps: unsupported
-  chunking: unsupported
+  chunking: experimental  # long-form audio over 30 s: sequential windows; ids, segment times and texts equal the reference
+  temperature_fallback: unsupported
+  compression_ratio_threshold: unsupported
+  logprob_threshold: unsupported
+  no_speech_detection: unsupported
+  condition_on_previous_text: unsupported
   quantized: unsupported
 
 compatibility:
@@ -214,7 +231,7 @@ maintenance:
       No reference fixtures are adopted into protected/ and no gate has run; every capability is at most
       experimental.
     - >-
-      The evidence covers English only (six LibriSpeech clips, 1.6 s to 30 s, asr-corpus-v2); other languages are
+      The evidence covers English only (eight LibriSpeech clips, 1.6 s to 59.1 s, asr-corpus-v3); other languages are
       untested.
     - >-
       The fp16 encoder's hidden state drifts further from the fp32 reference on audio positions of 20 to 30 s clips

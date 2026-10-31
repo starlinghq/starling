@@ -42,7 +42,7 @@ var files = await WhisperModelAssets.DownloadAsync();
 // Load offline at startup.
 using var transcriber = WhisperTranscriber.Create(files, new WhisperOptions { Language = "en" });
 
-// 16 kHz float32 PCM, up to 30 seconds.
+// 16 kHz float32 PCM. Over 30 seconds, the clip is transcribed sequentially in 30 s windows.
 string text = transcriber.Transcribe(waveform);
 
 // The same clip with segment timestamps (seconds on the clip's timeline).
@@ -68,8 +68,22 @@ foreach (WhisperSegment segment in result.Segments)
 
 ## Supported
 
-- Transcription of up to 30 s of 16 kHz audio, greedy decoding. Shorter clips are zero-padded to 30 s
-  (`WhisperMelSpectrogram.ExtractChunk`, as the feature extractor pads); longer clips are refused, not truncated.
+- Transcription of 16 kHz audio, greedy decoding, in one window when the spectrogram fits one (at most 3000 frames).
+  Up to 30 s the clip is zero-padded to 30 s (`WhisperMelSpectrogram.ExtractChunk`, as the feature extractor pads). A
+  clip of 480,001 to 480,159 samples still has 3000 frames over the whole clip and is decoded in one window too, as
+  transformers treats it (`is_shortform = frames <= 3000`). Longer clips: long-form, below.
+- Long-form audio of more than 3000 frames, from 480,160 samples (experimental): `Transcribe` and `TranscribeWithTimestamps` follow transformers 5.18.0
+  sequential long-form `generate`: one spectrogram over the whole clip (`WhisperMelSpectrogram.ExtractLongForm`, as
+  `WhisperFeatureExtractor(truncation=False, padding="longest")` computes it, the max - 8 clamp taken over the whole
+  clip), decoded in 3000-frame windows with timestamps; each next window starts at the last closing timestamp, or
+  after the whole window when its last segment is closed. Segment times are on the clip's timeline. Greedy, with no
+  temperature fallback, no compression-ratio, log-probability or no-speech threshold, and no conditioning on earlier
+  windows. A long-form clip has no single-window, timestamp-free decode (transformers refuses
+  `return_timestamps=False` for more than 3000 frames), so `Transcribe` returns the timestamped text.
+  Cost of the whole-clip spectrogram: its naive DFT (kept for bit-exactness; an FFT sums in another order) takes about
+  70 s of one core per hour of audio, and it allocates about 18 bytes per sample (about 1 GB per hour of audio) on top
+  of the caller's samples. The `CancellationToken` of `Transcribe` and `TranscribeWithTimestamps` is observed inside the
+  spectrogram (every 1024 frames). There is no length limit: bound the audio you accept.
 - Segment timestamps (experimental): `WhisperTranscriber.TranscribeWithTimestamps` (or `TranscribeMelWithTimestamps`)
   returns a `WhisperTranscription`: the text, the segments (`Start`, `End` in seconds, `Text`, token `Ids`) and the
   decoded windows. The segments are those transformers 5.18.0 `generate(return_timestamps=True, return_segments=True)`
@@ -97,10 +111,9 @@ foreach (WhisperSegment segment in result.Segments)
 
 ## Unsupported (for now)
 
-Translation, word-level timestamps (the pinned graphs do not export the alignment heads' cross-attention), chunking
-and streaming of clips longer than 30 s, temperature fallback and the compression-ratio, log-probability and no-speech
-thresholds, conditioning on earlier text or prompts, batching, KV-cache decoding, CUDA qualification, persistence,
-training.
+Translation, word-level timestamps (the pinned graphs do not export the alignment heads' cross-attention), streaming,
+the long-form temperature fallback and the compression-ratio, log-probability and no-speech thresholds, conditioning
+on earlier text or prompts, batching, KV-cache decoding, CUDA qualification, persistence, training.
 
 Without a KV cache, every decode step re-runs the decoder over all ids so far. `WhisperModel.Generate` writes the
 `[seq, 51866]` logits of those steps into one buffer per call, which grows by doubling, instead of a new array per step.

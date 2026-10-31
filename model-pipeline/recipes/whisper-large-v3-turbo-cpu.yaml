@@ -2,5 +2,5 @@ recipe_version: 1
 id: whisper-large-v3-turbo-cpu
 plugin: whisper-onnx-cpu-v1
 manifest: model-pipeline/candidates/whisper-large-v3-turbo/profile.json
-reference_corpus: model-pipeline/reference/corpus/asr-corpus-v2.jsonl
+reference_corpus: model-pipeline/reference/corpus/asr-corpus-v3.jsonl
 reference_environment: model-pipeline/reference/whisper/requirements.txt

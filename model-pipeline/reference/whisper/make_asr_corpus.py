@@ -9,6 +9,7 @@ reference, never against this text.
 asr-corpus-v1.jsonl holds the four single utterances (asr-v1/). asr-corpus-v2.jsonl holds those four plus composite
 clips (asr-v2/): consecutive utterances of one chapter joined by GAP_SAMPLES of digital silence, their ground truth the
 utterance transcripts joined by spaces. A composite clip gives the timestamped decode several segments to emit.
+asr-corpus-v3.jsonl holds v2 plus composites longer than 30 s (asr-v3/) for sequential long-form transcription.
 
 Run once, outside the reference lock (pyarrow and soundfile are only needed here):
 
@@ -37,12 +38,18 @@ FILE_SHA256 = "4e69a06fa5edc90921e5e7e39a7084881f8b3ed9c805c574f4f39c6fde27c603"
 # Differently sized clips: a typical sentence, a very short one, a long one, and a number the model writes as digits.
 UTTERANCES = ("1272-128104-0000", "1272-135031-0009", "1272-128104-0002", "1272-141231-0013")
 SAMPLE_RATE = 16000
-# Composite clips (asr-corpus-v2): consecutive utterances of one chapter, each composite at most 30 s.
+# Composite clips: consecutive utterances of one chapter. v2's are at most 30 s; v3's are longer (long-form).
 COMPOSITES = {
-    "librispeech-1272-135031-0003-0008": tuple(f"1272-135031-{index:04d}" for index in range(3, 9)),
-    # Cut at exactly 30 s, inside the third utterance: speech runs into the window's end, so the decode ends inside a
-    # segment and transformers decodes again from the last closing timestamp (a second, shorter window).
-    "librispeech-1272-128104-0009-0011-cut30": tuple(f"1272-128104-{index:04d}" for index in range(9, 12)),
+    "v2": {
+        "librispeech-1272-135031-0003-0008": tuple(f"1272-135031-{index:04d}" for index in range(3, 9)),
+        # Cut at exactly 30 s, inside the third utterance: speech runs into the window's end, so the decode ends inside
+        # a segment and transformers decodes again from the last closing timestamp (a second, shorter window).
+        "librispeech-1272-128104-0009-0011-cut30": tuple(f"1272-128104-{index:04d}" for index in range(9, 12)),
+    },
+    "v3": {
+        "librispeech-1272-135031-0000-0002": tuple(f"1272-135031-{index:04d}" for index in range(0, 3)),
+        "librispeech-1272-141231-0000-0008": tuple(f"1272-141231-{index:04d}" for index in range(0, 9)),
+    },
 }
 # Composites cut to this many samples; their text is the full utterances' (more than is spoken), so the route leaves
 # them out of the ground-truth sanity bound.
@@ -109,39 +116,41 @@ def main() -> int:
             }
         )
     write_index(args.out / "asr-corpus-v1.jsonl", index)
-    composite_dir = args.out / "asr-v2"
-    composite_dir.mkdir(parents=True, exist_ok=True)
-    composites = []
-    for identifier, utterances in COMPOSITES.items():
-        gap = numpy.zeros(GAP_SAMPLES, dtype=numpy.int16)
-        parts = [decode(rows, utterance) for utterance in utterances]
-        samples = numpy.concatenate([piece for part in parts for piece in (part, gap)][:-1])
-        if identifier in TRUNCATED:
-            samples = samples[: TRUNCATED[identifier]]
-        if len(samples) > MAX_SAMPLES:
-            raise SystemExit(f"{identifier}: {len(samples)} samples exceed 30 s")
-        data = wav(samples)
-        (composite_dir / f"{identifier}.wav").write_bytes(data)
-        composites.append(
-            {
-                "id": identifier,
-                "audio": f"asr-v2/{identifier}.wav",
-                "sha256": sha256(data),
-                "sample_rate": SAMPLE_RATE,
-                "samples": len(samples),
-                "language": "en",
-                "text": " ".join(rows[utterance]["text"] for utterance in utterances),
-                "source": {
-                    **source,
-                    "utterances": list(utterances),
-                    "gap_samples": GAP_SAMPLES,
-                    **({"truncated_to_samples": TRUNCATED[identifier]} if identifier in TRUNCATED else {}),
-                },
-                "license": "CC-BY-4.0",
-            }
-        )
-    write_index(args.out / "asr-corpus-v2.jsonl", index + composites)
-    print(f"wrote {len(index)} clips to {audio_dir} and {len(composites)} composite clips to {composite_dir}")
+    for version, composites in COMPOSITES.items():
+        composite_dir = args.out / f"asr-{version}"
+        composite_dir.mkdir(parents=True, exist_ok=True)
+        for identifier, utterances in composites.items():
+            gap = numpy.zeros(GAP_SAMPLES, dtype=numpy.int16)
+            parts = [decode(rows, utterance) for utterance in utterances]
+            samples = numpy.concatenate([piece for part in parts for piece in (part, gap)][:-1])
+            if identifier in TRUNCATED:
+                samples = samples[: TRUNCATED[identifier]]
+            if (len(samples) > MAX_SAMPLES) != (version != "v2"):
+                raise SystemExit(
+                    f"{identifier}: {len(samples)} samples, but {version} composites are on the other side of 30 s"
+                )
+            data = wav(samples)
+            (composite_dir / f"{identifier}.wav").write_bytes(data)
+            index.append(
+                {
+                    "id": identifier,
+                    "audio": f"asr-{version}/{identifier}.wav",
+                    "sha256": sha256(data),
+                    "sample_rate": SAMPLE_RATE,
+                    "samples": len(samples),
+                    "language": "en",
+                    "text": " ".join(rows[utterance]["text"] for utterance in utterances),
+                    "source": {
+                        **source,
+                        "utterances": list(utterances),
+                        "gap_samples": GAP_SAMPLES,
+                        **({"truncated_to_samples": TRUNCATED[identifier]} if identifier in TRUNCATED else {}),
+                    },
+                    "license": "CC-BY-4.0",
+                }
+            )
+        write_index(args.out / f"asr-corpus-{version}.jsonl", index)
+    print(f"wrote {len(index)} clips to {args.out}")
     return 0
 
 

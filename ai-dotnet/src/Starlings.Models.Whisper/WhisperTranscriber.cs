@@ -3,8 +3,9 @@ namespace Starlings.Models.Whisper;
 /// <summary>
 /// Speech-to-text for <c>openai/whisper-large-v3-turbo</c>: 16 kHz audio to the log-mel spectrogram
 /// (<see cref="WhisperMelSpectrogram"/>), through the encoder and greedy decoder (<see cref="WhisperModel"/>), and back
-/// to text (<see cref="WhisperTokenizer"/>). Transcribes at most 30 s of audio per call, as plain text
-/// (<see cref="Transcribe"/>) or as segments with timestamps (<see cref="TranscribeWithTimestamps"/>).
+/// to text (<see cref="WhisperTokenizer"/>), as plain text (<see cref="Transcribe"/>) or as segments with timestamps
+/// (<see cref="TranscribeWithTimestamps"/>). Audio longer than 30 s is transcribed sequentially in 30 s windows, as
+/// transformers long-form generation does.
 /// </summary>
 public sealed class WhisperTranscriber : IDisposable
 {
@@ -56,17 +57,41 @@ public sealed class WhisperTranscriber : IDisposable
         return new WhisperTranscriber(model, tokenizer, options, ownsModel: true);
     }
 
-    /// <summary>Transcribes one 16 kHz float32 clip of up to 30 s (at most 480,000 samples; shorter clips are zero-padded).</summary>
-    /// <exception cref="ArgumentException">The clip is empty or longer than 30 s (chunking is unsupported).</exception>
+    /// <summary>
+    /// Transcribes one 16 kHz float32 clip. A clip whose spectrogram fits one window (at most 3000 frames: up to
+    /// 480,159 samples) is decoded in one window: up to 30 s it is zero-padded to 30 s, and the 159 samples past 30 s
+    /// only extend the last frame (<see cref="WhisperMelSpectrogram.ExtractLongForm"/> still yields 3000 frames), as
+    /// transformers treats them (short-form, <c>frames &lt;= 3000</c>). A longer clip is long-form: the text of
+    /// <see cref="TranscribeWithTimestamps"/>, because sequential long-form decoding needs the timestamps (transformers
+    /// enables them for long-form input and refuses <c>return_timestamps=False</c>).
+    /// </summary>
+    /// <exception cref="ArgumentException">The clip is empty.</exception>
+    /// <exception cref="OperationCanceledException">The token was cancelled, also during a long clip's spectrogram.</exception>
     public string Transcribe(float[] waveform, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(waveform);
-        // Refuse before the 30 s spectrogram, the costliest CPU step ahead of the encoder.
+        // Refuse before the spectrogram, the costliest CPU step ahead of the encoder.
         ObjectDisposedException.ThrowIf(Volatile.Read(ref _disposed) != 0, this);
         cancellationToken.ThrowIfCancellationRequested();
-        var mel = WhisperMelSpectrogram.ExtractChunk(waveform);
-        return TranscribeMel(mel, cancellationToken);
+        if (IsLongForm(waveform.Length))
+        {
+            return TranscribeWithTimestamps(waveform, cancellationToken).Text;
+        }
+
+        return TranscribeMel(Features(waveform, cancellationToken), cancellationToken);
     }
+
+    /// <summary>
+    /// Whether a clip of <paramref name="samples"/> is long-form: its spectrogram has more than one window of frames
+    /// (<c>samples / 160 &gt; 3000</c>, from 480,160 samples), transformers' <c>is_shortform = frames &lt;= 3000</c>.
+    /// </summary>
+    internal static bool IsLongForm(int samples) => samples / WhisperMelSpectrogram.HopLength > WhisperMelSpectrogram.NumFrames;
+
+    /// <summary>The clip's spectrogram: zero-padded to 30 s up to 480,000 samples, otherwise over the whole clip.</summary>
+    private static float[] Features(float[] waveform, CancellationToken cancellationToken) =>
+        waveform.Length > WhisperMelSpectrogram.MaxSamples
+            ? WhisperMelSpectrogram.ExtractLongForm(waveform, out _, cancellationToken)
+            : WhisperMelSpectrogram.ExtractChunk(waveform);
 
     /// <summary>
     /// Transcribes a log-mel spectrogram (<c>[128, 3000]</c>) to text. With <see cref="WhisperOptions.NoTimestamps"/>
@@ -87,37 +112,42 @@ public sealed class WhisperTranscriber : IDisposable
     }
 
     /// <summary>
-    /// Transcribes one 16 kHz float32 clip of up to 30 s with segment timestamps (shorter clips are zero-padded, as
-    /// <see cref="Transcribe"/> pads them). See <see cref="TranscribeMelWithTimestamps"/>.
+    /// Transcribes one 16 kHz float32 clip with segment timestamps on the clip's timeline. Up to 30 s the clip is
+    /// zero-padded to one window (<see cref="WhisperMelSpectrogram.ExtractChunk"/>, as <see cref="Transcribe"/> pads it);
+    /// a longer clip gets one spectrogram over all its samples (<see cref="WhisperMelSpectrogram.ExtractLongForm"/>), which
+    /// the sequential decode walks in 30 s windows. See <see cref="TranscribeMelWithTimestamps"/>.
     /// </summary>
-    /// <exception cref="ArgumentException">The clip is empty or longer than 30 s (chunking is unsupported).</exception>
+    /// <exception cref="ArgumentException">The clip is empty.</exception>
+    /// <exception cref="OperationCanceledException">The token was cancelled, also during a long clip's spectrogram.</exception>
     public WhisperTranscription TranscribeWithTimestamps(float[] waveform, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(waveform);
         ObjectDisposedException.ThrowIf(Volatile.Read(ref _disposed) != 0, this);
         cancellationToken.ThrowIfCancellationRequested();
-        var mel = WhisperMelSpectrogram.ExtractChunk(waveform);
-        return TranscribeMelWithTimestamps(mel, cancellationToken);
+        return TranscribeMelWithTimestamps(Features(waveform, cancellationToken), cancellationToken);
     }
 
     /// <summary>
-    /// Transcribes a log-mel spectrogram (<c>[128, 3000]</c>) with segment timestamps, as transformers 5.18.0
-    /// <c>generate(return_timestamps=True)</c> does with greedy decoding: decode the window with the timestamp rules
-    /// (<see cref="WhisperModel.GenerateWithTimestamps"/>), split it into segments at timestamp pairs, and when the
-    /// window ends inside a segment, decode again from the last closing timestamp (the remaining frames, zero-padded)
-    /// until the frames are covered. No temperature fallback, no conditioning on earlier text, no thresholds.
-    /// Word-level timestamps are unsupported.
+    /// Transcribes a log-mel spectrogram (<c>[128, frames]</c>, row-major: one 30 s window of 3000 frames, or a
+    /// long-form spectrogram of any length) with segment timestamps, as transformers 5.18.0
+    /// <c>generate(return_timestamps=True)</c> does with greedy decoding (sequential long-form): decode the window at
+    /// the current frame with the timestamp rules (<see cref="WhisperModel.GenerateWithTimestamps"/>; frames past the end
+    /// are zero), split it into segments at timestamp pairs and offset them by the window's start, then move to the last
+    /// closing timestamp when the window ends inside a segment, or past the whole window otherwise, until every frame
+    /// is covered. No temperature fallback, no conditioning on earlier windows, no compression-ratio, log-probability
+    /// or no-speech threshold. Word-level timestamps are unsupported.
     /// </summary>
+    /// <exception cref="ArgumentException">The spectrogram is empty or not a whole number of 128-bin frames.</exception>
     public WhisperTranscription TranscribeMelWithTimestamps(float[] mel, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(mel);
         ObjectDisposedException.ThrowIf(Volatile.Read(ref _disposed) != 0, this);
-        if (mel.Length != WhisperModel.NumMelBins * WhisperModel.NumFrames)
+        if (mel.Length == 0 || mel.Length % WhisperModel.NumMelBins != 0)
         {
-            throw new ArgumentException($"Mel must be {WhisperModel.NumMelBins * WhisperModel.NumFrames} floats, got {mel.Length}.", nameof(mel));
+            throw new ArgumentException($"Mel must hold a positive multiple of {WhisperModel.NumMelBins} floats, got {mel.Length}.", nameof(mel));
         }
 
-        const int totalFrames = WhisperModel.NumFrames;
+        int totalFrames = mel.Length / WhisperModel.NumMelBins;
         var prompt = WhisperModel.Prompt(_options.Language, transcribe: true, noTimestamps: false);
         var windows = new List<WhisperWindow>();
         var segments = new List<WhisperSegment>();

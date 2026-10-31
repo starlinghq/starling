@@ -549,10 +549,15 @@ One table per family, one column per profile. Rows are every capability any prof
 | extensions_ai | unsupported |
 | mlnet | unsupported |
 | asset_acquisition | experimental |
-| chunking | unsupported |
+| chunking | experimental |
+| compression_ratio_threshold | unsupported |
 | concurrent_calls | untested |
+| condition_on_previous_text | unsupported |
 | language_detection | untested |
+| logprob_threshold | unsupported |
+| no_speech_detection | unsupported |
 | quantized | unsupported |
+| temperature_fallback | unsupported |
 | timestamps | experimental |
 | transcription | experimental |
 | transcription_cuda | untested |
@@ -708,7 +713,7 @@ One table per family, one column per profile. Rows are every capability any prof
 - `qwen3.5-0.8b/ortgenai-fp32x-cuda`: The fp32x graph was built for the CPU provider; on the CUDA provider it decodes far slower than fp16x (M0: about 22 tokens/s; node placement not inspected, so CPU fallback of the DeltaNet operators is possible). fp32 built for the CUDA provider fails (M0 failure 2).
 - `qwen3.5-0.8b/ortgenai-fp32x-cuda`: Native runtime: Microsoft.ML.OnnxRuntimeGenAI.Cuda 0.17.1 brings Microsoft.ML.OnnxRuntime.Gpu 1.30.0 and needs the CUDA 13 runtime and cuBLAS on the loader path (not shipped). The schema has no field for native runtime, driver or GPU requirements; they are recorded here and in docs/evidence/p016-qwen35/README.md.
 - `whisper-large-v3-turbo/onnx-fp16-cpu`: No reference fixtures are adopted into protected/ and no gate has run; every capability is at most experimental.
-- `whisper-large-v3-turbo/onnx-fp16-cpu`: The evidence covers English only (six LibriSpeech clips, 1.6 s to 30 s, asr-corpus-v2); other languages are untested.
+- `whisper-large-v3-turbo/onnx-fp16-cpu`: The evidence covers English only (eight LibriSpeech clips, 1.6 s to 59.1 s, asr-corpus-v3); other languages are untested.
 - `whisper-large-v3-turbo/onnx-fp16-cpu`: The fp16 encoder's hidden state drifts further from the fp32 reference on audio positions of 20 to 30 s clips (up to 0.498 in the #229 diagnostic, 0.110 on the 27.9 s composite of asr-corpus-v2, against 0.013 to 0.025 on 14 to 18 s clips), so hidden_max_abs was re-adopted at 0.6 (1.2 x the worst observed). Teacher-forced logits stay within logits_max_abs, and ids, transcripts and segment timestamps equal the reference.
 - `whisper-large-v3-turbo/onnx-fp16-cpu`: Decoding re-runs the full decoder over the prefix at every step (no KV cache), so long transcripts are slow.
 - `whisper-large-v3-turbo/onnx-fp16-cpu`: The export repository has no license tag; see rights.notes.
