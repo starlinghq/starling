@@ -33,10 +33,11 @@
 # unchanged.
 #
 # The encoder hidden state is bounded separately on the positions whose receptive field holds audio and on the
-# zero-padded tail: fp16 drift concentrates on the padded (log-mel floor) frames (0.16 to 0.54 there, at most 0.012 on
-# audio positions), and one bound loose enough for the tail would hide a regression on the frames the transcript
-# depends on. The fixed keys (mel, same backend, ids, transcripts, ground-truth sanity bound, non-finite, required
-# paths) are correctness checks, not fp16 fidelity, and stay at the route's predeclared template.
+# zero-padded tail. On the original four clips (1.6 s to 12.5 s), fp16 drift concentrated on the padded (log-mel
+# floor) frames (0.16 to 0.54 there, at most 0.012 on audio positions). Longer clips show greater audio-position drift,
+# as measured above. One bound loose enough for the tail would hide a regression on the frames the transcript depends
+# on. The fixed keys (mel, same backend, ids, transcripts, ground-truth sanity bound, non-finite, required paths) are
+# correctness checks, not fp16 fidelity, and stay at the route's predeclared template.
 profile: whisper-large-v3-turbo/onnx-fp16-cpu
 reference: transformers 5.18.0 WhisperForConditionalGeneration, PyTorch fp32 CPU; log-mel from WhisperFeatureExtractor (numpy path)
 policy:
