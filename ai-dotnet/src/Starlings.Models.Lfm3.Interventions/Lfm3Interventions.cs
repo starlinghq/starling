@@ -1,3 +1,4 @@
+using Starlings.Acquisition;
 using Starlings.Generation;
 using Starlings.Interventions;
 using Starlings.Runtime.Onnx;
@@ -19,6 +20,9 @@ namespace Starlings.Models.Lfm3.Interventions;
 /// </remarks>
 public static class Lfm3Interventions
 {
+    /// <summary>The site mapping of the fp32 graph this integration accepts (model-pipeline <c>injection_sites.py</c>).</summary>
+    public const string Fp32SiteMappingVersion = "lfm3-1.7b/fp32/1";
+
     /// <summary>
     /// Opens the cache entry in <paramref name="artifactDirectory"/> (<see cref="InterventionArtifactCache.OpenEntry"/>:
     /// the directory name must be the key recomputed from its manifest), checks it against the LFM3 graph of
@@ -99,8 +103,9 @@ public static class Lfm3Interventions
 
     /// <summary>
     /// Checks a derived artifact's manifest against the LFM3 graph of <paramref name="precision"/> before any session
-    /// exists: the base graph identity, the precision, exactly one float32 strength input of shape [1] (or []) that is
-    /// not a base input name, and sites inside the 24 decoder layers at hidden size 2048.
+    /// exists: the base graph identity, every base artifact (graph and external data) against the precision's asset lock,
+    /// the precision, the site mapping version (<see cref="Fp32SiteMappingVersion"/>), exactly one float32 strength input
+    /// of shape [1] that is not a base input name, and sites inside the 24 decoder layers at hidden size 2048.
     /// </summary>
     /// <exception cref="InterventionMismatchException">The artifact was compiled for another graph or precision.</exception>
     /// <exception cref="InterventionContractException">The artifact declares inputs or sites this integration does not know.</exception>
@@ -127,6 +132,43 @@ public static class Lfm3Interventions
         if (!string.Equals(manifest.Precision, expectedPrecision, StringComparison.Ordinal))
         {
             throw new InterventionMismatchException($"The artifact was compiled at precision '{manifest.Precision}'; the LFM3 {precision} graph needs '{expectedPrecision}'.");
+        }
+
+        // The graph file holds only offsets into the external data, so its hash alone does not identify the weights: every
+        // base artifact (graph and external data) must be the lock's file, and every locked graph file must be recorded.
+        // Fast verification compares the linked weights with these entries by size only, so this is what ties them to
+        // the lock's hashes.
+        ModelAssetLock assetLock = Lfm3ModelAssets.LockFor(precision);
+        var recorded = new HashSet<string>(StringComparer.Ordinal);
+        foreach (InterventionBaseArtifact artifact in manifest.BaseArtifacts)
+        {
+            InterventionArtifactFile file = artifact.File;
+            ModelAssetFile? locked = assetLock.Files.FirstOrDefault(f => string.Equals(f.Path, file.Path, StringComparison.Ordinal));
+            if (locked is null || !string.Equals(locked.Sha256, file.Sha256, StringComparison.Ordinal) || locked.Size != file.Size)
+            {
+                throw new InterventionMismatchException(
+                    $"Base artifact '{file.Path}' ({file.Sha256}, {file.Size} bytes) is not a file of the LFM3 {precision} lock {assetLock.Name}.");
+            }
+
+            recorded.Add(file.Path);
+        }
+
+        foreach (ModelAssetFile locked in assetLock.Files)
+        {
+            if (locked.Path.StartsWith(Lfm3ModelAssets.ModelFile(precision), StringComparison.Ordinal) && !recorded.Contains(locked.Path))
+            {
+                throw new InterventionMismatchException($"The artifact does not record the locked base file '{locked.Path}'.");
+            }
+        }
+
+        // Site mappings are versioned; accept only the mapping this integration was verified with.
+        string? mappingVersion = precision == Lfm3Precision.Fp32 ? Fp32SiteMappingVersion : null;
+        if (!string.Equals(manifest.SiteMappingVersion, mappingVersion, StringComparison.Ordinal))
+        {
+            throw new InterventionContractException(
+                mappingVersion is null
+                    ? $"The LFM3 {precision} graph has no supported site mapping (the artifact names '{manifest.SiteMappingVersion}')."
+                    : $"The artifact uses site mapping '{manifest.SiteMappingVersion}'; this integration supports '{mappingVersion}'.");
         }
 
         if (manifest.Inputs.Count != 1)

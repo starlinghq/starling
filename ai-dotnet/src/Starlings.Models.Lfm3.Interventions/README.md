@@ -26,8 +26,8 @@ using Starlings.Models.Lfm3;
 using Starlings.Models.Lfm3.Interventions;
 
 Lfm3ModelFiles files = Lfm3ModelAssets.OpenLocal(Lfm3Precision.Fp32);
-// Checks the manifest before any session exists: base graph SHA-256 = the fp32 lock's, precision fp32, exactly one
-// float32 [1] strength input, sites inside the 24 layers. Then loads the derived graph through OnnxModelSession.
+// Checks the manifest before any session exists: graph and external data = the fp32 lock's files, precision fp32,
+// site mapping lfm3-1.7b/fp32/1, exactly one float32 [1] strength input, sites inside the 24 layers. Then loads the derived graph through OnnxModelSession.
 using Lfm3ChatModel chat = Lfm3Interventions.CreateChatModel(files, entryDirectory);
 
 var selection = new InterventionSelection("lfm3-synthetic-test", strength: 0.5f);

@@ -79,6 +79,38 @@ public sealed class ManifestCheckTests
     }
 
     [Fact]
+    public void ExternalDataThatIsNotTheLockedWeightsIsRejected()
+    {
+        // The same graph file with other weights of the same size: model.onnx holds only offsets, so its hash matches the
+        // lock while the weights do not. Base artifact and derived link are changed together, as a compiler would record them.
+        const string locked = "bb631a02237e4f8a491e12b25c333849046332b6db60fe0a2120f278c982fa76";
+        string other = Text.Replace(locked, new string('1', 64), StringComparison.Ordinal);
+        Assert.NotEqual(Text, other);
+        Parse(other); // still a consistent manifest
+        Assert.Throws<InterventionMismatchException>(() => Lfm3Interventions.CheckManifest(Parse(other), Lfm3Precision.Fp32));
+    }
+
+    [Fact]
+    public void AMissingLockedWeightFileIsRejected()
+    {
+        // Drop model.onnx_data_3 from base_artifacts and derived_files.
+        InterventionManifest manifest = Parse(Text);
+        InterventionManifest other = Parse(Text
+            .Replace(",\n    {\n      \"role\": \"external_data\",\n      \"path\": \"onnx/model.onnx_data_3\",\n      \"sha256\": \"1538827aa1c279442457028c4e3d784b7ea82bcf03abd4b55e45fa4facf9fe62\",\n      \"size\": 784818176\n    }", string.Empty, StringComparison.Ordinal)
+            .Replace(",\n    {\n      \"path\": \"model.onnx_data_3\",\n      \"sha256\": \"1538827aa1c279442457028c4e3d784b7ea82bcf03abd4b55e45fa4facf9fe62\",\n      \"size\": 784818176\n    }", string.Empty, StringComparison.Ordinal));
+        Assert.Equal(manifest.BaseArtifacts.Count - 1, other.BaseArtifacts.Count);
+        Assert.Throws<InterventionMismatchException>(() => Lfm3Interventions.CheckManifest(other, Lfm3Precision.Fp32));
+    }
+
+    [Fact]
+    public void AnUnknownSiteMappingVersionIsRejected()
+    {
+        string other = Text.Replace("\"lfm3-1.7b/fp32/1\"", "\"lfm3-1.7b/fp32/2\"", StringComparison.Ordinal);
+        Assert.NotEqual(Text, other);
+        Assert.Throws<InterventionContractException>(() => Lfm3Interventions.CheckManifest(Parse(other), Lfm3Precision.Fp32));
+    }
+
+    [Fact]
     public void NothingIsSupported()
     {
         Assert.DoesNotContain(CapabilityStatus.Supported, Lfm3InterventionCapabilities.All.Values);

@@ -51,9 +51,10 @@ With a tokenizer, `Lfm3Interventions.CreateChatModel(files, entryDirectory)` ret
 
 1. `InterventionArtifactCache.OpenEntry` (Fast by default): the directory name is the key recomputed from the manifest; manifest and profile parse and match, directions verify, the derived graph's SHA-256, the linked weights' sizes and their identity with the base artifacts. `Full` also hashes the linked weights and the snapshot's base files.
 2. The manifest's base graph SHA-256 equals the lock's entry for the requested precision's graph. A wrong base graph (another export, the fp16 graph) throws `InterventionMismatchException` and no session is created.
-3. The manifest precision matches (`fp32`).
-4. Exactly one extra input: the strength, float32, shape `[1]`, not named like an LFM3 input.
-5. Every site is inside the 24 decoder layers at hidden size 2048.
+3. The manifest precision matches (`fp32`), and every base artifact (the graph and its four external data files) is the lock's file with the lock's SHA-256 and size; no locked graph file is missing. The graph file holds only offsets into the weights, so its hash alone does not identify them, and Fast verification compares the linked weights with the manifest by size only.
+4. The site mapping version is `lfm3-1.7b/fp32/1` (`Lfm3Interventions.Fp32SiteMappingVersion`); another mapping version is rejected until this integration is verified with it.
+5. Exactly one extra input: the strength, float32, shape `[1]`, not named like an LFM3 input.
+6. Every site is inside the 24 decoder layers at hidden size 2048.
 
 The session takes the derived graph's verified SHA-256 as `KnownModelSha256`, so `GetInterventionDiagnostics()` reports the original identity (the lock's), the loaded identity (the derived graph's, source `Known`), the profile id, the strength input and the 39 model inputs.
 
@@ -77,7 +78,7 @@ The derived graph of the synthetic profile (cache key `5ff9b1d7…d025`, derived
 | Greedy ids, 6 steps, strength 0 vs original (.NET) | equal | `StrengthZeroMatchesTheOriginalGraph` |
 | 10 concurrent sequences, strengths 0, 0.5, 1, -1, 2 on one session vs sequential | within 1e-5 each | `ConcurrentSequencesWithDifferentStrengthsAreIsolated` |
 | Prefill vs token-by-token at strength 1 | max abs 2.8e-5, same argmax | `PrefillAndTokenByTokenAgree` |
-| fp16 graph hash, wrong base hash, wrong precision, scalar or colliding strength input, site layer 24 | rejected before any session | `ManifestCheckTests`, `TheArtifactIsRejectedForAnotherBaseGraphBeforeAnySession` |
+| fp16 graph hash, wrong base hash, external data not the locked weights, missing locked weight file, unknown site mapping version, wrong precision, scalar or colliding strength input, site layer 24 | rejected before any session | `ManifestCheckTests`, `TheArtifactIsRejectedForAnotherBaseGraphBeforeAnySession` |
 
 Strength 0 is bit-identical here; other graphs, providers or optimization levels may only match within rounding (the extra reader of the residual tensor can change operator fusion).
 
