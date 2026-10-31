@@ -39,7 +39,7 @@ Run the derived graph with the ordinary inputs plus `intervention_strength`, a f
 
    A float16 site gets `Cast(y)` to float32 first and `Cast(delta)` back to float16 before the `Sub`. `Q^T`, `Q` and `s` are inline float32 initializers named `intervention/layer<L>/<target>/...`; `alpha` is the graph input `intervention_strength`, shared by every site.
 6. Rewires **only the consumer nodes the site mapping lists** to read `y'`. The inserted nodes read `y`, and so does every unlisted reader, graph outputs included: a graph output that exposes the site tensor keeps reporting the original value. Inserted names that collide with any existing name are rejected.
-7. Validates the derived graph against the base graph: onnx.checker (on a view where external initializers are graph inputs, so no file is opened), topological order (no cycle), non-strict shape inference, inputs equal to the base inputs plus exactly the strength input, outputs unchanged, every base initializer present and byte-identical (for external tensors: same location, offset and length), same IR version and opset imports, every base node still present.
+7. Validates the derived graph against the base graph: onnx.checker (on a view where external initializers are graph inputs, so no file is opened; skipped when the checker already rejects the base graph, as it does for graphs that use operators only ONNX Runtime registers in the default domain, such as LFM3's `SimplifiedLayerNormalization`; a derived graph of a checker-clean base must pass), topological order (no cycle), non-strict shape inference, inputs equal to the base inputs plus exactly the strength input, outputs unchanged, every base initializer present and byte-identical (for external tensors: same location, offset and length), same IR version and opset imports, every base node still present.
 8. Writes `model.onnx`, hard-links every external-data file of the base graph into the output directory under its original location, and writes `compiler-manifest.json` (canonical form; the C# reader re-serializes it byte for byte). The manifest lists each of those external-data files in `derived_files` (location, SHA-256, size), so `VerifyDerivedFiles` checks the bytes ONNX Runtime reads next to the derived graph, not only the originals.
 
 The base bundle is only read. The derived graph is deterministic: the same inputs give the same bytes.
@@ -56,11 +56,13 @@ The derived graph keeps the base graph's external-data entries unchanged, so it 
 
 ## Site mappings
 
-`injection_sites.SiteMapping` records, for one exact base graph SHA-256: a model name, a version label (`site_mapping_version` in the manifest), the precision, and one `MappedSite` per supported `(layer, target)`: the tensor, its hidden size and the consumer node names to rewire. Mappings are written by hand from the exported graph and versioned; they are never inferred. The registry is empty in this change; model integrations add theirs.
+`injection_sites.SiteMapping` records, for one exact base graph SHA-256: a model name, a version label (`site_mapping_version` in the manifest), the precision, and one `MappedSite` per supported `(layer, target)`: the tensor, its hidden size and the consumer node names to rewire. Mappings are written by hand from the exported graph and versioned; they are never inferred.
+
+The registry holds one mapping, `lfm3-1.7b/fp32/1`, for `LiquidAI/LFM3-1.7B-ONNX` `onnx/model.onnx` (fp32) at `c680759a`, SHA-256 `add6653f…5ef77` (the fp32 asset lock's): `residual_post` after each of the 24 decoder layers, the tensor `/model/layers.L/Add_2/output_0` (float32, hidden 2048), rewiring both readers (layer `L+1`'s operator norm and first residual add; after layer 23, the `logits_to_keep` slice). A test checks that these are every reader of each tensor in the real graph. The fp16 graph has no mapping. See [lfm3.md](lfm3.md).
 
 ## Not covered
 
-- Real models: no site mapping ships yet, so every real graph is unsupported.
+- Real models other than the LFM3 fp32 graph: unsupported (no mapping).
 - Site tensors inside subgraphs (`If`, `Loop`, `Scan` bodies) and listed consumers inside subgraphs: not supported. An unlisted subgraph reader keeps the original value.
 - Element types other than float32 and float16 at the site, and profile dtypes other than float32.
 - Base graphs below IR version 4 (there every initializer must also be a graph input, which would add inputs) and below default-domain opset 7.

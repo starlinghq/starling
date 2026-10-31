@@ -16,6 +16,7 @@
     <Project Path="src/Starlings.Models.PaddleOcr/Starlings.Models.PaddleOcr.csproj" />
     <Project Path="src/Starlings.Models.Clover/Starlings.Models.Clover.csproj" />
     <Project Path="src/Starlings.Models.Lfm3/Starlings.Models.Lfm3.csproj" />
+    <Project Path="src/Starlings.Models.Lfm3.Interventions/Starlings.Models.Lfm3.Interventions.csproj" />
     <Project Path="src/Starlings.Runtime.Onnx/Starlings.Runtime.Onnx.csproj" />
     <Project Path="src/Starlings.Interventions/Starlings.Interventions.csproj" />
     <Project Path="src/Starlings.Models.Abstractions/Starlings.Models.Abstractions.csproj" />
@@ -39,6 +40,7 @@
     <Project Path="tests/Starlings.Models.PaddleOcr.Tests/Starlings.Models.PaddleOcr.Tests.csproj" />
     <Project Path="tests/Starlings.Models.Clover.Tests/Starlings.Models.Clover.Tests.csproj" />
     <Project Path="tests/Starlings.Models.Lfm3.Tests/Starlings.Models.Lfm3.Tests.csproj" />
+    <Project Path="tests/Starlings.Models.Lfm3.Interventions.Tests/Starlings.Models.Lfm3.Interventions.Tests.csproj" />
     <Project Path="tests/Starlings.Runtime.Onnx.Tests/Starlings.Runtime.Onnx.Tests.csproj" />
     <Project Path="tests/Starlings.Interventions.Tests/Starlings.Interventions.Tests.csproj" />
     <Project Path="tests/Starlings.Soak.Tool.Tests/Starlings.Soak.Tool.Tests.csproj" />

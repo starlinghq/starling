@@ -84,6 +84,18 @@ public sealed class Lfm3ChatModel : IDisposable
     public IEnumerable<GenerationUpdate> GenerateStreaming(IReadOnlyList<int> promptIds, GenerationOptions? options = null, CancellationToken cancellationToken = default) =>
         GenerateStreamingCore(promptIds, options, null, cancellationToken);
 
+    /// <summary>As <see cref="Generate"/>, with an intervention strength fixed for the request (see <see cref="Lfm3Model.CreateSequence(float?)"/>).</summary>
+    internal GenerationResult GenerateWithStrength(IReadOnlyList<int> promptIds, GenerationOptions? options, float? strength, CancellationToken cancellationToken)
+    {
+        GenerationResult? result = null;
+        foreach (var update in GenerateStreamingCore(promptIds, options, null, strength, cancellationToken))
+        {
+            result = update.Result;
+        }
+
+        return result!;
+    }
+
     /// <summary>Disposes the graph when this instance owns it. Idempotent.</summary>
     public void Dispose()
     {
@@ -95,7 +107,15 @@ public sealed class Lfm3ChatModel : IDisposable
 
     /// <summary>As <see cref="GenerateStreaming"/>; <paramref name="step0Logits"/> receives the logits after the prefill (fidelity evidence).</summary>
     internal IEnumerable<GenerationUpdate> GenerateStreamingCore(
-        IReadOnlyList<int> promptIds, GenerationOptions? options, Action<float[]>? step0Logits, CancellationToken cancellationToken)
+        IReadOnlyList<int> promptIds, GenerationOptions? options, Action<float[]>? step0Logits, CancellationToken cancellationToken) =>
+        GenerateStreamingCore(promptIds, options, step0Logits, null, cancellationToken);
+
+    /// <summary>
+    /// As <see cref="GenerateStreaming"/>, with an intervention strength fixed for the request. The strength is checked
+    /// against the loaded graph when this method is called, before generation starts.
+    /// </summary>
+    internal IEnumerable<GenerationUpdate> GenerateStreamingCore(
+        IReadOnlyList<int> promptIds, GenerationOptions? options, Action<float[]>? step0Logits, float? strength, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(promptIds);
         options ??= new GenerationOptions();
@@ -134,14 +154,28 @@ public sealed class Lfm3ChatModel : IDisposable
             };
         }
 
+        if (strength is { } value)
+        {
+            if (Model.Intervention is null)
+            {
+                throw new InvalidOperationException("The loaded LFM3 graph has no intervention; load a derived intervention graph to select one.");
+            }
+
+            if (!float.IsFinite(value))
+            {
+                throw new ArgumentOutOfRangeException(nameof(strength), value, "The intervention strength must be finite.");
+            }
+        }
+
         HashSet<int> stopIds = [Lfm3Checkpoint.ImEndTokenId, .. options.AdditionalStopTokenIds];
-        return Run(prompt, options, stopIds, step0Logits, cancellationToken);
+        return Run(prompt, options, stopIds, step0Logits, strength, cancellationToken);
     }
 
-    private IEnumerable<GenerationUpdate> Run(int[] prompt, GenerationOptions options, HashSet<int> stopIds, Action<float[]>? step0Logits, CancellationToken cancellationToken)
+    private IEnumerable<GenerationUpdate> Run(
+        int[] prompt, GenerationOptions options, HashSet<int> stopIds, Action<float[]>? step0Logits, float? strength, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
-        using Lfm3Sequence sequence = Model.CreateSequence();
+        using Lfm3Sequence sequence = Model.CreateSequence(strength);
         var clock = Stopwatch.StartNew();
         int chunk = options.PrefillChunkTokens ?? prompt.Length;
         for (int start = 0; start < prompt.Length; start += chunk)

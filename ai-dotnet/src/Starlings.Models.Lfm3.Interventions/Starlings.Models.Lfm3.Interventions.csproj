@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <!-- Source only while the intervention mechanism is experimental (docs/interventions/architecture.md). A packable
+         library cannot depend on the source-only Starlings.Interventions, so the LFM3 integration lives here and
+         Starlings.Models.Lfm3 keeps its public surface and package unchanged. -->
+    <IsPackable>false</IsPackable>
+    <IsAotCompatible>true</IsAotCompatible>
+    <Description>Graph interventions for LFM3-1.7B (Starlings.Models.Lfm3): loads a derived intervention graph verified through its compiler manifest (base graph identity, precision, the one strength input), and runs requests with a per-request InterventionSelection fixed for the sequence's lifetime. Experimental and source only. V1 evidence uses synthetic directions.</Description>
+    <PackageTags>lfm3;onnxruntime;interventions;activation-steering;llm</PackageTags>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../Starlings.Models.Lfm3/Starlings.Models.Lfm3.csproj" />
+    <ProjectReference Include="../Starlings.Interventions/Starlings.Interventions.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Starlings.Models.Lfm3.Interventions.Tests" />
+  </ItemGroup>
+
+</Project>

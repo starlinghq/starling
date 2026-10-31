@@ -61,7 +61,8 @@ def _tensor_identity(tensor: TensorProto) -> bytes:
 def validate_derived_model(base: ModelProto, derived: ModelProto, extra_inputs: Sequence[str]) -> None:
     """Check that ``derived`` is ``base`` plus the intervention and nothing else that matters.
 
-    - onnx.checker passes, and non-strict shape inference runs;
+    - onnx.checker passes (unless it already rejects the base graph, e.g. for operators only ONNX Runtime registers),
+      and non-strict shape inference runs;
     - top-level nodes are topologically ordered (so the rewiring created no cycle);
     - the inputs are exactly the base inputs, in order, followed by ``extra_inputs``;
     - the outputs are the base outputs, unchanged;
@@ -69,7 +70,21 @@ def validate_derived_model(base: ModelProto, derived: ModelProto, extra_inputs: 
     - IR version, opset imports and the base nodes' operators are unchanged.
     """
     view = checker_view(derived)
-    onnx.checker.check_model(view)
+    try:
+        onnx.checker.check_model(view)
+    except onnx.checker.ValidationError as derived_error:
+        # Graphs exported for ONNX Runtime can use operators ORT registers in the default domain that onnx does not
+        # know (LFM3: SimplifiedLayerNormalization), so the checker rejects the base graph itself. Then the checker
+        # cannot judge the derived graph either; the structural checks below and the ONNX Runtime load stand in for it.
+        # A derived graph whose base passes the checker must pass it too.
+        try:
+            onnx.checker.check_model(checker_view(base))
+        except onnx.checker.ValidationError:
+            pass
+        else:
+            raise DerivedGraphError(f"onnx.checker rejects the derived graph but not its base: {derived_error}") from (
+                derived_error
+            )
     check_topological_order(derived)
     try:
         onnx.shape_inference.infer_shapes(view, check_type=True, strict_mode=False)
