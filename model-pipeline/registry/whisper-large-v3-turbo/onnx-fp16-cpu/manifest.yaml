@@ -23,7 +23,7 @@ origin:
   files:
     # onnx-community/whisper-large-v3-turbo-ONNX at the pinned commit: the route's pinned set
     # (candidates/whisper-large-v3-turbo/profile.json, origin.files). The package's own lock (WhisperModelAssets.Lock)
-    # holds three of them, the two graphs and tokenizer.json, with the same digests; the four configuration files are
+    # holds four of them, the three graphs and tokenizer.json, with the same digests; the four configuration files are
     # what the route's assets stage checks against the contract (geometry, special tokens, suppression lists).
     - path: added_tokens.json
       sha256: "3c51f66c4c21f9e126970078f11ae77a78c74aee8df606ee9daba86e467108e0"
@@ -37,6 +37,9 @@ origin:
     - path: onnx/decoder_model_fp16.onnx
       sha256: "15870b95e08e666ea2423738ee12722de965d09cf05f4579fa947357332b5057"
       size: 343974281
+    - path: onnx/decoder_with_past_model_fp16.onnx
+      sha256: "33041ca209a268f9562d5ff544542ed219c3a4342209e95a34042e9124f055ad"
+      size: 317742004
     - path: onnx/encoder_model_fp16.onnx
       sha256: "b48fd309c51e77ba88324469632fbff8796d2dd37b1658c9516c1c1b1d96428d"
       size: 1274342603
@@ -98,7 +101,12 @@ behavior:
     max_new_tokens: >-
       444 without timestamps, 445 per window with timestamps (448 decoder positions, WhisperModel.MaxTargetPositions,
       less the four- or three-token prompt)
-    decoder: full-context decoder_model_fp16.onnx, no KV cache (each step re-runs the decoder over the prefix)
+    decoder: >-
+      KV cache by default (WhisperOptions.DecoderMode): decoder_model_fp16.onnx once over the prompt, then
+      decoder_with_past_model_fp16.onnx one token per step with the cached keys and values; DecoderMode.FullContext
+      keeps the reference loop that re-runs decoder_model_fp16.onnx over the prefix at every step. The two loops'
+      logits differ by fp16 summation order (bounded by the candidate's proposed kv_logits_max_abs); ids, segments and
+      transcripts are equal
   unsupported:
     - translation (<|translate|>)
     - word-level timestamps (they need the alignment heads' cross-attention weights; the pinned graphs do not export them)
@@ -107,7 +115,7 @@ behavior:
       conditioning on earlier windows
     - batching several clips in one call
     - beam search and sampling
-    - KV-cache decoding (decoder_with_past_model_fp16.onnx, decoder_model_merged_fp16.onnx)
+    - the merged decoder graph (decoder_model_merged_fp16.onnx)
     - quantized graphs (q4f16 and others in the export repository)
     - audio decoding from files (the caller supplies 16 kHz PCM)
     - CUDA (untested)
@@ -146,14 +154,19 @@ execution:
   precision: fp16
   variant: reference
   graph:
-    # Two graphs with float32 inputs and outputs (fp16 inside).
+    # Three graphs with float32 inputs and outputs (fp16 inside). The full-context decoder also outputs present.{0..3}.
+    # {decoder,encoder}.{key,value} [batch_size, 20, length, 64]; the KV-cache decoder takes them back as
+    # past_key_values.{0..3}.{decoder,encoder}.{key,value} and returns the decoder ones for the next step.
     inputs:
       - { name: input_features, type: float32, shape: [batch_size, 128, 3000], graph: onnx/encoder_model_fp16.onnx }
       - { name: input_ids, type: int64, shape: [batch_size, decoder_sequence_length], graph: onnx/decoder_model_fp16.onnx }
       - { name: encoder_hidden_states, type: float32, shape: [batch_size, 1500, 1280], graph: onnx/decoder_model_fp16.onnx }
+      - { name: input_ids, type: int64, shape: [batch_size, 1], graph: onnx/decoder_with_past_model_fp16.onnx }
+      - { name: cache_position, type: int64, shape: [1], graph: onnx/decoder_with_past_model_fp16.onnx }
     outputs:
       - { name: last_hidden_state, type: float32, shape: [batch_size, 1500, 1280], graph: onnx/encoder_model_fp16.onnx }
       - { name: logits, type: float32, shape: [batch_size, decoder_sequence_length, 51866], graph: onnx/decoder_model_fp16.onnx }
+      - { name: logits, type: float32, shape: [batch_size, 1, 51866], graph: onnx/decoder_with_past_model_fp16.onnx }
 
 capabilities:
   # Starlings.Models.Whisper (WhisperCapabilities.All, same statuses; ai-dotnet/tests/Starlings.Models.Whisper.Tests
@@ -176,6 +189,7 @@ capabilities:
   translation: unsupported
   timestamps: experimental  # segment level, on the clip's timeline: ids, segment times and texts equal the reference (route evidence)
   word_timestamps: unsupported
+  kv_cache: experimental  # decoder_with_past loop, the default: ids, segments and transcripts equal the full-context loop
   chunking: experimental  # long-form audio over 30 s: sequential windows; ids, segment times and texts equal the reference
   temperature_fallback: unsupported
   compression_ratio_threshold: unsupported
@@ -239,6 +253,8 @@ maintenance:
       to 18 s clips), so hidden_max_abs was re-adopted at 0.6 (1.2 x the worst observed). Teacher-forced logits stay
       within logits_max_abs, and ids, transcripts and segment timestamps equal the reference.
     - >-
-      Decoding re-runs the full decoder over the prefix at every step (no KV cache), so long transcripts are slow.
+      The KV-cache loop's logits are not bit-identical to the full-context loop's (up to about 1e-2: the fp16 graphs
+      sum over the whole prefix in one product on one path and one row at a time on the other). The bound is the
+      candidate's proposed kv_logits_max_abs, not yet adopted into protected/.
     - >-
       The export repository has no license tag; see rights.notes.

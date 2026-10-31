@@ -44,12 +44,14 @@ STAGES = ["assets", "environment", "reference", "onnx", "dotnet", "evaluate", "r
 RUNTIME = {"backend": "onnx", "version": "1.30.0", "provider": "CPUExecutionProvider", "precision": "fp16"}
 ENCODER_FILE = "onnx/encoder_model_fp16.onnx"
 DECODER_FILE = "onnx/decoder_model_fp16.onnx"
+DECODER_WITH_PAST_FILE = "onnx/decoder_with_past_model_fp16.onnx"
 TOKENIZER_FILE = "tokenizer.json"
 SNAPSHOT_FILES = (
     "added_tokens.json",
     "config.json",
     "generation_config.json",
     DECODER_FILE,
+    DECODER_WITH_PAST_FILE,
     ENCODER_FILE,
     "preprocessor_config.json",
     TOKENIZER_FILE,
@@ -115,6 +117,7 @@ BEHAVIOR = {
     "architecture": "WhisperForConditionalGeneration",
     "encoder_file": ENCODER_FILE,
     "decoder_file": DECODER_FILE,
+    "decoder_with_past_file": DECODER_WITH_PAST_FILE,
     "tokenizer_file": TOKENIZER_FILE,
     "tokenizer_profile": "whisper-bpe",
     "sample_rate": 16000,
@@ -147,6 +150,7 @@ CONTRACTS = {
         "pins": {
             ENCODER_FILE: (1274342603, "b48fd309c51e77ba88324469632fbff8796d2dd37b1658c9516c1c1b1d96428d"),
             DECODER_FILE: (343974281, "15870b95e08e666ea2423738ee12722de965d09cf05f4579fa947357332b5057"),
+            DECODER_WITH_PAST_FILE: (317742004, "33041ca209a268f9562d5ff544542ed219c3a4342209e95a34042e9124f055ad"),
             TOKENIZER_FILE: (2480645, "b3c8202bbf06d8ee4232c5984baa563784ac4737e2e7fdc42fa180200d3cfcdb"),
         },
         "behavior": BEHAVIOR,
@@ -197,9 +201,13 @@ FIDELITY_CAPS = {
 }
 TENSORS = {
     "reference": ("mel", "mel_torch", "hidden", "logits"),
-    "onnx": ("hidden", "logits"),
-    "dotnet": ("mel", "hidden", "logits"),
+    "onnx": ("hidden", "logits", "kv_logits", "kv_full_logits"),
+    "dotnet": ("mel", "hidden", "logits", "kv_logits"),
 }
+# Proposed (not yet adopted into protected/) bound of the KV-cache loop: its per-step logits against the full-context
+# decoder's teacher-forced on the same ids, on the same backend. Not bit-exact: the fp16 graphs sum over the whole
+# prefix in one product on the full-context path and one row at a time on the cached path. Capped here.
+PROPOSED_POLICY_CAPS = {"kv_logits_max_abs": 0.1}
 
 
 def _refuse(field: str, detail: str) -> None:
@@ -227,6 +235,16 @@ def _validate_policy(policy: dict) -> None:
         lower_ok = value >= 0 if key == "reference_wer_max" else value > 0
         if type(value) not in (int, float) or not math.isfinite(value) or not lower_ok or value > cap:
             _refuse(f"evaluation.policy.{key}", f"must be a finite number up to {cap}")
+
+
+def _validate_proposed_policy(policy) -> None:
+    """The candidate's own proposed bounds (not in protected/): exactly the route's keys, each within its cap."""
+    if not isinstance(policy, dict) or set(policy) != set(PROPOSED_POLICY_CAPS):
+        _refuse("evaluation.proposed_policy", f"fields must be exactly {sorted(PROPOSED_POLICY_CAPS)}")
+    for key, cap in PROPOSED_POLICY_CAPS.items():
+        value = policy[key]
+        if type(value) not in (int, float) or not math.isfinite(value) or not 0 < value <= cap:
+            _refuse(f"evaluation.proposed_policy.{key}", f"must be a finite number above 0 and up to {cap}")
 
 
 def protected_policy(path: Path, profile: str) -> dict:
@@ -305,6 +323,7 @@ def validate_candidate_behavior(candidate: dict, repo_root: Path | None = None) 
             _same(f"behavior.{key}", behavior[key], value)
         _same("evaluation.status", candidate["evaluation"]["status"], "proposed")
         _validate_policy(candidate["evaluation"]["policy"])
+        _validate_proposed_policy(candidate["evaluation"].get("proposed_policy"))
         if repo_root is not None:
             relative = contract["protected_tolerances"]
             bound = protected_policy(repository_input(repo_root, relative), contract["id"])
@@ -540,7 +559,7 @@ def _document(path: Path, candidate: dict, digest: str, stage: str) -> tuple[dic
         names = {"model.safetensors", "preprocessor_config.json", "tokenizer.json"}
         files = candidate["origin"]["base"]["files"]
     else:
-        names = {ENCODER_FILE, DECODER_FILE, TOKENIZER_FILE}
+        names = {ENCODER_FILE, DECODER_FILE, DECODER_WITH_PAST_FILE, TOKENIZER_FILE}
         files = candidate["origin"]["files"]
     expected_assets = {entry["path"]: entry["sha256"] for entry in files if entry["path"] in names}
     behavior = candidate["behavior"]
@@ -590,6 +609,17 @@ def _document(path: Path, candidate: dict, digest: str, stage: str) -> tuple[dic
                 raise PipelineError(f"{stage}/{identifier}: the teacher-forced ids are missing")
             if stage == "dotnet" and not isinstance(row["audio_transcript"], str):
                 raise PipelineError(f"{stage}/{identifier}: the public audio-path transcript is missing")
+            if stage != "reference":
+                kv_ids = row["kv_ids"]
+                if (
+                    not isinstance(kv_ids, list)
+                    or not len(expected_prompt) < len(kv_ids) <= behavior["max_target_positions"]
+                    or any(type(value) is not int or not 0 <= value < behavior["vocabulary_size"] for value in kv_ids)
+                    or kv_ids[: len(expected_prompt)] != expected_prompt
+                    or eos in kv_ids[:-1]
+                ):
+                    raise PipelineError(f"{stage}/{identifier}: invalid KV-cache ids")
+                _check_timestamped(row["kv_timestamped"], candidate, row["language"], f"{stage}/{identifier}/kv")
             _check_timestamped(row["timestamped"], candidate, row["language"], f"{stage}/{identifier}")
             if stage == "dotnet":
                 _check_timestamped(row["audio_timestamped"], candidate, row["language"], f"{stage}/{identifier}/audio")
@@ -611,6 +641,9 @@ def _check_long_form(row: dict, stage: str, candidate: dict, where: str) -> None
             or any(type(token) is not int for token in row["default_path_ids"])
         ):
             raise PipelineError(f"{where}: invalid long-form sample count or default feature-path ids")
+    if stage != "reference":
+        expected |= {"kv_timestamped"}
+        _check_timestamped(row["kv_timestamped"], candidate, row["language"], f"{where}/kv")
     if stage == "dotnet":
         expected |= {"audio_timestamped", "audio_transcript"}
         if not isinstance(row["audio_transcript"], str):
@@ -659,6 +692,10 @@ def _tensors(
                 raise PipelineError(f"unknown or duplicate tensor {key}")
             if row["name"] in ("mel", "mel_torch"):
                 expected = [behavior["num_mel_bins"], frames[row["id"]]]
+            elif row["name"] in ("kv_logits", "kv_full_logits"):
+                case = cases[row["id"]]
+                steps = len(case["kv_ids"]) - len(prompt({"behavior": behavior}, case["language"]))
+                expected = [steps, behavior["vocabulary_size"]]
             else:
                 expected = shapes.get(row["name"]) or [len(forced[row["id"]]) - 1, behavior["vocabulary_size"]]
             if row["shape"] != expected or row["offset"] != position:
@@ -808,6 +845,43 @@ def _transcript(row: dict) -> str:
     return row["timestamped"]["transcript"] if row["long_form"] else row["transcript"]
 
 
+def _kv_checks(identifier: str, python_row: dict, dotnet_row: dict, tensors: dict, policy: dict, proposed: dict):
+    """The KV-cache loop: same ids, segments and transcripts as the full-context loop (exact), its logits within the
+    proposed bound of the full-context logits on the same backend, and .NET's KV loop equal to Python's."""
+    checks = [
+        _exact(
+            [_windows(python_row["kv_timestamped"]), _segments(python_row["kv_timestamped"])],
+            [_windows(python_row["timestamped"]), _segments(python_row["timestamped"])],
+            f"onnx/{identifier}/kv_timestamped_vs_full_context",
+        ),
+        _exact(
+            [_windows(dotnet_row["kv_timestamped"]), _segments(dotnet_row["kv_timestamped"])],
+            [_windows(python_row["kv_timestamped"]), _segments(python_row["kv_timestamped"])],
+            f"dotnet-mel/{identifier}/kv_timestamped_vs_python",
+        ),
+    ]
+    if python_row["long_form"]:
+        return checks
+    python_tensors, dotnet_tensors = tensors["onnx"], tensors["dotnet"]
+    return [
+        _difference(
+            python_tensors[identifier, "kv_logits"],
+            python_tensors[identifier, "kv_full_logits"],
+            proposed["kv_logits_max_abs"],
+            f"onnx/{identifier}/kv_logits_vs_full_context",
+        ),
+        _exact(python_row["kv_ids"], python_row["ids"], f"onnx/{identifier}/kv_ids_vs_full_context"),
+        _difference(
+            dotnet_tensors[identifier, "kv_logits"],
+            python_tensors[identifier, "kv_logits"],
+            policy["same_backend_max_abs"],
+            f"dotnet-mel/{identifier}/kv_logits_vs_python",
+        ),
+        _exact(dotnet_row["kv_ids"], python_row["kv_ids"], f"dotnet-mel/{identifier}/kv_ids_vs_python"),
+        *checks,
+    ]
+
+
 def _long_form_checks(identifier: str, row: dict, python_row: dict, dotnet_row: dict, tensors: dict, policy: dict):
     """A long-form clip: the whole-clip mel (both feature paths, and .NET), the default feature path's ids, the
     timestamped decode against the reference and across backends, and the public plain-text path."""
@@ -862,6 +936,7 @@ def evaluate_development(
     contract = validate_candidate_behavior(candidate, repo_root)
     policy_source = contract["protected_tolerances"] if repo_root is not None else "unbound (route caps only)"
     behavior, policy = candidate["behavior"], candidate["evaluation"]["policy"]
+    proposed = candidate["evaluation"]["proposed_policy"]
     digest = fixtures.sha256_file(candidate_path)
     reference, expected = _document(reference_path, candidate, digest, "reference")
     onnx, python_cases = _document(onnx_path, candidate, digest, "onnx")
@@ -910,6 +985,7 @@ def evaluate_development(
     checks = []
     for identifier, row in expected.items():
         python_row, dotnet_row = python_cases[identifier], dotnet_cases[identifier]
+        checks += _kv_checks(identifier, python_row, dotnet_row, tensors, policy, proposed)
         if row["long_form"]:
             checks += _long_form_checks(identifier, row, python_row, dotnet_row, tensors, policy)
             continue
@@ -1035,6 +1111,9 @@ def evaluate_development(
         "evaluation_status": "proposed",
         "policy": policy,
         "policy_source": policy_source,
+        # The candidate's own bounds for checks the binding tolerances do not cover yet (the KV-cache loop).
+        "proposed_policy": proposed,
+        "proposed_policy_status": "proposed",
         "policy_status": "binding" if repo_root is not None else "proposed",
         "protected_release_qualification": {"status": "unapproved", "G1": "not-run", "G2": "not-run"},
         "inputs": {

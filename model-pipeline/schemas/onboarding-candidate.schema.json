@@ -63,7 +63,7 @@
     "evaluation": {
       "type": "object", "additionalProperties": false,
       "required": ["status", "policy"],
-      "properties": {"status": {"const": "proposed"}, "policy": {"type": "object", "minProperties": 1}}
+      "properties": {"status": {"const": "proposed"}, "policy": {"type": "object", "minProperties": 1}, "proposed_policy": {"type": "object", "minProperties": 1}}
     }
   },
   "$defs": {

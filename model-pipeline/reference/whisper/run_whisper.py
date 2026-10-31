@@ -11,7 +11,9 @@ reference: for each corpus clip, the transformers WhisperFeatureExtractor log-me
 onnx:      the pinned fp16 graphs on ONNX Runtime from the reference mel: encoder hidden state, an independent greedy
            loop with the generation config's suppression lists, and logits teacher-forced on the reference ids.
            Timestamped: the same greedy loop with the timestamp rules, and the sequential seek loop that splits each
-           window into segments.
+           window into segments. KV cache: both decodes again through the decoder_with_past graph (the full-context
+           graph once over the prompt, then one cached step per token), with each step's logits and the full-context
+           logits teacher-forced on the cached ids.
 """
 
 from __future__ import annotations
@@ -382,9 +384,65 @@ def main() -> int:
         ] != ["input_ids", "encoder_hidden_states"]:
             raise ValueError("unsupported ONNX graph input signature")
 
+        with_past = ort.InferenceSession(
+            str(args.snapshot / behavior["decoder_with_past_file"]), options, providers=["CPUExecutionProvider"]
+        )
+        layers = behavior["decoder_layers"]
+        present = [
+            f"present.{layer}.{part}.{kind}"
+            for layer in range(layers)
+            for part in ("decoder", "encoder")
+            for kind in ("key", "value")
+        ]
+        past_names = [
+            "input_ids",
+            *(name.replace("present.", "past_key_values.") for name in present),
+            "cache_position",
+        ]
+        if [value.name for value in with_past.get_inputs()] != past_names:
+            raise ValueError("unsupported KV-cache graph input signature")
+
         def decode(ids: list[int], hidden: np.ndarray) -> np.ndarray:
             feeds = {"input_ids": np.array([ids], dtype=np.int64), "encoder_hidden_states": hidden}
             return decoder.run(["logits"], feeds)[0][0]
+
+        def pick(logits: np.ndarray, generated: list[int], rules: bool) -> int:
+            if rules:
+                return next_token(logits, generated, behavior)
+            return int(np.argmax(suppressed(logits, behavior, not generated)))
+
+        def greedy(start: list[int], hidden: np.ndarray, rules: bool, cached: bool, rows: list | None = None) -> list:
+            """Greedy decode from `start`: full context (every step over all ids) or KV cache (one cached step per
+            token). `rows` collects each step's raw logits."""
+            ids = list(start)
+            if not cached:
+                while len(ids) < behavior["max_target_positions"]:
+                    logits = decode(ids, hidden)[-1]
+                    if rows is not None:
+                        rows.append(logits)
+                    ids.append(pick(logits, ids[len(start) :], rules))
+                    if ids[-1] == eos:
+                        break
+                return ids
+            feeds = {"input_ids": np.array([ids], dtype=np.int64), "encoder_hidden_states": hidden}
+            outputs = dict(zip(["logits", *present], decoder.run(["logits", *present], feeds), strict=True))
+            cache = {name.replace("present.", "past_key_values."): outputs[name] for name in present}
+            logits = outputs["logits"][0, -1]
+            while True:
+                if rows is not None:
+                    rows.append(logits)
+                ids.append(pick(logits, ids[len(start) :], rules))
+                if ids[-1] == eos or len(ids) >= behavior["max_target_positions"]:
+                    return ids
+                feeds = {
+                    "input_ids": np.array([[ids[-1]]], dtype=np.int64),
+                    **cache,
+                    "cache_position": np.array([len(ids) - 1], dtype=np.int64),
+                }
+                names = ["logits", *(name for name in present if ".decoder." in name)]
+                step = dict(zip(names, with_past.run(names, feeds), strict=True))
+                cache.update({name.replace("present.", "past_key_values."): step[name] for name in names[1:]})
+                logits = step["logits"][0, -1]
 
         begin = behavior["timestamps"]["timestamp_begin"]
 
@@ -392,7 +450,7 @@ def main() -> int:
             """Timestamp tokens are not special in tokenizer.json: drop them, as WhisperTokenizer does, then decode."""
             return tokenizer.decode([token for token in ids if token < begin], skip_special_tokens=True)
 
-        def timestamped(mel: np.ndarray, language: str) -> dict:
+        def timestamped(mel: np.ndarray, language: str, cached: bool = False) -> dict:
             """The sequential seek loop: decode a window with the timestamp rules, split it, advance, repeat."""
             start = prompt(candidate, language, timestamps=True)
             num_frames, total = behavior["num_frames"], mel.shape[1]
@@ -402,11 +460,7 @@ def main() -> int:
                 hidden = encoder.run(
                     ["last_hidden_state"], {"input_features": window(mel, seek, frames, num_frames)[None]}
                 )[0]
-                ids = list(start)
-                while len(ids) < behavior["max_target_positions"]:
-                    ids.append(next_token(decode(ids, hidden)[-1], ids[len(start) :], behavior))
-                    if ids[-1] == eos:
-                        break
+                ids = greedy(start, hidden, rules=True, cached=cached)
                 tokens = ids[len(start) : -1] if ids[-1] == eos else ids[len(start) :]
                 pieces, advance = split_segments(tokens, seek, frames, behavior)
                 records.append({"seek": seek, "ids": ids})
@@ -427,19 +481,19 @@ def main() -> int:
                         "audio_sha256": row["sha256"],
                         "long_form": True,
                         "timestamped": timestamped(reference_mel[row["id"]], row["language"]),
+                        "kv_timestamped": timestamped(reference_mel[row["id"]], row["language"], cached=True),
                     }
                 )
                 continue
             hidden = encoder.run(["last_hidden_state"], {"input_features": reference_mel[row["id"]][None]})[0]
-            ids = prompt(candidate, row["language"])
-            first = True
-            while len(ids) < behavior["max_target_positions"]:
-                ids.append(int(np.argmax(suppressed(decode(ids, hidden)[-1], behavior, first))))
-                first = False
-                if ids[-1] == eos:
-                    break
+            start = prompt(candidate, row["language"])
+            ids = greedy(start, hidden, rules=False, cached=False)
+            rows = []
+            kv_ids = greedy(start, hidden, rules=False, cached=True, rows=rows)
             tensors.add(row["id"], "hidden", hidden[0])
             tensors.add(row["id"], "logits", decode(source["ids"][:-1], hidden))
+            tensors.add(row["id"], "kv_logits", np.stack(rows))
+            tensors.add(row["id"], "kv_full_logits", decode(kv_ids[:-1], hidden)[len(start) - 1 :])
             stamped = timestamped(reference_mel[row["id"]], row["language"])
             cases.append(
                 {
@@ -451,9 +505,16 @@ def main() -> int:
                     "transcript": tokenizer.decode(ids, skip_special_tokens=True),
                     "long_form": False,
                     "timestamped": stamped,
+                    "kv_ids": kv_ids,
+                    "kv_timestamped": timestamped(reference_mel[row["id"]], row["language"], cached=True),
                 }
             )
-        assets = (behavior["encoder_file"], behavior["decoder_file"], behavior["tokenizer_file"])
+        assets = (
+            behavior["encoder_file"],
+            behavior["decoder_file"],
+            behavior["decoder_with_past_file"],
+            behavior["tokenizer_file"],
+        )
     document = {
         "format": FORMAT,
         "format_version": 1,

@@ -78,7 +78,19 @@ NEAR_MISSES = [
     ("base repository", lambda c: c["origin"]["base"].update(repo="openai/whisper-large-v3"), "origin.base.repo"),
     ("base revision", lambda c: c["origin"]["base"].update(revision="0" * 40), "origin.base.revision"),
     ("missing graph", lambda c: c["origin"]["files"].pop(3), "origin.files"),
-    ("other encoder", lambda c: c["origin"]["files"][4].update(sha256="f" * 64), "origin.files"),
+    ("other encoder", lambda c: c["origin"]["files"][5].update(sha256="f" * 64), "origin.files"),
+    ("other KV-cache graph", lambda c: c["origin"]["files"][4].update(size=1), "origin.files"),
+    ("no proposed policy", lambda c: c["evaluation"].pop("proposed_policy"), "evaluation.proposed_policy"),
+    (
+        "KV bound over cap",
+        lambda c: c["evaluation"]["proposed_policy"].update(kv_logits_max_abs=0.5),
+        "kv_logits_max_abs",
+    ),
+    (
+        "unknown proposed key",
+        lambda c: c["evaluation"]["proposed_policy"].update(beam_max=1),
+        "evaluation.proposed_policy",
+    ),
     ("missing weights", lambda c: c["origin"]["base"]["files"].pop(4), "origin.base.files"),
     ("fp32 runtime", lambda c: c["runtime"].update(precision="fp32"), "runtime"),
     ("cuda", lambda c: c["runtime"].update(provider="CUDAExecutionProvider"), "runtime"),
@@ -125,7 +137,8 @@ NEAR_MISSES = [
 def test_contract_refuses_near_misses_field_by_field(name, mutate, field):
     candidate = profile()
     assert candidate["origin"]["files"][3]["path"] == whisper.DECODER_FILE
-    assert candidate["origin"]["files"][4]["path"] == whisper.ENCODER_FILE
+    assert candidate["origin"]["files"][4]["path"] == whisper.DECODER_WITH_PAST_FILE
+    assert candidate["origin"]["files"][5]["path"] == whisper.ENCODER_FILE
     assert candidate["origin"]["base"]["files"][4]["path"] == "model.safetensors"
     mutate(candidate)
     with pytest.raises(PipelineError, match=field.replace(".", r"\.")):
@@ -435,7 +448,7 @@ def write_stage(
         names = ("model.safetensors", "preprocessor_config.json", "tokenizer.json")
         files = candidate["origin"]["base"]["files"]
     else:
-        names = (whisper.ENCODER_FILE, whisper.DECODER_FILE, whisper.TOKENIZER_FILE)
+        names = (whisper.ENCODER_FILE, whisper.DECODER_FILE, whisper.DECODER_WITH_PAST_FILE, whisper.TOKENIZER_FILE)
         files = candidate["origin"]["files"]
     pins = {record["path"]: record["sha256"] for record in files}
     cases, layout, blob = [], [], array.array("f")
@@ -456,7 +469,11 @@ def write_stage(
         if stage == "reference":
             row.update(text=f"WORDS OF {identifier.upper()}", samples=SAMPLES[identifier], default_path_ids=ids)
         else:
-            row["forced_ids"] = ids
+            row.update(
+                forced_ids=ids,
+                kv_ids=list(ids),
+                kv_timestamped=timestamped(candidate, generated, row["transcript"], identifier == "clip-b"),
+            )
         row["long_form"] = False
         row["timestamped"] = timestamped(candidate, generated, row["transcript"], identifier == "clip-b")
         if stage == "dotnet":
@@ -464,9 +481,15 @@ def write_stage(
             row["audio_timestamped"] = timestamped(candidate, generated, row["transcript"], identifier == "clip-b")
         cases.append(row)
         for name in whisper.TENSORS[stage]:
-            shape = shapes.get(name) or [len(ids) - 1, behavior["vocabulary_size"]]
+            steps = len(ids) - len(whisper.prompt(candidate, "en"))
+            if name.startswith("kv_"):
+                shape = [steps, behavior["vocabulary_size"]]
+            else:
+                shape = shapes.get(name) or [len(ids) - 1, behavior["vocabulary_size"]]
             layout.append({"id": identifier, "name": name, "offset": len(blob), "shape": shape})
-            blob.extend(tensor_values(seed + len(name.removesuffix("_torch")), shape[0] * shape[1]))
+            # The KV-cache tensors of every stage hold the same values (exact agreement), like mel and mel_torch.
+            key = "kv" if name.startswith("kv_") else name.removesuffix("_torch")
+            blob.extend(tensor_values(seed + len(key), shape[0] * shape[1]))
     for identifier, generated in LONG.items():
         row = {
             "id": identifier,
@@ -475,6 +498,8 @@ def write_stage(
             "long_form": True,
             "timestamped": long_timestamped(candidate, generated),
         }
+        if stage != "reference":
+            row["kv_timestamped"] = long_timestamped(candidate, generated)
         if stage == "reference":
             row.update(
                 text=f"WORDS OF {identifier.upper()}",
@@ -578,7 +603,14 @@ def test_complete_evidence_passes_and_never_adopts_protected_gates(tmp_path, tin
         "dotnet-mel/*/timestamp_transcript_vs_python",
         "dotnet-audio/*/segments_vs_python",
         "dotnet-audio/*/timestamp_transcript_vs_python",
+        "onnx/*/kv_logits_vs_full_context",
+        "onnx/*/kv_ids_vs_full_context",
+        "onnx/*/kv_timestamped_vs_full_context",
+        "dotnet-mel/*/kv_logits_vs_python",
+        "dotnet-mel/*/kv_ids_vs_python",
+        "dotnet-mel/*/kv_timestamped_vs_python",
     }
+    assert report["proposed_policy"] == {"kv_logits_max_abs": 0.02}
     assert [check["id"] for check in report["checks"][-4:]] == [
         "reference/corpus/wer_vs_ground_truth",
         "reference/corpus/timestamp_pair_coverage",
@@ -601,6 +633,8 @@ def test_complete_evidence_passes_and_never_adopts_protected_gates(tmp_path, tin
         "dotnet-audio/*/segments_vs_python",
         "dotnet-audio/*/timestamp_transcript_vs_python",
         "dotnet-audio/*/transcript_vs_python",
+        "onnx/*/kv_timestamped_vs_full_context",
+        "dotnet-mel/*/kv_timestamped_vs_python",
     }
 
 
@@ -628,7 +662,10 @@ def _layout(document, blob):
             position += len(names) * behavior["num_mel_bins"] * (SAMPLES[row["id"]] // behavior["hop_length"])
             continue
         for name in whisper.TENSORS[document["stage"]]:
-            size = shapes.get(name) or (len(row["ids"]) - 1) * behavior["vocabulary_size"]
+            if name.startswith("kv_"):
+                size = (len(row["kv_ids"]) - 4) * behavior["vocabulary_size"]
+            else:
+                size = shapes.get(name) or (len(row["ids"]) - 1) * behavior["vocabulary_size"]
             layout.append({"id": row["id"], "name": name, "offset": position})
             position += size
     return layout
@@ -753,6 +790,40 @@ def test_timestamp_differences_produce_named_failed_checks(tmp_path, tiny, stage
 def test_malformed_timestamp_evidence_is_refused(tmp_path, tiny, stage, edit, message):
     with pytest.raises(PipelineError, match=message):
         whisper.evaluate_development(**evidence(tmp_path, tiny, {stage: edit}))
+
+
+@pytest.mark.parametrize(
+    ("stage", "edit", "failed"),
+    [
+        ("onnx", nudge("kv_logits", 0.05, "clip-b"), "onnx/clip-b/kv_logits_vs_full_context"),
+        ("dotnet", nudge("kv_logits", 1e-4), "dotnet-mel/clip-a/kv_logits_vs_python"),
+        (
+            "onnx",
+            lambda document, blob: document["cases"][0]["kv_ids"].__setitem__(4, 441),
+            "onnx/clip-a/kv_ids_vs_full_context",
+        ),
+        (
+            "dotnet",
+            lambda document, blob: document["cases"][1]["kv_ids"].__setitem__(4, 441),
+            "dotnet-mel/clip-b/kv_ids_vs_python",
+        ),
+        (
+            "onnx",
+            lambda document, blob: document["cases"][2]["kv_timestamped"]["segments"][0].update(end=19.98),
+            "onnx/clip-long/kv_timestamped_vs_full_context",
+        ),
+        (
+            "dotnet",
+            lambda document, blob: document["cases"][0]["kv_timestamped"]["segments"][0].update(text=" Other."),
+            "dotnet-mel/clip-a/kv_timestamped_vs_python",
+        ),
+    ],
+    ids=lambda value: value if isinstance(value, str) and "/" in value else "",
+)
+def test_kv_cache_differences_produce_named_failed_checks(tmp_path, tiny, stage, edit, failed):
+    report = whisper.evaluate_development(**evidence(tmp_path, tiny, {stage: edit}))
+    assert report["status"] == "failed"
+    assert failed in report["failed_checks"]
 
 
 def _long(stage_key: str, change):

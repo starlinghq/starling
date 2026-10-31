@@ -6,6 +6,8 @@
 // Both paths also decode with segment timestamps (TranscribeMelWithTimestamps from the reference mel,
 // TranscribeWithTimestamps from the WAV samples): windows, segments and transcript. A clip over 30 s is long-form: the
 // .NET whole-clip mel (WhisperMelSpectrogram.ExtractLongForm), the timestamped decodes and the public Transcribe text.
+// The mel path runs the full-context decoder loop (the reference path); the KV-cache loop (the library default) decodes
+// the reference mel again (kv_ids with each step's logits, kv_timestamped) and serves the public audio paths.
 // Writes dotnet.json plus a float32 sidecar in the layout run_whisper.py uses; the evaluator compares them.
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
@@ -72,8 +74,9 @@ int ToolBody()
     var layout = new List<Dictionary<string, object>>();
     string tensorPath = Path.Combine(output, "dotnet-tensors.f32");
     float[]? cancellationClip = null;
-    // One transcriber per language: each owns the encoder and decoder sessions (about 1.6 GB).
+    // Two transcribers per language, full-context and KV-cache: each owns its encoder and decoder sessions (about 2 GB).
     var transcribers = new Dictionary<string, WhisperTranscriber>(StringComparer.Ordinal);
+    var cachedTranscribers = new Dictionary<string, WhisperTranscriber>(StringComparer.Ordinal);
     try
     {
         using var tensors = File.Create(tensorPath);
@@ -89,10 +92,27 @@ int ToolBody()
             if (!transcribers.TryGetValue(language, out var transcriber))
             {
                 // Default MaxLength: the library stops at max_target_positions tokens, the prompt included, as transformers does.
-                var whisperOptions = new WhisperOptions { Language = language, EncoderSession = session, DecoderSession = session };
+                var whisperOptions = new WhisperOptions
+                {
+                    Language = language,
+                    EncoderSession = session,
+                    DecoderSession = session,
+                    DecoderWithPastSession = session,
+                    DecoderMode = WhisperDecoderMode.FullContext,
+                };
                 transcriber = WhisperTranscriber.Create(files.EncoderPath, files.DecoderPath, files.TokenizerPath, whisperOptions);
                 transcribers.Add(language, transcriber);
+                var cached = WhisperTranscriber.Create(
+                    files.EncoderPath, files.DecoderPath, files.DecoderWithPastPath!, files.TokenizerPath, whisperOptions with { DecoderMode = null });
+                if (cached.Model.DecoderMode != WhisperDecoderMode.KvCache)
+                {
+                    throw new InvalidOperationException("The default decoder loop with the KV-cache graph is not the KV cache.");
+                }
+
+                cachedTranscribers.Add(language, cached);
             }
+
+            var cachedTranscriber = cachedTranscribers[language];
 
             if (source.GetProperty("long_form").GetBoolean())
             {
@@ -105,8 +125,9 @@ int ToolBody()
                     ["audio_sha256"] = clip.Sha256,
                     ["long_form"] = true,
                     ["timestamped"] = Timestamped(transcriber.TranscribeMelWithTimestamps(referenceMel[id])),
-                    ["audio_timestamped"] = Timestamped(transcriber.TranscribeWithTimestamps(clip.Waveform)),
-                    ["audio_transcript"] = transcriber.Transcribe(clip.Waveform),
+                    ["kv_timestamped"] = Timestamped(cachedTranscriber.TranscribeMelWithTimestamps(referenceMel[id])),
+                    ["audio_timestamped"] = Timestamped(cachedTranscriber.TranscribeWithTimestamps(clip.Waveform)),
+                    ["audio_transcript"] = cachedTranscriber.Transcribe(clip.Waveform),
                 });
                 continue;
             }
@@ -120,6 +141,10 @@ int ToolBody()
             Write(tensors, layout, id, "mel", mel, [WhisperModel.NumMelBins, WhisperModel.NumFrames]);
             Write(tensors, layout, id, "hidden", hidden, [WhisperModel.EncoderSequenceLength, WhisperModel.HiddenSize]);
             Write(tensors, layout, id, "logits", logits, [forced.Length - 1, WhisperModel.VocabSize]);
+            var steps = new List<float[]>();
+            int[] cachedIds = cachedTranscriber.Model.GenerateRecordingLogits(
+                hidden, WhisperModel.Prompt(language), WhisperDecoderMode.KvCache, timestamps: false, steps, transcriber.Options.MaxLength);
+            Write(tensors, layout, id, "kv_logits", steps.SelectMany(step => step).ToArray(), [steps.Count, WhisperModel.VocabSize]);
             rows.Add(new Dictionary<string, object>
             {
                 ["id"] = id,
@@ -129,16 +154,18 @@ int ToolBody()
                 ["forced_ids"] = forced,
                 ["transcript"] = tokenizer.Decode(ids),
                 ["long_form"] = false,
-                ["audio_transcript"] = transcriber.Transcribe(clip.Waveform),
+                ["audio_transcript"] = cachedTranscriber.Transcribe(clip.Waveform),
                 ["timestamped"] = Timestamped(transcriber.TranscribeMelWithTimestamps(referenceMel[id])),
-                ["audio_timestamped"] = Timestamped(transcriber.TranscribeWithTimestamps(clip.Waveform)),
+                ["audio_timestamped"] = Timestamped(cachedTranscriber.TranscribeWithTimestamps(clip.Waveform)),
+                ["kv_ids"] = cachedIds,
+                ["kv_timestamped"] = Timestamped(cachedTranscriber.TranscribeMelWithTimestamps(referenceMel[id])),
             });
             cancellationClip ??= clip.Waveform;
         }
     }
     finally
     {
-        foreach (var transcriber in transcribers.Values)
+        foreach (var transcriber in transcribers.Values.Concat(cachedTranscribers.Values))
         {
             transcriber.Dispose();
         }
@@ -170,7 +197,7 @@ int ToolBody()
         ["stage"] = "dotnet",
         ["reference_status"] = "proposed",
         ["reference_sha256"] = Sha256(options["--reference"]),
-        ["assets"] = new[] { WhisperModelAssets.EncoderFile, WhisperModelAssets.DecoderFile, WhisperModelAssets.TokenizerFile }
+        ["assets"] = new[] { WhisperModelAssets.EncoderFile, WhisperModelAssets.DecoderFile, WhisperModelAssets.DecoderWithPastFile, WhisperModelAssets.TokenizerFile }
             .Select(path => new { path, sha256 = WhisperModelAssets.Lock.Files.Single(file => file.Path == path).Sha256 }).ToArray(),
         ["environment"] = new
         {
@@ -312,6 +339,8 @@ internal static class Contract
         var behavior = profile.GetProperty("behavior");
         Same("behavior.encoder_file", behavior.GetProperty("encoder_file").GetString(), WhisperModelAssets.EncoderFile);
         Same("behavior.decoder_file", behavior.GetProperty("decoder_file").GetString(), WhisperModelAssets.DecoderFile);
+        Same("behavior.decoder_with_past_file", behavior.GetProperty("decoder_with_past_file").GetString(), WhisperModelAssets.DecoderWithPastFile);
+        Same("behavior.decoder_layers", behavior.GetProperty("decoder_layers").GetInt32(), WhisperModel.DecoderLayers);
         Same("behavior.tokenizer_file", behavior.GetProperty("tokenizer_file").GetString(), WhisperModelAssets.TokenizerFile);
         Same("behavior.sample_rate", behavior.GetProperty("sample_rate").GetInt32(), WhisperMelSpectrogram.SampleRate);
         Same("behavior.n_fft", behavior.GetProperty("n_fft").GetInt32(), WhisperMelSpectrogram.Nfft);

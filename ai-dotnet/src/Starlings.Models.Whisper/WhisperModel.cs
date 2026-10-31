@@ -6,11 +6,18 @@ namespace Starlings.Models.Whisper;
 /// <summary>
 /// The <c>openai/whisper-large-v3-turbo</c> encoder and decoder over ONNX Runtime: encodes a log-mel spectrogram
 /// (<see cref="WhisperMelSpectrogram"/>) to <c>last_hidden_state</c>, then greedily decodes token ids with the model's
-/// suppression lists, and optionally the timestamp rules (<see cref="GenerateWithTimestamps"/>). Full-context decoder
-/// (no KV cache) for the first cut: every step re-runs the decoder over all ids, writing into one logits buffer per
-/// call. Decodes one 30 s window.
+/// suppression lists, and optionally the timestamp rules (<see cref="GenerateWithTimestamps"/>). Decodes one 30 s window.
 /// </summary>
 /// <remarks>
+/// <para><b>Decoder loop.</b> With the <c>decoder_with_past</c> graph loaded (<see cref="Create(WhisperModelFiles, WhisperOptions?)"/>
+/// or the three-graph path overload), the default is the KV cache (<see cref="WhisperDecoderMode.KvCache"/>): the
+/// full-context decoder runs once over the prompt and returns every layer's self- and cross-attention keys and values,
+/// then each step feeds one token and the cached keys and values to <c>decoder_with_past</c>. Without it, or with
+/// <see cref="WhisperDecoderMode.FullContext"/>, every step re-runs the full-context decoder over all ids (the
+/// reference path). The two loops differ in the last bits of the logits: the fp16 graphs sum the attention and
+/// projections over the whole prefix in one product on the full-context path and one row at a time on the cached
+/// path, so the float16 accumulations round differently (about 1e-3 to 1e-2 in the logits). The onboarding route bounds
+/// that difference and checks that ids, segments and transcripts are identical.</para>
 /// <para><b>Prompt.</b> The decode prompt is <c>[&lt;|startoftranscript|&gt;, language, &lt;|transcribe|&gt;,
 /// &lt;|notimestamps|&gt;]</c>. The language token is the id of a language code (see <see cref="LanguageToId"/>).
 /// With no language, the slot holds <see cref="StartOfLanguageModel"/>: that is a task token, not a language token, and
@@ -84,24 +91,40 @@ public sealed class WhisperModel : IDisposable
     private static readonly bool[] SuppressMask = BuildSuppressMask();
     private static readonly int[] BeginSuppressTokens = [220, 50257];
 
+    /// <summary>Decoder graph input name of the new token's position in the KV-cache graph.</summary>
+    public const string CachePositionName = "cache_position";
+    /// <summary>Decoder layers (4): one self- and one cross-attention key/value pair each.</summary>
+    public const int DecoderLayers = 4;
+
+    private static readonly string[] FullContextOutputNames = BuildFullContextOutputNames();
+    private static readonly string[] WithPastInputNames = BuildWithPastInputNames();
+    private static readonly string[] WithPastOutputNames = BuildWithPastOutputNames();
+
     private readonly OnnxModelSession _encoder;
     private readonly OnnxModelSession _decoder;
+    private readonly OnnxModelSession? _decoderWithPast;
     private readonly bool _ownsSessions;
     private int _disposed;
 
-    private WhisperModel(OnnxModelSession encoder, OnnxModelSession decoder, bool ownsSessions)
+    private WhisperModel(OnnxModelSession encoder, OnnxModelSession decoder, OnnxModelSession? decoderWithPast, WhisperDecoderMode mode, bool ownsSessions)
     {
         _encoder = encoder;
         _decoder = decoder;
+        _decoderWithPast = decoderWithPast;
+        DecoderMode = mode;
         _ownsSessions = ownsSessions;
     }
 
+    /// <summary>The decoder loop <see cref="Generate"/> and <see cref="GenerateWithTimestamps"/> use.</summary>
+    public WhisperDecoderMode DecoderMode { get; }
+
     /// <summary>
-    /// Loads the encoder and decoder graphs of verified files (<see cref="WhisperModelAssets.OpenLocal"/> or
-    /// <see cref="WhisperModelAssets.OpenDirectory"/>) and owns the resulting sessions. When the snapshot hashed the
-    /// graphs (<see cref="WhisperModelFiles.EncoderSha256"/>, <see cref="WhisperModelFiles.DecoderSha256"/>), each session
-    /// takes that digest as <see cref="OnnxSessionOptions.KnownModelSha256"/> (unless the options set one) instead of
-    /// reading the graph again.
+    /// Loads the graphs of verified files (<see cref="WhisperModelAssets.OpenLocal"/> or
+    /// <see cref="WhisperModelAssets.OpenDirectory"/>) and owns the resulting sessions: the encoder, the full-context
+    /// decoder, and the KV-cache decoder unless <see cref="WhisperOptions.DecoderMode"/> is
+    /// <see cref="WhisperDecoderMode.FullContext"/>. When the snapshot hashed the graphs
+    /// (<see cref="WhisperModelFiles.EncoderSha256"/> and the others), each session takes that digest as
+    /// <see cref="OnnxSessionOptions.KnownModelSha256"/> (unless the options set one) instead of reading the graph again.
     /// </summary>
     public static WhisperModel Create(WhisperModelFiles files, WhisperOptions? options = null)
     {
@@ -111,33 +134,64 @@ public sealed class WhisperModel : IDisposable
         {
             EncoderSession = options.EncoderSession with { KnownModelSha256 = options.EncoderSession.KnownModelSha256 ?? files.EncoderSha256 },
             DecoderSession = options.DecoderSession with { KnownModelSha256 = options.DecoderSession.KnownModelSha256 ?? files.DecoderSha256 },
+            DecoderWithPastSession = options.DecoderWithPastSession with
+            {
+                KnownModelSha256 = options.DecoderWithPastSession.KnownModelSha256 ?? files.DecoderWithPastSha256,
+            },
         };
-        return Create(files.EncoderPath, files.DecoderPath, options);
+        return Create(files.EncoderPath, files.DecoderPath, files.DecoderWithPastPath, options);
     }
 
-    /// <summary>Loads the encoder and decoder graphs and owns the resulting sessions.</summary>
+    /// <summary>
+    /// Loads the encoder and the full-context decoder and owns the resulting sessions. Without the KV-cache graph the
+    /// decoder loop is <see cref="WhisperDecoderMode.FullContext"/>.
+    /// </summary>
     /// <exception cref="WhisperUnsupportedLanguageException"><see cref="WhisperOptions.Language"/> is not a language code of the model (checked before any graph loads).</exception>
-    public static WhisperModel Create(string encoderPath, string decoderPath, WhisperOptions? options = null)
+    /// <exception cref="ArgumentException"><see cref="WhisperOptions.DecoderMode"/> is <see cref="WhisperDecoderMode.KvCache"/>, which needs the KV-cache graph.</exception>
+    public static WhisperModel Create(string encoderPath, string decoderPath, WhisperOptions? options = null) =>
+        Create(encoderPath, decoderPath, null, options);
+
+    /// <summary>
+    /// Loads the encoder, the full-context decoder and, unless <see cref="WhisperOptions.DecoderMode"/> is
+    /// <see cref="WhisperDecoderMode.FullContext"/>, the KV-cache decoder (<c>decoder_with_past_model_fp16.onnx</c>), and
+    /// owns the resulting sessions. With <paramref name="decoderWithPastPath"/> null the loop is full-context.
+    /// </summary>
+    /// <exception cref="WhisperUnsupportedLanguageException"><see cref="WhisperOptions.Language"/> is not a language code of the model (checked before any graph loads).</exception>
+    /// <exception cref="ArgumentException"><see cref="WhisperOptions.DecoderMode"/> is <see cref="WhisperDecoderMode.KvCache"/> and <paramref name="decoderWithPastPath"/> is null.</exception>
+    public static WhisperModel Create(string encoderPath, string decoderPath, string? decoderWithPastPath, WhisperOptions? options = null)
     {
         options ??= new WhisperOptions();
         options.Validate();
-        var encoder = OnnxModelSession.Create(encoderPath, options.EncoderSession);
+        if (options.DecoderMode == WhisperDecoderMode.KvCache && decoderWithPastPath is null)
+        {
+            throw new ArgumentException("DecoderMode.KvCache needs the decoder_with_past graph.", nameof(decoderWithPastPath));
+        }
+
+        bool cached = decoderWithPastPath is not null && options.DecoderMode != WhisperDecoderMode.FullContext;
+        var sessions = new List<OnnxModelSession>();
         try
         {
-            var decoder = OnnxModelSession.Create(decoderPath, options.DecoderSession);
-            try
+            sessions.Add(OnnxModelSession.Create(encoderPath, options.EncoderSession));
+            sessions.Add(OnnxModelSession.Create(decoderPath, options.DecoderSession));
+            if (cached)
             {
-                return new WhisperModel(encoder, decoder, ownsSessions: true);
+                sessions.Add(OnnxModelSession.Create(decoderWithPastPath!, options.DecoderWithPastSession));
             }
-            catch
-            {
-                decoder.Dispose();
-                throw;
-            }
+
+            return new WhisperModel(
+                sessions[0],
+                sessions[1],
+                cached ? sessions[2] : null,
+                cached ? WhisperDecoderMode.KvCache : WhisperDecoderMode.FullContext,
+                ownsSessions: true);
         }
         catch
         {
-            encoder.Dispose();
+            foreach (var session in sessions)
+            {
+                session.Dispose();
+            }
+
             throw;
         }
     }
@@ -216,7 +270,7 @@ public sealed class WhisperModel : IDisposable
     /// </summary>
     /// <exception cref="ArgumentException">The prompt fills every decoder position.</exception>
     public int[] Generate(float[] encoderHidden, int[] prompt, int maxLength = 448, CancellationToken cancellationToken = default) =>
-        GenerateCore(encoderHidden, prompt, maxLength, timestamps: false, cancellationToken);
+        GenerateCore(encoderHidden, prompt, maxLength, timestamps: false, DecoderMode, null, cancellationToken);
 
     /// <summary>
     /// As <see cref="Generate"/>, with the timestamp rules applied after suppression on every step (transformers
@@ -225,13 +279,32 @@ public sealed class WhisperModel : IDisposable
     /// </summary>
     /// <exception cref="ArgumentException">The prompt fills every decoder position.</exception>
     public int[] GenerateWithTimestamps(float[] encoderHidden, int[] prompt, int maxLength = 448, CancellationToken cancellationToken = default) =>
-        GenerateCore(encoderHidden, prompt, maxLength, timestamps: true, cancellationToken);
+        GenerateCore(encoderHidden, prompt, maxLength, timestamps: true, DecoderMode, null, cancellationToken);
+
+    /// <summary>
+    /// Diagnostics: <see cref="Generate"/> or <see cref="GenerateWithTimestamps"/> with an explicit decoder loop, adding
+    /// each step's raw logits row (before suppression and the timestamp rules) to <paramref name="stepLogits"/>.
+    /// </summary>
+    /// <exception cref="InvalidOperationException"><paramref name="mode"/> is <see cref="WhisperDecoderMode.KvCache"/> and the KV-cache graph is not loaded.</exception>
+    public int[] GenerateRecordingLogits(
+        float[] encoderHidden, int[] prompt, WhisperDecoderMode mode, bool timestamps, List<float[]> stepLogits,
+        int maxLength = 448, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(stepLogits);
+        if (mode == WhisperDecoderMode.KvCache && _decoderWithPast is null)
+        {
+            throw new InvalidOperationException("The KV-cache graph is not loaded.");
+        }
+
+        return GenerateCore(encoderHidden, prompt, maxLength, timestamps, mode, stepLogits, cancellationToken);
+    }
 
     /// <summary>Disposes the sessions if this model owns them. Idempotent.</summary>
     public void Dispose()
     {
         if (Interlocked.Exchange(ref _disposed, 1) == 0 && _ownsSessions)
         {
+            _decoderWithPast?.Dispose();
             _decoder.Dispose();
             _encoder.Dispose();
         }
@@ -372,7 +445,9 @@ public sealed class WhisperModel : IDisposable
         return best;
     }
 
-    private int[] GenerateCore(float[] encoderHidden, int[] prompt, int maxLength, bool timestamps, CancellationToken cancellationToken)
+    private int[] GenerateCore(
+        float[] encoderHidden, int[] prompt, int maxLength, bool timestamps, WhisperDecoderMode mode, List<float[]>? stepLogits,
+        CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(prompt);
         if (prompt.Length is 0 || prompt.Length >= MaxTargetPositions)
@@ -381,6 +456,10 @@ public sealed class WhisperModel : IDisposable
         }
 
         ObjectDisposedException.ThrowIf(Volatile.Read(ref _disposed) != 0, this);
+        if (mode == WhisperDecoderMode.KvCache)
+        {
+            return GenerateCached(encoderHidden, prompt, maxLength, timestamps, stepLogits, cancellationToken);
+        }
 
         // One ids buffer and one logits buffer per call, instead of fresh [seq, vocab] arrays every step. The logits
         // buffer grows by doubling up to the last step's length, so it never holds more than twice the rows needed.
@@ -405,6 +484,7 @@ public sealed class WhisperModel : IDisposable
 
             DecodeLogitsInto(ids.AsMemory(0, count), encoderHidden, logits.AsMemory(0, count * VocabSize), cancellationToken);
             var last = logits.AsSpan((count - 1) * VocabSize, VocabSize);
+            stepLogits?.Add(last.ToArray());
             ApplySuppression(last, step == 0);
             if (timestamps)
             {
@@ -426,6 +506,142 @@ public sealed class WhisperModel : IDisposable
         }
 
         return result;
+    }
+
+    /// <summary>
+    /// The KV-cache loop: the full-context decoder over the prompt (logits plus every layer's present keys and values),
+    /// then one <c>decoder_with_past</c> run per generated token with the cached keys and values. Same stopping rule
+    /// as the full-context loop.
+    /// </summary>
+    private int[] GenerateCached(
+        float[] encoderHidden, int[] prompt, int maxLength, bool timestamps, List<float[]>? stepLogits, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(encoderHidden);
+        var memoryInfo = OrtMemoryInfo.DefaultInstance;
+        var ids = new List<long>(MaxTargetPositions);
+        foreach (int token in prompt)
+        {
+            ids.Add(token);
+        }
+
+        var row = new float[VocabSize];
+        var token1 = new long[1];
+        var position = new long[1];
+        using var hiddenValue = OrtValue.CreateTensorValueFromMemory(memoryInfo, encoderHidden.AsMemory(0, encoderHidden.Length), [1, EncoderSequenceLength, HiddenSize]);
+        using var promptValue = OrtValue.CreateTensorValueFromMemory(memoryInfo, ids.ToArray().AsMemory(), [1, prompt.Length]);
+        using var tokenValue = OrtValue.CreateTensorValueFromMemory(memoryInfo, token1.AsMemory(), [1, 1]);
+        using var positionValue = OrtValue.CreateTensorValueFromMemory(memoryInfo, position.AsMemory(), [1]);
+
+        // Outputs: logits, then per layer decoder key, decoder value, encoder key, encoder value.
+        using var first = _decoder.Run([InputIdsName, EncoderHiddenStatesName], [promptValue, hiddenValue], FullContextOutputNames, cancellationToken);
+        var encoderCache = new OrtValue[2 * DecoderLayers];
+        var decoderCache = new OrtValue[2 * DecoderLayers];
+        for (int layer = 0; layer < DecoderLayers; layer++)
+        {
+            decoderCache[2 * layer] = first[1 + 4 * layer];
+            decoderCache[2 * layer + 1] = first[2 + 4 * layer];
+            encoderCache[2 * layer] = first[3 + 4 * layer];
+            encoderCache[2 * layer + 1] = first[4 + 4 * layer];
+        }
+
+        first[0].GetTensorDataAsSpan<float>().Slice((prompt.Length - 1) * VocabSize, VocabSize).CopyTo(row);
+        IDisposableReadOnlyCollection<OrtValue>? previous = null;
+        try
+        {
+            var inputs = new OrtValue[WithPastInputNames.Length];
+            for (int step = 0; ; step++)
+            {
+                stepLogits?.Add((float[])row.Clone());
+                ApplySuppression(row, step == 0);
+                if (timestamps)
+                {
+                    ApplyTimestampRules(row, System.Runtime.InteropServices.CollectionsMarshal.AsSpan(ids)[prompt.Length..]);
+                }
+
+                int next = ArgMax(row);
+                ids.Add(next);
+                if (next == EndOfText || step + 1 >= maxLength || ids.Count >= MaxTargetPositions)
+                {
+                    break;
+                }
+
+                cancellationToken.ThrowIfCancellationRequested();
+                token1[0] = next;
+                position[0] = ids.Count - 1;
+                // Inputs: input_ids, per layer decoder key, decoder value, encoder key, encoder value, cache_position.
+                inputs[0] = tokenValue;
+                for (int layer = 0; layer < DecoderLayers; layer++)
+                {
+                    inputs[1 + 4 * layer] = decoderCache[2 * layer];
+                    inputs[2 + 4 * layer] = decoderCache[2 * layer + 1];
+                    inputs[3 + 4 * layer] = encoderCache[2 * layer];
+                    inputs[4 + 4 * layer] = encoderCache[2 * layer + 1];
+                }
+
+                inputs[^1] = positionValue;
+                var current = _decoderWithPast!.Run(WithPastInputNames, inputs, WithPastOutputNames, cancellationToken);
+                previous?.Dispose();
+                previous = current;
+                for (int i = 0; i < decoderCache.Length; i++)
+                {
+                    decoderCache[i] = current[1 + i];
+                }
+
+                current[0].GetTensorDataAsSpan<float>()[..VocabSize].CopyTo(row);
+            }
+        }
+        finally
+        {
+            previous?.Dispose();
+        }
+
+        var result = new int[ids.Count];
+        for (int i = 0; i < ids.Count; i++)
+        {
+            result[i] = (int)ids[i];
+        }
+
+        return result;
+    }
+
+    private static string[] BuildFullContextOutputNames()
+    {
+        var names = new List<string> { LogitsName };
+        for (int layer = 0; layer < DecoderLayers; layer++)
+        {
+            names.AddRange([
+                $"present.{layer}.decoder.key", $"present.{layer}.decoder.value",
+                $"present.{layer}.encoder.key", $"present.{layer}.encoder.value",
+            ]);
+        }
+
+        return names.ToArray();
+    }
+
+    private static string[] BuildWithPastInputNames()
+    {
+        var names = new List<string> { InputIdsName };
+        for (int layer = 0; layer < DecoderLayers; layer++)
+        {
+            names.AddRange([
+                $"past_key_values.{layer}.decoder.key", $"past_key_values.{layer}.decoder.value",
+                $"past_key_values.{layer}.encoder.key", $"past_key_values.{layer}.encoder.value",
+            ]);
+        }
+
+        names.Add(CachePositionName);
+        return names.ToArray();
+    }
+
+    private static string[] BuildWithPastOutputNames()
+    {
+        var names = new List<string> { LogitsName };
+        for (int layer = 0; layer < DecoderLayers; layer++)
+        {
+            names.AddRange([$"present.{layer}.decoder.key", $"present.{layer}.decoder.value"]);
+        }
+
+        return names.ToArray();
     }
 
     private void DecodeLogitsInto(Memory<long> ids, float[] encoderHidden, Memory<float> logits, CancellationToken cancellationToken)
