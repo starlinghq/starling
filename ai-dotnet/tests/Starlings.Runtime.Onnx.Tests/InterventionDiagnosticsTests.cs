@@ -23,7 +23,7 @@ public class InterventionDiagnosticsTests
         Assert.False(d.Enabled);
         Assert.Equal(AddSha, d.OriginalModelSha256);
         Assert.Equal(AddSha, d.LoadedModelSha256);
-        Assert.True(d.LoadedModelSha256CheckedBySession);
+        Assert.Equal(OnnxModelDigestSource.Computed, d.LoadedModelSha256Source);
         Assert.Equal("<memory>", d.LoadedModelSource);
         Assert.Empty(d.ProfileIds);
         Assert.Empty(d.InterventionInputs);
@@ -39,7 +39,7 @@ public class InterventionDiagnosticsTests
         Assert.True(d.Enabled);
         Assert.Equal(AddSha, d.OriginalModelSha256);
         Assert.Equal(DerivedSha, d.LoadedModelSha256);
-        Assert.True(d.LoadedModelSha256CheckedBySession);
+        Assert.Equal(OnnxModelDigestSource.Computed, d.LoadedModelSha256Source);
         Assert.Equal(["synthetic-demo"], d.ProfileIds);
         OnnxTensorInfo strength = Assert.Single(d.InterventionInputs);
         Assert.Equal(Strength, strength.Name);
@@ -53,15 +53,20 @@ public class InterventionDiagnosticsTests
     }
 
     [Fact]
-    public void DerivedGraphWithoutSessionDigestIsMarkedUnchecked()
+    public void DigestSourceSaysWhetherTheSessionHashedTheFile()
     {
         using var session = OnnxModelSession.Create(TestModels.AddWithStrength, new OnnxSessionOptions { ComputeModelSha256 = false });
         var d = OnnxInterventionDiagnostics.ForDerivedGraph(session, AddSha, DerivedSha, ["p"], [Strength]);
         Assert.Equal(DerivedSha, d.LoadedModelSha256);
-        Assert.False(d.LoadedModelSha256CheckedBySession);
+        Assert.Null(d.LoadedModelSha256Source);
 
+        // A caller-supplied digest is reported as Known, never as computed: the session did not read the file for it.
         using var known = OnnxModelSession.Create(TestModels.AddWithStrength, new OnnxSessionOptions { KnownModelSha256 = DerivedSha });
-        Assert.True(OnnxInterventionDiagnostics.ForDerivedGraph(known, AddSha, DerivedSha, ["p"], [Strength]).LoadedModelSha256CheckedBySession);
+        Assert.Equal(
+            OnnxModelDigestSource.Known,
+            OnnxInterventionDiagnostics.ForDerivedGraph(known, AddSha, DerivedSha, ["p"], [Strength]).LoadedModelSha256Source);
+        using var knownOriginal = OnnxModelSession.Create(TestModels.Add, new OnnxSessionOptions { KnownModelSha256 = AddSha });
+        Assert.Equal(OnnxModelDigestSource.Known, OnnxInterventionDiagnostics.ForOriginalGraph(knownOriginal).LoadedModelSha256Source);
     }
 
     [Fact]

@@ -34,11 +34,15 @@ public sealed record OnnxInterventionDiagnostics
     public string? LoadedModelSha256 { get; private init; }
 
     /// <summary>
-    /// Whether the session itself established <see cref="LoadedModelSha256"/> (hashed at load, or supplied as
-    /// <see cref="OnnxSessionOptions.KnownModelSha256"/>) and it matched. <see langword="false"/> when the session has no
-    /// digest and the value is only the caller's record (for example a manifest verified before loading).
+    /// Where the session's digest, which equals <see cref="LoadedModelSha256"/>, came from
+    /// (<see cref="OnnxSessionDiagnostics.ModelSha256Source"/>): <see cref="OnnxModelDigestSource.Computed"/> when the
+    /// session hashed the loaded file, so the bytes ONNX Runtime read are proven; <see cref="OnnxModelDigestSource.Known"/>
+    /// when the caller supplied it as <see cref="OnnxSessionOptions.KnownModelSha256"/>, so the file was not re-read and
+    /// the value is only as good as the caller's own check (for example the manifest verification before loading);
+    /// <see langword="null"/> when the session has no digest and <see cref="LoadedModelSha256"/> is only the caller's
+    /// record.
     /// </summary>
-    public bool LoadedModelSha256CheckedBySession { get; private init; }
+    public OnnxModelDigestSource? LoadedModelSha256Source { get; private init; }
 
     /// <summary>Ids of the intervention profiles compiled into the loaded graph; empty when interventions are off.</summary>
     public IReadOnlyList<string> ProfileIds { get; private init; } = [];
@@ -63,7 +67,7 @@ public sealed record OnnxInterventionDiagnostics
             OriginalModelSha256 = d.ModelSha256,
             LoadedModelSource = d.ModelSource,
             LoadedModelSha256 = d.ModelSha256,
-            LoadedModelSha256CheckedBySession = d.ModelSha256 is not null,
+            LoadedModelSha256Source = d.ModelSha256Source,
             ModelInputs = d.Inputs,
         };
     }
@@ -126,7 +130,7 @@ public sealed record OnnxInterventionDiagnostics
             OriginalModelSha256 = originalModelSha256,
             LoadedModelSource = d.ModelSource,
             LoadedModelSha256 = derivedGraphSha256,
-            LoadedModelSha256CheckedBySession = d.ModelSha256 is not null,
+            LoadedModelSha256Source = d.ModelSha256Source,
             ProfileIds = ids,
             InterventionInputs = [.. d.Inputs.Where(i => declared.Contains(i.Name))],
             ModelInputs = [.. d.Inputs.Where(i => !declared.Contains(i.Name))],
