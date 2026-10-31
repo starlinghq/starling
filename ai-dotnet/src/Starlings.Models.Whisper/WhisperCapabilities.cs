@@ -43,7 +43,11 @@ public static class WhisperCapabilities
         ["concurrent_calls"] = CapabilityStatus.Untested,
         ["asset_acquisition"] = CapabilityStatus.Experimental,
         ["translation"] = CapabilityStatus.Unsupported,
-        ["timestamps"] = CapabilityStatus.Unsupported,
+        // Segment-level timestamps for one 30 s window (TranscribeWithTimestamps): window ids, segment boundaries and
+        // texts equal the transformers reference and Python ONNX Runtime on the route corpus; not yet qualified.
+        ["timestamps"] = CapabilityStatus.Experimental,
+        // Word-level timestamps need the alignment heads' cross-attention weights, which the pinned graphs do not export.
+        ["word_timestamps"] = CapabilityStatus.Unsupported,
         ["chunking"] = CapabilityStatus.Unsupported,
         ["streaming"] = CapabilityStatus.Unsupported,
         ["batch"] = CapabilityStatus.Unsupported,

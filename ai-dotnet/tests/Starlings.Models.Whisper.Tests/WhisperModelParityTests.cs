@@ -117,7 +117,29 @@ public sealed class WhisperModelParityTests
         }
     }
 
-    private static int[] StepwiseGenerate(WhisperModel model, float[] hidden, int[] prompt, int maxLength, CancellationToken cancellationToken)
+    [Fact]
+    public void GenerateWithTimestampsMatchesTheStepwiseLoopAndSplitsIntoSegments()
+    {
+        var (files, modelReason) = WhisperTestAssets.FindModel();
+        Assert.SkipWhen(files is null, modelReason);
+        float[] mel = Golden("golden-mel-numpy.f32", out string goldenReason);
+        Assert.SkipWhen(mel.Length == 0, goldenReason);
+
+        var cancellationToken = TestContext.Current.CancellationToken;
+        using var model = WhisperModel.Create(files!.EncoderPath, files.DecoderPath);
+        float[] hidden = model.Encode(mel, cancellationToken);
+        int[] prompt = WhisperModel.Prompt("en", noTimestamps: false);
+        int[] actual = model.GenerateWithTimestamps(hidden, prompt, cancellationToken: cancellationToken);
+
+        Assert.Equal(StepwiseGenerate(model, hidden, prompt, 448, cancellationToken, timestamps: true), actual);
+        Assert.Equal(WhisperModel.TimestampBegin, actual[prompt.Length]);
+        Assert.Equal(WhisperModel.EndOfText, actual[^1]);
+        var segments = WhisperSegmenter.Split(actual[prompt.Length..^1], seek: 0, seekFrames: WhisperModel.NumFrames, out _);
+        Assert.NotEmpty(segments);
+        Assert.All(segments, segment => Assert.True(segment.Start <= segment.End));
+    }
+
+    private static int[] StepwiseGenerate(WhisperModel model, float[] hidden, int[] prompt, int maxLength, CancellationToken cancellationToken, bool timestamps = false)
     {
         var ids = new List<int>(prompt);
         for (int step = 0; step < maxLength && ids.Count < WhisperModel.MaxTargetPositions; step++)
@@ -125,6 +147,11 @@ public sealed class WhisperModelParityTests
             float[] logits = model.DecodeLogits(ids.Select(id => (long)id).ToArray(), hidden, cancellationToken);
             var last = logits.AsSpan((ids.Count - 1) * WhisperModel.VocabSize, WhisperModel.VocabSize);
             WhisperModel.ApplySuppression(last, step == 0);
+            if (timestamps)
+            {
+                WhisperModel.ApplyTimestampRules(last, ids.Skip(prompt.Length).Select(id => (long)id).ToArray());
+            }
+
             ids.Add(WhisperModel.ArgMax(last));
             if (ids[^1] == WhisperModel.EndOfText)
             {

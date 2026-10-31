@@ -172,7 +172,8 @@
     "video_variable_frame_rate",
     "vision",
     "wasm_aot",
-    "wasm_interpreter"
+    "wasm_interpreter",
+    "word_timestamps"
   ],
   "platforms": [
     "linux-x64 cpu",
@@ -389,7 +390,8 @@
         "video_variable_frame_rate": "unrecorded",
         "vision": "unrecorded",
         "wasm_aot": "unrecorded",
-        "wasm_interpreter": "unrecorded"
+        "wasm_interpreter": "unrecorded",
+        "word_timestamps": "unrecorded"
       },
       "compatibility": {
         "linux-x64 cpu": {
@@ -647,7 +649,8 @@
         "video_variable_frame_rate": "unrecorded",
         "vision": "unrecorded",
         "wasm_aot": "unrecorded",
-        "wasm_interpreter": "unrecorded"
+        "wasm_interpreter": "unrecorded",
+        "word_timestamps": "unrecorded"
       },
       "compatibility": {
         "linux-x64 cpu": {
@@ -905,7 +908,8 @@
         "video_variable_frame_rate": "unrecorded",
         "vision": "unrecorded",
         "wasm_aot": "unrecorded",
-        "wasm_interpreter": "unrecorded"
+        "wasm_interpreter": "unrecorded",
+        "word_timestamps": "unrecorded"
       },
       "compatibility": {
         "linux-x64 cpu": {
@@ -1164,7 +1168,8 @@
         "video_variable_frame_rate": "unrecorded",
         "vision": "unrecorded",
         "wasm_aot": "unrecorded",
-        "wasm_interpreter": "unrecorded"
+        "wasm_interpreter": "unrecorded",
+        "word_timestamps": "unrecorded"
       },
       "compatibility": {
         "linux-x64 cpu": {
@@ -1422,7 +1427,8 @@
         "video_variable_frame_rate": "unrecorded",
         "vision": "unrecorded",
         "wasm_aot": "unrecorded",
-        "wasm_interpreter": "unrecorded"
+        "wasm_interpreter": "unrecorded",
+        "word_timestamps": "unrecorded"
       },
       "compatibility": {
         "linux-x64 cpu": {
@@ -1710,7 +1716,8 @@
         "video_variable_frame_rate": "unrecorded",
         "vision": "unrecorded",
         "wasm_aot": "unrecorded",
-        "wasm_interpreter": "unrecorded"
+        "wasm_interpreter": "unrecorded",
+        "word_timestamps": "unrecorded"
       },
       "compatibility": {
         "linux-x64 cpu": {
@@ -1992,7 +1999,8 @@
         "video_variable_frame_rate": "unrecorded",
         "vision": "unrecorded",
         "wasm_aot": "unrecorded",
-        "wasm_interpreter": "unrecorded"
+        "wasm_interpreter": "unrecorded",
+        "word_timestamps": "unrecorded"
       },
       "compatibility": {
         "linux-x64 cpu": {
@@ -2270,7 +2278,8 @@
         "video_variable_frame_rate": "unrecorded",
         "vision": "unrecorded",
         "wasm_aot": "unrecorded",
-        "wasm_interpreter": "unrecorded"
+        "wasm_interpreter": "unrecorded",
+        "word_timestamps": "unrecorded"
       },
       "compatibility": {
         "linux-x64 cpu": {
@@ -2552,7 +2561,8 @@
         "video_variable_frame_rate": "unrecorded",
         "vision": "unrecorded",
         "wasm_aot": "unrecorded",
-        "wasm_interpreter": "unrecorded"
+        "wasm_interpreter": "unrecorded",
+        "word_timestamps": "unrecorded"
       },
       "compatibility": {
         "linux-x64 cpu": {
@@ -2833,7 +2843,8 @@
         "video_variable_frame_rate": "experimental",
         "vision": "unrecorded",
         "wasm_aot": "unrecorded",
-        "wasm_interpreter": "unrecorded"
+        "wasm_interpreter": "unrecorded",
+        "word_timestamps": "unrecorded"
       },
       "compatibility": {
         "linux-x64 cpu": {
@@ -3117,7 +3128,8 @@
         "video_variable_frame_rate": "experimental",
         "vision": "unrecorded",
         "wasm_aot": "unrecorded",
-        "wasm_interpreter": "unrecorded"
+        "wasm_interpreter": "unrecorded",
+        "word_timestamps": "unrecorded"
       },
       "compatibility": {
         "linux-x64 cpu": {
@@ -3395,7 +3407,8 @@
         "video_variable_frame_rate": "unrecorded",
         "vision": "unrecorded",
         "wasm_aot": "unrecorded",
-        "wasm_interpreter": "unrecorded"
+        "wasm_interpreter": "unrecorded",
+        "word_timestamps": "unrecorded"
       },
       "compatibility": {
         "linux-x64 cpu": {
@@ -3679,7 +3692,8 @@
         "video_variable_frame_rate": "unrecorded",
         "vision": "unrecorded",
         "wasm_aot": "unrecorded",
-        "wasm_interpreter": "unrecorded"
+        "wasm_interpreter": "unrecorded",
+        "word_timestamps": "unrecorded"
       },
       "compatibility": {
         "linux-x64 cpu": {
@@ -3931,7 +3945,8 @@
         "video_variable_frame_rate": "unrecorded",
         "vision": "unrecorded",
         "wasm_aot": "unrecorded",
-        "wasm_interpreter": "unrecorded"
+        "wasm_interpreter": "unrecorded",
+        "word_timestamps": "unrecorded"
       },
       "compatibility": {
         "linux-x64 cpu": {
@@ -4198,7 +4213,8 @@
         "video_variable_frame_rate": "unrecorded",
         "vision": "unrecorded",
         "wasm_aot": "unrecorded",
-        "wasm_interpreter": "unrecorded"
+        "wasm_interpreter": "unrecorded",
+        "word_timestamps": "unrecorded"
       },
       "compatibility": {
         "linux-x64 cpu": {
@@ -4461,7 +4477,8 @@
         "video_variable_frame_rate": "unrecorded",
         "vision": "unrecorded",
         "wasm_aot": "unrecorded",
-        "wasm_interpreter": "unrecorded"
+        "wasm_interpreter": "unrecorded",
+        "word_timestamps": "unrecorded"
       },
       "compatibility": {
         "linux-x64 cpu": {
@@ -4728,7 +4745,8 @@
         "video_variable_frame_rate": "unrecorded",
         "vision": "unrecorded",
         "wasm_aot": "unrecorded",
-        "wasm_interpreter": "unrecorded"
+        "wasm_interpreter": "unrecorded",
+        "word_timestamps": "unrecorded"
       },
       "compatibility": {
         "linux-x64 cpu": {
@@ -4992,7 +5010,8 @@
         "video_variable_frame_rate": "unrecorded",
         "vision": "unsupported",
         "wasm_aot": "unrecorded",
-        "wasm_interpreter": "unrecorded"
+        "wasm_interpreter": "unrecorded",
+        "word_timestamps": "unrecorded"
       },
       "compatibility": {
         "linux-x64 cpu": {
@@ -5256,7 +5275,8 @@
         "video_variable_frame_rate": "unrecorded",
         "vision": "unrecorded",
         "wasm_aot": "unrecorded",
-        "wasm_interpreter": "unrecorded"
+        "wasm_interpreter": "unrecorded",
+        "word_timestamps": "unrecorded"
       },
       "compatibility": {
         "linux-x64 cpu": {
@@ -5543,7 +5563,8 @@
         "video_variable_frame_rate": "unrecorded",
         "vision": "unrecorded",
         "wasm_aot": "unrecorded",
-        "wasm_interpreter": "unrecorded"
+        "wasm_interpreter": "unrecorded",
+        "word_timestamps": "unrecorded"
       },
       "compatibility": {
         "linux-x64 cpu": {
@@ -5824,7 +5845,8 @@
         "video_variable_frame_rate": "unrecorded",
         "vision": "unrecorded",
         "wasm_aot": "unrecorded",
-        "wasm_interpreter": "unrecorded"
+        "wasm_interpreter": "unrecorded",
+        "word_timestamps": "unrecorded"
       },
       "compatibility": {
         "linux-x64 cpu": {
@@ -6080,7 +6102,8 @@
         "video_variable_frame_rate": "unrecorded",
         "vision": "unrecorded",
         "wasm_aot": "experimental",
-        "wasm_interpreter": "experimental"
+        "wasm_interpreter": "experimental",
+        "word_timestamps": "unrecorded"
       },
       "compatibility": {
         "linux-x64 cpu": {
@@ -6347,7 +6370,8 @@
         "video_variable_frame_rate": "unrecorded",
         "vision": "unrecorded",
         "wasm_aot": "experimental",
-        "wasm_interpreter": "untested"
+        "wasm_interpreter": "untested",
+        "word_timestamps": "unrecorded"
       },
       "compatibility": {
         "linux-x64 cpu": {
@@ -6616,7 +6640,8 @@
         "video_variable_frame_rate": "unrecorded",
         "vision": "unrecorded",
         "wasm_aot": "experimental",
-        "wasm_interpreter": "experimental"
+        "wasm_interpreter": "experimental",
+        "word_timestamps": "unrecorded"
       },
       "compatibility": {
         "linux-x64 cpu": {
@@ -6880,7 +6905,8 @@
         "video_variable_frame_rate": "unrecorded",
         "vision": "unrecorded",
         "wasm_aot": "experimental",
-        "wasm_interpreter": "untested"
+        "wasm_interpreter": "untested",
+        "word_timestamps": "unrecorded"
       },
       "compatibility": {
         "linux-x64 cpu": {
@@ -7141,7 +7167,8 @@
         "video_variable_frame_rate": "unrecorded",
         "vision": "unrecorded",
         "wasm_aot": "unrecorded",
-        "wasm_interpreter": "unrecorded"
+        "wasm_interpreter": "unrecorded",
+        "word_timestamps": "unrecorded"
       },
       "compatibility": {
         "linux-x64 cpu": {
@@ -7404,7 +7431,8 @@
         "video_variable_frame_rate": "unrecorded",
         "vision": "unsupported",
         "wasm_aot": "unrecorded",
-        "wasm_interpreter": "unrecorded"
+        "wasm_interpreter": "unrecorded",
+        "word_timestamps": "unrecorded"
       },
       "compatibility": {
         "linux-x64 cpu": {
@@ -7670,7 +7698,8 @@
         "video_variable_frame_rate": "unrecorded",
         "vision": "unsupported",
         "wasm_aot": "unrecorded",
-        "wasm_interpreter": "unrecorded"
+        "wasm_interpreter": "unrecorded",
+        "word_timestamps": "unrecorded"
       },
       "compatibility": {
         "linux-x64 cpu": {
@@ -7966,7 +7995,8 @@
         "video_variable_frame_rate": "unrecorded",
         "vision": "unsupported",
         "wasm_aot": "unrecorded",
-        "wasm_interpreter": "unrecorded"
+        "wasm_interpreter": "unrecorded",
+        "word_timestamps": "unrecorded"
       },
       "compatibility": {
         "linux-x64 cpu": {
@@ -8246,7 +8276,8 @@
         "video_variable_frame_rate": "unrecorded",
         "vision": "unsupported",
         "wasm_aot": "unrecorded",
-        "wasm_interpreter": "unrecorded"
+        "wasm_interpreter": "unrecorded",
+        "word_timestamps": "unrecorded"
       },
       "compatibility": {
         "linux-x64 cpu": {
@@ -8529,7 +8560,8 @@
         "video_variable_frame_rate": "unrecorded",
         "vision": "unsupported",
         "wasm_aot": "unrecorded",
-        "wasm_interpreter": "unrecorded"
+        "wasm_interpreter": "unrecorded",
+        "word_timestamps": "unrecorded"
       },
       "compatibility": {
         "linux-x64 cpu": {
@@ -8598,7 +8630,8 @@
       "last_checked": "2026-10-23",
       "known_issues": [
         "No reference fixtures are adopted into protected/ and no gate has run; every capability is at most experimental.",
-        "The evidence covers English only (four LibriSpeech clips, 1.6 s to 12.5 s); other languages are untested.",
+        "The evidence covers English only (six LibriSpeech clips, 1.6 s to 30 s, asr-corpus-v2); other languages are untested.",
+        "The fp16 encoder's hidden state drifts from the fp32 reference by more than the adopted hidden_max_abs (0.05) on audio positions of 20 to 30 s clips: up to 0.498 in the #229 diagnostic (0.110 on the 27.9 s composite of asr-corpus-v2), against 0.013 to 0.025 on 14 to 18 s clips. Teacher-forced logits stay within logits_max_abs, and ids, transcripts and segment timestamps equal the reference. #229 re-adopts the bound at 0.6; until it lands, the route's run fails that check.",
         "Decoding re-runs the full decoder over the prefix at every step (no KV cache), so long transcripts are slow.",
         "The export repository has no license tag; see rights.notes."
       ],
@@ -8749,7 +8782,7 @@
         "text": "unrecorded",
         "text_only_inputs": "unrecorded",
         "tf32": "unrecorded",
-        "timestamps": "unsupported",
+        "timestamps": "experimental",
         "tokenizer_owned": "unrecorded",
         "tool_calling": "unrecorded",
         "transcription": "experimental",
@@ -8780,7 +8813,8 @@
         "video_variable_frame_rate": "unrecorded",
         "vision": "unrecorded",
         "wasm_aot": "unrecorded",
-        "wasm_interpreter": "unrecorded"
+        "wasm_interpreter": "unrecorded",
+        "word_timestamps": "unsupported"
       },
       "compatibility": {
         "linux-x64 cpu": {
