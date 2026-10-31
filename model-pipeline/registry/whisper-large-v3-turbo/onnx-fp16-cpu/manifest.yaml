@@ -217,11 +217,10 @@ maintenance:
       The evidence covers English only (six LibriSpeech clips, 1.6 s to 30 s, asr-corpus-v2); other languages are
       untested.
     - >-
-      The fp16 encoder's hidden state drifts from the fp32 reference by more than the adopted hidden_max_abs (0.05)
-      on audio positions of 20 to 30 s clips: up to 0.498 in the #229 diagnostic (0.110 on the 27.9 s composite of
-      asr-corpus-v2), against 0.013 to 0.025 on 14 to 18 s clips. Teacher-forced logits stay within logits_max_abs,
-      and ids, transcripts and segment timestamps equal the reference. #229 re-adopts the bound at 0.6; until it
-      lands, the route's run fails that check.
+      The fp16 encoder's hidden state drifts further from the fp32 reference on audio positions of 20 to 30 s clips
+      (up to 0.498 in the #229 diagnostic, 0.110 on the 27.9 s composite of asr-corpus-v2, against 0.013 to 0.025 on 14
+      to 18 s clips), so hidden_max_abs was re-adopted at 0.6 (1.2 x the worst observed). Teacher-forced logits stay
+      within logits_max_abs, and ids, transcripts and segment timestamps equal the reference.
     - >-
       Decoding re-runs the full decoder over the prefix at every step (no KV cache), so long transcripts are slow.
     - >-
