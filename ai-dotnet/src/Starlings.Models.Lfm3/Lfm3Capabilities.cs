@@ -18,21 +18,22 @@ public enum CapabilityStatus
 
 /// <summary>Capability descriptor for this package version.</summary>
 /// <remarks>
-/// <see cref="All"/> is package-wide. LFM3 is new and not admitted to the registry; nothing is Supported, and everything
-/// not listed here is Unsupported.
+/// <see cref="All"/> is package-wide. LFM3 is admitted at Experimental (registry profile <see cref="CpuProfile"/>);
+/// nothing is Supported, and everything not listed here is Unsupported.
 /// </remarks>
 public static class Lfm3Capabilities
 {
-    /// <summary>The candidate profile of this package on CPU: the fp32 graph. Experimental, not registered.</summary>
+    /// <summary>The registered profile of this package on CPU: the fp32 graph. Experimental.</summary>
     public const string CpuProfile = "lfm3-1.7b/onnx-fp32-cpu";
 
-    /// <summary>The candidate profile on CUDA (RTX 3090): the fp16 graph. Untested, not registered.</summary>
+    /// <summary>The intended profile on CUDA (RTX 3090): the fp16 graph. Untested and not registered.</summary>
     public const string CudaProfile = "lfm3-1.7b/onnx-fp16-cuda";
 
     /// <summary>Status per capability.</summary>
     public static IReadOnlyDictionary<string, CapabilityStatus> All { get; } = new Dictionary<string, CapabilityStatus>(StringComparer.Ordinal)
     {
-        // Greedy fp32 CPU generation compared with the PyTorch reference and ONNX Runtime in Python (development evidence).
+        // Greedy fp32 CPU generation equals ONNX Runtime in Python on the same graph (development evidence); the PyTorch
+        // reference has not run.
         ["generation.greedy"] = CapabilityStatus.Experimental,
         ["generation.fp16"] = CapabilityStatus.Untested,
         ["generation.cuda"] = CapabilityStatus.Untested,
