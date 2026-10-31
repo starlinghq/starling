@@ -4,7 +4,8 @@
 //   dotnet-audio: the clip's WAV samples through WhisperMelSpectrogram (the .NET mel) and the public
 //                 WhisperTranscriber.Transcribe path.
 // Both paths also decode with segment timestamps (TranscribeMelWithTimestamps from the reference mel,
-// TranscribeWithTimestamps from the WAV samples): windows, segments and transcript.
+// TranscribeWithTimestamps from the WAV samples): windows, segments and transcript. A clip over 30 s is long-form: the
+// .NET whole-clip mel (WhisperMelSpectrogram.ExtractLongForm), the timestamped decodes and the public Transcribe text.
 // Writes dotnet.json plus a float32 sidecar in the layout run_whisper.py uses; the evaluator compares them.
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
@@ -80,7 +81,6 @@ int ToolBody()
         {
             string id = source.GetProperty("id").GetString()!;
             string language = source.GetProperty("language").GetString()!;
-            int[] forced = source.GetProperty("ids").EnumerateArray().Select(value => value.GetInt32()).ToArray();
             if (!corpus.TryGetValue(id, out var clip) || clip.Sha256 != source.GetProperty("audio_sha256").GetString())
             {
                 throw new InvalidDataException($"{id}: the reference clip is missing from the corpus or differs from it.");
@@ -94,6 +94,24 @@ int ToolBody()
                 transcribers.Add(language, transcriber);
             }
 
+            if (source.GetProperty("long_form").GetBoolean())
+            {
+                float[] longMel = WhisperMelSpectrogram.ExtractLongForm(clip.Waveform, out int frames);
+                Write(tensors, layout, id, "mel", longMel, [WhisperModel.NumMelBins, frames]);
+                rows.Add(new Dictionary<string, object>
+                {
+                    ["id"] = id,
+                    ["language"] = language,
+                    ["audio_sha256"] = clip.Sha256,
+                    ["long_form"] = true,
+                    ["timestamped"] = Timestamped(transcriber.TranscribeMelWithTimestamps(referenceMel[id])),
+                    ["audio_timestamped"] = Timestamped(transcriber.TranscribeWithTimestamps(clip.Waveform)),
+                    ["audio_transcript"] = transcriber.Transcribe(clip.Waveform),
+                });
+                continue;
+            }
+
+            int[] forced = source.GetProperty("ids").EnumerateArray().Select(value => value.GetInt32()).ToArray();
             var model = transcriber.Model;
             float[] hidden = model.Encode(referenceMel[id]);
             int[] ids = model.Generate(hidden, WhisperModel.Prompt(language), transcriber.Options.MaxLength);
@@ -110,6 +128,7 @@ int ToolBody()
                 ["ids"] = ids,
                 ["forced_ids"] = forced,
                 ["transcript"] = tokenizer.Decode(ids),
+                ["long_form"] = false,
                 ["audio_transcript"] = transcriber.Transcribe(clip.Waveform),
                 ["timestamped"] = Timestamped(transcriber.TranscribeMelWithTimestamps(referenceMel[id])),
                 ["audio_timestamped"] = Timestamped(transcriber.TranscribeWithTimestamps(clip.Waveform)),
@@ -215,7 +234,7 @@ int ToolBody()
         {
             long offset = entry.GetProperty("offset").GetInt64();
             int count = entry.GetProperty("shape").EnumerateArray().Aggregate(1, (product, size) => product * size.GetInt32());
-            if (count != WhisperModel.NumMelBins * WhisperModel.NumFrames || (offset + count) * sizeof(float) > blob.Length)
+            if (count <= 0 || count % WhisperModel.NumMelBins != 0 || (offset + count) * sizeof(float) > blob.Length)
             {
                 throw new InvalidDataException("Reference mel tensor has the wrong shape or lies outside the sidecar.");
             }
@@ -314,6 +333,17 @@ internal static class Contract
         Same("behavior.timestamps.time_precision", timestamps.GetProperty("time_precision").GetDouble(), WhisperModel.TimePrecision);
         Same("behavior.timestamps.feature_precision", timestamps.GetProperty("feature_precision").GetDouble(), 0.01);
         Same("behavior.timestamps.input_stride", timestamps.GetProperty("input_stride").GetInt32(), 2);
+        // TranscribeMelWithTimestamps: sequential windows over a whole-clip spectrogram, greedy, no fallback, no
+        // conditioning on earlier windows, no thresholds.
+        var longForm = behavior.GetProperty("long_form");
+        Same("behavior.long_form.strategy", longForm.GetProperty("strategy").GetString(), "sequential");
+        Same("behavior.long_form.features", longForm.GetProperty("features").GetString(), "full-clip");
+        Same("behavior.long_form.temperature", longForm.GetProperty("temperature").GetDouble(), 0.0);
+        Same("behavior.long_form.condition_on_prev_tokens", longForm.GetProperty("condition_on_prev_tokens").GetBoolean(), false);
+        foreach (string threshold in new[] { "compression_ratio_threshold", "logprob_threshold", "no_speech_threshold" })
+        {
+            Same($"behavior.long_form.{threshold}", longForm.GetProperty(threshold).ValueKind, JsonValueKind.Null);
+        }
         Same("behavior.decoding", behavior.GetProperty("decoding").GetString(), "greedy");
         var special = behavior.GetProperty("special_tokens");
         Same("special_tokens.end_of_text", special.GetProperty("end_of_text").GetInt32(), WhisperModel.EndOfText);

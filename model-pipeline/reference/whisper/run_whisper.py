@@ -6,6 +6,8 @@ reference: for each corpus clip, the transformers WhisperFeatureExtractor log-me
            those ids. The numpy-path mel is the input every later stage uses. Timestamped: generate(return_timestamps=
            True, return_segments=True) on the same mel, replayed window by window through this file's port of the
            timestamp rules and segment split over teacher-forced logits, which must reproduce its ids and segments.
+           A clip over 30 s is long-form: the spectrogram of the whole clip (both feature paths, as
+           WhisperFeatureExtractor(truncation=False, padding="longest") computes it) and the timestamped decode only.
 onnx:      the pinned fp16 graphs on ONNX Runtime from the reference mel: encoder hidden state, an independent greedy
            loop with the generation config's suppression lists, and logits teacher-forced on the reference ids.
            Timestamped: the same greedy loop with the timestamp rules, and the sequential seek loop that splits each
@@ -192,19 +194,16 @@ def main() -> int:
         ).eval()
 
         options = {"task": "transcribe", "return_timestamps": False, "do_sample": False, "num_beams": 1}
-        # Sequential timestamped decoding, pinned: greedy, no temperature fallback, no conditioning on earlier windows,
-        # and no compression-ratio, log-probability or no-speech threshold.
+        # Sequential timestamped decoding, pinned by the contract's long_form block: greedy, no temperature fallback,
+        # no conditioning on earlier windows, and no compression-ratio, log-probability or no-speech threshold.
+        pinned = {key: value for key, value in behavior["long_form"].items() if key not in ("strategy", "features")}
         timestamp_options = {
             "task": "transcribe",
             "return_timestamps": True,
             "return_segments": True,
             "do_sample": False,
             "num_beams": 1,
-            "temperature": 0.0,
-            "condition_on_prev_tokens": False,
-            "compression_ratio_threshold": None,
-            "logprob_threshold": None,
-            "no_speech_threshold": None,
+            **pinned,
         }
         num_frames = behavior["num_frames"]
 
@@ -267,8 +266,42 @@ def main() -> int:
             """Plain generate(input_features), the call users make: its own encoder pass stays an independent check."""
             return model.generate(torch.from_numpy(features[None]), language=language, **options)[0].tolist()
 
+        def long_form_case(row: dict, audio: np.ndarray) -> dict:
+            """Long-form: one spectrogram over the whole clip, decoded with timestamps window after window."""
+            numpy_mel = extractor._np_extract_fbank_features(audio[None], "cpu")[0].astype(np.float32)
+            torch_mel = extractor._torch_extract_fbank_features(audio[None], "cpu")[0].astype(np.float32)
+            # The call transformers documents for long-form input: no truncation, no padding beyond the clip.
+            default_mel = extractor(
+                audio, sampling_rate=behavior["sample_rate"], truncation=False, padding="longest", return_tensors="np"
+            ).input_features[0]
+            if not np.array_equal(default_mel, torch_mel):
+                raise ValueError(f"{row['id']}: the default feature path is not the torch path this runner records")
+            if numpy_mel.shape != (behavior["num_mel_bins"], len(audio) // behavior["hop_length"]):
+                raise ValueError(f"{row['id']}: unexpected long-form spectrogram shape {numpy_mel.shape}")
+            with torch.inference_mode():
+                stamped = timestamped(numpy_mel, row["language"])
+                default = model.generate(
+                    torch.from_numpy(default_mel[None]), language=row["language"], **timestamp_options
+                )
+            tensors.add(row["id"], "mel", numpy_mel)
+            tensors.add(row["id"], "mel_torch", torch_mel)
+            return {
+                "id": row["id"],
+                "language": row["language"],
+                "audio_sha256": row["sha256"],
+                "samples": row["samples"],
+                "text": row["text"],
+                "long_form": True,
+                "timestamped": stamped,
+                "default_path_ids": default["sequences"][0].tolist(),
+            }
+
         for row in corpus:
             audio = read_audio(row["path"], behavior["sample_rate"])
+            timestamp_prompt = prompt(candidate, row["language"], timestamps=True)
+            if len(audio) > behavior["max_samples"]:
+                cases.append(long_form_case(row, audio))
+                continue
             padded = np.zeros(behavior["max_samples"], dtype=np.float32)
             padded[: len(audio)] = audio
             default_mel = extractor(audio, sampling_rate=behavior["sample_rate"], return_tensors="np").input_features[0]
@@ -277,7 +310,6 @@ def main() -> int:
             if not np.array_equal(default_mel, torch_mel):
                 raise ValueError(f"{row['id']}: the default feature path is not the torch path this runner records")
             expected_prompt = prompt(candidate, row["language"])
-            timestamp_prompt = prompt(candidate, row["language"], timestamps=True)
             with torch.inference_mode():
                 stamped = timestamped(numpy_mel, row["language"])
                 hidden, generated = transcribe(numpy_mel, row["language"])
@@ -308,6 +340,7 @@ def main() -> int:
                     "ids": ids,
                     "transcript": tokenizer.decode(ids, skip_special_tokens=True),
                     "default_path_ids": expected_prompt + default_generated + [eos],
+                    "long_form": False,
                     "timestamped": stamped,
                 }
             )
@@ -379,6 +412,17 @@ def main() -> int:
             source = reference_cases[row["id"]]
             if source["audio_sha256"] != row["sha256"]:
                 raise ValueError(f"{row['id']}: reference audio differs from the corpus")
+            if source["long_form"]:
+                cases.append(
+                    {
+                        "id": row["id"],
+                        "language": row["language"],
+                        "audio_sha256": row["sha256"],
+                        "long_form": True,
+                        "timestamped": timestamped(reference_mel[row["id"]], row["language"]),
+                    }
+                )
+                continue
             hidden = encoder.run(["last_hidden_state"], {"input_features": reference_mel[row["id"]][None]})[0]
             ids = prompt(candidate, row["language"])
             first = True
@@ -398,6 +442,7 @@ def main() -> int:
                     "ids": ids,
                     "forced_ids": source["ids"],
                     "transcript": tokenizer.decode(ids, skip_special_tokens=True),
+                    "long_form": False,
                     "timestamped": stamped,
                 }
             )

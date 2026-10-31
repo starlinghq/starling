@@ -43,12 +43,21 @@ public static class WhisperCapabilities
         ["concurrent_calls"] = CapabilityStatus.Untested,
         ["asset_acquisition"] = CapabilityStatus.Experimental,
         ["translation"] = CapabilityStatus.Unsupported,
-        // Segment-level timestamps for one 30 s window (TranscribeWithTimestamps): window ids, segment boundaries and
-        // texts equal the transformers reference and Python ONNX Runtime on the route corpus; not yet qualified.
+        // Segment-level timestamps (TranscribeWithTimestamps): window ids, segment boundaries and texts equal the
+        // transformers reference and Python ONNX Runtime on the route corpus; not yet qualified.
         ["timestamps"] = CapabilityStatus.Experimental,
         // Word-level timestamps need the alignment heads' cross-attention weights, which the pinned graphs do not export.
         ["word_timestamps"] = CapabilityStatus.Unsupported,
-        ["chunking"] = CapabilityStatus.Unsupported,
+        // Long-form audio over 30 s: transformers' sequential long-form generation (whole-clip spectrogram, 30 s windows,
+        // seek to the last closing timestamp), greedy; ids, segment times and texts equal the reference on the route corpus.
+        ["chunking"] = CapabilityStatus.Experimental,
+        // transformers' long-form fallbacks and conditioning are not implemented: decoding never re-runs a window at a
+        // higher temperature, never skips a window as silence, and never prompts with earlier text.
+        ["temperature_fallback"] = CapabilityStatus.Unsupported,
+        ["compression_ratio_threshold"] = CapabilityStatus.Unsupported,
+        ["logprob_threshold"] = CapabilityStatus.Unsupported,
+        ["no_speech_detection"] = CapabilityStatus.Unsupported,
+        ["condition_on_previous_text"] = CapabilityStatus.Unsupported,
         ["streaming"] = CapabilityStatus.Unsupported,
         ["batch"] = CapabilityStatus.Unsupported,
         ["persistence"] = CapabilityStatus.Unsupported,

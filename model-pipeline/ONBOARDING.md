@@ -166,9 +166,18 @@ checkpoint they were exported from (`candidates/whisper-large-v3-turbo/`). Stage
   repositories' pins and checks their `config.json`, `generation_config.json` and `preprocessor_config.json` against
   the contract.
 - The reference environment is `reference/whisper/requirements.txt` (Python 3.11, torch 2.14.1 CPU, transformers
-  5.18.0, onnxruntime 1.30.0). The corpus is `reference/corpus/asr-corpus-v2.jsonl`: LibriSpeech WAV clips pinned by
-  SHA-256 (the four single utterances of `asr-corpus-v1.jsonl`, a 27.9 s composite of six consecutive utterances, and
-  a composite cut at 30 s inside its last utterance, which the ground-truth sanity bound leaves out).
+  5.18.0, onnxruntime 1.30.0). The corpus is `reference/corpus/asr-corpus-v3.jsonl`: LibriSpeech WAV clips pinned by
+  SHA-256 (the four single utterances of `asr-corpus-v1.jsonl`; from v2, a 27.9 s composite of six consecutive
+  utterances and a composite cut at 30 s inside its last utterance, which the ground-truth sanity bound leaves out; and
+  two long-form composites of 34.5 s and 59.1 s).
+- A clip over 30 s is long-form, as transformers `generate` treats input over 3000 mel frames: one spectrogram over the
+  whole clip (`WhisperFeatureExtractor(truncation=False, padding="longest")`, numpy and torch paths, against
+  `WhisperMelSpectrogram.ExtractLongForm`), decoded with timestamps window after window (the contract's `long_form`
+  block pins greedy decoding, temperature 0 with no fallback, no conditioning on earlier windows and no thresholds).
+  Its checks are the whole-clip mel, the default feature path's ids, and the timestamped checks below, plus .NET's
+  plain-text `Transcribe`. A long-form clip has no single-window decode, so no encoder hidden state or teacher-forced
+  logits are compared for it: the fidelity bounds are measured on the clips up to 30 s only. A corpus-level check
+  requires some long-form clip to take three windows or more.
 - Evidence is checked at three levels. Intermediate tensors: the .NET mel against the reference mel; the fp16 encoder
   hidden state (separately on the positions that cover audio and on the zero-padded tail) and the decoder logits,
   teacher-forced on the reference ids, against the fp32 PyTorch reference. Same backend: .NET against Python ONNX

@@ -10,7 +10,8 @@ namespace Starlings.Models.Whisper;
 /// </summary>
 /// <remarks>
 /// Fixed geometry for large-v3/turbo: sample rate 16,000, n_fft 400, hop 160, 128 mel bins,
-/// 30 s (480,000 samples) -> 3000 frames. The encoder expects [128, 3000].
+/// 30 s (480,000 samples) -> 3000 frames. The encoder expects [128, 3000]; a long-form spectrogram
+/// (<see cref="ExtractLongForm"/>) has samples / 160 frames and is decoded in 3000-frame windows.
 /// </remarks>
 public static class WhisperMelSpectrogram
 {
@@ -43,8 +44,8 @@ public static class WhisperMelSpectrogram
 
     /// <summary>
     /// Log-mel spectrogram of one float32 16 kHz clip of up to 30 s, shape [128, 3000]: the clip is zero-padded on the
-    /// right to <see cref="MaxSamples"/>, as <c>WhisperFeatureExtractor</c> pads it. Longer clips are refused (chunking is
-    /// unsupported) rather than silently truncated.
+    /// right to <see cref="MaxSamples"/>, as <c>WhisperFeatureExtractor</c> pads it. Longer clips are refused rather than
+    /// silently truncated; <see cref="ExtractLongForm"/> computes their spectrogram.
     /// </summary>
     /// <exception cref="ArgumentException">The clip is empty or longer than 30 s.</exception>
     public static float[] ExtractChunk(float[] waveform)
@@ -53,7 +54,7 @@ public static class WhisperMelSpectrogram
         if (waveform.Length is 0 or > MaxSamples)
         {
             throw new ArgumentException(
-                $"Audio must hold 1 to {MaxSamples} samples (30 s at 16 kHz), got {waveform.Length}; chunking is unsupported.",
+                $"Audio must hold 1 to {MaxSamples} samples (30 s at 16 kHz), got {waveform.Length}; use ExtractLongForm for longer clips.",
                 nameof(waveform));
         }
 
@@ -64,6 +65,33 @@ public static class WhisperMelSpectrogram
         }
 
         return Extract(padded);
+    }
+
+    /// <summary>
+    /// Log-mel spectrogram of one float32 16 kHz clip longer than 30 s, over the whole clip as transformers
+    /// <c>WhisperFeatureExtractor(audio, truncation=False, padding="longest")</c> computes it for long-form generation:
+    /// no padding, one STFT over every sample, the clamp to max - 8 taken over the whole clip. Shape [128, frames] with
+    /// <paramref name="frames"/> = samples / 160 (rounded down); long-form decoding slices it into 3000-frame windows.
+    /// </summary>
+    /// <exception cref="ArgumentException">The clip holds 30 s or less (use <see cref="ExtractChunk"/>).</exception>
+    public static float[] ExtractLongForm(float[] waveform, out int frames)
+    {
+        ArgumentNullException.ThrowIfNull(waveform);
+        if (waveform.Length <= MaxSamples)
+        {
+            throw new ArgumentException(
+                $"Long-form audio must hold more than {MaxSamples} samples (30 s at 16 kHz), got {waveform.Length}; use ExtractChunk.",
+                nameof(waveform));
+        }
+
+        var samples = new double[waveform.Length];
+        for (int i = 0; i < waveform.Length; i++)
+        {
+            samples[i] = waveform[i];
+        }
+
+        frames = waveform.Length / HopLength;
+        return Extract(samples, HannWindow, MelFilters, skipSilentFrames: true);
     }
 
     /// <summary>Log-mel spectrogram of one 16 kHz waveform (exactly 480,000 samples), shape [128, 3000].</summary>
@@ -195,7 +223,8 @@ public static class WhisperMelSpectrogram
             padded[n + pad + i] = waveform[n - 2 - i];
         }
 
-        int frameCount = 1 + (padded.Length - Nfft) / HopLength;   // 3001, then last dropped
+        int frameCount = 1 + (padded.Length - Nfft) / HopLength;   // samples / 160 + 1, then the last is dropped
+        int frames = frameCount - 1;
 
         // power spectrogram [frameCount, 201], then mel [128, frameCount].
         var mel = new double[NumMelBins * frameCount];
@@ -253,7 +282,7 @@ public static class WhisperMelSpectrogram
         double max = double.NegativeInfinity;
         for (int m = 0; m < NumMelBins; m++)
         {
-            for (int t = 0; t < NumFrames; t++)
+            for (int t = 0; t < frames; t++)
             {
                 double v = mel[m * frameCount + t];
                 if (v > max)
@@ -264,10 +293,10 @@ public static class WhisperMelSpectrogram
         }
 
         double floor = max - 8.0;
-        float[] result = new float[NumMelBins * NumFrames];
+        float[] result = new float[NumMelBins * frames];
         for (int m = 0; m < NumMelBins; m++)
         {
-            for (int t = 0; t < NumFrames; t++)
+            for (int t = 0; t < frames; t++)
             {
                 double v = mel[m * frameCount + t];
                 if (v < floor)
@@ -275,7 +304,7 @@ public static class WhisperMelSpectrogram
                     v = floor;
                 }
 
-                result[m * NumFrames + t] = (float)((v + 4.0) / 4.0);
+                result[m * frames + t] = (float)((v + 4.0) / 4.0);
             }
         }
 

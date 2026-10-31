@@ -20,7 +20,7 @@ from model_pipeline.onboarding_runner import PipelineError
 REPO = Path(__file__).resolve().parents[2]
 PROFILE = REPO / "model-pipeline/candidates/whisper-large-v3-turbo/profile.json"
 RECIPE = REPO / "model-pipeline/recipes/whisper-large-v3-turbo-cpu.yaml"
-CORPUS = REPO / "model-pipeline/reference/corpus/asr-corpus-v2.jsonl"
+CORPUS = REPO / "model-pipeline/reference/corpus/asr-corpus-v3.jsonl"
 GRAPHS = "onnx-community/whisper-large-v3-turbo-ONNX"
 
 
@@ -95,6 +95,10 @@ NEAR_MISSES = [
         "behavior.timestamps",
     ),
     ("translation", lambda c: c["behavior"].update(task="translate"), "behavior.task"),
+    ("fallback", lambda c: c["behavior"]["long_form"].update(temperature=[0.0, 0.2]), "behavior.long_form"),
+    ("conditioning", lambda c: c["behavior"]["long_form"].update(condition_on_prev_tokens=True), "behavior.long_form"),
+    ("no-speech", lambda c: c["behavior"]["long_form"].update(no_speech_threshold=0.6), "behavior.long_form"),
+    ("per-window mel", lambda c: c["behavior"]["long_form"].update(features="per-window"), "behavior.long_form"),
     ("sampling", lambda c: c["behavior"].update(decoding="sample"), "behavior.decoding"),
     ("suppression", lambda c: c["behavior"]["suppress_tokens"].pop(), "behavior.suppress_tokens"),
     ("extra behavior", lambda c: c["behavior"].update(beams=5), "behavior"),
@@ -285,19 +289,30 @@ def test_shipped_corpus_is_pinned_and_differently_sized():
     assert all(row["source"]["revision"] == "5be91486e11a2d616f4ec5db8d3fd248585ac07a" for row in rows)
 
 
-def test_corpus_v2_extends_v1_unchanged_with_a_composite_clip():
-    first = fixtures.read_jsonl(CORPUS.parent / "asr-corpus-v1.jsonl")
-    second = fixtures.read_jsonl(CORPUS)
-    assert second[: len(first)] == first
+def test_each_corpus_version_extends_the_previous_unchanged():
+    first, second, third = (fixtures.read_jsonl(CORPUS.parent / f"asr-corpus-v{n}.jsonl") for n in (1, 2, 3))
+    assert second[: len(first)] == first and third[: len(second)] == second
     composite = [row for row in second if "utterances" in row["source"]]
     assert composite and all(len(row["source"]["utterances"]) > 1 for row in composite)
     assert all(row["audio"].startswith("asr-v2/") and row["samples"] <= 480000 for row in composite)
+    long_clips = third[len(second) :]
+    assert len(long_clips) >= 2 and all(row["audio"].startswith("asr-v3/") for row in long_clips)
+    # Over 30 s, and one past 60 s of decoding windows (at least three windows when segments close before the edge).
+    assert all(row["samples"] > 480000 for row in long_clips) and max(row["samples"] for row in long_clips) > 900000
+
+
+def test_long_form_helpers():
+    behavior = whisper.BEHAVIOR
+    assert not whisper.long_form(480000, behavior) and whisper.long_form(480001, behavior)
+    assert whisper.mel_frames(26239, behavior) == 3000
+    assert whisper.mel_frames(551840, behavior) == 3449 and whisper.mel_frames(480159, behavior) == 3000
 
 
 def corpus_copy(tmp_path: Path, mutate=None) -> Path:
     rows = fixtures.read_jsonl(CORPUS)
     (tmp_path / "asr-v1").mkdir()
     (tmp_path / "asr-v2").mkdir()
+    (tmp_path / "asr-v3").mkdir()
     for row in rows:
         (tmp_path / row["audio"]).write_bytes((CORPUS.parent / row["audio"]).read_bytes())
     if mutate:
@@ -312,7 +327,11 @@ def corpus_copy(tmp_path: Path, mutate=None) -> Path:
         ("changed audio", lambda d, rows: (d / rows[0]["audio"]).write_bytes(b"RIFF"), "SHA-256"),
         ("escaping path", lambda d, rows: rows[0].update(audio="../asr-v1/x.wav"), "unsafe"),
         ("not wav", lambda d, rows: rows[0].update(audio="asr-v1/x.flac"), "non-WAV"),
-        ("over 30 s", lambda d, rows: rows[0].update(samples=480001), "30 s"),
+        (
+            "one short clip",
+            lambda d, rows: rows.__setitem__(slice(None), [rows[0], *(row for row in rows if row["samples"] > 480000)]),
+            "two clips of up to 30 s",
+        ),
         ("other rate", lambda d, rows: rows[0].update(sample_rate=8000), "16 kHz"),
         ("other language", lambda d, rows: rows[0].update(language="fr"), "language"),
         ("duplicate id", lambda d, rows: rows[1].update(id=rows[0]["id"]), "unique"),
@@ -341,7 +360,8 @@ def test_word_error_rate():
 
 TINY = {"num_mel_bins": 2, "num_frames": 3, "encoder_positions": 4, "hidden_size": 3}
 # clip-a covers two of the four encoder positions (the rest is padding); clip-b covers all four.
-SAMPLES = {"clip-a": 1, "clip-b": 640}
+SAMPLES = {"clip-a": 1, "clip-b": 640, "clip-long": 480960}
+LONG = {"clip-long": [440, 1029]}
 GENERATED = {"clip-a": [440, 1029, 13], "clip-b": [2221, 50257 - 1]}
 
 
@@ -383,6 +403,28 @@ def timestamped(candidate: dict, generated: list[int], text: str, redecoded: boo
     }
 
 
+def long_timestamped(candidate: dict, generated: list[int]) -> dict:
+    """Three windows: the first closes a segment at 20.00 s and ends inside another, the second closes one at 21.00 s
+    and ends inside a third, and the last covers the rest."""
+    start = whisper.prompt(candidate, "en", timestamps=True)
+    first = [50365, *generated, 51365, 51365, 440]
+    second = [50365, *generated, 50415, 50415, 13]
+    third = [50365, 13, 50370]
+    return {
+        "windows": [
+            {"seek": 0, "ids": start + first + [50257]},
+            {"seek": 2000, "ids": start + second + [50257]},
+            {"seek": 2100, "ids": start + third + [50257]},
+        ],
+        "segments": [
+            {"start": 0.0, "end": 20.0, "ids": first[:-1], "text": " Words of"},
+            {"start": 20.0, "end": 21.0, "ids": second[:-1], "text": " clip-long."},
+            {"start": 21.0, "end": 21.1, "ids": third, "text": ""},
+        ],
+        "transcript": " Words of clip-long.",
+    }
+
+
 def write_stage(
     directory: Path, stage: str, candidate: dict, digest: str, reference_sha: str | None, edit=None
 ) -> Path:
@@ -414,6 +456,7 @@ def write_stage(
             row.update(text=f"WORDS OF {identifier.upper()}", samples=SAMPLES[identifier], default_path_ids=ids)
         else:
             row["forced_ids"] = ids
+        row["long_form"] = False
         row["timestamped"] = timestamped(candidate, generated, row["transcript"], identifier == "clip-b")
         if stage == "dotnet":
             row["audio_transcript"] = row["transcript"]
@@ -423,6 +466,29 @@ def write_stage(
             shape = shapes.get(name) or [len(ids) - 1, behavior["vocabulary_size"]]
             layout.append({"id": identifier, "name": name, "offset": len(blob), "shape": shape})
             blob.extend(tensor_values(seed + len(name.removesuffix("_torch")), shape[0] * shape[1]))
+    for identifier, generated in LONG.items():
+        row = {
+            "id": identifier,
+            "language": "en",
+            "audio_sha256": hashlib.sha256(identifier.encode()).hexdigest(),
+            "long_form": True,
+            "timestamped": long_timestamped(candidate, generated),
+        }
+        if stage == "reference":
+            row.update(
+                text=f"WORDS OF {identifier.upper()}",
+                samples=SAMPLES[identifier],
+                default_path_ids=[token for segment in row["timestamped"]["segments"] for token in segment["ids"]],
+            )
+        if stage == "dotnet":
+            row.update(
+                audio_timestamped=long_timestamped(candidate, generated), audio_transcript=" Words of clip-long."
+            )
+        cases.append(row)
+        for name in whisper.LONG_FORM_TENSORS[stage]:
+            shape = [behavior["num_mel_bins"], SAMPLES[identifier] // behavior["hop_length"]]
+            layout.append({"id": identifier, "name": name, "offset": len(blob), "shape": shape})
+            blob.extend(tensor_values(7, shape[0] * shape[1]))
     document = {
         "format": whisper.FORMAT,
         "format_version": 1,
@@ -458,7 +524,7 @@ def synthetic_corpus() -> list[dict]:
             "language": "en",
             "text": f"WORDS OF {identifier.upper()}",
         }
-        for seed, identifier in enumerate(GENERATED)
+        for seed, identifier in enumerate([*GENERATED, *LONG])
     ]
 
 
@@ -485,7 +551,7 @@ def test_complete_evidence_passes_and_never_adopts_protected_gates(tmp_path, tin
     report = whisper.evaluate_development(**evidence(tmp_path, tiny))
     assert report["status"] == "passed", report["failed_checks"]
     assert report["protected_release_qualification"] == {"status": "unapproved", "G1": "not-run", "G2": "not-run"}
-    assert report["evaluation_status"] == "proposed" and report["case_count"] == 2
+    assert report["evaluation_status"] == "proposed" and report["case_count"] == 3
     # Synthetic evidence runs without the repository, so its (tiny-geometry) policy is checked against the caps only.
     assert (report["policy_status"], report["policy_source"]) == ("proposed", "unbound (route caps only)")
     per_clip = {check["id"].replace("/clip-a/", "/*/") for check in report["checks"] if "/clip-a/" in check["id"]}
@@ -512,11 +578,29 @@ def test_complete_evidence_passes_and_never_adopts_protected_gates(tmp_path, tin
         "dotnet-audio/*/segments_vs_python",
         "dotnet-audio/*/timestamp_transcript_vs_python",
     }
-    assert [check["id"] for check in report["checks"][-3:]] == [
+    assert [check["id"] for check in report["checks"][-4:]] == [
         "reference/corpus/wer_vs_ground_truth",
         "reference/corpus/timestamp_pair_coverage",
         "reference/corpus/redecode_coverage",
+        "reference/corpus/long_form_coverage",
     ]
+    long_clip = {
+        check["id"].replace("/clip-long/", "/*/") for check in report["checks"] if "/clip-long/" in check["id"]
+    }
+    assert long_clip == {
+        "reference/*/mel_torch_vs_numpy",
+        "reference/*/default_path_ids",
+        "dotnet-audio/*/mel_vs_reference",
+        "onnx/*/timestamp_ids_vs_reference",
+        "onnx/*/segment_times_vs_reference",
+        "onnx/*/timestamp_wer_vs_reference",
+        "dotnet-mel/*/timestamp_ids_vs_python",
+        "dotnet-mel/*/segments_vs_python",
+        "dotnet-mel/*/timestamp_transcript_vs_python",
+        "dotnet-audio/*/segments_vs_python",
+        "dotnet-audio/*/timestamp_transcript_vs_python",
+        "dotnet-audio/*/transcript_vs_python",
+    }
 
 
 def nudge(name: str, delta: float, clip: str = "clip-a", index: int = 0):
@@ -537,6 +621,11 @@ def _layout(document, blob):
         "hidden": behavior["encoder_positions"] * behavior["hidden_size"],
     }
     for row in document["cases"]:
+        if row["long_form"]:
+            names = whisper.LONG_FORM_TENSORS[document["stage"]]
+            layout += [{"id": row["id"], "name": name, "offset": position} for name in names]
+            position += len(names) * behavior["num_mel_bins"] * (SAMPLES[row["id"]] // behavior["hop_length"])
+            continue
         for name in whisper.TENSORS[document["stage"]]:
             size = shapes.get(name) or (len(row["ids"]) - 1) * behavior["vocabulary_size"]
             layout.append({"id": row["id"], "name": name, "offset": position})
@@ -665,6 +754,62 @@ def test_malformed_timestamp_evidence_is_refused(tmp_path, tiny, stage, edit, me
         whisper.evaluate_development(**evidence(tmp_path, tiny, {stage: edit}))
 
 
+def _long(stage_key: str, change):
+    def edit(document, blob):
+        change(next(row for row in document["cases"] if row["id"] == "clip-long")[stage_key])
+
+    return edit
+
+
+@pytest.mark.parametrize(
+    ("stage", "edit", "failed"),
+    [
+        ("dotnet", nudge("mel", 1e-5, "clip-long", 5000), "dotnet-audio/clip-long/mel_vs_reference"),
+        ("reference", nudge("mel_torch", 1e-2, "clip-long"), "reference/clip-long/mel_torch_vs_numpy"),
+        (
+            "onnx",
+            _long("timestamped", lambda decode: decode["windows"][1].update(seek=1998)),
+            "onnx/clip-long/timestamp_ids_vs_reference",
+        ),
+        (
+            "dotnet",
+            _long("audio_timestamped", lambda decode: decode["segments"][1].update(start=19.98)),
+            "dotnet-audio/clip-long/segments_vs_python",
+        ),
+        (
+            "reference",
+            lambda document, blob: document["cases"][2].update(default_path_ids=[50365, 440]),
+            "reference/clip-long/default_path_ids",
+        ),
+        (
+            "dotnet",
+            lambda document, blob: document["cases"][2].update(audio_transcript=" Words."),
+            "dotnet-audio/clip-long/transcript_vs_python",
+        ),
+    ],
+    ids=lambda value: value if isinstance(value, str) and "/" in value else "",
+)
+def test_long_form_differences_produce_named_failed_checks(tmp_path, tiny, stage, edit, failed):
+    report = whisper.evaluate_development(**evidence(tmp_path, tiny, {stage: edit}))
+    assert report["status"] == "failed"
+    assert failed in report["failed_checks"]
+
+
+@pytest.mark.parametrize(
+    ("stage", "edit", "message"),
+    [
+        ("dotnet", lambda document, blob: document["cases"][2].update(ids=[50258]), "holds exactly"),
+        ("onnx", lambda document, blob: document["cases"][2].update(long_form=False), "incomplete or malformed"),
+        ("reference", lambda document, blob: document["cases"][2].update(samples=480000), "long-form sample count"),
+        ("dotnet", lambda document, blob: document["cases"][2].pop("audio_transcript"), "incomplete or malformed"),
+    ],
+    ids=["single-window ids on a long clip", "flag disagrees", "short sample count", "no plain-text path"],
+)
+def test_malformed_long_form_evidence_is_refused(tmp_path, tiny, stage, edit, message):
+    with pytest.raises(PipelineError, match=message):
+        whisper.evaluate_development(**evidence(tmp_path, tiny, {stage: edit}))
+
+
 def test_transcript_drift_against_the_reference_fails_its_wer_bound(tmp_path, tiny):
     def drift(document, blob):
         document["cases"][0]["transcript"] = " Other words entirely."
@@ -686,7 +831,7 @@ def test_ground_truth_wer_bound_catches_agreeing_but_wrong_transcripts(tmp_path,
 def test_ground_truth_comes_from_the_pinned_corpus_not_the_reference(tmp_path, tiny):
     def rewrite(document, blob):
         for row in document["cases"]:
-            row["text"] = row["transcript"]
+            row["text"] = row["timestamped"]["transcript"] if row["long_form"] else row["transcript"]
 
     corpus = synthetic_corpus()
     for row in corpus:
@@ -743,7 +888,7 @@ def _set(path: tuple, value):
         ("reference", _set(("cases", 0, "ids", 5), 51866), "invalid prompt"),
         ("dotnet", _set(("cases", 0, "forced_ids"), [50258]), "teacher-forced ids"),
         ("onnx", _set(("cases", 1, "audio_sha256"), "0" * 64), "audio or teacher-forced"),
-        ("dotnet", lambda document, blob: document["cases"].pop(), "missing required case rows"),
+        ("dotnet", lambda document, blob: document["cases"].__delitem__(slice(1, None)), "missing required case rows"),
         ("dotnet", lambda document, blob: blob.append(0.0), "unreferenced values"),
         ("onnx", lambda document, blob: blob.__setitem__(0, float("nan")), "non-finite"),
     ],
@@ -805,6 +950,16 @@ def test_stage_graph_declares_audio_inputs_and_order(tmp_path, monkeypatch):
     assert "model-pipeline/reference/whisper/run_whisper.py" in by_name["reference"].inputs
 
 
+def _no_pairs(document):
+    """Break every timestamp pair: the second timestamp of each pair becomes a text token."""
+    for row in document["cases"]:
+        for window in row["timestamped"]["windows"]:
+            ids = window["ids"]
+            for index in range(1, len(ids)):
+                if ids[index - 1] >= 50365 and ids[index] >= 50365:
+                    ids[index] = 440
+
+
 @pytest.mark.parametrize(
     ("edit", "failed"),
     [
@@ -814,12 +969,7 @@ def test_stage_graph_declares_audio_inputs_and_order(tmp_path, monkeypatch):
             ),
             "reference/corpus/redecode_coverage",
         ),
-        (
-            lambda document, blob: [
-                row["timestamped"]["windows"][0]["ids"].__setitem__(-3, 440) for row in document["cases"][1:2]
-            ],
-            "reference/corpus/timestamp_pair_coverage",
-        ),
+        (lambda document, blob: _no_pairs(document), "reference/corpus/timestamp_pair_coverage"),
     ],
     ids=["no re-decoded window", "no timestamp pair"],
 )
@@ -834,3 +984,13 @@ def test_a_truncated_clip_is_left_out_of_the_ground_truth_bound(tmp_path, tiny):
     report = whisper.evaluate_development(**evidence(tmp_path, tiny, corpus=corpus))
     check = next(check for check in report["checks"] if check["id"] == "reference/corpus/wer_vs_ground_truth")
     assert check["status"] == "passed" and check["excluded"] == ["clip-a"]
+
+
+def test_the_corpus_must_hold_a_long_form_clip_of_three_windows(tmp_path, tiny):
+    def two_windows(document, blob):
+        decode = next(row for row in document["cases"] if row["long_form"])["timestamped"]
+        decode["windows"].pop()
+        decode["segments"].pop()
+
+    report = whisper.evaluate_development(**evidence(tmp_path, tiny, {"reference": two_windows}))
+    assert "reference/corpus/long_form_coverage" in report["failed_checks"]

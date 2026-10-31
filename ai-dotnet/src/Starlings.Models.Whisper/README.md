@@ -42,7 +42,7 @@ var files = await WhisperModelAssets.DownloadAsync();
 // Load offline at startup.
 using var transcriber = WhisperTranscriber.Create(files, new WhisperOptions { Language = "en" });
 
-// 16 kHz float32 PCM, up to 30 seconds.
+// 16 kHz float32 PCM. Over 30 seconds, the clip is transcribed sequentially in 30 s windows.
 string text = transcriber.Transcribe(waveform);
 
 // The same clip with segment timestamps (seconds on the clip's timeline).
@@ -70,6 +70,14 @@ foreach (WhisperSegment segment in result.Segments)
 
 - Transcription of up to 30 s of 16 kHz audio, greedy decoding. Shorter clips are zero-padded to 30 s
   (`WhisperMelSpectrogram.ExtractChunk`, as the feature extractor pads); longer clips are refused, not truncated.
+- Long-form audio over 30 s (experimental): `Transcribe` and `TranscribeWithTimestamps` follow transformers 5.18.0
+  sequential long-form `generate`: one spectrogram over the whole clip (`WhisperMelSpectrogram.ExtractLongForm`, as
+  `WhisperFeatureExtractor(truncation=False, padding="longest")` computes it, the max - 8 clamp taken over the whole
+  clip), decoded in 3000-frame windows with timestamps; each next window starts at the last closing timestamp, or
+  after the whole window when its last segment is closed. Segment times are on the clip's timeline. Greedy, with no
+  temperature fallback, no compression-ratio, log-probability or no-speech threshold, and no conditioning on earlier
+  windows. A long clip has no single-window, timestamp-free decode (transformers refuses one too), so `Transcribe`
+  returns the timestamped text.
 - Segment timestamps (experimental): `WhisperTranscriber.TranscribeWithTimestamps` (or `TranscribeMelWithTimestamps`)
   returns a `WhisperTranscription`: the text, the segments (`Start`, `End` in seconds, `Text`, token `Ids`) and the
   decoded windows. The segments are those transformers 5.18.0 `generate(return_timestamps=True, return_segments=True)`
@@ -97,10 +105,9 @@ foreach (WhisperSegment segment in result.Segments)
 
 ## Unsupported (for now)
 
-Translation, word-level timestamps (the pinned graphs do not export the alignment heads' cross-attention), chunking
-and streaming of clips longer than 30 s, temperature fallback and the compression-ratio, log-probability and no-speech
-thresholds, conditioning on earlier text or prompts, batching, KV-cache decoding, CUDA qualification, persistence,
-training.
+Translation, word-level timestamps (the pinned graphs do not export the alignment heads' cross-attention), streaming,
+the long-form temperature fallback and the compression-ratio, log-probability and no-speech thresholds, conditioning
+on earlier text or prompts, batching, KV-cache decoding, CUDA qualification, persistence, training.
 
 Without a KV cache, every decode step re-runs the decoder over all ids so far. `WhisperModel.Generate` writes the
 `[seq, 51866]` logits of those steps into one buffer per call, which grows by doubling, instead of a new array per step.

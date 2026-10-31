@@ -16,6 +16,15 @@
     "languages": {
       "en": 50259
     },
+    "long_form": {
+      "compression_ratio_threshold": null,
+      "condition_on_prev_tokens": false,
+      "features": "full-clip",
+      "logprob_threshold": null,
+      "no_speech_threshold": null,
+      "strategy": "sequential",
+      "temperature": 0.0
+    },
     "max_samples": 480000,
     "max_target_positions": 448,
     "n_fft": 400,
