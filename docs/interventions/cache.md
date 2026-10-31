@@ -103,12 +103,15 @@ Both sides offer two levels. **Fast** is for every load; **Full** is for when th
 | Key recomputed from the manifest equals the directory name (and the expected key) | yes | yes |
 | `profile.json` SHA-256 equals `profile_sha256`; id, operator, base graph and sites match; directions files verify (size, SHA-256, finite) | yes | yes |
 | `model.onnx` size and SHA-256 | yes | yes |
+| Each other derived file is the link of a base `external_data` artifact (path relative to the base graph's directory) with that artifact's SHA-256 and size, and every base external data file has its link | yes | yes |
 | Each other derived file (the linked weights): exists with the recorded size | yes | yes |
 | Python with `base_dir`: each linked file is still the same inode as its base file | yes | — |
 | SHA-256 of each other derived file (reads the whole weights file) | no | yes |
 | With the base directory: size and SHA-256 of every base artifact | no | yes |
 
-A weights file rewritten in place with the same size passes Fast and fails Full. C# has no portable inode check, so its Fast level checks sizes only for the linked files.
+A weights file rewritten in place with the same size passes Fast and fails Full. C# has no portable inode check, so its Fast level checks sizes only for the linked files. The Python inode check runs at the Fast level only: a bundle re-acquired with identical bytes (new inodes) fails Fast and passes Full.
+
+The cache key covers the compile inputs (`base_artifacts`, profile, versions, inputs), not `derived_graph` or `derived_files`; the rule that each derived file carries its base artifact's identity is what ties the bytes ONNX Runtime reads to the key. `compiler-manifest.json` itself is the local root of trust: it is not signed, so these checks detect corruption, partial writes and changed bundles, not a deliberate rewrite of a whole entry by someone who can write to the cache directory.
 
 ```csharp
 InterventionArtifact artifact = InterventionArtifactCache.Open(cacheRoot, "lfm3", key);       // Fast

@@ -448,6 +448,43 @@ def test_base_replaced_by_rename_leaves_a_stale_link_that_is_detected(setup):
     open_entry(entry.directory, verify="full", base_dir=setup["base_dir"])
 
 
+def _rewrite_derived_files(directory: Path, files: list[dict]) -> None:
+    document = contract.parse_strict_json((directory / "compiler-manifest.json").read_bytes(), "manifest")
+    document["derived_files"] = files
+    (directory / "compiler-manifest.json").write_bytes(contract.serialize_manifest_document(document))
+
+
+def test_derived_files_must_be_the_base_external_data(setup):
+    # The key covers base_artifacts, not derived_files: a manifest recording other weights for the linked file (and a
+    # matching swapped file) keeps the key and the directory name, so open_entry must tie the two together.
+    entry = _get(setup)
+    d = entry.directory
+    link = d / "model.onnx_data"
+    raw = bytearray(link.read_bytes())
+    raw[0] ^= 0x01
+    link.unlink()
+    link.write_bytes(bytes(raw))
+    _rewrite_derived_files(
+        d, [{"path": "model.onnx_data", "sha256": contract.sha256_bytes(bytes(raw)), "size": len(raw)}]
+    )
+    assert manifest_cache_key(contract.load_manifest(d / "compiler-manifest.json")) == entry.key
+    for verify in ("fast", "full"):
+        with pytest.raises(InterventionCacheError, match="base artifact"):
+            open_entry(d, verify=verify, base_dir=setup["base_dir"])
+        with pytest.raises(InterventionCacheError, match="base artifact"):
+            open_entry(d, verify=verify)
+
+    # A derived file that links nothing in the base, and base external data without its link, are rejected too.
+    original = entry.manifest.derived_files[0]
+    good = {"path": original.path, "sha256": original.sha256, "size": original.size}
+    _rewrite_derived_files(d, [good, {**good, "path": "extra.bin"}])
+    with pytest.raises(InterventionCacheError, match="not a link"):
+        open_entry(d)
+    _rewrite_derived_files(d, [])
+    with pytest.raises(InterventionCacheError, match="no linked derived file"):
+        open_entry(d)
+
+
 def test_base_rewritten_in_place_is_detected_by_full_verification(setup):
     entry = _get(setup)
     data = setup["base_dir"] / DATA

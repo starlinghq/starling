@@ -266,6 +266,36 @@ def _check_disjoint(groups: Mapping[str, Iterable[str]]) -> None:
 # Open and verify an entry
 
 
+def linked_base_artifacts(manifest: InterventionManifest) -> dict[str, BaseArtifact]:
+    """Map each ``derived_files`` path to the base external-data artifact it must be a link of.
+
+    In a cache entry the derived files are exactly the base graph's external data files, at their location relative to
+    the base graph's directory, with the base artifact's SHA-256 and size. The cache key covers ``base_artifacts`` but
+    not ``derived_files``, so without this rule a manifest could name base weights in its key while recording (and
+    verifying) different bytes for the file ONNX Runtime reads. Raises ``InterventionMismatchError`` otherwise.
+    """
+    graph_dir = manifest.base_graph.path.rpartition("/")[0]
+    external = {a.path: a for a in manifest.base_artifacts if a.role == ARTIFACT_ROLE_EXTERNAL_DATA}
+    sources: dict[str, BaseArtifact] = {}
+    for file in manifest.derived_files:
+        base_path = f"{graph_dir}/{file.path}" if graph_dir else file.path
+        source = external.get(base_path)
+        if source is None:
+            raise InterventionMismatchError(
+                f"derived file '{file.path}' is not a link of a base external data artifact ('{base_path}')."
+            )
+        if (source.sha256, source.size) != (file.sha256, file.size):
+            raise InterventionMismatchError(
+                f"derived file '{file.path}' records SHA-256 {file.sha256} ({file.size} bytes) but its base artifact "
+                f"'{base_path}' is {source.sha256} ({source.size} bytes)."
+            )
+        sources[file.path] = source
+    missing = sorted(set(external) - {s.path for s in sources.values()})
+    if missing:
+        raise InterventionMismatchError(f"base external data {missing} has no linked derived file.")
+    return sources
+
+
 def open_entry(
     directory: str | Path,
     *,
@@ -278,8 +308,9 @@ def open_entry(
     ``fast`` (cache hits): the manifest parses; the key recomputed from it matches ``expected_key`` (when given) and,
     for a directory named like a key, the directory name; ``profile.json`` has the manifest's profile SHA-256 and
     matches it (``verify_manifest_profile``) and its directions verify; ``model.onnx`` has the recorded size and
-    SHA-256; every other derived file has the recorded size and, when ``base_dir`` is given, is still the same inode as
-    the base file of the same identity (a hard link). The weights are not hashed.
+    SHA-256; every other derived file is the link of a base external data artifact with the same SHA-256 and size
+    (``linked_base_artifacts``), has that size and, when ``base_dir`` is given, is still the same inode as that base
+    file. The weights are not hashed.
 
     ``full``: additionally hashes every derived file (the linked weights included) and, when ``base_dir`` is given,
     every base artifact under it.
@@ -306,9 +337,7 @@ def open_entry(
             profile.load_directions(site)
         graph = manifest.derived_graph
         verify_artifact_file(resolve_relative(directory, graph.path), graph.sha256, graph.size)
-        base_by_identity = {
-            (a.sha256, a.size): a for a in manifest.base_artifacts if a.role == ARTIFACT_ROLE_EXTERNAL_DATA
-        }
+        sources = linked_base_artifacts(manifest)
         for file in manifest.derived_files:
             path = resolve_relative(directory, file.path)
             if verify == "full":
@@ -318,9 +347,8 @@ def open_entry(
                 raise InterventionMismatchError(f"'{path}' does not exist.")
             if path.stat().st_size != file.size:
                 raise InterventionMismatchError(f"'{path}' is {path.stat().st_size} bytes; expected {file.size}.")
-            source = base_by_identity.get((file.sha256, file.size))
-            if base_dir is not None and source is not None:
-                original = resolve_relative(Path(base_dir), source.path)
+            if base_dir is not None:
+                original = resolve_relative(Path(base_dir), sources[file.path].path)
                 if not original.is_file() or not os.path.samefile(original, path):
                     raise InterventionMismatchError(
                         f"'{path}' is no longer a hard link to '{original}' (the base file was replaced or the link "

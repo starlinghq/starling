@@ -6,7 +6,7 @@ public enum InterventionArtifactVerification
     /// <summary>
     /// For every load. The manifest parses; <c>profile.json</c> has the manifest's profile SHA-256 and matches it, and
     /// its directions files verify; the derived graph has the recorded size and SHA-256; every other derived file (the
-    /// hard-linked external weights) exists with the recorded size. The weights are not hashed, so a weights file
+    /// hard-linked external weights) is recorded with its base artifact's SHA-256 and size and exists with that size. The weights are not hashed, so a weights file
     /// rewritten in place with the same size is not detected at this level.
     /// </summary>
     Fast,
@@ -83,6 +83,7 @@ public sealed class InterventionArtifact
         manifest.VerifyProfile(profile);
         profile.VerifyDirections();
         manifest.DerivedGraph.Verify(full);
+        VerifyLinkedFiles(manifest);
         foreach (InterventionArtifactFile file in manifest.DerivedFiles)
         {
             if (verification == InterventionArtifactVerification.Full)
@@ -110,5 +111,53 @@ public sealed class InterventionArtifact
         }
 
         return new InterventionArtifact(full, manifest, profile, InterventionCacheKey.Compute(manifest));
+    }
+
+    /// <summary>
+    /// In a derived artifact directory the derived files are exactly the base graph's external data files (hard links), at
+    /// their location relative to the base graph's directory, with the base artifact's SHA-256 and size. The cache key
+    /// covers <c>base_artifacts</c> but not <c>derived_files</c>, so without this rule a manifest could name the base
+    /// weights in its key while recording, and verifying, other bytes for the file ONNX Runtime reads.
+    /// </summary>
+    private static void VerifyLinkedFiles(InterventionManifest manifest)
+    {
+        string graphPath = manifest.BaseGraph.Path;
+        int slash = graphPath.LastIndexOf('/');
+        string prefix = slash < 0 ? string.Empty : graphPath[..(slash + 1)];
+        Dictionary<string, InterventionArtifactFile> external = new(StringComparer.Ordinal);
+        foreach (InterventionBaseArtifact artifact in manifest.BaseArtifacts)
+        {
+            if (artifact.Role == InterventionArtifactRole.ExternalData)
+            {
+                external[artifact.File.Path] = artifact.File;
+            }
+        }
+
+        HashSet<string> linked = new(StringComparer.Ordinal);
+        foreach (InterventionArtifactFile file in manifest.DerivedFiles)
+        {
+            string basePath = prefix + file.Path;
+            if (!external.TryGetValue(basePath, out InterventionArtifactFile? source))
+            {
+                throw new InterventionMismatchException(
+                    $"Derived file '{file.Path}' is not a link of a base external data artifact ('{basePath}').");
+            }
+
+            if (!string.Equals(source.Sha256, file.Sha256, StringComparison.Ordinal) || source.Size != file.Size)
+            {
+                throw new InterventionMismatchException(
+                    $"Derived file '{file.Path}' records SHA-256 {file.Sha256} ({file.Size} bytes) but its base artifact '{basePath}' is {source.Sha256} ({source.Size} bytes).");
+            }
+
+            linked.Add(basePath);
+        }
+
+        foreach (string path in external.Keys)
+        {
+            if (!linked.Contains(path))
+            {
+                throw new InterventionMismatchException($"Base external data '{path}' has no linked derived file.");
+            }
+        }
     }
 }

@@ -319,6 +319,42 @@ public sealed class InterventionArtifactTests
         }
     }
 
+    private static InterventionManifest WithDerivedFiles(InterventionManifest m, IReadOnlyList<InterventionArtifactFile> files) =>
+        new(m.CompilerVersion, m.SiteMappingVersion, m.BaseArtifacts, m.ProfileId, m.ProfileSha256, m.Operator, m.Opset,
+            m.Precision, m.Inputs, m.Sites, m.DerivedGraph, files);
+
+    [Fact]
+    public void DerivedFilesMustBeTheBaseExternalData()
+    {
+        // The key covers base_artifacts, not derived_files: a manifest that records other weights for the linked file
+        // (and a matching swapped file) keeps the key and the directory name, so the reader must tie the two together.
+        using Entry e = new();
+        byte[] other = (byte[])e.Data.Clone();
+        other[0] ^= 1;
+        e.Write("model.onnx_data", other);
+        InterventionManifest forged = WithDerivedFiles(
+            e.Manifest, [new("model.onnx_data", InterventionHashes.ComputeSha256(other), other.Length)]);
+        Assert.Equal(e.Key, InterventionCacheKey.Compute(forged));
+        e.Write("compiler-manifest.json", forged.Serialize());
+        foreach (InterventionArtifactVerification level in Enum.GetValues<InterventionArtifactVerification>())
+        {
+            var error = Assert.Throws<InterventionMismatchException>(
+                () => InterventionArtifactCache.Open(e.CacheRoot, Model, e.Key, level, e.BaseDir));
+            Assert.Contains("base artifact", error.Message, StringComparison.Ordinal);
+        }
+
+        // A derived file that links nothing in the base, and base external data without its link, are rejected too.
+        e.Write("model.onnx_data", e.Data);
+        InterventionArtifactFile link = e.Manifest.DerivedFiles[0];
+        e.Write("extra.bin", e.Data);
+        e.Write("compiler-manifest.json", WithDerivedFiles(e.Manifest, [link, new("extra.bin", link.Sha256, link.Size)]).Serialize());
+        Assert.Throws<InterventionMismatchException>(() => InterventionArtifactCache.Open(e.CacheRoot, Model, e.Key));
+        e.Write("compiler-manifest.json", WithDerivedFiles(e.Manifest, []).Serialize());
+        Assert.Throws<InterventionMismatchException>(() => InterventionArtifactCache.Open(e.CacheRoot, Model, e.Key));
+        e.Write("compiler-manifest.json", e.Manifest.Serialize());
+        _ = InterventionArtifactCache.Open(e.CacheRoot, Model, e.Key, InterventionArtifactVerification.Full, e.BaseDir);
+    }
+
     [Fact]
     public void SameSizeWeightsChangeIsCaughtOnlyByFullVerification()
     {
