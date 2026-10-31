@@ -114,7 +114,7 @@ Written by the graph compiler next to the derived graph; read and verified by `I
 | `opset` | integer | yes | default-domain ONNX opset of the derived graph, 1 to 1,000 |
 | `precision` | string | yes | `^[a-z0-9][a-z0-9_]{0,31}$`, the base graph's precision (for example `fp32`, `fp16`, `q4`) |
 | `inputs` | array of input | yes | the derived graph's extra inputs beyond the base graph's; exactly one with role `strength`, holding one element (shape `[]` or `[1]`); names unique |
-| `sites` | array of site binding | yes | one per profile site, 1 to 1,024; no two with the same `layer` and `target` |
+| `sites` | array of site binding | yes | one per profile site, 1 to 1,024; no two with the same `layer` and `target`, and no two with the same `tensor` |
 | `derived_graph` | file | yes | the derived `model.onnx`, relative to the derived artifact directory |
 | `derived_files` | array of file | yes | other derived files (for example a small external data file of the derived graph); paths unique and different from `derived_graph.path`; may be empty |
 
@@ -122,7 +122,7 @@ Base artifact: `role` (`graph` or `external_data`), `path` (relative to the base
 
 File: `path`, `sha256`, `size`.
 
-Input: `name` (ONNX input name, non-empty, at most 1,024 characters, no control characters), `role` (`strength`), `dtype` (`float32`), `shape` (array of non-negative integers; `[]` is a scalar). A model integration accepts exactly the base graph's inputs plus these.
+Input: `name` (ONNX input name, non-empty, at most 1,024 characters, no control characters), `role` (`strength`), `dtype` (`float32`), `shape` (array of non-negative integers, at most 8 dimensions and 2,147,483,647 elements; `[]` is a scalar; the strength input's shape is exactly `[]` or `[1]`). A model integration accepts exactly the base graph's inputs plus these.
 
 Site binding: `layer`, `target`, `tensor` (the base graph tensor the site mapping resolved the site to).
 

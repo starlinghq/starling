@@ -140,6 +140,11 @@ public sealed class InterventionManifestTests
         { "\"path\": \"model.onnx\",", "\"path\": \"model.onnx\",\n    \"role\": \"graph\",", "derived_graph.role" },
         { "\"profile_sha256\": \"2222", "\"profile_sha256\": \"222", "profile_sha256" },
         { "  \"derived_files\": []\n", "  \"derived_files\": null\n", "derived_files" },
+        { "\"shape\": [\n        1\n      ]", "\"shape\": [1, 1]", "inputs" },
+        { "\"shape\": [\n        1\n      ]", "\"shape\": [4611686018427387905, 4611686018427387905, 4611686018427387905, 4611686018427387905]", "inputs[0].shape" },
+        { "\"shape\": [\n        1\n      ]", "\"shape\": [1e0]", "inputs[0].shape[0]" },
+        { "\"opset\": 17,", "\"opset\": 1.7e1,", "opset" },
+        { "\"tensor\": \"/model/layers.3/Add_1_output_0\"", "\"tensor\": \"/model/layers.1/Add_1_output_0\"", "sites" },
     };
 
     [Theory]
@@ -159,6 +164,14 @@ public sealed class InterventionManifestTests
         Assert.Throws<InterventionContractException>(() => Manifest(inputs: [Strength(), Strength()]));
         Assert.Throws<InterventionContractException>(() => Manifest(inputs: [Strength("a", 1), Strength("b", 1)]));
         Assert.Throws<InterventionContractException>(() => Manifest(inputs: [Strength("a", 1, 2)]));
+        Assert.Throws<InterventionContractException>(() => Manifest(inputs: [Strength("a", 1, 1)]));
+        Assert.Throws<InterventionContractException>(() => Manifest(inputs: [Strength("a", 0)]));
+
+        // (2^62 + 1)^4 wraps to 1 in unchecked 64-bit arithmetic; the shape must be rejected, not counted as one element.
+        const long Wrap = (1L << 62) + 1;
+        Assert.Throws<InterventionContractException>(() => Strength("a", Wrap, Wrap, Wrap, Wrap));
+        Assert.Equal(0, Strength("a", 0, long.MaxValue).ElementCount);
+        Assert.Equal(1, Manifest(inputs: [Strength("a", 1)]).StrengthInput.ElementCount);
         Assert.Equal([], Manifest(inputs: [Strength("scalar_strength")]).StrengthInput.Shape);
     }
 
@@ -176,6 +189,7 @@ public sealed class InterventionManifestTests
         Assert.Throws<InterventionMismatchException>(() => Manifest(baseArtifacts: [new(InterventionArtifactRole.Graph, new("model.onnx", OtherSha, 1))]).VerifyProfile(profile, ProfileSha));
         Assert.Throws<InterventionMismatchException>(() => Manifest(sites: [new(1, InterventionTarget.ResidualPost, "t")]).VerifyProfile(profile, ProfileSha));
         Assert.Throws<InterventionMismatchException>(() => Manifest(sites: [new(1, InterventionTarget.ResidualPost, "t"), new(2, InterventionTarget.ResidualPost, "u")]).VerifyProfile(profile, ProfileSha));
+        Assert.Throws<InterventionContractException>(() => Manifest(sites: [new(1, InterventionTarget.ResidualPost, "t"), new(3, InterventionTarget.ResidualPost, "t")]));
     }
 
     [Fact]

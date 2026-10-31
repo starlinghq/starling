@@ -31,8 +31,8 @@ public sealed class InterventionManifest
     /// <param name="operatorKind">The profile's operator.</param>
     /// <param name="opset">Default-domain ONNX opset of the derived graph, 1 to 1000.</param>
     /// <param name="precision">Precision name of the base graph (for example <c>fp32</c>).</param>
-    /// <param name="inputs">Declared extra inputs: exactly one <see cref="InterventionInputRole.Strength"/> input; names unique.</param>
-    /// <param name="sites">One binding per profile site; no two share a layer and target.</param>
+    /// <param name="inputs">Declared extra inputs: exactly one <see cref="InterventionInputRole.Strength"/> input, shape [] or [1]; names unique.</param>
+    /// <param name="sites">One binding per profile site; no two share a layer and target, or a tensor.</param>
     /// <param name="derivedGraph">The derived <c>model.onnx</c>, relative to the derived artifact directory.</param>
     /// <param name="derivedFiles">Other derived files (for example a small external data file of the derived graph); paths unique.</param>
     /// <exception cref="InterventionContractException">A value violates the contract.</exception>
@@ -135,9 +135,9 @@ public sealed class InterventionManifest
             throw new InterventionContractException("inputs", "no input has role 'strength'.");
         }
 
-        if (strength.ElementCount != 1)
+        if (!(strength.Shape.Count == 0 || (strength.Shape.Count == 1 && strength.Shape[0] == 1)))
         {
-            throw new InterventionContractException("inputs", $"the strength input '{strength.Name}' must hold one element (shape [] or [1]).");
+            throw new InterventionContractException("inputs", $"the strength input '{strength.Name}' must have shape [] or [1].");
         }
 
         InterventionSiteBinding[] siteList = [.. sites];
@@ -157,6 +157,16 @@ public sealed class InterventionManifest
             if (CompareBindings(siteList[i - 1], siteList[i]) == 0)
             {
                 throw new InterventionContractException("sites", $"two sites at layer {siteList[i].Layer}, target '{InterventionNames.Of(siteList[i].Target)}'.");
+            }
+        }
+
+        // Each site is a distinct tensor of the base graph; two sites resolved to one tensor mean a wrong site mapping.
+        HashSet<string> tensors = new(StringComparer.Ordinal);
+        foreach (InterventionSiteBinding site in siteList)
+        {
+            if (!tensors.Add(site.Tensor))
+            {
+                throw new InterventionContractException("sites", $"tensor '{site.Tensor}' is bound to more than one site.");
             }
         }
 

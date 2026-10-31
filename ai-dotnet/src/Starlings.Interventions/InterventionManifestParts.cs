@@ -113,6 +113,9 @@ public sealed class InterventionBaseArtifact
 /// <summary>An extra input the derived graph declares beyond the base graph's inputs.</summary>
 public sealed class InterventionGraphInput
 {
+    /// <summary>Largest accepted element count of a declared input (2^31 - 1).</summary>
+    public const long MaxElementCount = int.MaxValue;
+
     private readonly long[] _shape;
 
     /// <summary>Creates the record.</summary>
@@ -142,12 +145,18 @@ public sealed class InterventionGraphInput
             throw new InterventionContractException(StrictObject.Join(path, "shape"), $"rank {shape.Length} exceeds 8.");
         }
 
+        long count = 1;
         foreach (long dim in shape)
         {
             if (dim < 0)
             {
                 throw new InterventionContractException(StrictObject.Join(path, "shape"), $"dimension {dim} is negative; declared inputs have fixed shapes.");
             }
+
+            // Bounded so ElementCount never wraps (an unchecked product of large dimensions can wrap to any value).
+            count = dim == 0 || count <= MaxElementCount / dim
+                ? count * dim
+                : throw new InterventionContractException(StrictObject.Join(path, "shape"), $"more than {MaxElementCount} elements.");
         }
 
         Name = name;

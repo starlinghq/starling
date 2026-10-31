@@ -91,6 +91,7 @@ public sealed class InterventionProfileTests
         { "\"layer\": 1,", "\"layer\": 1.0,", "sites[0].layer" },
         { "\"layer\": 1,", "\"layer\": -1,", "sites[0].layer" },
         { "\"layer\": 1,", "\"layer\": \"1\",", "sites[0].layer" },
+        { "\"layer\": 1,", "\"layer\": 1e0,", "sites[0].layer" },
         { "\"rank\": 2,", "\"rank\": 0,", "sites[0].rank" },
         { "\"rank\": 2,", "\"rank\": 2,\n      \"bias\": 0,", "sites[0].bias" },
         { "\"rank\": 2,", "\"rank\": 9,", "sites[0].rank" },
