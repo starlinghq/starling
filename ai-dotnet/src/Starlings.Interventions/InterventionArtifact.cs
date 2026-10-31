@@ -19,7 +19,8 @@ public enum InterventionArtifactVerification
 }
 
 /// <summary>
-/// A derived intervention artifact directory (a cache entry, or any compiler output directory) opened and verified:
+/// A derived intervention artifact directory opened and verified (a cache entry, or any directory with the same layout:
+/// manifest, derived graph, linked data, <c>profile.json</c> and its directions files):
 /// the compiler manifest, the compiled profile, and the derived graph path. Open it once at load; it is immutable.
 /// The layout is specified in <c>docs/interventions/cache.md</c>.
 /// </summary>

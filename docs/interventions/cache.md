@@ -116,7 +116,7 @@ artifact.Manifest.VerifyBaseModel(expectedBaseGraphSha256);  // before any sessi
 // artifact.GraphPath loads with OnnxModelSession.Create(path, options); inputs: base inputs + artifact.Manifest.Inputs
 ```
 
-`InterventionArtifact.Open(directory)` opens any compiler output directory without the name check; `InterventionArtifactCache.ListEntries(cacheRoot, model)` lists published entries (key-named directories only) without opening them.
+`InterventionArtifact.Open(directory)` opens any directory with the cache-entry layout (manifest, `model.onnx`, linked data, `profile.json` and its directions files) without the name check; plain `compile_intervention` output has no `profile.json`, so it does not open; `InterventionArtifactCache.ListEntries(cacheRoot, model)` lists published entries (key-named directories only) without opening them.
 
 ## Not covered
 
