@@ -32,7 +32,7 @@
 # logits_max_abs (worst 0.036), and ids, transcripts and segment timestamps are exact on every clip; every other key is
 # unchanged.
 #
-# Adopted kv_logits_max_abs (#192, PR #231): the KV-cache decoder loop (decoder_with_past_model_fp16.onnx) against the
+# Evidence for kv_logits_max_abs (#192, PR #231); adopted in PR #233: the KV-cache decoder loop (decoder_with_past_model_fp16.onnx) against the
 # full-context decoder teacher-forced on the same ids, same backend (Python ONNX Runtime 1.30 CPU, fp16 graphs). Not
 # bit-identical: the fp16 graphs sum over the whole prefix in one product on one path and one row at a time on the
 # other (ORT_DISABLE_ALL with one thread still differs by up to 4e-3). Evidence: model-pipeline run of
