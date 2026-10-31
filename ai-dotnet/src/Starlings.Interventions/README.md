@@ -10,6 +10,8 @@ This library is **experimental** and source only. V1 evidence uses synthetic ran
 - `InterventionDirections`: the raw directions file (little-endian float32, row-major `[rank, hidden]`, no header), checked for size, SHA-256 and finite values.
 - `InterventionSelection(profileId, strength)`: what a request asks for. Strength 0 leaves outputs unchanged.
 - `InterventionManifest`: `compiler-manifest.json` (schema version 1). Base artifacts, profile id and hash, compiler and site-mapping versions, opset, precision, declared inputs, resolved site tensors, derived files and their hashes.
+- `InterventionCacheKey`: the cache key of a derived artifact, recomputed from its manifest (the same text the Python cache writer hashes).
+- `InterventionArtifact` and `InterventionArtifactCache`: the read side of the derived-artifact cache `<cache>/<model>/interventions/<key>/`. Open an entry, check its directory name against the key, verify the manifest, profile and derived files (`Fast` for every load, `Full` to hash the linked weights and the base bundle). Entries are written by the Python compiler ([cache.md](https://github.com/starlinghq/starling/blob/main/docs/interventions/cache.md)).
 
 The operator, for a site tensor `y` of shape `[..., hidden]`:
 
@@ -28,6 +30,11 @@ InterventionManifest manifest = InterventionManifest.Load(Path.Combine(derivedDi
 manifest.VerifyProfile(file);                    // same profile bytes, same base graph, same sites
 manifest.VerifyDerivedFiles(derivedDir);
 
+// A cache entry written by model_pipeline.interventions.cache.get_or_compile:
+InterventionArtifact artifact = InterventionArtifactCache.Open(cacheRoot, "lfm3", cacheKey);
+artifact.Manifest.VerifyBaseModel(baseModelSha256);
+// artifact.GraphPath loads with the ordinary ONNX Runtime session API.
+
 var selection = new InterventionSelection(file.Profile.Id, strength: 0.5f);
 ```
 
@@ -37,6 +44,6 @@ Formats: [docs/interventions/profile-format.md](https://github.com/starlinghq/st
 
 `InterventionCapabilities.All` lists every capability with an explicit status. In short:
 
-- **Experimental:** profile and manifest schema version 1, the `directional_projection` operator, the `residual_post` target, raw float32 directions.
-- **Unsupported (rejected):** other operators, targets and dtypes (float16 directions), several profiles per graph, hot swap, behavioural profiles, access control (the host's job).
+- **Experimental:** profile and manifest schema version 1, the cache key and artifact verification (read side), the `directional_projection` operator, the `residual_post` target, raw float32 directions.
+- **Unsupported (rejected):** other operators, targets and dtypes (float16 directions), several profiles per graph, hot swap, behavioural profiles, access control (the host's job), writing cache entries (the Python compiler does that).
 - **Untested:** AOT (analyzers on, no AOT publish run).

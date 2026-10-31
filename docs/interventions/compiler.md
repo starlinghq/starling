@@ -65,5 +65,5 @@ The derived graph keeps the base graph's external-data entries unchanged, so it 
 - Element types other than float32 and float16 at the site, and profile dtypes other than float32.
 - Base graphs below IR version 4 (there every initializer must also be a graph input, which would add inputs) and below default-domain opset 7.
 - Strength 0 is exact for finite activations. An infinite activation at a site gives `inf * 0 = NaN` in the correction.
-- Atomic publication, locking and reuse of derived artifacts belong to the derived-artifact cache.
+- Atomic publication, locking and reuse of derived artifacts belong to the derived-artifact cache ([cache.md](cache.md)); `compile_intervention` writes in place.
 - Windows, the CUDA execution provider and graphs over 2 GiB without external data were not tested.

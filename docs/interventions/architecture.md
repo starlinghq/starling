@@ -31,11 +31,11 @@ The compiler inserts it as `MatMul(y, Q^T)`, `Mul(s, alpha)`, `Mul(·, s·alpha)
 | Contract | `ai-dotnet/src/Starlings.Interventions` | Profile, site, selection, manifest, directions file format; strict parsing, deterministic serialization, hash and dimension checks. No ONNX Runtime dependency. |
 | Graph compiler | `model-pipeline/src/model_pipeline/interventions/` | Python, onnx API ([compiler.md](compiler.md)). Reads a profile and a model-specific site mapping, inserts the operator at the mapped tensors, adds the strength input, writes the derived graph and the compiler manifest. |
 | Site mappings | `model-pipeline/src/model_pipeline/interventions/injection_sites.py` | Per model, versioned, keyed to the exact SHA-256 of the base graph asset. A graph hash with no mapping is unsupported; unknown graphs are never pattern-matched. |
-| Derived artifact cache | `<cache>/<model>/interventions/<derived-hash>/` | `model.onnx`, `profile.json`, `compiler-manifest.json` and any small derived data file. Written atomically; the source bundle is never rewritten. |
+| Derived artifact cache | `<cache>/<model>/interventions/<key>/`; writer `model_pipeline/interventions/cache.py`, reader `InterventionArtifactCache` | `model.onnx`, hard links to the base weights, `profile.json` (verbatim), its directions files and `compiler-manifest.json`. Keyed by a hash of every compile input, published by one directory rename under a file lock, reused on repeat, verified on every open; the source bundle is never written ([cache.md](cache.md)). |
 | Session loading | `Starlings.Runtime.Onnx` | Derived graphs load through the ordinary `OnnxModelSession.Create(path, options)`; diagnostics report the original and loaded graph identities and the intervention inputs. |
 | Model integration | e.g. `Starlings.Models.Lfm3` | Recognizes a verified derived graph through its manifest, accepts exactly the declared extra inputs, and passes the strength on every call. |
 
-The graph compiler is experimental. The cache, session diagnostics and model integration arrive in later changes; each carries its own capability status.
+The graph compiler and the derived-artifact cache are experimental. Session diagnostics and model integration arrive in later changes; each carries its own capability status.
 
 ## Identities
 
@@ -44,7 +44,7 @@ The graph compiler is experimental. The cache, session diagnostics and model int
 - **Profile identity**: the SHA-256 of the `profile.json` bytes as stored. It is not a hash of a re-serialization, so no cross-language canonical JSON is needed. The cache stores `profile.json` byte for byte.
 - **Derived graph identity**: SHA-256 of the derived `model.onnx` and of every other derived file, in the manifest.
 
-The cache key of a derived graph combines the base graph and external weight identities, the profile hash, the compiler version, the site-mapping version, the opset and the precision. All of them are recorded in the compiler manifest.
+The cache key of a derived graph combines the base graph and external weight identities, the profile hash, the compiler version, the site-mapping version, the opset, the precision and the declared inputs. All of them are recorded in the compiler manifest, so a reader recomputes the key from the manifest and checks it against the cache directory name ([cache.md](cache.md)).
 
 ## Requests
 
