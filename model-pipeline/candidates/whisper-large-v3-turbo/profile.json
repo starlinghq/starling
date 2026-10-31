@@ -7,6 +7,7 @@
     ],
     "decoder_file": "onnx/decoder_model_fp16.onnx",
     "decoder_layers": 4,
+    "decoder_with_past_file": "onnx/decoder_with_past_model_fp16.onnx",
     "decoding": "greedy",
     "encoder_file": "onnx/encoder_model_fp16.onnx",
     "encoder_layers": 32,
@@ -164,6 +165,9 @@
       "token_ids": "exact",
       "transcript": "exact"
     },
+    "proposed_policy": {
+      "kv_logits_max_abs": 0.02
+    },
     "status": "proposed"
   },
   "format_version": 1,
@@ -250,6 +254,11 @@
         "path": "onnx/decoder_model_fp16.onnx",
         "sha256": "15870b95e08e666ea2423738ee12722de965d09cf05f4579fa947357332b5057",
         "size": 343974281
+      },
+      {
+        "path": "onnx/decoder_with_past_model_fp16.onnx",
+        "sha256": "33041ca209a268f9562d5ff544542ed219c3a4342209e95a34042e9124f055ad",
+        "size": 317742004
       },
       {
         "path": "onnx/encoder_model_fp16.onnx",

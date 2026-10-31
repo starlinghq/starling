@@ -51,6 +51,10 @@ public static class WhisperCapabilities
         // Long-form audio over 30 s: transformers' sequential long-form generation (whole-clip spectrogram, 30 s windows,
         // seek to the last closing timestamp), greedy; ids, segment times and texts equal the reference on the route corpus.
         ["chunking"] = CapabilityStatus.Experimental,
+        // The KV-cache decoder loop (decoder_with_past, the default with WhisperModelFiles): ids, segments and transcripts
+        // equal the full-context loop on the route corpus; logits within the candidate's proposed kv_logits_max_abs
+        // (fp16 summation order differs between the two graphs, so they are not bit-identical).
+        ["kv_cache"] = CapabilityStatus.Experimental,
         // transformers' long-form fallbacks and conditioning are not implemented: decoding never re-runs a window at a
         // higher temperature, never skips a window as silence, and never prompts with earlier text.
         ["temperature_fallback"] = CapabilityStatus.Unsupported,

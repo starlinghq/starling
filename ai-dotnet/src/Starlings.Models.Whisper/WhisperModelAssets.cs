@@ -32,6 +32,15 @@ public sealed record WhisperModelFiles(string EncoderPath, string DecoderPath, s
     /// <c>OnnxSessionOptions.KnownModelSha256</c> in <see cref="WhisperOptions.DecoderSession"/>.
     /// </summary>
     public string? DecoderSha256 => Snapshot?.GetVerifiedSha256(WhisperModelAssets.DecoderFile);
+
+    /// <summary>
+    /// Absolute path of <c>onnx/decoder_with_past_model_fp16.onnx</c> (the KV-cache decoder) in <see cref="Snapshot"/>;
+    /// null without a snapshot, which leaves <see cref="WhisperModel"/> on the full-context loop.
+    /// </summary>
+    public string? DecoderWithPastPath { get; init; } = Snapshot?.GetFilePath(WhisperModelAssets.DecoderWithPastFile);
+
+    /// <summary>SHA-256 of <see cref="DecoderWithPastPath"/> when <see cref="Snapshot"/> hashed it; otherwise null.</summary>
+    public string? DecoderWithPastSha256 => Snapshot?.GetVerifiedSha256(WhisperModelAssets.DecoderWithPastFile);
 }
 
 /// <summary>
@@ -53,6 +62,9 @@ public static class WhisperModelAssets
     /// <summary>Decoder graph path inside the repository.</summary>
     public const string DecoderFile = "onnx/decoder_model_fp16.onnx";
 
+    /// <summary>KV-cache decoder graph path inside the repository.</summary>
+    public const string DecoderWithPastFile = "onnx/decoder_with_past_model_fp16.onnx";
+
     /// <summary>Tokenizer path inside the repository.</summary>
     public const string TokenizerFile = "tokenizer.json";
 
@@ -62,10 +74,13 @@ public static class WhisperModelAssets
     /// <summary>SHA-256 of <see cref="DecoderFile"/>.</summary>
     public const string DecoderSha256 = "15870b95e08e666ea2423738ee12722de965d09cf05f4579fa947357332b5057";
 
+    /// <summary>SHA-256 of <see cref="DecoderWithPastFile"/>.</summary>
+    public const string DecoderWithPastSha256 = "33041ca209a268f9562d5ff544542ed219c3a4342209e95a34042e9124f055ad";
+
     /// <summary>SHA-256 of <see cref="TokenizerFile"/>.</summary>
     public const string TokenizerSha256 = "b3c8202bbf06d8ee4232c5984baa563784ac4737e2e7fdc42fa180200d3cfcdb";
 
-    /// <summary>The lock: the two graphs plus the tokenizer (about 1.5 GB).</summary>
+    /// <summary>The lock: the encoder, the full-context and KV-cache decoders, and the tokenizer (about 1.9 GB).</summary>
     public static ModelAssetLock Lock { get; } = new(
         "whisper-large-v3-turbo",
         Repository,
@@ -73,6 +88,7 @@ public static class WhisperModelAssets
         [
             new ModelAssetFile(EncoderFile, 1274342603, EncoderSha256),
             new ModelAssetFile(DecoderFile, 343974281, DecoderSha256),
+            new ModelAssetFile(DecoderWithPastFile, 317742004, DecoderWithPastSha256),
             new ModelAssetFile(TokenizerFile, 2480645, TokenizerSha256),
         ]);
 

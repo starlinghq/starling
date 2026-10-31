@@ -19,6 +19,17 @@ Changes merged to `main` after the last release record, collected here for the n
 - `WhisperTokenizer.Decode` drops timestamp tokens (ids from 50365), as transformers `WhisperTokenizer.decode` does.
 - `WhisperOptions.NoTimestamps = false` now makes `Transcribe` return the timestamped decode's text, instead of
   prompting without `<|notimestamps|>` and decoding without the timestamp rules.
+- **KV-cache decoding (experimental, #192), now the default.** `WhisperModelAssets.Lock` adds
+  `onnx/decoder_with_past_model_fp16.onnx` (317,742,004 bytes, same revision), so `DownloadAsync` fetches about 318 MB
+  more. **Upgrading:** a cache acquired before this change lacks that file, so `WhisperModelAssets.OpenLocal` and
+  `OpenDirectory` throw `ModelAssetMissingException` until `WhisperModelAssets.DownloadAsync` runs again (it fetches only
+  the missing file). This applies with `DecoderMode = FullContext` too: the lock is one set of files, and that mode
+  merely does not load the graph. `WhisperModel` runs the full-context decoder once over the prompt and then one cached step per token;
+  `WhisperOptions.DecoderMode = WhisperDecoderMode.FullContext` keeps the previous loop. Logits differ from the
+  full-context loop in the last bits (fp16 summation order; bounded on the route), ids are equal. New:
+  `WhisperDecoderMode`, `WhisperOptions.DecoderMode` and `DecoderWithPastSession`, `WhisperModelFiles.DecoderWithPastPath`,
+  path overloads of `WhisperModel.Create` and `WhisperTranscriber.Create` with the KV-cache graph, and
+  `WhisperModel.GenerateRecordingLogits` (diagnostics). Capability `kv_cache`: experimental.
 - **Long-form transcription (experimental, #222).** `Transcribe` and `TranscribeWithTimestamps` accept clips
   of more than 3000 mel frames (480,160 samples or more; up to 480,159 samples stay one window, as in transformers) and
   transcribe them as transformers 5.18.0 sequential long-form `generate` does: the new

@@ -170,6 +170,13 @@ checkpoint they were exported from (`candidates/whisper-large-v3-turbo/`). Stage
   SHA-256 (the four single utterances of `asr-corpus-v1.jsonl`; from v2, a 27.9 s composite of six consecutive
   utterances and a composite cut at 30 s inside its last utterance, which the ground-truth sanity bound leaves out; and
   two long-form composites of 34.5 s and 59.1 s).
+- KV cache: the onnx stage and .NET also decode every clip through `decoder_with_past_model_fp16.onnx` (the
+  full-context graph once over the prompt, then one cached step per token). Ids, windows and segments must equal the
+  full-context decode exactly, and .NET's KV loop must equal Python's (ids exact, step logits within
+  `same_backend_max_abs`). The KV loop's step logits against the full-context logits teacher-forced on the same ids are
+  not bit-identical (fp16 summation order); they are bounded by the candidate's `evaluation.proposed_policy`
+  `kv_logits_max_abs`, a proposed bound outside `protected/` until the maintainer adopts it. The .NET public audio paths
+  run the library default, the KV cache.
 - A clip of more than 3000 mel frames (480,160 samples or more) is long-form, exactly as transformers `generate` decides (`is_shortform = frames <= 3000`; the route, the evaluator and the library all decide by frames): one spectrogram over the
   whole clip (`WhisperFeatureExtractor(truncation=False, padding="longest")`, numpy and torch paths, against
   `WhisperMelSpectrogram.ExtractLongForm`), decoded with timestamps window after window (the contract's `long_form`

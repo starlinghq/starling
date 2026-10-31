@@ -113,10 +113,25 @@ foreach (WhisperSegment segment in result.Segments)
 
 Translation, word-level timestamps (the pinned graphs do not export the alignment heads' cross-attention), streaming,
 the long-form temperature fallback and the compression-ratio, log-probability and no-speech thresholds, conditioning
-on earlier text or prompts, batching, KV-cache decoding, CUDA qualification, persistence, training.
+on earlier text or prompts, batching, the merged decoder graph, CUDA qualification, persistence, training.
 
-Without a KV cache, every decode step re-runs the decoder over all ids so far. `WhisperModel.Generate` writes the
-`[seq, 51866]` logits of those steps into one buffer per call, which grows by doubling, instead of a new array per step.
+## Decoder loop
+
+The KV cache is the default (experimental): `WhisperModelAssets.Lock` includes `onnx/decoder_with_past_model_fp16.onnx`
+(the same pinned revision), and `WhisperModel` runs the full-context decoder once over the prompt, then
+`decoder_with_past` one token per step with every layer's cached keys and values. `WhisperOptions.DecoderMode =
+WhisperDecoderMode.FullContext` keeps the reference loop, which re-runs the full-context decoder over all ids at every
+step (into one logits buffer per call that grows by doubling) and does not load the KV-cache graph. The path overloads
+of `Create` take the KV-cache graph as an extra path; without it the loop is full-context. A cache acquired before the lock gained the
+KV-cache graph must run `WhisperModelAssets.DownloadAsync` again (it fetches only that file) before `OpenLocal` or
+`OpenDirectory` succeed, also when you use `FullContext`.
+
+The two loops' logits are **not bit-identical**: the fp16 graphs sum the attention and projections over the whole prefix
+in one matrix product on the full-context path and one row at a time on the cached path, so the float16 accumulations
+round differently (about 1e-3 to 1e-2 in the logits, independent of ONNX Runtime's graph optimizations). The onboarding
+route bounds that difference (the candidate's proposed `kv_logits_max_abs`) and checks that ids, segments and
+transcripts are identical on every corpus clip, long-form included, and that .NET's KV loop equals Python ONNX
+Runtime's bit for bit.
 
 ## Capabilities
 

@@ -553,6 +553,7 @@ One table per family, one column per profile. Rows are every capability any prof
 | compression_ratio_threshold | unsupported |
 | concurrent_calls | untested |
 | condition_on_previous_text | unsupported |
+| kv_cache | experimental |
 | language_detection | untested |
 | logprob_threshold | unsupported |
 | no_speech_detection | unsupported |
@@ -715,5 +716,5 @@ One table per family, one column per profile. Rows are every capability any prof
 - `whisper-large-v3-turbo/onnx-fp16-cpu`: No reference fixtures are adopted into protected/ and no gate has run; every capability is at most experimental.
 - `whisper-large-v3-turbo/onnx-fp16-cpu`: The evidence covers English only (eight LibriSpeech clips, 1.6 s to 59.1 s, asr-corpus-v3); other languages are untested.
 - `whisper-large-v3-turbo/onnx-fp16-cpu`: The fp16 encoder's hidden state drifts further from the fp32 reference on audio positions of 20 to 30 s clips (up to 0.498 in the #229 diagnostic, 0.110 on the 27.9 s composite of asr-corpus-v2, against 0.013 to 0.025 on 14 to 18 s clips), so hidden_max_abs was re-adopted at 0.6 (1.2 x the worst observed). Teacher-forced logits stay within logits_max_abs, and ids, transcripts and segment timestamps equal the reference.
-- `whisper-large-v3-turbo/onnx-fp16-cpu`: Decoding re-runs the full decoder over the prefix at every step (no KV cache), so long transcripts are slow.
+- `whisper-large-v3-turbo/onnx-fp16-cpu`: The KV-cache loop's logits are not bit-identical to the full-context loop's (up to about 1e-2: the fp16 graphs sum over the whole prefix in one product on one path and one row at a time on the other). The bound is the candidate's proposed kv_logits_max_abs, not yet adopted into protected/.
 - `whisper-large-v3-turbo/onnx-fp16-cpu`: The export repository has no license tag; see rights.notes.
