@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <!-- Source only while the intervention mechanism is experimental (docs/interventions/architecture.md). -->
+    <IsPackable>false</IsPackable>
+    <IsAotCompatible>true</IsAotCompatible>
+    <Description>The contract of ONNX Runtime graph interventions: the intervention profile (schema version, base graph identity, operator, sites with their directions and scales), the per-request InterventionSelection, the compiler manifest of a derived graph, and the raw float32 directions file format. Strict JSON parsing, deterministic serialization, SHA-256 and dimension checks. No ONNX Runtime or model dependency. Experimental and source only.</Description>
+    <PackageTags>onnxruntime;interventions;activation-steering;llm</PackageTags>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- CapabilityStatus (BCL only, through Starlings.Acquisition). -->
+    <ProjectReference Include="../Starlings.Models.Abstractions/Starlings.Models.Abstractions.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Starlings.Interventions.Tests" />
+  </ItemGroup>
+
+</Project>
