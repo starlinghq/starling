@@ -175,7 +175,10 @@ checkpoint they were exported from (`candidates/whisper-large-v3-turbo/`). Stage
   full-context decode exactly, and .NET's KV loop must equal Python's (ids exact, step logits within
   `same_backend_max_abs`). The KV loop's step logits against the full-context logits teacher-forced on the same ids are
   not bit-identical (fp16 summation order); they are bounded by the candidate's `evaluation.proposed_policy`
-  `kv_logits_max_abs`, a proposed bound outside `protected/` until the maintainer adopts it. The .NET public audio paths
+  `kv_logits_max_abs`, a proposed bound outside `protected/` until the maintainer adopts it. Adopting moves the key
+  from the candidate's `proposed_policy` into its `policy` in the same protected-change PR that adds it to the tolerance
+  file; the route accepts the key in exactly one of the two places, and the binding check requires the candidate policy
+  and the tolerance file to hold the same keys. The report names the source (`kv_logits_max_abs_source`). The .NET public audio paths
   run the library default, the KV cache.
 - A clip of more than 3000 mel frames (480,160 samples or more) is long-form, exactly as transformers `generate` decides (`is_shortform = frames <= 3000`; the route, the evaluator and the library all decide by frames): one spectrogram over the
   whole clip (`WhisperFeatureExtractor(truncation=False, padding="longest")`, numpy and torch paths, against
