@@ -8824,7 +8824,7 @@
         "No reference fixtures are adopted into protected/ and no gate has run; every capability is at most experimental.",
         "The evidence covers English only (eight LibriSpeech clips, 1.6 s to 59.1 s, asr-corpus-v3); other languages are untested.",
         "The fp16 encoder's hidden state drifts further from the fp32 reference on audio positions of 20 to 30 s clips (up to 0.498 in the #229 diagnostic, 0.110 on the 27.9 s composite of asr-corpus-v2, against 0.013 to 0.025 on 14 to 18 s clips), so hidden_max_abs was re-adopted at 0.6 (1.2 x the worst observed). Teacher-forced logits stay within logits_max_abs, and ids, transcripts and segment timestamps equal the reference.",
-        "The KV-cache loop's logits are not bit-identical to the full-context loop's (up to about 1e-2: the fp16 graphs sum over the whole prefix in one product on one path and one row at a time on the other). The bound is the candidate's proposed kv_logits_max_abs, not yet adopted into protected/.",
+        "The KV-cache loop's logits are not bit-identical to the full-context loop's (up to about 1e-2: the fp16 graphs sum over the whole prefix in one product on one path and one row at a time on the other). The bound, kv_logits_max_abs 0.02 (2 x the worst observed 0.0101), is adopted into the protected tolerance file.",
         "The export repository has no license tag; see rights.notes."
       ],
       "execution": {

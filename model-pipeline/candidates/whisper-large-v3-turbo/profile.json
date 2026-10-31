@@ -150,6 +150,7 @@
       "ground_truth_wer_max": 0.2,
       "hidden_max_abs": 0.6,
       "hidden_padding_max_abs": 1.0,
+      "kv_logits_max_abs": 0.02,
       "logits_max_abs": 0.1,
       "mel_max_abs": 1e-06,
       "mel_path_max_abs": 0.0001,
@@ -164,9 +165,6 @@
       "same_backend_max_abs": 1e-05,
       "token_ids": "exact",
       "transcript": "exact"
-    },
-    "proposed_policy": {
-      "kv_logits_max_abs": 0.02
     },
     "status": "proposed"
   },

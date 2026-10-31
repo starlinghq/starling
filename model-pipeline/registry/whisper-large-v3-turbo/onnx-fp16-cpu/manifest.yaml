@@ -105,7 +105,7 @@ behavior:
       KV cache by default (WhisperOptions.DecoderMode): decoder_model_fp16.onnx once over the prompt, then
       decoder_with_past_model_fp16.onnx one token per step with the cached keys and values; DecoderMode.FullContext
       keeps the reference loop that re-runs decoder_model_fp16.onnx over the prefix at every step. The two loops'
-      logits differ by fp16 summation order (bounded by the candidate's proposed kv_logits_max_abs); ids, segments and
+      logits differ by fp16 summation order (bounded by the adopted kv_logits_max_abs, 0.02); ids, segments and
       transcripts are equal
   unsupported:
     - translation (<|translate|>)
@@ -254,7 +254,7 @@ maintenance:
       within logits_max_abs, and ids, transcripts and segment timestamps equal the reference.
     - >-
       The KV-cache loop's logits are not bit-identical to the full-context loop's (up to about 1e-2: the fp16 graphs
-      sum over the whole prefix in one product on one path and one row at a time on the other). The bound is the
-      candidate's proposed kv_logits_max_abs, not yet adopted into protected/.
+      sum over the whole prefix in one product on one path and one row at a time on the other). The bound,
+      kv_logits_max_abs 0.02 (2 x the worst observed 0.0101), is adopted into the protected tolerance file.
     - >-
       The export repository has no license tag; see rights.notes.

@@ -174,8 +174,8 @@ checkpoint they were exported from (`candidates/whisper-large-v3-turbo/`). Stage
   full-context graph once over the prompt, then one cached step per token). Ids, windows and segments must equal the
   full-context decode exactly, and .NET's KV loop must equal Python's (ids exact, step logits within
   `same_backend_max_abs`). The KV loop's step logits against the full-context logits teacher-forced on the same ids are
-  not bit-identical (fp16 summation order); they are bounded by the candidate's `evaluation.proposed_policy`
-  `kv_logits_max_abs`, a proposed bound outside `protected/` until the maintainer adopts it. Adopting moves the key
+  not bit-identical (fp16 summation order); they are bounded by the candidate's `evaluation.policy`
+  `kv_logits_max_abs`, adopted into `protected/` at 0.02 (it started as the candidate's proposal). Adopting moves the key
   from the candidate's `proposed_policy` into its `policy` in the same protected-change PR that adds it to the tolerance
   file; the route accepts the key in exactly one of the two places, and the binding check requires the candidate policy
   and the tolerance file to hold the same keys. The report names the source (`kv_logits_max_abs_source`). The .NET public audio paths
