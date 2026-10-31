@@ -129,7 +129,8 @@ KV-cache graph must run `WhisperModelAssets.DownloadAsync` again (it fetches onl
 The two loops' logits are **not bit-identical**: the fp16 graphs sum the attention and projections over the whole prefix
 in one matrix product on the full-context path and one row at a time on the cached path, so the float16 accumulations
 round differently (about 1e-3 to 1e-2 in the logits, independent of ONNX Runtime's graph optimizations). The onboarding
-route bounds that difference (the candidate's proposed `kv_logits_max_abs`) and checks that ids, segments and
+route bounds that difference (`kv_logits_max_abs`: the candidate's proposal, binding once adopted into the
+protected tolerance file) and checks that ids, segments and
 transcripts are identical on every corpus clip, long-form included, and that .NET's KV loop equals Python ONNX
 Runtime's bit for bit.
 

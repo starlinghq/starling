@@ -204,9 +204,11 @@ TENSORS = {
     "onnx": ("hidden", "logits", "kv_logits", "kv_full_logits"),
     "dotnet": ("mel", "hidden", "logits", "kv_logits"),
 }
-# Proposed (not yet adopted into protected/) bound of the KV-cache loop: its per-step logits against the full-context
-# decoder's teacher-forced on the same ids, on the same backend. Not bit-exact: the fp16 graphs sum over the whole
-# prefix in one product on the full-context path and one row at a time on the cached path. Capped here.
+# Bounds that start as the candidate's proposal (evaluation.proposed_policy) and become binding once the maintainer
+# adopts them into the protected tolerance file; each key sits in exactly one of the two places, within its cap.
+# kv_logits_max_abs: the KV-cache loop's per-step logits against the full-context decoder's teacher-forced on the same
+# ids, on the same backend. Not bit-exact: the fp16 graphs sum over the whole prefix in one product on the full-context
+# path and one row at a time on the cached path.
 PROPOSED_POLICY_CAPS = {"kv_logits_max_abs": 0.1}
 
 
@@ -225,9 +227,23 @@ def _files(field: str, records, expected: tuple[str, ...]) -> None:
         _refuse(field, f"pinned files must be exactly {sorted(expected)}")
 
 
+def _adoptable_value(field: str, value, cap: float) -> None:
+    if type(value) not in (int, float) or not math.isfinite(value) or not 0 < value <= cap:
+        _refuse(field, f"must be a finite number above 0 and up to {cap}")
+
+
 def _validate_policy(policy: dict) -> None:
-    if not isinstance(policy, dict) or set(policy) != set(POLICY):
-        _refuse("evaluation.policy", f"fields must be exactly {sorted(POLICY)}")
+    if (
+        not isinstance(policy, dict)
+        or not set(POLICY) <= set(policy)
+        or not set(policy) <= set(POLICY) | set(PROPOSED_POLICY_CAPS)
+    ):
+        _refuse(
+            "evaluation.policy",
+            f"fields must be exactly {sorted(POLICY)}, plus any adopted of {sorted(PROPOSED_POLICY_CAPS)}",
+        )
+    for key in set(policy) & set(PROPOSED_POLICY_CAPS):
+        _adoptable_value(f"evaluation.policy.{key}", policy[key], PROPOSED_POLICY_CAPS[key])
     for key, value in FIXED_POLICY_KEYS.items():
         _same(f"evaluation.policy.{key}", policy[key], value)
     for key, cap in FIDELITY_CAPS.items():
@@ -237,14 +253,24 @@ def _validate_policy(policy: dict) -> None:
             _refuse(f"evaluation.policy.{key}", f"must be a finite number up to {cap}")
 
 
-def _validate_proposed_policy(policy) -> None:
-    """The candidate's own proposed bounds (not in protected/): exactly the route's keys, each within its cap."""
-    if not isinstance(policy, dict) or set(policy) != set(PROPOSED_POLICY_CAPS):
-        _refuse("evaluation.proposed_policy", f"fields must be exactly {sorted(PROPOSED_POLICY_CAPS)}")
-    for key, cap in PROPOSED_POLICY_CAPS.items():
-        value = policy[key]
-        if type(value) not in (int, float) or not math.isfinite(value) or not 0 < value <= cap:
-            _refuse(f"evaluation.proposed_policy.{key}", f"must be a finite number above 0 and up to {cap}")
+def _validate_proposed_policy(proposed, policy: dict) -> None:
+    """The candidate's own proposed bounds (not in protected/): exactly the adoptable keys its policy does not hold yet,
+    each within its cap; absent once every one is adopted."""
+    expected = set(PROPOSED_POLICY_CAPS) - set(policy)
+    if proposed is None and not expected:
+        return
+    if not isinstance(proposed, dict) or set(proposed) != expected:
+        _refuse("evaluation.proposed_policy", f"fields must be exactly {sorted(expected)}")
+    for key in expected:
+        _adoptable_value(f"evaluation.proposed_policy.{key}", proposed[key], PROPOSED_POLICY_CAPS[key])
+
+
+def kv_bounds(candidate: dict) -> tuple[float, str]:
+    """The KV-cache logits bound and whether it is binding (adopted into the policy) or the candidate's proposal."""
+    evaluation = candidate["evaluation"]
+    if "kv_logits_max_abs" in evaluation["policy"]:
+        return evaluation["policy"]["kv_logits_max_abs"], "policy"
+    return evaluation["proposed_policy"]["kv_logits_max_abs"], "proposed_policy"
 
 
 def protected_policy(path: Path, profile: str) -> dict:
@@ -264,11 +290,18 @@ def protected_policy(path: Path, profile: str) -> dict:
     if set(data) != {"profile", "reference", "policy", "report_only"}:
         raise PipelineError(f"{path}: tolerance file must hold exactly profile, reference, policy and report_only")
     policy = data["policy"]
-    if not isinstance(policy, dict) or set(policy) != set(POLICY):
-        raise PipelineError(f"{path}: tolerance policy fields must be exactly {sorted(POLICY)}")
+    if (
+        not isinstance(policy, dict)
+        or not set(POLICY) <= set(policy)
+        or not set(policy) <= set(POLICY) | set(PROPOSED_POLICY_CAPS)
+    ):
+        raise PipelineError(
+            f"{path}: tolerance policy fields must be exactly {sorted(POLICY)}, plus any adopted of "
+            f"{sorted(PROPOSED_POLICY_CAPS)}"
+        )
     bound = {}
     for key, value in policy.items():
-        if isinstance(POLICY[key], float):
+        if key in PROPOSED_POLICY_CAPS or isinstance(POLICY[key], float):
             try:
                 number = float(value)
             except (TypeError, ValueError):
@@ -323,10 +356,16 @@ def validate_candidate_behavior(candidate: dict, repo_root: Path | None = None) 
             _same(f"behavior.{key}", behavior[key], value)
         _same("evaluation.status", candidate["evaluation"]["status"], "proposed")
         _validate_policy(candidate["evaluation"]["policy"])
-        _validate_proposed_policy(candidate["evaluation"].get("proposed_policy"))
+        _validate_proposed_policy(candidate["evaluation"].get("proposed_policy"), candidate["evaluation"]["policy"])
         if repo_root is not None:
             relative = contract["protected_tolerances"]
             bound = protected_policy(repository_input(repo_root, relative), contract["id"])
+            # An adoptable key is binding only once the protected file holds it.
+            _same(
+                f"evaluation.policy fields (binding {relative})",
+                sorted(candidate["evaluation"]["policy"]),
+                sorted(bound),
+            )
             for key, value in bound.items():
                 _same(f"evaluation.policy.{key} (binding {relative})", candidate["evaluation"]["policy"][key], value)
         return contract
@@ -845,9 +884,10 @@ def _transcript(row: dict) -> str:
     return row["timestamped"]["transcript"] if row["long_form"] else row["transcript"]
 
 
-def _kv_checks(identifier: str, python_row: dict, dotnet_row: dict, tensors: dict, policy: dict, proposed: dict):
-    """The KV-cache loop: same ids, segments and transcripts as the full-context loop (exact), its logits within the
-    proposed bound of the full-context logits on the same backend, and .NET's KV loop equal to Python's."""
+def _kv_checks(identifier: str, python_row: dict, dotnet_row: dict, tensors: dict, policy: dict, kv_bound: float):
+    """The KV-cache loop: same ids, segments and transcripts as the full-context loop (exact), its logits within
+    `kv_bound` (kv_logits_max_abs, proposed or adopted) of the full-context logits on the same backend, and .NET's KV
+    loop equal to Python's."""
     checks = [
         _exact(
             [_windows(python_row["kv_timestamped"]), _segments(python_row["kv_timestamped"])],
@@ -867,7 +907,7 @@ def _kv_checks(identifier: str, python_row: dict, dotnet_row: dict, tensors: dic
         _difference(
             python_tensors[identifier, "kv_logits"],
             python_tensors[identifier, "kv_full_logits"],
-            proposed["kv_logits_max_abs"],
+            kv_bound,
             f"onnx/{identifier}/kv_logits_vs_full_context",
         ),
         _exact(python_row["kv_ids"], python_row["ids"], f"onnx/{identifier}/kv_ids_vs_full_context"),
@@ -936,7 +976,8 @@ def evaluate_development(
     contract = validate_candidate_behavior(candidate, repo_root)
     policy_source = contract["protected_tolerances"] if repo_root is not None else "unbound (route caps only)"
     behavior, policy = candidate["behavior"], candidate["evaluation"]["policy"]
-    proposed = candidate["evaluation"]["proposed_policy"]
+    proposed = candidate["evaluation"].get("proposed_policy", {})
+    kv_bound, kv_source = kv_bounds(candidate)
     digest = fixtures.sha256_file(candidate_path)
     reference, expected = _document(reference_path, candidate, digest, "reference")
     onnx, python_cases = _document(onnx_path, candidate, digest, "onnx")
@@ -985,7 +1026,7 @@ def evaluate_development(
     checks = []
     for identifier, row in expected.items():
         python_row, dotnet_row = python_cases[identifier], dotnet_cases[identifier]
-        checks += _kv_checks(identifier, python_row, dotnet_row, tensors, policy, proposed)
+        checks += _kv_checks(identifier, python_row, dotnet_row, tensors, policy, kv_bound)
         if row["long_form"]:
             checks += _long_form_checks(identifier, row, python_row, dotnet_row, tensors, policy)
             continue
@@ -1111,9 +1152,12 @@ def evaluate_development(
         "evaluation_status": "proposed",
         "policy": policy,
         "policy_source": policy_source,
-        # The candidate's own bounds for checks the binding tolerances do not cover yet (the KV-cache loop).
+        # The candidate's own bounds that the binding tolerances do not hold yet; empty once every adoptable bound
+        # (PROPOSED_POLICY_CAPS) is adopted, and then there is nothing proposed to qualify.
         "proposed_policy": proposed,
-        "proposed_policy_status": "proposed",
+        "proposed_policy_status": "proposed" if proposed else "none",
+        # Where the KV-cache logits bound came from: the (binding) policy, or the candidate's proposal.
+        "kv_logits_max_abs_source": kv_source,
         "policy_status": "binding" if repo_root is not None else "proposed",
         "protected_release_qualification": {"status": "unapproved", "G1": "not-run", "G2": "not-run"},
         "inputs": {

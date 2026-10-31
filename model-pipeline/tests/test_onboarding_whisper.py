@@ -28,6 +28,22 @@ def profile() -> dict:
     return json.loads(PROFILE.read_text(encoding="utf-8"))
 
 
+# The KV-cache bound sits in the candidate's proposed_policy until the maintainer adopts it, then in its policy. The
+# tests below put a candidate in either state explicitly, so they hold before and after that adoption.
+def _to_proposed(candidate: dict) -> dict:
+    evaluation = candidate["evaluation"]
+    if "kv_logits_max_abs" in evaluation["policy"]:
+        evaluation["proposed_policy"] = {"kv_logits_max_abs": evaluation["policy"].pop("kv_logits_max_abs")}
+    return candidate
+
+
+def _to_adopted(candidate: dict) -> dict:
+    evaluation = candidate["evaluation"]
+    if "proposed_policy" in evaluation:
+        evaluation["policy"]["kv_logits_max_abs"] = evaluation.pop("proposed_policy")["kv_logits_max_abs"]
+    return candidate
+
+
 # --- contract -------------------------------------------------------------------------------------------------------
 
 
@@ -80,15 +96,19 @@ NEAR_MISSES = [
     ("missing graph", lambda c: c["origin"]["files"].pop(3), "origin.files"),
     ("other encoder", lambda c: c["origin"]["files"][5].update(sha256="f" * 64), "origin.files"),
     ("other KV-cache graph", lambda c: c["origin"]["files"][4].update(size=1), "origin.files"),
-    ("no proposed policy", lambda c: c["evaluation"].pop("proposed_policy"), "evaluation.proposed_policy"),
+    (
+        "no proposed policy",
+        lambda c: _to_proposed(c)["evaluation"].pop("proposed_policy"),
+        "evaluation.proposed_policy",
+    ),
     (
         "KV bound over cap",
-        lambda c: c["evaluation"]["proposed_policy"].update(kv_logits_max_abs=0.5),
+        lambda c: _to_proposed(c)["evaluation"]["proposed_policy"].update(kv_logits_max_abs=0.5),
         "kv_logits_max_abs",
     ),
     (
         "unknown proposed key",
-        lambda c: c["evaluation"]["proposed_policy"].update(beam_max=1),
+        lambda c: _to_proposed(c)["evaluation"]["proposed_policy"].update(beam_max=1),
         "evaluation.proposed_policy",
     ),
     ("missing weights", lambda c: c["origin"]["base"]["files"].pop(4), "origin.base.files"),
@@ -610,7 +630,9 @@ def test_complete_evidence_passes_and_never_adopts_protected_gates(tmp_path, tin
         "dotnet-mel/*/kv_ids_vs_python",
         "dotnet-mel/*/kv_timestamped_vs_python",
     }
-    assert report["proposed_policy"] == {"kv_logits_max_abs": 0.02}
+    bound, source = whisper.kv_bounds(tiny)
+    assert bound == 0.02 and report["kv_logits_max_abs_source"] == source
+    assert report["proposed_policy"] == ({"kv_logits_max_abs": 0.02} if source == "proposed_policy" else {})
     assert [check["id"] for check in report["checks"][-4:]] == [
         "reference/corpus/wer_vs_ground_truth",
         "reference/corpus/timestamp_pair_coverage",
@@ -1066,3 +1088,82 @@ def test_the_corpus_must_hold_a_long_form_clip_of_three_windows(tmp_path, tiny):
 
     report = whisper.evaluate_development(**evidence(tmp_path, tiny, {"reference": two_windows}))
     assert "reference/corpus/long_form_coverage" in report["failed_checks"]
+
+
+# --- adopting a proposed bound into the binding tolerances ------------------------------------------------------------
+
+
+def adopted(candidate: dict) -> dict:
+    """The candidate as it reads once kv_logits_max_abs is adopted: in the policy, no proposed policy left."""
+    return _to_adopted(copy.deepcopy(candidate))
+
+
+def proposed(candidate: dict) -> dict:
+    """The candidate as it reads before kv_logits_max_abs is adopted: in the proposed policy."""
+    return _to_proposed(copy.deepcopy(candidate))
+
+
+def test_an_adopted_kv_bound_moves_from_the_proposal_into_the_policy():
+    whisper.validate_candidate_behavior(adopted(profile()))
+    whisper.validate_candidate_behavior(proposed(profile()))
+    assert whisper.kv_bounds(proposed(profile())) == (0.02, "proposed_policy")
+    assert whisper.kv_bounds(adopted(profile())) == (0.02, "policy")
+
+
+@pytest.mark.parametrize(
+    ("change", "field"),
+    [
+        (lambda c: c["evaluation"]["policy"].update(kv_logits_max_abs=0.02), "evaluation.proposed_policy"),
+        (lambda c: c["evaluation"]["policy"].update(kv_logits_max_abs=0.5), "evaluation.policy.kv_logits_max_abs"),
+        (lambda c: c["evaluation"]["policy"].update(kv_logits_max_abs=True), "evaluation.policy.kv_logits_max_abs"),
+    ],
+    ids=["in both places", "adopted over cap", "adopted non-number"],
+)
+def test_a_kv_bound_sits_in_exactly_one_place_within_its_cap(change, field):
+    candidate = proposed(profile())
+    change(candidate)
+    if "proposed_policy" not in field:
+        candidate["evaluation"].pop("proposed_policy")
+    with pytest.raises(PipelineError, match=field.replace(".", r"\.")):
+        whisper.validate_candidate_behavior(candidate)
+
+
+def test_a_tolerance_file_may_adopt_the_kv_bound(tmp_path):
+    text = TOLERANCES.read_text(encoding="utf-8")
+    text = "".join(line for line in text.splitlines(True) if not line.startswith("  kv_logits_max_abs:"))
+    text = text.replace("  logits_max_abs: 0.1\n", "  logits_max_abs: 0.1\n  kv_logits_max_abs: 2e-2\n")
+    (tmp_path / "tolerances.yaml").write_text(text, encoding="utf-8")
+    bound = whisper.protected_policy(tmp_path / "tolerances.yaml", PROFILE_ID)
+    assert bound["kv_logits_max_abs"] == 0.02 and type(bound["kv_logits_max_abs"]) is float
+    assert bound == adopted(profile())["evaluation"]["policy"]
+
+
+def test_the_binding_check_requires_the_same_adopted_keys():
+    # The candidate in the other state than the shipped tolerance file is off the binding file.
+    binding = whisper.protected_policy(TOLERANCES, PROFILE_ID)
+    other = proposed(profile()) if "kv_logits_max_abs" in binding else adopted(profile())
+    with pytest.raises(PipelineError, match="evaluation\\.policy fields \\(binding"):
+        whisper.validate_candidate_behavior(other, REPO)
+
+
+@pytest.mark.parametrize(
+    ("state", "source", "proposal", "status"),
+    [
+        (proposed, "proposed_policy", {"kv_logits_max_abs": 0.02}, "proposed"),
+        (adopted, "policy", {}, "none"),
+    ],
+    ids=["proposed", "adopted"],
+)
+def test_the_evaluator_reports_where_the_kv_bound_came_from(tmp_path, tiny, state, source, proposal, status):
+    report = whisper.evaluate_development(**evidence(tmp_path, state(tiny)))
+    assert report["status"] == "passed" and report["kv_logits_max_abs_source"] == source
+    assert report["proposed_policy"] == proposal and report["proposed_policy_status"] == status
+
+
+@pytest.mark.parametrize("state", [proposed, adopted], ids=["proposed", "adopted"])
+def test_the_kv_bound_gates_the_kv_logits_in_either_state(tmp_path, tiny, state):
+    report = whisper.evaluate_development(
+        **evidence(tmp_path, state(tiny), {"onnx": nudge("kv_logits", 0.05, "clip-b")})
+    )
+    check = next(c for c in report["checks"] if c["id"] == "onnx/clip-b/kv_logits_vs_full_context")
+    assert check["status"] == "failed" and check["bound"] == 0.02
