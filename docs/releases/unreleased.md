@@ -21,7 +21,10 @@ Changes merged to `main` after the last release record, collected here for the n
   prompting without `<|notimestamps|>` and decoding without the timestamp rules.
 - **KV-cache decoding (experimental, #192), now the default.** `WhisperModelAssets.Lock` adds
   `onnx/decoder_with_past_model_fp16.onnx` (317,742,004 bytes, same revision), so `DownloadAsync` fetches about 318 MB
-  more. `WhisperModel` runs the full-context decoder once over the prompt and then one cached step per token;
+  more. **Upgrading:** a cache acquired before this change lacks that file, so `WhisperModelAssets.OpenLocal` and
+  `OpenDirectory` throw `ModelAssetMissingException` until `WhisperModelAssets.DownloadAsync` runs again (it fetches only
+  the missing file). This applies with `DecoderMode = FullContext` too: the lock is one set of files, and that mode
+  merely does not load the graph. `WhisperModel` runs the full-context decoder once over the prompt and then one cached step per token;
   `WhisperOptions.DecoderMode = WhisperDecoderMode.FullContext` keeps the previous loop. Logits differ from the
   full-context loop in the last bits (fp16 summation order; bounded on the route), ids are equal. New:
   `WhisperDecoderMode`, `WhisperOptions.DecoderMode` and `DecoderWithPastSession`, `WhisperModelFiles.DecoderWithPastPath`,

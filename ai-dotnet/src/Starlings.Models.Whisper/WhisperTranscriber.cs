@@ -49,10 +49,16 @@ public sealed class WhisperTranscriber : IDisposable
     /// </summary>
     /// <exception cref="InvalidDataException">The tokenizer file is not the pinned one.</exception>
     /// <exception cref="WhisperUnsupportedLanguageException"><see cref="WhisperOptions.Language"/> is not a language code of the model.</exception>
+    /// <exception cref="ArgumentException"><see cref="WhisperOptions.DecoderMode"/> is <see cref="WhisperDecoderMode.KvCache"/>, which needs the KV-cache graph (the four-path overload); checked before the tokenizer loads.</exception>
     public static WhisperTranscriber Create(string encoderPath, string decoderPath, string tokenizerPath, WhisperOptions? options = null)
     {
         options ??= new WhisperOptions();
         options.Validate();
+        if (options.DecoderMode == WhisperDecoderMode.KvCache)
+        {
+            throw new ArgumentException("DecoderMode.KvCache needs the decoder_with_past graph: use the overload that takes its path.", nameof(options));
+        }
+
         var tokenizer = WhisperTokenizer.FromFile(tokenizerPath, WhisperModelAssets.TokenizerSha256);
         var model = WhisperModel.Create(encoderPath, decoderPath, options);
         return new WhisperTranscriber(model, tokenizer, options, ownsModel: true);

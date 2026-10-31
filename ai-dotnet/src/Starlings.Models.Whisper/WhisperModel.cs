@@ -269,6 +269,7 @@ public sealed class WhisperModel : IDisposable
     /// <see cref="MaxTargetPositions"/> tokens in total (the decoder has no position beyond it). Returns ids including the prompt.
     /// </summary>
     /// <exception cref="ArgumentException">The prompt fills every decoder position.</exception>
+    /// <exception cref="ArgumentOutOfRangeException"><paramref name="maxLength"/> is less than 1.</exception>
     public int[] Generate(float[] encoderHidden, int[] prompt, int maxLength = 448, CancellationToken cancellationToken = default) =>
         GenerateCore(encoderHidden, prompt, maxLength, timestamps: false, DecoderMode, null, cancellationToken);
 
@@ -278,6 +279,7 @@ public sealed class WhisperModel : IDisposable
     /// <see cref="NoTimestamps"/> (<see cref="Prompt"/> with <c>noTimestamps: false</c>). Returns ids including the prompt.
     /// </summary>
     /// <exception cref="ArgumentException">The prompt fills every decoder position.</exception>
+    /// <exception cref="ArgumentOutOfRangeException"><paramref name="maxLength"/> is less than 1.</exception>
     public int[] GenerateWithTimestamps(float[] encoderHidden, int[] prompt, int maxLength = 448, CancellationToken cancellationToken = default) =>
         GenerateCore(encoderHidden, prompt, maxLength, timestamps: true, DecoderMode, null, cancellationToken);
 
@@ -286,6 +288,7 @@ public sealed class WhisperModel : IDisposable
     /// each step's raw logits row (before suppression and the timestamp rules) to <paramref name="stepLogits"/>.
     /// </summary>
     /// <exception cref="InvalidOperationException"><paramref name="mode"/> is <see cref="WhisperDecoderMode.KvCache"/> and the KV-cache graph is not loaded.</exception>
+    /// <exception cref="ArgumentOutOfRangeException"><paramref name="maxLength"/> is less than 1.</exception>
     public int[] GenerateRecordingLogits(
         float[] encoderHidden, int[] prompt, WhisperDecoderMode mode, bool timestamps, List<float[]> stepLogits,
         int maxLength = 448, CancellationToken cancellationToken = default)
@@ -455,6 +458,8 @@ public sealed class WhisperModel : IDisposable
             throw new ArgumentException($"The prompt must hold 1 to {MaxTargetPositions - 1} tokens, got {prompt.Length}.", nameof(prompt));
         }
 
+        // Both loops emit at least one token once they start, so a non-positive budget is refused for either mode.
+        ArgumentOutOfRangeException.ThrowIfLessThan(maxLength, 1);
         ObjectDisposedException.ThrowIf(Volatile.Read(ref _disposed) != 0, this);
         if (mode == WhisperDecoderMode.KvCache)
         {

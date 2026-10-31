@@ -28,6 +28,39 @@ public sealed class KvCacheTests
     }
 
     [Fact]
+    public void TheThreePathTranscriberRefusesKvCacheBeforeReadingTheTokenizer()
+    {
+        // The tokenizer path does not exist: the mode check must come first.
+        var ex = Assert.Throws<ArgumentException>(() => WhisperTranscriber.Create(
+            "missing-encoder.onnx", "missing-decoder.onnx", "missing-tokenizer.json", new WhisperOptions { DecoderMode = WhisperDecoderMode.KvCache }));
+
+        Assert.Equal("options", ex.ParamName);
+    }
+
+    [Fact]
+    public void BothLoopsAgreeAtOneTokenAndRefuseZero()
+    {
+        var (files, reason) = WhisperTestAssets.FindModel();
+        Assert.SkipWhen(files is null, reason);
+        var cancellationToken = TestContext.Current.CancellationToken;
+        using var model = WhisperModel.Create(files!.EncoderPath, files.DecoderPath, files.DecoderWithPastPath);
+        float[] hidden = model.Encode(WhisperMelSpectrogram.ExtractChunk(new float[16_000]), cancellationToken);
+        int[] prompt = WhisperModel.Prompt("en");
+        foreach (var mode in new[] { WhisperDecoderMode.FullContext, WhisperDecoderMode.KvCache })
+        {
+            int[] ids = model.GenerateRecordingLogits(hidden, prompt, mode, timestamps: false, [], maxLength: 1, cancellationToken);
+            Assert.Equal(prompt.Length + 1, ids.Length);
+            Assert.Throws<ArgumentOutOfRangeException>(
+                () => model.GenerateRecordingLogits(hidden, prompt, mode, timestamps: false, [], maxLength: 0, cancellationToken));
+        }
+
+        Assert.Equal(
+            model.GenerateRecordingLogits(hidden, prompt, WhisperDecoderMode.FullContext, false, [], 1, cancellationToken),
+            model.GenerateRecordingLogits(hidden, prompt, WhisperDecoderMode.KvCache, false, [], 1, cancellationToken));
+        Assert.Throws<ArgumentOutOfRangeException>(() => model.Generate(hidden, prompt, maxLength: 0, cancellationToken));
+    }
+
+    [Fact]
     public void TheKvCacheLoopEqualsTheFullContextLoop()
     {
         var (files, reason) = WhisperTestAssets.FindModel();
