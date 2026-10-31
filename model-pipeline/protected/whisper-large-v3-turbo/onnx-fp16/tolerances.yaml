@@ -32,6 +32,22 @@
 # logits_max_abs (worst 0.036), and ids, transcripts and segment timestamps are exact on every clip; every other key is
 # unchanged.
 #
+# Evidence for kv_logits_max_abs (#192, PR #231); adopted in PR #233: the KV-cache decoder loop (decoder_with_past_model_fp16.onnx) against the
+# full-context decoder teacher-forced on the same ids, same backend (Python ONNX Runtime 1.30 CPU, fp16 graphs). Not
+# bit-identical: the fp16 graphs sum over the whole prefix in one product on one path and one row at a time on the
+# other (ORT_DISABLE_ALL with one thread still differs by up to 4e-3). Evidence: model-pipeline run of
+# recipes/whisper-large-v3-turbo-cpu.yaml on #231 with #229 (7583dcf), 194/194 checks, asr-corpus-v3, 2 threads.
+# Per clip, max (mean) abs over every generated step:
+#   librispeech-1272-128104-0000                   0.0042 (7.1e-4)
+#   librispeech-1272-135031-0009                   0.0024 (5.4e-4)
+#   librispeech-1272-128104-0002                   0.0101 (1.0e-3)   (worst observed)
+#   librispeech-1272-141231-0013                   0.0016 (3.8e-4)
+#   composite 1272-135031-0003..0008, 27.9 s       0.0062 (8.5e-4)
+#   composite 1272-128104-0009..0011 cut at 30 s   0.0061 (8.8e-4)
+# KV-cache ids, windows, segments and transcripts equal the full-context loop's on every clip (long-form included), and
+# .NET's KV loop equals Python's bit for bit. Margin rule: about 2 x the worst observed, rounded to one significant
+# figure: 2 x 0.0101 = 0.0202 -> 0.02. The route caps this key at 0.1.
+#
 # The encoder hidden state is bounded separately on the positions whose receptive field holds audio and on the
 # zero-padded tail. On the original four clips (1.6 s to 12.5 s), fp16 drift concentrated on the padded (log-mel
 # floor) frames (0.16 to 0.54 there, at most 0.012 on audio positions). Longer clips show greater audio-position drift,
@@ -46,6 +62,7 @@ policy:
   hidden_max_abs: 0.6
   hidden_padding_max_abs: 1.0
   logits_max_abs: 0.1
+  kv_logits_max_abs: 0.02
   same_backend_max_abs: 1.0e-5
   token_ids: exact
   transcript: exact
