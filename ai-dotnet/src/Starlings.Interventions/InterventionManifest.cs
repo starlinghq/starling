@@ -312,6 +312,7 @@ public sealed class InterventionManifest
         BaseGraph = graph.File;
         SchemaVersion = schemaVersion;
         Profiles = new ReadOnlyCollection<InterventionManifestProfile>(profiles);
+        ProfileIds = new ReadOnlyCollection<string>([.. profiles.Select(p => p.Id)]);
         Opset = opset;
         Precision = precision;
         Inputs = new ReadOnlyCollection<InterventionGraphInput>(inputList);
@@ -359,7 +360,7 @@ public sealed class InterventionManifest
     public InterventionOperatorKind Operator => Single.Operator;
 
     /// <summary>The ids of <see cref="Profiles"/>, in strength-vector order.</summary>
-    public IReadOnlyList<string> ProfileIds => [.. Profiles.Select(p => p.Id)];
+    public IReadOnlyList<string> ProfileIds { get; }
 
     private InterventionManifestProfile Single => Profiles.Count == 1
         ? Profiles[0]

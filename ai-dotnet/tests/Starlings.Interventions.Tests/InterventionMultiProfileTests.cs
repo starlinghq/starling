@@ -411,6 +411,18 @@ public sealed class InterventionMultiProfileTests
     }
 
     [Fact]
+    public void SelectionsOfSeveralProfilesPrintTheirEntries()
+    {
+        // A record prints every public property; ProfileId and Strength throw for several profiles, so ToString (string
+        // interpolation, logging, the debugger) must not go through them.
+        InterventionSelection two = new([new("synthetic-a", 1f), new("synthetic-b", -0.5f)]);
+        string text = two.ToString();
+        Assert.Contains("synthetic-a", text, StringComparison.Ordinal);
+        Assert.Contains("synthetic-b", text, StringComparison.Ordinal);
+        Assert.Contains("synthetic-a", new InterventionSelection("synthetic-a", 1f).ToString(), StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void OpensASchema2EntryWithItsProfilesInStrengthOrder()
     {
         using MultiEntry e = new();

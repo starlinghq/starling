@@ -130,6 +130,22 @@ public sealed record InterventionSelection
         _ = Resolve([profile.Id]);
     }
 
+    // The synthesized PrintMembers would read ProfileId and Strength, which throw for several profiles.
+    private bool PrintMembers(System.Text.StringBuilder builder)
+    {
+        builder.Append("Entries = [");
+        for (int i = 0; i < _entries.Length; i++)
+        {
+            builder.Append(i == 0 ? "" : ", ")
+                .Append(_entries[i].ProfileId)
+                .Append(": ")
+                .Append(_entries[i].Strength.ToString(System.Globalization.CultureInfo.InvariantCulture));
+        }
+
+        builder.Append(']');
+        return true;
+    }
+
     /// <inheritdoc/>
     public bool Equals(InterventionSelection? other) =>
         other is not null && _entries.AsSpan().SequenceEqual(other._entries);
