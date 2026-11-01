@@ -32,10 +32,10 @@ The compiler inserts it as `MatMul(y, Q^T)`, `Mul(s, alpha)`, `Mul(·, s·alpha)
 | Graph compiler | `model-pipeline/src/model_pipeline/interventions/` | Python, onnx API ([compiler.md](compiler.md)). Reads a profile and a model-specific site mapping, inserts the operator at the mapped tensors, adds the strength input, writes the derived graph and the compiler manifest. |
 | Site mappings | `model-pipeline/src/model_pipeline/interventions/injection_sites.py` | Per model, versioned, keyed to the exact SHA-256 of the base graph asset. A graph hash with no mapping is unsupported; unknown graphs are never pattern-matched. |
 | Derived artifact cache | `<cache>/<model>/interventions/<key>/`; writer `model_pipeline/interventions/cache.py`, reader `InterventionArtifactCache` | `model.onnx`, hard links to the base weights, `profile.json` (verbatim), its directions files and `compiler-manifest.json`. Keyed by a hash of every compile input, published by one directory rename under a file lock, reused on repeat, verified on every open; the source bundle is never written ([cache.md](cache.md)). |
-| Session loading | `Starlings.Runtime.Onnx` | Derived graphs load through the ordinary `OnnxModelSession.Create(path, options)`; diagnostics report the original and loaded graph identities and the intervention inputs. |
+| Session loading | `Starlings.Runtime.Onnx` | Derived graphs load through the ordinary `OnnxModelSession.Create(path, options)`; `OnnxSessionOptions` has no intervention setting. The companion `OnnxInterventionDiagnostics` reports the original and loaded graph identities, whether interventions are on, the profile ids and the intervention inputs (see "Loading a derived graph" below). |
 | Model integration | e.g. `Starlings.Models.Lfm3` | Recognizes a verified derived graph through its manifest, accepts exactly the declared extra inputs, and passes the strength on every call. |
 
-The graph compiler and the derived-artifact cache are experimental. Session diagnostics and model integration arrive in later changes; each carries its own capability status.
+The graph compiler, the derived-artifact cache and the session diagnostics are experimental. Model integration arrives in a later change and carries its own capability status.
 
 ## Identities
 
@@ -45,6 +45,27 @@ The graph compiler and the derived-artifact cache are experimental. Session diag
 - **Derived graph identity**: SHA-256 of the derived `model.onnx` and of every other derived file, in the manifest.
 
 The cache key of a derived graph combines the base graph and external weight identities, the profile hash, the compiler version, the site-mapping version, the opset, the precision and the declared inputs. All of them are recorded in the compiler manifest, so a reader recomputes the key from the manifest and checks it against the cache directory name ([cache.md](cache.md)).
+
+## Loading a derived graph
+
+A model package that supports interventions loads a derived graph like any other model file, then records what it loaded:
+
+```csharp
+InterventionArtifact artifact = InterventionArtifactCache.Open(cacheRoot, "lfm3", key);   // verify before loading
+artifact.Manifest.VerifyBaseModel(expectedBaseGraphSha256);                                // wrong base graph: no session
+using var session = OnnxModelSession.Create(artifact.GraphPath, new OnnxSessionOptions
+{
+    KnownModelSha256 = artifact.Manifest.DerivedGraph.Sha256,   // verified by Open; not re-read
+});
+var interventions = OnnxInterventionDiagnostics.ForDerivedGraph(
+    session,
+    artifact.Manifest.BaseModelSha256,
+    artifact.Manifest.DerivedGraph.Sha256,
+    [artifact.Manifest.ProfileId],
+    [.. artifact.Manifest.Inputs.Select(i => i.Name)]);
+```
+
+`Starlings.Runtime.Onnx` knows nothing about profiles or manifests: the diagnostics type takes plain values, and the model package (which references both libraries) fills it in. Without an intervention the package loads the original graph and reports `OnnxInterventionDiagnostics.ForOriginalGraph(session)`: same inputs, same cost as before.
 
 ## Requests
 

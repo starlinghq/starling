@@ -32,6 +32,25 @@ def add_model() -> bytes:
     return finish(graph, {"purpose": "runtime-tests"})
 
 
+def add_with_strength_model() -> bytes:
+    """The shape of a derived intervention graph of Add: s = x + y; z = s - intervention_strength * s.
+
+    One extra float [1] input, appended after the base inputs, as the intervention compiler adds it; strength 0 gives
+    exactly the Add graph's output.
+    """
+    x = helper.make_tensor_value_info("x", TensorProto.FLOAT, ["batch", 4])
+    y = helper.make_tensor_value_info("y", TensorProto.FLOAT, ["batch", 4])
+    strength = helper.make_tensor_value_info("intervention_strength", TensorProto.FLOAT, [1])
+    z = helper.make_tensor_value_info("z", TensorProto.FLOAT, ["batch", 4])
+    nodes = [
+        helper.make_node("Add", ["x", "y"], ["sum"]),
+        helper.make_node("Mul", ["sum", "intervention_strength"], ["delta"]),
+        helper.make_node("Sub", ["sum", "delta"], ["z"]),
+    ]
+    graph = helper.make_graph(nodes, "add-intervention", [x, y, strength], [z])
+    return finish(graph, {"purpose": "runtime-tests"})
+
+
 def slow_model(steps: int = 300) -> bytes:
     """x [n, n] -> Tanh(MatMul(h, h)) repeated; long enough to cancel between nodes."""
     x = helper.make_tensor_value_info("x", TensorProto.FLOAT, ["n", "n"])
@@ -284,6 +303,11 @@ def emit(doc: str, name: str, data: bytes) -> str:
 
 parts = [
     emit("z = x + y, float [batch, 4].", "Add", add_model()),
+    emit(
+        "Derived-intervention shape of Add: z = (x + y) - intervention_strength * (x + y); intervention_strength float [1].",
+        "AddWithStrength",
+        add_with_strength_model(),
+    ),
     emit("300 x Tanh(MatMul(h, h)) on float [n, n].", "Slow", slow_model()),
     emit(
         "e5 signature; hidden[b, t] = [id, 1000 * token_type_id, 1, 0.5 * mask].",
