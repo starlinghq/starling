@@ -210,7 +210,15 @@ public sealed record OnnxSessionOptions
     /// </summary>
     public bool? TrimNativeHeapAfterRun { get; init; }
 
-    internal void Validate()
+    /// <summary>
+    /// Throws if an option is out of range or malformed, including <see cref="Cuda"/> (validated whatever the
+    /// <see cref="Provider"/>). Session creation and <see cref="OnnxRuntimeInfo.TryInitializeProvider(OnnxSessionOptions, out string?)"/>
+    /// call it; call it directly to check a configuration early, for example at startup. Needs no model, GPU or CUDA
+    /// libraries, so it cannot tell whether a provider or device accepts the options.
+    /// </summary>
+    /// <exception cref="ArgumentOutOfRangeException">A value is out of range or an enum value is undefined.</exception>
+    /// <exception cref="ArgumentException">A path, hash or additional CUDA provider option is malformed.</exception>
+    public void Validate()
     {
         if (!Enum.IsDefined(Provider))
         {

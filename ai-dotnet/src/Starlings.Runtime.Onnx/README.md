@@ -74,6 +74,10 @@ using var outputs = session.Run(inputNames, inputValues, outputNames, cancellati
 
 The options are validated on every build, CPU-only included, and ignored for a CPU session. `use_tf32=0` is always set and is not an option. A non-default cuDNN algorithm search can change convolution results in the last bits; the qualified CUDA profiles were measured with the defaults, and no model package's parity claim covers other values. `Diagnostics.ProviderOptions` reports the options as ONNX Runtime returns them. Status: untested on CUDA (no GPU run with these options).
 
+`AdditionalProviderOptions` passes further CUDA provider options as raw key-value strings, after the typed ones, for options the typed members do not cover. Starlings does not validate their names or values: it only rejects a blank key, a null value, or a key that Starlings or a typed member sets (`device_id`, `use_tf32`, `gpu_mem_limit`, `arena_extend_strategy`, `cudnn_conv_algo_search`, `enable_cuda_graph`), even when the typed member is null. ONNX Runtime rejects an unknown key or a bad value when the CUDA provider is created (`OnnxProviderUnavailableException`). No model package's parity claim covers options passed this way. Status: untested on CUDA.
+
+`OnnxSessionOptions.Validate()` (and `OnnxCudaProviderOptions.Validate()`) is public: it runs the same checks as session creation, without a model or GPU, so a configuration can be checked at startup.
+
 ### Logging, optimization level and the optimized graph
 
 - `LogSeverity` (default `Error`, the level before this option existed) and `LogId` set the session's ONNX Runtime log filter and logger id.
