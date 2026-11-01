@@ -73,4 +73,6 @@ The range is reported when the passing strengths are contiguous in the sweep, on
 - The quality check is a keyword and repetition check, not a judgement of factual accuracy or helpfulness. Read `generations.jsonl` for that.
 - The drift and capability thresholds were fixed before the run, without calibration.
 - Only `shorter_responses` is implemented as a target effect.
+- Only `directional_projection` profiles with one site per layer and one target for every site are evaluated; the command rejects other profiles, since the control, the report's sign convention and the single capture target assume them.
+- Capability answers are capped at `capability_max_new_tokens`; a step-by-step answer cut off before its final number scores as wrong. `generations.jsonl` records whether each answer ended.
 - Real-model runs are local; CI runs only the model-free tests.

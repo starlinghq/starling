@@ -367,6 +367,23 @@ def test_the_control_directions_are_the_written_profiles_directions(tmp_path):
     assert [s.layer for s in written.profile.sites] == [s.layer for s in profile.profile.sites]
 
 
+def test_only_supported_profiles_are_evaluated():
+    import dataclasses
+
+    from model_pipeline.interventions.contract import load_profile
+
+    profile = load_profile(CONCISE / "profile.json").profile
+    ev.check_supported_profile(profile)
+    with pytest.raises(ev.EvaluationSpecError, match="operator"):
+        ev.check_supported_profile(dataclasses.replace(profile, operator="additive"))
+    first = profile.sites[0]
+    with pytest.raises(ev.EvaluationSpecError, match="one site per layer"):
+        ev.check_supported_profile(dataclasses.replace(profile, sites=(first, first)))
+    other = dataclasses.replace(profile.sites[1], target="mlp_out")
+    with pytest.raises(ev.EvaluationSpecError, match="one target"):
+        ev.check_supported_profile(dataclasses.replace(profile, sites=(first, other)))
+
+
 # --------------------------------------------------------------------------------------------------------------------
 # The checked-in evidence
 
@@ -396,3 +413,18 @@ def test_the_checked_in_report_matches_its_inputs():
             target = [r for r in rows if r["arm"] == arm and r["set"] == "target" and r["strength"] == e["strength"]]
             assert e["target"]["finished"] == sum(r["finished"] for r in target)
             assert e["target"]["median_tokens"] == pytest.approx(float(np.median([r["tokens"] for r in target])))
+            assert e["target"]["keywords"] == sum(r["keywords"] for r in target)
+            assert e["target"]["degenerate"] == sum(r["degenerate"] for r in target)
+            capability = [
+                r for r in rows if r["arm"] == arm and r["set"] == "capability" and r["strength"] == e["strength"]
+            ]
+            assert e["capability"]["correct"] == sum(r["correct"] for r in capability)
+    # Every stored score follows from the stored text under the current scorers.
+    target_by_id = {t.id: t for t in ev.load_target(spec.target_prompts)}
+    checks = {c.id: c.check for c in ev.load_capability(spec.capability)}
+    for r in rows:
+        if r["set"] == "target":
+            assert r["keywords"] == ev.keyword_hits(target_by_id[r["id"]].keywords, r["text"]), r["id"]
+            assert r["degenerate"] == ev.is_degenerate(r["text"]), r["id"]
+        else:
+            assert r["correct"] == ev.score_capability(checks[r["id"]], r["text"]), (r["arm"], r["strength"], r["id"])
