@@ -9,8 +9,9 @@ public enum InterventionArtifactVerification
     /// hard-linked external weights) is recorded with its base artifact's SHA-256 and size, exists with that size, and
     /// still has the <see cref="InterventionArtifactFile.Identity"/> the manifest records (an entry without one fails):
     /// on Linux device, inode and modification time (and, with a base directory, the base file is that same inode);
-    /// on other platforms the modification time only, at 100 ns precision. The weights are not hashed, so a rewrite in
-    /// place that keeps the size and restores the modification time is not detected at this level.
+    /// on other platforms the modification time only, at 100 ns precision, and no base-directory inode check. The
+    /// weights are not hashed, so a rewrite in place that keeps the size and restores the modification time is not
+    /// detected at this level.
     /// </summary>
     Fast,
 

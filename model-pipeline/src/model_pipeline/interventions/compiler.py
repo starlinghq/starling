@@ -436,6 +436,9 @@ def _write_outputs(
         # hardlink attack"), although ONNX Runtime 1.30 loads it. onnx.load(..., load_external_data=True) refuses it
         # too.
 
+    # Taken before hashing and compared after it: a weights file rewritten in place while it was hashed would otherwise
+    # be recorded with a digest of stale or torn bytes and the post-rewrite mtime, and pass Fast verification forever.
+    before = {link.relative_to(out_dir).as_posix(): FileIdentity.of(link) for link in linked}
     external_artifacts = external_data.base_external_artifacts(graph_path, base_dir, locations)
     base_artifacts = [BaseArtifact(ARTIFACT_ROLE_GRAPH, graph, graph_sha, len(graph_bytes)), *external_artifacts]
     # The derived graph reads its external data from out_dir/<location>, so those files are derived files: recording
@@ -447,7 +450,10 @@ def _write_outputs(
         source = graph_path.parent.joinpath(*link.relative_to(out_dir).parts)
         if not os.path.samefile(source, link):
             raise InterventionMismatchError(f"external data file '{source}' was replaced during compilation.")
-        identities[link.relative_to(out_dir).as_posix()] = FileIdentity.of(link)
+        location = link.relative_to(out_dir).as_posix()
+        if FileIdentity.of(link) != before[location]:
+            raise InterventionMismatchError(f"external data file '{source}' was modified during compilation.")
+        identities[location] = before[location]
     derived_files = tuple(
         ArtifactFile(location, a.sha256, a.size, identities.get(location))
         for location, a in zip(locations, external_artifacts, strict=True)

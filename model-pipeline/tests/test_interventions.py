@@ -413,6 +413,24 @@ def test_failure_after_writing_removes_partial_output(bundle, tmp_path, monkeypa
     assert sorted(p.name for p in (tmp_path / "keep").iterdir()) == ["other.txt"]
 
 
+def test_weights_rewritten_while_hashed_fail_the_compile(bundle, tmp_path, monkeypatch):
+    real = external_data.sha256_file
+
+    def rewrite_while_hashing(path):
+        digest = real(path)
+        data = Path(path).read_bytes()
+        stat = os.stat(path)
+        with open(path, "r+b") as f:  # in place: same inode, same size, new bytes and mtime
+            f.write(bytes([data[0] ^ 0xFF]))
+        os.utime(path, ns=(stat.st_atime_ns, stat.st_mtime_ns + 1_000_000))
+        return digest
+
+    monkeypatch.setattr(external_data, "sha256_file", rewrite_while_hashing)
+    with pytest.raises(InterventionMismatchError, match="modified during compilation"):
+        _compile(bundle, tmp_path / "d")
+    assert not (tmp_path / "d").exists()
+
+
 def test_write_bytes_leaves_no_temporary_file_on_failure(tmp_path, monkeypatch):
     def refuse(src, dst):
         raise OSError(errno.EIO, "simulated")

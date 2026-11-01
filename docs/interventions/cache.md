@@ -112,7 +112,7 @@ Both sides offer two levels. **Fast** is for every load; **Full** is for when th
 | With the base directory: size and SHA-256 of every base artifact | no | yes |
 
 - A weights file rewritten in place changes its modification time and fails Fast. Only a rewrite that keeps the size and restores the modification time (for example `touch -d`) passes Fast; Full catches it.
-- The identity is machine-local. A copied, restored or re-acquired entry or bundle (new inodes, identical bytes) fails Fast and passes Full; evict and recompile it to make Fast pass again. Full does not rewrite the manifest.
+- The identity is machine-local. A copied, restored or re-acquired entry or bundle (new inodes, identical bytes) fails Fast and passes Full; evict and recompile it to make Fast pass again. Full does not rewrite the manifest. Device numbers are not stable everywhere: on btrfs subvolumes, overlayfs, NFS or a device-mapper volume they can change across a remount or reboot, and every Fast open of the entry then fails the same way (this repository's development cache is on btrfs; not observed so far).
 - Python reads the identity with `os.stat`. C# reads it on Linux with `statx(2)` (device as glibc encodes `st_dev`, the same numbers Python reports; checked across the two languages on one entry). On other platforms, or a Linux without `statx`, the C# Fast level compares the modification time only, at the 100 ns precision .NET reports, and skips the base-directory inode check. Windows and macOS were not tested.
 - An entry written before identities were recorded fails Fast with "records no identity"; Full still opens it. No released writer produced such entries (the cache is unreleased), so the compiler version did not change: the derived graph bytes are the same.
 
