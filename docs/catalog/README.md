@@ -8,7 +8,7 @@ Maturity and support are published separately (plan section 14). The compatibili
 
 ## Profiles
 
-Gate cells link to the evidence the manifest records. The Stable readiness column applies the validator's Stable rules (every gate G0 to G7 `passed`, no capability `untested`) and lists exactly what fails them. Stable also needs regression support: CPU regression runs weekly on hosted runners, and GPU regression runs for every release (and on demand) on a RunPod GPU pod, so a CUDA profile is not promoted until that per-release GPU run is green for it.
+Gate cells link to the evidence the manifest records. The Stable readiness column applies the validator's Stable rules (every gate G0 to G7 `passed`, no capability `untested`) and lists exactly what fails them. Stable also needs regression support: CPU regression runs weekly on the self-hosted qualification runner, and GPU regression runs for every release (and on demand) on a RunPod GPU pod, so a CUDA profile is not promoted until that per-release GPU run is green for it.
 
 | Profile | Task | Maturity | Owner | Review date | G0 | G1 | G2 | G3 | G4 | G5 | G6 | G7 | Stable readiness |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
