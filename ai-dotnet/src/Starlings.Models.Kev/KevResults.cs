@@ -1,3 +1,5 @@
+using System.Runtime.CompilerServices;
+
 namespace Starlings.Models.Kev;
 
 /// <summary>The answers to a request, in question order.</summary>
@@ -14,8 +16,35 @@ public sealed record KevDecision(IReadOnlyList<KevAnswer> Answers, int StateToke
 
     /// <summary>The answer to a question by id.</summary>
     /// <exception cref="KeyNotFoundException">No question has this id, or it was declined (<see cref="Declined"/>).</exception>
-    public KevAnswer this[string id] => Answers.FirstOrDefault(a => a.Id == id) ?? throw new KeyNotFoundException(
-        Declined.Any(d => d.Id == id) ? $"Question '{id}' was declined: it is over a token limit." : $"No question '{id}'.");
+    /// <remarks>
+    /// A hash lookup: an ordinal index of <see cref="Answers"/> is built on first use and kept with that list, so a copy
+    /// with other answers (<c>with { Answers = ... }</c>) gets its own. On a repeated id the first answer wins.
+    /// Pass an answers list that is not changed afterwards (the model's are arrays): a list mutated after the first
+    /// lookup keeps its old index.
+    /// </remarks>
+    public KevAnswer this[string id]
+    {
+        get
+        {
+            ArgumentNullException.ThrowIfNull(id);
+            return AnswerIndex.GetValue(Answers, BuildIndex).TryGetValue(id, out var answer) ? answer : throw new KeyNotFoundException(
+                Declined.Any(d => d.Id == id) ? $"Question '{id}' was declined: it is over a token limit." : $"No question '{id}'.");
+        }
+    }
+
+    // Keyed by the Answers list itself rather than held in a field, so record equality, copies and hashing are unchanged.
+    private static readonly ConditionalWeakTable<IReadOnlyList<KevAnswer>, Dictionary<string, KevAnswer>> AnswerIndex = new();
+
+    private static Dictionary<string, KevAnswer> BuildIndex(IReadOnlyList<KevAnswer> answers)
+    {
+        var index = new Dictionary<string, KevAnswer>(answers.Count, StringComparer.Ordinal);
+        foreach (var answer in answers)
+        {
+            index.TryAdd(answer.Id, answer);
+        }
+
+        return index;
+    }
 }
 
 /// <summary>

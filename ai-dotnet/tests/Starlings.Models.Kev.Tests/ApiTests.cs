@@ -45,6 +45,68 @@ public sealed class ApiTests
     }
 
     [Fact]
+    public void CanLoadChecksTheProviderWithoutABundle()
+    {
+        Assert.Equal(KevCapabilityStatus.Experimental, KevCapabilities.All["load_check"]);
+        Assert.Equal(KevCapabilityStatus.Untested, KevCapabilities.All["load_check.cuda"]);
+        Assert.True(KevDecisionModel.CanLoad(null, out string? reason), reason);
+        Assert.Null(reason);
+        Assert.True(KevDecisionModel.CanLoad(new KevOptions { Session = new OnnxSessionOptions { Provider = OnnxExecutionProvider.Cpu } }, out reason), reason);
+
+        // The test project references the CPU-only native package, so CUDA cannot load and the reason says why.
+        Assert.SkipWhen(
+            OnnxRuntimeInfo.AvailableProviders.Contains(OnnxRuntimeInfo.CudaProviderName),
+            "The loaded ONNX Runtime has the CUDA provider; the CPU-only negative case does not apply.");
+        Assert.False(KevDecisionModel.CanLoad(new KevOptions { Session = new OnnxSessionOptions { Provider = OnnxExecutionProvider.Cuda } }, out reason));
+        Assert.Contains("CUDA", reason, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void CanLoadRejectsInvalidOptionsWithAReason()
+    {
+        Assert.False(KevDecisionModel.CanLoad(new KevOptions { MaxBranchTokens = 0 }, out string? reason));
+        Assert.Contains(nameof(KevOptions.MaxBranchTokens), reason, StringComparison.Ordinal);
+        Assert.False(KevDecisionModel.CanLoad(new KevOptions { Session = new OnnxSessionOptions { CudaDeviceId = -1 } }, out reason));
+        Assert.Contains(nameof(OnnxSessionOptions.CudaDeviceId), reason, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void DecisionLookupIsByOrdinalIdAndFollowsCopies()
+    {
+        var a = new KevAnswer("a", KevQuestion.Noul("q"), [0.2f, 0.8f]);
+        var b = new KevAnswer("b", KevQuestion.Noul("q"), [0.6f, 0.4f]);
+        var first = new KevAnswer("dup", KevQuestion.Noul("q"), [0.1f, 0.9f]);
+        var second = new KevAnswer("dup", KevQuestion.Noul("q"), [0.9f, 0.1f]);
+        var decision = new KevDecision([a, b, first, second], 10, 20)
+        {
+            Declined = [new KevOverLongQuestion(4, "long", KevTokenLimit.Branch, 2000, 1000)],
+        };
+
+        Assert.Same(a, decision["a"]);
+        Assert.Same(b, decision["b"]);
+        Assert.Same(first, decision["dup"]);
+        Assert.Contains("No question", Assert.Throws<KeyNotFoundException>(() => decision["A"]).Message, StringComparison.Ordinal);
+        Assert.Contains("declined", Assert.Throws<KeyNotFoundException>(() => decision["long"]).Message, StringComparison.Ordinal);
+
+        // A copy with other answers has its own index; the original keeps its own.
+        var copy = decision with { Answers = [b] };
+        Assert.Same(b, copy["b"]);
+        Assert.Throws<KeyNotFoundException>(() => copy["a"]);
+        Assert.Same(a, decision["a"]);
+        Assert.Equal(new KevDecision(decision.Answers, 10, 20) { Declined = decision.Declined }, decision);
+    }
+
+    [Fact]
+    public void NoulProbabilitiesAreInNoYesOrder()
+    {
+        var answer = new KevAnswer("u", KevQuestion.Noul("q"), [0.3f, 0.7f]);
+        Assert.Equal(["false", "true"], answer.Keys);
+        Assert.Equal(0.7f, answer.Yes);
+        Assert.Equal(0.7f, answer.Probabilities["true"]);
+        Assert.Equal(0.3f, answer.Probabilities["false"]);
+    }
+
+    [Fact]
     public void EveryOverLongQuestionIsReportedInOnePass()
     {
         Assert.SkipWhen(Encoder.Value.Encoder is null, Encoder.Value.Reason);
