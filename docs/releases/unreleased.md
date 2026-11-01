@@ -20,6 +20,8 @@ Every package that tokenizes now pins `Starlings.Tokenizers [0.3.4]` (0.3.2 in 0
   applies transformers 5.18.0 `WhisperTimeStampLogitsProcessor`; the transcriber follows `generate(return_timestamps=True)`'s
   sequential seek loop, greedy, without fallbacks. Capability `timestamps` moves from unsupported to experimental; the new
   `word_timestamps` is unsupported.
+- **Obsolete:** `WhisperCapabilities.StableProfile`, replaced by `WhisperCapabilities.CpuProfile` (same value; the profile is
+  Experimental, not Stable). Removed in the next minor version.
 - `WhisperTokenizer.Decode` drops timestamp tokens (ids from 50365), as transformers `WhisperTokenizer.decode` does.
 - `WhisperOptions.NoTimestamps = false` now makes `Transcribe` return the timestamped decode's text, instead of
   prompting without `<|notimestamps|>` and decoding without the timestamp rules.

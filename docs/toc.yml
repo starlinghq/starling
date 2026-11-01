@@ -10,3 +10,5 @@
   href: evidence/README.md
 - name: Support policy
   href: support-policy.md
+- name: Breaking changes
+  href: releases/BREAKING.md
