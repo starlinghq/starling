@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import errno
+import json
 import os
 import threading
 from pathlib import Path
@@ -326,8 +327,10 @@ def test_cross_device_link_fails_clearly_and_cleans_up(setup, monkeypatch):
         raise OSError(errno.EXDEV, "Invalid cross-device link")
 
     monkeypatch.setattr(os, "link", exdev)
-    with pytest.raises(ExternalDataLinkError, match="different file systems"):
+    with pytest.raises(ExternalDataLinkError, match="different file systems") as info:
         _get(setup)
+    assert info.value.errno == errno.EXDEV
+    assert "cache_root" in str(info.value) and "never copied" in str(info.value)
     parent = setup["cache_root"] / MODEL / "interventions"
     assert [p.name for p in parent.iterdir() if p.is_dir()] == []
 
@@ -490,11 +493,90 @@ def test_base_rewritten_in_place_is_detected_by_full_verification(setup):
     data = setup["base_dir"] / DATA
     raw = bytearray(data.read_bytes())
     raw[-1] ^= 0x01
+    before = os.stat(data)
     with open(data, "r+b") as f:  # in place: the link shares the inode and sees the new bytes
         f.write(bytes(raw))
-    open_entry(entry.directory, base_dir=setup["base_dir"])  # fast: same inode, same size
+    os.utime(data, ns=(before.st_atime_ns, before.st_mtime_ns + 1_000_000))
+    # Fast: same inode and size, but the modification time recorded in the manifest moved.
+    with pytest.raises(InterventionCacheError, match="was modified"):
+        open_entry(entry.directory, base_dir=setup["base_dir"])
     with pytest.raises(InterventionCacheError, match="SHA-256"):
         open_entry(entry.directory, verify="full")
+
+
+def test_rewrite_that_restores_mtime_passes_fast_and_fails_full(setup):
+    entry = _get(setup)
+    data = setup["base_dir"] / DATA
+    before = os.stat(data)
+    raw = bytearray(data.read_bytes())
+    raw[-1] ^= 0x01
+    with open(data, "r+b") as f:
+        f.write(bytes(raw))
+    os.utime(data, ns=(before.st_atime_ns, before.st_mtime_ns))
+    open_entry(entry.directory, base_dir=setup["base_dir"])  # the documented limit of Fast
+    with pytest.raises(InterventionCacheError, match="SHA-256"):
+        open_entry(entry.directory, verify="full")
+
+
+def test_manifest_records_the_identity_of_each_link(setup):
+    entry = _get(setup)
+    (file,) = entry.manifest.derived_files
+    st = os.stat(setup["base_dir"] / DATA)
+    assert (file.identity.device, file.identity.inode, file.identity.mtime_ns) == (
+        st.st_dev,
+        st.st_ino,
+        st.st_mtime_ns,
+    )
+    assert entry.manifest.validation == contract.ManifestValidation(contract.CHECKER_PASSED)
+
+
+def test_link_replaced_by_identical_copy_fails_fast_passes_full(setup):
+    entry = _get(setup)
+    link = entry.directory / "model.onnx_data"
+    data = link.read_bytes()
+    stat = os.stat(link)
+    link.unlink()
+    link.write_bytes(data)  # same bytes and size, new inode
+    os.utime(link, ns=(stat.st_atime_ns, stat.st_mtime_ns))
+    with pytest.raises(InterventionCacheError, match="inode"):
+        open_entry(entry.directory)
+    open_entry(entry.directory, verify="full")
+
+
+def test_entry_without_recorded_identity_fails_fast(setup):
+    entry = _get(setup)
+    manifest_path = entry.directory / compiler.MANIFEST_NAME
+    document = json.loads(manifest_path.read_bytes())
+    for file in document["derived_files"]:
+        del file["identity"]
+    manifest_path.write_bytes(contract.serialize_manifest_document(document))
+    with pytest.raises(InterventionCacheError, match="records no identity"):
+        open_entry(entry.directory)
+    open_entry(entry.directory, verify="full")
+
+
+def test_symlinked_entry_directory_is_rejected(setup):
+    entry = _get(setup)
+    alias = entry.directory.with_name("f" * 64)
+    alias.symlink_to(entry.directory, target_is_directory=True)
+    with pytest.raises(InterventionCacheError, match="symbolic link"):
+        open_entry(alias)
+
+
+def test_entry_evicted_during_a_hit_is_compiled_again(setup, monkeypatch):
+    first = _get(setup)
+    real = cache.open_entry
+    calls = []
+
+    def evict_then_open(directory, **kwargs):
+        if not calls:
+            evict(setup["cache_root"], MODEL, first.key)
+        calls.append(directory)
+        return real(directory, **kwargs)
+
+    monkeypatch.setattr(cache, "open_entry", evict_then_open)
+    again = _get(setup)
+    assert again.created and again.key == first.key
 
 
 def test_directory_name_must_match_manifest_key(setup):

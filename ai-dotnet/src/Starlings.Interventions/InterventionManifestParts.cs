@@ -10,11 +10,27 @@ public sealed class InterventionArtifactFile
     /// <summary>Creates the record.</summary>
     /// <exception cref="InterventionContractException">A value violates the contract.</exception>
     public InterventionArtifactFile(string path, string sha256, long size)
-        : this(path, sha256, size, "")
+        : this(path, sha256, size, null, "")
+    {
+    }
+
+    /// <summary>Creates the record of a derived file with its identity on the machine that wrote it.</summary>
+    /// <param name="path">Path relative to the directory the record belongs to, forward slashes.</param>
+    /// <param name="sha256">SHA-256 of the file bytes.</param>
+    /// <param name="size">Size in bytes.</param>
+    /// <param name="identity">Device, inode and modification time (only <c>derived_files</c> entries carry one), or null.</param>
+    /// <exception cref="InterventionContractException">A value violates the contract.</exception>
+    public InterventionArtifactFile(string path, string sha256, long size, InterventionFileIdentity? identity)
+        : this(path, sha256, size, identity, "")
     {
     }
 
     internal InterventionArtifactFile(string path, string sha256, long size, string jsonPath)
+        : this(path, sha256, size, null, jsonPath)
+    {
+    }
+
+    private InterventionArtifactFile(string path, string sha256, long size, InterventionFileIdentity? identity, string jsonPath)
     {
         if (!StrictJson.IsRelativePath(path))
         {
@@ -30,6 +46,7 @@ public sealed class InterventionArtifactFile
         Path = path;
         Sha256 = sha256!;
         Size = size;
+        Identity = identity;
     }
 
     /// <summary>Path relative to the directory the record belongs to, forward slashes.</summary>
@@ -41,6 +58,13 @@ public sealed class InterventionArtifactFile
     /// <summary>Size in bytes.</summary>
     public long Size { get; }
 
+    /// <summary>
+    /// For a <c>derived_files</c> entry: the file's device, inode and modification time when the compiler linked it,
+    /// which <see cref="InterventionArtifactVerification.Fast"/> compares; null when not recorded, and always null for
+    /// the derived graph and base artifacts.
+    /// </summary>
+    public InterventionFileIdentity? Identity { get; }
+
     /// <summary>Checks the file under <paramref name="directory"/> against this record (size first, then SHA-256).</summary>
     /// <exception cref="InterventionMismatchException">The size or SHA-256 differs.</exception>
     /// <exception cref="FileNotFoundException">The file does not exist.</exception>
@@ -51,13 +75,23 @@ public sealed class InterventionArtifactFile
     }
 
     internal static InterventionArtifactFile Read(StrictObject o) =>
-        new(o.GetString("path"), o.GetString("sha256"), o.GetInt64("size"), o.Path);
+        new(
+            o.GetString("path"),
+            o.GetString("sha256"),
+            o.GetInt64("size"),
+            o.Has("identity") ? InterventionFileIdentity.Read(o.Required("identity"), o.Child("identity")) : null,
+            o.Path);
 
     internal void WriteProperties(Utf8JsonWriter writer)
     {
         writer.WriteString("path", Path);
         writer.WriteString("sha256", Sha256);
         writer.WriteNumber("size", Size);
+        if (Identity is not null)
+        {
+            writer.WritePropertyName("identity");
+            Identity.Write(writer);
+        }
     }
 
     internal void Write(Utf8JsonWriter writer)

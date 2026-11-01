@@ -30,7 +30,7 @@ public static class Lfm3Interventions
     /// </summary>
     /// <param name="files">The verified original files; their precision selects the expected base graph.</param>
     /// <param name="artifactDirectory">The cache entry directory (<c>&lt;cache&gt;/lfm3/interventions/&lt;key&gt;</c>).</param>
-    /// <param name="options">Load options. <see cref="OnnxSessionOptions.KnownModelSha256"/> is replaced by the derived graph's verified SHA-256, whatever the options set.</param>
+    /// <param name="options">Load options. <see cref="OnnxSessionOptions.KnownModelSha256"/> is replaced by the derived graph's verified SHA-256, whatever the options set; an <see cref="OnnxSessionOptions.ExpectedModelSha256"/> equal to the original graph's SHA-256 is dropped (the derived graph was checked against it), any other value is kept and must match the derived graph.</param>
     /// <param name="verification">How much of the artifact to hash; <see cref="InterventionArtifactVerification.Full"/> also hashes the base files of <paramref name="files"/>.</param>
     /// <exception cref="InterventionMismatchException">The artifact was compiled for another graph, or a file does not match its manifest.</exception>
     /// <exception cref="InterventionContractException">The manifest or profile violates the contract, or declares inputs this integration does not know.</exception>
@@ -42,7 +42,7 @@ public static class Lfm3Interventions
     {
         ArgumentNullException.ThrowIfNull(files);
         ArgumentException.ThrowIfNullOrEmpty(artifactDirectory);
-        InterventionArtifact artifact = InterventionArtifactCache.OpenEntry(artifactDirectory, verification, files.Snapshot?.Directory);
+        InterventionArtifact artifact = InterventionArtifactCache.OpenEntry(artifactDirectory, verification, files.Snapshot.Directory);
         return CreateModel(files, artifact, options);
     }
 
@@ -67,7 +67,18 @@ public static class Lfm3Interventions
         options ??= new Lfm3Options();
         // The session's digest is the derived graph's, which InterventionArtifact.Open hashed at every level, never the
         // original graph's that Lfm3Model.Create(files) would pass.
-        options = options with { Session = options.Session with { KnownModelSha256 = artifact.Manifest.DerivedGraph.Sha256 } };
+        // A caller that reuses options pinning the original graph's digest (ExpectedModelSha256) would otherwise fail the
+        // derived load with an integrity error: the manifest has just tied the derived graph to exactly that original.
+        string? expected = options.Session.ExpectedModelSha256;
+        if (string.Equals(expected, artifact.Manifest.BaseModelSha256, StringComparison.Ordinal))
+        {
+            expected = null;
+        }
+
+        options = options with
+        {
+            Session = options.Session with { KnownModelSha256 = artifact.Manifest.DerivedGraph.Sha256, ExpectedModelSha256 = expected },
+        };
         var intervention = new Lfm3GraphIntervention(artifact.Manifest.ProfileId, artifact.Manifest.StrengthInput.Name, artifact);
         Lfm3Model model = Lfm3Model.Create(artifact.GraphPath, files.Precision, options, intervention);
         try

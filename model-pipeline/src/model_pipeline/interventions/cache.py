@@ -20,8 +20,8 @@ treats only 40-hex directories as revisions, never mistakes an entry for a snaps
 
 The derived graph reaches the original weights through hard links (the measured ONNX Runtime 1.30 behaviour:
 parent-relative, absolute and symlinked locations are rejected). A link cannot cross file systems: the cache must be on
-the bundle's file system, and ``ExternalDataLinkError`` is raised otherwise. Weights are never copied and the source
-bundle is never written.
+the bundle's file system, and ``ExternalDataLinkError`` (``EXDEV``, with the remedy in the message) is raised otherwise,
+before anything is written. Weights are never copied and the source bundle is never written.
 """
 
 from __future__ import annotations
@@ -57,6 +57,7 @@ from .contract import (
     DTYPE_FLOAT32,
     ROLE_STRENGTH,
     BaseArtifact,
+    FileIdentity,
     GraphInput,
     InterventionContractError,
     InterventionManifest,
@@ -309,15 +310,21 @@ def open_entry(
     for a directory named like a key, the directory name; ``profile.json`` has the manifest's profile SHA-256 and
     matches it (``verify_manifest_profile``) and its directions verify; ``model.onnx`` has the recorded size and
     SHA-256; every other derived file is the link of a base external data artifact with the same SHA-256 and size
-    (``linked_base_artifacts``), has that size and, when ``base_dir`` is given, is still the same inode as that base
-    file. The weights are not hashed.
+    (``linked_base_artifacts``), has that size and the device, inode and modification time recorded in the manifest
+    (``identity``; an entry without it fails), and, when ``base_dir`` is given, is still the same inode as that base
+    file. The weights are not hashed, so a rewrite in place that keeps size and modification time is not detected.
 
-    ``full``: additionally hashes every derived file (the linked weights included) and, when ``base_dir`` is given,
-    every base artifact under it.
+    ``full``: instead of the identity check, hashes every derived file (the linked weights included) and, when
+    ``base_dir`` is given, every base artifact under it. A copied or restored entry (new inodes) fails ``fast`` and can
+    still pass ``full``.
+
+    A directory named like a cache key must not be a symbolic link.
     """
     directory = Path(directory).absolute()
     if verify not in ("fast", "full"):
         raise ValueError(f"verify must be 'fast' or 'full', not {verify!r}.")
+    if is_sha256(directory.name) and directory.is_symlink():
+        raise InterventionCacheError(f"cache entry '{directory}' is a symbolic link; entries are real directories.")
     try:
         manifest_path = directory / MANIFEST_NAME
         if not manifest_path.is_file():
@@ -347,6 +354,7 @@ def open_entry(
                 raise InterventionMismatchError(f"'{path}' does not exist.")
             if path.stat().st_size != file.size:
                 raise InterventionMismatchError(f"'{path}' is {path.stat().st_size} bytes; expected {file.size}.")
+            _check_identity(path, file.identity)
             if base_dir is not None:
                 original = resolve_relative(Path(base_dir), sources[file.path].path)
                 if not original.is_file() or not os.path.samefile(original, path):
@@ -362,6 +370,26 @@ def open_entry(
     except (InterventionContractError, InterventionMismatchError, OSError) as e:
         raise InterventionCacheError(f"cache entry '{directory}' failed verification: {e}") from e
     return CacheEntry(directory, key, manifest, profile, created=False)
+
+
+def _check_identity(path: Path, recorded: FileIdentity | None) -> None:
+    if recorded is None:
+        raise InterventionMismatchError(
+            f"the manifest records no identity (device, inode, mtime) for '{path}', so fast verification cannot tie it "
+            "to the bytes that were hashed; verify with verify='full' or evict and recompile the entry."
+        )
+    actual = FileIdentity.of(path)
+    if (actual.device, actual.inode) != (recorded.device, recorded.inode):
+        raise InterventionMismatchError(
+            f"'{path}' is now device {actual.device} inode {actual.inode}; the manifest records device "
+            f"{recorded.device} inode {recorded.inode} (the file was replaced, or the entry copied or restored); "
+            "verify with verify='full' or evict the entry."
+        )
+    if actual.mtime_ns != recorded.mtime_ns:
+        raise InterventionMismatchError(
+            f"'{path}' was modified (mtime {actual.mtime_ns} ns, recorded {recorded.mtime_ns} ns): the linked weights "
+            "may have been rewritten in place; verify with verify='full' or evict the entry."
+        )
 
 
 # --------------------------------------------------------------------------------------------------------------------
@@ -456,7 +484,13 @@ def get_or_compile(
     parent = interventions_directory(cache_root, model)
     final = parent / key
     if final.exists():
-        return open_entry(final, verify=verify, base_dir=base_dir, expected_key=key)
+        try:
+            return open_entry(final, verify=verify, base_dir=base_dir, expected_key=key)
+        except InterventionCacheError:
+            # An evict renamed the entry away while we read it: compile it again under the lock below. An entry that
+            # is still there is corrupt, and that is reported.
+            if final.exists():
+                raise
 
     with _FileLock(parent / f"{key}{LOCK_SUFFIX}", lock_timeout):
         if final.exists():  # published by another compile while we waited for the lock
