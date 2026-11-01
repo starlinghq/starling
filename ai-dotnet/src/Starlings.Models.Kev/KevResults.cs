@@ -15,6 +15,7 @@ public sealed record KevDecision(IReadOnlyList<KevAnswer> Answers, int StateToke
     public IReadOnlyList<KevOverLongQuestion> Declined { get; init; } = [];
 
     /// <summary>The answer to a question by id.</summary>
+    /// <exception cref="ArgumentNullException"><paramref name="id"/> is null.</exception>
     /// <exception cref="KeyNotFoundException">No question has this id, or it was declined (<see cref="Declined"/>).</exception>
     /// <remarks>
     /// A hash lookup: an ordinal index of <see cref="Answers"/> is built on first use and kept with that list, so a copy

@@ -15,7 +15,7 @@ Every package that tokenizes now pins `Starlings.Tokenizers [0.3.4]` (0.3.2 in 0
 ## Starlings.Models.Kev (#166)
 
 - `KevDecisionModel.CanLoad(options, out reason)` checks the options and the requested provider (`OnnxRuntimeInfo.TryInitializeProvider`) before any graph is read, so a consumer need not load 3 to 17 GB to learn that CUDA is unavailable. Capabilities `load_check` (experimental) and `load_check.cuda` (untested, no GPU evidence).
-- `KevDecision[id]` is a hash lookup (ordinal, first answer on a repeated id) instead of a linear scan; record equality and copies are unchanged.
+- `KevDecision[id]` is a hash lookup (ordinal, first answer on a repeated id) instead of a linear scan; record equality and copies are unchanged. A null `id` now throws `ArgumentNullException` (it threw `KeyNotFoundException` before).
 - README: noul answers are in no, yes order; `Yes` and `Probabilities["true"]` give p(yes) without reordering. `KevInputTooLongException` stays an `ArgumentException`, as the shared `InputTooLongException` base is.
 
 ## Starlings.Models.Whisper

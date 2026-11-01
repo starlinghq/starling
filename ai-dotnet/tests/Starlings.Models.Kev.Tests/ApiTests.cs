@@ -87,6 +87,7 @@ public sealed class ApiTests
         Assert.Same(first, decision["dup"]);
         Assert.Contains("No question", Assert.Throws<KeyNotFoundException>(() => decision["A"]).Message, StringComparison.Ordinal);
         Assert.Contains("declined", Assert.Throws<KeyNotFoundException>(() => decision["long"]).Message, StringComparison.Ordinal);
+        Assert.Throws<ArgumentNullException>(() => decision[null!]);
 
         // A copy with other answers has its own index; the original keeps its own.
         var copy = decision with { Answers = [b] };
