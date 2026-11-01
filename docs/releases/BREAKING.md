@@ -15,8 +15,8 @@ Marked `[Obsolete]` (a warning, `error: false`) and removed in the next minor ve
 | `Starlings.Models.E5.CapabilityStatus` | `Starlings.Models.E5` | `Starlings.Models.CapabilityStatus` (same names and order) | 0.4.0 |
 | `Starlings.Models.EmbeddingGemma2.EmbeddingGemma2CapabilityStatus` | `Starlings.Models.EmbeddingGemma2` | `Starlings.Models.CapabilityStatus` | 0.4.0 |
 | `Starlings.Models.Gliner2.Gliner2CapabilityStatus` | `Starlings.Models.Gliner2` | `Starlings.Models.CapabilityStatus` | 0.4.0 |
-| `E5Capabilities.All`, `EmbeddingGemma2Capabilities.All`, `Gliner2Capabilities.All` | e5, EmbeddingGemma 2, GLiNER2 | `XCapabilities.Statuses` | 0.4.0 |
-| `E5Capabilities.Profiles`, `EmbeddingGemma2Capabilities.Profiles`, `Gliner2Capabilities.Profiles` | e5, EmbeddingGemma 2, GLiNER2 | `XCapabilities.ProfileCapabilities[profile].Capabilities` | 0.4.0 |
+| `E5Capabilities.All`, `EmbeddingGemma2Capabilities.All`, `Gliner2Capabilities.All` | `Starlings.Models.E5`, `Starlings.Models.EmbeddingGemma2`, `Starlings.Models.Gliner2` | `XCapabilities.Statuses` | 0.4.0 |
+| `E5Capabilities.Profiles`, `EmbeddingGemma2Capabilities.Profiles`, `Gliner2Capabilities.Profiles` | `Starlings.Models.E5`, `Starlings.Models.EmbeddingGemma2`, `Starlings.Models.Gliner2` | `XCapabilities.ProfileCapabilities[profile].Capabilities` | 0.4.0 |
 | `EmbeddingGemma2InputTooLongException.MaximumTokens` | `Starlings.Models.EmbeddingGemma2` | `MaxTokens` (on `Starlings.Models.InputTooLongException`) | 0.4.0 |
 | `WhisperCapabilities.StableProfile` | `Starlings.Models.Whisper` (not yet published) | `WhisperCapabilities.CpuProfile` (same value) | unreleased (source only) |
 
@@ -28,6 +28,7 @@ Merged to `main` after 0.4.0; collected in [`unreleased.md`](unreleased.md). Not
 
 - **Obsolete:** `WhisperCapabilities.StableProfile`, replaced by `WhisperCapabilities.CpuProfile` (the profile is Experimental, not Stable). `Starlings.Models.Whisper` has not been published to nuget.org, so this affects only source consumers.
 - **`Starlings.Models.Whisper` (source only).** `WhisperModelAssets.Lock` adds `onnx/decoder_with_past_model_fp16.onnx`: a cache acquired earlier makes `WhisperModelAssets.OpenLocal` and `OpenDirectory` throw `ModelAssetMissingException` until `DownloadAsync` runs again, with either `DecoderMode`. KV-cache decoding is the default (`WhisperOptions.DecoderMode = WhisperDecoderMode.FullContext` keeps the previous loop). `WhisperOptions.NoTimestamps = false` makes `Transcribe` return the timestamped decode's text. `WhisperTokenizer.Decode` drops timestamp tokens.
+- **`Starlings.Models.Whisper` long-form transcription (source only, #222).** `WhisperTranscriber.Transcribe` and `TranscribeWithTimestamps` accept clips longer than 3000 mel frames (480,160 samples or more), which earlier code refused with `ArgumentException`, and transcribe them in 30 s windows; `TranscribeMelWithTimestamps` takes a spectrogram of any number of frames instead of exactly `[128, 3000]`. `WhisperMelSpectrogram.ExtractChunk` still refuses clips over 30 s.
 - **Tokenizer pin** `Starlings.Tokenizers [0.3.4]` (0.3.2 in 0.4.0): additive; outputs of existing profiles are unchanged.
 - No member was removed.
 
