@@ -17,6 +17,17 @@ dependencies = [
 dev = [
     "pytest>=8",
     "ruff>=0.6",
+    # The intervention graph compiler's tests build and run ONNX graphs (src/model_pipeline/interventions/).
+    "numpy>=2.0",
+    "onnx==1.23.1",
+    "onnxruntime==1.30.0",
+]
+# ONNX Runtime interventions: the graph compiler (model_pipeline.interventions). onnxruntime matches the C#
+# Microsoft.ML.OnnxRuntime pin in ai-dotnet/Directory.Packages.props.
+interventions = [
+    "numpy>=2.0",
+    "onnx==1.23.1",
+    "onnxruntime==1.30.0",
 ]
 
 [project.scripts]

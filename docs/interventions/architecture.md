@@ -22,20 +22,20 @@ y' = y - alpha * ((y Q^T) ⊙ s) Q
 - `s` (`[rank]`): per-direction scales, from the profile.
 - `alpha` (scalar): the request-level strength, a graph input. `alpha = 0` gives `y' = y` exactly in real arithmetic. With orthonormal `Q`, `s = 1` and `alpha = 1`, the component of `y` in the span of `Q` is removed.
 
-The compiler inserts it as `MatMul(y, Q^T)`, `Mul(·, s)`, `MatMul(·, Q)`, `Mul(·, alpha)`, `Sub(y, ·)`, plus a `Cast` where the graph's dtype differs from the profile's dtype (V1 profiles are float32).
+The compiler inserts it as `MatMul(y, Q^T)`, `Mul(s, alpha)`, `Mul(·, s·alpha)`, `MatMul(·, Q)`, `Sub(y, ·)`: the strength scales the `[rank]` vector rather than the `[..., hidden]` correction. Where the site tensor is float16, a `Cast` to float32 precedes the projection and the float32 correction is cast back before the `Sub`, so `alpha = 0` leaves the site value bit-identical. See [compiler.md](compiler.md).
 
 ## Pieces and where they live
 
 | Piece | Where | What |
 | --- | --- | --- |
 | Contract | `ai-dotnet/src/Starlings.Interventions` | Profile, site, selection, manifest, directions file format; strict parsing, deterministic serialization, hash and dimension checks. No ONNX Runtime dependency. |
-| Graph compiler | `model-pipeline/src/model_pipeline/interventions/` | Python, onnx API. Reads a profile and a model-specific site mapping, inserts the operator at the mapped tensors, adds the strength input, writes the derived graph and the compiler manifest. |
+| Graph compiler | `model-pipeline/src/model_pipeline/interventions/` | Python, onnx API ([compiler.md](compiler.md)). Reads a profile and a model-specific site mapping, inserts the operator at the mapped tensors, adds the strength input, writes the derived graph and the compiler manifest. |
 | Site mappings | `model-pipeline/src/model_pipeline/interventions/injection_sites.py` | Per model, versioned, keyed to the exact SHA-256 of the base graph asset. A graph hash with no mapping is unsupported; unknown graphs are never pattern-matched. |
 | Derived artifact cache | `<cache>/<model>/interventions/<derived-hash>/` | `model.onnx`, `profile.json`, `compiler-manifest.json` and any small derived data file. Written atomically; the source bundle is never rewritten. |
 | Session loading | `Starlings.Runtime.Onnx` | Derived graphs load through the ordinary `OnnxModelSession.Create(path, options)`; diagnostics report the original and loaded graph identities and the intervention inputs. |
 | Model integration | e.g. `Starlings.Models.Lfm3` | Recognizes a verified derived graph through its manifest, accepts exactly the declared extra inputs, and passes the strength on every call. |
 
-The compiler, cache, session diagnostics and model integration arrive in later changes; each carries its own capability status.
+The graph compiler is experimental. The cache, session diagnostics and model integration arrive in later changes; each carries its own capability status.
 
 ## Identities
 
