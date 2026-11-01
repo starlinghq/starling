@@ -41,7 +41,7 @@
           "Starlings.Acquisition": "[0.4.0, )",
           "Starlings.Models.Abstractions": "[0.4.0, )",
           "Starlings.Runtime.Onnx": "[0.4.0, )",
-          "Starlings.Tokenizers": "[0.3.2, 0.3.2]"
+          "Starlings.Tokenizers": "[0.3.4, 0.3.4]"
         }
       },
       "starlings.models.embeddinggemma2.imaging.skiasharp": {
@@ -93,9 +93,9 @@
       },
       "Starlings.Tokenizers": {
         "type": "CentralTransitive",
-        "requested": "[0.3.2, 0.3.2]",
-        "resolved": "0.3.2",
-        "contentHash": "HZn31iCOWxhXSNjj5kavc/St0YbtPzdmDM78sz5laj1IL90IdYWAA0Hf2fsQsBM44NzlaKdolwXYiEC+Po8VnQ=="
+        "requested": "[0.3.4, 0.3.4]",
+        "resolved": "0.3.4",
+        "contentHash": "YYBHbSofthVVprGN9ZTwbAvi8tjrGhWds1NPfN+szBx4CoJCrSxz65LUfX6lexUM5s3JHh9HuqzTA/jxPyp4TA=="
       }
     }
   }

@@ -116,7 +116,7 @@ behavior:
 processing:
   tokenizer:
     package: Starlings.Tokenizers
-    version: 0.3.2
+    version: 0.3.4
     # The repository's tokenizer.json through Tokenizer.FromFile (no named profile); QwenChatProfile pins its digest
     # and checks the special-token identities.
     profile_id: tokenizer-json-unprofiled

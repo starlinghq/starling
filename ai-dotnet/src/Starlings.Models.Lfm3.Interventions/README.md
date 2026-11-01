@@ -20,14 +20,20 @@ python -m model_pipeline.interventions.lfm3_synthetic \
 
 That command compiles a synthetic test profile; a real profile goes through `model_pipeline.interventions.get_or_compile` the same way.
 
+The application adds the ONNX Runtime native package (`Microsoft.ML.OnnxRuntime`), as for `Starlings.Models.Lfm3`.
+
 ```csharp
+using Starlings.Generation;          // ChatTurn, GenerationOptions, GenerationResult
 using Starlings.Interventions;
 using Starlings.Models.Lfm3;
 using Starlings.Models.Lfm3.Interventions;
+using Starlings.Runtime.Onnx;        // OnnxInterventionDiagnostics
 
+IReadOnlyList<ChatTurn> turns = [new ChatTurn(ChatTurnRole.User, "What is 2 + 2? Answer briefly.")];
 Lfm3ModelFiles files = Lfm3ModelAssets.OpenLocal(Lfm3Precision.Fp32);
 // Checks the manifest before any session exists: graph and external data = the fp32 lock's files, precision fp32,
 // site mapping lfm3-1.7b/fp32/1, exactly one float32 [1] strength input, sites inside the 24 layers. Then loads the derived graph through OnnxModelSession.
+// The tokenizer is the snapshot's tokenizer.json through Starlings.Tokenizers (profile lfm3-bpe-chat, from 0.3.3).
 using Lfm3ChatModel chat = Lfm3Interventions.CreateChatModel(files, entryDirectory);
 
 var selection = new InterventionSelection("lfm3-synthetic-test", strength: 0.5f);

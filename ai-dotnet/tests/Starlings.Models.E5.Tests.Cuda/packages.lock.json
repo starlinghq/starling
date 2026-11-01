@@ -169,12 +169,19 @@
       "starlings.acquisition": {
         "type": "Project"
       },
+      "starlings.models.abstractions": {
+        "type": "Project",
+        "dependencies": {
+          "Starlings.Acquisition": "[0.4.0, )"
+        }
+      },
       "starlings.models.e5": {
         "type": "Project",
         "dependencies": {
-          "Starlings.Acquisition": "[0.3.0, )",
-          "Starlings.Runtime.Onnx": "[0.3.0, )",
-          "Starlings.Tokenizers": "[0.3.1, 0.3.1]"
+          "Starlings.Acquisition": "[0.4.0, )",
+          "Starlings.Models.Abstractions": "[0.4.0, )",
+          "Starlings.Runtime.Onnx": "[0.4.0, )",
+          "Starlings.Tokenizers": "[0.3.4, 0.3.4]"
         }
       },
       "starlings.models.e5.extensions.ai": {
@@ -182,14 +189,14 @@
         "dependencies": {
           "Microsoft.Extensions.AI.Abstractions": "[10.10.1, )",
           "Microsoft.Extensions.DependencyInjection.Abstractions": "[10.0.12, )",
-          "Starlings.Models.E5": "[0.3.0, )"
+          "Starlings.Models.E5": "[0.4.0, )"
         }
       },
       "starlings.models.e5.mlnet": {
         "type": "Project",
         "dependencies": {
           "Microsoft.ML": "[5.0.0, )",
-          "Starlings.Models.E5": "[0.3.0, )"
+          "Starlings.Models.E5": "[0.4.0, )"
         }
       },
       "starlings.runtime.onnx": {
@@ -235,9 +242,9 @@
       },
       "Starlings.Tokenizers": {
         "type": "CentralTransitive",
-        "requested": "[0.3.1, 0.3.1]",
-        "resolved": "0.3.1",
-        "contentHash": "5q7VVzj3v4Cm7jaru6/SFwRjG4RXKDhbXifmM6odCLtOuCA200y4CUyiflsDIQ37kknOSpsk9r/YGdNJx6y5BQ=="
+        "requested": "[0.3.4, 0.3.4]",
+        "resolved": "0.3.4",
+        "contentHash": "YYBHbSofthVVprGN9ZTwbAvi8tjrGhWds1NPfN+szBx4CoJCrSxz65LUfX6lexUM5s3JHh9HuqzTA/jxPyp4TA=="
       }
     }
   }

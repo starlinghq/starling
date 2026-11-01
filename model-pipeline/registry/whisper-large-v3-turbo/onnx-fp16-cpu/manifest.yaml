@@ -123,7 +123,7 @@ behavior:
 processing:
   tokenizer:
     package: Starlings.Tokenizers
-    version: 0.3.2
+    version: 0.3.4
     # The export repository's tokenizer.json through the whisper-bpe profile (byte-level BPE with the multilingual
     # special tokens); WhisperTokenizer decodes the generated ids and skips special tokens.
     profile_id: whisper-bpe

@@ -97,7 +97,7 @@ processing:
   tokenizer:
     # The owned tokenizer pinned in ai-dotnet/Directory.Packages.props; ONNX Runtime receives ids only.
     package: Starlings.Tokenizers
-    version: 0.3.2
+    version: 0.3.4
     profile_id: xlmr-unigram
     algorithm: unigram
     assets:

@@ -214,23 +214,23 @@
         "type": "Project",
         "dependencies": {
           "Microsoft.Extensions.AI.Abstractions": "[10.10.1, )",
-          "Starlings.Tokenizers": "[0.3.2, 0.3.2]"
+          "Starlings.Tokenizers": "[0.3.4, 0.3.4]"
         }
       },
       "starlings.generation.onnxgenai": {
         "type": "Project",
         "dependencies": {
           "Microsoft.ML.OnnxRuntimeGenAI.Managed": "[0.17.1, 0.17.1]",
-          "Starlings.Generation.Abstractions": "[0.3.0, )",
-          "Starlings.Tokenizers": "[0.3.2, 0.3.2]"
+          "Starlings.Generation.Abstractions": "[0.4.0, )",
+          "Starlings.Tokenizers": "[0.3.4, 0.3.4]"
         }
       },
       "starlings.models.qwen35": {
         "type": "Project",
         "dependencies": {
-          "Starlings.Acquisition": "[0.3.0, )",
-          "Starlings.Generation.Abstractions": "[0.3.0, )",
-          "Starlings.Tokenizers": "[0.3.2, 0.3.2]"
+          "Starlings.Acquisition": "[0.4.0, )",
+          "Starlings.Generation.Abstractions": "[0.4.0, )",
+          "Starlings.Tokenizers": "[0.3.4, 0.3.4]"
         }
       },
       "starlings.models.qwen35.extensions.ai": {
@@ -238,16 +238,16 @@
         "dependencies": {
           "Microsoft.Extensions.AI.Abstractions": "[10.10.1, )",
           "Microsoft.Extensions.DependencyInjection.Abstractions": "[10.0.12, )",
-          "Starlings.Models.Qwen35.OnnxGenAI": "[0.3.0, )"
+          "Starlings.Models.Qwen35.OnnxGenAI": "[0.4.0, )"
         }
       },
       "starlings.models.qwen35.onnxgenai": {
         "type": "Project",
         "dependencies": {
-          "Starlings.Acquisition": "[0.3.0, )",
-          "Starlings.Generation.OnnxGenAI": "[0.3.0, )",
-          "Starlings.Models.Qwen35": "[0.3.0, )",
-          "Starlings.Tokenizers": "[0.3.2, 0.3.2]"
+          "Starlings.Acquisition": "[0.4.0, )",
+          "Starlings.Generation.OnnxGenAI": "[0.4.0, )",
+          "Starlings.Models.Qwen35": "[0.4.0, )",
+          "Starlings.Tokenizers": "[0.3.4, 0.3.4]"
         }
       },
       "Microsoft.Extensions.AI.Abstractions": {
@@ -291,9 +291,9 @@
       },
       "Starlings.Tokenizers": {
         "type": "CentralTransitive",
-        "requested": "[0.3.2, 0.3.2]",
-        "resolved": "0.3.2",
-        "contentHash": "HZn31iCOWxhXSNjj5kavc/St0YbtPzdmDM78sz5laj1IL90IdYWAA0Hf2fsQsBM44NzlaKdolwXYiEC+Po8VnQ=="
+        "requested": "[0.3.4, 0.3.4]",
+        "resolved": "0.3.4",
+        "contentHash": "YYBHbSofthVVprGN9ZTwbAvi8tjrGhWds1NPfN+szBx4CoJCrSxz65LUfX6lexUM5s3JHh9HuqzTA/jxPyp4TA=="
       }
     }
   }

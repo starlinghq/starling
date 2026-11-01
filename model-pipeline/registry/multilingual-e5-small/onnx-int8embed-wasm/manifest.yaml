@@ -73,7 +73,7 @@ behavior:
 processing:
   tokenizer:
     package: Starlings.Tokenizers
-    version: 0.3.2
+    version: 0.3.4
     profile_id: xlmr-unigram-e5
     algorithm: unigram
     assets:

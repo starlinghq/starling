@@ -10,9 +10,9 @@
       },
       "Starlings.Tokenizers": {
         "type": "Direct",
-        "requested": "[0.3.2, 0.3.2]",
-        "resolved": "0.3.2",
-        "contentHash": "HZn31iCOWxhXSNjj5kavc/St0YbtPzdmDM78sz5laj1IL90IdYWAA0Hf2fsQsBM44NzlaKdolwXYiEC+Po8VnQ=="
+        "requested": "[0.3.4, 0.3.4]",
+        "resolved": "0.3.4",
+        "contentHash": "YYBHbSofthVVprGN9ZTwbAvi8tjrGhWds1NPfN+szBx4CoJCrSxz65LUfX6lexUM5s3JHh9HuqzTA/jxPyp4TA=="
       },
       "System.Numerics.Tensors": {
         "type": "Transitive",
