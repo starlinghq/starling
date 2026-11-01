@@ -68,7 +68,7 @@ public sealed class InterventionProfileTests
     {
         { "unknown top-level property", """ "extra": 1, """, "extra" },
         { "duplicate property", """ "id": "again", """, "id" },
-        { "schema version 2", """ "schema_version": 2, """, "schema_version" },
+        { "schema version 3", """ "schema_version": 3, """, "schema_version" },
         { "schema version as string", """ "schema_version": "1", """, "schema_version" },
         { "schema version as float", """ "schema_version": 1.0, """, "schema_version" },
     };

@@ -12,23 +12,39 @@ namespace Starlings.Interventions;
 /// </summary>
 public static class InterventionCacheKey
 {
-    /// <summary>First line of the key text; it changes when the key format changes.</summary>
+    /// <summary>First line of the key text of a schema version 1 manifest; it changes when the key format changes.</summary>
     public const string Header = "starling-intervention-cache-key 1";
+
+    /// <summary>First line of the key text of a schema version 2 manifest (several profiles, strength vector).</summary>
+    public const string HeaderV2 = "starling-intervention-cache-key 2";
 
     /// <summary>
     /// The canonical key text of <paramref name="manifest"/>: one field per line, fields separated by a tab, every line
-    /// ending in LF; base artifacts sorted by path and inputs by name, both ordinally over UTF-8 bytes.
+    /// ending in LF; base artifacts sorted by path and inputs by name, both ordinally over UTF-8 bytes. A schema version 2
+    /// manifest gets header <see cref="HeaderV2"/> and, instead of the <c>profile_sha256</c> line, one
+    /// <c>profile&lt;TAB&gt;index&lt;TAB&gt;sha256</c> line per profile in strength-vector order.
     /// </summary>
     public static string GetText(InterventionManifest manifest)
     {
         ArgumentNullException.ThrowIfNull(manifest);
         StringBuilder text = new();
-        Line(text, Header);
+        bool multi = manifest.SchemaVersion == InterventionManifest.MultiProfileSchemaVersion;
+        Line(text, multi ? HeaderV2 : Header);
         Line(text, "compiler_version", manifest.CompilerVersion);
         Line(text, "site_mapping_version", manifest.SiteMappingVersion);
         Line(text, "opset", manifest.Opset.ToString(CultureInfo.InvariantCulture));
         Line(text, "precision", manifest.Precision);
-        Line(text, "profile_sha256", manifest.ProfileSha256);
+        if (multi)
+        {
+            for (int i = 0; i < manifest.Profiles.Count; i++)
+            {
+                Line(text, "profile", i.ToString(CultureInfo.InvariantCulture), manifest.Profiles[i].Sha256);
+            }
+        }
+        else
+        {
+            Line(text, "profile_sha256", manifest.ProfileSha256);
+        }
 
         InterventionBaseArtifact[] artifacts = [.. manifest.BaseArtifacts];
         Array.Sort(artifacts, (a, b) => CompareUtf8(a.File.Path, b.File.Path));

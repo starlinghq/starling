@@ -1,4 +1,4 @@
-"""Python side of the intervention file contract (schema version 1).
+"""Python side of the intervention file contract (profile schema versions 1 and 2, manifest schema versions 1 and 2).
 
 The normative specification is ``docs/interventions/profile-format.md``; the C# reference implementation is
 ``ai-dotnet/src/Starlings.Interventions``. This module reads ``profile.json`` and directions files as strictly as the
@@ -21,20 +21,28 @@ from typing import Any
 import numpy as np
 
 SCHEMA_VERSION = 1
+# Profile schema 2 adds the operator ``directional_addition``; manifest schema 2 holds several profiles and a strength
+# vector. Version 1 documents are still read and written unchanged.
+SCHEMA_VERSION_2 = 2
+PROFILE_SCHEMA_VERSIONS = frozenset({SCHEMA_VERSION, SCHEMA_VERSION_2})
+MANIFEST_SCHEMA_VERSIONS = frozenset({SCHEMA_VERSION, SCHEMA_VERSION_2})
 MAX_DOCUMENT_BYTES = 16 * 1024 * 1024
 MAX_SITES = 1024
+MAX_PROFILES = 64  # profiles in one schema 2 manifest (strength-vector length)
 MAX_HIDDEN_SIZE = 1 << 20
 MAX_INPUT_RANK = 8
 MAX_INPUT_ELEMENTS = 2**31 - 1
 
 OPERATOR_DIRECTIONAL_PROJECTION = "directional_projection"
+OPERATOR_DIRECTIONAL_ADDITION = "directional_addition"
 TARGET_RESIDUAL_POST = "residual_post"
 DTYPE_FLOAT32 = "float32"
 ROLE_STRENGTH = "strength"
 ARTIFACT_ROLE_GRAPH = "graph"
 ARTIFACT_ROLE_EXTERNAL_DATA = "external_data"
 
-OPERATORS = frozenset({OPERATOR_DIRECTIONAL_PROJECTION})
+OPERATORS = frozenset({OPERATOR_DIRECTIONAL_PROJECTION})  # schema version 1 (profiles and manifests)
+OPERATORS_V2 = frozenset({OPERATOR_DIRECTIONAL_PROJECTION, OPERATOR_DIRECTIONAL_ADDITION})
 TARGETS = frozenset({TARGET_RESIDUAL_POST})
 DTYPES = frozenset({DTYPE_FLOAT32})
 INPUT_ROLES = frozenset({ROLE_STRENGTH})
@@ -221,14 +229,18 @@ def _vocab(value: Any, path: str, allowed: frozenset[str], what: str) -> str:
     return text
 
 
-def _schema_version(document: Any, path: str = "schema_version") -> None:
+def _schema_version(
+    document: Any, path: str = "schema_version", allowed: frozenset[int] = frozenset({SCHEMA_VERSION})
+) -> int:
     if not isinstance(document, dict):
         raise InterventionContractError(f"expected an object, found {_kind(document)}.", "$")
     if "schema_version" not in document:
         raise InterventionContractError("missing required property 'schema_version'.", "$")
     version = document["schema_version"]
-    if type(version) is not int or version != SCHEMA_VERSION:
-        raise InterventionContractError(f"unsupported schema version {version!r}; expected {SCHEMA_VERSION}.", path)
+    if type(version) is not int or version not in allowed:
+        expected = " or ".join(str(v) for v in sorted(allowed))
+        raise InterventionContractError(f"unsupported schema version {version!r}; expected {expected}.", path)
+    return version
 
 
 # --------------------------------------------------------------------------------------------------------------------
@@ -258,6 +270,8 @@ class InterventionProfile:
     base_model_sha256: str
     operator: str
     sites: tuple[InterventionSite, ...]
+    # 1 or 2. Version 1 allows only ``directional_projection``; version 2 adds ``directional_addition``.
+    schema_version: int = SCHEMA_VERSION
 
 
 @dataclass(frozen=True)
@@ -295,14 +309,15 @@ def _float32(value: Any, path: str) -> float:
 
 def parse_profile(data: bytes) -> InterventionProfile:
     document = parse_strict_json(data, "profile.json")
-    _schema_version(document)
+    version = _schema_version(document, allowed=PROFILE_SCHEMA_VERSIONS)
     root = _object(document, "$", _PROFILE_KEYS, _PROFILE_OPTIONAL)
     profile_id = _str(root["id"], "id")
     if not is_profile_id(profile_id):
         raise InterventionContractError(f"'{profile_id}' is not a valid profile id.", "id")
     description = _str(root["description"], "description") if "description" in root else None
     base = _sha(root["base_model_sha256"], "base_model_sha256")
-    operator = _vocab(root["operator"], "operator", OPERATORS, "operator")
+    operators = OPERATORS if version == SCHEMA_VERSION else OPERATORS_V2
+    operator = _vocab(root["operator"], "operator", operators, "operator")
     raw_sites = _list(root["sites"], "sites")
     if not 1 <= len(raw_sites) <= MAX_SITES:
         raise InterventionContractError(f"expected 1 to {MAX_SITES} sites, found {len(raw_sites)}.", "sites")
@@ -334,7 +349,7 @@ def parse_profile(data: bytes) -> InterventionProfile:
         seen.add(key)
         sites.append(InterventionSite(layer, target, hidden, rank, dtype, directions_file, directions_sha, scales))
     sites.sort(key=lambda s: s.key)
-    return InterventionProfile(profile_id, description, base, operator, tuple(sites))
+    return InterventionProfile(profile_id, description, base, operator, tuple(sites), version)
 
 
 def load_profile(path: str | Path) -> InterventionProfileFile:
@@ -594,8 +609,9 @@ def _validation(value: Any, path: str) -> ManifestValidation:
     return ManifestValidation(result, detail)
 
 
-def _manifest_from_document(document: Any) -> InterventionManifest:
-    _schema_version(document)
+def _manifest_from_document(document: Any) -> InterventionManifest | MultiProfileManifest:
+    if _schema_version(document, allowed=MANIFEST_SCHEMA_VERSIONS) == SCHEMA_VERSION_2:
+        return _multi_manifest_from_document(document)
     root = _object(document, "$", _MANIFEST_KEYS, _MANIFEST_OPTIONAL)
     compiler_version = _str(root["compiler_version"], "compiler_version")
     if not is_version_label(compiler_version):
@@ -706,16 +722,20 @@ def _manifest_from_document(document: Any) -> InterventionManifest:
     )
 
 
-def parse_manifest(data: bytes) -> InterventionManifest:
+def parse_manifest(data: bytes) -> InterventionManifest | MultiProfileManifest:
+    """A schema 1 document gives an ``InterventionManifest``, a schema 2 document a ``MultiProfileManifest``."""
     return _manifest_from_document(parse_strict_json(data, "compiler-manifest.json"))
 
 
-def load_manifest(path: str | Path) -> InterventionManifest:
+def load_manifest(path: str | Path) -> InterventionManifest | MultiProfileManifest:
     return parse_manifest(Path(path).read_bytes())
 
 
 def verify_manifest_profile(manifest: InterventionManifest, profile: InterventionProfileFile) -> None:
     """The checks of C# ``InterventionManifest.VerifyProfile``."""
+    if isinstance(manifest, MultiProfileManifest):
+        verify_manifest_profiles(manifest, [profile])
+        return
     p = profile.profile
     if manifest.profile_id != p.id:
         raise InterventionMismatchError(f"manifest is for profile '{manifest.profile_id}', not '{p.id}'.")
@@ -744,3 +764,271 @@ def verify_artifact_file(path: Path, sha256: str, size: int) -> None:
     actual = sha256_file(path)
     if actual != sha256:
         raise InterventionMismatchError(f"'{path}' has SHA-256 {actual}; expected {sha256}.")
+
+
+# --------------------------------------------------------------------------------------------------------------------
+# Compiler manifest, schema version 2: several profiles and a strength vector
+
+
+@dataclass(frozen=True)
+class ManifestProfile:
+    """One compiled profile of a schema 2 manifest; its position in ``profiles`` is its strength-vector index."""
+
+    id: str
+    sha256: str
+    operator: str
+
+
+@dataclass(frozen=True)
+class MultiSiteBinding:
+    """A resolved site of a schema 2 manifest and the profiles applied there, by strength index, in application order
+    (ascending): profile ``profiles[0]`` reads the base tensor, each later one reads the previous one's output."""
+
+    layer: int
+    target: str
+    tensor: str
+    profiles: tuple[int, ...]
+
+
+@dataclass(frozen=True)
+class MultiProfileManifest:
+    """``compiler-manifest.json`` schema version 2 (``docs/interventions/profile-format.md``)."""
+
+    compiler_version: str
+    site_mapping_version: str
+    base_artifacts: tuple[BaseArtifact, ...]
+    profiles: tuple[ManifestProfile, ...]
+    opset: int
+    precision: str
+    inputs: tuple[GraphInput, ...]
+    sites: tuple[MultiSiteBinding, ...]
+    derived_graph: ArtifactFile
+    derived_files: tuple[ArtifactFile, ...]
+    validation: ManifestValidation | None = None
+
+    schema_version = SCHEMA_VERSION_2
+
+    @property
+    def base_graph(self) -> BaseArtifact:
+        return next(a for a in self.base_artifacts if a.role == ARTIFACT_ROLE_GRAPH)
+
+    @property
+    def strength_input(self) -> GraphInput:
+        return next(i for i in self.inputs if i.role == ROLE_STRENGTH)
+
+    @property
+    def profile_ids(self) -> tuple[str, ...]:
+        return tuple(p.id for p in self.profiles)
+
+    def validate(self) -> MultiProfileManifest:
+        _multi_manifest_from_document(multi_manifest_to_document(self))
+        return self
+
+    def serialize(self) -> bytes:
+        self.validate()
+        return serialize_manifest_document(multi_manifest_to_document(self))
+
+
+_MULTI_MANIFEST_KEYS = (
+    "schema_version",
+    "compiler_version",
+    "site_mapping_version",
+    "base_artifacts",
+    "profiles",
+    "opset",
+    "precision",
+    "inputs",
+    "sites",
+    "derived_graph",
+    "derived_files",
+    "validation",
+)
+_MANIFEST_PROFILE_KEYS = ("id", "sha256", "operator")
+_MULTI_BINDING_KEYS = ("layer", "target", "tensor", "profiles")
+
+
+def _file_document(f: ArtifactFile) -> dict[str, Any]:
+    document: dict[str, Any] = {"path": f.path, "sha256": f.sha256, "size": f.size}
+    if f.identity is not None:
+        document["identity"] = {"device": f.identity.device, "inode": f.identity.inode, "mtime_ns": f.identity.mtime_ns}
+    return document
+
+
+def multi_manifest_to_document(manifest: MultiProfileManifest) -> dict[str, Any]:
+    """Plain dict in canonical key order (sites sorted by layer, then target; profiles in strength-vector order)."""
+    document: dict[str, Any] = {
+        "schema_version": SCHEMA_VERSION_2,
+        "compiler_version": manifest.compiler_version,
+        "site_mapping_version": manifest.site_mapping_version,
+        "base_artifacts": [
+            {"role": a.role, "path": a.path, "sha256": a.sha256, "size": a.size} for a in manifest.base_artifacts
+        ],
+        "profiles": [{"id": p.id, "sha256": p.sha256, "operator": p.operator} for p in manifest.profiles],
+        "opset": manifest.opset,
+        "precision": manifest.precision,
+        "inputs": [{"name": i.name, "role": i.role, "dtype": i.dtype, "shape": list(i.shape)} for i in manifest.inputs],
+        "sites": [
+            {"layer": s.layer, "target": s.target, "tensor": s.tensor, "profiles": list(s.profiles)}
+            for s in sorted(manifest.sites, key=lambda s: (s.layer, s.target))
+        ],
+        "derived_graph": _file_document(manifest.derived_graph),
+        "derived_files": [_file_document(f) for f in manifest.derived_files],
+    }
+    if manifest.validation is not None:
+        validation: dict[str, Any] = {"onnx_checker": manifest.validation.onnx_checker}
+        if manifest.validation.detail is not None:
+            validation["detail"] = manifest.validation.detail
+        document["validation"] = validation
+    return document
+
+
+def _multi_manifest_from_document(document: Any) -> MultiProfileManifest:
+    """Schema 2. The parts shared with schema 1 follow the same rules; the differences are ``profiles`` (1 to 64, ids
+    unique, operators from the schema 2 vocabulary), a strength input of shape exactly ``[len(profiles)]``, and a
+    ``profiles`` list on each site binding (strength indices, strictly ascending, each profile at one site at least)."""
+    _schema_version(document, allowed=frozenset({SCHEMA_VERSION_2}))
+    root = _object(document, "$", _MULTI_MANIFEST_KEYS, _MANIFEST_OPTIONAL)
+    # The schema 1 parser checks the shared fields; feed it a schema 1 view with a placeholder single profile.
+    shared = {k: v for k, v in root.items() if k not in ("profiles", "sites", "inputs")}
+    shared |= {
+        "schema_version": SCHEMA_VERSION,
+        "profile_id": "placeholder",
+        "profile_sha256": "0" * 64,
+        "operator": OPERATOR_DIRECTIONAL_PROJECTION,
+        "inputs": [],
+        "sites": [],
+    }
+    raw_profiles = _list(root["profiles"], "profiles")
+    if not 1 <= len(raw_profiles) <= MAX_PROFILES:
+        raise InterventionContractError(
+            f"expected 1 to {MAX_PROFILES} profiles, found {len(raw_profiles)}.", "profiles"
+        )
+    profiles: list[ManifestProfile] = []
+    for i, raw in enumerate(raw_profiles):
+        path = f"profiles[{i}]"
+        obj = _object(raw, path, _MANIFEST_PROFILE_KEYS)
+        profile_id = _str(obj["id"], f"{path}.id")
+        if not is_profile_id(profile_id):
+            raise InterventionContractError(f"'{profile_id}' is not a valid profile id.", f"{path}.id")
+        profiles.append(
+            ManifestProfile(
+                profile_id,
+                _sha(obj["sha256"], f"{path}.sha256"),
+                _vocab(obj["operator"], f"{path}.operator", OPERATORS_V2, "operator"),
+            )
+        )
+    if len({p.id for p in profiles}) != len(profiles):
+        raise InterventionContractError("profile ids must be unique.", "profiles")
+
+    inputs = _inputs(root["inputs"])
+    strengths = [g for g in inputs if g.role == ROLE_STRENGTH]
+    if len(strengths) != 1:
+        raise InterventionContractError("expected exactly one input with role 'strength'.", "inputs")
+    if strengths[0].shape != (len(profiles),):
+        raise InterventionContractError(
+            f"the strength input's shape must be [{len(profiles)}], one element per profile.", "inputs"
+        )
+
+    raw_sites = _list(root["sites"], "sites")
+    if not 1 <= len(raw_sites) <= MAX_SITES:
+        raise InterventionContractError(f"expected 1 to {MAX_SITES} sites, found {len(raw_sites)}.", "sites")
+    sites: list[MultiSiteBinding] = []
+    used: set[int] = set()
+    for i, raw in enumerate(raw_sites):
+        path = f"sites[{i}]"
+        obj = _object(raw, path, _MULTI_BINDING_KEYS)
+        tensor = _str(obj["tensor"], f"{path}.tensor")
+        if not is_tensor_name(tensor):
+            raise InterventionContractError("not a valid ONNX tensor name.", f"{path}.tensor")
+        raw_indices = _list(obj["profiles"], f"{path}.profiles")
+        indices = tuple(_int(v, f"{path}.profiles[{j}]", 0, len(profiles) - 1) for j, v in enumerate(raw_indices))
+        if not indices or any(a >= b for a, b in zip(indices, indices[1:], strict=False)):
+            raise InterventionContractError(
+                "expected one or more strength indices in strictly ascending order.", f"{path}.profiles"
+            )
+        used.update(indices)
+        sites.append(
+            MultiSiteBinding(
+                _int(obj["layer"], f"{path}.layer", 0, 2**31 - 1),
+                _vocab(obj["target"], f"{path}.target", TARGETS, "target"),
+                tensor,
+                indices,
+            )
+        )
+    if len({(s.layer, s.target) for s in sites}) != len(sites):
+        raise InterventionContractError("two site bindings have the same layer and target.", "sites")
+    if len({s.tensor for s in sites}) != len(sites):
+        raise InterventionContractError("two site bindings name the same tensor.", "sites")
+    unused = sorted(set(range(len(profiles))) - used)
+    if unused:
+        raise InterventionContractError(f"profiles {unused} are applied at no site.", "sites")
+
+    # Shared fields (versions, base artifacts, opset, precision, derived files, validation) by the schema 1 rules.
+    shared["inputs"] = [{"name": "placeholder", "role": ROLE_STRENGTH, "dtype": DTYPE_FLOAT32, "shape": [1]}]
+    shared["sites"] = [{"layer": 0, "target": TARGET_RESIDUAL_POST, "tensor": "placeholder"}]
+    v1 = _manifest_from_document(shared)
+    return MultiProfileManifest(
+        v1.compiler_version,
+        v1.site_mapping_version,
+        v1.base_artifacts,
+        tuple(profiles),
+        v1.opset,
+        v1.precision,
+        inputs,
+        tuple(sorted(sites, key=lambda s: (s.layer, s.target))),
+        v1.derived_graph,
+        v1.derived_files,
+        v1.validation,
+    )
+
+
+def _inputs(value: Any) -> tuple[GraphInput, ...]:
+    inputs: list[GraphInput] = []
+    for i, raw in enumerate(_list(value, "inputs")):
+        path = f"inputs[{i}]"
+        obj = _object(raw, path, _INPUT_KEYS)
+        name = _str(obj["name"], f"{path}.name")
+        if not is_tensor_name(name):
+            raise InterventionContractError("not a valid ONNX input name.", f"{path}.name")
+        role = _vocab(obj["role"], f"{path}.role", INPUT_ROLES, "input role")
+        dtype = _vocab(obj["dtype"], f"{path}.dtype", DTYPES, "dtype")
+        dims = _list(obj["shape"], f"{path}.shape")
+        if len(dims) > MAX_INPUT_RANK:
+            raise InterventionContractError(f"at most {MAX_INPUT_RANK} dimensions.", f"{path}.shape")
+        shape = tuple(_int(d, f"{path}.shape[{j}]", 0, _MAX_SIZE) for j, d in enumerate(dims))
+        if math.prod(shape) > MAX_INPUT_ELEMENTS:
+            raise InterventionContractError(f"more than {MAX_INPUT_ELEMENTS} elements.", f"{path}.shape")
+        inputs.append(GraphInput(name, role, dtype, shape))
+    if len({g.name for g in inputs}) != len(inputs):
+        raise InterventionContractError("input names must be unique.", "inputs")
+    return tuple(inputs)
+
+
+def verify_manifest_profiles(manifest: MultiProfileManifest, profiles: list[InterventionProfileFile]) -> None:
+    """The checks of C# ``InterventionManifest.VerifyProfiles``: the profiles in strength-vector order, each with the
+    recorded id, SHA-256 and operator, the manifest's base graph, and exactly the sites whose bindings list it."""
+    if len(profiles) != len(manifest.profiles):
+        raise InterventionMismatchError(
+            f"manifest records {len(manifest.profiles)} profiles; {len(profiles)} were given."
+        )
+    for index, (recorded, profile) in enumerate(zip(manifest.profiles, profiles, strict=True)):
+        p = profile.profile
+        if recorded.id != p.id:
+            raise InterventionMismatchError(f"manifest profile {index} is '{recorded.id}', not '{p.id}'.")
+        if recorded.sha256 != profile.sha256:
+            raise InterventionMismatchError(
+                f"manifest records SHA-256 {recorded.sha256} for profile '{p.id}'; its profile.json has "
+                f"{profile.sha256}."
+            )
+        if recorded.operator != p.operator:
+            raise InterventionMismatchError(
+                f"manifest operator '{recorded.operator}' of profile '{p.id}' differs from '{p.operator}'."
+            )
+        if manifest.base_graph.sha256 != p.base_model_sha256:
+            raise InterventionMismatchError(
+                f"manifest base graph {manifest.base_graph.sha256} differs from profile '{p.id}''s "
+                f"{p.base_model_sha256}."
+            )
+        bound = sorted((s.layer, s.target) for s in manifest.sites if index in s.profiles)
+        if bound != sorted(s.key for s in p.sites):
+            raise InterventionMismatchError(f"manifest sites of profile '{p.id}' differ from its sites.")

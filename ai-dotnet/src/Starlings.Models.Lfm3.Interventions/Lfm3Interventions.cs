@@ -8,14 +8,16 @@ namespace Starlings.Models.Lfm3.Interventions;
 /// <summary>
 /// Loads LFM3-1.7B with a derived intervention graph and runs requests with a per-request
 /// <see cref="InterventionSelection"/>. The derived graph is a cache entry written by the Python compiler
-/// (<c>docs/interventions/cache.md</c>): the original weights, hard-linked, plus a low-rank directional projection at the
-/// profile's residual-stream sites and one float32 strength input. Requests change only that input.
+/// (<c>docs/interventions/cache.md</c>): the original weights, hard-linked, plus one or more profiles' low-rank operators
+/// at their residual-stream sites and one float32 strength input with one element per profile. Requests change only that
+/// input.
 /// </summary>
 /// <remarks>
 /// <para>Without an intervention, load the original graph with <see cref="Lfm3Model.Create(Lfm3ModelFiles, Lfm3Options?)"/>:
 /// nothing here runs and nothing costs more. A selection on such a model is rejected.</para>
-/// <para>The strength is fixed when a sequence is created and passed on every native call of that sequence; a request
-/// cannot change it midway. No selection on an intervention graph means strength 0, the original model's output.</para>
+/// <para>The strength vector is resolved from the selection when a sequence is created (each named profile gets its
+/// strength, every other profile 0) and passed on every native call of that sequence; a request cannot change it
+/// midway. No selection on an intervention graph means all strengths 0, the original model's output.</para>
 /// <para>Which caller gets which profile is the host application's decision; this library ships the mechanism only.</para>
 /// </remarks>
 public static class Lfm3Interventions
@@ -79,7 +81,7 @@ public static class Lfm3Interventions
         {
             Session = options.Session with { KnownModelSha256 = artifact.Manifest.DerivedGraph.Sha256, ExpectedModelSha256 = expected },
         };
-        var intervention = new Lfm3GraphIntervention(artifact.Manifest.ProfileId, artifact.Manifest.StrengthInput.Name, artifact);
+        var intervention = new Lfm3GraphIntervention(artifact.Manifest.ProfileIds, artifact.Manifest.StrengthInput.Name, artifact);
         Lfm3Model model = Lfm3Model.Create(artifact.GraphPath, files.Precision, options, intervention);
         try
         {
@@ -116,7 +118,8 @@ public static class Lfm3Interventions
     /// Checks a derived artifact's manifest against the LFM3 graph of <paramref name="precision"/> before any session
     /// exists: the base graph identity, every base artifact (graph and external data) against the precision's asset lock,
     /// the precision, the site mapping version (<see cref="Fp32SiteMappingVersion"/>), exactly one float32 strength input
-    /// of shape [1] that is not a base input name, and sites inside the 24 decoder layers at hidden size 2048.
+    /// of shape [n] (n = the number of profiles; [1] for a schema version 1 manifest) that is not a base input name, and
+    /// sites inside the 24 decoder layers at hidden size 2048.
     /// </summary>
     /// <exception cref="InterventionMismatchException">The artifact was compiled for another graph or precision.</exception>
     /// <exception cref="InterventionContractException">The artifact declares inputs or sites this integration does not know.</exception>
@@ -124,7 +127,7 @@ public static class Lfm3Interventions
     {
         ArgumentNullException.ThrowIfNull(artifact);
         CheckManifest(artifact.Manifest, precision);
-        foreach (InterventionSite site in artifact.Profile.Profile.Sites)
+        foreach (InterventionSite site in artifact.Profiles.SelectMany(p => p.Profile.Sites))
         {
             if (site.HiddenSize != Lfm3Checkpoint.HiddenSize || site.Layer >= Lfm3Checkpoint.Layers)
             {
@@ -189,15 +192,16 @@ public static class Lfm3Interventions
         }
 
         InterventionGraphInput strength = manifest.StrengthInput;
-        if (strength.DType != InterventionDType.Fp32 || strength.Shape.Count > 1 || (strength.Shape.Count == 1 && strength.Shape[0] != 1))
+        int count = manifest.Profiles.Count;
+        if (strength.DType != InterventionDType.Fp32 || strength.Shape.Count > 1 || (strength.Shape.Count == 1 && strength.Shape[0] != count))
         {
-            throw new InterventionContractException($"The strength input '{strength.Name}' must be float32 of shape [1] or [].");
+            throw new InterventionContractException($"The strength input '{strength.Name}' must be float32 of shape [{count}] (one element per profile).");
         }
 
         if (strength.Shape.Count == 0)
         {
-            // The sequence passes a [1] tensor; a scalar input would be rejected by ONNX Runtime at the first call.
-            throw new InterventionContractException($"The strength input '{strength.Name}' is a scalar; LFM3 passes shape [1].");
+            // The sequence passes a [n] tensor; a scalar input would be rejected by ONNX Runtime at the first call.
+            throw new InterventionContractException($"The strength input '{strength.Name}' is a scalar; LFM3 passes shape [{count}].");
         }
 
         if (strength.Name is Lfm3Model.InputIdsName or Lfm3Model.AttentionMaskName or Lfm3Model.PositionIdsName or Lfm3Model.LogitsToKeepName
@@ -216,11 +220,12 @@ public static class Lfm3Interventions
     }
 
     /// <summary>
-    /// Starts a request with <paramref name="selection"/> fixed for the sequence's lifetime. Null on an intervention graph
-    /// means strength 0; null on the original graph is <see cref="Lfm3Model.CreateSequence()"/>.
+    /// Starts a request with <paramref name="selection"/> fixed for the sequence's lifetime: its strength vector is
+    /// resolved once (each named profile gets its strength, every other compiled profile 0). Null on an intervention graph
+    /// means all strengths 0; null on the original graph is <see cref="Lfm3Model.CreateSequence()"/>.
     /// </summary>
     /// <exception cref="InvalidOperationException">A selection was given but the loaded graph has no intervention.</exception>
-    /// <exception cref="InterventionMismatchException">The selection names another profile than the compiled one.</exception>
+    /// <exception cref="InterventionMismatchException">The selection names a profile the graph does not carry.</exception>
     public static Lfm3Sequence CreateSequence(this Lfm3Model model, InterventionSelection? selection)
     {
         ArgumentNullException.ThrowIfNull(model);
@@ -229,7 +234,7 @@ public static class Lfm3Interventions
 
     /// <summary>As <see cref="Lfm3ChatModel.Generate"/>, with <paramref name="selection"/> fixed for the request.</summary>
     /// <exception cref="InvalidOperationException">A selection was given but the loaded graph has no intervention.</exception>
-    /// <exception cref="InterventionMismatchException">The selection names another profile than the compiled one.</exception>
+    /// <exception cref="InterventionMismatchException">The selection names a profile the graph does not carry.</exception>
     public static GenerationResult Generate(
         this Lfm3ChatModel chat, IReadOnlyList<int> promptIds, InterventionSelection? selection, GenerationOptions? options = null, CancellationToken cancellationToken = default)
     {
@@ -239,7 +244,7 @@ public static class Lfm3Interventions
 
     /// <summary>As <see cref="Lfm3ChatModel.GenerateStreaming"/>, with <paramref name="selection"/> fixed for the request. Arguments, including the selection, are checked when this method is called.</summary>
     /// <exception cref="InvalidOperationException">A selection was given but the loaded graph has no intervention.</exception>
-    /// <exception cref="InterventionMismatchException">The selection names another profile than the compiled one.</exception>
+    /// <exception cref="InterventionMismatchException">The selection names a profile the graph does not carry.</exception>
     public static IEnumerable<GenerationUpdate> GenerateStreaming(
         this Lfm3ChatModel chat, IReadOnlyList<int> promptIds, InterventionSelection? selection, GenerationOptions? options = null, CancellationToken cancellationToken = default)
     {
@@ -253,8 +258,8 @@ public static class Lfm3Interventions
         bool enableThinking = true, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(chat);
-        float? strength = Resolve(chat.Model, selection);
-        return chat.GenerateWithStrength(chat.EncodePrompt(turns, enableThinking), options, strength, cancellationToken);
+        float[]? strengths = Resolve(chat.Model, selection);
+        return chat.GenerateWithStrength(chat.EncodePrompt(turns, enableThinking), options, strengths, cancellationToken);
     }
 
     /// <summary>The verified derived artifact the model was loaded from; null for the original graph.</summary>
@@ -265,8 +270,8 @@ public static class Lfm3Interventions
     }
 
     /// <summary>
-    /// Intervention diagnostics of the loaded session: for a derived graph the original and loaded identities, the
-    /// profile id and the strength input (<see cref="OnnxInterventionDiagnostics.ForDerivedGraph"/>); for the original
+    /// Intervention diagnostics of the loaded session: for a derived graph the original and loaded identities, every
+    /// profile id (strength-vector order) and the strength input (<see cref="OnnxInterventionDiagnostics.ForDerivedGraph"/>); for the original
     /// graph, interventions off.
     /// </summary>
     public static OnnxInterventionDiagnostics GetInterventionDiagnostics(this Lfm3Model model)
@@ -279,10 +284,10 @@ public static class Lfm3Interventions
 
         InterventionManifest manifest = artifact.Manifest;
         return OnnxInterventionDiagnostics.ForDerivedGraph(
-            model.Session, manifest.BaseModelSha256, manifest.DerivedGraph.Sha256, [manifest.ProfileId], [.. manifest.Inputs.Select(i => i.Name)]);
+            model.Session, manifest.BaseModelSha256, manifest.DerivedGraph.Sha256, manifest.ProfileIds, [.. manifest.Inputs.Select(i => i.Name)]);
     }
 
-    private static float? Resolve(Lfm3Model model, InterventionSelection? selection)
+    private static float[]? Resolve(Lfm3Model model, InterventionSelection? selection)
     {
         if (selection is null)
         {
@@ -292,10 +297,9 @@ public static class Lfm3Interventions
         if (model.GetInterventionArtifact() is not { } artifact)
         {
             throw new InvalidOperationException(
-                $"The loaded LFM3 graph has no intervention; selection '{selection.ProfileId}' needs a derived graph (Lfm3Interventions.CreateModel).");
+                $"The loaded LFM3 graph has no intervention; selection [{string.Join(", ", selection.Entries.Select(e => e.ProfileId))}] needs a derived graph (Lfm3Interventions.CreateModel).");
         }
 
-        selection.EnsureMatches(artifact.Profile.Profile);
-        return selection.Strength;
+        return artifact.Manifest.ResolveStrengths(selection);
     }
 }

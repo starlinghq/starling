@@ -120,7 +120,7 @@ public sealed class InterventionManifestTests
 
     public static TheoryData<string, string, string> Replaced => new()
     {
-        { "\"schema_version\": 1", "\"schema_version\": 2", "schema_version" },
+        { "\"schema_version\": 1", "\"schema_version\": 3", "schema_version" },
         { "\"opset\": 17,", "\"opset\": 17,\n  \"extra\": true,", "extra" },
         { "\"opset\": 17,", "\"opset\": 0,", "opset" },
         { "\"precision\": \"fp32\"", "\"precision\": \"FP32\"", "precision" },

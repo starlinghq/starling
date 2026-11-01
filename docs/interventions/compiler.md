@@ -2,7 +2,7 @@
 
 Status: **experimental**. Code: `model-pipeline/src/model_pipeline/interventions/`. Tests: `model-pipeline/tests/test_interventions.py`. Design: [architecture.md](architecture.md); file formats: [profile-format.md](profile-format.md).
 
-The compiler turns one base ONNX graph and one `profile.json` into a derived `model.onnx` that applies the `directional_projection` operator at the profile's sites, plus a `compiler-manifest.json` that the C# `InterventionManifest` reads and verifies. It needs the `interventions` extra of `model-pipeline` (numpy, onnx 1.23.1, onnxruntime 1.30.0, the version the C# packages pin); the `dev` extra includes it.
+The compiler turns one base ONNX graph and one `profile.json` into a derived `model.onnx` that applies the `directional_projection` operator at the profile's sites, plus a `compiler-manifest.json` that the C# `InterventionManifest` reads and verifies. `compile_interventions` compiles several profiles (`directional_projection` or `directional_addition`) into one graph with a strength vector (see "Several profiles" below). It needs the `interventions` extra of `model-pipeline` (numpy, onnx 1.23.1, onnxruntime 1.30.0, the version the C# packages pin); the `dev` extra includes it.
 
 The mechanism evidence uses synthetic random orthonormal directions (`model_pipeline.interventions.synthetic`). Profiles extracted from prompt sets ([extraction.md](extraction.md)) compile the same way. The compiler ships the mechanism; which callers get which profile is the host application's job.
 
@@ -45,6 +45,31 @@ Run the derived graph with the ordinary inputs plus `intervention_strength`, a f
 
 The base bundle is only read. The derived graph is deterministic: the same inputs give the same bytes.
 
+## Several profiles, one strength vector
+
+```python
+from model_pipeline.interventions import compile_interventions
+
+result = compile_interventions(
+    base_dir="bundle", graph="onnx/model.onnx",
+    profiles=["a/profile.json", "b/profile.json"],     # strength-vector order; ids unique
+    out_dir="derived",
+)
+# result.manifest is a MultiProfileManifest (compiler-manifest.json schema version 2)
+```
+
+Run the derived graph with the ordinary inputs plus `intervention_strength`, a float32 tensor of shape `[n]`: element `i` is the strength of `profiles[i]`. `[0, ..., 0]` gives the base graph's outputs; `[a, 0]` gives what a graph of the first profile alone gives at `a` (bit for bit on the synthetic graphs and on LFM3 fp32 CPU; another graph or optimization level may only agree within rounding).
+
+What differs from the single-profile compile:
+
+1. Profile schema version 2 may use `directional_addition`, `y' = y + alpha * (s Q)`, inserted as `Mul(s, alpha_i)`, `MatMul(·, Q)` (a `[hidden]` vector) and `Add(y, ·)`, with the same float16 `Cast` pattern as the projection. `compile_intervention` (one profile, schema 1 manifest) rejects it and names `compile_interventions`.
+2. For each profile `i`, `Gather(intervention_strength, [i])` gives a `[1]` tensor `intervention/strength/p<i>`, so every site sees the same shape as in a single-profile graph. `Gather` has the same signature at every opset the compiler accepts (`Slice` changed at opset 10).
+3. Inserted names are `intervention/p<i>/layer<L>/<target>/...`.
+4. **Shared sites compose in strength-vector order.** Where several profiles have a site on one tensor, profile `i` reads the output of the previous profile at that tensor (the base tensor for the first), and only the last output is wired to the consumers the site mapping lists. So `[projection, addition]` on one site computes `(y - a0 ((y Q0^T) * s0) Q0) + a1 (s1 Q1)`, and the reverse order is a different graph. The manifest records the order on each site (`sites[].profiles`, ascending).
+5. The validation, linking, cleanup and file-system rules are the same; the manifest is schema version 2 ([profile-format.md](profile-format.md)).
+
+`COMPILER_VERSION` stays `0.1.0`: the single-profile derived graph is byte for byte what it was, and schema 2 graphs have their own cache key text ([cache.md](cache.md)).
+
 ## External data
 
 The derived graph keeps the base graph's external-data entries unchanged, so it must sit next to files with those names. ONNX Runtime 1.30 (C# and Python, measured) rejects every location that leaves the graph's directory: parent-relative (`../original/model.onnx_data`), absolute, and symlinked files or directories, which it canonicalizes before the check. A **hard link** next to the derived graph loads and shares the original bytes, so there is no second copy.
@@ -70,6 +95,7 @@ The registry holds one mapping, `lfm3-1.7b/fp32/1`, for `LiquidAI/LFM3-1.7B-ONNX
 - Real models other than the LFM3 fp32 graph: unsupported (no mapping).
 - Site tensors inside subgraphs (`If`, `Loop`, `Scan` bodies) and listed consumers inside subgraphs: not supported. An unlisted subgraph reader keeps the original value.
 - Element types other than float32 and float16 at the site, and profile dtypes other than float32.
+- More than 64 profiles in one graph; the same profile id twice.
 - Base graphs below IR version 4 (there every initializer must also be a graph input, which would add inputs) and below default-domain opset 7.
 - Strength 0 is exact for finite activations. An infinite activation at a site gives `inf * 0 = NaN` in the correction.
 - Atomic publication, locking and reuse of derived artifacts belong to the derived-artifact cache ([cache.md](cache.md)); `compile_intervention` writes in place.

@@ -25,8 +25,9 @@ public enum InterventionArtifactVerification
 
 /// <summary>
 /// A derived intervention artifact directory opened and verified (a cache entry, or any directory with the same layout:
-/// manifest, derived graph, linked data, <c>profile.json</c> and its directions files):
-/// the compiler manifest, the compiled profile, and the derived graph path. Open it once at load; it is immutable.
+/// manifest, derived graph, linked data, <c>profile.json</c> and its directions files, or for a schema version 2
+/// manifest <c>profiles/&lt;i&gt;/profile.json</c> and theirs): the compiler manifest, the compiled profiles, and the
+/// derived graph path. Open it once at load; it is immutable.
 /// The layout is specified in <c>docs/interventions/cache.md</c>.
 /// </summary>
 public sealed class InterventionArtifact
@@ -37,11 +38,14 @@ public sealed class InterventionArtifact
     /// <summary>File name of the compiled profile (stored byte for byte) in a derived artifact directory.</summary>
     public const string ProfileFileName = "profile.json";
 
-    private InterventionArtifact(string directory, InterventionManifest manifest, InterventionProfileFile profile, string cacheKey)
+    /// <summary>Directory of the profiles of a schema version 2 entry: <c>profiles/&lt;strength index&gt;/profile.json</c>.</summary>
+    public const string ProfilesDirectoryName = "profiles";
+
+    private InterventionArtifact(string directory, InterventionManifest manifest, InterventionProfileFile[] profiles, string cacheKey)
     {
         Directory = directory;
         Manifest = manifest;
-        Profile = profile;
+        Profiles = profiles;
         CacheKey = cacheKey;
         GraphPath = Internal.StrictJson.Resolve(directory, manifest.DerivedGraph.Path);
     }
@@ -52,8 +56,29 @@ public sealed class InterventionArtifact
     /// <summary>The verified compiler manifest.</summary>
     public InterventionManifest Manifest { get; }
 
-    /// <summary>The compiled profile, read from the artifact directory.</summary>
-    public InterventionProfileFile Profile { get; }
+    /// <summary>The compiled profile, read from the artifact directory, when the graph carries exactly one.</summary>
+    /// <exception cref="InvalidOperationException">The graph carries several profiles; use <see cref="Profiles"/>.</exception>
+    public InterventionProfileFile Profile => Profiles.Count == 1
+        ? Profiles[0]
+        : throw new InvalidOperationException($"The artifact carries {Profiles.Count} profiles; use Profiles.");
+
+    /// <summary>The compiled profiles in strength-vector order (<see cref="InterventionManifest.Profiles"/>), read from the artifact directory.</summary>
+    public IReadOnlyList<InterventionProfileFile> Profiles { get; }
+
+    /// <summary>
+    /// Path of profile <paramref name="index"/> relative to an artifact directory of <paramref name="manifest"/>:
+    /// <c>profile.json</c> (schema version 1) or <c>profiles/&lt;index&gt;/profile.json</c> (schema version 2, so two
+    /// profiles' directions files never collide).
+    /// </summary>
+    public static string ProfilePath(InterventionManifest manifest, int index)
+    {
+        ArgumentNullException.ThrowIfNull(manifest);
+        ArgumentOutOfRangeException.ThrowIfNegative(index);
+        ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual(index, manifest.Profiles.Count);
+        return manifest.SchemaVersion == InterventionManifest.MultiProfileSchemaVersion
+            ? $"{ProfilesDirectoryName}/{index.ToString(System.Globalization.CultureInfo.InvariantCulture)}/{ProfileFileName}"
+            : ProfileFileName;
+    }
 
     /// <summary>The cache key recomputed from <see cref="Manifest"/> (<see cref="InterventionCacheKey"/>).</summary>
     public string CacheKey { get; }
@@ -84,9 +109,18 @@ public sealed class InterventionArtifact
 
         string full = Path.GetFullPath(directory);
         InterventionManifest manifest = InterventionManifest.Load(Path.Combine(full, ManifestFileName));
-        InterventionProfileFile profile = InterventionProfileFile.Load(Path.Combine(full, ProfileFileName));
-        manifest.VerifyProfile(profile);
-        profile.VerifyDirections();
+        InterventionProfileFile[] profiles = new InterventionProfileFile[manifest.Profiles.Count];
+        for (int i = 0; i < profiles.Length; i++)
+        {
+            profiles[i] = InterventionProfileFile.Load(Internal.StrictJson.Resolve(full, ProfilePath(manifest, i)));
+        }
+
+        manifest.VerifyProfiles(profiles);
+        foreach (InterventionProfileFile profile in profiles)
+        {
+            profile.VerifyDirections();
+        }
+
         manifest.DerivedGraph.Verify(full);
         VerifyLinkedFiles(manifest);
         foreach (InterventionArtifactFile file in manifest.DerivedFiles)
@@ -117,7 +151,7 @@ public sealed class InterventionArtifact
             manifest.VerifyBaseArtifacts(baseDirectory);
         }
 
-        return new InterventionArtifact(full, manifest, profile, InterventionCacheKey.Compute(manifest));
+        return new InterventionArtifact(full, manifest, profiles, InterventionCacheKey.Compute(manifest));
     }
 
     /// <summary>

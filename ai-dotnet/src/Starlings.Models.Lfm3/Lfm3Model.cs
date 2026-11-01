@@ -122,32 +122,51 @@ public sealed class Lfm3Model : IDisposable
     }
 
     /// <summary>Starts a request: empty caches, no tokens.</summary>
-    public Lfm3Sequence CreateSequence() => CreateSequence(strength: null);
+    public Lfm3Sequence CreateSequence() => CreateSequence(strengths: null);
 
     /// <summary>
-    /// Starts a request with an intervention strength fixed for the sequence's lifetime. On a derived intervention
-    /// graph, null means strength 0 (the original model's output); on the original graph, a strength is rejected.
+    /// Starts a request with an intervention strength vector fixed for the sequence's lifetime: element i is the strength
+    /// of the derived graph's profile i (<see cref="Lfm3GraphIntervention.ProfileIds"/>). On a derived intervention
+    /// graph, null means all strengths 0 (the original model's output); on the original graph, a vector is rejected. The
+    /// array is copied, so the caller may reuse it.
     /// </summary>
-    /// <exception cref="InvalidOperationException">A strength was given but the loaded graph has no intervention.</exception>
-    /// <exception cref="ArgumentOutOfRangeException">The strength is not finite.</exception>
-    internal Lfm3Sequence CreateSequence(float? strength)
+    /// <exception cref="InvalidOperationException">A vector was given but the loaded graph has no intervention.</exception>
+    /// <exception cref="ArgumentException">The vector's length is not the graph's number of profiles.</exception>
+    /// <exception cref="ArgumentOutOfRangeException">A strength is not finite.</exception>
+    internal Lfm3Sequence CreateSequence(float[]? strengths)
     {
         ObjectDisposedException.ThrowIf(Volatile.Read(ref _disposed) != 0, this);
-        if (strength is { } value)
-        {
-            if (Intervention is null)
-            {
-                throw new InvalidOperationException("The loaded LFM3 graph has no intervention; load a derived intervention graph to select one.");
-            }
+        CheckStrengths(strengths);
+        float[]? fixedStrengths = Intervention is null ? null : strengths is null ? new float[Intervention.ProfileIds.Count] : [.. strengths];
+        return new Lfm3Sequence(this, fixedStrengths);
+    }
 
-            if (!float.IsFinite(value))
-            {
-                throw new ArgumentOutOfRangeException(nameof(strength), value, "The intervention strength must be finite.");
-            }
+    /// <summary>Checks a strength vector against the loaded graph (see <see cref="CreateSequence(float[])"/>).</summary>
+    internal void CheckStrengths(float[]? strengths)
+    {
+        if (strengths is null)
+        {
+            return;
         }
 
-        float? fixedStrength = Intervention is null ? null : strength ?? 0f;
-        return new Lfm3Sequence(this, fixedStrength);
+        if (Intervention is null)
+        {
+            throw new InvalidOperationException("The loaded LFM3 graph has no intervention; load a derived intervention graph to select one.");
+        }
+
+        if (strengths.Length != Intervention.ProfileIds.Count)
+        {
+            throw new ArgumentException(
+                $"The strength vector has {strengths.Length} elements; the graph carries {Intervention.ProfileIds.Count} profiles.", nameof(strengths));
+        }
+
+        foreach (float value in strengths)
+        {
+            if (!float.IsFinite(value))
+            {
+                throw new ArgumentOutOfRangeException(nameof(strengths), value, "The intervention strength must be finite.");
+            }
+        }
     }
 
     /// <summary>Disposes the session. Idempotent; sequences still open fail on their next call.</summary>
@@ -179,9 +198,10 @@ public sealed class Lfm3Model : IDisposable
 
 /// <summary>
 /// What a derived intervention graph adds to the LFM3 step graph, as the companion assembly verified it from the compiler
-/// manifest: one float32 strength input of shape [1], appended after the base inputs, and the compiled profile.
+/// manifest: one float32 strength input of shape [n], appended after the base inputs, whose element i is the strength of
+/// profile i, and the compiled profiles.
 /// </summary>
-/// <param name="ProfileId">Id of the compiled profile.</param>
+/// <param name="ProfileIds">Ids of the compiled profiles in strength-vector order (n = the count).</param>
 /// <param name="StrengthInputName">Name of the strength input.</param>
 /// <param name="State">The companion's verified artifact (opaque here).</param>
-internal sealed record Lfm3GraphIntervention(string ProfileId, string StrengthInputName, object State);
+internal sealed record Lfm3GraphIntervention(IReadOnlyList<string> ProfileIds, string StrengthInputName, object State);

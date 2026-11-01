@@ -21,8 +21,9 @@ public sealed class Lfm3Sequence : IGenerationSequence
     private readonly Lfm3Model _model;
     private readonly float[] _logits = new float[Lfm3Checkpoint.VocabularySize];
 
-    // The intervention strength of this request: fixed at creation, never written afterwards, owned by this sequence
-    // (no tensor is shared between sequences). Null on the original graph, where no extra input exists.
+    // The intervention strength vector of this request (one element per profile): fixed at creation, never written
+    // afterwards, owned by this sequence (no tensor is shared between sequences). Null on the original graph, where no
+    // extra input exists.
     private readonly float[]? _strength;
     private OrtValue[] _past;
     private IDisposable? _pastOwner;
@@ -31,10 +32,10 @@ public sealed class Lfm3Sequence : IGenerationSequence
     private bool _hasLogits;
     private bool _disposed;
 
-    internal Lfm3Sequence(Lfm3Model model, float? strength = null)
+    internal Lfm3Sequence(Lfm3Model model, float[]? strengths = null)
     {
         _model = model;
-        _strength = strength is { } value ? [value] : null;
+        _strength = strengths;
         _past = new OrtValue[model.PastNames.Length];
         TensorElementType type = model.CacheElementType;
         try
@@ -55,8 +56,8 @@ public sealed class Lfm3Sequence : IGenerationSequence
     /// <inheritdoc />
     public int VocabularySize => Lfm3Checkpoint.VocabularySize;
 
-    /// <summary>The intervention strength fixed for this request; null when the graph has no intervention.</summary>
-    internal float? Strength => _strength?[0];
+    /// <summary>A copy of the intervention strength vector fixed for this request; null when the graph has no intervention.</summary>
+    internal float[]? Strengths => _strength is null ? null : [.. _strength];
 
     /// <summary>Tokens in the sequence: those run through the graph plus a selected token not yet run.</summary>
     public int Length => _processed + (_pending >= 0 ? 1 : 0);
@@ -227,7 +228,7 @@ public sealed class Lfm3Sequence : IGenerationSequence
         using var positionsValue = OrtValue.CreateTensorValueFromMemory(positions, [1, n]);
         using var keepValue = OrtValue.CreateTensorValueFromMemory(new long[] { 1 }, [1]);
         // The strength tensor wraps this sequence's own array and lives until the native call returns.
-        using OrtValue? strengthValue = _strength is null ? null : OrtValue.CreateTensorValueFromMemory(_strength, [1]);
+        using OrtValue? strengthValue = _strength is null ? null : OrtValue.CreateTensorValueFromMemory(_strength, [_strength.Length]);
         OrtValue[] inputs = strengthValue is null
             ? [idsValue, maskValue, positionsValue, keepValue, .. _past]
             : [idsValue, maskValue, positionsValue, keepValue, .. _past, strengthValue];

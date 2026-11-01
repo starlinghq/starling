@@ -33,7 +33,7 @@ import re
 import secrets
 import shutil
 import time
-from collections.abc import Iterable, Mapping
+from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Literal
@@ -45,10 +45,12 @@ from .compiler import (
     COMPILER_VERSION,
     DERIVED_GRAPH_NAME,
     MANIFEST_NAME,
+    MAX_PROFILES,
     STRENGTH_INPUT_NAME,
     STRENGTH_SHAPE,
     InterventionCompileError,
     compile_intervention,
+    compile_interventions,
     default_opset,
 )
 from .contract import (
@@ -63,6 +65,7 @@ from .contract import (
     InterventionManifest,
     InterventionMismatchError,
     InterventionProfileFile,
+    MultiProfileManifest,
     is_relative_path,
     is_sha256,
     load_manifest,
@@ -72,12 +75,15 @@ from .contract import (
     sha256_file,
     verify_artifact_file,
     verify_manifest_profile,
+    verify_manifest_profiles,
 )
 from .injection_sites import SiteMapping, lookup_site_mapping
 
 CACHE_DIRECTORY = "interventions"
 PROFILE_NAME = "profile.json"
 CACHE_KEY_HEADER = "starling-intervention-cache-key 1"
+CACHE_KEY_HEADER_V2 = "starling-intervention-cache-key 2"  # schema 2 manifests (several profiles, strength vector)
+PROFILES_DIRECTORY = "profiles"  # schema 2 entries: profiles/<strength index>/profile.json and its directions
 LOCK_SUFFIX = ".lock"
 TEMP_PREFIX = ".tmp-"
 
@@ -96,9 +102,10 @@ class CacheEntry:
 
     directory: Path
     key: str
-    manifest: InterventionManifest
-    profile: InterventionProfileFile
+    manifest: InterventionManifest | MultiProfileManifest
+    profile: InterventionProfileFile  # the first profile of a schema 2 entry
     created: bool
+    profiles: tuple[InterventionProfileFile, ...] = ()  # every profile, in strength-vector order
 
     @property
     def graph_path(self) -> Path:
@@ -155,8 +162,52 @@ def cache_key(**components) -> str:
     return sha256_bytes(cache_key_text(**components).encode("utf-8"))
 
 
-def manifest_cache_key(manifest: InterventionManifest) -> str:
+def multi_cache_key_text(
+    *,
+    compiler_version: str,
+    site_mapping_version: str,
+    opset: int,
+    precision: str,
+    profile_sha256s: Iterable[str],
+    base_artifacts: Iterable[BaseArtifact],
+    inputs: Iterable[GraphInput],
+) -> str:
+    """The key text of a schema 2 entry: as ``cache_key_text`` with header ``starling-intervention-cache-key 2`` and,
+    instead of the ``profile_sha256`` line, one ``profile<TAB><index><TAB><sha256>`` line per profile in strength-vector
+    order (the order matters: it is the input layout and the order of application at shared sites)."""
+    lines = [
+        CACHE_KEY_HEADER_V2,
+        f"compiler_version\t{compiler_version}",
+        f"site_mapping_version\t{site_mapping_version}",
+        f"opset\t{opset}",
+        f"precision\t{precision}",
+    ]
+    lines += [f"profile\t{index}\t{sha}" for index, sha in enumerate(profile_sha256s)]
+    for path, role, sha, size in _utf8_sorted((a.path, a.role, a.sha256, str(a.size)) for a in base_artifacts):
+        lines.append(f"base\t{role}\t{path}\t{sha}\t{size}")
+    for name, role, dtype, shape in _utf8_sorted(
+        (i.name, i.role, i.dtype, ",".join(str(d) for d in i.shape)) for i in inputs
+    ):
+        lines.append(f"input\t{name}\t{role}\t{dtype}\t[{shape}]")
+    for line in lines:
+        if "\r" in line or "\n" in line:
+            raise InterventionContractError(f"cache key component contains a line break: {line!r}.")
+    return "".join(line + "\n" for line in lines)
+
+
+def manifest_cache_key(manifest: InterventionManifest | MultiProfileManifest) -> str:
     """The cache key recomputed from a compiler manifest (every component is recorded there)."""
+    if isinstance(manifest, MultiProfileManifest):
+        text = multi_cache_key_text(
+            compiler_version=manifest.compiler_version,
+            site_mapping_version=manifest.site_mapping_version,
+            opset=manifest.opset,
+            precision=manifest.precision,
+            profile_sha256s=[p.sha256 for p in manifest.profiles],
+            base_artifacts=manifest.base_artifacts,
+            inputs=manifest.inputs,
+        )
+        return sha256_bytes(text.encode("utf-8"))
     return cache_key(
         compiler_version=manifest.compiler_version,
         site_mapping_version=manifest.site_mapping_version,
@@ -335,13 +386,8 @@ def open_entry(
             raise InterventionCacheError(f"'{directory}' holds the artifact of cache key {key}, not {expected_key}.")
         if is_sha256(directory.name) and directory.name != key:
             raise InterventionCacheError(f"'{directory}' is named {directory.name} but its manifest gives key {key}.")
-        profile_path = directory / PROFILE_NAME
-        if not profile_path.is_file():
-            raise InterventionCacheError(f"'{directory}' has no {PROFILE_NAME}.")
-        profile = load_profile(profile_path)
-        verify_manifest_profile(manifest, profile)
-        for site in profile.profile.sites:
-            profile.load_directions(site)
+        profiles = _open_profiles(directory, manifest)
+        profile = profiles[0]
         graph = manifest.derived_graph
         verify_artifact_file(resolve_relative(directory, graph.path), graph.sha256, graph.size)
         sources = linked_base_artifacts(manifest)
@@ -369,7 +415,35 @@ def open_entry(
         raise
     except (InterventionContractError, InterventionMismatchError, OSError) as e:
         raise InterventionCacheError(f"cache entry '{directory}' failed verification: {e}") from e
-    return CacheEntry(directory, key, manifest, profile, created=False)
+    return CacheEntry(directory, key, manifest, profile, created=False, profiles=profiles)
+
+
+def profile_path_in_entry(manifest: InterventionManifest | MultiProfileManifest, index: int) -> str:
+    """Where a cache entry stores profile ``index``: ``profile.json`` (schema 1), ``profiles/<index>/profile.json``
+    (schema 2, so two profiles' directions files never collide)."""
+    if isinstance(manifest, MultiProfileManifest):
+        return f"{PROFILES_DIRECTORY}/{index}/{PROFILE_NAME}"
+    return PROFILE_NAME
+
+
+def _open_profiles(
+    directory: Path, manifest: InterventionManifest | MultiProfileManifest
+) -> tuple[InterventionProfileFile, ...]:
+    count = len(manifest.profiles) if isinstance(manifest, MultiProfileManifest) else 1
+    profiles = []
+    for index in range(count):
+        path = resolve_relative(directory, profile_path_in_entry(manifest, index))
+        if not path.is_file():
+            raise InterventionCacheError(f"'{directory}' has no {profile_path_in_entry(manifest, index)}.")
+        profile = load_profile(path)
+        for site in profile.profile.sites:
+            profile.load_directions(site)
+        profiles.append(profile)
+    if isinstance(manifest, MultiProfileManifest):
+        verify_manifest_profiles(manifest, profiles)
+    else:
+        verify_manifest_profile(manifest, profiles[0])
+    return tuple(profiles)
 
 
 def _check_identity(path: Path, recorded: FileIdentity | None) -> None:
@@ -533,7 +607,7 @@ def get_or_compile(
             _remove_tree(temporary)
             raise
     entry = open_entry(final, verify="fast", base_dir=base_dir, expected_key=key)
-    return CacheEntry(entry.directory, entry.key, entry.manifest, entry.profile, created=True)
+    return CacheEntry(entry.directory, entry.key, entry.manifest, entry.profile, created=True, profiles=entry.profiles)
 
 
 def _copy_profile(profile: InterventionProfileFile, directory: Path) -> None:
@@ -541,11 +615,138 @@ def _copy_profile(profile: InterventionProfileFile, directory: Path) -> None:
     source = profile.path.read_bytes()
     if sha256_bytes(source) != profile.sha256:
         raise InterventionMismatchError(f"'{profile.path}' changed after it was loaded.")
+    directory.mkdir(parents=True, exist_ok=True)
     (directory / PROFILE_NAME).write_bytes(source)
     for relative in _profile_files(profile):
         target = resolve_relative(directory, relative)
         target.parent.mkdir(parents=True, exist_ok=True)
         shutil.copyfile(resolve_relative(profile.directory, relative), target)
+
+
+def _base_artifacts_for_key(
+    base_dir: Path, graph: str, graph_bytes: bytes, external_sha256: Mapping[str, str] | None
+) -> tuple[list[BaseArtifact], list[str], onnx.ModelProto]:
+    base = onnx.load_model_from_string(graph_bytes)
+    locations = external_data.external_locations(base)
+    graph_path = base_dir.joinpath(*graph.split("/"))
+    prefix = graph_path.parent.relative_to(base_dir).as_posix()
+    artifacts = [BaseArtifact(ARTIFACT_ROLE_GRAPH, graph, sha256_bytes(graph_bytes), len(graph_bytes))]
+    for location in locations:
+        relative = location if prefix in ("", ".") else f"{prefix}/{location}"
+        file = graph_path.parent.joinpath(*location.split("/"))
+        if not file.is_file():
+            raise InterventionContractError(f"external data file '{file}' does not exist.")
+        known = (external_sha256 or {}).get(relative)
+        if known is not None and not is_sha256(known):
+            raise InterventionContractError(f"external_sha256['{relative}'] is not a SHA-256.")
+        sha = known if known is not None else sha256_file(file)
+        artifacts.append(BaseArtifact(ARTIFACT_ROLE_EXTERNAL_DATA, relative, sha, file.stat().st_size))
+    return artifacts, locations, base
+
+
+def get_or_compile_profiles(
+    *,
+    cache_root: str | Path,
+    model: str,
+    base_dir: str | Path,
+    graph: str,
+    profiles: Sequence[InterventionProfileFile | str | Path],
+    mapping: SiteMapping | None = None,
+    registry: Mapping[str, SiteMapping] | None = None,
+    external_sha256: Mapping[str, str] | None = None,
+    verify: Verification = "fast",
+    lock_timeout: float = 600.0,
+    strength_input: str = STRENGTH_INPUT_NAME,
+) -> CacheEntry:
+    """``get_or_compile`` for several profiles in one derived graph with a strength vector (manifest schema 2).
+
+    The order of ``profiles`` is the strength-vector order and part of the key (``multi_cache_key_text``). The entry
+    stores each profile byte for byte at ``profiles/<index>/profile.json`` with its directions files under the same
+    directory. Locking, verification, reuse and failure handling are those of ``get_or_compile``.
+    """
+    base_dir = Path(base_dir).absolute()
+    if not is_relative_path(graph):
+        raise InterventionContractError(f"'{graph}' is not a valid relative graph path.")
+    profile_files = [p if isinstance(p, InterventionProfileFile) else load_profile(p) for p in profiles]
+    if not 1 <= len(profile_files) <= MAX_PROFILES:
+        raise InterventionCompileError(f"expected 1 to {MAX_PROFILES} profiles, got {len(profile_files)}.")
+    graph_bytes = base_dir.joinpath(*graph.split("/")).read_bytes()
+    graph_sha = sha256_bytes(graph_bytes)
+    for profile_file in profile_files:
+        profile_file.verify_base_model(graph_sha)
+    if mapping is None:
+        mapping = lookup_site_mapping(graph_sha, registry)
+    artifacts, locations, base = _base_artifacts_for_key(base_dir, graph, graph_bytes, external_sha256)
+    text = multi_cache_key_text(
+        compiler_version=COMPILER_VERSION,
+        site_mapping_version=mapping.version,
+        opset=default_opset(base),
+        precision=mapping.precision,
+        profile_sha256s=[p.sha256 for p in profile_files],
+        base_artifacts=artifacts,
+        inputs=[GraphInput(strength_input, ROLE_STRENGTH, DTYPE_FLOAT32, (len(profile_files),))],
+    )
+    key = sha256_bytes(text.encode("utf-8"))
+    parent = interventions_directory(cache_root, model)
+    final = parent / key
+    if final.exists():
+        try:
+            return open_entry(final, verify=verify, base_dir=base_dir, expected_key=key)
+        except InterventionCacheError:
+            if final.exists():
+                raise
+
+    profile_paths = [
+        f"{PROFILES_DIRECTORY}/{index}/{relative}"
+        for index, profile_file in enumerate(profile_files)
+        for relative in [PROFILE_NAME, *_profile_files(profile_file)]
+    ]
+    with _FileLock(parent / f"{key}{LOCK_SUFFIX}", lock_timeout):
+        if final.exists():
+            return open_entry(final, verify=verify, base_dir=base_dir, expected_key=key)
+        for stale in parent.glob(f"{TEMP_PREFIX}{key}-*"):
+            _remove_tree(stale)
+        _check_disjoint(
+            {
+                "derived graph": [DERIVED_GRAPH_NAME, MANIFEST_NAME],
+                "external data": locations,
+                "profile": profile_paths,
+            }
+        )
+        temporary = parent / f"{TEMP_PREFIX}{key}-{os.getpid()}-{secrets.token_hex(4)}"
+        temporary.mkdir(parents=True)
+        try:
+            result = compile_interventions(
+                base_dir=base_dir,
+                graph=graph,
+                profiles=profile_files,
+                out_dir=temporary,
+                mapping=mapping,
+                strength_input=strength_input,
+            )
+            actual = manifest_cache_key(result.manifest)
+            if actual != key:
+                raise InterventionMismatchError(
+                    f"the compiled artifact has cache key {actual}, expected {key}: an external_sha256 value does not "
+                    "match the file, or the base files changed during compilation."
+                )
+            for index, profile_file in enumerate(profile_files):
+                _copy_profile(profile_file, temporary / PROFILES_DIRECTORY / str(index))
+            for path in (
+                temporary / DERIVED_GRAPH_NAME,
+                temporary / MANIFEST_NAME,
+                *(temporary / PROFILES_DIRECTORY / str(i) / PROFILE_NAME for i in range(len(profile_files))),
+            ):
+                _fsync_file(path)
+            open_entry(temporary, verify="fast", base_dir=base_dir, expected_key=key)
+            _fsync_dir(temporary)
+            os.rename(temporary, final)
+            _fsync_dir(parent)
+        except BaseException:
+            _remove_tree(temporary)
+            raise
+    entry = open_entry(final, verify="fast", base_dir=base_dir, expected_key=key)
+    return CacheEntry(entry.directory, entry.key, entry.manifest, entry.profile, created=True, profiles=entry.profiles)
 
 
 def evict(cache_root: str | Path, model: str, key: str, *, lock_timeout: float = 600.0) -> bool:

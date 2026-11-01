@@ -2,7 +2,7 @@
 
 Status: **experimental**. The mechanism evidence below uses synthetic random orthonormal directions. One extracted style profile, `lfm3-1.7b-concise` (`model-pipeline/interventions/profiles/lfm3-1.7b/concise/`), has held-out separability evidence ([extraction.md](extraction.md)) and a strength-sweep evaluation ([evidence](../evidence/lfm3-concise-evaluation-2026-10-31/README.md)). The evaluation recommends no strength: amplifying the direction shortens answers within a narrow band, but at a cost in capability and drift; removing it lengthens them. Deciding which callers may apply which profile is the host application's job.
 
-LFM3-1.7B (`Starlings.Models.Lfm3`, the fp32 step graph of `LiquidAI/LFM3-1.7B-ONNX` at `c680759a`) can run with one intervention profile compiled into a derived graph, with the strength chosen per request. The integration is the source-only companion `Starlings.Models.Lfm3.Interventions`; `Starlings.Models.Lfm3` keeps its public API, and an application that does not use interventions loads the original graph exactly as before.
+LFM3-1.7B (`Starlings.Models.Lfm3`, the fp32 step graph of `LiquidAI/LFM3-1.7B-ONNX` at `c680759a`) can run with one or more intervention profiles compiled into a derived graph, with the strengths chosen per request. The integration is the source-only companion `Starlings.Models.Lfm3.Interventions`; `Starlings.Models.Lfm3` keeps its public API, and an application that does not use interventions loads the original graph exactly as before.
 
 ## Pieces
 
@@ -11,8 +11,9 @@ LFM3-1.7B (`Starlings.Models.Lfm3`, the fp32 step graph of `LiquidAI/LFM3-1.7B-O
 | Site mapping `lfm3-1.7b/fp32/1` | `model-pipeline/src/model_pipeline/interventions/injection_sites.py`, keyed to the fp32 lock's `onnx/model.onnx` SHA-256 `add6653f…5ef77`. Sites: `residual_post` after each of the 24 decoder layers (`/model/layers.L/Add_2/output_0`, float32, hidden 2048). Both readers of each tensor are rewired. The fp16 graph has no mapping. |
 | Synthetic compile | `python -m model_pipeline.interventions.lfm3_synthetic`: writes profile `lfm3-synthetic-test` (rank 8 after layers 8 and 16, seeded random orthonormal directions, scales 1) and compiles it with `get_or_compile`, passing the lock's external data hashes. |
 | Load and verify | `Lfm3Interventions.CreateModel` / `CreateChatModel`: open the cache entry (`InterventionArtifactCache.OpenEntry`: name = key), check the manifest before any session exists, load the derived graph through `OnnxModelSession`. |
-| Per-request strength | `model.CreateSequence(selection)`, `chat.Generate/GenerateStreaming/Chat(..., selection, ...)` extension methods. |
-| Graph check | `Lfm3Model` accepts the 39 inputs of the LFM3 step graph plus exactly the manifest's one strength input. |
+| Synthetic two-profile compile | `python -m model_pipeline.interventions.lfm3_synthetic --multi`: profile 0 is `lfm3-synthetic-test` (byte for byte the profile above), profile 1 `lfm3-synthetic-add` (`directional_addition`, rank 2, scales 1 and 0.5, after layers 12 and 16); compiled with `get_or_compile_profiles` into one graph with strength input `[2]`. Layer 16 is shared: the projection runs first, then the addition. |
+| Per-request strength | `model.CreateSequence(selection)`, `chat.Generate/GenerateStreaming/Chat(..., selection, ...)` extension methods. The selection is a set of `(profile id, strength)` pairs resolved to the strength vector (unnamed profiles 0). |
+| Graph check | `Lfm3Model` accepts the 39 inputs of the LFM3 step graph plus exactly the manifest's one strength input (shape `[n]`, n = profiles). |
 
 ## Compile, load, request
 
@@ -53,15 +54,16 @@ using Lfm3Sequence plain = model.CreateSequence(selection: null);
 2. The manifest's base graph SHA-256 equals the lock's entry for the requested precision's graph. A wrong base graph (another export, the fp16 graph) throws `InterventionMismatchException` and no session is created.
 3. The manifest precision matches (`fp32`), and every base artifact (the graph and its four external data files) is the lock's file with the lock's SHA-256 and size; no locked graph file is missing. The graph file holds only offsets into the weights, so its hash alone does not identify them, and Fast verification compares the linked weights with the manifest by size and file identity, not by hash.
 4. The site mapping version is `lfm3-1.7b/fp32/1` (`Lfm3Interventions.Fp32SiteMappingVersion`); another mapping version is rejected until this integration is verified with it.
-5. Exactly one extra input: the strength, float32, shape `[1]`, not named like an LFM3 input.
+5. Exactly one extra input: the strength, float32, shape `[n]` with `n` the number of profiles (`[1]` for a schema version 1 manifest), not named like an LFM3 input.
 6. Every site is inside the 24 decoder layers at hidden size 2048.
 
-The session takes the derived graph's verified SHA-256 as `KnownModelSha256`, so `GetInterventionDiagnostics()` reports the original identity (the lock's), the loaded identity (the derived graph's, source `Known`), the profile id, the strength input and the 39 model inputs.
+The session takes the derived graph's verified SHA-256 as `KnownModelSha256`, so `GetInterventionDiagnostics()` reports the original identity (the lock's), the loaded identity (the derived graph's, source `Known`), every profile id (strength-vector order), the strength input and the 39 model inputs.
 
 ### Request semantics
 
-- The selection is resolved when the sequence is created and fixed for its lifetime; `Lfm3Sequence` has no way to change it. Each sequence owns its one-element strength array; each native call wraps it in a tensor that lives until the call returns. No tensor is shared between sequences.
-- No selection on a derived graph: strength 0. A selection on the original graph: `InvalidOperationException`. A selection naming another profile: `InterventionMismatchException`.
+- The selection is resolved to the strength vector when the sequence is created (each named profile gets its strength, every other profile 0) and fixed for its lifetime; `Lfm3Sequence` has no way to change it. Each sequence owns its `[n]` strength array (a copy); each native call wraps it in a tensor that lives until the call returns. No tensor is shared between sequences.
+- No selection on a derived graph: every strength 0. A selection on the original graph: `InvalidOperationException`. A selection naming a profile the graph does not carry: `InterventionMismatchException`.
+- Single-profile entries (manifest schema version 1) load and run as before: a strength vector of length 1.
 
 ## Evidence (2026-10-31, linux-x64 CPU, ONNX Runtime 1.30.0)
 
@@ -81,6 +83,24 @@ The derived graph of the synthetic profile (cache key `5ff9b1d7…d025`, derived
 | Chat model (tokenizer 0.3.4): `Generate` and `GenerateStreaming` at strength 1 give the same ids, equal to the sequence's greedy ids; no selection gives the original graph's ids; another profile id throws; the tokenizer encodes the rendered conversation to the reference prompt ids and `Chat(turns, selection)` gives the same ids and text as `Generate` | pass (6 new tokens) | `ChatGenerateAndStreamingPassTheSelection` |
 | fp16 graph hash, wrong base hash, external data not the locked weights, missing locked weight file, unknown site mapping version, wrong precision, scalar or colliding strength input, site layer 24 | rejected before any session | `ManifestCheckTests`, `TheArtifactIsRejectedForAnotherBaseGraphBeforeAnySession` |
 
+Two profiles in one graph (cache key `7496ccf0…1e06b`, manifest schema version 2, strength input `[2]`), same prompt, linux-x64 CPU:
+
+| Check | Result | Where |
+| --- | --- | --- |
+| Vector (0, 0) vs original, logits (Python ORT and .NET) | max abs 0; no selection = (0, 0) = `{add: 0}` | `test_strength_vector_zero_matches_the_base_and_one_profile_matches_its_single_graph`, `Lfm3MultiProfileModelTests.TheZeroVectorMatchesTheOriginalGraph` |
+| (1, 0) vs the single-profile graph at strength 1 (Python ORT and .NET) | max abs 0 | same, `OneProfileAloneMatchesTheSingleProfileGraph` |
+| (0, 1) vs original; (1, 0) vs (1, 1) | max abs 10.3; 9.77 | same, `ProfilesCombineAndSelectionOrderDoesNotMatter` |
+| Shared layer-16 site vs NumPy `y1 = y - a((yQ0ᵀ)⊙s0)Q0`, `y2 = y1 + b(s1Q1)`, strengths (1, 1) and (0.5, -2) | max abs ≤ 6.7e-7 (projection), ≤ 1.1e-6 (addition) | `test_shared_site_matches_the_numpy_composition` |
+| Selection order `{test: 1, add: 1}` vs `{add: 1, test: 1}` (.NET) | equal | `ProfilesCombineAndSelectionOrderDoesNotMatter` |
+| 10 concurrent sequences, vectors (0,0), (1,0), (0,1), (0.5,-1), (-1,2) on one session vs sequential (.NET) | within 1e-5 each | `ConcurrentSequencesWithDifferentVectorsAreIsolated` |
+| Unknown profile id, wrong vector length | rejected (`InterventionMismatchException`, `ArgumentException`) | `ASelectionOfAnUnknownProfileOrAWrongVectorIsRejected` |
+| Diagnostics list both profile ids | yes | `DiagnosticsListEveryProfile` |
+| The single-profile class (`Lfm3InterventionModelTests`) on a fresh schema 1 entry and on the entry compiled by the previous change | 7 passed, 1 skipped (chat, then blocked by the 0.3.2 tokenizer pin) each | |
+
+The synthetic addition at strength 1 moves the logits far more than the projection (10.3 against 1.97): it adds a unit-norm direction to the residual stream whatever its content. The directions are random, not behavioural.
+
+The real-model test classes each hold an fp32 session in a process-wide fixture; run each in its own test process (`-class ...`). They share an xunit collection, so they never run in parallel.
+
 Strength 0 is bit-identical here; other graphs, providers or optimization levels may only match within rounding (the extra reader of the residual tensor can change operator fusion).
 
 The synthetic directions at strength 1 left the 6 greedy ids of this prompt unchanged although the logits moved by up to 1.97: the directions are random, not behavioural.
@@ -89,6 +109,6 @@ The compile command above and both code examples (this page's sequence example a
 
 ## Not covered
 
-- The real-model tests need `STARLING_LFM3_SNAPSHOT` and a compiled entry (`STARLING_LFM3_INTERVENTION` for .NET, `STARLING_LFM3_INTERVENTION_CACHE` for Python); CI runs only the model-free tests (manifest checks, mapping).
+- The real-model tests need `STARLING_LFM3_SNAPSHOT` and a compiled entry (`STARLING_LFM3_INTERVENTION`, and `STARLING_LFM3_INTERVENTION_MULTI` for the two-profile graph, for .NET; `STARLING_LFM3_INTERVENTION_CACHE` for Python); CI runs only the model-free tests (manifest checks, mapping).
 - The fp16 graph (no site mapping), CUDA, Windows, AOT publish.
-- More than one profile per graph, hot swap. A behavioural evaluation of any profile other than `concise`.
+- Hot swap. On LFM3 two profiles per graph were measured; three only on the synthetic graphs of the compiler tests. A behavioural evaluation of any profile other than `concise`.

@@ -795,14 +795,14 @@ def _doc_json_blocks() -> list[bytes]:
 
 
 def test_documented_examples_parse_and_reserialize_identically():
-    profile_text, manifest_text = _doc_json_blocks()
+    profile_text, manifest_text = _doc_json_blocks()[:2]
     profile = contract.parse_profile(profile_text)
     assert profile.id == "synthetic-demo" and profile.sites[0].scales == (1.0, 0.5)
     assert contract.parse_manifest(manifest_text).serialize() == manifest_text
 
 
 def test_manifest_validation_matches_csharp_rules():
-    _, manifest_text = _doc_json_blocks()
+    _, manifest_text = _doc_json_blocks()[:2]
     document = json.loads(manifest_text)
 
     def rejected(mutate, path):
@@ -812,7 +812,8 @@ def test_manifest_validation_matches_csharp_rules():
             contract.parse_manifest(json.dumps(doc).encode())
         assert info.value.json_path == path
 
-    rejected(lambda d: d.update(schema_version=2), "schema_version")
+    rejected(lambda d: d.update(schema_version=3), "schema_version")
+    rejected(lambda d: d.update(schema_version=2), "$")  # a schema 2 manifest has "profiles", not "profile_id"
     rejected(lambda d: d.update(extra=1), "$")
     rejected(lambda d: d["inputs"][0].update(shape=[1, 1]), "inputs")
     rejected(lambda d: d["inputs"][0].update(dtype="float16"), "inputs[0].dtype")
@@ -840,7 +841,7 @@ def test_manifest_validation_matches_csharp_rules():
 
 
 def test_identity_and_validation_are_optional_and_round_trip():
-    _, manifest_text = _doc_json_blocks()
+    _, manifest_text = _doc_json_blocks()[:2]
     manifest = contract.parse_manifest(manifest_text)
     assert manifest.derived_files[0].identity == contract.FileIdentity(66307, 1234567, 1761000000123456789)
     assert manifest.validation.onnx_checker == contract.CHECKER_SKIPPED_BASE_REJECTED
@@ -887,7 +888,8 @@ def _profile_doc(**overrides) -> dict:
 @pytest.mark.parametrize(
     ("text", "path"),
     [
-        (json.dumps(_profile_doc(schema_version=2)), "schema_version"),
+        (json.dumps(_profile_doc(schema_version=3)), "schema_version"),
+        (json.dumps(_profile_doc(operator="directional_addition")), "operator"),
         (json.dumps(_profile_doc(schema_version=1.0)), "schema_version"),
         (json.dumps(_profile_doc(schema_version="1")), "schema_version"),
         (json.dumps(_profile_doc(extra=True)), "$"),

@@ -14,7 +14,8 @@ public static class Lfm3InterventionCapabilities
         ["graph.fp16"] = CapabilityStatus.Unsupported,              // no site mapping for onnx/model_fp16.onnx
         ["selection.per_request"] = CapabilityStatus.Experimental,  // strength fixed per sequence, passed on every call
         ["selection.mid_sequence_change"] = CapabilityStatus.Unsupported, // impossible by construction
-        ["profiles.multiple_per_graph"] = CapabilityStatus.Unsupported,
+        ["profiles.multiple_per_graph"] = CapabilityStatus.Experimental, // strength vector per sequence; synthetic two-profile evidence
+        ["operator.directional_addition"] = CapabilityStatus.Experimental,
         ["profiles.hot_swap"] = CapabilityStatus.Unsupported,
         ["profiles.behavioural"] = CapabilityStatus.Unsupported,    // no real behavioural profile ships or is evaluated
         ["cuda"] = CapabilityStatus.Untested,

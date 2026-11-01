@@ -5,21 +5,40 @@ using Starlings.Interventions.Internal;
 namespace Starlings.Interventions;
 
 /// <summary>
-/// The compiler manifest of a derived intervention graph (<c>compiler-manifest.json</c>, schema version 1): what it was
-/// compiled from (base artifacts, profile), how (compiler and site-mapping versions, opset, precision), what it adds
-/// (declared inputs, resolved sites) and what it produced (derived graph and files, with their SHA-256). Immutable;
-/// construction and <see cref="Parse(ReadOnlyMemory{byte})"/> validate every value. The format is specified in
+/// The compiler manifest of a derived intervention graph (<c>compiler-manifest.json</c>): what it was compiled from
+/// (base artifacts, profiles), how (compiler and site-mapping versions, opset, precision), what it adds (declared
+/// inputs, resolved sites) and what it produced (derived graph and files, with their SHA-256). Immutable; construction
+/// and <see cref="Parse(ReadOnlyMemory{byte})"/> validate every value. The format is specified in
 /// <c>docs/interventions/profile-format.md</c>.
 /// </summary>
+/// <remarks>
+/// Schema version 1 holds one profile (<c>profile_id</c>, <c>profile_sha256</c>, <c>operator</c>) and a strength input
+/// of shape [] or [1]. Schema version 2 holds one or more profiles in strength-vector order (<see cref="Profiles"/>), a
+/// strength input of shape [n] whose element i is the strength of profile i, and on each site the profiles applied
+/// there, in application order (<see cref="InterventionSiteBinding.Profiles"/>). Both are read; each is written in its
+/// own version.
+/// </remarks>
 public sealed class InterventionManifest
 {
-    /// <summary>The only schema version this library reads and writes.</summary>
+    /// <summary>Schema version 1: one profile per derived graph.</summary>
     public const int CurrentSchemaVersion = 1;
+
+    /// <summary>Schema version 2: several profiles and a strength vector.</summary>
+    public const int MultiProfileSchemaVersion = 2;
+
+    /// <summary>Largest number of profiles in one schema 2 manifest (the strength vector's length).</summary>
+    public const int MaxProfiles = 64;
 
     internal static readonly string[] PropertyNames =
     [
         "schema_version", "compiler_version", "site_mapping_version", "base_artifacts", "profile_id", "profile_sha256",
         "operator", "opset", "precision", "inputs", "sites", "derived_graph", "derived_files", "validation",
+    ];
+
+    internal static readonly string[] PropertyNamesV2 =
+    [
+        "schema_version", "compiler_version", "site_mapping_version", "base_artifacts", "profiles", "opset", "precision",
+        "inputs", "sites", "derived_graph", "derived_files", "validation",
     ];
 
     /// <summary>Creates a manifest.</summary>
@@ -57,6 +76,52 @@ public sealed class InterventionManifest
         InterventionArtifactFile derivedGraph,
         IEnumerable<InterventionArtifactFile> derivedFiles,
         InterventionManifestValidation? validation = null)
+        : this(CurrentSchemaVersion, compilerVersion, siteMappingVersion, baseArtifacts, [SingleProfile(profileId, profileSha256, operatorKind)], opset, precision, inputs, sites, derivedGraph, derivedFiles, validation)
+    {
+    }
+
+    /// <summary>Creates a schema version 2 manifest: several profiles in one derived graph with a strength vector.</summary>
+    /// <param name="compilerVersion">Version label of the compiler.</param>
+    /// <param name="siteMappingVersion">Version label of the model-specific site mapping that resolved the sites.</param>
+    /// <param name="baseArtifacts">Exactly one <see cref="InterventionArtifactRole.Graph"/> entry and any external data files; paths unique.</param>
+    /// <param name="profiles">1 to <see cref="MaxProfiles"/> profiles in strength-vector order; ids unique.</param>
+    /// <param name="opset">Default-domain ONNX opset of the derived graph, 1 to 1000.</param>
+    /// <param name="precision">Precision name of the base graph.</param>
+    /// <param name="inputs">Declared extra inputs: exactly one <see cref="InterventionInputRole.Strength"/> input of shape [n] with n = the number of profiles; names unique.</param>
+    /// <param name="sites">Resolved sites, each naming the profiles applied there (strictly ascending strength indices); every profile at one site at least; no two share a layer and target, or a tensor.</param>
+    /// <param name="derivedGraph">The derived <c>model.onnx</c>.</param>
+    /// <param name="derivedFiles">Other derived files, as for schema version 1.</param>
+    /// <param name="validation">How the compiler validated the derived graph, or null.</param>
+    /// <exception cref="InterventionContractException">A value violates the contract.</exception>
+    public InterventionManifest(
+        string compilerVersion,
+        string siteMappingVersion,
+        IEnumerable<InterventionBaseArtifact> baseArtifacts,
+        IEnumerable<InterventionManifestProfile> profiles,
+        int opset,
+        string precision,
+        IEnumerable<InterventionGraphInput> inputs,
+        IEnumerable<InterventionSiteBinding> sites,
+        InterventionArtifactFile derivedGraph,
+        IEnumerable<InterventionArtifactFile> derivedFiles,
+        InterventionManifestValidation? validation = null)
+        : this(MultiProfileSchemaVersion, compilerVersion, siteMappingVersion, baseArtifacts, [.. profiles ?? throw new ArgumentNullException(nameof(profiles))], opset, precision, inputs, sites, derivedGraph, derivedFiles, validation)
+    {
+    }
+
+    private InterventionManifest(
+        int schemaVersion,
+        string compilerVersion,
+        string siteMappingVersion,
+        IEnumerable<InterventionBaseArtifact> baseArtifacts,
+        InterventionManifestProfile[] profiles,
+        int opset,
+        string precision,
+        IEnumerable<InterventionGraphInput> inputs,
+        IEnumerable<InterventionSiteBinding> sites,
+        InterventionArtifactFile derivedGraph,
+        IEnumerable<InterventionArtifactFile> derivedFiles,
+        InterventionManifestValidation? validation)
     {
         ArgumentNullException.ThrowIfNull(baseArtifacts);
         ArgumentNullException.ThrowIfNull(inputs);
@@ -74,15 +139,20 @@ public sealed class InterventionManifest
             throw new InterventionContractException("site_mapping_version", $"'{siteMappingVersion}' is not a version label ([A-Za-z0-9._+/-], at most 64).");
         }
 
-        if (!StrictJson.IsProfileId(profileId))
+        bool multi = schemaVersion == MultiProfileSchemaVersion;
+        if (profiles.Length is 0 or > MaxProfiles)
         {
-            throw new InterventionContractException("profile_id", $"'{profileId}' is not a valid profile id.");
+            throw new InterventionContractException("profiles", $"{profiles.Length} profiles; expected 1..{MaxProfiles}.");
         }
 
-        StrictJson.RequireSha256(profileSha256 ?? "", "profile_sha256");
-        if (!Enum.IsDefined(operatorKind))
+        HashSet<string> profileIds = new(StringComparer.Ordinal);
+        foreach (InterventionManifestProfile profile in profiles)
         {
-            throw new InterventionContractException("operator", $"unknown operator {operatorKind}.");
+            ArgumentNullException.ThrowIfNull(profile, nameof(profiles));
+            if (!profileIds.Add(profile.Id))
+            {
+                throw new InterventionContractException("profiles", $"profile id '{profile.Id}' appears twice.");
+            }
         }
 
         if (opset is < 1 or > 1000)
@@ -148,7 +218,14 @@ public sealed class InterventionManifest
             throw new InterventionContractException("inputs", "no input has role 'strength'.");
         }
 
-        if (!(strength.Shape.Count == 0 || (strength.Shape.Count == 1 && strength.Shape[0] == 1)))
+        if (multi)
+        {
+            if (strength.Shape.Count != 1 || strength.Shape[0] != profiles.Length)
+            {
+                throw new InterventionContractException("inputs", $"the strength input '{strength.Name}' must have shape [{profiles.Length}], one element per profile.");
+            }
+        }
+        else if (!(strength.Shape.Count == 0 || (strength.Shape.Count == 1 && strength.Shape[0] == 1)))
         {
             throw new InterventionContractException("inputs", $"the strength input '{strength.Name}' must have shape [] or [1].");
         }
@@ -159,9 +236,39 @@ public sealed class InterventionManifest
             throw new InterventionContractException("sites", $"{siteList.Length} sites; expected 1..{InterventionProfile.MaxSites}.");
         }
 
+        bool[] applied = new bool[profiles.Length];
         foreach (InterventionSiteBinding site in siteList)
         {
             ArgumentNullException.ThrowIfNull(site, nameof(sites));
+            if (!multi)
+            {
+                if (site.Profiles.Count != 0)
+                {
+                    throw new InterventionContractException("sites", $"site at layer {site.Layer} lists profiles; only schema version 2 sites do.");
+                }
+
+                continue;
+            }
+
+            if (site.Profiles.Count == 0)
+            {
+                throw new InterventionContractException("sites", $"site at layer {site.Layer} lists no profiles.");
+            }
+
+            foreach (int index in site.Profiles)
+            {
+                if (index >= profiles.Length)
+                {
+                    throw new InterventionContractException("sites", $"site at layer {site.Layer} names profile {index}; there are {profiles.Length}.");
+                }
+
+                applied[index] = true;
+            }
+        }
+
+        if (multi && Array.IndexOf(applied, false) is int unused and >= 0)
+        {
+            throw new InterventionContractException("sites", $"profile {unused} ('{profiles[unused].Id}') is applied at no site.");
         }
 
         Array.Sort(siteList, CompareBindings);
@@ -203,9 +310,8 @@ public sealed class InterventionManifest
         SiteMappingVersion = siteMappingVersion;
         BaseArtifacts = new ReadOnlyCollection<InterventionBaseArtifact>(baseList);
         BaseGraph = graph.File;
-        ProfileId = profileId;
-        ProfileSha256 = profileSha256!;
-        Operator = operatorKind;
+        SchemaVersion = schemaVersion;
+        Profiles = new ReadOnlyCollection<InterventionManifestProfile>(profiles);
         Opset = opset;
         Precision = precision;
         Inputs = new ReadOnlyCollection<InterventionGraphInput>(inputList);
@@ -231,14 +337,33 @@ public sealed class InterventionManifest
     /// <summary>SHA-256 of the base graph (<see cref="BaseGraph"/>); equals the profile's <see cref="InterventionProfile.BaseModelSha256"/>.</summary>
     public string BaseModelSha256 => BaseGraph.Sha256;
 
-    /// <summary>Id of the compiled profile.</summary>
-    public string ProfileId { get; }
+    /// <summary>The schema version of the document: <see cref="CurrentSchemaVersion"/> (1) or <see cref="MultiProfileSchemaVersion"/> (2).</summary>
+    public int SchemaVersion { get; }
 
-    /// <summary>SHA-256 of the compiled <c>profile.json</c> bytes.</summary>
-    public string ProfileSha256 { get; }
+    /// <summary>
+    /// The compiled profiles in strength-vector order: element i of the strength input is the strength of profile i.
+    /// A schema version 1 manifest has exactly one.
+    /// </summary>
+    public IReadOnlyList<InterventionManifestProfile> Profiles { get; }
 
-    /// <summary>The profile's operator.</summary>
-    public InterventionOperatorKind Operator { get; }
+    /// <summary>Id of the compiled profile, when there is exactly one (see <see cref="Profiles"/>).</summary>
+    /// <exception cref="InvalidOperationException">The manifest holds several profiles.</exception>
+    public string ProfileId => Single.Id;
+
+    /// <summary>SHA-256 of the compiled <c>profile.json</c> bytes, when there is exactly one profile.</summary>
+    /// <exception cref="InvalidOperationException">The manifest holds several profiles.</exception>
+    public string ProfileSha256 => Single.Sha256;
+
+    /// <summary>The profile's operator, when there is exactly one profile.</summary>
+    /// <exception cref="InvalidOperationException">The manifest holds several profiles.</exception>
+    public InterventionOperatorKind Operator => Single.Operator;
+
+    /// <summary>The ids of <see cref="Profiles"/>, in strength-vector order.</summary>
+    public IReadOnlyList<string> ProfileIds => [.. Profiles.Select(p => p.Id)];
+
+    private InterventionManifestProfile Single => Profiles.Count == 1
+        ? Profiles[0]
+        : throw new InvalidOperationException($"The manifest holds {Profiles.Count} profiles; use Profiles.");
 
     /// <summary>Default-domain ONNX opset of the derived graph.</summary>
     public int Opset { get; }
@@ -275,11 +400,16 @@ public sealed class InterventionManifest
         JsonElement root = document.RootElement;
         if (root.ValueKind == JsonValueKind.Object && root.TryGetProperty("schema_version", out JsonElement version))
         {
-            if (version.ValueKind != JsonValueKind.Number || !version.TryGetInt32(out int v) || v != CurrentSchemaVersion)
+            if (version.ValueKind != JsonValueKind.Number || !version.TryGetInt32(out int v) || v is < CurrentSchemaVersion or > MultiProfileSchemaVersion)
             {
                 throw new InterventionContractException(
                     "schema_version",
-                    $"unsupported schema version {version.GetRawText()}; this library reads version {CurrentSchemaVersion}.");
+                    $"unsupported schema version {version.GetRawText()}; this library reads versions {CurrentSchemaVersion} and {MultiProfileSchemaVersion}.");
+            }
+
+            if (v == MultiProfileSchemaVersion)
+            {
+                return ParseV2(root);
             }
         }
 
@@ -343,6 +473,104 @@ public sealed class InterventionManifest
             validation);
     }
 
+    private static InterventionManifest ParseV2(JsonElement root)
+    {
+        StrictObject o = StrictObject.Open(root, "", PropertyNamesV2);
+        _ = o.GetInt32("schema_version");
+
+        List<InterventionBaseArtifact> baseArtifacts = [];
+        int index = 0;
+        foreach (JsonElement item in StrictJson.GetArray(o.Required("base_artifacts"), "base_artifacts"))
+        {
+            baseArtifacts.Add(InterventionBaseArtifact.Read(item, StrictJson.Index("base_artifacts", index++)));
+        }
+
+        List<InterventionManifestProfile> profiles = [];
+        index = 0;
+        foreach (JsonElement item in StrictJson.GetArray(o.Required("profiles"), "profiles"))
+        {
+            if (index >= MaxProfiles)
+            {
+                throw new InterventionContractException("profiles", $"more than {MaxProfiles} profiles.");
+            }
+
+            profiles.Add(InterventionManifestProfile.Read(item, StrictJson.Index("profiles", index++)));
+        }
+
+        if (profiles.Count == 0)
+        {
+            throw new InterventionContractException("profiles", $"0 profiles; expected 1..{MaxProfiles}.");
+        }
+
+        List<InterventionGraphInput> inputs = [];
+        index = 0;
+        foreach (JsonElement item in StrictJson.GetArray(o.Required("inputs"), "inputs"))
+        {
+            inputs.Add(InterventionGraphInput.Read(item, StrictJson.Index("inputs", index++)));
+        }
+
+        List<InterventionSiteBinding> sites = [];
+        index = 0;
+        foreach (JsonElement item in StrictJson.GetArray(o.Required("sites"), "sites"))
+        {
+            if (index >= InterventionProfile.MaxSites)
+            {
+                throw new InterventionContractException("sites", $"more than {InterventionProfile.MaxSites} sites.");
+            }
+
+            sites.Add(InterventionSiteBinding.ReadV2(item, StrictJson.Index("sites", index++), profiles.Count));
+        }
+
+        InterventionArtifactFile derivedGraph = InterventionArtifactFile.Read(
+            StrictObject.Open(o.Required("derived_graph"), "derived_graph", "path", "sha256", "size"));
+
+        List<InterventionArtifactFile> derivedFiles = [];
+        index = 0;
+        foreach (JsonElement item in StrictJson.GetArray(o.Required("derived_files"), "derived_files"))
+        {
+            derivedFiles.Add(InterventionArtifactFile.Read(
+                StrictObject.Open(item, StrictJson.Index("derived_files", index++), "path", "sha256", "size", "identity")));
+        }
+
+        InterventionManifestValidation? validation = o.Has("validation")
+            ? InterventionManifestValidation.Read(o.Required("validation"), "validation")
+            : null;
+
+        return new InterventionManifest(
+            o.GetString("compiler_version"),
+            o.GetString("site_mapping_version"),
+            baseArtifacts,
+            profiles,
+            o.GetInt32("opset"),
+            o.GetString("precision"),
+            inputs,
+            sites,
+            derivedGraph,
+            derivedFiles,
+            validation);
+    }
+
+    private static InterventionManifestProfile SingleProfile(string profileId, string profileSha256, InterventionOperatorKind operatorKind)
+    {
+        if (!StrictJson.IsProfileId(profileId))
+        {
+            throw new InterventionContractException("profile_id", $"'{profileId}' is not a valid profile id.");
+        }
+
+        StrictJson.RequireSha256(profileSha256 ?? "", "profile_sha256");
+        if (!Enum.IsDefined(operatorKind))
+        {
+            throw new InterventionContractException("operator", $"unknown operator {operatorKind}.");
+        }
+
+        if (operatorKind != InterventionOperatorKind.DirectionalProjection)
+        {
+            throw new InterventionContractException("operator", $"operator '{InterventionNames.Of(operatorKind)}' needs a schema version 2 manifest.");
+        }
+
+        return new InterventionManifestProfile(profileId, profileSha256!, operatorKind);
+    }
+
     /// <summary>Reads and validates the manifest at <paramref name="path"/>.</summary>
     /// <exception cref="InterventionContractException">The document violates the contract.</exception>
     public static InterventionManifest Load(string path)
@@ -369,7 +597,7 @@ public sealed class InterventionManifest
     public byte[] Serialize() => StrictJson.Write(writer =>
     {
         writer.WriteStartObject();
-        writer.WriteNumber("schema_version", CurrentSchemaVersion);
+        writer.WriteNumber("schema_version", SchemaVersion);
         writer.WriteString("compiler_version", CompilerVersion);
         writer.WriteString("site_mapping_version", SiteMappingVersion);
         writer.WriteStartArray("base_artifacts");
@@ -379,9 +607,23 @@ public sealed class InterventionManifest
         }
 
         writer.WriteEndArray();
-        writer.WriteString("profile_id", ProfileId);
-        writer.WriteString("profile_sha256", ProfileSha256);
-        writer.WriteString("operator", InterventionNames.Of(Operator));
+        if (SchemaVersion == MultiProfileSchemaVersion)
+        {
+            writer.WriteStartArray("profiles");
+            foreach (InterventionManifestProfile profile in Profiles)
+            {
+                profile.Write(writer);
+            }
+
+            writer.WriteEndArray();
+        }
+        else
+        {
+            writer.WriteString("profile_id", ProfileId);
+            writer.WriteString("profile_sha256", ProfileSha256);
+            writer.WriteString("operator", InterventionNames.Of(Operator));
+        }
+
         writer.WriteNumber("opset", Opset);
         writer.WriteString("precision", Precision);
         writer.WriteStartArray("inputs");
@@ -426,6 +668,17 @@ public sealed class InterventionManifest
     {
         ArgumentNullException.ThrowIfNull(profile);
         InterventionHashes.RequireSha256(profileSha256, nameof(profileSha256));
+        if (SchemaVersion == MultiProfileSchemaVersion)
+        {
+            if (Profiles.Count != 1)
+            {
+                throw new InterventionMismatchException($"Manifest holds {Profiles.Count} profiles, not one.");
+            }
+
+            VerifyProfileAt(0, profile, profileSha256);
+            return;
+        }
+
         if (!string.Equals(ProfileId, profile.Id, StringComparison.Ordinal))
         {
             throw new InterventionMismatchException($"Manifest was compiled from profile '{ProfileId}', not '{profile.Id}'.");
@@ -466,6 +719,87 @@ public sealed class InterventionManifest
     {
         ArgumentNullException.ThrowIfNull(profileFile);
         VerifyProfile(profileFile.Profile, profileFile.Sha256);
+    }
+
+    /// <summary>
+    /// Checks that this manifest was compiled from exactly <paramref name="profiles"/>, in strength-vector order: for each
+    /// index the recorded id, SHA-256 and operator, the base graph the profile names, and exactly the profile's sites
+    /// (the sites whose <see cref="InterventionSiteBinding.Profiles"/> list that index; for schema version 1, every site).
+    /// </summary>
+    /// <exception cref="InterventionMismatchException">The count, order or any profile differs.</exception>
+    public void VerifyProfiles(IReadOnlyList<InterventionProfileFile> profiles)
+    {
+        ArgumentNullException.ThrowIfNull(profiles);
+        if (profiles.Count != Profiles.Count)
+        {
+            throw new InterventionMismatchException($"Manifest records {Profiles.Count} profiles; {profiles.Count} were given.");
+        }
+
+        if (SchemaVersion == CurrentSchemaVersion)
+        {
+            VerifyProfile(profiles[0]);
+            return;
+        }
+
+        for (int i = 0; i < profiles.Count; i++)
+        {
+            ArgumentNullException.ThrowIfNull(profiles[i], nameof(profiles));
+            VerifyProfileAt(i, profiles[i].Profile, profiles[i].Sha256);
+        }
+    }
+
+    /// <summary>The sites profile <paramref name="index"/> is applied at (schema version 1: every site).</summary>
+    public IReadOnlyList<InterventionSiteBinding> SitesOf(int index)
+    {
+        ArgumentOutOfRangeException.ThrowIfNegative(index);
+        ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual(index, Profiles.Count);
+        return SchemaVersion == CurrentSchemaVersion ? Sites : [.. Sites.Where(s => s.Profiles.Contains(index))];
+    }
+
+    /// <summary>
+    /// The strength vector of <paramref name="selection"/> for this graph: element i is the strength the selection gives
+    /// profile i (<see cref="Profiles"/>), 0 for a profile it does not name; null selection gives all zeros.
+    /// </summary>
+    /// <exception cref="InterventionMismatchException">The selection names a profile this graph does not carry.</exception>
+    public float[] ResolveStrengths(InterventionSelection? selection) =>
+        selection is null ? new float[Profiles.Count] : selection.Resolve(ProfileIds);
+
+    private void VerifyProfileAt(int index, InterventionProfile profile, string profileSha256)
+    {
+        InterventionManifestProfile recorded = Profiles[index];
+        if (!string.Equals(recorded.Id, profile.Id, StringComparison.Ordinal))
+        {
+            throw new InterventionMismatchException($"Manifest profile {index} is '{recorded.Id}', not '{profile.Id}'.");
+        }
+
+        if (!string.Equals(recorded.Sha256, profileSha256, StringComparison.Ordinal))
+        {
+            throw new InterventionMismatchException($"Manifest records SHA-256 {recorded.Sha256} for profile '{profile.Id}', the profile file has {profileSha256}.");
+        }
+
+        if (recorded.Operator != profile.Operator)
+        {
+            throw new InterventionMismatchException(
+                $"Manifest operator '{InterventionNames.Of(recorded.Operator)}' of profile '{profile.Id}' differs from the profile's '{InterventionNames.Of(profile.Operator)}'.");
+        }
+
+        if (!profile.AppliesTo(BaseModelSha256))
+        {
+            throw new InterventionMismatchException(
+                $"Manifest base graph {BaseModelSha256} differs from the base graph {profile.BaseModelSha256} of profile '{profile.Id}'.");
+        }
+
+        IReadOnlyList<InterventionSiteBinding> bound = SitesOf(index);
+        bool sameSites = bound.Count == profile.Sites.Count;
+        for (int i = 0; sameSites && i < bound.Count; i++)
+        {
+            sameSites = bound[i].Layer == profile.Sites[i].Layer && bound[i].Target == profile.Sites[i].Target;
+        }
+
+        if (!sameSites)
+        {
+            throw new InterventionMismatchException($"Manifest sites of profile '{profile.Id}' differ from its sites.");
+        }
     }
 
     /// <summary>Checks that the base graph of this manifest has SHA-256 <paramref name="baseModelSha256"/>.</summary>
