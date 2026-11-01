@@ -11,7 +11,8 @@ namespace Starlings.Models.Lfm3.Interventions.Tests;
 /// without them. The original graph is loaded first, its reference values kept, and disposed before the derived graph
 /// loads, so only one fp32 session (about 7 GB) exists at a time. The prompt is the template corpus case
 /// <c>arithmetic</c> as token ids. The chat-level test loads the snapshot's <c>tokenizer.json</c> with the pinned
-/// <c>Starlings.Tokenizers</c> (profile <c>lfm3-bpe-chat</c>, from 0.3.3).
+/// <c>Starlings.Tokenizers</c> (profile <c>lfm3-bpe-chat</c>, from 0.3.3) and checks that the text path encodes the same
+/// conversation to those ids.
 /// </summary>
 public sealed class Lfm3InterventionModelTests
 {
@@ -124,6 +125,14 @@ public sealed class Lfm3InterventionModelTests
         GenerationResult zero = chat.Generate(f.Prompt, null, options, TestContext.Current.CancellationToken);
         Assert.Equal(f.BaseTokens.TakeWhile(id => id != Lfm3Checkpoint.ImEndTokenId), zero.TokenIds);
         Assert.Throws<InterventionMismatchException>(() => chat.GenerateStreaming(f.Prompt, new InterventionSelection("another-profile", 1f), cancellationToken: TestContext.Current.CancellationToken));
+
+        // The text path: the pinned tokenizer encodes the rendered conversation to the reference prompt ids, and
+        // Chat(turns, selection) decodes the same ids as Generate on those ids.
+        IReadOnlyList<ChatTurn> turns = [new ChatTurn(ChatTurnRole.User, "What is 2 + 2? Answer briefly.")];
+        Assert.Equal(f.Prompt, chat.EncodePrompt(turns, enableThinking: false));
+        GenerationResult chatted = chat.Chat(turns, selection, options, enableThinking: false, TestContext.Current.CancellationToken);
+        Assert.Equal(generated.TokenIds, chatted.TokenIds);
+        Assert.Equal(generated.Text, chatted.Text);
     }
 
     [Fact]

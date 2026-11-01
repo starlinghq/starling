@@ -49,7 +49,7 @@ What this pull request delivers instead is the runtime-independent model definit
 
 ## Tokenizer profile
 
-Byte-level BPE, the Qwen2/Qwen3 pipeline (NFC, the Qwen2 split regex without `\p{M}`, ByteLevel post-processor that adds nothing): vocabulary 248,044, 247,581 merges, 34 added tokens. Against the Qwen3.5 vocabulary, id 151669 holds the special added token `<|mask|>` instead of `ĠãģĿãĤĮ` (" それ"), and the 6 merges that built that token are removed. transformers 5.19.0 loads the Hub file as is (`Qwen2Tokenizer`), so the asset is the Hub file. It loads with the `Starlings.Tokenizers` version this repository pins (0.3.2; no new component). starlinghq/tokenizers#20 adds the profile `clover-bpe-chat` with fixtures from huggingface/tokenizers 0.23.3 (137/137 cases exact, plus a 13-case `<|mask|>` check).
+Byte-level BPE, the Qwen2/Qwen3 pipeline (NFC, the Qwen2 split regex without `\p{M}`, ByteLevel post-processor that adds nothing): vocabulary 248,044, 247,581 merges, 34 added tokens. Against the Qwen3.5 vocabulary, id 151669 holds the special added token `<|mask|>` instead of `ĠãģĿãĤĮ` (" それ"), and the 6 merges that built that token are removed. transformers 5.19.0 loads the Hub file as is (`Qwen2Tokenizer`), so the asset is the Hub file. It loads with the `Starlings.Tokenizers` version this repository pinned at admission (0.3.2; no new component). starlinghq/tokenizers#20 adds the profile `clover-bpe-chat` with fixtures from huggingface/tokenizers 0.23.3 (137/137 cases exact, plus a 13-case `<|mask|>` check).
 
 ## Feature contract
 

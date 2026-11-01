@@ -78,7 +78,7 @@ The derived graph of the synthetic profile (cache key `5ff9b1d7…d025`, derived
 | Greedy ids, 6 steps, strength 0 vs original (.NET) | equal | `StrengthZeroMatchesTheOriginalGraph` |
 | 10 concurrent sequences, strengths 0, 0.5, 1, -1, 2 on one session vs sequential | within 1e-5 each | `ConcurrentSequencesWithDifferentStrengthsAreIsolated` |
 | Prefill vs token-by-token at strength 1 | max abs 2.8e-5, same argmax | `PrefillAndTokenByTokenAgree` |
-| Chat model (tokenizer 0.3.4): `Generate` and `GenerateStreaming` at strength 1 give the same ids, equal to the sequence's greedy ids; no selection gives the original graph's ids; another profile id throws | pass (6 new tokens) | `ChatGenerateAndStreamingPassTheSelection` |
+| Chat model (tokenizer 0.3.4): `Generate` and `GenerateStreaming` at strength 1 give the same ids, equal to the sequence's greedy ids; no selection gives the original graph's ids; another profile id throws; the tokenizer encodes the rendered conversation to the reference prompt ids and `Chat(turns, selection)` gives the same ids and text as `Generate` | pass (6 new tokens) | `ChatGenerateAndStreamingPassTheSelection` |
 | fp16 graph hash, wrong base hash, external data not the locked weights, missing locked weight file, unknown site mapping version, wrong precision, scalar or colliding strength input, site layer 24 | rejected before any session | `ManifestCheckTests`, `TheArtifactIsRejectedForAnotherBaseGraphBeforeAnySession` |
 
 Strength 0 is bit-identical here; other graphs, providers or optimization levels may only match within rounding (the extra reader of the residual tensor can change operator fusion).
