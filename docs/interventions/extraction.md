@@ -95,11 +95,17 @@ In-sample values are reported next to them for comparison only.
 
 - Every layer separates the sets on held-out pairs (held-out AUC 0.98 to 1.00). The task is easy at every depth, so AUC cannot choose layers. Cohen's d does: it is largest in layers 2 to 11 and falls off after layer 13. The selected layers are 2, 4 and 11.
 - **Confounds.** The verbose answers are about five times longer, so a response-mean vector also encodes length and position statistics. They also use more connective and explanatory wording. The direction separates *these* answer styles. Whether it is a style direction or a length direction is not established.
-- **Operator semantics.** `directional_projection` scales the component of the residual along `Q`; it does not add a vector. Strength 1 with scale 1 removes that component, strength 0 leaves the graph unchanged, and negative strengths amplify the existing component. Which strength, if any, makes LFM3 answer more concisely was not established by the extraction. A small greedy-decoding probe is recorded below.
+- **Operator semantics.** `directional_projection` scales the component of the residual along `Q`; it does not add a vector. Strength 1 with scale 1 removes that component, strength 0 leaves the graph unchanged, and negative strengths amplify the existing component. The extraction itself does not show which strength, if any, makes LFM3 answer more concisely; a small greedy-decoding probe is recorded below.
 
 ### Behavioural probe
 
-The profile was compiled into the fp32 graph and greedy-decoded on CPU with ONNX Runtime 1.30.0, for 8 prompts that are not in the prompt set (thinking disabled, at most 160 new tokens). The results are in [`extraction-report.md`](../../model-pipeline/interventions/profiles/lfm3-1.7b/concise/extraction-report.md#behavioural-probe-not-an-evaluation). Eight prompts and one decoding setting are an observation, not an evaluation.
+The profile was compiled into the fp32 graph and greedy-decoded on CPU with ONNX Runtime 1.30.0, for 4 prompts that are not in the prompt set (thinking disabled, at most 384 new tokens per answer). The results are in the profile's [README](../../model-pipeline/interventions/profiles/lfm3-1.7b/concise/README.md#behavioural-probe-not-an-evaluation).
+
+- At strength 0 and at strength 1 (removal), every answer reached the cap.
+- At -1, 2 of 4 answers ended before the cap.
+- At -2, 4 of 4 ended, after 146 to 229 tokens, with coherent text.
+
+With this operator, "more concise" therefore points to a negative strength, which amplifies the component. Four prompts and one decoding setting are an observation, not an evaluation.
 
 ## Not covered
 

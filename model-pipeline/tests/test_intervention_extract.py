@@ -197,6 +197,10 @@ def test_the_checked_in_concise_profile_matches_its_spec_and_report():
     assert report["spec"]["sha256"] == spec.sha256
     assert report["profile"]["sha256"] == profile.sha256
     assert [s.layer for s in profile.profile.sites] == report["selected_layers"]
+    # The markdown report is generated from the JSON one; no hand edits.
+    from model_pipeline.interventions.extract import render_report_markdown
+
+    assert render_report_markdown(report) == (CONCISE / REPORT_MD).read_text(encoding="utf-8")
     from model_pipeline.interventions.contract import sha256_file
 
     for role, s in (("positive", spec.positive), ("negative", spec.negative)):
