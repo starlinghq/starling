@@ -408,6 +408,27 @@ def _interventions_evaluate(args: argparse.Namespace) -> int:
     return run_cli(args)
 
 
+def _discover_arguments(parser: argparse.ArgumentParser) -> None:
+    # Mirrors model_pipeline.interventions.discover.add_arguments without importing onnx at CLI start-up.
+    parser.add_argument("graph", type=Path, help="the base graph (model.onnx); its external data is not read")
+    parser.add_argument("--out", type=Path, help="write the proposal here (default: stdout)")
+    parser.add_argument(
+        "--layer-pattern",
+        default=r"(?:^|/)layers\.(\d+)/",
+        help="regular expression on node names; group 1 is the decoder layer index",
+    )
+    parser.add_argument("--compare", metavar="VERSION", help="diff against this checked-in site mapping version")
+
+
+def _discover_sites(args: argparse.Namespace) -> int:
+    try:
+        from model_pipeline.interventions import discover
+    except ImportError as exc:
+        print(f"error: discover-sites needs the 'interventions' extra (numpy, onnx): {exc}", file=sys.stderr)
+        return 2
+    return discover.run(args)
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="model-pipeline")
     sub = parser.add_subparsers(dest="command", required=True)
@@ -614,6 +635,15 @@ def main(argv: list[str] | None = None) -> int:
     )
     _interventions_evaluate_arguments(iv_evaluate)
     iv_evaluate.set_defaults(func=_interventions_evaluate)
+
+    ds = sub.add_parser(
+        "discover-sites",
+        help="propose intervention site tensors of a decoder graph for review (experimental; never used at runtime)",
+        description="Reads the graph structure only (no external data) and writes a reviewable site-mapping proposal. "
+        "Exit codes: 0 written; 1 --compare found a difference; 2 bad input. See docs/interventions/onboarding.md.",
+    )
+    _discover_arguments(ds)
+    ds.set_defaults(func=_discover_sites)
 
     args = parser.parse_args(argv)
     return args.func(args)

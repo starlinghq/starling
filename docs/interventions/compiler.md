@@ -82,9 +82,9 @@ The derived graph keeps the base graph's external-data entries unchanged, so it 
 
 ## Site mappings
 
-`injection_sites.SiteMapping` records, for one exact base graph SHA-256: a model name, a version label (`site_mapping_version` in the manifest), the precision, and one `MappedSite` per supported `(layer, target)`: the tensor, its hidden size and the consumer node names to rewire. Mappings are written by hand from the exported graph and versioned; they are never inferred.
+`injection_sites.SiteMapping` records, for one exact base graph SHA-256: a model name, a version label (`site_mapping_version` in the manifest), the precision, and one `MappedSite` per supported `(layer, target)`: the tensor, its hidden size and the consumer node names to rewire. Mappings are versioned and written by hand from the exported graph, never inferred at compile time. `discover-sites` proposes one for a reviewer to check; see [onboarding.md](onboarding.md).
 
-The registry holds one mapping, `lfm3-1.7b/fp32/1`, for `LiquidAI/LFM3-1.7B-ONNX` `onnx/model.onnx` (fp32) at `c680759a`, SHA-256 `add6653f…5ef77` (the fp32 asset lock's): `residual_post` after each of the 24 decoder layers, the tensor `/model/layers.L/Add_2/output_0` (float32, hidden 2048), rewiring both readers (layer `L+1`'s operator norm and first residual add; after layer 23, the `logits_to_keep` slice). A test checks that these are every reader of each tensor in the real graph. The fp16 graph has no mapping. See [lfm3.md](lfm3.md).
+The registry holds two mappings. The first, `lfm3-1.7b/fp32/1`, is for `LiquidAI/LFM3-1.7B-ONNX` `onnx/model.onnx` (fp32) at `c680759a`, SHA-256 `add6653f…5ef77` (the fp32 asset lock's): `residual_post` after each of the 24 decoder layers, the tensor `/model/layers.L/Add_2/output_0` (float32, hidden 2048), rewiring both readers (layer `L+1`'s operator norm and first residual add; after layer 23, the `logits_to_keep` slice). A test checks that these are every reader of each tensor in the real graph. The second mapping is `lfm3-1.7b/fp16/1`, for `onnx/model_fp16.onnx` at the same revision, SHA-256 `d3093d69…830fe` (the fp16 asset lock's). It has the same tensor and consumer names, but its sites are float16, so the compiler casts around the operator. `discover-sites` regenerates both mappings exactly from the real graphs. See [lfm3.md](lfm3.md).
 
 ## Capture mode
 
@@ -92,7 +92,7 @@ The registry holds one mapping, `lfm3-1.7b/fp32/1`, for `LiquidAI/LFM3-1.7B-ONNX
 
 ## Not covered
 
-- Real models other than the LFM3 fp32 graph: unsupported (no mapping).
+- Real models other than the LFM3 fp32 and fp16 graphs: unsupported (no mapping).
 - Site tensors inside subgraphs (`If`, `Loop`, `Scan` bodies) and listed consumers inside subgraphs: not supported. An unlisted subgraph reader keeps the original value.
 - Element types other than float32 and float16 at the site, and profile dtypes other than float32.
 - More than 64 profiles in one graph; the same profile id twice.

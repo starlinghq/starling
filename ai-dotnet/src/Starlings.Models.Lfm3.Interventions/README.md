@@ -8,7 +8,7 @@ The LFM3 weights are under the LFM Open License v1.0 (see the LFM3 package READM
 
 ## Compile once, then load
 
-The derived graph is compiled by the Python compiler into the derived-artifact cache ([cache.md](https://github.com/starlinghq/starling/blob/main/docs/interventions/cache.md)). The cache must be on the snapshot's file system (hard links). The supported base graph is the fp32 `onnx/model.onnx` of the asset lock (site mapping `lfm3-1.7b/fp32/1`: the residual stream after any of the 24 decoder layers); the fp16 graph has no mapping and is rejected.
+The derived graph is compiled by the Python compiler into the derived-artifact cache ([cache.md](https://github.com/starlinghq/starling/blob/main/docs/interventions/cache.md)). The cache must be on the snapshot's file system (hard links). The supported base graph is the fp32 `onnx/model.onnx` of the asset lock (site mapping `lfm3-1.7b/fp32/1`: the residual stream after any of the 24 decoder layers); the fp16 graph has a model-pipeline mapping (`lfm3-1.7b/fp16/1`), but this integration has not been verified with it and rejects fp16 entries.
 
 ```sh
 cd model-pipeline
