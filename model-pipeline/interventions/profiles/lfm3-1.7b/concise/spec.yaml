@@ -1,0 +1,35 @@
+# Extraction spec of the "concise" profile for LFM3-1.7B (fp32 graph of LiquidAI/LFM3-1.7B-ONNX at c680759a).
+# Schema: model-pipeline/schemas/intervention-extraction-spec.schema.json. Method: docs/interventions/extraction.md.
+# Run from model-pipeline/ (writes profile.json, directions/ and extraction-report.* next to this file):
+#   model-pipeline interventions extract interventions/profiles/lfm3-1.7b/concise/spec.yaml \
+#       --snapshot <LFM3-1.7B-ONNX snapshot> --cache <intervention cache root on the snapshot's file system>
+schema_version: 1
+profile_id: lfm3-1.7b-concise
+description: >-
+  Concise-versus-verbose direction for LFM3-1.7B fp32: per selected layer, the normalized mean residual difference
+  between concise and verbose answers to the same 64 prompts (response-token mean, residual_post). Experimental;
+  separability is measured on held-out pairs, behavioural effect not evaluated.
+model: lfm3
+base_model_sha256: add6653fc8b3cf2c7ee9fa0205a4a9a833fcb85d3449a5fea06f8aa494b5ef77
+graph: onnx/model.onnx
+chat_template: lfm3
+operator: directional_projection
+target: residual_post
+prompt_sets:
+  positive:
+    label: concise
+    path: prompts/concise.jsonl
+  negative:
+    label: verbose
+    path: prompts/verbose.jsonl
+pooling: response_mean
+candidate_layers: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23]
+rank: 1
+direction_method: mean_difference_pca
+scale: 1
+evaluation:
+  folds: 4
+selection:
+  max_layers: 3
+  min_auc: 0.9
+seed: 20261031

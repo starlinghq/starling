@@ -1,0 +1,64 @@
+{"id": "boil-water", "prompt": "Why does water boil at a lower temperature on a mountain?", "response": "Air pressure is lower at altitude, so water reaches its boiling point at a lower temperature."}
+{"id": "leaves-color", "prompt": "Why do leaves change color in autumn?", "response": "Trees stop making green chlorophyll, revealing the yellow and orange pigments underneath."}
+{"id": "rainbow", "prompt": "How does a rainbow form?", "response": "Sunlight is bent and reflected inside raindrops, splitting it into its colors."}
+{"id": "bread-rise", "prompt": "What makes bread dough rise?", "response": "Yeast eats sugars in the dough and releases carbon dioxide gas that inflates it."}
+{"id": "seasons", "prompt": "What causes the seasons on Earth?", "response": "The tilt of Earth's axis changes how directly sunlight hits each hemisphere during the year."}
+{"id": "moon-phases", "prompt": "Why does the moon have phases?", "response": "We see different portions of its sunlit half as it orbits Earth."}
+{"id": "salt-ice", "prompt": "Why do people put salt on icy roads?", "response": "Salt lowers the freezing point of water, so ice melts at colder temperatures."}
+{"id": "sky-blue", "prompt": "Why is the sky blue?", "response": "Air scatters blue light from the sun more strongly than red light."}
+{"id": "plants-light", "prompt": "Why do plants need sunlight?", "response": "They use its energy to turn water and carbon dioxide into sugar through photosynthesis."}
+{"id": "tides", "prompt": "What causes ocean tides?", "response": "Mainly the moon's gravity pulling on Earth's oceans as Earth rotates."}
+{"id": "thunder", "prompt": "Why do we hear thunder after we see lightning?", "response": "Light travels much faster than sound, so the flash reaches us first."}
+{"id": "ice-floats", "prompt": "Why does ice float on water?", "response": "Ice is less dense than liquid water because its molecules lock into an open structure."}
+{"id": "vaccines", "prompt": "How do vaccines protect people?", "response": "They train the immune system to recognize a germ before a real infection."}
+{"id": "heart", "prompt": "What does the heart do?", "response": "It pumps blood around the body, delivering oxygen and nutrients."}
+{"id": "sleep", "prompt": "Why do people need sleep?", "response": "Sleep lets the brain and body recover, store memories and restore energy."}
+{"id": "compass", "prompt": "How does a compass work?", "response": "Its magnetized needle lines up with Earth's magnetic field and points north."}
+{"id": "recycle-paper", "prompt": "How is paper recycled?", "response": "Used paper is soaked into pulp, cleaned of ink and pressed into new sheets."}
+{"id": "cats-purr", "prompt": "Why do cats purr?", "response": "Cats purr mostly when content, but also to soothe themselves when stressed."}
+{"id": "bees-honey", "prompt": "How do bees make honey?", "response": "Bees collect nectar, then evaporate its water and add enzymes inside the hive."}
+{"id": "camels", "prompt": "How can camels go so long without water?", "response": "They lose very little water and can drink huge amounts at once when they find it."}
+{"id": "birds-migrate", "prompt": "Why do some birds migrate?", "response": "They travel to places with more food and better conditions for each season."}
+{"id": "fridge", "prompt": "How does a refrigerator keep food cold?", "response": "It pumps a refrigerant that absorbs heat inside and releases it outside the cabinet."}
+{"id": "microwave", "prompt": "How does a microwave oven heat food?", "response": "Microwaves make water molecules in the food vibrate, which produces heat."}
+{"id": "battery", "prompt": "How does a battery store energy?", "response": "It stores chemical energy that is released as electricity when a circuit is connected."}
+{"id": "internet-packets", "prompt": "How does data travel across the internet?", "response": "It is split into small packets that are routed separately and reassembled at the destination."}
+{"id": "password", "prompt": "What makes a password strong?", "response": "Length and unpredictability, ideally a long phrase not used anywhere else."}
+{"id": "backup", "prompt": "Why should I back up my files?", "response": "So you can recover them if your device fails, is lost or gets damaged."}
+{"id": "tea", "prompt": "How do I make a good cup of tea?", "response": "Steep fresh tea in water at the right temperature for a few minutes, then remove it."}
+{"id": "rice", "prompt": "How do I cook rice on the stove?", "response": "Simmer rinsed rice in measured water with the lid on until the water is absorbed."}
+{"id": "houseplant", "prompt": "How often should I water a houseplant?", "response": "Water when the top few centimetres of soil feel dry, rather than on a fixed schedule."}
+{"id": "stain", "prompt": "How do I remove a fresh coffee stain from a shirt?", "response": "Rinse it with cold water from the back, then treat it with detergent and wash."}
+{"id": "budget", "prompt": "How do I start a simple monthly budget?", "response": "List your income, track your spending and set limits for each category."}
+{"id": "job-interview", "prompt": "How should I prepare for a job interview?", "response": "Research the company, practise common questions and prepare a few examples of your work."}
+{"id": "new-habit", "prompt": "How can I build a new habit?", "response": "Start very small, attach it to an existing routine and repeat it daily."}
+{"id": "focus", "prompt": "How can I concentrate better while studying?", "response": "Remove distractions, work in short timed sessions and take regular breaks."}
+{"id": "public-speaking", "prompt": "How can I feel less nervous about public speaking?", "response": "Practise the talk aloud several times and focus on your message rather than yourself."}
+{"id": "run-start", "prompt": "How should a beginner start running?", "response": "Begin with short run-walk intervals a few times a week and build up gradually."}
+{"id": "posture", "prompt": "How can I improve my posture at a desk?", "response": "Set the screen at eye level, keep your feet flat and take regular breaks to move."}
+{"id": "photosynthesis-define", "prompt": "What is photosynthesis?", "response": "It is how plants use light energy to make sugar from water and carbon dioxide."}
+{"id": "gravity", "prompt": "What is gravity?", "response": "Gravity is the force by which objects with mass attract one another."}
+{"id": "volcano", "prompt": "Why do volcanoes erupt?", "response": "Pressure from molten rock and gas below the surface forces magma out."}
+{"id": "earthquake", "prompt": "What causes earthquakes?", "response": "Sudden slipping along faults where large plates of Earth's crust meet."}
+{"id": "clouds", "prompt": "How do clouds form?", "response": "Rising air cools, and its water vapour condenses into tiny droplets."}
+{"id": "wind", "prompt": "What causes wind?", "response": "Air moves from areas of high pressure to areas of low pressure."}
+{"id": "fossils", "prompt": "How do fossils form?", "response": "Remains buried in sediment are slowly replaced by minerals and turn to stone."}
+{"id": "dinosaurs", "prompt": "What happened to the dinosaurs?", "response": "Most died out about 66 million years ago, likely after a huge asteroid impact."}
+{"id": "printing", "prompt": "Why was the printing press important?", "response": "It made books cheap and fast to produce, spreading knowledge widely."}
+{"id": "wheel", "prompt": "Why was the wheel such an important invention?", "response": "It made moving heavy loads far easier, transforming transport and machines."}
+{"id": "library-card", "prompt": "What can I do with a public library card?", "response": "Borrow books and media for free, and often use computers, e-books and events."}
+{"id": "compost", "prompt": "How do I start composting at home?", "response": "Mix kitchen scraps with dry material like leaves in a bin and turn it now and then."}
+{"id": "bike-tire", "prompt": "How do I fix a flat bicycle tire?", "response": "Remove the tube, find and patch the hole or replace it, then reinflate the tire."}
+{"id": "jet-lag", "prompt": "How can I reduce jet lag?", "response": "Shift your sleep toward the new time zone and get daylight at the right times."}
+{"id": "kindness", "prompt": "Why is it good to be kind to others?", "response": "Kindness helps others, strengthens relationships and tends to make us happier too."}
+{"id": "reading-kids", "prompt": "Why is reading to young children helpful?", "response": "It builds their vocabulary, listening skills and love of books."}
+{"id": "drink-water", "prompt": "Why is drinking water important?", "response": "Your body needs water to regulate temperature, carry nutrients and remove waste."}
+{"id": "solar-panel", "prompt": "How do solar panels make electricity?", "response": "Sunlight knocks electrons loose in silicon cells, creating an electric current."}
+{"id": "glasses", "prompt": "How do glasses help people see clearly?", "response": "Their lenses bend light so it focuses properly on the back of the eye."}
+{"id": "soap", "prompt": "How does soap clean things?", "response": "Soap molecules grab oil and dirt and let water rinse them away."}
+{"id": "yawn", "prompt": "Why do people yawn?", "response": "Yawning may help cool the brain and increase alertness, often when tired or bored."}
+{"id": "hiccups", "prompt": "What causes hiccups?", "response": "Sudden spasms of the diaphragm make the vocal cords snap shut with a hic sound."}
+{"id": "goldfish", "prompt": "How should I look after a pet goldfish?", "response": "Keep it in a large filtered tank, feed it lightly and change some water each week."}
+{"id": "snow", "prompt": "Why is every snowflake said to be unique?", "response": "Each flake grows along its own path through changing air, shaping a different pattern."}
+{"id": "airplane", "prompt": "How do airplanes stay in the air?", "response": "Their wings are shaped to push air down, creating lift that supports the plane."}
+{"id": "money-interest", "prompt": "What is compound interest?", "response": "It is interest earned on both your original money and the interest already added."}

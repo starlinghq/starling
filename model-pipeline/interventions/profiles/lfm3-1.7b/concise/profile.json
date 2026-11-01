@@ -1,0 +1,45 @@
+{
+  "schema_version": 1,
+  "id": "lfm3-1.7b-concise",
+  "description": "Concise-versus-verbose direction for LFM3-1.7B fp32: per selected layer, the normalized mean residual difference between concise and verbose answers to the same 64 prompts (response-token mean, residual_post). Experimental; separability is measured on held-out pairs, behavioural effect not evaluated.",
+  "base_model_sha256": "add6653fc8b3cf2c7ee9fa0205a4a9a833fcb85d3449a5fea06f8aa494b5ef77",
+  "operator": "directional_projection",
+  "sites": [
+    {
+      "layer": 2,
+      "target": "residual_post",
+      "hidden_size": 2048,
+      "rank": 1,
+      "dtype": "float32",
+      "directions_file": "directions/layer2-residual_post.f32",
+      "directions_sha256": "b42c8fe532249bbfd9a7dd4c23dd58678348ccc89f75fecb14bbfb143f92243f",
+      "scales": [
+        1
+      ]
+    },
+    {
+      "layer": 4,
+      "target": "residual_post",
+      "hidden_size": 2048,
+      "rank": 1,
+      "dtype": "float32",
+      "directions_file": "directions/layer4-residual_post.f32",
+      "directions_sha256": "554c10670bcd473ce58b99282831f60c32b06ba7b18129f4555b0ebcc1386a7d",
+      "scales": [
+        1
+      ]
+    },
+    {
+      "layer": 11,
+      "target": "residual_post",
+      "hidden_size": 2048,
+      "rank": 1,
+      "dtype": "float32",
+      "directions_file": "directions/layer11-residual_post.f32",
+      "directions_sha256": "51fcf542bd00298805103f936d769b5acd65b82aee6446121802242c218e1c53",
+      "scales": [
+        1
+      ]
+    }
+  ]
+}

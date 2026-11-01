@@ -2,7 +2,7 @@
 
 Status: **experimental**. Normative for the C# contract (`Starlings.Interventions`) and for the Python graph compiler (`model-pipeline`). Design: [architecture.md](architecture.md).
 
-V1 evidence uses synthetic random orthonormal directions only. The library ships the mechanism; which callers may apply which profile is the host application's job.
+The mechanism evidence uses synthetic random orthonormal directions; `model-pipeline interventions extract` writes profiles in this format from prompt sets ([extraction.md](extraction.md)). The library ships the mechanism; which callers may apply which profile is the host application's job.
 
 ## Common rules
 

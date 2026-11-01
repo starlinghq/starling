@@ -4,7 +4,7 @@ Status: **experimental**. Code: `model-pipeline/src/model_pipeline/interventions
 
 The compiler turns one base ONNX graph and one `profile.json` into a derived `model.onnx` that applies the `directional_projection` operator at the profile's sites, plus a `compiler-manifest.json` that the C# `InterventionManifest` reads and verifies. It needs the `interventions` extra of `model-pipeline` (numpy, onnx 1.23.1, onnxruntime 1.30.0, the version the C# packages pin); the `dev` extra includes it.
 
-V1 evidence uses synthetic random orthonormal directions only (`model_pipeline.interventions.synthetic`). The compiler ships the mechanism; which callers get which profile is the host application's job.
+The mechanism evidence uses synthetic random orthonormal directions (`model_pipeline.interventions.synthetic`). Profiles extracted from prompt sets ([extraction.md](extraction.md)) compile the same way. The compiler ships the mechanism; which callers get which profile is the host application's job.
 
 ## Use
 
@@ -60,6 +60,10 @@ The derived graph keeps the base graph's external-data entries unchanged, so it 
 `injection_sites.SiteMapping` records, for one exact base graph SHA-256: a model name, a version label (`site_mapping_version` in the manifest), the precision, and one `MappedSite` per supported `(layer, target)`: the tensor, its hidden size and the consumer node names to rewire. Mappings are written by hand from the exported graph and versioned; they are never inferred.
 
 The registry holds one mapping, `lfm3-1.7b/fp32/1`, for `LiquidAI/LFM3-1.7B-ONNX` `onnx/model.onnx` (fp32) at `c680759a`, SHA-256 `add6653f…5ef77` (the fp32 asset lock's): `residual_post` after each of the 24 decoder layers, the tensor `/model/layers.L/Add_2/output_0` (float32, hidden 2048), rewiring both readers (layer `L+1`'s operator norm and first residual add; after layer 23, the `logits_to_keep` slice). A test checks that these are every reader of each tensor in the real graph. The fp16 graph has no mapping. See [lfm3.md](lfm3.md).
+
+## Capture mode
+
+`model_pipeline.interventions.capture` builds a *capture graph*: the base graph with the mapped site tensors of the requested layers appended as graph outputs, and no other change (no weight change, no extra input). It follows the same rules as above: lookup by exact graph hash, external data left as references and hard-linked, a structural check against the base, deterministic bytes. Entries are cached under `<cache>/<model>/intervention-captures/<key>/` with their own `capture-manifest.json`, apart from intervention entries. Profile extraction uses it to read the residual stream ([extraction.md](extraction.md)).
 
 ## Not covered
 
