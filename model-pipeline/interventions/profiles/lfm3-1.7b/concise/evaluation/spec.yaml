@@ -1,0 +1,44 @@
+# Evaluation spec of the "concise" profile for LFM3-1.7B (fp32 graph of LiquidAI/LFM3-1.7B-ONNX at c680759a).
+# Schema: model-pipeline/schemas/intervention-evaluation-spec.schema.json. Method: docs/interventions/evaluation.md.
+# The thresholds under `recommendation` were fixed before the first run; the report applies them as written.
+# Run from model-pipeline/:
+#   model-pipeline interventions evaluate interventions/profiles/lfm3-1.7b/concise/evaluation/spec.yaml \
+#       --snapshot <LFM3-1.7B-ONNX snapshot> --cache <intervention cache root on the snapshot's file system> \
+#       --out <report directory> [--provider cuda --device-id 1]
+schema_version: 1
+evaluation_id: lfm3-1.7b-concise-v1
+profile: ../profile.json
+model: lfm3
+graph: onnx/model.onnx
+chat_template: lfm3
+# Negative strengths amplify the component along the direction; positive strengths remove it (1 = fully removed).
+strengths: [-3, -2, -1.5, -1, -0.5, 0, 0.5, 1, 2]
+generation:
+  decoding: greedy
+  max_new_tokens: 512
+  capability_max_new_tokens: 128
+target:
+  effect: shorter_responses
+  prompts: target.jsonl
+  labels:
+    positive: concise
+    negative: verbose
+  pooling: response_mean
+neutral: ../../../../evaluation/neutral.jsonl
+capability: ../../../../evaluation/capability.jsonl
+# A random unit direction per site, scaled so that its per-token RMS projection on the target set's reference answers
+# equals the profile direction's: the same perturbation size at strength s, in a direction with no meaning.
+control:
+  seed: 20261101
+  scaling: matched_rms
+  strengths: [-3, -2, -1.5, -1, 0, 1]
+cross_check:
+  prompts: 2
+  strengths: [0, -2]
+  max_new_tokens: 48
+recommendation:
+  min_length_reduction: 0.25
+  max_quality_drop: 0.125
+  max_capability_drop: 2
+  max_mean_kl: 0.5
+  min_specificity: 0.15
