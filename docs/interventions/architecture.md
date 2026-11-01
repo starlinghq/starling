@@ -1,0 +1,63 @@
+# ONNX Runtime interventions: architecture (V1)
+
+Status: **experimental**. This page describes the design; [profile-format.md](profile-format.md) specifies the files.
+
+## Goal
+
+Apply a low-rank intervention to a model's residual stream at inference time, with:
+
+- one original ONNX model whose weights are never changed, copied or downloaded twice;
+- a derived graph compiled locally, once, at load time, that adds the intervention operators and one strength input;
+- a per-request strength passed as an ordinary graph input, so requests never recompile or reload anything.
+
+## The operator
+
+V1 has one operator, `directional_projection`. For a site tensor `y` of shape `[..., hidden]`:
+
+```
+y' = y - alpha * ((y Q^T) ⊙ s) Q
+```
+
+- `Q` (`[rank, hidden]`): the directions. Rows should be orthonormal; that is the profile author's job. The contract checks the shape and that every value is finite, and offers `InterventionDirections.MaxOrthonormalityError()` as a diagnostic.
+- `s` (`[rank]`): per-direction scales, from the profile.
+- `alpha` (scalar): the request-level strength, a graph input. `alpha = 0` gives `y' = y` exactly in real arithmetic. With orthonormal `Q`, `s = 1` and `alpha = 1`, the component of `y` in the span of `Q` is removed.
+
+The compiler inserts it as `MatMul(y, Q^T)`, `Mul(·, s)`, `MatMul(·, Q)`, `Mul(·, alpha)`, `Sub(y, ·)`, plus a `Cast` where the graph's dtype differs from the profile's dtype (V1 profiles are float32).
+
+## Pieces and where they live
+
+| Piece | Where | What |
+| --- | --- | --- |
+| Contract | `ai-dotnet/src/Starlings.Interventions` | Profile, site, selection, manifest, directions file format; strict parsing, deterministic serialization, hash and dimension checks. No ONNX Runtime dependency. |
+| Graph compiler | `model-pipeline/src/model_pipeline/interventions/` | Python, onnx API. Reads a profile and a model-specific site mapping, inserts the operator at the mapped tensors, adds the strength input, writes the derived graph and the compiler manifest. |
+| Site mappings | `model-pipeline/src/model_pipeline/interventions/injection_sites.py` | Per model, versioned, keyed to the exact SHA-256 of the base graph asset. A graph hash with no mapping is unsupported; unknown graphs are never pattern-matched. |
+| Derived artifact cache | `<cache>/<model>/interventions/<derived-hash>/` | `model.onnx`, `profile.json`, `compiler-manifest.json` and any small derived data file. Written atomically; the source bundle is never rewritten. |
+| Session loading | `Starlings.Runtime.Onnx` | Derived graphs load through the ordinary `OnnxModelSession.Create(path, options)`; diagnostics report the original and loaded graph identities and the intervention inputs. |
+| Model integration | e.g. `Starlings.Models.Lfm3` | Recognizes a verified derived graph through its manifest, accepts exactly the declared extra inputs, and passes the strength on every call. |
+
+The compiler, cache, session diagnostics and model integration arrive in later changes; each carries its own capability status.
+
+## Identities
+
+- **Base graph identity**: the SHA-256 of the base `model.onnx` bytes, exactly as the model package's asset lock records it. A profile names it in `base_model_sha256`; applying a profile to another graph fails before any session is created.
+- **External weights**: each external data file of the base graph is identified by path, SHA-256 and size in the manifest's `base_artifacts`. The derived graph references the original files; it never carries a copy.
+- **Profile identity**: the SHA-256 of the `profile.json` bytes as stored. It is not a hash of a re-serialization, so no cross-language canonical JSON is needed. The cache stores `profile.json` byte for byte.
+- **Derived graph identity**: SHA-256 of the derived `model.onnx` and of every other derived file, in the manifest.
+
+The cache key of a derived graph combines the base graph and external weight identities, the profile hash, the compiler version, the site-mapping version, the opset and the precision. All of them are recorded in the compiler manifest.
+
+## Requests
+
+A request carries an `InterventionSelection(profileId, strength)`. The selection is fixed for the lifetime of a generation sequence; the strength is a fresh tensor passed on every native call. When no intervention is configured, the original graph is loaded: no extra inputs, no extra cost.
+
+## Scope of V1
+
+In scope: the `directional_projection` operator at `residual_post` sites, float32 directions, one profile per derived graph, synthetic directions as evidence.
+
+Out of scope: discovering or training profiles, several preloaded profiles, refusal-direction or other behavioural profiles, the ONNX Runtime GenAI path, CUDA kernels, hot swap.
+
+## Evidence and responsibility
+
+V1 evidence uses synthetic random orthonormal directions only. It shows that the mechanism is exact (strength 0 matches the original graph; other strengths match a NumPy reference of the projection), not that any profile has a useful or safe behavioural effect.
+
+The library ships the mechanism. Which callers may use which profile, at what strength, is the host application's decision; the library performs no access control.
