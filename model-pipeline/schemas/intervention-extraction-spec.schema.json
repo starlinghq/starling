@@ -1,0 +1,119 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/starlinghq/starling/model-pipeline/schemas/intervention-extraction-spec.schema.json",
+  "title": "Intervention profile extraction spec (schema version 1)",
+  "description": "Inputs of `model-pipeline interventions extract`: the base graph, two contrasting prompt sets, the candidate sites and the direction method. Paths are relative to the spec file. Machine-specific locations (model snapshot, cache) are command-line options, never part of the spec. See docs/interventions/extraction.md.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "profile_id",
+    "model",
+    "base_model_sha256",
+    "graph",
+    "chat_template",
+    "operator",
+    "target",
+    "prompt_sets",
+    "pooling",
+    "candidate_layers",
+    "rank",
+    "direction_method",
+    "scale",
+    "evaluation",
+    "selection",
+    "seed"
+  ],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "profile_id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{0,127}$" },
+    "description": { "type": "string", "minLength": 1, "maxLength": 2000 },
+    "model": {
+      "description": "Cache model name (the capture cache directory under the cache root).",
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{0,63}$"
+    },
+    "base_model_sha256": {
+      "description": "SHA-256 of the base model.onnx, as the model package's asset lock records it. A site mapping must exist for it.",
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "graph": {
+      "description": "The base graph, relative to the model snapshot root.",
+      "type": "string",
+      "pattern": "^[A-Za-z0-9_.-]+(/[A-Za-z0-9_.-]+)*$"
+    },
+    "chat_template": { "enum": ["lfm3"] },
+    "operator": { "enum": ["directional_projection"] },
+    "target": { "enum": ["residual_post"] },
+    "prompt_sets": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["positive", "negative"],
+      "properties": {
+        "positive": { "$ref": "#/$defs/promptSet" },
+        "negative": { "$ref": "#/$defs/promptSet" }
+      }
+    },
+    "pooling": {
+      "description": "response_mean: mean of the residual over the response tokens. last_token: the residual at the last token before <|im_end|>.",
+      "enum": ["response_mean", "last_token"]
+    },
+    "candidate_layers": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 1024,
+      "uniqueItems": true,
+      "items": { "type": "integer", "minimum": 0 }
+    },
+    "rank": { "type": "integer", "minimum": 1, "maximum": 64 },
+    "direction_method": {
+      "description": "mean_difference_pca: direction 1 is the normalized mean of the paired differences; directions 2..rank are the top principal components of the paired differences with direction 1 projected out.",
+      "enum": ["mean_difference_pca"]
+    },
+    "scale": {
+      "description": "The per-direction scale s written for every direction of every selected site.",
+      "type": "number",
+      "exclusiveMinimum": 0,
+      "maximum": 1000
+    },
+    "evaluation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["folds"],
+      "properties": {
+        "folds": {
+          "description": "Cross-validation folds over pairs: separability is measured on held-out pairs only.",
+          "type": "integer",
+          "minimum": 2,
+          "maximum": 64
+        }
+      }
+    },
+    "selection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["max_layers", "min_auc"],
+      "properties": {
+        "max_layers": { "type": "integer", "minimum": 1, "maximum": 1024 },
+        "min_auc": { "type": "number", "minimum": 0.5, "maximum": 1 }
+      }
+    },
+    "seed": { "type": "integer", "minimum": 0, "maximum": 4294967295 }
+  },
+  "$defs": {
+    "promptSet": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["label", "path"],
+      "properties": {
+        "label": { "type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$" },
+        "path": {
+          "description": "JSON lines file, one object per line: {\"id\", \"prompt\", \"response\"}. Relative to the spec file.",
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_.-]+(/[A-Za-z0-9_.-]+)*$"
+        }
+      }
+    }
+  }
+}

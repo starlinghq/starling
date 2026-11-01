@@ -354,6 +354,33 @@ def _upstream(args: argparse.Namespace) -> int:
     return 1 if summary["new_since_known"] else 0
 
 
+def _interventions_extract_arguments(parser: argparse.ArgumentParser) -> None:
+    # Same options as model_pipeline.interventions.extract.add_arguments; declared here so building the parser does not
+    # import the optional interventions extra (numpy, onnx, onnxruntime, tokenizers).
+    parser.add_argument("spec", type=Path, help="extraction spec (YAML)")
+    parser.add_argument(
+        "--snapshot",
+        type=Path,
+        default=os.environ.get("STARLING_LFM3_SNAPSHOT"),
+        help="model snapshot root (default: $STARLING_LFM3_SNAPSHOT)",
+    )
+    parser.add_argument(
+        "--cache",
+        type=Path,
+        default=os.environ.get("STARLING_LFM3_INTERVENTION_CACHE"),
+        help="intervention cache root on the snapshot's file system (default: $STARLING_LFM3_INTERVENTION_CACHE)",
+    )
+    parser.add_argument("--out", type=Path, help="output directory (default: the spec's directory)")
+    parser.add_argument("--threads", type=int, help="ONNX Runtime intra-op threads")
+
+
+def _interventions_extract(args: argparse.Namespace) -> int:
+    # Imported lazily: the interventions extra is optional.
+    from .interventions.extract import run_cli
+
+    return run_cli(args)
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="model-pipeline")
     sub = parser.add_subparsers(dest="command", required=True)
@@ -545,6 +572,15 @@ def main(argv: list[str] | None = None) -> int:
     up.add_argument("--json", help="also write the report (starlings-upstream-check/1) to this path")
     up.add_argument("--date", help="check date to record (default: today)")
     up.set_defaults(func=_upstream)
+
+    iv = sub.add_parser("interventions", help="ONNX Runtime interventions (experimental): profile extraction")
+    iv_sub = iv.add_subparsers(dest="interventions_command", required=True)
+    iv_extract = iv_sub.add_parser(
+        "extract",
+        help="extract a directional-projection profile from two contrasting prompt sets (docs/interventions)",
+    )
+    _interventions_extract_arguments(iv_extract)
+    iv_extract.set_defaults(func=_interventions_extract)
 
     args = parser.parse_args(argv)
     return args.func(args)

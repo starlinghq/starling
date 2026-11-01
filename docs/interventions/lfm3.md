@@ -1,6 +1,6 @@
 # LFM3 interventions (V1)
 
-Status: **experimental**. V1 evidence uses synthetic random orthonormal directions; no behavioural profile ships or has been evaluated. Deciding which callers may apply which profile is the host application's job.
+Status: **experimental**. The mechanism evidence below uses synthetic random orthonormal directions. One extracted style profile, `lfm3-1.7b-concise` (`model-pipeline/interventions/profiles/lfm3-1.7b/concise/`), has held-out separability evidence and a small decoding probe, not a behavioural evaluation ([extraction.md](extraction.md)). Deciding which callers may apply which profile is the host application's job.
 
 LFM3-1.7B (`Starlings.Models.Lfm3`, the fp32 step graph of `LiquidAI/LFM3-1.7B-ONNX` at `c680759a`) can run with one intervention profile compiled into a derived graph, with the strength chosen per request. The integration is the source-only companion `Starlings.Models.Lfm3.Interventions`; `Starlings.Models.Lfm3` keeps its public API, and an application that does not use interventions loads the original graph exactly as before.
 
@@ -91,4 +91,4 @@ The compile command above and both code examples (this page's sequence example a
 
 - The real-model tests need `STARLING_LFM3_SNAPSHOT` and a compiled entry (`STARLING_LFM3_INTERVENTION` for .NET, `STARLING_LFM3_INTERVENTION_CACHE` for Python); CI runs only the model-free tests (manifest checks, mapping).
 - The fp16 graph (no site mapping), CUDA, Windows, AOT publish.
-- More than one profile per graph, hot swap, behavioural profiles.
+- More than one profile per graph, hot swap, a behavioural evaluation of any profile.

@@ -29,6 +29,14 @@ interventions = [
     "onnx==1.23.1",
     "onnxruntime==1.30.0",
 ]
+# Profile extraction (model_pipeline.interventions.extract): the compiler's dependencies plus the Hugging Face
+# tokenizers library, which reads the snapshot's tokenizer.json (the version the LFM3 reference runner pins).
+interventions-extract = [
+    "numpy>=2.0",
+    "onnx==1.23.1",
+    "onnxruntime==1.30.0",
+    "tokenizers==0.23.3",
+]
 
 [project.scripts]
 model-pipeline = "model_pipeline.cli:main"
