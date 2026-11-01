@@ -162,12 +162,59 @@ jobs:
             [[ " ${pushed[*]} " == *" ${id} "* ]] || push "${id}"
           done
           echo "pushed ${#pushed[@]} packages: ${pushed[*]}"
+      # The GitHub release through the REST API (actions/github-script), so the runner needs no gh CLI. A rerun
+      # resumes: an existing release for the tag is kept as it is (title, notes, pre-release flag) and only the
+      # assets it lacks are uploaded; an asset already there with a different size fails the step.
       - name: GitHub release
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          prerelease=()
-          [[ "${VERSION}" == *-* ]] && prerelease=(--prerelease)
-          gh release create "${GITHUB_REF_NAME}" "${prerelease[@]}" \
-            --title "Starlings ${VERSION}" --notes-file "docs/releases/ai-${VERSION}.md" \
-            packages/*.nupkg packages/*.snupkg
+          TITLE: Starlings ${{ needs.candidate.outputs.version }}
+          NOTES_FILE: docs/releases/ai-${{ needs.candidate.outputs.version }}.md
+        with:
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+            const { owner, repo } = context.repo;
+            const tag = process.env.GITHUB_REF_NAME;
+            const version = process.env.VERSION;
+            const files = fs.readdirSync('packages').filter(f => /\.s?nupkg$/.test(f)).sort()
+              .map(f => path.join('packages', f));
+            if (files.length === 0) throw new Error('No packages to attach.');
+            for (const f of files) {
+              if (!fs.statSync(f).isFile()) throw new Error(`${f} is not a file`);
+            }
+            const releases = await github.paginate(github.rest.repos.listReleases, { owner, repo, per_page: 100 });
+            let release = releases.find(r => r.tag_name === tag);
+            if (release) {
+              core.notice(`Release ${tag} already exists (${release.html_url}); only missing assets are uploaded.`);
+            } else {
+              ({ data: release } = await github.rest.repos.createRelease({
+                owner, repo, tag_name: tag, name: process.env.TITLE,
+                body: fs.readFileSync(process.env.NOTES_FILE, 'utf8'),
+                prerelease: version.includes('-'),
+              }));
+              core.info(`Created release ${release.html_url}`);
+            }
+            const assets = await github.paginate(github.rest.repos.listReleaseAssets,
+              { owner, repo, release_id: release.id, per_page: 100 });
+            for (const f of files) {
+              const name = path.basename(f);
+              const size = fs.statSync(f).size;
+              const existing = assets.find(a => a.name === name);
+              if (existing && existing.state === 'uploaded') {
+                if (existing.size !== size) {
+                  throw new Error(`Asset ${name} on ${tag} has ${existing.size} bytes, the local file ${size}; not replacing it.`);
+                }
+                core.info(`${name} already attached; skipped.`);
+                continue;
+              }
+              if (existing) {
+                // A broken upload from an earlier attempt.
+                await github.rest.repos.deleteReleaseAsset({ owner, repo, asset_id: existing.id });
+              }
+              await github.rest.repos.uploadReleaseAsset({
+                owner, repo, release_id: release.id, name, data: fs.readFileSync(f),
+                headers: { 'content-type': 'application/octet-stream', 'content-length': size },
+              });
+              core.info(`Uploaded ${name} (${size} bytes).`);
+            }
