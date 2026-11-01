@@ -5,6 +5,8 @@ Issue #167. GLiNER2 serializes its CUDA runs because unserialized concurrent run
 - `multilingual-e5-small/onnx-fp32-cuda`: `concurrent_calls` is `Supported` in `E5Capabilities.Profiles` and in the package README's "Stable contract: CUDA". The manifest has no `concurrent_calls` key.
 - `embeddinggemma-2/onnx-fp32-cuda`: `concurrent_calls: supported` in the manifest.
 
+Out of scope: the EmbeddingGemma 2 `image-fp32-cuda` and `video-fp32-cuda` profiles also declare `concurrent_calls: supported` and use the same `OnnxModelSession`, but this run tests only the two text profiles above. #257 tracks testing them and the RTX 3090 rerun.
+
 The existing CUDA concurrency tests of both models used single-input `Embed` calls on four threads. This run adds a stronger test to each local CUDA test project: concurrent multi-row `EmbedBatch` calls on eight threads.
 
 ## Result
