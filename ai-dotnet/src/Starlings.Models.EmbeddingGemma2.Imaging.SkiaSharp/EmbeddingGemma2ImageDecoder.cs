@@ -76,6 +76,7 @@ public static class EmbeddingGemma2ImageDecoder
         options ??= new EmbeddingGemma2ImageDecoderOptions();
         options.Validate();
         long limit = options.MaxEncodedBytes;
+        int capacity = 0;
         if (stream.CanSeek)
         {
             long remaining = stream.Length - stream.Position;
@@ -83,9 +84,13 @@ public static class EmbeddingGemma2ImageDecoder
             {
                 throw EncodedTooLarge(remaining, limit);
             }
+
+            // The size is known, so the buffer starts at that capacity and peak memory stays at the limit instead of
+            // doubling while it grows.
+            capacity = (int)Math.Max(0, remaining);
         }
 
-        using var buffer = new MemoryStream();
+        using var buffer = new MemoryStream(capacity);
         byte[] chunk = new byte[81920];
         int read;
         while ((read = stream.Read(chunk, 0, chunk.Length)) > 0)
@@ -272,7 +277,7 @@ public sealed record EmbeddingGemma2ImageDecoderOptions
     /// reads from a stream before rejecting it with <see cref="EmbeddingGemma2ImageTooLargeException"/>. Default
     /// 67,108,864 (64 MiB); 1 to <see cref="Array.MaxLength"/>. A seekable stream is checked from its remaining length
     /// before any byte is read; a non-seekable one while it is read. The span and file overloads, whose bytes are
-    /// already in memory or sized by the caller, do not apply it.
+    /// already in memory or sized by the caller, do not apply it, but every overload validates the value.
     /// </summary>
     public long MaxEncodedBytes { get; init; } = 64L * 1024 * 1024;
 

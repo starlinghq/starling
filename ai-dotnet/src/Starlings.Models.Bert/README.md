@@ -132,7 +132,8 @@ directory by size and SHA-256 (`ModelAssetStore.VerifyDirectory`) and never down
   of `ScoreBatch` in document order.
 - `BertInput(InputIds, AttentionMask, TokenTypeIds)` for pre-tokenized rows: equal lengths from 2 to `MaxTokens`,
   the profile's CLS id first and SEP id as the last visible token, right padding with the profile's pad id and mask 0.
-- `BertCapabilities`: text, batch and cancellation `experimental`; streaming, persistence and training
+- `BertCapabilities`: text, batch and cancellation `experimental`; text truncation on the right to `MaxTokens`
+  (`TextTruncation`, capability key `text.truncation`) `experimental`; streaming, persistence and training
   `unsupported`; AOT `untested`.
 
 `threads` must be 1 to 64 and `maxBatchSize` 1 to 128. `Create` with a profile of the other task throws
