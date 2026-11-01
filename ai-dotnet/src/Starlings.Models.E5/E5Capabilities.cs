@@ -63,10 +63,14 @@ public static class E5Capabilities
         ["streaming"] = Status.Unsupported,
         ["pair_input"] = Status.Unsupported,
         ["token_type_ids_nonzero"] = Status.Unsupported,
-        // Encoder-side truncation (the README's "truncation in the encoder"): E5Encoder rejects id sequences longer
-        // than MaxSequenceLength. Text is truncated on the right to 512 by E5Tokenizer, as the reference and the
-        // manifests' behavior.truncation (truncate-right) say; that is part of embedding.text, not of this key.
+        // Encoder-side truncation (the README's "encoder-side truncation"): E5Encoder rejects id sequences longer
+        // than MaxSequenceLength. The key keeps that meaning (#193, decided 2026-11-01); text truncation is the
+        // separate key below.
         ["truncation"] = Status.Unsupported,
+        // Text truncation (#193): E5Tokenizer truncates text on the right to 512 tokens, special tokens included, as
+        // the reference does; covered by embedding.text's evidence. The typed policy is
+        // ModelProfileCapabilities.Truncation (TruncationPolicy.TruncatesRight), from the manifests' behavior.truncation.
+        ["text.truncation"] = Status.Supported,
         ["prefix_insertion"] = Status.Unsupported,
         ["tf32"] = Status.Unsupported,
         ["fp16"] = Status.Unsupported,

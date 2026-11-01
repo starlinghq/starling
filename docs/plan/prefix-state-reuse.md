@@ -1,6 +1,6 @@
 # Prefix state reuse for chat: design note
 
-Status: design note, 2026-10-26 (#161; 2026-10-25 review, item B4 track b). Nothing in this note changes product code, a capability status or a tolerance. `conversation_state_reuse` stays `unsupported` on every Qwen3.5 and QwenChat profile (`Qwen35Capabilities`, the five manifests under `model-pipeline/registry/`). Kev's state reuse is a separate track (#140, #166).
+Status: design note, 2026-10-26 (#161; 2026-10-25 review, item B4 track b); its open questions were decided on 2026-11-01 (section 6). Nothing in this note changes product code, a capability status or a tolerance. `conversation_state_reuse` stays `unsupported` on every Qwen3.5 and QwenChat profile (`Qwen35Capabilities`, the five manifests under `model-pipeline/registry/`). Kev's state reuse is a separate track (#140, #166).
 
 ## Summary
 
@@ -70,8 +70,10 @@ A family with standard attention only makes route A available on the existing ma
 2. what its chat template does to earlier turns (think blocks dropped or kept, generation prompt suffix), which sets where the shared prefix ends;
 3. a measured `RewindTo(p)` plus append against a fresh prefill on its bundle, before reuse is offered.
 
-## 6. Open questions for the maintainer
+## 6. Decisions
 
-1. **Engine or wait:** invest in a P/Invoke layer over the GenAI Engine API (route C, possibly upstreamed as a managed wrapper), or wait for the managed binding (route D)? The batching note's CUDA Engine spike would answer part of this.
-2. **Requirement for the next generator:** is prefix reuse a requirement for the family chosen in #181, which would favour a family without recurrent layers?
-3. **Snapshot spike:** is a CPU spike of route B on the existing bundles worth running (no GPU needed), measuring snapshot size, restore time and reused-versus-fresh agreement?
+The former open questions, decided 2026-11-01 by the maintainer's delegate (agent), revisitable (#161).
+
+1. **Engine or wait:** wait. Do not wrap the GenAI Engine API now (route C); wait for the managed binding (route D), and revisit when the batching note's CUDA Engine spike or an upstream managed wrapper lands. Rationale: no upstream maintenance burden and no new native surface on a pre-1.0 binding.
+2. **Requirement for the next generator:** prefix reuse is not a hard requirement for the family chosen in #181. The family's admission records whether it has recurrent layers and whether its chat template keeps a stable rendered prefix (section 5, items 1 and 2), so that reuse stays possible. Rationale: it keeps the choice of family open while preserving the information reuse would need.
+3. **Snapshot spike:** deferred. The CPU spike of route B runs when a consumer needs latency below the current full prefill. `conversation_state_reuse` stays unsupported. Rationale: no consumer has asked for it, and route B is a preview native API.

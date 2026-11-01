@@ -97,6 +97,9 @@ public static class EmbeddingGemma2Capabilities
         ["input.2050_to_8192_tokens"] = Status.Experimental,
         ["input.over_8192_tokens"] = Status.Unsupported,
         ["truncation"] = Status.Unsupported,
+        // Text truncation (#193): longer text is rejected, never truncated (ModelProfileCapabilities.Truncation is
+        // TruncationPolicy.Rejects).
+        ["text.truncation"] = Status.Unsupported,
 
         ["batch"] = Status.Supported,
         // Opt-in length-sorted chunking, EmbeddingGemma2EncoderOptions.SortByLength (text path): off by default, and the

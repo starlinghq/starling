@@ -60,7 +60,7 @@ public class AssetAndCapabilityTests
         Assert.Equal(Status.Supported, all["entity_extraction.cuda"]);
         Assert.Equal(Status.Experimental, all["label_descriptions"]);
         Assert.Equal(Status.Unsupported, all["concurrent_calls.cuda.unserialized"]);
-        foreach (var key in new[] { "classification", "relation_extraction", "structured_extraction", "plain_deduplicated_output", "input_over_512_tokens", "truncation", "tf32", "extensions_ai", "mlnet" })
+        foreach (var key in new[] { "classification", "relation_extraction", "structured_extraction", "plain_deduplicated_output", "input_over_512_tokens", "truncation", "text.truncation", "tf32", "extensions_ai", "mlnet" })
         {
             Assert.Equal(Status.Unsupported, all[key]);
         }
