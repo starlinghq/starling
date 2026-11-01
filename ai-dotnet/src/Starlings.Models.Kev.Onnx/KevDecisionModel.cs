@@ -1,4 +1,5 @@
 using System.Collections.Immutable;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using Microsoft.ML.OnnxRuntime;
 using Starlings.Runtime.Onnx;
@@ -189,6 +190,33 @@ public sealed partial class KevDecisionModel : IDisposable
 
     /// <summary>The underlying session, for diagnostics.</summary>
     public OnnxModelSession Session => _session;
+
+    /// <summary>
+    /// Checks, before anything is loaded, whether <see cref="Create(KevModelFiles, KevOptions?)"/> with
+    /// <paramref name="options"/> can start: the options are valid, the ONNX Runtime native library loads, and for
+    /// <see cref="OnnxExecutionProvider.Cuda"/> the native library has the CUDA provider and it initializes for
+    /// <see cref="OnnxSessionOptions.CudaDeviceId"/> (<see cref="OnnxRuntimeInfo.TryInitializeProvider(OnnxSessionOptions, out string?)"/>).
+    /// No graph, head or tokenizer is read and no device memory is allocated, so it costs milliseconds instead of a
+    /// 3 to 17 GB load; a missing, busy or full device, or too little memory, can still fail at
+    /// <see cref="Create(KevModelFiles, KevOptions?)"/>.
+    /// </summary>
+    /// <param name="options">The options <see cref="Create(KevModelFiles, KevOptions?)"/> would get; null for the defaults (CPU).</param>
+    /// <param name="reason">Why the model cannot load with these options; null when it can.</param>
+    /// <returns>True when nothing found stops the load.</returns>
+    public static bool CanLoad(KevOptions? options, [NotNullWhen(false)] out string? reason)
+    {
+        options ??= new KevOptions();
+        try
+        {
+            options.Validate();
+            return OnnxRuntimeInfo.TryInitializeProvider(options.Session, out reason);
+        }
+        catch (Exception ex) when (ex is ArgumentException or NotSupportedException)
+        {
+            reason = ex.Message;
+            return false;
+        }
+    }
 
     /// <summary>
     /// Loads a verified bundle (<see cref="KevModelAssets.OpenDirectory"/>) and owns the session. Unless

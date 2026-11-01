@@ -12,6 +12,12 @@ Changes merged to `main` after the last release record, collected here for the n
 
 Every package that tokenizes now pins `Starlings.Tokenizers [0.3.4]` (0.3.2 in 0.4.0), and every manifest's `processing.tokenizer.version` moved with the pin. 0.3.3 adds the `Sequence` post-processor, the Llama 3 split regex and the profiles `lfm3-bpe-chat`, `qwen3-bpe-embedding` and `qwen3-bpe-chat`; 0.3.4 adds only the profile `clover-bpe-chat`. 0.3.2 rejected a `Sequence` post-processor and the Llama 3 regex at load, so no pinned asset of an existing profile declares either, and the tokenizer's conformance fixtures pass unchanged (starlinghq/tokenizers CHANGELOG). The LFM3 tokenizer now loads, so `Lfm3ParityTests.PromptIdsMatchTheReferenceTokenizer` and the LFM3 intervention chat test run against the pin.
 
+## Starlings.Models.Kev (#166)
+
+- `KevDecisionModel.CanLoad(options, out reason)` checks the options and the requested provider (`OnnxRuntimeInfo.TryInitializeProvider`) before any graph is read, so a consumer need not load 3 to 17 GB to learn that CUDA is unavailable. Capabilities `load_check` (experimental) and `load_check.cuda` (untested, no GPU evidence).
+- `KevDecision[id]` is a hash lookup (ordinal, first answer on a repeated id) instead of a linear scan; record equality and copies are unchanged. A null `id` now throws `ArgumentNullException` (it threw `KeyNotFoundException` before).
+- README: noul answers are in no, yes order; `Yes` and `Probabilities["true"]` give p(yes) without reordering. `KevInputTooLongException` stays an `ArgumentException`, as the shared `InputTooLongException` base is.
+
 ## Capability key `text.truncation` (#193)
 
 The capability key `truncation` keeps its encoder-side meaning (the encoder rejects id sequences over the profile's limit instead of truncating them), so no Stable profile's documented contract changes. A new key, `text.truncation`, says what happens to text: `Supported` in `E5Capabilities.Statuses` (`E5Tokenizer` truncates on the right to 512 tokens, as the reference), `Unsupported` in `EmbeddingGemma2Capabilities` and `Gliner2Capabilities` (longer text is rejected), and the new `BertCapabilities.TextTruncation` is `experimental`, as the whole BERT route is. The README tables name the old row "encoder-side truncation" and point to the typed `ModelProfileCapabilities.Truncation` (`TruncationPolicy`) as the authoritative text policy. Decision recorded in `docs/kickoff.md` ("Capability key `truncation`", 2026-11-01).

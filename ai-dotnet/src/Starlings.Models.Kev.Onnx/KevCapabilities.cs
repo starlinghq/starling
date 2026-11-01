@@ -80,6 +80,10 @@ public static class KevCapabilities
         // KevAnswer.IsCalibrated / KevDecisionModel.IsCalibrated (ApiTests, CPU, KevModel.Kev08B).
         ["placement_report"] = KevCapabilityStatus.Experimental,
         ["calibration_flag"] = KevCapabilityStatus.Experimental,
+        // KevDecisionModel.CanLoad: options and provider checked without loading the bundle (ApiTests: CPU true, CUDA on the
+        // CPU-only native package false with the reason). The CUDA-present path has no GPU evidence yet.
+        ["load_check"] = KevCapabilityStatus.Experimental,
+        ["load_check.cuda"] = KevCapabilityStatus.Untested,
         // KevState: one state pass reused by later Decide calls, on the bundles as qualified (no new graph). Every request
         // golden bit-identical to Decide, also from four concurrent callers (ApiTests, CPU, KevModel.Kev08B). Not run on CUDA.
         ["state_reuse_across_calls"] = KevCapabilityStatus.Experimental,
