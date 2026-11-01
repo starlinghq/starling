@@ -103,9 +103,9 @@ The profile was compiled into the fp32 graph and greedy-decoded on CPU with ONNX
 
 - At strength 0 and at strength 1 (removal), every answer reached the cap.
 - At -1, 2 of 4 answers ended before the cap.
-- At -2, 4 of 4 ended, after 146 to 229 tokens, with coherent text.
+- At -2, 4 of 4 ended, after 146 to 274 tokens, with coherent text (factuality was not checked).
 
-With this operator, "more concise" therefore points to a negative strength, which amplifies the component. Four prompts and one decoding setting are an observation, not an evaluation.
+With this operator, "more concise" therefore points to a negative strength, which amplifies the component. Four prompts and one decoding setting are an observation, not an evaluation. No control direction was run: amplifying a random unit direction at the same layers and strengths was not tried, so the shortening is not shown to be specific to this direction.
 
 ## Not covered
 

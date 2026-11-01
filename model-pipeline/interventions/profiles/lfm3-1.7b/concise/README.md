@@ -24,8 +24,8 @@ This is one small observation. The profile was compiled into the fp32 graph with
 
 - **Strength 0** is the original model. All four answers ran past 384 tokens.
 - **Strength 1 (removal):** removing the component along the direction did not shorten any answer within the cap.
-- **Negative strengths (amplification):** they amplify the existing component, and the answers got shorter. At -2 all four ended between 146 and 229 tokens before the cap, and the text stayed coherent and on topic. The cast-iron answer, for example, was a short numbered list with key tips.
+- **Negative strengths (amplification):** they amplify the existing component, and the answers got shorter. At -2 all four ended before the cap, after 146 to 274 tokens, and the text stayed coherent and on topic (factuality was not checked). The cast-iron answer, for example, was a short numbered list with key tips.
 
-So, for this operator, "more concise" corresponds to a negative strength. Four prompts with one decoding setting do not establish this. Quality, factuality, side effects, other strengths and sampling were not evaluated. The direction may partly encode answer length, since the verbose answers are about five times longer (see the report).
+So, for this operator, "more concise" corresponds to a negative strength. Four prompts with one decoding setting do not establish this. Quality, factuality, side effects, other strengths and sampling were not evaluated, and no control was run (a random unit direction amplified at the same layers and strengths), so the shortening is not shown to be specific to this direction. The direction may partly encode answer length, since the verbose answers are about five times longer (see the report).
 
 Which callers may apply this profile, and at what strength, is the host application's decision.

@@ -197,6 +197,13 @@ def test_the_checked_in_concise_profile_matches_its_spec_and_report():
     assert report["spec"]["sha256"] == spec.sha256
     assert report["profile"]["sha256"] == profile.sha256
     assert [s.layer for s in profile.profile.sites] == report["selected_layers"]
+    # The selected layers follow the spec's rule applied to the report's held-out numbers.
+    eligible = [m for m in report["layers"] if m["heldout_auc"] >= spec.min_auc]
+    ranked = sorted(eligible, key=lambda m: (-m["heldout_cohens_d"], m["layer"]))
+    assert sorted(m["layer"] for m in ranked[: spec.max_layers]) == report["selected_layers"]
+    assert sorted(p.name for p in (CONCISE / "directions").iterdir()) == sorted(
+        Path(s.directions_file).name for s in profile.profile.sites
+    )
     # The markdown report is generated from the JSON one; no hand edits.
     from model_pipeline.interventions.extract import render_report_markdown
 
@@ -315,6 +322,30 @@ def test_rank_two_spans_the_mean_difference_and_the_main_paired_variation():
     assert float(q[0] @ v) > 0.98
     projection = q.T @ q
     assert np.linalg.norm(projection @ w_perp) > 0.97  # the second direction picks up the planted variation
+
+
+def test_a_rerun_leaves_only_the_new_profiles_files(tmp_path):
+    """Writing into a directory that holds an earlier run's profile (the default output is the spec's directory)
+    removes direction files of layers that are no longer selected; a run that selects nothing removes the profile."""
+    spec = load_spec(_write_spec(tmp_path, pairs=64))
+    out = tmp_path / "out"
+    first = _planted(layers=3, planted_layer=0, seed=1)
+    extract_from_activations(spec, first[0], first[1], response_tokens={"short": [1], "long": [2]}, out_dir=out,
+                             environment={})  # fmt: skip
+    assert sorted(p.name for p in (out / "directions").iterdir()) == ["layer0-residual_post.f32"]
+    (out / "directions" / "notes.txt").write_text("kept")
+    second = _planted(layers=3, planted_layer=2, seed=2)
+    _, profile = extract_from_activations(spec, second[0], second[1], response_tokens={"short": [1], "long": [2]},
+                                          out_dir=out, environment={})  # fmt: skip
+    assert [s.layer for s in profile.profile.sites] == [2]
+    assert sorted(p.name for p in (out / "directions").iterdir()) == ["layer2-residual_post.f32", "notes.txt"]
+    rng = np.random.default_rng(0)
+    noise = rng.standard_normal((64, 3, 8))
+    with pytest.raises(ExtractionError, match="no candidate layer"):
+        extract_from_activations(spec, noise + 0.01 * rng.standard_normal((64, 3, 8)), noise,
+                                 response_tokens={"short": [1], "long": [2]}, out_dir=out, environment={})  # fmt: skip
+    assert not (out / "profile.json").exists()
+    assert sorted(p.name for p in (out / "directions").iterdir()) == ["notes.txt"]
 
 
 def test_no_layer_above_the_threshold_writes_no_profile(tmp_path):

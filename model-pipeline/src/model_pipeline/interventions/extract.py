@@ -465,6 +465,17 @@ def _round(value: float) -> float:
 # Output
 
 
+def _remove_previous_outputs(directory: Path, target: str) -> None:
+    """Remove ``profile.json`` and ``directions/layer<L>-<target>.f32`` written by an earlier run into ``directory``
+    (the default output directory is the spec's, where a profile may already be checked in)."""
+    (directory / PROFILE_NAME).unlink(missing_ok=True)
+    folder = directory / "directions"
+    if folder.is_dir():
+        for path in folder.glob(f"layer*-{target}.f32"):
+            if path.name[len("layer") : -len(f"-{target}.f32")].isdigit():
+                path.unlink()
+
+
 def write_profile(
     directory: Path,
     *,
@@ -475,7 +486,12 @@ def write_profile(
     found: Mapping[int, np.ndarray],
     scale: float,
 ) -> InterventionProfileFile:
-    """``profile.json`` (canonical form) and ``directions/layer<L>-<target>.f32``; returns the loaded profile."""
+    """``profile.json`` (canonical form) and ``directions/layer<L>-<target>.f32``; returns the loaded profile.
+
+    Direction files of an earlier run whose layer is no longer selected are removed, so the directory holds exactly
+    the profile's files.
+    """
+    _remove_previous_outputs(directory, target)
     (directory / "directions").mkdir(parents=True, exist_ok=True)
     sites = []
     for layer in sorted(found):
@@ -662,7 +678,10 @@ def extract_from_activations(
     )
     out_dir.mkdir(parents=True, exist_ok=True)
     profile = None
-    if analysis.selected:
+    if not analysis.selected:
+        # The report will say that no profile was written; do not leave an earlier run's profile next to it.
+        _remove_previous_outputs(out_dir, spec.target)
+    else:
         profile = write_profile(
             out_dir,
             profile_id=spec.profile_id,
