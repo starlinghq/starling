@@ -8,7 +8,8 @@ LFM3-1.7B (`Starlings.Models.Lfm3`, the fp32 step graph of `LiquidAI/LFM3-1.7B-O
 
 | Piece | Where |
 | --- | --- |
-| Site mapping `lfm3-1.7b/fp32/1` | `model-pipeline/src/model_pipeline/interventions/injection_sites.py`, keyed to the fp32 lock's `onnx/model.onnx` SHA-256 `add6653f…5ef77`. Sites: `residual_post` after each of the 24 decoder layers (`/model/layers.L/Add_2/output_0`, float32, hidden 2048). Both readers of each tensor are rewired. The fp16 graph has no mapping. |
+| Site mapping `lfm3-1.7b/fp32/1` | `model-pipeline/src/model_pipeline/interventions/injection_sites.py`, keyed to the fp32 lock's `onnx/model.onnx` SHA-256 `add6653f…5ef77`. Sites: `residual_post` after each of the 24 decoder layers (`/model/layers.L/Add_2/output_0`, float32, hidden 2048). Both readers of each tensor are rewired. |
+| Site mapping `lfm3-1.7b/fp16/1` | Same file, keyed to the fp16 lock's `onnx/model_fp16.onnx` SHA-256 `d3093d69…830fe`. It has the same tensor and consumer names, with float16 sites. It was proposed by `discover-sites` and reviewed ([onboarding.md](onboarding.md)). The Python compiler builds fp16 entries (`lfm3_synthetic --fp16`); the .NET integration does not load them yet. |
 | Synthetic compile | `python -m model_pipeline.interventions.lfm3_synthetic`: writes profile `lfm3-synthetic-test` (rank 8 after layers 8 and 16, seeded random orthonormal directions, scales 1) and compiles it with `get_or_compile`, passing the lock's external data hashes. |
 | Load and verify | `Lfm3Interventions.CreateModel` / `CreateChatModel`: open the cache entry (`InterventionArtifactCache.OpenEntry`: name = key), check the manifest before any session exists, load the derived graph through `OnnxModelSession`. |
 | Synthetic two-profile compile | `python -m model_pipeline.interventions.lfm3_synthetic --multi`: profile 0 is `lfm3-synthetic-test` (byte for byte the profile above), profile 1 `lfm3-synthetic-add` (`directional_addition`, rank 2, scales 1 and 0.5, after layers 12 and 16); compiled with `get_or_compile_profiles` into one graph with strength input `[2]`. Layer 16 is shared: the projection runs first, then the addition. |
@@ -107,8 +108,20 @@ The synthetic directions at strength 1 left the 6 greedy ids of this prompt unch
 
 The compile command above and both code examples (this page's sequence example and the package README's chat example, with `OpenLocal`'s default SHA-256 verification) ran end to end against the same snapshot; the compile reproduced the cache key `5ff9b1d7…d025`.
 
+The fp16 graph (site mapping `lfm3-1.7b/fp16/1`). The synthetic profile has the same seed and directions, with `base_model_sha256` set to the fp16 graph's hash. It was compiled with `lfm3_synthetic --fp16` (cache key `d4c9c12c…da74`; the two fp16 weight files are hard-linked). Same prompt, Python ONNX Runtime 1.30.0, linux-x64 CPU:
+
+| Check | Result | Where |
+| --- | --- | --- |
+| `discover-sites` on `onnx/model.onnx` and `onnx/model_fp16.onnx` regenerates `lfm3-1.7b/fp32/1` and `lfm3-1.7b/fp16/1` field for field, consumers in order | 24/24 each, 0 warnings | `test_intervention_discover.py::test_the_real_lfm3_graph_regenerates_its_mapping_exactly` |
+| fp16 mapping tensors and consumers are every reader of each residual tensor; float16, hidden 2048 | 24/24 | `test_fp16_mapping_matches_the_real_fp16_graph_exactly` |
+| Inserted casts at each site: float16 to float32 before the operator, float32 to float16 before the `Sub` | yes | `test_fp16_entry_records_the_fp16_mapping_and_casts_at_each_site` |
+| Strength 0 vs original fp16 graph, last-position logits (float32 output) | max abs 0, same argmax (tolerance `2 * 2^-10 * max abs logits`, about 0.041). Also 0 with all graph optimizations off. | `test_fp16_strength_zero_matches_the_base_logits_and_strength_one_differs` |
+| Strength 1 vs original fp16 | max abs 1.98 | same |
+| Layer-8 site tensor (float16) vs NumPy `y - a((yQᵀ)⊙s)Q` in float64, strengths 1 and 0.5 | max abs 1.4e-3, 7.9e-4 (bound 1.3e-2) | `test_fp16_site_tensor_matches_the_numpy_projection` |
+
 ## Not covered
 
 - The real-model tests need `STARLING_LFM3_SNAPSHOT` and a compiled entry (`STARLING_LFM3_INTERVENTION`, and `STARLING_LFM3_INTERVENTION_MULTI` for the two-profile graph, for .NET; `STARLING_LFM3_INTERVENTION_CACHE` for Python); CI runs only the model-free tests (manifest checks, mapping).
-- The fp16 graph (no site mapping), CUDA, Windows, AOT publish.
+- fp16 in .NET: the model-pipeline mapping `lfm3-1.7b/fp16/1` and the Python evidence above exist, but `Lfm3Interventions` accepts only the fp32 mapping version and rejects fp16 entries before any session exists (`graph.fp16` stays Unsupported for the .NET integration). fp16 was measured on CPU only.
+- CUDA, Windows, AOT publish.
 - Hot swap. On LFM3 two profiles per graph were measured; three only on the synthetic graphs of the compiler tests. A behavioural evaluation of any profile other than `concise`.

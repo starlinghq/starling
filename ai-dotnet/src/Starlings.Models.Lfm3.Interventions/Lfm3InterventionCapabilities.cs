@@ -11,7 +11,7 @@ public static class Lfm3InterventionCapabilities
     public static IReadOnlyDictionary<string, CapabilityStatus> All { get; } = new Dictionary<string, CapabilityStatus>(StringComparer.Ordinal)
     {
         ["graph.fp32"] = CapabilityStatus.Experimental,             // site mapping lfm3-1.7b/fp32/1; synthetic-direction evidence
-        ["graph.fp16"] = CapabilityStatus.Unsupported,              // no site mapping for onnx/model_fp16.onnx
+        ["graph.fp16"] = CapabilityStatus.Unsupported,              // model-pipeline has lfm3-1.7b/fp16/1; not verified or accepted here
         ["selection.per_request"] = CapabilityStatus.Experimental,  // strength fixed per sequence, passed on every call
         ["selection.mid_sequence_change"] = CapabilityStatus.Unsupported, // impossible by construction
         ["profiles.multiple_per_graph"] = CapabilityStatus.Experimental, // strength vector per sequence; synthetic two-profile evidence

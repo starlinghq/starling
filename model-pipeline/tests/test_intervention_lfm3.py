@@ -25,6 +25,8 @@ from model_pipeline.interventions import (  # noqa: E402
 )
 from model_pipeline.interventions.external_data import link_external_data  # noqa: E402
 from model_pipeline.interventions.injection_sites import (  # noqa: E402
+    LFM3_FP16_GRAPH_SHA256,
+    LFM3_FP16_MAPPING,
     LFM3_FP32_GRAPH_SHA256,
     LFM3_FP32_MAPPING,
     LFM3_HIDDEN_SIZE,
@@ -33,16 +35,18 @@ from model_pipeline.interventions.injection_sites import (  # noqa: E402
 from model_pipeline.interventions.lfm3_synthetic import (  # noqa: E402
     ADDITION_LAYERS,
     ADDITION_PROFILE_ID,
+    LFM3_FP16_EXTERNAL_SHA256,
+    LFM3_FP16_GRAPH,
     LFM3_FP32_EXTERNAL_SHA256,
     LFM3_FP32_GRAPH,
     SYNTHETIC_LAYERS,
     SYNTHETIC_PROFILE_ID,
     compile_lfm3_synthetic,
+    compile_lfm3_synthetic_fp16,
     compile_lfm3_synthetic_multi,
 )
 
 REPO = Path(__file__).resolve().parents[2]
-LFM3_FP16_GRAPH_SHA256 = "d3093d69f6f954bd74f1dc9e59452ec5e9766e62d9c409456fb8ea5698a830fe"
 SNAPSHOT = os.environ.get("STARLING_LFM3_SNAPSHOT")
 CACHE = os.environ.get("STARLING_LFM3_INTERVENTION_CACHE")
 # "What is 2 + 2? Answer briefly." rendered by the LFM3 chat template without thinking (the template corpus case
@@ -73,10 +77,21 @@ def test_mapping_is_keyed_to_the_fp32_lock_hash():
     assert contract.is_version_label(LFM3_FP32_MAPPING.version)
 
 
-def test_fp16_graph_is_unsupported():
-    assert _lock_sha("onnx/model_fp16.onnx") == LFM3_FP16_GRAPH_SHA256
+def test_fp16_mapping_is_keyed_to_the_fp16_lock_hash():
+    assert _lock_sha(LFM3_FP16_GRAPH) == LFM3_FP16_GRAPH_SHA256
+    for path, sha in LFM3_FP16_EXTERNAL_SHA256.items():
+        assert _lock_sha(path) == sha
+    assert lookup_site_mapping(LFM3_FP16_GRAPH_SHA256) is LFM3_FP16_MAPPING
+    assert LFM3_FP16_MAPPING.precision == "fp16"
+    assert LFM3_FP16_MAPPING.version == "lfm3-1.7b/fp16/1"
+    assert LFM3_FP16_MAPPING.version != LFM3_FP32_MAPPING.version
+    # The fp16 export names its nodes like the fp32 one (checked against the real graph below).
+    assert LFM3_FP16_MAPPING.sites == LFM3_FP32_MAPPING.sites
+
+
+def test_another_graph_is_unsupported():
     with pytest.raises(UnsupportedGraphError):
-        lookup_site_mapping(LFM3_FP16_GRAPH_SHA256)
+        lookup_site_mapping("0" * 64)
 
 
 def test_mapping_sites_are_the_residual_stream_after_every_decoder_layer():
@@ -108,8 +123,22 @@ needs_cache = pytest.mark.skipif(
 
 @needs_snapshot
 def test_mapping_matches_the_real_graph_exactly():
-    path = Path(SNAPSHOT, LFM3_FP32_GRAPH)
-    assert hashlib.sha256(path.read_bytes()).hexdigest() == LFM3_FP32_GRAPH_SHA256
+    _check_mapping_against_graph(Path(SNAPSHOT, LFM3_FP32_GRAPH), LFM3_FP32_MAPPING, onnx.TensorProto.FLOAT)
+
+
+needs_fp16_snapshot = pytest.mark.skipif(
+    not SNAPSHOT or not Path(SNAPSHOT, LFM3_FP16_GRAPH).is_file(),
+    reason="set STARLING_LFM3_SNAPSHOT to the LFM3-1.7B-ONNX snapshot (c680759a) holding onnx/model_fp16.onnx",
+)
+
+
+@needs_fp16_snapshot
+def test_fp16_mapping_matches_the_real_fp16_graph_exactly():
+    _check_mapping_against_graph(Path(SNAPSHOT, LFM3_FP16_GRAPH), LFM3_FP16_MAPPING, onnx.TensorProto.FLOAT16)
+
+
+def _check_mapping_against_graph(path: Path, mapping, elem_type: int) -> None:
+    assert hashlib.sha256(path.read_bytes()).hexdigest() == mapping.base_graph_sha256
     model = onnx.load(str(path), load_external_data=False)
     readers: dict[str, list[str]] = {}
     producers: dict[str, str] = {}
@@ -118,13 +147,14 @@ def test_mapping_matches_the_real_graph_exactly():
             readers.setdefault(name, []).append(node.name)
         for name in node.output:
             producers[name] = node.op_type
-    for site in LFM3_FP32_MAPPING.sites:
+    value_info = {v.name: v for v in model.graph.value_info}
+    for site in mapping.sites:
         assert producers[site.tensor] == "Add", site.tensor
         # Every reader of the residual tensor is rewired: nothing downstream keeps the original value.
         assert sorted(readers[site.tensor]) == sorted(site.consumers), site.tensor
-    value_info = {v.name: v for v in model.graph.value_info}
-    dims = value_info[LFM3_FP32_MAPPING.sites[0].tensor].type.tensor_type.shape.dim
-    assert dims[-1].dim_value == LFM3_HIDDEN_SIZE
+        tensor_type = value_info[site.tensor].type.tensor_type
+        assert tensor_type.elem_type == elem_type, site.tensor
+        assert tensor_type.shape.dim[-1].dim_value == LFM3_HIDDEN_SIZE
 
 
 def _feeds(session, ids: list[int]) -> dict[str, np.ndarray]:
@@ -136,10 +166,12 @@ def _feeds(session, ids: list[int]) -> dict[str, np.ndarray]:
         "logits_to_keep": np.asarray([1], dtype=np.int64),
     }
     for item in session.get_inputs():
+        # The fp16 graph's caches are float16 (its logits stay float32).
+        dtype = np.float16 if item.type == "tensor(float16)" else np.float32
         if item.name.startswith("past_conv."):
-            feeds[item.name] = np.zeros((1, LFM3_HIDDEN_SIZE, item.shape[2]), dtype=np.float32)
+            feeds[item.name] = np.zeros((1, LFM3_HIDDEN_SIZE, item.shape[2]), dtype=dtype)
         elif item.name.startswith("past_key_values."):
-            feeds[item.name] = np.zeros((1, item.shape[1], 0, item.shape[3]), dtype=np.float32)
+            feeds[item.name] = np.zeros((1, item.shape[1], 0, item.shape[3]), dtype=dtype)
     return feeds
 
 
@@ -321,6 +353,90 @@ def test_shared_site_matches_the_numpy_composition(multi_entry):
             print(f"strengths ({alpha}, {beta}): max|p0 - numpy| = {err0:.3g}, max|p1 - numpy| = {err1:.3g}")
             assert err0 <= 1e-5 * max(1.0, scale)
             assert err1 <= 1e-5 * max(1.0, scale)
+    finally:
+        for child in probe.iterdir():
+            child.unlink()
+        probe.rmdir()
+
+
+# --------------------------------------------------------------------------------------------------------------------
+# The fp16 graph (site mapping lfm3-1.7b/fp16/1): float16 sites, so the compiler casts around the operator
+
+needs_fp16_cache = pytest.mark.skipif(
+    not SNAPSHOT or not CACHE or not Path(SNAPSHOT, LFM3_FP16_GRAPH).is_file(),
+    reason="set STARLING_LFM3_SNAPSHOT (with onnx/model_fp16.onnx) and STARLING_LFM3_INTERVENTION_CACHE",
+)
+FP16_EPS = float(np.finfo(np.float16).eps)  # 2**-10
+
+
+@pytest.fixture(scope="module")
+def fp16_entry():
+    return compile_lfm3_synthetic_fp16(SNAPSHOT, CACHE, Path(CACHE, "profiles", f"{SYNTHETIC_PROFILE_ID}-fp16"))
+
+
+@needs_fp16_cache
+def test_fp16_entry_records_the_fp16_mapping_and_casts_at_each_site(fp16_entry):
+    manifest = fp16_entry.manifest
+    assert manifest.base_graph.sha256 == LFM3_FP16_GRAPH_SHA256
+    assert manifest.precision == "fp16"
+    assert manifest.site_mapping_version == LFM3_FP16_MAPPING.version
+    assert [(i.name, i.dtype, i.shape) for i in manifest.inputs] == [(STRENGTH_INPUT_NAME, "float32", (1,))]
+    derived = onnx.load(str(fp16_entry.graph_path), load_external_data=False)
+    casts = {n.name: n for n in derived.graph.node if n.op_type == "Cast" and n.name.startswith("intervention/")}
+    for layer in SYNTHETIC_LAYERS:
+        # y -> float32 for the operator, the correction -> float16 before the Sub on the float16 residual stream.
+        targets = sorted(
+            onnx.helper.get_attribute_value(next(a for a in n.attribute if a.name == "to"))
+            for name, n in casts.items()
+            if f"/layer{layer}/" in name
+        )
+        assert targets == sorted([onnx.TensorProto.FLOAT, onnx.TensorProto.FLOAT16]), layer
+
+
+@needs_fp16_cache
+def test_fp16_strength_zero_matches_the_base_logits_and_strength_one_differs(fp16_entry):
+    base = _run(Path(SNAPSHOT, LFM3_FP16_GRAPH), None, None)["logits"]
+    zero = _run(fp16_entry.graph_path, None, 0.0)["logits"]
+    one = _run(fp16_entry.graph_path, None, 1.0)["logits"]
+    assert base.dtype == np.float32  # the fp16 export's logits stay float32
+    diff_zero = float(np.max(np.abs(base - zero)))
+    diff_one = float(np.max(np.abs(base - one)))
+    print(f"fp16: max|base - strength 0| = {diff_zero:.3g}, max|base - strength 1| = {diff_one:.3g}")
+    # Strength 0 is y - Cast(0) = y on the float16 stream, so only a different operator fusion around the extra reader
+    # could move the logits: allow two float16 units in the last place at the logits' magnitude (measured: 0).
+    assert diff_zero <= 2 * FP16_EPS * max(1.0, float(np.max(np.abs(base))))
+    assert int(np.argmax(base[0, -1])) == int(np.argmax(zero[0, -1]))
+    assert diff_one > 1e-1
+
+
+@needs_fp16_cache
+def test_fp16_site_tensor_matches_the_numpy_projection(fp16_entry):
+    layer = SYNTHETIC_LAYERS[0]
+    site_tensor = f"/model/layers.{layer}/Add_2/output_0"
+    intervened = f"intervention/layer{layer}/residual_post/output"
+    derived = onnx.load(str(fp16_entry.graph_path), load_external_data=False)
+    for name in (site_tensor, intervened):
+        derived.graph.output.append(onnx.helper.make_empty_tensor_value_info(name))
+    probe = Path(CACHE, "probe-" + os.urandom(4).hex())
+    probe.mkdir()
+    try:
+        locations = sorted(p.split("/", 1)[1] for p in LFM3_FP16_EXTERNAL_SHA256)
+        link_external_data(Path(SNAPSHOT, "onnx"), probe, locations)
+        (probe / "model_fp16.onnx").write_bytes(derived.SerializeToString())
+        profile = fp16_entry.profile
+        site = next(s for s in profile.profile.sites if s.layer == layer)
+        q = profile.load_directions(site).astype(np.float64)
+        scales = np.asarray(site.scales, dtype=np.float64)
+        for strength in (1.0, 0.5):
+            out = _run(probe / "model_fp16.onnx", ["logits", site_tensor, intervened], strength)
+            assert out[site_tensor].dtype == np.float16 and out[intervened].dtype == np.float16
+            y = out[site_tensor].astype(np.float64)
+            delta = strength * ((y @ q.T) * scales) @ q
+            err = float(np.max(np.abs(out[intervened].astype(np.float64) - (y - delta))))
+            bound = 2 * FP16_EPS * max(1.0, float(np.max(np.abs(y)) + np.max(np.abs(delta))))
+            print(f"fp16 strength {strength}: max|site - numpy| = {err:.3g} (bound {bound:.3g})")
+            # The operator runs in float32; the correction and the Sub round to float16.
+            assert err <= bound
     finally:
         for child in probe.iterdir():
             child.unlink()

@@ -151,9 +151,36 @@ LFM3_FP32_MAPPING = SiteMapping(
     sites=_lfm3_fp32_sites(),
 )
 
+# LiquidAI/LFM3-1.7B-ONNX at revision c680759afee1ce8310c90d6c621f4558200dee77, onnx/model_fp16.onnx: the SHA-256 the
+# fp16 asset lock records (Lfm3ModelAssets.Fp16Lock).
+LFM3_FP16_GRAPH_SHA256 = "d3093d69f6f954bd74f1dc9e59452ec5e9766e62d9c409456fb8ea5698a830fe"
+LFM3_FP16_MAPPING_VERSION = "lfm3-1.7b/fp16/1"
+
+
+def _lfm3_fp16_sites() -> tuple[MappedSite, ...]:
+    """The residual stream after each of the 24 decoder layers of the fp16 graph.
+
+    Proposed by ``discover-sites`` from that exact graph and reviewed (docs/interventions/onboarding.md): the fp16
+    export names its nodes exactly like the fp32 one, so the tensors (``/model/layers.L/Add_2/output_0``, here float16
+    ``[batch, sequence, 2048]``) and their readers (layer ``L + 1``'s operator norm and first residual add; after the
+    last layer the ``logits_to_keep`` slice) are the same names. They are fixed to the fp16 hash, not shared by lookup:
+    a test checks them against the real fp16 graph. The compiler casts float16 sites to float32 around the operator.
+    """
+    return _lfm3_fp32_sites()
+
+
+LFM3_FP16_MAPPING = SiteMapping(
+    model="lfm3-1.7b",
+    version=LFM3_FP16_MAPPING_VERSION,
+    base_graph_sha256=LFM3_FP16_GRAPH_SHA256,
+    precision="fp16",
+    sites=_lfm3_fp16_sites(),
+)
+
 # Supported base graphs, keyed by the SHA-256 of the exact base graph asset. The compiler rejects every other graph as
-# unsupported. The LFM3 fp16 graph (onnx/model_fp16.onnx) has no mapping yet.
-SITE_MAPPINGS: Mapping[str, SiteMapping] = build_registry((LFM3_FP32_MAPPING,))
+# unsupported. A new mapping starts from a discover-sites proposal and is reviewed by hand
+# (docs/interventions/onboarding.md).
+SITE_MAPPINGS: Mapping[str, SiteMapping] = build_registry((LFM3_FP32_MAPPING, LFM3_FP16_MAPPING))
 
 
 def lookup_site_mapping(base_graph_sha256: str, registry: Mapping[str, SiteMapping] | None = None) -> SiteMapping:
