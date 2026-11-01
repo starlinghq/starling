@@ -71,7 +71,7 @@ public static class EmbeddingGemma2Capabilities
         // reruns the CUDA tests, G1 to G3 and a soak smoke test (every check green in run 38857860186).
         ["embedding.pretokenized.cuda"] = Status.Supported,
 
-        // Text through EmbeddingGemma2Tokenizer (owned profile gemma-bpe-embeddinggemma2, Starlings.Tokenizers 0.3.2).
+        // Text through EmbeddingGemma2Tokenizer (owned profile gemma-bpe-embeddinggemma2, Starlings.Tokenizers 0.3.4).
         ["embedding.text"] = Status.Supported,
         ["tokenizer.owned"] = Status.Supported,
 

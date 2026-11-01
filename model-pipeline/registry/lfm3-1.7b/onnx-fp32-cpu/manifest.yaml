@@ -88,9 +88,9 @@ behavior:
 processing:
   tokenizer:
     package: Starlings.Tokenizers
-    # The repository pin (every manifest names it; the release drills check). 0.3.2 rejects the LFM3 split regex: the
-    # pin and this line move to 0.3.3, the first version with lfm3-bpe-chat, before any release ships this package.
-    version: 0.3.2
+    # The repository pin (every manifest names it; the release drills check). 0.3.3 is the first version with
+    # lfm3-bpe-chat (the Llama 3 split regex); 0.3.2 rejected this tokenizer at load.
+    version: 0.3.4
     # The export's tokenizer.json (the checkpoint's file without its final newline: the same JSON) through the
     # lfm3-bpe-chat profile (byte-level BPE, Llama 3 split regex, ignore_merges).
     profile_id: lfm3-bpe-chat

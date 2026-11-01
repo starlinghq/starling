@@ -45,7 +45,7 @@ using (Lfm3Sequence sequence = model.CreateSequence(new InterventionSelection("l
 using Lfm3Sequence plain = model.CreateSequence(selection: null);
 ```
 
-With a tokenizer, `Lfm3Interventions.CreateChatModel(files, entryDirectory)` returns an `Lfm3ChatModel`, and `chat.Chat(turns, selection, options)` / `chat.GenerateStreaming(promptIds, selection, options)` take the selection per call.
+`Lfm3Interventions.CreateChatModel(files, entryDirectory)` also loads the snapshot's `tokenizer.json` (`Starlings.Tokenizers` 0.3.4, the pin; profile `lfm3-bpe-chat`) and returns an `Lfm3ChatModel` that owns the graph; `chat.Chat(turns, selection, options)` / `chat.GenerateStreaming(promptIds, selection, options)` take the selection per call. The chat example, with its `using` directives, is in the [package README](../../ai-dotnet/src/Starlings.Models.Lfm3.Interventions/README.md#compile-once-then-load); the application adds the ONNX Runtime native package (`Microsoft.ML.OnnxRuntime`).
 
 ### What `CreateModel` checks before loading
 
@@ -78,15 +78,17 @@ The derived graph of the synthetic profile (cache key `5ff9b1d7…d025`, derived
 | Greedy ids, 6 steps, strength 0 vs original (.NET) | equal | `StrengthZeroMatchesTheOriginalGraph` |
 | 10 concurrent sequences, strengths 0, 0.5, 1, -1, 2 on one session vs sequential | within 1e-5 each | `ConcurrentSequencesWithDifferentStrengthsAreIsolated` |
 | Prefill vs token-by-token at strength 1 | max abs 2.8e-5, same argmax | `PrefillAndTokenByTokenAgree` |
+| Chat model (tokenizer 0.3.4): `Generate` and `GenerateStreaming` at strength 1 give the same ids, equal to the sequence's greedy ids; no selection gives the original graph's ids; another profile id throws | pass (6 new tokens) | `ChatGenerateAndStreamingPassTheSelection` |
 | fp16 graph hash, wrong base hash, external data not the locked weights, missing locked weight file, unknown site mapping version, wrong precision, scalar or colliding strength input, site layer 24 | rejected before any session | `ManifestCheckTests`, `TheArtifactIsRejectedForAnotherBaseGraphBeforeAnySession` |
 
 Strength 0 is bit-identical here; other graphs, providers or optimization levels may only match within rounding (the extra reader of the residual tensor can change operator fusion).
 
 The synthetic directions at strength 1 left the 6 greedy ids of this prompt unchanged although the logits moved by up to 1.97: the directions are random, not behavioural.
 
+The compile command above and both code examples (this page's sequence example and the package README's chat example, with `OpenLocal`'s default SHA-256 verification) ran end to end against the same snapshot; the compile reproduced the cache key `5ff9b1d7…d025`.
+
 ## Not covered
 
 - The real-model tests need `STARLING_LFM3_SNAPSHOT` and a compiled entry (`STARLING_LFM3_INTERVENTION` for .NET, `STARLING_LFM3_INTERVENTION_CACHE` for Python); CI runs only the model-free tests (manifest checks, mapping).
-- The chat-level test (`ChatGenerateAndStreamingPassTheSelection`) skips: the pinned `Starlings.Tokenizers` 0.3.2 rejects the LFM3 tokenizer's pre-tokenizer regex (as for `Lfm3ParityTests`, see [the onboarding evidence](../evidence/lfm3-onboarding-2026-10-28/README.md)). The model-level tests exercise the same sequence path.
 - The fp16 graph (no site mapping), CUDA, Windows, AOT publish.
 - More than one profile per graph, hot swap, behavioural profiles.

@@ -10,9 +10,8 @@ namespace Starlings.Models.Lfm3.Interventions.Tests;
 /// against the original graph, on CPU. Needs <see cref="SnapshotVariable"/> and <see cref="InterventionVariable"/>; skips
 /// without them. The original graph is loaded first, its reference values kept, and disposed before the derived graph
 /// loads, so only one fp32 session (about 7 GB) exists at a time. The prompt is the template corpus case
-/// <c>arithmetic</c> as token ids. The chat-level tests also need the owned tokenizer to load the LFM3
-/// <c>tokenizer.json</c>; the pinned <c>Starlings.Tokenizers</c> 0.3.2 rejects its pre-tokenizer regex (see
-/// <c>docs/evidence/lfm3-onboarding-2026-10-28</c>), so they skip until the tokenizer pin is raised.
+/// <c>arithmetic</c> as token ids. The chat-level test loads the snapshot's <c>tokenizer.json</c> with the pinned
+/// <c>Starlings.Tokenizers</c> (profile <c>lfm3-bpe-chat</c>, from 0.3.3).
 /// </summary>
 public sealed class Lfm3InterventionModelTests
 {
@@ -110,8 +109,7 @@ public sealed class Lfm3InterventionModelTests
     public void ChatGenerateAndStreamingPassTheSelection()
     {
         Fixture f = Require();
-        Assert.SkipWhen(f.Chat is null, $"The owned tokenizer cannot load this tokenizer.json: {f.TokenizerError?.Message}");
-        Lfm3ChatModel chat = f.Chat!;
+        Lfm3ChatModel chat = f.Chat;
         var selection = new InterventionSelection(ProfileId, 1f);
         var options = new GenerationOptions { MaxNewTokens = NewTokens };
         GenerationResult generated = chat.Generate(f.Prompt, selection, options, TestContext.Current.CancellationToken);
@@ -182,10 +180,8 @@ public sealed class Lfm3InterventionModelTests
     {
         public required Lfm3Model Model { get; init; }
 
-        /// <summary>A chat model over <see cref="Model"/>; null when the owned tokenizer cannot load the tokenizer.</summary>
-        public required Lfm3ChatModel? Chat { get; init; }
-
-        public required Exception? TokenizerError { get; init; }
+        /// <summary>A chat model over <see cref="Model"/> with the snapshot's tokenizer.</summary>
+        public required Lfm3ChatModel Chat { get; init; }
 
         public required int[] Prompt { get; init; }
 
@@ -252,22 +248,12 @@ public sealed class Lfm3InterventionModelTests
             }
 
             Lfm3Model model = Lfm3Interventions.CreateModel(files, entry, options);
-            Lfm3ChatModel? chat = null;
-            Exception? tokenizerError = null;
-            try
-            {
-                chat = new Lfm3ChatModel(model, Tokenizers.Tokenizer.FromFile(files.TokenizerPath));
-            }
-            catch (Tokenizers.UnsupportedTokenizerComponentException e)
-            {
-                tokenizerError = e;
-            }
+            var chat = new Lfm3ChatModel(model, Tokenizers.Tokenizer.FromFile(files.TokenizerPath));
 
             return new Fixture
             {
                 Model = model,
                 Chat = chat,
-                TokenizerError = tokenizerError,
                 Prompt = PromptIds,
                 BaseLogits = baseLogits,
                 BaseTokens = baseTokens,

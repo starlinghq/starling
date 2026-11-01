@@ -148,7 +148,7 @@ public class AssetAndCapabilityTests
         Assert.All(all.Values, v => Assert.True(Enum.IsDefined(v)));
 
         string cpu = Manifest("onnx-fp32-cpu");
-        Assert.Contains("    version: 0.3.2\n    profile_id: gemma-bpe-embeddinggemma2\n", cpu, StringComparison.Ordinal);
+        Assert.Contains("    version: 0.3.4\n    profile_id: gemma-bpe-embeddinggemma2\n", cpu, StringComparison.Ordinal);
         Assert.Equal(Status.Supported, all["image"]);
         Assert.Equal(Status.Supported, all["image.cuda"]);
         Assert.Equal(Status.Experimental, all["image.budget_other"]);
