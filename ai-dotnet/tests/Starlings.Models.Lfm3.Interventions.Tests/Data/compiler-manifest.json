@@ -1,0 +1,91 @@
+{
+  "schema_version": 1,
+  "compiler_version": "0.1.0",
+  "site_mapping_version": "lfm3-1.7b/fp32/1",
+  "base_artifacts": [
+    {
+      "role": "graph",
+      "path": "onnx/model.onnx",
+      "sha256": "add6653fc8b3cf2c7ee9fa0205a4a9a833fcb85d3449a5fea06f8aa494b5ef77",
+      "size": 274961
+    },
+    {
+      "role": "external_data",
+      "path": "onnx/model.onnx_data",
+      "sha256": "bf44fe98d130ad2bca747e9b62f28b18a3277d45bf1367da15a478538c849057",
+      "size": 2122694656
+    },
+    {
+      "role": "external_data",
+      "path": "onnx/model.onnx_data_1",
+      "sha256": "bb631a02237e4f8a491e12b25c333849046332b6db60fe0a2120f278c982fa76",
+      "size": 2140200960
+    },
+    {
+      "role": "external_data",
+      "path": "onnx/model.onnx_data_2",
+      "sha256": "ad39ed4b378c9c1b34c1a3cdb879880c7e110061070ff29fca118e8dd0b48010",
+      "size": 2135916544
+    },
+    {
+      "role": "external_data",
+      "path": "onnx/model.onnx_data_3",
+      "sha256": "1538827aa1c279442457028c4e3d784b7ea82bcf03abd4b55e45fa4facf9fe62",
+      "size": 784818176
+    }
+  ],
+  "profile_id": "lfm3-synthetic-test",
+  "profile_sha256": "aab7c161c12f394bc553952d1ee1ccdf6f0d30554e34984cc8d8076d33a1a105",
+  "operator": "directional_projection",
+  "opset": 21,
+  "precision": "fp32",
+  "inputs": [
+    {
+      "name": "intervention_strength",
+      "role": "strength",
+      "dtype": "float32",
+      "shape": [
+        1
+      ]
+    }
+  ],
+  "sites": [
+    {
+      "layer": 8,
+      "target": "residual_post",
+      "tensor": "/model/layers.8/Add_2/output_0"
+    },
+    {
+      "layer": 16,
+      "target": "residual_post",
+      "tensor": "/model/layers.16/Add_2/output_0"
+    }
+  ],
+  "derived_graph": {
+    "path": "model.onnx",
+    "sha256": "8818cf8275c3d984b67f549173f7eebdfffc7d08f8412805734d19c2b2d1a2af",
+    "size": 539490
+  },
+  "derived_files": [
+    {
+      "path": "model.onnx_data",
+      "sha256": "bf44fe98d130ad2bca747e9b62f28b18a3277d45bf1367da15a478538c849057",
+      "size": 2122694656
+    },
+    {
+      "path": "model.onnx_data_1",
+      "sha256": "bb631a02237e4f8a491e12b25c333849046332b6db60fe0a2120f278c982fa76",
+      "size": 2140200960
+    },
+    {
+      "path": "model.onnx_data_2",
+      "sha256": "ad39ed4b378c9c1b34c1a3cdb879880c7e110061070ff29fca118e8dd0b48010",
+      "size": 2135916544
+    },
+    {
+      "path": "model.onnx_data_3",
+      "sha256": "1538827aa1c279442457028c4e3d784b7ea82bcf03abd4b55e45fa4facf9fe62",
+      "size": 784818176
+    }
+  ]
+}

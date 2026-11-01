@@ -39,7 +39,11 @@ from model_pipeline.interventions.synthetic import (  # noqa: E402
     random_orthonormal,
     write_synthetic_profile,
 )
-from model_pipeline.interventions.validate import check_topological_order, max_abs_difference  # noqa: E402
+from model_pipeline.interventions.validate import (  # noqa: E402
+    check_topological_order,
+    max_abs_difference,
+    validate_derived_model,
+)
 
 REPO = Path(__file__).resolve().parents[2]
 HIDDEN = 16
@@ -437,6 +441,36 @@ def test_partial_consumer_list_rewires_only_that_consumer(bundle, tmp_path):
     by_name = {n.name: n for n in onnx.load(str(result.graph_path), load_external_data=False).graph.node}
     assert by_name["layer1/norm"].input[0] == "layer0/residual_post"
     assert by_name["layer1/residual_add"].input[0] == "intervention/layer0/residual_post/output"
+
+
+def _with_ort_only_op(model: onnx.ModelProto) -> onnx.ModelProto:
+    """A copy whose first node is an operator ONNX Runtime registers in the default domain but onnx does not know."""
+    copy = onnx.ModelProto()
+    copy.CopyFrom(model)
+    copy.graph.node[0].op_type = "SimplifiedLayerNormalization"
+    return copy
+
+
+def test_checker_is_skipped_only_when_it_rejects_the_base_graph():
+    base = _with_ort_only_op(_build_graph())
+    with pytest.raises(onnx.checker.ValidationError):
+        onnx.checker.check_model(base)
+    derived = onnx.ModelProto()
+    derived.CopyFrom(base)
+    validate_derived_model(base, derived, [])
+    # The structural checks still run when the checker cannot judge the graph.
+    nodes = list(derived.graph.node)
+    del derived.graph.node[:]
+    derived.graph.node.extend([nodes[1], nodes[0], *nodes[2:]])
+    with pytest.raises(DerivedGraphError, match="topologically ordered"):
+        validate_derived_model(base, derived, [])
+
+
+def test_checker_failure_of_the_derived_graph_alone_is_an_error():
+    base = _build_graph()
+    onnx.checker.check_model(base)
+    with pytest.raises(DerivedGraphError, match="rejects the derived graph but not its base"):
+        validate_derived_model(base, _with_ort_only_op(base), [])
 
 
 def test_topological_order_check_detects_misordered_nodes():

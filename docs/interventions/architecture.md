@@ -33,9 +33,9 @@ The compiler inserts it as `MatMul(y, Q^T)`, `Mul(s, alpha)`, `Mul(·, s·alpha)
 | Site mappings | `model-pipeline/src/model_pipeline/interventions/injection_sites.py` | Per model, versioned, keyed to the exact SHA-256 of the base graph asset. A graph hash with no mapping is unsupported; unknown graphs are never pattern-matched. |
 | Derived artifact cache | `<cache>/<model>/interventions/<key>/`; writer `model_pipeline/interventions/cache.py`, reader `InterventionArtifactCache` | `model.onnx`, hard links to the base weights, `profile.json` (verbatim), its directions files and `compiler-manifest.json`. Keyed by a hash of every compile input, published by one directory rename under a file lock, reused on repeat, verified on every open; the source bundle is never written ([cache.md](cache.md)). |
 | Session loading | `Starlings.Runtime.Onnx` | Derived graphs load through the ordinary `OnnxModelSession.Create(path, options)`; `OnnxSessionOptions` has no intervention setting. The companion `OnnxInterventionDiagnostics` reports the original and loaded graph identities, whether interventions are on, the profile ids and the intervention inputs (see "Loading a derived graph" below). |
-| Model integration | e.g. `Starlings.Models.Lfm3` | Recognizes a verified derived graph through its manifest, accepts exactly the declared extra inputs, and passes the strength on every call. |
+| Model integration | `Starlings.Models.Lfm3.Interventions` (source only) over `Starlings.Models.Lfm3` | Recognizes a verified derived graph through its manifest, accepts exactly the declared extra input, and passes the strength on every call ([lfm3.md](lfm3.md)). |
 
-The graph compiler, the derived-artifact cache and the session diagnostics are experimental. Model integration arrives in a later change and carries its own capability status.
+The graph compiler, the derived-artifact cache, the session diagnostics and the LFM3 integration are experimental. A packable model package cannot reference the source-only contract library, so a model's integration lives in a source-only companion that the model package grants internal access to; the model package's public surface does not change.
 
 ## Identities
 

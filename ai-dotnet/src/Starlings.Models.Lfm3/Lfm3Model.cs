@@ -22,11 +22,12 @@ public sealed class Lfm3Model : IDisposable
     private readonly OnnxModelSession _session;
     private int _disposed;
 
-    private Lfm3Model(OnnxModelSession session, Lfm3Precision precision, int contextLength)
+    private Lfm3Model(OnnxModelSession session, Lfm3Precision precision, int contextLength, Lfm3GraphIntervention? intervention)
     {
         _session = session;
         Precision = precision;
         ContextLength = contextLength;
+        Intervention = intervention;
         var pastNames = new List<string>();
         var presentNames = new List<string>();
         var shapes = new List<long[]>();
@@ -51,7 +52,11 @@ public sealed class Lfm3Model : IDisposable
 
         PastNames = [.. pastNames];
         InitialPastShapes = [.. shapes];
-        InputNames = [InputIdsName, AttentionMaskName, PositionIdsName, LogitsToKeepName, .. PastNames];
+        // A derived intervention graph has exactly one extra input, the strength, after the base inputs; CheckGraph's
+        // count comparison then accepts the declared extra input and nothing else.
+        InputNames = intervention is null
+            ? [InputIdsName, AttentionMaskName, PositionIdsName, LogitsToKeepName, .. PastNames]
+            : [InputIdsName, AttentionMaskName, PositionIdsName, LogitsToKeepName, .. PastNames, intervention.StrengthInputName];
         OutputNames = [LogitsName, .. presentNames];
         CheckGraph();
     }
@@ -75,6 +80,9 @@ public sealed class Lfm3Model : IDisposable
 
     internal OnnxModelSession Session => _session;
 
+    /// <summary>The intervention compiled into the loaded graph; null for the original graph.</summary>
+    internal Lfm3GraphIntervention? Intervention { get; }
+
     /// <summary>
     /// Loads the graph of verified files (<see cref="Lfm3ModelAssets.OpenLocal"/> or
     /// <see cref="Lfm3ModelAssets.OpenDirectory"/>). When the snapshot hashed the graph, the session takes that digest
@@ -90,14 +98,21 @@ public sealed class Lfm3Model : IDisposable
 
     /// <summary>Loads an LFM3-1.7B step graph from <paramref name="modelPath"/> (its external data files next to it).</summary>
     /// <exception cref="InvalidDataException">The graph's inputs or outputs are not those of the LFM3-1.7B export at <paramref name="precision"/>.</exception>
-    public static Lfm3Model Create(string modelPath, Lfm3Precision precision, Lfm3Options? options = null)
+    public static Lfm3Model Create(string modelPath, Lfm3Precision precision, Lfm3Options? options = null) =>
+        Create(modelPath, precision, options, intervention: null);
+
+    /// <summary>
+    /// Loads a graph; with <paramref name="intervention"/>, a derived intervention graph whose identity the caller
+    /// (Starlings.Models.Lfm3.Interventions) verified against its compiler manifest before calling.
+    /// </summary>
+    internal static Lfm3Model Create(string modelPath, Lfm3Precision precision, Lfm3Options? options, Lfm3GraphIntervention? intervention)
     {
         options ??= new Lfm3Options();
         options.Validate();
         var session = OnnxModelSession.Create(modelPath, options.Session);
         try
         {
-            return new Lfm3Model(session, precision, options.ContextLength);
+            return new Lfm3Model(session, precision, options.ContextLength, intervention);
         }
         catch
         {
@@ -107,10 +122,32 @@ public sealed class Lfm3Model : IDisposable
     }
 
     /// <summary>Starts a request: empty caches, no tokens.</summary>
-    public Lfm3Sequence CreateSequence()
+    public Lfm3Sequence CreateSequence() => CreateSequence(strength: null);
+
+    /// <summary>
+    /// Starts a request with an intervention strength fixed for the sequence's lifetime. On a derived intervention
+    /// graph, null means strength 0 (the original model's output); on the original graph, a strength is rejected.
+    /// </summary>
+    /// <exception cref="InvalidOperationException">A strength was given but the loaded graph has no intervention.</exception>
+    /// <exception cref="ArgumentOutOfRangeException">The strength is not finite.</exception>
+    internal Lfm3Sequence CreateSequence(float? strength)
     {
         ObjectDisposedException.ThrowIf(Volatile.Read(ref _disposed) != 0, this);
-        return new Lfm3Sequence(this);
+        if (strength is { } value)
+        {
+            if (Intervention is null)
+            {
+                throw new InvalidOperationException("The loaded LFM3 graph has no intervention; load a derived intervention graph to select one.");
+            }
+
+            if (!float.IsFinite(value))
+            {
+                throw new ArgumentOutOfRangeException(nameof(strength), value, "The intervention strength must be finite.");
+            }
+        }
+
+        float? fixedStrength = Intervention is null ? null : strength ?? 0f;
+        return new Lfm3Sequence(this, fixedStrength);
     }
 
     /// <summary>Disposes the session. Idempotent; sequences still open fail on their next call.</summary>
@@ -139,3 +176,12 @@ public sealed class Lfm3Model : IDisposable
         }
     }
 }
+
+/// <summary>
+/// What a derived intervention graph adds to the LFM3 step graph, as the companion assembly verified it from the compiler
+/// manifest: one float32 strength input of shape [1], appended after the base inputs, and the compiled profile.
+/// </summary>
+/// <param name="ProfileId">Id of the compiled profile.</param>
+/// <param name="StrengthInputName">Name of the strength input.</param>
+/// <param name="State">The companion's verified artifact (opaque here).</param>
+internal sealed record Lfm3GraphIntervention(string ProfileId, string StrengthInputName, object State);

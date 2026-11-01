@@ -108,9 +108,52 @@ def build_registry(mappings: Iterable[SiteMapping]) -> dict[str, SiteMapping]:
     return registry
 
 
-# Supported base graphs, keyed by the SHA-256 of the exact base graph asset. Empty until a model integration adds its
-# mapping (LFM3 arrives with its integration); the compiler rejects every other graph as unsupported.
-SITE_MAPPINGS: Mapping[str, SiteMapping] = build_registry(())
+# LiquidAI/LFM3-1.7B-ONNX at revision c680759afee1ce8310c90d6c621f4558200dee77, onnx/model.onnx (fp32): the SHA-256
+# the fp32 asset lock records (Lfm3ModelAssets.Fp32Lock in ai-dotnet/src/Starlings.Models.Lfm3/Lfm3ModelAssets.cs).
+LFM3_FP32_GRAPH_SHA256 = "add6653fc8b3cf2c7ee9fa0205a4a9a833fcb85d3449a5fea06f8aa494b5ef77"
+LFM3_FP32_MAPPING_VERSION = "lfm3-1.7b/fp32/1"
+LFM3_LAYERS = 24
+LFM3_HIDDEN_SIZE = 2048
+
+
+def _lfm3_fp32_sites() -> tuple[MappedSite, ...]:
+    """The residual stream after each of the 24 decoder layers of that exact graph.
+
+    These names were read from the graph once (every node is named; none is duplicated) and are fixed to its hash; they
+    are not searched for at compile time. Decoder layer ``L`` ends in ``/model/layers.L/Add_2`` (the residual add after
+    the feed-forward block), whose output (float32, ``[batch, sequence, 2048]``) is read by exactly two nodes of layer
+    ``L + 1`` (its operator norm and its first residual add), and after the last layer by the ``logits_to_keep`` slice
+    before the final norm. Both readers are rewired, so the intervened value is the whole downstream residual stream.
+    """
+    sites = []
+    for layer in range(LFM3_LAYERS):
+        if layer + 1 < LFM3_LAYERS:
+            consumers = (f"/model/layers.{layer + 1}/operator_layernorm/LayerNorm", f"/model/layers.{layer + 1}/Add_1")
+        else:
+            consumers = ("/model/logits_to_keep/Slice",)
+        sites.append(
+            MappedSite(
+                layer=layer,
+                target="residual_post",
+                tensor=f"/model/layers.{layer}/Add_2/output_0",
+                hidden_size=LFM3_HIDDEN_SIZE,
+                consumers=consumers,
+            )
+        )
+    return tuple(sites)
+
+
+LFM3_FP32_MAPPING = SiteMapping(
+    model="lfm3-1.7b",
+    version=LFM3_FP32_MAPPING_VERSION,
+    base_graph_sha256=LFM3_FP32_GRAPH_SHA256,
+    precision="fp32",
+    sites=_lfm3_fp32_sites(),
+)
+
+# Supported base graphs, keyed by the SHA-256 of the exact base graph asset. The compiler rejects every other graph as
+# unsupported. The LFM3 fp16 graph (onnx/model_fp16.onnx) has no mapping yet.
+SITE_MAPPINGS: Mapping[str, SiteMapping] = build_registry((LFM3_FP32_MAPPING,))
 
 
 def lookup_site_mapping(base_graph_sha256: str, registry: Mapping[str, SiteMapping] | None = None) -> SiteMapping:

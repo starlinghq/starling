@@ -29,6 +29,9 @@
 
   <ItemGroup>
     <InternalsVisibleTo Include="Starlings.Models.Lfm3.Tests" />
+    <!-- The source-only intervention companion (experimental): loads derived graphs and passes the strength input. -->
+    <InternalsVisibleTo Include="Starlings.Models.Lfm3.Interventions" />
+    <InternalsVisibleTo Include="Starlings.Models.Lfm3.Interventions.Tests" />
   </ItemGroup>
 
 </Project>
