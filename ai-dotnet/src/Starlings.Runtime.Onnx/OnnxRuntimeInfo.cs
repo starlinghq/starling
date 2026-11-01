@@ -94,7 +94,7 @@ public static class OnnxRuntimeInfo
             }
             catch (OnnxRuntimeException ex)
             {
-                throw OnnxCudaProviderOptions.CudaUnavailable(ex);
+                throw OnnxCudaProviderOptions.CudaUnavailable(ex, options.Cuda);
             }
 
             problem = null;

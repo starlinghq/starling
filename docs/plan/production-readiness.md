@@ -44,7 +44,7 @@ Other wave 1 results:
 
 ### Blockers common to all models
 
-Status 2026-10-18: blockers 1 to 5 are closed (see the dated status entries under Tracking), and 0.2.0 is published (blocker 6; `docs/releases/ai-0.2.0.md`). Branch protection and the `Starlings` prefix reservation are tracked in `docs/kickoff.md`. The list below is the 2026-10-13 audit.
+Status 2026-10-18: blockers 1 to 5 are closed (see the dated status entries under Tracking), and 0.2.0 is published (blocker 6; `docs/releases/ai-0.2.0.md`). Branch protection is tracked in `docs/kickoff.md`; the `Starlings` prefix reservation is no longer a prerequisite (#209, 2026-11-01). The list below is the 2026-10-13 audit.
 
 1. **No protected release sets (P-030).** Every G1/G2 pass so far is on development fixtures. No model has a held-out task metric (G3). Only the maintainer may author these sets.
 2. **Hosting.** The GLiNER2, EmbeddingGemma 2 and Qwen graphs sit in private Hugging Face repositories (`source_status: placeholder`), so no clean install can acquire them (G0, G6).
@@ -96,16 +96,23 @@ These cannot be done by an agent. Each row names what it unblocks.
 | M2 | Choose G3 datasets (licensed) and quality budgets, and G5 performance budgets per profile. | G3, G5 |
 | M3 | Make graph hosting public: GitHub release assets (`embeddinggemma-2-onnx-r1`, `-vision-onnx-r1`, GLiNER2) and the Qwen `ortgenai` build. Replace `source_status: placeholder`. | G0, G6 |
 | M4 | Legal: D2 (FFmpeg adapter); sign-off on licenses stated only in model cards (e5 MIT, GLiNER2 Apache-2.0). | G0, adapter publish |
-| M5 | Repository settings: branch protection, the `release` environment, the NuGet `Starlings` prefix reservation (`docs/kickoff.md`). | G6, any publish |
+| M5 | Repository settings: branch protection and the `release` environment (`docs/kickoff.md`). The NuGet `Starlings` prefix reservation is optional hardening, not a publish prerequisite: releases ship without it (#209, decided 2026-11-01 by the maintainer's delegate (agent), revisitable). | G6, any publish |
 | M6 | Hardware: GPU time for CUDA evaluator runs and soaks, a quiet machine for controlled benchmarks, and Windows evidence (CI runner approval). | G2/G4/G5 on CUDA, compatibility matrix |
-| M7 | Name a second release owner and a first named consumer (P-028). | Stable, G7 |
-| M8 | Accept the e5 CUDA `PROPOSED.md` decisions. Decide whether a tokenizer bump requires a model G1/G2 rerun or whether the tokenizer conformance suite suffices (options in `docs/support-policy.md`, R10). | e5 CUDA, every tokenizer bump |
+| M7 | Name a second release owner and a first named consumer (P-028). Update 2026-11-01 (decided 2026-11-01 by the maintainer's delegate (agent), revisitable): the first named consumers are starlinghq/roost and starlinghq/corvid, the organization's own projects on the published `0.3.0` packages (#208), so the consumer half is done; the owner half is a standing single-owner exception that every promotion and release cites (#207), still open as a risk but no longer blocking. | Stable, G7 |
+| M8 | Accept the e5 CUDA `PROPOSED.md` decisions. Decide whether a tokenizer bump requires a model G1/G2 rerun or whether the tokenizer conformance suite suffices (settled 2026-11-01, #202: the middle path in `docs/support-policy.md`; options in `docs/support-policy.md`, R10). | e5 CUDA, every tokenizer bump |
 | M9 | File the upstream onnxruntime-genai concurrent-generator report (drafted in R8). Confirm CUDA serialization as the documented behavior. | Qwen G4 |
 | M10 | Record gate results and promote maturity once evidence exists. | Every promotion |
 
 ## Tracking
 
 Each workstream PR updates this document's tables when it lands. The catalog (R3) becomes the source of truth for status once it exists.
+
+### Status 2026-11-01 (support-policy decisions)
+
+- **Support policy adopted** (#188): `docs/support-policy.md` moves from draft to adopted, with every open question settled (#191, #202 to #210), each decided 2026-11-01 by the maintainer's delegate (agent), revisitable.
+- **M5:** the `Starlings` prefix reservation is dropped from the publish prerequisites (#209); branch protection is still a manual step.
+- **M7:** first named consumers recorded (starlinghq/roost and starlinghq/corvid, #208); the second release owner is a standing single-owner exception (#207).
+- **M8:** the tokenizer-bump rule is the middle path (#202).
 
 ### Status 2026-10-18 (0.2.0 published)
 

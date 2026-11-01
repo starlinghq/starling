@@ -28,7 +28,12 @@
           "catalog/README.md",
           "catalog/compatibility-matrix.md",
           "evidence/**/*.md",
-          "support-policy.md"
+          "support-policy.md",
+          "releases/BREAKING.md",
+          "releases/ai-0.2.0.md",
+          "releases/ai-0.3.0.md",
+          "releases/ai-0.4.0.md",
+          "releases/unreleased.md"
         ]
       }
     ],

@@ -183,6 +183,57 @@ public sealed class DecoderTests(ITestOutputHelper output)
     }
 
     [Fact]
+    public void ASeekableStreamOverTheByteLimitIsRejectedBeforeAnyRead()
+    {
+        byte[] png = Png(3, 1, bitDepth: 8, colorType: 0, raw: [0, 0, 128, 255]);
+        using var stream = new UnreadableSeekableStream(png.Length);
+        var options = new EmbeddingGemma2ImageDecoderOptions { MaxEncodedBytes = png.Length - 1 };
+        var ex = Assert.Throws<EmbeddingGemma2ImageTooLargeException>(() => EmbeddingGemma2ImageDecoder.Decode(stream, options));
+        Assert.Contains("MaxEncodedBytes", ex.Message, StringComparison.Ordinal);
+        Assert.Equal(0, stream.Reads);
+    }
+
+    [Fact]
+    public void ANonSeekableStreamOverTheByteLimitIsRejectedWhileRead()
+    {
+        byte[] png = Png(3, 1, bitDepth: 8, colorType: 0, raw: [0, 0, 128, 255]);
+        using var stream = new NonSeekableStream(png);
+        var options = new EmbeddingGemma2ImageDecoderOptions { MaxEncodedBytes = png.Length - 1 };
+        Assert.Throws<EmbeddingGemma2ImageTooLargeException>(() => EmbeddingGemma2ImageDecoder.Decode(stream, options));
+    }
+
+    [Fact]
+    public void StreamsAtTheByteLimitDecodeLikeTheByteOverload()
+    {
+        byte[] png = Png(3, 1, bitDepth: 8, colorType: 0, raw: [0, 0, 128, 255]);
+        var options = new EmbeddingGemma2ImageDecoderOptions { MaxEncodedBytes = png.Length };
+        byte[] expected = EmbeddingGemma2ImageDecoder.Decode(png).Pixels.ToArray();
+        using (var seekable = new MemoryStream(png))
+        {
+            Assert.Equal(expected, EmbeddingGemma2ImageDecoder.Decode(seekable, options).Pixels.ToArray());
+        }
+
+        using (var nonSeekable = new NonSeekableStream(png))
+        {
+            Assert.Equal(expected, EmbeddingGemma2ImageDecoder.Decode(nonSeekable, options).Pixels.ToArray());
+        }
+
+        // A seekable stream is measured from its position: the bytes before it do not count.
+        byte[] prefixed = [.. new byte[10], .. png];
+        using var positioned = new MemoryStream(prefixed) { Position = 10 };
+        Assert.Equal(expected, EmbeddingGemma2ImageDecoder.Decode(positioned, options).Pixels.ToArray());
+    }
+
+    [Fact]
+    public void TheByteLimitIsValidated()
+    {
+        Assert.Equal(64L * 1024 * 1024, new EmbeddingGemma2ImageDecoderOptions().MaxEncodedBytes);
+        using var stream = new MemoryStream([1]);
+        Assert.Throws<ArgumentOutOfRangeException>(() => EmbeddingGemma2ImageDecoder.Decode(stream, new EmbeddingGemma2ImageDecoderOptions { MaxEncodedBytes = 0 }));
+        Assert.Throws<ArgumentOutOfRangeException>(() => EmbeddingGemma2ImageDecoder.Decode(stream, new EmbeddingGemma2ImageDecoderOptions { MaxEncodedBytes = (long)Array.MaxLength + 1 }));
+    }
+
+    [Fact]
     public void StreamAndFileOverloadsDecodeTheSameImage()
     {
         byte[] png = Png(3, 1, bitDepth: 8, colorType: 0, raw: [0, 0, 128, 255]);
@@ -273,4 +324,74 @@ public sealed class DecoderTests(ITestOutputHelper output)
 
         return ~crc;
     }
+}
+
+/// <summary>A seekable stream of the given length whose reads count and return nothing.</summary>
+internal sealed class UnreadableSeekableStream(long length) : Stream
+{
+    public int Reads { get; private set; }
+
+    public override bool CanRead => true;
+
+    public override bool CanSeek => true;
+
+    public override bool CanWrite => false;
+
+    public override long Length => length;
+
+    public override long Position { get; set; }
+
+    public override int Read(byte[] buffer, int offset, int count)
+    {
+        Reads++;
+        return 0;
+    }
+
+    public override void Flush()
+    {
+    }
+
+    public override long Seek(long offset, SeekOrigin origin) => throw new NotSupportedException();
+
+    public override void SetLength(long value) => throw new NotSupportedException();
+
+    public override void Write(byte[] buffer, int offset, int count) => throw new NotSupportedException();
+}
+
+/// <summary>Reads bytes in small pieces and reports no length or position.</summary>
+internal sealed class NonSeekableStream(byte[] data) : Stream
+{
+    private int _position;
+
+    public override bool CanRead => true;
+
+    public override bool CanSeek => false;
+
+    public override bool CanWrite => false;
+
+    public override long Length => throw new NotSupportedException();
+
+    public override long Position
+    {
+        get => throw new NotSupportedException();
+        set => throw new NotSupportedException();
+    }
+
+    public override int Read(byte[] buffer, int offset, int count)
+    {
+        int n = Math.Min(Math.Min(count, 7), data.Length - _position);
+        Array.Copy(data, _position, buffer, offset, n);
+        _position += n;
+        return n;
+    }
+
+    public override void Flush()
+    {
+    }
+
+    public override long Seek(long offset, SeekOrigin origin) => throw new NotSupportedException();
+
+    public override void SetLength(long value) => throw new NotSupportedException();
+
+    public override void Write(byte[] buffer, int offset, int count) => throw new NotSupportedException();
 }

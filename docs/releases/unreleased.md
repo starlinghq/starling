@@ -12,6 +12,14 @@ Changes merged to `main` after the last release record, collected here for the n
 
 Every package that tokenizes now pins `Starlings.Tokenizers [0.3.4]` (0.3.2 in 0.4.0), and every manifest's `processing.tokenizer.version` moved with the pin. 0.3.3 adds the `Sequence` post-processor, the Llama 3 split regex and the profiles `lfm3-bpe-chat`, `qwen3-bpe-embedding` and `qwen3-bpe-chat`; 0.3.4 adds only the profile `clover-bpe-chat`. 0.3.2 rejected a `Sequence` post-processor and the Llama 3 regex at load, so no pinned asset of an existing profile declares either, and the tokenizer's conformance fixtures pass unchanged (starlinghq/tokenizers CHANGELOG). The LFM3 tokenizer now loads, so `Lfm3ParityTests.PromptIdsMatchTheReferenceTokenizer` and the LFM3 intervention chat test run against the pin.
 
+## Capability key `text.truncation` (#193)
+
+The capability key `truncation` keeps its encoder-side meaning (the encoder rejects id sequences over the profile's limit instead of truncating them), so no Stable profile's documented contract changes. A new key, `text.truncation`, says what happens to text: `Supported` in `E5Capabilities.Statuses` (`E5Tokenizer` truncates on the right to 512 tokens, as the reference), `Unsupported` in `EmbeddingGemma2Capabilities` and `Gliner2Capabilities` (longer text is rejected), and the new `BertCapabilities.TextTruncation` is `experimental`, as the whole BERT route is. The README tables name the old row "encoder-side truncation" and point to the typed `ModelProfileCapabilities.Truncation` (`TruncationPolicy`) as the authoritative text policy. Decision recorded in `docs/kickoff.md` ("Capability key `truncation`", 2026-11-01).
+
+## Starlings.Models.EmbeddingGemma2.Imaging.SkiaSharp: stream byte limit (#194)
+
+New `EmbeddingGemma2ImageDecoderOptions.MaxEncodedBytes` (default 64 MiB, 67,108,864; 1 to `Array.MaxLength`). `EmbeddingGemma2ImageDecoder.Decode(Stream)` now rejects a seekable stream whose remaining length is over the limit before reading anything, and a non-seekable stream as soon as more than the limit has been read, with `EmbeddingGemma2ImageTooLargeException`. Before, it buffered the whole stream before the `MaxPixels` header check. **Behavior change:** a stream above 64 MiB that decoded before now throws; raise `MaxEncodedBytes` to keep it. The byte-span and file overloads are unchanged, and decoding itself is unchanged, so the PIL-equality evidence of the image profiles still holds (no G2 rerun needed). Decision recorded in `docs/kickoff.md` ("SkiaSharp `Decode(Stream)` byte bound", 2026-11-01).
+
 ## Starlings.Models.Whisper
 
 - **Segment timestamps (experimental, #221).** `WhisperTranscriber.TranscribeWithTimestamps` and
@@ -20,6 +28,8 @@ Every package that tokenizes now pins `Starlings.Tokenizers [0.3.4]` (0.3.2 in 0
   applies transformers 5.18.0 `WhisperTimeStampLogitsProcessor`; the transcriber follows `generate(return_timestamps=True)`'s
   sequential seek loop, greedy, without fallbacks. Capability `timestamps` moves from unsupported to experimental; the new
   `word_timestamps` is unsupported.
+- **Obsolete:** `WhisperCapabilities.StableProfile`, replaced by `WhisperCapabilities.CpuProfile` (same value; the profile is
+  Experimental, not Stable). Removed in the next minor version.
 - `WhisperTokenizer.Decode` drops timestamp tokens (ids from 50365), as transformers `WhisperTokenizer.decode` does.
 - `WhisperOptions.NoTimestamps = false` now makes `Transcribe` return the timestamped decode's text, instead of
   prompting without `<|notimestamps|>` and decoding without the timestamp rules.

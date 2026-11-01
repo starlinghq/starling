@@ -56,7 +56,9 @@ public sealed class SoakRunTests : IDisposable
     [Fact]
     public void KeepLoadedLoadsOnceServesEveryCycleAndDisposesAtTheEnd()
     {
-        var options = SoakOptions.Parse(["--out", _dir, "--duration", "2s", "--keep-loaded", "--requests-per-cycle", "10", "--deadline-every", "0", "--sample-interval", "200ms"]);
+        // Bounded by wall-clock time only, like the run above: a fake cycle (two settled memory samples) can take up to 2 s
+        // on a loaded CI runner, so the run gets enough time for at least 2 cycles there (#143).
+        var options = SoakOptions.Parse(["--out", _dir, "--duration", "8s", "--keep-loaded", "--requests-per-cycle", "10", "--deadline-every", "0", "--sample-interval", "200ms"]);
         Assert.True(options.KeepLoaded);
         var workload = new FakeWorkload();
 
@@ -107,7 +109,9 @@ public sealed class SoakRunTests : IDisposable
 
             public void RunLong(CancellationToken cancellationToken)
             {
-                cancellationToken.WaitHandle.WaitOne(TimeSpan.FromSeconds(2));
+                // Far longer than the longest deadline (150 ms), so a starved timer thread on a loaded runner still cancels
+                // the request instead of letting it complete before the deadline (#143).
+                cancellationToken.WaitHandle.WaitOne(TimeSpan.FromSeconds(30));
                 cancellationToken.ThrowIfCancellationRequested();
             }
 

@@ -96,6 +96,9 @@ public static class Gliner2Capabilities
         // Outside the contract.
         ["input_over_512_tokens"] = Status.Unsupported,
         ["truncation"] = Status.Unsupported,
+        // Text truncation (#193): longer text is rejected, never truncated (ModelProfileCapabilities.Truncation is
+        // TruncationPolicy.Rejects).
+        ["text.truncation"] = Status.Unsupported,
         ["max_len_word_cap"] = Status.Unsupported,
         ["extract_long"] = Status.Unsupported,
         ["plain_deduplicated_output"] = Status.Unsupported,

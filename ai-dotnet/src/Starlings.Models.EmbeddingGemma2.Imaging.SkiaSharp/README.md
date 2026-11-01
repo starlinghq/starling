@@ -34,6 +34,7 @@ Maturity is per profile, generated from the registry manifests by `model-pipelin
 | EXIF orientation | Ignored by default, as upstream. `new EmbeddingGemma2ImageDecoderOptions { ApplyExifOrientation = true }` rotates or mirrors the image upright like Pillow's `exif_transpose`: **a deliberate deviation from upstream** (the embedding then differs from sentence-transformers') | experimental (opt-in) |
 | 16 bits per channel (16-bit PNG and other high-bit-depth sources) | Rejected: `EmbeddingGemma2UnsupportedImageException` with `Reason = HighBitDepth`. Upstream saturates such images to white; any decoder that scales them would give another embedding | unsupported |
 | More than 50 megapixels (`MaxPixels`) | Rejected from the header before decoding: `EmbeddingGemma2ImageTooLargeException` | unsupported above the limit |
+| A stream of more than 64 MiB (`MaxEncodedBytes`) | `Decode(Stream)` rejects it with `EmbeddingGemma2ImageTooLargeException`: a seekable stream from its remaining length before anything is read, a non-seekable one as soon as the limit is passed. The byte and file overloads do not apply it | unsupported above the limit |
 | Truncated or corrupt data | Rejected (`Reason = Undecodable`), as PIL rejects it | unsupported |
 | Other formats (ICO, WBMP, DNG, HEIF, AVIF, ...) | Rejected (`Reason = UnsupportedFormat`) | unsupported |
 
