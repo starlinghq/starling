@@ -268,19 +268,37 @@ public sealed class InterventionGraphInput
     }
 }
 
-/// <summary>Where the compiler applied one profile site: the site's layer and target and the base graph tensor it resolved to.</summary>
+/// <summary>
+/// Where the compiler applied a site: the site's layer and target, the base graph tensor it resolved to, and (schema
+/// version 2) the profiles applied there.
+/// </summary>
 public sealed class InterventionSiteBinding
 {
-    /// <summary>Creates the record.</summary>
+    private static readonly IReadOnlyList<int> NoProfiles = new ReadOnlyCollection<int>([]);
+
+    /// <summary>Creates the record of a schema version 1 site (the manifest's one profile).</summary>
     /// <param name="layer">Zero-based decoder layer index.</param>
     /// <param name="target">Where relative to the layer.</param>
     /// <param name="tensor">Name of the base graph tensor the site mapping resolved the site to.</param>
     public InterventionSiteBinding(int layer, InterventionTarget target, string tensor)
-        : this(layer, target, tensor, "")
+        : this(layer, target, tensor, null, "")
     {
     }
 
-    private InterventionSiteBinding(int layer, InterventionTarget target, string tensor, string path)
+    /// <summary>Creates the record of a schema version 2 site.</summary>
+    /// <param name="layer">Zero-based decoder layer index.</param>
+    /// <param name="target">Where relative to the layer.</param>
+    /// <param name="tensor">Name of the base graph tensor.</param>
+    /// <param name="profiles">
+    /// Strength indices of the profiles applied here, strictly ascending, at least one. They are applied in this order:
+    /// the first reads the base tensor, each later one the previous one's output.
+    /// </param>
+    public InterventionSiteBinding(int layer, InterventionTarget target, string tensor, IEnumerable<int> profiles)
+        : this(layer, target, tensor, [.. profiles ?? throw new ArgumentNullException(nameof(profiles))], "")
+    {
+    }
+
+    private InterventionSiteBinding(int layer, InterventionTarget target, string tensor, int[]? profiles, string path)
     {
         if (layer < 0)
         {
@@ -297,9 +315,24 @@ public sealed class InterventionSiteBinding
             throw new InterventionContractException(StrictObject.Join(path, "tensor"), "tensor name is empty, too long or has a control character.");
         }
 
+        if (profiles is not null)
+        {
+            bool ascending = profiles.Length > 0 && profiles[0] >= 0;
+            for (int i = 1; ascending && i < profiles.Length; i++)
+            {
+                ascending = profiles[i - 1] < profiles[i];
+            }
+
+            if (!ascending)
+            {
+                throw new InterventionContractException(StrictObject.Join(path, "profiles"), "expected one or more strength indices in strictly ascending order.");
+            }
+        }
+
         Layer = layer;
         Target = target;
         Tensor = tensor;
+        Profiles = profiles is null ? NoProfiles : new ReadOnlyCollection<int>(profiles);
     }
 
     /// <summary>Zero-based decoder layer index.</summary>
@@ -311,7 +344,15 @@ public sealed class InterventionSiteBinding
     /// <summary>Name of the base graph tensor.</summary>
     public string Tensor { get; }
 
+    /// <summary>
+    /// Schema version 2: strength indices of the profiles applied at this site, in application order (ascending). Empty
+    /// for a schema version 1 site, where the manifest's one profile applies.
+    /// </summary>
+    public IReadOnlyList<int> Profiles { get; }
+
     internal static readonly string[] PropertyNames = ["layer", "target", "tensor"];
+
+    internal static readonly string[] PropertyNamesV2 = ["layer", "target", "tensor", "profiles"];
 
     internal static InterventionSiteBinding Read(JsonElement element, string path)
     {
@@ -320,6 +361,32 @@ public sealed class InterventionSiteBinding
             o.GetInt32("layer"),
             InterventionNames.ParseTarget(o.GetString("target"), o.Child("target")),
             o.GetString("tensor"),
+            null,
+            path);
+    }
+
+    internal static InterventionSiteBinding ReadV2(JsonElement element, string path, int profileCount)
+    {
+        StrictObject o = StrictObject.Open(element, path, PropertyNamesV2);
+        List<int> profiles = [];
+        int index = 0;
+        foreach (JsonElement item in StrictJson.GetArray(o.Required("profiles"), o.Child("profiles")))
+        {
+            string itemPath = StrictJson.Index(o.Child("profiles"), index++);
+            if (item.ValueKind != JsonValueKind.Number || !item.TryGetInt32(out int value) || value < 0 || value >= profileCount
+                || item.GetRawText().AsSpan().IndexOfAny('.', 'e', 'E') >= 0)
+            {
+                throw new InterventionContractException(itemPath, $"expected an integer in [0, {profileCount - 1}].");
+            }
+
+            profiles.Add(value);
+        }
+
+        return new InterventionSiteBinding(
+            o.GetInt32("layer"),
+            InterventionNames.ParseTarget(o.GetString("target"), o.Child("target")),
+            o.GetString("tensor"),
+            [.. profiles],
             path);
     }
 
@@ -329,6 +396,79 @@ public sealed class InterventionSiteBinding
         writer.WriteNumber("layer", Layer);
         writer.WriteString("target", InterventionNames.Of(Target));
         writer.WriteString("tensor", Tensor);
+        if (Profiles.Count > 0)
+        {
+            writer.WriteStartArray("profiles");
+            foreach (int index in Profiles)
+            {
+                writer.WriteNumberValue(index);
+            }
+
+            writer.WriteEndArray();
+        }
+
+        writer.WriteEndObject();
+    }
+}
+
+/// <summary>One compiled profile of a schema version 2 manifest; its position in <see cref="InterventionManifest.Profiles"/> is its strength index.</summary>
+public sealed class InterventionManifestProfile
+{
+    /// <summary>Creates the record.</summary>
+    /// <param name="id">The profile's id.</param>
+    /// <param name="sha256">SHA-256 of the compiled <c>profile.json</c> bytes.</param>
+    /// <param name="operatorKind">The profile's operator.</param>
+    /// <exception cref="InterventionContractException">A value violates the contract.</exception>
+    public InterventionManifestProfile(string id, string sha256, InterventionOperatorKind operatorKind)
+        : this(id, sha256, operatorKind, "")
+    {
+    }
+
+    private InterventionManifestProfile(string id, string sha256, InterventionOperatorKind operatorKind, string path)
+    {
+        if (!StrictJson.IsProfileId(id))
+        {
+            throw new InterventionContractException(StrictObject.Join(path, "id"), $"'{id}' is not a valid profile id.");
+        }
+
+        StrictJson.RequireSha256(sha256 ?? "", StrictObject.Join(path, "sha256"));
+        if (!Enum.IsDefined(operatorKind))
+        {
+            throw new InterventionContractException(StrictObject.Join(path, "operator"), $"unknown operator {operatorKind}.");
+        }
+
+        Id = id;
+        Sha256 = sha256!;
+        Operator = operatorKind;
+    }
+
+    /// <summary>The profile's id.</summary>
+    public string Id { get; }
+
+    /// <summary>SHA-256 of the compiled <c>profile.json</c> bytes.</summary>
+    public string Sha256 { get; }
+
+    /// <summary>The profile's operator.</summary>
+    public InterventionOperatorKind Operator { get; }
+
+    internal static readonly string[] PropertyNames = ["id", "sha256", "operator"];
+
+    internal static InterventionManifestProfile Read(JsonElement element, string path)
+    {
+        StrictObject o = StrictObject.Open(element, path, PropertyNames);
+        return new InterventionManifestProfile(
+            o.GetString("id"),
+            o.GetString("sha256"),
+            InterventionNames.ParseOperatorV2(o.GetString("operator"), o.Child("operator")),
+            path);
+    }
+
+    internal void Write(Utf8JsonWriter writer)
+    {
+        writer.WriteStartObject();
+        writer.WriteString("id", Id);
+        writer.WriteString("sha256", Sha256);
+        writer.WriteString("operator", InterventionNames.Of(Operator));
         writer.WriteEndObject();
     }
 }

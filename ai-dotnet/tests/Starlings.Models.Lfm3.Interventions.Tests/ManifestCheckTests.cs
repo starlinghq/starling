@@ -5,13 +5,51 @@ namespace Starlings.Models.Lfm3.Interventions.Tests;
 
 /// <summary>
 /// The LFM3 checks of a compiler manifest, run before any session exists. <c>Data/compiler-manifest.json</c> is the
-/// manifest the Python compiler wrote for the synthetic profile on the real fp32 graph (sites after layers 8 and 16).
+/// manifest the Python compiler wrote for the synthetic profile on the real fp32 graph (sites after layers 8 and 16);
+/// <c>Data/compiler-manifest-multi.json</c> the schema version 2 manifest of the two synthetic profiles in one graph
+/// (projection after layers 8 and 16, addition after layers 12 and 16, strength vector [2]). Machine-local file
+/// identities are removed from both.
 /// </summary>
 public sealed class ManifestCheckTests
 {
     private static readonly string Text = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "Data", "compiler-manifest.json")).ReplaceLineEndings("\n");
 
+    private static readonly string MultiText = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "Data", "compiler-manifest-multi.json")).ReplaceLineEndings("\n");
+
     private static InterventionManifest Parse(string text) => InterventionManifest.Parse(Encoding.UTF8.GetBytes(text));
+
+    [Fact]
+    public void TheCompiledMultiProfileManifestPassesForFp32()
+    {
+        InterventionManifest manifest = Parse(MultiText);
+        Lfm3Interventions.CheckManifest(manifest, Lfm3Precision.Fp32);
+        Assert.Equal(2, manifest.SchemaVersion);
+        Assert.Equal(["lfm3-synthetic-test", "lfm3-synthetic-add"], manifest.ProfileIds);
+        Assert.Equal([2L], manifest.StrengthInput.Shape);
+        Assert.Equal([8, 12, 16], manifest.Sites.Select(s => s.Layer));
+        Assert.Equal([0, 1], manifest.Sites[2].Profiles);
+        Assert.Equal(MultiText, Encoding.UTF8.GetString(manifest.Serialize()));
+
+        // Profile 0 is the profile of the single-profile manifest, byte for byte.
+        Assert.Equal(Parse(Text).ProfileSha256, manifest.Profiles[0].Sha256);
+    }
+
+    [Fact]
+    public void AMultiProfileStrengthOfTheWrongLengthIsRejected()
+    {
+        // [1] for two profiles breaks the manifest contract itself; the LFM3 check would reject it too.
+        string other = MultiText.Replace("\"shape\": [\n        2\n      ]", "\"shape\": [\n        1\n      ]", StringComparison.Ordinal);
+        Assert.NotEqual(MultiText, other);
+        Assert.Throws<InterventionContractException>(() => Parse(other));
+    }
+
+    [Fact]
+    public void AMultiProfileManifestForAnotherGraphIsRejected()
+    {
+        string other = MultiText.Replace("add6653fc8b3cf2c7ee9fa0205a4a9a833fcb85d3449a5fea06f8aa494b5ef77", new string('0', 64), StringComparison.Ordinal);
+        Assert.Throws<InterventionMismatchException>(() => Lfm3Interventions.CheckManifest(Parse(other), Lfm3Precision.Fp32));
+        Assert.Throws<InterventionMismatchException>(() => Lfm3Interventions.CheckManifest(Parse(MultiText), Lfm3Precision.Fp16));
+    }
 
     [Fact]
     public void TheCompiledManifestPassesForFp32()
@@ -117,5 +155,6 @@ public sealed class ManifestCheckTests
         Assert.Equal(CapabilityStatus.Unsupported, Lfm3InterventionCapabilities.All["graph.fp16"]);
         Assert.Equal(CapabilityStatus.Unsupported, Lfm3InterventionCapabilities.All["selection.mid_sequence_change"]);
         Assert.Equal(CapabilityStatus.Experimental, Lfm3InterventionCapabilities.All["graph.fp32"]);
+        Assert.Equal(CapabilityStatus.Experimental, Lfm3InterventionCapabilities.All["profiles.multiple_per_graph"]);
     }
 }

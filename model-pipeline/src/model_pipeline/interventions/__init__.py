@@ -1,4 +1,4 @@
-"""ONNX Runtime interventions: compile a directional-projection profile into a derived ONNX graph (experimental).
+"""ONNX Runtime interventions: compile intervention profiles into a derived ONNX graph (experimental).
 
 Requires the ``interventions`` extra (numpy, onnx, onnxruntime). Specification: ``docs/interventions/``.
 """
@@ -10,9 +10,12 @@ from .cache import (
     entry_directory,
     evict,
     get_or_compile,
+    get_or_compile_profiles,
     linked_base_artifacts,
     manifest_cache_key,
+    multi_cache_key_text,
     open_entry,
+    profile_path_in_entry,
 )
 from .compiler import (
     COMPILER_VERSION,
@@ -20,6 +23,7 @@ from .compiler import (
     CompileResult,
     InterventionCompileError,
     compile_intervention,
+    compile_interventions,
 )
 from .contract import (
     FileIdentity,
@@ -28,6 +32,9 @@ from .contract import (
     InterventionMismatchError,
     InterventionProfile,
     InterventionProfileFile,
+    ManifestProfile,
+    MultiProfileManifest,
+    MultiSiteBinding,
     load_manifest,
     load_profile,
 )
@@ -42,6 +49,13 @@ __all__ = [
     "entry_directory",
     "evict",
     "get_or_compile",
+    "get_or_compile_profiles",
+    "multi_cache_key_text",
+    "profile_path_in_entry",
+    "compile_interventions",
+    "ManifestProfile",
+    "MultiProfileManifest",
+    "MultiSiteBinding",
     "linked_base_artifacts",
     "manifest_cache_key",
     "open_entry",

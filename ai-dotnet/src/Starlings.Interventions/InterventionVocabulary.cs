@@ -1,6 +1,9 @@
 namespace Starlings.Interventions;
 
-/// <summary>The intervention operators. V1 has exactly one; any other name in a document is rejected.</summary>
+/// <summary>
+/// The intervention operators. Profile schema version 1 knows only <see cref="DirectionalProjection"/>; schema version 2
+/// adds <see cref="DirectionalAddition"/>. Any other name in a document is rejected.
+/// </summary>
 public enum InterventionOperatorKind
 {
     /// <summary>
@@ -11,6 +14,13 @@ public enum InterventionOperatorKind
     /// removes the component of <c>y</c> in the span of <c>Q</c>; <c>alpha = 0</c> leaves <c>y</c> unchanged.
     /// </summary>
     DirectionalProjection,
+
+    /// <summary>
+    /// Low-rank directional addition, JSON <c>directional_addition</c> (profile schema version 2):
+    /// <c>y' = y + alpha * (s Q)</c>, adding the fixed vector <c>sum_i s_i Q_i</c> (shape <c>[hidden]</c>) scaled by the
+    /// request-level strength <c>alpha</c>. It does not depend on <c>y</c>; <c>alpha = 0</c> leaves <c>y</c> unchanged.
+    /// </summary>
+    DirectionalAddition,
 }
 
 /// <summary>Where in a model an intervention site sits, relative to its <see cref="InterventionSite.Layer"/>.</summary>
@@ -54,6 +64,7 @@ public static class InterventionNames
     public static string Of(InterventionOperatorKind value) => value switch
     {
         InterventionOperatorKind.DirectionalProjection => "directional_projection",
+        InterventionOperatorKind.DirectionalAddition => "directional_addition",
         _ => throw new ArgumentOutOfRangeException(nameof(value), value, null),
     };
 
@@ -89,7 +100,15 @@ public static class InterventionNames
     internal static InterventionOperatorKind ParseOperator(string value, string path) => value switch
     {
         "directional_projection" => InterventionOperatorKind.DirectionalProjection,
-        _ => throw new InterventionContractException(path, $"unknown operator '{value}'; V1 knows only 'directional_projection'."),
+        _ => throw new InterventionContractException(path, $"unknown operator '{value}'; schema version 1 knows only 'directional_projection'."),
+    };
+
+    /// <summary>Operators of profile and manifest schema version 2.</summary>
+    internal static InterventionOperatorKind ParseOperatorV2(string value, string path) => value switch
+    {
+        "directional_projection" => InterventionOperatorKind.DirectionalProjection,
+        "directional_addition" => InterventionOperatorKind.DirectionalAddition,
+        _ => throw new InterventionContractException(path, $"unknown operator '{value}'; expected 'directional_projection' or 'directional_addition'."),
     };
 
     internal static InterventionTarget ParseTarget(string value, string path) => value switch

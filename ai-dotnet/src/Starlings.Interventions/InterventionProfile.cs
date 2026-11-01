@@ -5,7 +5,7 @@ using Starlings.Interventions.Internal;
 namespace Starlings.Interventions;
 
 /// <summary>
-/// An intervention profile (<c>profile.json</c>, schema version 1): which base graph it applies to, the operator, and
+/// An intervention profile (<c>profile.json</c>, schema version 1 or 2): which base graph it applies to, the operator, and
 /// the sites with their directions and scales. Immutable; construction and <see cref="Parse(ReadOnlyMemory{byte})"/>
 /// validate every value. The format is specified in <c>docs/interventions/profile-format.md</c>.
 /// </summary>
@@ -17,8 +17,11 @@ namespace Starlings.Interventions;
 /// </remarks>
 public sealed class InterventionProfile
 {
-    /// <summary>The only schema version this library reads and writes.</summary>
+    /// <summary>Schema version 1: the version of a profile whose operator is <see cref="InterventionOperatorKind.DirectionalProjection"/>, unless it says otherwise.</summary>
     public const int CurrentSchemaVersion = 1;
+
+    /// <summary>The newest schema version this library reads and writes: 2 adds <see cref="InterventionOperatorKind.DirectionalAddition"/>.</summary>
+    public const int MaxSchemaVersion = 2;
 
     /// <summary>Largest accepted number of sites.</summary>
     public const int MaxSites = 1024;
@@ -38,7 +41,25 @@ public sealed class InterventionProfile
         InterventionOperatorKind operatorKind,
         IEnumerable<InterventionSite> sites,
         string? description = null)
+        : this(id, baseModelSha256, operatorKind, sites, description, operatorKind == InterventionOperatorKind.DirectionalProjection ? CurrentSchemaVersion : MaxSchemaVersion)
     {
+    }
+
+    /// <summary>Creates a profile with an explicit schema version (1 or 2; version 1 allows only <see cref="InterventionOperatorKind.DirectionalProjection"/>).</summary>
+    /// <exception cref="InterventionContractException">A value violates the contract.</exception>
+    public InterventionProfile(
+        string id,
+        string baseModelSha256,
+        InterventionOperatorKind operatorKind,
+        IEnumerable<InterventionSite> sites,
+        string? description,
+        int schemaVersion)
+    {
+        if (schemaVersion is < CurrentSchemaVersion or > MaxSchemaVersion)
+        {
+            throw new InterventionContractException("schema_version", $"unsupported schema version {schemaVersion}; this library reads versions 1 and 2.");
+        }
+
         ArgumentNullException.ThrowIfNull(sites);
         InterventionSite[] siteArray = [.. sites];
         if (!StrictJson.IsProfileId(id))
@@ -50,6 +71,12 @@ public sealed class InterventionProfile
         if (!Enum.IsDefined(operatorKind))
         {
             throw new InterventionContractException("operator", $"unknown operator {operatorKind}.");
+        }
+
+        if (schemaVersion == CurrentSchemaVersion && operatorKind != InterventionOperatorKind.DirectionalProjection)
+        {
+            throw new InterventionContractException(
+                "operator", $"operator '{InterventionNames.Of(operatorKind)}' needs schema version 2; version 1 knows only 'directional_projection'.");
         }
 
         if (siteArray.Length is 0 or > MaxSites)
@@ -78,7 +105,11 @@ public sealed class InterventionProfile
         BaseModelSha256 = baseModelSha256!;
         Operator = operatorKind;
         Sites = new ReadOnlyCollection<InterventionSite>(siteArray);
+        SchemaVersion = schemaVersion;
     }
+
+    /// <summary>The schema version of the document (1 or 2); <see cref="Serialize"/> writes it unchanged.</summary>
+    public int SchemaVersion { get; }
 
     /// <summary>Profile id.</summary>
     public string Id { get; }
@@ -105,20 +136,22 @@ public sealed class InterventionProfile
         // The schema version is checked first, so a future document fails on its version, not on a field it added.
         if (root.ValueKind == JsonValueKind.Object && root.TryGetProperty("schema_version", out JsonElement version))
         {
-            if (version.ValueKind != JsonValueKind.Number || !version.TryGetInt32(out int v) || v != CurrentSchemaVersion)
+            if (version.ValueKind != JsonValueKind.Number || !version.TryGetInt32(out int v) || v is < CurrentSchemaVersion or > MaxSchemaVersion)
             {
                 throw new InterventionContractException(
                     "schema_version",
-                    $"unsupported schema version {version.GetRawText()}; this library reads version {CurrentSchemaVersion}.");
+                    $"unsupported schema version {version.GetRawText()}; this library reads versions {CurrentSchemaVersion} and {MaxSchemaVersion}.");
             }
         }
 
         StrictObject o = StrictObject.Open(root, "", PropertyNames);
-        _ = o.GetInt32("schema_version");
+        int schemaVersion = o.GetInt32("schema_version");
         string id = o.GetString("id");
         string? description = o.GetOptionalString("description");
         string baseSha = o.GetString("base_model_sha256");
-        InterventionOperatorKind operatorKind = InterventionNames.ParseOperator(o.GetString("operator"), "operator");
+        InterventionOperatorKind operatorKind = schemaVersion == CurrentSchemaVersion
+            ? InterventionNames.ParseOperator(o.GetString("operator"), "operator")
+            : InterventionNames.ParseOperatorV2(o.GetString("operator"), "operator");
 
         List<InterventionSite> sites = [];
         int index = 0;
@@ -132,7 +165,7 @@ public sealed class InterventionProfile
             sites.Add(InterventionSite.Read(item, StrictJson.Index("sites", index++)));
         }
 
-        return new InterventionProfile(id, baseSha, operatorKind, sites, description);
+        return new InterventionProfile(id, baseSha, operatorKind, sites, description, schemaVersion);
     }
 
     /// <summary>
@@ -143,7 +176,7 @@ public sealed class InterventionProfile
     public byte[] Serialize() => StrictJson.Write(writer =>
     {
         writer.WriteStartObject();
-        writer.WriteNumber("schema_version", CurrentSchemaVersion);
+        writer.WriteNumber("schema_version", SchemaVersion);
         writer.WriteString("id", Id);
         if (Description is not null)
         {

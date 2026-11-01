@@ -2,7 +2,7 @@
 
 Status: **experimental**. Writer: `model-pipeline/src/model_pipeline/interventions/cache.py` (Python, tests in `model-pipeline/tests/test_intervention_cache.py`). Reader: `InterventionArtifactCache`, `InterventionArtifact` and `InterventionCacheKey` in `ai-dotnet/src/Starlings.Interventions` (tests in `InterventionArtifactTests.cs`). Design: [architecture.md](architecture.md); file formats: [profile-format.md](profile-format.md); compiler: [compiler.md](compiler.md).
 
-A derived graph is compiled once per combination of base graph, profile and compiler, then reused. Requests never compile: they only change the strength input.
+A derived graph is compiled once per combination of base graph, profile (or ordered list of profiles) and compiler, then reused. Requests never compile: they only change the strength input.
 
 ## Layout
 
@@ -11,8 +11,10 @@ A derived graph is compiled once per combination of base graph, profile and comp
     <key>/                          one entry; never modified after it is published
         model.onnx                  the derived graph
         model.onnx_data             hard link to the base graph's external data (one per external location)
-        profile.json                the compiled profile, byte for byte
+        profile.json                the compiled profile, byte for byte (schema version 1 manifest)
         directions/...              the profile's directions files, at their profile-relative paths
+        profiles/<i>/profile.json   schema version 2 manifest: profile i (strength index), byte for byte,
+        profiles/<i>/directions/... and its directions files (two profiles may use the same relative paths)
         compiler-manifest.json
     <key>.lock                      advisory lock file of every compile of <key>
     .tmp-<key>-<pid>-<random>/      an entry being built
@@ -20,7 +22,8 @@ A derived graph is compiled once per combination of base graph, profile and comp
 
 - `<model>` is a cache model name, `[a-z0-9][a-z0-9._-]{0,63}` (for example `lfm3`).
 - `<key>` is the cache key below: 64 lower-case hex characters. The acquisition store under the same cache root treats only `<owner>/<name>/<40-hex>` directories as snapshots, so its maintenance never lists or prunes an entry.
-- External locations, `profile.json`, its directions files, `model.onnx` and `compiler-manifest.json` must not collide (equal paths, or one a directory prefix of another); the writer rejects a profile whose directions path would, before compiling.
+- An entry holds either `profile.json` (one profile, manifest schema version 1) or `profiles/0/`, `profiles/1/`, ... (manifest schema version 2), never both.
+- External locations, `profile.json` (or `profiles/<i>/...`), its directions files, `model.onnx` and `compiler-manifest.json` must not collide (equal paths, or one a directory prefix of another); the writer rejects a profile whose directions path would, before compiling.
 - Lock files stay behind; they are empty and harmless.
 
 ## Cache key
@@ -60,6 +63,25 @@ input	intervention_strength	strength	float32	[1]
 
 has key `560773f98c03601aa3bd35112beebdbd3b91198e8dbac03f94eb1134499e6579`.
 
+### Schema version 2 key
+
+A schema version 2 manifest (several profiles, one strength vector) has its own key text: header `starling-intervention-cache-key 2`, and instead of the `profile_sha256` line one `profile<TAB><index><TAB><sha256>` line per profile in strength-vector order. The order is part of the key: it is the input layout and the order in which profiles that share a site are applied, so `[a, b]` and `[b, a]` are two entries. The other lines are as above. A schema 1 and a schema 2 graph of the same files therefore never share a key, and the compiler version did not change for schema 2 (the schema 1 derived graph bytes are unchanged).
+
+```
+starling-intervention-cache-key 2
+compiler_version	0.1.0
+site_mapping_version	lfm3/fp32/1
+opset	17
+precision	fp32
+profile	0	2222222222222222222222222222222222222222222222222222222222222222
+profile	1	5555555555555555555555555555555555555555555555555555555555555555
+base	graph	onnx/model.onnx	0000000000000000000000000000000000000000000000000000000000000000	1234
+base	external_data	onnx/model.onnx_data	1111111111111111111111111111111111111111111111111111111111111111	4096
+input	intervention_strength	strength	float32	[2]
+```
+
+has key `e0f6313abf870678bfcecfaf7734e414b9d8543428204bbf1204782e2e62d37b` (checked by `test_intervention_multi.py` and `InterventionMultiProfileTests`).
+
 ## Writing an entry (Python)
 
 ```python
@@ -86,6 +108,21 @@ entry.graph_path, entry.key, entry.created
 
 The source bundle and the profile directory are only read. Weights are never copied.
 
+Several profiles in one graph (manifest schema version 2):
+
+```python
+from model_pipeline.interventions import get_or_compile_profiles
+
+entry = get_or_compile_profiles(
+    cache_root="~/.cache/starlings", model="lfm3", base_dir=snapshot_dir, graph="onnx/model.onnx",
+    profiles=["profiles/a/profile.json", "profiles/b/profile.json"],   # strength-vector order
+    external_sha256={"onnx/model.onnx_data": lock_sha},
+)
+entry.profiles   # in strength-vector order; entry.manifest is a MultiProfileManifest
+```
+
+The steps are the same, with the schema 2 key, `compile_interventions` instead of `compile_intervention`, and each profile copied verbatim (with its directions files) to `profiles/<i>/`.
+
 ## External data and file systems
 
 The derived graph reaches the original weights through hard links next to `model.onnx`, under the base graph's own location names. That is the only route ONNX Runtime 1.30 accepted in the spike (C# and Python): parent-relative and absolute locations, and file or directory symlinks, are all rejected because ORT requires the resolved path to stay inside the model's directory. So:
@@ -100,9 +137,9 @@ Both sides offer two levels. **Fast** is for every load; **Full** is for when th
 
 | Check | Fast | Full |
 | --- | --- | --- |
-| Manifest parses (strict, schema version 1) | yes | yes |
+| Manifest parses (strict, schema version 1 or 2) | yes | yes |
 | Key recomputed from the manifest equals the directory name (and the expected key) | yes | yes |
-| `profile.json` SHA-256 equals `profile_sha256`; id, operator, base graph and sites match; directions files verify (size, SHA-256, finite) | yes | yes |
+| `profile.json` SHA-256 equals `profile_sha256`; id, operator, base graph and sites match; directions files verify (size, SHA-256, finite). Schema version 2: the same for each `profiles/<i>/profile.json` against `profiles[i]`, with its sites being exactly the bindings that list `i` | yes | yes |
 | `model.onnx` size and SHA-256 | yes | yes |
 | Each other derived file is the link of a base `external_data` artifact (path relative to the base graph's directory) with that artifact's SHA-256 and size, and every base external data file has its link | yes | yes |
 | Each other derived file (the linked weights): exists with the recorded size | yes | yes |
@@ -124,7 +161,7 @@ artifact.Manifest.VerifyBaseModel(expectedBaseGraphSha256);  // before any sessi
 // artifact.GraphPath loads with OnnxModelSession.Create(path, options); inputs: base inputs + artifact.Manifest.Inputs
 ```
 
-`InterventionArtifact.Open(directory)` opens any directory with the cache-entry layout (manifest, `model.onnx`, linked data, `profile.json` and its directions files) without the name check; plain `compile_intervention` output has no `profile.json`, so it does not open; `InterventionArtifactCache.ListEntries(cacheRoot, model)` lists published entries (key-named directories only) without opening them.
+`InterventionArtifact.Open(directory)` opens any directory with the cache-entry layout (manifest, `model.onnx`, linked data, `profile.json` or `profiles/<i>/profile.json` and their directions files) without the name check; `artifact.Profiles` lists the profiles in strength-vector order (`artifact.Profile` is the single one of a one-profile graph); plain `compile_intervention` output has no `profile.json`, so it does not open; `InterventionArtifactCache.ListEntries(cacheRoot, model)` lists published entries (key-named directories only) without opening them.
 
 ## Not covered
 

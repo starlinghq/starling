@@ -14,6 +14,7 @@ namespace Starlings.Models.Lfm3.Interventions.Tests;
 /// <c>Starlings.Tokenizers</c> (profile <c>lfm3-bpe-chat</c>, from 0.3.3) and checks that the text path encodes the same
 /// conversation to those ids.
 /// </summary>
+[Collection(Lfm3SessionGroup.Name)]
 public sealed class Lfm3InterventionModelTests
 {
     /// <summary>The LFM3-1.7B-ONNX fp32 snapshot directory (as in Starlings.Models.Lfm3.Tests).</summary>

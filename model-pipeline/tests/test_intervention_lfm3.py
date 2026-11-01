@@ -31,11 +31,14 @@ from model_pipeline.interventions.injection_sites import (  # noqa: E402
     LFM3_LAYERS,
 )
 from model_pipeline.interventions.lfm3_synthetic import (  # noqa: E402
+    ADDITION_LAYERS,
+    ADDITION_PROFILE_ID,
     LFM3_FP32_EXTERNAL_SHA256,
     LFM3_FP32_GRAPH,
     SYNTHETIC_LAYERS,
     SYNTHETIC_PROFILE_ID,
     compile_lfm3_synthetic,
+    compile_lfm3_synthetic_multi,
 )
 
 REPO = Path(__file__).resolve().parents[2]
@@ -216,6 +219,108 @@ def test_site_tensor_matches_the_numpy_projection(entry, tmp_path_factory):
             # The removed component is the span of Q at strength 1 with scales 1.
             if strength == 1.0:
                 assert float(np.max(np.abs(out[intervened].astype(np.float64) @ q.T))) <= 1e-4 * max(1.0, scale)
+    finally:
+        for child in probe.iterdir():
+            child.unlink()
+        probe.rmdir()
+
+
+# --------------------------------------------------------------------------------------------------------------------
+# Two profiles, one strength vector (manifest schema 2)
+
+
+def _run_vectors(path: Path, outputs: list[str], vectors: list[tuple[float, ...]]) -> list[dict[str, np.ndarray]]:
+    """One session, one run per strength vector (each run gets its own [n] tensor)."""
+    import onnxruntime as ort
+
+    session = ort.InferenceSession(str(path), providers=["CPUExecutionProvider"])
+    try:
+        feeds = _feeds(session, PROMPT_IDS)
+        results = []
+        for vector in vectors:
+            values = session.run(outputs, {**feeds, STRENGTH_INPUT_NAME: np.asarray(vector, dtype=np.float32)})
+            results.append(dict(zip(outputs, values, strict=True)))
+        return results
+    finally:
+        del session
+
+
+@pytest.fixture(scope="module")
+def multi_entry():
+    return compile_lfm3_synthetic_multi(SNAPSHOT, CACHE, Path(CACHE, "profiles"))
+
+
+@needs_cache
+def test_multi_entry_declares_a_strength_vector_and_the_shared_site(multi_entry, entry):
+    manifest = multi_entry.manifest
+    assert manifest.schema_version == 2
+    assert [p.id for p in manifest.profiles] == [SYNTHETIC_PROFILE_ID, ADDITION_PROFILE_ID]
+    # Profile 0 is byte for byte the profile of the single-profile entry.
+    assert manifest.profiles[0].sha256 == entry.manifest.profile_sha256
+    assert [(i.name, i.shape) for i in manifest.inputs] == [(STRENGTH_INPUT_NAME, (2,))]
+    expected = {layer: [] for layer in sorted({*SYNTHETIC_LAYERS, *ADDITION_LAYERS})}
+    for layer in SYNTHETIC_LAYERS:
+        expected[layer].append(0)
+    for layer in ADDITION_LAYERS:
+        expected[layer].append(1)
+    assert [(s.layer, s.profiles) for s in manifest.sites] == [(k, tuple(v)) for k, v in expected.items()]
+
+
+@needs_cache
+def test_strength_vector_zero_matches_the_base_and_one_profile_matches_its_single_graph(multi_entry, entry):
+    base = _run(Path(SNAPSHOT, LFM3_FP32_GRAPH), None, None)["logits"]
+    single = _run(entry.graph_path, None, 1.0)["logits"]
+    zero, first, second, both = (
+        r["logits"] for r in _run_vectors(multi_entry.graph_path, ["logits"], [(0, 0), (1, 0), (0, 1), (1, 1)])
+    )
+    diffs = {
+        "base - (0,0)": float(np.max(np.abs(base - zero))),
+        "single(1) - (1,0)": float(np.max(np.abs(single - first))),
+        "base - (0,1)": float(np.max(np.abs(base - second))),
+        "(1,0) - (1,1)": float(np.max(np.abs(first - both))),
+    }
+    print(", ".join(f"max|{k}| = {v:.3g}" for k, v in diffs.items()))
+    assert diffs["base - (0,0)"] <= 1e-4
+    assert diffs["single(1) - (1,0)"] <= 1e-4
+    assert diffs["base - (0,1)"] > 1e-2
+    assert diffs["(1,0) - (1,1)"] > 1e-2
+
+
+@needs_cache
+def test_shared_site_matches_the_numpy_composition(multi_entry):
+    """At the shared layer-16 site: the projection (profile 0) reads y, the addition (profile 1) reads its output."""
+    layer = 16
+    assert layer in SYNTHETIC_LAYERS and layer in ADDITION_LAYERS
+    site_tensor = f"/model/layers.{layer}/Add_2/output_0"
+    out0 = f"intervention/p0/layer{layer}/residual_post/output"
+    out1 = f"intervention/p1/layer{layer}/residual_post/output"
+    derived = onnx.load(str(multi_entry.graph_path), load_external_data=False)
+    for name in (site_tensor, out0, out1):
+        derived.graph.output.append(onnx.helper.make_empty_tensor_value_info(name))
+    probe = Path(CACHE, "probe-" + os.urandom(4).hex())
+    probe.mkdir()
+    try:
+        locations = sorted(p.split("/", 1)[1] for p in LFM3_FP32_EXTERNAL_SHA256)
+        link_external_data(Path(SNAPSHOT, "onnx"), probe, locations)
+        (probe / "model.onnx").write_bytes(derived.SerializeToString())
+        a, b = multi_entry.profiles
+        site_a = next(s for s in a.profile.sites if s.layer == layer)
+        site_b = next(s for s in b.profile.sites if s.layer == layer)
+        qa, sa = a.load_directions(site_a).astype(np.float64), np.asarray(site_a.scales, dtype=np.float64)
+        qb, sb = b.load_directions(site_b).astype(np.float64), np.asarray(site_b.scales, dtype=np.float64)
+        vectors = [(1.0, 1.0), (0.5, -2.0)]
+        for (alpha, beta), out in zip(
+            vectors, _run_vectors(probe / "model.onnx", ["logits", site_tensor, out0, out1], vectors), strict=True
+        ):
+            y = out[site_tensor].astype(np.float64)
+            projected = y - alpha * ((y @ qa.T) * sa) @ qa
+            expected = projected + beta * (sb @ qb)
+            scale = float(np.max(np.abs(y)))
+            err0 = float(np.max(np.abs(out[out0] - projected)))
+            err1 = float(np.max(np.abs(out[out1] - expected)))
+            print(f"strengths ({alpha}, {beta}): max|p0 - numpy| = {err0:.3g}, max|p1 - numpy| = {err1:.3g}")
+            assert err0 <= 1e-5 * max(1.0, scale)
+            assert err1 <= 1e-5 * max(1.0, scale)
     finally:
         for child in probe.iterdir():
             child.unlink()

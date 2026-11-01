@@ -17,6 +17,7 @@ from .contract import (
     DTYPE_FLOAT32,
     OPERATOR_DIRECTIONAL_PROJECTION,
     SCHEMA_VERSION,
+    SCHEMA_VERSION_2,
     TARGET_RESIDUAL_POST,
     InterventionProfileFile,
     encode_directions,
@@ -50,8 +51,11 @@ def write_synthetic_profile(
     sites: Sequence[SyntheticSite],
     seed: int = 0,
     description: str | None = "Synthetic random orthonormal directions; no behavioural meaning.",
+    operator: str = OPERATOR_DIRECTIONAL_PROJECTION,
 ) -> InterventionProfileFile:
-    """Write ``profile.json`` and ``directions/layer<N>.f32`` files in canonical form and load the result back."""
+    """Write ``profile.json`` and ``directions/layer<N>.f32`` files in canonical form and load the result back.
+
+    A ``directional_projection`` profile is written as schema version 1, any other operator as schema version 2."""
     directory = Path(directory)
     (directory / "directions").mkdir(parents=True, exist_ok=True)
     entries = []
@@ -73,10 +77,11 @@ def write_synthetic_profile(
                 "scales": [_Raw(format_float32(v)) for v in scales],
             }
         )
-    document: dict = {"schema_version": SCHEMA_VERSION, "id": profile_id}
+    version = SCHEMA_VERSION if operator == OPERATOR_DIRECTIONAL_PROJECTION else SCHEMA_VERSION_2
+    document: dict = {"schema_version": version, "id": profile_id}
     if description is not None:
         document["description"] = description
-    document |= {"base_model_sha256": base_model_sha256, "operator": OPERATOR_DIRECTIONAL_PROJECTION, "sites": entries}
+    document |= {"base_model_sha256": base_model_sha256, "operator": operator, "sites": entries}
     path = directory / "profile.json"
     path.write_bytes(_dumps(document).encode("utf-8"))
     return load_profile(path)

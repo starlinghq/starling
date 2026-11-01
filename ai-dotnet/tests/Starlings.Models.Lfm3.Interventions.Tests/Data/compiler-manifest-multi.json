@@ -1,0 +1,119 @@
+{
+  "schema_version": 2,
+  "compiler_version": "0.1.0",
+  "site_mapping_version": "lfm3-1.7b/fp32/1",
+  "base_artifacts": [
+    {
+      "role": "graph",
+      "path": "onnx/model.onnx",
+      "sha256": "add6653fc8b3cf2c7ee9fa0205a4a9a833fcb85d3449a5fea06f8aa494b5ef77",
+      "size": 274961
+    },
+    {
+      "role": "external_data",
+      "path": "onnx/model.onnx_data",
+      "sha256": "bf44fe98d130ad2bca747e9b62f28b18a3277d45bf1367da15a478538c849057",
+      "size": 2122694656
+    },
+    {
+      "role": "external_data",
+      "path": "onnx/model.onnx_data_1",
+      "sha256": "bb631a02237e4f8a491e12b25c333849046332b6db60fe0a2120f278c982fa76",
+      "size": 2140200960
+    },
+    {
+      "role": "external_data",
+      "path": "onnx/model.onnx_data_2",
+      "sha256": "ad39ed4b378c9c1b34c1a3cdb879880c7e110061070ff29fca118e8dd0b48010",
+      "size": 2135916544
+    },
+    {
+      "role": "external_data",
+      "path": "onnx/model.onnx_data_3",
+      "sha256": "1538827aa1c279442457028c4e3d784b7ea82bcf03abd4b55e45fa4facf9fe62",
+      "size": 784818176
+    }
+  ],
+  "profiles": [
+    {
+      "id": "lfm3-synthetic-test",
+      "sha256": "aab7c161c12f394bc553952d1ee1ccdf6f0d30554e34984cc8d8076d33a1a105",
+      "operator": "directional_projection"
+    },
+    {
+      "id": "lfm3-synthetic-add",
+      "sha256": "6fe6feea3ede53a3bf25e7e48419c6b35b7f9642ebc5c8360cf8629617b494cc",
+      "operator": "directional_addition"
+    }
+  ],
+  "opset": 21,
+  "precision": "fp32",
+  "inputs": [
+    {
+      "name": "intervention_strength",
+      "role": "strength",
+      "dtype": "float32",
+      "shape": [
+        2
+      ]
+    }
+  ],
+  "sites": [
+    {
+      "layer": 8,
+      "target": "residual_post",
+      "tensor": "/model/layers.8/Add_2/output_0",
+      "profiles": [
+        0
+      ]
+    },
+    {
+      "layer": 12,
+      "target": "residual_post",
+      "tensor": "/model/layers.12/Add_2/output_0",
+      "profiles": [
+        1
+      ]
+    },
+    {
+      "layer": 16,
+      "target": "residual_post",
+      "tensor": "/model/layers.16/Add_2/output_0",
+      "profiles": [
+        0,
+        1
+      ]
+    }
+  ],
+  "derived_graph": {
+    "path": "model.onnx",
+    "sha256": "75bf07f24a434194fc58080584b464cdf4f32a1ec2b5c9fbc53f836a9c1349e7",
+    "size": 574211
+  },
+  "derived_files": [
+    {
+      "path": "model.onnx_data",
+      "sha256": "bf44fe98d130ad2bca747e9b62f28b18a3277d45bf1367da15a478538c849057",
+      "size": 2122694656
+    },
+    {
+      "path": "model.onnx_data_1",
+      "sha256": "bb631a02237e4f8a491e12b25c333849046332b6db60fe0a2120f278c982fa76",
+      "size": 2140200960
+    },
+    {
+      "path": "model.onnx_data_2",
+      "sha256": "ad39ed4b378c9c1b34c1a3cdb879880c7e110061070ff29fca118e8dd0b48010",
+      "size": 2135916544
+    },
+    {
+      "path": "model.onnx_data_3",
+      "sha256": "1538827aa1c279442457028c4e3d784b7ea82bcf03abd4b55e45fa4facf9fe62",
+      "size": 784818176
+    }
+  ],
+  "validation": {
+    "onnx_checker": "skipped_base_rejected",
+    "detail": "No Op registered for SimplifiedLayerNormalization with domain_version of 21"
+  }
+}

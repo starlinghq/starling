@@ -276,7 +276,7 @@ def _encoder_with_end(text):
     return ids
 
 
-def run_fake(tmp_path, spec=None):
+def run_fake(tmp_path, spec=None, **extra):
     spec = spec or ev.load_spec(SPEC)
     prepared = ev.prepare(spec, _encoder_with_end)
     directions = {2: np.eye(HIDDEN, dtype=np.float32)[:1], 4: np.eye(HIDDEN, dtype=np.float32)[:1]}
@@ -302,6 +302,7 @@ def run_fake(tmp_path, spec=None):
         profile_id="fake",
         environment={"Runtime": "fake"},
         log=lambda _: None,
+        **extra,
     )
     return report, seen
 
@@ -382,6 +383,46 @@ def test_only_supported_profiles_are_evaluated():
     other = dataclasses.replace(profile.sites[1], target="mlp_out")
     with pytest.raises(ev.EvaluationSpecError, match="one target"):
         ev.check_supported_profile(dataclasses.replace(profile, sites=(first, other)))
+
+
+def test_addition_profiles_are_rejected_and_the_wording_follows_the_operator(tmp_path):
+    from model_pipeline.interventions.contract import (
+        OPERATOR_DIRECTIONAL_ADDITION,
+        OPERATOR_DIRECTIONAL_PROJECTION,
+        load_profile,
+    )
+    from model_pipeline.interventions.synthetic import SyntheticSite, write_synthetic_profile
+
+    concise = load_profile(CONCISE / "profile.json").profile
+    added = write_synthetic_profile(
+        tmp_path / "add",
+        profile_id="add",
+        base_model_sha256=concise.base_model_sha256,
+        sites=[SyntheticSite(s.layer, s.hidden_size, s.rank, list(s.scales), s.target) for s in concise.sites],
+        operator=OPERATOR_DIRECTIONAL_ADDITION,
+    )
+    assert (added.profile.schema_version, added.profile.operator) == (2, OPERATOR_DIRECTIONAL_ADDITION)
+    # A real schema 2 addition profile: the sign convention is the opposite of the projection's, so it is refused.
+    with pytest.raises(ev.EvaluationSpecError, match="'directional_addition' profiles: a positive strength adds"):
+        ev.check_supported_profile(added.profile)
+    with pytest.raises(ev.EvaluationSpecError, match="no strength convention for the 'directional_addition'"):
+        ev.strength_semantics(OPERATOR_DIRECTIONAL_ADDITION)
+    # The injected-session entry point refuses it before opening anything.
+    with pytest.raises(ev.EvaluationSpecError, match="directional_addition"):
+        run_fake(tmp_path / "run", operator=OPERATOR_DIRECTIONAL_ADDITION)
+
+    # The report records the operator, and the strength sentence comes from it.
+    report, _ = run_fake(tmp_path / "ok")
+    assert report["profile"]["operator"] == OPERATOR_DIRECTIONAL_PROJECTION
+    text = ev.render_report_markdown(report)
+    assert ev.STRENGTH_SEMANTICS[OPERATOR_DIRECTIONAL_PROJECTION] in text
+    # A report of an operator the evaluator cannot describe does not render with the projection's wording.
+    forged = report | {"profile": report["profile"] | {"operator": OPERATOR_DIRECTIONAL_ADDITION}}
+    with pytest.raises(ev.EvaluationSpecError, match="directional_addition"):
+        ev.render_report_markdown(forged)
+    # Reports written before the field existed were projection-only and render as before.
+    legacy = report | {"profile": {k: v for k, v in report["profile"].items() if k != "operator"}}
+    assert ev.render_report_markdown(legacy) == text
 
 
 # --------------------------------------------------------------------------------------------------------------------
