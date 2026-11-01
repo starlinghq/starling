@@ -117,6 +117,97 @@ public class RuntimeSurfaceTests
     }
 
     [Fact]
+    public void AdditionalCudaOptionsFollowTheTypedKeys()
+    {
+        var options = new OnnxCudaProviderOptions
+        {
+            GpuMemoryLimitBytes = 1024,
+            AdditionalProviderOptions = new Dictionary<string, string> { ["do_copy_in_default_stream"] = "1", ["tunable_op_enable"] = "0" },
+        };
+        options.Validate();
+        Assert.Equal(
+            new Dictionary<string, string>
+            {
+                ["device_id"] = "1",
+                ["use_tf32"] = "0",
+                ["gpu_mem_limit"] = "1024",
+                ["do_copy_in_default_stream"] = "1",
+                ["tunable_op_enable"] = "0",
+            },
+            OnnxCudaProviderOptions.ToProviderOptions(1, options));
+
+        var empty = new OnnxCudaProviderOptions { AdditionalProviderOptions = new Dictionary<string, string>() };
+        empty.Validate();
+        Assert.Equal(OnnxCudaProviderOptions.ToProviderOptions(0, null), OnnxCudaProviderOptions.ToProviderOptions(0, empty));
+    }
+
+    [Fact]
+    public void AdditionalCudaOptionsAreCopiedWhenSet()
+    {
+        var source = new Dictionary<string, string> { ["do_copy_in_default_stream"] = "1" };
+        var options = new OnnxCudaProviderOptions { AdditionalProviderOptions = source };
+        source["use_tf32"] = "1";
+
+        options.Validate();
+        Assert.Equal("0", OnnxCudaProviderOptions.ToProviderOptions(0, options)["use_tf32"]);
+        Assert.Single(options.AdditionalProviderOptions!);
+    }
+
+    [Fact]
+    public void CudaUnavailableMessageNamesAdditionalOptions()
+    {
+        var plain = OnnxCudaProviderOptions.CudaUnavailableMessage("boom", null);
+        Assert.Contains("libonnxruntime_providers_cuda", plain);
+        Assert.DoesNotContain("Additional provider options", plain);
+        Assert.Equal(plain, OnnxCudaProviderOptions.CudaUnavailableMessage("boom", new OnnxCudaProviderOptions { AdditionalProviderOptions = new Dictionary<string, string>() }));
+
+        var withExtras = OnnxCudaProviderOptions.CudaUnavailableMessage(
+            "boom",
+            new OnnxCudaProviderOptions { AdditionalProviderOptions = new Dictionary<string, string> { ["tunable_op_enable"] = "0", ["do_copy_in_default_strem"] = "1" } });
+        Assert.StartsWith(plain, withExtras);
+        Assert.Contains("(do_copy_in_default_strem, tunable_op_enable)", withExtras);
+    }
+
+    [Theory]
+    [InlineData("device_id", "1")]
+    [InlineData("use_tf32", "1")]
+    [InlineData("gpu_mem_limit", "1024")]
+    [InlineData("arena_extend_strategy", "kSameAsRequested")]
+    [InlineData("cudnn_conv_algo_search", "HEURISTIC")]
+    [InlineData("enable_cuda_graph", "1")]
+    [InlineData("", "1")]
+    [InlineData("  ", "1")]
+    [InlineData("do_copy_in_default_stream", null)]
+    public void InvalidAdditionalCudaOptionsAreRejected(string key, string? value)
+    {
+        // Reserved keys are rejected even when the typed member is unset, so use_tf32 cannot be turned on this way.
+        var cuda = new OnnxCudaProviderOptions { AdditionalProviderOptions = new Dictionary<string, string> { [key] = value! } };
+        var ex = Assert.Throws<ArgumentException>(cuda.Validate);
+        Assert.Equal(nameof(OnnxCudaProviderOptions.AdditionalProviderOptions), ex.ParamName);
+
+        var session = new OnnxSessionOptions { Cuda = cuda };
+        Assert.Throws<ArgumentException>(session.Validate);
+        Assert.Throws<ArgumentException>(() => OnnxModelSession.Create(TestModels.Add, session));
+    }
+
+    [Fact]
+    public void PublicValidateChecksOptionsWithoutAModel()
+    {
+        new OnnxSessionOptions().Validate();
+        new OnnxSessionOptions { Provider = OnnxExecutionProvider.Cuda, CudaDeviceId = 2, Cuda = new OnnxCudaProviderOptions { GpuMemoryLimitBytes = 1 } }.Validate();
+
+        Assert.Throws<ArgumentOutOfRangeException>(new OnnxSessionOptions { IntraOpNumThreads = 0 }.Validate);
+        Assert.Throws<ArgumentOutOfRangeException>(new OnnxSessionOptions { CudaDeviceId = -1 }.Validate);
+        Assert.Throws<ArgumentOutOfRangeException>(new OnnxSessionOptions { Provider = (OnnxExecutionProvider)99 }.Validate);
+        Assert.Throws<ArgumentException>(new OnnxSessionOptions { OptimizedModelFilePath = "" }.Validate);
+        Assert.Throws<ArgumentException>(new OnnxSessionOptions { ExpectedModelSha256 = "abc" }.Validate);
+
+        // CUDA options are validated whatever the provider.
+        Assert.Throws<ArgumentOutOfRangeException>(new OnnxSessionOptions { Cuda = new OnnxCudaProviderOptions { GpuMemoryLimitBytes = 0 } }.Validate);
+        Assert.Throws<ArgumentOutOfRangeException>(new OnnxCudaProviderOptions { GpuMemoryLimitBytes = -1 }.Validate);
+    }
+
+    [Fact]
     public void CudaOptionsAreIgnoredForCpuSessions()
     {
         var options = new OnnxSessionOptions { Cuda = new OnnxCudaProviderOptions { GpuMemoryLimitBytes = 1024, EnableCudaGraph = true } };

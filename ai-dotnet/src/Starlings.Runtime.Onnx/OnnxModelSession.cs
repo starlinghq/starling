@@ -444,7 +444,7 @@ public sealed class OnnxModelSession : IDisposable
                 }
                 catch (OnnxRuntimeException ex)
                 {
-                    throw OnnxCudaProviderOptions.CudaUnavailable(ex);
+                    throw OnnxCudaProviderOptions.CudaUnavailable(ex, options.Cuda);
                 }
 
                 providerOptions = ParseProviderOptions(cudaOptions.GetOptions());
@@ -460,7 +460,7 @@ public sealed class OnnxModelSession : IDisposable
             }
             catch (OnnxRuntimeException ex) when (cuda)
             {
-                throw OnnxCudaProviderOptions.CudaUnavailable(ex);
+                throw OnnxCudaProviderOptions.CudaUnavailable(ex, options.Cuda);
             }
 
             // Session creation frees much of what it allocates (graph transformation, initializer copies); on the

@@ -15,7 +15,7 @@ EmbeddingGemma 2 text, image and video embeddings are merged into `main` (video:
 
 What is not finished:
 
-- Nothing is published. The EmbeddingGemma 2 packages are in the 0.1.0-preview.5 candidate (`docs/releases/ai-0.1.0-preview.5.md`, PR #52, W5 done): 14 publishable packages, the FFmpeg adapter built and drilled but held until the D2 legal review. Update 2026-10-15: D2 is cleared and both FFmpeg adapters (8 and 9) are publishable from the next release. Publishing itself still waits for the `release` environment and the NuGet prefix reservation.
+- Nothing is published. The EmbeddingGemma 2 packages are in the 0.1.0-preview.5 candidate (`docs/releases/ai-0.1.0-preview.5.md`, PR #52, W5 done): 14 publishable packages, the FFmpeg adapter built and drilled but held until the D2 legal review. Update 2026-10-15: D2 is cleared and both FFmpeg adapters (8 and 9) are publishable from the next release. Publishing itself still waits for the `release` environment and the NuGet prefix reservation. Update 2026-11-01 (#209, decided 2026-11-01 by the maintainer's delegate (agent), revisitable): the prefix reservation is no longer a publish prerequisite; releases ship without it, as `0.1.0-preview.6`, `0.2.0` and `0.3.0` did.
 - The registry manifests for all six EmbeddingGemma 2 profiles keep G1 and G2 at "not run".
 - CUDA profiles (image and video) have test-project evidence only. The fidelity tool references the CPU natives, so the protected evaluator has never run on CUDA.
 - The CUDA video error rose from the spike's 4.5e-7 to 3.3e-6 after the default moved from 4 frames per vision call to 2.
@@ -40,7 +40,7 @@ The browser spike made no recommendation on hosting (its decision 4). The record
 | D3 (approved) | FFmpeg 9 support, and how: a second adapter package with bindings generated from the FFmpeg 9 headers, or one adapter that binds both majors. | Separate package per FFmpeg major. Each keeps a single decoder profile and its own exactness gate. Bindings differ per major, so one package would carry two binding sets. | W4 |
 | D4 (approved) | Confirm the gate policy: G1 and G2 move into the manifests only after the protected release set (P-030) exists. Or accept development-fixture evidence for Experimental profiles now. | Keep the existing policy, starting with `video-fp32-cpu` once P-030 lands. | W7 |
 | D5 (approved) | Curate P-030 release sets for EmbeddingGemma 2 (text, image, video). Plan 17 budgets 10 to 20 maintainer hours for the encoder and tokenizer sets; multimodal sets add to that. | Start with a small retrieval-style text set and a handful of licensed images and videos with known sources. Agents do not author these sets. | W7 |
-| D6 (approved) | Cut a release candidate that includes the EmbeddingGemma 2 packages (next would be 0.1.0-preview.5), with or without the FFmpeg adapter. | Yes, with the adapter included only if D2 is done. Publishing still waits for the release environment and the NuGet prefix (`docs/kickoff.md`). | W5 |
+| D6 (approved) | Cut a release candidate that includes the EmbeddingGemma 2 packages (next would be 0.1.0-preview.5), with or without the FFmpeg adapter. | Yes, with the adapter included only if D2 is done. Publishing still waits for the release environment and the NuGet prefix (`docs/kickoff.md`; the prefix is no longer a prerequisite since 2026-11-01, #209). | W5 |
 | D7 (approved) | CUDA vision frame-call default, after W1 reports. | Decide on W1's numbers. Keep 2 unless 4 fits the shared GPU with headroom. | none |
 
 ### 1.1 Protected tolerance files for Mark to commit

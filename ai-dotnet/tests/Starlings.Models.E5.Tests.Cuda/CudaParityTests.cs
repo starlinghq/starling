@@ -111,6 +111,62 @@ public class CudaParityTests(E5CudaFixture fixture, ITestOutputHelper output) : 
         Assert.True(max <= Tolerances.PaddedBatchVsSingleMaxAbs);
     }
 
+    /// <summary>
+    /// Capability <c>concurrent_calls</c> over CUDA with batches (issue #167; GLiNER2 had to serialize): eight threads
+    /// released together each run <see cref="E5Encoder.EmbedBatch(IReadOnlyList{EncoderInput}, CancellationToken)"/>
+    /// on one session with a different batch of 8 inputs (different lengths and padding), five rounds. Every vector
+    /// must equal the sequential result of the same batch bit for bit.
+    /// </summary>
+    [Fact]
+    public void ConcurrentEmbedBatchCallsGiveTheSequentialResultsBitForBit()
+    {
+        const int Threads = 8, BatchRows = 8, Rounds = 5;
+        var encoder = fixture.Encoder;
+        var ct = TestContext.Current.CancellationToken;
+        var cases = E5Fixtures.Cases;
+        var batches = Enumerable.Range(0, Threads)
+            .Select(t => Enumerable.Range(0, BatchRows).Select(i => new EncoderInput(cases[((t * 5) + (i * 3)) % cases.Count].InputIds)).ToList())
+            .ToList();
+        var sequential = batches.Select(b => encoder.EmbedBatch(b, ct)).ToList();
+        int vectors = 0;
+        double max = 0;
+        for (int round = 0; round < Rounds; round++)
+        {
+            var parallel = new float[Threads][][];
+            var errors = new Exception?[Threads];
+            using var start = new Barrier(Threads);
+            var threads = Enumerable.Range(0, Threads).Select(t => new Thread(() =>
+            {
+                try
+                {
+                    start.SignalAndWait(ct);
+                    parallel[t] = encoder.EmbedBatch(batches[t], ct);
+                }
+                catch (Exception ex)
+                {
+                    errors[t] = ex;
+                }
+            })
+            { IsBackground = true, Name = $"embed-{t}" }).ToList();
+            threads.ForEach(t => t.Start());
+            threads.ForEach(t => t.Join());
+            Assert.All(errors, e => Assert.Null(e));
+            for (int t = 0; t < Threads; t++)
+            {
+                for (int i = 0; i < BatchRows; i++)
+                {
+                    var stats = new ErrorStats();
+                    stats.Add(parallel[t][i], sequential[t][i]);
+                    max = Math.Max(max, stats.Max);
+                    Assert.True(sequential[t][i].AsSpan().SequenceEqual(parallel[t][i]), $"round {round}, thread {t}, row {i}: max abs {stats.Max:E3} against the sequential run");
+                    vectors++;
+                }
+            }
+        }
+
+        output.WriteLine($"{Threads} concurrent EmbedBatch calls x {BatchRows} inputs x {Rounds} rounds on one CUDA session: {vectors} vectors bit-for-bit equal to the sequential run (max abs {max:E3})");
+    }
+
     [Fact]
     public void CancellationStopsALargeBatchAndEncoderStaysUsable()
     {
