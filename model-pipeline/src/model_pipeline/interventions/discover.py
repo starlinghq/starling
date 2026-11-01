@@ -404,7 +404,12 @@ def run(args: argparse.Namespace) -> int:
         return 2
     text = proposal_json(proposal)
     if args.out:
-        args.out.write_text(text, encoding="utf-8")
+        try:
+            args.out.write_text(text, encoding="utf-8")
+        except OSError as exc:
+            # Exit code 1 means "differs from the mapping", so a failed write must not surface as a traceback (1).
+            print(f"error: cannot write {args.out}: {exc}", file=sys.stderr)
+            return 2
     else:
         sys.stdout.write(text)
     summary = proposal["proposed"]

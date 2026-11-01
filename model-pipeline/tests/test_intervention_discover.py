@@ -260,6 +260,10 @@ def test_cli_writes_the_proposal_and_compares(tmp_path, monkeypatch, capsys):
     assert "differs from x/fp32/1" in capsys.readouterr().err
     assert cli.main(["discover-sites", str(path), "--compare", "nope/1"]) == 2
     assert cli.main(["discover-sites", str(tmp_path / "missing.onnx")]) == 2
+    # An unwritable --out is bad input (2), never a difference (1), even with --compare.
+    unwritable = tmp_path / "no-such-dir" / "proposal.json"
+    assert cli.main(["discover-sites", str(path), "--out", str(unwritable), "--compare", "x/fp32/1"]) == 2
+    assert "cannot write" in capsys.readouterr().err
 
 
 def test_cli_prints_to_stdout_and_matches_the_module_defaults(tmp_path, capsys):
