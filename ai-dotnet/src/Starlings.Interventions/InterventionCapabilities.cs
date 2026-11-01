@@ -4,8 +4,8 @@ namespace Starlings.Interventions;
 
 /// <summary>Capability descriptor of the intervention contract for this version.</summary>
 /// <remarks>
-/// Everything not listed here is Unsupported. This library holds the contract only; the graph compiler, the derived
-/// artifact cache and model integration live elsewhere and carry their own status.
+/// Everything not listed here is Unsupported. This library holds the contract and the read side of the derived artifact
+/// cache; the graph compiler, the cache writer and model integration live elsewhere and carry their own status.
 /// V1 evidence uses synthetic directions only: no behavioural profile has been evaluated.
 /// </remarks>
 public static class InterventionCapabilities
@@ -25,6 +25,9 @@ public static class InterventionCapabilities
         ["profiles.hot_swap"] = CapabilityStatus.Unsupported,
         ["profiles.behavioural"] = CapabilityStatus.Unsupported,         // no real behavioural profile ships or is evaluated
         ["access_control"] = CapabilityStatus.Unsupported,               // the host application decides who gets which profile
+        ["artifact.cache_key"] = CapabilityStatus.Experimental,          // recomputed from the manifest; same text as the Python writer
+        ["artifact.open_verify"] = CapabilityStatus.Experimental,        // Fast and Full verification of a derived artifact directory
+        ["artifact.cache_write"] = CapabilityStatus.Unsupported,         // the Python compiler writes entries; this library only reads
         ["aot"] = CapabilityStatus.Untested,                             // AOT analyzers on; no AOT publish run
     };
 }

@@ -3,6 +3,16 @@
 Requires the ``interventions`` extra (numpy, onnx, onnxruntime). Specification: ``docs/interventions/``.
 """
 
+from .cache import (
+    CacheEntry,
+    InterventionCacheError,
+    cache_key_text,
+    entry_directory,
+    evict,
+    get_or_compile,
+    manifest_cache_key,
+    open_entry,
+)
 from .compiler import (
     COMPILER_VERSION,
     STRENGTH_INPUT_NAME,
@@ -24,6 +34,14 @@ from .injection_sites import SITE_MAPPINGS, MappedSite, SiteMapping, Unsupported
 from .validate import DerivedGraphError
 
 __all__ = [
+    "CacheEntry",
+    "InterventionCacheError",
+    "cache_key_text",
+    "entry_directory",
+    "evict",
+    "get_or_compile",
+    "manifest_cache_key",
+    "open_entry",
     "COMPILER_VERSION",
     "SITE_MAPPINGS",
     "STRENGTH_INPUT_NAME",
