@@ -70,9 +70,17 @@ public sealed record OnnxCudaProviderOptions
     /// <c>enable_cuda_graph</c>): those are rejected whether or not the typed member is set, so TF32 stays off and each
     /// option has one source. Names and values are otherwise not validated by Starlings; ONNX Runtime rejects an unknown
     /// key or a bad value only when the CUDA provider is created, as an <see cref="OnnxProviderUnavailableException"/>.
-    /// No model package's parity claim covers options set here. Status: untested on CUDA.
+    /// No model package's parity claim covers options set here. Status: untested on CUDA. The dictionary is copied when
+    /// set, so later changes to the caller's instance have no effect. Record equality compares it by reference, so two
+    /// instances built from dictionaries with equal contents compare unequal.
     /// </summary>
-    public IReadOnlyDictionary<string, string>? AdditionalProviderOptions { get; init; }
+    public IReadOnlyDictionary<string, string>? AdditionalProviderOptions
+    {
+        get => _additionalProviderOptions;
+        init => _additionalProviderOptions = value is null ? null : new Dictionary<string, string>(value, StringComparer.Ordinal);
+    }
+
+    private readonly IReadOnlyDictionary<string, string>? _additionalProviderOptions;
 
     /// <summary>CUDA option keys that only Starlings or the typed members set; <see cref="AdditionalProviderOptions"/> must not contain them.</summary>
     internal static readonly IReadOnlySet<string> ReservedProviderOptionKeys = new HashSet<string>(StringComparer.Ordinal)
@@ -208,14 +216,29 @@ public sealed record OnnxCudaProviderOptions
         catch (OnnxRuntimeException ex)
         {
             native?.Dispose();
-            throw CudaUnavailable(ex);
+            throw CudaUnavailable(ex, options);
         }
     }
 
-    internal static OnnxProviderUnavailableException CudaUnavailable(OnnxRuntimeException ex) => new(
-        "The CUDA execution provider could not be initialized: " + ex.Message +
-        " It needs libonnxruntime_providers_cuda from Microsoft.ML.OnnxRuntime.Gpu.Linux next to libonnxruntime, the CUDA 13 runtime " +
-        "(libcudart, libcublas, libcublasLt) and cuDNN 9 on the native loader path (LD_LIBRARY_PATH or the ldconfig cache on Linux), " +
-        "a compatible NVIDIA driver, and a visible device. No CPU fallback was attempted.",
-        ex);
+    internal static OnnxProviderUnavailableException CudaUnavailable(OnnxRuntimeException ex, OnnxCudaProviderOptions? options) =>
+        new(CudaUnavailableMessage(ex.Message, options), ex);
+
+    /// <summary>
+    /// The message for a failed CUDA provider setup. When <see cref="AdditionalProviderOptions"/> is non-empty it names
+    /// those keys, because ONNX Runtime reports an unknown key or a bad value through the same failure as a missing library.
+    /// </summary>
+    internal static string CudaUnavailableMessage(string onnxRuntimeMessage, OnnxCudaProviderOptions? options)
+    {
+        var message = "The CUDA execution provider could not be initialized: " + onnxRuntimeMessage +
+            " It needs libonnxruntime_providers_cuda from Microsoft.ML.OnnxRuntime.Gpu.Linux next to libonnxruntime, the CUDA 13 runtime " +
+            "(libcudart, libcublas, libcublasLt) and cuDNN 9 on the native loader path (LD_LIBRARY_PATH or the ldconfig cache on Linux), " +
+            "a compatible NVIDIA driver, and a visible device. No CPU fallback was attempted.";
+        if (options?.AdditionalProviderOptions is { Count: > 0 } additional)
+        {
+            message += " Additional provider options were also passed (" + string.Join(", ", additional.Keys.Order(StringComparer.Ordinal)) +
+                "); ONNX Runtime rejects an unknown key or a bad value the same way, so check them too.";
+        }
+
+        return message;
+    }
 }

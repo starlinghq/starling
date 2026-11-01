@@ -141,6 +141,33 @@ public class RuntimeSurfaceTests
         Assert.Equal(OnnxCudaProviderOptions.ToProviderOptions(0, null), OnnxCudaProviderOptions.ToProviderOptions(0, empty));
     }
 
+    [Fact]
+    public void AdditionalCudaOptionsAreCopiedWhenSet()
+    {
+        var source = new Dictionary<string, string> { ["do_copy_in_default_stream"] = "1" };
+        var options = new OnnxCudaProviderOptions { AdditionalProviderOptions = source };
+        source["use_tf32"] = "1";
+
+        options.Validate();
+        Assert.Equal("0", OnnxCudaProviderOptions.ToProviderOptions(0, options)["use_tf32"]);
+        Assert.Single(options.AdditionalProviderOptions!);
+    }
+
+    [Fact]
+    public void CudaUnavailableMessageNamesAdditionalOptions()
+    {
+        var plain = OnnxCudaProviderOptions.CudaUnavailableMessage("boom", null);
+        Assert.Contains("libonnxruntime_providers_cuda", plain);
+        Assert.DoesNotContain("Additional provider options", plain);
+        Assert.Equal(plain, OnnxCudaProviderOptions.CudaUnavailableMessage("boom", new OnnxCudaProviderOptions { AdditionalProviderOptions = new Dictionary<string, string>() }));
+
+        var withExtras = OnnxCudaProviderOptions.CudaUnavailableMessage(
+            "boom",
+            new OnnxCudaProviderOptions { AdditionalProviderOptions = new Dictionary<string, string> { ["tunable_op_enable"] = "0", ["do_copy_in_default_strem"] = "1" } });
+        Assert.StartsWith(plain, withExtras);
+        Assert.Contains("(do_copy_in_default_strem, tunable_op_enable)", withExtras);
+    }
+
     [Theory]
     [InlineData("device_id", "1")]
     [InlineData("use_tf32", "1")]
