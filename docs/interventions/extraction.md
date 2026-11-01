@@ -107,9 +107,11 @@ The profile was compiled into the fp32 graph and greedy-decoded on CPU with ONNX
 
 With this operator, "more concise" therefore points to a negative strength, which amplifies the component. Four prompts and one decoding setting are an observation, not an evaluation. No control direction was run: amplifying a random unit direction at the same layers and strengths was not tried, so the shortening is not shown to be specific to this direction.
 
+The evaluation that followed ([evaluation.md](evaluation.md), [evidence](../evidence/lfm3-concise-evaluation-2026-10-31/README.md)) used 16 new prompts, a sweep from -3 to 2 and a magnitude-matched random control. It confirms the sign: answers are 24 to 31% shorter at -1.5 to -2, which is specific to this direction, and about 30% longer at +1 and +2. It also finds that no strength meets the pre-set rules: capability and drift costs at -1.5 to -2, a breakdown at -3, and no effect at -1 and -0.5.
+
 ## Not covered
 
 - Profiles other than LFM3 fp32 `concise`, chat templates other than LFM3, multi-turn or system-prompt examples.
-- A behavioural evaluation of any profile: quality, side effects, strengths, other decoding settings.
+- A behavioural evaluation of any profile other than `concise` ([evaluation.md](evaluation.md)), and other decoding settings for it.
 - Untangling style from length in the concise direction, for example with length-matched pairs.
 - CUDA capture, the fp16 graph (no site mapping), Windows.

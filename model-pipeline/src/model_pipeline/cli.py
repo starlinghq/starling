@@ -381,6 +381,33 @@ def _interventions_extract(args: argparse.Namespace) -> int:
     return run_cli(args)
 
 
+def _interventions_evaluate_arguments(parser: argparse.ArgumentParser) -> None:
+    # Same options as model_pipeline.interventions.evaluate.add_arguments, declared here for the same reason.
+    parser.add_argument("spec", type=Path, help="evaluation spec (YAML)")
+    parser.add_argument(
+        "--snapshot",
+        type=Path,
+        default=os.environ.get("STARLING_LFM3_SNAPSHOT"),
+        help="model snapshot root (default: $STARLING_LFM3_SNAPSHOT)",
+    )
+    parser.add_argument(
+        "--cache",
+        type=Path,
+        default=os.environ.get("STARLING_LFM3_INTERVENTION_CACHE"),
+        help="intervention cache root on the snapshot's file system (default: $STARLING_LFM3_INTERVENTION_CACHE)",
+    )
+    parser.add_argument("--out", type=Path, required=True, help="report directory")
+    parser.add_argument("--provider", choices=["cpu", "cuda"], default="cpu", help="ONNX Runtime execution provider")
+    parser.add_argument("--device-id", type=int, default=0, help="CUDA device id")
+    parser.add_argument("--threads", type=int, help="ONNX Runtime intra-op threads")
+
+
+def _interventions_evaluate(args: argparse.Namespace) -> int:
+    from .interventions.evaluate import run_cli
+
+    return run_cli(args)
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="model-pipeline")
     sub = parser.add_subparsers(dest="command", required=True)
@@ -581,6 +608,12 @@ def main(argv: list[str] | None = None) -> int:
     )
     _interventions_extract_arguments(iv_extract)
     iv_extract.set_defaults(func=_interventions_extract)
+    iv_evaluate = iv_sub.add_parser(
+        "evaluate",
+        help="evaluate a profile over a strength sweep and write an evidence report (docs/interventions)",
+    )
+    _interventions_evaluate_arguments(iv_evaluate)
+    iv_evaluate.set_defaults(func=_interventions_evaluate)
 
     args = parser.parse_args(argv)
     return args.func(args)

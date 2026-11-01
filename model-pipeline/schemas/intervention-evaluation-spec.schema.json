@@ -1,0 +1,259 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/starlinghq/starling/model-pipeline/schemas/intervention-evaluation-spec.schema.json",
+  "title": "Intervention profile evaluation spec (schema version 1)",
+  "description": "Inputs of `model-pipeline interventions evaluate`: the profile, the strength sweep, the target prompt set, the neutral drift set, the capability set, the control direction and the recommendation thresholds. Paths are relative to the spec file. Machine-specific locations (model snapshot, cache, execution provider) are command-line options, never part of the spec. See docs/interventions/evaluation.md.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "evaluation_id",
+    "profile",
+    "model",
+    "graph",
+    "chat_template",
+    "strengths",
+    "generation",
+    "target",
+    "neutral",
+    "capability",
+    "control",
+    "cross_check",
+    "recommendation"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "evaluation_id": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{0,127}$"
+    },
+    "profile": {
+      "description": "The profile.json to evaluate.",
+      "$ref": "#/$defs/path"
+    },
+    "model": {
+      "description": "Cache model name (the cache directory under the cache root).",
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{0,63}$"
+    },
+    "graph": {
+      "description": "The base graph, relative to the model snapshot root. Its SHA-256 must be the profile's base_model_sha256.",
+      "type": "string",
+      "pattern": "^[A-Za-z0-9_.-]+(/[A-Za-z0-9_.-]+)*$"
+    },
+    "chat_template": {
+      "enum": [
+        "lfm3"
+      ]
+    },
+    "strengths": {
+      "description": "The sweep. Must contain 0 (the original model, the baseline of every comparison).",
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 32,
+      "uniqueItems": true,
+      "contains": {
+        "const": 0
+      },
+      "items": {
+        "type": "number",
+        "minimum": -16,
+        "maximum": 16
+      }
+    },
+    "generation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "decoding",
+        "max_new_tokens",
+        "capability_max_new_tokens"
+      ],
+      "properties": {
+        "decoding": {
+          "enum": [
+            "greedy"
+          ]
+        },
+        "max_new_tokens": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 4096
+        },
+        "capability_max_new_tokens": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 4096
+        }
+      }
+    },
+    "target": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "effect",
+        "prompts",
+        "labels",
+        "pooling"
+      ],
+      "properties": {
+        "effect": {
+          "description": "The behavioural effect the profile is meant to have. shorter_responses: fewer generated tokens.",
+          "enum": [
+            "shorter_responses"
+          ]
+        },
+        "prompts": {
+          "description": "JSON lines of {id, prompt, keywords, reference_positive, reference_negative}; held out from the extraction prompt sets.",
+          "$ref": "#/$defs/path"
+        },
+        "labels": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "positive",
+            "negative"
+          ],
+          "properties": {
+            "positive": {
+              "$ref": "#/$defs/label"
+            },
+            "negative": {
+              "$ref": "#/$defs/label"
+            }
+          }
+        },
+        "pooling": {
+          "enum": [
+            "response_mean",
+            "last_token"
+          ]
+        }
+      }
+    },
+    "neutral": {
+      "description": "JSON lines of {id, prompt, response}: teacher-forced texts for the drift measure.",
+      "$ref": "#/$defs/path"
+    },
+    "capability": {
+      "description": "JSON lines of {id, kind, prompt, check}.",
+      "$ref": "#/$defs/path"
+    },
+    "control": {
+      "description": "A random unit direction per profile site (same layers and rank), seeded, run at these strengths. scaling matched_rms: per site, the profile's scales times the ratio of the per-token RMS projections (profile direction over random direction) on the target set's reference answers, so both perturb by the same amount at a given strength; profile: the profile's scales.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "seed",
+        "scaling",
+        "strengths"
+      ],
+      "properties": {
+        "seed": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "scaling": {
+          "enum": [
+            "matched_rms",
+            "profile"
+          ]
+        },
+        "strengths": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "contains": {
+            "const": 0
+          },
+          "items": {
+            "type": "number",
+            "minimum": -16,
+            "maximum": 16
+          }
+        }
+      }
+    },
+    "cross_check": {
+      "description": "Greedy ids of the first prompts on the CPU provider against the main run (skipped when the main run is on CPU).",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "prompts",
+        "strengths",
+        "max_new_tokens"
+      ],
+      "properties": {
+        "prompts": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 64
+        },
+        "strengths": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "number",
+            "minimum": -16,
+            "maximum": 16
+          }
+        },
+        "max_new_tokens": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 4096
+        }
+      }
+    },
+    "recommendation": {
+      "description": "A strength is recommended when every rule holds against strength 0. Fixed before the run.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "min_length_reduction",
+        "max_quality_drop",
+        "max_capability_drop",
+        "max_mean_kl",
+        "min_specificity"
+      ],
+      "properties": {
+        "min_length_reduction": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "max_quality_drop": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "max_capability_drop": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "max_mean_kl": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "min_specificity": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        }
+      }
+    }
+  },
+  "$defs": {
+    "path": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9_.-]+(/[A-Za-z0-9_.-]+)*$"
+    },
+    "label": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9_-]{0,31}$"
+    }
+  }
+}

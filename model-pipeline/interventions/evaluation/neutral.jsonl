@@ -1,0 +1,16 @@
+{"id": "capital-canada", "prompt": "What is the capital of Canada?", "response": "The capital of Canada is Ottawa, in the province of Ontario."}
+{"id": "translate-french", "prompt": "Translate into French: The library opens at nine.", "response": "La bibliothèque ouvre à neuf heures."}
+{"id": "primary-colors", "prompt": "Name the three primary colours of light.", "response": "The three primary colours of light are red, green and blue."}
+{"id": "water-formula", "prompt": "What is the chemical formula of water?", "response": "The chemical formula of water is H2O: two hydrogen atoms bonded to one oxygen atom."}
+{"id": "week-days", "prompt": "List the days of the week, starting with Monday.", "response": "Monday, Tuesday, Wednesday, Thursday, Friday, Saturday, Sunday."}
+{"id": "photosynthesis-inputs", "prompt": "What does a plant need for photosynthesis?", "response": "A plant needs light, water and carbon dioxide. Using the energy in light, it turns water and carbon dioxide into sugar and releases oxygen."}
+{"id": "email-subject", "prompt": "Suggest a subject line for an email moving a team meeting from Tuesday to Thursday.", "response": "Team meeting moved from Tuesday to Thursday"}
+{"id": "python-reverse", "prompt": "How do I reverse a list called items in Python?", "response": "Use items.reverse() to reverse it in place, or items[::-1] to get a reversed copy."}
+{"id": "synonym-happy", "prompt": "Give a synonym for happy.", "response": "Cheerful."}
+{"id": "boiling-point", "prompt": "At what temperature does water boil at sea level?", "response": "At sea level, water boils at 100 degrees Celsius, which is 212 degrees Fahrenheit."}
+{"id": "haiku-rain", "prompt": "Write a haiku about rain.", "response": "Soft rain on the roof\nthe garden drinks quietly\nevening smells of earth"}
+{"id": "recipe-steps", "prompt": "Give me the steps to make a cheese sandwich.", "response": "1. Take two slices of bread.\n2. Spread butter on one side of each slice.\n3. Put slices of cheese on one buttered side.\n4. Close the sandwich with the other slice, buttered side down.\n5. Cut it in half and serve."}
+{"id": "moon-distance", "prompt": "How far is the Moon from Earth?", "response": "On average the Moon is about 384,400 kilometres from Earth. The distance changes a little over each month because its orbit is slightly elliptical."}
+{"id": "thank-you-note", "prompt": "Write a short thank-you note to a neighbour who watered my plants.", "response": "Dear Sam,\nThank you so much for watering my plants while I was away. They look healthier than when I left! I really appreciate your help.\nBest wishes,\nAlex"}
+{"id": "explain-percent", "prompt": "What is 15 percent of 80, and how do you work it out?", "response": "15 percent of 80 is 12. Multiply 80 by 0.15, or find 10 percent (8) and 5 percent (4) and add them together."}
+{"id": "define-mammal", "prompt": "What is a mammal?", "response": "A mammal is a warm-blooded animal with hair or fur that feeds its young with milk. Most mammals give birth to live young; a few, such as the platypus, lay eggs."}

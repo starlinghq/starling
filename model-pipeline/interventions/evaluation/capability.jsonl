@@ -1,0 +1,24 @@
+{"id": "add-3digit", "kind": "arithmetic", "prompt": "What is 347 + 286?", "check": {"type": "last_integer", "value": 633}}
+{"id": "sub-3digit", "kind": "arithmetic", "prompt": "What is 905 - 478?", "check": {"type": "last_integer", "value": 427}}
+{"id": "mul-2digit", "kind": "arithmetic", "prompt": "What is 23 times 17?", "check": {"type": "last_integer", "value": 391}}
+{"id": "div-exact", "kind": "arithmetic", "prompt": "What is 144 divided by 12?", "check": {"type": "last_integer", "value": 12}}
+{"id": "word-apples", "kind": "arithmetic", "prompt": "Sara has 14 apples. She gives 5 to Tom and then buys 9 more. How many apples does she have now?", "check": {"type": "last_integer", "value": 18}}
+{"id": "word-minutes", "kind": "arithmetic", "prompt": "A film starts at 6:40 pm and lasts 95 minutes. How many minutes after 7:00 pm does it end?", "check": {"type": "last_integer", "value": 75}}
+{"id": "percent", "kind": "arithmetic", "prompt": "What is 25 percent of 240?", "check": {"type": "last_integer", "value": 60}}
+{"id": "square", "kind": "arithmetic", "prompt": "What is 19 squared?", "check": {"type": "last_integer", "value": 361}}
+{"id": "only-number", "kind": "instruction", "prompt": "How many legs does a spider have? Reply with only the number, nothing else.", "check": {"type": "exact", "value": "8"}}
+{"id": "uppercase", "kind": "instruction", "prompt": "Write the sentence 'the train leaves at noon' in capital letters only. Reply with just the sentence.", "check": {"type": "uppercase_contains", "value": "THE TRAIN LEAVES AT NOON"}}
+{"id": "three-bullets", "kind": "instruction", "prompt": "List exactly three fruits as a bulleted list, one per line, each line starting with '- '. Write nothing else.", "check": {"type": "bullets", "count": 3}}
+{"id": "one-word", "kind": "instruction", "prompt": "Answer with a single word: what colour is a ripe banana?", "check": {"type": "one_word", "value": "yellow"}}
+{"id": "json-object", "kind": "instruction", "prompt": "Return a JSON object with the keys \"name\" and \"age\" for a person called Ana who is 30. Output only the JSON.", "check": {"type": "json_object", "value": {"name": "Ana", "age": 30}}}
+{"id": "yes-no", "kind": "instruction", "prompt": "Is 17 a prime number? Answer only yes or no.", "check": {"type": "exact", "value": "yes"}}
+{"id": "start-with", "kind": "instruction", "prompt": "Write one sentence about the ocean that starts with the word 'Waves'.", "check": {"type": "starts_with", "value": "Waves"}}
+{"id": "max-words", "kind": "instruction", "prompt": "Describe the colour of the sky on a clear day in at most five words.", "check": {"type": "max_words", "value": 5}}
+{"id": "code-len", "kind": "code", "prompt": "What does this Python code print? Reply with only the output.\n\nprint(len('starling'))", "check": {"type": "exact", "value": "8"}}
+{"id": "code-slice", "kind": "code", "prompt": "What does this Python code print? Reply with only the output.\n\nprint('abcdef'[1:4])", "check": {"type": "exact", "value": "bcd"}}
+{"id": "code-sum", "kind": "code", "prompt": "What does this Python code print? Reply with only the output.\n\nprint(sum(range(5)))", "check": {"type": "exact", "value": "10"}}
+{"id": "code-upper", "kind": "code", "prompt": "What does this Python code print? Reply with only the output.\n\nprint('hi'.upper() * 2)", "check": {"type": "exact", "value": "HIHI"}}
+{"id": "code-list", "kind": "code", "prompt": "What does this Python code print? Reply with only the output.\n\nxs = [3, 1, 2]\nxs.sort()\nprint(xs)", "check": {"type": "exact", "value": "[1, 2, 3]"}}
+{"id": "code-dict", "kind": "code", "prompt": "What does this Python code print? Reply with only the output.\n\nd = {'a': 1, 'b': 2}\nprint(d['b'] + 5)", "check": {"type": "exact", "value": "7"}}
+{"id": "code-loop", "kind": "code", "prompt": "What does this Python code print? Reply with only the output.\n\nt = 1\nfor i in range(1, 5):\n    t *= i\nprint(t)", "check": {"type": "exact", "value": "24"}}
+{"id": "code-bool", "kind": "code", "prompt": "What does this Python code print? Reply with only the output.\n\nprint(3 > 2 and 2 > 5)", "check": {"type": "exact", "value": "False"}}
