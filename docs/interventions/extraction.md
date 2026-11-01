@@ -114,4 +114,4 @@ The evaluation that followed ([evaluation.md](evaluation.md), [evidence](../evid
 - Profiles other than LFM3 fp32 `concise`, chat templates other than LFM3, multi-turn or system-prompt examples.
 - A behavioural evaluation of any profile other than `concise` ([evaluation.md](evaluation.md)), and other decoding settings for it.
 - Untangling style from length in the concise direction, for example with length-matched pairs.
-- CUDA capture, the fp16 graph (no site mapping), Windows.
+- CUDA capture, the fp16 graph (it has a site mapping, `lfm3-1.7b/fp16/1`, but capture and extraction were not run on it), Windows.
