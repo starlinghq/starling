@@ -93,5 +93,6 @@ public sealed class BatchingOptionsTests
         BertSession.ValidateBatching(8, 1);
         Assert.Equal("experimental", BertCapabilities.BatchTokenBudget);
         Assert.Equal("experimental", BertCapabilities.BatchSortByLength);
+        Assert.Equal("experimental", BertCapabilities.TextTruncation);
     }
 }

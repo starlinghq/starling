@@ -59,16 +59,45 @@ public static class EmbeddingGemma2ImageDecoder
     }
 
     /// <summary>
-    /// Decodes an encoded image from a stream (read to the end; the stream is not disposed). The whole stream is
-    /// buffered in memory before the header is read, so <see cref="EmbeddingGemma2ImageDecoderOptions.MaxPixels"/>
-    /// bounds the decoded pixels, not the encoded bytes read from the stream; bound the stream's length first when the
-    /// source is untrusted.
+    /// Decodes an encoded image from a stream (read to the end; the stream is not disposed). At most
+    /// <see cref="EmbeddingGemma2ImageDecoderOptions.MaxEncodedBytes"/> bytes are read: a seekable stream whose remaining
+    /// length is over the limit is rejected before anything is read, and a non-seekable stream is rejected as soon as
+    /// more bytes than the limit have been read. The accepted bytes are buffered in memory, then decoded as
+    /// <see cref="Decode(ReadOnlySpan{byte}, EmbeddingGemma2ImageDecoderOptions?)"/> does.
     /// </summary>
+    /// <exception cref="EmbeddingGemma2ImageTooLargeException">
+    /// The stream holds more than <see cref="EmbeddingGemma2ImageDecoderOptions.MaxEncodedBytes"/> bytes, or the image
+    /// has more pixels than allowed.
+    /// </exception>
+    /// <exception cref="EmbeddingGemma2UnsupportedImageException">The data is not a supported, decodable 8-bit image.</exception>
     public static EmbeddingGemma2Image Decode(Stream stream, EmbeddingGemma2ImageDecoderOptions? options = null)
     {
         ArgumentNullException.ThrowIfNull(stream);
+        options ??= new EmbeddingGemma2ImageDecoderOptions();
+        options.Validate();
+        long limit = options.MaxEncodedBytes;
+        if (stream.CanSeek)
+        {
+            long remaining = stream.Length - stream.Position;
+            if (remaining > limit)
+            {
+                throw EncodedTooLarge(remaining, limit);
+            }
+        }
+
         using var buffer = new MemoryStream();
-        stream.CopyTo(buffer);
+        byte[] chunk = new byte[81920];
+        int read;
+        while ((read = stream.Read(chunk, 0, chunk.Length)) > 0)
+        {
+            if (buffer.Length + read > limit)
+            {
+                throw EncodedTooLarge(null, limit);
+            }
+
+            buffer.Write(chunk, 0, read);
+        }
+
         return Decode(buffer.GetBuffer().AsSpan(0, (int)buffer.Length), options);
     }
 
@@ -188,6 +217,11 @@ public static class EmbeddingGemma2ImageDecoder
         return image;
     }
 
+    private static EmbeddingGemma2ImageTooLargeException EncodedTooLarge(long? length, long limit) =>
+        new(length is { } n
+            ? $"The image stream holds {n} bytes; the limit is {limit} encoded bytes (EmbeddingGemma2ImageDecoderOptions.MaxEncodedBytes). Raise the limit or decode a smaller file."
+            : $"The image stream holds more than {limit} bytes; the limit is {limit} encoded bytes (EmbeddingGemma2ImageDecoderOptions.MaxEncodedBytes). Raise the limit or decode a smaller file.");
+
     private static bool HasTransparentPixel(byte[] rgba)
     {
         for (int i = 3; i < rgba.Length; i += 4)
@@ -229,12 +263,25 @@ public sealed record EmbeddingGemma2ImageDecoderOptions
 
     /// <summary>
     /// Decoded pixels at most, checked from the header before any pixel is decoded. Default 50,000,000. It does not
-    /// bound the encoded bytes: <see cref="EmbeddingGemma2ImageDecoder.Decode(Stream, EmbeddingGemma2ImageDecoderOptions?)"/>
-    /// reads the whole stream into memory first.
+    /// bound the encoded bytes; <see cref="MaxEncodedBytes"/> does that for streams.
     /// </summary>
     public long MaxPixels { get; init; } = 50_000_000;
 
-    internal void Validate() => ArgumentOutOfRangeException.ThrowIfLessThan(MaxPixels, 1);
+    /// <summary>
+    /// Encoded bytes at most that <see cref="EmbeddingGemma2ImageDecoder.Decode(Stream, EmbeddingGemma2ImageDecoderOptions?)"/>
+    /// reads from a stream before rejecting it with <see cref="EmbeddingGemma2ImageTooLargeException"/>. Default
+    /// 67,108,864 (64 MiB); 1 to <see cref="Array.MaxLength"/>. A seekable stream is checked from its remaining length
+    /// before any byte is read; a non-seekable one while it is read. The span and file overloads, whose bytes are
+    /// already in memory or sized by the caller, do not apply it.
+    /// </summary>
+    public long MaxEncodedBytes { get; init; } = 64L * 1024 * 1024;
+
+    internal void Validate()
+    {
+        ArgumentOutOfRangeException.ThrowIfLessThan(MaxPixels, 1);
+        ArgumentOutOfRangeException.ThrowIfLessThan(MaxEncodedBytes, 1);
+        ArgumentOutOfRangeException.ThrowIfGreaterThan(MaxEncodedBytes, Array.MaxLength);
+    }
 }
 
 /// <summary>Why an image was rejected.</summary>

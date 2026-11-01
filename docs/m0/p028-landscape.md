@@ -1,6 +1,6 @@
 # P-028 landscape comparison: .NET encoder and tokenizer options
 
-Status: draft for review. Covers the section 3.1 candidates of `docs/plan/fast-faithful-ai-dotnet.md` plus notable packages found while surveying. The first named consumer, the second half of P-028, is still open.
+Status: draft for review. Covers the section 3.1 candidates of `docs/plan/fast-faithful-ai-dotnet.md` plus notable packages found while surveying. The first named consumer, the second half of P-028, is recorded since 2026-11-01: starlinghq/roost and starlinghq/corvid (#208; section 6, item 1).
 
 ## 1. Method and date
 
@@ -149,7 +149,7 @@ Where the surveyed options already do well and this project should not claim a d
 
 ## 6. Open items
 
-1. **First named consumer.** Still required before M1 exits (P-028 acceptance; `docs/kickoff.md` lists it as open). Candidates to approach can be drawn from the downstream users above, for example projects that use the Semantic Kernel ONNX connector or FastBertTokenizer for BERT embeddings, since the P0 encoder is in the same lane. Until one agrees, score user demand from observable signals as plan section 3.1 says.
+1. **First named consumer.** Settled 2026-11-01 (#208, decided 2026-11-01 by the maintainer's delegate (agent), revisitable): starlinghq/roost and starlinghq/corvid, which consume the published `0.3.0` packages from nuget.org (pinned in each one's `Directory.Packages.props`), are the first named consumers (`docs/kickoff.md`). They are the organization's own projects, not independent outside demand. Outside demand stays scored from observable signals as plan section 3.1 says, and an outside consumer is added if one agrees; candidates can be drawn from the downstream users above, for example projects that use the Semantic Kernel ONNX connector or FastBertTokenizer for BERT embeddings, since the P0 encoder is in the same lane.
 2. **Issue #6901 status and milestone.** Not verifiable from this environment. Re-check from a network that reaches github.com.
 3. **ErgoX.TokenX archive status and source repository.** Archive date is search-only; the nuspec source repository `vecrax/tokenizers` is not reachable.
 4. **Measurements not run.** No benchmark or parity test from any surveyed project was executed here. Comparisons in section 2 restate what each project publishes. Running FastBertTokenizer's and the bindings' tests against the P0 encoder's tokenizer would give a like-for-like baseline once huggingface.co is reachable.

@@ -27,6 +27,11 @@ public static class BertCapabilities
     public const string BatchSortByLength = "experimental";
     /// <summary>Cancellation is experimental, at native graph-node and batch-chunk boundaries.</summary>
     public const string Cancellation = "experimental";
+    /// <summary>
+    /// Text truncation (capability key <c>text.truncation</c>, #193): text is truncated on the right to the profile's
+    /// limit, special tokens and any prompt included, as the pinned tokenizer does. Experimental, as the whole route is.
+    /// </summary>
+    public const string TextTruncation = "experimental";
     /// <summary>Token counting without embedding (<c>CountTokens</c>, <c>Validate</c>) and <c>TextChunker</c> over <c>ChunkingTokenizer</c> are experimental.</summary>
     public const string TokenCounting = "experimental";
     /// <summary>No incremental output contract.</summary>

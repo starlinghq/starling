@@ -90,7 +90,7 @@ The P-022 criterion is that both profiles remain identifiable. With the existing
 
 - The **old combination** stays fully identified by its package version, the lock inside it, the release record and the Git tag. Nothing about it is edited after release. The catalog keeps showing it until the manifest says otherwise.
 - The **new combination** gets a new package version, a new lock (new commit and digests), and a release record that names both identities and links the migration note.
-- The **registry** has one manifest per profile ID, so the old state needs a place. Proposed default (*open question 1*): while the new revision is being qualified, it gets its own profile directory, `<profile>-r<N>` (for example `multilingual-e5-small/onnx-fp32-cpu-r2`), at `experimental`. The old profile is untouched. When the new one reaches the old one's maturity, the old manifest takes `maturity: maintenance` (or `deprecated`) with `maintenance.replaced_by` and `support_ends`. Both remain in the catalog.
+- The **registry** has one manifest per profile ID, so the old state needs a place. Decided (#206, open question 1; 2026-11-01 by the maintainer's delegate (agent), revisitable): while the new revision is being qualified, it gets its own profile directory, `<profile>-r<N>` (for example `multilingual-e5-small/onnx-fp32-cpu-r2`), at `experimental`. The old profile is untouched. When the new one reaches the old one's maturity, the old manifest takes `maturity: maintenance` (or `deprecated`) with `maintenance.replaced_by` and `support_ends`. Both remain in the catalog.
 
 ## 6. The update drill (P-022, first half)
 
@@ -145,8 +145,8 @@ Purpose: show that a user can return to the previous combination without help, a
 
 ## 9. Open questions for the maintainer
 
-1. **Old and new profile identity in the registry:** the `<profile>-r<N>` directory (section 5), or another scheme? Alternatives: keep a single manifest and rely on release records for old identities, or put the revision in the profile ID.
+1. **Old and new profile identity in the registry:** settled 2026-11-01 (#206, decided 2026-11-01 by the maintainer's delegate (agent), revisitable): the `<profile>-r<N>` revision directory of section 5 (as `<model>/<profile>-r<N>`), at `experimental` until it reaches the old profile's maturity; then the old manifest moves to `maintenance` (or `deprecated`) with `maintenance.replaced_by` and `support_ends`, and both stay in the catalog. Rejected: a single manifest relying on release records, which would hide an older pinned profile's gate record from the current catalog, short of P-022's "both remain identifiable". Not chosen: the revision in the profile ID.
 2. **First drill change:** accept the order in section 6 (a real Hub change, else the e5 ONNX Runtime bump, else a tokenizer patch)?
-3. **M8:** the tokenizer-bump rule that decides the scope of option 2 in section 6.
+3. **M8:** the tokenizer-bump rule that decides the scope of option 2 in section 6. Settled 2026-11-01 (#202): the middle path in `docs/support-policy.md` ("Tokenizer bumps").
 4. **Upstream deletion risk:** mirror the bytes of Stable bundles (as release assets) so a rollback survives an upstream deletion, or accept the risk and document it? Mirroring is redistribution, so it needs a rights check per model (G0).
 5. **Detector cadence and token:** weekly, with a read-only `HF_TOKEN` that has no write scope? This is set in R6.

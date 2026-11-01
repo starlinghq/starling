@@ -140,7 +140,7 @@ public class AssetAndCapabilityTests
         Assert.Equal(Status.Experimental, all["input.2050_to_8192_tokens"]);
         Assert.Equal(Status.Experimental, all["prompts.task"]);
         Assert.Equal(Status.Unsupported, all["image.decode.gif_transparency"]);
-        foreach (var key in new[] { "audio", "video.frames_without_timing", "video.timestamps", "video.over_8192_tokens", "video.decode.ffmpeg9", "mlnet.video_column", "media_placeholder_tokens", "image.16_bit_per_channel", "image.over_8192_tokens", "mlnet.image_column", "input.over_8192_tokens", "truncation", "tf32", "fp16", "matryoshka.other_sizes", "prompt_insertion.implicit" })
+        foreach (var key in new[] { "audio", "video.frames_without_timing", "video.timestamps", "video.over_8192_tokens", "video.decode.ffmpeg9", "mlnet.video_column", "media_placeholder_tokens", "image.16_bit_per_channel", "image.over_8192_tokens", "mlnet.image_column", "input.over_8192_tokens", "truncation", "text.truncation", "tf32", "fp16", "matryoshka.other_sizes", "prompt_insertion.implicit" })
         {
             Assert.Equal(Status.Unsupported, all[key]);
         }

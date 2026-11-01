@@ -291,6 +291,8 @@ public class EncoderBehaviorTests
         Assert.Equal(Status.Unsupported, all["tf32"]);
         Assert.Equal(Status.Unsupported, all["streaming"]);
         Assert.Equal(Status.Unsupported, all["truncation"]);
+        Assert.Equal(Status.Supported, all["text.truncation"]);
+        Assert.Equal(TruncationPolicy.TruncatesRight, E5Capabilities.ProfileCapabilities[E5Capabilities.StableProfile].Truncation);
         Assert.Equal(Status.Supported, all["extensions_ai.embedding_generator"]);
         Assert.Equal(Status.Unsupported, all["extensions_ai.dimensions_truncation"]);
     }
