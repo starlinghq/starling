@@ -11,7 +11,7 @@ This library is **experimental** and source only. V1 evidence uses synthetic ran
 - `InterventionSelection(profileId, strength)`: what a request asks for. Strength 0 leaves outputs unchanged.
 - `InterventionManifest`: `compiler-manifest.json` (schema version 1). Base artifacts, profile id and hash, compiler and site-mapping versions, opset, precision, declared inputs, resolved site tensors, derived files and their hashes.
 - `InterventionCacheKey`: the cache key of a derived artifact, recomputed from its manifest (the same text the Python cache writer hashes).
-- `InterventionArtifact` and `InterventionArtifactCache`: the read side of the derived-artifact cache `<cache>/<model>/interventions/<key>/`. Open an entry, check its directory name against the key, verify the manifest, profile and derived files (`Fast` for every load, `Full` to hash the linked weights and the base bundle). Entries are written by the Python compiler ([cache.md](https://github.com/starlinghq/starling/blob/main/docs/interventions/cache.md)).
+- `InterventionArtifact` and `InterventionArtifactCache`: the read side of the derived-artifact cache `<cache>/<model>/interventions/<key>/`. Open an entry, check its directory name against the key, verify the manifest, profile and derived files (`Fast` for every load: sizes, plus device, inode and modification time of the linked weights on Linux; `Full` to hash the linked weights and the base bundle). Entries are written by the Python compiler ([cache.md](https://github.com/starlinghq/starling/blob/main/docs/interventions/cache.md)).
 
 The operator, for a site tensor `y` of shape `[..., hidden]`:
 

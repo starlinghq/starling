@@ -78,7 +78,7 @@ public static partial class InterventionArtifactCache
     /// and the key recomputed from its manifest must equal the directory name.
     /// </summary>
     /// <exception cref="DirectoryNotFoundException">The directory does not exist.</exception>
-    /// <exception cref="InterventionMismatchException">The name is not the manifest's key, or a file does not match.</exception>
+    /// <exception cref="InterventionMismatchException">The directory is a symbolic link, the name is not the manifest's key, or a file does not match.</exception>
     public static InterventionArtifact OpenEntry(
         string entryDirectory,
         InterventionArtifactVerification verification = InterventionArtifactVerification.Fast,
@@ -89,6 +89,12 @@ public static partial class InterventionArtifactCache
         if (!System.IO.Directory.Exists(full))
         {
             throw new DirectoryNotFoundException($"Intervention cache entry not found: {full}");
+        }
+
+        if ((new DirectoryInfo(full).Attributes & FileAttributes.ReparsePoint) != 0)
+        {
+            // ListEntries skips these too: an entry is a real directory, never a link to one somewhere else.
+            throw new InterventionMismatchException($"{full} is a symbolic link or reparse point, not a cache entry directory.");
         }
 
         string name = Path.GetFileName(full);

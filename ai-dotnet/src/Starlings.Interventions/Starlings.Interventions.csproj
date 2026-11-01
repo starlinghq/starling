@@ -4,6 +4,8 @@
     <!-- Source only while the intervention mechanism is experimental (docs/interventions/architecture.md). -->
     <IsPackable>false</IsPackable>
     <IsAotCompatible>true</IsAotCompatible>
+    <!-- LibraryImport of statx(2) for the Fast identity check (Internal/FileIdentityProbe.cs). -->
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <Description>The contract of ONNX Runtime graph interventions: the intervention profile (schema version, base graph identity, operator, sites with their directions and scales), the per-request InterventionSelection, the compiler manifest of a derived graph, and the raw float32 directions file format. Strict JSON parsing, deterministic serialization, SHA-256 and dimension checks. No ONNX Runtime or model dependency. Experimental and source only.</Description>
     <PackageTags>onnxruntime;interventions;activation-steering;llm</PackageTags>
     <PackageReadmeFile>README.md</PackageReadmeFile>

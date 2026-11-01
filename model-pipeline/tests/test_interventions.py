@@ -5,6 +5,7 @@ from __future__ import annotations
 import errno
 import hashlib
 import json
+import logging
 import os
 import re
 from pathlib import Path
@@ -29,6 +30,7 @@ from model_pipeline.interventions import (  # noqa: E402
     SiteMapping,
     UnsupportedGraphError,
     compile_intervention,
+    compiler,
     contract,
     external_data,
     load_manifest,
@@ -347,6 +349,100 @@ def test_cross_device_link_fails_clearly(bundle, tmp_path, monkeypatch):
     with pytest.raises(ExternalDataLinkError, match="different file systems") as info:
         _compile(bundle, tmp_path / "d")
     assert info.value.errno == errno.EXDEV
+    assert "never copied" in str(info.value) and "cache_root" in str(info.value)
+    # Nothing is left behind: not the derived graph, not the directory the compile created.
+    assert not (tmp_path / "d").exists()
+    assert (bundle[0] / "onnx" / "model.onnx_data").is_file()
+
+
+def test_cross_device_is_detected_before_anything_is_written(bundle, tmp_path, monkeypatch):
+    source = (bundle[0] / "onnx" / "model.onnx_data").absolute()
+    real_stat = os.stat
+
+    class _Other:
+        st_dev = -1
+
+    def stat(path, *args, **kwargs):
+        if Path(path).absolute() == source:
+            return _Other()
+        return real_stat(path, *args, **kwargs)
+
+    writes = []
+    monkeypatch.setattr(compiler, "_write_bytes", lambda *a: writes.append(a))
+    monkeypatch.setattr(external_data.os, "stat", stat)
+    with pytest.raises(ExternalDataLinkError, match="different file systems") as info:
+        _compile(bundle, tmp_path / "d")
+    monkeypatch.undo()
+    assert info.value.errno == errno.EXDEV
+    assert writes == [] and not (tmp_path / "d").exists()
+
+
+def test_failed_link_of_a_later_file_removes_the_earlier_links(tmp_path, monkeypatch):
+    src = tmp_path / "src"
+    (src / "sub").mkdir(parents=True)
+    (src / "a.bin").write_bytes(b"a")
+    (src / "sub" / "b.bin").write_bytes(b"b")
+    real_link = os.link
+
+    def link(a, b):
+        if Path(b).name == "b.bin":
+            raise OSError(errno.EACCES, "denied")
+        real_link(a, b)
+
+    monkeypatch.setattr(external_data.os, "link", link)
+    with pytest.raises(ExternalDataLinkError, match="denied"):
+        external_data.link_external_data(src, tmp_path / "out", ["a.bin", "sub/b.bin"])
+    assert sorted(p.relative_to(tmp_path).as_posix() for p in (tmp_path / "out").rglob("*")) == []
+    assert (src / "a.bin").read_bytes() == b"a"
+
+
+def test_failure_after_writing_removes_partial_output(bundle, tmp_path, monkeypatch):
+    def boom(*args, **kwargs):
+        raise RuntimeError("simulated failure after model.onnx and the link exist")
+
+    monkeypatch.setattr(external_data, "base_external_artifacts", boom)
+    with pytest.raises(RuntimeError, match="simulated"):
+        _compile(bundle, tmp_path / "parent" / "d")
+    assert not (tmp_path / "parent").exists()
+    assert (bundle[0] / "onnx" / "model.onnx_data").is_file()
+    # An existing output directory is kept; only what the compile created goes.
+    (tmp_path / "keep").mkdir()
+    (tmp_path / "keep" / "other.txt").write_text("x")
+    with pytest.raises(RuntimeError, match="simulated"):
+        _compile(bundle, tmp_path / "keep")
+    assert sorted(p.name for p in (tmp_path / "keep").iterdir()) == ["other.txt"]
+
+
+def test_write_bytes_leaves_no_temporary_file_on_failure(tmp_path, monkeypatch):
+    def refuse(src, dst):
+        raise OSError(errno.EIO, "simulated")
+
+    monkeypatch.setattr(compiler.os, "replace", refuse)
+    with pytest.raises(OSError, match="simulated"):
+        compiler._write_bytes(tmp_path / "model.onnx", b"x")
+    monkeypatch.undo()
+    assert list(tmp_path.iterdir()) == []
+
+
+def test_write_bytes_from_many_threads_into_one_directory(tmp_path):
+    import threading
+
+    errors = []
+
+    def write(i):
+        try:
+            for _ in range(20):
+                compiler._write_bytes(tmp_path / "model.onnx", bytes([i]) * 64)
+        except Exception as e:  # noqa: BLE001
+            errors.append(e)
+
+    threads = [threading.Thread(target=write, args=(i,)) for i in range(8)]
+    for t in threads:
+        t.start()
+    for t in threads:
+        t.join()
+    assert errors == []
+    assert [p.name for p in tmp_path.iterdir()] == ["model.onnx"]
 
 
 def test_no_link_mode_writes_graph_only(bundle, tmp_path):
@@ -356,6 +452,7 @@ def test_no_link_mode_writes_graph_only(bundle, tmp_path):
     # The manifest still names the external data the derived graph needs; until it is placed, verification fails.
     (file,) = result.manifest.derived_files
     assert file.path == "model.onnx_data"
+    assert file.identity is None  # nothing was linked, so there is no identity to record
     with pytest.raises(InterventionMismatchError, match="does not exist"):
         contract.verify_artifact_file(result.derived_dir / file.path, file.sha256, file.size)
 
@@ -451,13 +548,18 @@ def _with_ort_only_op(model: onnx.ModelProto) -> onnx.ModelProto:
     return copy
 
 
-def test_checker_is_skipped_only_when_it_rejects_the_base_graph():
+def test_checker_is_skipped_only_when_it_rejects_the_base_graph(caplog):
     base = _with_ort_only_op(_build_graph())
     with pytest.raises(onnx.checker.ValidationError):
         onnx.checker.check_model(base)
     derived = onnx.ModelProto()
     derived.CopyFrom(base)
-    validate_derived_model(base, derived, [])
+    with caplog.at_level(logging.WARNING, logger="model_pipeline.interventions.validate"):
+        report = validate_derived_model(base, derived, [])
+    assert report.onnx_checker == contract.CHECKER_SKIPPED_BASE_REJECTED
+    assert "SimplifiedLayerNormalization" in report.detail and "\n" not in report.detail
+    assert any("checked structurally only" in r.getMessage() for r in caplog.records)
+    assert validate_derived_model(_build_graph(), _build_graph(), []).onnx_checker == contract.CHECKER_PASSED
     # The structural checks still run when the checker cannot judge the graph.
     nodes = list(derived.graph.node)
     del derived.graph.node[:]
@@ -652,6 +754,9 @@ def test_manifest_contents(bundle, tmp_path):
     assert [(f.path, f.sha256, f.size) for f in manifest.derived_files] == [
         ("model.onnx_data", _sha(data), data.stat().st_size)
     ]
+    st = data.stat()
+    assert manifest.derived_files[0].identity == contract.FileIdentity(st.st_dev, st.st_ino, st.st_mtime_ns)
+    assert manifest.validation == contract.ManifestValidation(contract.CHECKER_PASSED)
     contract.verify_manifest_profile(manifest, profile)
     contract.verify_artifact_file(result.graph_path, manifest.derived_graph.sha256, manifest.derived_graph.size)
     for file in manifest.derived_files:
@@ -701,6 +806,37 @@ def test_manifest_validation_matches_csharp_rules():
     rejected(lambda d: d["derived_files"].append(dict(d["derived_graph"])), "derived_files")
     rejected(lambda d: d["derived_graph"].update(path="../model.onnx"), "derived_graph.path")
     rejected(lambda d: d.update(compiler_version="-bad"), "compiler_version")
+    identity = {"device": 1, "inode": 2, "mtime_ns": 3}
+    rejected(lambda d: d["derived_graph"].update(identity=identity), "derived_graph")
+    rejected(lambda d: d["derived_files"][0]["identity"].update(inode=-1), "derived_files[0].identity.inode")
+    rejected(lambda d: d["derived_files"][0]["identity"].update(device=1.0), "derived_files[0].identity.device")
+    rejected(lambda d: d["derived_files"][0]["identity"].pop("mtime_ns"), "derived_files[0].identity")
+    rejected(lambda d: d["derived_files"][0]["identity"].update(ctime_ns=1), "derived_files[0].identity")
+    rejected(lambda d: d["validation"].update(onnx_checker="skipped"), "validation.onnx_checker")
+    rejected(lambda d: d["validation"].update(detail="two\nlines"), "validation.detail")
+    rejected(lambda d: d["validation"].update(detail=""), "validation.detail")
+    rejected(lambda d: d["validation"].update(detail="x" * 513), "validation.detail")
+    rejected(lambda d: d["validation"].pop("onnx_checker"), "validation")
+    rejected(lambda d: d["validation"].update(extra=1), "validation")
+    rejected(lambda d: d.update(validation="passed"), "validation")
+
+
+def test_identity_and_validation_are_optional_and_round_trip():
+    _, manifest_text = _doc_json_blocks()
+    manifest = contract.parse_manifest(manifest_text)
+    assert manifest.derived_files[0].identity == contract.FileIdentity(66307, 1234567, 1761000000123456789)
+    assert manifest.validation.onnx_checker == contract.CHECKER_SKIPPED_BASE_REJECTED
+    document = json.loads(manifest_text)
+    del document["validation"]
+    del document["derived_files"][0]["identity"]
+    document["derived_files"][0]["identity"] = {"device": 0, "inode": 0, "mtime_ns": -(2**63)}
+    text = contract.serialize_manifest_document(document)
+    assert contract.parse_manifest(text).serialize() == text
+    del document["derived_files"][0]["identity"]
+    text = contract.serialize_manifest_document(document)
+    bare = contract.parse_manifest(text)
+    assert bare.validation is None and bare.derived_files[0].identity is None
+    assert bare.serialize() == text
 
 
 # --------------------------------------------------------------------------------------------------------------------

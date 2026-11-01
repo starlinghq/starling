@@ -1,3 +1,4 @@
+using System.Runtime.InteropServices;
 using System.Text;
 
 namespace Starlings.Interventions.Tests;
@@ -101,6 +102,27 @@ internal static class TestData
 
         return [.. rows.SelectMany(row => row.Select(x => (float)x))];
     }
+
+    /// <summary>Hard-links <paramref name="target"/> to <paramref name="source"/> (Linux); copies elsewhere.</summary>
+    public static void HardLink(string source, string target)
+    {
+        Directory.CreateDirectory(System.IO.Path.GetDirectoryName(target)!);
+        if (!OperatingSystem.IsLinux())
+        {
+            File.Copy(source, target);
+            return;
+        }
+
+        if (Link(source, target) != 0)
+        {
+            throw new IOException($"link({source}, {target}) failed with errno {Marshal.GetLastPInvokeError()}.");
+        }
+    }
+
+    [DllImport("libc", EntryPoint = "link", SetLastError = true)]
+#pragma warning disable SYSLIB1054, CA2101 // a test helper; runtime marshalling of two paths is fine here
+    private static extern int Link([MarshalAs(UnmanagedType.LPUTF8Str)] string source, [MarshalAs(UnmanagedType.LPUTF8Str)] string target);
+#pragma warning restore SYSLIB1054, CA2101
 
     /// <summary>A temporary directory deleted on dispose.</summary>
     public sealed class TempDir : IDisposable

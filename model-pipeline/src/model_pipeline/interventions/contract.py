@@ -11,6 +11,7 @@ from __future__ import annotations
 import hashlib
 import json
 import math
+import os
 import re
 import unicodedata
 from dataclasses import dataclass
@@ -38,6 +39,11 @@ TARGETS = frozenset({TARGET_RESIDUAL_POST})
 DTYPES = frozenset({DTYPE_FLOAT32})
 INPUT_ROLES = frozenset({ROLE_STRENGTH})
 ARTIFACT_ROLES = frozenset({ARTIFACT_ROLE_GRAPH, ARTIFACT_ROLE_EXTERNAL_DATA})
+# What onnx.checker said about a derived graph (manifest "validation.onnx_checker").
+CHECKER_PASSED = "passed"
+CHECKER_SKIPPED_BASE_REJECTED = "skipped_base_rejected"
+CHECKER_RESULTS = frozenset({CHECKER_PASSED, CHECKER_SKIPPED_BASE_REJECTED})
+MAX_VALIDATION_DETAIL = 512
 
 _PROFILE_ID = re.compile(r"[a-z0-9][a-z0-9._-]{0,127}")
 _VERSION_LABEL = re.compile(r"[A-Za-z0-9][A-Za-z0-9._+/-]{0,63}")
@@ -79,6 +85,11 @@ def is_version_label(value: object) -> bool:
 
 def is_precision(value: object) -> bool:
     return isinstance(value, str) and _PRECISION.fullmatch(value) is not None
+
+
+def utf16_length(value: str) -> int:
+    """Length in UTF-16 code units, as C# ``string.Length`` counts it."""
+    return len(value.encode("utf-16-le")) // 2
 
 
 def _has_control(value: str) -> bool:
@@ -385,10 +396,41 @@ def format_float32(value: float) -> str:
 
 
 @dataclass(frozen=True)
+class FileIdentity:
+    """Where a derived file's bytes live on this machine: ``st_dev``, ``st_ino`` and ``st_mtime_ns`` (stat, following
+    symlinks) when the entry was written. A hard link shares these with its base file. Machine-local: a copied or
+    restored entry no longer matches, and Fast verification then fails (Full, which hashes, is unaffected)."""
+
+    device: int
+    inode: int
+    mtime_ns: int
+
+    @staticmethod
+    def of(path: str | Path) -> FileIdentity:
+        st = os.stat(path)
+        return FileIdentity(st.st_dev, st.st_ino, st.st_mtime_ns)
+
+
+@dataclass(frozen=True)
 class ArtifactFile:
     path: str
     sha256: str
     size: int
+    # Only on ``derived_files`` entries (optional in the schema; the compiler records it for every file it links).
+    identity: FileIdentity | None = None
+
+
+@dataclass(frozen=True)
+class ManifestValidation:
+    """How the compiler validated the derived graph (manifest ``validation``, optional in the schema).
+
+    ``onnx_checker`` is ``passed``, or ``skipped_base_rejected`` when onnx.checker already rejects the base graph (for
+    example operators only ONNX Runtime registers in the default domain); ``detail`` is then the first line of the
+    checker's message about the base graph. The structural checks of ``validate_derived_model`` run either way.
+    """
+
+    onnx_checker: str
+    detail: str | None = None
 
 
 @dataclass(frozen=True)
@@ -428,6 +470,7 @@ class InterventionManifest:
     sites: tuple[SiteBinding, ...]
     derived_graph: ArtifactFile
     derived_files: tuple[ArtifactFile, ...]
+    validation: ManifestValidation | None = None
 
     @property
     def base_graph(self) -> BaseArtifact:
@@ -461,9 +504,14 @@ _MANIFEST_KEYS = (
     "sites",
     "derived_graph",
     "derived_files",
+    "validation",
 )
+_MANIFEST_OPTIONAL = frozenset({"validation"})
 _BASE_ARTIFACT_KEYS = ("role", "path", "sha256", "size")
 _FILE_KEYS = ("path", "sha256", "size")
+_DERIVED_FILE_KEYS = ("path", "sha256", "size", "identity")
+_IDENTITY_KEYS = ("device", "inode", "mtime_ns")
+_VALIDATION_KEYS = ("onnx_checker", "detail")
 _INPUT_KEYS = ("name", "role", "dtype", "shape")
 _BINDING_KEYS = ("layer", "target", "tensor")
 _MAX_SIZE = 2**63 - 1
@@ -473,9 +521,16 @@ def manifest_to_document(manifest: InterventionManifest) -> dict[str, Any]:
     """Plain dict in canonical key order (sites sorted by layer, then target)."""
 
     def file(f: ArtifactFile) -> dict[str, Any]:
-        return {"path": f.path, "sha256": f.sha256, "size": f.size}
+        document: dict[str, Any] = {"path": f.path, "sha256": f.sha256, "size": f.size}
+        if f.identity is not None:
+            document["identity"] = {
+                "device": f.identity.device,
+                "inode": f.identity.inode,
+                "mtime_ns": f.identity.mtime_ns,
+            }
+        return document
 
-    return {
+    document = {
         "schema_version": SCHEMA_VERSION,
         "compiler_version": manifest.compiler_version,
         "site_mapping_version": manifest.site_mapping_version,
@@ -495,6 +550,12 @@ def manifest_to_document(manifest: InterventionManifest) -> dict[str, Any]:
         "derived_graph": file(manifest.derived_graph),
         "derived_files": [file(f) for f in manifest.derived_files],
     }
+    if manifest.validation is not None:
+        validation: dict[str, Any] = {"onnx_checker": manifest.validation.onnx_checker}
+        if manifest.validation.detail is not None:
+            validation["detail"] = manifest.validation.detail
+        document["validation"] = validation
+    return document
 
 
 def serialize_manifest_document(document: dict[str, Any]) -> bytes:
@@ -502,17 +563,40 @@ def serialize_manifest_document(document: dict[str, Any]) -> bytes:
     return (json.dumps(document, indent=2, ensure_ascii=False) + "\n").encode("utf-8")
 
 
-def _file(value: Any, path: str) -> ArtifactFile:
-    obj = _object(value, path, _FILE_KEYS)
+def _file(value: Any, path: str, keys: tuple[str, ...] = _FILE_KEYS) -> ArtifactFile:
+    obj = _object(value, path, keys, frozenset({"identity"}))
     rel = _str(obj["path"], f"{path}.path")
     if not is_relative_path(rel):
         raise InterventionContractError(f"'{rel}' is not a valid relative path.", f"{path}.path")
-    return ArtifactFile(rel, _sha(obj["sha256"], f"{path}.sha256"), _int(obj["size"], f"{path}.size", 0, _MAX_SIZE))
+    identity = None
+    if "identity" in obj:
+        raw = _object(obj["identity"], f"{path}.identity", _IDENTITY_KEYS)
+        identity = FileIdentity(
+            _int(raw["device"], f"{path}.identity.device", 0, _MAX_SIZE),
+            _int(raw["inode"], f"{path}.identity.inode", 0, _MAX_SIZE),
+            _int(raw["mtime_ns"], f"{path}.identity.mtime_ns", -_MAX_SIZE - 1, _MAX_SIZE),
+        )
+    return ArtifactFile(
+        rel, _sha(obj["sha256"], f"{path}.sha256"), _int(obj["size"], f"{path}.size", 0, _MAX_SIZE), identity
+    )
+
+
+def _validation(value: Any, path: str) -> ManifestValidation:
+    obj = _object(value, path, _VALIDATION_KEYS, frozenset({"detail"}))
+    result = _vocab(obj["onnx_checker"], f"{path}.onnx_checker", CHECKER_RESULTS, "onnx_checker result")
+    detail = None
+    if "detail" in obj:
+        detail = _str(obj["detail"], f"{path}.detail")
+        if not detail or utf16_length(detail) > MAX_VALIDATION_DETAIL or _has_control(detail):
+            raise InterventionContractError(
+                f"expected 1 to {MAX_VALIDATION_DETAIL} characters without control characters.", f"{path}.detail"
+            )
+    return ManifestValidation(result, detail)
 
 
 def _manifest_from_document(document: Any) -> InterventionManifest:
     _schema_version(document)
-    root = _object(document, "$", _MANIFEST_KEYS)
+    root = _object(document, "$", _MANIFEST_KEYS, _MANIFEST_OPTIONAL)
     compiler_version = _str(root["compiler_version"], "compiler_version")
     if not is_version_label(compiler_version):
         raise InterventionContractError(f"'{compiler_version}' is not a valid version label.", "compiler_version")
@@ -596,7 +680,8 @@ def _manifest_from_document(document: Any) -> InterventionManifest:
 
     derived_graph = _file(root["derived_graph"], "derived_graph")
     derived_files = tuple(
-        _file(v, f"derived_files[{i}]") for i, v in enumerate(_list(root["derived_files"], "derived_files"))
+        _file(v, f"derived_files[{i}]", _DERIVED_FILE_KEYS)
+        for i, v in enumerate(_list(root["derived_files"], "derived_files"))
     )
     paths = [f.path for f in derived_files]
     if len(set(paths)) != len(paths) or derived_graph.path in paths:
@@ -617,6 +702,7 @@ def _manifest_from_document(document: Any) -> InterventionManifest:
         tuple(sorted(sites, key=lambda s: (s.layer, s.target))),
         derived_graph,
         derived_files,
+        _validation(root["validation"], "validation") if "validation" in root else None,
     )
 
 

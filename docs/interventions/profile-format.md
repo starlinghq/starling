@@ -116,11 +116,16 @@ Written by the graph compiler next to the derived graph; read and verified by `I
 | `inputs` | array of input | yes | the derived graph's extra inputs beyond the base graph's; exactly one with role `strength`, holding one element (shape `[]` or `[1]`); names unique |
 | `sites` | array of site binding | yes | one per profile site, 1 to 1,024; no two with the same `layer` and `target`, and no two with the same `tensor` |
 | `derived_graph` | file | yes | the derived `model.onnx`, relative to the derived artifact directory |
-| `derived_files` | array of file | yes | other derived files (for example a small external data file of the derived graph); paths unique and different from `derived_graph.path`; may be empty |
+| `derived_files` | array of derived file | yes | other derived files; paths unique and different from `derived_graph.path`; may be empty. In a derived-artifact cache entry these are exactly the hard links of the base graph's external data ([cache.md](cache.md), "Verification"); a compiler that writes a file of its own here needs a reader change and a compiler-version bump |
+| `validation` | validation | no | how the compiler validated the derived graph (below); the compiler always writes it |
 
 Base artifact: `role` (`graph` or `external_data`), `path` (relative to the base model directory), `sha256`, `size` (integer bytes, `>= 0`), in that order.
 
 File: `path`, `sha256`, `size`.
+
+Derived file: `path`, `sha256`, `size`, then optionally `identity`: an object with `device`, `inode` (integers, 0 to 2^63-1) and `mtime_ns` (integer, -2^63 to 2^63-1), in that order. It is the `stat` of the file (symlinks followed) when the compiler linked it: device number, inode number and modification time in nanoseconds since the Unix epoch. A hard link shares all three with its base file. The values are machine-local and are not part of the cache key; Fast verification compares them ([cache.md](cache.md)). The compiler writes `identity` for every file it links and omits it with `link_external=False`.
+
+Validation: `onnx_checker`, then optionally `detail`. `onnx_checker` is `passed` (onnx.checker accepted the derived graph) or `skipped_base_rejected` (onnx.checker already rejects the base graph, for example because it uses operators only ONNX Runtime registers in the default domain, so it cannot judge the derived graph; the structural checks and the ONNX Runtime load stand in for it). `detail` is one line, 1 to 512 characters, no control characters: the first line of the checker's message about the base graph.
 
 Input: `name` (ONNX input name, non-empty, at most 1,024 characters, no control characters), `role` (`strength`), `dtype` (`float32`), `shape` (array of non-negative integers, at most 8 dimensions and 2,147,483,647 elements; `[]` is a scalar; the strength input's shape is exactly `[]` or `[1]`). A model integration accepts exactly the base graph's inputs plus these.
 
@@ -130,7 +135,7 @@ A reader verifies, before loading the derived graph:
 
 1. `VerifyProfile(profile, sha)`: same `profile_id`, same `profile_sha256`, same operator, the base graph (`base_artifacts` entry with role `graph`) has the profile's `base_model_sha256`, and the sites (layer, target) equal the profile's.
 2. `VerifyBaseModel(sha)`: the base graph is the one the application's asset lock expects.
-3. `VerifyDerivedFiles(dir)`: size, then SHA-256 of `derived_graph` and every `derived_files` entry.
+3. `VerifyDerivedFiles(dir)`: size, then SHA-256 of `derived_graph` and every `derived_files` entry (`identity` is not used here; the cache readers' Fast level checks it instead of hashing).
 4. Optionally `VerifyBaseArtifacts(dir)`: size, then SHA-256 of every base artifact (this hashes the external weights).
 
 How the derived graph reaches the original external data files is decided by the derived-artifact cache and recorded there; the manifest identifies the files it depends on.
@@ -183,7 +188,22 @@ Example (synthetic):
     "sha256": "3333333333333333333333333333333333333333333333333333333333333333",
     "size": 2048
   },
-  "derived_files": []
+  "derived_files": [
+    {
+      "path": "model.onnx_data",
+      "sha256": "4444444444444444444444444444444444444444444444444444444444444444",
+      "size": 5000000000,
+      "identity": {
+        "device": 66307,
+        "inode": 1234567,
+        "mtime_ns": 1761000000123456789
+      }
+    }
+  ],
+  "validation": {
+    "onnx_checker": "skipped_base_rejected",
+    "detail": "No Op registered for SimplifiedLayerNormalization with domain_version of 17"
+  }
 }
 ```
 

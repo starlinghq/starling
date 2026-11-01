@@ -10,6 +10,7 @@ from .cache import (
     entry_directory,
     evict,
     get_or_compile,
+    linked_base_artifacts,
     manifest_cache_key,
     open_entry,
 )
@@ -21,6 +22,7 @@ from .compiler import (
     compile_intervention,
 )
 from .contract import (
+    FileIdentity,
     InterventionContractError,
     InterventionManifest,
     InterventionMismatchError,
@@ -40,6 +42,7 @@ __all__ = [
     "entry_directory",
     "evict",
     "get_or_compile",
+    "linked_base_artifacts",
     "manifest_cache_key",
     "open_entry",
     "COMPILER_VERSION",
@@ -48,6 +51,7 @@ __all__ = [
     "CompileResult",
     "DerivedGraphError",
     "ExternalDataLinkError",
+    "FileIdentity",
     "InterventionCompileError",
     "InterventionContractError",
     "InterventionManifest",

@@ -49,9 +49,9 @@ using Lfm3Sequence plain = model.CreateSequence(selection: null);
 
 ### What `CreateModel` checks before loading
 
-1. `InterventionArtifactCache.OpenEntry` (Fast by default): the directory name is the key recomputed from the manifest; manifest and profile parse and match, directions verify, the derived graph's SHA-256, the linked weights' sizes and their identity with the base artifacts. `Full` also hashes the linked weights and the snapshot's base files.
+1. `InterventionArtifactCache.OpenEntry` (Fast by default): the directory name is the key recomputed from the manifest; manifest and profile parse and match, directions verify, the derived graph's SHA-256, the linked weights' sizes, device, inode and modification time against the manifest (and, with the snapshot directory, that they are still the snapshot's files), and their identity with the base artifacts. `Full` also hashes the linked weights and the snapshot's base files.
 2. The manifest's base graph SHA-256 equals the lock's entry for the requested precision's graph. A wrong base graph (another export, the fp16 graph) throws `InterventionMismatchException` and no session is created.
-3. The manifest precision matches (`fp32`), and every base artifact (the graph and its four external data files) is the lock's file with the lock's SHA-256 and size; no locked graph file is missing. The graph file holds only offsets into the weights, so its hash alone does not identify them, and Fast verification compares the linked weights with the manifest by size only.
+3. The manifest precision matches (`fp32`), and every base artifact (the graph and its four external data files) is the lock's file with the lock's SHA-256 and size; no locked graph file is missing. The graph file holds only offsets into the weights, so its hash alone does not identify them, and Fast verification compares the linked weights with the manifest by size and file identity, not by hash.
 4. The site mapping version is `lfm3-1.7b/fp32/1` (`Lfm3Interventions.Fp32SiteMappingVersion`); another mapping version is rejected until this integration is verified with it.
 5. Exactly one extra input: the strength, float32, shape `[1]`, not named like an LFM3 input.
 6. Every site is inside the 24 decoder layers at hidden size 2048.

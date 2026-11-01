@@ -72,7 +72,8 @@ public sealed class InterventionManifestTests
         InterventionArtifactFile? derivedGraph = null,
         IEnumerable<InterventionArtifactFile>? derivedFiles = null,
         string profileId = "synthetic-demo",
-        string profileSha = ProfileSha) => new(
+        string profileSha = ProfileSha,
+        InterventionManifestValidation? validation = null) => new(
         "0.1.0",
         "tiny-mlp/fp32/1",
         baseArtifacts ??
@@ -92,7 +93,8 @@ public sealed class InterventionManifestTests
             new(1, InterventionTarget.ResidualPost, "/model/layers.1/Add_1_output_0"),
         ],
         derivedGraph ?? new("model.onnx", GraphSha, 2048),
-        derivedFiles ?? []);
+        derivedFiles ?? [],
+        validation);
 
     private static InterventionGraphInput Strength(string name = "intervention_strength", params long[] shape) =>
         new(name, InterventionInputRole.Strength, InterventionDType.Fp32, shape.Length == 0 && name == "intervention_strength" ? [1] : shape);
@@ -146,6 +148,85 @@ public sealed class InterventionManifestTests
         { "\"opset\": 17,", "\"opset\": 1.7e1,", "opset" },
         { "\"tensor\": \"/model/layers.3/Add_1_output_0\"", "\"tensor\": \"/model/layers.1/Add_1_output_0\"", "sites" },
     };
+
+    // The tail of the documented example (docs/interventions/profile-format.md), which the Python tests parse.
+    private const string IdentityTail = """
+          "derived_files": [
+            {
+              "path": "model.onnx_data",
+              "sha256": "4444444444444444444444444444444444444444444444444444444444444444",
+              "size": 5000000000,
+              "identity": {
+                "device": 66307,
+                "inode": 1234567,
+                "mtime_ns": 1761000000123456789
+              }
+            }
+          ],
+          "validation": {
+            "onnx_checker": "skipped_base_rejected",
+            "detail": "No Op registered for SimplifiedLayerNormalization with domain_version of 17"
+          }
+        }
+
+        """;
+
+    private static string WithIdentity => Canonical.Replace("  \"derived_files\": []\n}\n", IdentityTail, StringComparison.Ordinal);
+
+    [Fact]
+    public void IdentityAndValidationRoundTrip()
+    {
+        Assert.NotEqual(Canonical, WithIdentity);
+        byte[] bytes = Utf8(WithIdentity);
+        InterventionManifest manifest = InterventionManifest.Parse(bytes);
+        Assert.Equal(bytes, manifest.Serialize());
+        Assert.Equal(new InterventionFileIdentity(66307, 1234567, 1761000000123456789), manifest.DerivedFiles[0].Identity);
+        Assert.Equal(InterventionCheckerResult.SkippedBaseRejected, manifest.Validation!.OnnxChecker);
+        Assert.StartsWith("No Op registered", manifest.Validation.Detail, StringComparison.Ordinal);
+
+        InterventionManifest built = Manifest(
+            derivedFiles: [new("model.onnx_data", DataSha, 5_000_000_000, new InterventionFileIdentity(66307, 1234567, 1761000000123456789))],
+            validation: new InterventionManifestValidation(InterventionCheckerResult.SkippedBaseRejected, manifest.Validation.Detail));
+        Assert.Equal(WithIdentity, Text(built.Serialize()));
+        Assert.Null(InterventionManifest.Parse(Utf8(Canonical)).Validation);
+    }
+
+    public static TheoryData<string, string, string> ReplacedWithIdentity => new()
+    {
+        { "\"inode\": 1234567", "\"inode\": -1", "derived_files[0].identity.inode" },
+        { "\"device\": 66307", "\"device\": 1.5", "derived_files[0].identity.device" },
+        { "\"mtime_ns\": 1761000000123456789", "\"ctime_ns\": 1", "derived_files[0].identity.ctime_ns" },
+        { ",\n        \"mtime_ns\": 1761000000123456789", "", "derived_files[0].identity.mtime_ns" },
+        { "\"onnx_checker\": \"skipped_base_rejected\"", "\"onnx_checker\": \"skipped\"", "validation.onnx_checker" },
+        { "\"detail\": \"No Op", "\"detail\": \"\\nNo Op", "validation.detail" },
+        { "\"detail\": \"No Op registered for SimplifiedLayerNormalization with domain_version of 17\"", "\"detail\": \"\"", "validation.detail" },
+        { "\"onnx_checker\": \"skipped_base_rejected\",", "\"result\": 1,", "validation.result" },
+        { "\"path\": \"model.onnx\",\n    \"sha256\"", "\"path\": \"model.onnx\",\n    \"identity\": {},\n    \"sha256\"", "derived_graph.identity" },
+    };
+
+    [Theory]
+    [MemberData(nameof(ReplacedWithIdentity))]
+    public void RejectsInvalidIdentityOrValidation(string find, string replace, string path)
+    {
+        Assert.Contains(find, WithIdentity, StringComparison.Ordinal);
+        string json = WithIdentity.Replace(find, replace, StringComparison.Ordinal);
+        InterventionContractException e = Assert.Throws<InterventionContractException>(() => InterventionManifest.Parse(Utf8(json)));
+        Assert.Equal(path, e.JsonPath);
+    }
+
+    [Fact]
+    public void OnlyDerivedFilesCarryAnIdentity()
+    {
+        InterventionFileIdentity identity = new(1, 2, 3);
+        Assert.Throws<InterventionContractException>(() => Manifest(derivedGraph: new("model.onnx", GraphSha, 2048, identity)));
+        Assert.Throws<InterventionContractException>(() => Manifest(baseArtifacts:
+        [
+            new(InterventionArtifactRole.Graph, new("onnx/model.onnx", BaseSha, 1234, identity)),
+        ]));
+        Assert.Throws<InterventionContractException>(() => new InterventionFileIdentity(-1, 0, 0));
+        Assert.Throws<InterventionContractException>(() => new InterventionManifestValidation(InterventionCheckerResult.Passed, new string('x', 513)));
+        Assert.Throws<InterventionContractException>(() => new InterventionManifestValidation(InterventionCheckerResult.Passed, "a\tb"));
+    }
 
     [Theory]
     [MemberData(nameof(Replaced))]

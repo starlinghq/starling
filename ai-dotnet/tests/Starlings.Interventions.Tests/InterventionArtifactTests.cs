@@ -124,7 +124,14 @@ public sealed class InterventionArtifactTests
             Profile = new InterventionProfile("synthetic-demo", BaseGraphSha, InterventionOperatorKind.DirectionalProjection, [site]);
             ProfileBytes = Profile.Serialize();
             Root.Write("bundle/onnx/model.onnx", Utf8("base graph"));
-            Root.Write("bundle/onnx/model.onnx_data", Data);
+            string baseData = Root.Write("bundle/onnx/model.onnx_data", Data);
+            // A whole-tick modification time, so tests can restore it exactly with the .NET API (100 ns precision).
+            File.SetLastWriteTimeUtc(baseData, DataModified);
+            CacheRoot = Path.Combine(Root.Path, "cache");
+            string link = Path.Combine(Root.Path, "staging", "model.onnx_data");
+            HardLink(baseData, link);
+            Identity = Internal.FileIdentityProbe.TryGet(link)
+                ?? new InterventionFileIdentity(0, 0, Internal.FileIdentityProbe.ModifiedNanoseconds(link));
             Manifest = new InterventionManifest(
                 "0.1.0",
                 "tiny-mlp/fp32/1",
@@ -140,12 +147,13 @@ public sealed class InterventionArtifactTests
                 [new("intervention_strength", InterventionInputRole.Strength, InterventionDType.Fp32, [1])],
                 [new(1, InterventionTarget.ResidualPost, "layer1/residual_post")],
                 new("model.onnx", InterventionHashes.ComputeSha256(Graph), Graph.Length),
-                [new("model.onnx_data", InterventionHashes.ComputeSha256(Data), Data.Length)]);
+                [new("model.onnx_data", InterventionHashes.ComputeSha256(Data), Data.Length, Identity)],
+                new InterventionManifestValidation(InterventionCheckerResult.Passed));
             Key = InterventionCacheKey.Compute(Manifest);
-            CacheRoot = Path.Combine(Root.Path, "cache");
             Dir = InterventionArtifactCache.GetEntryDirectory(CacheRoot, Model, Key);
+            Directory.CreateDirectory(Dir);
+            File.Move(link, PathOf("model.onnx_data"));
             Write("model.onnx", Graph);
-            Write("model.onnx_data", Data);
             Write("profile.json", ProfileBytes);
             Write("directions/layer1.f32", Directions);
             Write("compiler-manifest.json", Manifest.Serialize());
@@ -172,6 +180,10 @@ public sealed class InterventionArtifactTests
         public InterventionProfile Profile { get; }
 
         public InterventionManifest Manifest { get; }
+
+        public InterventionFileIdentity Identity { get; }
+
+        public static DateTime DataModified => new(2026, 1, 2, 3, 4, 5, DateTimeKind.Utc);
 
         public string PathOf(string relative) => Path.Combine(Dir, relative.Replace('/', Path.DirectorySeparatorChar));
 
@@ -321,7 +333,7 @@ public sealed class InterventionArtifactTests
 
     private static InterventionManifest WithDerivedFiles(InterventionManifest m, IReadOnlyList<InterventionArtifactFile> files) =>
         new(m.CompilerVersion, m.SiteMappingVersion, m.BaseArtifacts, m.ProfileId, m.ProfileSha256, m.Operator, m.Opset,
-            m.Precision, m.Inputs, m.Sites, m.DerivedGraph, files);
+            m.Precision, m.Inputs, m.Sites, m.DerivedGraph, files, m.Validation);
 
     [Fact]
     public void DerivedFilesMustBeTheBaseExternalData()
@@ -356,16 +368,107 @@ public sealed class InterventionArtifactTests
     }
 
     [Fact]
-    public void SameSizeWeightsChangeIsCaughtOnlyByFullVerification()
+    public void SameSizeWeightsRewriteIsCaughtByTheModificationTime()
     {
         using Entry e = new();
+        Assert.Equal(e.Identity, e.Manifest.DerivedFiles[0].Identity);
+        _ = InterventionArtifactCache.Open(e.CacheRoot, Model, e.Key, InterventionArtifactVerification.Fast, e.BaseDir);
         byte[] changed = (byte[])e.Data.Clone();
         changed[^1] ^= 1;
-        e.Write("model.onnx_data", changed);
-        _ = InterventionArtifactCache.Open(e.CacheRoot, Model, e.Key); // fast: sizes only for the weights
+        using (FileStream stream = new(e.PathOf("model.onnx_data"), FileMode.Open, FileAccess.Write))
+        {
+            stream.Write(changed); // in place: the base file shares the inode and changes too
+        }
+
+        var error = Assert.Throws<InterventionMismatchException>(() => InterventionArtifactCache.Open(e.CacheRoot, Model, e.Key));
+        Assert.Contains("modified", error.Message, StringComparison.Ordinal);
+        Assert.Throws<InterventionMismatchException>(
+            () => InterventionArtifactCache.Open(e.CacheRoot, Model, e.Key, InterventionArtifactVerification.Full));
+
+        // A rewrite that restores the modification time is the documented limit of Fast; Full still catches it.
+        File.SetLastWriteTimeUtc(e.PathOf("model.onnx_data"), Entry.DataModified);
+        _ = InterventionArtifactCache.Open(e.CacheRoot, Model, e.Key, InterventionArtifactVerification.Fast, e.BaseDir);
         Assert.Throws<InterventionMismatchException>(
             () => InterventionArtifactCache.Open(e.CacheRoot, Model, e.Key, InterventionArtifactVerification.Full));
     }
+
+    [Fact]
+    public void ReplacedLinkIsCaughtByFastAndPassesFull()
+    {
+        Assert.SkipUnless(OperatingSystem.IsLinux(), "device and inode are checked on Linux only");
+        using Entry e = new();
+        string link = e.PathOf("model.onnx_data");
+        File.Delete(link);
+        File.WriteAllBytes(link, e.Data); // same bytes and size, new inode
+        File.SetLastWriteTimeUtc(link, Entry.DataModified);
+        var error = Assert.Throws<InterventionMismatchException>(() => InterventionArtifactCache.Open(e.CacheRoot, Model, e.Key));
+        Assert.Contains("inode", error.Message, StringComparison.Ordinal);
+        _ = InterventionArtifactCache.Open(e.CacheRoot, Model, e.Key, InterventionArtifactVerification.Full, e.BaseDir);
+    }
+
+    [Fact]
+    public void ReplacedBaseFileIsCaughtByFastWithTheBaseDirectory()
+    {
+        Assert.SkipUnless(OperatingSystem.IsLinux(), "device and inode are checked on Linux only");
+        using Entry e = new();
+        string original = Path.Combine(e.BaseDir, "onnx", "model.onnx_data");
+        string replacement = original + ".new";
+        File.WriteAllBytes(replacement, e.Data);
+        File.Move(replacement, original, overwrite: true); // replaced by rename: the entry keeps the old inode
+        _ = InterventionArtifactCache.Open(e.CacheRoot, Model, e.Key); // the entry itself is unchanged
+        var error = Assert.Throws<InterventionMismatchException>(
+            () => InterventionArtifactCache.Open(e.CacheRoot, Model, e.Key, InterventionArtifactVerification.Fast, e.BaseDir));
+        Assert.Contains("no longer a hard link", error.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void FastRequiresARecordedIdentity()
+    {
+        using Entry e = new();
+        InterventionArtifactFile link = e.Manifest.DerivedFiles[0];
+        e.Write("compiler-manifest.json", WithDerivedFiles(e.Manifest, [new(link.Path, link.Sha256, link.Size)]).Serialize());
+        var error = Assert.Throws<InterventionMismatchException>(() => InterventionArtifactCache.Open(e.CacheRoot, Model, e.Key));
+        Assert.Contains("no identity", error.Message, StringComparison.Ordinal);
+        _ = InterventionArtifactCache.Open(e.CacheRoot, Model, e.Key, InterventionArtifactVerification.Full);
+    }
+
+    [Fact]
+    public void SymlinkedEntryDirectoryIsRejected()
+    {
+        using Entry e = new();
+        string alias = Path.Combine(Path.GetDirectoryName(e.Dir)!, new string('f', 64));
+        Directory.CreateSymbolicLink(alias, e.Dir);
+        var error = Assert.Throws<InterventionMismatchException>(() => InterventionArtifactCache.OpenEntry(alias));
+        Assert.Contains("symbolic link", error.Message, StringComparison.Ordinal);
+        Assert.Equal([e.Dir], InterventionArtifactCache.ListEntries(e.CacheRoot, Model));
+    }
+
+    [Fact]
+    public void ProbeReportsSharedIdentityForHardLinks()
+    {
+        Assert.SkipUnless(OperatingSystem.IsLinux(), "statx is Linux only");
+        using TempDir dir = new();
+        string a = dir.Write("a.bin", [1, 2, 3]);
+        string b = dir.Write("b.bin", [1, 2, 3]);
+        string c = Path.Combine(dir.Path, "c.bin");
+        HardLink(a, c);
+        InterventionFileIdentity ia = Internal.FileIdentityProbe.TryGet(a)!;
+        Assert.Equal(ia, Internal.FileIdentityProbe.TryGet(c));
+        InterventionFileIdentity ib = Internal.FileIdentityProbe.TryGet(b)!;
+        Assert.Equal(ia.Device, ib.Device);
+        Assert.NotEqual(ia.Inode, ib.Inode);
+        // statx's nanosecond mtime agrees with .NET's 100 ns value.
+        Assert.Equal(Internal.FileIdentityProbe.ModifiedNanoseconds(a) / 100, ia.ModifiedNanoseconds / 100);
+        Assert.Throws<FileNotFoundException>(() => Internal.FileIdentityProbe.TryGet(Path.Combine(dir.Path, "missing")));
+    }
+
+    [Theory]
+    [InlineData(8u, 1u, 2049UL)]
+    [InlineData(259u, 3u, 66307UL)]
+    [InlineData(0u, 52u, 52UL)]
+    [InlineData(4096u, 256u, (4096UL << 32) | (256UL << 12))]
+    public void DeviceNumbersUseTheGlibcEncoding(uint major, uint minor, ulong expected) =>
+        Assert.Equal(expected, Internal.FileIdentityProbe.MakeDevice(major, minor));
 
     [Fact]
     public void FullVerificationWithBaseDirectoryHashesTheBaseArtifacts()

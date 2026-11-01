@@ -19,7 +19,7 @@ public sealed class InterventionManifest
     internal static readonly string[] PropertyNames =
     [
         "schema_version", "compiler_version", "site_mapping_version", "base_artifacts", "profile_id", "profile_sha256",
-        "operator", "opset", "precision", "inputs", "sites", "derived_graph", "derived_files",
+        "operator", "opset", "precision", "inputs", "sites", "derived_graph", "derived_files", "validation",
     ];
 
     /// <summary>Creates a manifest.</summary>
@@ -34,7 +34,14 @@ public sealed class InterventionManifest
     /// <param name="inputs">Declared extra inputs: exactly one <see cref="InterventionInputRole.Strength"/> input, shape [] or [1]; names unique.</param>
     /// <param name="sites">One binding per profile site; no two share a layer and target, or a tensor.</param>
     /// <param name="derivedGraph">The derived <c>model.onnx</c>, relative to the derived artifact directory.</param>
-    /// <param name="derivedFiles">Other derived files (for example a small external data file of the derived graph); paths unique.</param>
+    /// <param name="derivedFiles">
+    /// Other derived files; paths unique. In a derived-artifact cache entry these are exactly the hard links of the base
+    /// graph's external data, with the base artifact's SHA-256 and size (<c>docs/interventions/cache.md</c>,
+    /// "Verification"; <see cref="InterventionArtifact.Open"/> rejects anything else). A compiler that writes a file of
+    /// its own here needs a reader change and a compiler-version bump. Only these entries may carry an
+    /// <see cref="InterventionArtifactFile.Identity"/>.
+    /// </param>
+    /// <param name="validation">How the compiler validated the derived graph, or null when not recorded.</param>
     /// <exception cref="InterventionContractException">A value violates the contract.</exception>
     public InterventionManifest(
         string compilerVersion,
@@ -48,7 +55,8 @@ public sealed class InterventionManifest
         IEnumerable<InterventionGraphInput> inputs,
         IEnumerable<InterventionSiteBinding> sites,
         InterventionArtifactFile derivedGraph,
-        IEnumerable<InterventionArtifactFile> derivedFiles)
+        IEnumerable<InterventionArtifactFile> derivedFiles,
+        InterventionManifestValidation? validation = null)
     {
         ArgumentNullException.ThrowIfNull(baseArtifacts);
         ArgumentNullException.ThrowIfNull(inputs);
@@ -96,6 +104,11 @@ public sealed class InterventionManifest
             if (!basePaths.Add(artifact.File.Path))
             {
                 throw new InterventionContractException("base_artifacts", $"path '{artifact.File.Path}' appears twice.");
+            }
+
+            if (artifact.File.Identity is not null)
+            {
+                throw new InterventionContractException("base_artifacts", $"base artifact '{artifact.File.Path}' carries an identity; only derived files do.");
             }
 
             if (artifact.Role == InterventionArtifactRole.Graph)
@@ -170,6 +183,11 @@ public sealed class InterventionManifest
             }
         }
 
+        if (derivedGraph.Identity is not null)
+        {
+            throw new InterventionContractException("derived_graph", "the derived graph carries an identity; only derived files do.");
+        }
+
         InterventionArtifactFile[] derivedList = [.. derivedFiles];
         HashSet<string> derivedPaths = new(StringComparer.Ordinal) { derivedGraph.Path };
         foreach (InterventionArtifactFile file in derivedList)
@@ -195,6 +213,7 @@ public sealed class InterventionManifest
         Sites = new ReadOnlyCollection<InterventionSiteBinding>(siteList);
         DerivedGraph = derivedGraph;
         DerivedFiles = new ReadOnlyCollection<InterventionArtifactFile>(derivedList);
+        Validation = validation;
     }
 
     /// <summary>Version label of the compiler.</summary>
@@ -241,6 +260,12 @@ public sealed class InterventionManifest
 
     /// <summary>Other derived files, in document order.</summary>
     public IReadOnlyList<InterventionArtifactFile> DerivedFiles { get; }
+
+    /// <summary>
+    /// How the compiler validated the derived graph, or null when the manifest does not record it. A value of
+    /// <see cref="InterventionCheckerResult.SkippedBaseRejected"/> means onnx.checker could not judge the graph.
+    /// </summary>
+    public InterventionManifestValidation? Validation { get; }
 
     /// <summary>Parses and validates a <c>compiler-manifest.json</c> document (UTF-8, no byte order mark).</summary>
     /// <exception cref="InterventionContractException">The document violates the contract.</exception>
@@ -295,8 +320,12 @@ public sealed class InterventionManifest
         foreach (JsonElement item in StrictJson.GetArray(o.Required("derived_files"), "derived_files"))
         {
             derivedFiles.Add(InterventionArtifactFile.Read(
-                StrictObject.Open(item, StrictJson.Index("derived_files", index++), "path", "sha256", "size")));
+                StrictObject.Open(item, StrictJson.Index("derived_files", index++), "path", "sha256", "size", "identity")));
         }
+
+        InterventionManifestValidation? validation = o.Has("validation")
+            ? InterventionManifestValidation.Read(o.Required("validation"), "validation")
+            : null;
 
         return new InterventionManifest(
             o.GetString("compiler_version"),
@@ -310,7 +339,8 @@ public sealed class InterventionManifest
             inputs,
             sites,
             derivedGraph,
-            derivedFiles);
+            derivedFiles,
+            validation);
     }
 
     /// <summary>Reads and validates the manifest at <paramref name="path"/>.</summary>
@@ -377,6 +407,12 @@ public sealed class InterventionManifest
         }
 
         writer.WriteEndArray();
+        if (Validation is not null)
+        {
+            writer.WritePropertyName("validation");
+            Validation.Write(writer);
+        }
+
         writer.WriteEndObject();
     });
 

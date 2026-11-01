@@ -6,14 +6,18 @@ public enum InterventionArtifactVerification
     /// <summary>
     /// For every load. The manifest parses; <c>profile.json</c> has the manifest's profile SHA-256 and matches it, and
     /// its directions files verify; the derived graph has the recorded size and SHA-256; every other derived file (the
-    /// hard-linked external weights) is recorded with its base artifact's SHA-256 and size and exists with that size. The weights are not hashed, so a weights file
-    /// rewritten in place with the same size is not detected at this level.
+    /// hard-linked external weights) is recorded with its base artifact's SHA-256 and size, exists with that size, and
+    /// still has the <see cref="InterventionArtifactFile.Identity"/> the manifest records (an entry without one fails):
+    /// on Linux device, inode and modification time (and, with a base directory, the base file is that same inode);
+    /// on other platforms the modification time only, at 100 ns precision. The weights are not hashed, so a rewrite in
+    /// place that keeps the size and restores the modification time is not detected at this level.
     /// </summary>
     Fast,
 
     /// <summary>
-    /// <see cref="Fast"/>, plus the SHA-256 of every derived file (this reads the whole weights file) and, when a base
-    /// directory is given, of every base artifact under it.
+    /// Instead of the identity check of <see cref="Fast"/>: the SHA-256 of every derived file (this reads the whole
+    /// weights file) and, when a base directory is given, of every base artifact under it. A copied or restored entry
+    /// (new inodes) fails <see cref="Fast"/> and can still pass <see cref="Full"/>.
     /// </summary>
     Full,
 }
@@ -103,6 +107,8 @@ public sealed class InterventionArtifact
             {
                 throw new InterventionMismatchException($"{path}: size {info.Length} bytes, expected {file.Size}.");
             }
+
+            VerifyIdentity(path, file, manifest.BaseGraph.Path, baseDirectory);
         }
 
         if (verification == InterventionArtifactVerification.Full && baseDirectory is not null)
@@ -111,6 +117,53 @@ public sealed class InterventionArtifact
         }
 
         return new InterventionArtifact(full, manifest, profile, InterventionCacheKey.Compute(manifest));
+    }
+
+    /// <summary>
+    /// Fast check of a linked file against the identity the compiler recorded: a replaced link, a restored or copied
+    /// entry, or a weights file rewritten in place (new modification time) fails here without hashing the weights.
+    /// </summary>
+    private static void VerifyIdentity(string path, InterventionArtifactFile file, string baseGraphPath, string? baseDirectory)
+    {
+        InterventionFileIdentity recorded = file.Identity ?? throw new InterventionMismatchException(
+            $"The manifest records no identity (device, inode, mtime) for {path}, so Fast verification cannot tie it to the bytes that were hashed; verify with Full, or evict and recompile the entry.");
+        InterventionFileIdentity? actual = Internal.FileIdentityProbe.TryGet(path);
+        if (actual is null)
+        {
+            long ticks = Math.DivRem(recorded.ModifiedNanoseconds, 100, out long remainder) - (remainder < 0 ? 1 : 0);
+            if (Internal.FileIdentityProbe.ModifiedNanoseconds(path) != ticks * 100)
+            {
+                throw new InterventionMismatchException(
+                    $"{path} was modified since the entry was written: the linked weights may have been rewritten in place; verify with Full, or evict the entry.");
+            }
+
+            return;
+        }
+
+        if (actual.Device != recorded.Device || actual.Inode != recorded.Inode)
+        {
+            throw new InterventionMismatchException(
+                $"{path} is now device {actual.Device} inode {actual.Inode}; the manifest records device {recorded.Device} inode {recorded.Inode} (the file was replaced, or the entry copied or restored); verify with Full, or evict the entry.");
+        }
+
+        if (actual.ModifiedNanoseconds != recorded.ModifiedNanoseconds)
+        {
+            throw new InterventionMismatchException(
+                $"{path} was modified (mtime {actual.ModifiedNanoseconds} ns, recorded {recorded.ModifiedNanoseconds} ns): the linked weights may have been rewritten in place; verify with Full, or evict the entry.");
+        }
+
+        if (baseDirectory is not null)
+        {
+            int slash = baseGraphPath.LastIndexOf('/');
+            string basePath = slash < 0 ? file.Path : baseGraphPath[..(slash + 1)] + file.Path;
+            string original = Internal.StrictJson.Resolve(Path.GetFullPath(baseDirectory), basePath);
+            InterventionFileIdentity? source = File.Exists(original) ? Internal.FileIdentityProbe.TryGet(original) : null;
+            if (source is null || source.Device != actual.Device || source.Inode != actual.Inode)
+            {
+                throw new InterventionMismatchException(
+                    $"{path} is no longer a hard link to {original} (the base file was replaced or removed); verify with Full, or evict the entry.");
+            }
+        }
     }
 
     /// <summary>

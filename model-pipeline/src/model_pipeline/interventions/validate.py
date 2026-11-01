@@ -2,12 +2,23 @@
 
 from __future__ import annotations
 
+import logging
 from collections.abc import Iterable, Mapping, Sequence
 from pathlib import Path
 
 import numpy as np
 import onnx
 from onnx import ModelProto, TensorProto
+
+from .contract import (
+    CHECKER_PASSED,
+    CHECKER_SKIPPED_BASE_REJECTED,
+    MAX_VALIDATION_DETAIL,
+    ManifestValidation,
+    utf16_length,
+)
+
+logger = logging.getLogger(__name__)
 
 
 class DerivedGraphError(ValueError):
@@ -58,7 +69,22 @@ def _tensor_identity(tensor: TensorProto) -> bytes:
     return tensor.SerializeToString(deterministic=True)
 
 
-def validate_derived_model(base: ModelProto, derived: ModelProto, extra_inputs: Sequence[str]) -> None:
+def _one_line(message: object) -> str:
+    """First non-empty line of ``message``, without control characters, at most ``MAX_VALIDATION_DETAIL`` long."""
+    lines = [line.strip() for line in str(message).splitlines() if line.strip()]
+    text = "".join(c if c.isprintable() else " " for c in (lines[0] if lines else "")) or "no message"
+    if utf16_length(text) <= MAX_VALIDATION_DETAIL:
+        return text
+    kept, used = [], 3  # room for "..."
+    for c in text:
+        used += utf16_length(c)
+        if used > MAX_VALIDATION_DETAIL:
+            break
+        kept.append(c)
+    return "".join(kept) + "..."
+
+
+def validate_derived_model(base: ModelProto, derived: ModelProto, extra_inputs: Sequence[str]) -> ManifestValidation:
     """Check that ``derived`` is ``base`` plus the intervention and nothing else that matters.
 
     - onnx.checker passes (unless it already rejects the base graph, e.g. for operators only ONNX Runtime registers),
@@ -68,8 +94,12 @@ def validate_derived_model(base: ModelProto, derived: ModelProto, extra_inputs: 
     - the outputs are the base outputs, unchanged;
     - every base initializer is present and identical (for external tensors: identical location, offset and length);
     - IR version, opset imports and the base nodes' operators are unchanged.
+
+    Returns what onnx.checker said (recorded in the compiler manifest's ``validation``). When the checker is skipped
+    because it rejects the base graph, a warning is logged on this module's logger.
     """
     view = checker_view(derived)
+    checker = ManifestValidation(CHECKER_PASSED)
     try:
         onnx.checker.check_model(view)
     except onnx.checker.ValidationError as derived_error:
@@ -79,8 +109,13 @@ def validate_derived_model(base: ModelProto, derived: ModelProto, extra_inputs: 
         # A derived graph whose base passes the checker must pass it too.
         try:
             onnx.checker.check_model(checker_view(base))
-        except onnx.checker.ValidationError:
-            pass
+        except onnx.checker.ValidationError as base_error:
+            checker = ManifestValidation(CHECKER_SKIPPED_BASE_REJECTED, _one_line(base_error))
+            logger.warning(
+                "onnx.checker rejects the base graph (%s); the derived graph is checked structurally only (topological "
+                "order, shape inference, inputs, outputs, initializers, nodes) and by the ONNX Runtime load.",
+                checker.detail,
+            )
         else:
             raise DerivedGraphError(f"onnx.checker rejects the derived graph but not its base: {derived_error}") from (
                 derived_error
@@ -121,6 +156,7 @@ def validate_derived_model(base: ModelProto, derived: ModelProto, extra_inputs: 
             raise DerivedGraphError(f"base node '{name}' ({op}) is missing or changed in the derived graph.")
     if len(derived.graph.node) < len(base.graph.node):
         raise DerivedGraphError("the derived graph has fewer nodes than the base graph.")
+    return checker
 
 
 def run_outputs(

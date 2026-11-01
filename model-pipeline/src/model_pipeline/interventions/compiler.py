@@ -18,6 +18,8 @@ offset and length entries as the base graph. See ``external_data`` for how the d
 from __future__ import annotations
 
 import os
+import secrets
+import threading
 from collections.abc import Mapping
 from dataclasses import dataclass
 from pathlib import Path
@@ -34,12 +36,14 @@ from .contract import (
     ROLE_STRENGTH,
     ArtifactFile,
     BaseArtifact,
+    FileIdentity,
     GraphInput,
     InterventionContractError,
     InterventionManifest,
     InterventionMismatchError,
     InterventionProfileFile,
     InterventionSite,
+    ManifestValidation,
     SiteBinding,
     is_relative_path,
     is_tensor_name,
@@ -314,8 +318,13 @@ def compile_intervention(
     With ``link_external`` (the default) every external data file is hard-linked into ``out_dir`` under its original
     location, so ``out_dir/model.onnx`` loads by path in ONNX Runtime. The manifest lists those files in
     ``derived_files`` (path, SHA-256 and size of the bytes the derived graph reads) whether or not they were linked
-    here. The derived graph, the links and the manifest are written in place; atomic publication into a cache is the
-    caller's job.
+    here, and for each file it linked also its identity on this machine (device, inode, mtime), which Fast
+    verification compares. The derived graph, the links and the manifest are written in place; atomic publication
+    into a cache is the caller's job. If the compile fails after it started writing, the files, links and directories
+    this call created are removed again (a file it overwrote is not restored).
+
+    External data on another file system than ``out_dir`` fails with ``ExternalDataLinkError`` (``EXDEV``) before
+    anything is written: the weights are never copied.
     """
     base_dir = Path(base_dir).absolute()
     out_dir = Path(out_dir).absolute()
@@ -363,15 +372,66 @@ def compile_intervention(
     plans = _plan(base, profile_file, mapping)
     derived = build_derived_model(base, plans, strength_input)
     inputs = (GraphInput(strength_input, ROLE_STRENGTH, DTYPE_FLOAT32, STRENGTH_SHAPE),)
-    validate_derived_model(base, derived, extra_inputs=[i.name for i in inputs])
+    validation = validate_derived_model(base, derived, extra_inputs=[i.name for i in inputs])
+    if link_external:
+        external_data.check_same_file_system(graph_path.parent, out_dir, locations)
 
+    created: list[Path] = [d for d in (out_dir, *out_dir.parents) if not d.exists()][::-1]
+    try:
+        return _write_outputs(
+            out_dir=out_dir,
+            created=created,
+            derived=derived,
+            graph=graph,
+            graph_path=graph_path,
+            graph_bytes=graph_bytes,
+            graph_sha=graph_sha,
+            base_dir=base_dir,
+            locations=locations,
+            link_external=link_external,
+            write_manifest=write_manifest,
+            profile_file=profile_file,
+            mapping=mapping,
+            opset=opset,
+            inputs=inputs,
+            plans=plans,
+            validation=validation,
+        )
+    except BaseException:
+        external_data.remove_created(created)
+        raise
+
+
+def _write_outputs(
+    *,
+    out_dir: Path,
+    created: list[Path],
+    derived: ModelProto,
+    graph: str,
+    graph_path: Path,
+    graph_bytes: bytes,
+    graph_sha: str,
+    base_dir: Path,
+    locations: list[str],
+    link_external: bool,
+    write_manifest: bool,
+    profile_file: InterventionProfileFile,
+    mapping: SiteMapping,
+    opset: int,
+    inputs: tuple[GraphInput, ...],
+    plans: list[_PlannedSite],
+    validation: ManifestValidation,
+) -> CompileResult:
+    """Write the derived graph, links and manifest, appending every path it creates to ``created``."""
     out_dir.mkdir(parents=True, exist_ok=True)
     derived_path = out_dir / DERIVED_GRAPH_NAME
     derived_bytes = derived.SerializeToString(deterministic=True)
     _write_bytes(derived_path, derived_bytes)
+    created.append(derived_path)
     linked: list[Path] = []
     if link_external:
-        linked = external_data.link_external_data(graph_path.parent, out_dir, locations)
+        linked, made = external_data.link_external_data_tracked(graph_path.parent, out_dir, locations)
+        created.extend(made)
         # Not checked by path with onnx.checker: onnx 1.23 refuses external data with several hard links ("potential
         # hardlink attack"), although ONNX Runtime 1.30 loads it. onnx.load(..., load_external_data=True) refuses it
         # too.
@@ -382,12 +442,15 @@ def compile_intervention(
     # them lets VerifyDerivedFiles check the bytes ONNX Runtime will actually load (a swapped or stale file next to
     # model.onnx fails). They are listed even with link_external=False; the caller must then place exactly these files.
     # A link shares the original's inode, so its hash is the one just computed, provided it is still the same file.
+    identities: dict[str, FileIdentity] = {}
     for link in linked:
         source = graph_path.parent.joinpath(*link.relative_to(out_dir).parts)
         if not os.path.samefile(source, link):
             raise InterventionMismatchError(f"external data file '{source}' was replaced during compilation.")
+        identities[link.relative_to(out_dir).as_posix()] = FileIdentity.of(link)
     derived_files = tuple(
-        ArtifactFile(location, a.sha256, a.size) for location, a in zip(locations, external_artifacts, strict=True)
+        ArtifactFile(location, a.sha256, a.size, identities.get(location))
+        for location, a in zip(locations, external_artifacts, strict=True)
     )
     manifest = InterventionManifest(
         compiler_version=COMPILER_VERSION,
@@ -402,6 +465,7 @@ def compile_intervention(
         sites=tuple(SiteBinding(p.site.layer, p.site.target, p.binding.tensor) for p in plans),
         derived_graph=ArtifactFile(DERIVED_GRAPH_NAME, sha256_bytes(derived_bytes), len(derived_bytes)),
         derived_files=derived_files,
+        validation=validation,
     ).validate()
     # The base graph must not have changed while we compiled.
     if sha256_file(graph_path) != graph_sha:
@@ -410,10 +474,16 @@ def compile_intervention(
     if write_manifest:
         manifest_path = out_dir / MANIFEST_NAME
         _write_bytes(manifest_path, manifest.serialize())
+        created.append(manifest_path)
     return CompileResult(out_dir, derived_path, manifest_path, manifest, tuple(linked))
 
 
 def _write_bytes(path: Path, data: bytes) -> None:
-    temporary = path.with_name(f".{path.name}.tmp-{os.getpid()}")
-    temporary.write_bytes(data)
-    os.replace(temporary, path)
+    # Unique per process, thread and call: two compiles into one directory never share a temporary file.
+    temporary = path.with_name(f".{path.name}.tmp-{os.getpid()}-{threading.get_ident()}-{secrets.token_hex(4)}")
+    try:
+        temporary.write_bytes(data)
+        os.replace(temporary, path)
+    except BaseException:
+        temporary.unlink(missing_ok=True)
+        raise
