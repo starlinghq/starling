@@ -1,0 +1,21 @@
+graph of lfm3-1.7b-concise: <cache>/lfm3/interventions/3c128f04cebae8b3c017eab2aedf39bf40cb9dbe94dde91efc9f1eb1d2605cf4 (reused)
+graph of lfm3-1.7b-concise-control-20261101: <cache>/lfm3/interventions/384e842a274673818929868747d1bb156135ca931e398a045a896a7366ed7ae8 (reused)
+arm profile: strengths [-3.0, -2.0, -1.5, -1.0, -0.5, 0.0, 0.5, 1.0, 2.0]
+strength -3: median 512 target tokens, mean neutral KL 2.05
+strength -2: median 207.5 target tokens, mean neutral KL 0.5939
+strength -1.5: median 227 target tokens, mean neutral KL 0.306
+strength -1: median 310.5 target tokens, mean neutral KL 0.1572
+strength -0.5: median 290 target tokens, mean neutral KL 0.046
+strength 0: median 299 target tokens, mean neutral KL 0
+strength 0.5: median 339 target tokens, mean neutral KL 0.02832
+strength 1: median 389 target tokens, mean neutral KL 0.08416
+strength 2: median 392 target tokens, mean neutral KL 0.2735
+arm control: strengths [-3.0, -2.0, -1.5, -1.0, 0.0, 1.0]
+strength -3: median 254.5 target tokens, mean neutral KL 0.2754
+strength -2: median 260.5 target tokens, mean neutral KL 0.1427
+strength -1.5: median 304 target tokens, mean neutral KL 0.09501
+strength -1: median 316.5 target tokens, mean neutral KL 0.05211
+strength 0: median 299 target tokens, mean neutral KL 0
+strength 1: median 317.5 target tokens, mean neutral KL 0.03705
+<repo>/docs/evidence/lfm3-concise-evaluation-2026-10-31/evaluation-report.md
+recommended range: none
