@@ -12,7 +12,7 @@ The checkpoint's own `artifact.metadata` gives the contract: `dim` 128, `query_m
 
 - **Processing contract to reproduce exactly** (from the colbert-ai source at a pinned commit; the markers and padding below are to be verified there, not taken from this note):
   - a marker token after `[CLS]`: `[Q]` for queries, `[D]` for documents, conventionally the vocabulary's `[unused0]` and `[unused1]`;
-  - queries padded with `[MASK]` to 32 tokens, the mask tokens attended to by the encoder but excluded or included in scoring per `attend_to_mask_tokens`;
+  - queries padded with `[MASK]` to 32 tokens. `attend_to_mask_tokens` decides only whether the encoder's attention mask covers the `[MASK]` padding (false here, so the encoder does not attend to it); the `[MASK]` output vectors are always kept in the query matrix and take part in MaxSim scoring (query augmentation). Confirm both points against the pinned colbert-ai `QueryTokenizer` and query encoder before building the reference;
   - documents truncated to 180 tokens, and punctuation tokens (a skiplist built from `string.punctuation`) and padding removed from the document vectors;
   - each token vector projected by a 768-to-128 linear layer (no bias) and L2-normalized.
 - **Tokenizer.** Uncased WordPiece; the existing `bert-wordpiece-uncased` profile very likely fits. Confirm by loading the pinned `tokenizer.json` and comparing against the reference on the route's corpus; if confirmed, no tokenizer work is needed.
