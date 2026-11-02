@@ -13,7 +13,9 @@ public sealed class DefinitionTests
     {
         AssemblyName[] references = typeof(KevRequest).Assembly.GetReferencedAssemblies();
         Assert.DoesNotContain(references, r => r.Name!.StartsWith("Microsoft.ML.OnnxRuntime", StringComparison.Ordinal));
-        Assert.DoesNotContain(references, r => r.Name is "Starlings.Runtime.Onnx" or "Starlings.Acquisition");
+        Assert.DoesNotContain(references, r => r.Name is "Starlings.Runtime.Onnx");
+        // Starlings.Acquisition (BCL only) for KevModelProfile.CheckpointLock and BaseCheckpointLock; nothing downloads.
+        Assert.Contains(references, r => r.Name == "Starlings.Acquisition");
         Assert.Same(typeof(KevRequest).Assembly, typeof(KevEncoder).Assembly);
         Assert.Same(typeof(KevRequest).Assembly, typeof(KevText).Assembly);
         Assert.Same(typeof(KevRequest).Assembly, typeof(KevModelProfile).Assembly);

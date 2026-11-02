@@ -1,0 +1,38 @@
+{
+  "schema_version": 2,
+  "name": "kev-4b-checkpoint",
+  "repository": "jaredpalmer/kev-4b",
+  "revision": "139fdd94f1b6a6ad80cc15e08fcb99cac885a101",
+  "files": [
+    {
+      "path": "adapter_config.json",
+      "size": 1271,
+      "sha256": "8a05dfd6c5e7f61a62e6db5d8de8093a8dbbd105aa7ee7b5e7b73f6249f45617"
+    },
+    {
+      "path": "adapter_model.safetensors",
+      "size": 129924032,
+      "sha256": "90e817356246e7f18bfa7ca3d31794cd4fbeb3332a66a84cb51d9ceae925f2b2"
+    },
+    {
+      "path": "head.pt",
+      "size": 5249791,
+      "sha256": "dd633435998ecc751ac538717a3742e32149500fabf7d7276287dbf0693f347c"
+    },
+    {
+      "path": "provenance.json",
+      "size": 4265,
+      "sha256": "7aa999a629f25d93713950d6fb39d0b4c37fe8a9f43d2673a79c4c455d42b26a"
+    },
+    {
+      "path": "tokenizer.json",
+      "size": 19989325,
+      "sha256": "06b9509352d2af50381ab2247e083b80d32d5c0aba91c272ca9ff729b6a0e523"
+    },
+    {
+      "path": "tokenizer_config.json",
+      "size": 1128,
+      "sha256": "8671bed7c852ce9e661be94f179a7b4ffd091c2a65aea0363e5501c20318ee45"
+    }
+  ]
+}

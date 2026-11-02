@@ -13,6 +13,9 @@
         "requested": "[0.3.4, 0.3.4]",
         "resolved": "0.3.4",
         "contentHash": "YYBHbSofthVVprGN9ZTwbAvi8tjrGhWds1NPfN+szBx4CoJCrSxz65LUfX6lexUM5s3JHh9HuqzTA/jxPyp4TA=="
+      },
+      "starlings.acquisition": {
+        "type": "Project"
       }
     }
   }
