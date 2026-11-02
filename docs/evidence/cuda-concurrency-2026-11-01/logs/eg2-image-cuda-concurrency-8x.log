@@ -1,7 +1,7 @@
 run 1:
-2026-11-02T00:03:10Z
+2026-11-02T00:49:46Z
 0, NVIDIA GeForce RTX 3090, 23263 MiB, 24576 MiB
-1, NVIDIA GeForce RTX 4060 Ti, 678 MiB, 16380 MiB
+1, NVIDIA GeForce RTX 4060 Ti, 775 MiB, 16380 MiB
 xUnit.net v3 In-Process Runner v4.0.1+8ed8aa354c (64-bit .NET 10.0.14)
   Discovering: Starlings.Models.EmbeddingGemma2.Tests.Cuda
   Discovered:  Starlings.Models.EmbeddingGemma2.Tests.Cuda
@@ -11,12 +11,12 @@ xUnit.net v3 In-Process Runner v4.0.1+8ed8aa354c (64-bit .NET 10.0.14)
     Starlings.Models.EmbeddingGemma2.Tests.Cuda.CudaImageParityTests.SessionsUseCudaWithTf32Disabled [OUTPUT] a2c22e072ec2: CUDAExecutionProvider, CPUExecutionProvider; use_tf32=0; CUDA_VISIBLE_DEVICES=1
   Finished:    Starlings.Models.EmbeddingGemma2.Tests.Cuda (ID = 'e93bd84fe3d0de17aeadabd437db056a60c19cade5f57edf4530fefaf873c017')
 === TEST EXECUTION SUMMARY ===
-   Starlings.Models.EmbeddingGemma2.Tests.Cuda  Total: 2, Errors: 0, Failed: 0, Skipped: 0, Not Run: 0, Time: 32.536s
+   Starlings.Models.EmbeddingGemma2.Tests.Cuda  Total: 2, Errors: 0, Failed: 0, Skipped: 0, Not Run: 0, Time: 52.112s
 exit 0
 run 2:
-2026-11-02T00:03:43Z
+2026-11-02T00:50:40Z
 0, NVIDIA GeForce RTX 3090, 23263 MiB, 24576 MiB
-1, NVIDIA GeForce RTX 4060 Ti, 681 MiB, 16380 MiB
+1, NVIDIA GeForce RTX 4060 Ti, 779 MiB, 16380 MiB
 xUnit.net v3 In-Process Runner v4.0.1+8ed8aa354c (64-bit .NET 10.0.14)
   Discovering: Starlings.Models.EmbeddingGemma2.Tests.Cuda
   Discovered:  Starlings.Models.EmbeddingGemma2.Tests.Cuda
@@ -26,12 +26,12 @@ xUnit.net v3 In-Process Runner v4.0.1+8ed8aa354c (64-bit .NET 10.0.14)
     Starlings.Models.EmbeddingGemma2.Tests.Cuda.CudaImageParityTests.SessionsUseCudaWithTf32Disabled [OUTPUT] a2c22e072ec2: CUDAExecutionProvider, CPUExecutionProvider; use_tf32=0; CUDA_VISIBLE_DEVICES=1
   Finished:    Starlings.Models.EmbeddingGemma2.Tests.Cuda (ID = 'e93bd84fe3d0de17aeadabd437db056a60c19cade5f57edf4530fefaf873c017')
 === TEST EXECUTION SUMMARY ===
-   Starlings.Models.EmbeddingGemma2.Tests.Cuda  Total: 2, Errors: 0, Failed: 0, Skipped: 0, Not Run: 0, Time: 31.890s
+   Starlings.Models.EmbeddingGemma2.Tests.Cuda  Total: 2, Errors: 0, Failed: 0, Skipped: 0, Not Run: 0, Time: 59.460s
 exit 0
 run 3:
-2026-11-02T00:04:16Z
+2026-11-02T00:51:41Z
 0, NVIDIA GeForce RTX 3090, 23263 MiB, 24576 MiB
-1, NVIDIA GeForce RTX 4060 Ti, 676 MiB, 16380 MiB
+1, NVIDIA GeForce RTX 4060 Ti, 778 MiB, 16380 MiB
 xUnit.net v3 In-Process Runner v4.0.1+8ed8aa354c (64-bit .NET 10.0.14)
   Discovering: Starlings.Models.EmbeddingGemma2.Tests.Cuda
   Discovered:  Starlings.Models.EmbeddingGemma2.Tests.Cuda
@@ -41,12 +41,12 @@ xUnit.net v3 In-Process Runner v4.0.1+8ed8aa354c (64-bit .NET 10.0.14)
     Starlings.Models.EmbeddingGemma2.Tests.Cuda.CudaImageParityTests.SessionsUseCudaWithTf32Disabled [OUTPUT] a2c22e072ec2: CUDAExecutionProvider, CPUExecutionProvider; use_tf32=0; CUDA_VISIBLE_DEVICES=1
   Finished:    Starlings.Models.EmbeddingGemma2.Tests.Cuda (ID = 'e93bd84fe3d0de17aeadabd437db056a60c19cade5f57edf4530fefaf873c017')
 === TEST EXECUTION SUMMARY ===
-   Starlings.Models.EmbeddingGemma2.Tests.Cuda  Total: 2, Errors: 0, Failed: 0, Skipped: 0, Not Run: 0, Time: 31.777s
+   Starlings.Models.EmbeddingGemma2.Tests.Cuda  Total: 2, Errors: 0, Failed: 0, Skipped: 0, Not Run: 0, Time: 54.583s
 exit 0
 run 4:
-2026-11-02T00:04:48Z
+2026-11-02T00:52:37Z
 0, NVIDIA GeForce RTX 3090, 23263 MiB, 24576 MiB
-1, NVIDIA GeForce RTX 4060 Ti, 678 MiB, 16380 MiB
+1, NVIDIA GeForce RTX 4060 Ti, 775 MiB, 16380 MiB
 xUnit.net v3 In-Process Runner v4.0.1+8ed8aa354c (64-bit .NET 10.0.14)
   Discovering: Starlings.Models.EmbeddingGemma2.Tests.Cuda
   Discovered:  Starlings.Models.EmbeddingGemma2.Tests.Cuda
@@ -56,12 +56,12 @@ xUnit.net v3 In-Process Runner v4.0.1+8ed8aa354c (64-bit .NET 10.0.14)
     Starlings.Models.EmbeddingGemma2.Tests.Cuda.CudaImageParityTests.SessionsUseCudaWithTf32Disabled [OUTPUT] a2c22e072ec2: CUDAExecutionProvider, CPUExecutionProvider; use_tf32=0; CUDA_VISIBLE_DEVICES=1
   Finished:    Starlings.Models.EmbeddingGemma2.Tests.Cuda (ID = 'e93bd84fe3d0de17aeadabd437db056a60c19cade5f57edf4530fefaf873c017')
 === TEST EXECUTION SUMMARY ===
-   Starlings.Models.EmbeddingGemma2.Tests.Cuda  Total: 2, Errors: 0, Failed: 0, Skipped: 0, Not Run: 0, Time: 33.280s
+   Starlings.Models.EmbeddingGemma2.Tests.Cuda  Total: 2, Errors: 0, Failed: 0, Skipped: 0, Not Run: 0, Time: 64.386s
 exit 0
 run 5:
-2026-11-02T00:05:23Z
+2026-11-02T00:53:42Z
 0, NVIDIA GeForce RTX 3090, 23263 MiB, 24576 MiB
-1, NVIDIA GeForce RTX 4060 Ti, 681 MiB, 16380 MiB
+1, NVIDIA GeForce RTX 4060 Ti, 779 MiB, 16380 MiB
 xUnit.net v3 In-Process Runner v4.0.1+8ed8aa354c (64-bit .NET 10.0.14)
   Discovering: Starlings.Models.EmbeddingGemma2.Tests.Cuda
   Discovered:  Starlings.Models.EmbeddingGemma2.Tests.Cuda
@@ -71,12 +71,12 @@ xUnit.net v3 In-Process Runner v4.0.1+8ed8aa354c (64-bit .NET 10.0.14)
     Starlings.Models.EmbeddingGemma2.Tests.Cuda.CudaImageParityTests.SessionsUseCudaWithTf32Disabled [OUTPUT] a2c22e072ec2: CUDAExecutionProvider, CPUExecutionProvider; use_tf32=0; CUDA_VISIBLE_DEVICES=1
   Finished:    Starlings.Models.EmbeddingGemma2.Tests.Cuda (ID = 'e93bd84fe3d0de17aeadabd437db056a60c19cade5f57edf4530fefaf873c017')
 === TEST EXECUTION SUMMARY ===
-   Starlings.Models.EmbeddingGemma2.Tests.Cuda  Total: 2, Errors: 0, Failed: 0, Skipped: 0, Not Run: 0, Time: 41.839s
+   Starlings.Models.EmbeddingGemma2.Tests.Cuda  Total: 2, Errors: 0, Failed: 0, Skipped: 0, Not Run: 0, Time: 51.926s
 exit 0
 run 6:
-2026-11-02T00:06:06Z
+2026-11-02T00:54:36Z
 0, NVIDIA GeForce RTX 3090, 23263 MiB, 24576 MiB
-1, NVIDIA GeForce RTX 4060 Ti, 677 MiB, 16380 MiB
+1, NVIDIA GeForce RTX 4060 Ti, 776 MiB, 16380 MiB
 xUnit.net v3 In-Process Runner v4.0.1+8ed8aa354c (64-bit .NET 10.0.14)
   Discovering: Starlings.Models.EmbeddingGemma2.Tests.Cuda
   Discovered:  Starlings.Models.EmbeddingGemma2.Tests.Cuda
@@ -86,12 +86,12 @@ xUnit.net v3 In-Process Runner v4.0.1+8ed8aa354c (64-bit .NET 10.0.14)
     Starlings.Models.EmbeddingGemma2.Tests.Cuda.CudaImageParityTests.SessionsUseCudaWithTf32Disabled [OUTPUT] a2c22e072ec2: CUDAExecutionProvider, CPUExecutionProvider; use_tf32=0; CUDA_VISIBLE_DEVICES=1
   Finished:    Starlings.Models.EmbeddingGemma2.Tests.Cuda (ID = 'e93bd84fe3d0de17aeadabd437db056a60c19cade5f57edf4530fefaf873c017')
 === TEST EXECUTION SUMMARY ===
-   Starlings.Models.EmbeddingGemma2.Tests.Cuda  Total: 2, Errors: 0, Failed: 0, Skipped: 0, Not Run: 0, Time: 43.648s
+   Starlings.Models.EmbeddingGemma2.Tests.Cuda  Total: 2, Errors: 0, Failed: 0, Skipped: 0, Not Run: 0, Time: 51.758s
 exit 0
 run 7:
-2026-11-02T00:06:50Z
+2026-11-02T00:55:29Z
 0, NVIDIA GeForce RTX 3090, 23263 MiB, 24576 MiB
-1, NVIDIA GeForce RTX 4060 Ti, 680 MiB, 16380 MiB
+1, NVIDIA GeForce RTX 4060 Ti, 780 MiB, 16380 MiB
 xUnit.net v3 In-Process Runner v4.0.1+8ed8aa354c (64-bit .NET 10.0.14)
   Discovering: Starlings.Models.EmbeddingGemma2.Tests.Cuda
   Discovered:  Starlings.Models.EmbeddingGemma2.Tests.Cuda
@@ -101,12 +101,12 @@ xUnit.net v3 In-Process Runner v4.0.1+8ed8aa354c (64-bit .NET 10.0.14)
     Starlings.Models.EmbeddingGemma2.Tests.Cuda.CudaImageParityTests.SessionsUseCudaWithTf32Disabled [OUTPUT] a2c22e072ec2: CUDAExecutionProvider, CPUExecutionProvider; use_tf32=0; CUDA_VISIBLE_DEVICES=1
   Finished:    Starlings.Models.EmbeddingGemma2.Tests.Cuda (ID = 'e93bd84fe3d0de17aeadabd437db056a60c19cade5f57edf4530fefaf873c017')
 === TEST EXECUTION SUMMARY ===
-   Starlings.Models.EmbeddingGemma2.Tests.Cuda  Total: 2, Errors: 0, Failed: 0, Skipped: 0, Not Run: 0, Time: 40.887s
+   Starlings.Models.EmbeddingGemma2.Tests.Cuda  Total: 2, Errors: 0, Failed: 0, Skipped: 0, Not Run: 0, Time: 61.671s
 exit 0
 run 8:
-2026-11-02T00:07:32Z
+2026-11-02T00:56:42Z
 0, NVIDIA GeForce RTX 3090, 23263 MiB, 24576 MiB
-1, NVIDIA GeForce RTX 4060 Ti, 677 MiB, 16380 MiB
+1, NVIDIA GeForce RTX 4060 Ti, 773 MiB, 16380 MiB
 xUnit.net v3 In-Process Runner v4.0.1+8ed8aa354c (64-bit .NET 10.0.14)
   Discovering: Starlings.Models.EmbeddingGemma2.Tests.Cuda
   Discovered:  Starlings.Models.EmbeddingGemma2.Tests.Cuda
@@ -116,5 +116,5 @@ xUnit.net v3 In-Process Runner v4.0.1+8ed8aa354c (64-bit .NET 10.0.14)
     Starlings.Models.EmbeddingGemma2.Tests.Cuda.CudaImageParityTests.SessionsUseCudaWithTf32Disabled [OUTPUT] a2c22e072ec2: CUDAExecutionProvider, CPUExecutionProvider; use_tf32=0; CUDA_VISIBLE_DEVICES=1
   Finished:    Starlings.Models.EmbeddingGemma2.Tests.Cuda (ID = 'e93bd84fe3d0de17aeadabd437db056a60c19cade5f57edf4530fefaf873c017')
 === TEST EXECUTION SUMMARY ===
-   Starlings.Models.EmbeddingGemma2.Tests.Cuda  Total: 2, Errors: 0, Failed: 0, Skipped: 0, Not Run: 0, Time: 35.337s
+   Starlings.Models.EmbeddingGemma2.Tests.Cuda  Total: 2, Errors: 0, Failed: 0, Skipped: 0, Not Run: 0, Time: 57.942s
 exit 0

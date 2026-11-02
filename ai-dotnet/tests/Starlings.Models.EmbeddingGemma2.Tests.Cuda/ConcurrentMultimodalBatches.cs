@@ -1,3 +1,4 @@
+using System.Runtime.InteropServices;
 using Starlings.TestSupport;
 
 namespace Starlings.Models.EmbeddingGemma2.Tests.Cuda;
@@ -7,7 +8,8 @@ namespace Starlings.Models.EmbeddingGemma2.Tests.Cuda;
 /// <see cref="CudaParityTests.ConcurrentEmbedBatchCallsGiveTheSequentialResultsBitForBit"/>): threads released together
 /// each run <see cref="EmbeddingGemma2MultimodalEmbedder.EmbedBatch(IReadOnlyList{EmbeddingGemma2MultimodalInput}, EmbeddingGemma2Prompt, CancellationToken)"/>
 /// on one embedder (one vision and one multimodal text session) with a different batch. Every vector must equal the
-/// sequential result of the same batch on the same embedder bit for bit.
+/// sequential result of the same batch on the same embedder bit for bit (compared as bytes, so a signed zero or a NaN
+/// payload that differs fails).
 /// </summary>
 internal static class ConcurrentMultimodalBatches
 {
@@ -57,7 +59,7 @@ internal static class ConcurrentMultimodalBatches
                     var stats = new EmbeddingGemma2ErrorStats();
                     stats.Add(batches[t][i].Id, parallel[t][i], sequential[t][i]);
                     max = Math.Max(max, stats.Max);
-                    Assert.True(sequential[t][i].AsSpan().SequenceEqual(parallel[t][i]), $"round {round}, thread {t}, row {i} ({batches[t][i].Id}): max abs {stats.Max:E3} against the sequential run");
+                    Assert.True(MemoryMarshal.AsBytes(sequential[t][i].AsSpan()).SequenceEqual(MemoryMarshal.AsBytes(parallel[t][i].AsSpan())), $"round {round}, thread {t}, row {i} ({batches[t][i].Id}): max abs {stats.Max:E3} against the sequential run");
                     vectors++;
                 }
             }
