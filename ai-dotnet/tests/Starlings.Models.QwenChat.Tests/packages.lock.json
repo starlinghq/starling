@@ -147,6 +147,12 @@
           "Starlings.Tokenizers": "[0.3.4, 0.3.4]"
         }
       },
+      "starlings.models.abstractions": {
+        "type": "Project",
+        "dependencies": {
+          "Starlings.Acquisition": "[0.4.0, )"
+        }
+      },
       "starlings.models.qwenchat": {
         "type": "Project",
         "dependencies": {
@@ -159,6 +165,7 @@
         "dependencies": {
           "Starlings.Acquisition": "[0.4.0, )",
           "Starlings.Generation.OnnxGenAI": "[0.4.0, )",
+          "Starlings.Models.Abstractions": "[0.4.0, )",
           "Starlings.Models.QwenChat": "[0.4.0, )",
           "Starlings.Tokenizers": "[0.3.4, 0.3.4]"
         }

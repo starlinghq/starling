@@ -12,8 +12,8 @@ regenerates from the same manifests, and `--check` fails when one is stale.
 Packages also carry each profile's capability record in C# (backlog D3): each file
 `ai-dotnet/src/*/ProfileCapabilities.g.cs` whose header names `catalog:capabilities profiles=<glob>[,<glob>...]` is
 regenerated from the same manifests as an internal class `GeneratedProfileCapabilities` of
-`Starlings.Models.ModelProfileCapabilities` records, and `--check` fails when one is stale. The package's namespace is
-its directory name.
+`Starlings.Models.ModelProfileCapabilities` records, and `--check` fails when one is stale. The class's namespace is
+the `<RootNamespace>` of the project file beside it, or the directory name when that project sets none.
 """
 
 from __future__ import annotations
@@ -479,6 +479,7 @@ def stale(files: dict[str, str], out: Path) -> list[str]:
 
 CAPABILITY_SOURCES = "ai-dotnet/src/*/ProfileCapabilities.g.cs"
 CAPABILITY_HEADER = re.compile(r"^// catalog:capabilities profiles=(?P<globs>[^ \n]+)$", re.MULTILINE)
+ROOT_NAMESPACE = re.compile(r"<RootNamespace>\s*(?P<namespace>[^<\s]+)\s*</RootNamespace>")
 _MATURITY = {
     "experimental": "Experimental",
     "preview": "Preview",
@@ -570,6 +571,15 @@ def _render_capability_source(globs: str, namespace: str, manifests: list[dict[s
     return "\n".join(lines)
 
 
+def _namespace(package: Path) -> str:
+    """The `<RootNamespace>` of the package's project file, else its directory name (the SDK default)."""
+    for project in sorted(package.glob("*.csproj")):
+        match = ROOT_NAMESPACE.search(project.read_text(encoding="utf-8"))
+        if match:
+            return match.group("namespace")
+    return package.name
+
+
 def capability_sources(registry: Path = DEFAULT_REGISTRY, repo_root: Path = REPO_ROOT) -> dict[Path, str]:
     """Generated C# capability source path to its content. Only files whose header opts in."""
     profiles = [m for _, m in _load_profiles(registry)]
@@ -582,5 +592,5 @@ def capability_sources(registry: Path = DEFAULT_REGISTRY, repo_root: Path = REPO
         members = [m for m in profiles if any(fnmatch.fnmatchcase(m["id"], g) for g in globs.split(","))]
         if not members:
             raise CatalogError(f"{path}: capability source matches no profile ({globs})")
-        result[path] = _render_capability_source(globs, path.parent.name, members)
+        result[path] = _render_capability_source(globs, _namespace(path.parent), members)
     return result

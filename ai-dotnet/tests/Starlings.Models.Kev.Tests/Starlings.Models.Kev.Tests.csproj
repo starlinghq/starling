@@ -16,6 +16,7 @@
     <None Include="Data/*.json" CopyToOutputDirectory="PreserveNewest" LinkBase="Data" />
     <Compile Include="../Shared/Kev/*.cs" Link="Shared/Kev/%(Filename)%(Extension)" />
     <Compile Include="../Shared/Registry/*.cs" Link="Shared/Registry/%(Filename)%(Extension)" />
+    <Compile Include="../Shared/CapabilityRecords/*.cs" Link="Shared/CapabilityRecords/%(Filename)%(Extension)" />
   </ItemGroup>
 
   <ItemGroup>

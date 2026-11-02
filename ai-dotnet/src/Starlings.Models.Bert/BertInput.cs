@@ -42,4 +42,11 @@ public static class BertCapabilities
     public const string Training = "unsupported";
     /// <summary>Native AOT has not been qualified.</summary>
     public const string Aot = "untested";
+
+    /// <summary>
+    /// The capability record of every registry profile this package serves (<see cref="ModelProfileCapabilities"/>),
+    /// generated from the profiles' registry manifests by <c>model-pipeline catalog</c>, keyed by profile id. Each
+    /// record's <see cref="ModelProfileCapabilities.Capabilities"/> is the manifest's <c>capabilities</c> map key for key.
+    /// </summary>
+    public static IReadOnlyDictionary<string, ModelProfileCapabilities> ProfileCapabilities => GeneratedProfileCapabilities.Profiles;
 }

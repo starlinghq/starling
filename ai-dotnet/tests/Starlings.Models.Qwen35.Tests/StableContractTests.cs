@@ -172,4 +172,11 @@ public class StableContractTests
         Assert.Equal(stable.Compatibility["windows-x64 cpu"], Name(Qwen35Capabilities.All["windows"]));
         Assert.Equal(8192, Qwen35ChatModel.MaxContextTokens);
     }
+
+    /// <summary>The generated capability records equal the registry manifests field for field and capability key for key.</summary>
+    [Fact]
+    public void CapabilityRecordsEqualTheManifests()
+    {
+        CapabilityRecordChecks.AssertRecordsEqualManifests(Qwen35Capabilities.ProfileCapabilities, Family);
+    }
 }

@@ -64,6 +64,13 @@ public sealed class RegistryContractTests
         Assert.Contains("USD 10 million", firstSection, StringComparison.Ordinal);
     }
 
+    /// <summary>The generated capability records equal the registry manifests field for field and capability key for key.</summary>
+    [Fact]
+    public void CapabilityRecordsEqualTheManifests()
+    {
+        CapabilityRecordChecks.AssertRecordsEqualManifests(Lfm3Capabilities.ProfileCapabilities, [Manifest]);
+    }
+
     private static string FindRepositoryRoot()
     {
         for (var dir = new DirectoryInfo(AppContext.BaseDirectory); dir is not null; dir = dir.Parent)

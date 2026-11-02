@@ -123,6 +123,14 @@ public static class KevCapabilities
     };
 
     /// <summary>
+    /// The capability record of every registry profile this package serves (<see cref="ModelProfileCapabilities"/>),
+    /// generated from the profiles' registry manifests by <c>model-pipeline catalog</c>, keyed by profile id. Each
+    /// record's <see cref="ModelProfileCapabilities.Capabilities"/> is the manifest's <c>capabilities</c> map key for key;
+    /// the package-wide <see cref="All"/> adds finer keys.
+    /// </summary>
+    public static IReadOnlyDictionary<string, ModelProfileCapabilities> ProfileCapabilities => GeneratedProfileCapabilities.Profiles;
+
+    /// <summary>
     /// Status per capability of each profile this package version has a contract for, keyed exactly as the profile's
     /// registry manifest (<c>model-pipeline/registry/&lt;profile&gt;/manifest.yaml</c>, <c>capabilities</c>). Both sizes
     /// have the same statuses on the same provider.

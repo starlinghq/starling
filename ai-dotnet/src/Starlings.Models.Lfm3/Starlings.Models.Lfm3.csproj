@@ -23,6 +23,8 @@
   <ItemGroup>
     <ProjectReference Include="../Starlings.Runtime.Onnx/Starlings.Runtime.Onnx.csproj" />
     <ProjectReference Include="../Starlings.Acquisition/Starlings.Acquisition.csproj" />
+    <!-- ModelProfileCapabilities: the generated capability records (ProfileCapabilities.g.cs). -->
+    <ProjectReference Include="../Starlings.Models.Abstractions/Starlings.Models.Abstractions.csproj" />
     <ProjectReference Include="../Starlings.Generation.Abstractions/Starlings.Generation.Abstractions.csproj" />
     <PackageReference Include="Starlings.Tokenizers" />
   </ItemGroup>

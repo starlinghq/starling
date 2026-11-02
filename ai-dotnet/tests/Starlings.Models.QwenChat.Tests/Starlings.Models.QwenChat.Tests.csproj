@@ -6,6 +6,8 @@
   <ItemGroup>
     <PackageReference Include="xunit.v3" />
     <Using Include="Xunit" />
+    <Compile Include="../Shared/Registry/*.cs" Link="Shared/Registry/%(Filename)%(Extension)" />
+    <Compile Include="../Shared/CapabilityRecords/*.cs" Link="Shared/CapabilityRecords/%(Filename)%(Extension)" />
     <ProjectReference Include="../../src/Starlings.Models.QwenChat.OnnxGenAI/Starlings.Models.QwenChat.OnnxGenAI.csproj" />
   </ItemGroup>
 </Project>

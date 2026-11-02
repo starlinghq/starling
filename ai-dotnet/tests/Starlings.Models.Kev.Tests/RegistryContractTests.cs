@@ -130,4 +130,11 @@ public sealed class RegistryContractTests
             Assert.False(cuda.Compatibility.ContainsKey("linux-x64 cpu"), $"{model.CudaId} records a CPU row");
         }
     }
+
+    /// <summary>The generated capability records equal the registry manifests field for field and capability key for key.</summary>
+    [Fact]
+    public void CapabilityRecordsEqualTheManifests()
+    {
+        CapabilityRecordChecks.AssertRecordsEqualManifests(KevCapabilities.ProfileCapabilities, Manifests);
+    }
 }

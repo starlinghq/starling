@@ -26,6 +26,12 @@
           "Starlings.Tokenizers": "[0.3.4, 0.3.4]"
         }
       },
+      "starlings.models.abstractions": {
+        "type": "Project",
+        "dependencies": {
+          "Starlings.Acquisition": "[0.4.0, )"
+        }
+      },
       "starlings.models.qwenchat": {
         "type": "Project",
         "dependencies": {

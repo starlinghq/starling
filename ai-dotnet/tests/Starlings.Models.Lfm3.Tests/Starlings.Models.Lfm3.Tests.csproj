@@ -18,6 +18,7 @@
 
   <ItemGroup>
     <Compile Include="../Shared/Registry/*.cs" Link="Shared/Registry/%(Filename)%(Extension)" />
+    <Compile Include="../Shared/CapabilityRecords/*.cs" Link="Shared/CapabilityRecords/%(Filename)%(Extension)" />
   </ItemGroup>
 
   <ItemGroup>
