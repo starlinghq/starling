@@ -59,7 +59,8 @@ on:
         description: "Skip the cuda (runpod) job: run the CPU jobs only"
         type: boolean
         default: false
-      # Allocator diagnostics on the hosted runner (docs/evidence/scheduled-regression-fix/). The defaults leave the
+      # Allocator diagnostics, added on the GitHub-hosted runner used until 2026-10-22 and kept on the self-hosted
+      # `qualification` runner (docs/evidence/scheduled-regression-fix/). The defaults leave the
       # qualification run unchanged.
       soak_only:
         description: "Diagnostics: run only the soak jobs (skip model tests, evaluator, release gates, catalog, upstream)"
@@ -168,8 +169,9 @@ jobs:
           tools/fetch-tokenizer-assets.sh
       - run: dotnet build ai-dotnet/AI.slnx --configuration Release
       # Tests of models whose files are absent (private hosting) still skip, with the reason in the report. One test
-      # module at a time: several modules each loading their models exhaust the hosted runner's memory (the first
-      # dispatched run lost its runner that way).
+      # module at a time: several modules each loading their models exhausted the memory of the GitHub-hosted runner
+      # used until 2026-10-22 (the first dispatched run lost its runner that way), and the self-hosted runner shares its
+      # host with other jobs.
       - name: Tests with the public models
         run: |
           dotnet test --solution ai-dotnet/AI.slnx --configuration Release --no-build --max-parallel-test-modules 1 \
@@ -572,8 +574,8 @@ jobs:
             reference: model-pipeline/reference/embeddinggemma2/requirements-video.txt
             hashes: --require-hashes
           # The release-set dump keeps every decoded frame of the array rows (a 2048x1024 clip among them) for both FFmpeg
-          # majors: about 20 GB peak resident on the workstation, above the hosted runner's 16 GB, so the job adds swap
-          # (the first dispatched run lost its runner there).
+          # majors: about 20 GB peak resident on the workstation, above the 16 GB of the GitHub-hosted runner used until
+          # 2026-10-22, so the job adds swap on a host without it (the first dispatched run lost its runner there).
           - profile: embeddinggemma-2/video-fp32-cpu
             reference: model-pipeline/reference/embeddinggemma2/requirements-video.txt
             hashes: --require-hashes
@@ -713,16 +715,18 @@ jobs:
       - name: Acquire and verify
         if: steps.wired.outputs.run == 'true'
         run: tools/acquire-models.sh "$RUNNER_TEMP/locks" "$PROFILE"
-      # The qualification length on a shared hosted runner: it screens for growth, wrong outputs and errors with the
+      # The qualification length on a shared runner (GitHub-hosted until 2026-10-22, the self-hosted `qualification`
+      # runner on the maintainer's workstation since #134): it screens for growth, wrong outputs and errors with the
       # tool's unchanged growth rule. It does not replace the G4 run on a quiet machine (M6), but a failure here is a
       # regression signal. Shorter runs (workflow_dispatch soak_duration) end in the warm-up ramp of glibc's resident
       # high-water mark and are expected to trip the growth rule.
       # MALLOC_MMAP_THRESHOLD_ is set only for the workload that documents it; the soak report records it.
-      # Transparent huge pages: the hosted image sets THP to `always`, where khugepaged collapses partly used 2 MiB
-      # ranges of the malloc heaps into huge pages and fills in their absent pages, so resident memory rises with no
-      # allocation behind it (docs/evidence/scheduled-regression-fix/). The soak sets `madvise`, the Ubuntu kernel
-      # default, as an environment precondition (like a quiet machine); the report records the setting. The variant
-      # part thp-always keeps the image's setting.
+      # Transparent huge pages: the GitHub-hosted image (used until 2026-10-22) set THP to `always`, where khugepaged
+      # collapses partly used 2 MiB ranges of the malloc heaps into huge pages and fills in their absent pages, so
+      # resident memory rises with no allocation behind it (docs/evidence/scheduled-regression-fix/). The soak requires
+      # `madvise`, the Ubuntu kernel default, as an environment precondition (like a quiet machine): it sets it where it
+      # can (sudo), and the self-hosted runner, which has no sudo, must already have it; the report records the setting.
+      # The variant part thp-always keeps the host's setting.
       - name: Soak
         if: steps.wired.outputs.run == 'true'
         env:

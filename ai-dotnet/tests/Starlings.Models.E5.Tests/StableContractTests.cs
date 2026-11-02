@@ -29,6 +29,7 @@ public class StableContractTests
             ["batch"] = ["batch", "embedding.pretokenized.cuda"],
             ["streaming"] = ["streaming"],
             ["cancellation"] = ["cancellation"],
+            ["concurrent_calls"] = ["concurrent_calls"],
             ["persistence"] = ["persistence", "mlnet.persistence"],
             ["training"] = ["training", "mlnet.training"],
             ["aot"] = ["aot.cuda"],
