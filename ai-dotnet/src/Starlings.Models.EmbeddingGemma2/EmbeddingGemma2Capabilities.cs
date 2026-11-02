@@ -128,6 +128,10 @@ public static class EmbeddingGemma2Capabilities
         ["image.budget_280"] = Status.Supported,
         ["image.budget_other"] = Status.Experimental, // 70, 140, 560, 1,120: proposed rows, within the protected bounds
         ["image.batch"] = Status.Supported,
+        // Opt-in vision batch limits from a free-memory probe at load (EmbeddingGemma2MultimodalOptions.AutoBatchLimits):
+        // off by default, so the qualified defaults are unchanged. The memory estimate is derived from the CUDA
+        // observations behind the defaults, not measured per device; no qualification run.
+        ["image.auto_batch_limits"] = Status.Experimental,
         ["image.matryoshka"] = Status.Supported,
         ["image.over_8192_tokens"] = Status.Unsupported, // rejected before inference
         ["image.over_50_megapixels"] = Status.Unsupported, // default limit, configurable

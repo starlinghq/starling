@@ -1,4 +1,5 @@
 using System.Buffers;
+using System.Globalization;
 using Starlings.Runtime.Onnx;
 using Microsoft.ML.OnnxRuntime;
 
@@ -160,6 +161,16 @@ public sealed class EmbeddingGemma2MultimodalEmbedder : IDisposable
             throw new ArgumentException($"The text encoder accepts at most {textEncoder.Value.Options.MaxSequenceLength} tokens; the options ask for {options.MaxSequenceLength}. Use the same MaxSequenceLength for both.", nameof(textEncoder));
         }
 
+        if (options.AutoBatchLimits is { } auto)
+        {
+            // After load, so the free memory excludes the resident weights.
+            int deviceId = vision.Diagnostics.ProviderOptions.TryGetValue("device_id", out string? id)
+                && int.TryParse(id, NumberStyles.None, CultureInfo.InvariantCulture, out int parsed) ? parsed : 0;
+            AutoBatchAvailableBytes = auto.ProbeFreeBytes(vision.Diagnostics.RequestedProvider, deviceId);
+            options = auto.Apply(options, AutoBatchAvailableBytes);
+            options.Validate();
+        }
+
         _tokenizer = tokenizer;
         _vision = vision;
         _multimodal = multimodalText;
@@ -172,8 +183,18 @@ public sealed class EmbeddingGemma2MultimodalEmbedder : IDisposable
     /// <summary>Output dimension (<see cref="EmbeddingGemma2MultimodalOptions.Dimension"/>).</summary>
     public int Dimension => _options.Dimension;
 
-    /// <summary>Options in effect.</summary>
+    /// <summary>
+    /// Options in effect: with <see cref="EmbeddingGemma2MultimodalOptions.AutoBatchLimits"/>, the vision limits chosen
+    /// at load.
+    /// </summary>
     public EmbeddingGemma2MultimodalOptions Options => _options;
+
+    /// <summary>
+    /// Free bytes the <see cref="EmbeddingGemma2MultimodalOptions.AutoBatchLimits"/> probe read at load (host RAM on
+    /// CPU, device memory on CUDA); <see langword="null"/> when the option is off or the probe was unavailable (then the
+    /// configured limits apply). Experimental.
+    /// </summary>
+    public long? AutoBatchAvailableBytes { get; }
 
     /// <summary>The tokenizer. Owned by the caller unless created by <see cref="Create(EmbeddingGemma2ImageModelFiles, EmbeddingGemma2MultimodalOptions?)"/>.</summary>
     public IEmbeddingGemma2Tokenizer Tokenizer => _tokenizer;
