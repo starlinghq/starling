@@ -21,6 +21,8 @@
     <ProjectReference Include="../Starlings.Generation.OnnxGenAI/Starlings.Generation.OnnxGenAI.csproj" />
     <PackageReference Include="Starlings.Tokenizers" />
     <ProjectReference Include="../Starlings.Acquisition/Starlings.Acquisition.csproj" />
+    <!-- ModelProfileCapabilities: the generated capability records (ProfileCapabilities.g.cs). -->
+    <ProjectReference Include="../Starlings.Models.Abstractions/Starlings.Models.Abstractions.csproj" />
   </ItemGroup>
 
   <ItemGroup>

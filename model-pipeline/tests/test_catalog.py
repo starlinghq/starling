@@ -304,6 +304,28 @@ def test_csharp_capability_records_are_generated_and_checked(repo):
     assert run(repo, "--check") == 2
 
 
+def test_csharp_capability_records_use_the_project_root_namespace(repo):
+    add_profile(repo / "registry", "fam/a")
+    pkg = repo / "ai-dotnet" / "src" / "Starlings.Models.Fam.Onnx"
+    pkg.mkdir(parents=True)
+    (pkg / "Starlings.Models.Fam.Onnx.csproj").write_text(
+        "<Project><PropertyGroup><!-- <RootNamespace>Old.Name</RootNamespace> -->"
+        "<RootNamespace Condition=\"'$(X)' == 'y'\">Other.Name</RootNamespace>"
+        "<RootNamespace>Starlings.Models.Fam</RootNamespace></PropertyGroup></Project>\n",
+        encoding="utf-8",
+    )
+    # Read after the project named for the directory, so its namespace wins.
+    (pkg / "Aaa.csproj").write_text(
+        "<Project><PropertyGroup><RootNamespace>Wrong.Name</RootNamespace></PropertyGroup></Project>\n",
+        encoding="utf-8",
+    )
+    source = pkg / "ProfileCapabilities.g.cs"
+    source.write_text("// catalog:capabilities profiles=fam/*\n", encoding="utf-8")
+
+    assert run(repo) == 0
+    assert "namespace Starlings.Models.Fam;" in source.read_text(encoding="utf-8")
+
+
 def test_committed_capability_sources_are_up_to_date():
     sources = catalog.capability_sources()
     assert sources, "no package opts in to a generated capability record"

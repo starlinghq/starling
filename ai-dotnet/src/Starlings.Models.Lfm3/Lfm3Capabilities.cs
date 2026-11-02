@@ -62,4 +62,12 @@ public static class Lfm3Capabilities
         ["training"] = CapabilityStatus.Unsupported,
         ["aot"] = CapabilityStatus.Untested,
     };
+
+    /// <summary>
+    /// The capability record of every registry profile this package serves (<see cref="ModelProfileCapabilities"/>),
+    /// generated from the profiles' registry manifests by <c>model-pipeline catalog</c>, keyed by profile id. Each
+    /// record's <see cref="ModelProfileCapabilities.Capabilities"/> is the manifest's <c>capabilities</c> map key for key;
+    /// the package-wide <see cref="All"/> adds finer keys.
+    /// </summary>
+    public static IReadOnlyDictionary<string, ModelProfileCapabilities> ProfileCapabilities => GeneratedProfileCapabilities.Profiles;
 }

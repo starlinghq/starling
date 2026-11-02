@@ -20,6 +20,8 @@
     <PackageReference Include="Starlings.Tokenizers" />
     <!-- Asset lock and verification of the pinned files (P-009). BCL only. -->
     <ProjectReference Include="../Starlings.Acquisition/Starlings.Acquisition.csproj" />
+    <!-- ModelProfileCapabilities: the generated capability records (ProfileCapabilities.g.cs). -->
+    <ProjectReference Include="../Starlings.Models.Abstractions/Starlings.Models.Abstractions.csproj" />
   </ItemGroup>
 
   <ItemGroup>

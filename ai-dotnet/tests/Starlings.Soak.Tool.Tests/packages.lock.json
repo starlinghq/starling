@@ -195,6 +195,7 @@
         "type": "Project",
         "dependencies": {
           "Starlings.Acquisition": "[0.4.0, )",
+          "Starlings.Models.Abstractions": "[0.4.0, )",
           "Starlings.Models.Kev": "[0.4.0, )",
           "Starlings.Runtime.Onnx": "[0.4.0, )",
           "Starlings.Tokenizers": "[0.3.4, 0.3.4]"
@@ -213,6 +214,7 @@
         "dependencies": {
           "Starlings.Acquisition": "[0.4.0, )",
           "Starlings.Generation.OnnxGenAI": "[0.4.0, )",
+          "Starlings.Models.Abstractions": "[0.4.0, )",
           "Starlings.Models.Qwen35": "[0.4.0, )",
           "Starlings.Tokenizers": "[0.3.4, 0.3.4]"
         }

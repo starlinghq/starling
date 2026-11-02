@@ -76,7 +76,7 @@ public sealed class BuiltInProfileTests
         [$"{assetLock.Name} {assetLock.Repository} {assetLock.Revision}",
             .. assetLock.Files.Select(f => $"{f.Path} {f.Size} {f.Sha256}")];
 
-    private static string RepositoryRoot()
+    internal static string RepositoryRoot()
     {
         for (var dir = new DirectoryInfo(AppContext.BaseDirectory); dir is not null; dir = dir.Parent)
         {

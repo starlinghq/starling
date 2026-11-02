@@ -50,4 +50,11 @@ public sealed class RegistryContractTests
     }
 
     private static string Name(CapabilityStatus status) => status.ToString().ToLowerInvariant();
+
+    /// <summary>The generated capability records equal the registry manifests field for field and capability key for key.</summary>
+    [Fact]
+    public void CapabilityRecordsEqualTheManifests()
+    {
+        CapabilityRecordChecks.AssertRecordsEqualManifests(WhisperCapabilities.ProfileCapabilities, [Manifest]);
+    }
 }

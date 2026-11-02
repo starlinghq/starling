@@ -163,6 +163,14 @@ public static class Qwen35Capabilities
     };
 
     /// <summary>
+    /// The capability record of every registry profile this package serves (<see cref="ModelProfileCapabilities"/>),
+    /// generated from the profiles' registry manifests by <c>model-pipeline catalog</c>, keyed by profile id. Each
+    /// record's <see cref="ModelProfileCapabilities.Capabilities"/> is the manifest's <c>capabilities</c> map key for key;
+    /// the package-wide <see cref="All"/> adds finer keys.
+    /// </summary>
+    public static IReadOnlyDictionary<string, ModelProfileCapabilities> ProfileCapabilities => GeneratedProfileCapabilities.Profiles;
+
+    /// <summary>
     /// Status per capability of each profile this package version publishes a contract for, keyed exactly as the
     /// profile's registry manifest (<c>model-pipeline/registry/&lt;profile&gt;/manifest.yaml</c>, <c>capabilities</c>).
     /// </summary>
