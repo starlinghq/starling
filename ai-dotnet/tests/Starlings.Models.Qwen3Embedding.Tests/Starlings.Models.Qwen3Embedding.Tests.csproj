@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup><OutputType>Exe</OutputType><GenerateDocumentationFile>false</GenerateDocumentationFile></PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="xunit.v3" />
+    <PackageReference Include="Microsoft.ML.OnnxRuntime" />
+    <Using Include="Xunit" />
+    <ProjectReference Include="../../src/Starlings.Models.Qwen3Embedding/Starlings.Models.Qwen3Embedding.csproj" />
+    <ProjectReference Include="../../src/Starlings.Models.Qwen3Embedding.Extensions.AI/Starlings.Models.Qwen3Embedding.Extensions.AI.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- PyTorch fp32 references (model-pipeline/reference/qwen3-embedding/make_dotnet_reference.py). -->
+    <None Include="TestData/*.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+</Project>

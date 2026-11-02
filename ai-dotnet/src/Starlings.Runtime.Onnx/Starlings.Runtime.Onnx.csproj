@@ -31,6 +31,7 @@
     <InternalsVisibleTo Include="Starlings.Models.E5" />
     <InternalsVisibleTo Include="Starlings.Models.EmbeddingGemma2" />
     <InternalsVisibleTo Include="Starlings.Models.Bert" />
+    <InternalsVisibleTo Include="Starlings.Models.Qwen3Embedding" />
   </ItemGroup>
 
 </Project>
