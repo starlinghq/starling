@@ -309,7 +309,14 @@ def test_csharp_capability_records_use_the_project_root_namespace(repo):
     pkg = repo / "ai-dotnet" / "src" / "Starlings.Models.Fam.Onnx"
     pkg.mkdir(parents=True)
     (pkg / "Starlings.Models.Fam.Onnx.csproj").write_text(
-        "<Project><PropertyGroup><RootNamespace>Starlings.Models.Fam</RootNamespace></PropertyGroup></Project>\n",
+        "<Project><PropertyGroup><!-- <RootNamespace>Old.Name</RootNamespace> -->"
+        "<RootNamespace Condition=\"'$(X)' == 'y'\">Other.Name</RootNamespace>"
+        "<RootNamespace>Starlings.Models.Fam</RootNamespace></PropertyGroup></Project>\n",
+        encoding="utf-8",
+    )
+    # Read after the project named for the directory, so its namespace wins.
+    (pkg / "Aaa.csproj").write_text(
+        "<Project><PropertyGroup><RootNamespace>Wrong.Name</RootNamespace></PropertyGroup></Project>\n",
         encoding="utf-8",
     )
     source = pkg / "ProfileCapabilities.g.cs"

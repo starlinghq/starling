@@ -13,7 +13,10 @@ Packages also carry each profile's capability record in C# (backlog D3): each fi
 `ai-dotnet/src/*/ProfileCapabilities.g.cs` whose header names `catalog:capabilities profiles=<glob>[,<glob>...]` is
 regenerated from the same manifests as an internal class `GeneratedProfileCapabilities` of
 `Starlings.Models.ModelProfileCapabilities` records, and `--check` fails when one is stale. The class's namespace is
-the `<RootNamespace>` of the project file beside it, or the directory name when that project sets none.
+the unconditioned `<RootNamespace>` of the project file beside it (`<dir>.csproj` first, ignoring commented-out
+elements), or else the project file's name, as the SDK defaults it. A definition package that shares its runtime
+package's namespace and grants it `InternalsVisibleTo` (today `Starlings.Models.Kev`, `Starlings.Models.Qwen35`) must
+not also carry a `ProfileCapabilities.g.cs`: the two internal `GeneratedProfileCapabilities` classes would clash.
 """
 
 from __future__ import annotations
@@ -479,7 +482,9 @@ def stale(files: dict[str, str], out: Path) -> list[str]:
 
 CAPABILITY_SOURCES = "ai-dotnet/src/*/ProfileCapabilities.g.cs"
 CAPABILITY_HEADER = re.compile(r"^// catalog:capabilities profiles=(?P<globs>[^ \n]+)$", re.MULTILINE)
+# No attribute slot, so a `Condition`-ed `<RootNamespace ...>` never matches.
 ROOT_NAMESPACE = re.compile(r"<RootNamespace>\s*(?P<namespace>[^<\s]+)\s*</RootNamespace>")
+XML_COMMENT = re.compile(r"<!--.*?-->", re.DOTALL)
 _MATURITY = {
     "experimental": "Experimental",
     "preview": "Preview",
@@ -572,12 +577,18 @@ def _render_capability_source(globs: str, namespace: str, manifests: list[dict[s
 
 
 def _namespace(package: Path) -> str:
-    """The `<RootNamespace>` of the package's project file, else its directory name (the SDK default)."""
-    for project in sorted(package.glob("*.csproj")):
-        match = ROOT_NAMESPACE.search(project.read_text(encoding="utf-8"))
+    """The unconditioned `<RootNamespace>` of the package's project file, else the project file name (SDK default).
+
+    `<dir>.csproj` is read first, then any other project file in the directory; commented-out elements are ignored.
+    """
+    preferred = package / f"{package.name}.csproj"
+    projects = [preferred] if preferred.is_file() else []
+    projects += [p for p in sorted(package.glob("*.csproj")) if p != preferred]
+    for project in projects:
+        match = ROOT_NAMESPACE.search(XML_COMMENT.sub("", project.read_text(encoding="utf-8")))
         if match:
             return match.group("namespace")
-    return package.name
+    return projects[0].stem if projects else package.name
 
 
 def capability_sources(registry: Path = DEFAULT_REGISTRY, repo_root: Path = REPO_ROOT) -> dict[Path, str]:

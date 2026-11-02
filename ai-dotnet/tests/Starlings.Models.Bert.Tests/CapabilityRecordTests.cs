@@ -8,7 +8,8 @@ namespace Starlings.Models.Bert.Tests;
 /// </summary>
 public sealed class CapabilityRecordTests
 {
-    // The model families named in the header of the package's ProfileCapabilities.g.cs, one per built-in profile.
+    // The model families named in the header of the package's ProfileCapabilities.g.cs. EveryBuiltInProfileHasAFamily
+    // pins them to the families of the built-in profiles, so a swapped family fails there.
     private static readonly string[] Families =
     [
         "all-minilm-l6-v2", "bge-small-en-v1.5", "bge-base-en-v1.5", "bge-m3", "ms-marco-minilm-l6-v2", "bge-reranker-v2-m3",
@@ -27,6 +28,13 @@ public sealed class CapabilityRecordTests
     [Fact]
     public void EveryBuiltInProfileHasAFamily()
     {
-        Assert.Equal(BertModelProfile.BuiltInIds.Count, Families.Length);
+        // A built-in profile's Id is its registry id (<family>/<profile>), from the candidate contract's "id".
+        static string Family(string id) => id[..id.IndexOf('/', StringComparison.Ordinal)];
+        var builtInFamilies = BertModelProfile.BuiltInIds.Select(name => Family(BertModelProfile.BuiltIn(name).Id))
+            .Order(StringComparer.Ordinal);
+        Assert.Equal(builtInFamilies, Families.Order(StringComparer.Ordinal));
+        Assert.Equal(
+            builtInFamilies,
+            BertCapabilities.ProfileCapabilities.Keys.Select(Family).Distinct().Order(StringComparer.Ordinal));
     }
 }
