@@ -139,6 +139,32 @@ public sealed class RerankingTests
     }
 
     [Fact]
+    public async Task ANaNScoreSortsLast()
+    {
+        Func<string, IReadOnlyList<string>, Task<float[]>> nanFirst = (_, _) => Task.FromResult<float[]>([float.NaN, 1f, -1f]);
+        var ranked = await Reranking.RerankAsync("q", Stream(Letters), s => s, nanFirst, cancellationToken: Ct);
+        Assert.Equal([1, 2, 0], ranked.Select(r => r.Index));
+        Assert.True(float.IsNaN(ranked[^1].Score));
+        var reranker = new TableReranker(t => t == "a" ? float.NaN : t.Length);
+        Assert.Equal(["ccc", "bb", "a"], reranker.Rerank("q", Letters, s => s, cancellationToken: Ct).Select(r => r.Item));
+    }
+
+    [Fact]
+    public void TheAsynchronousFormsValidateArgumentsSynchronously()
+    {
+        var reranker = new TableReranker(Table);
+        Func<string, IReadOnlyList<string>, Task<float[]>> score = reranker.AsScoringFunction(Ct);
+        var hits = Stream(Hits);
+        Assert.Throws<ArgumentNullException>("reranker", () => { _ = Reranking.RerankAsync(null!, "q", hits, h => h.Text, cancellationToken: Ct); });
+        Assert.Throws<ArgumentNullException>("query", () => { _ = reranker.RerankAsync(null!, hits, h => h.Text, cancellationToken: Ct); });
+        Assert.Throws<ArgumentNullException>("candidates", () => { _ = Reranking.RerankAsync("q", (IAsyncEnumerable<Hit>)null!, h => h.Text, score, cancellationToken: Ct); });
+        Assert.Throws<ArgumentNullException>("text", () => { _ = Reranking.RerankAsync("q", hits, null!, score, cancellationToken: Ct); });
+        Assert.Throws<ArgumentNullException>("score", () => { _ = Reranking.RerankAsync("q", hits, h => h.Text, null!, cancellationToken: Ct); });
+        Assert.Throws<ArgumentOutOfRangeException>("top", () => { _ = reranker.RerankAsync("q", hits, h => h.Text, top: 0, cancellationToken: Ct); });
+        Assert.Equal(0, reranker.Calls);
+    }
+
+    [Fact]
     public async Task AnyScorerWithTheDelegateShapeCanRerank()
     {
         Func<string, IReadOnlyList<string>, Task<float[]>> lengthScorer =

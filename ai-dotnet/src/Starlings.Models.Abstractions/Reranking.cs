@@ -14,10 +14,13 @@ public sealed record RerankedItem<T>(T Item, int Index, float Score);
 /// selector, and need no reference to either library. Experimental: the API may change.
 /// </summary>
 /// <remarks>
-/// Scoring runs on the calling thread: the asynchronous forms read the candidates asynchronously, then score them all
-/// with one <see cref="IReranker.Score"/> call and return a completed task. Failures are never thrown synchronously by
-/// the delegate from <see cref="AsScoringFunction"/>; they are in the returned task. Ordering is by descending score,
-/// ties in input order.
+/// <see cref="Rerank{T}"/> scores on the calling thread. The delegate from <see cref="AsScoringFunction"/> scores
+/// synchronously on the thread that invokes it and returns a completed (or faulted, or cancelled) task; failures are
+/// never thrown synchronously by it, they are in the returned task. The asynchronous forms read the candidates
+/// asynchronously, then score them all with one <see cref="IReranker.Score"/> call after the last candidate arrives,
+/// on the thread that resumed it (a thread-pool thread when the source completes asynchronously, as a vector store's
+/// <c>SearchAsync</c> usually does), so their task is not necessarily complete when they return. They validate their
+/// arguments synchronously. Ordering is by descending score, ties in input order, a NaN score last.
 /// </remarks>
 public static class Reranking
 {
@@ -109,13 +112,19 @@ public static class Reranking
     /// <exception cref="ArgumentException"><paramref name="text"/> returned null for a candidate.</exception>
     /// <exception cref="ArgumentOutOfRangeException"><paramref name="top"/> is below 1.</exception>
     /// <exception cref="InvalidOperationException">The scorer returned null or a score count other than the candidate count.</exception>
-    public static async Task<IReadOnlyList<RerankedItem<T>>> RerankAsync<T>(string query, IAsyncEnumerable<T> candidates, Func<T, string> text, Func<string, IReadOnlyList<string>, Task<float[]>> score, int? top = null, CancellationToken cancellationToken = default)
+    public static Task<IReadOnlyList<RerankedItem<T>>> RerankAsync<T>(string query, IAsyncEnumerable<T> candidates, Func<T, string> text, Func<string, IReadOnlyList<string>, Task<float[]>> score, int? top = null, CancellationToken cancellationToken = default)
     {
+        // Validated here, synchronously; the async core only reads, scores and orders.
         ArgumentNullException.ThrowIfNull(query);
         ArgumentNullException.ThrowIfNull(candidates);
         ArgumentNullException.ThrowIfNull(text);
         ArgumentNullException.ThrowIfNull(score);
         ValidateTop(top);
+        return RerankCoreAsync(query, candidates, text, score, top, cancellationToken);
+    }
+
+    private static async Task<IReadOnlyList<RerankedItem<T>>> RerankCoreAsync<T>(string query, IAsyncEnumerable<T> candidates, Func<T, string> text, Func<string, IReadOnlyList<string>, Task<float[]>> score, int? top, CancellationToken cancellationToken)
+    {
         var items = new List<T>();
         await foreach (var item in candidates.WithCancellation(cancellationToken).ConfigureAwait(false))
         {
