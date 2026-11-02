@@ -12,9 +12,11 @@ namespace Starlings.Models.EmbeddingGemma2;
 /// <remarks>
 /// <para>
 /// After the vision and multimodal graphs are loaded, the embedder reads the free memory of the device the vision graph
-/// runs on: on CPU the host's <c>MemAvailable</c> (<c>/proc/meminfo</c>), lowered to the room left under the process's
-/// cgroup v2 <c>memory.max</c> when one is set; on CUDA the device's free memory (<c>cuMemGetInfo</c> of the CUDA
-/// driver, in the visible-device order that <see cref="OnnxSessionOptions.CudaDeviceId"/> uses). The probe is Linux only
+/// runs on: on CPU the host's <c>MemAvailable</c> (<c>/proc/meminfo</c>), lowered to the least room left under a cgroup
+/// v2 <c>memory.max</c> of the process's cgroup or any of its ancestors; on CUDA the device's free memory
+/// (<c>cuMemGetInfo</c> of the CUDA driver, in the visible-device order that <see cref="OnnxSessionOptions.CudaDeviceId"/>
+/// uses), capped at the CUDA arena limit (<see cref="OnnxCudaProviderOptions.GpuMemoryLimitBytes"/>,
+/// <c>gpu_mem_limit</c>) when one is set. cgroup v1 limits are not read. The probe is Linux only
 /// on CPU; when it is unavailable (another OS, no driver, an error) the configured limits apply unchanged and
 /// <see cref="EmbeddingGemma2MultimodalEmbedder.AutoBatchAvailableBytes"/> is <see langword="null"/>.
 /// </para>
@@ -35,6 +37,10 @@ namespace Starlings.Models.EmbeddingGemma2;
 /// <see cref="EmbeddingGemma2MultimodalEmbedder.Options"/> reports the limits chosen. The text-graph limits
 /// (<see cref="EmbeddingGemma2MultimodalOptions.MaxBatchSize"/>, <see cref="EmbeddingGemma2MultimodalOptions.MaxBatchTokens"/>)
 /// are not changed. Memory used by other processes after load is not tracked: the probe runs once.
+/// </para>
+/// <para>
+/// Because every vision call is sized to the whole budget, the embedder runs its vision-graph calls one at a time when
+/// this option is set (concurrent callers wait for each other's vision calls; text-graph calls are not serialized).
 /// </para>
 /// </remarks>
 public sealed record EmbeddingGemma2AutoBatchLimits
@@ -73,6 +79,23 @@ public sealed record EmbeddingGemma2AutoBatchLimits
         ArgumentOutOfRangeException.ThrowIfLessThan(patches, 1);
         double r = (double)patches / FullImagePatches;
         return (long)Math.Ceiling(FullImageBytes * ((0.25 * r) + (0.75 * r * r)));
+    }
+
+    /// <summary>
+    /// <paramref name="freeBytes"/> capped at the CUDA arena limit (<c>gpu_mem_limit</c>) in
+    /// <paramref name="providerOptions"/>, when one is set. The cap ignores what the arena already holds.
+    /// </summary>
+    internal static long? CapToArenaLimit(long? freeBytes, IReadOnlyDictionary<string, string> providerOptions)
+    {
+        if (freeBytes is { } free
+            && providerOptions.TryGetValue("gpu_mem_limit", out string? text)
+            && long.TryParse(text, NumberStyles.None, CultureInfo.InvariantCulture, out long limit)
+            && limit > 0)
+        {
+            return Math.Min(free, limit);
+        }
+
+        return freeBytes;
     }
 
     internal void Validate()
@@ -146,8 +169,8 @@ public sealed record EmbeddingGemma2AutoBatchLimits
 internal static class EmbeddingGemma2MemoryProbe
 {
     /// <summary>
-    /// Linux: <c>MemAvailable</c> from <c>/proc/meminfo</c>, lowered to <c>memory.max - memory.current</c> of the
-    /// process's cgroup v2 when a limit is set. Null on other systems or when <c>MemAvailable</c> is missing.
+    /// Linux: <c>MemAvailable</c> from <c>/proc/meminfo</c>, lowered to the least <c>memory.max - memory.current</c>
+    /// over the process's cgroup v2 and its ancestors that set a limit. Null on other systems or when <c>MemAvailable</c> is missing.
     /// </summary>
     internal static long? HostAvailableBytes()
     {
@@ -206,10 +229,38 @@ internal static class EmbeddingGemma2MemoryProbe
             return null;
         }
 
-        string dir = Path.Combine("/sys/fs/cgroup", path.TrimStart('/'));
-        string maxFile = Path.Combine(dir, "memory.max");
-        string currentFile = Path.Combine(dir, "memory.current");
-        return File.Exists(maxFile) && File.Exists(currentFile) ? CgroupRoom(File.ReadAllText(maxFile), File.ReadAllText(currentFile)) : null;
+        return CgroupRoomOverAncestors("/sys/fs/cgroup", path.Trim(), (dir, file) =>
+        {
+            string full = Path.Combine(dir, file);
+            return File.Exists(full) ? File.ReadAllText(full) : null;
+        });
+    }
+
+    /// <summary>
+    /// The least room under a cgroup v2 limit over <paramref name="path"/> and its ancestors below
+    /// <paramref name="root"/> (a slice's or pod's limit sits above the process's own cgroup); null when none is limited.
+    /// <paramref name="read"/> gives a file of a cgroup directory, or null when it is missing.
+    /// </summary>
+    internal static long? CgroupRoomOverAncestors(string root, string path, Func<string, string, string?> read)
+    {
+        long? least = null;
+        string relative = path.Trim('/');
+        while (true)
+        {
+            string dir = relative.Length == 0 ? root : root.TrimEnd('/') + "/" + relative;
+            if (read(dir, "memory.max") is { } max && read(dir, "memory.current") is { } current && CgroupRoom(max, current) is { } room)
+            {
+                least = least is { } l ? Math.Min(l, room) : room;
+            }
+
+            if (relative.Length == 0)
+            {
+                return least;
+            }
+
+            int slash = relative.LastIndexOf('/');
+            relative = slash < 0 ? string.Empty : relative[..slash];
+        }
     }
 
     /// <summary>

@@ -46,7 +46,9 @@ namespace Starlings.Models.EmbeddingGemma2;
 /// <para>
 /// <b>Batching and memory.</b> Images are preprocessed per text chunk and run on the vision graph in calls of at most
 /// <see cref="EmbeddingGemma2MultimodalOptions.MaxVisionBatchSize"/> images (default 1, GPU-safe). Methods are
-/// synchronous, safe to call concurrently, and check cancellation between graph calls and inside each run.
+/// synchronous, safe to call concurrently, and check cancellation between graph calls and inside each run. With
+/// <see cref="EmbeddingGemma2MultimodalOptions.AutoBatchLimits"/> set, vision-graph calls run one at a time, because each
+/// is sized to the whole memory budget; text-graph calls are not serialized.
 /// </para>
 /// </remarks>
 public sealed class EmbeddingGemma2MultimodalEmbedder : IDisposable
@@ -108,6 +110,9 @@ public sealed class EmbeddingGemma2MultimodalEmbedder : IDisposable
     private readonly bool _ownsSessions;
     private readonly EmbeddingGemma2BufferPool _buffers;
     private readonly EmbeddingGemma2MultimodalOptions _options;
+
+    // With AutoBatchLimits, each vision call is sized to the whole budget, so vision calls run one at a time.
+    private readonly SemaphoreSlim? _visionGate;
     private int _disposed;
 
     /// <summary>
@@ -166,9 +171,12 @@ public sealed class EmbeddingGemma2MultimodalEmbedder : IDisposable
             // After load, so the free memory excludes the resident weights.
             int deviceId = vision.Diagnostics.ProviderOptions.TryGetValue("device_id", out string? id)
                 && int.TryParse(id, NumberStyles.None, CultureInfo.InvariantCulture, out int parsed) ? parsed : 0;
-            AutoBatchAvailableBytes = auto.ProbeFreeBytes(vision.Diagnostics.RequestedProvider, deviceId);
+            AutoBatchAvailableBytes = EmbeddingGemma2AutoBatchLimits.CapToArenaLimit(
+                auto.ProbeFreeBytes(vision.Diagnostics.RequestedProvider, deviceId),
+                vision.Diagnostics.ProviderOptions);
             options = auto.Apply(options, AutoBatchAvailableBytes);
             options.Validate();
+            _visionGate = new SemaphoreSlim(1, 1);
         }
 
         _tokenizer = tokenizer;
@@ -901,7 +909,15 @@ public sealed class EmbeddingGemma2MultimodalEmbedder : IDisposable
             using (var softValue = OrtValue.CreateTensorValueFromMemory(memoryInfo, softOut.AsMemory(0, count * slots * SoftTokenDimension), [count, slots, SoftTokenDimension]))
             using (var maskValue = OrtValue.CreateTensorValueFromMemory(memoryInfo, maskOut.AsMemory(0, count * slots), [count, slots]))
             {
-                _vision.Run(VisionInputNames, [pixelValue, positionValue], VisionOutputNames, [softValue, maskValue], cancellationToken);
+                _visionGate?.Wait(cancellationToken);
+                try
+                {
+                    _vision.Run(VisionInputNames, [pixelValue, positionValue], VisionOutputNames, [softValue, maskValue], cancellationToken);
+                }
+                finally
+                {
+                    _visionGate?.Release();
+                }
             }
 
             for (int b = 0; b < count; b++)

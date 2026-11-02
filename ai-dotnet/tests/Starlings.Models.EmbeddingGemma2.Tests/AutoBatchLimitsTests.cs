@@ -159,8 +159,46 @@ public class AutoBatchLimitsTests
         var actual = auto.EmbedBatch(images, Ct);
         for (int i = 0; i < images.Length; i++)
         {
-            Assert.Equal(expected[i], actual[i]);
+            // The fake graph's reductions run over the padded call, so batched rows can differ in the last float bits
+            // on some platforms (seen on Windows x64); the real model's batch parity is covered by ImageParityTests.
+            Assert.Equal(expected[i].Length, actual[i].Length);
+            for (int k = 0; k < expected[i].Length; k++)
+            {
+                Assert.Equal(expected[i][k], actual[i][k], tolerance: 1e-6f);
+            }
         }
+    }
+
+    [Fact]
+    public void CudaArenaLimitCapsTheFreeBytes()
+    {
+        var none = new Dictionary<string, string>();
+        var capped = new Dictionary<string, string> { ["gpu_mem_limit"] = (4 * GiB).ToString(System.Globalization.CultureInfo.InvariantCulture) };
+        Assert.Equal(13 * GiB, EmbeddingGemma2AutoBatchLimits.CapToArenaLimit(13 * GiB, none));
+        Assert.Equal(4 * GiB, EmbeddingGemma2AutoBatchLimits.CapToArenaLimit(13 * GiB, capped));
+        Assert.Equal(2 * GiB, EmbeddingGemma2AutoBatchLimits.CapToArenaLimit(2 * GiB, capped));
+        Assert.Null(EmbeddingGemma2AutoBatchLimits.CapToArenaLimit(null, capped));
+        Assert.Equal(13 * GiB, EmbeddingGemma2AutoBatchLimits.CapToArenaLimit(13 * GiB, new Dictionary<string, string> { ["gpu_mem_limit"] = "junk" }));
+    }
+
+    [Fact]
+    public void CgroupAncestorLimitsApply()
+    {
+        var files = new Dictionary<string, string>
+        {
+            ["/sys/fs/cgroup/memory.current"] = "1\n",
+            ["/sys/fs/cgroup/user.slice/memory.max"] = $"{8L * GiB}\n",
+            ["/sys/fs/cgroup/user.slice/memory.current"] = $"{2L * GiB}\n",
+            ["/sys/fs/cgroup/user.slice/app.scope/memory.max"] = "max\n",
+            ["/sys/fs/cgroup/user.slice/app.scope/memory.current"] = "100\n",
+        };
+        string? Read(string dir, string file) => files.TryGetValue(dir + "/" + file, out string? text) ? text : null;
+        Assert.Equal(6L * GiB, EmbeddingGemma2MemoryProbe.CgroupRoomOverAncestors("/sys/fs/cgroup", "/user.slice/app.scope", Read));
+
+        files["/sys/fs/cgroup/user.slice/app.scope/memory.max"] = $"{1L * GiB}\n";
+        Assert.Equal(1L * GiB - 100, EmbeddingGemma2MemoryProbe.CgroupRoomOverAncestors("/sys/fs/cgroup", "/user.slice/app.scope", Read));
+        Assert.Null(EmbeddingGemma2MemoryProbe.CgroupRoomOverAncestors("/sys/fs/cgroup", "/", Read));
+        Assert.Null(EmbeddingGemma2MemoryProbe.CgroupRoomOverAncestors("/sys/fs/cgroup", "/other", Read));
     }
 
     [Fact]
