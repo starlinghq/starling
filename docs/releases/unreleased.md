@@ -64,3 +64,7 @@ New `EmbeddingGemma2ImageDecoderOptions.MaxEncodedBytes` (default 64 MiB, 67,108
   consecutive LibriSpeech utterances, and a composite cut at 30 s inside its last utterance (its decode ends inside a
   segment and is decoded again from the last closing timestamp). It checks the timestamped decode of every clip and
   that the corpus exercises a timestamp pair and that re-decode.
+
+## Starlings.Models.Abstractions: reranking helpers for vector-search pipelines (Experimental; #168)
+
+New `Reranking` and `RerankedItem<T>(Item, Index, Score)` put an `IReranker` (today `BertReranker`, for example `bge-reranker-v2-m3`) after a first-stage retriever. Microsoft.Extensions.AI has no reranker abstraction, so the helpers take any sequence plus a text selector and add no package reference: `RerankAsync` reads an `IAsyncEnumerable<T>` such as a `Microsoft.Extensions.VectorData` `SearchAsync` top-k, scores it with one `Score` call and orders by descending score (ties in input order, optional `top`); `Rerank` is the synchronous form; `AsScoringFunction` wraps an `IReranker` as a `Func<string, IReadOnlyList<string>, Task<float[]>>`, and a `RerankAsync` overload takes any such scorer. Scoring runs on the calling thread and returns a completed task. API only and Experimental; every reranker profile stays Experimental (the Stable `bge-reranker-v2-m3` profile is still open in #168).

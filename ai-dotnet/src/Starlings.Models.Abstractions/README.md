@@ -8,6 +8,7 @@ Types the Starlings model packages share, with no ONNX Runtime dependency (it re
 | `ModelProfileCapabilities` | The capability record of one registry profile, generated from its manifest (see below) | `E5Capabilities.ProfileCapabilities`, `EmbeddingGemma2Capabilities.ProfileCapabilities`, `Gliner2Capabilities.ProfileCapabilities` |
 | `ITextEmbedder` | `Dimension`, `MaxSequenceLength`, `EmbedBatch(texts, tokenCounts, cancellationToken)`, `CountTokens(text)`, `CountTokens(texts)`, `Validate(text)` (a `TokenLimitCheck`) | `E5TextEmbedder`, `EmbeddingGemma2TextEmbedder` (no prompt), `BertTextEmbedder` (prompt `none`) |
 | `IReranker` | `Score(query, documents, cancellationToken)`: one raw score per document | `BertReranker` |
+| `Reranking`, `RerankedItem<T>` | Rerank a first-stage retriever's top-k (for example a `Microsoft.Extensions.VectorData` `SearchAsync`) with an `IReranker` or any `Func<string, IReadOnlyList<string>, Task<float[]>>` (Experimental, see below) | |
 | `IModelAssets<TFiles>` | A package's asset lock and explicit acquisition (`DownloadAsync`, `OpenLocal`, `OpenDirectory`) as one object | `E5ModelAssets.Assets`, `EmbeddingGemma2ModelAssets.Assets`, `Gliner2ModelAssets.Assets` |
 | `TokenLimitCheck` | `TokenCount`, `MaxTokens`, `ExceedsLimit`, `TokenCountIsLowerBound`: an input checked against the limit without embedding it | returned by `ITextEmbedder.Validate` |
 | `IChunkingTokenizer`, `TokenSpan` | Untruncated `CountTokens`, `SpecialTokenCount` and `GetTokenSpans` (UTF-16 offsets of each token): what `TextChunker` needs | `E5Tokenizer`, `EmbeddingGemma2Tokenizer`, `BertTextEmbedder.ChunkingTokenizer` |
@@ -84,6 +85,34 @@ float[] pooled = chunker.EmbedPooled(e5, document);
 ```
 
 `EmbedPooled` embeds every chunk (prefix prepended) in one `EmbedBatch` call and returns the mean of the L2-normalized chunk vectors, L2-normalized again (`TextChunker.Pool`). **A pooled vector is not the reference model's output and carries no parity claim**: the reference truncates or rejects such text, and no fidelity gate covers pooled vectors. Each chunk's own embedding is the model's output for that chunk text, with the profile's usual fidelity. Capability `chunking`: experimental.
+
+## Reranking retrieval results (experimental)
+
+Microsoft.Extensions.AI has no reranker abstraction, so `Reranking` connects an `IReranker` (today `BertReranker`, for example `bge-reranker-v2-m3`) to a retrieval pipeline without referencing `Microsoft.Extensions.VectorData` or `Microsoft.Extensions.AI`: the candidates are any sequence, and a selector picks the text to score.
+
+- `reranker.AsScoringFunction(cancellationToken)` returns a `Func<string, IReadOnlyList<string>, Task<float[]>>`: `Score(query, documents)` as a delegate, for pipelines that take a scorer rather than an `IReranker`.
+- `reranker.RerankAsync(query, candidates, text, top, cancellationToken)` reads an `IAsyncEnumerable<T>` (such as the results of `SearchAsync`) to the end, scores all candidates with one `Score` call, and returns `RerankedItem<T>(Item, Index, Score)` by descending score, ties in input order, keeping at most `top`. `Reranking.RerankAsync(query, candidates, text, score, top, cancellationToken)` does the same with any scorer delegate. `reranker.Rerank(...)` is the synchronous form over an `IEnumerable<T>`.
+
+Scoring runs on the calling thread, and the delegate returns a completed task (failures and cancellation are in the task, never thrown synchronously), as the Starlings `IEmbeddingGenerator` implementations do by default. No candidates means no reranker call and an empty result. A text selector that returns null throws `ArgumentException`; a scorer whose score count differs from the candidate count throws `InvalidOperationException`. Scores are the reranker's raw output (a logit for `BertReranker`), so `RerankedItem<T>.Score` is comparable only within one call; the first-stage score stays available on the item.
+
+```csharp
+using Microsoft.Extensions.VectorData;
+using Starlings.Models;
+using Starlings.Models.Bert;
+
+// collection: a VectorStoreCollection<string, Passage> whose embedding generator is, for example, e5's.
+using var reranker = BertReranker.Create(BertModelProfile.BuiltIn("bge-reranker-v2-m3"), rerankerSnapshot);
+string question = "Which river flows through Cologne?";
+IReadOnlyList<RerankedItem<VectorSearchResult<Passage>>> best = await reranker.RerankAsync(
+    question,
+    collection.SearchAsync("query: " + question, top: 20), // the embedder's top-k, with e5's query prefix
+    hit => hit.Record.Text,                                // the reranker scores the plain query and passage text
+    top: 3);
+foreach (var r in best)
+    Console.WriteLine($"{r.Score:F3} (was #{r.Index + 1}, {r.Item.Score:F3})  {r.Item.Record.Text}");
+```
+
+The helpers are API only: their maturity is the reranker profile's (every reranker profile is Experimental; see the `Starlings.Models.Bert` README).
 
 ## Migrating from the per-package types
 
