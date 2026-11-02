@@ -1,0 +1,128 @@
+run 1:
+2026-11-02T00:57:42Z
+0, NVIDIA GeForce RTX 3090, 23263 MiB, 24576 MiB
+1, NVIDIA GeForce RTX 4060 Ti, 773 MiB, 16380 MiB
+xUnit.net v3 In-Process Runner v4.0.1+8ed8aa354c (64-bit .NET 10.0.14)
+  Discovering: Starlings.Models.EmbeddingGemma2.Tests.Cuda
+  Discovered:  Starlings.Models.EmbeddingGemma2.Tests.Cuda
+  Starting:    Starlings.Models.EmbeddingGemma2.Tests.Cuda
+    Starlings.Models.EmbeddingGemma2.Tests.Cuda.CudaVideoParityTests.ConcurrentEmbedBatchCallsGiveTheSequentialResultsBitForBit [OUTPUT] 8 concurrent EmbedBatch calls x 2 rows x 5 rounds on one CUDA embedder (28 video and multimodal rows, 2 frames per vision call): 80 vectors bit-for-bit equal to the sequential run (max abs 0.000E+000)
+    Starlings.Models.EmbeddingGemma2.Tests.Cuda.CudaVideoParityTests.SessionsUseCudaWithTf32Disabled [OUTPUT] frames per vision call: 2 (max vision batch patches 2520)
+    Starlings.Models.EmbeddingGemma2.Tests.Cuda.CudaVideoParityTests.SessionsUseCudaWithTf32Disabled [OUTPUT] 6c97f477a82f: CUDAExecutionProvider, CPUExecutionProvider; use_tf32=0; CUDA_VISIBLE_DEVICES=1
+    Starlings.Models.EmbeddingGemma2.Tests.Cuda.CudaVideoParityTests.SessionsUseCudaWithTf32Disabled [OUTPUT] a2c22e072ec2: CUDAExecutionProvider, CPUExecutionProvider; use_tf32=0; CUDA_VISIBLE_DEVICES=1
+  Finished:    Starlings.Models.EmbeddingGemma2.Tests.Cuda (ID = 'e93bd84fe3d0de17aeadabd437db056a60c19cade5f57edf4530fefaf873c017')
+=== TEST EXECUTION SUMMARY ===
+   Starlings.Models.EmbeddingGemma2.Tests.Cuda  Total: 2, Errors: 0, Failed: 0, Skipped: 0, Not Run: 0, Time: 91.328s
+exit 0
+run 2:
+2026-11-02T00:59:14Z
+0, NVIDIA GeForce RTX 3090, 23263 MiB, 24576 MiB
+1, NVIDIA GeForce RTX 4060 Ti, 773 MiB, 16380 MiB
+xUnit.net v3 In-Process Runner v4.0.1+8ed8aa354c (64-bit .NET 10.0.14)
+  Discovering: Starlings.Models.EmbeddingGemma2.Tests.Cuda
+  Discovered:  Starlings.Models.EmbeddingGemma2.Tests.Cuda
+  Starting:    Starlings.Models.EmbeddingGemma2.Tests.Cuda
+    Starlings.Models.EmbeddingGemma2.Tests.Cuda.CudaVideoParityTests.ConcurrentEmbedBatchCallsGiveTheSequentialResultsBitForBit [OUTPUT] 8 concurrent EmbedBatch calls x 2 rows x 5 rounds on one CUDA embedder (28 video and multimodal rows, 2 frames per vision call): 80 vectors bit-for-bit equal to the sequential run (max abs 0.000E+000)
+    Starlings.Models.EmbeddingGemma2.Tests.Cuda.CudaVideoParityTests.SessionsUseCudaWithTf32Disabled [OUTPUT] frames per vision call: 2 (max vision batch patches 2520)
+    Starlings.Models.EmbeddingGemma2.Tests.Cuda.CudaVideoParityTests.SessionsUseCudaWithTf32Disabled [OUTPUT] 6c97f477a82f: CUDAExecutionProvider, CPUExecutionProvider; use_tf32=0; CUDA_VISIBLE_DEVICES=1
+    Starlings.Models.EmbeddingGemma2.Tests.Cuda.CudaVideoParityTests.SessionsUseCudaWithTf32Disabled [OUTPUT] a2c22e072ec2: CUDAExecutionProvider, CPUExecutionProvider; use_tf32=0; CUDA_VISIBLE_DEVICES=1
+  Finished:    Starlings.Models.EmbeddingGemma2.Tests.Cuda (ID = 'e93bd84fe3d0de17aeadabd437db056a60c19cade5f57edf4530fefaf873c017')
+=== TEST EXECUTION SUMMARY ===
+   Starlings.Models.EmbeddingGemma2.Tests.Cuda  Total: 2, Errors: 0, Failed: 0, Skipped: 0, Not Run: 0, Time: 95.876s
+exit 0
+run 3:
+2026-11-02T01:00:52Z
+0, NVIDIA GeForce RTX 3090, 23263 MiB, 24576 MiB
+1, NVIDIA GeForce RTX 4060 Ti, 773 MiB, 16380 MiB
+xUnit.net v3 In-Process Runner v4.0.1+8ed8aa354c (64-bit .NET 10.0.14)
+  Discovering: Starlings.Models.EmbeddingGemma2.Tests.Cuda
+  Discovered:  Starlings.Models.EmbeddingGemma2.Tests.Cuda
+  Starting:    Starlings.Models.EmbeddingGemma2.Tests.Cuda
+    Starlings.Models.EmbeddingGemma2.Tests.Cuda.CudaVideoParityTests.ConcurrentEmbedBatchCallsGiveTheSequentialResultsBitForBit [OUTPUT] 8 concurrent EmbedBatch calls x 2 rows x 5 rounds on one CUDA embedder (28 video and multimodal rows, 2 frames per vision call): 80 vectors bit-for-bit equal to the sequential run (max abs 0.000E+000)
+    Starlings.Models.EmbeddingGemma2.Tests.Cuda.CudaVideoParityTests.SessionsUseCudaWithTf32Disabled [OUTPUT] frames per vision call: 2 (max vision batch patches 2520)
+    Starlings.Models.EmbeddingGemma2.Tests.Cuda.CudaVideoParityTests.SessionsUseCudaWithTf32Disabled [OUTPUT] 6c97f477a82f: CUDAExecutionProvider, CPUExecutionProvider; use_tf32=0; CUDA_VISIBLE_DEVICES=1
+    Starlings.Models.EmbeddingGemma2.Tests.Cuda.CudaVideoParityTests.SessionsUseCudaWithTf32Disabled [OUTPUT] a2c22e072ec2: CUDAExecutionProvider, CPUExecutionProvider; use_tf32=0; CUDA_VISIBLE_DEVICES=1
+  Finished:    Starlings.Models.EmbeddingGemma2.Tests.Cuda (ID = 'e93bd84fe3d0de17aeadabd437db056a60c19cade5f57edf4530fefaf873c017')
+=== TEST EXECUTION SUMMARY ===
+   Starlings.Models.EmbeddingGemma2.Tests.Cuda  Total: 2, Errors: 0, Failed: 0, Skipped: 0, Not Run: 0, Time: 95.251s
+exit 0
+run 4:
+2026-11-02T01:02:28Z
+0, NVIDIA GeForce RTX 3090, 23263 MiB, 24576 MiB
+1, NVIDIA GeForce RTX 4060 Ti, 773 MiB, 16380 MiB
+xUnit.net v3 In-Process Runner v4.0.1+8ed8aa354c (64-bit .NET 10.0.14)
+  Discovering: Starlings.Models.EmbeddingGemma2.Tests.Cuda
+  Discovered:  Starlings.Models.EmbeddingGemma2.Tests.Cuda
+  Starting:    Starlings.Models.EmbeddingGemma2.Tests.Cuda
+    Starlings.Models.EmbeddingGemma2.Tests.Cuda.CudaVideoParityTests.ConcurrentEmbedBatchCallsGiveTheSequentialResultsBitForBit [OUTPUT] 8 concurrent EmbedBatch calls x 2 rows x 5 rounds on one CUDA embedder (28 video and multimodal rows, 2 frames per vision call): 80 vectors bit-for-bit equal to the sequential run (max abs 0.000E+000)
+    Starlings.Models.EmbeddingGemma2.Tests.Cuda.CudaVideoParityTests.SessionsUseCudaWithTf32Disabled [OUTPUT] frames per vision call: 2 (max vision batch patches 2520)
+    Starlings.Models.EmbeddingGemma2.Tests.Cuda.CudaVideoParityTests.SessionsUseCudaWithTf32Disabled [OUTPUT] 6c97f477a82f: CUDAExecutionProvider, CPUExecutionProvider; use_tf32=0; CUDA_VISIBLE_DEVICES=1
+    Starlings.Models.EmbeddingGemma2.Tests.Cuda.CudaVideoParityTests.SessionsUseCudaWithTf32Disabled [OUTPUT] a2c22e072ec2: CUDAExecutionProvider, CPUExecutionProvider; use_tf32=0; CUDA_VISIBLE_DEVICES=1
+  Finished:    Starlings.Models.EmbeddingGemma2.Tests.Cuda (ID = 'e93bd84fe3d0de17aeadabd437db056a60c19cade5f57edf4530fefaf873c017')
+=== TEST EXECUTION SUMMARY ===
+   Starlings.Models.EmbeddingGemma2.Tests.Cuda  Total: 2, Errors: 0, Failed: 0, Skipped: 0, Not Run: 0, Time: 87.968s
+exit 0
+run 5:
+2026-11-02T01:03:57Z
+0, NVIDIA GeForce RTX 3090, 23263 MiB, 24576 MiB
+1, NVIDIA GeForce RTX 4060 Ti, 773 MiB, 16380 MiB
+xUnit.net v3 In-Process Runner v4.0.1+8ed8aa354c (64-bit .NET 10.0.14)
+  Discovering: Starlings.Models.EmbeddingGemma2.Tests.Cuda
+  Discovered:  Starlings.Models.EmbeddingGemma2.Tests.Cuda
+  Starting:    Starlings.Models.EmbeddingGemma2.Tests.Cuda
+    Starlings.Models.EmbeddingGemma2.Tests.Cuda.CudaVideoParityTests.ConcurrentEmbedBatchCallsGiveTheSequentialResultsBitForBit [OUTPUT] 8 concurrent EmbedBatch calls x 2 rows x 5 rounds on one CUDA embedder (28 video and multimodal rows, 2 frames per vision call): 80 vectors bit-for-bit equal to the sequential run (max abs 0.000E+000)
+    Starlings.Models.EmbeddingGemma2.Tests.Cuda.CudaVideoParityTests.SessionsUseCudaWithTf32Disabled [OUTPUT] frames per vision call: 2 (max vision batch patches 2520)
+    Starlings.Models.EmbeddingGemma2.Tests.Cuda.CudaVideoParityTests.SessionsUseCudaWithTf32Disabled [OUTPUT] 6c97f477a82f: CUDAExecutionProvider, CPUExecutionProvider; use_tf32=0; CUDA_VISIBLE_DEVICES=1
+    Starlings.Models.EmbeddingGemma2.Tests.Cuda.CudaVideoParityTests.SessionsUseCudaWithTf32Disabled [OUTPUT] a2c22e072ec2: CUDAExecutionProvider, CPUExecutionProvider; use_tf32=0; CUDA_VISIBLE_DEVICES=1
+  Finished:    Starlings.Models.EmbeddingGemma2.Tests.Cuda (ID = 'e93bd84fe3d0de17aeadabd437db056a60c19cade5f57edf4530fefaf873c017')
+=== TEST EXECUTION SUMMARY ===
+   Starlings.Models.EmbeddingGemma2.Tests.Cuda  Total: 2, Errors: 0, Failed: 0, Skipped: 0, Not Run: 0, Time: 94.738s
+exit 0
+run 6:
+2026-11-02T01:05:33Z
+0, NVIDIA GeForce RTX 3090, 23263 MiB, 24576 MiB
+1, NVIDIA GeForce RTX 4060 Ti, 773 MiB, 16380 MiB
+xUnit.net v3 In-Process Runner v4.0.1+8ed8aa354c (64-bit .NET 10.0.14)
+  Discovering: Starlings.Models.EmbeddingGemma2.Tests.Cuda
+  Discovered:  Starlings.Models.EmbeddingGemma2.Tests.Cuda
+  Starting:    Starlings.Models.EmbeddingGemma2.Tests.Cuda
+    Starlings.Models.EmbeddingGemma2.Tests.Cuda.CudaVideoParityTests.ConcurrentEmbedBatchCallsGiveTheSequentialResultsBitForBit [OUTPUT] 8 concurrent EmbedBatch calls x 2 rows x 5 rounds on one CUDA embedder (28 video and multimodal rows, 2 frames per vision call): 80 vectors bit-for-bit equal to the sequential run (max abs 0.000E+000)
+    Starlings.Models.EmbeddingGemma2.Tests.Cuda.CudaVideoParityTests.SessionsUseCudaWithTf32Disabled [OUTPUT] frames per vision call: 2 (max vision batch patches 2520)
+    Starlings.Models.EmbeddingGemma2.Tests.Cuda.CudaVideoParityTests.SessionsUseCudaWithTf32Disabled [OUTPUT] 6c97f477a82f: CUDAExecutionProvider, CPUExecutionProvider; use_tf32=0; CUDA_VISIBLE_DEVICES=1
+    Starlings.Models.EmbeddingGemma2.Tests.Cuda.CudaVideoParityTests.SessionsUseCudaWithTf32Disabled [OUTPUT] a2c22e072ec2: CUDAExecutionProvider, CPUExecutionProvider; use_tf32=0; CUDA_VISIBLE_DEVICES=1
+  Finished:    Starlings.Models.EmbeddingGemma2.Tests.Cuda (ID = 'e93bd84fe3d0de17aeadabd437db056a60c19cade5f57edf4530fefaf873c017')
+=== TEST EXECUTION SUMMARY ===
+   Starlings.Models.EmbeddingGemma2.Tests.Cuda  Total: 2, Errors: 0, Failed: 0, Skipped: 0, Not Run: 0, Time: 107.827s
+exit 0
+run 7:
+2026-11-02T01:07:22Z
+0, NVIDIA GeForce RTX 3090, 23263 MiB, 24576 MiB
+1, NVIDIA GeForce RTX 4060 Ti, 774 MiB, 16380 MiB
+xUnit.net v3 In-Process Runner v4.0.1+8ed8aa354c (64-bit .NET 10.0.14)
+  Discovering: Starlings.Models.EmbeddingGemma2.Tests.Cuda
+  Discovered:  Starlings.Models.EmbeddingGemma2.Tests.Cuda
+  Starting:    Starlings.Models.EmbeddingGemma2.Tests.Cuda
+    Starlings.Models.EmbeddingGemma2.Tests.Cuda.CudaVideoParityTests.ConcurrentEmbedBatchCallsGiveTheSequentialResultsBitForBit [OUTPUT] 8 concurrent EmbedBatch calls x 2 rows x 5 rounds on one CUDA embedder (28 video and multimodal rows, 2 frames per vision call): 80 vectors bit-for-bit equal to the sequential run (max abs 0.000E+000)
+    Starlings.Models.EmbeddingGemma2.Tests.Cuda.CudaVideoParityTests.SessionsUseCudaWithTf32Disabled [OUTPUT] frames per vision call: 2 (max vision batch patches 2520)
+    Starlings.Models.EmbeddingGemma2.Tests.Cuda.CudaVideoParityTests.SessionsUseCudaWithTf32Disabled [OUTPUT] 6c97f477a82f: CUDAExecutionProvider, CPUExecutionProvider; use_tf32=0; CUDA_VISIBLE_DEVICES=1
+    Starlings.Models.EmbeddingGemma2.Tests.Cuda.CudaVideoParityTests.SessionsUseCudaWithTf32Disabled [OUTPUT] a2c22e072ec2: CUDAExecutionProvider, CPUExecutionProvider; use_tf32=0; CUDA_VISIBLE_DEVICES=1
+  Finished:    Starlings.Models.EmbeddingGemma2.Tests.Cuda (ID = 'e93bd84fe3d0de17aeadabd437db056a60c19cade5f57edf4530fefaf873c017')
+=== TEST EXECUTION SUMMARY ===
+   Starlings.Models.EmbeddingGemma2.Tests.Cuda  Total: 2, Errors: 0, Failed: 0, Skipped: 0, Not Run: 0, Time: 102.326s
+exit 0
+run 8:
+2026-11-02T01:09:05Z
+0, NVIDIA GeForce RTX 3090, 23263 MiB, 24576 MiB
+1, NVIDIA GeForce RTX 4060 Ti, 774 MiB, 16380 MiB
+xUnit.net v3 In-Process Runner v4.0.1+8ed8aa354c (64-bit .NET 10.0.14)
+  Discovering: Starlings.Models.EmbeddingGemma2.Tests.Cuda
+  Discovered:  Starlings.Models.EmbeddingGemma2.Tests.Cuda
+  Starting:    Starlings.Models.EmbeddingGemma2.Tests.Cuda
+    Starlings.Models.EmbeddingGemma2.Tests.Cuda.CudaVideoParityTests.ConcurrentEmbedBatchCallsGiveTheSequentialResultsBitForBit [OUTPUT] 8 concurrent EmbedBatch calls x 2 rows x 5 rounds on one CUDA embedder (28 video and multimodal rows, 2 frames per vision call): 80 vectors bit-for-bit equal to the sequential run (max abs 0.000E+000)
+    Starlings.Models.EmbeddingGemma2.Tests.Cuda.CudaVideoParityTests.SessionsUseCudaWithTf32Disabled [OUTPUT] frames per vision call: 2 (max vision batch patches 2520)
+    Starlings.Models.EmbeddingGemma2.Tests.Cuda.CudaVideoParityTests.SessionsUseCudaWithTf32Disabled [OUTPUT] 6c97f477a82f: CUDAExecutionProvider, CPUExecutionProvider; use_tf32=0; CUDA_VISIBLE_DEVICES=1
+    Starlings.Models.EmbeddingGemma2.Tests.Cuda.CudaVideoParityTests.SessionsUseCudaWithTf32Disabled [OUTPUT] a2c22e072ec2: CUDAExecutionProvider, CPUExecutionProvider; use_tf32=0; CUDA_VISIBLE_DEVICES=1
+  Finished:    Starlings.Models.EmbeddingGemma2.Tests.Cuda (ID = 'e93bd84fe3d0de17aeadabd437db056a60c19cade5f57edf4530fefaf873c017')
+=== TEST EXECUTION SUMMARY ===
+   Starlings.Models.EmbeddingGemma2.Tests.Cuda  Total: 2, Errors: 0, Failed: 0, Skipped: 0, Not Run: 0, Time: 117.287s
+exit 0

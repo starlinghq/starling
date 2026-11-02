@@ -1,0 +1,50 @@
+2026-11-02T00:02:00Z
+0, NVIDIA GeForce RTX 3090, 23263 MiB, 24576 MiB
+1, NVIDIA GeForce RTX 4060 Ti, 679 MiB, 16380 MiB
+xUnit.net v3 In-Process Runner v4.0.1+8ed8aa354c (64-bit .NET 10.0.14)
+  Discovering: Starlings.Models.EmbeddingGemma2.Tests.Cuda
+  Discovered:  Starlings.Models.EmbeddingGemma2.Tests.Cuda
+  Starting:    Starlings.Models.EmbeddingGemma2.Tests.Cuda
+2026-11-01 16:02:35.142612178 [E:onnxruntime:, sequential_executor.cc:671 ExecuteKernel] Non-zero status code returned while running MatMul node. Name:'node_MatMul_227' Status Message: /onnxruntime_src/onnxruntime/core/framework/bfc_arena.cc:360 void* onnxruntime::BFCArena::AllocateRawInternal(size_t, bool, onnxruntime::Stream*) Failed to allocate memory for requested buffer of size 254803968
+
+    Starlings.Models.EmbeddingGemma2.Tests.Cuda.CudaImageParityTests.ConcurrentEmbedBatchCallsGiveTheSequentialResultsBitForBit [FAIL]
+      Assert.All() Failure: 1 out of 8 items in the collection did not pass.
+      [6]: Item:  Microsoft.ML.OnnxRuntime.OnnxRuntimeException: [ErrorCode:Fail] Non-zero status code returned while running MatMul node. Name:'node_MatMul_227' Status Message: /onnxruntime_src/onnxruntime/core/framework/bfc_arena.cc:360 void* onnxruntime::BFCArena::AllocateRawInternal(size_t, bool, onnxruntime::Stream*) Failed to allocate memory for requested buffer of size 254803968
+                  
+                     at Microsoft.ML.OnnxRuntime.InferenceSession.Run(RunOptions runOptions, IReadOnlyCollection`1 inputNames, IReadOnlyCollection`1 inputValues, IReadOnlyCollection`1 outputNames, IReadOnlyCollection`1 outputValues)
+                     at Starlings.Runtime.Onnx.OnnxModelSession.Invoke(Action`1 run, RunOptions runOptions) in <repo>/ai-dotnet/src/Starlings.Runtime.Onnx/OnnxModelSession.cs:line 616
+                     at Starlings.Runtime.Onnx.OnnxModelSession.RunOnceCuda(Action`1 run, RunOptions runOptions, CancellationToken cancellationToken) in <repo>/ai-dotnet/src/Starlings.Runtime.Onnx/OnnxModelSession.cs:line 650
+                     at Starlings.Runtime.Onnx.OnnxModelSession.Run(IReadOnlyCollection`1 inputNames, IReadOnlyCollection`1 inputValues, IReadOnlyCollection`1 outputNames, IReadOnlyCollection`1 outputValues, CancellationToken cancellationToken) in <repo>/ai-dotnet/src/Starlings.Runtime.Onnx/OnnxModelSession.cs:line 183
+                     at Starlings.Models.EmbeddingGemma2.EmbeddingGemma2MultimodalEmbedder.RunVisionCall(EmbeddingGemma2ImagePatches[] batch, Int32 rows, Single[] soft, ReadOnlySpan`1 offsets, CancellationToken cancellationToken) in <repo>/ai-dotnet/src/Starlings.Models.EmbeddingGemma2/EmbeddingGemma2MultimodalEmbedder.cs:line 883
+                     at Starlings.Models.EmbeddingGemma2.EmbeddingGemma2MultimodalEmbedder.RunVision(EmbeddingGemma2Image[] images, Int32 budget, Int32 maxPerCall, Int32 preprocessAhead, Int32[]& offsets, Int32[]& counts, CancellationToken cancellationToken) in <repo>/ai-dotnet/src/Starlings.Models.EmbeddingGemma2/EmbeddingGemma2MultimodalEmbedder.cs:line 831
+                     at Starlings.Models.EmbeddingGemma2.EmbeddingGemma2MultimodalEmbedder.EmbedImageChunk(PreparedInput[] chunk, Span`1 destination, IEmbeddingGemma2Diagnostics diagnostics, CancellationToken cancellationToken) in <repo>/ai-dotnet/src/Starlings.Models.EmbeddingGemma2/EmbeddingGemma2MultimodalEmbedder.cs:line 625
+                     at Starlings.Models.EmbeddingGemma2.EmbeddingGemma2MultimodalEmbedder.EmbedCore(IReadOnlyList`1 inputs, EmbeddingGemma2Prompt prompt, Span`1 destination, Span`1 tokenCounts, IEmbeddingGemma2Diagnostics diagnostics, CancellationToken cancellationToken) in <repo>/ai-dotnet/src/Starlings.Models.EmbeddingGemma2/EmbeddingGemma2MultimodalEmbedder.cs:line 407
+                     at Starlings.Models.EmbeddingGemma2.EmbeddingGemma2MultimodalEmbedder.EmbedBatch(IReadOnlyList`1 inputs, EmbeddingGemma2Prompt prompt, Span`1 tokenCounts, CancellationToken cancellationToken) in <repo>/ai-dotnet/src/Starlings.Models.EmbeddingGemma2/EmbeddingGemma2MultimodalEmbedder.cs:line 294
+                     at Starlings.Models.EmbeddingGemma2.EmbeddingGemma2MultimodalEmbedder.EmbedBatch(IReadOnlyList`1 inputs, EmbeddingGemma2Prompt prompt, CancellationToken cancellationToken) in <repo>/ai-dotnet/src/Starlings.Models.EmbeddingGemma2/EmbeddingGemma2MultimodalEmbedder.cs:line 279
+                     at Starlings.Models.EmbeddingGemma2.Tests.Cuda.ConcurrentMultimodalBatches.<>c__DisplayClass1_2.<Check>b__7() in <repo>/ai-dotnet/tests/Starlings.Models.EmbeddingGemma2.Tests.Cuda/ConcurrentMultimodalBatches.cs:line 42
+           Error: Assert.Null() Failure: Value is not null
+                  Expected: null
+                  Actual:   Microsoft.ML.OnnxRuntime.OnnxRuntimeException: [ErrorCode:Fail] Non-zero status code returned while running MatMul node. Name:'node_MatMul_227' Status Message: /onnxruntime_src/onnxruntime/core/framework/bfc_arena.cc:360 void* onnxruntime::BFCArena::AllocateRawInternal(size_t, bool, onnxruntime::Stream*) Failed to allocate memory for requested buffer of size 254803968
+                  
+                     at Microsoft.ML.OnnxRuntime.InferenceSession.Run(RunOptions runOptions, IReadOnlyCollection`1 inputNames, IReadOnlyCollection`1 inputValues, IReadOnlyCollection`1 outputNames, IReadOnlyCollection`1 outputValues)
+                     at Starlings.Runtime.Onnx.OnnxModelSession.Invoke(Action`1 run, RunOptions runOptions) in <repo>/ai-dotnet/src/Starlings.Runtime.Onnx/OnnxModelSession.cs:line 616
+                     at Starlings.Runtime.Onnx.OnnxModelSession.RunOnceCuda(Action`1 run, RunOptions runOptions, CancellationToken cancellationToken) in <repo>/ai-dotnet/src/Starlings.Runtime.Onnx/OnnxModelSession.cs:line 650
+                     at Starlings.Runtime.Onnx.OnnxModelSession.Run(IReadOnlyCollection`1 inputNames, IReadOnlyCollection`1 inputValues, IReadOnlyCollection`1 outputNames, IReadOnlyCollection`1 outputValues, CancellationToken cancellationToken) in <repo>/ai-dotnet/src/Starlings.Runtime.Onnx/OnnxModelSession.cs:line 183
+                     at Starlings.Models.EmbeddingGemma2.EmbeddingGemma2MultimodalEmbedder.RunVisionCall(EmbeddingGemma2ImagePatches[] batch, Int32 rows, Single[] soft, ReadOnlySpan`1 offsets, CancellationToken cancellationToken) in <repo>/ai-dotnet/src/Starlings.Models.EmbeddingGemma2/EmbeddingGemma2MultimodalEmbedder.cs:line 883
+                     at Starlings.Models.EmbeddingGemma2.EmbeddingGemma2MultimodalEmbedder.RunVision(EmbeddingGemma2Image[] images, Int32 budget, Int32 maxPerCall, Int32 preprocessAhead, Int32[]& offsets, Int32[]& counts, CancellationToken cancellationToken) in <repo>/ai-dotnet/src/Starlings.Models.EmbeddingGemma2/EmbeddingGemma2MultimodalEmbedder.cs:line 831
+                     at Starlings.Models.EmbeddingGemma2.EmbeddingGemma2MultimodalEmbedder.EmbedImageChunk(PreparedInput[] chunk, Span`1 destination, IEmbeddingGemma2Diagnostics diagnostics, CancellationToken cancellationToken) in <repo>/ai-dotnet/src/Starlings.Models.EmbeddingGemma2/EmbeddingGemma2MultimodalEmbedder.cs:line 625
+                     at Starlings.Models.EmbeddingGemma2.EmbeddingGemma2MultimodalEmbedder.EmbedCore(IReadOnlyList`1 inputs, EmbeddingGemma2Prompt prompt, Span`1 destination, Span`1 tokenCounts, IEmbeddingGemma2Diagnostics diagnostics, CancellationToken cancellationToken) in <repo>/ai-dotnet/src/Starlings.Models.EmbeddingGemma2/EmbeddingGemma2MultimodalEmbedder.cs:line 407
+                     at Starlings.Models.EmbeddingGemma2.EmbeddingGemma2MultimodalEmbedder.EmbedBatch(IReadOnlyList`1 inputs, EmbeddingGemma2Prompt prompt, Span`1 tokenCounts, CancellationToken cancellationToken) in <repo>/ai-dotnet/src/Starlings.Models.EmbeddingGemma2/EmbeddingGemma2MultimodalEmbedder.cs:line 294
+                     at Starlings.Models.EmbeddingGemma2.EmbeddingGemma2MultimodalEmbedder.EmbedBatch(IReadOnlyList`1 inputs, EmbeddingGemma2Prompt prompt, CancellationToken cancellationToken) in <repo>/ai-dotnet/src/Starlings.Models.EmbeddingGemma2/EmbeddingGemma2MultimodalEmbedder.cs:line 279
+                     at Starlings.Models.EmbeddingGemma2.Tests.Cuda.ConcurrentMultimodalBatches.<>c__DisplayClass1_2.<Check>b__7() in <repo>/ai-dotnet/tests/Starlings.Models.EmbeddingGemma2.Tests.Cuda/ConcurrentMultimodalBatches.cs:line 42
+      Stack Trace:
+        ai-dotnet/tests/Starlings.Models.EmbeddingGemma2.Tests.Cuda/ConcurrentMultimodalBatches.cs(52,0): at Starlings.Models.EmbeddingGemma2.Tests.Cuda.ConcurrentMultimodalBatches.Check(EmbeddingGemma2MultimodalEmbedder embedder, List`1 batches, Int32 rounds, CancellationToken ct)
+        ai-dotnet/tests/Starlings.Models.EmbeddingGemma2.Tests.Cuda/CudaImageParityTests.cs(56,0): at Starlings.Models.EmbeddingGemma2.Tests.Cuda.CudaImageParityTests.ConcurrentEmbedBatchCallsGiveTheSequentialResultsBitForBit()
+           at System.Reflection.MethodBaseInvoker.InterpretedInvoke_Method(Object obj, IntPtr* args)
+           at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)
+    Starlings.Models.EmbeddingGemma2.Tests.Cuda.CudaImageParityTests.SessionsUseCudaWithTf32Disabled [OUTPUT] 6c97f477a82f: CUDAExecutionProvider, CPUExecutionProvider; use_tf32=0; CUDA_VISIBLE_DEVICES=1
+    Starlings.Models.EmbeddingGemma2.Tests.Cuda.CudaImageParityTests.SessionsUseCudaWithTf32Disabled [OUTPUT] a2c22e072ec2: CUDAExecutionProvider, CPUExecutionProvider; use_tf32=0; CUDA_VISIBLE_DEVICES=1
+  Finished:    Starlings.Models.EmbeddingGemma2.Tests.Cuda (ID = 'e93bd84fe3d0de17aeadabd437db056a60c19cade5f57edf4530fefaf873c017')
+=== TEST EXECUTION SUMMARY ===
+   Starlings.Models.EmbeddingGemma2.Tests.Cuda  Total: 2, Errors: 0, Failed: 1, Skipped: 0, Not Run: 0, Time: 36.613s
+exit 1
