@@ -103,7 +103,16 @@ public static class Gliner2Capabilities
         ["extract_long"] = Status.Unsupported,
         ["plain_deduplicated_output"] = Status.Unsupported,
         ["batch.mixed_label_sets"] = Status.Unsupported,
-        ["classification"] = Status.Unsupported,
+        // Single-task classification (Gliner2TextClassifier: the graph's last_hidden_state at the [L] markers, then the
+        // checkpoint's classifier head from model.safetensors). CPU: 26 proposed cases run by the pinned GLiNER2, ids,
+        // marker positions and decisions exact, logits and scores within the profile's span-logit and score bounds
+        // (docs/evidence/gliner2-classification-2026-11-01/). No task-quality set (G3): outside the Stable contract.
+        ["classification"] = Status.Experimental,
+        // No CUDA run: Gliner2TextClassifier rejects a session whose first provider is CUDA.
+        ["classification.cuda"] = Status.Unsupported,
+        ["classification.multiple_tasks"] = Status.Unsupported,
+        ["classification.label_descriptions"] = Status.Unsupported,
+        ["classification.batch"] = Status.Unsupported,
         ["relation_extraction"] = Status.Unsupported,
         ["structured_extraction"] = Status.Unsupported,
         ["per_label_thresholds"] = Status.Unsupported,

@@ -31,6 +31,12 @@ internal sealed class Gliner2Preprocessor
     /// <summary>The schema's prompt token for entities.</summary>
     public const string EntitiesPrompt = "entities";
 
+    /// <summary>The label marker of an entity schema.</summary>
+    public const string EntityMarker = "[E]";
+
+    /// <summary>The label marker of a classification schema (GLiNER2 <c>L_TOKEN</c>).</summary>
+    public const string ClassificationMarker = "[L]";
+
     private readonly Tokenizer _tokenizer;
     private readonly ConcurrentDictionary<string, long[]> _ids = new(StringComparer.Ordinal);
 
@@ -98,7 +104,11 @@ internal sealed class Gliner2Preprocessor
     /// GLiNER2's <c>max_len</c> word cap (words after the first <paramref name="maxWords"/> are dropped before
     /// encoding). Outside the contract; used only for fidelity evidence. Null: no cap (GLiNER2's default).
     /// </param>
-    public Gliner2ModelInput Build(string text, IReadOnlyList<string> labels, IReadOnlyDictionary<string, string>? descriptions, int? maxWords = null)
+    /// <param name="prompt">The schema's task name: <see cref="EntitiesPrompt"/> for entities, the caller's task for classification.</param>
+    /// <param name="marker">The label marker token: <see cref="EntityMarker"/> or <see cref="ClassificationMarker"/>.</param>
+    public Gliner2ModelInput Build(
+        string text, IReadOnlyList<string> labels, IReadOnlyDictionary<string, string>? descriptions, int? maxWords = null,
+        string prompt = EntitiesPrompt, string marker = EntityMarker)
     {
         int originalScalars = Gliner2Text.ToScalars(text, nameof(text)).Length;
         string normalized = Gliner2Text.Normalize(text);
@@ -109,9 +119,8 @@ internal sealed class Gliner2Preprocessor
             words.RemoveRange(cap, words.Count - cap);
         }
 
-        // ( [P] prompt ( [E] l1 [E] l2 ... ) ), then [SEP_TEXT]. With descriptions the prompt is one string with the
+        // ( [P] prompt ( [E] l1 [E] l2 ... ) ), then [SEP_TEXT]; classification uses [L] in place of [E]. With descriptions the prompt is one string with the
         // special token inside: "entities [DESCRIPTION] label: text ...", in label order.
-        string prompt = EntitiesPrompt;
         if (descriptions is not null)
         {
             foreach (string label in labels)
@@ -126,7 +135,7 @@ internal sealed class Gliner2Preprocessor
         var schemaTokens = new List<string>(labels.Count * 2 + 6) { "(", "[P]", prompt, "(" };
         foreach (string label in labels)
         {
-            schemaTokens.Add("[E]");
+            schemaTokens.Add(marker);
             schemaTokens.Add(label);
         }
 
@@ -139,8 +148,8 @@ internal sealed class Gliner2Preprocessor
         for (int j = 0; j < schemaTokens.Count; j++)
         {
             // Marker positions by structure, not by text: index 1 is [P], then [E] at 4, 6, ... before the closing ")" ")".
-            bool marker = j == 1 || (j >= 4 && j < schemaTokens.Count - 2 && (j - 4) % 2 == 0);
-            if (marker)
+            bool isMarker = j == 1 || (j >= 4 && j < schemaTokens.Count - 2 && (j - 4) % 2 == 0);
+            if (isMarker)
             {
                 schemaIndex[slot++] = ids.Count;
             }

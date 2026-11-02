@@ -93,7 +93,9 @@ behavior:
   unsupported:
     - relation extraction
     - structured (JSON) extraction
-    - text classification (named candidate; kickoff decision)
+    - >-
+      text classification beyond one task with plain labels per call (several tasks, label descriptions or examples,
+      temperature, batches, long-text chunking); single-task classification is experimental (Gliner2TextClassifier)
     - inputs above 512 tokens (rejected, not truncated)
     - GLiNER2's plain output format (strings de-duplicated on lower-cased text)
     - per-label thresholds, dtype "str", regex validators, entity attributes
@@ -183,7 +185,13 @@ capabilities:
   input_over_512_tokens: unsupported
   plain_deduplicated_output: unsupported
   mixed_label_sets_in_batch: unsupported
-  classification: unsupported
+  # classification (issue #183 step 1, docs/evidence/gliner2-classification-2026-11-01/README.md): Gliner2TextClassifier
+  # reads the locked graph's last_hidden_state at the [L] markers and applies the checkpoint's classifier head
+  # (model.safetensors, Gliner2ModelAssets.ClassificationLock). 26 proposed cases on repository-written text
+  # (model-pipeline/proposed/gliner2-base-v1/classification) run by the pinned GLiNER2 on CPU: ids, marker positions
+  # and decisions exact, logits and scores within this profile's span-logit and score bounds. No task-quality set (G3)
+  # and no protected bound for classification logits: outside the Stable contract.
+  classification: experimental
   relation_extraction: unsupported
   structured_extraction: unsupported
 

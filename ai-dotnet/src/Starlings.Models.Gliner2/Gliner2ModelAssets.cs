@@ -99,6 +99,33 @@ public static class Gliner2ModelAssets
             new ModelAssetFile(TokenizerFile, TokenizerSize, TokenizerSha256),
         ]);
 
+    /// <summary>
+    /// The checkpoint in <see cref="Repository"/> at <see cref="Revision"/>, which holds the classification head
+    /// (<see cref="Gliner2ClassificationHead"/>; Experimental). Not in <see cref="Lock"/>: entity extraction does not need it.
+    /// </summary>
+    public const string ClassificationWeightsFile = "model.safetensors";
+
+    /// <summary>SHA-256 of <see cref="ClassificationWeightsFile"/>.</summary>
+    public const string ClassificationWeightsSha256 = "845fc4bd93c525b86124c58ab4f56c9eacf8587953086b14c501fab25957c007";
+
+    /// <summary>Size of <see cref="ClassificationWeightsFile"/> in bytes.</summary>
+    public const long ClassificationWeightsSize = 833_938_108;
+
+    /// <summary>
+    /// <see cref="Lock"/> plus <see cref="ClassificationWeightsFile"/> from <see cref="Repository"/> (about 1.67 GB), for
+    /// <see cref="Gliner2TextClassifier"/> (Experimental). Acquire it with <see cref="ModelAssetStore"/>; the extra file
+    /// is downloaded from the Hub repository at the pinned commit, with no token.
+    /// </summary>
+    public static ModelAssetLock ClassificationLock { get; } = new(
+        "gliner2-base-v1",
+        Repository,
+        Revision,
+        [
+            new ModelAssetFile(ModelFile, ModelSize, ModelSha256, new Uri(ModelSource)),
+            new ModelAssetFile(TokenizerFile, TokenizerSize, TokenizerSha256),
+            new ModelAssetFile(ClassificationWeightsFile, ClassificationWeightsSize, ClassificationWeightsSha256),
+        ]);
+
     /// <summary>Explicitly downloads (or verifies already cached) GLiNER2 files. See <see cref="ModelAssetStore.DownloadAsync(ModelAssetLock, IProgress{ModelAssetProgress}?, CancellationToken)"/>.</summary>
     public static async Task<Gliner2ModelFiles> DownloadAsync(
         ModelAcquisitionOptions? options = null, IProgress<ModelAssetProgress>? progress = null, CancellationToken cancellationToken = default)
