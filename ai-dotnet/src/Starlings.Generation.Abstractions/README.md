@@ -36,6 +36,7 @@ Maturity is per profile, generated from the registry manifests by `model-pipelin
 | `qwen3.5-0.8b/ortgenai-fp16x-cuda` | stable | linux-x64 cuda: supported; windows-x64 cuda: untested |
 | `qwen3.5-0.8b/ortgenai-fp32x-cpu` | stable | linux-x64 cpu: supported; windows-x64 cpu: untested |
 | `qwen3.5-0.8b/ortgenai-fp32x-cuda` | stable | linux-x64 cuda: supported; windows-x64 cuda: untested |
+| `qwen3.5-0.8b/ortgenai-int4-cpu` | experimental | linux-x64 cpu: experimental; linux-x64 cuda: unsupported; windows-x64 cpu: untested |
 <!-- /catalog:maturity -->
 
 The types moved here from `Starlings.Generation.OnnxGenAI` unchanged in behaviour; the migration from 0.3.0 is in the release notes. Documentation: [ai-dotnet/README.md](https://github.com/starlinghq/starling/blob/main/ai-dotnet/README.md#generation-backend-and-pilot-llm-p-016).

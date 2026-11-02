@@ -43,6 +43,7 @@ Gate cells link to the evidence the manifest records. The Stable readiness colum
 | [qwen3.5-0.8b/ortgenai-fp16x-cuda](../../model-pipeline/registry/qwen3.5-0.8b/ortgenai-fp16x-cuda/manifest.yaml) | generation | stable | Mark | 2027-01-05 | [passed](../evidence/g0-provenance-2026-10-14/README.md) | [passed](../evidence/release-set-gates-2026-10-14/qwen35-ortgenai-fp16x-cuda/README.md) | [passed](../evidence/release-set-gates-2026-10-14/qwen35-ortgenai-fp16x-cuda/README.md) | [passed](../evidence/release-set-gates-2026-10-14/qwen35-ortgenai-fp16x-cuda/README.md) | [passed](../evidence/qualification-2026-10-16-cuda/README.md) | [passed](../evidence/qualification-2026-10-16-cuda/README.md) | [passed](../evidence/g6-distribution-2026-10-14/README.md) | [passed](../evidence/g7-integration-2026-10-14/README.md) | stable: meets the validator's Stable rules |
 | [qwen3.5-0.8b/ortgenai-fp32x-cpu](../../model-pipeline/registry/qwen3.5-0.8b/ortgenai-fp32x-cpu/manifest.yaml) | generation | stable | Mark | 2027-01-05 | [passed](../evidence/g0-provenance-2026-10-14/README.md) | [passed](../evidence/release-set-gates-2026-10-14/qwen35-ortgenai-fp32x-cpu/README.md) | [passed](../evidence/release-set-gates-2026-10-14/qwen35-ortgenai-fp32x-cpu/README.md) | [passed](../evidence/release-set-gates-2026-10-14/qwen35-ortgenai-fp32x-cpu/README.md) | [passed](../evidence/g4-soak-1h-2026-10-14/README.md) | [passed](../evidence/qualification-2026-10-15/README.md) | [passed](../evidence/g6-distribution-2026-10-14/README.md) | [passed](../evidence/g7-integration-2026-10-14/README.md) | stable: meets the validator's Stable rules |
 | [qwen3.5-0.8b/ortgenai-fp32x-cuda](../../model-pipeline/registry/qwen3.5-0.8b/ortgenai-fp32x-cuda/manifest.yaml) | generation | stable | Mark | 2027-01-05 | [passed](../evidence/g0-provenance-2026-10-14/README.md) | [passed](../evidence/release-set-gates-2026-10-14/qwen35-ortgenai-fp32x-cuda/README.md) | [passed](../evidence/release-set-gates-2026-10-14/qwen35-ortgenai-fp32x-cuda/README.md) | [passed](../evidence/release-set-gates-2026-10-14/qwen35-ortgenai-fp32x-cuda/README.md) | [passed](../evidence/qualification-2026-10-16-cuda/README.md) | [passed](../evidence/qualification-2026-10-16-cuda/README.md) | [passed](../evidence/g6-distribution-2026-10-14/README.md) | [passed](../evidence/g7-integration-2026-10-14/README.md) | stable: meets the validator's Stable rules |
+| [qwen3.5-0.8b/ortgenai-int4-cpu](../../model-pipeline/registry/qwen3.5-0.8b/ortgenai-int4-cpu/manifest.yaml) | generation | experimental | Mark | 2027-02-01 | not-run | not-run | not-run | not-run | not-run | not-run | not-run | not-run | gates not passed: G0, G1, G2, G3, G4, G5, G6, G7; untested: aot, extensions_ai, long_context_1667_to_8192_tokens, tool_calling |
 | [whisper-large-v3-turbo/onnx-fp16-cpu](../../model-pipeline/registry/whisper-large-v3-turbo/onnx-fp16-cpu/manifest.yaml) | transcription | experimental | Mark | 2027-01-23 | not-run | not-run | not-run | not-run | not-run | not-run | not-run | not-run | gates not passed: G0, G1, G2, G3, G4, G5, G6, G7; untested: aot, concurrent_calls, language_detection, transcription_cuda |
 
 ## Execution
@@ -80,6 +81,7 @@ Gate cells link to the evidence the manifest records. The Stable readiness colum
 | qwen3.5-0.8b/ortgenai-fp16x-cuda | onnxruntime-genai 0.17.1 | Microsoft.ML.OnnxRuntimeGenAI.Cuda 0.17.1 | fp16 | reference |
 | qwen3.5-0.8b/ortgenai-fp32x-cpu | onnxruntime-genai 0.17.1 | Microsoft.ML.OnnxRuntimeGenAI 0.17.1 | fp32 | reference |
 | qwen3.5-0.8b/ortgenai-fp32x-cuda | onnxruntime-genai 0.17.1 | Microsoft.ML.OnnxRuntimeGenAI.Cuda 0.17.1 | fp32 | reference |
+| qwen3.5-0.8b/ortgenai-int4-cpu | onnxruntime-genai 0.17.1 | Microsoft.ML.OnnxRuntimeGenAI 0.17.1 | int4 | quantized |
 | whisper-large-v3-turbo/onnx-fp16-cpu | onnxruntime 1.30.0 | Microsoft.ML.OnnxRuntime | fp16 | reference |
 
 ## Capabilities
@@ -505,36 +507,37 @@ One table per family, one column per profile. Rows are every capability any prof
 
 ### qwen3.5-0.8b
 
-| Capability | ortgenai-fp16x-cuda | ortgenai-fp32x-cpu | ortgenai-fp32x-cuda |
-| --- | --- | --- | --- |
-| batch | unsupported | unsupported | unsupported |
-| streaming | supported | supported | supported |
-| cancellation | supported | supported | supported |
-| persistence | unsupported | unsupported | unsupported |
-| training | unsupported | unsupported | unsupported |
-| aot | experimental | supported | experimental |
-| extensions_ai | supported | supported | supported |
-| mlnet | unsupported | unsupported | unsupported |
-| cancellation_inside_a_step | unsupported | unsupported | unsupported |
-| chat_template_owned_text | supported | supported | supported |
-| chunked_prefill | supported | supported | supported |
-| concurrent_requests | supported | supported | supported |
-| conversation_state_reuse | unsupported | unsupported | unsupported |
-| enable_thinking | experimental | experimental | experimental |
-| greedy_generation | supported | supported | supported |
-| long_context_1667_to_8192_tokens | experimental | experimental | experimental |
-| long_context_over_8192_tokens | unsupported | unsupported | unsupported |
-| max_new_tokens | supported | supported | supported |
-| reasoning_split | unsupported | unsupported | unsupported |
-| sampling_seeded | supported | supported | supported |
-| step0_logits | supported | supported | supported |
-| stop_sequences | supported | supported | supported |
-| stop_tokens | supported | supported | supported |
-| structured_output | unsupported | unsupported | unsupported |
-| tokenizer_owned | supported | supported | supported |
-| tool_calling | experimental | experimental | experimental |
-| usage | supported | supported | supported |
-| vision | unsupported | unsupported | unsupported |
+| Capability | ortgenai-fp16x-cuda | ortgenai-fp32x-cpu | ortgenai-fp32x-cuda | ortgenai-int4-cpu |
+| --- | --- | --- | --- | --- |
+| batch | unsupported | unsupported | unsupported | unsupported |
+| streaming | supported | supported | supported | experimental |
+| cancellation | supported | supported | supported | experimental |
+| persistence | unsupported | unsupported | unsupported | unsupported |
+| training | unsupported | unsupported | unsupported | unsupported |
+| aot | experimental | supported | experimental | untested |
+| extensions_ai | supported | supported | supported | untested |
+| mlnet | unsupported | unsupported | unsupported | unsupported |
+| cancellation_inside_a_step | unsupported | unsupported | unsupported | unsupported |
+| chat_template_owned_text | supported | supported | supported | experimental |
+| chunked_prefill | supported | supported | supported | experimental |
+| concurrent_requests | supported | supported | supported | experimental |
+| conversation_state_reuse | unsupported | unsupported | unsupported | unsupported |
+| enable_thinking | experimental | experimental | experimental | experimental |
+| greedy_generation | supported | supported | supported | experimental |
+| long_context_1667_to_8192_tokens | experimental | experimental | experimental | untested |
+| long_context_over_8192_tokens | unsupported | unsupported | unsupported | unsupported |
+| max_new_tokens | supported | supported | supported | experimental |
+| quantized | unrecorded | unrecorded | unrecorded | experimental |
+| reasoning_split | unsupported | unsupported | unsupported | unsupported |
+| sampling_seeded | supported | supported | supported | experimental |
+| step0_logits | supported | supported | supported | experimental |
+| stop_sequences | supported | supported | supported | experimental |
+| stop_tokens | supported | supported | supported | experimental |
+| structured_output | unsupported | unsupported | unsupported | unsupported |
+| tokenizer_owned | supported | supported | supported | experimental |
+| tool_calling | experimental | experimental | experimental | untested |
+| usage | supported | supported | supported | experimental |
+| vision | unsupported | unsupported | unsupported | unsupported |
 
 ### whisper-large-v3-turbo
 
@@ -713,6 +716,9 @@ One table per family, one column per profile. Rows are every capability any prof
 - `qwen3.5-0.8b/ortgenai-fp32x-cuda`: The ONNX Runtime GenAI C# API is labeled preview upstream; Starlings.Generation.OnnxGenAI isolates it. The runtime version must equal the builder version that wrote the graph (0.17.1).
 - `qwen3.5-0.8b/ortgenai-fp32x-cuda`: The fp32x graph was built for the CPU provider; on the CUDA provider it decodes far slower than fp16x (M0: about 22 tokens/s; node placement not inspected, so CPU fallback of the DeltaNet operators is possible). fp32 built for the CUDA provider fails (M0 failure 2).
 - `qwen3.5-0.8b/ortgenai-fp32x-cuda`: Native runtime: Microsoft.ML.OnnxRuntimeGenAI.Cuda 0.17.1 brings Microsoft.ML.OnnxRuntime.Gpu 1.30.0 and needs the CUDA 13 runtime and cuBLAS on the loader path (not shipped). The schema has no field for native runtime, driver or GPU requirements; they are recorded here and in docs/evidence/p016-qwen35/README.md.
+- `qwen3.5-0.8b/ortgenai-int4-cpu`: Not hosted: users build the int4 graph from the pinned checkpoint with the bundle script (--variant int4) and open it with Qwen35ModelAssets.OpenDirectory.
+- `qwen3.5-0.8b/ortgenai-int4-cpu`: Fidelity to the checkpoint is not claimed: against the transformers fp32 reference the int4 build agrees on 1 of 22 greedy sequences (M0). No task-quality floor exists yet.
+- `qwen3.5-0.8b/ortgenai-int4-cpu`: The ONNX Runtime GenAI runtime version must equal the builder version that wrote the graph (0.17.1).
 - `whisper-large-v3-turbo/onnx-fp16-cpu`: No reference fixtures are adopted into protected/ and no gate has run; every capability is at most experimental.
 - `whisper-large-v3-turbo/onnx-fp16-cpu`: The evidence covers English only (eight LibriSpeech clips, 1.6 s to 59.1 s, asr-corpus-v3); other languages are untested.
 - `whisper-large-v3-turbo/onnx-fp16-cpu`: The fp16 encoder's hidden state drifts further from the fp32 reference on audio positions of 20 to 30 s clips (up to 0.498 in the #229 diagnostic, 0.110 on the 27.9 s composite of asr-corpus-v2, against 0.013 to 0.025 on 14 to 18 s clips), so hidden_max_abs was re-adopted at 0.6 (1.2 x the worst observed). Teacher-forced logits stay within logits_max_abs, and ids, transcripts and segment timestamps equal the reference.

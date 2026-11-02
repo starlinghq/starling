@@ -34,9 +34,46 @@ public sealed class AssetAndCapabilityTests
     }
 
     [Fact]
+    public void TheInt4LockPinsTheLocalBuildWithoutAHostedGraph()
+    {
+        var l = Qwen35ModelAssets.GetLock(Qwen35Variant.Int4);
+        Assert.Equal("qwen3.5-0.8b-ortgenai-int4", l.Name);
+        Assert.Equal(
+            ["chat_template.jinja", "transformers-5.18.0/tokenizer.json", "ortgenai-int4/genai_config.json", "ortgenai-int4/model.onnx", "ortgenai-int4/model.onnx.data"],
+            l.Files.Select(f => f.Path));
+        // The weights are byte-identical to the M0 int4 CPU build (docs/m0/generation-backend-check.md section 2).
+        Assert.Equal("709e08797497f609547f7aef1387cfb35bd0deb3f4039acf001f0680b23f9745", l.GetFile("ortgenai-int4/model.onnx.data").Sha256);
+        Assert.Equal(541_523_968L, l.GetFile("ortgenai-int4/model.onnx.data").Size);
+        Assert.All(l.Files.Where(f => f.Path.StartsWith("ortgenai-int4/", StringComparison.Ordinal)), f => Assert.Null(f.Source));
+        Assert.False(Qwen35ModelAssets.IsHosted(Qwen35Variant.Int4));
+        Assert.True(Qwen35ModelAssets.IsHosted(Qwen35Variant.Fp32x));
+        Assert.True(Qwen35ModelAssets.IsHosted(Qwen35Variant.Fp16x));
+    }
+
+    [Fact]
+    public async Task TheInt4VariantIsNotDownloadable()
+    {
+        var ex = await Assert.ThrowsAsync<NotSupportedException>(() => Qwen35ModelAssets.DownloadAsync(Qwen35Variant.Int4, cancellationToken: TestContext.Current.CancellationToken));
+        Assert.Contains("build_ortgenai_bundle.py", ex.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Int4OnCudaIsRejectedBeforeLoading()
+    {
+        var files = new Qwen35ModelFiles(Qwen35Variant.Int4, "/nonexistent", "/nonexistent/tokenizer.json", "/nonexistent/chat_template.jinja", null!);
+        Assert.Throws<NotSupportedException>(() => Qwen35ChatModel.Load(files, new Qwen35ModelOptions { Provider = GenAIExecutionProvider.Cuda }));
+        Assert.Equal(Qwen35CapabilityStatus.Experimental, Qwen35Capabilities.All["chat.greedy.int4.cpu"]);
+        Assert.Equal(Qwen35CapabilityStatus.Experimental, Qwen35Capabilities.All["quantized.int4.cpu"]);
+        Assert.Equal(Qwen35CapabilityStatus.Unsupported, Qwen35Capabilities.All["int4.cuda"]);
+        Assert.Equal(Qwen35CapabilityStatus.Unsupported, Qwen35Capabilities.All["asset_acquisition.download.int4"]);
+        // The Stable profiles stay unquantized.
+        Assert.Equal(Qwen35CapabilityStatus.Unsupported, Qwen35Capabilities.All["quantized"]);
+    }
+
+    [Fact]
     public void LocksAgreeWithTheRegistryManifests()
     {
-        foreach (var (variant, profile) in new[] { (Qwen35Variant.Fp32x, "ortgenai-fp32x-cpu"), (Qwen35Variant.Fp32x, "ortgenai-fp32x-cuda"), (Qwen35Variant.Fp16x, "ortgenai-fp16x-cuda") })
+        foreach (var (variant, profile) in new[] { (Qwen35Variant.Fp32x, "ortgenai-fp32x-cpu"), (Qwen35Variant.Fp32x, "ortgenai-fp32x-cuda"), (Qwen35Variant.Fp16x, "ortgenai-fp16x-cuda"), (Qwen35Variant.Int4, "ortgenai-int4-cpu") })
         {
             string manifest = File.ReadAllText(Path.Combine(Qwen35TestAssets.ManifestDirectory, profile, "manifest.yaml"));
             foreach (var f in Qwen35ModelAssets.GetLock(variant).Files)

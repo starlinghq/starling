@@ -106,6 +106,11 @@ public sealed class Qwen35ChatModel : IDisposable
             throw new NotSupportedException("The fp16x variant is built for the CUDA provider; on CPU use the fp32x variant.");
         }
 
+        if (files.Variant == Qwen35Variant.Int4 && options.Provider != GenAIExecutionProvider.Cpu)
+        {
+            throw new NotSupportedException("The int4 variant is built for the CPU provider and is Experimental on CPU only; on CUDA use fp32x or fp16x.");
+        }
+
         string templateSha = Sha256(files.ChatTemplatePath);
         if (templateSha != Qwen35ChatTemplate.TemplateSha256)
         {

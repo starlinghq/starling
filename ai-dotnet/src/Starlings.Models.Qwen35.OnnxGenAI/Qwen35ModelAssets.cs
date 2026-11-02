@@ -14,6 +14,14 @@ public enum Qwen35Variant
 
     /// <summary>fp16 graph built for the CUDA provider (<c>-p fp16 -e cuda</c>); CUDA only.</summary>
     Fp16x,
+
+    /// <summary>
+    /// int4 graph built for the CPU provider (<c>-p int4 -e cpu</c>: RTN, block 32, accuracy level 4); CPU only.
+    /// Experimental (profile <c>qwen3.5-0.8b/ortgenai-int4-cpu</c>): compared with the same graph run by the upstream
+    /// Python binding, not with the fp32 reference. Not hosted: build it locally with the bundle script
+    /// (<c>--variant int4</c>) and open it with <see cref="Qwen35ModelAssets.OpenDirectory"/>.
+    /// </summary>
+    Int4,
 }
 
 /// <summary>Verified local paths of one variant's runtime files.</summary>
@@ -110,16 +118,23 @@ public static class Qwen35ModelAssets
         ("model.onnx", 308_301, "4a052c4a1444c9437e00ffd48baecb0838d3d9ca1703c3153dbd46e945e84703"),
         ("model.onnx.data", 3_077_177_344, "129c58a320b6de7192713cc9c7e4ba744dcf7fabb0f57c6535021b45b3dc5143"));
 
+    // Not hosted: the graph files have no download source (DownloadAsync rejects the variant); the shared files do.
+    private static readonly ModelAssetLock Int4Lock = Build(Qwen35Variant.Int4, hosted: false,
+        ("genai_config.json", 1_935, "e7e1957b2544fdad6170a9cc81cbbb1b88c8819b7016a609170ad7cbebba81ba"),
+        ("model.onnx", 364_388, "a41f341f106a1bb5b50eb67ca824cd9c324705141d88b027de0888f140e39cf7"),
+        ("model.onnx.data", 541_523_968, "709e08797497f609547f7aef1387cfb35bd0deb3f4039acf001f0680b23f9745"));
+
     private static readonly ModelAssetLock Fp16xLock = Build(Qwen35Variant.Fp16x,
         ("genai_config.json", 2_109, "ded164b67284883a13c6454d7445f814014a1e12277ce323011683cd6a69d055"),
         ("model.onnx", 316_521, "26895023e4be1f528aef04ce3a07a14e70a2421cfb400a49fec639ea9a14f46d"),
         ("model.onnx.data", 1_572_143_104, "47f6ee15d95080acc66f7c4acdf4012c83b20063cf0cfeb59a6b7ae09950a3b2"));
 
-    /// <summary>Directory of a variant's graph files in the snapshot directory (<c>ortgenai-fp32x</c>, <c>ortgenai-fp16x</c>).</summary>
+    /// <summary>Directory of a variant's graph files in the snapshot directory (<c>ortgenai-fp32x</c>, <c>ortgenai-fp16x</c>, <c>ortgenai-int4</c>).</summary>
     public static string VariantDirectory(Qwen35Variant variant) => variant switch
     {
         Qwen35Variant.Fp32x => "ortgenai-fp32x",
         Qwen35Variant.Fp16x => "ortgenai-fp16x",
+        Qwen35Variant.Int4 => "ortgenai-int4",
         _ => throw new ArgumentOutOfRangeException(nameof(variant), variant, "Unknown variant."),
     };
 
@@ -128,6 +143,7 @@ public static class Qwen35ModelAssets
     {
         Qwen35Variant.Fp32x => Fp32xLock,
         Qwen35Variant.Fp16x => Fp16xLock,
+        Qwen35Variant.Int4 => Int4Lock,
         _ => throw new ArgumentOutOfRangeException(nameof(variant), variant, "Unknown variant."),
     };
 
@@ -135,6 +151,13 @@ public static class Qwen35ModelAssets
     public static async Task<Qwen35ModelFiles> DownloadAsync(
         Qwen35Variant variant, ModelAcquisitionOptions? options = null, IProgress<ModelAssetProgress>? progress = null, CancellationToken cancellationToken = default)
     {
+        if (!IsHosted(variant))
+        {
+            throw new NotSupportedException(
+                $"The {VariantDirectory(variant)} variant is not hosted. Build it with model-pipeline/reference/generation/build_ortgenai_bundle.py " +
+                "--variant int4 into a snapshot directory and open it with OpenDirectory (the lock's digests must match).");
+        }
+
         using var store = new ModelAssetStore(options);
         return Qwen35ModelFiles.From(variant, await store.DownloadAsync(GetLock(variant), progress, cancellationToken).ConfigureAwait(false));
     }
@@ -155,11 +178,17 @@ public static class Qwen35ModelAssets
     public static Qwen35ModelFiles OpenDirectory(string directory, Qwen35Variant variant, CacheVerification verification = CacheVerification.Sha256) =>
         Qwen35ModelFiles.From(variant, ModelAssetStore.VerifyDirectory(GetLock(variant), directory, verification));
 
+    /// <summary>True when <see cref="HostingRepository"/> serves the variant's graph files (fp32x, fp16x); int4 is local only.</summary>
+    public static bool IsHosted(Qwen35Variant variant) => variant is Qwen35Variant.Fp32x or Qwen35Variant.Fp16x;
+
     private static Uri HostedSource(string path) => new(HostingBaseUrl + path);
 
     internal static string GraphFile(Qwen35Variant variant, string name) => $"{VariantDirectory(variant)}/{name}";
 
-    private static ModelAssetLock Build(Qwen35Variant variant, params (string Name, long Size, string Sha256)[] graph)
+    private static ModelAssetLock Build(Qwen35Variant variant, params (string Name, long Size, string Sha256)[] graph) =>
+        Build(variant, hosted: true, graph);
+
+    private static ModelAssetLock Build(Qwen35Variant variant, bool hosted, params (string Name, long Size, string Sha256)[] graph)
     {
         string dir = VariantDirectory(variant);
         var files = new List<ModelAssetFile>
@@ -169,7 +198,7 @@ public static class Qwen35ModelAssets
         };
         foreach (var (name, size, sha) in graph)
         {
-            files.Add(new ModelAssetFile($"{dir}/{name}", size, sha, HostedSource($"{dir}/{name}")));
+            files.Add(new ModelAssetFile($"{dir}/{name}", size, sha, hosted ? HostedSource($"{dir}/{name}") : null));
         }
 
         return new ModelAssetLock($"qwen3.5-0.8b-{dir}", Repository, Revision, files);

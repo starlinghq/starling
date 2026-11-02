@@ -41,6 +41,7 @@ Platform (OS, architecture) by runtime and execution provider by profile. A cell
 | qwen3.5-0.8b/ortgenai-fp16x-cuda | 0.17.1 | stable | unrecorded | supported (2026-10-16) | unrecorded | unrecorded | unrecorded | unrecorded | unrecorded | unrecorded | unrecorded | untested | unrecorded | unrecorded |
 | qwen3.5-0.8b/ortgenai-fp32x-cpu | 0.17.1 | stable | supported (2026-10-16) | unrecorded | unrecorded | unrecorded | unrecorded | unrecorded | unrecorded | unrecorded | untested | unrecorded | unrecorded | unrecorded |
 | qwen3.5-0.8b/ortgenai-fp32x-cuda | 0.17.1 | stable | unrecorded | supported (2026-10-16) | unrecorded | unrecorded | unrecorded | unrecorded | unrecorded | unrecorded | unrecorded | untested | unrecorded | unrecorded |
+| qwen3.5-0.8b/ortgenai-int4-cpu | 0.17.1 | experimental | experimental (2026-11-01) | unsupported | unrecorded | unrecorded | unrecorded | unrecorded | unrecorded | unrecorded | untested | unrecorded | unrecorded | unrecorded |
 
 ## onnxruntime-web
 

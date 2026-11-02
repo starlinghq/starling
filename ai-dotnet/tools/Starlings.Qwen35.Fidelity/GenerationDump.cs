@@ -1,7 +1,7 @@
 // Candidate outputs for the generation task-quality evaluator (G3): `model-pipeline evaluate --g3 generation`.
 //
 //   dotnet run --project ai-dotnet/tools/Starlings.Qwen35.Fidelity -c Release -- generation \
-//     --bundle <snapshot dir> --prompts <prompts.jsonl> --out <dir> [--variant fp32x|fp16x] [--device cpu|cuda] [--threads N]
+//     --bundle <snapshot dir> --prompts <prompts.jsonl> --out <dir> [--variant fp32x|fp16x|int4] [--device cpu|cuda] [--threads N]
 //
 // Runs the public chat path once per prompt row: the row's messages through the owned chat template and tokenizer
 // (Qwen35ChatModel.Generate, chat_template_kwargs.enable_thinking honoured), greedy decoding, the row's
@@ -48,8 +48,13 @@ internal static class GenerationDump
                 case "--device" when i + 1 < args.Length && args[i + 1] is "cpu" or "cuda":
                     device = args[++i];
                     break;
-                case "--variant" when i + 1 < args.Length && args[i + 1] is "fp32x" or "fp16x":
-                    variant = args[++i] == "fp16x" ? Qwen35Variant.Fp16x : Qwen35Variant.Fp32x;
+                case "--variant" when i + 1 < args.Length && args[i + 1] is "fp32x" or "fp16x" or "int4":
+                    variant = args[++i] switch
+                    {
+                        "fp16x" => Qwen35Variant.Fp16x,
+                        "int4" => Qwen35Variant.Int4,
+                        _ => Qwen35Variant.Fp32x,
+                    };
                     break;
                 case "--threads" when i + 1 < args.Length && int.TryParse(args[i + 1], CultureInfo.InvariantCulture, out int n) && n > 0:
                     threads = n;
@@ -219,7 +224,7 @@ internal static class GenerationDump
     private static int Usage(string error)
     {
         Console.Error.WriteLine($"error: {error}");
-        Console.Error.WriteLine("usage: Starlings.Qwen35.Fidelity generation --bundle <dir> --prompts <jsonl> --out <dir> [--variant fp32x|fp16x] [--device cpu|cuda] [--threads N]");
+        Console.Error.WriteLine("usage: Starlings.Qwen35.Fidelity generation --bundle <dir> --prompts <jsonl> --out <dir> [--variant fp32x|fp16x|int4] [--device cpu|cuda] [--threads N]");
         return 2;
     }
 }
