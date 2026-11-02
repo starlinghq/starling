@@ -63,6 +63,7 @@ internal static class GeneratedProfileCapabilities
                     ["batch"] = Status.Supported,
                     ["streaming"] = Status.Unsupported,
                     ["cancellation"] = Status.Supported,
+                    ["concurrent_calls"] = Status.Supported,
                     ["persistence"] = Status.Unsupported,
                     ["training"] = Status.Unsupported,
                     ["aot"] = Status.Experimental,

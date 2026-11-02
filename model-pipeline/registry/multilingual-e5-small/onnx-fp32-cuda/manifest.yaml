@@ -147,6 +147,14 @@ capabilities:
   batch: supported
   streaming: unsupported
   cancellation: supported
+  # concurrent_calls (#258): stated explicitly, as the README's "Stable contract: CUDA" and E5Capabilities.Statuses
+  # ["concurrent_calls"] already do; the status is unchanged. On CUDA, OnnxModelSession runs on the calling thread and
+  # does not serialize runs. Evidence for Supported: the binding RTX 3090 G4 one-hour soak of this profile ran with 2
+  # concurrent callers (docs/evidence/qualification-2026-10-16-cuda/, PASS). Extra local coverage:
+  # docs/evidence/cuda-concurrency-2026-11-01/ (concurrent multi-row EmbedBatch on 8 threads, bit-for-bit equal to
+  # sequential calls in 8 of 8 processes; an RTX 4060 Ti, a local check, not qualification; #257 tracks the RTX 3090
+  # rerun of that check).
+  concurrent_calls: supported
   persistence: unsupported
   training: unsupported
   # Capability closure 2026-10-14 (docs/evidence/capability-closure-2026-10-14/README.md):

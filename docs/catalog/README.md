@@ -413,6 +413,7 @@ One table per family, one column per profile. Rows are every capability any prof
 | extensions_ai | supported | supported | experimental | experimental | experimental | experimental |
 | mlnet | supported | supported | unsupported | unsupported | unsupported | unsupported |
 | cache_storage | unrecorded | unrecorded | untested | untested | experimental | untested |
+| concurrent_calls | unrecorded | supported | unrecorded | unrecorded | unrecorded | unrecorded |
 | embedding_pretokenized | unrecorded | unrecorded | experimental | experimental | experimental | experimental |
 | embedding_text | unrecorded | unrecorded | experimental | experimental | experimental | experimental |
 | multithreaded_cross_origin_isolated | unrecorded | unrecorded | experimental | experimental | experimental | experimental |

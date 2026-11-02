@@ -10,7 +10,7 @@ namespace Starlings.Models.E5.Tests;
 public class StableContractTests
 {
     // Per Stable profile: manifest capability -> the package-wide keys (E5Capabilities.Statuses) that carry the same status on
-    // that profile (keys without a provider suffix: the CPU profile; .cuda: the CUDA profile).
+    // that profile (unsuffixed keys: the CPU profile, and the CUDA profile where no .cuda key exists; .cuda: the CUDA profile).
     private static readonly Dictionary<string, Dictionary<string, string[]>> PackageKeys = new(StringComparer.Ordinal)
     {
         [E5Capabilities.StableProfile] = new(StringComparer.Ordinal)
@@ -29,6 +29,7 @@ public class StableContractTests
             ["batch"] = ["batch", "embedding.pretokenized.cuda"],
             ["streaming"] = ["streaming"],
             ["cancellation"] = ["cancellation"],
+            ["concurrent_calls"] = ["concurrent_calls"],
             ["persistence"] = ["persistence", "mlnet.persistence"],
             ["training"] = ["training", "mlnet.training"],
             ["aot"] = ["aot.cuda"],
