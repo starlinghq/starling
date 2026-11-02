@@ -64,3 +64,8 @@ New `EmbeddingGemma2ImageDecoderOptions.MaxEncodedBytes` (default 64 MiB, 67,108
   consecutive LibriSpeech utterances, and a composite cut at 30 s inside its last utterance (its decode ends inside a
   segment and is decoded again from the last closing timestamp). It checks the timestamped decode of every clip and
   that the corpus exercises a timestamp pair and that re-decode.
+
+## BERT route: paraphrase-multilingual-MiniLM-L12-v2 draft contract (#182, unsupported)
+
+- `BertModelProfile.Load` and `Parse` accept an eighth repository, `sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2` (XLM-R Unigram tokenizer with BERT segment ids, mean pooling, no L2, 128 tokens, 384 wide; candidate `model-pipeline/candidates/paraphrase-multilingual`). Text embedding through it is **unsupported**: the pinned `Starlings.Tokenizers` 0.3.4 refuses the model's `WhitespaceSplit` pre-tokenizer, so `BertTextEmbedder.Create` throws `UnsupportedTokenizerComponentException`. It is not a built-in profile (`BuiltInIds` still lists seven), has no registry manifest and claims no maturity. A test pins the refusal, so the Tokenizers bump that fixes it is noticed.
+- `model-pipeline scaffold` takes `--token-type-ids` / `--no-token-type-ids` to state whether the graph takes `token_type_ids`; without either flag an existing entry keeps its value, and a value that contradicts the entry is refused.
