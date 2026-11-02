@@ -53,7 +53,7 @@ public sealed class Gliner2ClassificationHead
     }
 
     /// <summary>Reads the head from <c>model.safetensors</c> and checks its bytes against <see cref="HeadSha256"/>.</summary>
-    /// <exception cref="InvalidDataException">Not a safetensors file, a tensor is missing or has another dtype or shape, or the bytes differ from the pinned head.</exception>
+    /// <exception cref="InvalidDataException">Not a safetensors file (including a malformed header), a tensor is missing or has another dtype or shape, or the bytes differ from the pinned head.</exception>
     public static Gliner2ClassificationHead FromSafetensors(string path) => FromSafetensors(path, HeadSha256);
 
     /// <summary>As <see cref="FromSafetensors(string)"/>; <paramref name="expectedSha256"/> null skips the digest (tests only).</summary>
@@ -77,7 +77,7 @@ public sealed class Gliner2ClassificationHead
         var header = new byte[headerLength];
         ReadExactly(handle, header, 8, path);
         long dataStart = 8 + (long)headerLength;
-        using var json = JsonDocument.Parse(header);
+        using var json = ParseHeader(header, path);
         using var hash = IncrementalHash.CreateHash(HashAlgorithmName.SHA256);
         var arrays = new float[Tensors.Length][];
         for (int t = 0; t < Tensors.Length; t++)
@@ -88,17 +88,13 @@ public sealed class Gliner2ClassificationHead
                 throw new InvalidDataException($"{path}: tensor '{name}' is missing; this is not a GLiNER2 checkpoint.");
             }
 
-            string? dtype = entry.GetProperty("dtype").GetString();
-            int[] actualShape = entry.GetProperty("shape").EnumerateArray().Select(e => e.GetInt32()).ToArray();
+            var (dtype, actualShape, begin, end) = ReadEntry(entry, name, path);
             if (dtype != "F32" || !actualShape.AsSpan().SequenceEqual(shape))
             {
                 throw new InvalidDataException(
                     $"{path}: tensor '{name}' is {dtype} [{string.Join(", ", actualShape)}]; expected F32 [{string.Join(", ", shape)}].");
             }
 
-            var offsets = entry.GetProperty("data_offsets");
-            long begin = offsets[0].GetInt64();
-            long end = offsets[1].GetInt64();
             int count = shape.Aggregate(1, (a, b) => a * b);
             if (end - begin != 4L * count || dataStart + end > fileLength || begin < 0)
             {
@@ -163,6 +159,48 @@ public sealed class Gliner2ClassificationHead
         }
 
         return logits;
+    }
+
+    private static JsonDocument ParseHeader(byte[] header, string path)
+    {
+        JsonDocument json;
+        try
+        {
+            json = JsonDocument.Parse(header);
+        }
+        catch (JsonException ex)
+        {
+            throw new InvalidDataException($"{path}: safetensors header is not valid JSON.", ex);
+        }
+
+        if (json.RootElement.ValueKind != JsonValueKind.Object)
+        {
+            json.Dispose();
+            throw new InvalidDataException($"{path}: safetensors header is not a JSON object.");
+        }
+
+        return json;
+    }
+
+    /// <summary>Reads one header entry; any malformed field becomes <see cref="InvalidDataException"/>.</summary>
+    private static (string? Dtype, int[] Shape, long Begin, long End) ReadEntry(JsonElement entry, string name, string path)
+    {
+        try
+        {
+            string? dtype = entry.GetProperty("dtype").GetString();
+            int[] shape = entry.GetProperty("shape").EnumerateArray().Select(e => e.GetInt32()).ToArray();
+            var offsets = entry.GetProperty("data_offsets");
+            if (offsets.GetArrayLength() != 2)
+            {
+                throw new InvalidDataException($"{path}: tensor '{name}' does not have two data offsets.");
+            }
+
+            return (dtype, shape, offsets[0].GetInt64(), offsets[1].GetInt64());
+        }
+        catch (Exception ex) when (ex is InvalidOperationException or KeyNotFoundException or FormatException or IndexOutOfRangeException)
+        {
+            throw new InvalidDataException($"{path}: tensor '{name}' has a malformed header entry.", ex);
+        }
     }
 
     private static void ReadExactly(Microsoft.Win32.SafeHandles.SafeFileHandle handle, byte[] buffer, long offset, string path)

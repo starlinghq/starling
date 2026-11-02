@@ -148,6 +148,32 @@ public class ClassificationTests
         }
     }
 
+    [Theory]
+    [InlineData("not json")]
+    [InlineData("[1, 2]")]
+    [InlineData("{\"classifier.0.weight\": {\"shape\": [1536, 768], \"data_offsets\": [0, 4]}}")]
+    [InlineData("{\"classifier.0.weight\": {\"dtype\": \"F32\", \"shape\": [\"x\"], \"data_offsets\": [0, 4]}}")]
+    [InlineData("{\"classifier.0.weight\": {\"dtype\": \"F32\", \"shape\": [1536, 768], \"data_offsets\": 4}}")]
+    [InlineData("{\"classifier.0.weight\": {\"dtype\": \"F32\", \"shape\": [1536, 768], \"data_offsets\": [0]}}")]
+    [InlineData("{\"classifier.0.weight\": {\"dtype\": \"F32\", \"shape\": [99999999999], \"data_offsets\": [0, 4]}}")]
+    public void HeadRejectsAMalformedHeaderAsInvalidData(string header)
+    {
+        byte[] json = Encoding.UTF8.GetBytes(header);
+        string path = Path.Combine(Path.GetTempPath(), $"gliner2-head-{Guid.NewGuid():N}.safetensors");
+        var bytes = new byte[8 + json.Length + 16];
+        BinaryPrimitives.WriteUInt64LittleEndian(bytes, (ulong)json.Length);
+        json.CopyTo(bytes, 8);
+        File.WriteAllBytes(path, bytes);
+        try
+        {
+            Assert.Throws<InvalidDataException>(() => Gliner2ClassificationHead.FromSafetensors(path, null));
+        }
+        finally
+        {
+            File.Delete(path);
+        }
+    }
+
     /// <summary>A minimal safetensors file (8-byte header length, JSON header, data), optionally with an unrelated tensor first.</summary>
     private static string WriteSafetensors((string Name, int[] Shape, float[] Values)[] tensors, bool extra)
     {
@@ -204,7 +230,6 @@ public class ClassificationParityTests(Gliner2CpuFixture fixture, ITestOutputHel
         var rows = Gliner2TestAssets.ReadJsonLines(path);
         Assert.Equal(26, rows.Count);
         double maxRelative = 0, maxScore = 0;
-        int decisionsExact = 0;
         foreach (var row in rows)
         {
             string id = row.GetProperty("id").GetString()!;
@@ -228,24 +253,15 @@ public class ClassificationParityTests(Gliner2CpuFixture fixture, ITestOutputHel
 
             var expected = ReferenceSelection(row.GetProperty("output").GetProperty(task), multi);
             var actual = result.Selected.Select(s => s.Label).ToArray();
-            if (expected.SequenceEqual(actual))
-            {
-                decisionsExact++;
-            }
-            else
-            {
-                // A different decision is allowed only where a reference score is within the score bound of the threshold.
-                bool nearThreshold = multi && refScores.Any(s => Math.Abs(s - threshold) <= Tolerances.ScoresMaxAbs);
-                Assert.True(nearThreshold, $"{id}: selected [{string.Join(", ", actual)}], reference [{string.Join(", ", expected)}]");
-            }
+            // Selected label sets must match the reference exactly; there is no near-threshold allowance.
+            Assert.True(expected.SequenceEqual(actual), $"{id}: selected [{string.Join(", ", actual)}], reference [{string.Join(", ", expected)}]");
 
             output.WriteLine(string.Create(CultureInfo.InvariantCulture, $"{id}: [{string.Join(", ", actual)}] top {result.Top.Score:G6}"));
         }
 
-        output.WriteLine(string.Create(CultureInfo.InvariantCulture, $"cases {rows.Count}, decisions exact {decisionsExact}, logits max relative {maxRelative:E2} (bound {Tolerances.SpanLogitsRelative:E1}), scores max abs {maxScore:E2} (bound {Tolerances.ScoresMaxAbs:E1})"));
+        output.WriteLine(string.Create(CultureInfo.InvariantCulture, $"cases {rows.Count}, decisions exact {rows.Count}, logits max relative {maxRelative:E2} (bound {Tolerances.SpanLogitsRelative:E1}), scores max abs {maxScore:E2} (bound {Tolerances.ScoresMaxAbs:E1})"));
         Assert.True(maxRelative <= Tolerances.SpanLogitsRelative, $"logits relative {maxRelative:E2}");
         Assert.True(maxScore <= Tolerances.ScoresMaxAbs, $"scores {maxScore:E2}");
-        Assert.Equal(rows.Count, decisionsExact);
     }
 
     [Fact]

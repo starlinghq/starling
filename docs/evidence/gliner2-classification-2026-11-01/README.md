@@ -28,7 +28,7 @@ The same script ran the locked graph with ONNX Runtime 1.30.0 CPU and applied th
 
 ## Results
 
-Hardware: Intel i7-5820K (12 threads), Linux x64, CPU provider only. No GPU was used. .NET SDK 10.0.100, ONNX Runtime 1.30.0.
+Hardware: Intel i7-5820K (12 threads), Linux x64, CPU provider only. Windows x64 CPU builds but was not run. No GPU was used. .NET SDK 10.0.100, ONNX Runtime 1.30.0.
 
 There is no protected bound for classification. The table judges with the CPU profile's protected bounds for the nearest quantities. The classifier logit has the same form as the span logit (an MLP and a dot product over the same hidden states), so it is judged with `span_logits_relative`. The score is judged with `scores_max_abs`. Whether these bounds should be the classification bounds is the maintainer's call.
 
@@ -38,6 +38,15 @@ There is no protected bound for classification. The table judges with the CPU pr
 | C# `Gliner2TextClassifier` vs PyTorch | exact, 26 / 26 | exact, 26 / 26 selected label sets | 2.74e-5 (bound 1e-4) | 8.46e-6 (bound 2e-5) |
 
 Per-case output is in [classification-parity-cpu.log](classification-parity-cpu.log), taken from the test's TRX report. The whole `Starlings.Models.Gliner2.Tests` project passed with the model present (112 of 112, none skipped). [gliner2-tests-cpu.log](gliner2-tests-cpu.log) holds that run's summary, copied from the console. An earlier run of the same build, started while the machine's memory level was `tight`, reported 102 passed, 0 failed and one test-host error, and was not investigated further. The rerun above is the clean result. That includes the protected entity parity, which confirms the shared preprocessor change kept entity inputs exact.
+
+## Parity is not quality
+
+Parity here means the .NET path gives the same answers as the pinned GLiNER2, not that those answers are right. On the 26 cases, at least 2 of the 19 single-label answers are wrong for GLiNER2 itself:
+
+- `spam`: an obvious prize-scam text ("Congratulations!!! You have WON a free cruise ...") is `not spam` at 1.0.
+- `sentiment-neu-1`: store opening hours are `positive` at 0.796, not `neutral`.
+
+The cases were written to exercise the route, not to measure accuracy, so classification quality is unmeasured until a task-quality (G3) set exists.
 
 ## What changed
 
