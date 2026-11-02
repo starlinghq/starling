@@ -25,6 +25,7 @@ The schema is only the first check. Each plugin compares the whole contract fiel
 | `bge-base/` | `bge-base-en-v1.5/onnx-fp32-cpu` | `BAAI/bge-base-en-v1.5` (`a5beb1e3`) | embeddings: 768 dimensions, CLS pooling, L2, 512 tokens, `query` prompt | `bert-onnx-cpu-v1` |
 | `ms-marco/` | `ms-marco-minilm-l6-v2/onnx-fp32-cpu` | `cross-encoder/ms-marco-MiniLM-L6-v2` (`233902d2`) | reranking: raw scalar logits, 512 tokens | `bert-onnx-cpu-v1` |
 | `nomic-embed/` | `nomic-embed-text-v1.5/onnx-fp32-cpu` | `nomic-ai/nomic-embed-text-v1.5` (`e9b67630`) | embeddings: 768 dimensions, mean pooling, no normalization, 8,192 tokens | `bert-onnx-cpu-v1` |
+| `paraphrase-multilingual/` | `paraphrase-multilingual-minilm-l12-v2/onnx-fp32-cpu` | `sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2` (`e8f8c211`) | embeddings: 384 dimensions, mean pooling, no normalization, 128 tokens, XLM-R Unigram with segment ids; .NET stage blocked on `Starlings.Tokenizers` (`WhitespaceSplit`) | `bert-onnx-cpu-v1` |
 | `qwen3/` | `qwen3-0.6b/ortgenai-fp32-cpu` | `Qwen/Qwen3-0.6B` (`c1899de2`) | generation: greedy text chat, thinking disabled | `qwen-genai-cpu-v1` |
 | `qwen25/` | `qwen2.5-0.5b-instruct/ortgenai-fp32-cpu` | `Qwen/Qwen2.5-0.5B-Instruct` (`7ae55760`) | generation: greedy text chat | `qwen-genai-cpu-v1` |
 | `kev-0.8b/` | `kev-0.8b/onnx-fp32-cpu` | `jaredpalmer/kev-0.8b` (`9a45d25e`) on `Qwen/Qwen3.5-0.8B-Base` (`dc7cdfe2`) | decision | `kev-onnx-cpu-v1` |

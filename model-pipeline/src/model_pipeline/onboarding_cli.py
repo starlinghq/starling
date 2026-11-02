@@ -67,7 +67,7 @@ def _scaffold(args: argparse.Namespace) -> int:
     from model_pipeline.scaffold import scaffold
 
     root = Path(args.repo_root).resolve() if args.repo_root else protection.find_repository_root(Path.cwd())
-    _json(scaffold(root, args.candidate, corpus=args.corpus, write=args.write))
+    _json(scaffold(root, args.candidate, corpus=args.corpus, write=args.write, token_type_ids=args.token_type_ids))
     return 0
 
 
@@ -273,6 +273,13 @@ def register(subparsers: argparse._SubParsersAction) -> None:
         "--corpus", help="repository-relative reference corpus (default: the task's five-model corpus)"
     )
     scaffold.add_argument("--write", action="store_true", help="write the generated pieces into the repository")
+    scaffold.add_argument(
+        "--token-type-ids",
+        action=argparse.BooleanOptionalAction,
+        default=None,
+        help="whether the graph takes token_type_ids (default: an existing table entry's value, else the tokenizer "
+        "profile's: true for bert-wordpiece-uncased, false for xlmr-unigram)",
+    )
     scaffold.set_defaults(func=_dispatch, onboarding_handler=_scaffold)
 
     plan = subparsers.add_parser("plan", help="validate an onboarding recipe and describe its stages")

@@ -57,15 +57,15 @@ persistence, AOT, GPU providers, and unlisted model contracts are unsupported or
 
 ## Profiles
 
-The package carries the seven candidate contracts as built-in profiles: `BertModelProfile.BuiltIn(name)` parses the
+The package carries the seven admitted candidate contracts as built-in profiles: `BertModelProfile.BuiltIn(name)` parses the
 embedded copy of `model-pipeline/candidates/<name>/profile.json` at the packed commit (linked at build time, so the
 package cannot drift from the repository), and `BertModelProfile.BuiltInIds` lists the names. `BertModelProfile.Load(path)`
-and `Parse(json)` still read a contract file or string. Every path accepts only these seven repositories, ONNX Runtime
+and `Parse(json)` still read a contract file or string. Every path accepts only the eight repositories below (the seven built-ins and the draft paraphrase-multilingual, which only `Load` and `Parse` read), ONNX Runtime
 1.30.0 on `CPUExecutionProvider` in fp32, and the exact values below; anything else throws `NotSupportedException`.
 The per-repository values come from the route contract table `model-pipeline/routes/bert-onnx-cpu-v1/contracts.json`,
 which the package embeds and validates on first use and the Python allow-list of the onboarding route reads too;
 `BertModelProfile.SupportedRepositories` lists its repositories. Each profile's maturity is in the table above (all
-Experimental; registry manifests under `model-pipeline/registry/`).
+Experimental; registry manifests under `model-pipeline/registry/`), except paraphrase-multilingual, which is not admitted yet (below).
 
 | Candidate | Profile id | Task | Max tokens | Pooling | Width | Normalize | Prompts |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -76,6 +76,9 @@ Experimental; registry manifests under `model-pipeline/registry/`).
 | `ms-marco` | `ms-marco-minilm-l6-v2/onnx-fp32-cpu` | reranking | 512 | none | 384 (one logit out) | none | `none` |
 | `bge-reranker-v2-m3` | `bge-reranker-v2-m3/onnx-fp32-cpu` | reranking | 8192 | none | 1024 (one logit out) | none | `none` |
 | `nomic-embed` | `nomic-embed-text-v1.5/onnx-fp32-cpu` | embeddings | 8192 | mean | 768 | none | `none` |
+| `paraphrase-multilingual` | `paraphrase-multilingual-minilm-l12-v2/onnx-fp32-cpu` | embeddings | 128 | mean | 384 | none | `none` |
+
+paraphrase-multilingual (`sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2`) is a draft candidate, not yet admitted: text embedding through it is **unsupported** on the pinned `Starlings.Tokenizers` 0.3.4, whose loader refuses the model's `WhitespaceSplit` pre-tokenizer, so `BertTextEmbedder.Create` throws `UnsupportedTokenizerComponentException`. It has no registry manifest and no maturity row, and it is not built in: `BuiltIn("paraphrase-multilingual")` throws `ArgumentException` and `BuiltInIds` does not list it; `BertModelProfile.Load` reads `model-pipeline/candidates/paraphrase-multilingual/profile.json`. The contract pairs the XLM-R Unigram tokenizer with BERT segment ids (all zero), mean pooling without L2 (normalize the vectors before cosine or dot-product comparison) and a 128-token limit, the `max_seq_length` sentence-transformers enforces.
 
 nomic-embed-text-v1.5 vectors are not unit length; normalize them before cosine or dot-product comparison.
 Its profile declares only the `none` prompt, so `Embed(text, "query")` throws `ArgumentException`; any task

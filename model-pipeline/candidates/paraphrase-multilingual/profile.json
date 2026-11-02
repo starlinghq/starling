@@ -1,0 +1,115 @@
+{
+  "behavior": {
+    "architecture": "bert",
+    "graph_file": "onnx/model.onnx",
+    "hidden_size": 384,
+    "max_tokens": 128,
+    "normalize": "none",
+    "output_name": "last_hidden_state",
+    "pad_token_id": 1,
+    "padding_side": "right",
+    "pooling": "mean",
+    "prompts": {
+      "none": ""
+    },
+    "tokenizer_file": "tokenizer.json",
+    "tokenizer_profile": "xlmr-unigram",
+    "truncation": "longest_first",
+    "vocabulary_size": 250002
+  },
+  "evaluation": {
+    "policy": {
+      "attention_mask": "exact",
+      "embedding_max_abs": 1e-05,
+      "hidden_max_abs": 0.0001,
+      "non_finite": "fail",
+      "padded_batch_max_abs": 1e-05,
+      "required_paths": [
+        "reference",
+        "python-onnx",
+        "dotnet-ids",
+        "dotnet-text"
+      ],
+      "same_backend_max_abs": 1e-05,
+      "score_max_abs": 0.0001,
+      "token_ids": "exact",
+      "token_type_ids": "exact"
+    },
+    "status": "proposed"
+  },
+  "format_version": 1,
+  "id": "paraphrase-multilingual-minilm-l12-v2/onnx-fp32-cpu",
+  "origin": {
+    "files": [
+      {
+        "path": "1_Pooling/config.json",
+        "sha256": "4be450dde3b0273bb9787637cfbd28fe04a7ba6ab9d36ac48e92b11e350ffc23",
+        "size": 190
+      },
+      {
+        "path": "README.md",
+        "sha256": "1e98ea05b0de579fcaad3d625b62ea55647142ed674d5f5ebf1440e4bbbb6f23",
+        "size": 3888
+      },
+      {
+        "path": "config.json",
+        "sha256": "6300193cb75e01cf80c96decef7187dfb33094d97cc1490b7ead6ff134476e4e",
+        "size": 645
+      },
+      {
+        "path": "config_sentence_transformers.json",
+        "sha256": "b8c64b5cece00d8424b4896ea75b512b6008576088497609dfeb6bd63e6d36b8",
+        "size": 122
+      },
+      {
+        "path": "model.safetensors",
+        "sha256": "eaa086f0ffee582aeb45b36e34cdd1fe2d6de2bef61f8a559a1bbc9bd955917b",
+        "size": 470641600
+      },
+      {
+        "path": "modules.json",
+        "sha256": "8f4b264b80206c830bebbdcae377e137925650a433b689343a63bdc9b3145460",
+        "size": 229
+      },
+      {
+        "path": "onnx/model.onnx",
+        "sha256": "10f7a088420252b26caf819236ca2c9d2987afd0fc06fec7553b542a5655a05a",
+        "size": 470301610
+      },
+      {
+        "path": "sentence_bert_config.json",
+        "sha256": "70f4448f31320443fe3557cacea5abf2dcc4915dda8c80646bec9f3bb0aa5a1f",
+        "size": 53
+      },
+      {
+        "path": "sentencepiece.bpe.model",
+        "sha256": "cfc8146abe2a0488e9e2a0c56de7952f7c11ab059eca145a0a727afce0db2865",
+        "size": 5069051
+      },
+      {
+        "path": "special_tokens_map.json",
+        "sha256": "378eb3bf733eb16e65792d7e3fda5b8a4631387ca04d2015199c4d4f22ae554d",
+        "size": 239
+      },
+      {
+        "path": "tokenizer.json",
+        "sha256": "2c3387be76557bd40970cec13153b3bbf80407865484b209e655e5e4729076b8",
+        "size": 9081518
+      },
+      {
+        "path": "tokenizer_config.json",
+        "sha256": "5036ea374ffedd706e3bef33e2e0d6953cb868ef8a490e76e32ba0faa37a6b9b",
+        "size": 526
+      }
+    ],
+    "repo": "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2",
+    "revision": "e8f8c211226b894fcb81acc59f3b34ba3efd5f42"
+  },
+  "runtime": {
+    "backend": "onnx",
+    "precision": "fp32",
+    "provider": "CPUExecutionProvider",
+    "version": "1.30.0"
+  },
+  "task": "embeddings"
+}
