@@ -16,7 +16,7 @@ Starling embeds images and video (EmbeddingGemma 2, Stable) but cannot generate 
 | #106 | `docling-project/SmolDocling-256M-preview` | Page image to DocTags (layout, tables, code, formulas, text) for document indexing. The Hub also serves it as `ds4sd/SmolDocling-256M-preview`; both ids resolve [hub, 2026-11-01]. Admission records which id and revision are pinned. |
 | #107 | `HuggingFaceTB/SmolVLM2-500M-Video-Instruct` | Describe and answer questions about images and short video clips. |
 
-No onboarding route fits any of them. `qwen-genai-cpu-v1` is text-only. `Qwen35ChatTemplate` and `QwenChatTemplate` reject image and video content. The EmbeddingGemma 2 multimodal path produces embeddings, not tokens. The triage comments ask for one shared design that picks the first candidate and orders the rest.
+No onboarding route fits any of them. `qwen-genai-cpu-v1` is text-only. `Qwen35ChatTemplate` documents image and video content as unsupported and rejects it. `QwenChatTemplate` takes string content only, so images cannot be expressed at all. The EmbeddingGemma 2 multimodal path produces embeddings, not tokens. The triage comments ask for one shared design that picks the first candidate and orders the rest.
 
 ## 2. Constraints
 
@@ -99,7 +99,7 @@ Configuration [hub, 2026-11-01], identical in both repositories except for the p
 Two lessons from EmbeddingGemma 2 apply directly:
 
 1. **Pin the processor implementation, not only the configuration.** transformers can run a PIL ("slow") or torchvision ("fast") backend for the same configuration. They produce different bytes. `resample` 1 is PIL's LANCZOS enum value, and the reference must record which backend and which filter actually ran. EmbeddingGemma 2 found that its reference ran the torchvision backend, not PIL.
-2. **Port the resampler bit for bit.** In EmbeddingGemma 2, one or two levels of resampling difference on under 1% of pixels moved the embedding by up to 2.6e-3. The image spike wrote both a torchvision-exact and a Pillow-exact fixed-point variant. Whichever backend the reference uses, the C# port starts from those variants (`TorchAntialiasResampler`, and the Pillow-quantized prototype in the spike) and must equal the reference's resized bytes exactly on the fixture images. Any approximation is a G1 failure.
+2. **Port the resampler bit for bit.** In EmbeddingGemma 2, one or two levels of resampling difference on under 1% of pixels moved the embedding by up to 2.6e-3. The image spike wrote both a torchvision-exact and a Pillow-exact fixed-point variant. Whichever backend the reference uses, the C# port starts from that work (`TorchAntialiasResampler` in `ai-dotnet/src`, and the Pillow-quantized variant, which exists only as the prototype described in `docs/m0/embeddinggemma2-image-spike.md`, not as shipped code) and must equal the reference's resized bytes exactly on the fixture images. Both existing variants are bicubic. SmolVLM's `resample` 1 is LANCZOS, so the filter itself is a new port; only the fixed-point structure and the exactness tests carry over. Any approximation is a G1 failure.
 
 The fidelity criterion differs from the embedding path. A generative model is judged by the LLM rules of plan 10.1, not by an embedding cosine bound: exact prompt ids, exact pixel tensors, soft tokens within a tolerance, step-0 logits within a tolerance, greedy token sequences on stable fixtures with the first divergence and its top-1 minus top-2 margin reported, and cached against uncached decoding. Pixel differences matter only through those numbers, so exact preprocessing is the only way to keep the comparison clean.
 
@@ -128,7 +128,7 @@ Dynamic resolution: the pixel count is kept between `shortest_edge` 65,536 and `
 2. At about 0.5B parameters (2.03 GB in fp32), CPU parity is feasible. The first profile does not depend on #210.
 3. SmolDocling shares the architecture, preprocessing, image token and ONNX layout. The same route then serves #106 with a smaller decoder and an output parser.
 4. Video is an extension of image mode (frames are images without splitting), on the same checkpoint.
-5. Qwen3-VL needs deepstack and M-RoPE, has no official ONNX, and is about 17.7 GB in fp32. That is above the 4060 Ti's 16 GB for fp32 CUDA runs, so its parity runs need either CPU (slow) or the paid budget in #210.
+5. Qwen3-VL needs deepstack and M-RoPE, has no official ONNX, and is about 17.7 GB in fp32. That is above the 4060 Ti's 16 GB for fp32 CUDA runs, so fp32 parity runs need either CPU (slow) or the paid budget in #210. The bf16 checkpoint (about 8.9 GB of weights) does fit the 4060 Ti, so the step 12 spike (the GenAI deepstack check and an Option B export trial) can run there without #210, using a bf16 reference on the same GPU. That evidence is Experimental only, names the GPU, and does not replace fp32 parity.
 
 Order: SmolVLM2 images, then SmolVLM2 video, then the SmolDocling candidate with the DocTags parser, then the Qwen3-VL spike.
 
@@ -159,7 +159,7 @@ Per profile, following plan section 8 and gates G0 to G7 (phased as in plan 10):
 9. Video mode: frame sampling fixtures, the frame prompt text, and a decoder adapter. A separate capability status.
 10. SmolDocling candidate on the same route: admission (including a check for a stable successor), its tokenizer profile or added-token delta, and a profile.
 11. DocTags parser with `docling-core` fixtures. Its own capability status.
-12. Qwen3-VL spike: GenAI `qwen3_vl` deepstack check and `SetModelInput` feasibility (Option A), against an Option B export. The result decides whether #105 proceeds, and on which route.
+12. Qwen3-VL spike: GenAI `qwen3_vl` deepstack check and `SetModelInput` feasibility (Option A), against an Option B export. It can run in bf16 on the RTX 4060 Ti (Experimental evidence only) and does not wait for #210. The result decides whether #105 proceeds, and on which route.
 13. CUDA on the RTX 4060 Ti for each profile above (Experimental evidence only).
 
 ## 10. Open questions for the maintainer
