@@ -77,6 +77,16 @@ public sealed record EmbeddingGemma2MultimodalOptions
     public int MaxVisionBatchPatches { get; init; } = 2_520;
 
     /// <summary>
+    /// When set, the embedder chooses <see cref="MaxVisionBatchSize"/>, <see cref="MaxVisionBatchPatches"/> and
+    /// <see cref="MaxVideoFramesPerVisionCall"/> from the free memory of the vision graph's device when it loads (host RAM
+    /// on CPU, device memory on CUDA), with the safety margin of <see cref="EmbeddingGemma2AutoBatchLimits"/>. The values
+    /// configured here are floors; the limits chosen are in <see cref="EmbeddingGemma2MultimodalEmbedder.Options"/>.
+    /// Default <see langword="null"/>: off, the configured limits apply unchanged. Experimental (capability
+    /// <c>image.auto_batch_limits</c>).
+    /// </summary>
+    public EmbeddingGemma2AutoBatchLimits? AutoBatchLimits { get; init; }
+
+    /// <summary>
     /// When <see langword="true"/>, every image is padded to the full patch budget (2,520 rows at 280 soft tokens) as
     /// upstream's processor does. Default <see langword="false"/>: each vision call is padded only to its longest image
     /// (on ONNX Runtime CPU the soft tokens are bit-identical; on CUDA within 3.4e-5, inside the soft-token bound),
@@ -137,6 +147,7 @@ public sealed record EmbeddingGemma2MultimodalOptions
         ArgumentOutOfRangeException.ThrowIfLessThan(MaxVisionBatchSize, 1);
         ArgumentOutOfRangeException.ThrowIfLessThan(MaxVisionBatchPatches, 9);
         ArgumentOutOfRangeException.ThrowIfLessThan(MaxVideoFramesPerVisionCall, 1);
+        AutoBatchLimits?.Validate();
     }
 }
 
