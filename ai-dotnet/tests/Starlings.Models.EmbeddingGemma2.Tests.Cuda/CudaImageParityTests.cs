@@ -47,21 +47,40 @@ public sealed class CudaImageParityTests(EmbeddingGemma2ImageCudaFixture fixture
     /// Capability <c>concurrent_calls</c> over CUDA with batches (issue #257): four threads released together each run
     /// <c>EmbedBatch</c> on the fixture's embedder with a different batch of 4 image or interleaved rows (different image
     /// sizes and token counts), five rounds. Every vector must equal the sequential result of the same batch bit for bit.
-    /// Four threads, not the text test's eight: on a 16 GB RTX 4060 Ti, eight concurrent image calls (4 or 2 rows each)
-    /// failed to get device memory from ONNX Runtime's CUDA arena (docs/evidence/cuda-concurrency-2026-11-01/).
+    /// Four threads by default, not the text test's eight: on a 16 GB RTX 4060 Ti, eight concurrent image calls (4 or 2
+    /// rows each) failed to get device memory from ONNX Runtime's CUDA arena (docs/evidence/cuda-concurrency-2026-11-01/).
+    /// <see cref="ConcurrentThreadsVariable"/> sets another count (2 to 16), for example 8 on a 24 GB RTX 3090.
     /// </summary>
     [Fact]
     public void ConcurrentEmbedBatchCallsGiveTheSequentialResultsBitForBit()
     {
-        const int Threads = 4, BatchRows = 4, Rounds = 5;
+        const int BatchRows = 4, Rounds = 5;
         var embedder = fixture.Embedder; // skips when the model is absent
+        int threads = ConcurrentThreads();
         var inputs = EmbeddingGemma2ImageTestAssets.Rows
             .Where(r => r.InContract && r.Images.Count > 0 && r.Prompt == "none")
             .Select(r => (r.Id, EmbeddingGemma2ImageTestAssets.BuildInput(r, EmbeddingGemma2ImageTestAssets.Decode)))
             .ToList();
-        var batches = ConcurrentMultimodalBatches.Rotations(inputs, Threads, BatchRows);
+        var batches = ConcurrentMultimodalBatches.Rotations(inputs, threads, BatchRows);
         var (vectors, max) = ConcurrentMultimodalBatches.Check(embedder, batches, Rounds, TestContext.Current.CancellationToken);
-        output.WriteLine($"{Threads} concurrent EmbedBatch calls x {BatchRows} rows x {Rounds} rounds on one CUDA embedder ({inputs.Count} image and interleaved rows): {vectors} vectors bit-for-bit equal to the sequential run (max abs {max:E3})");
+        output.WriteLine($"{threads} concurrent EmbedBatch calls x {BatchRows} rows x {Rounds} rounds on one CUDA embedder ({inputs.Count} image and interleaved rows): {vectors} vectors bit-for-bit equal to the sequential run (max abs {max:E3})");
+    }
+
+    /// <summary>Thread count of the image concurrency test (unset: 4).</summary>
+    public const string ConcurrentThreadsVariable = "STARLING_EG2_CUDA_IMAGE_CONCURRENT_THREADS";
+
+    private static int ConcurrentThreads()
+    {
+        string? value = Environment.GetEnvironmentVariable(ConcurrentThreadsVariable);
+        if (string.IsNullOrEmpty(value))
+        {
+            return 4;
+        }
+
+        Assert.True(
+            int.TryParse(value, System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture, out int threads) && threads is >= 2 and <= 16,
+            $"{ConcurrentThreadsVariable}={value}: expected an integer from 2 to 16");
+        return threads;
     }
 }
 

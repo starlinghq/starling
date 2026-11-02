@@ -26,6 +26,10 @@ The capability key `truncation` keeps its encoder-side meaning (the encoder reje
 
 New `EmbeddingGemma2ImageDecoderOptions.MaxEncodedBytes` (default 64 MiB, 67,108,864; 1 to `Array.MaxLength`). `EmbeddingGemma2ImageDecoder.Decode(Stream)` now rejects a seekable stream whose remaining length is over the limit before reading anything, and a non-seekable stream as soon as more than the limit has been read, with `EmbeddingGemma2ImageTooLargeException`. Before, it buffered the whole stream before the `MaxPixels` header check. **Behavior change:** a stream above 64 MiB that decoded before now throws; raise `MaxEncodedBytes` to keep it. The byte-span and file overloads are unchanged, and decoding itself is unchanged, so the PIL-equality evidence of the image profiles still holds (no G2 rerun needed). Decision recorded in `docs/kickoff.md` ("SkiaSharp `Decode(Stream)` byte bound", 2026-11-01).
 
+## EmbeddingGemma 2 image and video CUDA: concurrent-call tests (#257)
+
+New CUDA tests run overlapping `EmbedBatch` calls on one `EmbeddingGemma2MultimodalEmbedder` for `image-fp32-cuda` (4 threads by default, `STARLING_EG2_CUDA_IMAGE_CONCURRENT_THREADS` to change it) and `video-fp32-cuda` (8 threads), and compare every vector with the sequential result byte for byte. Both passed on an RTX 4060 Ti (experimental evidence; the RTX 3090 rerun is open in #257). `concurrent_calls` stays supported. The package README now warns that 8 overlapping image calls on one embedder ran out of device memory on a 16 GB GPU (`OnnxRuntimeException`, not a wrong result) until memory-aware limits land (#172). Evidence: `docs/evidence/cuda-concurrency-2026-11-01/`.
+
 ## Starlings.Models.Whisper
 
 - **Segment timestamps (experimental, #221).** `WhisperTranscriber.TranscribeWithTimestamps` and
