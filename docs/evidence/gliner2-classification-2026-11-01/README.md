@@ -37,7 +37,7 @@ There is no protected bound for classification. The table judges with the CPU pr
 | Python: ORT graph + NumPy head vs PyTorch | same ids | 26 / 26 argmax | 2.75e-5 | 8.46e-6 |
 | C# `Gliner2TextClassifier` vs PyTorch | exact, 26 / 26 | exact, 26 / 26 selected label sets | 2.74e-5 (bound 1e-4) | 8.46e-6 (bound 2e-5) |
 
-Per-case output is in [classification-parity-cpu.log](classification-parity-cpu.log). The whole `Starlings.Models.Gliner2.Tests` project passed with the model present (112 of 112, none skipped; [gliner2-tests-cpu.log](gliner2-tests-cpu.log)). That includes the protected entity parity, which confirms the shared preprocessor change kept entity inputs exact.
+Per-case output is in [classification-parity-cpu.log](classification-parity-cpu.log), taken from the test's TRX report. The whole `Starlings.Models.Gliner2.Tests` project passed with the model present (112 of 112, none skipped). [gliner2-tests-cpu.log](gliner2-tests-cpu.log) holds that run's summary, copied from the console. An earlier run of the same build, started while the machine's memory level was `tight`, reported 102 passed, 0 failed and one test-host error, and was not investigated further. The rerun above is the clean result. That includes the protected entity parity, which confirms the shared preprocessor change kept entity inputs exact.
 
 ## What changed
 
@@ -51,6 +51,7 @@ Per-case output is in [classification-parity-cpu.log](classification-parity-cpu.
 
 ## Not done
 
+- **A download through `ClassificationLock`.** It was not run end to end. The pinned size and SHA-256 of `model.safetensors` were checked against a local copy, and the tests read that copy. A Hub file with no explicit source takes the same path as `tokenizer.json`.
 - **Task quality (G3).** A classification task-quality set and its bound are maintainer-owned.
 - **CUDA.** There is no CUDA run. A 4060 Ti run could support only an Experimental CUDA status.
 - **Several tasks per call, label descriptions or examples, temperature, batching and long-text chunking.** All are `unsupported`.
