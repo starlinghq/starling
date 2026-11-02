@@ -1,10 +1,10 @@
 # ai-dotnet release 0.4.0
 
-**Starlings.Models.Bert reaches nuget.org.** This release follows `0.3.0` (published 2026-10-19) and carries the work merged since (#128 to #218). It adds nine packages to the publishable set. `Starlings.Models.Bert` carries the BERT route's seven embedding and reranking profiles, now including the multilingual `BAAI/bge-m3` embedder (#128) and the `BAAI/bge-reranker-v2-m3` cross-encoder reranker (#146, closes #99). All seven profiles are **Experimental**. The package now carries its profiles: `BertModelProfile.BuiltIn(name)` works from the package alone, with no repository checkout. The browser packages `Starlings.Runtime.OnnxWeb`, `Starlings.Runtime.OnnxWeb.WebGpu` and `Starlings.Models.E5.Browser` (#149, #150) run multilingual-e5-small in .NET browser-wasm apps on onnxruntime-web; their four profiles are **Experimental**. `Starlings.Models.Abstractions` (shared model contracts) is new, and the generation packages are split into model definitions without a runtime and their ONNX Runtime packages: `Starlings.Generation.Abstractions`, `Starlings.Models.Qwen35.OnnxGenAI`, `Starlings.Models.Kev.Onnx` and `Starlings.Models.QwenChat.OnnxGenAI` are new, and **the split is breaking** for 0.3.0 users of `Starlings.Models.Qwen35`, `Starlings.Models.QwenChat` and `Starlings.Models.Kev` (see [Upgrading from 0.3.0](#upgrading-from-030)).
+**Starlings.Models.Bert reaches nuget.org.** This release follows `0.3.0` (published 2026-10-19) and carries the work merged since (#128 to #263). It adds ten packages to the publishable set. `Starlings.Models.Bert` carries the BERT route's seven embedding and reranking profiles, now including the multilingual `BAAI/bge-m3` embedder (#128) and the `BAAI/bge-reranker-v2-m3` cross-encoder reranker (#146, closes #99). All seven profiles are **Experimental**. The package now carries its profiles: `BertModelProfile.BuiltIn(name)` works from the package alone, with no repository checkout. The browser packages `Starlings.Runtime.OnnxWeb`, `Starlings.Runtime.OnnxWeb.WebGpu` and `Starlings.Models.E5.Browser` (#149, #150) run multilingual-e5-small in .NET browser-wasm apps on onnxruntime-web; their four profiles are **Experimental**. `Starlings.Models.Abstractions` (shared model contracts) is new, and the generation packages are split into model definitions without a runtime and their ONNX Runtime packages: `Starlings.Generation.Abstractions`, `Starlings.Models.Qwen35.OnnxGenAI`, `Starlings.Models.Kev.Onnx` and `Starlings.Models.QwenChat.OnnxGenAI` are new, and **the split is breaking** for 0.3.0 users of `Starlings.Models.Qwen35`, `Starlings.Models.QwenChat` and `Starlings.Models.Kev` (see [Upgrading from 0.3.0](#upgrading-from-030)). `Starlings.Models.Lfm3` (#217, #218, #220) runs `LiquidAI/LFM3-1.7B` text generation on ONNX Runtime; its profile is **Experimental**, and **its model license is the LFM Open License v1.0, not MIT or Apache-2.0: commercial use is licensed only to an entity below USD 10 million annual revenue** (see [LFM3](#new-package-starlingsmodelslfm3-lfm3-17b-experimental-217)).
 
-**Publishing.** The `release` workflow publishes this release from the tag `ai-v0.4.0` on `main`, after a maintainer approves the `release` environment. It publishes the 26 packages of the publishable set below through NuGet trusted publishing, and creates a GitHub release with this record as notes.
+**Publishing.** The `release` workflow publishes this release from the tag `ai-v0.4.0` on `main`, after a maintainer approves the `release` environment. It publishes the 27 packages of the publishable set below through NuGet trusted publishing, and creates a GitHub release with this record as notes.
 
-**Tokenizer.** Every package that tokenizes now pins `Starlings.Tokenizers [0.3.2]` (0.3.0 in the previous release). #128 raised the pin to 0.3.1, which adds the lstrip/rstrip added-token options bge-m3 needs. #135 raised it to 0.3.2, which adds ByteLevel `use_regex` for Whisper. No pinned asset of an existing profile declares either option, so their outputs are unchanged. Every manifest's `processing.tokenizer.version` moved with the pin.
+**Tokenizer.** Every package that tokenizes now pins `Starlings.Tokenizers [0.3.4]` (0.3.0 in the previous release). #128 raised the pin to 0.3.1, which adds the lstrip/rstrip added-token options bge-m3 needs. #135 raised it to 0.3.2, which adds ByteLevel `use_regex` for Whisper. The move to 0.3.4 brings 0.3.3's `Sequence` post-processor, the Llama 3 split regex and the profiles `lfm3-bpe-chat`, `qwen3-bpe-embedding` and `qwen3-bpe-chat`, and 0.3.4's profile `clover-bpe-chat`. LFM3 needs `lfm3-bpe-chat`. No pinned asset of an existing profile declares any of these options, so their outputs are unchanged, and the tokenizer's conformance fixtures pass unchanged (starlinghq/tokenizers CHANGELOG). Every manifest's `processing.tokenizer.version` moved with the pin.
 
 **Maturity.** Maturity belongs to profiles, not packages, and each package README has a generated maturity table. Every Stable profile of 0.3.0 is still Stable with the same contract: no gate, tolerance or `protected/` file changed. The new profiles are Experimental: no gate has run on them, and their capabilities are at most Experimental. They get registry manifests in this release candidate so the package README can state their maturity. Each manifest has every gate `not-run`. Their tolerances are the candidate's predeclared development policy (`qualification.tolerances` points at the candidate `profile.json`, as for QwenChat). Their references are proposed and not adopted into `protected/`. The BERT route has no admission record. The models were admitted to the onboarding route in the PRs below.
 
@@ -17,46 +17,48 @@
 | `bge-base-en-v1.5/onnx-fp32-cpu` | Experimental | #121 |
 | `bge-m3/onnx-fp32-cpu` | Experimental | #128 |
 | `bge-reranker-v2-m3/onnx-fp32-cpu` | Experimental | #146 (closes #99) |
+| `lfm3-1.7b/onnx-fp32-cpu` | Experimental | admission record `model-pipeline/admissions/lfm3.md` (#217, decided 2026-10-30) |
 
-Candidate contracts: `model-pipeline/candidates/{minilm,bge-small,ms-marco,nomic-embed,bge-base,bge-m3,bge-reranker-v2-m3}/profile.json`. Registry manifests: `model-pipeline/registry/<family>/onnx-fp32-cpu/manifest.yaml`. The Stable profiles are listed in [`ai-0.2.0.md`](ai-0.2.0.md), and the Kev and QwenChat profiles in [`ai-0.3.0.md`](ai-0.3.0.md). The [catalog](../catalog/README.md) links every gate to its evidence.
+Candidate contracts: `model-pipeline/candidates/{minilm,bge-small,ms-marco,nomic-embed,bge-base,bge-m3,bge-reranker-v2-m3,lfm3-1.7b}/profile.json`. Registry manifests: `model-pipeline/registry/<family>/onnx-fp32-cpu/manifest.yaml`. The Stable profiles are listed in [`ai-0.2.0.md`](ai-0.2.0.md), and the Kev and QwenChat profiles in [`ai-0.3.0.md`](ai-0.3.0.md). The [catalog](../catalog/README.md) links every gate to its evidence.
 
 ## Packages
 
-All packages target `net10.0`, are licensed MIT OR Apache-2.0 and have SourceLink to the commit. Sibling and tokenizer dependencies are exact (`[version]`).
+All packages target `net10.0` and have SourceLink to the commit. All are licensed MIT OR Apache-2.0, except `Starlings.Models.Lfm3`, whose NuGet license is the LFM Open License v1.0 file (see its row). Sibling and tokenizer dependencies are exact (`[version]`).
 
 | Package | Version | Change since 0.3.0 |
 | --- | --- | --- |
-| `Starlings.Tokenizers` | 0.3.2 | dependency, raised from 0.3.0 (#128, #135); outputs of existing profiles unchanged |
-| `Starlings.Runtime.Onnx` | 0.4.0 | provider probe, CUDA options, logging, I/O binding, warmup, exception base (D2); known model digest (C7); shared encoder core; `buildTransitive` native package checks (E1); README maturity table lists the BERT profiles |
+| `Starlings.Tokenizers` | 0.3.4 | dependency, raised from 0.3.0 (#128, #135, then 0.3.4 for LFM3); outputs of existing profiles unchanged |
+| `Starlings.Runtime.Onnx` | 0.4.0 | provider probe, CUDA options, logging, I/O binding, warmup, exception base (D2); known model digest (C7); shared encoder core; `buildTransitive` native package checks (E1); `OnnxCudaProviderOptions.AdditionalProviderOptions` and public `Validate()`; `OnnxInterventionDiagnostics` (experimental); README maturity table lists the BERT and LFM3 profiles |
 | `Starlings.Acquisition` | 0.4.0 | status, cleanup, progress, waits, concurrent files, mirrors, pruning, lock format 3 (D1); README maturity table lists the BERT profiles |
 | `Starlings.Models.Abstractions` | 0.4.0 | **first publish**. `CapabilityStatus`, `ModelProfileCapabilities`, `ITextEmbedder`, `IReranker`, `IModelAssets<TFiles>`, `InputTooLongException`, `TextChunker` (A2, C2, C3) |
-| `Starlings.Models.E5` | 0.4.0 | tokenizer 0.3.2 (README contract row); references `Starlings.Models.Abstractions` (A2, C2 to C5); outputs unchanged |
+| `Starlings.Models.E5` | 0.4.0 | tokenizer 0.3.4 (README contract row); references `Starlings.Models.Abstractions` (A2, C2 to C5); outputs unchanged |
 | `Starlings.Models.E5.Extensions.AI` | 0.4.0 | rebuilt, no change |
 | `Starlings.Models.E5.MLNet` | 0.4.0 | rebuilt, no change |
-| `Starlings.Models.Gliner2` | 0.4.0 | tokenizer 0.3.2 (README contract row); references `Starlings.Models.Abstractions` (A2, C2 to C5); outputs unchanged |
+| `Starlings.Models.Gliner2` | 0.4.0 | tokenizer 0.3.4 (README contract row); references `Starlings.Models.Abstractions` (A2, C2 to C5); outputs unchanged |
 | `Starlings.Generation.Abstractions` | 0.4.0 | **first publish**. Backend-neutral generation types moved from `Starlings.Generation.OnnxGenAI` (namespace `Starlings.Generation`), chat seams, `IGenerationSequence` |
 | `Starlings.Generation.OnnxGenAI` | 0.4.0 | references `Starlings.Generation.Abstractions` (the moved types); guided decoding (B1); `buildTransitive` native package checks (E1) |
 | `Starlings.Models.Qwen35` | 0.4.0 | **breaking**: now the model definition without ONNX Runtime (template, parser, tool grammar, `Qwen35Checkpoint`); `Qwen35ChatModel` moved to `Starlings.Models.Qwen35.OnnxGenAI`. Guided decoding (B1). Outputs unchanged |
 | `Starlings.Models.Qwen35.OnnxGenAI` | 0.4.0 | **first publish**. `Qwen35ChatModel` and the bundle locks, split from `Starlings.Models.Qwen35`; CPU prefill in 1,024-token chunks (B2). The Stable Qwen3.5 contracts are unchanged |
 | `Starlings.Models.Qwen35.Extensions.AI` | 0.4.0 | references `Starlings.Models.Qwen35.OnnxGenAI`; tool modes and JSON response format through guidance when the model directory has the guidance files (B1) |
-| `Starlings.Models.EmbeddingGemma2` | 0.4.0 | tokenizer 0.3.2 (README contract rows, capability comment); references `Starlings.Models.Abstractions` (A2, C2 to C5); outputs unchanged |
+| `Starlings.Models.EmbeddingGemma2` | 0.4.0 | tokenizer 0.3.4 (README contract rows, capability comment); references `Starlings.Models.Abstractions` (A2, C2 to C5); outputs unchanged |
 | `Starlings.Models.EmbeddingGemma2.Extensions.AI` | 0.4.0 | rebuilt, no change |
 | `Starlings.Models.EmbeddingGemma2.MLNet` | 0.4.0 | rebuilt, no change |
-| `Starlings.Models.EmbeddingGemma2.Imaging.SkiaSharp` | 0.4.0 | rebuilt, no change |
+| `Starlings.Models.EmbeddingGemma2.Imaging.SkiaSharp` | 0.4.0 | `MaxEncodedBytes` (default 64 MiB) bounds `Decode(Stream)` (#194; behavior change above 64 MiB) |
 | `Starlings.Models.EmbeddingGemma2.Video.FFmpeg` | 0.4.0 | rebuilt, no change |
 | `Starlings.Models.EmbeddingGemma2.Video.FFmpeg9` | 0.4.0 | rebuilt, no change |
-| `Starlings.Models.Kev` | 0.4.0 | **breaking**: now the model definition without ONNX Runtime (depends on `Starlings.Tokenizers` only); the runtime moved to `Starlings.Models.Kev.Onnx`. Kev API items (B9). See [Changes merged since #155](#changes-merged-since-155) |
-| `Starlings.Models.Kev.Onnx` | 0.4.0 | **first publish**. `KevDecisionModel` and the bundle locks on ONNX Runtime, split from `Starlings.Models.Kev`; state reuse, placement and calibration flag (B9). Experimental profiles |
+| `Starlings.Models.Kev` | 0.4.0 | **breaking**: now the model definition without ONNX Runtime (depends on `Starlings.Tokenizers` only); the runtime moved to `Starlings.Models.Kev.Onnx`. Kev API items (B9); `KevDecision[id]` is a hash lookup and a null id throws `ArgumentNullException` (#166). See [Changes merged since #155](#changes-merged-since-155) |
+| `Starlings.Models.Kev.Onnx` | 0.4.0 | **first publish**. `KevDecisionModel` and the bundle locks on ONNX Runtime, split from `Starlings.Models.Kev`; state reuse, placement and calibration flag (B9); `KevDecisionModel.CanLoad` (#166). Experimental profiles |
 | `Starlings.Models.QwenChat` | 0.4.0 | **breaking**: now the model definition without ONNX Runtime (templates, parser, `QwenChatCheckpoint`); the runtime moved to `Starlings.Models.QwenChat.OnnxGenAI` |
 | `Starlings.Models.QwenChat.OnnxGenAI` | 0.4.0 | **first publish**. `QwenChatModel`, `QwenChatModelAssets` and `QwenChatProfile` on ONNX Runtime GenAI, split from `Starlings.Models.QwenChat`. Experimental profiles |
 | `Starlings.Runtime.OnnxWeb` | 0.4.0 | **first publish** (#149, #150). onnxruntime-web 1.30.0 (WASM backend) for .NET browser-wasm apps: model download with SHA-256 verification and Cache Storage, sessions and runs from C# through `[JSImport]`. Ships onnxruntime-web's WASM-only bundle as static web assets, with onnxruntime's license and notices |
 | `Starlings.Runtime.OnnxWeb.WebGpu` | 0.4.0 | **first publish** (#149, #150). onnxruntime-web 1.30.0's WebGPU-capable bundle as static web assets for `Starlings.Runtime.OnnxWeb` |
 | `Starlings.Models.E5.Browser` | 0.4.0 | **first publish** (#149, #150). multilingual-e5-small embeddings in the browser with the owned tokenizer and an `IEmbeddingGenerator`. Four Experimental profiles: `multilingual-e5-small/onnx-fp32-wasm`, `onnx-int8embed-wasm`, `onnx-fp32-webgpu`, `onnx-int8embed-webgpu` (G1 and G2 pass; evidence in `docs/evidence/browser-e5-package-2026-10-23/`). WebAssembly has no support badge |
 | `Starlings.Models.Bert` | 0.4.0 | **first publish**. BERT-family text embeddings and paired-input reranking on ONNX Runtime 1.30.0 CPU fp32, with owned tokenization (WordPiece; XLM-R Unigram for bge-m3 and the reranker). Seven Experimental profiles: all-MiniLM-L6-v2, bge-small-en-v1.5, bge-base-en-v1.5 (#121), bge-m3 (#128), nomic-embed-text-v1.5 (#120), and the rerankers ms-marco-MiniLM-L6-v2 and bge-reranker-v2-m3 (#146). New API in this release: `BertModelProfile.BuiltIn(name)` and `BertModelProfile.BuiltInIds` parse the candidate contracts embedded in the package; the embedded files are linked from `model-pipeline/candidates/*/profile.json` at build time, so they cannot drift. Since 0.3.0 on `main`: a data-driven per-repository spec (output name, segment ids, XLM-R geometry; #128). `RuntimeLock` also includes `onnx/model.onnx_data` when the profile pins it (#146). Opt-in batching options as in #126. After #155: the contract table is the embedded `model-pipeline/routes/bert-onnx-cpu-v1/contracts.json` (`BertModelProfile.SupportedRepositories`), `ITextEmbedder` and `IReranker`, token counting; it depends on `Starlings.Models.Abstractions`. Model files are downloaded explicitly (`ModelAssetStore.DownloadAsync(profile.RuntimeLock)`); inference never downloads |
+| `Starlings.Models.Lfm3` | 0.4.0 | **first publish** (#217, #218, #220). **License: LFM Open License v1.0** (Liquid AI): the package's NuGet license is the file `LICENSE.txt`, which states first that commercial use is licensed only below USD 10 million annual revenue (section 5), then the full license text; NuGet asks for acceptance on install (`requireLicenseAcceptance`), and the description and README open with the condition. The ported chat template is under that license; the rest of the code is MIT OR Apache-2.0. `LiquidAI/LFM3-1.7B` text generation on ONNX Runtime 1.30.0 through Liquid's ONNX export (`LiquidAI/LFM3-1.7B-ONNX` at `c680759a`): owned greedy decode loop (`Lfm3Model`, `Lfm3Sequence`, `Lfm3ChatModel`), the chat template for text turns (`Lfm3ChatTemplate`), asset locks for the fp32 and fp16 graphs (`Lfm3ModelAssets`). One Experimental profile, `lfm3-1.7b/onnx-fp32-cpu`; fp16 and CUDA untested; the PyTorch reference has not run. Weights are downloaded explicitly and are not in the package |
 
-**Publishable set (26 packages):** every row at 0.4.0. Nothing is held (`HELD` is empty in `.github/workflows/release.yml`).
+**Publishable set (27 packages):** every row at 0.4.0. Nothing is held (`HELD` is empty in `.github/workflows/release.yml`).
 
-**Not published:** `Starlings.Models.Whisper` (`openai/whisper-large-v3-turbo` speech-to-text, #135, #136, #141, #142) is packable, and it builds and tests on `main`. It is not in the release drill's package set. Its profile `whisper-large-v3-turbo/onnx-fp16-cpu` has an Experimental registry manifest and the package README has its generated maturity table, but the package description lacks the per-profile line and there is no admission record. Publishing it needs its own change: the description line, and the drill and publish entries, as Kev and QwenChat had. `Starlings.Models.Lfm3` (LFM3-1.7B, #218) is experimental and source only.
+**Not published:** `Starlings.Models.Whisper` (`openai/whisper-large-v3-turbo` speech-to-text, #135, #136, #141, #142) is packable, and it builds and tests on `main`. It is not in the release drill's package set. Its profile `whisper-large-v3-turbo/onnx-fp16-cpu` has an Experimental registry manifest and the package README has its generated maturity table, but the package description lacks the per-profile line and there is no admission record. Publishing it needs its own change: the description line, and the drill and publish entries, as Kev and QwenChat had. `Starlings.Models.PaddleOcr` (#227, #228) is packable but not in the drill's package set either, for the same reasons. `Starlings.Interventions`, `Starlings.Models.Lfm3.Interventions` and `Starlings.Models.Clover` are source only (not packable).
 
 ML.NET under Native AOT is unsupported (Microsoft.ML emits code at run time).
 
@@ -207,10 +209,81 @@ The generation packages are split so that a runtime without ONNX Runtime (for ex
 - **Packaging.** The release workflow pushes `Starlings.Generation.Abstractions`, `Starlings.Models.Qwen35.OnnxGenAI`, `Starlings.Models.Kev` and `Starlings.Models.QwenChat` before the packages that pin them; the release drills and `tools/aot-check-ai.sh` pack and inspect the new packages.
 - **Not in this change.** Raising the Roost pin (needs a release). A generic asynchronous decode loop over `IGenerationSequence` (the ONNX Runtime GenAI loop stays synchronous). A shared Microsoft.Extensions.AI message mapper (`Qwen35ChatRequestMapper` stays in the adapter). Kev's `PythonFloatRepr` keeps its own copy, so `Starlings.Models.Kev` does not depend on the generation packages. Raw-checkpoint locks for the Qwen3, Qwen2.5 and Kev checkpoints.
 
+### New package: Starlings.Models.Lfm3 (LFM3-1.7B, Experimental; #217)
+
+**Model license: LFM Open License v1.0.** Commercial use of LFM3 is licensed only to a legal entity below USD 10 million annual revenue (section 5). The package is the first whose NuGet license is not `MIT OR Apache-2.0`. Its license file, `LICENSE.txt`, states the condition first, then gives the full LFM Open License v1.0 text and the split: the ported chat template is under that license, and the rest of the code is MIT OR Apache-2.0. NuGet asks for acceptance on install (`requireLicenseAcceptance`). The description and README open with the condition, and `THIRD-PARTY-NOTICES.md` is packed. The release drill checks all of this (`tools/release-drill-ai.sh`, `.ps1`).
+
+**What it does.** `LiquidAI/LFM3-1.7B` text generation on ONNX Runtime 1.30.0 through Liquid's ONNX export (`LiquidAI/LFM3-1.7B-ONNX` at `c680759a`). It has an owned greedy decode loop over the step graph (`Lfm3Model`, `Lfm3Sequence`, `Lfm3ChatModel`), a C# port of the chat template for text turns (`Lfm3ChatTemplate`), and asset locks for the fp32 and fp16 graphs (`Lfm3ModelAssets`). It needs `Starlings.Tokenizers` 0.3.3 or later (profile `lfm3-bpe-chat`); the pin is now 0.3.4 (below), so `release.yml` no longer holds it (`HELD` is empty). Registry profile `lfm3-1.7b/onnx-fp32-cpu`, Experimental. Evidence: `docs/evidence/lfm3-onboarding-2026-10-28/`. Not run: the PyTorch reference, fp16 and CUDA.
+
+### Tokenizer: Starlings.Tokenizers 0.3.4
+
+Every package that tokenizes now pins `Starlings.Tokenizers [0.3.4]` (0.3.2 when this release candidate opened), and every manifest's `processing.tokenizer.version` moved with the pin. 0.3.3 adds the `Sequence` post-processor, the Llama 3 split regex and the profiles `lfm3-bpe-chat`, `qwen3-bpe-embedding` and `qwen3-bpe-chat`; 0.3.4 adds only the profile `clover-bpe-chat`. 0.3.2 rejected a `Sequence` post-processor and the Llama 3 regex at load, so no pinned asset of an existing profile declares either, and the tokenizer's conformance fixtures pass unchanged (starlinghq/tokenizers CHANGELOG). The LFM3 tokenizer now loads, so `Lfm3ParityTests.PromptIdsMatchTheReferenceTokenizer` and the LFM3 intervention chat test run against the pin.
+
+### Starlings.Models.Kev (#166)
+
+- `KevDecisionModel.CanLoad(options, out reason)` checks the options and the requested provider (`OnnxRuntimeInfo.TryInitializeProvider`) before any graph is read, so a consumer need not load 3 to 17 GB to learn that CUDA is unavailable. Capabilities `load_check` (experimental) and `load_check.cuda` (untested, no GPU evidence).
+- `KevDecision[id]` is a hash lookup (ordinal, first answer on a repeated id) instead of a linear scan; record equality and copies are unchanged. A null `id` now throws `ArgumentNullException` (it threw `KeyNotFoundException` before).
+- README: noul answers are in no, yes order; `Yes` and `Probabilities["true"]` give p(yes) without reordering. `KevInputTooLongException` stays an `ArgumentException`, as the shared `InputTooLongException` base is.
+
+### Capability key `text.truncation` (#193)
+
+The capability key `truncation` keeps its encoder-side meaning (the encoder rejects id sequences over the profile's limit instead of truncating them), so no Stable profile's documented contract changes. A new key, `text.truncation`, says what happens to text: `Supported` in `E5Capabilities.Statuses` (`E5Tokenizer` truncates on the right to 512 tokens, as the reference), `Unsupported` in `EmbeddingGemma2Capabilities` and `Gliner2Capabilities` (longer text is rejected), and the new `BertCapabilities.TextTruncation` is `experimental`, as the whole BERT route is. The README tables name the old row "encoder-side truncation" and point to the typed `ModelProfileCapabilities.Truncation` (`TruncationPolicy`) as the authoritative text policy. Decision recorded in `docs/kickoff.md` ("Capability key `truncation`", 2026-11-01).
+
+### Starlings.Models.EmbeddingGemma2.Imaging.SkiaSharp: stream byte limit (#194)
+
+New `EmbeddingGemma2ImageDecoderOptions.MaxEncodedBytes` (default 64 MiB, 67,108,864; 1 to `Array.MaxLength`). `EmbeddingGemma2ImageDecoder.Decode(Stream)` now rejects a seekable stream whose remaining length is over the limit before reading anything, and a non-seekable stream as soon as more than the limit has been read, with `EmbeddingGemma2ImageTooLargeException`. Before, it buffered the whole stream before the `MaxPixels` header check. **Behavior change:** a stream above 64 MiB that decoded before now throws; raise `MaxEncodedBytes` to keep it. The byte-span and file overloads are unchanged, and decoding itself is unchanged, so the PIL-equality evidence of the image profiles still holds (no G2 rerun needed). Decision recorded in `docs/kickoff.md` ("SkiaSharp `Decode(Stream)` byte bound", 2026-11-01).
+
+### Starlings.Models.Whisper (not published in this release)
+
+- **Segment timestamps (experimental, #221).** `WhisperTranscriber.TranscribeWithTimestamps` and
+  `TranscribeMelWithTimestamps` return a `WhisperTranscription` (text, `WhisperSegment` list with start and end in
+  seconds, text and token ids, and the decoded `WhisperWindow`s); with #222 below, for audio of any length. `WhisperModel.GenerateWithTimestamps`
+  applies transformers 5.18.0 `WhisperTimeStampLogitsProcessor`; the transcriber follows `generate(return_timestamps=True)`'s
+  sequential seek loop, greedy, without fallbacks. Capability `timestamps` moves from unsupported to experimental; the new
+  `word_timestamps` is unsupported.
+- **Obsolete:** `WhisperCapabilities.StableProfile`, replaced by `WhisperCapabilities.CpuProfile` (same value; the profile is
+  Experimental, not Stable). Removed in the next minor version.
+- `WhisperTokenizer.Decode` drops timestamp tokens (ids from 50365), as transformers `WhisperTokenizer.decode` does.
+- `WhisperOptions.NoTimestamps = false` now makes `Transcribe` return the timestamped decode's text, instead of
+  prompting without `<|notimestamps|>` and decoding without the timestamp rules.
+- **KV-cache decoding (experimental, #192), now the default.** `WhisperModelAssets.Lock` adds
+  `onnx/decoder_with_past_model_fp16.onnx` (317,742,004 bytes, same revision), so `DownloadAsync` fetches about 318 MB
+  more. **Upgrading:** a cache acquired before this change lacks that file, so `WhisperModelAssets.OpenLocal` and
+  `OpenDirectory` throw `ModelAssetMissingException` until `WhisperModelAssets.DownloadAsync` runs again (it fetches only
+  the missing file). This applies with `DecoderMode = FullContext` too: the lock is one set of files, and that mode
+  merely does not load the graph. `WhisperModel` runs the full-context decoder once over the prompt and then one cached step per token;
+  `WhisperOptions.DecoderMode = WhisperDecoderMode.FullContext` keeps the previous loop. Logits differ from the
+  full-context loop in the last bits (fp16 summation order; bounded on the route), ids are equal. New:
+  `WhisperDecoderMode`, `WhisperOptions.DecoderMode` and `DecoderWithPastSession`, `WhisperModelFiles.DecoderWithPastPath`,
+  path overloads of `WhisperModel.Create` and `WhisperTranscriber.Create` with the KV-cache graph, and
+  `WhisperModel.GenerateRecordingLogits` (diagnostics). Capability `kv_cache`: experimental.
+- **Long-form transcription (experimental, #222).** `Transcribe` and `TranscribeWithTimestamps` accept clips
+  of more than 3000 mel frames (480,160 samples or more; up to 480,159 samples stay one window, as in transformers) and
+  transcribe them as transformers 5.18.0 sequential long-form `generate` does: the new
+  `WhisperMelSpectrogram.ExtractLongForm` computes one spectrogram over the whole clip, and the timestamped decode walks
+  it in 30 s windows, seeking to the last closing timestamp. `TranscribeMelWithTimestamps` takes a spectrogram of any
+  number of frames. Greedy only; the temperature fallback, compression-ratio, log-probability and no-speech thresholds
+  and conditioning on earlier windows stay unsupported (new capability keys say so). Capability `chunking` moves from
+  unsupported to experimental. The Whisper route reads `asr-corpus-v3.jsonl`, which adds a 34.5 s and a 59.1 s
+  composite of consecutive LibriSpeech utterances. `WhisperMelSpectrogram.ExtractLongForm` takes a `CancellationToken`
+  (observed every 1024 frames); the spectrogram costs about 70 s of one core and about 1 GB per hour of audio.
+- The Whisper onboarding route reads `asr-corpus-v2.jsonl`: the four clips of v1, a 27.9 s composite of six
+  consecutive LibriSpeech utterances, and a composite cut at 30 s inside its last utterance (its decode ends inside a
+  segment and is decoded again from the last closing timestamp). It checks the timestamped decode of every clip and
+  that the corpus exercises a timestamp pair and that re-decode.
+
+### Starlings.Runtime.Onnx: raw CUDA options, public validation, intervention diagnostics
+
+- `OnnxCudaProviderOptions.AdditionalProviderOptions` passes further CUDA provider options as raw key-value strings, after the typed ones. Starlings rejects only a blank key, a null value, or a key that Starlings or a typed member sets (`device_id`, `use_tf32`, `gpu_mem_limit`, `arena_extend_strategy`, `cudnn_conv_algo_search`, `enable_cuda_graph`); ONNX Runtime rejects an unknown key or bad value when the provider is created, and the error then names the additional keys. The dictionary is copied when set. Untested on CUDA; no parity claim covers options set this way.
+- `OnnxSessionOptions.Validate()` and `OnnxCudaProviderOptions.Validate()` are public: the checks of session creation, without a model or GPU.
+- `OnnxInterventionDiagnostics` (experimental): the intervention identity of a session (original and loaded graph digests, `LoadedModelSha256Source`, profile ids, intervention inputs), built by a model package that loads a derived intervention graph. Design: `docs/interventions/architecture.md`. The intervention companions themselves (`Starlings.Interventions`, `Starlings.Models.Lfm3.Interventions`) are not published.
+
 ## Upgrading from 0.3.0
 
-- Raise every `Starlings.*` reference to `0.4.0` together. The tokenizer comes along as `0.3.2`.
-- No default changed, and Stable profiles produce the same outputs.
+- Raise every `Starlings.*` reference to `0.4.0` together. The tokenizer comes along as `0.3.4`.
+- Stable profiles produce the same outputs. One default changed: `EmbeddingGemma2ImageDecoder.Decode(Stream)` rejects more than 64 MiB of encoded input (`EmbeddingGemma2ImageTooLargeException`); raise `EmbeddingGemma2ImageDecoderOptions.MaxEncodedBytes` to keep decoding larger streams.
+- `KevDecision[id]` with a null id throws `ArgumentNullException` (it threw `KeyNotFoundException`).
+- `Starlings.Models.Lfm3` is new: read its `LICENSE.txt` before use. The LFM Open License v1.0 licenses commercial use only below USD 10 million annual revenue.
 - `Starlings.Models.Bert`: add `Microsoft.ML.OnnxRuntime` 1.30.0 (the CPU natives) to the application. Pick a profile with `BertModelProfile.BuiltIn("bge-small")` (names in `BertModelProfile.BuiltInIds`) in place of `BertModelProfile.Load("model-pipeline/candidates/bge-small/profile.json")`. `Load` and `Parse` still work.
 - If you used the BERT library from source before this release: `bge-m3`'s `RuntimeLock` now has **3 files** (`onnx/model.onnx`, `onnx/model.onnx_data`, `tokenizer.json`), not 2, because its graph keeps its weights in external data (#146). Download `RuntimeLock` again, or `Create` reports the missing `onnx/model.onnx_data`. `bge-reranker-v2-m3` has the same 3 files. The other five profiles still need 2.
 - Reranker scores (ms-marco and bge-reranker-v2-m3) are raw logits, not probabilities. Apply a sigmoid yourself for bge-reranker-v2-m3's 0-1 mapping. nomic-embed-text-v1.5 vectors are not unit length.
