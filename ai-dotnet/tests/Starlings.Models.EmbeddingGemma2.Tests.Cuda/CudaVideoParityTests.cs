@@ -61,4 +61,24 @@ public sealed class CudaVideoParityTests(EmbeddingGemma2VideoCudaFixture fixture
 
     [Fact]
     public void TextOnlyInputsUseTheReleasedTextGraph() => EmbeddingGemma2VideoParityChecks.TextOnlyEqualsTheTextEmbedder(fixture);
+
+    /// <summary>
+    /// Capability <c>concurrent_calls</c> over CUDA with batches (issue #257): eight threads released together each run
+    /// <c>EmbedBatch</c> on the fixture's embedder with a different batch of 2 video or multimodal rows (different
+    /// codecs, sizes, frame counts and token counts), five rounds. Every vector must equal the sequential result of the
+    /// same batch bit for bit. The videos are decoded before any thread starts.
+    /// </summary>
+    [Fact]
+    public void ConcurrentEmbedBatchCallsGiveTheSequentialResultsBitForBit()
+    {
+        const int Threads = 8, BatchRows = 2, Rounds = 5;
+        var embedder = fixture.Embedder; // skips when the model, the videos or FFmpeg are absent
+        var inputs = EmbeddingGemma2VideoTestAssets.Rows
+            .Where(r => r.InDefaultContract && r.Videos.Count > 0 && r.Prompt == "none")
+            .Select(r => (r.Id, EmbeddingGemma2VideoTestAssets.BuildInput(r)))
+            .ToList();
+        var batches = ConcurrentMultimodalBatches.Rotations(inputs, Threads, BatchRows);
+        var (vectors, max) = ConcurrentMultimodalBatches.Check(embedder, batches, Rounds, TestContext.Current.CancellationToken);
+        output.WriteLine($"{Threads} concurrent EmbedBatch calls x {BatchRows} rows x {Rounds} rounds on one CUDA embedder ({inputs.Count} video and multimodal rows, {fixture.Options.MaxVideoFramesPerVisionCall} frames per vision call): {vectors} vectors bit-for-bit equal to the sequential run (max abs {max:E3})");
+    }
 }

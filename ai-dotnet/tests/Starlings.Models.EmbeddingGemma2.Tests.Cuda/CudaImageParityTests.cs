@@ -42,6 +42,27 @@ public sealed class CudaImageParityTests(EmbeddingGemma2ImageCudaFixture fixture
 
     [Fact]
     public void TextOnlyInputsUseTheReleasedTextGraph() => EmbeddingGemma2ImageParityChecks.TextOnlyEqualsTheTextEmbedder(fixture);
+
+    /// <summary>
+    /// Capability <c>concurrent_calls</c> over CUDA with batches (issue #257): four threads released together each run
+    /// <c>EmbedBatch</c> on the fixture's embedder with a different batch of 4 image or interleaved rows (different image
+    /// sizes and token counts), five rounds. Every vector must equal the sequential result of the same batch bit for bit.
+    /// Four threads, not the text test's eight: on a 16 GB RTX 4060 Ti, eight concurrent image calls (4 or 2 rows each)
+    /// failed to get device memory from ONNX Runtime's CUDA arena (docs/evidence/cuda-concurrency-2026-11-01/).
+    /// </summary>
+    [Fact]
+    public void ConcurrentEmbedBatchCallsGiveTheSequentialResultsBitForBit()
+    {
+        const int Threads = 4, BatchRows = 4, Rounds = 5;
+        var embedder = fixture.Embedder; // skips when the model is absent
+        var inputs = EmbeddingGemma2ImageTestAssets.Rows
+            .Where(r => r.InContract && r.Images.Count > 0 && r.Prompt == "none")
+            .Select(r => (r.Id, EmbeddingGemma2ImageTestAssets.BuildInput(r, EmbeddingGemma2ImageTestAssets.Decode)))
+            .ToList();
+        var batches = ConcurrentMultimodalBatches.Rotations(inputs, Threads, BatchRows);
+        var (vectors, max) = ConcurrentMultimodalBatches.Check(embedder, batches, Rounds, TestContext.Current.CancellationToken);
+        output.WriteLine($"{Threads} concurrent EmbedBatch calls x {BatchRows} rows x {Rounds} rounds on one CUDA embedder ({inputs.Count} image and interleaved rows): {vectors} vectors bit-for-bit equal to the sequential run (max abs {max:E3})");
+    }
 }
 
 /// <summary>
