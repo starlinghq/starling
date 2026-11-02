@@ -130,6 +130,9 @@ directory by size and SHA-256 (`ModelAssetStore.VerifyDirectory`) and never down
   `ScoreTokens`, `Tokenize`, and `Rank(query, documents)`, which returns `BertRankedDocument(Index, Document, Score)`
   by descending score, ties in original order. It is an `IReranker`: `Score(query, documents)` returns the raw logits
   of `ScoreBatch` in document order.
+  To rerank a vector store's top-k (`Microsoft.Extensions.VectorData` `SearchAsync`) or use it as a
+  `Func<string, IReadOnlyList<string>, Task<float[]>>`, use `Reranking.RerankAsync` and `AsScoringFunction` from
+  `Starlings.Models.Abstractions` (experimental; see that package's README).
 - `BertInput(InputIds, AttentionMask, TokenTypeIds)` for pre-tokenized rows: equal lengths from 2 to `MaxTokens`,
   the profile's CLS id first and SEP id as the last visible token, right padding with the profile's pad id and mask 0.
 - `BertCapabilities`: text, batch and cancellation `experimental`; text truncation on the right to `MaxTokens`
