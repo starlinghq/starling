@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <IsPackable>true</IsPackable>
-    <Description>Qwen/Qwen3-0.6B (revision c1899de2, thinking disabled) and Qwen/Qwen2.5-0.5B-Instruct (revision 7ae55760) model definitions without a runtime: the pinned chat templates rendered in C# for system, user, assistant and tool messages with tool definitions and calls (tool calling experimental; multimodal input rejected), a parser for the templates' JSON tool-call format (whole or streamed), per-request chat options, and each checkpoint's identity and decoder shape (QwenChatCheckpoint, ModelProfile) with tokenizer verification through the owned tokenizer Starlings.Tokenizers. No ONNX Runtime dependency. To run the models in-process on ONNX Runtime GenAI, reference Starlings.Models.QwenChat.OnnxGenAI. Maturity is per model profile (Stable, Preview or Experimental): see the README, generated from the model registry.</Description>
+    <Description>Qwen/Qwen3-0.6B (revision c1899de2, thinking disabled) and Qwen/Qwen2.5-0.5B-Instruct (revision 7ae55760) model definitions without a runtime: the pinned chat templates rendered in C# for system, user, assistant and tool messages with tool definitions and calls (tool calling experimental; multimodal input rejected), a parser for the templates' JSON tool-call format (whole or streamed), per-request chat options, and each checkpoint's identity and decoder shape (QwenChatCheckpoint, ModelProfile) with tokenizer verification through the owned tokenizer Starlings.Tokenizers, and the asset lock of each Hub checkpoint itself (safetensors, config, generation config, tokenizer files). No ONNX Runtime dependency. To run the models in-process on ONNX Runtime GenAI, reference Starlings.Models.QwenChat.OnnxGenAI. Maturity is per model profile (Stable, Preview or Experimental): see the README, generated from the model registry.</Description>
     <PackageTags>llm;chat;qwen;qwen3;qwen2.5;chat-template;tool-calling</PackageTags>
     <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
@@ -9,7 +9,11 @@
     <None Include="README.md" Pack="true" PackagePath="" />
     <None Include="THIRD-PARTY-NOTICES.md" Pack="true" PackagePath="" />
     <None Include="LICENSE.Qwen.txt" Pack="true" PackagePath="" />
+    <!-- QwenChatCheckpoint.Lock of each checkpoint as a JSON lock (schema_version 2) for tools outside .NET; a test keeps them equal. -->
+    <None Include="locks/*.checkpoint.lock.json" Pack="true" PackagePath="locks" />
     <ProjectReference Include="../Starlings.Generation.Abstractions/Starlings.Generation.Abstractions.csproj" />
     <PackageReference Include="Starlings.Tokenizers" />
+    <!-- ModelAssetLock of the Hub checkpoints (BCL only). -->
+    <ProjectReference Include="../Starlings.Acquisition/Starlings.Acquisition.csproj" />
   </ItemGroup>
 </Project>

@@ -3,17 +3,21 @@
   <PropertyGroup>
     <IsPackable>true</IsPackable>
     <IsAotCompatible>true</IsAotCompatible>
-    <Description>Kev decision model definitions (jaredpalmer/kev-0.8b and jaredpalmer/kev-4b, Kev 1.0) without a runtime: typed requests (one state and noul, choice and score questions, or a System One request body), Kev's request rendering and delimiter escaping in C#, the encoder that turns a request into Kev's state and question rows of token ids with the owned tokenizer (Starlings.Tokenizers profile qwen2-bpe-kev: no Microsoft.ML.Tokenizers), the checkpoints' identities and dimensions (KevModelProfile), and the decision result types. No ONNX Runtime dependency. To run the models in-process on ONNX Runtime, reference Starlings.Models.Kev.Onnx. Maturity is per model profile (Stable, Preview or Experimental): see the README, generated from the model registry.</Description>
+    <Description>Kev decision model definitions (jaredpalmer/kev-0.8b and jaredpalmer/kev-4b, Kev 1.0) without a runtime: typed requests (one state and noul, choice and score questions, or a System One request body), Kev's request rendering and delimiter escaping in C#, the encoder that turns a request into Kev's state and question rows of token ids with the owned tokenizer (Starlings.Tokenizers profile qwen2-bpe-kev: no Microsoft.ML.Tokenizers), the checkpoints' identities and dimensions with asset locks of the Kev and base Hub checkpoints (KevModelProfile), and the decision result types. No ONNX Runtime dependency. To run the models in-process on ONNX Runtime, reference Starlings.Models.Kev.Onnx. Maturity is per model profile (Stable, Preview or Experimental): see the README, generated from the model registry.</Description>
     <PackageTags>kev;decision;classification;calibration;qwen3.5</PackageTags>
     <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
 
   <ItemGroup>
     <None Include="README.md" Pack="true" PackagePath="" />
+    <!-- KevModelProfile.CheckpointLock and BaseCheckpointLock as JSON locks (schema_version 2) for tools outside .NET; a test keeps them equal. -->
+    <None Include="locks/*.checkpoint.lock.json" Pack="true" PackagePath="locks" />
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Starlings.Tokenizers" />
+    <!-- ModelAssetLock of the Hub checkpoints (BCL only). -->
+    <ProjectReference Include="../Starlings.Acquisition/Starlings.Acquisition.csproj" />
   </ItemGroup>
 
   <ItemGroup>

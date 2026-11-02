@@ -30,7 +30,9 @@ public sealed class DefinitionTests
     {
         AssemblyName[] references = typeof(QwenChatTemplate).Assembly.GetReferencedAssemblies();
         Assert.DoesNotContain(references, r => r.Name!.StartsWith("Microsoft.ML.OnnxRuntime", StringComparison.Ordinal));
-        Assert.DoesNotContain(references, r => r.Name is "Starlings.Generation.OnnxGenAI" or "Starlings.Runtime.Onnx" or "Starlings.Acquisition");
+        Assert.DoesNotContain(references, r => r.Name is "Starlings.Generation.OnnxGenAI" or "Starlings.Runtime.Onnx");
+        // Starlings.Acquisition (BCL only) for QwenChatCheckpoint.Lock, as in Starlings.Models.Qwen35; nothing downloads.
+        Assert.Contains(references, r => r.Name == "Starlings.Acquisition");
         Assert.Equal("Starlings.Models.QwenChat.OnnxGenAI", typeof(QwenChatModel).Assembly.GetName().Name);
         Assert.Equal(typeof(QwenChatTemplate).Namespace, typeof(QwenChatModel).Namespace);
     }
