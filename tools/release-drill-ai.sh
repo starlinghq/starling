@@ -447,6 +447,7 @@ expect_deps() {
             echo "Microsoft.Extensions.AI.Abstractions 10.10.1"
             echo "Microsoft.Extensions.DependencyInjection.Abstractions 10.0.12" ;;
         Starlings.Models.Kev)
+            echo "Starlings.Acquisition [$ai_version]"
             echo "Starlings.Tokenizers [$tok_version]" ;;
         Starlings.Models.Kev.Onnx)
             echo "Starlings.Acquisition [$ai_version]"
@@ -454,6 +455,7 @@ expect_deps() {
             echo "Starlings.Runtime.Onnx [$ai_version]"
             echo "Starlings.Tokenizers [$tok_version]" ;;
         Starlings.Models.QwenChat)
+            echo "Starlings.Acquisition [$ai_version]"
             echo "Starlings.Generation.Abstractions [$ai_version]"
             echo "Starlings.Tokenizers [$tok_version]" ;;
         Starlings.Models.QwenChat.OnnxGenAI)
@@ -515,6 +517,16 @@ expected
 $expected"
     for f in "lib/net10.0/$id.dll" "lib/net10.0/$id.xml" README.md; do
         grep -qx "$f" <<<"$contents" || fail "$id: package lacks $f"
+    done
+    # The definition packages carry their Hub checkpoint locks as JSON (a test keeps each equal to the C# lock).
+    packed_locks=()
+    case "$id" in
+        Starlings.Models.Qwen35) packed_locks=(qwen3.5-0.8b) ;;
+        Starlings.Models.QwenChat) packed_locks=(qwen3-0.6b qwen2.5-0.5b-instruct) ;;
+        Starlings.Models.Kev) packed_locks=(kev-0.8b kev-4b qwen3.5-0.8b-base qwen3.5-4b-base) ;;
+    esac
+    for l in ${packed_locks[@]+"${packed_locks[@]}"}; do
+        grep -qx "locks/$l.checkpoint.lock.json" <<<"$contents" || fail "$id: package lacks locks/$l.checkpoint.lock.json"
     done
     # The build-time native package checks travel to every consumer (README, "Native package check").
     case "$id" in

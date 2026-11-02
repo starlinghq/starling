@@ -221,9 +221,10 @@ public sealed record KevModelProfile
     /// The asset lock of the frozen base checkpoint's files, downloaded from <see cref="BaseRepository"/> at
     /// <see cref="BaseRevision"/>: the configuration, the safetensors weights and their index, the tokenizer files and
     /// the preprocessor configurations (the candidate contract's <c>origin.base.files</c> without the card and license,
-    /// checked against the Hub as <see cref="CheckpointLock"/> was). The merge reads these with
-    /// <see cref="CheckpointLock"/> to build the ONNX bundle (about 1.8 GB of base files for Kev-0.8B, 9.3 GB for
-    /// Kev-4B). Shipped in this package as <c>locks/</c><see cref="BaseCheckpointLockFileName"/>.
+    /// checked against the Hub as <see cref="CheckpointLock"/> was): the base files the candidate contract records for the
+    /// checkpoint, not a list of what a text-only merge reads (about 1.8 GB for Kev-0.8B, 9.3 GB for Kev-4B). Like the
+    /// other checkpoint locks it leaves out the Hub repository's <c>LICENSE</c> (Apache-2.0): fetch it from the
+    /// repository at the same revision if you redistribute the files. Shipped in this package as <c>locks/</c><see cref="BaseCheckpointLockFileName"/>.
     /// </summary>
     public required ModelAssetLock BaseCheckpointLock { get; init; }
 
