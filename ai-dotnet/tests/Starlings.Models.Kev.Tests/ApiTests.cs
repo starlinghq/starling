@@ -40,7 +40,7 @@ public sealed class ApiTests
         Assert.Equal(KevCapabilityStatus.Experimental, KevCapabilities.All["placement_report"]);
         Assert.Equal(KevCapabilityStatus.Experimental, KevCapabilities.All["calibration_flag"]);
         Assert.Equal(KevCapabilityStatus.Experimental, KevCapabilities.All["state_reuse_across_calls"]);
-        Assert.Equal(KevCapabilityStatus.Untested, KevCapabilities.All["state_reuse_across_calls.cuda"]);
+        Assert.Equal(KevCapabilityStatus.Experimental, KevCapabilities.All["state_reuse_across_calls.cuda"]);
         Assert.Equal(KevCapabilityStatus.Unsupported, KevCapabilities.All["state_prefix_reuse_across_requests"]);
     }
 

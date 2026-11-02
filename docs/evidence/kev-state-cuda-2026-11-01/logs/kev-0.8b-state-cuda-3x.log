@@ -1,0 +1,54 @@
+run 1:
+xUnit.net v3 In-Process Runner v4.0.1+8ed8aa354c (64-bit .NET 10.0.12)
+  Discovering: Starlings.Models.Kev.Tests.Cuda
+  Discovered:  Starlings.Models.Kev.Tests.Cuda
+  Starting:    Starlings.Models.Kev.Tests.Cuda
+    Starlings.Models.Kev.Tests.Cuda.CudaParityTests.SessionUsesCudaWithTf32DisabledAndSerializes(model: Kev08B) [OUTPUT] ORT 1.30.0; session CUDAExecutionProvider, CPUExecutionProvider; CUDA_VISIBLE_DEVICES=1
+    Starlings.Models.Kev.Tests.Cuda.CudaParityTests.SessionUsesCudaWithTf32DisabledAndSerializes(model: Kev08B) [OUTPUT] provider options: arena_extend_strategy=kNextPowerOfTwo, cudnn_conv1d_pad_to_nc1d=0, cudnn_conv_algo_search=EXHAUSTIVE, cudnn_conv_use_max_workspace=1, device_id=0, do_copy_in_default_stream=1, enable_cudnn=1, fuse_conv_bias=0, gpu_mem_limit=18446744073709551615, has_user_compute_stream=0, prefer_nhwc=0, sdpa_kernel=0, tunable_op_enable=0, tunable_op_max_tuning_duration_ms=0, tunable_op_tuning_enable=0, use_ep_level_unified_stream=0, use_tf32=0, user_compute_stream=0
+    Starlings.Models.Kev.Tests.Cuda.CudaParityTests.SessionUsesCudaWithTf32DisabledAndSerializes(model: Kev4B) [SKIP]
+      STARLING_KEV_4B_BUNDLE is not set: point it at a kev-4b/onnx-fp32-cpu bundle to run the model tests.
+    Starlings.Models.Kev.Tests.Cuda.CudaParityTests.StateIsSharedByConcurrentCallsAndRefusedAfterDispose(model: Kev08B) [OUTPUT] 8 decisions from one state on 4 callers bit-identical to Decide(request) on the same session
+    Starlings.Models.Kev.Tests.Cuda.CudaParityTests.StateIsSharedByConcurrentCallsAndRefusedAfterDispose(model: Kev4B) [SKIP]
+      STARLING_KEV_4B_BUNDLE is not set: point it at a kev-4b/onnx-fp32-cpu bundle to run the model tests.
+    Starlings.Models.Kev.Tests.Cuda.CudaParityTests.StateReuseEqualsDecideBitForBit(model: Kev08B) [OUTPUT] kev-0.8b/onnx-fp32-cuda: 9 goldens from a KevState, 60 answers bit-identical to Decide(request) on the same session
+    Starlings.Models.Kev.Tests.Cuda.CudaParityTests.StateReuseEqualsDecideBitForBit(model: Kev4B) [SKIP]
+      STARLING_KEV_4B_BUNDLE is not set: point it at a kev-4b/onnx-fp32-cpu bundle to run the model tests.
+  Finished:    Starlings.Models.Kev.Tests.Cuda (ID = '2d4cf050a5610584e5ca1347d6b7d9b74166b965bc73f8f9141fd9f4294f26d5')
+=== TEST EXECUTION SUMMARY ===
+   Starlings.Models.Kev.Tests.Cuda  Total: 6, Errors: 0, Failed: 0, Skipped: 3, Not Run: 0, Time: 7.363s
+run 2:
+xUnit.net v3 In-Process Runner v4.0.1+8ed8aa354c (64-bit .NET 10.0.12)
+  Discovering: Starlings.Models.Kev.Tests.Cuda
+  Discovered:  Starlings.Models.Kev.Tests.Cuda
+  Starting:    Starlings.Models.Kev.Tests.Cuda
+    Starlings.Models.Kev.Tests.Cuda.CudaParityTests.SessionUsesCudaWithTf32DisabledAndSerializes(model: Kev08B) [OUTPUT] ORT 1.30.0; session CUDAExecutionProvider, CPUExecutionProvider; CUDA_VISIBLE_DEVICES=1
+    Starlings.Models.Kev.Tests.Cuda.CudaParityTests.SessionUsesCudaWithTf32DisabledAndSerializes(model: Kev08B) [OUTPUT] provider options: arena_extend_strategy=kNextPowerOfTwo, cudnn_conv1d_pad_to_nc1d=0, cudnn_conv_algo_search=EXHAUSTIVE, cudnn_conv_use_max_workspace=1, device_id=0, do_copy_in_default_stream=1, enable_cudnn=1, fuse_conv_bias=0, gpu_mem_limit=18446744073709551615, has_user_compute_stream=0, prefer_nhwc=0, sdpa_kernel=0, tunable_op_enable=0, tunable_op_max_tuning_duration_ms=0, tunable_op_tuning_enable=0, use_ep_level_unified_stream=0, use_tf32=0, user_compute_stream=0
+    Starlings.Models.Kev.Tests.Cuda.CudaParityTests.SessionUsesCudaWithTf32DisabledAndSerializes(model: Kev4B) [SKIP]
+      STARLING_KEV_4B_BUNDLE is not set: point it at a kev-4b/onnx-fp32-cpu bundle to run the model tests.
+    Starlings.Models.Kev.Tests.Cuda.CudaParityTests.StateIsSharedByConcurrentCallsAndRefusedAfterDispose(model: Kev08B) [OUTPUT] 8 decisions from one state on 4 callers bit-identical to Decide(request) on the same session
+    Starlings.Models.Kev.Tests.Cuda.CudaParityTests.StateIsSharedByConcurrentCallsAndRefusedAfterDispose(model: Kev4B) [SKIP]
+      STARLING_KEV_4B_BUNDLE is not set: point it at a kev-4b/onnx-fp32-cpu bundle to run the model tests.
+    Starlings.Models.Kev.Tests.Cuda.CudaParityTests.StateReuseEqualsDecideBitForBit(model: Kev08B) [OUTPUT] kev-0.8b/onnx-fp32-cuda: 9 goldens from a KevState, 60 answers bit-identical to Decide(request) on the same session
+    Starlings.Models.Kev.Tests.Cuda.CudaParityTests.StateReuseEqualsDecideBitForBit(model: Kev4B) [SKIP]
+      STARLING_KEV_4B_BUNDLE is not set: point it at a kev-4b/onnx-fp32-cpu bundle to run the model tests.
+  Finished:    Starlings.Models.Kev.Tests.Cuda (ID = '2d4cf050a5610584e5ca1347d6b7d9b74166b965bc73f8f9141fd9f4294f26d5')
+=== TEST EXECUTION SUMMARY ===
+   Starlings.Models.Kev.Tests.Cuda  Total: 6, Errors: 0, Failed: 0, Skipped: 3, Not Run: 0, Time: 7.367s
+run 3:
+xUnit.net v3 In-Process Runner v4.0.1+8ed8aa354c (64-bit .NET 10.0.12)
+  Discovering: Starlings.Models.Kev.Tests.Cuda
+  Discovered:  Starlings.Models.Kev.Tests.Cuda
+  Starting:    Starlings.Models.Kev.Tests.Cuda
+    Starlings.Models.Kev.Tests.Cuda.CudaParityTests.SessionUsesCudaWithTf32DisabledAndSerializes(model: Kev08B) [OUTPUT] ORT 1.30.0; session CUDAExecutionProvider, CPUExecutionProvider; CUDA_VISIBLE_DEVICES=1
+    Starlings.Models.Kev.Tests.Cuda.CudaParityTests.SessionUsesCudaWithTf32DisabledAndSerializes(model: Kev08B) [OUTPUT] provider options: arena_extend_strategy=kNextPowerOfTwo, cudnn_conv1d_pad_to_nc1d=0, cudnn_conv_algo_search=EXHAUSTIVE, cudnn_conv_use_max_workspace=1, device_id=0, do_copy_in_default_stream=1, enable_cudnn=1, fuse_conv_bias=0, gpu_mem_limit=18446744073709551615, has_user_compute_stream=0, prefer_nhwc=0, sdpa_kernel=0, tunable_op_enable=0, tunable_op_max_tuning_duration_ms=0, tunable_op_tuning_enable=0, use_ep_level_unified_stream=0, use_tf32=0, user_compute_stream=0
+    Starlings.Models.Kev.Tests.Cuda.CudaParityTests.SessionUsesCudaWithTf32DisabledAndSerializes(model: Kev4B) [SKIP]
+      STARLING_KEV_4B_BUNDLE is not set: point it at a kev-4b/onnx-fp32-cpu bundle to run the model tests.
+    Starlings.Models.Kev.Tests.Cuda.CudaParityTests.StateIsSharedByConcurrentCallsAndRefusedAfterDispose(model: Kev08B) [OUTPUT] 8 decisions from one state on 4 callers bit-identical to Decide(request) on the same session
+    Starlings.Models.Kev.Tests.Cuda.CudaParityTests.StateIsSharedByConcurrentCallsAndRefusedAfterDispose(model: Kev4B) [SKIP]
+      STARLING_KEV_4B_BUNDLE is not set: point it at a kev-4b/onnx-fp32-cpu bundle to run the model tests.
+    Starlings.Models.Kev.Tests.Cuda.CudaParityTests.StateReuseEqualsDecideBitForBit(model: Kev08B) [OUTPUT] kev-0.8b/onnx-fp32-cuda: 9 goldens from a KevState, 60 answers bit-identical to Decide(request) on the same session
+    Starlings.Models.Kev.Tests.Cuda.CudaParityTests.StateReuseEqualsDecideBitForBit(model: Kev4B) [SKIP]
+      STARLING_KEV_4B_BUNDLE is not set: point it at a kev-4b/onnx-fp32-cpu bundle to run the model tests.
+  Finished:    Starlings.Models.Kev.Tests.Cuda (ID = '2d4cf050a5610584e5ca1347d6b7d9b74166b965bc73f8f9141fd9f4294f26d5')
+=== TEST EXECUTION SUMMARY ===
+   Starlings.Models.Kev.Tests.Cuda  Total: 6, Errors: 0, Failed: 0, Skipped: 3, Not Run: 0, Time: 7.189s
