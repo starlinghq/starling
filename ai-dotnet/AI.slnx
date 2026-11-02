@@ -3,6 +3,8 @@
     <Project Path="src/Starlings.Models.Bert/Starlings.Models.Bert.csproj" />
     <Project Path="src/Starlings.Models.QwenChat/Starlings.Models.QwenChat.csproj" />
     <Project Path="src/Starlings.Models.QwenChat.OnnxGenAI/Starlings.Models.QwenChat.OnnxGenAI.csproj" />
+    <Project Path="src/Starlings.Models.Qwen3Embedding/Starlings.Models.Qwen3Embedding.csproj" />
+    <Project Path="src/Starlings.Models.Qwen3Embedding.Extensions.AI/Starlings.Models.Qwen3Embedding.Extensions.AI.csproj" />
     <Project Path="src/Starlings.Models.EmbeddingGemma2.Extensions.AI/Starlings.Models.EmbeddingGemma2.Extensions.AI.csproj" />
     <Project Path="src/Starlings.Models.EmbeddingGemma2.MLNet/Starlings.Models.EmbeddingGemma2.MLNet.csproj" />
     <Project Path="src/Starlings.Models.EmbeddingGemma2/Starlings.Models.EmbeddingGemma2.csproj" />
@@ -36,6 +38,7 @@
   <Folder Name="/tests/">
     <Project Path="tests/Starlings.Models.Bert.Tests/Starlings.Models.Bert.Tests.csproj" />
     <Project Path="tests/Starlings.Models.QwenChat.Tests/Starlings.Models.QwenChat.Tests.csproj" />
+    <Project Path="tests/Starlings.Models.Qwen3Embedding.Tests/Starlings.Models.Qwen3Embedding.Tests.csproj" />
     <Project Path="tests/Starlings.Models.Whisper.Tests/Starlings.Models.Whisper.Tests.csproj" />
     <Project Path="tests/Starlings.Models.PaddleOcr.Tests/Starlings.Models.PaddleOcr.Tests.csproj" />
     <Project Path="tests/Starlings.Models.Clover.Tests/Starlings.Models.Clover.Tests.csproj" />

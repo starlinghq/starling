@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <IsPackable>true</IsPackable>
+    <Description>Experimental: Qwen/Qwen3-Embedding-0.6B text embeddings (last-token pooling, L2, 1024 floats, query instructions) and Qwen/Qwen3-Reranker-0.6B query-document reranking (raw yes/no log-odds, IReranker) on ONNX Runtime CPU (fp32), with owned tokenization (Starlings.Tokenizers; no Microsoft.ML.Tokenizers). Built-in pinned profiles verify graphs built by the repository's export recipe; the graphs are not hosted yet, so nothing is downloaded. The application adds the ONNX Runtime native package. See the README for capability statuses.</Description>
+    <PackageTags>qwen3;embeddings;reranking;onnxruntime</PackageTags>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="" />
+    <None Include="THIRD-PARTY-NOTICES.md" Pack="true" PackagePath="" />
+    <None Include="LICENSE.Qwen.txt" Pack="true" PackagePath="" />
+    <ProjectReference Include="../Starlings.Runtime.Onnx/Starlings.Runtime.Onnx.csproj" />
+    <!-- CapabilityStatus, ITextEmbedder, IReranker and TokenLimitCheck (no ONNX Runtime dependency). -->
+    <ProjectReference Include="../Starlings.Models.Abstractions/Starlings.Models.Abstractions.csproj" />
+    <ProjectReference Include="../Starlings.Acquisition/Starlings.Acquisition.csproj" />
+    <PackageReference Include="Starlings.Tokenizers" />
+    <InternalsVisibleTo Include="Starlings.Models.Qwen3Embedding.Tests" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- Length-aware chunk planning shared by the explicit-batch encoders (internal). -->
+    <Compile Include="../Shared/Batching/*.cs" Link="Shared/%(Filename)%(Extension)" />
+  </ItemGroup>
+</Project>

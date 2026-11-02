@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <IsPackable>true</IsPackable>
+    <Description>Experimental: Microsoft.Extensions.AI IEmbeddingGenerator&lt;string, Embedding&lt;float&gt;&gt; over the Qwen3-Embedding-0.6B text embedder (Starlings.Models.Qwen3Embedding): named prompts per request (none, document, query), batching, usage and model metadata. See the README for capability statuses.</Description>
+    <PackageTags>embeddings;qwen3;microsoft.extensions.ai;iembeddinggenerator;onnxruntime</PackageTags>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.AI.Abstractions" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../Starlings.Models.Qwen3Embedding/Starlings.Models.Qwen3Embedding.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Request and result handling shared with the other text embedding generators (internal). -->
+    <Compile Include="../Shared/ExtensionsAI/*.cs" Link="Shared/%(Filename)%(Extension)" />
+  </ItemGroup>
+
+</Project>
