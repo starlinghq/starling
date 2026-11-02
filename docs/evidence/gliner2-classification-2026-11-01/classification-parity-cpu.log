@@ -1,0 +1,27 @@
+sentiment-pos-1: [positive] top 1
+sentiment-neg-1: [negative] top 1
+sentiment-neu-1: [positive] top 0.796061
+sentiment-pos-2: [positive] top 1
+sentiment-neg-2: [negative] top 1
+sentiment-mixed: [negative] top 0.75961
+topic-sports: [sports] top 1
+topic-politics: [politics] top 1
+topic-technology: [technology] top 0.818259
+topic-business: [business] top 1
+topic-health: [health] top 1
+intent-billing: [billing question] top 1
+intent-technical: [technical problem] top 1
+intent-cancel: [cancel subscription] top 0.969405
+intent-feature: [feature request] top 1
+intent-feedback: [general feedback] top 1
+multi-topic-1: [sports, politics, business] top 0.999697
+multi-topic-2: [technology, business, health] top 0.999674
+multi-topic-3: [health] top 0.0769409
+multi-emotion-1: [anger] top 0.999964
+multi-emotion-2: [joy, surprise] top 0.866192
+multi-emotion-3: [fear, surprise] top 0.981997
+multi-threshold-high: [technology, health] top 0.999995
+language-two-labels: [english] top 1
+urgency-unicode: [urgent] top 1
+spam: [not spam] top 1
+cases 26, decisions exact 26, logits max relative 2.74E-005 (bound 1.0E-004), scores max abs 8.46E-006 (bound 2.0E-005)

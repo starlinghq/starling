@@ -100,7 +100,9 @@ behavior:
   unsupported:
     - relation extraction
     - structured (JSON) extraction
-    - text classification (named candidate; kickoff decision)
+    - >-
+      text classification (no CUDA evidence: Gliner2TextClassifier rejects CUDA sessions; experimental on the CPU
+      profile, issue #183)
     - inputs above 512 tokens (rejected, not truncated)
     - GLiNER2's plain output format (strings de-duplicated on lower-cased text)
     - per-label thresholds, dtype "str", regex validators, entity attributes

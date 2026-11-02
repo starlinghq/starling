@@ -256,7 +256,7 @@ One table per family, one column per profile. Rows are every capability any prof
 | aot | supported | experimental |
 | extensions_ai | unsupported | unsupported |
 | mlnet | unsupported | unsupported |
-| classification | unsupported | unsupported |
+| classification | experimental | unsupported |
 | concurrent_calls | supported | supported |
 | concurrent_calls_unserialized | unrecorded | unsupported |
 | count_gate_closed | experimental | experimental |

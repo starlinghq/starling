@@ -74,8 +74,8 @@ This is the contract of profile `gliner2-base-v1/onnx-fp32-cpu`. Its Stable labe
 | Task quality | WNUT-17 test, 300 sentences: exact micro F1 at least 0.352 and partial micro F1 at least 0.403 (budget); measured 0.3626 and 0.4134, equal to the PyTorch reference. |
 | Supported | Entity extraction with labels and threshold, the staged API, original-text offsets, batch, cancellation, concurrent calls, offline asset resolution and explicit download, Native AOT (CPU natives). |
 | Limits | At most 512 tokens, schema prefix included; longer texts throw `Gliner2InputTooLongException`, and nothing is truncated. Spans up to 8 words. The model files (838 MB) are acquired explicitly; inference never downloads. |
-| Outside the Stable contract | Label descriptions and the closed count gate: experimental (proposed capability cases, not yet accepted fixtures). CUDA is the separate profile `gliner2-base-v1/onnx-fp32-cuda`, with its own contract ([Stable contract: CUDA](#stable-contract-cuda)). Windows x64 CPU: experimental (CI builds, runs the weight-free tests and the clean-install drill without the model; no model run). macOS and ARM64: unsupported (no evidence). |
-| Unsupported | inputs over 512 tokens, unserialized concurrent calls on CUDA (wrong entities in 6 of 8 test runs), text truncation (`text.truncation`; longer text is rejected) and encoder-side truncation (`truncation`), the `max_len` word cap, `extract_long`, GLiNER2's plain de-duplicated output, mixed label sets in one batch, classification, relation extraction, structured (JSON) extraction, per-label thresholds, overlap policies, the character splitter, non-English text, TF32, fp16, quantized graphs, streaming, persistence, training, Microsoft.Extensions.AI, ML.NET (no adapter exists). |
+| Outside the Stable contract | Label descriptions and the closed count gate: experimental (proposed capability cases, not yet accepted fixtures). Single-task text classification (`Gliner2TextClassifier`): experimental on CPU ([Text classification](#text-classification-experimental-cpu-only)). CUDA is the separate profile `gliner2-base-v1/onnx-fp32-cuda`, with its own contract ([Stable contract: CUDA](#stable-contract-cuda)). Windows x64 CPU: experimental (CI builds, runs the weight-free tests and the clean-install drill without the model; no model run). macOS and ARM64: unsupported (no evidence). |
+| Unsupported | inputs over 512 tokens, unserialized concurrent calls on CUDA (wrong entities in 6 of 8 test runs), text truncation (`text.truncation`; longer text is rejected) and encoder-side truncation (`truncation`), the `max_len` word cap, `extract_long`, GLiNER2's plain de-duplicated output, mixed label sets in one batch, classification on CUDA or with several tasks, label descriptions or batches, relation extraction, structured (JSON) extraction, per-label thresholds, overlap policies, the character splitter, non-English text, TF32, fp16, quantized graphs, streaming, persistence, training, Microsoft.Extensions.AI, ML.NET (no adapter exists). |
 | Known issues | Most entity scores saturate to exactly 1.0 in fp32, so near-ties make the order sensitive to backend noise. Upstream span offsets index the normalized text: a span that includes the appended `.` ends one past the original text (seen at threshold 0.0); the package maps such spans onto the input. With default glibc settings, memory retained by the allocator trips the soak's growth rule (below). |
 
 ## Stable contract: CUDA
@@ -105,6 +105,26 @@ Evidence: [binding CUDA G4 and G5 round](https://github.com/starlinghq/starling/
 ## Execution scheduler (experimental, opt-in)
 
 `Gliner2ExtractorOptions.ExecutionScheduler` (a `TaskScheduler`, null by default) chooses where `ExtractAsync` executes. Null keeps it inline: on the calling thread, a completed task without micro-batching. `TaskScheduler.Default` offloads to the thread pool; an application's own scheduler (for example one thread per device) can serialize or place the work. With micro-batching on, only the preparation and queueing move to the scheduler; batches still run on the dispatcher thread. The synchronous methods ignore it, and the entities do not change. Status: experimental (capability `execution_scheduler`; weight-free tests).
+
+## Text classification (experimental, CPU only)
+
+`Gliner2TextClassifier` runs GLiNER2's classification head over an extractor's session: a task name and at least two labels in, a logit and a score per label out, as `GLiNER2.classify_text(text, {task: {"labels": labels, "multi_label": multi_label, "cls_threshold": threshold}})` computes them. Single-label tasks take the softmax over the labels and answer with the best one. Multi-label tasks take a sigmoid per label and answer with every label at or above the threshold, or with the best one alone when none reaches it.
+
+The locked graph has no classification head. It exposes the backbone's `last_hidden_state`, and `Gliner2ClassificationHead` applies the head to the `[L]` label markers. The head is read from the checkpoint's `model.safetensors` (834 MB; only the head's 4.7 MB is read, and those bytes are checked against `Gliner2ClassificationHead.HeadSha256`). `Gliner2ModelAssets.ClassificationLock` is the entity lock plus that file, which comes from the Hub repository at the pinned commit:
+
+```csharp
+using var store = new ModelAssetStore();
+var snapshot = await store.DownloadAsync(Gliner2ModelAssets.ClassificationLock);   // about 1.67 GB, once
+using var extractor = Gliner2EntityExtractor.Create(Gliner2ModelFiles.From(snapshot));
+var classifier = new Gliner2TextClassifier(
+    extractor, Gliner2ClassificationHead.FromSafetensors(snapshot.GetFilePath(Gliner2ModelAssets.ClassificationWeightsFile)));
+
+var result = classifier.Classify("The app crashes every time I upload a photo.", "intent",
+    ["billing question", "technical problem", "feature request"]);
+Console.WriteLine($"{result.Top.Label} {result.Top.Score:F3}");
+```
+
+Status: experimental (capability `classification`), Linux x64 CPU only. Evidence: 26 proposed cases run by the pinned GLiNER2 on CPU. Input ids, marker positions and decisions are exact, and logits and scores are within this profile's span-logit and score bounds ([evidence](https://github.com/starlinghq/starling/blob/main/docs/evidence/gliner2-classification-2026-11-01/README.md)). There is no task-quality set yet. A CUDA session is rejected (`classification.cuda`). Several tasks in one call, label descriptions and examples, temperature, batches and long-text chunking are not offered.
 
 ## Memory on Linux
 

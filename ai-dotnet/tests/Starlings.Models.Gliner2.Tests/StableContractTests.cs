@@ -55,7 +55,7 @@ public class StableContractTests
             ["input_over_512_tokens"] = ["input_over_512_tokens", "truncation", "text.truncation"],
             ["plain_deduplicated_output"] = ["plain_deduplicated_output"],
             ["mixed_label_sets_in_batch"] = ["batch.mixed_label_sets"],
-            ["classification"] = ["classification"],
+            ["classification"] = ["classification.cuda"],
             ["relation_extraction"] = ["relation_extraction"],
             ["structured_extraction"] = ["structured_extraction"],
         },

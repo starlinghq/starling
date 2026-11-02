@@ -22,7 +22,7 @@ namespace Starlings.Models.Gliner2;
 /// <b>Limits.</b> Texts above <see cref="Gliner2ExtractorOptions.MaxSequenceLength"/> tokens (default 512, schema
 /// prefix included) are rejected with <see cref="Gliner2InputTooLongException"/>; nothing is truncated. One call uses
 /// one label set: the graph's label projection depends on the whole label set, so a padded batch cannot mix label
-/// sets. Classification, relations, structured extraction and GLiNER2's plain (de-duplicated, string-only) output are
+/// sets. Classification is offered by <see cref="Gliner2TextClassifier"/> over this extractor (Experimental); relations, structured extraction and GLiNER2's plain (de-duplicated, string-only) output are
 /// not offered (<see cref="Gliner2Capabilities"/>).
 /// </para>
 /// <para>
@@ -63,10 +63,14 @@ public sealed class Gliner2EntityExtractor : IDisposable
     /// <summary>Graph output: span logits, float [batch, labels, words, max width].</summary>
     public const string SpanLogitsName = "span_logits";
 
+    /// <summary>Graph output: the backbone's last hidden state, float [batch, sequence, 768] (read for classification).</summary>
+    public const string LastHiddenStateName = "last_hidden_state";
+
     private readonly SemaphoreSlim? _runGate;
 
     private static readonly string[] InputNames = [InputIdsName, AttentionMaskName, WordIndexName, SchemaIndexName];
     private static readonly string[] OutputNames = [CountLogitsName, SpanLogitsName];
+    private static readonly string[] HiddenOutputNames = [LastHiddenStateName];
 
     private readonly OnnxModelSession _session;
     private readonly bool _ownsSession;
@@ -383,6 +387,65 @@ public sealed class Gliner2EntityExtractor : IDisposable
         }
 
         return Gliner2Decoder.ToResult(input, Gliner2Decoder.DecodeUpstream(input, output, t));
+    }
+
+    /// <summary>The preprocessor (shared with <see cref="Gliner2TextClassifier"/>).</summary>
+    internal Gliner2Preprocessor Preprocessor => _preprocessor;
+
+    /// <summary>Rejects an input above <see cref="Gliner2ExtractorOptions.MaxSequenceLength"/>.</summary>
+    internal void EnsureLength(Gliner2ModelInput input, int index) => CheckLength(input, index);
+
+    /// <summary>
+    /// Runs one prepared input and returns the graph's <c>last_hidden_state</c> rows at the label markers
+    /// (<see cref="Gliner2ModelInput.SchemaIndex"/> after <c>[P]</c>), row-major [labels, 768]. Only that output is
+    /// requested, so ONNX Runtime skips the entity heads. Follows the extractor's serialization of native calls.
+    /// </summary>
+    /// <exception cref="NotSupportedException">The graph does not expose <c>last_hidden_state</c>.</exception>
+    internal float[] RunLabelMarkers(Gliner2ModelInput input, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(input);
+        ObjectDisposedException.ThrowIf(Volatile.Read(ref _disposed) != 0, this);
+        if (!_session.Outputs.Any(o => o.Name == LastHiddenStateName && o.ElementType == "Float" && o.Dimensions.Count == 3))
+        {
+            throw new NotSupportedException($"Graph output '{LastHiddenStateName}' (float, rank 3) is missing; classification needs the locked route A graph.");
+        }
+
+        int sequence = input.TokenCount;
+        var ids = input.InputIds.ToArray();
+        var mask = new long[sequence];
+        mask.AsSpan().Fill(1);
+        var wordIndex = input.WordIndex.ToArray();
+        var schemaIndex = input.SchemaIndex.ToArray();
+        using var idsValue = OrtValue.CreateTensorValueFromMemory(ids, [1, sequence]);
+        using var maskValue = OrtValue.CreateTensorValueFromMemory(mask, [1, sequence]);
+        using var wordValue = OrtValue.CreateTensorValueFromMemory(wordIndex, [1, wordIndex.Length]);
+        using var schemaValue = OrtValue.CreateTensorValueFromMemory(schemaIndex, [1, schemaIndex.Length]);
+        cancellationToken.ThrowIfCancellationRequested();
+        _runGate?.Wait(cancellationToken);
+        try
+        {
+            using var results = _session.Run(InputNames, [idsValue, maskValue, wordValue, schemaValue], HiddenOutputNames, cancellationToken);
+            var shape = results[0].GetTensorTypeAndShape().Shape;
+            if (shape.Length != 3 || shape[0] != 1 || shape[1] != sequence)
+            {
+                throw new InvalidOperationException($"Unexpected graph output shape: {LastHiddenStateName} [{string.Join(", ", shape)}].");
+            }
+
+            int hidden = (int)shape[2];
+            var data = results[0].GetTensorDataAsSpan<float>();
+            int labels = schemaIndex.Length - 1;
+            var rows = new float[labels * hidden];
+            for (int m = 0; m < labels; m++)
+            {
+                data.Slice((int)schemaIndex[m + 1] * hidden, hidden).CopyTo(rows.AsSpan(m * hidden));
+            }
+
+            return rows;
+        }
+        finally
+        {
+            _runGate?.Release();
+        }
     }
 
     /// <summary>Disposes the session if this extractor owns it. Idempotent.</summary>

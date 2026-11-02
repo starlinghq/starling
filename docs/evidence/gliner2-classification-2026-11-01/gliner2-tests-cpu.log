@@ -1,0 +1,7 @@
+dotnet test --project ai-dotnet/tests/Starlings.Models.Gliner2.Tests (Linux x64, Intel i7-5820K, CPU provider, ORT 1.30.0; STARLING_GLINER2_SAFETENSORS set; 2026-11-01)
+Test run summary: Passed!
+  total: 112
+  failed: 0
+  succeeded: 112
+  skipped: 0
+  duration: 2m 25s 180ms

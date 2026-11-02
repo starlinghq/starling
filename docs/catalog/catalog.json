@@ -3362,7 +3362,7 @@
         "chat_template_thinking_switch": "unrecorded",
         "chunked_prefill": "unrecorded",
         "chunking": "unrecorded",
-        "classification": "unsupported",
+        "classification": "experimental",
         "compression_ratio_threshold": "unrecorded",
         "concurrent_calls": "supported",
         "concurrent_calls_unserialized": "unrecorded",

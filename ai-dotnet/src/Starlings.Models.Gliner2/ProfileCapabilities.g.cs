@@ -50,7 +50,7 @@ internal static class GeneratedProfileCapabilities
                     ["input_over_512_tokens"] = Status.Unsupported,
                     ["plain_deduplicated_output"] = Status.Unsupported,
                     ["mixed_label_sets_in_batch"] = Status.Unsupported,
-                    ["classification"] = Status.Unsupported,
+                    ["classification"] = Status.Experimental,
                     ["relation_extraction"] = Status.Unsupported,
                     ["structured_extraction"] = Status.Unsupported,
                 },
