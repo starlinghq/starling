@@ -1,0 +1,106 @@
+{
+  "fixture_format": "starlings.generation-fixture",
+  "fixture_format_version": 1,
+  "generated_by": "model-pipeline/reference/generation/make_generation_fixture.py",
+  "repository": {
+    "commit": "31bba314eff7d81e8d0db3f2d25f239b4926fc26",
+    "dirty": true
+  },
+  "prompts": {
+    "path": "model-pipeline/reference/generation/prompts-v1.jsonl",
+    "sha256": "7b236f0d013ce1057f075f7d2d941dde836618ba0f848d6a123e0f86c4b928d2"
+  },
+  "step0_top_k": 64,
+  "step0_full_vectors": {
+    "note": "float32 little-endian log-softmax over the full vocabulary, kept outside Git",
+    "sha256": {
+      "en-short": "b1afd3458833bb0d270e109658e63196b35258380e20e57823093048cfcf3894",
+      "en-list": "0da1fdc5a6e3be10d56f674bfb2c97a6d9ef3b6b81e1a51b68f8ca6ec0a88edd",
+      "en-math": "284d984e6fec9313269d53cf6b02e26f692dbebf54bff02fb0b1d28c8833dba6",
+      "system-pirate": "f7cc8db289515de3ed4ca17d9dac0e1ab30258df58197a5385213fa89a893e7d",
+      "multi-turn": "ae2a6555604b91089ae592ab0196182dc7339b55dcdfa5045f25f3c6ee80039e",
+      "zh": "a8fa2fad7bdd8b866c23b4775d65b61b9b59dc234d624cca9e796d1458e0f467",
+      "ja": "a1e9374e202d2f51898305ca92e1b624590da0efef450a0f4917a255e4f16fc5",
+      "ar": "2edf00b28ba7e5ddf257355177b38e9f68313075b93d9bc25bb1ca1a4f843e27",
+      "hi": "d6bc2784a7f3360213384ac15161e4b039567d5b903503189981496d46fb61e3",
+      "th": "6c5483987c99d194a79ff6c2889515f67e15c7842062760388639a2ea5a5d4ef",
+      "ru-de-mix": "68089d1a55bbbef3aaafe1a00a5fc7cdbed6cd10f8e9575bd80e78efd34dec61",
+      "emoji": "7125195375ff034b49f009a97dcbf97f6a6c8d13daef80b6814c17e9a11457c1",
+      "code-py": "08899ad65699ee5806b15b4e79ab24e876c66a0663f67aef6abd77095bf7ed60",
+      "code-cs": "fffd422a3ca35237a3b14cf5c67dc51a398052571b26a2dd0fd3cc80a56d0d3a",
+      "code-sql": "bc214ccfb352107b82e6880db874f10dea240f3ebb617f5d3139f26ed5430b74",
+      "special-imend": "4fa71a45e3e4d2278daa007d12c05af8fbdab4da51c28840f6b5e925ece5c5d3",
+      "special-endoftext": "b9c83d11df3061697dced964738f6bc7ecd18cfd2d5deac74d7c9cc714bee64e",
+      "special-think-tool": "a3ab151dddec0c1125fb3e5c27ee7aa24e9fb384dd7074bdb14ad2684f3f00e6",
+      "special-broken": "27f074e32af3c81e2fe834525d10af926e9d02df23d38a68f87990f2a9a8b0d2",
+      "thinking-on": "2dc448a8d151d6d18ed4179ee6d3f5b3a4b8dadf801debb5888521475a33d1b9",
+      "tools": "2e03be80394a2746440ce8a2a0eedd3e4ea50382657d13a813abcd0d096fc9b9",
+      "long-license": "6fda716eb3c124e7f8f8c6d77fb3f3dd09aa40d460f51130ece0ed81a1cc0e95"
+    }
+  },
+  "reference_run": {
+    "runner": "model-pipeline/reference/generation/run_genai_reference.py",
+    "graph_dir": "/home/mark/.cache/starling-int4-163/bundle/ortgenai-int4",
+    "graph": {
+      "genai_config.json": "e7e1957b2544fdad6170a9cc81cbbb1b88c8819b7016a609170ad7cbebba81ba",
+      "model.onnx": "a41f341f106a1bb5b50eb67ca824cd9c324705141d88b027de0888f140e39cf7",
+      "model.onnx.data": "709e08797497f609547f7aef1387cfb35bd0deb3f4039acf001f0680b23f9745"
+    },
+    "provider": "cpu",
+    "device_name": "x86_64",
+    "intra_op_num_threads": 6,
+    "prefill_chunk": 1024,
+    "config_overlays": [
+      {
+        "model": {
+          "decoder": {
+            "session_options": {
+              "intra_op_num_threads": 6
+            }
+          }
+        }
+      },
+      {
+        "model": {
+          "pad_token_id": 248319
+        }
+      }
+    ],
+    "search": {
+      "do_sample": false,
+      "max_length": "len(prompt_ids) + max_new_tokens"
+    },
+    "stop_ids": [
+      248044,
+      248046
+    ],
+    "python": "3.12.14",
+    "packages": {
+      "onnxruntime-genai": "0.17.1",
+      "onnxruntime": "1.30.0",
+      "numpy": "2.5.3"
+    },
+    "prompts_sha256": "7b236f0d013ce1057f075f7d2d941dde836618ba0f848d6a123e0f86c4b928d2",
+    "prompt_ids_from": "model-pipeline/protected/qwen3.5-0.8b/reference/generation.jsonl",
+    "prompt_ids_from_sha256": "c6900a8198d52af0122fc12b59318921e9abd596d2373dce725ff12f8a664025",
+    "annotation": {
+      "prompt_ids_checked_against_snapshot": true,
+      "output_text": "transformers tokenizer decode, skip_special_tokens=False",
+      "snapshot_files": {
+        "chat_template.jinja": "273d8e0e683b885071fb17e08d71e5f2a5ddfb5309756181681de4f5a1822d80",
+        "config.json": "b90b86f35c8e6925ef74ee04d0e758f0a845c83a42089ad82bbaa948de9b4204",
+        "merges.txt": "a9d356d7bdf1ef4949e3e748e95b8e10ad9d4e2e838eddc38a0a7b6b94d1db8d",
+        "model.safetensors.index.json": "d8a08838a613b025eb7952ed9db11696213e57e76a375661ef5c12f9dd5dcf4e",
+        "preprocessor_config.json": "27225450ac9c6529872ee1924fcb0962ff5634834f817040f444118116f4e516",
+        "tokenizer.json": "5f9e4d4901a92b997e463c1f46055088b6cca5ca61a6522d1b9f64c4bb81cb42",
+        "tokenizer_config.json": "49e2b6e395f959f077f1e992b338919c0d4a9732fc6e613995e06557f843500c",
+        "video_preprocessor_config.json": "7768af27c1fafa9cc9011c1dc20067e03f8915e03b63504550e11d5066986d13",
+        "vocab.json": "ce99b4cb2983d118806ce0a8b777a35b093e2000a503ebde25853284c9dfa003"
+      },
+      "packages": {
+        "transformers": "5.18.0",
+        "tokenizers": "0.23.2"
+      }
+    }
+  }
+}

@@ -8802,6 +8802,280 @@
       "scheduled_regression": false
     },
     {
+      "id": "qwen3.5-0.8b/ortgenai-int4-cpu",
+      "family": "qwen3.5-0.8b",
+      "profile": "ortgenai-int4-cpu",
+      "manifest": "model-pipeline/registry/qwen3.5-0.8b/ortgenai-int4-cpu/manifest.yaml",
+      "maturity": "experimental",
+      "tasks": [
+        "generation"
+      ],
+      "behavior": {
+        "max_input_tokens": 8192,
+        "truncation": "error",
+        "dimension": null,
+        "stop_token_ids": [
+          248046,
+          248044
+        ]
+      },
+      "qualified_providers": [],
+      "owner": "Mark",
+      "review_date": "2027-02-01",
+      "last_checked": "2026-11-01",
+      "known_issues": [
+        "Not hosted: users build the int4 graph from the pinned checkpoint with the bundle script (--variant int4) and open it with Qwen35ModelAssets.OpenDirectory.",
+        "Fidelity to the checkpoint is not claimed: against the transformers fp32 reference the int4 build agrees on 1 of 22 greedy sequences (M0). No task-quality floor exists yet.",
+        "The ONNX Runtime GenAI runtime version must equal the builder version that wrote the graph (0.17.1)."
+      ],
+      "execution": {
+        "runtime": "onnxruntime-genai",
+        "runtime_version": "0.17.1",
+        "binding": "Microsoft.ML.OnnxRuntimeGenAI",
+        "binding_version": "0.17.1",
+        "precision": "int4",
+        "variant": "quantized"
+      },
+      "gates": {
+        "G0": {
+          "status": "not-run"
+        },
+        "G1": {
+          "status": "not-run"
+        },
+        "G2": {
+          "status": "not-run"
+        },
+        "G3": {
+          "status": "not-run"
+        },
+        "G4": {
+          "status": "not-run"
+        },
+        "G5": {
+          "status": "not-run"
+        },
+        "G6": {
+          "status": "not-run"
+        },
+        "G7": {
+          "status": "not-run"
+        }
+      },
+      "capabilities": {
+        "batch": "unsupported",
+        "streaming": "experimental",
+        "cancellation": "experimental",
+        "persistence": "unsupported",
+        "training": "unsupported",
+        "aot": "untested",
+        "extensions_ai": "untested",
+        "mlnet": "unsupported",
+        "asset_acquisition": "unrecorded",
+        "asset_acquisition_download": "unrecorded",
+        "asset_verification_offline": "unrecorded",
+        "audio": "unrecorded",
+        "batch_sort_by_length": "unrecorded",
+        "batch_token_budget": "unrecorded",
+        "bf16": "unrecorded",
+        "built_in_profile": "unrecorded",
+        "bundle_lock_verification": "unrecorded",
+        "cache_storage": "unrecorded",
+        "calibrated_temperature": "unrecorded",
+        "calibration_fitting": "unrecorded",
+        "cancellation_inside_a_step": "unsupported",
+        "chat_template_owned_text": "experimental",
+        "chat_template_text": "unrecorded",
+        "chat_template_thinking_switch": "unrecorded",
+        "chunked_prefill": "experimental",
+        "chunking": "unrecorded",
+        "classification": "unrecorded",
+        "compression_ratio_threshold": "unrecorded",
+        "concurrent_calls": "unrecorded",
+        "concurrent_calls_unserialized": "unrecorded",
+        "concurrent_requests": "experimental",
+        "condition_on_previous_text": "unrecorded",
+        "conversation_state_reuse": "unsupported",
+        "count_gate_closed": "unrecorded",
+        "date_facts": "unrecorded",
+        "decision_choice": "unrecorded",
+        "decision_noul": "unrecorded",
+        "decision_score": "unrecorded",
+        "delimiter_escaping": "unrecorded",
+        "embedding_pretokenized": "unrecorded",
+        "embedding_text": "unrecorded",
+        "enable_thinking": "experimental",
+        "entity_extraction": "unrecorded",
+        "fp16": "unrecorded",
+        "generation": "unrecorded",
+        "generation_cuda": "unrecorded",
+        "generation_fp16": "unrecorded",
+        "generation_greedy": "unrecorded",
+        "gpu": "unrecorded",
+        "greedy_generation": "experimental",
+        "guided_decoding": "unrecorded",
+        "http_server": "unrecorded",
+        "image": "unrecorded",
+        "image_16_bit": "unrecorded",
+        "image_alpha_compositing": "unrecorded",
+        "image_batch": "unrecorded",
+        "image_budget_280": "unrecorded",
+        "image_budget_other": "unrecorded",
+        "image_decode_gif_bmp_webp": "unrecorded",
+        "image_decode_gif_transparency": "unrecorded",
+        "image_decode_png_jpeg": "unrecorded",
+        "image_exif_orientation_opt_in": "unrecorded",
+        "image_interleaved_text": "unrecorded",
+        "image_matryoshka": "unrecorded",
+        "image_multiple_per_input": "unrecorded",
+        "image_over_default_pixel_limit_with_option": "unrecorded",
+        "image_prompts": "unrecorded",
+        "input_2050_to_8192_tokens": "unrecorded",
+        "input_over_512_tokens": "unrecorded",
+        "input_over_8192_tokens": "unrecorded",
+        "input_up_to_2049_tokens": "unrecorded",
+        "kv_cache": "unrecorded",
+        "label_descriptions": "unrecorded",
+        "language_detection": "unrecorded",
+        "logprob_threshold": "unrecorded",
+        "logprobs": "unrecorded",
+        "long_context": "unrecorded",
+        "long_context_1667_to_8192_tokens": "untested",
+        "long_context_over_8192_tokens": "unsupported",
+        "matryoshka": "unrecorded",
+        "max_new_tokens": "experimental",
+        "mixed_label_sets_in_batch": "unrecorded",
+        "multithreaded_cross_origin_isolated": "unrecorded",
+        "no_speech_detection": "unrecorded",
+        "non_english": "unrecorded",
+        "offsets_original_text": "unrecorded",
+        "option_isolation": "unrecorded",
+        "plain_deduplicated_output": "unrecorded",
+        "prefill_chunking": "unrecorded",
+        "prefix_reuse": "unrecorded",
+        "probability_rounding": "unrecorded",
+        "prompts_query_document": "unrecorded",
+        "prompts_task": "unrecorded",
+        "proxy_worker": "unrecorded",
+        "quantized": "experimental",
+        "query_instruction": "unrecorded",
+        "question_isolation": "unrecorded",
+        "raw_probabilities": "unrecorded",
+        "reasoning_parsing": "unrecorded",
+        "reasoning_split": "unsupported",
+        "relation_extraction": "unrecorded",
+        "request_isolation": "unrecorded",
+        "sampling": "unrecorded",
+        "sampling_seeded": "experimental",
+        "single_thread_without_isolation": "unrecorded",
+        "state_cache_within_request": "unrecorded",
+        "state_json_rendering": "unrecorded",
+        "state_over_8192_tokens": "unrecorded",
+        "state_prefix_reuse_across_requests": "unrecorded",
+        "step0_logits": "experimental",
+        "stop_sequences": "experimental",
+        "stop_tokens": "experimental",
+        "structured_extraction": "unrecorded",
+        "structured_output": "unsupported",
+        "temperature_fallback": "unrecorded",
+        "text": "unrecorded",
+        "text_only_inputs": "unrecorded",
+        "tf32": "unrecorded",
+        "timestamps": "unrecorded",
+        "tokenizer_owned": "experimental",
+        "tool_calling": "untested",
+        "transcription": "unrecorded",
+        "transcription_cuda": "unrecorded",
+        "translation": "unrecorded",
+        "usage": "experimental",
+        "usage_output_tokens": "unrecorded",
+        "video": "unrecorded",
+        "video_audio_track": "unrecorded",
+        "video_batch": "unrecorded",
+        "video_decode_ffmpeg8": "unrecorded",
+        "video_decode_ffmpeg9": "unrecorded",
+        "video_decode_rotation_90": "unrecorded",
+        "video_decode_rotation_other": "unrecorded",
+        "video_decode_streams": "unrecorded",
+        "video_decoded_frames_with_timing": "unrecorded",
+        "video_frames_without_timing": "unrecorded",
+        "video_frames_without_timing_opt_in": "unrecorded",
+        "video_hdr": "unrecorded",
+        "video_interlaced": "unrecorded",
+        "video_interleaved_image": "unrecorded",
+        "video_interleaved_text": "unrecorded",
+        "video_matryoshka": "unrecorded",
+        "video_multiple_per_input": "unrecorded",
+        "video_pre_sampled_frames": "unrecorded",
+        "video_prompts": "unrecorded",
+        "video_timestamps": "unrecorded",
+        "video_variable_frame_rate": "unrecorded",
+        "vision": "unsupported",
+        "wasm_aot": "unrecorded",
+        "wasm_interpreter": "unrecorded",
+        "word_timestamps": "unrecorded"
+      },
+      "compatibility": {
+        "linux-x64 cpu": {
+          "status": "experimental",
+          "verified": "2026-11-01"
+        },
+        "linux-x64 cuda": {
+          "status": "unsupported"
+        },
+        "linux-x64 wasm chromium-153": {
+          "status": "unrecorded"
+        },
+        "linux-x64 wasm firefox": {
+          "status": "unrecorded"
+        },
+        "linux-x64 webgpu chromium-153": {
+          "status": "unrecorded"
+        },
+        "linux-x64 webgpu firefox": {
+          "status": "unrecorded"
+        },
+        "macos-arm64 wasm safari": {
+          "status": "unrecorded"
+        },
+        "macos-arm64 webgpu safari": {
+          "status": "unrecorded"
+        },
+        "windows-x64 cpu": {
+          "status": "untested"
+        },
+        "windows-x64 cuda": {
+          "status": "unrecorded"
+        },
+        "windows-x64 wasm chromium": {
+          "status": "unrecorded"
+        },
+        "windows-x64 webgpu chromium": {
+          "status": "unrecorded"
+        }
+      },
+      "stable_readiness": {
+        "ready": false,
+        "gates_not_passed": [
+          "G0",
+          "G1",
+          "G2",
+          "G3",
+          "G4",
+          "G5",
+          "G6",
+          "G7"
+        ],
+        "untested_capabilities": [
+          "aot",
+          "extensions_ai",
+          "long_context_1667_to_8192_tokens",
+          "tool_calling"
+        ]
+      },
+      "scheduled_regression": true
+    },
+    {
       "id": "whisper-large-v3-turbo/onnx-fp16-cpu",
       "family": "whisper-large-v3-turbo",
       "profile": "onnx-fp16-cpu",

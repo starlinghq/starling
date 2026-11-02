@@ -17,6 +17,7 @@ Maturity is per profile, generated from the registry manifests by `model-pipelin
 | `qwen3.5-0.8b/ortgenai-fp16x-cuda` | stable | linux-x64 cuda: supported; windows-x64 cuda: untested |
 | `qwen3.5-0.8b/ortgenai-fp32x-cpu` | stable | linux-x64 cpu: supported; windows-x64 cpu: untested |
 | `qwen3.5-0.8b/ortgenai-fp32x-cuda` | stable | linux-x64 cuda: supported; windows-x64 cuda: untested |
+| `qwen3.5-0.8b/ortgenai-int4-cpu` | experimental | linux-x64 cpu: experimental; linux-x64 cuda: unsupported; windows-x64 cpu: untested |
 <!-- /catalog:maturity -->
 
 ## Install
@@ -86,6 +87,13 @@ result = model.Generate(conversation, options);                        // the an
 | --- | --- | --- |
 | `qwen3.5-0.8b/ortgenai-fp32x` | fp32 graph on CPU (`ortgenai-fp32x-cpu`); the same graph on CUDA with TF32 off (`ortgenai-fp32x-cuda`) | CPU: stable (since 2026-10-16); CUDA: stable on an RTX 3090 (since 2026-10-16) |
 | `qwen3.5-0.8b/ortgenai-fp16x` | fp16 graph on CUDA (`ortgenai-fp16x-cuda`) | stable on an RTX 3090 (since 2026-10-16), under its protected near-tie rule (greedy ids may diverge from the fp32 reference where the reference margin is below 0.05) |
+| `qwen3.5-0.8b/ortgenai-int4` | int4 graph on CPU (`ortgenai-int4-cpu`; `Qwen35Variant.Int4`) | experimental, CPU only, local build only (below) |
+
+### int4 on CPU (experimental, local build)
+
+`Qwen35Variant.Int4` is the ONNX Runtime GenAI builder's int4 CPU recipe (`-p int4 -e cpu`: round-to-nearest, block 32, accuracy level 4) applied to the same float32-overlay snapshot as fp32x. It is about a sixth of the fp32x weights (541,523,968 bytes against 3,077,177,344). It is **not hosted**: `Qwen35ModelAssets.DownloadAsync(Qwen35Variant.Int4)` throws `NotSupportedException`. Build it into the snapshot layout with `model-pipeline/reference/generation/build_ortgenai_bundle.py --variant int4` and open it with `Qwen35ModelAssets.OpenDirectory(dir, Qwen35Variant.Int4)`; the lock's digests must match. CUDA is rejected at load.
+
+What is claimed: the .NET runtime produces the same greedy tokens as the upstream Python binding running the same int4 graph (proposed fixture `model-pipeline/proposed/qwen3.5-0.8b/ortgenai-int4-cpu`, evidence in `docs/evidence/qwen35-int4-cpu-2026-11-01/README.md`). What is not claimed: fidelity to the checkpoint. Against the transformers fp32 reference the int4 graph matches 1 of 22 greedy sequences, so its answers differ from fp32x's. No maintainer tolerance or task-quality floor exists for int4 yet. Capability `quantized.int4.cpu` is experimental; `quantized` (the Stable profiles) stays unsupported.
 
 ## Semantics
 
@@ -125,7 +133,7 @@ This is the contract of profile `qwen3.5-0.8b/ortgenai-fp32x-cpu` (fp32x on Linu
 | Performance | G5: decode tokens per second at least 0.95 of the Python ONNX Runtime GenAI run on the same bundle, and time to first token at most 1.10 of it. The qualifying run measured 1.045 [0.823, 1.274] on `short-decode64`. The first run failed (1.119) under host load (see the qualification evidence). |
 | Supported | Greedy generation; the owned template for text conversations and the owned tokenizer; stop tokens and stop sequences; max new tokens; streaming; cancellation between decode steps; chunked prefill; usage; concurrent requests; seeded sampling; step-0 logits; explicit acquisition and anonymous download; Native AOT; `Starlings.Models.Qwen35.Extensions.AI` (`IChatClient`: chat, streaming, cancellation, usage, seeded sampling, concurrency, middleware, dependency injection). |
 | Outside the Stable contract | Experimental: **tool calling** (the template's tools block, tool calls and tool messages match upstream on the 41 tool cases of the proposed P-029 corpus; the parser, the streaming parser and the `IChatClient` function-invocation loop are tested with scripted sequences and once on the real model; a 0.8B model's tool choice is not qualified). Also experimental: `enable_thinking` (one accepted prompt; the P-029 rows are proposed) and prompts of 1,667 to 8,192 tokens (a proposed fixture, within the protected bounds), and the opt-in per-token log probabilities (`ReturnLogprobs`; scripted sequences and one real-model test on CPU). Also experimental and opt-in: guided decoding (`Guidance`, `Qwen35ToolGrammar`; capabilities `guidance.json_schema`, `guidance.lark`, `guidance.regex`) from a model directory with `tokenizer.json` and `tokenizer_config.json` added (scripted sequences, and one CPU run per constraint). The published bundle has neither file, so on it required tool choice and structured output stay unsupported (below). CUDA (`ortgenai-fp32x-cuda`, `ortgenai-fp16x-cuda`): their own contract ([Stable contract: CUDA](#stable-contract-cuda)). Windows x64, Linux ARM64 and macOS: untested. |
-| Unsupported | sequences over 8,192 tokens, cancellation inside a decode step or prefill chunk, batching several prompts, conversation state reuse, required or specific tool choice (`ToolMode` `RequireAny`/`RequireSpecific`), reasoning extraction in this package, structured output, images and video, beam search and repetition penalties, MTP and speculative decoding, quantized variants, fp16 on CPU, persistence, training, ML.NET. |
+| Unsupported | sequences over 8,192 tokens, cancellation inside a decode step or prefill chunk, batching several prompts, conversation state reuse, required or specific tool choice (`ToolMode` `RequireAny`/`RequireSpecific`), reasoning extraction in this package, structured output, images and video, beam search and repetition penalties, MTP and speculative decoding, quantized variants (int4 on CPU is a separate experimental profile, [above](#int4-on-cpu-experimental-local-build)), fp16 on CPU, persistence, training, ML.NET. |
 | Known issues | The ONNX Runtime GenAI C# API is labeled preview upstream; `Starlings.Generation.OnnxGenAI` isolates it. The runtime version must equal the builder version that wrote the graph (0.17.1). C# and Python load different ONNX Runtime 1.30.0 native builds (NuGet against pip); G5 compares the shipped products. |
 
 ## Stable contract: CUDA

@@ -35,6 +35,7 @@ Maturity is per profile, generated from the registry manifests by `model-pipelin
 | `qwen3.5-0.8b/ortgenai-fp16x-cuda` | stable | linux-x64 cuda: supported; windows-x64 cuda: untested |
 | `qwen3.5-0.8b/ortgenai-fp32x-cpu` | stable | linux-x64 cpu: supported; windows-x64 cpu: untested |
 | `qwen3.5-0.8b/ortgenai-fp32x-cuda` | stable | linux-x64 cuda: supported; windows-x64 cuda: untested |
+| `qwen3.5-0.8b/ortgenai-int4-cpu` | experimental | linux-x64 cpu: experimental; linux-x64 cuda: unsupported; windows-x64 cpu: untested |
 <!-- /catalog:maturity -->
 
 The template renderer and the tool-call parser are part of every profile above; their statuses are in the runtime package's README and `Qwen35Capabilities`.

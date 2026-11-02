@@ -1,7 +1,7 @@
 // Pilot LLM fidelity runner (P-016). Applies no thresholds; writes nothing under model-pipeline/protected/.
 //
 //   dotnet run --project ai-dotnet/tools/Starlings.Qwen35.Fidelity -c Release -- \
-//     --bundle <snapshot dir> --variant fp32x|fp16x --device cpu|cuda \
+//     --bundle <snapshot dir> --variant fp32x|fp16x|int4 --device cpu|cuda \
 //     --prompts model-pipeline/reference/generation/prompts-v1.jsonl --reference <dir> --out <dir> [--modes parity,semantics] [--threads N]
 //
 // --reference is a directory holding results.jsonl from run_reference.py or generation.jsonl (the proposed fixture).
@@ -53,7 +53,7 @@ int ToolBody()
     var opt = Options.Parse(args);
     if (opt is null)
     {
-        Console.Error.WriteLine("usage: --bundle <dir> --variant fp32x|fp16x --device cpu|cuda --prompts <jsonl> --reference <dir> --out <dir> [--modes parity,semantics] [--threads N]");
+        Console.Error.WriteLine("usage: --bundle <dir> --variant fp32x|fp16x|int4 --device cpu|cuda --prompts <jsonl> --reference <dir> --out <dir> [--modes parity,semantics] [--threads N]");
         return 2;
     }
 
@@ -909,7 +909,12 @@ internal sealed record Options(string Bundle, Qwen35Variant Variant, string Devi
             return null;
         }
 
-        var variant = Get("--variant", "fp32x") == "fp16x" ? Qwen35Variant.Fp16x : Qwen35Variant.Fp32x;
+        var variant = Get("--variant", "fp32x") switch
+        {
+            "fp16x" => Qwen35Variant.Fp16x,
+            "int4" => Qwen35Variant.Int4,
+            _ => Qwen35Variant.Fp32x,
+        };
         return new Options(bundle, variant, Get("--device", "cpu")!, prompts, reference, output,
             [.. Get("--modes", "parity,semantics")!.Split(',')], int.Parse(Get("--threads", "0")!, CultureInfo.InvariantCulture),
             Get("--prefill-chunk") is string pc ? int.Parse(pc, CultureInfo.InvariantCulture) : null,

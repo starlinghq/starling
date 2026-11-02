@@ -49,6 +49,14 @@ public static class Qwen35Capabilities
         ["chat.greedy.fp32x.cpu"] = Qwen35CapabilityStatus.Supported,
         ["chat.greedy.fp32x.cuda"] = Qwen35CapabilityStatus.Supported,
         ["chat.greedy.fp16x.cuda"] = Qwen35CapabilityStatus.Supported,
+        // int4 on CPU (profile qwen3.5-0.8b/ortgenai-int4-cpu, Experimental, local build only, issue #163): compared with
+        // the same graph through the upstream Python binding on the 22 development prompts (proposed fixture
+        // model-pipeline/proposed/qwen3.5-0.8b/ortgenai-int4-cpu, no maintainer tolerances yet). It is not close to the
+        // fp32 reference (M0: 1 of 22 sequences). "quantized" below stays the status on the Stable profiles.
+        ["chat.greedy.int4.cpu"] = Qwen35CapabilityStatus.Experimental,
+        ["quantized.int4.cpu"] = Qwen35CapabilityStatus.Experimental,
+        ["int4.cuda"] = Qwen35CapabilityStatus.Unsupported,
+        ["asset_acquisition.download.int4"] = Qwen35CapabilityStatus.Unsupported,
         ["template.owned_renderer.text"] = Qwen35CapabilityStatus.Supported,
         ["template.enable_thinking"] = Qwen35CapabilityStatus.Experimental,
         ["tokenizer.owned"] = Qwen35CapabilityStatus.Supported,

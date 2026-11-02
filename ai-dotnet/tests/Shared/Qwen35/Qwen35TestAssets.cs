@@ -80,6 +80,21 @@ internal static class Qwen35TestAssets
 
     public static IReadOnlyList<GenerationCase> LoadLongContextCases() => ReadJsonLines(LongContextFixturePath).Select(GenerationCase.Parse).ToList();
 
+    /// <summary>
+    /// The int4 CPU reference fixture (prompts-v1 through the upstream Python binding on the same int4 graph, same
+    /// format): the protected copy once accepted, else the proposal under model-pipeline/proposed/.
+    /// </summary>
+    public static string Int4FixturePath
+    {
+        get
+        {
+            string accepted = Path.Combine(RepositoryRoot, "model-pipeline", "protected", "qwen3.5-0.8b", "ortgenai-int4-cpu", "generation.jsonl");
+            return File.Exists(accepted) ? accepted : Path.Combine(RepositoryRoot, "model-pipeline", "proposed", "qwen3.5-0.8b", "ortgenai-int4-cpu", "generation.jsonl");
+        }
+    }
+
+    public static IReadOnlyList<GenerationCase> LoadInt4Cases() => ReadJsonLines(Int4FixturePath).Select(GenerationCase.Parse).ToList();
+
     /// <summary>The binding tolerances of a profile (read only).</summary>
     public static Qwen35Tolerances Tolerances(string profile) =>
         Qwen35Tolerances.Load(Path.Combine(RepositoryRoot, "model-pipeline", "protected", "qwen3.5-0.8b", profile, "tolerances.yaml"));

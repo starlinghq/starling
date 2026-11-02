@@ -54,6 +54,9 @@ FLOAT32_CONFIG_SHA256 = "295154cd6039372b0b16a30336b11deea6591320bf21ee4dc053a30
 VARIANTS = {
     "fp32x": {"precision": "fp32", "ep": "cpu"},
     "fp16x": {"precision": "fp16", "ep": "cuda"},
+    # M0's "int4x, -e cpu" build: RTN, block 32, accuracy level 4 (the builder's defaults for -p int4 -e cpu), for the
+    # Experimental CPU-only profile qwen3.5-0.8b/ortgenai-int4-cpu (issue #163).
+    "int4": {"precision": "int4", "ep": "cpu"},
 }
 
 # Pinned outputs (bundle-relative path -> (sha256, size)), equal to the M0 builds (docs/m0/generation-backend-check.md).
@@ -72,6 +75,17 @@ EXPECTED = {
         "ortgenai-fp16x/model.onnx.data": (
             "47f6ee15d95080acc66f7c4acdf4012c83b20063cf0cfeb59a6b7ae09950a3b2",
             1572143104,
+        ),
+    },
+    # model.onnx.data is byte-identical to M0's "int4x, -e cpu" build (docs/m0/generation-backend-check.md section 2).
+    # model.onnx (the graph without weights) reproduces across builds in this environment but differs from the M0
+    # digest 766e49f3...; docs/evidence/qwen35-int4-cpu-2026-11-01/README.md. genai_config.json equals fp32x's.
+    "int4": {
+        "ortgenai-int4/genai_config.json": ("e7e1957b2544fdad6170a9cc81cbbb1b88c8819b7016a609170ad7cbebba81ba", 1935),
+        "ortgenai-int4/model.onnx": ("a41f341f106a1bb5b50eb67ca824cd9c324705141d88b027de0888f140e39cf7", 364388),
+        "ortgenai-int4/model.onnx.data": (
+            "709e08797497f609547f7aef1387cfb35bd0deb3f4039acf001f0680b23f9745",
+            541523968,
         ),
     },
 }
