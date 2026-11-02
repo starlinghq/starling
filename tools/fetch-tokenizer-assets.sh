@@ -37,6 +37,7 @@ assets=(
     "Qwen/Qwen3-0.6B|c1899de289a04d12100db370d81485cdf75e47ca|tokenizer.json|aeb13307a71acd8fe81861d94ad54ab689df773318809eed3cbe794b4492dae4"
     "Qwen/Qwen2.5-0.5B-Instruct|7ae557604adf67be50417f59c2c2f167def9a775|tokenizer.json|c0382117ea329cdf097041132f6d735924b697924d6f6fc3945713e96ce87539"
     "Diffuspace/Clover-35B-A3B-Preview|4b0402b65e523d0183a14c431955438714cb16ff|tokenizer.json|7c62ba7d8bb13291c94459896cd27537858beb58a88a037b09a150e213420988"
+    "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2|e8f8c211226b894fcb81acc59f3b34ba3efd5f42|tokenizer.json|2c3387be76557bd40970cec13153b3bbf80407865484b209e655e5e4729076b8"
 )
 
 # target repo|commit|path|sha256 <- source repo|commit|path (the source must be in assets above)

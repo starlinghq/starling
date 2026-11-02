@@ -120,6 +120,29 @@ def test_scaffold_refuses_a_candidate_that_contradicts_the_table(tmp_path):
         scaffold.scaffold(root, NEW)
 
 
+def test_scaffold_states_segment_ids_the_tokenizer_profile_does_not_imply(tmp_path):
+    root = _copy_repo(tmp_path)
+    _new_candidate(
+        root,
+        tokenizer_profile="xlmr-unigram",
+        vocabulary_size=250002,
+        pad_token_id=1,
+        output_name="last_hidden_state",
+    )
+    assert scaffold.derive_contract(_profile_at(root))["token_type_ids"] is False
+    scaffold.scaffold(root, NEW, write=True, token_type_ids=True)
+    entry = bert.load_contracts(root / scaffold.CONTRACTS)[NEW_REPO]
+    assert (entry["cls_token_id"], entry["sep_token_id"], entry["token_type_ids"]) == (0, 2, True)
+    # An existing entry's value stands when none is stated; a stated value that contradicts it is refused.
+    assert [piece["action"] for piece in scaffold.scaffold(root, NEW)["files"]][:5] == ["unchanged"] * 5
+    with pytest.raises(PipelineError, match="token_type_ids"):
+        scaffold.scaffold(root, NEW, token_type_ids=False)
+
+
+def _profile_at(root: Path) -> dict:
+    return json.loads((root / f"model-pipeline/candidates/{NEW}/profile.json").read_text(encoding="utf-8"))
+
+
 def test_scaffold_refuses_other_routes_and_paths(tmp_path):
     root = _copy_repo(tmp_path)
     _new_candidate(root, architecture="qwen3")

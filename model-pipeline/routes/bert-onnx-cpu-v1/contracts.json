@@ -124,6 +124,23 @@
         "none": ""
       },
       "score_activation_source": "explicit"
+    },
+    "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2": {
+      "task": "embeddings",
+      "max_tokens": 128,
+      "pooling": "mean",
+      "hidden_size": 384,
+      "normalize": "none",
+      "vocabulary_size": 250002,
+      "cls_token_id": 0,
+      "sep_token_id": 2,
+      "pad_token_id": 1,
+      "output_name": "last_hidden_state",
+      "tokenizer_profile": "xlmr-unigram",
+      "token_type_ids": true,
+      "prompts": {
+        "none": ""
+      }
     }
   }
 }

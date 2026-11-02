@@ -23,6 +23,7 @@ Paths are repository-relative. Absolute paths, backslashes, `.` or `..` segments
 | `bge-base-cpu.yaml` | `bert-onnx-cpu-v1` | `candidates/bge-base/profile.json` | `corpora/five-models/embeddings.jsonl` | `reference/encoder/requirements.txt` |
 | `ms-marco-cpu.yaml` | `bert-onnx-cpu-v1` | `candidates/ms-marco/profile.json` | `corpora/five-models/reranking.jsonl` | `reference/encoder/requirements.txt` |
 | `nomic-embed-cpu.yaml` | `bert-onnx-cpu-v1` | `candidates/nomic-embed/profile.json` | `corpora/five-models/embeddings.jsonl` | `reference/encoder/requirements.txt` |
+| `paraphrase-multilingual-cpu.yaml` | `bert-onnx-cpu-v1` | `candidates/paraphrase-multilingual/profile.json` | `corpora/five-models/embeddings.jsonl` | `reference/encoder/requirements.txt` |
 | `qwen3-cpu.yaml` | `qwen-genai-cpu-v1` | `candidates/qwen3/profile.json` | `corpora/five-models/chat.jsonl` | `reference/generation/requirements.txt` |
 | `qwen25-cpu.yaml` | `qwen-genai-cpu-v1` | `candidates/qwen25/profile.json` | `corpora/five-models/chat.jsonl` | `reference/generation/requirements.txt` |
 | `kev-0.8b-cpu.yaml` | `kev-onnx-cpu-v1` | `candidates/kev-0.8b/profile.json` | `reference/corpus/kev-decisions-v1.jsonl` | `reference/kev/requirements.txt` |

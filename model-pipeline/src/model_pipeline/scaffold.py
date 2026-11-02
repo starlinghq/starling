@@ -57,8 +57,12 @@ def _candidate_path(root: Path, candidate: str) -> tuple[str, Path]:
     return name, resolved
 
 
-def derive_contract(candidate: dict) -> dict[str, Any]:
-    """The route contract table entry a BERT candidate implies (tokenizer-profile defaults for ids not in it)."""
+def derive_contract(candidate: dict, *, token_type_ids: bool | None = None) -> dict[str, Any]:
+    """The route contract table entry a BERT candidate implies (tokenizer-profile defaults for ids not in it).
+
+    The candidate does not record whether the graph takes a segment-id input: ``token_type_ids`` states it, and
+    ``None`` takes the tokenizer profile's default (a BERT encoder can pair an XLM-R tokenizer with segment ids).
+    """
     behavior = candidate["behavior"]
     if behavior.get("architecture") != "bert":
         raise PipelineError("scaffold supports the bert-onnx-cpu-v1 route only (behavior.architecture must be bert)")
@@ -77,7 +81,7 @@ def derive_contract(candidate: dict) -> dict[str, Any]:
         "pad_token_id": behavior["pad_token_id"],
         "output_name": behavior["output_name"],
         "tokenizer_profile": profile,
-        "token_type_ids": TOKENIZER_DEFAULTS[profile]["token_type_ids"],
+        "token_type_ids": TOKENIZER_DEFAULTS[profile]["token_type_ids"] if token_type_ids is None else token_type_ids,
         "prompts": behavior["prompts"],
     }
 
@@ -166,16 +170,29 @@ def _insert_line(text: str, line: str, *, before: str | None = None, after_block
     return "\n".join(lines)
 
 
-def scaffold(root: Path, candidate_name: str, *, corpus: str | None = None, write: bool = False) -> dict[str, Any]:
-    """Describe (and with ``write``, apply) every generated input of one BERT-route candidate."""
+def scaffold(
+    root: Path,
+    candidate_name: str,
+    *,
+    corpus: str | None = None,
+    write: bool = False,
+    token_type_ids: bool | None = None,
+) -> dict[str, Any]:
+    """Describe (and with ``write``, apply) every generated input of one BERT-route candidate.
+
+    ``token_type_ids`` states whether the graph takes segment ids; ``None`` keeps an existing table entry's value
+    (the candidate cannot contradict it) or, for a new entry, takes the tokenizer profile's default.
+    """
     root = root.resolve()
     name, path = _candidate_path(root, candidate_name)
     candidate = load_candidate(path)
-    contract = derive_contract(candidate)
     repo = candidate["origin"]["repo"]
     contracts_path = root / CONTRACTS
     document = json.loads(contracts_path.read_text(encoding="utf-8"))
     existing = document["contracts"].get(repo)
+    if token_type_ids is None and existing is not None and type(existing.get("token_type_ids")) is bool:
+        token_type_ids = existing["token_type_ids"]
+    contract = derive_contract(candidate, token_type_ids=token_type_ids)
     if existing is not None:
         differing = sorted(key for key, value in contract.items() if existing.get(key) != value)
         if differing:

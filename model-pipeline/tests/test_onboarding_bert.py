@@ -289,6 +289,46 @@ def test_xlmr_reranker_refuses_embeddings_task():
         bert.validate_candidate_behavior(contract)
 
 
+MULTILINGUAL_MINILM = "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
+
+
+def test_multilingual_minilm_pairs_xlmr_tokenization_with_segment_ids():
+    contract = candidate(MULTILINGUAL_MINILM)
+    bert.validate_candidate_behavior(contract)
+    spec = bert.CONTRACTS[MULTILINGUAL_MINILM]
+    assert (spec["task"], spec["max_tokens"], spec["pooling"], spec["normalize"]) == ("embeddings", 128, "mean", "none")
+    assert (spec["tokenizer_profile"], spec["token_type_ids"], spec["output_name"]) == (
+        "xlmr-unigram",
+        True,
+        "last_hidden_state",
+    )
+    assert (spec["vocabulary_size"], spec["cls_token_id"], spec["sep_token_id"], spec["pad_token_id"]) == (
+        250002,
+        0,
+        2,
+        1,
+    )
+
+
+@pytest.mark.parametrize(
+    "key,value",
+    [
+        ("pooling", "cls"),
+        ("normalize", "l2"),
+        ("max_tokens", 512),
+        ("pad_token_id", 0),
+        # config.json declares 250037 embedding rows; the tokenizer's ids stop at 250001.
+        ("vocabulary_size", 250037),
+        ("tokenizer_profile", "bert-wordpiece-uncased"),
+    ],
+)
+def test_multilingual_minilm_near_misses_are_refused(key, value):
+    contract = candidate(MULTILINGUAL_MINILM)
+    contract["behavior"][key] = value
+    with pytest.raises(PipelineError, match="unsupported BERT behavior"):
+        bert.validate_candidate_behavior(contract)
+
+
 def test_policies_cannot_be_raised_after_reference_execution():
     contract = candidate()
     contract["evaluation"]["policy"]["embedding_max_abs"] = 0.1

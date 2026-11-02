@@ -48,6 +48,7 @@ int Run()
         ["minilm"] = ("all-minilm-l6-v2/onnx-fp32-cpu", BertTask.Embeddings, 2),
         ["ms-marco"] = ("ms-marco-minilm-l6-v2/onnx-fp32-cpu", BertTask.Reranking, 2),
         ["nomic-embed"] = ("nomic-embed-text-v1.5/onnx-fp32-cpu", BertTask.Embeddings, 2),
+        ["paraphrase-multilingual"] = ("paraphrase-multilingual-minilm-l12-v2/onnx-fp32-cpu", BertTask.Embeddings, 2),
     };
     Check(BertModelProfile.BuiltInIds.SequenceEqual(expected.Keys.Order(StringComparer.Ordinal)),
         $"BuiltInIds: {string.Join(", ", BertModelProfile.BuiltInIds)}");
