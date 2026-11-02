@@ -85,9 +85,11 @@ public static class KevCapabilities
         ["load_check"] = KevCapabilityStatus.Experimental,
         ["load_check.cuda"] = KevCapabilityStatus.Untested,
         // KevState: one state pass reused by later Decide calls, on the bundles as qualified (no new graph). Every request
-        // golden bit-identical to Decide, also from four concurrent callers (ApiTests, CPU, KevModel.Kev08B). Not run on CUDA.
+        // golden bit-identical to Decide, also from four concurrent callers (ApiTests, CPU, KevModel.Kev08B). On CUDA the same
+        // checks on one session (Tests.Cuda CudaParityTests, KevModel.Kev08B, RTX 4060 Ti; docs/evidence/kev-state-cuda-2026-11-01).
+        // Kev-4B on CUDA and the RTX 3090 are not run.
         ["state_reuse_across_calls"] = KevCapabilityStatus.Experimental,
-        ["state_reuse_across_calls.cuda"] = KevCapabilityStatus.Untested,
+        ["state_reuse_across_calls.cuda"] = KevCapabilityStatus.Experimental,
 
         // Not offered: reusing the cache of a common prefix of different states.
         ["state_prefix_reuse_across_requests"] = KevCapabilityStatus.Unsupported,

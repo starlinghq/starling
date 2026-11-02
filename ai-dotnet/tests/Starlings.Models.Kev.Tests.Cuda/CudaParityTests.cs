@@ -144,6 +144,93 @@ public sealed class CudaParityTests(ITestOutputHelper output)
     }
 
     /// <summary>
+    /// Capability <c>state_reuse_across_calls.cuda</c>: on one CUDA session, every request golden decided from a
+    /// <see cref="KevState"/> equals <c>Decide(request)</c> on the same session bit for bit, twice in a row and question by
+    /// question (the CPU test <c>ApiTests.StateReuseEqualsDecideBitForBit</c> on the CUDA provider).
+    /// </summary>
+    [Theory]
+    [MemberData(nameof(Sizes))]
+    public void StateReuseEqualsDecideBitForBit(KevModel model)
+    {
+        var (kev, reason) = Load(model);
+        Assert.SkipWhen(kev is null, reason);
+        int requests = 0, compared = 0;
+        foreach (string id in KevParity.CaseIds())
+        {
+            var request = KevParity.Request(id);
+            var expected = kev!.Decide(request, Ct);
+            using var state = kev.CreateState(request.State, Ct);
+            Assert.Equal(expected.StateTokens, state.TokenCount);
+            for (int round = 0; round < 2; round++)
+            {
+                var actual = kev.Decide(state, request.Questions, Ct);
+                Assert.Equal(expected.StateTokens, actual.StateTokens);
+                Assert.Equal(expected.BranchTokens, actual.BranchTokens);
+                Assert.Equal(expected.Answers.Select(a => a.Id), actual.Answers.Select(a => a.Id));
+                for (int i = 0; i < expected.Answers.Count; i++)
+                {
+                    Assert.Equal(expected.Answers[i].ProbabilityList, actual.Answers[i].ProbabilityList);
+                    compared++;
+                }
+            }
+
+            // A different question set on the same state: each question alone.
+            foreach (var question in request.Questions)
+            {
+                var alone = kev.Decide(state, [question], Ct);
+                Assert.Equal(expected[question.Key].ProbabilityList, alone[question.Key].ProbabilityList);
+                compared++;
+            }
+
+            requests++;
+        }
+
+        output.WriteLine($"{KevModelProfile.For(model).CudaId}: {requests} goldens from a KevState, {compared} answers bit-identical to Decide(request) on the same session");
+    }
+
+    /// <summary>
+    /// One <see cref="KevState"/> shared by four concurrent callers (serialized, the CUDA default) gives the sequential
+    /// answers bit for bit, a cancelled call leaves it usable, and it is refused after dispose.
+    /// </summary>
+    [Theory]
+    [MemberData(nameof(Sizes))]
+    public void StateIsSharedByConcurrentCallsAndRefusedAfterDispose(KevModel model)
+    {
+        var (kev, reason) = Load(model);
+        Assert.SkipWhen(kev is null, reason);
+        const string text = "I was charged twice for order 1182. Please refund one of the charges.";
+        KeyValuePair<string, KevQuestion>[] questions =
+        [
+            new("team", KevQuestion.Choice("Which team should handle this?", "billing", "shipping", "returns")),
+            new("urgent", KevQuestion.Noul("Does this need a reply today?")),
+            new("severity", KevQuestion.Score("How severe is the problem?", "minor", "moderate", "serious")),
+        ];
+        var expected = kev!.Decide(new KevRequest(text, questions), Ct);
+        var state = kev.CreateState(text, Ct);
+        var results = new KevDecision[8];
+        Parallel.For(0, results.Length, new ParallelOptions { MaxDegreeOfParallelism = 4, CancellationToken = Ct }, i =>
+            results[i] = kev.Decide(state, questions, Ct));
+        Assert.All(results, r =>
+        {
+            for (int i = 0; i < questions.Length; i++)
+            {
+                Assert.Equal(expected.Answers[i].ProbabilityList, r.Answers[i].ProbabilityList);
+            }
+        });
+
+        using var cts = new CancellationTokenSource();
+        cts.Cancel();
+        Assert.ThrowsAny<OperationCanceledException>(() => kev.Decide(state, questions, cts.Token));
+        Assert.Equal(expected["urgent"].ProbabilityList, kev.Decide(state, [questions[1]], Ct)["urgent"].ProbabilityList);
+
+        state.Dispose();
+        state.Dispose();
+        Assert.True(state.IsDisposed);
+        Assert.Throws<ObjectDisposedException>(() => kev.Decide(state, questions, Ct));
+        output.WriteLine($"{results.Length} decisions from one state on 4 callers bit-identical to Decide(request) on the same session");
+    }
+
+    /// <summary>
     /// Cancelled calls leave no device work queued (<c>docs/evidence/gliner2-cuda-wrong-output/</c>), and the model
     /// answers the goldens within the bound afterwards.
     /// </summary>
