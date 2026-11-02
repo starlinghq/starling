@@ -6,7 +6,7 @@ Status: **proposed**, 2026-11-01 (#184). Nothing in this note changes product co
 
 Starling has speech input (`Starlings.Models.Whisper`) but no speech output. `onnx-community/Kokoro-82M-v1.0-ONNX` (base model `hexgrad/Kokoro-82M`, Apache-2.0) is the small, widely used TTS model with an existing ONNX export. No route fits it: the existing routes are the encoder (BERT), GenAI, Whisper, Kev and PP-OCR routes, and none of them has text-to-waveform evaluation.
 
-The graph, as the ONNX repository's README describes it, takes `input_ids` (int64, shape `[1, n + 2]`: phoneme ids with a pad id 0 at each end, at most 510 phoneme ids), `style` (float32 `[1, 256]`) and `speed` (float32 `[1]`), and returns a float32 waveform at 24 kHz. `style` is a row of a per-voice file (`voices/<name>.bin`, float32, 510 rows of 256) selected by the number of phoneme ids. The repository ships fp32 (`onnx/model.onnx`, 326 MB) and several quantized graphs, and 54 voice files.
+The graph, as the ONNX repository's README describes it, takes `input_ids` (int64, shape `[1, n + 2]`: phoneme ids with a pad id 0 at each end, at most 510 phoneme ids), `style` (float32 `[1, 256]`) and `speed` (float32 `[1]`), and returns a float32 waveform at 24 kHz. `style` is a row of a per-voice file (`voices/<name>.bin`, float32 rows of 256) selected by the number of phoneme ids. The row count differs between files (`af.bin` is 524,288 bytes, 512 rows; the others are 522,240 bytes, 510 rows), and the README indexes `voices[len(tokens)]`, which a 510-row file cannot serve at 510 phoneme ids. The true phoneme-id cap and the row-index convention (`n` or `n - 1`) must be verified against the graph and the upstream code before the loader is written (checklist step 2). The repository ships fp32 (`onnx/model.onnx`, 326 MB) and several quantized graphs, and 55 voice files.
 
 ## Constraints
 
@@ -37,7 +37,7 @@ Proposed shape, for discussion only: a `Starlings.Models.Kokoro` package with a 
 ## Checklist (one PR each)
 
 1. Maintainer decisions: accept the pre-phonemised contract; name the parity metric (thresholds are set separately by the maintainer); confirm the ONNX-reference-only scope for the first profile.
-2. Inspect the pinned fp32 graph (inputs, outputs, opset, random ops) and record the findings in this note; pin the ONNX repository and `hexgrad/Kokoro-82M` `config.json` by full commit SHA.
+2. Inspect the pinned fp32 graph (inputs, outputs, opset, random ops), verify the phoneme-id cap and the style-row index per voice file, and record the findings in this note; pin the ONNX repository and `hexgrad/Kokoro-82M` `config.json` by full commit SHA.
 3. `model-pipeline`: a `tts` reference runner on Python ONNX Runtime, a fixed phoneme-id corpus (short, long near 510, punctuation, several voices and speeds) with its source recorded, and a waveform comparison evaluator. Orchestration tests.
 4. `Starlings.Models.Kokoro`: asset lock (graph, phoneme table, chosen voices), phoneme-id and phoneme-string inputs with validation, style row selection, synthesis, WAV writer, capability statuses. Unit tests without the model; model tests gated as the other model packages do.
 5. The `tts-onnx-cpu-v1` plugin wiring the reference, the .NET run and the evaluator; candidate profile and recipe.
