@@ -14,7 +14,7 @@ New here? Issues labeled [`good first issue`](https://github.com/starlinghq/star
 
 1. Open or pick an issue. Backlog items carry a `P-0xx` ID from the plan. New public APIs, new backends, new model families, and fidelity policy changes start with a design proposal issue.
 2. Branch, change, and run the checks for the directories you touched (below).
-3. Open a pull request using the template, as a draft while work is in progress. CI must pass.
+3. Open a pull request using the template, as a draft while work is in progress. CI must pass. CI on a fork needs a maintainer's approval to start, and it runs on GitHub-hosted runners.
 4. Changes to the paths in [CODEOWNERS](CODEOWNERS) need review by the maintainer (@MarkWalls): protected evidence, `.github/`, `global.json`, every `Directory.Packages.props` and every `packages.lock.json`.
 
 ## Development setup and checks
@@ -42,7 +42,7 @@ Use `python3 -m pytest`, not bare `pytest`. Tests that need model weights skip w
 
 CI (`.github/workflows/ci.yml`) runs the jobs `boundary`, `ai release-candidate drill` (`tools/release-drill-ai.sh --no-model`), `ai-dotnet` (build, tests, library dependency boundaries), `ai-dotnet (windows x64)`, `model-pipeline`, `browser conformance app (build)`, `docs site (docfx)` (the API reference site, uploaded as an artifact) and `repository checks` (no committed weights, no ImageSharp, no bundled FFmpeg, every CPU test project in `AI.slnx`). `.github/workflows/protected-evidence.yml` checks protected changes (below). Model qualification (`qualification.yml`) runs weekly, on release tags and on dispatch, not on pull requests.
 
-**Boundary check.** `tools/check-boundary.py` fails if the name of an unrelated older project appears in any tracked file, file name, embedded data or commit message. Files are scanned in full; commits from the baseline in `tools/check-boundary.baseline` on, or a pull request's own commits. Do not work around it; remove the reference.
+**Boundary check.** `tools/check-boundary.py` fails if the name of an unrelated older project appears in any tracked file, file name, embedded data or commit message. Files are scanned in full; commits from the baseline in `tools/check-boundary.baseline` on, or a pull request's own commits. The list of names isn't published, so if it fails on your pull request, ask on the pull request and a maintainer will point you to the line. Do not work around it; remove the reference.
 
 **Lock files.** Package versions are central (`Directory.Packages.props` per product) and projects carry `packages.lock.json` files (the root `Directory.Build.props` turns them on). CI restores in locked mode. After adding or changing a package reference, run `dotnet restore` and commit the updated lock files. Libraries under `ai-dotnet/src/` never reference Microsoft.ML.Tokenizers or another tokenizer, an ONNX Runtime native package, or a cloud SDK; CI enforces this.
 

@@ -26,7 +26,7 @@ jobs:
   # commits (base..head of the PR), so a past commit message cannot block every later run.
   boundary:
     name: boundary
-    runs-on: [self-hosted, omarchy]
+    runs-on: ${{ github.event.pull_request.head.repo.fork && 'ubuntu-latest' || fromJSON('["self-hosted", "omarchy"]') }}
     steps:
       - uses: actions/checkout@v5
         with:
@@ -51,7 +51,7 @@ jobs:
   # docs/releases/). Nothing is published.
   ai-release-drill:
     name: ai release-candidate drill
-    runs-on: [self-hosted, omarchy]
+    runs-on: ${{ github.event.pull_request.head.repo.fork && 'ubuntu-latest' || fromJSON('["self-hosted", "omarchy"]') }}
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-dotnet@v5
@@ -68,7 +68,7 @@ jobs:
 
   ai-dotnet:
     name: ai-dotnet
-    runs-on: [self-hosted, omarchy]
+    runs-on: ${{ github.event.pull_request.head.repo.fork && 'ubuntu-latest' || fromJSON('["self-hosted", "omarchy"]') }}
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-dotnet@v5
@@ -191,7 +191,7 @@ jobs:
         run: ./tools/release-drill-ai.ps1 -NoModel
 
   model-pipeline:
-    runs-on: [self-hosted, omarchy]
+    runs-on: ${{ github.event.pull_request.head.repo.fork && 'ubuntu-latest' || fromJSON('["self-hosted", "omarchy"]') }}
     defaults:
       run:
         working-directory: model-pipeline
@@ -217,7 +217,7 @@ jobs:
   # trimming package (browser/conformance/README.md). No model, no browser run.
   browser-conformance-build:
     name: browser conformance app (build)
-    runs-on: [self-hosted, omarchy]
+    runs-on: ${{ github.event.pull_request.head.repo.fork && 'ubuntu-latest' || fromJSON('["self-hosted", "omarchy"]') }}
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-dotnet@v5
@@ -238,7 +238,7 @@ jobs:
   # the pages and id-token permissions and the github-pages environment, which the maintainer sets up.
   docs:
     name: docs site (docfx)
-    runs-on: [self-hosted, omarchy]
+    runs-on: ${{ github.event.pull_request.head.repo.fork && 'ubuntu-latest' || fromJSON('["self-hosted", "omarchy"]') }}
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-dotnet@v5
@@ -263,7 +263,7 @@ jobs:
 
   repo:
     name: repository checks
-    runs-on: [self-hosted, omarchy]
+    runs-on: ${{ github.event.pull_request.head.repo.fork && 'ubuntu-latest' || fromJSON('["self-hosted", "omarchy"]') }}
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-python@v6

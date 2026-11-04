@@ -13,11 +13,11 @@ Every workflow sets `permissions: contents: read` at the top level. Only the `re
 
 ## Runners and fork pull requests
 
-Every job of `ci`, `protected-evidence` and `release` runs on the maintainer's self-hosted runner, labelled `[self-hosted, omarchy]`, except `ai-dotnet-windows`, which runs on GitHub-hosted `windows-latest`. Every job of `qualification` runs on the self-hosted runner labelled `qualification`; the `cuda` job only drives a RunPod pod from there.
+Every job of `ci`, `protected-evidence` and `release` runs on the maintainer's self-hosted runner, labelled `[self-hosted, omarchy]`, except `ai-dotnet-windows`, which runs on GitHub-hosted `windows-latest`, and the `ci` and `protected-evidence` jobs of a fork pull request, which run on GitHub-hosted `ubuntu-latest`. Every job of `qualification` runs on the self-hosted runner labelled `qualification`; the `cuda` job only drives a RunPod pod from there.
 
-`ci` and `protected-evidence` run on `pull_request`, so a pull request from a fork executes its own code on the maintainer's machine. No workflow uses `pull_request_target`, and fork runs get no secrets and a read-only token, but the code itself still runs on that host. The control is the repository's fork pull request approval policy, set to require approval for every outside contributor's workflow run (Settings > Actions > General, "Require approval for all external contributors"; the API reports `all_external_contributors`), not only first-time contributors. Before approving a fork run, the maintainer reads the pull request's diff, including any change under `.github/`, `tools/` and build files (`*.props`, `*.targets`, `*.csproj`, `pyproject.toml`), since those run during the jobs. `qualification` and `release` never run on `pull_request`.
+`ci` and `protected-evidence` run on `pull_request`, so a pull request from a fork executes its own code. That code runs on GitHub-hosted runners, never on the maintainer's machine: each job's `runs-on` checks `github.event.pull_request.head.repo.fork`. No workflow uses `pull_request_target`, and fork runs get no secrets and a read-only token. The repository's fork pull request approval policy still requires approval for every outside contributor's workflow run (Settings > Actions > General, "Require approval for all external contributors"; the API reports `all_external_contributors`). Before approving, the maintainer reads the pull request's diff, including any change under `.github/`, `tools/` and build files. `qualification` and `release` never run on `pull_request`.
 
-Deferred maintainer options, not applied: moving fork pull requests to GitHub-hosted runners with weight-free jobs only, and adding required status checks to the `main` ruleset (`docs/kickoff.md`, "Repository settings to apply by hand").
+Deferred maintainer option, not applied: adding required status checks to the `main` ruleset (`docs/kickoff.md`, "Repository settings to apply by hand").
 
 ## ci
 
