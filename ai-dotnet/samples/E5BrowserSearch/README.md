@@ -5,7 +5,7 @@
 Multilingual semantic search that runs entirely in the browser. It's a standalone Blazor WebAssembly app on `Starlings.Models.E5.Browser`: `intfloat/multilingual-e5-small` on onnxruntime-web, with the owned tokenizer and the same pooling code as the server-side `Starlings.Models.E5`.
 
 The app does three things:
-- **Loads the model once.** The graph comes from the Hugging Face Hub (fp32) or your own host (int8-embed). It is checked against its pinned SHA-256 and kept in the browser's Cache Storage, so later visits load from the cache.
+- **Loads the model once.** Both graphs come from the Hugging Face Hub by default, and you can host int8-embed yourself. It is checked against its pinned SHA-256 and kept in the browser's Cache Storage, so later visits load from the cache.
 - **Embeds a 28-passage corpus** in 16 languages with the `passage: ` prefix.
 - **Ranks passages for a query** embedded with `query: `, by cosine, in any of those languages.
 
@@ -60,8 +60,8 @@ These are measured in headless Chrome for Testing 153 on an i7-5820K (6 cores), 
 
 | | fp32 | int8-embed |
 | --- | --- | --- |
-| Download (first visit) | 470 MB, from the Hub | 182 MB, from your host |
-| Load to searchable, first visit (download, verify, session, 28 passages) | 20 s | 11 s (from localhost) |
+| Download (first visit) | 470 MB, from the Hub | 182 MB, from the Hub or your host |
+| Load to searchable, first visit (download, verify, session, 28 passages) | 20 s | 11 s (from localhost), 17 to 20 s (from the Hub, on the hosted demo) |
 | Session creation | about 1.4 s | about 0.9 s |
 | Renderer memory | about 2.3 GB | about 1.4 GB |
 | One 34-token passage, 4 WASM threads | about 25 ms | about 25 ms |
