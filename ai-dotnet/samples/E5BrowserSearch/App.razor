@@ -1,5 +1,6 @@
 @using Starlings.Models.E5.Browser
 @using Starlings.Runtime.OnnxWeb
+@inject NavigationManager Nav
 @inject SearchEngine Engine
 
 <main>
@@ -21,21 +22,24 @@
                     Graph
                     <select @bind="_variant" disabled="@_loading">
                         <option value="@E5BrowserVariant.Fp32">fp32 reference, from the Hugging Face Hub (470 MB, about 249 MB compressed)</option>
-                        <option value="@E5BrowserVariant.Int8Embed">int8-embed, self-hosted (182 MB, about 109 MB compressed)</option>
+                        <option value="@E5BrowserVariant.Int8Embed">int8-embed (182 MB, about 109 MB compressed)</option>
                     </select>
                 </label>
                 @if (_variant == E5BrowserVariant.Int8Embed)
                 {
                     <label>
                         Graph URL
-                        <input @bind="_modelUrl" placeholder="models/model-int8-embed.onnx" disabled="@_loading" />
+                        <input @bind="_modelUrl" placeholder="https://huggingface.co/Starlinghq/multilingual-e5-small-browser-onnx/resolve/51c02127009ddca6e3c7c187b2e406d1715f69a7/model-int8-embed.onnx" disabled="@_loading" />
                     </label>
                 }
                 <label>
                     Backend
                     <select @bind="_provider" disabled="@_loading">
                         <option value="@OnnxWebExecutionProvider.Wasm">WebAssembly (CPU)</option>
-                        <option value="@OnnxWebExecutionProvider.WebGpu">WebGPU (experimental)</option>
+                        @if (!Nav.BaseUri.EndsWith("/demo/"))
+                        {
+                            <option value="@OnnxWebExecutionProvider.WebGpu">WebGPU (experimental)</option>
+                        }
                     </select>
                 </label>
             </div>
@@ -114,9 +118,10 @@
 </main>
 
 @code {
-    private E5BrowserVariant _variant = E5BrowserVariant.Fp32;
+    // The hosted demo at starling.rocks/demo/ ships without the WebGPU runtime, which is over its host's file size limit.
+    private E5BrowserVariant _variant = E5BrowserVariant.Int8Embed;
     private OnnxWebExecutionProvider _provider = OnnxWebExecutionProvider.Wasm;
-    private string _modelUrl = "models/model-int8-embed.onnx";
+    private string _modelUrl = "https://huggingface.co/Starlinghq/multilingual-e5-small-browser-onnx/resolve/51c02127009ddca6e3c7c187b2e406d1715f69a7/model-int8-embed.onnx";
     private bool _loading;
     private bool _searching;
     private E5BrowserLoadProgress _progress;

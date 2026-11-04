@@ -61,7 +61,7 @@ using var generator = new E5BrowserEmbeddingGenerator(embedder, E5InputType.Pass
 var embeddings = await generator.GenerateAsync(["Trim the stems and stand basil in water.", "Le Rhin se jette dans la mer du Nord."]);
 ```
 
-The int8-embed graph (182 MB, about 109 MB brotli) has no public URL. Build it with `model-pipeline/reference/encoder/quantize_e5_browser.py`, which is deterministic and produces SHA-256 `374a3cc0…fb19`. Host it with the app, then load it:
+The int8-embed graph (182 MB, about 109 MB brotli) is on the Hugging Face Hub at [`Starlinghq/multilingual-e5-small-browser-onnx`](https://huggingface.co/Starlinghq/multilingual-e5-small-browser-onnx/resolve/51c02127009ddca6e3c7c187b2e406d1715f69a7/model-int8-embed.onnx), pinned by commit. Build it with `model-pipeline/reference/encoder/quantize_e5_browser.py`, which is deterministic and produces SHA-256 `374a3cc0…fb19`. Host it with the app, then load it:
 
 ```csharp
 await E5BrowserEmbedder.LoadAsync(new E5BrowserLoadOptions { Variant = E5BrowserVariant.Int8Embed, ModelUrl = "models/model-int8-embed.onnx" });

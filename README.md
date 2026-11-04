@@ -12,6 +12,8 @@
 
 Starling packages open models as ordinary NuGet libraries: embeddings, entity extraction, image and video search, and chat. They run on ONNX Runtime on CPU or CUDA and plug into [`Microsoft.Extensions.AI`](https://learn.microsoft.com/dotnet/ai/microsoft-extensions-ai) (`IEmbeddingGenerator`, `IChatClient`), so code you wrote against a hosted provider can move to a local model by changing one line at the call site. Embeddings still need re-indexing, and a small local model is not a large hosted one. Each model is pinned to an exact upstream commit, verified by SHA-256, and checked against the original PyTorch/Python implementation before it is released.
 
+**[Try it in your browser](https://starling.rocks/demo/)**: multilingual search with nothing to install. It downloads a 182 MB model once, and what you type stays on the page.
+
 ⭐ If this is useful, star the repository so other .NET developers can find it.
 
 **Using an AI coding agent?** Point it at [`llms.txt`](llms.txt) or install the [Starling skill](#use-it-with-your-ai-coding-agent).

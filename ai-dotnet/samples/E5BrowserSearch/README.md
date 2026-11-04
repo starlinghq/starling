@@ -1,5 +1,7 @@
 # E5BrowserSearch
 
+**[Try it on starling.rocks](https://starling.rocks/demo/).** The hosted build is WebAssembly only.
+
 Multilingual semantic search that runs entirely in the browser. It's a standalone Blazor WebAssembly app on `Starlings.Models.E5.Browser`: `intfloat/multilingual-e5-small` on onnxruntime-web, with the owned tokenizer and the same pooling code as the server-side `Starlings.Models.E5`.
 
 The app does three things:
@@ -19,10 +21,10 @@ python model-pipeline/reference/encoder/quantize_e5_browser.py --model <e5 snaps
 python3 serve.py out/wwwroot --models models       # http://127.0.0.1:8080/
 ```
 
-Pick **int8-embed, self-hosted** (URL `models/model-int8-embed.onnx`) and **WebAssembly**, then click **Load**. It's ready in about 8 s, and the runtime panel should say "4 of N logical cores". Then click the example queries; most are in another language than the passage they find.
+Keep **int8-embed** and **WebAssembly**, then click **Load**. To use the graph you built instead of the hosted one, set the URL to `models/model-int8-embed.onnx`. It's ready in about 8 s, and the runtime panel should say "4 of N logical cores". Then click the example queries; most are in another language than the passage they find.
 
 - **What `serve.py` does.** It's standard-library Python. It serves the publish output with the cross-origin isolation headers (several inference threads), its precompressed `.br` files, and the graph directory under `/models/`.
-- **The graph.** The int8-embed graph (182 MB, cosine 0.9998 to fp32) has no public URL. `quantize_e5_browser.py` builds it deterministically. The loader rejects any file whose SHA-256 differs from the pin (`374a3cc0…fb19`). Don't commit it.
+- **The graph.** The int8-embed graph (182 MB, cosine 0.9998 to fp32) is hosted on the Hugging Face Hub at a pinned commit, and the app loads it by default. [`Starlinghq/multilingual-e5-small-browser-onnx`](https://huggingface.co/Starlinghq/multilingual-e5-small-browser-onnx) records how it was built. `quantize_e5_browser.py` builds the same bytes if you want to host it yourself. The loader rejects any file whose SHA-256 differs from the pin (`374a3cc0…fb19`). Don't commit it.
 - **No preparation.** Pick **fp32 reference, from the Hugging Face Hub**. It downloads 470 MB from the Hub on the first visit (about 20 s on a fast line), then loads from the browser cache.
 - **WebGPU.** Pick **WebGPU** in a browser that exposes it. Each call costs about 18 ms whatever the batch size, against about 25 ms for one short text on 4 WASM threads.
 
