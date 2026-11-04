@@ -14,7 +14,7 @@ New here? Issues labeled [`good first issue`](https://github.com/starlinghq/star
 
 1. Open or pick an issue. Backlog items carry a `P-0xx` ID from the plan. New public APIs, new backends, new model families, and fidelity policy changes start with a design proposal issue.
 2. Branch, change, and run the checks for the directories you touched (below).
-3. Open a pull request using the template, as a draft while work is in progress. CI must pass. CI on a fork needs a maintainer's approval to start, and it runs on GitHub-hosted runners.
+3. Open a pull request using the template, as a draft while work is in progress. CI must pass. CI on a fork needs a maintainer's approval to start, and it runs on GitHub-hosted runners. A maintainer won't approve a run that changes the workflows' runners.
 4. Changes to the paths in [CODEOWNERS](CODEOWNERS) need review by the maintainer (@MarkWalls): protected evidence, `.github/`, `global.json`, every `Directory.Packages.props` and every `packages.lock.json`.
 
 ## Development setup and checks
