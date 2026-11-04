@@ -2,6 +2,8 @@
 
 The model definitions of the Kev 1.0 decision models ([`jaredpalmer/kev-0.8b`](https://huggingface.co/jaredpalmer/kev-0.8b) and [`jaredpalmer/kev-4b`](https://huggingface.co/jaredpalmer/kev-4b)), without a runtime: requests, Kev's request rendering and escaping, the encoder that turns a request into token-id rows, the checkpoint identities, and the result types. No ONNX Runtime dependency (only the owned tokenizer `Starlings.Tokenizers`, and `Starlings.Acquisition` for the checkpoint locks). To run the models on ONNX Runtime, reference [`Starlings.Models.Kev.Onnx`](https://github.com/starlinghq/starling/blob/main/ai-dotnet/src/Starlings.Models.Kev.Onnx/README.md), which brings this package. Experimental; the API may still change.
 
+⭐ If this package is useful, [star Starling on GitHub](https://github.com/starlinghq/starling).
+
 - `KevRequest` (a state and named `KevQuestion`s: `Noul`, `Choice`, `Score`; `ParseSystemOne` for a System One request body) and `KevContent` (text, or JSON rendered as Kev does).
 - `KevText`: Kev's rendering of JSON values (Python `str()` of numbers and booleans), option text, and `EscapeSpecialTokens`, which rewrites `<|…|>` in user text so it can never become a delimiter.
 - `KevRequest.ToRecord()`: the rendered record Kev's encoder reads (`KevRecord`, `KevRecordQuestion`).

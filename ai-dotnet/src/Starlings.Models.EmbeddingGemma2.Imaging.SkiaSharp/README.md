@@ -2,6 +2,8 @@
 
 Decodes image files and streams with [SkiaSharp](https://github.com/mono/SkiaSharp) into `EmbeddingGemma2Image` for `Starlings.Models.EmbeddingGemma2`, reproducing what the upstream processor receives from PIL (`Image.open(...).convert("RGB")`). The model package itself takes decoded RGB and has no native dependency; this adapter is optional.
 
+⭐ If this package is useful, [star Starling on GitHub](https://github.com/starlinghq/starling).
+
 ```csharp
 using Starlings.Models.EmbeddingGemma2;
 using Starlings.Models.EmbeddingGemma2.Imaging.SkiaSharp;

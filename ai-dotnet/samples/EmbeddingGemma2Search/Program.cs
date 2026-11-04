@@ -274,6 +274,7 @@ async Task<int> ToolBody()
         }
 
         Console.WriteLine($"extensions.ai images: {generated.Count} embeddings, {generated.Usage?.InputTokenCount} tokens, max abs difference from the typed API {maxDiff:G3}");
+        Console.WriteLine("If this was useful, star https://github.com/starlinghq/starling");
         return 0;
     }
 

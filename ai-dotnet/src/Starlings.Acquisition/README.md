@@ -2,6 +2,8 @@
 
 Explicit, verified acquisition of model files. An asset lock names a Hub repository, a full 40-character commit SHA, and each file's size and SHA-256. `ModelAssetStore.DownloadAsync` downloads (with retries and resume) into a local cache and verifies every file; `OpenLocal` resolves the cache offline and never touches the network. No dependencies beyond the BCL. The API may still change.
 
+⭐ If this package is useful, [star Starling on GitHub](https://github.com/starlinghq/starling).
+
 ## Maturity
 
 <!-- catalog:maturity profiles=*-cpu,*-cuda -->

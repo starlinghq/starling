@@ -2,6 +2,8 @@
 
 [onnxruntime-web](https://onnxruntime.ai/docs/tutorials/web/) 1.30.0 for Starlings models in .NET `browser-wasm` apps (Blazor WebAssembly). It's the browser counterpart of `Starlings.Runtime.Onnx`: model download with SHA-256 verification and Cache Storage, session creation with no silent provider fallback, and asynchronous runs from C# through `[JSImport]`. Model bytes stay in JavaScript and never enter the .NET heap. The package ships onnxruntime-web's WASM-only bundle as static web assets under `_content/Starlings.Runtime.OnnxWeb/ort/` (14.2 MB, about 2.3 MB brotli). WebGPU is the separate, opt-in `Starlings.Runtime.OnnxWeb.WebGpu`. The API may still change.
 
+⭐ If this package is useful, [star Starling on GitHub](https://github.com/starlinghq/starling).
+
 ## Maturity
 
 <!-- catalog:maturity profiles=multilingual-e5-small/onnx-*-wasm,multilingual-e5-small/onnx-*-webgpu -->

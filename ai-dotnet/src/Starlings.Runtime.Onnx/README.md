@@ -2,6 +2,8 @@
 
 ONNX Runtime session ownership for Starlings models: provider selection with no silent fallback (CPU, or CUDA with TF32 always off), native/managed version check, diagnostics (versions, providers, options, model SHA-256, graph signature), cancellation (at node boundaries on CPU, after the current run on CUDA) and reference-counted disposal. The API may still change.
 
+⭐ If this package is useful, [star Starling on GitHub](https://github.com/starlinghq/starling).
+
 ## Maturity
 
 <!-- catalog:maturity profiles=multilingual-e5-small/onnx-fp32-cpu,multilingual-e5-small/onnx-fp32-cuda,gliner2-base-v1/*,embeddinggemma-2/*,kev-0.8b/*,kev-4b/*,whisper-large-v3-turbo/*,all-minilm-l6-v2/*,bge-small-en-v1.5/*,bge-base-en-v1.5/*,bge-m3/*,ms-marco-minilm-l6-v2/*,bge-reranker-v2-m3/*,nomic-embed-text-v1.5/*,paraphrase-multilingual-minilm-l12-v2/* -->

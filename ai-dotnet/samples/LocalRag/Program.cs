@@ -116,6 +116,8 @@ async Task<int> RunAsync()
     await foreach (ChatResponseUpdate update in chat.GetStreamingResponseAsync(messages, new ChatOptions { MaxOutputTokens = 256 }))
         Console.Write(update.Text);
     Console.WriteLine();
+    Console.WriteLine();
+    Console.WriteLine("If this was useful, star https://github.com/starlinghq/starling");
     return 0;
 }
 

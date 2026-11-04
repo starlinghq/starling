@@ -2,6 +2,8 @@
 
 Decodes video files and streams into `EmbeddingGemma2Video` for `Starlings.Models.EmbeddingGemma2` exactly as upstream sees them: sentence-transformers decodes videos with torchcodec 0.17 on FFmpeg, and this adapter makes the same FFmpeg calls (packet-scan metadata, 1 frame per second sampling up to 32 frames, the display matrix applied, FFmpeg's default RGB conversion). The model package itself takes decoded frames and has no native dependency; this adapter is optional.
 
+⭐ If this package is useful, [star Starling on GitHub](https://github.com/starlinghq/starling).
+
 **This package contains no FFmpeg.** It binds FFmpeg through its own bindings, generated from the FFmpeg 8.1 headers by `tools/generate-ffmpeg-bindings.py` (no third-party bindings package), and loads **your own FFmpeg 8.x shared libraries** at run time. For FFmpeg 9.x use `Starlings.Models.EmbeddingGemma2.Video.FFmpeg9` (one adapter package per FFmpeg major; the decoding code is shared). You choose, install and distribute FFmpeg (see [Licenses and patents](#licenses-and-patents)).
 
 ```csharp

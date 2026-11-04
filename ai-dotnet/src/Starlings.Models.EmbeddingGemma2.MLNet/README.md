@@ -2,6 +2,8 @@
 
 Text only. An ML.NET estimator and transformer that turn a text column into an EmbeddingGemma 2 embedding column (`Vector<Single, 768>`, or a Matryoshka size of 512, 256 or 128, L2-normalized) with the embedder in `Starlings.Models.EmbeddingGemma2`. The API may still change.
 
+⭐ If this package is useful, [star Starling on GitHub](https://github.com/starlinghq/starling).
+
 ## Maturity
 
 <!-- catalog:maturity profiles=embeddinggemma-2/onnx-* -->

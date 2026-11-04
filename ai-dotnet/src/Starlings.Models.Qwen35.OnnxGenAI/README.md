@@ -2,6 +2,8 @@
 
 Chat generation with [`Qwen/Qwen3.5-0.8B`](https://huggingface.co/Qwen/Qwen3.5-0.8B) at revision `2fc06364715b967f1860aea9cf38778875588b17`, in-process on ONNX Runtime GenAI 0.17.1, offline after an explicit acquisition. The API and the supported platforms may still change. The three registry profiles are Stable since 2026-10-16: `ortgenai-fp32x-cpu` on Linux x64 CPU, and `ortgenai-fp32x-cuda` and `ortgenai-fp16x-cuda` on Linux x64 with an RTX 3090 (see [Stable contract](#stable-contract) and [Stable contract: CUDA](#stable-contract-cuda)).
 
+⭐ If this package is useful, [star Starling on GitHub](https://github.com/starlinghq/starling).
+
 - The model definition is the package `Starlings.Models.Qwen35` (template, tool-call parser, chat options, checkpoint profile and lock; no ONNX Runtime), which this package references. Before 0.5 both were one package `Starlings.Models.Qwen35`; the types keep the namespace `Starlings.Models.Qwen35`.
 - The pinned chat template is rendered in C# for text and tool-calling conversations (system, user, assistant and tool messages, tool definitions, assistant tool calls, `enable_thinking`); images are rejected. Prompt ids come from the owned tokenizer `Starlings.Tokenizers` (profile `qwen35-bpe-chat`): no Microsoft.ML.Tokenizers, no GenAI tokenizer, no Python.
 - Starling's decode loop (`Starlings.Generation.OnnxGenAI`; options and results in `Starlings.Generation.Abstractions`): greedy or seeded sampling, stop at `<|im_end|>` / `<|endoftext|>` and at stop strings, streaming, cancellation between decode steps, usage.

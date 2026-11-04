@@ -2,6 +2,8 @@
 
 Experimental Qwen text chat on ONNX Runtime GenAI. Until 0.5 this was the package `Starlings.Models.QwenChat`, on nuget.org from release 0.3.0 (`docs/releases/ai-0.3.0.md`); the templates, parser, options and checkpoint identities now form the model definition package `Starlings.Models.QwenChat` (no ONNX Runtime), which this package references, and every type keeps the namespace `Starlings.Models.QwenChat`. Keep every `Starlings.*` package at the same version. The API may still change. For the Stable Qwen3.5-0.8B chat model, use `Starlings.Models.Qwen35.OnnxGenAI`.
 
+⭐ If this package is useful, [star Starling on GitHub](https://github.com/starlinghq/starling).
+
 ## Maturity
 
 <!-- catalog:maturity profiles=qwen3-0.6b/*,qwen2.5-0.5b-instruct/* -->

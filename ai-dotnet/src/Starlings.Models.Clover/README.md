@@ -2,6 +2,8 @@
 
 The model definition of [`Diffuspace/Clover-35B-A3B-Preview`](https://huggingface.co/Diffuspace/Clover-35B-A3B-Preview) at revision `4b0402b65e523d0183a14c431955438714cb16ff`, without a runtime. It holds what a backend needs to prompt the model and check a build against the checkpoint. No backend in this repository runs Clover: it is a block-diffusion language model (a 35B mixture-of-experts fine-tune of `Qwen/Qwen3.6-35B-A3B` with about 3B active parameters per token). It fills blocks of 32 masked positions in parallel, and neither ONNX Runtime GenAI nor any published ONNX export implements that decoder. The reasons and the open decisions are in `model-pipeline/admissions/clover.md`.
 
+⭐ If this package is useful, [star Starling on GitHub](https://github.com/starlinghq/starling).
+
 This library is **experimental**, source only and not admitted.
 
 - `CloverChatTemplate`: the checkpoint's `chat_template.jinja` rendered in C# for text turns (system, user, assistant with reasoning). It carries the template's three switches with their upstream defaults: `enable_thinking` (true), `preserve_thinking` (true) and `add_non_thinking_prefix` (true). `CloverChatTemplate.Instance` is the same renderer behind `IChatTemplate`.

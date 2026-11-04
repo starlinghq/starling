@@ -2,6 +2,8 @@
 
 The FFmpeg 9 counterpart of `Starlings.Models.EmbeddingGemma2.Video.FFmpeg`: decodes video files and streams into `EmbeddingGemma2Video` for `Starlings.Models.EmbeddingGemma2` exactly as upstream sees them (sentence-transformers decodes videos with torchcodec 0.17 on FFmpeg; this adapter makes the same FFmpeg calls). One adapter package per FFmpeg major: use this one with FFmpeg 9.x, the `...Video.FFmpeg` package with FFmpeg 8.x. Both are optional; the model package takes decoded frames and references neither.
 
+⭐ If this package is useful, [star Starling on GitHub](https://github.com/starlinghq/starling).
+
 **This package contains no FFmpeg.** It binds FFmpeg through its own bindings, generated from the FFmpeg 9.0.1 headers (commit `bf1b838f2ab88b4f8fd83443325c782ea0e0f7fa`) by `tools/generate-ffmpeg-bindings.py --major 9` (no third-party bindings package), and loads **your own FFmpeg 9.x shared libraries** at run time. You choose, install and distribute FFmpeg (see [Licenses and patents](#licenses-and-patents)). The decoding code is the FFmpeg 8 adapter's, shared as source; only the bindings differ.
 
 ```csharp

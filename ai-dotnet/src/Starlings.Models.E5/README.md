@@ -2,6 +2,8 @@
 
 Sentence embeddings from [`intfloat/multilingual-e5-small`](https://huggingface.co/intfloat/multilingual-e5-small) at revision `614241f622f53c4eeff9890bdc4f31cfecc418b3`, on ONNX Runtime 1.30.0, in-process and offline after an explicit download. The package is versioned 0.x, so the API may still change between minor versions; maturity is per profile (below).
 
+⭐ If this package is useful, [star Starling on GitHub](https://github.com/starlinghq/starling).
+
 - Text goes through the owned tokenizer `Starlings.Tokenizers` (exact against huggingface/tokenizers on the published fixtures). No Microsoft.ML.Tokenizers and no native tokenizer library.
 - Batching with right padding, mean pooling over the attention mask, L2 normalization: 384-dimensional unit vectors.
 - The package ships the model's asset lock (repository, commit, file sizes and SHA-256), not the 487 MB of model files. Acquisition is an explicit call; inference never downloads.

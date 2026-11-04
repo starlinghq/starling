@@ -2,6 +2,8 @@
 
 [Microsoft.Extensions.AI](https://learn.microsoft.com/dotnet/ai/microsoft-extensions-ai) `IEmbeddingGenerator<string, Embedding<float>>` over the EmbeddingGemma 2 text embedder (and generators for images and videos, [below](#images-and-videos)) in `Starlings.Models.EmbeddingGemma2`: the same tokenizer, encoder and numbers, usable with Microsoft.Extensions.AI middleware and dependency injection. The API may still change.
 
+⭐ If this package is useful, [star Starling on GitHub](https://github.com/starlinghq/starling).
+
 ## Maturity
 
 <!-- catalog:maturity profiles=embeddinggemma-2/* -->

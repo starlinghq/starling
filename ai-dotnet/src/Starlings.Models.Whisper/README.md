@@ -5,6 +5,8 @@ spectrogram, through the encoder and the autoregressive decoder (greedy), and ba
 tokenizer (`Starlings.Tokenizers`, profile `whisper-bpe`). This package ships the asset lock, not the weights; acquire
 them explicitly. The application adds the ONNX Runtime native package.
 
+⭐ If this package is useful, [star Starling on GitHub](https://github.com/starlinghq/starling).
+
 This library is **experimental** and not yet qualified. The log-mel spectrogram, the encoder and the greedy decoder are
 verified bit-exact against the reference (transformers `WhisperFeatureExtractor` numpy path and the same ONNX graphs);
 end-to-end transcript parity against a fresh transformers reference is checked by the model-pipeline route

@@ -2,6 +2,8 @@
 
 Backend-neutral types for Starling's chat models: everything a generation runtime and a model definition share, without ONNX Runtime. Dependencies: the owned tokenizer `Starlings.Tokenizers` and `Microsoft.Extensions.AI.Abstractions` 10.10.1 only. The ONNX Runtime GenAI backend is `Starlings.Generation.OnnxGenAI`; the model definitions are `Starlings.Models.Qwen35` and `Starlings.Models.QwenChat`. The API may still change.
 
+⭐ If this package is useful, [star Starling on GitHub](https://github.com/starlinghq/starling).
+
 Namespace `Starlings.Generation`:
 
 - Request and result: `GenerationOptions` (`MaxNewTokens`, `StopSequences`, `AdditionalStopTokenIds`, `Sampling`, `PrefillChunkTokens`, `ReturnLogprobs`, `TopLogprobs`, `Guidance`; `Validate()` applies the decode loop's checks), `SamplingOptions`, `GenerationGuidance` (experimental: JSON Schema, Lark grammar or regex, optional fast-forward), `GenerationResult`, `GenerationUpdate`, `GenerationFinishReason`, `GenerationUsage`, `GenerationTimings`, `TokenLogprob`, `TopTokenLogprob` and `GenerationContextLengthException`.

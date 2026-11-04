@@ -2,6 +2,8 @@
 
 Graph interventions for LFM3-1.7B ([Starlings.Models.Lfm3](../Starlings.Models.Lfm3/README.md)): load a derived intervention graph (the original fp32 weights, hard-linked, plus one or more profiles' low-rank operators at chosen residual-stream sites) and run each request with its own strengths.
 
+⭐ If this package is useful, [star Starling on GitHub](https://github.com/starlinghq/starling).
+
 This library is **experimental** and source only (a packable library cannot depend on the source-only `Starlings.Interventions`; `Starlings.Models.Lfm3` itself is unchanged for applications that do not use interventions). V1 evidence uses synthetic random orthonormal directions only: no behavioural profile ships or has been evaluated. Deciding which callers may apply which profile is the host application's job.
 
 The LFM3 weights are under the LFM Open License v1.0 (see the LFM3 package README).

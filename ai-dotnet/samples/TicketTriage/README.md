@@ -46,7 +46,7 @@ The `CustomMapping` shows that any local model can join a pipeline as a row-wise
 
 ## A real run
 
-Linux x64 CPU, .NET SDK 10.0.401 (runtime 10.0.12), Starlings 0.2.0, on 2026-10-17, from an existing cache passed with `--cache ~/.cache/starling-models`. `train` output:
+Linux x64 CPU, .NET SDK 10.0.100, Starlings 0.5.0, on 2026-11-04, from an existing cache with no network interface. `train` output:
 
 ```text
 Trained on 80 English tickets (embedding and training 5.6 s).

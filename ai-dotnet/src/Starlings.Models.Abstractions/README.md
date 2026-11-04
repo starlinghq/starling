@@ -2,6 +2,8 @@
 
 Types the Starlings model packages share, with no ONNX Runtime dependency (it references only `Starlings.Acquisition`, which needs nothing beyond the BCL). Code that works with several models can depend on these instead of each package's own types. The API may still change.
 
+⭐ If this package is useful, [star Starling on GitHub](https://github.com/starlinghq/starling).
+
 | Type | What it is | Implemented by |
 | --- | --- | --- |
 | `CapabilityStatus` | `Supported`, `Unsupported`, `Experimental`, `Untested`. A missing entry never means supported. | the capability tables of `Starlings.Models.E5`, `Starlings.Models.EmbeddingGemma2`, `Starlings.Models.Gliner2` (`XCapabilities.Statuses`) |

@@ -7,6 +7,8 @@ dictionary (18,383 entries: Simplified and Traditional Chinese, English, Japanes
 `inference.yml`. All post-processing is owned C# (no OpenCV, no native dependency besides ONNX Runtime). This package
 ships the asset locks, not the weights; acquire them explicitly. The application adds the ONNX Runtime native package.
 
+⭐ If this package is useful, [star Starling on GitHub](https://github.com/starlinghq/starling).
+
 This library is **experimental** and not yet qualified. Its evidence is proposed: the model-pipeline route
 `ppocr-onnx-cpu-v1` (`model-pipeline/candidates/ppocrv5-mobile/`) compares it against PaddleOCR 3.7.0 on the Paddle
 inference engine on ten rendered images. No tolerances or reference fixtures are adopted, no registry manifest exists

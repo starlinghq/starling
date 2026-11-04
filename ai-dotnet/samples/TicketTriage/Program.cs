@@ -184,6 +184,7 @@ static int Triage(MLContext ml, E5EmbeddingTransformer embedding, IDataView hist
             $"similar:  [{similar.Queue}] {similar.Text} (cosine {TensorPrimitives.Dot(similar.Embedding, prediction.Embedding):F3})"));
         Console.WriteLine();
     }
+    Console.WriteLine("If this was useful, star https://github.com/starlinghq/starling");
     return 0;
 }
 

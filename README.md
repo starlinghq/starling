@@ -1,6 +1,6 @@
 # Starling
 
-**Run real AI models inside your .NET app, with no Python sidecar and no cloud API, and with published evidence that they give the same answers as the upstream reference.**
+**Local AI in .NET, with no Python sidecar and no API key.**
 
 [![NuGet](https://img.shields.io/nuget/v/Starlings.Models.E5.Extensions.AI?label=nuget&color=004880)](https://www.nuget.org/packages?q=Starlings.Models)
 [![CI](https://github.com/starlinghq/starling/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/starlinghq/starling/actions/workflows/ci.yml)
@@ -10,9 +10,71 @@
 
 ![Starling demo: multilingual semantic search with e5, then streaming chat with Qwen3.5 through IChatClient](docs/assets/demo.gif)
 
-Starling packages open models as ordinary NuGet libraries: embeddings, entity extraction, image and video search, and chat. They run on ONNX Runtime on CPU or CUDA and plug into [`Microsoft.Extensions.AI`](https://learn.microsoft.com/dotnet/ai/microsoft-extensions-ai) (`IEmbeddingGenerator`, `IChatClient`), so code you wrote against a hosted provider can switch to a local model with a one-line change. Each model is pinned to an exact upstream commit, verified by SHA-256, and checked against the original PyTorch/Python implementation before it is released.
+Starling packages open models as ordinary NuGet libraries: embeddings, entity extraction, image and video search, and chat. They run on ONNX Runtime on CPU or CUDA and plug into [`Microsoft.Extensions.AI`](https://learn.microsoft.com/dotnet/ai/microsoft-extensions-ai) (`IEmbeddingGenerator`, `IChatClient`), so code you wrote against a hosted provider can move to a local model by changing one line at the call site. Embeddings still need re-indexing, and a small local model is not a large hosted one. Each model is pinned to an exact upstream commit, verified by SHA-256, and checked against the original PyTorch/Python implementation before it is released.
+
+⭐ If this is useful, star the repository so other .NET developers can find it.
 
 **Using an AI coding agent?** Point it at [`llms.txt`](llms.txt) or install the [Starling skill](#use-it-with-your-ai-coding-agent).
+
+## What you can build
+
+Three complete programs in [`ai-dotnet/samples/`](ai-dotnet/samples). Each downloads its models once, then runs with the network off. The output below is from a run on Linux x64 CPU with no network interface, on the published 0.5.0 packages.
+
+### Ask a folder of docs
+
+[`LocalRag`](ai-dotnet/samples/LocalRag) answers from your own Markdown and text files, using EmbeddingGemma 2 and Qwen3.5 through `Microsoft.Extensions.AI`.
+
+```sh
+cd ai-dotnet/samples/LocalRag
+dotnet run -c Release -- download    # about 4 GB, once
+dotnet run -c Release -- ask --docs docs "When is the Willow Bookshop open?"
+```
+
+```text
+Indexed 4 paragraphs.
+[1] bookshop.md paragraph 1 (cosine 0.9016)
+[2] travel.txt paragraph 1 (cosine 0.7852)
+[3] bookshop.md paragraph 3 (cosine 0.7462)
+Question: When is the Willow Bookshop open?
+Answer: The Willow Bookshop is open Tuesday through Saturday from 10:00 to 18:00.
+```
+
+It's a small-folder demonstration: it re-embeds every paragraph on each question, and a 0.8B model can be wrong, so it prints its sources.
+
+### Triage tickets in any language
+
+[`TicketTriage`](ai-dotnet/samples/TicketTriage) trains a router on English tickets in an ordinary ML.NET pipeline, then routes German, Spanish, French and Japanese tickets with the same model. GLiNER2 pulls out the entities.
+
+```sh
+cd ai-dotnet/samples/TicketTriage
+dotnet run -c Release -- download    # about 1.3 GB, once
+dotnet run -c Release -- train
+dotnet run -c Release -- triage "Mon colis est arrivé ouvert et il manque un article."
+```
+
+```text
+ticket:   Mon colis est arrivé ouvert et il manque un article.
+queue:    shipping 56 %, then returns 27 %
+entities: product: colis
+similar:  [shipping] My order was split into two shipments and only one has arrived. (cosine 0.902)
+```
+
+### Search photos with text
+
+[`EmbeddingGemma2Search`](ai-dotnet/samples/EmbeddingGemma2Search) puts text and images in one embedding space, so a text query can rank a folder of photos.
+
+```sh
+cd ai-dotnet/samples/EmbeddingGemma2Search
+dotnet run -- download-images        # about 2.9 GB, once
+dotnet run -- images --images <your photos> "a photo of a cat"
+```
+
+```text
+image query: a photo of a cat
+  top: chelsea.png (0.7051); next: astronaut.png (0.5782)
+```
+
+Vision takes about 4.5 s per photo on a 12-thread CPU, so start with a small folder or use CUDA.
 
 ## Quickstart
 
@@ -78,7 +140,7 @@ await foreach (var update in chat.GetStreamingResponseAsync("In one sentence, wh
     Console.Write(update.Text);
 ```
 
-Ten complete programs are in [`ai-dotnet/samples/`](ai-dotnet/samples): semantic search with e5 (`E5Search`), with an in-memory `Microsoft.Extensions.VectorData` collection (`E5VectorStore`) and with a reranking second stage (`E5RerankSearch`, Experimental), text, image and video search with EmbeddingGemma 2 (`EmbeddingGemma2Search`), entity extraction with GLiNER2 (`Gliner2Ner`), streaming chat with Qwen3.5 (`QwenChat`), local question answering over your own files (`LocalRag`), multilingual ticket triage in an ML.NET pipeline (`TicketTriage`), and e5 search in the browser from Blazor WebAssembly (`E5BrowserSearch`) and from a JavaScript page (`E5BrowserJs`), both on the not yet published browser packages.
+Ten complete programs are in [`ai-dotnet/samples/`](ai-dotnet/samples): semantic search with e5 (`E5Search`), with an in-memory `Microsoft.Extensions.VectorData` collection (`E5VectorStore`) and with a reranking second stage (`E5RerankSearch`, Experimental), text, image and video search with EmbeddingGemma 2 (`EmbeddingGemma2Search`), entity extraction with GLiNER2 (`Gliner2Ner`), streaming chat with Qwen3.5 (`QwenChat`), local question answering over your own files (`LocalRag`), multilingual ticket triage in an ML.NET pipeline (`TicketTriage`), and e5 search in the browser from Blazor WebAssembly (`E5BrowserSearch`) and from a JavaScript page (`E5BrowserJs`), both on the Experimental browser packages.
 
 ## Models
 
@@ -104,7 +166,7 @@ Their candidate contracts are in [`model-pipeline/candidates/`](model-pipeline/c
 
 **Stable** means every release gate passed: provenance, numerical parity and task quality against the Python reference, a one-hour leak soak, benchmarks, a clean install from the packages, and integration. It also means regression runs continue: weekly on CPU, and on a GPU before every release for CUDA. Stable on CUDA means Linux x64 with an NVIDIA GeForce RTX 3090, where every CUDA gate and the per-release GPU run take place; other GPUs are untested. On Linux, GLiNER2 (CPU and CUDA) and EmbeddingGemma 2 video on CUDA also need `MALLOC_MMAP_THRESHOLD_=65536` in the process environment; see each package README. The [model catalog](docs/catalog/README.md) links each gate to its evidence, and the [compatibility matrix](docs/catalog/compatibility-matrix.md) lists each platform and provider.
 
-**Release status:** `0.3.0`, published on [nuget.org](https://www.nuget.org/packages?q=Starlings.Models) on 2026-10-19 ([GitHub release](https://github.com/starlinghq/starling/releases/tag/ai-v0.3.0)), adds the Experimental Kev and QwenChat packages, opt-in batching and the public stop-string matcher; every Stable profile of 0.2.0 is unchanged ([release record](docs/releases/ai-0.3.0.md)). It depends on `Starlings.Tokenizers` `0.3.0`; `main` pins `0.3.5` for the next release.
+**Release status:** `0.5.0`, published on [nuget.org](https://www.nuget.org/packages?q=Starlings.Models) on 2026-11-03 ([GitHub release](https://github.com/starlinghq/starling/releases/tag/ai-v0.5.0)), adds Qwen3.5 int4 and guided decoding on the hosted files, GLiNER2 text classification, reranking helpers and generated capability records; every Stable profile of `0.4.0` is unchanged ([release record](docs/releases/ai-0.5.0.md)). It depends on `Starlings.Tokenizers` `0.3.4`.
 
 ## How a model becomes a package
 

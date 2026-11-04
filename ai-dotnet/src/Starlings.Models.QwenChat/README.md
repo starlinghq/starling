@@ -2,6 +2,8 @@
 
 The model definitions of the experimental Qwen text chat profiles, without a runtime: `Qwen/Qwen3-0.6B` at `c1899de289a04d12100db370d81485cdf75e47ca` (rendered with `enable_thinking=false`) and `Qwen/Qwen2.5-0.5B-Instruct` at `7ae557604adf67be50417f59c2c2f167def9a775`. No ONNX Runtime dependency (only `Starlings.Generation.Abstractions`, `Starlings.Acquisition` for the checkpoint locks, and the owned tokenizer `Starlings.Tokenizers`). To run the models on ONNX Runtime GenAI, reference [`Starlings.Models.QwenChat.OnnxGenAI`](https://github.com/starlinghq/starling/blob/main/ai-dotnet/src/Starlings.Models.QwenChat.OnnxGenAI/README.md), which brings this package. Experimental; the API may still change.
 
+⭐ If this package is useful, [star Starling on GitHub](https://github.com/starlinghq/starling).
+
 - `QwenChatTemplate.Render(checkpoint, messages, tools)`: the pinned templates rendered in C# for system, user, assistant and tool messages, tool definitions and assistant tool calls (tool calling experimental; multimodal input rejected). A `QwenChatProfile` of the runtime package converts implicitly to its checkpoint, so `Render(profile, ...)` works as before. `QwenChatTemplate.For(checkpoint)` (or `checkpoint.ChatTemplate`) is the same renderer behind `IChatTemplate`.
 - `QwenChatToolCallParser`: the templates' JSON tool-call form, whole or streamed; it also implements `IToolCallParser`.
 - `QwenChatMessage`, `QwenChatTool`, `QwenChatToolCall`, `QwenChatOptions` (with `ToGenerationOptions()`), `QwenChatPrompt`; conversions to and from `ChatTurn`, `ToolDefinition` and `ToolCall`.

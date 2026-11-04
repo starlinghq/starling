@@ -3,6 +3,8 @@
 > [!IMPORTANT]
 > **Model license: LFM Open License v1.0, not MIT or Apache-2.0.** The LFM3 weights, tokenizer and chat template are Liquid AI's. Commercial use is licensed **only to a legal entity with annual revenue below USD 10 million** (section 5). Above that threshold, LFM3 needs a separate commercial license from [Liquid AI](https://www.liquid.ai). Downloading the weights through this package means you accept the license. The full text is `LICENSE.txt` in this package and [on the Hub](https://huggingface.co/LiquidAI/LFM3-1.7B/blob/40ebe0aa6662c9d40389c2f5d565b6a2c6aebacd/LICENSE). NuGet asks you to accept it when you install the package.
 
+⭐ If this package is useful, [star Starling on GitHub](https://github.com/starlinghq/starling).
+
 Text generation with `LiquidAI/LFM3-1.7B` on ONNX Runtime, through Liquid's own ONNX export (`LiquidAI/LFM3-1.7B-ONNX` at `c680759afee1ce8310c90d6c621f4558200dee77`). It includes the LFM3 chat template for text turns and a managed greedy decode loop over the export's step graph, with its convolution and attention caches. Prompts are tokenized by the owned tokenizer (`Starlings.Tokenizers`, profile `lfm3-bpe-chat`). The package ships the asset lock, not the weights: acquire them explicitly. The application adds the ONNX Runtime native package.
 
 This library is **experimental**: admitted at Experimental (`model-pipeline/admissions/lfm3.md`, model request #217), with development evidence and no release gate.

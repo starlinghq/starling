@@ -2,6 +2,8 @@
 
 The contract of ONNX Runtime graph interventions: a profile that names one original ONNX graph and adds a low-rank directional projection (or, with schema version 2, a directional addition) at chosen residual-stream sites, the per-request strengths, and the manifest a graph compiler writes for the derived graph, which may carry several profiles with one strength vector. No ONNX Runtime or model dependency (it references only `Starlings.Models.Abstractions` for `CapabilityStatus`).
 
+⭐ If this package is useful, [star Starling on GitHub](https://github.com/starlinghq/starling).
+
 This library is **experimental** and source only. V1 evidence uses synthetic random orthonormal directions only; no behavioural profile ships or has been evaluated. The library ships the mechanism. Deciding which callers may apply which profile is the host application's job.
 
 - `InterventionProfile`: `profile.json` (schema version 1, or 2 for the `directional_addition` operator; `SchemaVersion` keeps the document's version). Id, `base_model_sha256` (the SHA-256 of the base `model.onnx` as the package's asset lock records it), operator, sites. Strict parsing: unknown, missing or duplicate properties, unknown schema versions, operators, targets and dtypes are rejected. `Serialize()` writes the canonical form.

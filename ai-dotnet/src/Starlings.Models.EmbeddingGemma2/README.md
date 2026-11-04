@@ -2,6 +2,8 @@
 
 Embeddings from [`google/embeddinggemma-2`](https://huggingface.co/google/embeddinggemma-2) at revision `914f7f89142e33e77833254d9c9b90c3cef7303b`, on ONNX Runtime 1.30.0, in-process and offline after an explicit download. The package is versioned 0.x, so the API may still change between minor versions; maturity is per profile (below).
 
+⭐ If this package is useful, [star Starling on GitHub](https://github.com/starlinghq/starling).
+
 - **Text** (`EmbeddingGemma2TextEmbedder`, `EmbeddingGemma2Encoder`): owned tokenizer or token ids, on the released text graph. The text encoder rejects the ids of the media placeholder and boundary tokens (`<|image|>`, `<|audio|>`, `<|video|>`, `<|image>`, `<image|>`, `<|audio>`, `<audio|>`).
 - **Images** (`EmbeddingGemma2MultimodalEmbedder`): an image alone, or text and images interleaved, from **already-decoded RGB** (`EmbeddingGemma2Image`), default budget of 280 soft tokens per image. See [Images](#images).
 - **Videos** (`EmbeddingGemma2MultimodalEmbedder`, `EmbeddingGemma2Video`): a video alone, or text, images and videos interleaved, from **already-decoded RGB frames**, at the checkpoint's settings (1 frame per second, at most 32 frames, 140 soft tokens per frame, no timestamps). Audio is not supported. See [Videos](#videos).

@@ -2,6 +2,8 @@
 
 Kev 1.0 decision models in-process on ONNX Runtime: one document (the *state*) and typed questions about it in, a calibrated probability per option out, in one prefill pass without generating text. Two checkpoints, both **Experimental**:
 
+⭐ If this package is useful, [star Starling on GitHub](https://github.com/starlinghq/starling).
+
 | Profile | Checkpoint | Base | Bundle (hosted) |
 | --- | --- | --- | --- |
 | `kev-0.8b/onnx-fp32-cpu` | [`jaredpalmer/kev-0.8b`](https://huggingface.co/jaredpalmer/kev-0.8b) at `9a45d25eb2ab761841196625383fa1dff0e56c1e` | `Qwen/Qwen3.5-0.8B-Base` at `dc7cdfe2…` | 3.1 GB, [`Starlinghq/kev-0.8b-onnx`](https://huggingface.co/Starlinghq/kev-0.8b-onnx) at `8a9fe017…` |

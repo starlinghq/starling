@@ -3,6 +3,8 @@
 Experimental. The package is on nuget.org from release 0.4.0 (`docs/releases/ai-0.4.0.md`); keep every `Starlings.*`
 package at the same version. The API may still change.
 
+⭐ If this package is useful, [star Starling on GitHub](https://github.com/starlinghq/starling).
+
 <!-- catalog:maturity profiles=all-minilm-l6-v2/*,bge-small-en-v1.5/*,bge-base-en-v1.5/*,bge-m3/*,ms-marco-minilm-l6-v2/*,bge-reranker-v2-m3/*,nomic-embed-text-v1.5/*,paraphrase-multilingual-minilm-l12-v2/* -->
 Maturity is per profile, generated from the registry manifests by `model-pipeline catalog` (do not edit this table by hand). Gates, evidence and capabilities per profile: the [model catalog](https://github.com/starlinghq/starling/blob/main/docs/catalog/README.md).
 

@@ -2,6 +2,8 @@
 
 **Experimental.** [Qwen/Qwen3-Embedding-0.6B](https://huggingface.co/Qwen/Qwen3-Embedding-0.6B) text embeddings and [Qwen/Qwen3-Reranker-0.6B](https://huggingface.co/Qwen/Qwen3-Reranker-0.6B) query-document reranking on ONNX Runtime CPU (fp32), with owned tokenization from `Starlings.Tokenizers` (profiles `qwen3-bpe-embedding` and `qwen3-bpe-chat`). Both checkpoints are a Qwen3 decoder used non-autoregressively (hidden 1024, 28 layers); design: starlinghq/starling#144.
 
+⭐ If this package is useful, [star Starling on GitHub](https://github.com/starlinghq/starling).
+
 The graphs are hosted publicly on Hugging Face (`Starlinghq/qwen3-embedding-0.6b-onnx`, `Starlinghq/qwen3-reranker-0.6b-onnx`), pinned by commit, size and SHA-256. Nothing here is Preview or Stable.
 
 <!-- catalog:maturity profiles=qwen3-embedding-0.6b/*,qwen3-reranker-0.6b/* -->

@@ -2,6 +2,8 @@
 
 [ML.NET](https://learn.microsoft.com/dotnet/machine-learning/) estimator and transformer over the multilingual-e5-small embedder in `Starlings.Models.E5`: a text column becomes a fixed-size `Vector<Single, 384>` embedding column (L2-normalized) and, optionally, an `Int32` token-count column. Same tokenizer, encoder and numbers as the typed API. The API may still change.
 
+⭐ If this package is useful, [star Starling on GitHub](https://github.com/starlinghq/starling).
+
 ## Maturity
 
 <!-- catalog:maturity profiles=multilingual-e5-small/onnx-fp32-cpu,multilingual-e5-small/onnx-fp32-cuda -->

@@ -2,6 +2,8 @@
 
 English entity extraction with [`fastino/gliner2-base-v1`](https://huggingface.co/fastino/gliner2-base-v1) at revision `f9634218e53580c56edf0de97ca1a7d3f1c2354e` (GLiNER2 2.0.0, source `55656fbf`), on ONNX Runtime 1.30.0, in-process and offline after an explicit acquisition. You name the entity labels; the model returns labelled spans with offsets and confidences. The package is versioned 0.x, so the API may still change between minor versions; maturity is per profile (below).
 
+⭐ If this package is useful, [star Starling on GitHub](https://github.com/starlinghq/starling).
+
 - GLiNER2's text handling is ported with Python semantics (normalization, the regular-expression word splitter, `str.lower()`), and the schema prefix is encoded with the owned tokenizer `Starlings.Tokenizers` (profile `gliner2-base-v1-unigram`). No Microsoft.ML.Tokenizers, no native tokenizer, no Python.
 - One ONNX graph (token ids and routing positions to count and span logits); GLiNER2's count gate, threshold, overlap suppression and result order in C#.
 - The package ships the asset lock (sizes and SHA-256), not the 838 MB of model files. Acquisition is an explicit call; inference never downloads.

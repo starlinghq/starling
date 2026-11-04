@@ -2,6 +2,8 @@
 
 **Experimental.** A Microsoft.Extensions.AI `IEmbeddingGenerator<string, Embedding<float>>` over `Qwen3TextEmbedder` from [Starlings.Models.Qwen3Embedding](https://github.com/starlinghq/starling/tree/main/ai-dotnet/src/Starlings.Models.Qwen3Embedding): same tokenizer, same graph, same numbers. Read that package's README for the profile, how to build the graphs (they are not hosted yet) and the capability statuses.
 
+⭐ If this package is useful, [star Starling on GitHub](https://github.com/starlinghq/starling).
+
 ```csharp
 using Microsoft.Extensions.AI;
 using Starlings.Models.Qwen3Embedding.Extensions.AI;

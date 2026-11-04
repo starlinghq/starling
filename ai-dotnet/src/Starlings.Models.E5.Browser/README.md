@@ -2,6 +2,8 @@
 
 `intfloat/multilingual-e5-small` (revision `614241f6`) sentence embeddings **in the browser**: Blazor WebAssembly or any other .NET `browser-wasm` app, on [onnxruntime-web](https://onnxruntime.ai/docs/tutorials/web/) through `Starlings.Runtime.OnnxWeb`. Text is tokenized by the owned tokenizer (`Starlings.Tokenizers`), and padding, mean pooling and L2 normalization are the same code as `Starlings.Models.E5`. Only the graph runs on a different backend. The API is asynchronous, because onnxruntime-web is, and may still change.
 
+⭐ If this package is useful, [star Starling on GitHub](https://github.com/starlinghq/starling).
+
 ## Maturity
 
 <!-- catalog:maturity profiles=multilingual-e5-small/onnx-*-wasm,multilingual-e5-small/onnx-*-webgpu -->

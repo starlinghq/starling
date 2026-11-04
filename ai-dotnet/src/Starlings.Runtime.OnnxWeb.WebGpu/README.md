@@ -2,6 +2,8 @@
 
 The voluntary WebGPU adapter of `Starlings.Runtime.OnnxWeb`. It ships onnxruntime-web 1.30.0's WebGPU-capable bundle (`ort.webgpu.min.mjs` and its asyncify binary, 26.8 MB, about 4 MB brotli) as static web assets, and `OnnxWebGpuBundle.WebGpu` to initialize with. No core package references it; reference it only if you want WebGPU.
 
+⭐ If this package is useful, [star Starling on GitHub](https://github.com/starlinghq/starling).
+
 ## Maturity
 
 <!-- catalog:maturity profiles=multilingual-e5-small/onnx-*-webgpu -->
