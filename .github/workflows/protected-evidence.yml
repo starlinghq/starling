@@ -14,7 +14,7 @@ permissions:
 jobs:
   protected-evidence:
     name: protected evidence changes
-    runs-on: ${{ github.event.pull_request.head.repo.fork && 'ubuntu-latest' || fromJSON('["self-hosted", "omarchy"]') }}
+    runs-on: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository && 'ubuntu-latest' || fromJSON('["self-hosted", "omarchy"]') }}
     steps:
       - uses: actions/checkout@v5
         with:
