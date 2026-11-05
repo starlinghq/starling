@@ -6,7 +6,7 @@ Multilingual semantic search that runs entirely in the browser. It's a standalon
 
 The app does three things:
 - **Loads the model once.** Both graphs come from the Hugging Face Hub by default, and you can host int8-embed yourself. It is checked against its pinned SHA-256 and kept in the browser's Cache Storage, so later visits load from the cache.
-- **Embeds a 28-passage corpus** in 16 languages with the `passage: ` prefix.
+- **Embeds a 49-passage corpus** in 16 languages with the `passage: ` prefix.
 - **Ranks passages for a query** embedded with `query: `, by cosine, in any of those languages.
 
 ![The sample after a search](../../../docs/evidence/browser-e5-package-2026-10-23/sample-screenshot.png)

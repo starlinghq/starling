@@ -33,6 +33,29 @@ public static class Corpus
         ("hi", "योग शरीर और मन दोनों को स्वस्थ रखने में मदद करता है।"),
         ("ru", "Транссибирская магистраль соединяет Москву с Владивостоком и считается самой длинной железной дорогой в мире."),
         ("tr", "İstanbul, Avrupa ve Asya kıtalarını birbirine bağlayan tarihi bir şehirdir."),
+
+        // Each example query below has several answers, so it finds the same fact in more than one language.
+        ("en", "Soak rice for about thirty minutes before cooking so the grains cook evenly."),
+        ("es", "Deja el arroz en remojo unos treinta minutos antes de cocinarlo."),
+        ("ko", "쌀은 밥을 짓기 전에 약 30분 동안 물에 불려 두는 것이 좋습니다."),
+        ("de", "Bücher können Sie von Montag bis Freitag zwischen neun und achtzehn Uhr in der Bibliothek ausleihen."),
+        ("en", "You can borrow books from the library on weekdays between nine and six."),
+        ("fr", "Vous pouvez emprunter des livres à la bibliothèque en semaine, de neuf heures à dix-huit heures."),
+        ("fr", "La photosynthèse permet aux plantes de transformer la lumière du soleil, l'eau et le dioxyde de carbone en sucre et en oxygène."),
+        ("es", "La fotosíntesis permite a las plantas convertir la luz solar, el agua y el dióxido de carbono en azúcar y oxígeno."),
+        ("de", "Bei der Photosynthese wandeln Pflanzen Sonnenlicht, Wasser und Kohlendioxid in Zucker und Sauerstoff um."),
+        ("en", "The high-speed train from Madrid to Barcelona takes about two and a half hours."),
+        ("fr", "Le train à grande vitesse relie Madrid à Barcelone en deux heures et demie environ."),
+        ("de", "Der Hochgeschwindigkeitszug von Madrid nach Barcelona braucht etwa zweieinhalb Stunden."),
+        ("en", "A traditional pasta carbonara is made with eggs, cheese and cured pork, without any cream."),
+        ("fr", "Les vraies pâtes à la carbonara se préparent avec des œufs, du fromage et du guanciale, sans crème."),
+        ("es", "La pasta carbonara auténtica lleva huevo, queso y guanciale, y no necesita nata."),
+        ("en", "Earthquakes happen when tectonic plates suddenly release built-up energy."),
+        ("ja", "地震は、プレートにたまったエネルギーが急に解放されることで起こります。"),
+        ("it", "I terremoti avvengono quando le placche tettoniche rilasciano improvvisamente energia."),
+        ("en", "On clear days, Mount Fuji is visible from Tokyo."),
+        ("zh", "天气晴朗时，从东京可以看到富士山。"),
+        ("ko", "맑은 날에는 도쿄에서 후지산이 보입니다."),
     ];
 
     /// <summary>

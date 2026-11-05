@@ -189,7 +189,7 @@
         try
         {
             string query = _query;
-            (_hits, _queryTime) = await Engine.SearchAsync(query);
+            (_hits, _queryTime) = await Engine.SearchAsync(query, top: 3);
             _hitsQuery = query;
         }
         catch (Exception ex)
