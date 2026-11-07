@@ -1,0 +1,30 @@
+--- <local>/pod-at-tag.orig.sh	2026-11-04 12:11:19.086051372 -0800
++++ <local>/run-at-tag.sh	2026-11-04 12:12:00.742259465 -0800
+@@ -26,8 +26,8 @@
+ SHA="${1:?commit sha}"
+ OUT="${2:?out dir}"
+ SOAK_DURATION="${3:-10m}"
+-W=/workspace
+-CI=/root/ci
++W=<local>/ws
++CI=<local>/ci
+ REPO=$CI/starling
+ B=$CI/build
+ V=$CI/venvs
+@@ -88,6 +88,7 @@
+     echo " none"
+ }
+ read -r QUOTA_CPUS QUOTA_SOURCE <<<"$(cpu_quota)"
++[[ $QUOTA_CPUS == none ]] && { QUOTA_CPUS=; QUOTA_SOURCE=none; }
+ AFFINITY_CPUS="$(nproc)"
+ REF_THREADS_CAP=16 # when no quota is readable: a fixed cap, never the host's 128 cores
+ if [[ -n $QUOTA_CPUS ]]; then
+@@ -222,7 +223,7 @@
+ build() {  # build <log name> <dotnet build args...>
+     local name=$1
+     shift
+-    if dotnet build "$@" -c Release -v q -nologo -p:RestoreLockedMode=true >"$OUT/build-$name.log" 2>&1; then :; else
++    if dotnet build "$@" -m:2 -c Release -v q -nologo -p:RestoreLockedMode=true >"$OUT/build-$name.log" 2>&1; then :; else
+         BUILD_OK=0
+         log "build $name failed (build-$name.log)"
+         return 1

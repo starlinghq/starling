@@ -1,0 +1,40 @@
+diff --git i/tools/release-gates.sh w/tools/release-gates.sh
+index b573a62..e31774b 100755
+--- i/tools/release-gates.sh
++++ w/tools/release-gates.sh
+@@ -47,6 +47,8 @@ while [[ $# -gt 0 ]]; do
+     esac
+ done
+ [[ -n "$out" && -n "$work" ]] || usage
++fetch_ffmpeg() { :; }
++
+ case "$profile" in
+     qwen3.5-0.8b/ortgenai-fp32x-cpu) ;;
+     *) [[ -n "$refpy" ]] || usage ;;
+@@ -71,7 +73,7 @@ python3 -I tools/qualification.py lock "$MAN" "$work/snapshot.lock.json" >/dev/n
+ SNAP="$STARLING_MODELS/$(python3 -I tools/qualification.py snapshot "$work/snapshot.lock.json")"
+ [[ -d "$SNAP" ]] || { echo "error: snapshot $SNAP not acquired" >&2; exit 2; }
+ 
+-dotnet build ai-dotnet/tools/Starlings.Fidelity.Tool --configuration Release --nologo -v quiet
++dotnet build ai-dotnet/tools/Starlings.Fidelity.Tool -m:2 --configuration Release --nologo -v quiet
+ TOOL=(dotnet ai-dotnet/tools/Starlings.Fidelity.Tool/bin/Release/net10.0/Starlings.Fidelity.Tool.dll)
+ 
+ results=()
+@@ -159,6 +161,8 @@ fetch_ffmpeg() {
+         tar xf "$2"' ffmpeg9 "$1/ffmpeg9" "$a"
+ }
+ 
++fetch_ffmpeg() { :; }
++
+ case "$profile" in
+     multilingual-e5-small/onnx-fp32-cpu)
+         REL=$P/multilingual-e5-small/release/onnx-fp32-release
+@@ -268,7 +272,7 @@ PY
+         TOK=$P/qwen3.5-0.8b/release/tokenizer-release/tokenizer.jsonl
+         RP=$P/qwen3.5-0.8b/release/release-prompts
+         DS=$P/qwen3.5-0.8b/release/task-quality/gsm8k-test-v1/prompts.jsonl
+-        dotnet build ai-dotnet/tools/Starlings.Qwen35.Fidelity --configuration Release --nologo -v quiet
++        dotnet build ai-dotnet/tools/Starlings.Qwen35.Fidelity -m:2 --configuration Release --nologo -v quiet
+         QWEN=(dotnet ai-dotnet/tools/Starlings.Qwen35.Fidelity/bin/Release/net10.0/Starlings.Qwen35.Fidelity.dll)
+         # The full step-0 reference vectors are outside Git (hosted, #71); the evaluator checks each against the
+         # fixture's step0_sha256.

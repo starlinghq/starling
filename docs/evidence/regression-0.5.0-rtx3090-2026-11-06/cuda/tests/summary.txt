@@ -1,0 +1,20 @@
+<local>/out-0.5.0/tests-E5.log:Test run summary: Passed!
+<local>/out-0.5.0/tests-E5.log:  total: 11
+<local>/out-0.5.0/tests-E5.log:  failed: 0
+<local>/out-0.5.0/tests-E5.log:  succeeded: 10
+<local>/out-0.5.0/tests-E5.log:  skipped: 1
+<local>/out-0.5.0/tests-EmbeddingGemma2.log:Test run summary: Passed!
+<local>/out-0.5.0/tests-EmbeddingGemma2.log:  total: 29
+<local>/out-0.5.0/tests-EmbeddingGemma2.log:  failed: 0
+<local>/out-0.5.0/tests-EmbeddingGemma2.log:  succeeded: 21
+<local>/out-0.5.0/tests-EmbeddingGemma2.log:  skipped: 8
+<local>/out-0.5.0/tests-Gliner2.log:Test run summary: Passed!
+<local>/out-0.5.0/tests-Gliner2.log:  total: 8
+<local>/out-0.5.0/tests-Gliner2.log:  failed: 0
+<local>/out-0.5.0/tests-Gliner2.log:  succeeded: 8
+<local>/out-0.5.0/tests-Gliner2.log:  skipped: 0
+<local>/out-0.5.0/tests-Qwen35.log:Test run summary: Passed!
+<local>/out-0.5.0/tests-Qwen35.log:  total: 116
+<local>/out-0.5.0/tests-Qwen35.log:  failed: 0
+<local>/out-0.5.0/tests-Qwen35.log:  succeeded: 116
+<local>/out-0.5.0/tests-Qwen35.log:  skipped: 0

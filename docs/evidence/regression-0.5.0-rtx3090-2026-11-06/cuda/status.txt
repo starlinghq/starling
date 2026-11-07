@@ -1,0 +1,79 @@
+2026-11-04T20:12:00Z pod run start: commit ce5225854fa7c007fc1cfb9adb50e665e6c1f611, soak 10m
+2026-11-04T20:12:00Z CPU: quota none (none), affinity 12, online 0-11; Python reference stages: 12 threads (no CPU quota readable: fixed cap 16, affinity 12)
+2026-11-04T20:12:01Z GPU NVIDIA GeForce RTX 3090, driver 615.78.08
+2026-11-04T20:12:01Z volume: 1029 GB free after removing stale ci-cache entries (volume-cleanup.txt)
+2026-11-04T20:12:01Z checkout
+2026-11-04T20:12:13Z reference environments
+2026-11-04T20:12:17Z builds
+2026-11-04T20:13:10Z build qwen35-fidelity failed (build-qwen35-fidelity.log)
+2026-11-04T20:13:15Z build soak failed (build-soak.log)
+2026-11-04T20:13:24Z acquire and verify models
+2026-11-04T20:16:02Z result all models-acquired-and-verified: passed
+2026-11-04T20:16:02Z CUDA test projects
+2026-11-04T20:16:46Z result Starlings.Models.E5.Tests.Cuda tests (total: 11, failed: 0, succeeded: 10, skipped: 1): passed
+2026-11-04T20:17:06Z result Starlings.Models.Gliner2.Tests.Cuda tests (total: 8, failed: 0, succeeded: 8, skipped: 0): passed
+2026-11-04T20:20:25Z result Starlings.Models.EmbeddingGemma2.Tests.Cuda tests (total: 29, failed: 0, succeeded: 21, skipped: 8): passed
+2026-11-04T20:27:34Z result Starlings.Models.Qwen35.Tests.Cuda tests (total: 116, failed: 0, succeeded: 116, skipped: 0): passed
+2026-11-04T20:27:34Z release inputs: preparing in the background (cache <workspace>/ci-cache)
+2026-11-04T20:28:25Z result all builds: failed
+2026-11-04T20:28:25Z release gates: e5, GLiNER2, EmbeddingGemma 2 text
+2026-11-04T20:28:26Z multilingual-e5-small/onnx-fp32-cuda g1-holdout-producer: exit 0, 1 s (CPU quota none; throttled 0 periods, 0 s; loadavg 7.96 13.17 23.06)
+2026-11-04T20:28:27Z result multilingual-e5-small/onnx-fp32-cuda g1-tokenizer-holdout G1: passed
+2026-11-04T20:28:36Z multilingual-e5-small/onnx-fp32-cuda dotnet-stages: exit 0, 9 s (CPU quota none; throttled 0 periods, 0 s; loadavg 7.97 13.00 22.90)
+2026-11-04T20:29:22Z multilingual-e5-small/onnx-fp32-cuda python-stage2: exit 0, 46 s (CPU quota none, OMP_NUM_THREADS 12; throttled 0 periods, 0 s; loadavg 8.51 12.46 22.25)
+2026-11-04T20:29:33Z result multilingual-e5-small/onnx-fp32-cuda g1-g2-staged G1,G2: passed
+2026-11-04T20:29:47Z multilingual-e5-small/onnx-fp32-cuda g3-producer: exit 0, 14 s (CPU quota none; throttled 0 periods, 0 s; loadavg 7.88 11.99 21.83)
+2026-11-04T20:30:02Z result multilingual-e5-small/onnx-fp32-cuda g3-retrieval G3: passed
+2026-11-04T20:30:02Z gliner2-base-v1/onnx-fp32-cuda g1-tokenizer-producer: exit 0, 0 s (CPU quota none; throttled 0 periods, 0 s; loadavg 7.86 11.79 21.61)
+2026-11-04T20:30:03Z result gliner2-base-v1/onnx-fp32-cuda g1-tokenizer-release G1: passed
+2026-11-04T20:30:09Z gliner2-base-v1/onnx-fp32-cuda dotnet-stages: exit 0, 6 s (CPU quota none; throttled 0 periods, 0 s; loadavg 8.10 11.72 21.48)
+2026-11-04T20:30:43Z gliner2-base-v1/onnx-fp32-cuda python-stage2: exit 0, 34 s (CPU quota none, OMP_NUM_THREADS 4; throttled 0 periods, 0 s; loadavg 8.41 11.42 21.07)
+2026-11-04T20:30:45Z result gliner2-base-v1/onnx-fp32-cuda g1-g2-extraction-release G1,G2: passed
+2026-11-04T20:30:53Z gliner2-base-v1/onnx-fp32-cuda g3-producer: exit 0, 8 s (CPU quota none; throttled 0 periods, 0 s; loadavg 8.34 11.30 20.93)
+2026-11-04T20:30:53Z result gliner2-base-v1/onnx-fp32-cuda g3-ner G3: passed
+2026-11-04T20:30:54Z embeddinggemma-2/onnx-fp32-cuda g1-holdout-producer: exit 0, 1 s (CPU quota none; throttled 0 periods, 0 s; loadavg 8.15 11.21 20.85)
+2026-11-04T20:30:55Z result embeddinggemma-2/onnx-fp32-cuda g1-tokenizer-holdout G1: passed
+2026-11-04T20:31:34Z embeddinggemma-2/onnx-fp32-cuda dotnet-stages: exit 0, 39 s (CPU quota none; throttled 0 periods, 0 s; loadavg 8.65 10.95 20.35)
+2026-11-04T20:34:22Z embeddinggemma-2/onnx-fp32-cuda python-stage2: exit 0, 168 s (CPU quota none, OMP_NUM_THREADS 12; throttled 0 periods, 0 s; loadavg 10.07 10.83 18.76)
+2026-11-04T20:36:43Z result embeddinggemma-2/onnx-fp32-cuda g2-release G1,G2: passed
+2026-11-04T20:38:38Z embeddinggemma-2/onnx-fp32-cuda g3-producer: exit 0, 115 s (CPU quota none; throttled 0 periods, 0 s; loadavg 12.62 12.53 17.61)
+2026-11-04T20:39:06Z result embeddinggemma-2/onnx-fp32-cuda g3-retrieval G3: passed
+2026-11-04T20:39:06Z release gates: Qwen3.5
+2026-11-04T20:39:07Z qwen3.5-0.8b/ortgenai-fp32x-cuda g1-tokenizer-producer: exit 0, 1 s (CPU quota none; throttled 0 periods, 0 s; loadavg 9.85 11.87 17.23)
+2026-11-04T20:39:07Z result qwen3.5-0.8b/ortgenai-fp32x-cuda g1-tokenizer-release G1: passed
+2026-11-04T20:39:43Z qwen3.5-0.8b/ortgenai-fp32x-cuda release-prompts: exit 0, 36 s (CPU quota none; throttled 0 periods, 0 s; loadavg 9.16 11.46 16.89)
+2026-11-04T20:39:46Z result qwen3.5-0.8b/ortgenai-fp32x-cuda g1-g2-release-prompts G1,G2: passed
+2026-11-04T20:46:08Z qwen3.5-0.8b/ortgenai-fp32x-cuda g3-producer: exit 0, 382 s (CPU quota none; throttled 0 periods, 0 s; loadavg 29.69 17.60 17.16)
+2026-11-04T20:46:09Z result qwen3.5-0.8b/ortgenai-fp32x-cuda g3-gsm8k G3: passed
+2026-11-04T20:46:10Z qwen3.5-0.8b/ortgenai-fp16x-cuda g1-tokenizer-producer: exit 0, 1 s (CPU quota none; throttled 0 periods, 0 s; loadavg 29.79 17.82 17.24)
+2026-11-04T20:46:11Z result qwen3.5-0.8b/ortgenai-fp16x-cuda g1-tokenizer-release G1: passed
+2026-11-04T20:46:44Z qwen3.5-0.8b/ortgenai-fp16x-cuda release-prompts: exit 0, 33 s (CPU quota none; throttled 0 periods, 0 s; loadavg 54.50 25.33 19.77)
+2026-11-04T20:46:48Z result qwen3.5-0.8b/ortgenai-fp16x-cuda g1-g2-release-prompts G1,G2: passed
+2026-11-04T20:49:51Z qwen3.5-0.8b/ortgenai-fp16x-cuda g3-producer: exit 0, 183 s (CPU quota none; throttled 0 periods, 0 s; loadavg 14.35 20.51 18.99)
+2026-11-04T20:49:52Z result qwen3.5-0.8b/ortgenai-fp16x-cuda g3-gsm8k G3: passed
+2026-11-04T20:49:52Z release gates: EmbeddingGemma 2 image and video (waiting for media)
+2026-11-04T20:52:31Z embeddinggemma-2/image-fp32-cuda dotnet-stages: exit 0, 49 s (CPU quota none; throttled 0 periods, 0 s; loadavg 9.23 15.20 17.17)
+2026-11-04T20:52:36Z result embeddinggemma-2/image-fp32-cuda g1-g2-image-release G1,G2: passed
+2026-11-04T20:54:37Z embeddinggemma-2/image-fp32-cuda g3-producer: exit 0, 121 s (CPU quota none; throttled 0 periods, 0 s; loadavg 18.04 17.12 17.66)
+2026-11-04T20:54:40Z result embeddinggemma-2/image-fp32-cuda g3-retrieval G3: passed
+2026-11-04T20:55:53Z embeddinggemma-2/video-fp32-cuda dotnet-stages: exit 0, 73 s (CPU quota none; throttled 0 periods, 0 s; loadavg 13.93 16.07 17.25)
+2026-11-04T20:56:07Z result embeddinggemma-2/video-fp32-cuda g1-g2-video-release G1,G2: passed
+2026-11-04T20:59:34Z embeddinggemma-2/video-fp32-cuda g3-producer: exit 0, 207 s (CPU quota none; throttled 0 periods, 0 s; loadavg 49.95 31.51 22.97)
+2026-11-04T20:59:35Z result embeddinggemma-2/video-fp32-cuda g3-retrieval G3: passed
+2026-11-04T20:59:35Z soaks (10m each), transparent_hugepage: always [madvise] never
+2026-11-04T21:09:39Z multilingual-e5-small/onnx-fp32-cuda soak: smoke (214 cycles, no wrong output or error); growth verdict not binding: PASS: every gating settled series plateaus after warmup; no wrong output or error (note: unloaded private (address space
+2026-11-04T21:09:39Z result multilingual-e5-small/onnx-fp32-cuda soak 10m smoke: passed
+2026-11-04T21:19:49Z gliner2-base-v1/onnx-fp32-cuda soak: smoke (129 cycles, no wrong output or error); growth verdict not binding: PASS: every gating settled series plateaus after warmup; no wrong output or error
+2026-11-04T21:19:49Z result gliner2-base-v1/onnx-fp32-cuda soak 10m smoke MALLOC_MMAP_THRESHOLD_=65536: passed
+2026-11-04T21:30:05Z embeddinggemma-2/onnx-fp32-cuda soak: smoke (87 cycles, no wrong output or error); growth verdict not binding: PASS: every gating settled series plateaus after warmup; no wrong output or error
+2026-11-04T21:30:05Z result embeddinggemma-2/onnx-fp32-cuda soak 10m smoke: passed
+2026-11-04T21:40:29Z embeddinggemma-2/image-fp32-cuda soak: smoke (73 cycles, no wrong output or error); growth verdict not binding: PASS: every gating settled series plateaus after warmup; no wrong output or error
+2026-11-04T21:40:29Z result embeddinggemma-2/image-fp32-cuda soak 10m smoke: passed
+2026-11-04T21:51:06Z embeddinggemma-2/video-fp32-cuda soak: smoke (53 cycles, no wrong output or error); growth verdict not binding: PASS: every gating settled series plateaus after warmup; no wrong output or error
+2026-11-04T21:51:06Z result embeddinggemma-2/video-fp32-cuda soak 10m smoke MALLOC_MMAP_THRESHOLD_=65536: passed
+2026-11-04T22:01:45Z qwen3.5-0.8b/ortgenai-fp32x-cuda soak: smoke (69 cycles, no wrong output or error); growth verdict not binding: FAIL: loaded working_set grows 36 MB (277 MB/h); loaded rss_anon grows 35 MB (267 MB/h)
+2026-11-04T22:01:45Z result qwen3.5-0.8b/ortgenai-fp32x-cuda soak 10m smoke: passed
+2026-11-04T22:12:02Z qwen3.5-0.8b/ortgenai-fp16x-cuda soak: smoke (122 cycles, no wrong output or error); growth verdict not binding: PASS: every gating settled series plateaus after warmup; no wrong output or error
+2026-11-04T22:12:02Z result qwen3.5-0.8b/ortgenai-fp16x-cuda soak 10m smoke: passed
+2026-11-04T22:12:02Z repository dirty paths after the run: 0
+2026-11-04T22:12:02Z POD RUN END exit 1

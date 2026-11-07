@@ -1,0 +1,141 @@
+diff --git i/ai-dotnet/tools/Starlings.Qwen35.Fidelity/packages.cuda.lock.json w/ai-dotnet/tools/Starlings.Qwen35.Fidelity/packages.cuda.lock.json
+index 3013c80..d56eebb 100644
+--- i/ai-dotnet/tools/Starlings.Qwen35.Fidelity/packages.cuda.lock.json
++++ w/ai-dotnet/tools/Starlings.Qwen35.Fidelity/packages.cuda.lock.json
+@@ -49,24 +49,31 @@
+         "type": "Project",
+         "dependencies": {
+           "Microsoft.ML.OnnxRuntimeGenAI.Managed": "[0.17.1, 0.17.1]",
+-          "Starlings.Generation.Abstractions": "[0.4.0, )",
++          "Starlings.Generation.Abstractions": "[0.5.0, )",
+           "Starlings.Tokenizers": "[0.3.4, 0.3.4]"
+         }
+       },
++      "starlings.models.abstractions": {
++        "type": "Project",
++        "dependencies": {
++          "Starlings.Acquisition": "[0.5.0, )"
++        }
++      },
+       "starlings.models.qwen35": {
+         "type": "Project",
+         "dependencies": {
+-          "Starlings.Acquisition": "[0.4.0, )",
+-          "Starlings.Generation.Abstractions": "[0.4.0, )",
++          "Starlings.Acquisition": "[0.5.0, )",
++          "Starlings.Generation.Abstractions": "[0.5.0, )",
+           "Starlings.Tokenizers": "[0.3.4, 0.3.4]"
+         }
+       },
+       "starlings.models.qwen35.onnxgenai": {
+         "type": "Project",
+         "dependencies": {
+-          "Starlings.Acquisition": "[0.4.0, )",
+-          "Starlings.Generation.OnnxGenAI": "[0.4.0, )",
+-          "Starlings.Models.Qwen35": "[0.4.0, )",
++          "Starlings.Acquisition": "[0.5.0, )",
++          "Starlings.Generation.OnnxGenAI": "[0.5.0, )",
++          "Starlings.Models.Abstractions": "[0.5.0, )",
++          "Starlings.Models.Qwen35": "[0.5.0, )",
+           "Starlings.Tokenizers": "[0.3.4, 0.3.4]"
+         }
+       },
+diff --git i/ai-dotnet/tools/Starlings.Soak.Tool/packages.cuda.lock.json w/ai-dotnet/tools/Starlings.Soak.Tool/packages.cuda.lock.json
+index a4e62a9..a4c6375 100644
+--- i/ai-dotnet/tools/Starlings.Soak.Tool/packages.cuda.lock.json
++++ w/ai-dotnet/tools/Starlings.Soak.Tool/packages.cuda.lock.json
+@@ -49,72 +49,75 @@
+         "type": "Project",
+         "dependencies": {
+           "Microsoft.ML.OnnxRuntimeGenAI.Managed": "[0.17.1, 0.17.1]",
+-          "Starlings.Generation.Abstractions": "[0.4.0, )",
++          "Starlings.Generation.Abstractions": "[0.5.0, )",
+           "Starlings.Tokenizers": "[0.3.4, 0.3.4]"
+         }
+       },
+       "starlings.models.abstractions": {
+         "type": "Project",
+         "dependencies": {
+-          "Starlings.Acquisition": "[0.4.0, )"
++          "Starlings.Acquisition": "[0.5.0, )"
+         }
+       },
+       "starlings.models.e5": {
+         "type": "Project",
+         "dependencies": {
+-          "Starlings.Acquisition": "[0.4.0, )",
+-          "Starlings.Models.Abstractions": "[0.4.0, )",
+-          "Starlings.Runtime.Onnx": "[0.4.0, )",
++          "Starlings.Acquisition": "[0.5.0, )",
++          "Starlings.Models.Abstractions": "[0.5.0, )",
++          "Starlings.Runtime.Onnx": "[0.5.0, )",
+           "Starlings.Tokenizers": "[0.3.4, 0.3.4]"
+         }
+       },
+       "starlings.models.embeddinggemma2": {
+         "type": "Project",
+         "dependencies": {
+-          "Starlings.Acquisition": "[0.4.0, )",
+-          "Starlings.Models.Abstractions": "[0.4.0, )",
+-          "Starlings.Runtime.Onnx": "[0.4.0, )",
++          "Starlings.Acquisition": "[0.5.0, )",
++          "Starlings.Models.Abstractions": "[0.5.0, )",
++          "Starlings.Runtime.Onnx": "[0.5.0, )",
+           "Starlings.Tokenizers": "[0.3.4, 0.3.4]"
+         }
+       },
+       "starlings.models.gliner2": {
+         "type": "Project",
+         "dependencies": {
+-          "Starlings.Acquisition": "[0.4.0, )",
+-          "Starlings.Models.Abstractions": "[0.4.0, )",
+-          "Starlings.Runtime.Onnx": "[0.4.0, )",
++          "Starlings.Acquisition": "[0.5.0, )",
++          "Starlings.Models.Abstractions": "[0.5.0, )",
++          "Starlings.Runtime.Onnx": "[0.5.0, )",
+           "Starlings.Tokenizers": "[0.3.4, 0.3.4]"
+         }
+       },
+       "starlings.models.kev": {
+         "type": "Project",
+         "dependencies": {
++          "Starlings.Acquisition": "[0.5.0, )",
+           "Starlings.Tokenizers": "[0.3.4, 0.3.4]"
+         }
+       },
+       "starlings.models.kev.onnx": {
+         "type": "Project",
+         "dependencies": {
+-          "Starlings.Acquisition": "[0.4.0, )",
+-          "Starlings.Models.Kev": "[0.4.0, )",
+-          "Starlings.Runtime.Onnx": "[0.4.0, )",
++          "Starlings.Acquisition": "[0.5.0, )",
++          "Starlings.Models.Abstractions": "[0.5.0, )",
++          "Starlings.Models.Kev": "[0.5.0, )",
++          "Starlings.Runtime.Onnx": "[0.5.0, )",
+           "Starlings.Tokenizers": "[0.3.4, 0.3.4]"
+         }
+       },
+       "starlings.models.qwen35": {
+         "type": "Project",
+         "dependencies": {
+-          "Starlings.Acquisition": "[0.4.0, )",
+-          "Starlings.Generation.Abstractions": "[0.4.0, )",
++          "Starlings.Acquisition": "[0.5.0, )",
++          "Starlings.Generation.Abstractions": "[0.5.0, )",
+           "Starlings.Tokenizers": "[0.3.4, 0.3.4]"
+         }
+       },
+       "starlings.models.qwen35.onnxgenai": {
+         "type": "Project",
+         "dependencies": {
+-          "Starlings.Acquisition": "[0.4.0, )",
+-          "Starlings.Generation.OnnxGenAI": "[0.4.0, )",
+-          "Starlings.Models.Qwen35": "[0.4.0, )",
++          "Starlings.Acquisition": "[0.5.0, )",
++          "Starlings.Generation.OnnxGenAI": "[0.5.0, )",
++          "Starlings.Models.Abstractions": "[0.5.0, )",
++          "Starlings.Models.Qwen35": "[0.5.0, )",
+           "Starlings.Tokenizers": "[0.3.4, 0.3.4]"
+         }
+       },
