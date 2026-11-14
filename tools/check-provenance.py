@@ -150,14 +150,20 @@ def check(path: pathlib.Path) -> list[str]:
             problems.append(f"origin.base {base_url}@{base_rev} does not resolve anonymously: {why}")
     base_prefix = "base/"
     checked = 0
+    # Every entry's digest format is validated even when its fetch is skipped
+    # (a not-hosted asset has no URL, but its pin is still part of the lock).
+    for f in origin["files"]:
+        sha = str(f["sha256"])
+        if not SHA256.match(sha):
+            problems.append(f"{f['path']}: sha256 {sha} is not a SHA-256")
     fetchable = [f for f in origin["files"] if f["path"] not in unhosted]
     for f in fetchable:
         fpath, sha, size = f["path"], str(f["sha256"]), int(f["size"])
         if not SHA256.match(sha):
-            problems.append(f"{fpath}: sha256 {sha} is not a SHA-256")
             continue
         if fpath in sources:
             url = sources[fpath]["source"]
+            why = verify_file(url, sha, size)
         else:
             # The pin lives wherever the anonymous Hub serves these exact bytes: the
             # upstream weights repository first, then the recorded Starling hosting
@@ -170,9 +176,11 @@ def check(path: pathlib.Path) -> list[str]:
                 url = f"{base_url.rstrip('/')}/resolve/{base_rev}/{fpath[len(base_prefix):]}"
             else:
                 url = base + fpath
-            if (why := verify_file(url, sha, size)) is not None:
-                url = hosting["source_base"] + fpath if hosting else url
-        if (why := verify_file(url, sha, size)) is not None:
+            why = verify_file(url, sha, size)
+            if why is not None and hosting:
+                url = hosting["source_base"] + fpath
+                why = verify_file(url, sha, size)
+        if why is not None:
             problems.append(f"{fpath}: {url}: {why}")
         else:
             checked += 1
