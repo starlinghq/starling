@@ -21,6 +21,12 @@ Recipe (``docs/m0/generation-backend-check.md`` sections 2 and 9, kickoff "Gener
 5. Hash every output and compare with the pinned digests below; exit 1 on any difference. The builder output is
    used unmodified: runtime settings (pad id, provider, TF32) are overlays applied by the C# runtime, never edits.
 
+The builder stamps model.onnx with producer_version "<version>+<commit>", and it takes the commit from
+`git rev-parse HEAD` run from <environment>/lib before it falls back to the wheel's own commit. An environment inside
+any Git work tree therefore stamps that work tree's HEAD into the graph, so the same inputs give different bytes per
+checkout (issue #294: the hosted int4 graph carried a Starling commit, `0.17.1+c98b9fc`). The build hides Git from the
+builder and refuses any other stamp, so the graph no longer depends on where the environment lives.
+
 Run in the environment of ``requirements.txt`` (torch 2.14.1, transformers 5.18.0, onnxruntime-genai 0.17.1,
 onnxruntime 1.30.0, onnx 1.23.1). Standard library plus the builder module. Example::
 
@@ -145,7 +151,22 @@ def make_float32_copy(snapshot: Path, dst: Path) -> str:
     return sha256_file(dst / "config.json")
 
 
-def run_builder(src: Path, out: Path, cache: Path, precision: str, ep: str, log: Path) -> None:
+def builder_environment(scratch: Path) -> dict[str, str]:
+    """A missing Git directory makes the builder's commit probe fail, so it stamps the wheel's commit."""
+    return {**os.environ, "GIT_DIR": str(scratch / "no-git-directory")}
+
+
+def verify_producer_version(graph: Path) -> None:
+    """Refuse a graph whose stamp is not the pinned builder's: the stamp is part of the graph's digest."""
+    import onnx
+
+    expected = f"{BUILDER_VERSION}+{BUILDER_SOURCE_COMMIT[:7]}"
+    actual = onnx.load(graph, load_external_data=False).producer_version
+    if actual != expected:
+        raise ValueError(f"builder stamped producer_version {actual!r}, expected {expected!r}")
+
+
+def run_builder(src: Path, out: Path, cache: Path, precision: str, ep: str, log: Path, scratch: Path) -> None:
     cmd = [
         sys.executable,
         "-m",
@@ -165,7 +186,7 @@ def run_builder(src: Path, out: Path, cache: Path, precision: str, ep: str, log:
     ]
     print("+", " ".join(cmd), flush=True)
     with log.open("w", encoding="utf-8") as f:
-        subprocess.run(cmd, check=True, stdout=f, stderr=subprocess.STDOUT)  # noqa: S603 - fixed argument list
+        subprocess.run(cmd, check=True, stdout=f, stderr=subprocess.STDOUT, env=builder_environment(scratch))  # noqa: S603 - fixed argument list
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -206,7 +227,8 @@ def main(argv: list[str] | None = None) -> int:
         build_dir = work / f"build-{variant}"
         if build_dir.exists():
             shutil.rmtree(build_dir)
-        run_builder(f32, build_dir, work / "cache", spec["precision"], spec["ep"], work / f"build-{variant}.log")
+        run_builder(f32, build_dir, work / "cache", spec["precision"], spec["ep"], work / f"build-{variant}.log", work)
+        verify_producer_version(build_dir / "model.onnx")
         dest = args.out / f"ortgenai-{variant}"
         dest.mkdir(parents=True, exist_ok=True)
         for name in GRAPH_FILES:

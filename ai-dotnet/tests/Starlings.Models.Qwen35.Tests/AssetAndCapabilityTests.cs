@@ -36,10 +36,10 @@ public sealed class AssetAndCapabilityTests
         var hub = Qwen35Checkpoint.Lock.GetFile("tokenizer_config.json");
         Assert.Equal((hub.Size, hub.Sha256), (config.Size, config.Sha256));
 
-        // Every file from the hosting repository, pinned by commit (r2), at its snapshot path.
-        Assert.Equal("22477cdb8a2dc71f4c98d2e6af0a046ec0d74f45", Qwen35ModelAssets.HostingRevision);
+        // Every file from the hosting repository, pinned by commit (r3), at its snapshot path.
+        Assert.Equal("4651f7e6fd8c0421c4e248b5c82a1d7f25374177", Qwen35ModelAssets.HostingRevision);
         Assert.All(l.Files, f => Assert.Equal(
-            $"https://huggingface.co/Starlinghq/qwen3.5-0.8b-ortgenai/resolve/22477cdb8a2dc71f4c98d2e6af0a046ec0d74f45/{f.Path}",
+            $"https://huggingface.co/Starlinghq/qwen3.5-0.8b-ortgenai/resolve/4651f7e6fd8c0421c4e248b5c82a1d7f25374177/{f.Path}",
             f.Source!.AbsoluteUri));
         Assert.True(Qwen35ModelAssets.IsHosted(variant));
         Assert.False(Qwen35ModelAssets.HostingIsPrivate);
@@ -53,9 +53,10 @@ public sealed class AssetAndCapabilityTests
     {
         var l = Qwen35ModelAssets.GetLock(Qwen35Variant.Int4);
         Assert.Equal("qwen3.5-0.8b-ortgenai-int4", l.Name);
-        // The weights are byte-identical to the M0 int4 CPU build (docs/m0/generation-backend-check.md section 2).
+        // The weights are byte-identical to the M0 int4 CPU build (docs/m0/generation-backend-check.md section 2);
+        // the graph's stamp is the wheel's own since hosting r3 (issue #294).
         Assert.Equal("709e08797497f609547f7aef1387cfb35bd0deb3f4039acf001f0680b23f9745", l.GetFile("ortgenai-int4/model.onnx.data").Sha256);
-        Assert.Equal("a41f341f106a1bb5b50eb67ca824cd9c324705141d88b027de0888f140e39cf7", l.GetFile("ortgenai-int4/model.onnx").Sha256);
+        Assert.Equal("766e49f3c58727e8cfd0865cfc0053a84998136f36395668e363c532193e7952", l.GetFile("ortgenai-int4/model.onnx").Sha256);
     }
 
     [Fact]
