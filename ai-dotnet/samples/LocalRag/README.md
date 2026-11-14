@@ -14,6 +14,10 @@ dotnet run -c Release --no-build -- ask --docs docs "When is the Willow Bookshop
 
 The program recursively reads `.md` and `.txt` files. Markdown files split on ATX headings (`#` through `######`) so chunks do not span sections, then on blank lines within each section; fenced code blocks are never treated as headings. Non-Markdown files split on blank lines only. Each nonempty chunk is embedded using `EmbeddingGemma2Prompt.Document`. It uses `EmbeddingGemma2Prompt.Query` for the question, ranks by cosine similarity, and sends the top three paragraphs (or all if fewer exist) as numbered context. A single embedding generator handles both prompts. All embedding and chat inference uses Microsoft.Extensions.AI interfaces; Starling APIs configure and acquire the models. Both native packages are needed: ONNX Runtime for embeddings and ONNX Runtime GenAI for chat.
 
+## Index cache
+
+The first `ask` run embeds every chunk and writes the embeddings to `<docs>/.localrag-index.json`, next to the corpus. The file records a fingerprint of the corpus (a SHA-256 over each file's relative path, size, and last write time, in a stable order) plus the chunk texts and their vectors. On later runs the index is reloaded instead of re-embedding whenever the fingerprint matches and the recomputed chunks are identical; it prints `Loaded cached index ...` in that case, or `Embedded ... and saved the index ...` when it rebuilt. Any change to the set of files, their sizes, their timestamps, or their contents (which changes the chunks) invalidates the index and it is rebuilt from scratch. Delete `.localrag-index.json` to force a rebuild, and keep it out of version control — it is machine-generated cache data.
+
 Actual stdout on Linux x64 CPU, .NET SDK 10.0.100 and Starlings 0.5.0, on 2026-11-04, using the included documents, an existing cache and no network interface:
 
 ```sh
@@ -31,6 +35,6 @@ Answer: The Willow Bookshop is open Tuesday through Saturday from 10:00 to 18:00
 If this was useful, star https://github.com/starlinghq/starling
 ```
 
-This is a small-folder demonstration: it re-embeds every paragraph on each question and keeps the text and scores in memory. It does not parse Markdown structure or persist an index. Long paragraphs are not silently truncated: the embedding model rejects inputs over its 8,192-token limit, and Qwen rejects a combined context/question/output beyond its context limit. Split long paragraphs or use a smaller document collection if those limits are reached. Generation is greedy with at most 256 output tokens. Scores and generated wording can vary across hardware.
+This is a small-folder demonstration: it keeps the text and scores in memory and re-embeds the corpus only when the persisted index is stale (see [Index cache](#index-cache)). Long paragraphs are not silently truncated: the embedding model rejects inputs over its 8,192-token limit, and Qwen rejects a combined context/question/output beyond its context limit. Split long paragraphs or use a smaller document collection if those limits are reached. Generation is greedy with at most 256 output tokens. Scores and generated wording can vary across hardware.
 
 The prompt requests source citations and an admission when context is insufficient; the small chat model may omit citations (as in this run) or give incorrect answers. Check the printed source paragraphs before relying on an answer. Invalid arguments return exit code 2; missing/empty document folders, missing models and inference errors return 1. Platform support is described in the [compatibility matrix](../../../docs/catalog/compatibility-matrix.md); this sample run covers Linux x64 CPU only.

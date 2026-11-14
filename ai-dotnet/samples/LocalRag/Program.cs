@@ -1,6 +1,8 @@
 using System.Globalization;
 using System.Numerics.Tensors;
+using System.Security.Cryptography;
 using System.Text;
+using System.Text.Json;
 using System.Text.RegularExpressions;
 using Microsoft.Extensions.AI;
 using Starlings.Acquisition;
@@ -83,21 +85,43 @@ async Task<int> RunAsync()
     using IEmbeddingGenerator<string, Embedding<float>> embedder = EmbeddingGemma2EmbeddingGenerator.Create(
         EmbeddingGemma2ModelAssets.OpenLocal(acquisition),
         new EmbeddingGemma2EmbeddingGeneratorOptions { Prompt = EmbeddingGemma2Prompt.Query });
-    var documentOptions = new EmbeddingGenerationOptions
+
+    // Persist the paragraph embeddings next to the corpus; reuse them while the corpus is unchanged.
+    string indexPath = Path.Combine(docs, ".localrag-index.json");
+    string fingerprint = ComputeFingerprint(docs);
+    List<float[]>? vectors = null;
+    if (await ReadIndexAsync(indexPath) is { } cached
+        && cached.Fingerprint == fingerprint
+        && SameParagraphs(cached.Paragraphs, paragraphs))
     {
-        AdditionalProperties = new()
+        vectors = cached.Vectors;
+        Console.WriteLine($"Loaded cached index with {paragraphs.Count} paragraphs from {indexPath}.");
+    }
+    if (vectors is null)
+    {
+        var documentOptions = new EmbeddingGenerationOptions
         {
-            [EmbeddingGemma2EmbeddingGenerator.PromptPropertyName] = EmbeddingGemma2Prompt.Document,
-        },
-    };
+            AdditionalProperties = new()
+            {
+                [EmbeddingGemma2EmbeddingGenerator.PromptPropertyName] = EmbeddingGemma2Prompt.Document,
+            },
+        };
+        vectors = new List<float[]>(paragraphs.Count);
+        foreach (Paragraph paragraph in paragraphs)
+        {
+            // Process one paragraph at a time; retain scores, not a corpus-sized matrix of embeddings.
+            ReadOnlyMemory<float> vector = await embedder.GenerateVectorAsync(paragraph.Text, documentOptions);
+            vectors.Add(vector.ToArray());
+        }
+        await File.WriteAllTextAsync(indexPath, JsonSerializer.Serialize(new PersistedIndex(1, fingerprint,
+            paragraphs.Select(p => new PersistedParagraph(p.File, p.Number, p.Text)).ToArray(), vectors)));
+        Console.WriteLine($"Embedded {paragraphs.Count} paragraphs and saved the index to {indexPath}.");
+    }
+
     ReadOnlyMemory<float> queryVector = await embedder.GenerateVectorAsync(question);
     var ranked = new List<(Paragraph Paragraph, float Score)>();
-    foreach (Paragraph paragraph in paragraphs)
-    {
-        // Process one paragraph at a time; retain scores, not a corpus-sized matrix of embeddings.
-        ReadOnlyMemory<float> vector = await embedder.GenerateVectorAsync(paragraph.Text, documentOptions);
-        ranked.Add((paragraph, TensorPrimitives.CosineSimilarity(queryVector.Span, vector.Span)));
-    }
+    for (int i = 0; i < paragraphs.Count; i++)
+        ranked.Add((paragraphs[i], TensorPrimitives.CosineSimilarity(queryVector.Span, vectors[i].AsSpan())));
     var top = ranked.OrderByDescending(p => p.Score).Take(3).ToArray();
     Console.WriteLine($"Indexed {paragraphs.Count} paragraphs.");
     for (int i = 0; i < top.Length; i++)
@@ -157,4 +181,47 @@ static IEnumerable<string> SplitBlocks(string text, bool isMarkdown)
     return blocks;
 }
 
+// SHA-256 over the relative path, length, and last write time (UTC) of every corpus file,
+// in a stable order. Any change to the set of files or their contents changes the fingerprint.
+static string ComputeFingerprint(string docs)
+{
+    using var sha = SHA256.Create();
+    foreach (string file in Directory.EnumerateFiles(docs, "*", SearchOption.AllDirectories)
+        .Where(f => !Path.GetFileName(f).Equals(".localrag-index.json", StringComparison.OrdinalIgnoreCase))
+        .Order(StringComparer.Ordinal))
+    {
+        string relative = Path.GetRelativePath(docs, file).Replace('\\', '/');
+        var info = new FileInfo(file);
+        byte[] bytes = Encoding.UTF8.GetBytes(
+            $"{relative}\n{info.Length}\n{info.LastWriteTimeUtc.Ticks}\n");
+        sha.TransformBlock(bytes, 0, bytes.Length, null, 0);
+    }
+    sha.TransformFinalBlock([], 0, 0);
+    return Convert.ToHexString(sha.Hash ?? []);
+}
+
+static async Task<PersistedIndex?> ReadIndexAsync(string path)
+{
+    try
+    {
+        return await JsonSerializer.DeserializeAsync<PersistedIndex>(File.OpenRead(path));
+    }
+    catch (Exception ex) when (ex is IOException or JsonException or NotSupportedException)
+    {
+        return null;
+    }
+}
+
+static bool SameParagraphs(IEnumerable<PersistedParagraph> cached, IReadOnlyList<Paragraph> paragraphs)
+{
+    if (cached.TryGetNonEnumeratedCount(out int count) && count != paragraphs.Count)
+        return false;
+    return cached.Select(p => (p.File, p.Number, p.Text))
+        .SequenceEqual(paragraphs.Select(p => (p.File, p.Number, p.Text)));
+}
+
 internal sealed record Paragraph(string File, int Number, string Text);
+
+internal sealed record PersistedParagraph(string File, int Number, string Text);
+
+internal sealed record PersistedIndex(int Version, string Fingerprint, PersistedParagraph[] Paragraphs, List<float[]> Vectors);
