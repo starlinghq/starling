@@ -89,11 +89,12 @@ EXPECTED = {
         ),
     },
     # model.onnx.data is byte-identical to M0's "int4x, -e cpu" build (docs/m0/generation-backend-check.md section 2).
-    # model.onnx (the graph without weights) reproduces across builds in this environment but differs from the M0
-    # digest 766e49f3...; docs/evidence/qwen35-int4-cpu-2026-11-01/README.md. genai_config.json equals fp32x's.
+    # model.onnx carries the M0 digest 766e49f3... since hosting revision r3 (issue #294): the Git-hidden builder stamps
+    # the wheel's commit, so the rebuild reproduces the M0 bytes exactly; the r2 hosting digest a41f341f... was the
+    # checkout-HEAD stamp. docs/evidence/qwen35-int4-cpu-2026-11-01/README.md. genai_config.json equals fp32x's.
     "int4": {
         "ortgenai-int4/genai_config.json": ("e7e1957b2544fdad6170a9cc81cbbb1b88c8819b7016a609170ad7cbebba81ba", 1935),
-        "ortgenai-int4/model.onnx": ("a41f341f106a1bb5b50eb67ca824cd9c324705141d88b027de0888f140e39cf7", 364388),
+        "ortgenai-int4/model.onnx": ("766e49f3c58727e8cfd0865cfc0053a84998136f36395668e363c532193e7952", 364388),
         "ortgenai-int4/model.onnx.data": (
             "709e08797497f609547f7aef1387cfb35bd0deb3f4039acf001f0680b23f9745",
             541523968,
