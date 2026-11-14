@@ -22,6 +22,15 @@ A sibling failure after the build: `OnnxProviderUnavailableException` — the ap
 asks for `OnnxExecutionProvider.Cuda`. There is no silent fallback; rebuild with the GPU package
 (`dotnet publish -c Release -r linux-x64 -p:UseCuda=true` in a dual-provider project).
 
+The opposite first-run failure: no native package at all. The build passes with only the `STARLINGS001` warning
+("This project references Starlings.Runtime.Onnx (through a Starlings model package) but no ONNX Runtime native
+package, so creating a session will throw OnnxRuntimeUnavailableException. Add exactly one: Microsoft.ML.OnnxRuntime
+1.30.0 (CPU) or Microsoft.ML.OnnxRuntime.Gpu.Linux 1.30.0 (CUDA)."), and the first model creation throws
+`OnnxRuntimeUnavailableException`. The fix is what the warning says: add the native package the graph is missing
+(`Microsoft.ML.OnnxRuntime` 1.30.0 for CPU, `Microsoft.ML.OnnxRuntime.Gpu.Linux` 1.30.0 for CUDA on Linux x64), and
+for the GenAI runtime the matching `Microsoft.ML.OnnxRuntimeGenAI`/`.Cuda` package — `STARLINGS003` warns when
+`Starlings.Generation.OnnxGenAI` is in the graph without one.
+
 ## The first run fails with a download error
 
 `DownloadAsync` on `XModelAssets` (for example `E5ModelAssets.DownloadAsync()`) is the only member that uses the
@@ -41,8 +50,10 @@ What to know when it fails:
   another volume; `.partial` files of abandoned downloads can be removed with
   `ModelAssetStore.RemovePartialDownloads` or `Starlings.Acquisition.Tool`'s `clean` command.
 - Later runs need no network: `XModelAssets.OpenLocal(...)` verifies the cached files and returns the snapshot
-  offline. `Check`/`TryOpenLocal` report the same without exceptions, and `Starlings.Acquisition.Tool status`
-  lists missing and failing files.
+  offline. But an empty cache is an error, not a download: `OpenLocal` throws `ModelAssetMissingException` and
+  fetches nothing. Run `Starlings.Acquisition.Tool status` to list missing and failing files (or `Check`/
+  `TryOpenLocal` for the same without exceptions), then call `DownloadAsync` — the quickstart's first line —
+  before reopening locally.
 - Acquisitions of the same file serialize on a lock file, so two processes (or two threads) each waiting on the
   same model is normal: the second finds the verified file and does not download again.
 
@@ -65,8 +76,11 @@ The exception is the e5 contract: an input longer than `E5EncoderOptions.MaxSequ
 Input {index} has {n} tokens; the maximum is {options.MaxSequenceLength}. Truncate in the tokenizer.
 ```
 
-e5 is the only model that truncates instead of throwing: the reference implementation truncates to 512 tokens
-(`<s>`/`</s>` included), and Starlings matches it. `E5TextEmbedder.CountTokens(text)` counts without embedding and
+e5 is the only model that truncates instead of throwing, and only on one of its two layers: `E5TextEmbedder` with
+the default `E5Tokenizer` truncates text on the right to `MaxSequenceLength` (512, `<s>`/`</s>` included) before
+embedding, as the reference does. The encoder itself never truncates: a token-id sequence over its limit throws
+`InputTooLongException`, and any other `IEncoderTokenizer` must truncate to the same length itself.
+`E5TextEmbedder.CountTokens(text)` counts without embedding and
 `Validate(text)` reports whether a text would be truncated; `TextChunker` can split long documents into 512-token
 windows (pass the `"passage: "` prefix as `TextChunkerOptions.Prefix`).
 
