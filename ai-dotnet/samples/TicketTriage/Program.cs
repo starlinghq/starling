@@ -2,11 +2,14 @@
 //
 //   dotnet run -- download [--cache <dir>]                          explicit acquisition of e5 and GLiNER2 (network)
 //   dotnet run -- train    [--cache <dir>] [--model <zip>]          train on English tickets, evaluate per language
-//   dotnet run -- triage   [--cache <dir>] [--model <zip>] [text]   route new tickets with the saved classifier
+//   dotnet run -- triage   [--cache <dir>] [--model <zip>] [--json] [text]
+//                          route new tickets; --json prints one JSON object per ticket (README)
 //
 // train and triage load verified local files only and never download.
 using System.Globalization;
 using System.Numerics.Tensors;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using Microsoft.ML;
 using Microsoft.ML.Data;
 using Microsoft.ML.Trainers;
@@ -32,6 +35,7 @@ async Task<int> RunAsync()
 
     string? cache = null;
     string modelPath = "triage-model.zip";
+    bool json = false;
     var texts = new List<string>();
     for (int i = 1; i < args.Length; i++)
     {
@@ -42,6 +46,8 @@ async Task<int> RunAsync()
             if (args[i] == "--cache") cache = args[++i];
             else modelPath = args[++i];
         }
+        else if (args[i] == "--json")
+            json = true;
         else if (args[0] == "triage" && !args[i].StartsWith("--", StringComparison.Ordinal))
             texts.Add(args[i]);
         else
@@ -72,7 +78,7 @@ async Task<int> RunAsync()
 
     return args[0] == "train"
         ? Train(ml, embedding, history, LoadTickets(ml, Path.Combine(dataDir, "test.tsv")), modelPath)
-        : Triage(ml, embedding, history, modelPath, acquisition, texts);
+        : Triage(ml, embedding, history, modelPath, acquisition, texts, json);
 }
 
 static int Train(MLContext ml, E5EmbeddingTransformer embedding, IDataView train, IDataView test, string modelPath)
@@ -130,7 +136,7 @@ static int Train(MLContext ml, E5EmbeddingTransformer embedding, IDataView train
 }
 
 static int Triage(MLContext ml, E5EmbeddingTransformer embedding, IDataView history, string modelPath,
-    ModelAcquisitionOptions acquisition, List<string> texts)
+    ModelAcquisitionOptions acquisition, List<string> texts, bool json)
 {
     if (!File.Exists(modelPath))
         throw new FileNotFoundException($"No trained classifier at {modelPath}; run 'train' first.");
@@ -168,6 +174,7 @@ static int Triage(MLContext ml, E5EmbeddingTransformer embedding, IDataView hist
     // A ticket goes to a person when the two likeliest queues are close, not merely when the top score is low: with five
     // queues and 80 training tickets, a correct prediction can hold well under half of the probability.
     const float ReviewMargin = 0.15f;
+    var results = new List<TriageResult>();
     foreach (string text in texts)
     {
         Prediction prediction = engine.Predict(new Ticket { Text = text });
@@ -175,15 +182,40 @@ static int Triage(MLContext ml, E5EmbeddingTransformer embedding, IDataView hist
         float margin = prediction.Score[order[0]] - prediction.Score[order[1]];
         // Embeddings are L2-normalized, so the dot product is the cosine similarity.
         var similar = past.MaxBy(p => TensorPrimitives.Dot(p.Embedding, prediction.Embedding))!;
+        float similarity = TensorPrimitives.Dot(similar.Embedding, prediction.Embedding);
+        string[] extracted = prediction.Entities.Length == 0 ? [] : prediction.Entities;
+        results.Add(new TriageResult
+        {
+            Text = text,
+            Queue = prediction.PredictedQueue,
+            Score = prediction.Score[order[0]],
+            RunnerUpQueue = queues[order[1]],
+            RunnerUpScore = prediction.Score[order[1]],
+            NeedsHumanReview = margin < ReviewMargin,
+            Entities = extracted,
+            SimilarQueue = similar.Queue,
+            SimilarText = similar.Text,
+            Similarity = similarity,
+        });
+        if (json)
+        {
+            // One JSON object per ticket, ready for a caller to read line by line. Scores and the similarity
+            // are written with round-trippable precision; the text output's percentages round these numbers.
+            Console.WriteLine(JsonSerializer.Serialize(results[^1], TriageJsonContext.Default.TriageResult));
+            continue;
+        }
+
         Console.WriteLine($"ticket:   {text}");
         string review = margin < ReviewMargin ? "  -> needs human review" : "";
         Console.WriteLine(string.Create(CultureInfo.InvariantCulture,
             $"queue:    {prediction.PredictedQueue} {prediction.Score[order[0]]:P0}, then {queues[order[1]]} {prediction.Score[order[1]]:P0}{review}"));
-        Console.WriteLine($"entities: {(prediction.Entities.Length == 0 ? "(none)" : string.Join("; ", prediction.Entities))}");
+        Console.WriteLine($"entities: {(extracted.Length == 0 ? "(none)" : string.Join("; ", extracted))}");
         Console.WriteLine(string.Create(CultureInfo.InvariantCulture,
-            $"similar:  [{similar.Queue}] {similar.Text} (cosine {TensorPrimitives.Dot(similar.Embedding, prediction.Embedding):F3})"));
+            $"similar:  [{similar.Queue}] {similar.Text} (cosine {similarity:F3})"));
         Console.WriteLine();
     }
+    if (json)
+        return 0;
     Console.WriteLine("If this was useful, star https://github.com/starlinghq/starling");
     return 0;
 }
@@ -230,3 +262,22 @@ internal sealed class Prediction
     [VectorType(384)] public float[] Embedding { get; set; } = [];
     public string[] Entities { get; set; } = [];
 }
+
+// The machine-readable output of 'triage --json': the fields the human output prints, unchanged in meaning.
+// Documented in the sample README; shape changes would break callers, so add, never rename or remove.
+internal sealed class TriageResult
+{
+    public string Text { get; set; } = "";
+    public string Queue { get; set; } = "";
+    public float Score { get; set; }
+    public string RunnerUpQueue { get; set; } = "";
+    public float RunnerUpScore { get; set; }
+    public bool NeedsHumanReview { get; set; }
+    public string[] Entities { get; set; } = [];
+    public string SimilarQueue { get; set; } = "";
+    public string SimilarText { get; set; } = "";
+    public float Similarity { get; set; }
+}
+
+[JsonSerializable(typeof(TriageResult))]
+internal sealed partial class TriageJsonContext : JsonSerializerContext;
