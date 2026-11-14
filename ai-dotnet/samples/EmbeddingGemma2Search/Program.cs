@@ -18,6 +18,8 @@
 // never downloads anything. Deployments must adhere to the Gemma Prohibited Use Policy
 // (https://ai.google.dev/gemma/prohibited_use_policy).
 using System.Reflection;
+using System.Security.Cryptography;
+using System.Text.Json;
 using Starlings.Acquisition;
 using Starlings.Models.EmbeddingGemma2;
 using Starlings.Models.EmbeddingGemma2.Extensions.AI;
@@ -241,7 +243,7 @@ async Task<int> ToolBody()
         }
 
         Console.WriteLine($"images: {images.Count} decoded from {imageDirectory}; vision session providers {string.Join(",", embedder.VisionSession.Diagnostics.SessionProviders)}");
-        float[][] imageVectors = embedder.EmbedBatch([.. images.Select(i => i.Image)]);
+        float[][] imageVectors = EmbedImagesWithCache(embedder, images, imageDirectory);
         string[] queries = rest.Count > 0
             ? [.. rest]
             : ["a photo of a cat", "a cup of coffee", "a rocket launch", "portrait of an astronaut", "deep space full of galaxies"];
@@ -369,6 +371,49 @@ async Task<int> ToolBody()
         }
 
         return 0;
+    }
+
+    // Images are embedded through a small on-disk cache keyed by the file's SHA-256, so unchanged photos are
+    // never re-embedded between runs (vision takes about 4.5 s per photo on CPU). The cache lives next to the
+    // image folder; "cache" because the vectors are exact copies of what the embedder returns, keyed by content:
+    // deleting the file (or changing an image's bytes) simply embeds that image again.
+    static float[][] EmbedImagesWithCache(EmbeddingGemma2MultimodalEmbedder embedder,
+        List<(string Name, string Path, EmbeddingGemma2Image Image)> images, string imageDirectory)
+    {
+        string cachePath = Path.Combine(imageDirectory, "embeddings-cache.json");
+        var cache = File.Exists(cachePath)
+            ? JsonSerializer.Deserialize<Dictionary<string, float[]>>(File.ReadAllBytes(cachePath)) ?? []
+            : [];
+
+        var needed = new List<(int Index, string Key)>();
+        float[][] vectors = new float[images.Count][];
+        foreach (var (path, index) in images.Select((i, index) => (i.Path, index)))
+        {
+            string key = Convert.ToHexString(SHA256.HashData(File.ReadAllBytes(path)));
+            if (cache.TryGetValue(key, out float[]? vector) && vector.Length == EmbeddingGemma2Encoder.NativeDimension)
+            {
+                vectors[index] = vector;
+            }
+            else
+            {
+                needed.Add((index, key));
+            }
+        }
+
+        Console.WriteLine($"image cache: {images.Count - needed.Count} of {images.Count} vectors from {cachePath}; {needed.Count} to embed");
+        if (needed.Count > 0)
+        {
+            float[][] embedded = embedder.EmbedBatch([.. needed.Select(n => images[n.Index].Image)]);
+            for (int i = 0; i < needed.Count; i++)
+            {
+                vectors[needed[i].Index] = embedded[i];
+                cache[needed[i].Key] = embedded[i];
+            }
+
+            File.WriteAllBytes(cachePath, JsonSerializer.SerializeToUtf8Bytes(cache));
+        }
+
+        return vectors;
     }
 
     static (int Index, float Score)[] Rank(float[] query, float[][] documents) =>

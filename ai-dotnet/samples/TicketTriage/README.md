@@ -65,7 +65,7 @@ The `CustomMapping` shows that any local model can join a pipeline as a row-wise
 `Score`, `RunnerUpScore` and `Similarity` are round-trippable floats; the human output's percentages round them. An example line:
 
 ```json
-{"Text":"Hallo, meine Bestellung 40917 sollte am 12. Oktober ankommen, ist aber immer noch nicht da.","Queue":"shipping","Score":0.396,"RunnerUpQueue":"billing","RunnerUpScore":0.368,"NeedsHumanReview":true,"Entities":["order number: 40917","date: 12. Oktober"],"SimilarQueue":"shipping","SimilarText":"I need to change the delivery address for order 77140 before it ships.","Similarity":0.846}
+{"Text":"Hallo, meine Bestellung 40917 sollte am 12. Oktober ankommen, ist aber immer noch nicht da.","Queue":"shipping","Score":0.39675224,"RunnerUpQueue":"billing","RunnerUpScore":0.36792228,"NeedsHumanReview":true,"Entities":["order number: 40917","date: 12. Oktober"],"SimilarQueue":"shipping","SimilarText":"I need to change the delivery address for order 77140 before it ships.","Similarity":0.8463595}
 ```
 
 Parse it with `jq` (numbers on the same line come from the same prediction as the text output):
