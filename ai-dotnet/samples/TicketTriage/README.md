@@ -10,6 +10,7 @@ dotnet run -c Release --no-build -- download
 dotnet run -c Release --no-build -- train
 dotnet run -c Release --no-build -- triage
 dotnet run -c Release --no-build -- triage "Mon colis est arrivé ouvert et il manque un article."
+dotnet run -c Release --no-build -- triage --json
 ```
 
 `download` acquires and verifies the e5 (about 487 MB) and GLiNER2 (about 840 MB) assets. It is the only command that uses the network. `train` and `triage` load verified local files and fail rather than download. All commands accept `--cache <dir>`; otherwise they use `$STARLING_MODELS` or the user cache (`~/.cache/starlings/models` on Linux). `train` and `triage` accept `--model <zip>` (default `triage-model.zip` in the current directory). `StarlingsVersion` pins the published packages, and `packages.lock.json` records the dependency graph; verify it with `dotnet restore --locked-mode`. The sample uses `PackageReference`s only (`Starlings.Models.E5.MLNet` and `Starlings.Models.Gliner2` 0.5.0, `Microsoft.ML.OnnxRuntime` 1.30.0), no project references, and runs on CPU as written; it has no CUDA option.
@@ -43,6 +44,35 @@ The `CustomMapping` shows that any local model can join a pipeline as a row-wise
 - a request for human review when the two likeliest queues are within 15 points of each other;
 - the extracted entities;
 - the most similar past ticket, by cosine similarity of the same embeddings, as a link an agent could follow.
+
+## Machine-readable output (`triage --json`)
+
+`triage --json` prints the same results as one JSON object per line (JSONL, UTF-8, `System.Text.Json` source generation), so an existing .NET service can read it line by line. The default human output is unchanged. Each line has this shape (the keys, in order, are stable; new keys may appear, existing ones are never renamed or removed — treat unknown keys as ignorable):
+
+| Key | Type | Meaning |
+|---|---|---|
+| `Text` | string | the ticket text |
+| `Queue` | string | the predicted queue |
+| `Score` | number | the predicted queue's probability (0–1) |
+| `RunnerUpQueue` | string | the second-likeliest queue |
+| `RunnerUpScore` | number | the runner-up's probability (0–1) |
+| `NeedsHumanReview` | boolean | true when the two likeliest queues are within 15 points of each other |
+| `Entities` | string array | the GLiNER2 extractions, `"label: text"`; empty when there are none |
+| `SimilarQueue` | string | the queue of the most similar past ticket |
+| `SimilarText` | string | the text of the most similar past ticket |
+| `Similarity` | number | the cosine similarity to that past ticket |
+
+`Score`, `RunnerUpScore` and `Similarity` are round-trippable floats; the human output's percentages round them. An example line:
+
+```json
+{"Text":"Hallo, meine Bestellung 40917 sollte am 12. Oktober ankommen, ist aber immer noch nicht da.","Queue":"shipping","Score":0.39675224,"RunnerUpQueue":"billing","RunnerUpScore":0.36792228,"NeedsHumanReview":true,"Entities":["order number: 40917","date: 12. Oktober"],"SimilarQueue":"shipping","SimilarText":"I need to change the delivery address for order 77140 before it ships.","Similarity":0.8463595}
+```
+
+Parse it with `jq` (numbers on the same line come from the same prediction as the text output):
+
+```sh
+dotnet run -c Release --no-build -- triage --json | jq -r '[.Queue, (.Score * 100 | floor), .RunnerUpQueue] | @tsv'
+```
 
 ## A real run
 
