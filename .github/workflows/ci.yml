@@ -108,7 +108,7 @@ jobs:
       - name: dotnet new starling-rag template scaffolds and builds
         shell: bash
         run: |
-          dotnet new install ai-dotnet/templates/LocalRag
+          dotnet new install ai-dotnet/templates/LocalRag --force
           dir=$(mktemp -d)
           dotnet new starling-rag -o "$dir/rag" --no-restore
           dotnet build "$dir/rag" --configuration Release
