@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Numerics.Tensors;
+using System.Text;
 using System.Text.RegularExpressions;
 using Microsoft.Extensions.AI;
 using Starlings.Acquisition;
@@ -57,7 +58,9 @@ async Task<int> RunAsync()
     if (!Directory.Exists(docs))
         throw new DirectoryNotFoundException($"Document directory does not exist: {docs}");
 
-    // Blank lines (including CRLF and whitespace-only lines) delimit paragraphs. Keep source locations for citations.
+    // Markdown files split on ATX headings first, then blank lines within each section;
+    // other files split on blank lines (including CRLF and whitespace-only lines).
+    // Keep source locations for citations.
     var paragraphs = new List<Paragraph>();
     foreach (string file in Directory.EnumerateFiles(docs, "*", SearchOption.AllDirectories)
         .Where(f => Path.GetExtension(f).Equals(".md", StringComparison.OrdinalIgnoreCase)
@@ -65,8 +68,9 @@ async Task<int> RunAsync()
         .Order(StringComparer.Ordinal))
     {
         string text = (await File.ReadAllTextAsync(file)).ReplaceLineEndings("\n");
+        bool isMarkdown = Path.GetExtension(file).Equals(".md", StringComparison.OrdinalIgnoreCase);
         int index = 0;
-        foreach (string block in Regex.Split(text, @"\n(?:[^\S\n]*\n)+"))
+        foreach (string block in SplitBlocks(text, isMarkdown))
         {
             if (!string.IsNullOrWhiteSpace(block))
                 paragraphs.Add(new(Path.GetRelativePath(docs, file), ++index, block.Trim()));
@@ -125,6 +129,32 @@ static int Usage()
 {
     Console.Error.WriteLine("usage: LocalRag download [--cache <dir>] | ask --docs <dir> [--cache <dir>] \"question\"");
     return 2;
+}
+
+// ATX headings (1-6 leading '#') delimit Markdown sections; blank lines delimit paragraphs within
+// each section (or everywhere for non-Markdown text). Fenced code blocks are not heading boundaries.
+static IEnumerable<string> SplitBlocks(string text, bool isMarkdown)
+{
+    Regex blankLines = new(@"\n(?:[^\S\n]*\n)+");
+    if (!isMarkdown)
+        return blankLines.Split(text);
+
+    var blocks = new List<string>();
+    var section = new StringBuilder();
+    bool inFence = false;
+    foreach (string line in text.Split('\n'))
+    {
+        if (Regex.IsMatch(line, @"^\s*(```|~~~)"))
+            inFence = !inFence;
+        if (!inFence && Regex.IsMatch(line, @"^#{1,6}(?:\s|$)"))
+        {
+            blocks.AddRange(blankLines.Split(section.ToString()));
+            section.Clear();
+        }
+        section.Append(line).Append('\n');
+    }
+    blocks.AddRange(blankLines.Split(section.ToString()));
+    return blocks;
 }
 
 internal sealed record Paragraph(string File, int Number, string Text);
