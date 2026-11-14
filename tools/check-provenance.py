@@ -8,11 +8,15 @@
         1. Immutable source lock: origin.code and origin.weights pinned by a full 40-hex commit; every origin.files
            entry has a 64-hex SHA-256 and a size; every hosted Starling file (execution.graph asset sources and the
            hosting source_base) is addressed at a full commit and recorded `source_status: public`.
-        2. Accessible reference: every origin.files entry is fetched anonymously (no token, no cookies) from where
-           the packages download it: the Hugging Face weights repository at the pinned commit, or the recorded
-           Starling hosting. Large (LFS) files are checked through the Hub's X-Linked-Etag (the file's SHA-256) and
-           X-Linked-Size headers without downloading them; small files are downloaded and hashed. The pinned code
-           and weights commits must resolve anonymously.
+        2. Accessible reference: every origin.files entry is fetched anonymously (no token, no cookies) and verified
+           against its pin: first from the Hugging Face weights repository at the pinned commit; when that does not
+           serve the pinned bytes, from the recorded Starling hosting (execution.graph.hosting), which mirrors the
+           upstream files and carries Starling's own builds (the ortgenai-*, transformers-* and chat_template.jinja
+           files and the fp32 ONNX graphs and bundle files upstream never shipped). A graph asset declared
+           `source_status: not-hosted` (Starling-built, no public source) is recorded, not fetched. Large (LFS) files
+           are checked through the Hub's X-Linked-Etag (the file's SHA-256) and X-Linked-Size headers without
+           downloading them; small files are downloaded and hashed. The pinned code and weights commits must resolve
+           anonymously.
         3. Rights recorded: rights.code_license, weights_license, tokenizer_terms and redistribution are present.
 
         Exits 0 only if every check passes. Never writes files; never sends a token.
@@ -123,25 +127,66 @@ def check(path: pathlib.Path) -> list[str]:
     if hosting:
         if hosting.get("source_status") != "public" or not SHA1.match(str(hosting.get("revision", ""))):
             problems.append(f"hosting {hosting.get('repository')}: status {hosting.get('source_status')}, revision {hosting.get('revision')}")
+    # A Starling-built graph with no public source (source_status: not-hosted) is recorded
+    # with its digests and recipe, but has no URL to verify: skip it in the fetch below.
+    graph = (m.get("execution") or {}).get("graph") or {}
+    assets = list(graph.get("assets") or [])
+    if graph.get("asset"):
+        assets.append(graph["asset"])
+    unhosted = {a["path"] for a in assets if a.get("source_status") == "not-hosted"}
     weights = origin["weights"]
     base = f"{weights['url'].rstrip('/')}/resolve/{weights['revision']}/"
+    # The frozen base model the pipeline reads (origin.base, e.g. the Kev merges): files
+    # under base/ are pinned from that repository at its own revision, not the weights
+    # repository (the schema has one weights source, so the manifests spell them base/...).
+    base_origin = origin.get("base")
+    base_url: str | None = None
+    base_rev: str | None = None
+    if base_origin:
+        base_url, base_rev = str(base_origin["url"]), str(base_origin["revision"])
+        if not SHA1.match(base_rev):
+            problems.append(f"origin.base.revision {base_rev} is not a full commit SHA")
+        elif (why := commit_resolves(base_url, base_rev)) is not None:
+            problems.append(f"origin.base {base_url}@{base_rev} does not resolve anonymously: {why}")
+    base_prefix = "base/"
     checked = 0
+    # Every entry's digest format is validated even when its fetch is skipped
+    # (a not-hosted asset has no URL, but its pin is still part of the lock).
     for f in origin["files"]:
+        sha = str(f["sha256"])
+        if not SHA256.match(sha):
+            problems.append(f"{f['path']}: sha256 {sha} is not a SHA-256")
+    fetchable = [f for f in origin["files"] if f["path"] not in unhosted]
+    for f in fetchable:
         fpath, sha, size = f["path"], str(f["sha256"]), int(f["size"])
         if not SHA256.match(sha):
-            problems.append(f"{fpath}: sha256 {sha} is not a SHA-256")
             continue
         if fpath in sources:
             url = sources[fpath]["source"]
-        elif hosting and (fpath.startswith(("ortgenai-", "transformers-")) or fpath == "chat_template.jinja"):
-            url = hosting["source_base"] + fpath
+            why = verify_file(url, sha, size)
         else:
-            url = base + fpath
-        if (why := verify_file(url, sha, size)) is not None:
+            # The pin lives wherever the anonymous Hub serves these exact bytes: the
+            # upstream weights repository first, then the recorded Starling hosting
+            # (which mirrors the upstream files and carries Starling's own builds —
+            # the ortgenai-*/transformers-* bundles and the fp32 graphs upstream
+            # never shipped). 404s and digest mismatches upstream therefore fall
+            # through to the hosting URL; a file upstream serves with the pinned
+            # bytes keeps the upstream URL even when the hosting copy differs.
+            if fpath.startswith(base_prefix) and base_url and base_rev:
+                url = f"{base_url.rstrip('/')}/resolve/{base_rev}/{fpath[len(base_prefix):]}"
+            else:
+                url = base + fpath
+            why = verify_file(url, sha, size)
+            if why is not None and hosting:
+                url = hosting["source_base"] + fpath
+                why = verify_file(url, sha, size)
+        if why is not None:
             problems.append(f"{fpath}: {url}: {why}")
         else:
             checked += 1
-    ok.append(f"{checked}/{len(origin['files'])} lock files served anonymously with the pinned SHA-256 and size")
+    ok.append(f"{checked}/{len(fetchable)} lock files served anonymously with the pinned SHA-256 and size")
+    for fpath in sorted(unhosted):
+        ok.append(f"{fpath}: not-hosted (Starling-built, digests pinned; no public URL to verify)")
     rights = m.get("rights") or {}
     missing = [k for k in ("code_license", "weights_license", "tokenizer_terms", "redistribution") if not rights.get(k)]
     if missing:

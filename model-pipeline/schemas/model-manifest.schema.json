@@ -39,6 +39,10 @@
       "properties": {
         "code": { "$ref": "#/$defs/pinnedSource" },
         "weights": { "$ref": "#/$defs/pinnedSource" },
+        "base": {
+          "description": "Optional frozen base model the pipeline reads: files under base/ in the lock are this repository at its revision (e.g. the Kev LoRA merges).",
+          "$ref": "#/$defs/pinnedSource"
+        },
         "files": {
           "description": "Immutable source lock: every file the bundle uses, with digest.",
           "type": "array",
