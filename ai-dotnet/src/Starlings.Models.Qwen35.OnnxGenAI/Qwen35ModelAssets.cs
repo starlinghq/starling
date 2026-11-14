@@ -116,10 +116,13 @@ public static class Qwen35ModelAssets
     public const string HostingRepository = "Starlinghq/qwen3.5-0.8b-ortgenai";
 
     /// <summary>
-    /// Pinned commit of <see cref="HostingRepository"/>: r2, which adds the int4 variant and the guidance files of each
-    /// variant directory to r1 (<c>95a690c1774f144957cb7b76986a9126e8b1bb5f</c>) and keeps every r1 file.
+    /// Pinned commit of <see cref="HostingRepository"/>: r3, which rebuilds the int4 graph with the Git-hidden builder
+    /// (issue #294; stamp <c>0.17.1+83de55a</c>, digest <c>766e49f3…</c>). r2
+    /// (<c>22477cdb8a2dc71f4c98d2e6af0a046ec0d74f45</c>) added the int4 variant and the guidance files of each variant
+    /// directory to r1 (<c>95a690c1774f144957cb7b76986a9126e8b1bb5f</c>) and keeps every r1 file; r3 keeps every r2 file
+    /// except <c>ortgenai-int4/model.onnx</c>.
     /// </summary>
-    public const string HostingRevision = "22477cdb8a2dc71f4c98d2e6af0a046ec0d74f45";
+    public const string HostingRevision = "4651f7e6fd8c0421c4e248b5c82a1d7f25374177";
 
     /// <summary>Base address of the files: <c>resolve</c> at <see cref="HostingRevision"/>; a file's source is this plus its snapshot path.</summary>
     public const string HostingBaseUrl = "https://huggingface.co/" + HostingRepository + "/resolve/" + HostingRevision + "/";
@@ -142,7 +145,7 @@ public static class Qwen35ModelAssets
 
     private static readonly ModelAssetLock Int4Lock = Build(Qwen35Variant.Int4,
         ("genai_config.json", 1_935, "e7e1957b2544fdad6170a9cc81cbbb1b88c8819b7016a609170ad7cbebba81ba"),
-        ("model.onnx", 364_388, "a41f341f106a1bb5b50eb67ca824cd9c324705141d88b027de0888f140e39cf7"),
+        ("model.onnx", 364_388, "766e49f3c58727e8cfd0865cfc0053a84998136f36395668e363c532193e7952"),
         ("model.onnx.data", 541_523_968, "709e08797497f609547f7aef1387cfb35bd0deb3f4039acf001f0680b23f9745"));
 
     private static readonly ModelAssetLock Fp16xLock = Build(Qwen35Variant.Fp16x,

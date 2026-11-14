@@ -52,7 +52,7 @@ origin:
       sha256: "e7e1957b2544fdad6170a9cc81cbbb1b88c8819b7016a609170ad7cbebba81ba"
       size: 1935
     - path: ortgenai-int4/model.onnx
-      sha256: "a41f341f106a1bb5b50eb67ca824cd9c324705141d88b027de0888f140e39cf7"
+      sha256: "766e49f3c58727e8cfd0865cfc0053a84998136f36395668e363c532193e7952"
       size: 364388
     - path: ortgenai-int4/model.onnx.data
       sha256: "709e08797497f609547f7aef1387cfb35bd0deb3f4039acf001f0680b23f9745"
@@ -156,15 +156,17 @@ execution:
     # --extra_options exclude_mtp=true: 151 MatMulNBits (4 bits, block 32, accuracy level 4) and a
     # GatherBlockQuantized embedding. Two builds on 2026-11-01 gave the same digests; model.onnx.data equals the M0
     # build, model.onnx differs from M0's recorded 766e49f3... (evidence README section 2). A rebuild on 2026-11-02
-    # gave the same digests, and those files were uploaded unchanged.
+    # reproduced those digests. Hosting revision r3 (2026-11-14, issue #294) rebuilds the graph with the Git-hidden
+    # builder (PR #289's fix applied to build_ortgenai_bundle.py): model.onnx now stamps the wheel's commit
+    # 0.17.1+83de55a and carries the M0 digest 766e49f3...; every other file keeps its r2 bytes.
     hosting:
       # Download location of every file in the origin.files lock that Qwen35ModelAssets uses (chat_template.jinja,
       # transformers-5.18.0/tokenizer.json, ortgenai-int4/): <source_base><path>. Hosting revision r2 added the int4
-      # variant (r1, 95a690c1774f144957cb7b76986a9126e8b1bb5f, held fp32x and fp16x only). The digests, not the address,
-      # pin the bytes.
+      # variant (r1, 95a690c1774f144957cb7b76986a9126e8b1bb5f, held fp32x and fp16x only); r3 rebuilt the int4 graph
+      # with the true stamp. The digests, not the address, pin the bytes.
       repository: https://huggingface.co/Starlinghq/qwen3.5-0.8b-ortgenai
-      revision: "22477cdb8a2dc71f4c98d2e6af0a046ec0d74f45"
-      source_base: https://huggingface.co/Starlinghq/qwen3.5-0.8b-ortgenai/resolve/22477cdb8a2dc71f4c98d2e6af0a046ec0d74f45/
+      revision: "4651f7e6fd8c0421c4e248b5c82a1d7f25374177"
+      source_base: https://huggingface.co/Starlinghq/qwen3.5-0.8b-ortgenai/resolve/4651f7e6fd8c0421c4e248b5c82a1d7f25374177/
       source_status: public
     inputs:
       - { name: input_ids, type: int64, shape: [batch, sequence] }

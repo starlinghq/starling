@@ -28,7 +28,13 @@ A data-driven GenAI chat onboarding route, `genai-chat-cpu-v1`, with `microsoft/
 
 Both revisions use one cache path, because the path is keyed on the upstream revision. So an app on 0.5.0 and a newer app that share a cache directory invalidate each other, and rolling back hits the same thing: each `DownloadAsync` replaces `model.onnx` with its own revision, and the other package then fails as above until it downloads again. Give the two apps separate cache directories.
 
-The same stamp exposure in the Qwen3.5 int4 graph (`c98b9fc`) is not part of this change.
+The same stamp exposure in the Qwen3.5 int4 graph (`c98b9fc`) is fixed by hosting revision r3 (below).
+
+## Starlings.Models.Qwen35.OnnxGenAI: hosting revision r3 for the int4 graph (#294)
+
+`build_ortgenai_bundle.py` now hides Git from the builder the way `build_bundle.py` has since #283, and refuses a graph whose `producer_version` is not the pinned wheel commit `0.17.1+83de55a`. Hosting revision r3 of `Starlinghq/qwen3.5-0.8b-ortgenai` (`4651f7e6fd8c0421c4e248b5c82a1d7f25374177`, tag `r3`) replaces `ortgenai-int4/model.onnx` with a rebuild from the pinned snapshot at that stamp; its digest is the M0 build's `766e49f3…`. Every other file of every variant keeps its r2 bytes, r2 (`22477cdb…`) stays reachable, and the `ortgenai-int4-cpu` manifest, `Qwen35ModelAssets` and the asset tests pin r3. The fp32x and fp16x graphs were assessed: their stamps are part of digests that reproduce byte-for-byte on this machine, so they carry no checkout-HEAD exposure and their hosting pins stay at r2.
+
+**Upgrading:** packages up to 0.5.0 pin r2 by commit and keep working. A cache acquired from r2 fails `Qwen35ModelAssets.OpenLocal` on `ortgenai-int4/model.onnx` (SHA-256, 364,388 bytes); one `DownloadAsync` of the int4 lock replaces it. The same shared-cache-path caveat as the QwenChat r2 applies between r2 and r3 of this repository.
 
 ## Qwen3.5 int4 guided decoding
 
