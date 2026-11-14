@@ -27,6 +27,7 @@
           "api/**/*.yml",
           "catalog/README.md",
           "catalog/compatibility-matrix.md",
+          "guides/troubleshooting.md",
           "evidence/**/*.md",
           "support-policy.md",
           "releases/BREAKING.md",

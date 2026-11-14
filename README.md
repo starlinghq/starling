@@ -121,7 +121,7 @@ dotnet run
 0.688  passage: 富士山は日本一高い山です。
 ```
 
-The first run downloads the model (about 487 MB) into your user cache; later runs work offline. The application chooses the ONNX Runtime native package: `Microsoft.ML.OnnxRuntime` for CPU, or `Microsoft.ML.OnnxRuntime.Gpu.Linux` for CUDA on Linux x64.
+The first run downloads the model (about 487 MB) into your user cache; later runs work offline. The application chooses the ONNX Runtime native package: `Microsoft.ML.OnnxRuntime` for CPU, or `Microsoft.ML.OnnxRuntime.Gpu.Linux` for CUDA on Linux x64. If this or a later step fails, [troubleshooting](docs/guides/troubleshooting.md) collects the errors people hit on first runs, with the fix for each.
 
 ### Local chat through `IChatClient`
 

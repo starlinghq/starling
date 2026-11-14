@@ -6,6 +6,8 @@
   href: catalog/README.md
 - name: Compatibility matrix
   href: catalog/compatibility-matrix.md
+- name: Troubleshooting
+  href: guides/troubleshooting.md
 - name: Evidence index
   href: evidence/README.md
 - name: Support policy
