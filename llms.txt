@@ -21,6 +21,7 @@ Key facts for writing code against it:
 - [README](https://raw.githubusercontent.com/starlinghq/starling/main/README.md): quickstart, models, maturity, comparison
 - [Model catalog](https://github.com/starlinghq/starling/blob/main/docs/catalog/README.md): every profile, its maturity and the evidence for each release gate
 - [Compatibility matrix](https://github.com/starlinghq/starling/blob/main/docs/catalog/compatibility-matrix.md): OS, architecture and execution provider status per profile
+- [Troubleshooting](https://github.com/starlinghq/starling/blob/main/docs/guides/troubleshooting.md): the errors people hit on first runs, with the fix for each
 
 ## Samples
 
