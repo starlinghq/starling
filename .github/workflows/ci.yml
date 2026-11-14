@@ -105,6 +105,13 @@ jobs:
         run: dotnet build ai-dotnet/samples/LocalRag --configuration Release -p:RestoreLockedMode=true
       - name: Build TicketTriage from published packages
         run: dotnet build ai-dotnet/samples/TicketTriage --configuration Release -p:RestoreLockedMode=true
+      - name: dotnet new starling-rag template scaffolds and builds
+        shell: bash
+        run: |
+          dotnet new install ai-dotnet/templates/LocalRag
+          dir=$(mktemp -d)
+          dotnet new starling-rag -o "$dir/rag" --no-restore
+          dotnet build "$dir/rag" --configuration Release
       - run: dotnet test --solution ai-dotnet/AI.slnx --configuration Release --no-build
       - name: Library dependency boundaries
         shell: bash

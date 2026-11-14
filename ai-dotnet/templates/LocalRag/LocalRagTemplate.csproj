@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+    <StarlingsVersion>0.5.0</StarlingsVersion>
+    <NativeRuntime>NativeRuntimeValue</NativeRuntime>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Starlings.Models.EmbeddingGemma2.Extensions.AI" Version="$(StarlingsVersion)" />
+    <PackageReference Include="Starlings.Models.Qwen35.OnnxGenAI" Version="$(StarlingsVersion)" />
+    <PackageReference Include="Starlings.Models.Qwen35.Extensions.AI" Version="$(StarlingsVersion)" />
+    <PackageReference Include="Microsoft.ML.OnnxRuntime" Version="1.30.0" Condition="'$(NativeRuntime)' == 'cpu'" />
+    <PackageReference Include="Microsoft.ML.OnnxRuntimeGenAI" Version="0.17.1" Condition="'$(NativeRuntime)' == 'cpu'" />
+    <PackageReference Include="Microsoft.ML.OnnxRuntime.Gpu" Version="1.30.0" Condition="'$(NativeRuntime)' == 'cuda'" />
+    <PackageReference Include="Microsoft.ML.OnnxRuntimeGenAI.Cuda" Version="0.17.1" Condition="'$(NativeRuntime)' == 'cuda'" />
+  </ItemGroup>
+</Project>
