@@ -85,7 +85,7 @@ processing:
   tokenizer:
     # The owned tokenizer pinned in ai-dotnet/Directory.Packages.props; ONNX Runtime receives ids only.
     package: Starlings.Tokenizers
-    version: 0.3.5
+    version: 0.3.6
     # Byte-level BPE with the Sequence[ByteLevel, TemplateProcessing] post-processor that appends <|endoftext|>.
     profile_id: qwen3-bpe-embedding
     algorithm: byte-level-bpe

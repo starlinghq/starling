@@ -5,7 +5,7 @@ The model definition of [`microsoft/Phi-4-mini-instruct`](https://huggingface.co
 This library is **experimental** and source only. It was admitted at maturity Experimental on 2026-11-04 with no package, no registry manifest and no hosted bundle (`model-pipeline/admissions/phi4-mini.md`).
 
 - `Phi4ChatTemplate`: the checkpoint's `chat_template` rendered in C# for text turns (system, user, assistant).
-- `Phi4Checkpoint`: repository and revision; the special token ids; the decoder shape; `Profile` (a `ModelProfile`); `Lock` (the asset lock of the Hub files a bundle is built from, about 7.7 GB of bf16 weights); `BundleFiles` (the lock of the six built bundle files); `ChatDefinition` (the entry of the route contract table, embedded here, with the template, the bundle lock and the tokenizer check); `OpenTokenizer`, which verifies the pinned `tokenizer.json` and loads it with the owned tokenizer (`phi4-bpe-chat`, `Starlings.Tokenizers` 0.3.5).
+- `Phi4Checkpoint`: repository and revision; the special token ids; the decoder shape; `Profile` (a `ModelProfile`); `Lock` (the asset lock of the Hub files a bundle is built from, about 7.7 GB of bf16 weights); `BundleFiles` (the lock of the six built bundle files); `ChatDefinition` (the entry of the route contract table, embedded here, with the template, the bundle lock and the tokenizer check); `OpenTokenizer`, which verifies the pinned `tokenizer.json` and loads it with the owned tokenizer (`phi4-bpe-chat`, `Starlings.Tokenizers` 0.3.6).
 - `Phi4Capabilities.All`: every capability with an explicit status.
 
 ```csharp

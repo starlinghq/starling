@@ -47,7 +47,7 @@ using (Lfm3Sequence sequence = model.CreateSequence(new InterventionSelection("l
 using Lfm3Sequence plain = model.CreateSequence(selection: null);
 ```
 
-`Lfm3Interventions.CreateChatModel(files, entryDirectory)` also loads the snapshot's `tokenizer.json` (`Starlings.Tokenizers` 0.3.5, the pin; profile `lfm3-bpe-chat`) and returns an `Lfm3ChatModel` that owns the graph; `chat.Chat(turns, selection, options)` / `chat.GenerateStreaming(promptIds, selection, options)` take the selection per call. The chat example, with its `using` directives, is in the [package README](../../ai-dotnet/src/Starlings.Models.Lfm3.Interventions/README.md#compile-once-then-load); the application adds the ONNX Runtime native package (`Microsoft.ML.OnnxRuntime`).
+`Lfm3Interventions.CreateChatModel(files, entryDirectory)` also loads the snapshot's `tokenizer.json` (`Starlings.Tokenizers` 0.3.6, the pin; profile `lfm3-bpe-chat`) and returns an `Lfm3ChatModel` that owns the graph; `chat.Chat(turns, selection, options)` / `chat.GenerateStreaming(promptIds, selection, options)` take the selection per call. The chat example, with its `using` directives, is in the [package README](../../ai-dotnet/src/Starlings.Models.Lfm3.Interventions/README.md#compile-once-then-load); the application adds the ONNX Runtime native package (`Microsoft.ML.OnnxRuntime`).
 
 ### What `CreateModel` checks before loading
 
