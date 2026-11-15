@@ -1,6 +1,6 @@
 # Workflows
 
-The four GitHub Actions workflows of this repository. This page is derived from the YAML files; the YAML and its comments are the authority. Scripts under `tools/` are described in [`tools/README.md`](../../tools/README.md).
+The five GitHub Actions workflows of this repository. This page is derived from the YAML files; the YAML and its comments are the authority. Scripts under `tools/` are described in [`tools/README.md`](../../tools/README.md).
 
 | Workflow | Runs on | Secrets and environments |
 | --- | --- | --- |
@@ -8,8 +8,9 @@ The four GitHub Actions workflows of this repository. This page is derived from 
 | [`protected-evidence`](#protected-evidence) | pull requests, including label changes | none |
 | [`qualification`](#qualification) | weekly schedule, `ai-v*` tags, manual dispatch | secret `RUNPOD_API_KEY` (job `cuda` only) |
 | [`release`](#release) | `ai-v*` tags, manual dispatch (candidate only) | environment `release`, its variable `NUGET_USER`, OIDC for NuGet trusted publishing |
+| [`docs-pages`](#docs-pages) | `ai-v*` tags, manual dispatch | environment `github-pages`, OIDC for the Pages deployment |
 
-Every workflow sets `permissions: contents: read` at the top level. Only the `release` job `publish` asks for more.
+Every workflow sets `permissions: contents: read` at the top level. Only the `release` job `publish` and the `docs-pages` job `deploy` ask for more.
 
 ## Runners and fork pull requests
 
@@ -95,3 +96,14 @@ git tag ai-v0.5.0 && git push origin ai-v0.5.0
 | --- | --- | --- |
 | `candidate` ("release candidate") | always | Boundary check; reads the version from `ai-dotnet/src/Starlings.Models.E5` (`dotnet msbuild -getProperty:Version`). On a tag: the tag must equal `ai-v<version>` and point at a commit on `main`. The release record `docs/releases/ai-<version>.md` must exist. Then `tools/release-drill-ai.sh --no-model`, and the publishable set (every drilled `.nupkg` and `.snupkg` not in `HELD`) is uploaded as the artifact `packages` (90 days). |
 | `publish` ("publish to nuget.org") | tag pushes only; needs `candidate` | Runs in the `release` environment, which has a required reviewer, so it waits for approval. Permissions `contents: write` (GitHub release) and `id-token: write` (NuGet trusted publishing). Downloads the `packages` artifact and checks no held package is in it; logs in with `NuGet/login` (OIDC, user `vars.NUGET_USER`; a short-lived key, no stored API key); pushes dependencies first (`Starlings.Acquisition`, `Starlings.Runtime.Onnx`, `Starlings.Models.Abstractions`, `Starlings.Generation.Abstractions`, `Starlings.Generation.OnnxGenAI`, `Starlings.Models.E5`, `Starlings.Models.Gliner2`, `Starlings.Models.EmbeddingGemma2`, `Starlings.Models.Qwen35`, `Starlings.Models.Qwen35.OnnxGenAI`, `Starlings.Models.Kev`, `Starlings.Models.QwenChat`, `Starlings.Models.Bert`), then the rest, without `--skip-duplicate` (a published version is immutable); creates the GitHub release through the REST API with `actions/github-script` (no `gh` CLI on the runner), the release record as notes and the packages attached (a pre-release for a version with a suffix); a rerun keeps an existing release for the tag and uploads only the assets it lacks. |
+
+## docs-pages
+
+`docs-pages.yml`: publishes the docfx documentation site to GitHub Pages (backlog #256). Pages is enabled with "GitHub Actions" as its source; that also created the `github-pages` environment.
+
+- **Triggers:** `push` of tags `ai-v*` (the released version goes live) and `workflow_dispatch` (a manual run of `main`). Concurrency group `docs-pages-<ref>`, not cancelled in progress.
+
+| Job | Runner | What it does |
+| --- | --- | --- |
+| `build` ("docs site (docfx)") | self-hosted `omarchy` | Exactly the `ci` job `docs` (same steps, same pinned docfx), but the site is uploaded with `actions/upload-pages-artifact` instead of `upload-artifact`. |
+| `deploy` ("deploy to GitHub Pages") | GitHub-hosted `ubuntu-latest` | Needs `build`; runs in the `github-pages` environment with permissions `pages: write` and `id-token: write`, and deploys the artifact with `actions/deploy-pages`. The site answers at `https://starlinghq.github.io/starling/`. |
