@@ -56,6 +56,7 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     permissions:
+      actions: read # the artifact lookup of deploy-pages
       pages: write # the Pages deployment
       id-token: write # OIDC for the Pages deployment
     steps:
