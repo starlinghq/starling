@@ -1,0 +1,63 @@
+name: docs-pages
+
+# Publish the docfx documentation site to GitHub Pages (issue #256).
+#
+# The build is exactly the ci workflow's "docs site (docfx)" job: dotnet tool restore (docfx, pinned in
+# .config/dotnet-tools.json), then dotnet docfx docs/docfx.json -- the API reference from the projects in
+# ai-dotnet/src/ and their XML docs, with the generated catalog, compatibility matrix, evidence index and the
+# support policy. On an ai-v* tag it deploys the released version; on manual dispatch it deploys what main built
+# last. Pages must be enabled with "GitHub Actions" as its source (Settings > Pages), which creates the
+# github-pages environment the deploy job needs.
+on:
+  push:
+    tags: ["ai-v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: docs-pages-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  DOTNET_NOLOGO: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+
+jobs:
+  build:
+    name: docs site (docfx)
+    runs-on: [self-hosted, omarchy]
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-dotnet@v5
+        with:
+          global-json-file: global.json
+      # docfx loads the projects through MSBuild, and Starlings.Runtime.OnnxWeb's build runs npm ci for its
+      # onnxruntime-web static web assets (ai-dotnet/src/Shared/OnnxWeb/OrtWebAssets.targets), as in ai-dotnet.
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: ai-dotnet/src/Shared/OnnxWeb/package-lock.json
+      # docfx is a local tool pinned in .config/dotnet-tools.json.
+      - run: dotnet tool restore
+      - name: Build the site
+        run: dotnet docfx docs/docfx.json
+      - uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa # v3
+        with:
+          path: artifacts/docfx/_site/
+
+  deploy:
+    name: deploy to GitHub Pages
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    permissions:
+      pages: write # the Pages deployment
+      id-token: write # OIDC for the Pages deployment
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@13b55b33dd8996121833dbc1db458c793a334630 # v4
