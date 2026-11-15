@@ -88,7 +88,7 @@ processing:
   tokenizer:
     # The owned tokenizer pinned in ai-dotnet/Directory.Packages.props; ONNX Runtime receives ids only.
     package: Starlings.Tokenizers
-    version: 0.3.5
+    version: 0.3.6
     profile_id: modernbert-bpe-gte-reranker
     algorithm: bpe
     assets:

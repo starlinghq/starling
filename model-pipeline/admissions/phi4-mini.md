@@ -47,7 +47,7 @@ GenAI masks a position whose id equals `pad_token_id`, and upstream's pad id is 
 
 ## Tokenizer profile
 
-`phi4-bpe-chat` in `Starlings.Tokenizers` 0.3.5, which this repository pins (starlinghq/tokenizers#23): byte-level BPE with the o200k split, and `rstrip` on the role tags. The SHA-256 of `tokenizer.json` is pinned in `Phi4Checkpoint`, and `OpenTokenizer` also checks the special token ids and that row 200063 has no token.
+`phi4-bpe-chat`, first in `Starlings.Tokenizers` 0.3.5 (starlinghq/tokenizers#23; this repository pins 0.3.6): byte-level BPE with the o200k split, and `rstrip` on the role tags. The SHA-256 of `tokenizer.json` is pinned in `Phi4Checkpoint`, and `OpenTokenizer` also checks the special token ids and that row 200063 has no token.
 
 ## Feature contract
 
