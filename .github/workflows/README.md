@@ -18,7 +18,14 @@ Every job of `ci`, `protected-evidence` and `release` runs on the maintainer's s
 
 `ci` and `protected-evidence` run on `pull_request`, so a pull request from a fork executes its own code. By default that code runs on GitHub-hosted runners: each job's `runs-on` compares `github.event.pull_request.head.repo.full_name` with `github.repository`, so a pull request whose fork was deleted, where the head repository is null, also stays on GitHub-hosted runners. This is not a security boundary: `pull_request` runs the workflow files from the pull request, so a fork can edit `runs-on` and reach the self-hosted runner. No workflow uses `pull_request_target`, and fork runs get no secrets and a read-only token. The repository's fork pull request approval policy still requires approval for every outside contributor's workflow run (Settings > Actions > General, "Require approval for all external contributors"; the API reports `all_external_contributors`). That approval is the control. Before approving, the maintainer reads the pull request's diff, including any change under `.github/`, `tools/` and build files, and never approves a fork run that changes `runs-on`. `qualification` and `release` never run on `pull_request`.
 
-Deferred maintainer option, not applied: adding required status checks to the `main` ruleset (`docs/kickoff.md`, "Repository settings to apply by hand").
+### Required status checks
+
+Applied 2026-11-15 (#253). The `main` branch ruleset (id 25349484) requires, on every pull request into `main`:
+
+- the eight jobs of the `ci` workflow: `boundary`, `ai release-candidate drill`, `ai-dotnet`, `ai-dotnet (windows x64)`, `model-pipeline`, `browser conformance app (build)`, `docs site (docfx)` and `repository checks`; and
+- `protected evidence changes`, the single job of `protected-evidence`.
+
+`ci` and `protected-evidence` run on every pull request (including from forks) and on pushes to `main`, and every job above runs on both events, so a pull request can always produce every required check. Nothing that runs only on tags, schedules or dispatch is required. Organization admins may still bypass the ruleset through a pull request (`docs/kickoff.md`, "Repository settings to apply by hand").
 
 ## ci
 
