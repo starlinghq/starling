@@ -26,8 +26,9 @@
 #                        CUDA test projects; they have no reproducible public source, so the run records `not-run`
 #                        without them.
 #   STARLING_KEV_08B_BUNDLE, STARLING_KEV_4B_BUNDLE
-#                        optional: Kev bundles for Starlings.Models.Kev.Tests.Cuda; default the acquired
-#                        kev-0.8b/onnx-fp32-cuda and kev-4b/onnx-fp32-cuda snapshots.
+#                        optional: Kev bundle directories for Starlings.Models.Kev.Tests.Cuda. Unset, the run
+#                        downloads and verifies the hosted bundles (Starlinghq/kev-0.8b-onnx, kev-4b-onnx: 3.1 GB and
+#                        16.9 GB) into STARLING_MODELS and uses those.
 #   CUDA_QUALIFICATION_WORK
 #                        optional: where reference environments, builds and prepared release inputs live (default
 #                        ${XDG_CACHE_HOME:-~/.cache}/starling-cuda-qualification); kept between runs. Release inputs
@@ -269,10 +270,8 @@ PROFILES=(
     qwen3.5-0.8b/ortgenai-fp32x-cuda
     qwen3.5-0.8b/ortgenai-fp16x-cuda
 )
-# Kev's CUDA profiles are acquired for Starlings.Models.Kev.Tests.Cuda only (no release gates or soaks here).
-KEV_PROFILES=(kev-0.8b/onnx-fp32-cuda kev-4b/onnx-fp32-cuda)
 log "acquire and verify models"
-if tools/acquire-models.sh "$OUT/locks" "${PROFILES[@]}" "${KEV_PROFILES[@]}" >"$OUT/acquire.log" 2>&1; then
+if tools/acquire-models.sh "$OUT/locks" "${PROFILES[@]}" >"$OUT/acquire.log" 2>&1; then
     record all models-acquired-and-verified passed
 else
     record all models-acquired-and-verified failed
@@ -284,9 +283,32 @@ E5_SNAP="$(snap multilingual-e5-small/onnx-fp32-cuda)"
 G2_SNAP="$(snap gliner2-base-v1/onnx-fp32-cuda)"
 EG2_SNAP="$(snap embeddinggemma-2/video-fp32-cuda)"
 QW_SNAP="$(snap qwen3.5-0.8b/ortgenai-fp16x-cuda)"
+
+# Kev's CUDA profiles, for Starlings.Models.Kev.Tests.Cuda only (no release gates or soaks here). Their bundles are
+# Starling builds hosted at execution.graph.hosting (Starlinghq/kev-*-onnx), not files of the upstream repository that
+# acquire-models.sh would ask, so each gets a lock of the five files KevModelAssets pins (tools/qualification.py
+# lock-hosted), filed under the snapshot directory KevModelAssets.OpenLocal reads. A bundle given in
+# STARLING_KEV_08B_BUNDLE / STARLING_KEV_4B_BUNDLE is used as it is (the tests check its file sizes against the lock).
+KEV_FILES=(model.onnx model.onnx.data head.safetensors head.json tokenizer.json)
+kev_bundle() {  # kev_bundle <profile> <variable>: acquire unless the variable is set, then export it
+    local lock="$OUT/locks/${1//\//--}.json"
+    if [[ -n ${!2:-} ]]; then
+        log "$1: bundle from $2=${!2} (not acquired)"
+        return 0
+    fi
+    if python3 -I tools/qualification.py lock-hosted "model-pipeline/registry/$1/manifest.yaml" "$lock" "${KEV_FILES[@]}" \
+            >>"$OUT/acquire.log" 2>&1 &&
+        env -u HF_TOKEN dotnet ai-dotnet/tools/Starlings.Acquisition.Tool/bin/Release/net10.0/Starlings.Acquisition.Tool.dll \
+            download "$lock" --cache "$STARLING_MODELS" >>"$OUT/acquire.log" 2>&1; then
+        record "$1" models-acquired-and-verified passed
+        export "$2=$(snap "$1")"
+    else
+        record "$1" models-acquired-and-verified "failed (acquire.log)"
+    fi
+}
+kev_bundle kev-0.8b/onnx-fp32-cuda STARLING_KEV_08B_BUNDLE
+kev_bundle kev-4b/onnx-fp32-cuda STARLING_KEV_4B_BUNDLE
 export STARLING_E5_SNAPSHOT=$E5_SNAP
-export STARLING_KEV_08B_BUNDLE="${STARLING_KEV_08B_BUNDLE:-$(snap kev-0.8b/onnx-fp32-cuda)}"
-export STARLING_KEV_4B_BUNDLE="${STARLING_KEV_4B_BUNDLE:-$(snap kev-4b/onnx-fp32-cuda)}"
 
 # ---------------------------------------------------------------------------------------------------------------------
 # Release and test inputs outside Git, prepared before the GPU work (one step at a time on this shared machine).
