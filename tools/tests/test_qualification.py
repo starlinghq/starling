@@ -1,4 +1,5 @@
-"""Tests of `tools/qualification.py lock-candidate`, the snapshot locks of the qualification job `experimental`.
+"""Tests of `tools/qualification.py lock-candidate`, the snapshot locks of the qualification job `experimental`, and
+of `lock-hosted`, the Kev bundle locks of tools/cuda-qualification-local.sh.
 
     python3 -I -m unittest discover -s tools/tests -v
 
@@ -92,6 +93,52 @@ class LockCandidateTests(unittest.TestCase):
                 with contextlib.redirect_stdout(io.StringIO()):
                     status = self.qualification.main(["lock-candidate", str(profile), str(out), *extra])
                 self.assertEqual(status, 0, f"{name} {extra}")
+
+
+@unittest.skipIf(yaml is None, "PyYAML is not installed")
+class LockHostedTests(unittest.TestCase):
+    """`lock-hosted`: the Kev bundle locks of tools/cuda-qualification-local.sh."""
+
+    BUNDLE = ("model.onnx", "model.onnx.data", "head.safetensors", "head.json", "tokenizer.json")
+
+    def setUp(self) -> None:
+        self.qualification = _load()
+        self._dir = tempfile.TemporaryDirectory()
+        self.dir = Path(self._dir.name)
+
+    def tearDown(self) -> None:
+        self._dir.cleanup()
+
+    def run_main(self, manifest: Path, *paths: str) -> tuple[int, dict | None]:
+        out = self.dir / "lock.json"
+        out.unlink(missing_ok=True)
+        with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
+            status = self.qualification.main(["lock-hosted", str(manifest), str(out), *paths])
+        return status, json.loads(out.read_text(encoding="utf-8")) if out.is_file() else None
+
+    def test_kev_bundles_download_from_their_hosting_repositories(self) -> None:
+        for name, repository, hosting in (
+            ("kev-0.8b", "jaredpalmer/kev-0.8b", "Starlinghq/kev-0.8b-onnx"),
+            ("kev-4b", "jaredpalmer/kev-4b", "Starlinghq/kev-4b-onnx"),
+        ):
+            for profile in ("onnx-fp32-cpu", "onnx-fp32-cuda"):
+                manifest = ROOT / "model-pipeline" / "registry" / name / profile / "manifest.yaml"
+                status, lock = self.run_main(manifest, *self.BUNDLE)
+                self.assertEqual(status, 0, f"{name}/{profile}")
+                self.assertEqual(lock["schema_version"], 2)
+                self.assertEqual(lock["repository"], repository)
+                self.assertEqual(tuple(f["path"] for f in lock["files"]), self.BUNDLE)
+                for f in lock["files"]:
+                    self.assertTrue(f["url"].startswith(f"https://huggingface.co/{hosting}/resolve/"), f["url"])
+                    self.assertTrue(f["url"].endswith("/" + f["path"]), f["url"])
+
+    def test_refuses_unknown_paths_and_manifests_without_a_source_base(self) -> None:
+        kev = ROOT / "model-pipeline" / "registry" / "kev-0.8b" / "onnx-fp32-cuda" / "manifest.yaml"
+        self.assertEqual(self.run_main(kev, "model.onnx", "not-in-origin-files.bin"), (2, None))
+        manifest = self.dir / "manifest.yaml"
+        origin = {"weights": {"url": "https://huggingface.co/org/model", "revision": SHA}, "files": [FILE]}
+        manifest.write_text(json.dumps({"id": "fam/name/profile", "origin": origin}), encoding="utf-8")
+        self.assertEqual(self.run_main(manifest, "config.json"), (2, None))
 
 
 if __name__ == "__main__":

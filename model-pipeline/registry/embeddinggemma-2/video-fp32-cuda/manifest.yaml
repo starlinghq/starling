@@ -10,7 +10,7 @@ id: embeddinggemma-2/video-fp32-cuda
 # Stable since 2026-10-17 (maintainer's delegated promotion; docs/kickoff.md, "Stable video profiles"): every gate G0 to
 # G7 passed (G4 and G5 in the binding RTX 3090 round, docs/evidence/qualification-2026-10-16-cuda/), the contract is the
 # Starlings.Models.EmbeddingGemma2 README's "Stable contract: CUDA" (videos, Linux x64, RTX 3090,
-# MALLOC_MMAP_THRESHOLD_=65536), and the per-release GPU regression (qualification workflow, job cuda (runpod), pinned
+# MALLOC_MMAP_THRESHOLD_=65536), and the per-release GPU regression (tools/cuda-qualification-local.sh, run locally before each release tag; pinned
 # to the RTX 3090) reruns the CUDA tests, G1 to G3 on the release sets and a soak smoke test. Every check of this
 # profile passed on an RTX 3090 in runs 39012176735 and 39023915026 (docs/evidence/video-promotion-2026-10-17/README.md).
 maturity: stable
@@ -360,7 +360,7 @@ maintenance:
     - >-
       Contract hardware: an NVIDIA GeForce RTX 3090 (Ampere, sm_86), driver 580, CUDA 13 runtime. The CUDA gates G1 to
       G5 (G4 and G5 in the binding 2026-10-16 round) ran on RTX 3090s, and the per-release GPU regression is pinned to
-      the RTX 3090 and refuses any other GPU (tools/ci/runpod.py). The RTX 4090 (Ada) is outside the contract: in run
+      the RTX 3090 and refuses any other GPU (tools/cuda-qualification-local.sh). The RTX 4090 (Ada) is outside the contract: in run
       38857860186, before the pin, this profile's G2 failed there on the final embedding (max abs 1.009e-5 against the
       unchanged 1e-5, commons-video-04). Other NVIDIA GPUs are untested.
     - >-

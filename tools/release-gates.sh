@@ -149,7 +149,7 @@ fetch_media() {
 
 # fetch_ffmpeg <dir>: the pinned FFmpeg 8.1 LGPL shared build (fetch_eg2_ffmpeg.sh) and the FFmpeg 9.0 LGPL shared
 # build of the FFmpeg 9 adapter, built from pinned sources (build_eg2_ffmpeg.sh) and fetched from Starlinghq at a pinned
-# commit, each checked by SHA-256 (the same archives as tools/ci/runpod-cuda-pod.sh).
+# commit, each checked by SHA-256 (the same archives as tools/ci/eg2-test-inputs.sh).
 fetch_ffmpeg() {
     local a=ffmpeg-n9.0.2-28-g669f5ab083-starling-linux64-lgpl-shared-9.0.tar.xz
     step ffmpeg8 sh model-pipeline/reference/embeddinggemma2/fetch_eg2_ffmpeg.sh "$1/ffmpeg8"

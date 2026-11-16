@@ -9,7 +9,7 @@ id: qwen3.5-0.8b/ortgenai-fp32x-cuda
 # Stable since 2026-10-16 (maintainer's delegated promotion; docs/kickoff.md, "Stable CUDA profiles, first round"):
 # every gate G0 to G7 passed (G4 and G5 in the binding RTX 3090 round, docs/evidence/qualification-2026-10-16-cuda/),
 # the contract is the Starlings.Models.Qwen35.OnnxGenAI README's "Stable contract: CUDA" (fp32x and fp16x, Linux x64, RTX 3090),
-# and the per-release GPU regression (qualification workflow, job cuda (runpod), pinned to the RTX 3090) reruns the
+# and the per-release GPU regression (tools/cuda-qualification-local.sh, run locally before each release tag; pinned to the RTX 3090) reruns the
 # CUDA tests, G1 to G3 on the release sets and a soak smoke test. Every check of this profile passed in its first run,
 # 38857860186 (on an RTX 4090, before the pin; docs/evidence/gpu-regression-2026-10-16/README.md).
 maturity: stable
@@ -297,7 +297,7 @@ maintenance:
     - >-
       Contract hardware: an NVIDIA GeForce RTX 3090 (Ampere, sm_86), driver 580, CUDA 13 runtime. The CUDA gates G1 to
       G5 (G4 and G5 in the binding 2026-10-16 round) ran on RTX 3090s, and the per-release GPU regression is pinned to
-      the RTX 3090 and refuses any other GPU (tools/ci/runpod.py). Its first run, 38857860186, landed on an RTX 4090
+      the RTX 3090 and refuses any other GPU (tools/cuda-qualification-local.sh). Its first run, 38857860186, landed on an RTX 4090
       (Ada) before the pin: every check of this profile passed there, but embeddinggemma-2/video-fp32-cuda failed G2
       (docs/evidence/gpu-regression-2026-10-16/README.md). Other NVIDIA GPUs, including the RTX 4090, are untested and
       outside the contract.
