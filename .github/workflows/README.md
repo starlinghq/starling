@@ -58,7 +58,9 @@ Library dependency boundaries (`ai-dotnet` job), checked on each library's trans
 `protected-evidence.yml` (plan 10.1 and 12, backlog P-007). A pull request that changes protected fixtures, conformance expectations or tolerances must carry the `protected-change` label and must not also change implementation code, so an implementation change cannot move its own thresholds.
 
 - **Triggers:** `pull_request` of types `opened`, `synchronize`, `reopened`, `labeled`, `unlabeled`, so it runs again when labels change.
-- **Job `protected-evidence`** ("protected evidence changes"): full-history checkout, `pip install -e model-pipeline`, then `model-pipeline check-protected --base <base sha> --head <head sha> --labels-json <labels>`. It reads the event payload only; no secrets, read-only token.
+- **Job `protected-evidence`** ("protected evidence changes"): full-history checkout of the pull request, a second checkout of the base commit (`github.event.pull_request.base.sha`) into `base/`, `pip install -e base/model-pipeline`, then, from the pull request checkout, `model-pipeline check-protected --base <base sha> --head <head sha> --labels-json <labels>`. The checker and its rules (`model-pipeline/src/model_pipeline/protection.py`) come from the base commit, so a pull request cannot empty the protected patterns and change `protected/` in one step. It reads the event payload only; no secrets, read-only token.
+- **Rules:** a protected path is `model-pipeline/protected/**` or any `tolerances.*`. Implementation code is `ai-dotnet/`, `model-pipeline/src/`, `model-pipeline/tests/`, `model-pipeline/reference/`, `tools/`, `browser/` and `.github/workflows/`. The changed files come from `git diff --no-renames base...head`, so a file moved out of `protected/` counts under its old path.
+- **Limit:** the workflow file itself still comes from the pull request (`pull_request` event), so a pull request that edits `protected-evidence.yml` changes how its own check runs. Such a change is implementation code under the base rules, and `.github/` is code-owned; only branch protection with required review closes this fully.
 
 ## qualification
 
