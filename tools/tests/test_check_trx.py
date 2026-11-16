@@ -12,6 +12,7 @@ from __future__ import annotations
 import contextlib
 import importlib.util
 import io
+import sys
 import tempfile
 import unittest
 from pathlib import Path
@@ -22,6 +23,8 @@ SCRIPT = Path(__file__).resolve().parents[1] / "ci" / "check-trx.py"
 def _load():
     spec = importlib.util.spec_from_file_location("check_trx", SCRIPT)
     module = importlib.util.module_from_spec(spec)
+    # dataclasses looks the defining module up in sys.modules (Python 3.14 fails without it).
+    sys.modules[spec.name] = module
     spec.loader.exec_module(module)
     return module
 
