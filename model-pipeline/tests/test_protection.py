@@ -149,6 +149,34 @@ def test_implementation_only_change_passes():
     assert protection.check_changes(["ai-dotnet/src/a.cs", "model-pipeline/src/model_pipeline/cli.py"], []).ok
 
 
+@pytest.mark.parametrize(
+    "path",
+    [
+        "model-pipeline/reference/e5/run_reference.py",
+        "tools/fetch-release-references.py",
+        "browser/conformance/run.mjs",
+        ".github/workflows/protected-evidence.yml",
+    ],
+)
+def test_reference_tool_and_ci_changes_cannot_ride_along_with_evidence(path):
+    assert protection.check_changes([path], []).ok
+    paths = ["model-pipeline/protected/x/tolerances.yaml", path]
+    result = protection.check_changes(paths, [protection.PROTECTED_LABEL])
+    assert not result.ok
+    assert result.implementation == [path]
+
+
+def test_moving_a_file_out_of_the_protected_tree_is_a_protected_change(repo):
+    base = git(repo.root, "rev-parse", "HEAD").strip()
+    git(repo.root, "checkout", "-q", "-b", "move-out")
+    git(repo.root, "mv", f"{PROTECTED}/tokenizer.jsonl", "model-pipeline/tokenizer.jsonl")
+    git(repo.root, "commit", "-q", "-m", "move")
+    paths = protection.changed_files(repo.root, base, "HEAD")
+    assert f"{PROTECTED}/tokenizer.jsonl" in paths
+    assert "model-pipeline/tokenizer.jsonl" in paths
+    assert not protection.check_changes(paths, []).ok
+
+
 def test_check_protected_cli(capsys):
     files = "model-pipeline/protected/a/tolerances.yaml\nREADME.md"
     assert main(["check-protected", "--files", files, "--labels-json", "[]"]) == 1

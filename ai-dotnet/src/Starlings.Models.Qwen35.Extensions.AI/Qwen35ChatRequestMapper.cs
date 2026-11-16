@@ -18,10 +18,20 @@ public static class Qwen35ChatRequestMapper
     /// Maps a conversation as the class remarks of <see cref="Qwen35ChatClient"/> describe: <paramref name="instructions"/>
     /// (<see cref="ChatOptions.Instructions"/>) becomes a leading system message when given, system, user and assistant
     /// messages map one to one (text concatenated; assistant reasoning and function calls carried over), and each
-    /// <see cref="FunctionResultContent"/> of a tool message becomes one tool message.
+    /// <see cref="FunctionResultContent"/> of a tool message becomes one tool message, its text escaped with
+    /// <see cref="EscapeToolResult"/> as <see cref="Qwen35ChatClientOptions.EscapeToolResults"/> does by default.
     /// </summary>
     /// <exception cref="NotSupportedException">A role, content type, author name or instructions placement the template cannot render.</exception>
-    public static List<Qwen35Message> MapMessages(IEnumerable<ChatMessage> messages, string? instructions)
+    public static List<Qwen35Message> MapMessages(IEnumerable<ChatMessage> messages, string? instructions) =>
+        MapMessages(messages, instructions, escapeToolResults: true);
+
+    /// <summary>
+    /// Maps a conversation as <see cref="MapMessages(IEnumerable{ChatMessage}, string?)"/> does;
+    /// <paramref name="escapeToolResults"/> is <see cref="Qwen35ChatClientOptions.EscapeToolResults"/>: true escapes
+    /// the text of each <see cref="FunctionResultContent"/> with <see cref="EscapeToolResult"/>, false keeps it verbatim.
+    /// </summary>
+    /// <exception cref="NotSupportedException">A role, content type, author name or instructions placement the template cannot render.</exception>
+    public static List<Qwen35Message> MapMessages(IEnumerable<ChatMessage> messages, string? instructions, bool escapeToolResults)
     {
         ArgumentNullException.ThrowIfNull(messages);
         var result = new List<Qwen35Message>(messages is ICollection<ChatMessage> c ? c.Count + 1 : 4);
@@ -41,7 +51,7 @@ public static class Qwen35ChatRequestMapper
             Qwen35Role role = MapRole(message.Role, index);
             if (role == Qwen35Role.Tool)
             {
-                MapToolMessage(message, index, result);
+                MapToolMessage(message, index, result, escapeToolResults);
                 index++;
                 continue;
             }
@@ -417,7 +427,7 @@ public static class Qwen35ChatRequestMapper
     }
 
     // A tool message: one template tool message per FunctionResultContent, in order.
-    private static void MapToolMessage(ChatMessage message, int index, List<Qwen35Message> result)
+    private static void MapToolMessage(ChatMessage message, int index, List<Qwen35Message> result, bool escape)
     {
         if (message.AuthorName is not null)
         {
@@ -432,7 +442,8 @@ public static class Qwen35ChatRequestMapper
                 throw new NotSupportedException($"Message {index}: a tool message may contain only FunctionResultContent, not {content.GetType().Name}.");
             }
 
-            result.Add(Qwen35Message.Tool(ResultText(r.Result)));
+            string text = ResultText(r.Result);
+            result.Add(Qwen35Message.Tool(escape ? EscapeToolResult(text) : text));
             count++;
         }
 
@@ -440,6 +451,43 @@ public static class Qwen35ChatRequestMapper
         {
             throw new NotSupportedException($"Message {index}: a tool message needs at least one FunctionResultContent.");
         }
+    }
+
+    /// <summary>
+    /// The added tokens of the pinned <c>qwen35-bpe-chat</c> tokenizer (<see cref="Qwen35Checkpoint.TokenizerSha256"/>)
+    /// that are not of the form <c>&lt;|name|&gt;</c>. The tokenizer matches each of them in raw text, special or not.
+    /// </summary>
+    internal static readonly string[] TagTokens =
+    [
+        "<tool_call>", "</tool_call>", "<tool_response>", "</tool_response>", "<think>", "</think>",
+        "<tts_pad>", "<tts_text_bos>", "<tts_text_eod>", "<tts_text_bos_single>",
+    ];
+
+    /// <summary>
+    /// Rewrites every added-token string of the pinned tokenizer in <paramref name="text"/> so that it tokenizes to no
+    /// added token: each <c>&lt;|name|&gt;</c> becomes <c>&lt;¦name¦&gt;</c> (U+00A6), as
+    /// <see cref="Qwen35ChatTemplate.EscapeSpecialTokens"/> does, and each tag token (<c>&lt;tool_call&gt;</c>,
+    /// <c>&lt;/tool_call&gt;</c>, <c>&lt;tool_response&gt;</c>, <c>&lt;/tool_response&gt;</c>, <c>&lt;think&gt;</c>,
+    /// <c>&lt;/think&gt;</c>, <c>&lt;tts_pad&gt;</c>, <c>&lt;tts_text_bos&gt;</c>, <c>&lt;tts_text_eod&gt;</c>,
+    /// <c>&lt;tts_text_bos_single&gt;</c>) gets a <c>¦</c> after its <c>&lt;</c>, for example <c>&lt;¦/tool_response&gt;</c>.
+    /// Escaping escaped text changes nothing. Applied to tool-result content when
+    /// <see cref="Qwen35ChatClientOptions.EscapeToolResults"/> is true (the default).
+    /// </summary>
+    public static string EscapeToolResult(string text)
+    {
+        ArgumentNullException.ThrowIfNull(text);
+        text = Qwen35ChatTemplate.EscapeSpecialTokens(text);
+        if (!text.Contains('<', StringComparison.Ordinal))
+        {
+            return text;
+        }
+
+        foreach (string tag in TagTokens)
+        {
+            text = text.Replace(tag, string.Concat("<\u00A6", tag.AsSpan(1)), StringComparison.Ordinal);
+        }
+
+        return text;
     }
 
     // A function result as the tool message text: a string as is, anything else as compact JSON.

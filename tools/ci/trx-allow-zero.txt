@@ -1,0 +1,8 @@
+# Test modules that may legitimately report 0 passed tests (tools/ci/check-trx.py). One module per line: the test
+# assembly name, whitespace, then why every test of it may skip. A line without a reason is an error.
+#
+# Empty on purpose. In the qualification run 42622741426 (2026-11-09, job `model tests (linux x64 cpu)`) every one of
+# the 30 modules of AI.slnx passed at least one test, the modules of privately hosted or unacquired models included
+# (their weight-free tests run). The *.Tests.Cuda modules run only in tools/cuda-qualification-local.sh, which
+# supplies every model they need, Kev's bundles included (from Starlinghq/kev-*-onnx). Add a module here only with the code-level reason its every
+# test needs an input that the run cannot have.

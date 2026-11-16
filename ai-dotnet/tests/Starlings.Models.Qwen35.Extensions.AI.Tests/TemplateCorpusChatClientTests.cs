@@ -11,7 +11,8 @@ namespace Starlings.Models.Qwen35.Extensions.AI.Tests;
 /// <see cref="FunctionResultContent"/> included, must reach the model as the upstream prompt ids (transformers 5.18.0
 /// rendering through the transformers tokenizer); every unsupported template feature (images, video, add_vision_id,
 /// add_generation_prompt=False, unknown roles) must fail with <see cref="NotSupportedException"/> before any generator
-/// is created. Scripted native sequence; needs the pinned tokenizer.json.
+/// is created. Tool results are rendered verbatim (<see cref="Qwen35ChatClientOptions.EscapeToolResults"/> false), as
+/// upstream renders them. Scripted native sequence; needs the pinned tokenizer.json.
 /// </summary>
 public sealed class TemplateCorpusChatClientTests
 {
@@ -27,7 +28,9 @@ public sealed class TemplateCorpusChatClientTests
         Assert.SkipWhen(tokenizer is null, reason);
         var c = Qwen35TemplateCorpus.Get(id);
         var backend = new ScriptedBackend(tokenizer!, _ => [Qwen35ChatModel.ImEndTokenId]);
-        using var client = new Qwen35ChatClient(backend.Model);
+        // Upstream fidelity: tool results verbatim (the default escapes them; the corpus case result-special-text has one
+        // with <|im_end|> in it, and ToolResultEscapingTests covers the default).
+        using var client = new Qwen35ChatClient(backend.Model, new Qwen35ChatClientOptions { EscapeToolResults = false });
         var (messages, options) = ToChatRequest(c);
 
         // Text parts are concatenated by the adapter, as the template concatenates them.
