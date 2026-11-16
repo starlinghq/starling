@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <IsPackable>true</IsPackable>
+    <!-- Trim, AOT and single-file analyzers on (warnings are errors). -->
+    <IsAotCompatible>true</IsAotCompatible>
+    <Description>Microsoft.Extensions.AI middleware that runs a Starlings.Guardrails guard around any IChatClient: new user messages and tool results are checked before the call, the response after it; findings come back in ChatResponse.AdditionalProperties (annotate) or as GuardrailsViolationException (block). Streaming responses are buffered and checked before release, or checked after completion. Input, output and tool-result checks switch on and off separately. Experimental.</Description>
+    <PackageTags>guardrails;prompt-injection;jailbreak;content-safety;microsoft.extensions.ai;ichatclient;middleware</PackageTags>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Abstractions only (DelegatingChatClient); pipelines use ChatClientBuilder.Use(c => c.WithGuardrails(guard)). -->
+    <PackageReference Include="Microsoft.Extensions.AI.Abstractions" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../Starlings.Guardrails/Starlings.Guardrails.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <IsPackable>true</IsPackable>
+    <!-- Trim, AOT and single-file analyzers on (warnings are errors). -->
+    <IsAotCompatible>true</IsAotCompatible>
+    <Description>Optional guardrails for prompts and responses: the IContentGuard contract (a 0 to 1 score, scores per category such as prompt injection, jailbreak and harmful content, flagged categories, and an explicit not-scanned outcome), a model-free pattern guard (microseconds, no memory to speak of) with canary strings for system-prompt leaks, and a cascade that runs cheap guards first and escalates to model guards only when needed. Model guards come from separate packages (Starlings.Models.Kev.Guardrails); the chat middleware is Starlings.Guardrails.Extensions.AI. BCL only. Experimental: detection quality is measured on small hand-written sets only, see the README.</Description>
+    <PackageTags>guardrails;prompt-injection;jailbreak;content-safety;moderation;llm-security</PackageTags>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="" />
+  </ItemGroup>
+
+</Project>

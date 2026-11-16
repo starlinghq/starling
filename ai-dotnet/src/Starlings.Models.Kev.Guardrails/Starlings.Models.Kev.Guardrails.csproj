@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <IsPackable>true</IsPackable>
+    <!-- Trim, AOT and single-file analyzers on (warnings are errors). -->
+    <IsAotCompatible>true</IsAotCompatible>
+    <Description>A Starlings.Guardrails model guard on the Kev 1.0 decision models (Starlings.Models.Kev.Onnx): each category is one Kev question on a shared state, answered in one prefill pass, so a text costs one Kev request whatever the number of categories. Default questions for prompt attacks (input) and harmful responses (output); questions, framing and thresholds are configurable. Over-long texts come back not scanned. Experimental: Kev is a general decision model, not a trained safety classifier; measured quality is in the README.</Description>
+    <PackageTags>guardrails;prompt-injection;jailbreak;content-safety;kev;onnxruntime</PackageTags>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../Starlings.Guardrails/Starlings.Guardrails.csproj" />
+    <ProjectReference Include="../Starlings.Models.Kev.Onnx/Starlings.Models.Kev.Onnx.csproj" />
+  </ItemGroup>
+
+</Project>
