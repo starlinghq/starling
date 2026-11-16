@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Pod side of the batching sweep (Phase 0 of the batching investigation; ai-dotnet/benchmarks/README.md, "Batching
-# sweep"). Runs on a RunPod RTX 3090 pod with the network volume starling-q-vol at /workspace, like
-# runpod-cuda-pod.sh, whose environment it reuses. Start it detached and poll <out>/status.txt and <out>/DONE:
+# sweep"). Runs on a RunPod RTX 3090 pod with the network volume starling-q-vol at /workspace, like the former CUDA
+# qualification pod script (removed 2026-11-15; CUDA qualification is now tools/cuda-qualification-local.sh), whose
+# volume environment it reuses. Start it detached and poll <out>/status.txt and <out>/DONE:
 #
 #   tools/ci/runpod-batching-bench.sh <commit sha> <out dir> [--quick]
 #
@@ -29,8 +30,8 @@
 # /workspace/starling, and writes nothing under model-pipeline/protected/.
 #
 # CPU thread counts follow the container's CPU quota (the pods show 256 CPUs but run under a CFS quota of about 31;
-# see runpod-cuda-pod.sh): the main CPU sweep uses min(quota, 16) intra-op threads and the thread sweep the powers of
-# two up to the quota plus the quota itself. ORT's default (one thread per visible core) is never used on the pod.
+# docs/evidence/cuda-soak-growth/): the main CPU sweep uses min(quota, 16) intra-op threads and the thread sweep the
+# powers of two up to the quota plus the quota itself. ORT's default (one thread per visible core) is never used on the pod.
 set -uo pipefail
 
 SHA="${1:?commit sha}"
@@ -81,7 +82,7 @@ export CUDA_DEVICE_ORDER=PCI_BUS_ID CUDA_VISIBLE_DEVICES=0 NVIDIA_TF32_OVERRIDE=
 export HF_HUB_DISABLE_TELEMETRY=1
 unset HF_TOKEN
 
-# The container's CPU quota, as runpod-cuda-pod.sh reads it (cgroup v2 cpu.max, else v1 cfs_quota_us).
+# The container's CPU quota, as the former CUDA qualification pod script read it (cgroup v2 cpu.max, else v1 cfs_quota_us).
 cpu_quota() {
     local q p d
     if read -r q p 2>/dev/null </sys/fs/cgroup/cpu.max && [[ $q =~ ^[0-9]+$ && $p =~ ^[0-9]+$ && $p -gt 0 ]]; then

@@ -3,22 +3,25 @@ name: qualification
 # Scheduled qualification (plan section 13.1 "trusted model qualification" and "periodic maintenance"; backlog P-018,
 # workstream R6 of docs/plan/production-readiness.md). Weekly, on release tags (ai-v*) and on manual dispatch only: never
 # on pull_request, so no fork code runs here, and no job can reach release credentials (the `release` environment is used only by
-# release.yml). Every job uses the read-only workflow token, and every job but `cuda` uses no secret: only publicly
-# hosted, pinned model assets are acquired, anonymously. Every registered graph is public since 2026-10-14 (maintainer action M3). A profile whose
+# release.yml). Every job uses the read-only workflow token and no secret: only publicly hosted, pinned model assets
+# are acquired, anonymously. Every registered graph is public since 2026-10-14 (maintainer action M3). A profile whose
 # manifest records a `source_status` of `placeholder` or `private` is skipped with a "hosting private" notice;
 # tools/qualification.py reads that from each manifest.
 #
 # This workflow is the regression support of the Stable profiles (docs/support-policy.md, "Regression support"): the
 # release-gates job reruns G1, G2 and G3 of each Stable CPU profile on its accepted P-030 release sets, and the soak job
-# screens each for growth: CPU regression runs weekly (and on every release tag). The cuda job does the same for every
-# CUDA profile on a RunPod GPU pod, for every release (an ai-v* tag push) and on manual dispatch, not weekly. A failure
-# there is handled like a regression report.
+# screens each for growth: CPU regression runs weekly (and on every release tag). A failure here is handled like a
+# regression report. No job here uses a GPU: CUDA qualification (the CUDA test projects, G1, G2 and G3 of every CUDA
+# profile on its release sets, and a soak smoke test per CUDA profile) runs on the maintainer's RTX 3090 with
+# tools/cuda-qualification-local.sh before every release tag (docs/support-policy.md, "Regression support").
 #
 # Jobs:
 #   assets         the lock of every public CPU profile (tools/qualification.py), uploaded as evidence. Each job that
 #                  needs models acquires them itself with tools/acquire-models.sh (anonymous Hub download, size and
 #                  SHA-256 verified): all CPU models together exceed the 10 GB actions/cache limit
-#   model-tests    the weight-dependent .NET tests, with the models present
+#   model-tests    the weight-dependent .NET tests, with the models and the EmbeddingGemma 2 image set, FFmpeg builds
+#                  and release videos present (tools/ci/eg2-test-inputs.sh); fails when a test module passed nothing
+#                  (tools/ci/check-trx.py), so a run where every test of a module skipped is not green
 #   evaluator      the protected staged evaluator on the development fixtures, G1 and G2 required, per CPU profile with
 #                  an onboarding recipe, plus the G3 task-quality evaluator on the public SMOKE example (not gate evidence)
 #   experimental   the onboarding routes of the Experimental CPU profiles of Kev-0.8B, QwenChat (Qwen3, Qwen2.5) and
@@ -31,16 +34,13 @@ name: qualification
 #   catalog        the generated catalog, compatibility matrix and package README maturity blocks are not stale
 #   upstream       upstream change detection (P-020): fails when a pinned Hub repository has a revision newer than the
 #                  manifest's latest_known_upstream_revision, so the maintainer is notified by the failed run
-#   cuda           regression support of the CUDA profiles on a RunPod GPU pod (tools/ci/runpod.py, runpod-cuda-pod.sh):
-#                  the CUDA test projects, release-set G1, G2 and G3 of every CUDA profile, and a short soak smoke test
-#                  per CUDA profile. Per release (ai-v* tags) and on dispatch, not on the schedule. The only job with a secret (RUNPOD_API_KEY, used on the runner only, never on the pod)
 #
 # Evidence from every job is uploaded as an artifact, also when a step fails. Nothing here changes a manifest, a gate
 # or a maturity: the maintainer records results (M10).
 on:
   schedule:
-    - cron: "23 4 * * 1" # Mondays 04:23 UTC: the CPU jobs (the cuda job does not run on the schedule)
-  # GPU regression per release: a release tag runs every job, the cuda job included.
+    - cron: "23 4 * * 1" # Mondays 04:23 UTC
+  # CPU regression per release: a release tag runs every job.
   push:
     tags: ["ai-v*"]
   workflow_dispatch:
@@ -49,16 +49,6 @@ on:
         description: "Soak duration per profile (Starlings.Soak.Tool --duration; 1h is the qualification length)"
         type: string
         default: 1h
-      cuda_soak_duration:
-        description: "Soak duration per CUDA profile on the RunPod pod (job cuda; 10m screens, 1h is the G4 length)"
-        type: string
-        default: 10m
-      # A CPU-only dispatch skips the paid RunPod job (for example while the RunPod balance is low). Scheduled runs
-      # always include it.
-      skip_cuda:
-        description: "Skip the cuda (runpod) job: run the CPU jobs only"
-        type: boolean
-        default: false
       # Allocator diagnostics, added on the GitHub-hosted runner used until 2026-10-22 and kept on the self-hosted
       # `qualification` runner (docs/evidence/scheduled-regression-fix/). The defaults leave the
       # qualification run unchanged.
@@ -167,15 +157,37 @@ jobs:
           # shellcheck disable=SC2086 # CPU_PROFILES is a word list
           tools/acquire-models.sh "$EVIDENCE/locks" $CPU_PROFILES
           tools/fetch-tokenizer-assets.sh
+      # The EmbeddingGemma 2 image set (regenerated by make_eg2_images.py and checked file by file against the protected
+      # images.json), the pinned FFmpeg 8.1 and 9.0 LGPL builds and the four release videos (Wikimedia Commons, SHA-1,
+      # size and SHA-256 checked), so the image tests and the release-video decoder test run instead of skipping. The 22
+      # synthetic fixture videos have no reproducible source (make_eg2_videos.py needs an FFmpeg GPL build that upstream
+      # deleted and nothing here hosts), so the tests that need them still skip, with that reason in the report.
+      - name: EmbeddingGemma 2 test inputs
+        run: |
+          pip install uv==0.12.19
+          tools/ci/eg2-test-inputs.sh "$RUNNER_TEMP/eg2-test-inputs"
+          sed 's/^export //' "$RUNNER_TEMP/eg2-test-inputs/env" >>"$GITHUB_ENV"
       - run: dotnet build ai-dotnet/AI.slnx --configuration Release
       # Tests of models whose files are absent (private hosting) still skip, with the reason in the report. One test
       # module at a time: several modules each loading their models exhausted the memory of the GitHub-hosted runner
       # used until 2026-10-22 (the first dispatched run lost its runner that way), and the self-hosted runner shares its
-      # host with other jobs.
+      # host with other jobs. `dotnet test` exits 0 when every test of a module skips, so tools/ci/check-trx.py then
+      # reads the TRX reports and fails the step when a module with tests passed none of them (allow-list:
+      # tools/ci/trx-allow-zero.txt); its per-module table goes to the step summary and the artifact.
       - name: Tests with the public models
         run: |
+          status=0
           dotnet test --solution ai-dotnet/AI.slnx --configuration Release --no-build --max-parallel-test-modules 1 \
-            --results-directory "$EVIDENCE/model-tests" -- --report-xunit-trx
+            --results-directory "$EVIDENCE/model-tests" -- --report-xunit-trx || status=$?
+          trx=0
+          python3 -I tools/ci/check-trx.py "$EVIDENCE/model-tests" --summary "$GITHUB_STEP_SUMMARY" \
+            >"$RUNNER_TEMP/trx-check.txt" 2>&1 || trx=$?
+          cat "$RUNNER_TEMP/trx-check.txt"
+          cp "$RUNNER_TEMP/trx-check.txt" "$EVIDENCE/model-tests/" 2>/dev/null || true
+          if [[ $status != 0 || $trx != 0 ]]; then
+            echo "::error::dotnet test exit $status, check-trx exit $trx"
+            exit 1
+          fi
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         if: always()
         with:
@@ -835,158 +847,3 @@ jobs:
           name: qualification-upstream
           path: artifacts/qualification/upstream/
           if-no-files-found: warn
-
-  # CUDA regression support (plan 13.1: NVIDIA CUDA on Linux x64) on a RunPod GPU pod, for every release (a push of an
-  # ai-v* tag) and on manual dispatch; not on the weekly schedule, never on pull_request and never in a fork. Each run creates one on-demand pod (RTX 3090 only, secure cloud
-  # EU-CZ-1) named starling-q-ci-<run id>, with the network volume starling-q-vol attached (the .NET SDK, uv, the pinned
-  # nvidia wheels and the verified models). The pod checks out exactly ${{ github.sha }} and runs
-  # tools/ci/runpod-cuda-pod.sh: the CUDA test projects, G1, G2 and G3 of every CUDA profile on its accepted P-030
-  # release sets (bounds and budgets only from protected/; the G2 references are the hosted, digest-verified ones), and a
-  # short soak per CUDA profile under its contract environment. The short soak is a smoke test: wrong outputs, errors and
-  # crashes fail it; its growth verdict (the tool's unchanged rule) is recorded but not binding, because a short run sits
-  # in the allocator's warm-up ramp. Growth is judged by the binding one-hour G4 soaks. The results come back as the artifact qualification-cuda.
-  #
-  # Only tools/ci/runpod.py, on this runner, uses the repository secret RUNPOD_API_KEY (to read the balance, create,
-  # inspect and terminate the pod). The secret is never echoed and never passed to the pod. The pod's SSH key is
-  # generated per run and discarded with the runner. The volume pins the datacenter, so pod creation waits up to 30
-  # minutes for an RTX 3090 to be in stock there. The CUDA support contracts cover the RTX 3090 (Ampere), where every CUDA
-  # gate ran; no other GPU is a fallback (run 38857860186 landed on an RTX 4090, where embeddinggemma-2/video-fp32-cuda
-  # failed G2: docs/evidence/gpu-regression-2026-10-16/). Without a 3090 in stock, or on a pod that reports another GPU, the
-  # job fails before any test runs. Cost guard: no pod starts below a $5 balance. Caps: the job
-  # timeout; a pod-side self-removal, armed by the pod's start command, as the backstop if the runner is lost; and a
-  # sweep of stale starling-q-ci-* pods before each run. Only pods named starling-q-ci-* are ever touched.
-  cuda:
-    name: cuda (runpod)
-    if: github.repository == 'starlinghq/starling' && (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/ai-v') || github.event_name == 'workflow_dispatch' && !inputs.soak_only && !inputs.skip_cuda)
-    runs-on: qualification
-    # Up to 30 min stock wait + 20 min SSH wait + POD_RUN_MINUTES + copy-back and termination, with margin.
-    timeout-minutes: 290
-    concurrency:
-      group: qualification-cuda-runpod
-      cancel-in-progress: false
-    env:
-      POD_NAME: starling-q-ci-${{ github.run_id }}
-      SOAK_DURATION: ${{ inputs.cuda_soak_duration || '10m' }}
-      # The pod removes itself this long after its creation, whatever happens to this runner. It must exceed the SSH
-      # wait (20 min) plus POD_RUN_MINUTES, also in the SSH-armed fallback (BACKSTOP_MINUTES - 15): 20 + 195 < 225.
-      BACKSTOP_MINUTES: "240"
-      # The pod-side run must finish within this many minutes of its start; the results are copied back either way.
-      # A green run takes about 107 min (38977347513); run 39012176735 needed about 180 (a CPU reference stage
-      # oversubscribed the pod's CPU quota) and was cut off at the former 165 in its last soak.
-      POD_RUN_MINUTES: "195"
-    steps:
-      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
-      - name: Balance and stale pods
-        env:
-          RUNPOD_API_KEY: ${{ secrets.RUNPOD_API_KEY }}
-        run: python3 -I tools/ci/runpod.py preflight --min-balance 5
-      - name: Ephemeral SSH key
-        run: |
-          ssh-keygen -q -t ed25519 -N '' -C "$POD_NAME" -f "$RUNNER_TEMP/pod_key"
-          : >"$RUNNER_TEMP/known_hosts"
-      - name: Create pod
-        id: pod
-        env:
-          RUNPOD_API_KEY: ${{ secrets.RUNPOD_API_KEY }}
-        run: |
-          python3 -I tools/ci/runpod.py create --name "$POD_NAME" --public-key "$RUNNER_TEMP/pod_key.pub" \
-            --backstop-minutes "$BACKSTOP_MINUTES" --stock-wait-minutes 30
-      - name: Wait for SSH
-        id: ssh
-        env:
-          RUNPOD_API_KEY: ${{ secrets.RUNPOD_API_KEY }}
-        run: |
-          endpoint="$(python3 -I tools/ci/runpod.py ssh --name "$POD_NAME" --wait-minutes 20)"
-          read -r ip port <<<"$endpoint"
-          echo "ip=$ip" >>"$GITHUB_OUTPUT"
-          echo "port=$port" >>"$GITHUB_OUTPUT"
-      # No step from here to the termination has the API key in its environment.
-      - name: Start the pod run
-        env:
-          IP: ${{ steps.ssh.outputs.ip }}
-          PORT: ${{ steps.ssh.outputs.port }}
-          SHA: ${{ github.sha }}
-        run: |
-          opts=(-i "$RUNNER_TEMP/pod_key" -o UserKnownHostsFile="$RUNNER_TEMP/known_hosts" -o StrictHostKeyChecking=accept-new
-            -o ConnectTimeout=20 -o ServerAliveInterval=30 -o LogLevel=ERROR)
-          for i in $(seq 1 40); do
-            if ssh "${opts[@]}" -p "$PORT" "root@$IP" true 2>/dev/null; then break; fi
-            if [[ $i == 40 ]]; then echo "::error::SSH login to the pod did not succeed"; exit 1; fi
-            sleep 15
-          done
-          ssh "${opts[@]}" -p "$PORT" "root@$IP" 'nvidia-smi --query-gpu=name,driver_version,memory.total --format=csv,noheader; nvidia-smi | grep -o "CUDA Version: [0-9.]*"'
-          # The contracts cover the RTX 3090 only: refuse any other GPU before the pod run starts.
-          gpu_name="$(ssh "${opts[@]}" -p "$PORT" "root@$IP" 'nvidia-smi --query-gpu=name --format=csv,noheader | head -1')"
-          if [[ "$gpu_name" != "NVIDIA GeForce RTX 3090" ]]; then
-            echo "::error title=Wrong GPU::the pod has '$gpu_name', not the NVIDIA GeForce RTX 3090 the CUDA contracts cover; no run on another GPU"
-            exit 1
-          fi
-          driver="$(ssh "${opts[@]}" -p "$PORT" "root@$IP" 'nvidia-smi --query-gpu=driver_version --format=csv,noheader | head -1')"
-          if (( ${driver%%.*} < 580 )); then echo "::error::driver $driver is older than CUDA 13 needs (580)"; exit 1; fi
-          # The pod-side backstop: confirm that the start command armed it, else arm it over SSH.
-          if ssh "${opts[@]}" -p "$PORT" "root@$IP" "pgrep -f '[s]leep $((BACKSTOP_MINUTES * 60))' >/dev/null"; then
-            echo "pod-side backstop armed by the start command ($BACKSTOP_MINUTES min after creation)"
-          elif ssh "${opts[@]}" -p "$PORT" "root@$IP" "command -v runpodctl >/dev/null && test -n \"\${RUNPOD_POD_ID:-}\" && { setsid nohup sh -c 'sleep $((BACKSTOP_MINUTES * 60 - 900)); runpodctl remove pod \"\$RUNPOD_POD_ID\"' >/var/log/starling-backstop.log 2>&1 < /dev/null & }"; then
-            echo "pod-side backstop armed over SSH"
-          else
-            echo "::warning::pod-side backstop not armed (no runpodctl or RUNPOD_POD_ID); the job timeout and the next run's sweep remain"
-          fi
-          scp -q -i "$RUNNER_TEMP/pod_key" -o UserKnownHostsFile="$RUNNER_TEMP/known_hosts" -o LogLevel=ERROR -P "$PORT" \
-            tools/ci/runpod-cuda-pod.sh "root@$IP:/root/runpod-cuda-pod.sh"
-          ssh "${opts[@]}" -p "$PORT" "root@$IP" "mkdir -p /root/ci-out && { setsid nohup bash /root/runpod-cuda-pod.sh $SHA /root/ci-out $SOAK_DURATION > /root/ci-out/run.log 2>&1 < /dev/null & } ; sleep 10; if test -s /root/ci-out/status.txt; then echo 'pod run started'; else tail -n 20 /root/ci-out/run.log; exit 1; fi"
-      - name: Pod run (CUDA tests, release gates, soaks)
-        env:
-          IP: ${{ steps.ssh.outputs.ip }}
-          PORT: ${{ steps.ssh.outputs.port }}
-        run: |
-          opts=(-i "$RUNNER_TEMP/pod_key" -o UserKnownHostsFile="$RUNNER_TEMP/known_hosts" -o ConnectTimeout=20
-            -o ServerAliveInterval=30 -o LogLevel=ERROR -p "$PORT")
-          end=$((SECONDS + POD_RUN_MINUTES * 60))
-          seen=0
-          while (( SECONDS < end )); do
-            sleep 60
-            # shellcheck disable=SC2029 # the line offset is meant to expand on the runner
-            if ! lines="$(ssh "${opts[@]}" "root@$IP" "tail -n +$((seen + 1)) /root/ci-out/status.txt 2>/dev/null; test -f /root/ci-out/DONE && echo __DONE__")"; then
-              echo "(ssh poll failed)"
-              continue
-            fi
-            new="$(grep -v '^__DONE__$' <<<"$lines" || true)"
-            if [[ -n "$new" ]]; then
-              echo "$new"
-              seen=$((seen + $(wc -l <<<"$new")))
-            fi
-            if grep -q '^__DONE__$' <<<"$lines"; then exit 0; fi
-          done
-          echo "::error::the pod run did not finish within $POD_RUN_MINUTES minutes; the partial results are in the artifact"
-          exit 1
-      - name: Copy results back
-        if: always() && steps.ssh.outputs.ip != ''
-        env:
-          IP: ${{ steps.ssh.outputs.ip }}
-          PORT: ${{ steps.ssh.outputs.port }}
-        run: |
-          mkdir -p "$EVIDENCE/cuda"
-          ssh -i "$RUNNER_TEMP/pod_key" -o UserKnownHostsFile="$RUNNER_TEMP/known_hosts" -o ConnectTimeout=20 -o LogLevel=ERROR \
-            -p "$PORT" "root@$IP" 'tar cf - -C /root/ci-out .' | tar xf - -C "$EVIDENCE/cuda" || echo "copy incomplete"
-          if [[ -f "$EVIDENCE/cuda/summary.md" ]]; then
-            cat "$EVIDENCE/cuda/summary.md" | tee -a "$GITHUB_STEP_SUMMARY"
-          else
-            tail -n 60 "$EVIDENCE/cuda/status.txt" "$EVIDENCE/cuda/run.log" 2>/dev/null || true
-          fi
-      - name: Terminate pod and confirm
-        if: always()
-        env:
-          RUNPOD_API_KEY: ${{ secrets.RUNPOD_API_KEY }}
-          CREATED_AT: ${{ steps.pod.outputs.created_at }}
-        run: python3 -I tools/ci/runpod.py terminate --name "$POD_NAME" --created-at "$CREATED_AT"
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
-        if: always()
-        with:
-          name: qualification-cuda
-          path: artifacts/qualification/cuda/
-          if-no-files-found: warn
-      - name: Result
-        run: |
-          rc="$(cat "$EVIDENCE/cuda/exit-code" 2>/dev/null || echo missing)"
-          echo "pod run exit code: $rc"
-          [[ "$rc" == 0 ]]

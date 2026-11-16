@@ -1,40 +1,84 @@
 #!/usr/bin/env bash
-# Pod side of the scheduled CUDA qualification (.github/workflows/qualification.yml, job `cuda`). Runs on a RunPod GPU
-# pod with the network volume starling-q-vol at /workspace; started detached by the job, which polls <out>/status.txt
-# and <out>/DONE and copies <out> back as the workflow artifact.
+# CUDA qualification on the maintainer's machine: the regression support of the CUDA profiles (docs/support-policy.md,
+# "Regression support"), run locally on an NVIDIA GeForce RTX 3090 before every release tag. It replaces the former
+# RunPod job `cuda` of .github/workflows/qualification.yml and does the same work with the same output layout, so its
+# evidence stays comparable with the runs recorded before (docs/evidence/gpu-regression-2026-10-16/ and later).
 #
-#   runpod-cuda-pod.sh <commit sha> <out dir> [soak duration, default 10m]
+#   tools/cuda-qualification-local.sh --gpu <index> <out dir> [soak duration, default 10m]
 #
-# Order: inventory, checkout of <sha> on the container disk, builds, reference environments, model acquisition, the
-# CUDA test projects, G1/G2/G3 of each CUDA profile on its accepted P-030 release sets, then one short soak per CUDA
-# profile. Every check is recorded in <out>/summary.tsv as `<profile> <check> <result>`; a check whose input is missing
-# is `not-run`, never `passed`. Exit status (also in <out>/exit-code): 0 only if every check passed.
+# Run it from a clean checkout of the commit to qualify (the commit and any modified tracked file are recorded; a
+# dirty checkout fails the check `checkout-clean`). Order: inventory, reference environments, builds, model
+# acquisition, the CUDA test projects (each judged by its exit status and by tools/ci/check-trx.py), G1/G2/G3 of each
+# CUDA profile on its accepted P-030 release sets, then one short soak per CUDA profile. Every check is recorded in
+# <out>/summary.tsv as `<profile> <check> <result>`; a check whose input is missing is `not-run`, never `passed`.
+# Exit status (also in <out>/exit-code): 0 only if every check passed. <out>/summary.md is the table to attach to the
+# release evidence; <out>/status.txt is the progress log.
 #
-# Uses from the volume: the .NET SDK (/workspace/dotnet), uv and its managed Python, the NuGet cache, the verified
-# model cache (/workspace/models, re-verified here), the soak's development fixtures (/workspace/fixtures) and the
-# eg2-cuda venv's pinned nvidia wheels (CUDA 13 runtime, cuDNN 9) for LD_LIBRARY_PATH. Never uses /workspace/shim (it
-# turns `dotnet build` into a no-op) and never changes /workspace/starling. Release inputs that are not in Git (media
-# from Wikimedia Commons, the pinned FFmpeg builds) are cached under /workspace/ci-cache after their first successful
-# preparation; the producers and the evaluator verify every one of them against the SHA-256 digests in Git, so a cached
-# file can make a check fail, never pass. Delete a cache directory to have the next run prepare it again. The G2
-# reference tensors that release sets keep outside Git are never regenerated here (they reproduce byte-identically only
-# on the reference CPU): they are downloaded to the container disk from the commit each protected hosted-reference.json
-# pins and verified file by file (tools/fetch-release-references.py). Stale copies under /workspace/ci-cache/refs (the
-# earlier regenerations) are deleted. Nothing here writes to model-pipeline/protected/.
+# Environment:
+#   --gpu <index>        the GPU to use, by PCI bus order (CUDA_DEVICE_ORDER=PCI_BUS_ID, CUDA_VISIBLE_DEVICES=<index>);
+#                        required, never a default device: on the shared workstation GPU 0 belongs to another
+#                        workload. The run refuses to start unless that GPU is an NVIDIA GeForce RTX 3090 (the only GPU
+#                        the CUDA contracts cover) with driver 580 or later.
+#   STARLING_MODELS      required: the verified model cache (tools/acquire-models.sh downloads what is missing and
+#                        verifies every file's size and SHA-256).
+#   STARLING_EMBEDDINGGEMMA2_VIDEO_TENSORS
+#                        the EmbeddingGemma 2 video reference tensors (run_embeddinggemma2_video.py --tensors) for the
+#                        CUDA test projects; they have no reproducible public source, so the run records `not-run`
+#                        without them.
+#   STARLING_KEV_08B_BUNDLE, STARLING_KEV_4B_BUNDLE
+#                        optional: Kev bundles for Starlings.Models.Kev.Tests.Cuda; default the acquired
+#                        kev-0.8b/onnx-fp32-cuda and kev-4b/onnx-fp32-cuda snapshots.
+#   CUDA_QUALIFICATION_WORK
+#                        optional: where reference environments, builds and prepared release inputs live (default
+#                        ${XDG_CACHE_HOME:-~/.cache}/starling-cuda-qualification); kept between runs. Release inputs
+#                        are verified against the digests in Git on every use, so a cached file can make a check fail,
+#                        never pass.
+#   dotnet, uv, git, curl, nvidia-smi on PATH.
+#
+# Fatal-signal tests: tests that inject a fatal signal into the test process may run only on GitHub-hosted runners,
+# where a crashed process cannot take a terminal session or another job with it; such a test gates on
+# RUNNER_ENVIRONMENT=github-hosted. This script never sets RUNNER_ENVIRONMENT and unsets it for its own run, so no such
+# test runs here, also when it is started from a shell that has it.
+#
+# Memory: the workstation is shared (other sessions, CI runners, a model server). Everything runs one step at a time
+# (no background preparation, one test module at a time), and before each heavy step (a build, a test module, a gate
+# producer, a soak) the script asks `agent-budget level` when that command is on PATH: on `critical` it waits with
+# `agent-budget alert --from critical --timeout 300` (repeatedly) before going on, on `tight` builds use -m:2.
+#
+# Release inputs that are not in Git (media from Wikimedia Commons, the pinned FFmpeg builds, the fixture image set)
+# are prepared under the work directory, each verified against the SHA-256 digests in Git by its producer or by the
+# evaluator. The G2 reference tensors that release sets keep outside Git are never regenerated (they reproduce
+# byte-identically only on the reference CPU): they are downloaded from the commit each protected
+# hosted-reference.json pins and verified file by file (tools/fetch-release-references.py). Nothing here writes to
+# model-pipeline/protected/.
 set -uo pipefail
+unset RUNNER_ENVIRONMENT HF_TOKEN
 
-SHA="${1:?commit sha}"
-OUT="${2:?out dir}"
-SOAK_DURATION="${3:-10m}"
-W=/workspace
-CI=/root/ci
-REPO=$CI/starling
-B=$CI/build
-V=$CI/venvs
-mkdir -p "$OUT" "$CI" "$B" "$V"
+GPU=""
+if [[ ${1:-} == --gpu ]]; then
+    GPU="${2:-}"
+    shift 2
+fi
+OUT="${1:-}"
+SOAK_DURATION="${2:-10m}"
+if [[ ! $GPU =~ ^[0-9]+$ || -z $OUT ]]; then
+    sed -n '7p' "$0" >&2
+    exit 2
+fi
+: "${STARLING_MODELS:?STARLING_MODELS must name the verified model cache}"
+REPO="$(cd "$(dirname "$0")/.." && pwd)"
+WORK="${CUDA_QUALIFICATION_WORK:-${XDG_CACHE_HOME:-$HOME/.cache}/starling-cuda-qualification}"
+B=$WORK/build
+V=$WORK/venvs
+CACHE=$WORK/cache
+mkdir -p "$OUT" "$B" "$V" "$CACHE"
 OUT="$(cd "$OUT" && pwd)"
+rm -rf "$OUT/DONE" "$OUT/exit-code" "$OUT/tests" "$OUT/gates" "$OUT/soak" "$OUT/trx-check.md" # a reused out dir
 : >"$OUT/summary.tsv"
+: >"$OUT/status.txt"
 START=$SECONDS
+cd "$REPO" || exit 1
+SHA="$(git rev-parse HEAD)"
 
 log() { echo "$(date -u +%FT%TZ) $*" | tee -a "$OUT/status.txt"; }
 record() { printf '%s\t%s\t%s\n' "$1" "$2" "$3" >>"$OUT/summary.tsv"; log "result $1 $2: $3"; }
@@ -42,37 +86,49 @@ finish() {
     local rc=0
     if [[ ! -s "$OUT/summary.tsv" ]] || cut -f3 "$OUT/summary.tsv" | grep -qv '^passed$'; then rc=1; fi
     {
-        echo "## CUDA qualification on RunPod"
+        echo "## CUDA qualification (local)"
         echo
-        echo "Commit \`$SHA\`, GPU $(nvidia-smi --query-gpu=name,driver_version --format=csv,noheader 2>/dev/null | head -1), wall $(((SECONDS - START) / 60)) min."
+        echo "Commit \`$SHA\`, GPU $GPU $(nvidia-smi -i "$GPU" --query-gpu=name,driver_version --format=csv,noheader 2>/dev/null | head -1), host $(hostname 2>/dev/null || echo unknown), wall $(((SECONDS - START) / 60)) min."
         echo
         echo "| Profile | Check | Result |"
         echo "| --- | --- | --- |"
         awk -F'\t' '{ printf "| `%s` | %s | %s |\n", $1, $2, $3 }' "$OUT/summary.tsv"
+        if [[ -s "$OUT/trx-check.md" ]]; then
+            echo
+            echo "### CUDA test modules (tools/ci/check-trx.py)"
+            echo
+            cat "$OUT/trx-check.md"
+        fi
     } >"$OUT/summary.md"
     echo "$rc" >"$OUT/exit-code"
-    log "POD RUN END exit $rc"
+    log "LOCAL RUN END exit $rc"
     touch "$OUT/DONE"
     exit "$rc"
 }
 
-export DOTNET_ROOT=$W/dotnet DOTNET_CLI_TELEMETRY_OPTOUT=1 DOTNET_NOLOGO=1 NUGET_PACKAGES=$W/nuget
-export UV_PYTHON_INSTALL_DIR=$W/uv-python UV_CACHE_DIR=$CI/uv-cache UV_NO_PROGRESS=1
-export PATH=$W/dotnet:$W/bin:$PATH
-export STARLING_MODELS=$W/models
-export CUDA_DEVICE_ORDER=PCI_BUS_ID CUDA_VISIBLE_DEVICES=0 NVIDIA_TF32_OVERRIDE=0
-export HF_HUB_DISABLE_TELEMETRY=1
-# The network volume refuses chown: extract archives (the FFmpeg builds) as the current user.
-export TAR_OPTIONS=--no-same-owner
-unset HF_TOKEN
+# Memory budget of the shared workstation (see the header). DOTNET_M is -m:2 for builds while the level is tight.
+DOTNET_M=()
+budget() {  # budget <what>: wait while the level is critical
+    DOTNET_M=()
+    command -v agent-budget >/dev/null 2>&1 || return 0
+    local level
+    level="$(agent-budget level 2>/dev/null || echo unknown)"
+    while [[ $level == critical ]]; do
+        log "memory budget critical before $1: waiting (agent-budget alert --from critical --timeout 300)"
+        agent-budget alert --from critical --timeout 300 >/dev/null 2>&1 || true
+        level="$(agent-budget level 2>/dev/null || echo unknown)"
+    done
+    [[ $level == tight ]] && DOTNET_M=(-m:2)
+    return 0
+}
 
-# The container's CPU quota. The pods show 256 CPUs (lscpu, nproc) but run under a CFS quota of about 31 CPUs
-# (docs/evidence/cuda-soak-growth/), set through cgroup v1 (/sys/fs/cgroup/cpu.max is absent there). PyTorch and
-# OpenMP size their pools from the host (torch_threads 128 in the reports), so a CPU reference stage ran 128 threads
-# against a 31-CPU quota and was throttled every scheduling period: run 39012176735 spent 3058 s in the EmbeddingGemma
-# 2 text python-stage2 (428 s the run before on the same host type) and 279 s in e5's (58 s). The reference stages run
-# with REF_THREADS (the quota, rounded down; cgroup v2, else v1, else a fixed cap) instead.
-cpu_quota() {  # prints "<cpus> <source>"; <cpus> is empty when no quota is set or readable
+export DOTNET_CLI_TELEMETRY_OPTOUT=1 DOTNET_NOLOGO=1
+export UV_NO_PROGRESS=1 HF_HUB_DISABLE_TELEMETRY=1
+export CUDA_DEVICE_ORDER=PCI_BUS_ID CUDA_VISIBLE_DEVICES=$GPU NVIDIA_TF32_OVERRIDE=0
+
+# The CPU threads of the Python reference stages: the cgroup CPU quota when one is set (cgroup v2, else v1), else a
+# fixed cap, never more than the CPUs this process may use. PyTorch and OpenMP otherwise size their pools from the host.
+cpu_quota() {  # prints "<cpus> <source>"; <cpus> is "-" when no quota is set or readable
     local q p d
     if read -r q p 2>/dev/null </sys/fs/cgroup/cpu.max && [[ $q =~ ^[0-9]+$ && $p =~ ^[0-9]+$ && $p -gt 0 ]]; then
         echo "$((q / p > 0 ? q / p : 1)) cgroup-v2-cpu.max($q/$p)"
@@ -85,110 +141,68 @@ cpu_quota() {  # prints "<cpus> <source>"; <cpus> is empty when no quota is set 
             return
         fi
     done
-    echo " none"
+    echo "- none"
 }
 read -r QUOTA_CPUS QUOTA_SOURCE <<<"$(cpu_quota)"
+[[ $QUOTA_CPUS == - ]] && QUOTA_CPUS=""
 AFFINITY_CPUS="$(nproc)"
-REF_THREADS_CAP=16 # when no quota is readable: a fixed cap, never the host's 128 cores
+REF_THREADS_CAP=16
 if [[ -n $QUOTA_CPUS ]]; then
     REF_THREADS=$((QUOTA_CPUS < AFFINITY_CPUS ? QUOTA_CPUS : AFFINITY_CPUS))
     REF_THREADS_SOURCE="quota from $QUOTA_SOURCE, affinity $AFFINITY_CPUS"
 else
     REF_THREADS=$((REF_THREADS_CAP < AFFINITY_CPUS ? REF_THREADS_CAP : AFFINITY_CPUS))
-    REF_THREADS_SOURCE="no CPU quota readable: fixed cap $REF_THREADS_CAP, affinity $AFFINITY_CPUS"
+    REF_THREADS_SOURCE="no CPU quota: fixed cap $REF_THREADS_CAP, affinity $AFFINITY_CPUS"
 fi
-# For the Python reference stages: PyTorch's intra-op pool follows OMP_NUM_THREADS; MKL and OpenBLAS have their own.
 REF_ENV=(OMP_NUM_THREADS="$REF_THREADS" MKL_NUM_THREADS="$REF_THREADS" OPENBLAS_NUM_THREADS="$REF_THREADS")
-cpu_throttled() {  # cumulative CFS throttling of this container: "<periods throttled> <seconds throttled>", or "n/a"
-    local f
-    if [[ -r /sys/fs/cgroup/cpu.stat ]] && grep -q '^throttled_usec' /sys/fs/cgroup/cpu.stat; then
-        awk '/^nr_throttled/ { n = $2 } /^throttled_usec/ { t = $2 / 1e6 } END { printf "%d %.0f", n, t }' /sys/fs/cgroup/cpu.stat
-        return
-    fi
-    for f in /sys/fs/cgroup/cpu,cpuacct/cpu.stat /sys/fs/cgroup/cpu/cpu.stat /sys/fs/cgroup/cpuacct,cpu/cpu.stat; do
-        if [[ -r $f ]]; then
-            awk '/^nr_throttled/ { n = $2 } /^throttled_time/ { t = $2 / 1e9 } END { printf "%d %.0f", n, t }' "$f"
-            return
-        fi
-    done
-    echo "n/a"
-}
 
 # ---------------------------------------------------------------------------------------------------------------------
-log "pod run start: commit $SHA, soak $SOAK_DURATION"
-log "CPU: quota ${QUOTA_CPUS:-none} ($QUOTA_SOURCE), affinity $AFFINITY_CPUS, online $(cat /sys/devices/system/cpu/online 2>/dev/null); Python reference stages: $REF_THREADS threads ($REF_THREADS_SOURCE)"
+log "local run start: commit $SHA, GPU $GPU, soak $SOAK_DURATION, work $WORK"
+log "CPU: quota ${QUOTA_CPUS:-none} ($QUOTA_SOURCE), affinity $AFFINITY_CPUS; Python reference stages: $REF_THREADS threads ($REF_THREADS_SOURCE)"
 {
     echo "== GPU"; nvidia-smi; nvidia-smi --query-gpu=index,name,driver_version,memory.total,pci.bus_id --format=csv
+    echo "selected: CUDA_DEVICE_ORDER=$CUDA_DEVICE_ORDER CUDA_VISIBLE_DEVICES=$CUDA_VISIBLE_DEVICES"
     echo "== CPU"; lscpu | grep -E '^(Model name|CPU\(s\)|Thread|Core|Socket)'
     echo "cgroup cpu.max: $(cat /sys/fs/cgroup/cpu.max 2>/dev/null)  memory.max: $(cat /sys/fs/cgroup/memory.max 2>/dev/null)"
-    for d in /sys/fs/cgroup/cpu,cpuacct /sys/fs/cgroup/cpu /sys/fs/cgroup/cpuacct,cpu; do
-        [[ -r $d/cpu.cfs_quota_us ]] && echo "cgroup v1 $d: cfs_quota_us $(cat "$d/cpu.cfs_quota_us") cfs_period_us $(cat "$d/cpu.cfs_period_us" 2>/dev/null)"
-    done
-    echo "cgroup: $(stat -fc %T /sys/fs/cgroup 2>/dev/null); /proc/self/cgroup: $(paste -sd' ' /proc/self/cgroup 2>/dev/null)"
     echo "nproc: $AFFINITY_CPUS; CPU quota: ${QUOTA_CPUS:-none} ($QUOTA_SOURCE); Python reference threads: $REF_THREADS ($REF_THREADS_SOURCE)"
-    echo "loadavg: $(cat /proc/loadavg); CFS throttled (periods, s): $(cpu_throttled)"
+    echo "loadavg: $(cat /proc/loadavg)"
     free -g; uname -a
-    echo "== disk"; df -h / "$W"
-    echo "== volume"; ls -la "$W"; ls "$W/venvs" "$W/models" "$W/fixtures" "$W/ci-cache" 2>&1
-    du -sh "$W"/* 2>/dev/null
-    echo "== tools"; "$W/dotnet/dotnet" --list-sdks; "$W/bin/uv" --version; git --version
-    echo "runpodctl: $(command -v runpodctl || echo missing)"
-    echo "pod environment names: $(env | cut -d= -f1 | grep '^RUNPOD_' | sort | tr '\n' ' ')"
-    echo "backstop: $(pgrep -fa 'sleep [0-9]+' | head -3)"
+    echo "transparent_hugepage: $(cat /sys/kernel/mm/transparent_hugepage/enabled 2>/dev/null || echo n/a)"
+    echo "== disk"; df -h "$REPO" "$STARLING_MODELS" "$WORK"
+    echo "== tools"; dotnet --list-sdks; uv --version; git --version
+    echo "agent-budget: $(command -v agent-budget || echo 'not on PATH'); level: $(agent-budget level -v 2>/dev/null || echo n/a)"
+    echo "RUNNER_ENVIRONMENT: ${RUNNER_ENVIRONMENT:-unset}"
+    echo "== checkout"; git log -1 --format='%H %cI %s'; git status --porcelain --untracked-files=no
 } >"$OUT/environment.txt" 2>&1
-driver="$(nvidia-smi --query-gpu=driver_version --format=csv,noheader | head -1)"
-gpu_name="$(nvidia-smi --query-gpu=name --format=csv,noheader | head -1)"
-log "GPU $gpu_name, driver $driver"
+driver="$(nvidia-smi -i "$GPU" --query-gpu=driver_version --format=csv,noheader 2>/dev/null | head -1)"
+gpu_name="$(nvidia-smi -i "$GPU" --query-gpu=name --format=csv,noheader 2>/dev/null | head -1)"
+log "GPU $GPU: $gpu_name, driver $driver"
 # The CUDA contracts cover the RTX 3090 (Ampere) only; results from another GPU are never recorded as this run's.
 if [[ "$gpu_name" != "NVIDIA GeForce RTX 3090" ]]; then
-    record all gpu-is-rtx-3090 "failed ($gpu_name; the CUDA contracts cover only the NVIDIA GeForce RTX 3090)"
+    record all gpu-is-rtx-3090 "failed (GPU $GPU is '$gpu_name'; the CUDA contracts cover only the NVIDIA GeForce RTX 3090)"
     finish
 fi
-
-# Volume space: the earlier runs regenerated reference tensors into $W/ci-cache/refs on this CPU (wrong digests, and
-# about 1.5 GB). They are replaced by the hosted, digest-verified references below, so the directory goes, as do
-# partial downloads and FFmpeg archives already extracted. The sizes before and after are recorded; nothing outside
-# ci-cache is deleted.
-{
-    echo "== volume before cleanup"; df -h "$W"; du -sh "$W"/* "$W"/ci-cache/* 2>/dev/null
-    rm -rf "$W/ci-cache/refs"
-    find "$W/ci-cache" -maxdepth 3 \( -name '*.part' -o -name '*.tmp' \) -delete 2>/dev/null
-    rm -rf "$W"/ci-cache/ffmpeg8 "$W"/ci-cache/ffmpeg9   # the BtbN builds, replaced by the builds in ffmpeg8-lgpl and ffmpeg9-lgpl
-    rm -f "$W"/ci-cache/ffmpeg8-lgpl/*.tar.xz "$W"/ci-cache/ffmpeg9-lgpl/*.tar.xz
-    echo "== volume after cleanup"; df -h "$W"; du -sh "$W"/ci-cache/* 2>/dev/null
-} >"$OUT/volume-cleanup.txt" 2>&1
-# Release-input cache: the volume when it has room, else the container disk (prepared again next run, in minutes), so
-# a full volume can no longer make a check not-run.
-CACHE=$W/ci-cache
-free_gb=$(df -BG --output=avail "$W" | tail -1 | tr -dc 0-9)
-log "volume: ${free_gb} GB free after removing stale ci-cache entries (volume-cleanup.txt)"
-if [[ ${free_gb:-0} -lt 8 ]]; then
-    CACHE=$CI/cache
-    log "volume has ${free_gb} GB free: release inputs cached on the container disk ($CACHE) for this run only"
-fi
-mkdir -p "$CACHE"
-
-# ---------------------------------------------------------------------------------------------------------------------
-log "checkout"
-if ! {
-    git clone -q --reference-if-able "$W/starling" --dissociate https://github.com/starlinghq/starling.git "$REPO" &&
-        git -C "$REPO" checkout -q --detach "$SHA" &&
-        [[ "$(git -C "$REPO" rev-parse HEAD)" == "$SHA" ]]
-} >"$OUT/checkout.log" 2>&1; then
-    record all checkout failed
+if [[ ! ${driver%%.*} =~ ^[0-9]+$ ]] || ((${driver%%.*} < 580)); then
+    record all driver-580-or-later "failed (driver $driver; CUDA 13 needs 580 or later)"
     finish
 fi
-cd "$REPO" || exit 1
+dirty="$(git status --porcelain --untracked-files=no | wc -l)"
+if [[ $dirty == 0 ]]; then
+    record all checkout-clean passed
+else
+    record all checkout-clean "failed ($dirty modified tracked paths; see environment.txt)"
+fi
 P="model-pipeline/protected"
 REG="model-pipeline/registry"
 
 # ---------------------------------------------------------------------------------------------------------------------
-# Reference environments, from the hash-locked requirements at this commit, on the container disk (built in parallel).
+# Reference environments, from the hash-locked requirements at this commit, one at a time.
 mkvenv() {  # mkvenv <name> <requirements> <hash mode> <index: pypi|torch-cpu>
     local name=$1 req=$2 mode=$3 index=$4 v=$V/$1 extra=()
     [[ $index == torch-cpu ]] && extra=(--extra-index-url https://download.pytorch.org/whl/cpu --index-strategy unsafe-best-match)
     {
-        uv venv -q --python 3.11 --python-preference only-managed "$v" &&
+        rm -rf "$v" &&
+            uv venv -q --python 3.11 --python-preference only-managed "$v" &&
             uv pip install -q --python "$v/bin/python" "$mode" -r "$req" --index-url https://pypi.org/simple "${extra[@]}" &&
             uv pip install -q --python "$v/bin/python" --no-deps -e model-pipeline &&
             uv pip install -q --python "$v/bin/python" jsonschema pyyaml &&
@@ -198,22 +212,26 @@ mkvenv() {  # mkvenv <name> <requirements> <hash mode> <index: pypi|torch-cpu>
 mkdir -p "$OUT/venvs"
 log "reference environments"
 {
-    uv venv -q --python 3.11 --python-preference only-managed "$V/mp" && uv pip install -q --python "$V/mp/bin/python" -e model-pipeline
+    rm -rf "$V/mp" && uv venv -q --python 3.11 --python-preference only-managed "$V/mp" && uv pip install -q --python "$V/mp/bin/python" -e model-pipeline
 } >"$OUT/venvs/mp.log" 2>&1 || { record all model-pipeline-environment failed; finish; }
 export PATH=$V/mp/bin:$PATH # python3 (tools/qualification.py) and the model-pipeline CLI
-mkvenv encoder-cuda model-pipeline/reference/encoder/requirements-cuda.txt --require-hashes pypi &
-mkvenv gliner2-cuda model-pipeline/reference/gliner2/requirements-cuda.txt --verify-hashes pypi &
-mkvenv eg2-cuda model-pipeline/reference/embeddinggemma2/requirements-cuda.txt --require-hashes pypi &
-mkvenv eg2-video model-pipeline/reference/embeddinggemma2/requirements-video.txt --require-hashes torch-cpu &
-VENV_JOBS=$(jobs -p)
+budget "reference environments"
+mkvenv encoder-cuda model-pipeline/reference/encoder/requirements-cuda.txt --require-hashes pypi
+mkvenv gliner2-cuda model-pipeline/reference/gliner2/requirements-cuda.txt --verify-hashes pypi
+mkvenv eg2-cuda model-pipeline/reference/embeddinggemma2/requirements-cuda.txt --require-hashes pypi
+mkvenv eg2-video model-pipeline/reference/embeddinggemma2/requirements-video.txt --require-hashes torch-cpu
+for v in encoder-cuda gliner2-cuda eg2-cuda eg2-video; do
+    [[ -s "$OUT/venvs/$v.freeze.txt" ]] || record all "reference environment $v" "failed (venvs/$v.log)"
+done
 
-# The CUDA 13 runtime and cuDNN 9 from the volume's pinned wheels (eg2 requirements-cuda), as the CUDA contracts state.
+# The CUDA 13 runtime and cuDNN 9 from the pinned nvidia wheels of the eg2 requirements-cuda environment, as the CUDA
+# contracts state.
 cuda_libs() {
     local site
     site="$("$1" -c 'import sysconfig; print(sysconfig.get_paths()["purelib"])')" || return 1
     find "$site/nvidia" -maxdepth 2 -type d -name lib | sort | paste -sd: -
 }
-CUDA_LIBS="$(cuda_libs $W/venvs/eg2-cuda/bin/python)"
+CUDA_LIBS="$(cuda_libs "$V/eg2-cuda/bin/python")"
 export LD_LIBRARY_PATH="$CUDA_LIBS"
 echo "LD_LIBRARY_PATH=$LD_LIBRARY_PATH" >>"$OUT/environment.txt"
 
@@ -223,7 +241,8 @@ BUILD_OK=1
 build() {  # build <log name> <dotnet build args...>
     local name=$1
     shift
-    if dotnet build "$@" -c Release -v q -nologo -p:RestoreLockedMode=true >"$OUT/build-$name.log" 2>&1; then :; else
+    budget "build $name"
+    if dotnet build "$@" -c Release -v q -nologo -p:RestoreLockedMode=true "${DOTNET_M[@]}" >"$OUT/build-$name.log" 2>&1; then :; else
         BUILD_OK=0
         log "build $name failed (build-$name.log)"
         return 1
@@ -236,6 +255,9 @@ build acquisition ai-dotnet/tools/Starlings.Acquisition.Tool
 TOOL=(dotnet ai-dotnet/tools/Starlings.Fidelity.Tool.Cuda/bin/Release/net10.0/Starlings.Fidelity.Tool.dll)
 QWEN=(dotnet "$B/qwen35-fidelity/Starlings.Qwen35.Fidelity.dll")
 SOAK=(dotnet "$B/soak/Starlings.Soak.Tool.dll")
+if [[ $BUILD_OK != 1 ]]; then
+    record all builds failed
+fi
 
 # ---------------------------------------------------------------------------------------------------------------------
 PROFILES=(
@@ -247,8 +269,10 @@ PROFILES=(
     qwen3.5-0.8b/ortgenai-fp32x-cuda
     qwen3.5-0.8b/ortgenai-fp16x-cuda
 )
+# Kev's CUDA profiles are acquired for Starlings.Models.Kev.Tests.Cuda only (no release gates or soaks here).
+KEV_PROFILES=(kev-0.8b/onnx-fp32-cuda kev-4b/onnx-fp32-cuda)
 log "acquire and verify models"
-if tools/acquire-models.sh "$OUT/locks" "${PROFILES[@]}" >"$OUT/acquire.log" 2>&1; then
+if tools/acquire-models.sh "$OUT/locks" "${PROFILES[@]}" "${KEV_PROFILES[@]}" >"$OUT/acquire.log" 2>&1; then
     record all models-acquired-and-verified passed
 else
     record all models-acquired-and-verified failed
@@ -261,36 +285,33 @@ G2_SNAP="$(snap gliner2-base-v1/onnx-fp32-cuda)"
 EG2_SNAP="$(snap embeddinggemma-2/video-fp32-cuda)"
 QW_SNAP="$(snap qwen3.5-0.8b/ortgenai-fp16x-cuda)"
 export STARLING_E5_SNAPSHOT=$E5_SNAP
-export STARLING_EMBEDDINGGEMMA2_IMAGES=$W/fixtures/images-r1
-export STARLING_EMBEDDINGGEMMA2_VIDEO_TENSORS=$W/fixtures/video-spike/ref-clean-tensors
+export STARLING_KEV_08B_BUNDLE="${STARLING_KEV_08B_BUNDLE:-$(snap kev-0.8b/onnx-fp32-cuda)}"
+export STARLING_KEV_4B_BUNDLE="${STARLING_KEV_4B_BUNDLE:-$(snap kev-4b/onnx-fp32-cuda)}"
 
 # ---------------------------------------------------------------------------------------------------------------------
-# Release inputs outside Git, prepared in the background while the GPU runs tests and the first profiles.
-FF8=$CACHE/ffmpeg8-lgpl/ffmpeg-n8.1.3-17-gc389840894-starling-linux64-lgpl-shared-8.1/lib
-FF9=$CACHE/ffmpeg9-lgpl/ffmpeg-n9.0.2-28-g669f5ab083-starling-linux64-lgpl-shared-9.0/lib
+# Release and test inputs outside Git, prepared before the GPU work (one step at a time on this shared machine).
+mkdir -p "$OUT/prepare"
+ready() { [[ -f "$1/.complete" ]]; }
+log "test inputs: EmbeddingGemma 2 image set and the pinned FFmpeg builds (tools/ci/eg2-test-inputs.sh)"
+if tools/ci/eg2-test-inputs.sh "$CACHE/eg2-test-inputs" >"$OUT/prepare/eg2-test-inputs.log" 2>&1; then
+    # shellcheck disable=SC1091 # written by eg2-test-inputs.sh
+    source "$CACHE/eg2-test-inputs/env"
+else
+    record all "test inputs (eg2-test-inputs.sh)" "failed (prepare/eg2-test-inputs.log)"
+fi
+FF8="${STARLING_FFMPEG_DIR:-$CACHE/eg2-test-inputs/missing-ffmpeg8}"
+FF9="${STARLING_FFMPEG9_DIR:-$CACHE/eg2-test-inputs/missing-ffmpeg9}"
+if [[ -z ${STARLING_EMBEDDINGGEMMA2_VIDEO_TENSORS:-} || ! -d ${STARLING_EMBEDDINGGEMMA2_VIDEO_TENSORS:-} ]]; then
+    record all "test inputs (STARLING_EMBEDDINGGEMMA2_VIDEO_TENSORS)" \
+        "not-run (set it to the run_embeddinggemma2_video.py --tensors output; the EmbeddingGemma 2 video CUDA tests need it)"
+fi
 MEDIA_REL=$CACHE/media/release
 MEDIA_IMG=$CACHE/media/image-retrieval-v1
 MEDIA_VID=$CACHE/media/video-retrieval-v1
-# Hosted G2 references (protected hosted-reference.json), on the container disk: about 190 MB, downloaded every run.
-REF_IMG=$CI/refs/eg2-image-release
-REF_VID=$CI/refs/eg2-video-release
-REF_QW=$CI/refs/qwen35-release-prompts
-mkdir -p "$OUT/prepare"
-ready() { [[ -f "$1/.complete" ]]; }
-prepare_ffmpeg() {
-    ready "$CACHE/ffmpeg8-lgpl" || {
-        rm -rf "$CACHE/ffmpeg8-lgpl" && sh model-pipeline/reference/embeddinggemma2/fetch_eg2_ffmpeg.sh "$CACHE/ffmpeg8-lgpl" &&
-            rm -f "$CACHE"/ffmpeg8-lgpl/*-lgpl-shared-8.1.tar.xz && touch "$CACHE/ffmpeg8-lgpl/.complete"
-    }
-    ready "$CACHE/ffmpeg9-lgpl" || {
-        local a=ffmpeg-n9.0.2-28-g669f5ab083-starling-linux64-lgpl-shared-9.0.tar.xz
-        rm -rf "$CACHE/ffmpeg9-lgpl" && mkdir -p "$CACHE/ffmpeg9-lgpl" && cd "$CACHE/ffmpeg9-lgpl" &&
-            curl -fsSL -o "$a" "https://huggingface.co/datasets/Starlinghq/ffmpeg-lgpl-rebuilds/resolve/caf396f176296fc12620c18a344a31f628a4613a/$a" &&
-            echo "db79bc561add07fe48cbe013f714f4ceaf12e49553e56aff9775eff088f8b5ed  $a" | sha256sum -c - &&
-            tar xf "$a" && rm -f "$a" && touch .complete
-        cd "$REPO" || return 1
-    }
-}
+# Hosted G2 references (protected hosted-reference.json): about 190 MB, downloaded and verified every run.
+REF_IMG=$WORK/refs/eg2-image-release
+REF_VID=$WORK/refs/eg2-video-release
+REF_QW=$WORK/refs/qwen35-release-prompts
 fetch_media() {  # fetch_media <media list> <dir>
     ready "$2" || { rm -rf "$2" && "$V/eg2-video/bin/python" -I model-pipeline/reference/embeddinggemma2/fetch_eg2_release_media.py \
         --media "$1" --out "$2" && touch "$2/.complete"; }
@@ -299,41 +320,38 @@ fetch_ref() {  # fetch_ref <protected hosted-reference.json> <dir> <log name>: d
     rm -f "$2/.complete"
     python3 -I tools/fetch-release-references.py --prune "$1" "$2" >"$OUT/prepare/$3.log" 2>&1 && touch "$2/.complete"
 }
-prepare_refs() {  # the accepted image, video and Qwen G2 references, verified against the recorded SHA-256
-    fetch_ref "$P/embeddinggemma-2/release/image-fp32-release/hosted-reference.json" "$REF_IMG" ref-image
-    fetch_ref "$P/embeddinggemma-2/release/video-fp32-release/hosted-reference.json" "$REF_VID" ref-video
-    fetch_ref "$P/qwen3.5-0.8b/release/release-prompts/reference/hosted-reference.json" "$REF_QW" ref-qwen
-}
-prepare_all() {
-    prepare_ffmpeg >"$OUT/prepare/ffmpeg.log" 2>&1
-    fetch_media "$P/embeddinggemma-2/release/media/media.json" "$MEDIA_REL" >"$OUT/prepare/media-release.log" 2>&1
-    fetch_media "$P/embeddinggemma-2/release/image-retrieval-v1/image-media.json" "$MEDIA_IMG" >"$OUT/prepare/media-image-retrieval.log" 2>&1
-    fetch_media "$P/embeddinggemma-2/release/video-retrieval-v1/video-media.json" "$MEDIA_VID" >"$OUT/prepare/media-video-retrieval.log" 2>&1
-    wait
-}
-for j in $VENV_JOBS; do wait "$j" || true; done
-for v in encoder-cuda gliner2-cuda eg2-cuda eg2-video; do
-    [[ -s "$OUT/venvs/$v.freeze.txt" ]] || record all "reference environment $v" "failed (venvs/$v.log)"
-done
+log "release inputs (cache $CACHE)"
+fetch_ref "$P/embeddinggemma-2/release/image-fp32-release/hosted-reference.json" "$REF_IMG" ref-image
+fetch_ref "$P/embeddinggemma-2/release/video-fp32-release/hosted-reference.json" "$REF_VID" ref-video
+fetch_ref "$P/qwen3.5-0.8b/release/release-prompts/reference/hosted-reference.json" "$REF_QW" ref-qwen
+fetch_media "$P/embeddinggemma-2/release/media/media.json" "$MEDIA_REL" >"$OUT/prepare/media-release.log" 2>&1
+fetch_media "$P/embeddinggemma-2/release/image-retrieval-v1/image-media.json" "$MEDIA_IMG" >"$OUT/prepare/media-image-retrieval.log" 2>&1
+fetch_media "$P/embeddinggemma-2/release/video-retrieval-v1/video-media.json" "$MEDIA_VID" >"$OUT/prepare/media-video-retrieval.log" 2>&1
 
 # ---------------------------------------------------------------------------------------------------------------------
-# The CUDA tests run before any background preparation: some time device work (cancellation drain) and must not share
-# the CPU with the reference regenerations.
+# The CUDA test projects, one at a time. Each is judged by its exit status, and all of them together by
+# tools/ci/check-trx.py: a module whose every test skipped (a model or input missing) fails, so a run cannot pass on
+# skipped tests.
 log "CUDA test projects"
 export STARLING_CUDA_TESTS=1
-for t in E5 Gliner2 EmbeddingGemma2 Qwen35; do
+for t in E5 Gliner2 EmbeddingGemma2 Qwen35 Kev; do
     proj=ai-dotnet/tests/Starlings.Models.$t.Tests.Cuda
-    if dotnet test --project "$proj" -c Release --results-directory "$OUT/tests/$t" -- --report-xunit-trx \
-        >"$OUT/tests-$t.log" 2>&1; then r=passed; else r=failed; fi
+    budget "tests $t"
+    if dotnet build "$proj" -c Release -v q -nologo -p:RestoreLockedMode=true "${DOTNET_M[@]}" >"$OUT/tests-$t.log" 2>&1 &&
+        dotnet test --project "$proj" -c Release --no-build --results-directory "$OUT/tests/$t" -- --report-xunit-trx \
+            >>"$OUT/tests-$t.log" 2>&1; then r=passed; else r=failed; fi
     counts="$(awk '/^Test run summary/ { s = 1 } s && /^ *(total|failed|succeeded|skipped):/ { gsub(/^ +/, ""); printf "%s%s", sep, $0; sep = ", " }' "$OUT/tests-$t.log")"
     record "Starlings.Models.$t.Tests.Cuda" "tests (${counts:-see tests-$t.log})" "$r"
 done
 unset STARLING_CUDA_TESTS
-
-log "release inputs: preparing in the background (cache $CACHE)"
-prepare_refs
-prepare_all &
-PREPARE_JOB=$!
+python3 -I tools/ci/check-trx.py "$OUT/tests" >"$OUT/trx-check.txt" 2>&1
+trx_rc=$?
+grep -E '^\|' "$OUT/trx-check.txt" >"$OUT/trx-check.md"
+if [[ $trx_rc == 0 ]]; then
+    record all "CUDA test modules each passed a test (check-trx.py)" passed
+else
+    record all "CUDA test modules each passed a test (check-trx.py)" "failed ($(tail -n 1 "$OUT/trx-check.txt"))"
+fi
 
 # ---------------------------------------------------------------------------------------------------------------------
 # evaluate <profile> <name> <gates> <model-pipeline evaluate args...>: every named gate must be `passed` in report.json.
@@ -362,32 +380,21 @@ PY
 }
 # step <profile> <log name> <command...>: a producer; on failure the evaluation that needs it fails on missing results.
 step() {
-    local profile=$1 name=$2 rc=0 s=$SECONDS t0 t1 threads=""
+    local profile=$1 name=$2 rc=0 s=$SECONDS threads=""
     shift 2
     local logf="$OUT/gates/${profile//\//--}/$name.log"
     [[ " $* " =~ \ OMP_NUM_THREADS=([0-9]+)\  ]] && threads=", OMP_NUM_THREADS ${BASH_REMATCH[1]}"
-    t0="$(cpu_throttled)"
+    budget "$profile $name"
     "$@" >"$logf" 2>&1 || rc=$?
-    t1="$(cpu_throttled)"
-    # Diagnosis of slow stages: the container's quota, CFS throttling during the stage, and the load the host shows.
-    if [[ $t0 != n/a && $t1 != n/a ]]; then
-        t1="throttled $(($(cut -d' ' -f1 <<<"$t1") - $(cut -d' ' -f1 <<<"$t0"))) periods, $(($(cut -d' ' -f2 <<<"$t1") - $(cut -d' ' -f2 <<<"$t0"))) s"
-    else
-        t1="throttling n/a"
-    fi
-    log "$profile $name: exit $rc, $((SECONDS - s)) s (CPU quota ${QUOTA_CPUS:-none}$threads; $t1; loadavg $(cut -d' ' -f1-3 /proc/loadavg))"
+    log "$profile $name: exit $rc, $((SECONDS - s)) s (CPU quota ${QUOTA_CPUS:-none}$threads; loadavg $(cut -d' ' -f1-3 /proc/loadavg))"
     [[ $rc == 0 ]] || record "$profile" "$name" "failed (exit $rc)"
 }
 need() {  # need <profile> <check> <ready dir>: record not-run when a prepared input is missing
     ready "$3" && return 0
-    record "$1" "$2" "not-run (input not prepared: ${3#"$CACHE"/}; see prepare/)"
+    record "$1" "$2" "not-run (input not prepared: ${3#"$WORK"/}; see prepare/)"
     return 1
 }
-work() { local d=$CI/work/${1//\//--}; mkdir -p "$d" "$OUT/gates/${1//\//--}"; echo "$d"; }
-
-if [[ $BUILD_OK != 1 ]]; then
-    record all builds failed
-fi
+work() { local d=$WORK/work/${1//\//--}; rm -rf "$d"; mkdir -p "$d" "$OUT/gates/${1//\//--}"; echo "$d"; }
 
 gates_e5() {
     local pr=multilingual-e5-small/onnx-fp32-cuda w REL=$P/multilingual-e5-small/release/onnx-fp32-release
@@ -436,7 +443,7 @@ gates_eg2_image() {
     local pr=embeddinggemma-2/image-fp32-cuda w REL=$P/embeddinggemma-2/release/image-fp32-release
     local SET=$P/embeddinggemma-2/release/image-retrieval-v1
     w="$(work $pr)"
-    if need $pr "g1-g2-image-release G1,G2" "$REF_IMG"; then
+    if need $pr "g1-g2-image-release G1,G2" "$REF_IMG" && need $pr "g1-g2-image-release G1,G2" "$MEDIA_REL"; then
         # One accepted image (79 MP) exceeds the 50 MP default: the release evaluation uses the option (experimental capability).
         step $pr dotnet-stages "${TOOL[@]}" embeddinggemma2-images --out "$w/stages" --images "$MEDIA_REL" --fixtures "$REL" \
             --threads 4 --max-image-pixels 80000000 --device cuda:0
@@ -452,30 +459,31 @@ gates_eg2_video() {
     local pr=embeddinggemma-2/video-fp32-cuda w REL=$P/embeddinggemma-2/release/video-fp32-release
     local SET=$P/embeddinggemma-2/release/video-retrieval-v1
     w="$(work $pr)"
-    if need $pr "g1-g2-video-release G1,G2" "$CACHE/ffmpeg9-lgpl" && need $pr "g1-g2-video-release G1,G2" "$REF_VID"; then
+    if need $pr "g1-g2-video-release G1,G2" "$CACHE/eg2-test-inputs/ffmpeg9" && need $pr "g1-g2-video-release G1,G2" "$REF_VID" &&
+        need $pr "g1-g2-video-release G1,G2" "$MEDIA_REL"; then
         step $pr dotnet-stages "${TOOL[@]}" embeddinggemma2-videos --out "$w/stages" --videos "$MEDIA_REL" --ffmpeg "$FF8" --ffmpeg9 "$FF9" \
             --fixtures "$REL" --threads 4 --device cuda:0
         evaluate $pr g1-g2-video-release G1,G2 --fixtures "$REL" --results "$w/stages" --reference-tensors "$REF_VID" --require-gates G1,G2
     fi
-    if need $pr "g3-retrieval G3" "$MEDIA_VID" && need $pr "g3-retrieval G3" "$CACHE/ffmpeg8-lgpl"; then
+    if need $pr "g3-retrieval G3" "$MEDIA_VID" && need $pr "g3-retrieval G3" "$CACHE/eg2-test-inputs/ffmpeg8"; then
         step $pr g3-producer "${TOOL[@]}" retrieval --model embeddinggemma2-video --dataset "$SET" --media "$MEDIA_VID" \
             --out "$w/g3/embeddings.jsonl" --ffmpeg "$FF8" --device cuda --threads 16
-        evaluate $pr g3-retrieval G3 --g3 retrieval --dataset "$SET" --results "$w/g3/embeddings.jsonl"
+        evaluate "$pr" g3-retrieval G3 --g3 retrieval --dataset "$SET" --results "$w/g3/embeddings.jsonl"
     fi
 }
 gates_qwen() {  # gates_qwen fp32x|fp16x
     local var=$1 pr=qwen3.5-0.8b/ortgenai-$1-cuda w TOK=$P/qwen3.5-0.8b/release/tokenizer-release/tokenizer.jsonl
     local RP=$P/qwen3.5-0.8b/release/release-prompts DS=$P/qwen3.5-0.8b/release/task-quality/gsm8k-test-v1/prompts.jsonl
-    w="$(work $pr)"
-    step $pr g1-tokenizer-producer "${TOOL[@]}" tokenizer --model qwen35 --tokenizer "$QW_SNAP/transformers-5.18.0/tokenizer.json" --fixtures "$TOK" --out "$w/g1-tokenizer"
-    evaluate $pr g1-tokenizer-release G1 --tokenizer-fixtures "$TOK" --results "$w/g1-tokenizer"
-    if need $pr "g1-g2-release-prompts G1,G2" "$REF_QW"; then
-        step $pr release-prompts "${QWEN[@]}" --bundle "$QW_SNAP" --variant "$var" --device cuda --prompts "$RP/prompts-release-v1.jsonl" \
+    w="$(work "$pr")"
+    step "$pr" g1-tokenizer-producer "${TOOL[@]}" tokenizer --model qwen35 --tokenizer "$QW_SNAP/transformers-5.18.0/tokenizer.json" --fixtures "$TOK" --out "$w/g1-tokenizer"
+    evaluate "$pr" g1-tokenizer-release G1 --tokenizer-fixtures "$TOK" --results "$w/g1-tokenizer"
+    if need "$pr" "g1-g2-release-prompts G1,G2" "$REF_QW"; then
+        step "$pr" release-prompts "${QWEN[@]}" --bundle "$QW_SNAP" --variant "$var" --device cuda --prompts "$RP/prompts-release-v1.jsonl" \
             --reference "$RP/reference" --out "$w/run" --modes parity,fixture-semantics --threads 4
-        evaluate $pr g1-g2-release-prompts G1,G2 --fixtures "$RP/reference" --results "$w/run" --reference-tensors "$REF_QW" --require-gates G1,G2
+        evaluate "$pr" g1-g2-release-prompts G1,G2 --fixtures "$RP/reference" --results "$w/run" --reference-tensors "$REF_QW" --require-gates G1,G2
     fi
-    step $pr g3-producer "${QWEN[@]}" generation --bundle "$QW_SNAP" --prompts "$DS" --out "$w/g3" --variant "$var" --device cuda --threads 4
-    evaluate $pr g3-gsm8k G3 --g3 generation --dataset "$DS" --results "$w/g3"
+    step "$pr" g3-producer "${QWEN[@]}" generation --bundle "$QW_SNAP" --prompts "$DS" --out "$w/g3" --variant "$var" --device cuda --threads 4
+    evaluate "$pr" g3-gsm8k G3 --g3 generation --dataset "$DS" --results "$w/g3"
 }
 
 log "release gates: e5, GLiNER2, EmbeddingGemma 2 text"
@@ -485,26 +493,23 @@ gates_eg2_text
 log "release gates: Qwen3.5"
 gates_qwen fp32x
 gates_qwen fp16x
-log "release gates: EmbeddingGemma 2 image and video (waiting for media)"
-wait "$PREPARE_JOB"
+log "release gates: EmbeddingGemma 2 image and video"
 gates_eg2_image
 gates_eg2_video
 
 # ---------------------------------------------------------------------------------------------------------------------
-# Short soaks (screening, not the one-hour G4 run), one at a time with nothing else running, each under its profile's
-# contract environment: MALLOC_MMAP_THRESHOLD_=65536 where the profile's README states it as a Linux deployment
-# requirement (GLiNER2; EmbeddingGemma 2 video on CUDA).
-wait
-# The soak precondition of the hosted job (THP madvise, not always) where the container may set it; the host's setting
-# otherwise. Every soak report records transparent_hugepage.
-echo madvise >/sys/kernel/mm/transparent_hugepage/enabled 2>/dev/null || true
+# Short soaks (screening, not the one-hour G4 run), one at a time, each under its profile's contract environment:
+# MALLOC_MMAP_THRESHOLD_=65536 where the profile's README states it as a Linux deployment requirement (GLiNER2;
+# EmbeddingGemma 2 video on CUDA). Transparent huge pages are the host's setting (the soak precondition is madvise; this
+# script does not change kernel settings); every soak report records transparent_hugepage.
 log "soaks ($SOAK_DURATION each), transparent_hugepage: $(cat /sys/kernel/mm/transparent_hugepage/enabled 2>/dev/null || echo n/a)"
 mkdir -p "$OUT/soak"
 soak() {  # soak <profile> <workload> [VAR=value...]
     local profile=$1 model=$2 rc=0
     shift 2
     local note
-    note="scheduled CUDA qualification on RunPod, $(nvidia-smi --query-gpu=name --format=csv,noheader | head -1), commit ${SHA:0:12}, CUDA libraries from the pinned eg2 requirements-cuda wheels${*:+, $*}"
+    note="local CUDA qualification, $gpu_name (GPU $GPU), commit ${SHA:0:12}, CUDA libraries from the pinned eg2 requirements-cuda wheels${*:+, $*}"
+    budget "soak $model"
     env "$@" "${SOAK[@]}" "$model" --cuda --duration "$SOAK_DURATION" --out "$OUT/soak/$model" --note "$note" >"$OUT/soak/$model.log" 2>&1 || rc=$?
     local line smoke
     line="$(grep -E '\] (PASS|FAIL)|^error:' "$OUT/soak/$model.log" | tail -1 | cut -c1-200)"
