@@ -18,7 +18,8 @@ namespace Starlings.Models.Qwen35.Extensions.AI;
 /// message may also carry <see cref="TextReasoningContent"/>, rendered as that turn's reasoning, and
 /// <see cref="FunctionCallContent"/>, rendered as the template's tool calls after the text. <see cref="ChatRole.Tool"/>
 /// messages carry <see cref="FunctionResultContent"/> only, each rendered as one template tool message (a string result
-/// as is, any other as compact JSON). Images and other content, and author names fail with
+/// as is, any other as compact JSON), with the tokenizer's added-token strings in it escaped by default
+/// (<see cref="Qwen35ChatClientOptions.EscapeToolResults"/>), so that a tool result cannot forge a turn. Images and other content, and author names fail with
 /// <see cref="NotSupportedException"/>. <see cref="ChatOptions.Instructions"/> becomes the system message when the
 /// conversation has none.
 /// </para>
@@ -34,8 +35,9 @@ namespace Starlings.Models.Qwen35.Extensions.AI;
 /// may contain only <see cref="EnableThinkingPropertyName"/>, <see cref="LogprobsPropertyName"/> and
 /// <see cref="TopLogprobsPropertyName"/> (per-token log probabilities, experimental). Two opt-in settings have no <see cref="ChatOptions"/>
 /// counterpart and come from <see cref="Qwen35ChatClientOptions.Defaults"/> for every request:
-/// <see cref="Qwen35ChatOptions.EscapeSpecialTokens"/> (special-token strings in message and tool-result content are
-/// escaped before rendering; off by default, faithful to upstream <c>apply_chat_template</c>) and
+/// <see cref="Qwen35ChatOptions.EscapeSpecialTokens"/> (special-token strings in all message content are escaped before
+/// rendering; off by default, faithful to upstream <c>apply_chat_template</c>; tool-result content is escaped either way
+/// unless <see cref="Qwen35ChatClientOptions.EscapeToolResults"/> is false) and
 /// <see cref="Qwen35ChatOptions.StopAtRoleMarker"/> (<c>&lt;|im_start|&gt;</c> ends generation; off by default).
 /// <see cref="CountTokens"/> renders a request exactly as the two response methods do and returns its prompt token
 /// count without generating; the mapping itself is <see cref="Qwen35ChatRequestMapper"/>. <see cref="ChatOptions.Tools"/>
@@ -559,7 +561,7 @@ public sealed class Qwen35ChatClient : IChatClient
     private (List<Qwen35Message> Conversation, Qwen35ChatOptions Options) Prepare(IEnumerable<ChatMessage> messages, ChatOptions? options)
     {
         ObjectDisposedException.ThrowIf(Volatile.Read(ref _disposed) != 0, this);
-        var conversation = Qwen35ChatRequestMapper.MapMessages(messages, options?.Instructions);
+        var conversation = Qwen35ChatRequestMapper.MapMessages(messages, options?.Instructions, _options.EscapeToolResults);
         var guidance = new Qwen35ChatRequestMapper.GuidanceSupport(_model.Info.GuidanceMissingFiles, _model.Info.ModelDirectory, _options.GuidanceFastForward);
         var chatOptions = Qwen35ChatRequestMapper.MapOptions(options, _options.Defaults, ModelId, guidance);
         return (conversation, chatOptions);
