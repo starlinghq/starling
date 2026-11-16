@@ -108,22 +108,32 @@ internal static class Qwen35TestAssets
 
     private static (Tokenizer?, string) LoadTokenizer()
     {
-        var candidates = new List<string>();
-        if (Environment.GetEnvironmentVariable(SnapshotEnvironmentVariable) is { Length: > 0 } snapshot)
-        {
-            candidates.Add(Path.Combine(snapshot, Qwen35ModelAssets.TokenizerFile));
-        }
+        var (path, reason) = TokenizerPath;
+        return path is null ? (null, reason) : (Tokenizers.Tokenizer.FromFile(path), string.Empty);
+    }
 
-        candidates.Add(Path.Combine(ModelsRoot, Qwen35ModelAssets.Repository, Qwen35ModelAssets.Revision, Qwen35ModelAssets.TokenizerFile));
-        foreach (string path in candidates)
+    /// <summary>The qwen35-bpe-chat <c>tokenizer.json</c>, or null with the reason.</summary>
+    public static (string? Path, string Reason) TokenizerPath
+    {
+        get
         {
-            if (File.Exists(path))
+            var candidates = new List<string>();
+            if (Environment.GetEnvironmentVariable(SnapshotEnvironmentVariable) is { Length: > 0 } snapshot)
             {
-                return (Tokenizers.Tokenizer.FromFile(path), string.Empty);
+                candidates.Add(Path.Combine(snapshot, Qwen35ModelAssets.TokenizerFile));
             }
-        }
 
-        return (null, $"qwen35-bpe-chat tokenizer.json not found ({string.Join(", ", candidates)}); run tools/fetch-tokenizer-assets.sh.");
+            candidates.Add(Path.Combine(ModelsRoot, Qwen35ModelAssets.Repository, Qwen35ModelAssets.Revision, Qwen35ModelAssets.TokenizerFile));
+            foreach (string path in candidates)
+            {
+                if (File.Exists(path))
+                {
+                    return (path, string.Empty);
+                }
+            }
+
+            return (null, $"qwen35-bpe-chat tokenizer.json not found ({string.Join(", ", candidates)}); run tools/fetch-tokenizer-assets.sh.");
+        }
     }
 
     private static string FindRepositoryRoot()

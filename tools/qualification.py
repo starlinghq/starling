@@ -26,6 +26,14 @@
         routes). These are the snapshots the onboarding recipes verify in their `assets` stage. Only Hugging Face
         repositories pinned by a full commit SHA are supported.
 
+    python3 -I tools/qualification.py lock-hosted <manifest.yaml> <out.json> <path>...
+        Writes a lock (schema_version 2) of the named `origin.files` entries only, each downloaded from
+        `execution.graph.hosting.source_base` + its path, filed under `origin.weights`' repository and revision (the
+        snapshot directory the package's own lock uses). For a bundle Starling builds and hosts in a repository of its
+        own (Kev: the five files KevModelAssets pins, hosted at Starlinghq/kev-*-onnx), where `lock` would ask the
+        upstream repository for files it does not have. A path that is not in `origin.files`, or a manifest without a
+        public `source_base`, is an error.
+
     python3 -I tools/qualification.py snapshot <lock.json>
         Prints the lock's snapshot directory relative to the cache root: <repository>/<revision>.
 
@@ -149,6 +157,44 @@ def lock(manifest: Path, out: Path, reference_environment: Path | None = None) -
     return 0
 
 
+def lock_hosted(manifest: Path, out: Path, paths: list[str]) -> int:
+    data = yaml.safe_load(manifest.read_text(encoding="utf-8"))
+    if any(status in PRIVATE_STATUSES for _, status in _statuses(data)):
+        print(f"error: {manifest}: hosting private (M3); no lock is written", file=sys.stderr)
+        return 2
+    origin = data.get("origin") or {}
+    weights = origin.get("weights") or {}
+    match = HUB.match(str(weights.get("url", "")))
+    revision = str(weights.get("revision", ""))
+    _, source_base = _hosted_sources(data)
+    if not match or not SHA.match(revision) or not source_base or not paths:
+        print(
+            f"error: {manifest}: needs origin.weights (a Hugging Face repository URL with a full commit SHA), "
+            "execution.graph.hosting.source_base and at least one path",
+            file=sys.stderr,
+        )
+        return 2
+    known = {str(f["path"]): f for f in origin.get("files") or [] if isinstance(f, dict) and "path" in f}
+    entries = []
+    for path in paths:
+        f = known.get(path)
+        if f is None or not {"path", "sha256", "size"} <= f.keys():
+            print(f"error: {manifest}: {path} is not an origin.files entry with a size and SHA-256", file=sys.stderr)
+            return 2
+        entries.append({"path": path, "size": int(f["size"]), "sha256": str(f["sha256"]), "url": source_base + path})
+    document = {
+        "schema_version": 2,
+        "name": str(data["id"]).replace("/", "-") + "-bundle",
+        "repository": match.group(1),
+        "revision": revision,
+        "files": entries,
+    }
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text(json.dumps(document, indent=2) + "\n", encoding="utf-8")
+    print(f"{out}: {source_base}, {len(entries)} files, {sum(e['size'] for e in entries)} bytes")
+    return 0
+
+
 def lock_candidate(profile: Path, out: Path, base: bool = False) -> int:
     data = json.loads(profile.read_text(encoding="utf-8"))
     origin = data.get("origin") or {}
@@ -198,6 +244,8 @@ def main(argv: list[str]) -> int:
         return lock(Path(argv[1]), Path(argv[2]))
     if len(argv) == 5 and argv[0] == "lock" and argv[3] == "--reference-environment":
         return lock(Path(argv[1]), Path(argv[2]), Path(argv[4]))
+    if len(argv) >= 4 and argv[0] == "lock-hosted":
+        return lock_hosted(Path(argv[1]), Path(argv[2]), argv[3:])
     if len(argv) in (3, 4) and argv[0] == "lock-candidate" and argv[3:] in ([], ["--base"]):
         return lock_candidate(Path(argv[1]), Path(argv[2]), base=len(argv) == 4)
     print(__doc__, file=sys.stderr)

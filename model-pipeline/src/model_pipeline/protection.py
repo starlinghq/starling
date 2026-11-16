@@ -8,7 +8,10 @@ Two mechanisms, both deterministic:
    from the base is not gate evidence.
 2. `check_changes` classifies the files a pull request changes. Changing protected evidence needs
    the `protected-change` label, and a change to protected evidence may not travel with
-   implementation code, so an implementation job cannot move its own thresholds.
+   implementation code, so an implementation job cannot move its own thresholds. Renames count as
+   a deletion and an addition, so moving a file out of the protected tree is a protected change.
+   CI runs the check with the base commit's copy of this module, so a pull request cannot loosen
+   these rules for itself unless it also edits the workflow, which code-owner review covers.
 
 Neither replaces code-owner review: they make an unreviewed threshold change visible and failing.
 """
@@ -32,11 +35,16 @@ PROTECTED_PATTERNS = (
     "tolerances.*",
 )
 
-# Implementation code. A pull request that changes protected evidence may not change these.
+# Implementation code, reference scripts and CI. A pull request that changes protected evidence may
+# not change these.
 IMPLEMENTATION_PATTERNS = (
     "ai-dotnet/**",
     "model-pipeline/src/**",
     "model-pipeline/tests/**",
+    "model-pipeline/reference/**",
+    "tools/**",
+    "browser/**",
+    ".github/workflows/**",
 )
 
 
@@ -152,7 +160,7 @@ def verify_unchanged(repo_root: Path, paths: list[Path], base: str = "auto") -> 
     sha, detail = resolve_base(repo_root, base)
     if sha is None:
         return Verification("unverified", None, detail, [], digests)
-    changed = set(_git(repo_root, "diff", "--name-only", sha, "--", *rels).splitlines())
+    changed = set(_git(repo_root, "diff", "--no-renames", "--name-only", sha, "--", *rels).splitlines())
     changed |= set(_git(repo_root, "ls-files", "--others", "--exclude-standard", "--", *rels).splitlines())
     changed.discard("")
     status = "changed" if changed else "verified"
@@ -190,4 +198,9 @@ def check_changes(paths: list[str], labels: list[str]) -> ChangeCheck:
 
 
 def changed_files(repo_root: Path, base: str, head: str) -> list[str]:
-    return [p for p in _git(repo_root, "diff", "--name-only", f"{base}...{head}").splitlines() if p]
+    """Paths changed between the merge base of `base` and `head`, and `head`.
+
+    Rename detection is off, so a moved file lists both its old and its new path.
+    """
+    diff = _git(repo_root, "diff", "--no-renames", "--name-only", f"{base}...{head}")
+    return [p for p in diff.splitlines() if p]
