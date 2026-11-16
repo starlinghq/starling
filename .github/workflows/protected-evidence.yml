@@ -5,7 +5,8 @@ name: protected-evidence
 # implementation code, so an implementation job cannot move its own thresholds. Runs again when
 # labels change. Reads the event payload only; no secrets, read-only token. The checker and its
 # rules are installed from the base commit, not from the pull request, so a pull request cannot
-# loosen the rules it is checked against.
+# loosen the rules it is checked against without also editing this file; that edit is caught by
+# required code-owner review on .github/, not by this check (.github/workflows/README.md, "Limit").
 on:
   pull_request:
     types: [opened, synchronize, reopened, labeled, unlabeled]

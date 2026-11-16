@@ -11,7 +11,7 @@ Two mechanisms, both deterministic:
    implementation code, so an implementation job cannot move its own thresholds. Renames count as
    a deletion and an addition, so moving a file out of the protected tree is a protected change.
    CI runs the check with the base commit's copy of this module, so a pull request cannot loosen
-   these rules for itself.
+   these rules for itself unless it also edits the workflow, which code-owner review covers.
 
 Neither replaces code-owner review: they make an unreviewed threshold change visible and failing.
 """
