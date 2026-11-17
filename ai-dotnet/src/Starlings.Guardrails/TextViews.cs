@@ -40,23 +40,27 @@ internal static partial class TextViews
             int v = runes[i].Value;
             if (v is >= 0xE0000 and <= 0xE007F)
             {
-                // A subdivision flag: black flag, tag letters/digits, cancel tag.
-                if (v != 0xE007F && i > 0 && IsFlagStart(runes, i))
+                // One pass over the whole run of tag characters (linear on hostile input): a subdivision flag (black
+                // flag, 2 to 7 tag letters or digits, cancel tag) is ordinary; anything else is smuggled text.
+                int end = i;
+                while (end < runes.Length && runes[end].Value is >= 0xE0000 and <= 0xE007F)
                 {
-                    while (i < runes.Length && runes[i].Value != 0xE007F)
+                    end++;
+                }
+
+                if (!IsFlag(runes, i, end))
+                {
+                    for (int k = i; k < end; k++)
                     {
-                        i++;
+                        tagCount++;
+                        if (runes[k].Value is >= 0xE0020 and <= 0xE007E)
+                        {
+                            (tagPayload ??= new()).Append((char)(runes[k].Value - 0xE0000));
+                        }
                     }
-
-                    continue;
                 }
 
-                tagCount++;
-                if (v is >= 0xE0020 and <= 0xE007E)
-                {
-                    (tagPayload ??= new()).Append((char)(v - 0xE0000));
-                }
-
+                i = end - 1;
                 continue;
             }
 
@@ -179,8 +183,9 @@ internal static partial class TextViews
     /// </summary>
     public static bool HasCharacterTricks(string clean)
     {
-        int wordStart = 0;
+        // One pass: the last non-mark character of the word is carried, not searched for (linear on long mark runs).
         bool latin = false, lookAlike = false;
+        char? lastBase = null;
         for (int i = 0; i <= clean.Length; i++)
         {
             if (i == clean.Length || char.IsWhiteSpace(clean[i]))
@@ -191,7 +196,7 @@ internal static partial class TextViews
                 }
 
                 latin = lookAlike = false;
-                wordStart = i + 1;
+                lastBase = null;
                 continue;
             }
 
@@ -200,16 +205,14 @@ internal static partial class TextViews
             lookAlike |= Homoglyphs.ContainsKey(c);
             if (CharUnicodeInfo.GetUnicodeCategory(c) is UnicodeCategory.NonSpacingMark or UnicodeCategory.EnclosingMark)
             {
-                int k = i - 1;
-                while (k >= wordStart && CharUnicodeInfo.GetUnicodeCategory(clean[k]) is UnicodeCategory.NonSpacingMark or UnicodeCategory.EnclosingMark)
-                {
-                    k--;
-                }
-
-                if (k >= wordStart && clean[k] < 0x250 && char.IsLetter(clean[k]))
+                if (lastBase is { } b && b < 0x250 && char.IsLetter(b))
                 {
                     return true;
                 }
+            }
+            else
+            {
+                lastBase = c;
             }
         }
 
@@ -337,27 +340,23 @@ internal static partial class TextViews
         }
     }
 
-    private static bool IsFlagStart(Rune[] runes, int i)
+    /// <summary>The tag run [start, end) after a black flag is 2 to 7 tag letters or digits and a cancel tag (for example gbsct).</summary>
+    private static bool IsFlag(Rune[] runes, int start, int end)
     {
-        int k = i;
-        while (k > 0 && runes[k - 1].Value is >= 0xE0020 and <= 0xE007E)
-        {
-            k--;
-        }
-
-        if (k == 0 || runes[k - 1].Value != 0x1F3F4)
+        if (start == 0 || runes[start - 1].Value != 0x1F3F4 || end - start is < 3 or > 8 || runes[end - 1].Value != 0xE007F)
         {
             return false;
         }
 
-        // Subdivision tags are 2 to 7 lower-case letters or digits (for example gbsct); anything else is not a flag.
-        int end = k;
-        while (end < runes.Length && runes[end].Value is (>= 0xE0030 and <= 0xE0039) or (>= 0xE0061 and <= 0xE007A))
+        for (int k = start; k < end - 1; k++)
         {
-            end++;
+            if (runes[k].Value is not ((>= 0xE0030 and <= 0xE0039) or (>= 0xE0061 and <= 0xE007A)))
+            {
+                return false;
+            }
         }
 
-        return end - k is >= 2 and <= 7 && end < runes.Length && runes[end].Value == 0xE007F;
+        return true;
     }
 
     private static bool IsSelector(int v) => v is (>= 0xFE00 and <= 0xFE0F) or (>= 0xE0100 and <= 0xE01EF);

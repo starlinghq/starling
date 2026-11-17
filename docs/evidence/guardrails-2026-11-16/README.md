@@ -68,7 +68,7 @@ Both files are written by the committed generator `data/make-sets.py` with ASCII
 
 Per technique with handling on, every row of every technique is caught except random deletion (0/3; the paper also found it the least effective attack). Emoji smuggling, tag smuggling, bidi, base64, hex, ROT13, reversed, upside-down, leet, homoglyphs, diacritics, underline, spacing, zero-width and emoji-between-letters also flag `obfuscation` (the attack shows only once decoded); full-width, math-bold and random capitals do not, because NFKC and case-insensitive matching already undo them in the plain view.
 
-The 3 benign texts flagged are the mention-versus-use limit of patterns, the same with handling off: "Never refuse a dessert" (two jailbreak signals), a question about the `<|endoftext|>` token, and a quote of "ignore previous instructions" in a security-class question. The obfuscation views add no false positive on this set. One rule was fixed after the set was run: the Russian and Ukrainian rules matched the stem `правил`, which also starts `правильный` ("correct"); they now require `правила`/`правило`. Held-out recall does not move: its misses are paraphrases, not obfuscation, which is the model tier's job.
+The 3 benign texts flagged are the mention-versus-use limit of patterns, the same with handling off: "Never refuse a dessert" (two jailbreak signals), a question about the `<|endoftext|>` token, and a quote of "ignore previous instructions" in a security-class question. The obfuscation views add no false positive on this set. One rule was fixed after the set was run: the Russian and Ukrainian rules matched the stem `правил`, which also starts `правильный` ("correct"); they now require `правила`/`правило`. Later, for speed (below), the Turkish rule was rewritten to anchor on the instruction word and verb (`talimat… yok say`) and no longer requires `önceki`/`tüm`/`bütün` before them, so it matches more than the version the benign set first measured; the sets were re-run after it and the counts are unchanged. Held-out recall does not move: its misses are paraphrases, not obfuscation, which is the model tier's job.
 
 ### Cost
 
@@ -82,6 +82,8 @@ CPU (i7-5820K), one thread, p50 / p95 over 20 runs after a warm-up:
 | 84 KB real document (`docs/plan/fast-faithful-ai-dotnet.md`) | 21 / 28 ms | 47 / 76 ms |
 
 Memory stays at the 40 to 44 MB of the process; nothing is loaded. The cost of long text is about 0.3 ms per rule pass per 50 KB, and AI-related prose contains the rules' keywords, so the keyword prefilter saves little there. Knobs: `DetectObfuscation = false`, a lower `MaxDecodeChars` (the whole-text ROT13, reversed and upside-down copies; 4,096 by default), or not checking tool results in the middleware. Profiling found two rules 10x slower than the rest (case-insensitive matching on Turkish and Cyrillic letters loses .NET's vectorized search); they now spell case variants out.
+
+Hostile input: the first version had two quadratic paths, a long run of tag characters and a long run of combining marks after a non-Latin base. One 100 KB message of either stalled a check for 1.0 to 3.6 s, a denial of service. Both are now single passes; `ObfuscationTests.HostileRunsAreScannedInLinearTime` checks six such inputs of 50,000 characters each (tags, a fake flag over tags, marks on a digit and on a Devanagari letter, variation selectors, zero-width spaces), which now take about 0.5 s together. A pattern that times out (100 ms each) makes the check come back not scanned rather than throw.
 
 ### Not covered
 

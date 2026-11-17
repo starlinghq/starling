@@ -37,6 +37,8 @@ Rules (`BuiltInRules`) and phrases (`BuiltInPhrases`) for attacks on the assista
 
 What it misses: paraphrased and novel attacks (2 of 16 caught on the held-out set), low-resource languages, random character deletion, payloads split across messages, ciphers beyond ROT13, nested encodings. Quoting an attack ("why does 'ignore previous instructions' work?") flags it: patterns see mentions, not intent. Use a model tier for those.
 
+Hostile input: every step is linear in the text (50,000-character runs of tag characters, combining marks or variation selectors are tested), and each pattern has a 100 ms timeout. A text that times a pattern out comes back `NotScanned` with the reason, not a pass and not an exception; `BlockWhenNotScanned` in the chat middleware blocks it.
+
 Cost on CPU, no model memory: about 0.2 ms for a message, 2 ms for 1 KB, 30 to 50 ms for 50 to 85 KB documents (13 to 21 ms with `DetectObfuscation = false`). `MaxDecodeChars` (4,096) bounds the whole-text ROT13, reversed and upside-down copies.
 
 ## Choosing a level
