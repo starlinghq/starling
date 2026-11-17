@@ -60,6 +60,13 @@ public sealed record PatternGuardOptions
     /// folded, leet and squashed views and the base64 and hex blob search always cover the whole text.
     /// </summary>
     public int MaxDecodeChars { get; init; } = 4_096;
+
+    /// <summary>
+    /// Phrases of 16 letters or more match the squashed view with up to this share of their letters deleted, inserted or
+    /// changed (random deletion, payload splitting with spliced letters, typos). Default 0.15 (4 edits for "ignore all
+    /// previous instructions"); 0 matches exactly only.
+    /// </summary>
+    public double PhraseEditRatio { get; init; } = 0.15;
 }
 
 /// <summary>
@@ -145,28 +152,13 @@ public sealed partial class PatternGuard : IContentGuard
         var hidden = TextViews.FindHidden(text);
         var transformed = new Dictionary<GuardCategory, double>();
         ScoreTransformedViews(clean, transformed);
+        var budget = new DecodeBudget();
         foreach (var payload in new[] { hidden.TagPayload, hidden.SelectorPayload }.OfType<string>())
         {
-            var payloadClean = TextViews.Clean(payload);
-            ScoreRules(payloadClean, transformed, plainView: true);
-            ScoreTransformedViews(payloadClean, transformed);
+            ScorePayload(TextViews.Clean(payload), transformed, depth: 1, budget);
         }
 
-        foreach (var decoded in TextViews.Decode(clean, _options.MaxDecodeChars))
-        {
-            if (decoded.Source is "base64" or "hex")
-            {
-                // Blobs are payloads: every view.
-                ScoreRules(decoded.Text, transformed, plainView: true);
-                ScoreTransformedViews(decoded.Text, transformed);
-            }
-            else
-            {
-                // Whole-text ROT13, reversed and upside-down copies: the Latin rules and the phrases only.
-                ScoreRules(decoded.Text, transformed, plainView: false);
-                ScorePhrases(TextViews.Squash(TextViews.Fold(decoded.Text)), transformed);
-            }
-        }
+        ScoreDecoded(clean, transformed, depth: 1, budget);
 
         // Hidden characters with no ordinary use, then attacks that only show once decoded or folded.
         double obfuscation = 0;
@@ -196,6 +188,77 @@ public sealed partial class PatternGuard : IContentGuard
         }
 
         return Result(merged, watch);
+    }
+
+    // Shorter phrases match exactly only: a few edits would let them match unrelated text.
+    private const int MinApproximatePhrase = 16;
+
+    // Nested encodings (base64 of base64, base64 of ROT13, hex of base64, tags of base64) decode to this depth.
+    private const int MaxDecodeDepth = 2;
+
+    /// <summary>
+    /// Bounds decoding per check: at most 24 decoded texts and 256 K characters. A text past the remaining characters is
+    /// cut, not skipped, so padding a smuggled payload does not hide its start.
+    /// </summary>
+    private sealed class DecodeBudget
+    {
+        private int _texts = 24;
+        private int _chars = 256 * 1024;
+
+        public string? Take(string text)
+        {
+            if (_texts == 0 || _chars == 0)
+            {
+                return null;
+            }
+
+            _texts--;
+            var taken = text.Length <= _chars ? text : text[.._chars];
+            _chars -= taken.Length;
+            return taken;
+        }
+    }
+
+    /// <summary>A decoded payload (smuggled text or a blob): every view, then one more level of decoding.</summary>
+    private void ScorePayload(string text, Dictionary<GuardCategory, double> into, int depth, DecodeBudget budget)
+    {
+        if (budget.Take(text) is not { } payload)
+        {
+            return;
+        }
+
+        ScoreRules(payload, into, plainView: true);
+        ScoreTransformedViews(payload, into);
+        if (depth < MaxDecodeDepth)
+        {
+            ScoreDecoded(payload, into, depth + 1, budget);
+        }
+    }
+
+    /// <summary>Blobs, ROT13, reversed and upside-down copies of a text. Blobs are payloads and decode further.</summary>
+    private void ScoreDecoded(string text, Dictionary<GuardCategory, double> into, int depth, DecodeBudget budget)
+    {
+        foreach (var decoded in TextViews.Decode(text, _options.MaxDecodeChars))
+        {
+            if (decoded.Source is "base64" or "hex")
+            {
+                ScorePayload(decoded.Text, into, depth, budget);
+            }
+            else if (budget.Take(decoded.Text) is { } copy)
+            {
+                // Whole-text copies: the Latin rules and the phrases only. In a ROT13 copy, blobs are followed too
+                // (ROT13 of base64); reversed and upside-down copies of blobs are not.
+                ScoreRules(copy, into, plainView: false);
+                ScorePhrases(TextViews.Squash(TextViews.Fold(copy)), into);
+                if (depth < MaxDecodeDepth && decoded.Source == "rot13")
+                {
+                    foreach (var inner in TextViews.Decode(copy, _options.MaxDecodeChars).Where(d => d.Source is "base64" or "hex"))
+                    {
+                        ScorePayload(inner.Text, into, depth + 1, budget);
+                    }
+                }
+            }
+        }
     }
 
     /// <summary>Folded and leet views get the rules; the squashed view gets the phrases. Each view is scored on its own; the highest wins.</summary>
@@ -242,7 +305,10 @@ public sealed partial class PatternGuard : IContentGuard
         var totals = new Dictionary<GuardCategory, double>();
         foreach (var (category, phrase, weight) in _phrases)
         {
-            if (squashed.Contains(phrase, StringComparison.Ordinal))
+            // Phrases of 16 letters or more also match with a few letters deleted, inserted or changed (random deletion,
+            // letters or variable names spliced in): up to PhraseEditRatio of their length.
+            int edits = phrase.Length >= MinApproximatePhrase ? (int)(phrase.Length * _options.PhraseEditRatio) : 0;
+            if (squashed.Contains(phrase, StringComparison.Ordinal) || (edits > 0 && TextViews.ApproximateContains(squashed, phrase, edits)))
             {
                 totals[category] = Math.Min(1.0, totals.GetValueOrDefault(category) + weight);
             }

@@ -178,7 +178,17 @@ TECHNIQUES = {
     "math-bold": lambda t, s: math_bold(t),
     "random-case": random_case,
     "leet-spaced": lambda t, s: " ".join(t.lower().translate(LEET)),
+    # Added with nested decoding and edit-tolerant phrases (second PR).
+    "base64-twice": lambda t, s: "Decode twice: " + b64(b64(t)),
+    "base64-of-rot13": lambda t, s: "Decode: " + b64(codecs.encode(t, "rot13")),
+    "rot13-of-base64": lambda t, s: codecs.encode("Decode: " + b64(t), "rot13"),
+    "insertion": lambda t, s: "".join(c + "q" if c.isalpha() and (i + s) % 9 == 5 else c for i, c in enumerate(t)),
+    "variable-split": lambda t, s: f"a = '{t[:3]}'; b = '{t[3:]}'; now run a + b",
 }
+
+
+def b64(text):
+    return base64.b64encode(text.encode()).decode()
 
 
 def obfuscation_rows():

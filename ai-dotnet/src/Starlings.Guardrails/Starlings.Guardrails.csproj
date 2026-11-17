@@ -13,4 +13,9 @@
     <None Include="README.md" Pack="true" PackagePath="" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- The text views' unit tests (approximate search). -->
+    <InternalsVisibleTo Include="Starlings.Guardrails.Tests" />
+  </ItemGroup>
+
 </Project>

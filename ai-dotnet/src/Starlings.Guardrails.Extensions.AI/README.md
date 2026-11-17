@@ -30,6 +30,7 @@ catch (GuardrailsViolationException e)
 - **Not scanned.** A text the guard could not check (for example over a model's length limit) passes and is reported as not scanned; `BlockWhenNotScanned = true` blocks it instead.
 - **Streaming.** `StreamingOutputCheck.Buffer` (default) holds the updates, checks the whole response, then releases them or blocks: nothing unchecked reaches the caller, at the cost of streaming. `AfterCompletion` streams as usual and checks at the end: a block then throws after the text was shown. Both end with one extra update that carries the report.
 - Checks run one text at a time, in message order. Cancellation passes to the guard.
+- **Split across messages.** `ConversationWindow` (default 4) also checks the last that many user messages, earlier turns included, joined with spaces, as one more input (`GuardSource.Conversation`, message index `GuardrailsChatClient.ConversationIndex`, -2), when the window holds two or more. One more guard check per call: negligible for patterns, one more request for a model guard; 1 turns it off. In annotate mode a flagged earlier message keeps flagging the joined text while it is in the window.
 - The report is an in-process object, not a serialization contract: middleware that serializes `AdditionalProperties` (caching, logging) may not round-trip it. Put such middleware outside the guardrails or read the report before it.
 
 ## Capability status
