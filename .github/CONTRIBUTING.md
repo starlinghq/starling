@@ -59,7 +59,7 @@ These paths hold reference fixtures, tolerances, and release evaluation sets (pl
 
 A change that edits them to make code pass will be rejected. Never raise a tolerance, rewrite a golden, drop a difficult example, or disable a feature while keeping its badge.
 
-A protected change goes in its own pull request with the `protected-change` label, its reference source and its rationale. The `protected evidence changes` check (`model-pipeline check-protected`) fails a pull request that changes protected paths without that label, or that also changes implementation code (`ai-dotnet/`, `model-pipeline/src/`, `model-pipeline/tests/`), so an implementation change cannot move its own thresholds. Files under `protected/` are byte-exact (`-text` in `.gitattributes`).
+A protected change goes in its own pull request with the `protected-change` label, its reference source and its rationale. The `protected evidence changes` check (`model-pipeline check-protected`) fails a pull request that changes protected paths without that label, or that also changes implementation code (`ai-dotnet/`, `model-pipeline/src/`, `model-pipeline/tests/`, `model-pipeline/reference/`, `tools/`, `browser/`, `.github/workflows/`), so an implementation change cannot move its own thresholds. Files under `protected/` are byte-exact (`-text` in `.gitattributes`).
 
 ## Agent contributions
 

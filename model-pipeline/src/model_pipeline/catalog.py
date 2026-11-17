@@ -312,8 +312,9 @@ def _render_readme(catalog: dict[str, Any], out: Path, repo_root: Path) -> str:
         "Stable rules (every gate G0 to G7 `passed`, no capability or generation field `untested`) and lists exactly "
         "what fails them, a generation field as `generation.<field>`. "
         "Stable also needs regression support: CPU regression runs weekly on the self-hosted qualification "
-        "runner, and GPU regression runs for every release (and on demand) on a RunPod GPU pod, so a CUDA profile "
-        "is not promoted until that per-release GPU run is green for it.",
+        "runner, and GPU regression runs before every release on the maintainer's RTX 3090 "
+        "(`tools/cuda-qualification-local.sh`), so a CUDA profile is not promoted until that per-release GPU run is "
+        "green for it.",
         "",
     ]
     header = ["Profile", "Task", "Maturity", "Review date", *GATES, "Stable readiness"]

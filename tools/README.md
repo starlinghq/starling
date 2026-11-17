@@ -90,7 +90,7 @@ python3 -I tools/fetch-release-references.py [--prune] <protected hosted-referen
 
 Each file is downloaded anonymously at the recorded commit and refused unless its size and SHA-256 match. A file already in `<out dir>` is kept only if it matches; otherwise it is downloaded again. `--prune` also deletes every other file under `<out dir>`. `<out dir>` must be outside the repository. Exit 0 when every file is verified, 1 on a mismatch or download failure, 2 on bad arguments. The evaluator later checks every array it reads against the release set's own digests, so this is a first gate, not the only one.
 
-CI: not called directly by a workflow; `release-gates.sh` and `ci/runpod-cuda-pod.sh` use it.
+CI: not called directly by a workflow; `release-gates.sh` and `cuda-qualification-local.sh` use it.
 
 ## Qualification
 
@@ -101,12 +101,14 @@ Helpers for the scheduled qualification workflow (P-018, workstream R6). Reads m
 ```sh
 python3 -I tools/qualification.py hosting <manifest.yaml>
 python3 -I tools/qualification.py lock <manifest.yaml> <out.json> [--reference-environment <environment.json>]
+python3 -I tools/qualification.py lock-hosted <manifest.yaml> <out.json> <path>...
 python3 -I tools/qualification.py lock-candidate <profile.json> <out.json> [--base]
 python3 -I tools/qualification.py snapshot <lock.json>
 ```
 
 - `hosting` prints `public` or `private: <where>`. A profile is private when any `source_status` in its manifest is `placeholder` or `private`. With `$GITHUB_OUTPUT` set it also writes `hosting=public|private` there.
 - `lock` writes a `Starlings.Acquisition` JSON lock of every file in `origin.files`, at the `origin.weights` repository and pinned revision. `--reference-environment` adds the files the protected reference run recorded when its model is the same repository and revision. Files Starling hosts outside the upstream repository carry their download `url` (lock `schema_version` 2). Only public Hub origins are supported.
+- `lock-hosted` writes a lock (`schema_version` 2) of the named `origin.files` entries only, each with the `url` `execution.graph.hosting.source_base` plus its path, filed under the `origin.weights` repository and revision (the snapshot directory the package's own lock uses). It is for a bundle Starling builds and hosts in a repository of its own, where `lock` would ask the upstream repository for files it does not have: `cuda-qualification-local.sh` uses it for the five Kev bundle files `KevModelAssets` pins. A path missing from `origin.files`, or a manifest without a public `source_base`, is an error.
 - `lock-candidate` writes the same kind of lock (schema version 1) for an onboarding candidate contract (`model-pipeline/candidates/<name>/profile.json`): every file of `origin.files` at `origin.repo` and `origin.revision`, or with `--base` every file of `origin.base` (the pinned base model of the Kev and Whisper routes). Only Hugging Face repositories pinned by a full commit SHA are supported. Tests: `tools/tests/test_qualification.py` (skipped without PyYAML).
 - `snapshot` prints the lock's snapshot directory relative to the cache root, `<repository>/<revision>`.
 
@@ -130,33 +132,47 @@ The commands are the ones each evidence README under `docs/evidence/release-set-
 
 CI: `qualification` job `release-gates`.
 
-### `ci/runpod.py`
+### `cuda-qualification-local.sh`
 
-RunPod control for the `cuda (runpod)` job of the qualification workflow. Runs on the GitHub runner only. Reads the API key from `RUNPOD_API_KEY` and never prints it, writes it to a file or sends it anywhere but the RunPod API. It only creates, inspects or terminates pods whose name starts with `starling-q-ci-`.
-
-```sh
-python3 -I tools/ci/runpod.py preflight [--min-balance <usd>]      # balance check; terminates stale starling-q-ci- pods
-python3 -I tools/ci/runpod.py create --name <n> --public-key <file> --backstop-minutes <m> [--stock-wait-minutes <m>]
-python3 -I tools/ci/runpod.py ssh --name <n> [--wait-minutes <m>]  # prints "<ip> <port>" once public SSH is mapped
-python3 -I tools/ci/runpod.py terminate --name <n> [--created-at <t>]  # terminates, confirms it is gone, logs wall time and cost
-python3 -I tools/ci/runpod.py check                                 # exit 1 if any starling-q-ci- pod exists
-```
-
-`create` prints the pod id, GPU and hourly cost and writes `pod_id` to `$GITHUB_OUTPUT`. The pod is created on demand (secure cloud) with the network volume `starling-q-vol` (EU-CZ-1), on an NVIDIA GeForce RTX 3090 only. No other GPU is a fallback: with no RTX 3090 in stock the job fails, and a pod that reports another GPU is terminated.
-
-CI: `qualification` job `cuda` (`preflight --min-balance 5`, `create`, `ssh`, `terminate`).
-
-### `ci/runpod-cuda-pod.sh`
-
-The pod side of the CUDA qualification. Runs on the RunPod pod with the network volume at `/workspace`; the `cuda` job copies it there and starts it detached, polls `<out>/status.txt` and `<out>/DONE`, and copies `<out>` back as the artifact `qualification-cuda`.
+The CUDA qualification: the regression support of the CUDA profiles (`docs/support-policy.md`, "Regression support"). No workflow runs it; the maintainer runs it on their own NVIDIA GeForce RTX 3090 before every `ai-v*` tag. It replaced the RunPod job `cuda` of the qualification workflow on 2026-11-15 and keeps its work and output layout.
 
 ```sh
-runpod-cuda-pod.sh <commit sha> <out dir> [soak duration, default 10m]
+STARLING_MODELS=<model cache> STARLING_EMBEDDINGGEMMA2_VIDEO_TENSORS=<dir> \
+    tools/cuda-qualification-local.sh --gpu <index> <out dir> [soak duration, default 10m]
 ```
 
-Order: inventory, checkout of `<sha>`, builds, reference environments, model acquisition, the CUDA test projects of e5, GLiNER2, EmbeddingGemma 2 and Qwen3.5, G1, G2 and G3 of each CUDA profile in the script's `PROFILES` list (the seven Stable CUDA profiles; not Kev's) on its accepted P-030 release sets, then one short soak per listed profile. Every check is a line `<profile> <check> <result>` in `<out>/summary.tsv`; a check whose input is missing is `not-run`, never `passed`. The exit status (also in `<out>/exit-code`) is 0 only if every check passed. Release inputs that are not in Git are cached under `/workspace/ci-cache` and verified against the digests in Git, so a cached file can make a check fail, never pass. G2 reference tensors are downloaded with `fetch-release-references.py`, never regenerated. Writes nothing to `model-pipeline/protected/`.
+- `--gpu`: the GPU in PCI bus order (`CUDA_DEVICE_ORDER=PCI_BUS_ID`, `CUDA_VISIBLE_DEVICES=<index>`); required. The run refuses a GPU that is not an RTX 3090 with driver 580 or later.
+- `STARLING_MODELS`: the model cache; `acquire-models.sh` downloads what is missing and verifies every file. `STARLING_EMBEDDINGGEMMA2_VIDEO_TENSORS`: the EmbeddingGemma 2 video reference tensors for the CUDA test project (no reproducible public source; without them the run records `not-run`). `STARLING_KEV_08B_BUNDLE` / `STARLING_KEV_4B_BUNDLE`: Kev bundle directories for the Kev CUDA test project; unset, the run downloads and verifies the hosted bundles (`Starlinghq/kev-0.8b-onnx`, `kev-4b-onnx`, 3.1 GB and 16.9 GB) into `STARLING_MODELS`. `CUDA_QUALIFICATION_WORK`: reference environments, builds and release inputs (default `~/.cache/starling-cuda-qualification`), kept between runs and verified on every use.
 
-CI: `qualification` job `cuda` (on the pod).
+Run it from a clean checkout of the commit to tag; the commit is recorded, and a modified tracked file fails the check `checkout-clean`. Order: inventory, reference environments, builds, model acquisition (the seven Stable CUDA profiles with `acquire-models.sh`; for Kev's two CUDA profiles the five bundle files `KevModelAssets` pins, from the bundles' hosting repositories with `qualification.py lock-hosted`, since the upstream Kev repositories do not hold them), test inputs (`ci/eg2-test-inputs.sh`) and release inputs, the CUDA test projects of e5, GLiNER2, EmbeddingGemma 2, Qwen3.5 and Kev (each judged by its exit status, and all of them by `ci/check-trx.py`), G1, G2 and G3 of each Stable CUDA profile on its accepted P-030 release sets, then one short soak per Stable CUDA profile (a smoke test: wrong outputs, errors and crashes fail it; its growth verdict is recorded but not binding). Every check is a line `<profile> <check> <result>` in `<out>/summary.tsv`, rendered with the test modules' table in `<out>/summary.md`; a check whose input is missing is `not-run`, never `passed`. The exit status (also in `<out>/exit-code`) is 0 only if every check passed. `<out>` also holds `status.txt` (progress), `environment.txt` (GPU, driver, CPU, memory, tools, checkout), the logs, `tests/<module>/` (TRX), `gates/<profile>/` (evaluator reports) and `soak/<workload>/`: the layout of the former artifact `qualification-cuda`. The maintainer records `summary.md` and `environment.txt` in `docs/evidence/gpu-regression-<date>/`.
+
+Shared machine: it runs one step at a time (one test module, one producer, one soak), and before each heavy step asks `agent-budget level` when that command is on the path, waiting with `agent-budget alert --from critical --timeout 300` while the level is `critical` and building with `-m:2` while it is `tight`. It never sets `RUNNER_ENVIRONMENT` and unsets it for its run: tests that inject fatal signals may run only on GitHub-hosted runners (`RUNNER_ENVIRONMENT=github-hosted`). G2 reference tensors are downloaded with `fetch-release-references.py`, never regenerated. Writes nothing to `model-pipeline/protected/`.
+
+CI: none (local only).
+
+### `ci/eg2-test-inputs.sh`
+
+Prepares the EmbeddingGemma 2 test inputs that are not in the repository but have a reproducible source, so the image tests and the release-video decoder test run instead of skipping.
+
+```sh
+tools/ci/eg2-test-inputs.sh <dir>   # then: source <dir>/env
+```
+
+Under `<dir>`: `images/` (`STARLING_EMBEDDINGGEMMA2_IMAGES`; `make_eg2_images.py` with numpy and Pillow from the hash-locked `model-pipeline/reference/embeddinggemma2/requirements.txt`, every file checked against the protected `image-fp32-cpu/images.json`), `ffmpeg8/` and `ffmpeg9/` (`STARLING_FFMPEG_DIR`, `STARLING_FFMPEG9_DIR`; the pinned FFmpeg 8.1 and 9.0 LGPL builds that `release-gates.sh` uses, checked by SHA-256), `release-videos/` (`STARLING_EMBEDDINGGEMMA2_RELEASE_VIDEOS`; the four P-030 release videos from Wikimedia Commons, checked by SHA-1, size and SHA-256) and `env` with the `export` lines. Not prepared, for lack of a reproducible source: the 22 synthetic fixture videos (`STARLING_EMBEDDINGGEMMA2_VIDEOS`; `make_eg2_videos.py` needs an FFmpeg GPL build that upstream deleted) and the reference tensors. A part already prepared is kept; the images are verified on every run. Needs `uv`, `curl` and network access.
+
+CI: `qualification` job `model-tests`. Also used by `cuda-qualification-local.sh`.
+
+### `ci/check-trx.py`
+
+Fails when a test module ran but passed nothing. `dotnet test` exits 0 when every test of a module skips; this reads the TRX reports (`-- --report-xunit-trx`) under a results directory and prints per module (the test assembly) the passed, skipped and failed counts.
+
+```sh
+python3 -I tools/ci/check-trx.py <results dir> [--allow <file>] [--summary <markdown file>]
+```
+
+Exit 1 when a module with tests has 0 passed or a failed test, 2 when there is no TRX report or the allow-list is malformed, 0 otherwise. `--allow` (default `tools/ci/trx-allow-zero.txt`) lists modules that may pass nothing, one per line with the reason; it is empty, because every module of `AI.slnx` has tests that run without models. `--summary` appends the table to a markdown file (the step summary). Tests: `tools/tests/test_check_trx.py`.
+
+CI: `qualification` job `model-tests`. Also used by `cuda-qualification-local.sh`.
 
 ### `measure-eg2-cuda-frame-calls.py`
 

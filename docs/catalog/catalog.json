@@ -1857,7 +1857,7 @@
       "review_date": "2027-01-05",
       "last_checked": "2026-11-03",
       "known_issues": [
-        "Contract hardware: an NVIDIA GeForce RTX 3090 (Ampere, sm_86), driver 580, CUDA 13 runtime. The CUDA gates G1 to G5 (G4 and G5 in the binding 2026-10-16 round) ran on RTX 3090s, and the per-release GPU regression is pinned to the RTX 3090 and refuses any other GPU (tools/ci/runpod.py). Its first run, 38857860186, landed on an RTX 4090 (Ada) before the pin: every check of this profile passed there, but embeddinggemma-2/video-fp32-cuda failed G2 (docs/evidence/gpu-regression-2026-10-16/README.md). Other NVIDIA GPUs, including the RTX 4090, are untested and outside the contract.",
+        "Contract hardware: an NVIDIA GeForce RTX 3090 (Ampere, sm_86), driver 580, CUDA 13 runtime. The CUDA gates G1 to G5 (G4 and G5 in the binding 2026-10-16 round) ran on RTX 3090s, and the per-release GPU regression is pinned to the RTX 3090 and refuses any other GPU (tools/cuda-qualification-local.sh). Its first run, 38857860186, landed on an RTX 4090 (Ada) before the pin: every check of this profile passed there, but embeddinggemma-2/video-fp32-cuda failed G2 (docs/evidence/gpu-regression-2026-10-16/README.md). Other NVIDIA GPUs, including the RTX 4090, are untested and outside the contract.",
         "Linux memory: MALLOC_MMAP_THRESHOLD_=65536 is recommended, not required (the Starlings.Models.EmbeddingGemma2 README, \"Memory on Linux\"); the G4 soak and the per-release soak smoke test ran without it.",
         "Cancellation on CUDA completes the current vision or text run before throwing (#61), so its latency is one run.",
         "The image release set's reference stage tensors regenerate byte-identical only on the reference CPU at 6 threads; the accepted soft-token and token-embedding arrays are hosted at Starlinghq/starling-release-references (commit and file digests in the protected hosted-reference.json, #71), and the evaluator checks every array against the protected tensors.json, so the per-release G2 needs no regeneration.",
@@ -2440,7 +2440,7 @@
       "review_date": "2027-01-05",
       "last_checked": "2026-11-03",
       "known_issues": [
-        "Contract hardware: an NVIDIA GeForce RTX 3090 (Ampere, sm_86), driver 580, CUDA 13 runtime. The CUDA gates G1 to G5 (G4 and G5 in the binding 2026-10-16 round) ran on RTX 3090s, and the per-release GPU regression is pinned to the RTX 3090 and refuses any other GPU (tools/ci/runpod.py). Its first run, 38857860186, landed on an RTX 4090 (Ada) before the pin: every check of this profile passed there, but embeddinggemma-2/video-fp32-cuda failed G2 (docs/evidence/gpu-regression-2026-10-16/README.md). Other NVIDIA GPUs, including the RTX 4090, are untested and outside the contract.",
+        "Contract hardware: an NVIDIA GeForce RTX 3090 (Ampere, sm_86), driver 580, CUDA 13 runtime. The CUDA gates G1 to G5 (G4 and G5 in the binding 2026-10-16 round) ran on RTX 3090s, and the per-release GPU regression is pinned to the RTX 3090 and refuses any other GPU (tools/cuda-qualification-local.sh). Its first run, 38857860186, landed on an RTX 4090 (Ada) before the pin: every check of this profile passed there, but embeddinggemma-2/video-fp32-cuda failed G2 (docs/evidence/gpu-regression-2026-10-16/README.md). Other NVIDIA GPUs, including the RTX 4090, are untested and outside the contract.",
         "Linux memory: no MALLOC_* setting is required; the runtime calls malloc_trim on session release (on by default).",
         "Cancellation on CUDA completes the current run before throwing (#61), so its latency is one chunk: up to about 1.2 s at the default 16 rows of 2,048 tokens; lower MaxBatchSize for faster cancellation (docs/evidence/gliner2-cuda-wrong-output/README.md).",
         "Evaluator run 2026-10-11 (docs/evidence/embeddinggemma2-dotnet/, CPU): G1 passed; G2 failed only on export.token_embeddings (Python ORT vs PyTorch): the tolerance file's |d| <= 1e-4 * max(1, |ref|) judged per value gives 1.7e-2, while the per-case max |d| / max(1, max |ref|) the bound was set from is 6.2e-6. Which reading binds is a maintainer decision; every .NET check passed.",
@@ -3024,7 +3024,7 @@
       "review_date": "2027-01-05",
       "last_checked": "2026-11-03",
       "known_issues": [
-        "Contract hardware: an NVIDIA GeForce RTX 3090 (Ampere, sm_86), driver 580, CUDA 13 runtime. The CUDA gates G1 to G5 (G4 and G5 in the binding 2026-10-16 round) ran on RTX 3090s, and the per-release GPU regression is pinned to the RTX 3090 and refuses any other GPU (tools/ci/runpod.py). The RTX 4090 (Ada) is outside the contract: in run 38857860186, before the pin, this profile's G2 failed there on the final embedding (max abs 1.009e-5 against the unchanged 1e-5, commons-video-04). Other NVIDIA GPUs are untested.",
+        "Contract hardware: an NVIDIA GeForce RTX 3090 (Ampere, sm_86), driver 580, CUDA 13 runtime. The CUDA gates G1 to G5 (G4 and G5 in the binding 2026-10-16 round) ran on RTX 3090s, and the per-release GPU regression is pinned to the RTX 3090 and refuses any other GPU (tools/cuda-qualification-local.sh). The RTX 4090 (Ada) is outside the contract: in run 38857860186, before the pin, this profile's G2 failed there on the final embedding (max abs 1.009e-5 against the unchanged 1e-5, commons-video-04). Other NVIDIA GPUs are untested.",
         "Linux memory: MALLOC_MMAP_THRESHOLD_=65536 is a deployment requirement (the Starlings.Models.EmbeddingGemma2 README, \"Image and video on CUDA\"); the binding G4 soak and the per-release soak smoke test ran with it.",
         "Cancellation on CUDA completes the current vision or text run before throwing (#61), so its latency is one run.",
         "Per-release coverage: the CUDA video parity tests (CudaVideoParityTests, on the development fixtures) and the multimodal IEmbeddingGenerator over CUDA (CudaAdapterTests) need the video fixture set, which the per-release GPU pod does not have, so they are skipped there; the per-release regression of this profile is release-set G1 (both FFmpeg decoder checks) and G2, G3 on video-retrieval-v1 and the soak smoke test. extensions_ai stays experimental until its test runs per release (G7 evidence: 2026-10-14 and 2026-10-15).",
@@ -3610,7 +3610,7 @@
       "review_date": "2027-01-05",
       "last_checked": "2026-10-10",
       "known_issues": [
-        "Contract hardware: an NVIDIA GeForce RTX 3090 (Ampere, sm_86), driver 580, CUDA 13 runtime. The CUDA gates G1 to G5 (G4 and G5 in the binding 2026-10-16 round) ran on RTX 3090s, and the per-release GPU regression is pinned to the RTX 3090 and refuses any other GPU (tools/ci/runpod.py). Its first run, 38857860186, landed on an RTX 4090 (Ada) before the pin: every check of this profile passed there, but embeddinggemma-2/video-fp32-cuda failed G2 (docs/evidence/gpu-regression-2026-10-16/README.md). Other NVIDIA GPUs, including the RTX 4090, are untested and outside the contract.",
+        "Contract hardware: an NVIDIA GeForce RTX 3090 (Ampere, sm_86), driver 580, CUDA 13 runtime. The CUDA gates G1 to G5 (G4 and G5 in the binding 2026-10-16 round) ran on RTX 3090s, and the per-release GPU regression is pinned to the RTX 3090 and refuses any other GPU (tools/cuda-qualification-local.sh). Its first run, 38857860186, landed on an RTX 4090 (Ada) before the pin: every check of this profile passed there, but embeddinggemma-2/video-fp32-cuda failed G2 (docs/evidence/gpu-regression-2026-10-16/README.md). Other NVIDIA GPUs, including the RTX 4090, are untested and outside the contract.",
         "Linux memory: start the process with MALLOC_MMAP_THRESHOLD_=65536 (the Starlings.Models.Gliner2 README, \"Memory on Linux\"); the G4 soak and the per-release soak smoke test run with it.",
         "Cancellation on CUDA completes the current run before throwing (no mid-graph termination, #61), so its latency is one chunk: about 50 ms for 8 long texts (docs/evidence/gliner2-cuda-wrong-output/README.md).",
         "Results are ordered by confidence; most entity scores saturate to exactly 1.0 in fp32, so near-ties make the order sensitive to backend noise (ORT CUDA with TF32 reorders one 1,329-token case with the same entity set).",
@@ -6123,7 +6123,7 @@
       "review_date": "2027-01-05",
       "last_checked": "2026-10-05",
       "known_issues": [
-        "Contract hardware: an NVIDIA GeForce RTX 3090 (Ampere, sm_86), driver 580, CUDA 13 runtime. The CUDA gates G1 to G5 (G4 and G5 in the binding 2026-10-16 round) ran on RTX 3090s, and the per-release GPU regression is pinned to the RTX 3090 and refuses any other GPU (tools/ci/runpod.py). Its first run, 38857860186, landed on an RTX 4090 (Ada) before the pin: every check of this profile passed there, but embeddinggemma-2/video-fp32-cuda failed G2 (docs/evidence/gpu-regression-2026-10-16/README.md). Other NVIDIA GPUs, including the RTX 4090, are untested and outside the contract.",
+        "Contract hardware: an NVIDIA GeForce RTX 3090 (Ampere, sm_86), driver 580, CUDA 13 runtime. The CUDA gates G1 to G5 (G4 and G5 in the binding 2026-10-16 round) ran on RTX 3090s, and the per-release GPU regression is pinned to the RTX 3090 and refuses any other GPU (tools/cuda-qualification-local.sh). Its first run, 38857860186, landed on an RTX 4090 (Ada) before the pin: every check of this profile passed there, but embeddinggemma-2/video-fp32-cuda failed G2 (docs/evidence/gpu-regression-2026-10-16/README.md). Other NVIDIA GPUs, including the RTX 4090, are untested and outside the contract.",
         "Linux memory: no MALLOC_* setting is required; the runtime calls malloc_trim on session release (on by default).",
         "Cancellation on CUDA completes the current run before throwing (#61), so its latency is one chunk: about 125 ms for 32 x 512 tokens (docs/evidence/gliner2-cuda-wrong-output/README.md).",
         "The pinned tokenizer.json emits a lone \"▁\" token before special-token literals and for trailing whitespace, where SentencePiece and transformers 5.18 emit none. The owned profile follows tokenizer.json; the difference is recorded, not fixed.",
@@ -8915,7 +8915,7 @@
       "review_date": "2027-01-05",
       "last_checked": "2026-10-10",
       "known_issues": [
-        "Contract hardware: an NVIDIA GeForce RTX 3090 (Ampere, sm_86), driver 580, CUDA 13 runtime. The CUDA gates G1 to G5 (G4 and G5 in the binding 2026-10-16 round) ran on RTX 3090s, and the per-release GPU regression is pinned to the RTX 3090 and refuses any other GPU (tools/ci/runpod.py). Its first run, 38857860186, landed on an RTX 4090 (Ada) before the pin: every check of this profile passed there, but embeddinggemma-2/video-fp32-cuda failed G2 (docs/evidence/gpu-regression-2026-10-16/README.md). Other NVIDIA GPUs, including the RTX 4090, are untested and outside the contract.",
+        "Contract hardware: an NVIDIA GeForce RTX 3090 (Ampere, sm_86), driver 580, CUDA 13 runtime. The CUDA gates G1 to G5 (G4 and G5 in the binding 2026-10-16 round) ran on RTX 3090s, and the per-release GPU regression is pinned to the RTX 3090 and refuses any other GPU (tools/cuda-qualification-local.sh). Its first run, 38857860186, landed on an RTX 4090 (Ada) before the pin: every check of this profile passed there, but embeddinggemma-2/video-fp32-cuda failed G2 (docs/evidence/gpu-regression-2026-10-16/README.md). Other NVIDIA GPUs, including the RTX 4090, are untested and outside the contract.",
         "Concurrency on CUDA: requests are serialized step by step (concurrent ONNX Runtime GenAI 0.17.1 generators produced wrong tokens); concurrent_requests means that serialized mode.",
         "Cancellation is checked between decode steps and, with chunked prefill (the CUDA default), between prefill chunks; never inside a native call.",
         "Linux memory: no MALLOC_* setting is required; the G4 soak and the per-release soak smoke test ran with the defaults.",
@@ -9512,7 +9512,7 @@
       "review_date": "2027-01-05",
       "last_checked": "2026-10-10",
       "known_issues": [
-        "Contract hardware: an NVIDIA GeForce RTX 3090 (Ampere, sm_86), driver 580, CUDA 13 runtime. The CUDA gates G1 to G5 (G4 and G5 in the binding 2026-10-16 round) ran on RTX 3090s, and the per-release GPU regression is pinned to the RTX 3090 and refuses any other GPU (tools/ci/runpod.py). Its first run, 38857860186, landed on an RTX 4090 (Ada) before the pin: every check of this profile passed there, but embeddinggemma-2/video-fp32-cuda failed G2 (docs/evidence/gpu-regression-2026-10-16/README.md). Other NVIDIA GPUs, including the RTX 4090, are untested and outside the contract.",
+        "Contract hardware: an NVIDIA GeForce RTX 3090 (Ampere, sm_86), driver 580, CUDA 13 runtime. The CUDA gates G1 to G5 (G4 and G5 in the binding 2026-10-16 round) ran on RTX 3090s, and the per-release GPU regression is pinned to the RTX 3090 and refuses any other GPU (tools/cuda-qualification-local.sh). Its first run, 38857860186, landed on an RTX 4090 (Ada) before the pin: every check of this profile passed there, but embeddinggemma-2/video-fp32-cuda failed G2 (docs/evidence/gpu-regression-2026-10-16/README.md). Other NVIDIA GPUs, including the RTX 4090, are untested and outside the contract.",
         "Concurrency on CUDA: requests are serialized step by step (concurrent ONNX Runtime GenAI 0.17.1 generators produced wrong tokens); concurrent_requests means that serialized mode.",
         "Cancellation is checked between decode steps and, with chunked prefill (the CUDA default), between prefill chunks; never inside a native call.",
         "Linux memory: no MALLOC_* setting is required; the G4 soak and the per-release soak smoke test ran with the defaults.",
@@ -10200,7 +10200,7 @@
         "input_up_to_2049_tokens": "unrecorded",
         "kv_cache": "experimental",
         "label_descriptions": "unrecorded",
-        "language_detection": "untested",
+        "language_detection": "unsupported",
         "logprob_threshold": "unsupported",
         "logprobs": "unrecorded",
         "long_context": "unrecorded",
@@ -10337,7 +10337,6 @@
         "untested_capabilities": [
           "aot",
           "concurrent_calls",
-          "language_detection",
           "transcription_cuda"
         ]
       },

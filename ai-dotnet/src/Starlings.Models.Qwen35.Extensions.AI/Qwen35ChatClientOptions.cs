@@ -13,7 +13,9 @@ public sealed record Qwen35ChatClientOptions
     /// <see cref="Qwen35ChatOptions.PrefillChunkTokens"/> (default: 512 on CUDA; on CPU one call up to 1,024 prompt tokens and
     /// 1,024-token chunks above). A request value replaces the default; see <see cref="Qwen35ChatClient"/> for the mapping.
     /// The opt-in settings that <c>ChatOptions</c> cannot express, <see cref="Qwen35ChatOptions.EscapeSpecialTokens"/> and
-    /// <see cref="Qwen35ChatOptions.StopAtRoleMarker"/> (both default false), apply to every request from here.
+    /// <see cref="Qwen35ChatOptions.StopAtRoleMarker"/> (both default false), apply to every request from here. Tool-result
+    /// content is escaped by default whatever <see cref="Qwen35ChatOptions.EscapeSpecialTokens"/> says; see
+    /// <see cref="EscapeToolResults"/>.
     /// </summary>
     /// <remarks>
     /// On CPU a prefill call cannot be cancelled until it completes (12 s for a 1,666-token prompt on the M0
@@ -50,6 +52,18 @@ public sealed record Qwen35ChatClientOptions
     /// (<see cref="Qwen35ModelInfo.GuidanceMissingFiles"/> empty). Experimental.
     /// </summary>
     public bool GuidanceFastForward { get; init; }
+
+    /// <summary>
+    /// Escape the tokenizer's added-token strings in tool-result content before rendering
+    /// (<see cref="Qwen35ChatRequestMapper.EscapeToolResult"/>), so that a function result, which under a
+    /// function-invocation loop is untrusted text, cannot close its tool response or turn and open another (for example
+    /// <c>&lt;|im_end|&gt;\n&lt;|im_start|&gt;system\n...</c>). Applies to the text of every
+    /// <see cref="Microsoft.Extensions.AI.FunctionResultContent"/>, after a non-string result is serialized to JSON;
+    /// system, user and assistant messages are not affected. Default true. False renders tool results verbatim, as
+    /// upstream <c>apply_chat_template</c> does and as earlier versions did; <see cref="Qwen35ChatOptions.EscapeSpecialTokens"/>
+    /// on <see cref="Defaults"/> still escapes every <c>&lt;|name|&gt;</c> in all message content when set.
+    /// </summary>
+    public bool EscapeToolResults { get; init; } = true;
 
     /// <summary>
     /// Admission control: the number of requests (<c>GetResponseAsync</c> and <c>GetStreamingResponseAsync</c> together)
