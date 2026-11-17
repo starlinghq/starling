@@ -18,6 +18,8 @@ What the experimental guardrails (`Starlings.Guardrails`, `Starlings.Guardrails.
 | Balanced | `patterns>kev-0.8b` | 0.83 | 12/16 (0.75) | 3/16 (0.19) | 478 / 568 ms | 2,259 MB |
 | Strict | `patterns>kev-0.8b` | 0.84 | 12/16 (0.75) | 3/16 (0.19) | 474 / 543 ms | 2,266 MB |
 
+After the held-out runs, one pattern rule was narrowed (`DAN` made case-sensitive, so the name "Dan" does not flag); the light level was re-run on both sets and its counts are identical (dev 19/24 and 0/24, held out 2/16 and 0/16).
+
 Kev's misses: instructions embedded in carried content (a product review, a search result, a calendar invite) and one context-window dump request. Kev's false positives: a question about jailbreak techniques for testing, IKEA assembly instructions, and a "hypothetically" mortgage question. The model load takes about 10 s and is not in the latency.
 
 ## Dev results (used for choices, not a quality claim)
