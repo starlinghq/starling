@@ -55,6 +55,7 @@ public sealed class E5TextEmbedder : ITextEmbedder, IDisposable
     /// </summary>
     /// <param name="files">Verified files.</param>
     /// <param name="options">Encoder options; defaults to the e5 profile.</param>
+    /// <exception cref="ArgumentOutOfRangeException">An option is out of range, for example <see cref="E5EncoderOptions.MaxSequenceLength"/> below 2 or above <see cref="E5Encoder.MaxSupportedSequenceLength"/>.</exception>
     public static E5TextEmbedder Create(E5ModelFiles files, E5EncoderOptions? options = null)
     {
         ArgumentNullException.ThrowIfNull(files);

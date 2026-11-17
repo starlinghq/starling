@@ -30,7 +30,7 @@ public sealed class WhisperTranscriber : IDisposable
     /// (<see cref="WhisperModel.Create(WhisperModelFiles, WhisperOptions?)"/>), so the graphs are not read again.
     /// </summary>
     /// <exception cref="InvalidDataException">The tokenizer file is not the pinned one.</exception>
-    /// <exception cref="WhisperUnsupportedLanguageException"><see cref="WhisperOptions.Language"/> is not a language code of the model.</exception>
+    /// <exception cref="WhisperUnsupportedLanguageException"><see cref="WhisperOptions.Language"/> is <see langword="null"/> or not a language code of the model.</exception>
     public static WhisperTranscriber Create(WhisperModelFiles files, WhisperOptions? options = null)
     {
         ArgumentNullException.ThrowIfNull(files);
@@ -48,7 +48,7 @@ public sealed class WhisperTranscriber : IDisposable
     /// only when <see cref="Starlings.Runtime.Onnx.OnnxSessionOptions.ExpectedModelSha256"/> is set on the session options.
     /// </summary>
     /// <exception cref="InvalidDataException">The tokenizer file is not the pinned one.</exception>
-    /// <exception cref="WhisperUnsupportedLanguageException"><see cref="WhisperOptions.Language"/> is not a language code of the model.</exception>
+    /// <exception cref="WhisperUnsupportedLanguageException"><see cref="WhisperOptions.Language"/> is <see langword="null"/> or not a language code of the model.</exception>
     /// <exception cref="ArgumentException"><see cref="WhisperOptions.DecoderMode"/> is <see cref="WhisperDecoderMode.KvCache"/>, which needs the KV-cache graph (the four-path overload); checked before the tokenizer loads.</exception>
     public static WhisperTranscriber Create(string encoderPath, string decoderPath, string tokenizerPath, WhisperOptions? options = null)
     {
@@ -70,7 +70,7 @@ public sealed class WhisperTranscriber : IDisposable
     /// (<see cref="WhisperOptions.DecoderMode"/>).
     /// </summary>
     /// <exception cref="InvalidDataException">The tokenizer file is not the pinned one.</exception>
-    /// <exception cref="WhisperUnsupportedLanguageException"><see cref="WhisperOptions.Language"/> is not a language code of the model.</exception>
+    /// <exception cref="WhisperUnsupportedLanguageException"><see cref="WhisperOptions.Language"/> is <see langword="null"/> or not a language code of the model.</exception>
     public static WhisperTranscriber Create(
         string encoderPath, string decoderPath, string decoderWithPastPath, string tokenizerPath, WhisperOptions? options = null)
     {
@@ -131,7 +131,7 @@ public sealed class WhisperTranscriber : IDisposable
         }
 
         var hidden = _model.Encode(mel, cancellationToken);
-        var prompt = WhisperModel.Prompt(_options.Language, transcribe: true, noTimestamps: true);
+        var prompt = WhisperModel.Prompt(_options.Language!, transcribe: true, noTimestamps: true);
         var ids = _model.Generate(hidden, prompt, _options.MaxLength, cancellationToken);
         return _tokenizer.Decode(ids);
     }
@@ -173,7 +173,7 @@ public sealed class WhisperTranscriber : IDisposable
         }
 
         int totalFrames = mel.Length / WhisperModel.NumMelBins;
-        var prompt = WhisperModel.Prompt(_options.Language, transcribe: true, noTimestamps: false);
+        var prompt = WhisperModel.Prompt(_options.Language!, transcribe: true, noTimestamps: false);
         var windows = new List<WhisperWindow>();
         var segments = new List<WhisperSegment>();
         var allIds = new List<int>();

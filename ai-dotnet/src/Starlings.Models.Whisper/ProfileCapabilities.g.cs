@@ -44,7 +44,7 @@ internal static class GeneratedProfileCapabilities
                     ["mlnet"] = Status.Unsupported,
                     ["transcription"] = Status.Experimental,
                     ["transcription_cuda"] = Status.Untested,
-                    ["language_detection"] = Status.Untested,
+                    ["language_detection"] = Status.Unsupported,
                     ["concurrent_calls"] = Status.Untested,
                     ["asset_acquisition"] = Status.Experimental,
                     ["translation"] = Status.Unsupported,

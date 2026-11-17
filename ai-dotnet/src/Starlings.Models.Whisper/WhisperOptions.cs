@@ -10,8 +10,9 @@ public sealed record WhisperOptions
 
     /// <summary>
     /// Language code, a key of <see cref="WhisperModel.LanguageToId"/> (case-insensitive). Default
-    /// <see cref="DefaultLanguage"/> (<c>"en"</c>). <see langword="null"/> opts in to auto-detection, which prompts with
-    /// <c>&lt;|startoflm|&gt;</c> and is untested (<see cref="WhisperCapabilities"/>, <c>language_detection</c>).
+    /// <see cref="DefaultLanguage"/> (<c>"en"</c>). A language is required: language detection is unsupported
+    /// (<see cref="WhisperCapabilities"/>, <c>language_detection</c>), and <see langword="null"/> is rejected when the
+    /// model or transcriber is created.
     /// </summary>
     public string? Language { get; init; } = DefaultLanguage;
 
@@ -38,7 +39,7 @@ public sealed record WhisperOptions
     /// </summary>
     public WhisperDecoderMode? DecoderMode { get; init; }
 
-    /// <exception cref="WhisperUnsupportedLanguageException"><see cref="Language"/> is not a language code of the model.</exception>
+    /// <exception cref="WhisperUnsupportedLanguageException"><see cref="Language"/> is <see langword="null"/> or not a language code of the model.</exception>
     internal void Validate()
     {
         ArgumentOutOfRangeException.ThrowIfLessThan(MaxLength, 1);

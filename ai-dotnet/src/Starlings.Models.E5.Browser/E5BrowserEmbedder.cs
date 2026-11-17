@@ -106,6 +106,7 @@ public sealed class E5BrowserEmbedder : IDisposable
     /// first), creates the session and returns an embedder that owns it.
     /// </summary>
     /// <exception cref="ArgumentException"><see cref="E5BrowserLoadOptions.ModelUrl"/> is missing for a variant without a default URL.</exception>
+    /// <exception cref="ArgumentOutOfRangeException">An encoder option is out of range, for example <see cref="E5EncoderOptions.MaxSequenceLength"/> below 2 or above <see cref="E5Encoder.MaxSupportedSequenceLength"/>; rejected before any download.</exception>
     /// <exception cref="InvalidDataException">A file does not match its pinned SHA-256.</exception>
     /// <exception cref="NotSupportedException">The provider or thread count is not available on this page.</exception>
     [SupportedOSPlatform("browser")]

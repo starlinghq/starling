@@ -14,8 +14,10 @@ public sealed record E5EncoderOptions
     /// <summary>
     /// Maximum tokens per sequence, special tokens included. The encoder rejects longer id sequences with
     /// <see cref="ArgumentException"/> and never truncates them; text is truncated on the right to this length by
-    /// <see cref="E5Tokenizer"/> (the profile's <c>truncate-right</c>, as the reference does). Default
-    /// <see cref="E5Encoder.MaxSupportedSequenceLength"/> (512).
+    /// <see cref="E5Tokenizer"/> (the profile's <c>truncate-right</c>, as the reference does). May be lowered, not
+    /// raised above <see cref="E5Encoder.MaxSupportedSequenceLength"/> (512, the XLM-R position table); at least 2, for
+    /// <c>&lt;s&gt;</c> and <c>&lt;/s&gt;</c>. A value outside that range makes the encoder, and every loader that takes
+    /// these options, throw <see cref="ArgumentOutOfRangeException"/>. Default 512.
     /// </summary>
     public int MaxSequenceLength { get; init; } = E5Encoder.MaxSupportedSequenceLength;
 
@@ -52,7 +54,8 @@ public sealed record E5EncoderOptions
     internal void Validate()
     {
         ArgumentNullException.ThrowIfNull(Session);
-        ArgumentOutOfRangeException.ThrowIfLessThan(MaxSequenceLength, 1);
+        ArgumentOutOfRangeException.ThrowIfLessThan(MaxSequenceLength, 2);
+        ArgumentOutOfRangeException.ThrowIfGreaterThan(MaxSequenceLength, E5Encoder.MaxSupportedSequenceLength);
         ArgumentOutOfRangeException.ThrowIfLessThan(MaxBatchSize, 1);
         if (MaxBatchTokens is { } maxBatchTokens)
         {
