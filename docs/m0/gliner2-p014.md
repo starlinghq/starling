@@ -73,7 +73,7 @@ What the fixtures do not cover: the closed count gate (the count head predicted 
 
 ## 5. Export spike
 
-Scripts: `export_gliner2_onnx.py`, `parity_gliner2_ort.py`, `dump_gliner2_ort.py`. Graphs stay under `/home/mark/Projects/AI-models/gliner2/onnx/` on the workstation; none is committed.
+Scripts: `export_gliner2_onnx.py`, `parity_gliner2_ort.py`, `dump_gliner2_ort.py`. Graphs stay under `<models dir>/gliner2/onnx/` on the workstation; none is committed.
 
 | Route | What | Exporter | Result | Nodes | Size |
 | --- | --- | --- | --- | --- | --- |
@@ -112,7 +112,7 @@ Span logits are compared over valid spans; entity equality is the public output 
 
 ### C# smoke
 
-`/home/mark/Projects/AI-models/gliner2/csharp/` (throwaway, outside `ai-dotnet/`): Starlings.Tokenizers from source (profile `gliner2-base-v1-unigram`, `tokenizer.json` `1b7fbabf...`), Microsoft.ML.OnnxRuntime 1.30.0 (CPU) and Microsoft.ML.OnnxRuntime.Gpu 1.30.0 (CUDA, `use_tf32=0`), route A dynamo. It ports text normalization, the Python-compatible splitter and lower-casing, the schema prefix and routing positions, the gate, thresholding, span mapping, greedy suppression and formatting (515 lines including the comparison harness).
+`<models dir>/gliner2/csharp/` (throwaway, outside `ai-dotnet/`): Starlings.Tokenizers from source (profile `gliner2-base-v1-unigram`, `tokenizer.json` `1b7fbabf...`), Microsoft.ML.OnnxRuntime 1.30.0 (CPU) and Microsoft.ML.OnnxRuntime.Gpu 1.30.0 (CUDA, `use_tf32=0`), route A dynamo. It ports text normalization, the Python-compatible splitter and lower-casing, the schema prefix and routing positions, the gate, thresholding, span mapping, greedy suppression and formatting (515 lines including the comparison harness).
 
 | Check | CPU (1 and 12 threads) | CUDA `use_tf32=0` | CUDA `use_tf32=1` |
 | --- | --- | --- | --- |

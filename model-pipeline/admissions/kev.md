@@ -334,7 +334,7 @@ Route A (ONNX Runtime GenAI builder graph, run with plain ONNX Runtime from Pyth
 
 ## GPU results (2026-10-05)
 
-Run 2026-10-05 to 2026-10-08 on a workstation: Intel Core i7-5820K (6 cores, 12 threads), 94 GB RAM, Linux x86-64, NVIDIA driver 610.57.04 (CUDA 13.3 capable), NVIDIA GeForce RTX 4060 Ti 16 GB (Ada, sm_89; the machine's other GPU was not used). On 2026-10-05 the GPU and CPU were shared with two other agents' jobs (CPU load average 25 to 40); timings from that period are labelled "contended". Uncontended timings were rerun on 2026-10-08. Downloaded weights, merged checkpoint, ONNX files, environments and per-record outputs stay on that machine under `/home/mark/Projects/AI-models/kev/` and are not committed. Thresholds are the provisional ones from step 8, labelled provisional, and are applied to the fp32 paths only. fp16 and bf16 numbers are drift measurements with no bar.
+Run 2026-10-05 to 2026-10-08 on a workstation: Intel Core i7-5820K (6 cores, 12 threads), Linux x86-64, NVIDIA driver 610.57.04 (CUDA 13.3 capable), NVIDIA GeForce RTX 4060 Ti 16 GB (Ada, sm_89; the machine's other GPU was not used). On 2026-10-05 the GPU and CPU were shared with two other agents' jobs (CPU load average 25 to 40); timings from that period are labelled "contended". Uncontended timings were rerun on 2026-10-08. Downloaded weights, merged checkpoint, ONNX files, environments and per-record outputs stay on that machine under `<models dir>/kev/` and are not committed. Thresholds are the provisional ones from step 8, labelled provisional, and are applied to the fp32 paths only. fp16 and bf16 numbers are drift measurements with no bar.
 
 Scripts: `model-pipeline/reference/kev/`. `kev_fixtures.py` and `kev_ort.py` gained `--device cuda` / `--provider cuda` (plus `placement`, `compare`, `--state-chunk`, `--random-states`, `--cuda-tf32`); `kev_layers.py` is new (per-layer diagnosis); `requirements-cuda.txt` records the three environments.
 
@@ -481,7 +481,7 @@ Full development partitions, forward layout, against the CPU fp32 PyTorch refere
 
 ### Goal 4: C# smoke on CUDA
 
-Setup: a throwaway console project outside the repository, at `/home/mark/Projects/AI-models/kev/csharp/KevSmoke` (`net10.0`, .NET SDK 10.0.100).
+Setup: a throwaway console project outside the repository, at `<models dir>/kev/csharp/KevSmoke` (`net10.0`, .NET SDK 10.0.100).
 - Packages: `Microsoft.ML.OnnxRuntime.Gpu.Linux` 1.30.0 (with `Microsoft.ML.OnnxRuntime.Managed` 1.30.0). The CUDA 13 and cuDNN libraries come from the `env-ortgpu` wheels via `LD_LIBRARY_PATH`.
 - Run: CUDA EP with `use_tf32=0`, the repaired CUDA fp32 graph, and the pointer head plus a minimal safetensors reader written in C#.
 

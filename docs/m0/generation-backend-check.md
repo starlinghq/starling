@@ -6,7 +6,7 @@ Decides the kickoff item "Generation backend: ONNX Runtime GenAI or an existing 
 
 ### Environment
 
-- Host: Intel Core i7-5820K (6 cores, 12 threads, AVX2, no AVX-512), 94 GB RAM, Linux x86-64 (kernel 7.2.5). GPU: NVIDIA RTX 4060 Ti 16 GB (PCI index 1, `CUDA_DEVICE_ORDER=PCI_BUS_ID CUDA_VISIBLE_DEVICES=1`), driver 610.57.04, CUDA 13.3 toolkit at `/opt/cuda`, no system cuDNN. The GPU and CPU were shared with other jobs. On 2026-10-05 the load average was about 40 (12 hardware threads); the 2026-10-08 benchmarks ran at load 1 to 15, recorded per run.
+- Host: Intel Core i7-5820K (6 cores, 12 threads, AVX2, no AVX-512), Linux x86-64. GPU: NVIDIA RTX 4060 Ti 16 GB (`CUDA_DEVICE_ORDER=PCI_BUS_ID CUDA_VISIBLE_DEVICES=1`), driver 610.57.04, CUDA 13.3 toolkit installed system-wide, no system cuDNN. The GPU and CPU were shared with other jobs. On 2026-10-05 the load average was about 40 (12 hardware threads); the 2026-10-08 benchmarks ran at load 1 to 15, recorded per run.
 - .NET SDK 10.0.100 (repository `global.json`), runtime 10.0.12.
 - Python 3.12.14 with `model-pipeline/reference/generation/requirements.txt` (compiled with hashes from `requirements.in`): torch 2.14.1+cu130, transformers 5.18.0, tokenizers 0.23.2, onnxruntime-genai 0.17.1 (builder), onnxruntime 1.30.0, onnx 1.23.1, onnx-ir 1.0.0, numpy 2.5.3.
 - GGUF conversion environment: llama.cpp `requirements/requirements-convert_hf_to_gguf.txt` at the conversion commit, resolved: torch 2.6.0+cpu, transformers 5.5.1, numpy 1.26.4, `gguf` from the same llama.cpp checkout.
@@ -214,4 +214,4 @@ Decisions for the maintainer: the kickoff rows "Generation backend" and "Pilot L
 ## 11. Files
 
 - `model-pipeline/reference/generation/`: `fetch_snapshot.py` (download by commit SHA and verify), `run_reference.py` (transformers reference), `compare.py` (scoring), `prompts-v1.jsonl`, `requirements.in` and `requirements.txt`, `dotnet/` (the two C# runners, shared `Common/Shared.cs`, standalone `Directory.Build.props` and `Directory.Packages.props`).
-- Large files, not in Git, under `/home/mark/Projects/AI-models/gen/`: `hf/` (snapshot), `onnx/` (builder outputs), `gguf/`, `out/` (per-run `results.jsonl`, `step0/`, `environment.json`, `bench.json`, `semantics.json`, comparison JSON in `out/compare-vs-ref-cpu/`), `logs/`, `venvs/`, `build/` (llama.cpp `3f7c29d3` CPU and CUDA builds), `nupkg/`.
+- Large files, not in Git, under `<models dir>/gen/`: `hf/` (snapshot), `onnx/` (builder outputs), `gguf/`, `out/` (per-run `results.jsonl`, `step0/`, `environment.json`, `bench.json`, `semantics.json`, comparison JSON in `out/compare-vs-ref-cpu/`), `logs/`, `venvs/`, `build/` (llama.cpp `3f7c29d3` CPU and CUDA builds), `nupkg/`.

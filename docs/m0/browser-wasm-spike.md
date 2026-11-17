@@ -6,7 +6,7 @@ Raw results: [docs/evidence/browser-wasm-spike/](../evidence/browser-wasm-spike/
 
 Pins: .NET SDK 10.0.100 with the `wasm-tools` workload 10.0.12 (browser-wasm runtime pack 10.0.12, Emscripten 3.1.56), `Microsoft.AspNetCore.Components.WebAssembly` 10.0.12; onnxruntime-web 1.30.0 (npm, `browser/spike/package-lock.json`, integrity `sha512-q0y+Jrrt…KYQ==`); Python ONNX Runtime 1.30.0, onnx 1.23.1, Playwright 1.63.0 (`model-pipeline/reference/encoder/requirements-browser.txt`, hashed); Chrome for Testing 153.0.8010.12 (the build Playwright 1.63.0 pins; its downloader timed out, so the same zip was fetched with curl, SHA-256 `8aac3501…fd5a`). e5: `intfloat/multilingual-e5-small@614241f6`, `onnx/model.onnx` SHA-256 `ca456c06…8665`.
 
-Machine: i7-5820K (6 cores, 12 threads, AVX2), 94 GB RAM, Linux x64, NVIDIA driver 610.57.04; GPU 0 RTX 3090 (not used, see section 5), GPU 1 RTX 4060 Ti (shared with other jobs). The timing tables come from one sequential run (`browser/spike/harness/run_all.sh`) at load average 1.3 to 3.0; an earlier run at load 15 had the same exactness and drift but 2 to 4 times slower timings. Exploratory, not a qualified benchmark.
+Machine: i7-5820K (6 cores, 12 threads, AVX2), Linux x64, NVIDIA driver 610.57.04; RTX 4060 Ti (shared with other jobs; a second GPU not used, see section 5). The timing tables come from one sequential run (`browser/spike/harness/run_all.sh`) at load average 1.3 to 3.0; an earlier run at load 15 had the same exactness and drift but 2 to 4 times slower timings. Exploratory, not a qualified benchmark.
 
 ## 1. Summary
 

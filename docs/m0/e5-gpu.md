@@ -7,14 +7,14 @@ Run on 2026-10-05 on a local workstation. `intfloat/multilingual-e5-small` at `6
 | Item | Value |
 | --- | --- |
 | CPU | Intel Core i7-5820K @ 3.30GHz (Haswell-E), 6 cores, 12 threads. ISA flags: `avx`, `avx2`, `fma`, `f16c`. No AVX-512, no AVX-VNNI, no AMX. |
-| RAM, OS | 94 GB; Linux 7.2.5 (Omarchy), glibc 2.44, x86-64 |
-| GPU | NVIDIA GeForce RTX 4060 Ti 16 GB (sm_89), PCI 04:00.0, selected with `CUDA_DEVICE_ORDER=PCI_BUS_ID CUDA_VISIBLE_DEVICES=1`. The RTX 3090 (03:00.0) was not used. |
+| OS | Linux x86-64, glibc 2.44 |
+| GPU | NVIDIA GeForce RTX 4060 Ti 16 GB (sm_89), selected with `CUDA_DEVICE_ORDER=PCI_BUS_ID CUDA_VISIBLE_DEVICES=1`. The other GPU was not used. |
 | Driver | 610.57.04 (CUDA 13.3 capable) |
 | Python environment | Python 3.11.16; `model-pipeline/reference/encoder/requirements-cuda.txt` (hashed): torch 2.14.1 (CUDA 13.0 build from PyPI), onnxruntime-gpu 1.30.0 (CUDA 13.0, build `f2c39fe2f`), transformers 5.18.0, sentence-transformers 6.1.0, tokenizers 0.23.2, onnx 1.23.1, numpy 2.4.6, nvidia-cudnn-cu13 9.24.0.43, nvidia-cuda-runtime 13.0.96, nvidia-cublas 13.1.1.3 |
 | C# probe | .NET SDK 10.0.401, `net10.0`, Release; `Microsoft.ML.OnnxRuntime` 1.30.0 (CPU build) and `Microsoft.ML.OnnxRuntime.Gpu` 1.30.0 (CUDA build) in two builds of one throwaway console project outside the repository. The CUDA build loads CUDA 13 and cuDNN 9 from the Python environment's `nvidia-*` wheels through `LD_LIBRARY_PATH`; the NuGet package does not ship them. |
 | Contention | The GPU and CPU were shared with other agents' jobs during every run (a Kev-0.8B CUDA job used 4 to 10 GB and up to 100% of the 4060 Ti; CPU load average 20 to 30 on 12 threads). This does not affect the numerical results (all runs were repeatable to 0); it makes the timings unreliable. |
 
-Runners: `model-pipeline/reference/encoder/run_e5_cuda.py` (parity, placement), `compare_e5_csharp.py` (C# against Python dumps), `bench_e5_ort.py` (timing). The C# probe, raw results, dumps and model snapshot are under `/home/mark/Projects/AI-models/e5/` (not in Git).
+Runners: `model-pipeline/reference/encoder/run_e5_cuda.py` (parity, placement), `compare_e5_csharp.py` (C# against Python dumps), `bench_e5_ort.py` (timing). The C# probe, raw results, dumps and model snapshot are under `<models dir>/e5/` (not in Git).
 
 ## 1. CUDA parity (Python)
 

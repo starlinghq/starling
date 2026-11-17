@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# CUDA qualification on the maintainer's machine: the regression support of the CUDA profiles (docs/support-policy.md,
+# Local CUDA qualification: the regression support of the CUDA profiles (docs/support-policy.md,
 # "Regression support"), run locally on an NVIDIA GeForce RTX 3090 before every release tag. It replaces the former
 # RunPod job `cuda` of .github/workflows/qualification.yml and does the same work with the same output layout, so its
 # evidence stays comparable with the runs recorded before (docs/evidence/gpu-regression-2026-10-16/ and later).
@@ -16,8 +16,8 @@
 #
 # Environment:
 #   --gpu <index>        the GPU to use, by PCI bus order (CUDA_DEVICE_ORDER=PCI_BUS_ID, CUDA_VISIBLE_DEVICES=<index>);
-#                        required, never a default device: on the shared workstation GPU 0 belongs to another
-#                        workload. The run refuses to start unless that GPU is an NVIDIA GeForce RTX 3090 (the only GPU
+#                        required, never a default device, so the run never lands on a GPU in other use.
+#                        The run refuses to start unless that GPU is an NVIDIA GeForce RTX 3090 (the only GPU
 #                        the CUDA contracts cover) with driver 580 or later.
 #   STARLING_MODELS      required: the verified model cache (tools/acquire-models.sh downloads what is missing and
 #                        verifies every file's size and SHA-256).
@@ -41,7 +41,7 @@
 # RUNNER_ENVIRONMENT=github-hosted. This script never sets RUNNER_ENVIRONMENT and unsets it for its own run, so no such
 # test runs here, also when it is started from a shell that has it.
 #
-# Memory: the workstation is shared (other sessions, CI runners, a model server). Everything runs one step at a time
+# Memory: the host may be running other work. Everything runs one step at a time
 # (no background preparation, one test module at a time), and before each heavy step (a build, a test module, a gate
 # producer, a soak) the script asks `agent-budget level` when that command is on PATH: on `critical` it waits with
 # `agent-budget alert --from critical --timeout 300` (repeatedly) before going on, on `tight` builds use -m:2.
@@ -107,7 +107,7 @@ finish() {
     exit "$rc"
 }
 
-# Memory budget of the shared workstation (see the header). DOTNET_M is -m:2 for builds while the level is tight.
+# Memory budget of the host (see the header). DOTNET_M is -m:2 for builds while the level is tight.
 DOTNET_M=()
 budget() {  # budget <what>: wait while the level is critical
     DOTNET_M=()
@@ -311,7 +311,7 @@ kev_bundle kev-4b/onnx-fp32-cuda STARLING_KEV_4B_BUNDLE
 export STARLING_E5_SNAPSHOT=$E5_SNAP
 
 # ---------------------------------------------------------------------------------------------------------------------
-# Release and test inputs outside Git, prepared before the GPU work (one step at a time on this shared machine).
+# Release and test inputs outside Git, prepared before the GPU work (one step at a time).
 mkdir -p "$OUT/prepare"
 ready() { [[ -f "$1/.complete" ]]; }
 log "test inputs: EmbeddingGemma 2 image set and the pinned FFmpeg builds (tools/ci/eg2-test-inputs.sh)"

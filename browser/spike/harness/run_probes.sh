@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Load-only probes of the other catalog graphs in onnxruntime-web (WASM backend), docs/m0/browser-wasm-spike.md.
 # Usage: run_probes.sh <publish dir> <chrome> <models root> <out dir>
-# <models root> holds the graphs at the paths below (the M0 workstation layout under ~/Projects/AI-models).
+# <models root> holds the graphs at the paths below (the M0 workstation layout under <models dir>).
 set -euo pipefail
 here="$(cd "$(dirname "$0")" && pwd)"
 publish="$1" chrome="$2" models="$3" out="$4"

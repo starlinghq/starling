@@ -12,7 +12,7 @@ name: qualification
 # release-gates job reruns G1, G2 and G3 of each Stable CPU profile on its accepted P-030 release sets, and the soak job
 # screens each for growth: CPU regression runs weekly (and on every release tag). A failure here is handled like a
 # regression report. No job here uses a GPU: CUDA qualification (the CUDA test projects, G1, G2 and G3 of every CUDA
-# profile on its release sets, and a soak smoke test per CUDA profile) runs on the maintainer's RTX 3090 with
+# profile on its release sets, and a soak smoke test per CUDA profile) runs on an RTX 3090 with
 # tools/cuda-qualification-local.sh before every release tag (docs/support-policy.md, "Regression support").
 #
 # Jobs:
@@ -586,7 +586,7 @@ jobs:
             reference: model-pipeline/reference/embeddinggemma2/requirements-video.txt
             hashes: --require-hashes
           # The release-set dump keeps every decoded frame of the array rows (a 2048x1024 clip among them) for both FFmpeg
-          # majors: about 20 GB peak resident on the workstation, above the 16 GB of the GitHub-hosted runner used until
+          # majors: about 20 GB peak resident, above the 16 GB of the GitHub-hosted runner used until
           # 2026-10-22, so the job adds swap on a host without it (the first dispatched run lost its runner there).
           - profile: embeddinggemma-2/video-fp32-cpu
             reference: model-pipeline/reference/embeddinggemma2/requirements-video.txt
@@ -728,7 +728,7 @@ jobs:
         if: steps.wired.outputs.run == 'true'
         run: tools/acquire-models.sh "$RUNNER_TEMP/locks" "$PROFILE"
       # The qualification length on a shared runner (GitHub-hosted until 2026-10-22, the self-hosted `qualification`
-      # runner on the maintainer's workstation since #134): it screens for growth, wrong outputs and errors with the
+      # runner since #134): it screens for growth, wrong outputs and errors with the
       # tool's unchanged growth rule. It does not replace the G4 run on a quiet machine (M6), but a failure here is a
       # regression signal. Shorter runs (workflow_dispatch soak_duration) end in the warm-up ramp of glibc's resident
       # high-water mark and are expected to trip the growth rule.
