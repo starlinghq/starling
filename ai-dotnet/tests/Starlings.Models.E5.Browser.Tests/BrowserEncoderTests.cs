@@ -118,6 +118,16 @@ public sealed class BrowserEncoderTests
         Assert.Empty(runner.Calls);
     }
 
+    [Theory]
+    [InlineData(1)]
+    [InlineData(E5Encoder.MaxSupportedSequenceLength + 1)]
+    public void RejectsAMaxSequenceLengthOutsideTwoToThePositionTable(int maxSequenceLength)
+    {
+        var runner = new FakeGraphRunner();
+        Assert.Throws<ArgumentOutOfRangeException>(() => new E5BrowserEncoder(runner, new E5EncoderOptions { MaxSequenceLength = maxSequenceLength }));
+        Assert.Empty(runner.Calls);
+    }
+
     [Fact]
     public async Task RejectsADestinationOfTheWrongSize()
     {

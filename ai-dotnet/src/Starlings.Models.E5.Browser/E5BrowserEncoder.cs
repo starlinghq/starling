@@ -46,6 +46,7 @@ public sealed class E5BrowserEncoder : IDisposable
     /// <param name="session">The session.</param>
     /// <param name="options">Encoder options; defaults to the e5 profile. <see cref="E5EncoderOptions.Session"/> is ignored.</param>
     /// <param name="ownsSession">When <see langword="true"/>, <see cref="Dispose"/> also disposes the session.</param>
+    /// <exception cref="ArgumentOutOfRangeException">An option is out of range, for example <see cref="E5EncoderOptions.MaxSequenceLength"/> below 2 or above <see cref="E5Encoder.MaxSupportedSequenceLength"/>.</exception>
     /// <exception cref="NotSupportedException">The graph signature is not the e5 encoder signature.</exception>
     [SupportedOSPlatform("browser")]
     public E5BrowserEncoder(OnnxWebSession session, E5EncoderOptions? options = null, bool ownsSession = false)

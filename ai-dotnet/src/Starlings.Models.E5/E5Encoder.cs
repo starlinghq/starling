@@ -71,6 +71,7 @@ public sealed class E5Encoder : IDisposable
     /// <param name="session">A session over the e5 graph.</param>
     /// <param name="options">Encoder options; defaults to the e5 profile.</param>
     /// <param name="ownsSession">When <see langword="true"/>, <see cref="Dispose"/> also disposes the session.</param>
+    /// <exception cref="ArgumentOutOfRangeException">An option is out of range, for example <see cref="E5EncoderOptions.MaxSequenceLength"/> below 2 or above <see cref="MaxSupportedSequenceLength"/>.</exception>
     /// <exception cref="NotSupportedException">The graph signature is not the e5 encoder signature.</exception>
     public E5Encoder(OnnxModelSession session, E5EncoderOptions? options = null, bool ownsSession = false)
     {
@@ -107,6 +108,7 @@ public sealed class E5Encoder : IDisposable
             : session with { DedicatedRunThreads = session.DedicatedRunThreads ?? true };
 
     /// <summary>Loads <c>onnx/model.onnx</c> and owns the resulting session.</summary>
+    /// <exception cref="ArgumentOutOfRangeException">An option is out of range, for example <see cref="E5EncoderOptions.MaxSequenceLength"/> below 2 or above <see cref="MaxSupportedSequenceLength"/>.</exception>
     public static E5Encoder Create(string modelPath, E5EncoderOptions? options = null)
     {
         options ??= new E5EncoderOptions();
