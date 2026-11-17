@@ -1,8 +1,9 @@
 namespace Starlings.Models.Whisper;
 
 /// <summary>
-/// A language code that is not one of the model's language tokens (<see cref="WhisperModel.LanguageToId"/>). Derives
-/// from <see cref="ArgumentException"/>, so callers that catch argument errors still catch it.
+/// A language code that is not one of the model's language tokens (<see cref="WhisperModel.LanguageToId"/>), or no
+/// language at all: language detection is unsupported. Derives from <see cref="ArgumentException"/>, so callers that
+/// catch argument errors still catch it.
 /// </summary>
 public sealed class WhisperUnsupportedLanguageException : ArgumentException
 {
@@ -29,12 +30,15 @@ public sealed class WhisperUnsupportedLanguageException : ArgumentException
     {
     }
 
-    /// <summary>The rejected language code, as given.</summary>
+    /// <summary>The rejected language code, as given; <see langword="null"/> when no language was given.</summary>
     public string? Language { get; init; }
 
     internal static WhisperUnsupportedLanguageException For(string language, string? paramName) =>
-        new($"'{language}' is not a language code of this model. Use a code of WhisperModel.LanguageToId (for example \"en\"), or null for the untested auto-detect prompt.", paramName)
+        new($"'{language}' is not a language code of this model. Use a code of WhisperModel.LanguageToId (for example \"en\").", paramName)
         {
             Language = language,
         };
+
+    internal static WhisperUnsupportedLanguageException ForDetection(string? paramName) =>
+        new("A language code is required: language detection is unsupported (starlinghq/starling#332). Use a code of WhisperModel.LanguageToId (for example \"en\").", paramName);
 }

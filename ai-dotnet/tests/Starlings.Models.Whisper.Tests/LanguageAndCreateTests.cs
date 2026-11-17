@@ -14,13 +14,45 @@ public sealed class LanguageAndCreateTests
         Assert.Equal(WhisperOptions.DefaultLanguage, options.Language);
         Assert.Equal(
             [WhisperModel.StartOfTranscript, WhisperModel.English, WhisperModel.Transcribe, WhisperModel.NoTimestamps],
-            WhisperModel.Prompt(options.Language));
+            WhisperModel.Prompt(options.Language!));
     }
 
     [Fact]
-    public void NullLanguageKeepsTheAutoDetectPrompt()
+    public void NullLanguageThrowsBecauseDetectionIsUnsupported()
     {
-        Assert.Equal(WhisperModel.StartOfLanguageModel, WhisperModel.Prompt(null)[1]);
+        var ex = Assert.Throws<WhisperUnsupportedLanguageException>(() => WhisperModel.Prompt(null!));
+
+        Assert.Null(ex.Language);
+        Assert.Equal("language", ex.ParamName);
+        Assert.Contains("language detection is unsupported", ex.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void LanguageDetectionIsUnsupported()
+    {
+        Assert.Equal(CapabilityStatus.Unsupported, WhisperCapabilities.All["language_detection"]);
+    }
+
+    [Fact]
+    public void CreateRejectsANullLanguageBeforeLoadingAnyFile()
+    {
+        var options = new WhisperOptions { Language = null };
+
+        var ex = Assert.Throws<WhisperUnsupportedLanguageException>(
+            () => WhisperTranscriber.Create("missing-encoder.onnx", "missing-decoder.onnx", "missing-tokenizer.json", options));
+
+        Assert.Null(ex.Language);
+        Assert.Equal(nameof(WhisperOptions.Language), ex.ParamName);
+    }
+
+    [Fact]
+    public void ModelCreateRejectsANullLanguageBeforeLoadingAnyGraph()
+    {
+        var ex = Assert.Throws<WhisperUnsupportedLanguageException>(
+            () => WhisperModel.Create("missing-encoder.onnx", "missing-decoder.onnx", new WhisperOptions { Language = null }));
+
+        Assert.Null(ex.Language);
+        Assert.Equal(nameof(WhisperOptions.Language), ex.ParamName);
     }
 
     [Fact]

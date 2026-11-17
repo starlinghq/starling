@@ -183,7 +183,7 @@ capabilities:
   mlnet: unsupported
   transcription: experimental  # 8 LibriSpeech clips (1.6 s to 59.1 s): transcripts equal the PyTorch fp32 reference word for word
   transcription_cuda: untested
-  language_detection: untested  # <|startoflm|> prompting differs from transformers' language-token detection
+  language_detection: unsupported  # a null language is rejected; transformers' detection has no reference case (#332)
   concurrent_calls: untested
   asset_acquisition: experimental  # the shared Starlings.Acquisition download and verification (pinned size and SHA-256)
   translation: unsupported

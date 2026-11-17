@@ -20,9 +20,8 @@ namespace Starlings.Models.Whisper;
 /// that difference and checks that ids, segments and transcripts are identical.</para>
 /// <para><b>Prompt.</b> The decode prompt is <c>[&lt;|startoftranscript|&gt;, language, &lt;|transcribe|&gt;,
 /// &lt;|notimestamps|&gt;]</c>. The language token is the id of a language code (see <see cref="LanguageToId"/>).
-/// With no language, the slot holds <see cref="StartOfLanguageModel"/>: that is a task token, not a language token, and
-/// this auto-detect prompt is untested (transformers instead picks the most likely language token after
-/// <c>&lt;|startoftranscript|&gt;</c>).</para>
+/// A language is required: language detection is unsupported (<see cref="WhisperCapabilities"/>,
+/// <c>language_detection</c>; starlinghq/starling#332).</para>
 /// <para><b>Suppression.</b> <see cref="SuppressTokens"/> are masked on every step; <see cref="BeginSuppressTokens"/>
 /// ([220, eos]) on the first step only, mirroring transformers <c>SuppressTokensLogitsProcessor</c> +
 /// <c>SuppressTokensAtBeginLogitsProcessor</c>.</para>
@@ -62,7 +61,7 @@ public sealed class WhisperModel : IDisposable
     public const int EndOfText = 50257;
     /// <summary><c>&lt;|startoftranscript|&gt;</c>.</summary>
     public const int StartOfTranscript = 50258;
-    /// <summary><c>&lt;|startoflm|&gt;</c>: a task token; <see cref="Prompt"/> puts it in the language slot when no language is given (untested).</summary>
+    /// <summary><c>&lt;|startoflm|&gt;</c>: a task token, not a language token. <see cref="Prompt"/> never uses it.</summary>
     public const int StartOfLanguageModel = 50361;
     /// <summary><c>&lt;|transcribe|&gt;</c>.</summary>
     public const int Transcribe = 50360;
@@ -146,7 +145,7 @@ public sealed class WhisperModel : IDisposable
     /// Loads the encoder and the full-context decoder and owns the resulting sessions. Without the KV-cache graph the
     /// decoder loop is <see cref="WhisperDecoderMode.FullContext"/>.
     /// </summary>
-    /// <exception cref="WhisperUnsupportedLanguageException"><see cref="WhisperOptions.Language"/> is not a language code of the model (checked before any graph loads).</exception>
+    /// <exception cref="WhisperUnsupportedLanguageException"><see cref="WhisperOptions.Language"/> is <see langword="null"/> or not a language code of the model (checked before any graph loads).</exception>
     /// <exception cref="ArgumentException"><see cref="WhisperOptions.DecoderMode"/> is <see cref="WhisperDecoderMode.KvCache"/>, which needs the KV-cache graph.</exception>
     public static WhisperModel Create(string encoderPath, string decoderPath, WhisperOptions? options = null) =>
         Create(encoderPath, decoderPath, null, options);
@@ -156,7 +155,7 @@ public sealed class WhisperModel : IDisposable
     /// <see cref="WhisperDecoderMode.FullContext"/>, the KV-cache decoder (<c>decoder_with_past_model_fp16.onnx</c>), and
     /// owns the resulting sessions. With <paramref name="decoderWithPastPath"/> null the loop is full-context.
     /// </summary>
-    /// <exception cref="WhisperUnsupportedLanguageException"><see cref="WhisperOptions.Language"/> is not a language code of the model (checked before any graph loads).</exception>
+    /// <exception cref="WhisperUnsupportedLanguageException"><see cref="WhisperOptions.Language"/> is <see langword="null"/> or not a language code of the model (checked before any graph loads).</exception>
     /// <exception cref="ArgumentException"><see cref="WhisperOptions.DecoderMode"/> is <see cref="WhisperDecoderMode.KvCache"/> and <paramref name="decoderWithPastPath"/> is null.</exception>
     public static WhisperModel Create(string encoderPath, string decoderPath, string? decoderWithPastPath, WhisperOptions? options = null)
     {
@@ -247,11 +246,11 @@ public sealed class WhisperModel : IDisposable
     }
 
     /// <summary>
-    /// Builds the decode prompt for the given language and task. A <see langword="null"/> language puts
-    /// <see cref="StartOfLanguageModel"/> in the language slot (auto-detect, untested).
+    /// Builds the decode prompt for the given language and task. The language is required: language detection is
+    /// unsupported (starlinghq/starling#332).
     /// </summary>
-    /// <exception cref="WhisperUnsupportedLanguageException"><paramref name="language"/> is not a key of <see cref="LanguageToId"/> (case-insensitive).</exception>
-    public static int[] Prompt(string? language = null, bool transcribe = true, bool noTimestamps = true)
+    /// <exception cref="WhisperUnsupportedLanguageException"><paramref name="language"/> is <see langword="null"/>, or not a key of <see cref="LanguageToId"/> (case-insensitive).</exception>
+    public static int[] Prompt(string language, bool transcribe = true, bool noTimestamps = true)
     {
         int lang = LanguageTokenId(language, nameof(language));
         int task = transcribe ? Transcribe : Translate;
@@ -313,13 +312,13 @@ public sealed class WhisperModel : IDisposable
         }
     }
 
-    /// <summary>The language-slot token of <paramref name="language"/>: its <see cref="LanguageToId"/> id, or <see cref="StartOfLanguageModel"/> for null.</summary>
-    /// <exception cref="WhisperUnsupportedLanguageException">The code is not a key of <see cref="LanguageToId"/> (case-insensitive).</exception>
+    /// <summary>The language-slot token of <paramref name="language"/>: its <see cref="LanguageToId"/> id.</summary>
+    /// <exception cref="WhisperUnsupportedLanguageException">The code is <see langword="null"/> (detection is unsupported), or not a key of <see cref="LanguageToId"/> (case-insensitive).</exception>
     internal static int LanguageTokenId(string? language, string? paramName)
     {
         if (language is null)
         {
-            return StartOfLanguageModel;
+            throw WhisperUnsupportedLanguageException.ForDetection(paramName);
         }
 
         return LanguageToId.TryGetValue(language.ToLowerInvariant(), out int id)

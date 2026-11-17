@@ -47,7 +47,7 @@ Gate cells link to the evidence the manifest records. The Stable readiness colum
 | [qwen3.5-0.8b/ortgenai-fp32x-cpu](../../model-pipeline/registry/qwen3.5-0.8b/ortgenai-fp32x-cpu/manifest.yaml) | generation | stable | 2027-01-05 | [passed](../evidence/g0-provenance-2026-10-14/README.md) | [passed](../evidence/release-set-gates-2026-10-14/qwen35-ortgenai-fp32x-cpu/README.md) | [passed](../evidence/release-set-gates-2026-10-14/qwen35-ortgenai-fp32x-cpu/README.md) | [passed](../evidence/release-set-gates-2026-10-14/qwen35-ortgenai-fp32x-cpu/README.md) | [passed](../evidence/g4-soak-1h-2026-10-14/README.md) | [passed](../evidence/qualification-2026-10-15/README.md) | [passed](../evidence/g6-distribution-2026-10-14/README.md) | [passed](../evidence/g7-integration-2026-10-14/README.md) | stable: meets the validator's Stable rules |
 | [qwen3.5-0.8b/ortgenai-fp32x-cuda](../../model-pipeline/registry/qwen3.5-0.8b/ortgenai-fp32x-cuda/manifest.yaml) | generation | stable | 2027-01-05 | [passed](../evidence/g0-provenance-2026-10-14/README.md) | [passed](../evidence/release-set-gates-2026-10-14/qwen35-ortgenai-fp32x-cuda/README.md) | [passed](../evidence/release-set-gates-2026-10-14/qwen35-ortgenai-fp32x-cuda/README.md) | [passed](../evidence/release-set-gates-2026-10-14/qwen35-ortgenai-fp32x-cuda/README.md) | [passed](../evidence/qualification-2026-10-16-cuda/README.md) | [passed](../evidence/qualification-2026-10-16-cuda/README.md) | [passed](../evidence/g6-distribution-2026-10-14/README.md) | [passed](../evidence/g7-integration-2026-10-14/README.md) | stable: meets the validator's Stable rules |
 | [qwen3.5-0.8b/ortgenai-int4-cpu](../../model-pipeline/registry/qwen3.5-0.8b/ortgenai-int4-cpu/manifest.yaml) | generation | experimental | 2027-02-01 | not-run | not-run | not-run | not-run | not-run | not-run | not-run | not-run | gates not passed: G0, G1, G2, G3, G4, G5, G6, G7; untested: aot, extensions_ai, generation.tool_call_mode, long_context_1667_to_8192_tokens, tool_calling |
-| [whisper-large-v3-turbo/onnx-fp16-cpu](../../model-pipeline/registry/whisper-large-v3-turbo/onnx-fp16-cpu/manifest.yaml) | transcription | experimental | 2027-01-23 | not-run | not-run | not-run | not-run | not-run | not-run | not-run | not-run | gates not passed: G0, G1, G2, G3, G4, G5, G6, G7; untested: aot, concurrent_calls, language_detection, transcription_cuda |
+| [whisper-large-v3-turbo/onnx-fp16-cpu](../../model-pipeline/registry/whisper-large-v3-turbo/onnx-fp16-cpu/manifest.yaml) | transcription | experimental | 2027-01-23 | not-run | not-run | not-run | not-run | not-run | not-run | not-run | not-run | gates not passed: G0, G1, G2, G3, G4, G5, G6, G7; untested: aot, concurrent_calls, transcription_cuda |
 
 ## Execution
 
@@ -625,7 +625,7 @@ One table per family, one column per profile. Rows are every capability any prof
 | concurrent_calls | untested |
 | condition_on_previous_text | unsupported |
 | kv_cache | experimental |
-| language_detection | untested |
+| language_detection | unsupported |
 | logprob_threshold | unsupported |
 | no_speech_detection | unsupported |
 | quantized | unsupported |

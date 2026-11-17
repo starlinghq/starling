@@ -10200,7 +10200,7 @@
         "input_up_to_2049_tokens": "unrecorded",
         "kv_cache": "experimental",
         "label_descriptions": "unrecorded",
-        "language_detection": "untested",
+        "language_detection": "unsupported",
         "logprob_threshold": "unsupported",
         "logprobs": "unrecorded",
         "long_context": "unrecorded",
@@ -10337,7 +10337,6 @@
         "untested_capabilities": [
           "aot",
           "concurrent_calls",
-          "language_detection",
           "transcription_cuda"
         ]
       },
