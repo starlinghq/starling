@@ -123,6 +123,7 @@ public sealed class E5EmbeddingGenerator : IEmbeddingGenerator<string, Embedding
     /// and session. The model's SHA-256 (<see cref="E5ModelAssets.ModelSha256"/>) and the tokenizer's
     /// (<see cref="E5ModelAssets.TokenizerSha256"/>) are enforced.
     /// </summary>
+    /// <exception cref="ArgumentOutOfRangeException">An encoder option is out of range, for example <see cref="E5EncoderOptions.MaxSequenceLength"/> below 2 or above <see cref="E5Encoder.MaxSupportedSequenceLength"/>.</exception>
     public static E5EmbeddingGenerator Create(E5ModelFiles files, E5EmbeddingGeneratorOptions? options = null)
     {
         ArgumentNullException.ThrowIfNull(files);

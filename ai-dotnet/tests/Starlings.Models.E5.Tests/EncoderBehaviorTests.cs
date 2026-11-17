@@ -219,6 +219,31 @@ public class EncoderBehaviorTests
         Assert.Throws<ArgumentOutOfRangeException>(() => new E5Encoder(session, new E5EncoderOptions { PadTokenId = -1 }));
     }
 
+    [Theory]
+    [InlineData(0)]
+    [InlineData(1)]
+    [InlineData(E5Encoder.MaxSupportedSequenceLength + 1)]
+    [InlineData(1024)]
+    public void MaxSequenceLengthOutsideTwoToThePositionTableIsRejected(int maxSequenceLength)
+    {
+        using var session = OnnxModelSession.Create(TestModels.FakeE5, Fast);
+        var options = new E5EncoderOptions { MaxSequenceLength = maxSequenceLength };
+        var error = Assert.Throws<ArgumentOutOfRangeException>(() => new E5Encoder(session, options));
+        Assert.Equal(nameof(E5EncoderOptions.MaxSequenceLength), error.ParamName);
+        Assert.Throws<ArgumentOutOfRangeException>(() => E5Encoder.Create("missing/model.onnx", options));
+    }
+
+    [Theory]
+    [InlineData(2)]
+    [InlineData(E5Encoder.MaxSupportedSequenceLength)]
+    public void MaxSequenceLengthAtTheBoundsIsAccepted(int maxSequenceLength)
+    {
+        using var encoder = FakeEncoder(new E5EncoderOptions { MaxSequenceLength = maxSequenceLength });
+        Assert.Equal(maxSequenceLength, encoder.Options.MaxSequenceLength);
+        var ids = new long[] { 0, 2 };
+        Assert.Equal(Expected(ids), encoder.Embed(new EncoderInput(ids), TestContext.Current.CancellationToken));
+    }
+
     [Fact]
     public void OwnedSessionIsDisposedWithTheEncoder()
     {
