@@ -39,6 +39,12 @@ public readonly record struct GuardCategory(string Id)
     /// <summary>Attempts to reveal the system prompt or hidden configuration; on output, a leak of it.</summary>
     public static GuardCategory PromptExtraction { get; } = new("prompt-extraction");
 
+    /// <summary>
+    /// Text hidden or disguised from filters: instructions smuggled in invisible Unicode (tag characters, emoji variation
+    /// selectors), bidi overrides, or an attack that only shows once decoded (base64, ROT13, leetspeak, look-alike letters).
+    /// </summary>
+    public static GuardCategory Obfuscation { get; } = new("obfuscation");
+
     /// <summary>Practical help with weapons or with attacking people.</summary>
     public static GuardCategory Violence { get; } = new("violence");
 

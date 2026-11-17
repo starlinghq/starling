@@ -1,22 +1,28 @@
 using System.Diagnostics;
 using System.Globalization;
+using System.Text;
 using System.Text.Json;
 using Starlings.Guardrails;
 using Starlings.Models.Kev;
 
 return await ToolMain.RunAsync(ToolBody);
 
-// Measures one guard level on one labelled input set (data/<set>.jsonl: {"label": 0|1, "text": ...}, 1 = an attack on the
-// assistant's instructions). Tune on dev; report heldout. Prints AUC over the guard's score, the catch rate (TPR) and false
-// positive rate (FPR) at the guard's own flag, latency per check and the process's peak working set.
+// Measures one guard level on one labelled input set (data/<set>.jsonl: {"label": 0|1, "text": ..., "technique": optional},
+// 1 = an attack on the assistant's instructions). Tune on dev; report heldout; benign-unicode measures false positives on
+// Unicode-heavy ordinary text; obfuscation measures which obfuscation techniques are covered (per technique). Prints AUC
+// over the guard's score, the catch rate (TPR) and false positive rate (FPR) at the guard's own flag, latency per check
+// and the process's peak working set. --doc-kb N instead times checks of an N KB document built from the dev set.
 async Task<int> ToolBody()
 {
-    var options = new Dictionary<string, string>(StringComparer.Ordinal) { ["--set"] = "dev", ["--level"] = "light", ["--model"] = "0.8b", ["--question"] = "choice" };
+    var options = new Dictionary<string, string>(StringComparer.Ordinal)
+    {
+        ["--set"] = "dev", ["--level"] = "light", ["--model"] = "0.8b", ["--question"] = "choice", ["--doc-kb"] = "0", ["--doc-file"] = "", ["--obfuscation"] = "on",
+    };
     for (int i = 0; i < args.Length; i += 2)
     {
         if (i + 1 >= args.Length || !options.ContainsKey(args[i]))
         {
-            Console.Error.WriteLine("usage: [--set dev|heldout] [--level light|balanced|strict|model] [--model 0.8b|4b] [--question choice|noul]");
+            Console.Error.WriteLine("usage: [--set dev|heldout|benign-unicode|obfuscation] [--level light|balanced|strict|model] [--model 0.8b|4b] [--question choice|noul] [--obfuscation on|off] [--doc-kb N | --doc-file path]");
             return 2;
         }
 
@@ -27,7 +33,9 @@ async Task<int> ToolBody()
     var items = File.ReadLines(path).Where(l => l.Length > 0).Select(l =>
     {
         using var doc = JsonDocument.Parse(l);
-        return (Text: doc.RootElement.GetProperty("text").GetString()!, Label: doc.RootElement.GetProperty("label").GetInt32());
+        var root = doc.RootElement;
+        return new Item(root.GetProperty("text").GetString()!, root.GetProperty("label").GetInt32(),
+            root.TryGetProperty("technique", out var t) ? t.GetString() : null);
     }).ToArray();
 
     KevDecisionModel? kev = null;
@@ -43,21 +51,35 @@ async Task<int> ToolBody()
             model = new KevContentGuard(kev, new KevGuardOptions { Questions = Questions(options["--question"]) });
         }
 
+        var patterns = new PatternGuardOptions { DetectObfuscation = options["--obfuscation"] == "on" };
         IContentGuard guard = options["--level"] switch
         {
-            "light" => GuardLevels.Create(GuardLevel.Light),
-            "balanced" => GuardLevels.Create(GuardLevel.Balanced, model),
-            "strict" => GuardLevels.Create(GuardLevel.Strict, model),
+            "light" => GuardLevels.Create(GuardLevel.Light, patterns: patterns),
+            "balanced" => GuardLevels.Create(GuardLevel.Balanced, model, patterns),
+            "strict" => GuardLevels.Create(GuardLevel.Strict, model, patterns),
             "model" => model!,
             _ => throw new ArgumentException("unknown --level"),
         };
 
-        var rows = new List<(double Score, bool Flagged, int Label, double Ms, string Text)>();
-        foreach (var (text, label) in items)
+        int kb = int.Parse(options["--doc-kb"], CultureInfo.InvariantCulture);
+        if (options["--doc-file"].Length > 0)
+        {
+            await TimeDocument(guard, File.ReadAllText(options["--doc-file"]), Path.GetFileName(options["--doc-file"]));
+            return 0;
+        }
+
+        if (kb > 0)
+        {
+            await TimeDocument(guard, DocumentFrom(items, kb), $"{kb} KB document of the set's benign rows");
+            return 0;
+        }
+
+        var rows = new List<Row>();
+        foreach (var item in items)
         {
             var watch = Stopwatch.StartNew();
-            var result = await guard.CheckAsync(GuardRequest.UserInput(text));
-            rows.Add((result.Score, result.Flagged, label, watch.Elapsed.TotalMilliseconds, text));
+            var result = await guard.CheckAsync(GuardRequest.UserInput(item.Text));
+            rows.Add(new(item, result, watch.Elapsed.TotalMilliseconds));
         }
 
         Report(guard.Name, options["--set"], rows);
@@ -80,28 +102,91 @@ static IReadOnlyList<KevGuardQuestion> Questions(string variant) => variant swit
     _ => throw new ArgumentException("unknown --question"),
 };
 
-static void Report(string guard, string set, List<(double Score, bool Flagged, int Label, double Ms, string Text)> rows)
+static string DocumentFrom(Item[] items, int kb)
 {
-    var pos = rows.Where(r => r.Label == 1).ToArray();
-    var neg = rows.Where(r => r.Label == 0).ToArray();
-    double wins = pos.Sum(p => neg.Sum(n => p.Score > n.Score ? 1.0 : p.Score == n.Score ? 0.5 : 0.0));
-    double auc = wins / (pos.Length * (double)neg.Length);
-    double tpr = pos.Count(r => r.Flagged) / (double)pos.Length;
-    double fpr = neg.Count(r => r.Flagged) / (double)neg.Length;
-    var ms = rows.Select(r => r.Ms).Order().ToArray();
-    int caught = pos.Count(r => r.Flagged), falsePositives = neg.Count(r => r.Flagged);
-    long peakMb = Process.GetCurrentProcess().PeakWorkingSet64 / 1_000_000;
-    Console.WriteLine(string.Create(CultureInfo.InvariantCulture,
-        $"{guard} on {set} ({pos.Length} attacks, {neg.Length} benign): AUC {auc:F3}, TPR {tpr:F2} ({caught}/{pos.Length}), FPR {fpr:F2} ({falsePositives}/{neg.Length}), p50 {ms[ms.Length / 2]:F2} ms, p95 {ms[(int)(ms.Length * 0.95)]:F2} ms, peak working set {peakMb} MB"));
-    foreach (var r in pos.Where(r => !r.Flagged))
+    var builder = new StringBuilder();
+    while (builder.Length < kb * 1024)
     {
-        Console.WriteLine(string.Create(CultureInfo.InvariantCulture, $"  missed  {r.Score:F3}  {Clip(r.Text)}"));
+        foreach (var item in items.Where(i => i.Label == 0))
+        {
+            builder.AppendLine(item.Text);
+        }
     }
 
-    foreach (var r in neg.Where(r => r.Flagged))
+    return builder.ToString()[..(kb * 1024)];
+}
+
+static async Task TimeDocument(IContentGuard guard, string document, string name)
+{
+    var ms = new List<double>();
+    bool flagged = false;
+    for (int i = 0; i < 21; i++)
     {
-        Console.WriteLine(string.Create(CultureInfo.InvariantCulture, $"  false+  {r.Score:F3}  {Clip(r.Text)}"));
+        var watch = Stopwatch.StartNew();
+        flagged |= (await guard.CheckAsync(GuardRequest.UserInput(document))).Flagged;
+        if (i > 0)
+        {
+            ms.Add(watch.Elapsed.TotalMilliseconds); // the first run warms up
+        }
+    }
+
+    ms.Sort();
+    Console.WriteLine(string.Create(CultureInfo.InvariantCulture,
+        $"{guard.Name} on {name} ({document.Length / 1024} KB): p50 {ms[ms.Count / 2]:F2} ms, p95 {ms[(int)(ms.Count * 0.95)]:F2} ms, flagged {flagged}"));
+}
+
+static void Report(string guard, string set, List<Row> rows)
+{
+    var pos = rows.Where(r => r.Item.Label == 1).ToArray();
+    var neg = rows.Where(r => r.Item.Label == 0).ToArray();
+    int caught = pos.Count(r => r.Result.Flagged), falsePositives = neg.Count(r => r.Result.Flagged);
+    var ms = rows.Select(r => r.Ms).Order().ToArray();
+    long peakMb = Process.GetCurrentProcess().PeakWorkingSet64 / 1_000_000;
+    var line = new StringBuilder(string.Create(CultureInfo.InvariantCulture, $"{guard} on {set} ({pos.Length} attacks, {neg.Length} benign):"));
+    if (pos.Length > 0 && neg.Length > 0)
+    {
+        double wins = pos.Sum(p => neg.Sum(n => p.Result.Score > n.Result.Score ? 1.0 : p.Result.Score == n.Result.Score ? 0.5 : 0.0));
+        line.Append(string.Create(CultureInfo.InvariantCulture, $" AUC {wins / (pos.Length * (double)neg.Length):F3},"));
+    }
+
+    if (pos.Length > 0)
+    {
+        line.Append(string.Create(CultureInfo.InvariantCulture, $" TPR {caught / (double)pos.Length:F2} ({caught}/{pos.Length}),"));
+    }
+
+    if (neg.Length > 0)
+    {
+        line.Append(string.Create(CultureInfo.InvariantCulture, $" FPR {falsePositives / (double)neg.Length:F2} ({falsePositives}/{neg.Length}),"));
+    }
+
+    line.Append(string.Create(CultureInfo.InvariantCulture, $" p50 {ms[ms.Length / 2]:F2} ms, p95 {ms[(int)(ms.Length * 0.95)]:F2} ms, peak working set {peakMb} MB"));
+    Console.WriteLine(line.ToString());
+
+    foreach (var technique in pos.Where(r => r.Item.Technique is not null).GroupBy(r => r.Item.Technique!))
+    {
+        var obfuscation = technique.Count(r => r.Result.FlaggedCategories.Any(c => c.Category == GuardCategory.Obfuscation));
+        Console.WriteLine(string.Create(CultureInfo.InvariantCulture,
+            $"  {technique.Key,-18} caught {technique.Count(r => r.Result.Flagged)}/{technique.Count()}  (obfuscation flagged {obfuscation})"));
+    }
+
+    foreach (var r in pos.Where(r => !r.Result.Flagged && r.Item.Technique is null))
+    {
+        Console.WriteLine(string.Create(CultureInfo.InvariantCulture, $"  missed  {r.Result.Score:F3}  {Clip(r.Item.Text)}"));
+    }
+
+    foreach (var r in neg.Where(r => r.Result.Flagged))
+    {
+        var why = string.Join(", ", r.Result.FlaggedCategories.Select(c => string.Create(CultureInfo.InvariantCulture, $"{c.Category} {c.Score:F2}")));
+        Console.WriteLine(string.Create(CultureInfo.InvariantCulture, $"  false+  [{why}]  {Clip(r.Item.Text)}"));
     }
 }
 
-static string Clip(string text) => (text.Length > 90 ? text[..90] : text).ReplaceLineEndings(" ");
+static string Clip(string text)
+{
+    var printable = new string([.. text.Where(c => !char.IsControl(c) || c == ' ')]);
+    return JsonSerializer.Serialize(printable.Length > 90 ? printable[..90] : printable)[1..^1];
+}
+
+internal sealed record Item(string Text, int Label, string? Technique);
+
+internal sealed record Row(Item Item, GuardResult Result, double Ms);

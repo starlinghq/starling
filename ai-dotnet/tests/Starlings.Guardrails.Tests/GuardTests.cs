@@ -100,6 +100,7 @@ public sealed class PatternGuardTests
         var guard = new PatternGuard(new PatternGuardOptions
         {
             Rules = [new(topic, new Regex("acme", RegexOptions.IgnoreCase), 0.3), new(topic, new Regex("price", RegexOptions.IgnoreCase), 0.3)],
+            Phrases = [],
         });
         var one = await guard.CheckAsync(GuardRequest.UserInput("Tell me about Acme."), Ct);
         var both = await guard.CheckAsync(GuardRequest.UserInput("What is Acme's price?"), Ct);
