@@ -107,10 +107,16 @@ static IReadOnlyList<KevGuardQuestion> Questions(string variant) => variant swit
 
 static string DocumentFrom(Item[] items, int kb)
 {
+    var benign = items.Where(i => i.Label == 0 && i.Text.Length > 0).ToArray();
+    if (benign.Length == 0)
+    {
+        throw new ArgumentException("--doc-kb needs a set with benign rows; this one has none.");
+    }
+
     var builder = new StringBuilder();
     while (builder.Length < kb * 1024)
     {
-        foreach (var item in items.Where(i => i.Label == 0))
+        foreach (var item in benign)
         {
             builder.AppendLine(item.Text);
         }
@@ -123,10 +129,17 @@ static async Task TimeDocument(IContentGuard guard, string document, string name
 {
     var ms = new List<double>();
     bool flagged = false;
+    var incomplete = new List<GuardResult>();
     for (int i = 0; i < 21; i++)
     {
         var watch = Stopwatch.StartNew();
-        flagged |= (await guard.CheckAsync(GuardRequest.UserInput(document))).Flagged;
+        var result = await guard.CheckAsync(GuardRequest.UserInput(document));
+        flagged |= result.Flagged;
+        if (!result.Complete)
+        {
+            incomplete.Add(result);
+        }
+
         if (i > 0)
         {
             ms.Add(watch.Elapsed.TotalMilliseconds); // the first run warms up
@@ -134,16 +147,27 @@ static async Task TimeDocument(IContentGuard guard, string document, string name
     }
 
     ms.Sort();
+    if (incomplete.Count > 0)
+    {
+        // The timing would be of the rejection path, not of a completed check.
+        var first = incomplete[0];
+        var why = first.Status == GuardStatus.NotScanned ? first.Reason : string.Join("; ", first.Gaps);
+        Console.WriteLine(string.Create(CultureInfo.InvariantCulture,
+            $"{guard.Name} on {name} ({document.Length / 1024} KB): not fully scanned in {incomplete.Count}/21 checks ({first.Status}: {why}); no completed-check timing, flagged {flagged}"));
+        return;
+    }
+
     Console.WriteLine(string.Create(CultureInfo.InvariantCulture,
         $"{guard.Name} on {name} ({document.Length / 1024} KB): p50 {ms[ms.Count / 2]:F2} ms, p95 {ms[(int)(ms.Count * 0.95)]:F2} ms, flagged {flagged}"));
 }
 
 static void Report(string guard, string set, List<Row> rows)
 {
-    var pos = rows.Where(r => r.Item.Label == 1).ToArray();
-    var neg = rows.Where(r => r.Item.Label == 0).ToArray();
+    // Rows the guard did not fully check are counted apart and left out of AUC, TPR and FPR.
+    var unscanned = rows.Where(r => !r.Result.Complete).ToArray();
+    var pos = rows.Where(r => r.Item.Label == 1 && r.Result.Complete).ToArray();
+    var neg = rows.Where(r => r.Item.Label == 0 && r.Result.Complete).ToArray();
     int caught = pos.Count(r => r.Result.Flagged), falsePositives = neg.Count(r => r.Result.Flagged);
-    int unscanned = rows.Count(r => r.Result.Status == GuardStatus.NotScanned);
     var ms = rows.Select(r => r.Ms).Order().ToArray();
     long peakMb = Process.GetCurrentProcess().PeakWorkingSet64 / 1_000_000;
     var line = new StringBuilder(string.Create(CultureInfo.InvariantCulture, $"{guard} on {set} ({pos.Length} attacks, {neg.Length} benign):"));
@@ -163,7 +187,13 @@ static void Report(string guard, string set, List<Row> rows)
         line.Append(string.Create(CultureInfo.InvariantCulture, $" FPR {falsePositives / (double)neg.Length:F2} ({falsePositives}/{neg.Length}),"));
     }
 
-    line.Append(string.Create(CultureInfo.InvariantCulture, $" not scanned {unscanned}, p50 {ms[ms.Length / 2]:F2} ms, p95 {ms[(int)(ms.Length * 0.95)]:F2} ms, peak working set {peakMb} MB"));
+    if (unscanned.Length > 0)
+    {
+        line.Append(string.Create(CultureInfo.InvariantCulture,
+            $" not fully scanned {unscanned.Length} ({unscanned.Count(r => r.Item.Label == 1)} attacks, {unscanned.Count(r => r.Item.Label == 0)} benign; excluded above),"));
+    }
+
+    line.Append(string.Create(CultureInfo.InvariantCulture, $" p50 {ms[ms.Length / 2]:F2} ms, p95 {ms[(int)(ms.Length * 0.95)]:F2} ms, peak working set {peakMb} MB"));
     Console.WriteLine(line.ToString());
 
     foreach (var technique in pos.Where(r => r.Item.Technique is not null).GroupBy(r => r.Item.Technique!))
