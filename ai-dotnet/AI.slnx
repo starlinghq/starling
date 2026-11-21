@@ -35,6 +35,9 @@
     <Project Path="src/Starlings.Models.Qwen35/Starlings.Models.Qwen35.csproj" />
     <Project Path="src/Starlings.Models.Qwen35.OnnxGenAI/Starlings.Models.Qwen35.OnnxGenAI.csproj" />
     <Project Path="src/Starlings.Models.Qwen35.Extensions.AI/Starlings.Models.Qwen35.Extensions.AI.csproj" />
+    <Project Path="src/Starlings.Guardrails/Starlings.Guardrails.csproj" />
+    <Project Path="src/Starlings.Guardrails.Extensions.AI/Starlings.Guardrails.Extensions.AI.csproj" />
+    <Project Path="src/Starlings.Models.Kev.Guardrails/Starlings.Models.Kev.Guardrails.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/Starlings.Models.Bert.Tests/Starlings.Models.Bert.Tests.csproj" />
@@ -66,6 +69,7 @@
     <Project Path="tests/Starlings.Generation.OnnxGenAI.Tests/Starlings.Generation.OnnxGenAI.Tests.csproj" />
     <Project Path="tests/Starlings.Models.Qwen35.Tests/Starlings.Models.Qwen35.Tests.csproj" />
     <Project Path="tests/Starlings.Models.Qwen35.Extensions.AI.Tests/Starlings.Models.Qwen35.Extensions.AI.Tests.csproj" />
+    <Project Path="tests/Starlings.Guardrails.Tests/Starlings.Guardrails.Tests.csproj" />
   </Folder>
   <Folder Name="/benchmarks/">
     <Project Path="benchmarks/Starlings.Benchmarks.Micro/Starlings.Benchmarks.Micro.csproj" />
@@ -87,5 +91,6 @@
     <Project Path="tools/Starlings.Fidelity.Tool/Starlings.Fidelity.Tool.csproj" />
     <Project Path="tools/Starlings.Qwen35.Fidelity/Starlings.Qwen35.Fidelity.csproj" />
     <Project Path="tools/Starlings.Soak.Tool/Starlings.Soak.Tool.csproj" />
+    <Project Path="tools/Starlings.Guardrails.Eval.Tool/Starlings.Guardrails.Eval.Tool.csproj" />
   </Folder>
 </Solution>

@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="xunit.v3" />
+    <!-- CPU native runtime (the Kev guard tests; they skip without a bundle). -->
+    <PackageReference Include="Microsoft.ML.OnnxRuntime" />
+    <!-- ChatClientBuilder, to prove the middleware composes in a standard pipeline. -->
+    <PackageReference Include="Microsoft.Extensions.AI" />
+    <Using Include="Xunit" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="../Shared/Kev/KevTestAssets.cs" Link="Shared/Kev/KevTestAssets.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../src/Starlings.Guardrails.Extensions.AI/Starlings.Guardrails.Extensions.AI.csproj" />
+    <ProjectReference Include="../../src/Starlings.Models.Kev.Guardrails/Starlings.Models.Kev.Guardrails.csproj" />
+  </ItemGroup>
+
+</Project>
