@@ -5283,9 +5283,10 @@
       },
       "qualified_providers": [],
       "review_date": "2027-01-28",
-      "last_checked": "2026-11-03",
+      "last_checked": "2026-11-21",
       "known_issues": [
         "The export's fidelity to the PyTorch checkpoint is unmeasured: run_lfm3.py reference executes the checkpoint's own modeling code and has not run. The evidence compares the .NET loop with Python ONNX Runtime on the same graph.",
+        "Template drift: the export's chat_template.jinja moved ahead of the checkpoint's (57c125df adds `| trim` to the system prompt and message contents; the checkpoint at the pin f45005c5 does not have it). The C# port and the template evidence follow the checkpoint's template. Rendering differs only when a system prompt or message content has leading or trailing whitespace (the 'whitespace' corpus case: the new template strips it). If the profile's pin moves to 57c125df, Lfm3ChatTemplate must adopt the trim and the template reference regenerate.",
         "No reference fixtures are adopted into protected/ and no gate has run; every capability is at most experimental.",
         "The weights are under the LFM Open License v1.0: commercial use is licensed only below 10 million USD annual revenue."
       ],
