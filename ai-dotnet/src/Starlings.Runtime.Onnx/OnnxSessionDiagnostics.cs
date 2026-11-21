@@ -80,6 +80,13 @@ public sealed record OnnxSessionDiagnostics
     /// <summary>Whether runs execute on the package's dedicated run threads (<see cref="OnnxSessionOptions.DedicatedRunThreads"/>).</summary>
     public bool DedicatedRunThreads { get; init; }
 
+    /// <summary>
+    /// When <see cref="OnnxSessionOptions.ApplyGlibcMmapThreshold"/> was set, what the opt-in
+    /// <c>mallopt(M_MMAP_THRESHOLD, 65536)</c> did (its loud diagnostic, also written to standard error on the first
+    /// application); empty when the option was not set. Not affected by later sessions.
+    /// </summary>
+    public string GlibcMmapThresholdDiagnostic { get; init; } = string.Empty;
+
     /// <summary>Graph optimization level applied at session creation.</summary>
     public required string GraphOptimizationLevel { get; init; }
 

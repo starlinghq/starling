@@ -139,9 +139,9 @@ When a session's native memory is released (after `Dispose` and the last in-flig
 
 ### Setting `MALLOC_MMAP_THRESHOLD_`
 
-Some profiles need `MALLOC_MMAP_THRESHOLD_=65536` on Linux: GLiNER2 (CPU and CUDA), EmbeddingGemma 2 `video-fp32-cuda` (recommended for `image-fp32-cuda`), and long-running Kev processes. Each model package's README states which of its profiles need it and why.
+Some profiles need `MALLOC_MMAP_THRESHOLD_=65536` on Linux: long-running Kev processes, GLiNER2 on CUDA, and EmbeddingGemma 2 `video-fp32-cuda` (recommended for `image-fp32-cuda`). Each model package's README states which of its profiles need it and why, with the per-profile evidence.
 
-glibc reads the variable when the process starts, before `Main`, so it must be in the environment the process is started with. Setting it from application code (`Environment.SetEnvironmentVariable`) or in `runtimeconfig.json` has no effect, and this package does not set it for you: it never calls `mallopt`, because that would change the allocator of the whole host process. The variable applies to the whole process, and only glibc reads it (musl, Windows and macOS ignore it).
+glibc reads the variable when the process starts, before `Main`, so it must be in the environment the process is started with. Setting it from application code (`Environment.SetEnvironmentVariable`) or in `runtimeconfig.json` has no effect, and this package does not set it for you. The variable applies to the whole process, and only glibc reads it (musl, Windows and macOS ignore it).
 
 A systemd unit, or a drop-in from `systemctl edit <unit>`:
 
@@ -165,3 +165,15 @@ exec dotnet /opt/myapp/MyApp.dll "$@"
 ```
 
 To check a running process: `tr '\0' '\n' </proc/<pid>/environ | grep '^MALLOC_'`.
+
+#### In-process opt-in for hosts that cannot set the environment
+
+When the host cannot control the environment of the process it starts — for example a supervisor that re-executes itself (Corvid does today), or a third-party launcher — the same threshold can be set from code with an opt-in: `OnnxSessionOptions.ApplyGlibcMmapThreshold = true` on the first session, or `GlibcMallocThreshold.Apply()` directly. It calls glibc's `mallopt(M_MMAP_THRESHOLD, 65536)` once per process and writes a loud diagnostic to standard error, for example:
+
+```
+[Starlings.Runtime.Onnx] Applied mallopt(M_MMAP_THRESHOLD, 65536) process-wide: glibc mmaps large allocations, so freed model memory returns to the OS. Opt-in for hosts that cannot set MALLOC_MMAP_THRESHOLD_ in the environment; the environment form remains the primary recommendation (issue #178).
+```
+
+The opt-in is off by default: nothing in this package calls `mallopt` unless the host asks for it, because the call changes the allocator of the whole host process, glibc caches the setting after the first call, and later calls (from any session) change nothing. It applies the same threshold the environment variable does, so a profile qualified with the variable behaves the same with the opt-in. `OnnxSessionDiagnostics.GlibcMmapThresholdDiagnostic` reports what was done. It is a no-op on other platforms and without glibc (musl). `GlibcMallocThresholdOutcome.Applied` says whether `mallopt` accepted the call.
+
+The environment form remains the primary recommendation: it works before any code runs and needs no package code path.

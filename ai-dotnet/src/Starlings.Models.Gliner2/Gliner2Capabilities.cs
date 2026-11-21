@@ -44,8 +44,8 @@ public static class Gliner2Capabilities
         // Declared contract (docs/kickoff.md, settled 2026-10-08): English entity extraction with labels and threshold.
         // Supported on Linux x64 CPU: G1 and G2 on the P-030 release sets (processor outputs and offsets exact, span
         // logits within 1.78e-5 relative against 1e-4, entities 30/30 from inputs and from text, every padded batch equal
-        // to single calls), G3 on WNUT-17 (exact F1 0.3626), G4 one-hour soak with MALLOC_MMAP_THRESHOLD_=65536 (the
-        // documented Linux setting; concurrent callers, timed-out requests), G6 anonymous download and offline run.
+        // to single calls), G3 on WNUT-17 (exact F1 0.3626), G4 one-hour soak without MALLOC_MMAP_THRESHOLD_ (the
+        // 2026-11-15 no-env rerun; concurrent callers, timed-out requests), G6 anonymous download and offline run.
         ["entity_extraction.cpu"] = Status.Supported,
         // CUDA (use_tf32 0) on an RTX 3090, Stable since 2026-10-16 (the README's "Stable contract: CUDA"): G1 to G3 on the
         // release sets, G4 one-hour soak and G5 (binding round), G6, G7; the per-release GPU regression reruns the CUDA
