@@ -40,3 +40,4 @@ __pycache__/
 # onnxruntime-web (npm ci in ai-dotnet/src/Shared/OnnxWeb) and the dist files the browser packages copy at build time.
 node_modules/
 ai-dotnet/src/Starlings.Runtime.OnnxWeb*/wwwroot/ort/
+.eval-data/

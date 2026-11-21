@@ -16,28 +16,22 @@ async Task<int> ToolBody()
 {
     var options = new Dictionary<string, string>(StringComparer.Ordinal)
     {
-        ["--set"] = "dev", ["--level"] = "light", ["--model"] = "0.8b", ["--question"] = "choice", ["--doc-kb"] = "0", ["--doc-file"] = "", ["--obfuscation"] = "on",
+        ["--set"] = "dev", ["--level"] = "light", ["--model"] = "0.8b", ["--question"] = "choice", ["--doc-kb"] = "0", ["--doc-file"] = "", ["--obfuscation"] = "on", ["--eval-data"] = "",
     };
     for (int i = 0; i < args.Length; i += 2)
     {
         if (i + 1 >= args.Length || !options.ContainsKey(args[i]))
         {
-            Console.Error.WriteLine("usage: [--set dev|heldout|benign-unicode|obfuscation] [--level light|balanced|strict|model] [--model 0.8b|4b] [--question choice|noul] [--obfuscation on|off] [--doc-kb N | --doc-file path]");
+            Console.Error.WriteLine("usage: [--set dev|heldout|benign-unicode|obfuscation|l1b3rt4s-dev|l1b3rt4s-heldout|l1b3rt4s-bombs] [--eval-data dir] [--level light|balanced|strict|model] [--model 0.8b|4b] [--question choice|noul] [--obfuscation on|off] [--doc-kb N | --doc-file path]");
             return 2;
         }
 
         options[args[i]] = args[i + 1];
     }
 
-    var path = Path.Combine(AppContext.BaseDirectory, "data", options["--set"] + ".jsonl");
-    var items = File.ReadLines(path).Where(l => l.Length > 0).Select(l =>
-    {
-        using var doc = JsonDocument.Parse(l);
-        var root = doc.RootElement;
-        return new Item(root.GetProperty("text").GetString()!, root.GetProperty("label").GetInt32(),
-            root.TryGetProperty("technique", out var t) ? t.GetString() : null);
-    }).ToArray();
-
+    var items = options["--set"].StartsWith("l1b3rt4s-", StringComparison.Ordinal)
+        ? L1b3rt4s.Load(options["--set"], L1b3rt4s.Directory(options["--eval-data"]))
+        : ReadSet(options["--set"]);
     KevDecisionModel? kev = null;
     try
     {
@@ -91,6 +85,15 @@ async Task<int> ToolBody()
     }
 }
 
+static Item[] ReadSet(string set) =>
+    [.. File.ReadLines(Path.Combine(AppContext.BaseDirectory, "data", set + ".jsonl")).Where(l => l.Length > 0).Select(l =>
+    {
+        using var doc = JsonDocument.Parse(l);
+        var root = doc.RootElement;
+        return new Item(root.GetProperty("text").GetString()!, root.GetProperty("label").GetInt32(),
+            root.TryGetProperty("technique", out var t) ? t.GetString() : null);
+    })];
+
 static IReadOnlyList<KevGuardQuestion> Questions(string variant) => variant switch
 {
     "choice" => KevGuardQuestions.Input,
@@ -140,6 +143,7 @@ static void Report(string guard, string set, List<Row> rows)
     var pos = rows.Where(r => r.Item.Label == 1).ToArray();
     var neg = rows.Where(r => r.Item.Label == 0).ToArray();
     int caught = pos.Count(r => r.Result.Flagged), falsePositives = neg.Count(r => r.Result.Flagged);
+    int unscanned = rows.Count(r => r.Result.Status == GuardStatus.NotScanned);
     var ms = rows.Select(r => r.Ms).Order().ToArray();
     long peakMb = Process.GetCurrentProcess().PeakWorkingSet64 / 1_000_000;
     var line = new StringBuilder(string.Create(CultureInfo.InvariantCulture, $"{guard} on {set} ({pos.Length} attacks, {neg.Length} benign):"));
@@ -159,27 +163,33 @@ static void Report(string guard, string set, List<Row> rows)
         line.Append(string.Create(CultureInfo.InvariantCulture, $" FPR {falsePositives / (double)neg.Length:F2} ({falsePositives}/{neg.Length}),"));
     }
 
-    line.Append(string.Create(CultureInfo.InvariantCulture, $" p50 {ms[ms.Length / 2]:F2} ms, p95 {ms[(int)(ms.Length * 0.95)]:F2} ms, peak working set {peakMb} MB"));
+    line.Append(string.Create(CultureInfo.InvariantCulture, $" not scanned {unscanned}, p50 {ms[ms.Length / 2]:F2} ms, p95 {ms[(int)(ms.Length * 0.95)]:F2} ms, peak working set {peakMb} MB"));
     Console.WriteLine(line.ToString());
 
     foreach (var technique in pos.Where(r => r.Item.Technique is not null).GroupBy(r => r.Item.Technique!))
     {
         var obfuscation = technique.Count(r => r.Result.FlaggedCategories.Any(c => c.Category == GuardCategory.Obfuscation));
         Console.WriteLine(string.Create(CultureInfo.InvariantCulture,
-            $"  {technique.Key,-18} caught {technique.Count(r => r.Result.Flagged)}/{technique.Count()}  (obfuscation flagged {obfuscation})"));
+            $"  {technique.Key,-18} caught {technique.Count(r => r.Result.Flagged)}/{technique.Count()}  (obfuscation flagged {obfuscation}, not scanned {technique.Count(r => r.Result.Status == GuardStatus.NotScanned)}, max {technique.Max(r => r.Ms):F0} ms)"));
     }
 
-    foreach (var r in pos.Where(r => !r.Result.Flagged && r.Item.Technique is null))
+    foreach (var r in pos.Where(r => !r.Result.Flagged && (r.Item.Technique is null || r.Item.Sensitive)))
     {
-        Console.WriteLine(string.Create(CultureInfo.InvariantCulture, $"  missed  {r.Result.Score:F3}  {Clip(r.Item.Text)}"));
+        var status = r.Result.Status == GuardStatus.NotScanned ? " not scanned" : "";
+        Console.WriteLine(string.Create(CultureInfo.InvariantCulture, $"  missed  {r.Result.Score:F3}{status}  {Describe(r.Item)}"));
     }
 
     foreach (var r in neg.Where(r => r.Result.Flagged))
     {
         var why = string.Join(", ", r.Result.FlaggedCategories.Select(c => string.Create(CultureInfo.InvariantCulture, $"{c.Category} {c.Score:F2}")));
-        Console.WriteLine(string.Create(CultureInfo.InvariantCulture, $"  false+  [{why}]  {Clip(r.Item.Text)}"));
+        Console.WriteLine(string.Create(CultureInfo.InvariantCulture, $"  false+  [{why}]  {Describe(r.Item)}"));
     }
 }
+
+// Items from L1B3RT4S are working jailbreak prompts: only their id and size are ever printed.
+static string Describe(Item item) => item.Sensitive
+    ? string.Create(CultureInfo.InvariantCulture, $"{item.Id} ({item.Text.Length} chars)")
+    : Clip(item.Text);
 
 static string Clip(string text)
 {
@@ -187,6 +197,6 @@ static string Clip(string text)
     return JsonSerializer.Serialize(printable.Length > 90 ? printable[..90] : printable)[1..^1];
 }
 
-internal sealed record Item(string Text, int Label, string? Technique);
+internal sealed record Item(string Text, int Label, string? Technique, string? Id = null, bool Sensitive = false);
 
 internal sealed record Row(Item Item, GuardResult Result, double Ms);

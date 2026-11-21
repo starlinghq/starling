@@ -24,6 +24,9 @@ public enum GuardSource
 
     /// <summary>A response of the guarded model.</summary>
     Assistant,
+
+    /// <summary>Several recent user messages joined, to catch an attack split across messages.</summary>
+    Conversation,
 }
 
 /// <summary>A category of issue a guard reports. Compared by <see cref="Id"/> (ordinal).</summary>

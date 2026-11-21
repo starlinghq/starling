@@ -286,6 +286,61 @@ internal static partial class TextViews
         return builder.ToString();
     }
 
+    /// <summary>
+    /// True when <paramref name="text"/> has a substring within <paramref name="maxEdits"/> insertions, deletions or
+    /// substitutions of <paramref name="pattern"/> (lower-case a to z, 1 to 64 letters; other characters never match).
+    /// Myers' bit-parallel approximate search: one pass over the text, linear time.
+    /// </summary>
+    public static bool ApproximateContains(string text, string pattern, int maxEdits)
+    {
+        int m = pattern.Length;
+        if (m is 0 or > 64)
+        {
+            return false;
+        }
+
+        Span<ulong> peq = stackalloc ulong[26];
+        for (int i = 0; i < m; i++)
+        {
+            if (pattern[i] is >= 'a' and <= 'z')
+            {
+                peq[pattern[i] - 'a'] |= 1UL << i;
+            }
+        }
+
+        ulong high = 1UL << (m - 1);
+        ulong pv = ulong.MaxValue, mv = 0;
+        int score = m;
+        foreach (var c in text)
+        {
+            ulong eq = c is >= 'a' and <= 'z' ? peq[c - 'a'] : 0;
+            ulong xv = eq | mv;
+            ulong xh = (((eq & pv) + pv) ^ pv) | eq;
+            ulong ph = mv | ~(xh | pv);
+            ulong mh = pv & xh;
+            if ((ph & high) != 0)
+            {
+                score++;
+            }
+            else if ((mh & high) != 0)
+            {
+                score--;
+            }
+
+            // Search, not alignment: a match may start anywhere, so no carry-in on the shifted horizontal deltas.
+            ph <<= 1;
+            mh <<= 1;
+            pv = mh | ~(xv | ph);
+            mv = ph & xv;
+            if (score <= maxEdits)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     /// <summary>Squashes any text the same way the views do (clean, fold, leet, squash), for phrases and canaries.</summary>
     public static string SquashAll(string text)
     {

@@ -46,12 +46,22 @@ public sealed record GuardrailsOptions
 
     /// <summary>How streaming responses are checked. Default <see cref="StreamingOutputCheck.Buffer"/>.</summary>
     public StreamingOutputCheck StreamingOutput { get; init; } = StreamingOutputCheck.Buffer;
+
+    /// <summary>
+    /// Also check the last this-many user messages joined (earlier turns included), as one more input text with source
+    /// <see cref="GuardSource.Conversation"/> and message index <see cref="GuardrailsChatClient.ConversationIndex"/>, to
+    /// catch an attack split across messages. Runs only when the window holds two or more user messages; 1 or less turns
+    /// it off. Default 4. Costs one more guard check per call (negligible for patterns, one more model request for a
+    /// model guard). With <see cref="GuardAction.Annotate"/>, a flagged earlier message keeps flagging the joined text
+    /// while it is in the window.
+    /// </summary>
+    public int ConversationWindow { get; init; } = 4;
 }
 
 /// <summary>One checked text and its result.</summary>
 /// <param name="Stage">Input or output.</param>
 /// <param name="Source">User message, tool result, or response.</param>
-/// <param name="MessageIndex">Index of the message in the request; -1 for the response.</param>
+/// <param name="MessageIndex">Index of the message in the request; -1 for the response, -2 for the joined conversation window.</param>
 /// <param name="Result">The guard's result.</param>
 public sealed record GuardFinding(GuardStage Stage, GuardSource Source, int MessageIndex, GuardResult Result);
 
@@ -110,7 +120,12 @@ public sealed class GuardrailsViolationException : Exception
     private static string Describe(GuardFinding finding)
     {
         ArgumentNullException.ThrowIfNull(finding);
-        var where = finding.MessageIndex < 0 ? "the response" : $"message {finding.MessageIndex} ({finding.Source})";
+        var where = finding.MessageIndex switch
+        {
+            GuardrailsChatClient.ConversationIndex => "the recent user messages joined",
+            < 0 => "the response",
+            _ => $"message {finding.MessageIndex} ({finding.Source})",
+        };
         return finding.Result.Status == GuardStatus.NotScanned
             ? $"A guardrail blocked {where}: not scanned ({finding.Result.Reason})."
             : $"A guardrail blocked {where}: {string.Join(", ", finding.Result.FlaggedCategories.Select(c => $"{c.Category} {c.Score:F2}"))}.";
@@ -126,6 +141,9 @@ public sealed class GuardrailsChatClient : DelegatingChatClient
 {
     /// <summary>The <see cref="AdditionalPropertiesDictionary"/> key of the <see cref="GuardrailsReport"/>.</summary>
     public const string ReportKey = "starlings.guardrails";
+
+    /// <summary>The <see cref="GuardFinding.MessageIndex"/> of the joined conversation window (<see cref="GuardrailsOptions.ConversationWindow"/>).</summary>
+    public const int ConversationIndex = -2;
 
     private readonly IContentGuard _guard;
     private readonly GuardrailsOptions _options;
@@ -236,6 +254,16 @@ public sealed class GuardrailsChatClient : DelegatingChatClient
             if (_options.CheckUserMessages && message.Role == ChatRole.User && message.Text is { Length: > 0 } userText)
             {
                 await CheckAsync(GuardRequest.UserInput(userText), i, findings, cancellationToken).ConfigureAwait(false);
+            }
+        }
+
+        if (_options.CheckUserMessages && _options.ConversationWindow > 1 && start < messages.Count)
+        {
+            var window = messages.Where(m => m.Role == ChatRole.User && m.Text.Length > 0).TakeLast(_options.ConversationWindow).Select(m => m.Text).ToArray();
+            if (window.Length > 1)
+            {
+                var joined = new GuardRequest(string.Join(' ', window), GuardStage.Input, GuardSource.Conversation);
+                await CheckAsync(joined, ConversationIndex, findings, cancellationToken).ConfigureAwait(false);
             }
         }
     }
