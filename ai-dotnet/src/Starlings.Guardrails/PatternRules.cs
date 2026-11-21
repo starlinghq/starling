@@ -151,14 +151,15 @@ public sealed partial class PatternGuard
     // правила/правило (rules), not the stem alone: правильный means "correct". The \b keeps a match from restarting
     // inside a prefixed verb (игнорируй in проигнорируй) past the negation check. A preceding не (don't) excludes the
     // negated forms ("Не забудь прочитать инструкцию": don't forget to read the instructions); in Turkish, the -ma/-me
-    // suffix does ("Kuralları unutmayın": don't forget the rules).
+    // suffix does ("Kuralları unutmayın": don't forget the rules), but not the infinitive -mak/-mek ("unutmak zorundasın":
+    // you must forget; "unutmamak", not to forget, still has the negation).
     [GeneratedRegex(@"(?<!\b(не|Не|НЕ)\s+)\b([иИ]гнорируй|[пП]роигнорируй|[зЗ]абудь|ИГНОРИРУЙ|ЗАБУДЬ)\s.{0,30}(инструкци|указани|правила|правило|ИНСТРУКЦИ|ПРАВИЛА)", RegexOptions.CultureInvariant | RegexOptions.Singleline, MatchTimeoutMs)]
     private static partial Regex IgnoreRussian();
 
     [GeneratedRegex(@"(?<!\b(не|Не|НЕ)\s+)\b([іІ]гноруй|[пП]роігноруй|[зЗ]абудь|ІГНОРУЙ|ЗАБУДЬ)\s.{0,30}(інструкці|вказівк|правила|правило|ІНСТРУКЦІ|ПРАВИЛА)", RegexOptions.CultureInvariant | RegexOptions.Singleline, MatchTimeoutMs)]
     private static partial Regex IgnoreUkrainian();
 
-    [GeneratedRegex(@"([tT]alimat|[kK]ural|[yY]önerge|TALİMAT|KURAL|YÖNERGE)\w*\s+([yY]ok\s+say(?!ma)|[gG]örmezden\s+gel(?!me)|[uU]nut(?!ma)|YOK\s+SAY(?!MA)|GÖRMEZDEN\s+GEL(?!ME)|UNUT(?!MA))", RegexOptions.CultureInvariant, MatchTimeoutMs)]
+    [GeneratedRegex(@"([tT]alimat|[kK]ural|[yY]önerge|TALİMAT|KURAL|YÖNERGE)\w*\s+([yY]ok\s+say(?!ma(?!k))|[gG]örmezden\s+gel(?!me(?!k))|[uU]nut(?!ma(?!k))|YOK\s+SAY(?!MA(?!K))|GÖRMEZDEN\s+GEL(?!ME(?!K))|UNUT(?!MA(?!K)))", RegexOptions.CultureInvariant, MatchTimeoutMs)]
     private static partial Regex IgnoreTurkish();
 
     [GeneratedRegex(@"\b(abaikan|lupakan)\b.{0,20}\b(instruksi|perintah|arahan|aturan)\b", Flags, MatchTimeoutMs)]
