@@ -205,16 +205,28 @@ qualification:
     G7: { status: not-run }
 
 maintenance:
-  # The export repository's main moved to e90558fd (2026-11-03): only README.md (card) and configuration_lfm3.py (now
-  # the copy in the LFM3-1.7B checkpoint at its pin) changed. Neither is in this profile's lock, so the pin stays (#279).
-  latest_known_upstream_revision: "e90558fd7388a536a029a4196ddc1c90a234ae9b"
+  # The export repository's main moved twice since the pin: to e90558fd (2026-11-03; README.md card and
+  # configuration_lfm3.py, neither in this profile's lock) and to 57c125df (2026-11-21 check, #279): README.md,
+  # configuration_lfm3.py and tokenizer_config.json (all outside the lock) plus chat_template.jinja (IN the lock,
+  # re-serialized; the template change adds `| trim` to the system prompt and message contents, so a system prompt or
+  # user message with leading or trailing whitespace renders differently). The checkpoint (origin.code) is unchanged
+  # at its pin, so the evidence's template reference still matches the pinned template; the C# port follows the
+  # checkpoint's template at 40ebe0aa (f45005c5), which the new export copy differs from. G0, G1, G2, G3 and G6 rerun
+  # before any pin move (the changed lock file is chat_template.jinja); until then the pin and verified revision stay.
+  latest_known_upstream_revision: "57c125dfa29f2d39157e280b1d1f7480b8736d8d"
   latest_verified_upstream_revision: "c680759afee1ce8310c90d6c621f4558200dee77"
-  last_checked: 2026-11-03
+  last_checked: 2026-11-21
   review_date: 2027-01-28
   known_issues:
     - >-
       The export's fidelity to the PyTorch checkpoint is unmeasured: run_lfm3.py reference executes the checkpoint's
       own modeling code and has not run. The evidence compares the .NET loop with Python ONNX Runtime on the same graph.
+    - >-
+      Template drift: the export's chat_template.jinja moved ahead of the checkpoint's (57c125df adds `| trim` to the
+      system prompt and message contents; the checkpoint at the pin f45005c5 does not have it). The C# port and the
+      template evidence follow the checkpoint's template. Rendering differs only when a system prompt or message
+      content has leading or trailing whitespace (the 'whitespace' corpus case: the new template strips it). If the
+      profile's pin moves to 57c125df, Lfm3ChatTemplate must adopt the trim and the template reference regenerate.
     - >-
       No reference fixtures are adopted into protected/ and no gate has run; every capability is at most experimental.
     - >-
