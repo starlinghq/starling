@@ -166,7 +166,11 @@ public sealed class KevContentGuard : IContentGuard
             return GuardResult.NotScanned(Name, "Every question was declined as over-long.", watch.Elapsed);
         }
 
-        return GuardResult.FromScores(Name, merged, watch.Elapsed);
+        // Some questions answered, others declined: keep the scores and report the declined ones as gaps.
+        return GuardResult.FromScores(Name, merged, watch.Elapsed) with
+        {
+            Gaps = [.. questions.Where(q => declined.Contains(q.Id)).Select(q => $"{Name}: question '{q.Id}' ({q.Category}) declined as over-long.")],
+        };
     }
 
     private KevGuardQuestion[] Stage(GuardStage stage) => [.. _options.Questions.Where(q => q.Stage == stage)];

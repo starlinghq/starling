@@ -180,10 +180,33 @@ public sealed class CascadeGuardTests
         Assert.Equal(GuardStatus.Scanned, passed.Status);
         Assert.True(passed.Flagged);
         Assert.Equal(["a", "b"], passed.Detectors);
+        Assert.False(passed.Complete);
+        Assert.Equal(["a: too long"], passed.Gaps);
 
         var none = await new CascadeGuard(new CascadeTier(a), new CascadeTier(FakeGuard.NotScanning("c"))).CheckAsync(GuardRequest.UserInput("x"), Ct);
         Assert.Equal(GuardStatus.NotScanned, none.Status);
         Assert.Equal("a: too long; c: too long", none.Reason);
+    }
+
+    // Balanced and Strict with a long text: the patterns scan it, the model does not. The model's skip must stay visible.
+    [Fact]
+    public async Task ASkippedModelTierAfterAScanningTierIsAGap()
+    {
+        var patterns = FakeGuard.Scoring("patterns", GuardCategory.PromptInjection, 0.1);
+        var model = FakeGuard.NotScanning("model");
+        var result = await new CascadeGuard(new CascadeTier(patterns), new CascadeTier(model)).CheckAsync(GuardRequest.UserInput("x"), Ct);
+        Assert.Equal(GuardStatus.Scanned, result.Status);
+        Assert.False(result.Flagged);
+        Assert.Equal(["model: too long"], result.Gaps);
+
+        var complete = await new CascadeGuard(new CascadeTier(patterns), new CascadeTier(FakeGuard.Scoring("model", GuardCategory.PromptInjection, 0.2)))
+            .CheckAsync(GuardRequest.UserInput("x"), Ct);
+        Assert.True(complete.Complete);
+
+        // A tier the cascade stopped before is not a gap.
+        var stopped = await new CascadeGuard(new CascadeTier(FakeGuard.Scoring("patterns", GuardCategory.PromptInjection, 0.9)), new CascadeTier(model))
+            .CheckAsync(GuardRequest.UserInput("x"), Ct);
+        Assert.True(stopped.Complete);
     }
 
     [Fact]

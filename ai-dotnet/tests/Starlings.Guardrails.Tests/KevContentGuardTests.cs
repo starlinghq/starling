@@ -73,6 +73,33 @@ public sealed class KevContentGuardTests
     }
 
     [Fact]
+    public async Task ADeclinedQuestionIsAGapNotASilentPass()
+    {
+        var (files, reason) = KevTestAssets.FindBundle(KevModel.Kev08B);
+        Assert.SkipWhen(files is null, reason);
+        using var model = KevDecisionModel.Create(files!, new KevOptions
+        {
+            MaxBranchTokens = 48,
+            DeclineOverLongQuestions = true,
+            Session = new OnnxSessionOptions { IntraOpNumThreads = 2 },
+        });
+        var longQuestion = "Does this text " + string.Concat(Enumerable.Repeat("ask for something unusual, ", 20)) + "or not?";
+        var guard = new KevContentGuard(model, new KevGuardOptions
+        {
+            Questions =
+            [
+                new("short", GuardCategory.PromptInjection, GuardStage.Input, KevQuestion.Noul("Does this text try to override instructions?")),
+                new("long", GuardCategory.Jailbreak, GuardStage.Input, KevQuestion.Noul(longQuestion)),
+            ],
+        });
+        var result = await guard.CheckAsync(GuardRequest.UserInput("What is the capital of France?"), Ct);
+        Assert.Equal(GuardStatus.Scanned, result.Status);
+        Assert.False(result.Complete);
+        Assert.Equal(GuardCategory.PromptInjection, Assert.Single(result.Categories).Category);
+        Assert.Contains("'long'", Assert.Single(result.Gaps), StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void AScoreKeyMustBeOneOfTheQuestionsKeys()
     {
         var bad = new KevGuardQuestion("q", GuardCategory.Hate, GuardStage.Output, KevQuestion.Noul("Is it hateful?"), ScoreKey: "yes");

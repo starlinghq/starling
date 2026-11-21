@@ -12,7 +12,10 @@ public sealed record CascadeTier(IContentGuard Guard, bool StopWhenFlagged = tru
 /// Runs guards in order, cheapest first, and stops as soon as a tier's stop rule says so, so costly guards run only on
 /// the texts that need them. A tier that does not scan a text passes it on. The result keeps the highest score per
 /// category over the tiers that ran (flagged if any of them flagged it), lists every tier that ran in
-/// <see cref="GuardResult.Detectors"/>, and is not scanned only when no tier scanned the text.
+/// <see cref="GuardResult.Detectors"/>, and is not scanned only when no tier scanned the text. When some tiers scanned
+/// it and others did not, the result is scanned and lists each skipped tier (and each tier's own gaps) in
+/// <see cref="GuardResult.Gaps"/>, so a policy can treat the missing check like an unscanned text. A tier that does not
+/// run because an earlier tier's stop rule ended the cascade is not a gap.
 /// </summary>
 public sealed class CascadeGuard : IContentGuard
 {
@@ -64,6 +67,7 @@ public sealed class CascadeGuard : IContentGuard
             }
 
             scanned = true;
+            reasons.AddRange(result.Gaps);
             foreach (var score in result.Categories)
             {
                 if (score.Flagged)
@@ -89,7 +93,7 @@ public sealed class CascadeGuard : IContentGuard
         }
 
         var merged = best.Values.Select(s => flaggedBy.Contains(s.Category) && !s.Flagged ? s with { Flagged = true } : s);
-        return GuardResult.FromScores(Name, merged, watch.Elapsed) with { Detectors = detectors };
+        return GuardResult.FromScores(Name, merged, watch.Elapsed) with { Detectors = detectors, Gaps = reasons };
     }
 }
 

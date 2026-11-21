@@ -1,4 +1,5 @@
 using System.Runtime.CompilerServices;
+using System.Text.Json;
 using Microsoft.Extensions.AI;
 
 namespace Starlings.Guardrails;
@@ -39,8 +40,9 @@ public sealed record GuardrailsOptions
     public GuardAction OnFlagged { get; init; } = GuardAction.Block;
 
     /// <summary>
-    /// Block a text the guard did not scan (for example over the model's length limit). Default false: it passes and the
-    /// report records it as not scanned.
+    /// Block a text the guard did not fully check: not scanned at all (for example over the model's length limit), or
+    /// scanned with <see cref="GuardResult.Gaps"/> (a cascade's model tier skipped it, or the model declined a question).
+    /// Default false: it passes and the report records it as not fully scanned.
     /// </summary>
     public bool BlockWhenNotScanned { get; init; }
 
@@ -72,8 +74,8 @@ public sealed record GuardrailsReport(IReadOnlyList<GuardFinding> Findings)
     /// <summary>True when any check flagged its text.</summary>
     public bool Flagged => Findings.Any(f => f.Result.Flagged);
 
-    /// <summary>True when any text was not scanned.</summary>
-    public bool HasUnscanned => Findings.Any(f => f.Result.Status == GuardStatus.NotScanned);
+    /// <summary>True when any text was not scanned, or scanned with <see cref="GuardResult.Gaps"/>.</summary>
+    public bool HasUnscanned => Findings.Any(f => !f.Result.Complete);
 
     /// <summary>The highest score over all checks.</summary>
     public double Score => Findings.Count == 0 ? 0 : Findings.Max(f => f.Result.Score);
@@ -126,9 +128,15 @@ public sealed class GuardrailsViolationException : Exception
             < 0 => "the response",
             _ => $"message {finding.MessageIndex} ({finding.Source})",
         };
-        return finding.Result.Status == GuardStatus.NotScanned
-            ? $"A guardrail blocked {where}: not scanned ({finding.Result.Reason})."
-            : $"A guardrail blocked {where}: {string.Join(", ", finding.Result.FlaggedCategories.Select(c => $"{c.Category} {c.Score:F2}"))}.";
+        var result = finding.Result;
+        if (result.Status == GuardStatus.NotScanned)
+        {
+            return $"A guardrail blocked {where}: not scanned ({result.Reason}).";
+        }
+
+        return result.Flagged
+            ? $"A guardrail blocked {where}: {string.Join(", ", result.FlaggedCategories.Select(c => $"{c.Category} {c.Score:F2}"))}."
+            : $"A guardrail blocked {where}: not fully scanned ({string.Join("; ", result.Gaps)}).";
     }
 }
 
@@ -190,11 +198,18 @@ public sealed class GuardrailsChatClient : DelegatingChatClient
         var findings = new List<GuardFinding>();
         await CheckInputsAsync(list, findings, cancellationToken).ConfigureAwait(false);
 
+        // The transcript is kept only when the response is checked; otherwise only the last update (for the ids).
         var updates = new List<ChatResponseUpdate>();
+        ChatResponseUpdate? last = null;
         bool buffer = _options.CheckResponse && _options.StreamingOutput == StreamingOutputCheck.Buffer;
         await foreach (var update in base.GetStreamingResponseAsync(list, options, cancellationToken).ConfigureAwait(false))
         {
-            updates.Add(update);
+            last = update;
+            if (_options.CheckResponse)
+            {
+                updates.Add(update);
+            }
+
             if (!buffer)
             {
                 yield return update;
@@ -214,12 +229,11 @@ public sealed class GuardrailsChatClient : DelegatingChatClient
             }
         }
 
-        var last = updates.Count > 0 ? updates[^1] : null;
+        // No MessageId: ToChatResponse() then keeps the report on the response, not on the last message.
         yield return new ChatResponseUpdate
         {
             Role = ChatRole.Assistant,
             ResponseId = last?.ResponseId,
-            MessageId = last?.MessageId,
             ConversationId = last?.ConversationId,
             AdditionalProperties = new() { [ReportKey] = new GuardrailsReport(findings) },
         };
@@ -244,7 +258,11 @@ public sealed class GuardrailsChatClient : DelegatingChatClient
             {
                 foreach (var result in message.Contents.OfType<FunctionResultContent>())
                 {
-                    if (result.Result?.ToString() is { Length: > 0 } text)
+                    if (!TryGetModelText(result.Result, out var text))
+                    {
+                        Record(new GuardFinding(GuardStage.Input, GuardSource.ToolResult, i, GuardResult.NotScanned("guardrails", text)), findings);
+                    }
+                    else if (text.Length > 0)
                     {
                         await CheckAsync(new GuardRequest(text, GuardStage.Input, GuardSource.ToolResult), i, findings, cancellationToken).ConfigureAwait(false);
                     }
@@ -268,13 +286,51 @@ public sealed class GuardrailsChatClient : DelegatingChatClient
         }
     }
 
+    /// <summary>
+    /// The text the model sees for a tool result: a string as is; anything else as the JSON that chat clients send
+    /// (structured results are serialized, so their <c>ToString()</c> is not what reaches the model). False, with the
+    /// reason in <paramref name="text"/>, when the result cannot be serialized (a cycle, an unsupported type, NaN or
+    /// infinity).
+    /// </summary>
+    private static bool TryGetModelText(object? result, out string text)
+    {
+        switch (result)
+        {
+            case null:
+                text = "";
+                return true;
+            case string s:
+                text = s;
+                return true;
+            case JsonElement { ValueKind: JsonValueKind.String } element:
+                text = element.GetString() ?? "";
+                return true;
+        }
+
+        try
+        {
+            text = JsonSerializer.Serialize(result, AIJsonUtilities.DefaultOptions.GetTypeInfo(result.GetType()));
+            return true;
+        }
+        catch (Exception e) when (e is NotSupportedException or JsonException or InvalidOperationException or ArgumentException)
+        {
+            text = $"Tool result of type {result.GetType().Name} could not be serialized to JSON for checking: {e.Message}";
+            return false;
+        }
+    }
+
     private async Task CheckAsync(GuardRequest request, int index, List<GuardFinding> findings, CancellationToken cancellationToken)
     {
         var result = await _guard.CheckAsync(request, cancellationToken).ConfigureAwait(false);
-        var finding = new GuardFinding(request.Stage, request.Source, index, result);
+        Record(new GuardFinding(request.Stage, request.Source, index, result), findings);
+    }
+
+    private void Record(GuardFinding finding, List<GuardFinding> findings)
+    {
+        var result = finding.Result;
         findings.Add(finding);
         bool block = (result.Flagged && _options.OnFlagged == GuardAction.Block)
-            || (result.Status == GuardStatus.NotScanned && _options.BlockWhenNotScanned);
+            || (!result.Complete && _options.BlockWhenNotScanned);
         if (block)
         {
             throw new GuardrailsViolationException(finding, new GuardrailsReport([.. findings]));
