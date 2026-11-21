@@ -386,7 +386,7 @@ internal static partial class TextViews
         }
 
         var text = clean.Length > maxChars ? clean[..maxChars] : clean;
-        if (text.Length < clean.Length && char.IsHighSurrogate(text[^1]))
+        if (text.Length > 0 && text.Length < clean.Length && char.IsHighSurrogate(text[^1]))
         {
             text = text[..^1]; // the cut split a surrogate pair; normalization throws on the lone half
         }

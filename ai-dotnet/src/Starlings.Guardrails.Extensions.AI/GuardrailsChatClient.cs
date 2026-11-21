@@ -289,7 +289,8 @@ public sealed class GuardrailsChatClient : DelegatingChatClient
     /// <summary>
     /// The text the model sees for a tool result: a string as is; anything else as the JSON that chat clients send
     /// (structured results are serialized, so their <c>ToString()</c> is not what reaches the model). False, with the
-    /// reason in <paramref name="text"/>, when the result cannot be serialized.
+    /// reason in <paramref name="text"/>, when the result cannot be serialized (a cycle, an unsupported type, NaN or
+    /// infinity).
     /// </summary>
     private static bool TryGetModelText(object? result, out string text)
     {
@@ -311,7 +312,7 @@ public sealed class GuardrailsChatClient : DelegatingChatClient
             text = JsonSerializer.Serialize(result, AIJsonUtilities.DefaultOptions.GetTypeInfo(result.GetType()));
             return true;
         }
-        catch (Exception e) when (e is NotSupportedException or JsonException or InvalidOperationException)
+        catch (Exception e) when (e is NotSupportedException or JsonException or InvalidOperationException or ArgumentException)
         {
             text = $"Tool result of type {result.GetType().Name} could not be serialized to JSON for checking: {e.Message}";
             return false;
