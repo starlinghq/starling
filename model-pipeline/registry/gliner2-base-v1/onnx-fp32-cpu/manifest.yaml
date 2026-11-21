@@ -7,8 +7,9 @@
 schema_version: 1
 id: gliner2-base-v1/onnx-fp32-cpu
 # Stable since 2026-10-15 (maintainer's promotion instruction; docs/kickoff.md, "First Stable profile"): every gate G0 to
-# G7 passed, the contract is the Starlings.Models.Gliner2 README's "Stable contract" (Linux x64 CPU, with
-# MALLOC_MMAP_THRESHOLD_=65536), and the scheduled qualification reruns G1 to G3 and a one-hour soak weekly.
+# G7 passed, the contract is the Starlings.Models.Gliner2 README's "Stable contract" (Linux x64 CPU; no MALLOC_*
+# deployment setting since the 2026-11-15 no-env soak rerun, docs/evidence/malloc-noenv-2026-11-15), and the
+# scheduled qualification reruns G1 to G3 and a one-hour soak weekly.
 maturity: stable
 
 origin:
@@ -196,8 +197,9 @@ capabilities:
   structured_extraction: unsupported
 
 compatibility:
-  # Linux x64 CPU: gates G0 to G7 (G1 to G5 on an Intel i7-5820K, AVX2, no AVX-512), G4 with the documented setting
-  # MALLOC_MMAP_THRESHOLD_=65536; the scheduled qualification reruns G1 to G3 and a short soak with that setting.
+  # Linux x64 CPU: gates G0 to G7 (G1 to G5 on an Intel i7-5820K, AVX2, no AVX-512); the 2026-11-15 no-env rerun
+  # (docs/evidence/malloc-noenv-2026-11-15) passed the full one-hour G4 soak without MALLOC_MMAP_THRESHOLD_, so no
+  # MALLOC_* setting is required on CPU. The scheduled qualification reruns G1 to G3 and a short soak weekly.
   - os: linux
     arch: x64
     provider: cpu

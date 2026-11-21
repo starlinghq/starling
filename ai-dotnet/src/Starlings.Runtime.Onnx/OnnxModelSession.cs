@@ -465,6 +465,9 @@ public sealed class OnnxModelSession : IDisposable
 
             // Session creation frees much of what it allocates (graph transformation, initializer copies); on the
             // creating thread's glibc heap that memory stays resident for the life of the session unless trimmed.
+            // The malloc opt-in is requested per session but applied process-wide, and glibc caches it after the
+            // first call, so the diagnostic text is captured once for the diagnostics record.
+            string mallocThresholdDiagnostic = options.ApplyGlibcMmapThreshold ? GlibcMallocThreshold.EnsureApplied() : string.Empty;
             bool trimmedAfterLoad = options.TrimNativeHeapAfterLoad == true && NativeHeap.Trim();
             var diagnostics = new OnnxSessionDiagnostics
             {
@@ -481,6 +484,7 @@ public sealed class OnnxModelSession : IDisposable
                 TrimNativeHeapOnRelease = options.TrimNativeHeapOnRelease && NativeHeap.Enabled,
                 TrimNativeHeapAfterLoad = trimmedAfterLoad,
                 TrimNativeHeapAfterRun = options.TrimNativeHeapAfterRun == true && NativeHeap.Enabled,
+                GlibcMmapThresholdDiagnostic = mallocThresholdDiagnostic,
                 CpuMemoryArena = sessionOptions.EnableCpuMemArena,
                 DedicatedRunThreads = options.DedicatedRunThreads ?? false,
                 GraphOptimizationLevel = sessionOptions.GraphOptimizationLevel.ToString(),

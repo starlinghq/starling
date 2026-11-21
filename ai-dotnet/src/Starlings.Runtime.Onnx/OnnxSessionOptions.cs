@@ -211,6 +211,17 @@ public sealed record OnnxSessionOptions
     public bool? TrimNativeHeapAfterRun { get; init; }
 
     /// <summary>
+    /// On Linux with glibc, apply the opt-in <c>mallopt(M_MMAP_THRESHOLD, 65536)</c> (<see cref="GlibcMallocThreshold"/>)
+    /// once per process, before this session is created, with a loud diagnostic on standard error. Default
+    /// <see langword="false"/>: nothing in this package calls <c>mallopt</c> unless the host asks for it, because the
+    /// call changes the allocator of the whole host process and glibc caches the setting after the first call. It
+    /// exists for hosts that cannot set <c>MALLOC_MMAP_THRESHOLD_=65536</c> in the environment of the process they
+    /// start (the primary recommendation). A no-op on other platforms and without glibc; a second session with this
+    /// option changes nothing. See the package README, "Setting <c>MALLOC_MMAP_THRESHOLD_</c>".
+    /// </summary>
+    public bool ApplyGlibcMmapThreshold { get; init; }
+
+    /// <summary>
     /// Throws if an option is out of range or malformed, including <see cref="Cuda"/> (validated whatever the
     /// <see cref="Provider"/>). Session creation and <see cref="OnnxRuntimeInfo.TryInitializeProvider(OnnxSessionOptions, out string?)"/>
     /// call it; call it directly to check a configuration early, for example at startup. Needs no model, GPU or CUDA

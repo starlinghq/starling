@@ -94,11 +94,14 @@ fix is one environment variable on the deployment process:
 MALLOC_MMAP_THRESHOLD_=65536
 ```
 
-Required for the EmbeddingGemma 2 CUDA video profile (`video-fp32-cuda`), recommended for `image-fp32-cuda`, and
-required for GLiNER2 in deployment on CPU and CUDA. The e5 and text profiles need no `MALLOC_*` setting. The
-systemd, Dockerfile and launcher-script forms are in the
+Required for long-running Kev processes (0.8B on CPU and CUDA, 4B to be safe) and the EmbeddingGemma 2 CUDA video
+profile (`video-fp32-cuda`), recommended for `image-fp32-cuda`, and required for GLiNER2 on CUDA. The e5, text and
+GLiNER2 CPU profiles need no `MALLOC_*` setting ([no-env rerun, 2026-11-15](https://github.com/starlinghq/starling/blob/main/docs/evidence/malloc-noenv-2026-11-15/README.md)).
+The systemd, Dockerfile and launcher-script forms, and the in-process opt-in
+(`OnnxSessionOptions.ApplyGlibcMmapThreshold`) for hosts that cannot set the environment, are in the
 [`Starlings.Runtime.Onnx` README](https://github.com/starlinghq/starling/blob/main/ai-dotnet/src/Starlings.Runtime.Onnx/README.md#setting-malloc_mmap_threshold_);
-the measurements are in `docs/evidence/gliner2-soak-growth/` and `docs/evidence/cuda-soak-growth/`.
+the measurements are in `docs/evidence/gliner2-soak-growth/`, `docs/evidence/cuda-soak-growth/` and
+`docs/evidence/malloc-noenv-2026-11-15/`.
 
 ## Common first-run mistakes
 
