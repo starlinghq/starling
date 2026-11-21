@@ -41,3 +41,6 @@ __pycache__/
 node_modules/
 ai-dotnet/src/Starlings.Runtime.OnnxWeb*/wwwroot/ort/
 .eval-data/
+
+# Python editable installs and build artifacts (pip install -e model-pipeline).
+model-pipeline/build/
