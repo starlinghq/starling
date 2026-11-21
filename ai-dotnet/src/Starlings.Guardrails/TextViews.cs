@@ -150,9 +150,12 @@ internal static partial class TextViews
         return true;
     }
 
+    // Every BMP character Clean's slow path removes, plus the high surrogate of the tag and supplementary-selector planes.
     private static readonly SearchValues<char> HiddenStarts = SearchValues.Create(
-        "\uDB40­͏᠎​‌‍‎‏‪‫‬‭‮⁠⁡⁢⁣⁤⁥⁦⁧⁨⁩"
-        + "︀︁︂︃︄︅︆︇︈︉︊︋︌︍︎️﻿");
+        "\uDB40\u00AD\u034F\u180E\u200B\u200C\u200D\u200E\u200F"
+        + "\u202A\u202B\u202C\u202D\u202E"
+        + "\u2060\u2061\u2062\u2063\u2064\u2065\u2066\u2067\u2068\u2069"
+        + "\uFE00\uFE01\uFE02\uFE03\uFE04\uFE05\uFE06\uFE07\uFE08\uFE09\uFE0A\uFE0B\uFE0C\uFE0D\uFE0E\uFE0F\uFEFF");
 
     /// <summary>
     /// The folded view of a cleaned text: combining marks removed (diacritics, underlines, zalgo) and common Cyrillic,
@@ -328,6 +331,11 @@ internal static partial class TextViews
         }
 
         var text = clean.Length > maxChars ? clean[..maxChars] : clean;
+        if (text.Length < clean.Length && char.IsHighSurrogate(text[^1]))
+        {
+            text = text[..^1]; // the cut split a surrogate pair; normalization throws on the lone half
+        }
+
         if (text.Any(char.IsAsciiLetter))
         {
             yield return new("rot13", Rot13(text));

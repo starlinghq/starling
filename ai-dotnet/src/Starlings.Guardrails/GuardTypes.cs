@@ -121,6 +121,16 @@ public sealed record GuardResult
     /// <summary>Why the text was not scanned; null when scanned.</summary>
     public string? Reason { get; init; }
 
+    /// <summary>
+    /// Parts of a scanned check that did not run, each with its reason: a cascade tier that did not scan the text, or a
+    /// model question declined as over-long. Empty when every configured check ran. Like <see cref="GuardStatus.NotScanned"/>,
+    /// a gap is not a pass; policies decide whether to allow or block it.
+    /// </summary>
+    public IReadOnlyList<string> Gaps { get; init; } = [];
+
+    /// <summary>True when the text was scanned and every configured check ran (<see cref="Gaps"/> is empty).</summary>
+    public bool Complete => Status == GuardStatus.Scanned && Gaps.Count == 0;
+
     /// <summary>Wall time spent checking.</summary>
     public TimeSpan Elapsed { get; init; }
 
