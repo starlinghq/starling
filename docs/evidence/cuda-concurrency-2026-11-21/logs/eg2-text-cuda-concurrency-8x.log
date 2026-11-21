@@ -1,0 +1,97 @@
+# eg2 text RTX 3090 rerun, 2026-11-21T16:13:31Z, 8 processes, 8 threads x 4 rows x 5 rounds per process
+--- process 1
+xUnit.net v3 In-Process Runner v4.0.1+8ed8aa354c (64-bit .NET 10.0.14)
+  Discovering: Starlings.Models.EmbeddingGemma2.Tests.Cuda
+  Discovered:  Starlings.Models.EmbeddingGemma2.Tests.Cuda
+  Starting:    Starlings.Models.EmbeddingGemma2.Tests.Cuda
+    Starlings.Models.EmbeddingGemma2.Tests.Cuda.CudaParityTests.SessionUsesCudaWithTf32Disabled [OUTPUT] ORT 1.30.0; session CUDAExecutionProvider, CPUExecutionProvider; CUDA_VISIBLE_DEVICES=0
+    Starlings.Models.EmbeddingGemma2.Tests.Cuda.CudaParityTests.SessionUsesCudaWithTf32Disabled [OUTPUT] provider options: arena_extend_strategy=kNextPowerOfTwo, cudnn_conv1d_pad_to_nc1d=0, cudnn_conv_algo_search=EXHAUSTIVE, cudnn_conv_use_max_workspace=1, device_id=0, do_copy_in_default_stream=1, enable_cudnn=1, fuse_conv_bias=0, gpu_mem_limit=18446744073709551615, has_user_compute_stream=0, prefer_nhwc=0, sdpa_kernel=0, tunable_op_enable=0, tunable_op_max_tuning_duration_ms=0, tunable_op_tuning_enable=0, use_ep_level_unified_stream=0, use_tf32=0, user_compute_stream=0
+    Starlings.Models.EmbeddingGemma2.Tests.Cuda.CudaParityTests.ConcurrentEmbedBatchCallsGiveTheSequentialResultsBitForBit [OUTPUT] 8 concurrent EmbedBatch calls x 4 rows x 5 rounds on one CUDA session (132 rows under 512 tokens): 160 vectors bit-for-bit equal to the sequential run (max abs 0.000E+000)
+  Finished:    Starlings.Models.EmbeddingGemma2.Tests.Cuda (ID = 'c87060042c30d5552ff6e907a33b0254ca25e0b7c876ddfc8df75e6251547d23')
+=== TEST EXECUTION SUMMARY ===
+   Starlings.Models.EmbeddingGemma2.Tests.Cuda  Total: 2, Errors: 0, Failed: 0, Skipped: 0, Not Run: 0, Time: 6.510s
+exit 0
+--- process 2
+xUnit.net v3 In-Process Runner v4.0.1+8ed8aa354c (64-bit .NET 10.0.14)
+  Discovering: Starlings.Models.EmbeddingGemma2.Tests.Cuda
+  Discovered:  Starlings.Models.EmbeddingGemma2.Tests.Cuda
+  Starting:    Starlings.Models.EmbeddingGemma2.Tests.Cuda
+    Starlings.Models.EmbeddingGemma2.Tests.Cuda.CudaParityTests.SessionUsesCudaWithTf32Disabled [OUTPUT] ORT 1.30.0; session CUDAExecutionProvider, CPUExecutionProvider; CUDA_VISIBLE_DEVICES=0
+    Starlings.Models.EmbeddingGemma2.Tests.Cuda.CudaParityTests.SessionUsesCudaWithTf32Disabled [OUTPUT] provider options: arena_extend_strategy=kNextPowerOfTwo, cudnn_conv1d_pad_to_nc1d=0, cudnn_conv_algo_search=EXHAUSTIVE, cudnn_conv_use_max_workspace=1, device_id=0, do_copy_in_default_stream=1, enable_cudnn=1, fuse_conv_bias=0, gpu_mem_limit=18446744073709551615, has_user_compute_stream=0, prefer_nhwc=0, sdpa_kernel=0, tunable_op_enable=0, tunable_op_max_tuning_duration_ms=0, tunable_op_tuning_enable=0, use_ep_level_unified_stream=0, use_tf32=0, user_compute_stream=0
+    Starlings.Models.EmbeddingGemma2.Tests.Cuda.CudaParityTests.ConcurrentEmbedBatchCallsGiveTheSequentialResultsBitForBit [OUTPUT] 8 concurrent EmbedBatch calls x 4 rows x 5 rounds on one CUDA session (132 rows under 512 tokens): 160 vectors bit-for-bit equal to the sequential run (max abs 0.000E+000)
+  Finished:    Starlings.Models.EmbeddingGemma2.Tests.Cuda (ID = 'c87060042c30d5552ff6e907a33b0254ca25e0b7c876ddfc8df75e6251547d23')
+=== TEST EXECUTION SUMMARY ===
+   Starlings.Models.EmbeddingGemma2.Tests.Cuda  Total: 2, Errors: 0, Failed: 0, Skipped: 0, Not Run: 0, Time: 6.530s
+exit 0
+--- process 3
+xUnit.net v3 In-Process Runner v4.0.1+8ed8aa354c (64-bit .NET 10.0.14)
+  Discovering: Starlings.Models.EmbeddingGemma2.Tests.Cuda
+  Discovered:  Starlings.Models.EmbeddingGemma2.Tests.Cuda
+  Starting:    Starlings.Models.EmbeddingGemma2.Tests.Cuda
+    Starlings.Models.EmbeddingGemma2.Tests.Cuda.CudaParityTests.SessionUsesCudaWithTf32Disabled [OUTPUT] ORT 1.30.0; session CUDAExecutionProvider, CPUExecutionProvider; CUDA_VISIBLE_DEVICES=0
+    Starlings.Models.EmbeddingGemma2.Tests.Cuda.CudaParityTests.SessionUsesCudaWithTf32Disabled [OUTPUT] provider options: arena_extend_strategy=kNextPowerOfTwo, cudnn_conv1d_pad_to_nc1d=0, cudnn_conv_algo_search=EXHAUSTIVE, cudnn_conv_use_max_workspace=1, device_id=0, do_copy_in_default_stream=1, enable_cudnn=1, fuse_conv_bias=0, gpu_mem_limit=18446744073709551615, has_user_compute_stream=0, prefer_nhwc=0, sdpa_kernel=0, tunable_op_enable=0, tunable_op_max_tuning_duration_ms=0, tunable_op_tuning_enable=0, use_ep_level_unified_stream=0, use_tf32=0, user_compute_stream=0
+    Starlings.Models.EmbeddingGemma2.Tests.Cuda.CudaParityTests.ConcurrentEmbedBatchCallsGiveTheSequentialResultsBitForBit [OUTPUT] 8 concurrent EmbedBatch calls x 4 rows x 5 rounds on one CUDA session (132 rows under 512 tokens): 160 vectors bit-for-bit equal to the sequential run (max abs 0.000E+000)
+  Finished:    Starlings.Models.EmbeddingGemma2.Tests.Cuda (ID = 'c87060042c30d5552ff6e907a33b0254ca25e0b7c876ddfc8df75e6251547d23')
+=== TEST EXECUTION SUMMARY ===
+   Starlings.Models.EmbeddingGemma2.Tests.Cuda  Total: 2, Errors: 0, Failed: 0, Skipped: 0, Not Run: 0, Time: 6.496s
+exit 0
+--- process 4
+xUnit.net v3 In-Process Runner v4.0.1+8ed8aa354c (64-bit .NET 10.0.14)
+  Discovering: Starlings.Models.EmbeddingGemma2.Tests.Cuda
+  Discovered:  Starlings.Models.EmbeddingGemma2.Tests.Cuda
+  Starting:    Starlings.Models.EmbeddingGemma2.Tests.Cuda
+    Starlings.Models.EmbeddingGemma2.Tests.Cuda.CudaParityTests.SessionUsesCudaWithTf32Disabled [OUTPUT] ORT 1.30.0; session CUDAExecutionProvider, CPUExecutionProvider; CUDA_VISIBLE_DEVICES=0
+    Starlings.Models.EmbeddingGemma2.Tests.Cuda.CudaParityTests.SessionUsesCudaWithTf32Disabled [OUTPUT] provider options: arena_extend_strategy=kNextPowerOfTwo, cudnn_conv1d_pad_to_nc1d=0, cudnn_conv_algo_search=EXHAUSTIVE, cudnn_conv_use_max_workspace=1, device_id=0, do_copy_in_default_stream=1, enable_cudnn=1, fuse_conv_bias=0, gpu_mem_limit=18446744073709551615, has_user_compute_stream=0, prefer_nhwc=0, sdpa_kernel=0, tunable_op_enable=0, tunable_op_max_tuning_duration_ms=0, tunable_op_tuning_enable=0, use_ep_level_unified_stream=0, use_tf32=0, user_compute_stream=0
+    Starlings.Models.EmbeddingGemma2.Tests.Cuda.CudaParityTests.ConcurrentEmbedBatchCallsGiveTheSequentialResultsBitForBit [OUTPUT] 8 concurrent EmbedBatch calls x 4 rows x 5 rounds on one CUDA session (132 rows under 512 tokens): 160 vectors bit-for-bit equal to the sequential run (max abs 0.000E+000)
+  Finished:    Starlings.Models.EmbeddingGemma2.Tests.Cuda (ID = 'c87060042c30d5552ff6e907a33b0254ca25e0b7c876ddfc8df75e6251547d23')
+=== TEST EXECUTION SUMMARY ===
+   Starlings.Models.EmbeddingGemma2.Tests.Cuda  Total: 2, Errors: 0, Failed: 0, Skipped: 0, Not Run: 0, Time: 6.550s
+exit 0
+--- process 5
+xUnit.net v3 In-Process Runner v4.0.1+8ed8aa354c (64-bit .NET 10.0.14)
+  Discovering: Starlings.Models.EmbeddingGemma2.Tests.Cuda
+  Discovered:  Starlings.Models.EmbeddingGemma2.Tests.Cuda
+  Starting:    Starlings.Models.EmbeddingGemma2.Tests.Cuda
+    Starlings.Models.EmbeddingGemma2.Tests.Cuda.CudaParityTests.SessionUsesCudaWithTf32Disabled [OUTPUT] ORT 1.30.0; session CUDAExecutionProvider, CPUExecutionProvider; CUDA_VISIBLE_DEVICES=0
+    Starlings.Models.EmbeddingGemma2.Tests.Cuda.CudaParityTests.SessionUsesCudaWithTf32Disabled [OUTPUT] provider options: arena_extend_strategy=kNextPowerOfTwo, cudnn_conv1d_pad_to_nc1d=0, cudnn_conv_algo_search=EXHAUSTIVE, cudnn_conv_use_max_workspace=1, device_id=0, do_copy_in_default_stream=1, enable_cudnn=1, fuse_conv_bias=0, gpu_mem_limit=18446744073709551615, has_user_compute_stream=0, prefer_nhwc=0, sdpa_kernel=0, tunable_op_enable=0, tunable_op_max_tuning_duration_ms=0, tunable_op_tuning_enable=0, use_ep_level_unified_stream=0, use_tf32=0, user_compute_stream=0
+    Starlings.Models.EmbeddingGemma2.Tests.Cuda.CudaParityTests.ConcurrentEmbedBatchCallsGiveTheSequentialResultsBitForBit [OUTPUT] 8 concurrent EmbedBatch calls x 4 rows x 5 rounds on one CUDA session (132 rows under 512 tokens): 160 vectors bit-for-bit equal to the sequential run (max abs 0.000E+000)
+  Finished:    Starlings.Models.EmbeddingGemma2.Tests.Cuda (ID = 'c87060042c30d5552ff6e907a33b0254ca25e0b7c876ddfc8df75e6251547d23')
+=== TEST EXECUTION SUMMARY ===
+   Starlings.Models.EmbeddingGemma2.Tests.Cuda  Total: 2, Errors: 0, Failed: 0, Skipped: 0, Not Run: 0, Time: 6.543s
+exit 0
+--- process 6
+xUnit.net v3 In-Process Runner v4.0.1+8ed8aa354c (64-bit .NET 10.0.14)
+  Discovering: Starlings.Models.EmbeddingGemma2.Tests.Cuda
+  Discovered:  Starlings.Models.EmbeddingGemma2.Tests.Cuda
+  Starting:    Starlings.Models.EmbeddingGemma2.Tests.Cuda
+    Starlings.Models.EmbeddingGemma2.Tests.Cuda.CudaParityTests.SessionUsesCudaWithTf32Disabled [OUTPUT] ORT 1.30.0; session CUDAExecutionProvider, CPUExecutionProvider; CUDA_VISIBLE_DEVICES=0
+    Starlings.Models.EmbeddingGemma2.Tests.Cuda.CudaParityTests.SessionUsesCudaWithTf32Disabled [OUTPUT] provider options: arena_extend_strategy=kNextPowerOfTwo, cudnn_conv1d_pad_to_nc1d=0, cudnn_conv_algo_search=EXHAUSTIVE, cudnn_conv_use_max_workspace=1, device_id=0, do_copy_in_default_stream=1, enable_cudnn=1, fuse_conv_bias=0, gpu_mem_limit=18446744073709551615, has_user_compute_stream=0, prefer_nhwc=0, sdpa_kernel=0, tunable_op_enable=0, tunable_op_max_tuning_duration_ms=0, tunable_op_tuning_enable=0, use_ep_level_unified_stream=0, use_tf32=0, user_compute_stream=0
+    Starlings.Models.EmbeddingGemma2.Tests.Cuda.CudaParityTests.ConcurrentEmbedBatchCallsGiveTheSequentialResultsBitForBit [OUTPUT] 8 concurrent EmbedBatch calls x 4 rows x 5 rounds on one CUDA session (132 rows under 512 tokens): 160 vectors bit-for-bit equal to the sequential run (max abs 0.000E+000)
+  Finished:    Starlings.Models.EmbeddingGemma2.Tests.Cuda (ID = 'c87060042c30d5552ff6e907a33b0254ca25e0b7c876ddfc8df75e6251547d23')
+=== TEST EXECUTION SUMMARY ===
+   Starlings.Models.EmbeddingGemma2.Tests.Cuda  Total: 2, Errors: 0, Failed: 0, Skipped: 0, Not Run: 0, Time: 6.514s
+exit 0
+--- process 7
+xUnit.net v3 In-Process Runner v4.0.1+8ed8aa354c (64-bit .NET 10.0.14)
+  Discovering: Starlings.Models.EmbeddingGemma2.Tests.Cuda
+  Discovered:  Starlings.Models.EmbeddingGemma2.Tests.Cuda
+  Starting:    Starlings.Models.EmbeddingGemma2.Tests.Cuda
+    Starlings.Models.EmbeddingGemma2.Tests.Cuda.CudaParityTests.SessionUsesCudaWithTf32Disabled [OUTPUT] ORT 1.30.0; session CUDAExecutionProvider, CPUExecutionProvider; CUDA_VISIBLE_DEVICES=0
+    Starlings.Models.EmbeddingGemma2.Tests.Cuda.CudaParityTests.SessionUsesCudaWithTf32Disabled [OUTPUT] provider options: arena_extend_strategy=kNextPowerOfTwo, cudnn_conv1d_pad_to_nc1d=0, cudnn_conv_algo_search=EXHAUSTIVE, cudnn_conv_use_max_workspace=1, device_id=0, do_copy_in_default_stream=1, enable_cudnn=1, fuse_conv_bias=0, gpu_mem_limit=18446744073709551615, has_user_compute_stream=0, prefer_nhwc=0, sdpa_kernel=0, tunable_op_enable=0, tunable_op_max_tuning_duration_ms=0, tunable_op_tuning_enable=0, use_ep_level_unified_stream=0, use_tf32=0, user_compute_stream=0
+    Starlings.Models.EmbeddingGemma2.Tests.Cuda.CudaParityTests.ConcurrentEmbedBatchCallsGiveTheSequentialResultsBitForBit [OUTPUT] 8 concurrent EmbedBatch calls x 4 rows x 5 rounds on one CUDA session (132 rows under 512 tokens): 160 vectors bit-for-bit equal to the sequential run (max abs 0.000E+000)
+  Finished:    Starlings.Models.EmbeddingGemma2.Tests.Cuda (ID = 'c87060042c30d5552ff6e907a33b0254ca25e0b7c876ddfc8df75e6251547d23')
+=== TEST EXECUTION SUMMARY ===
+   Starlings.Models.EmbeddingGemma2.Tests.Cuda  Total: 2, Errors: 0, Failed: 0, Skipped: 0, Not Run: 0, Time: 6.560s
+exit 0
+--- process 8
+xUnit.net v3 In-Process Runner v4.0.1+8ed8aa354c (64-bit .NET 10.0.14)
+  Discovering: Starlings.Models.EmbeddingGemma2.Tests.Cuda
+  Discovered:  Starlings.Models.EmbeddingGemma2.Tests.Cuda
+  Starting:    Starlings.Models.EmbeddingGemma2.Tests.Cuda
+    Starlings.Models.EmbeddingGemma2.Tests.Cuda.CudaParityTests.SessionUsesCudaWithTf32Disabled [OUTPUT] ORT 1.30.0; session CUDAExecutionProvider, CPUExecutionProvider; CUDA_VISIBLE_DEVICES=0
+    Starlings.Models.EmbeddingGemma2.Tests.Cuda.CudaParityTests.SessionUsesCudaWithTf32Disabled [OUTPUT] provider options: arena_extend_strategy=kNextPowerOfTwo, cudnn_conv1d_pad_to_nc1d=0, cudnn_conv_algo_search=EXHAUSTIVE, cudnn_conv_use_max_workspace=1, device_id=0, do_copy_in_default_stream=1, enable_cudnn=1, fuse_conv_bias=0, gpu_mem_limit=18446744073709551615, has_user_compute_stream=0, prefer_nhwc=0, sdpa_kernel=0, tunable_op_enable=0, tunable_op_max_tuning_duration_ms=0, tunable_op_tuning_enable=0, use_ep_level_unified_stream=0, use_tf32=0, user_compute_stream=0
+    Starlings.Models.EmbeddingGemma2.Tests.Cuda.CudaParityTests.ConcurrentEmbedBatchCallsGiveTheSequentialResultsBitForBit [OUTPUT] 8 concurrent EmbedBatch calls x 4 rows x 5 rounds on one CUDA session (132 rows under 512 tokens): 160 vectors bit-for-bit equal to the sequential run (max abs 0.000E+000)
+  Finished:    Starlings.Models.EmbeddingGemma2.Tests.Cuda (ID = 'c87060042c30d5552ff6e907a33b0254ca25e0b7c876ddfc8df75e6251547d23')
+=== TEST EXECUTION SUMMARY ===
+   Starlings.Models.EmbeddingGemma2.Tests.Cuda  Total: 2, Errors: 0, Failed: 0, Skipped: 0, Not Run: 0, Time: 6.677s
+exit 0
