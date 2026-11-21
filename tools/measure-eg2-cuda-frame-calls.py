@@ -17,7 +17,7 @@ Nothing is changed in the package: the default stays 2 frames per call until the
 Requirements (GPU allowance: this runs on the shared GPU, so the maintainer runs it): the CUDA 13 runtime and cuDNN 9 on
 the loader path, the EmbeddingGemma 2 image graphs (STARLING_MODELS or STARLING_EMBEDDINGGEMMA2_SNAPSHOT), the video set
 (STARLING_EMBEDDINGGEMMA2_VIDEOS), the reference tensors (STARLING_EMBEDDINGGEMMA2_VIDEO_TENSORS, optional) and FFmpeg 8
-(STARLING_FFMPEG_DIR). The GPU is chosen by PCI bus order; the default is GPU 1, as for every CUDA run here.
+(STARLING_FFMPEG_DIR). The GPU is chosen by PCI bus order; the default is GPU 1.
 
     tools/measure-eg2-cuda-frame-calls.py --gpu 1 --out docs/evidence/embeddinggemma2-video/frame-calls [--frames 2 3 4]
         [--dotnet <dotnet>] [--interval-ms 200] [--settle 5]

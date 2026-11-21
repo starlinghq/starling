@@ -231,7 +231,7 @@ Added 2026-10-10 for the EmbeddingGemma 2 admission spike (`model-pipeline/admis
 
 Code: transformers 5.19.0 (PyPI, uploaded 2026-10-06) is the first release that defines `embedding_gemma2`; 5.16.1, 5.17.0 and 5.18.0 do not (checked in the wheels). The checkpoint's `config.json` names `transformers_version` `5.18.0.dev0`, a development build. Wheel SHA-256 `afcd2dd5f603ed28c1e1fcb00a338ccbb4ef5f878ed289635df8b58187afb518`. sentence-transformers 6.1.0 (the version `config_sentence_transformers.json` records and requires, `>=6.1.0`). Both are pinned with hashes in `model-pipeline/reference/embeddinggemma2/requirements.txt`.
 
-Every file in the repository was downloaded from `https://huggingface.co/google/embeddinggemma-2/resolve/914f7f89142e33e77833254d9c9b90c3cef7303b/<path>` into `/home/mark/Projects/AI-models/embeddinggemma2/snapshot/` (outside Git). Sizes match the Hub API; the three LFS files match the Hub's SHA-256, and the git blob ID of every small file, recomputed locally, matches the Hub's.
+Every file in the repository was downloaded from `https://huggingface.co/google/embeddinggemma-2/resolve/914f7f89142e33e77833254d9c9b90c3cef7303b/<path>` into `<models dir>/embeddinggemma2/snapshot/` (outside Git). Sizes match the Hub API; the three LFS files match the Hub's SHA-256, and the git blob ID of every small file, recomputed locally, matches the Hub's.
 
 | File | Size (bytes) | SHA-256 |
 | --- | ---: | --- |

@@ -52,7 +52,7 @@ Proposed protected copies of these files, plus CPU and CUDA parity evidence, are
 
 ## 4. Export and parity
 
-Scripts: `eg2_text.py` (exportable restatement), `export_embeddinggemma2_onnx.py`, `parity_embeddinggemma2_ort.py`, `compare_embeddinggemma2_csharp.py`. Graphs stay under `/home/mark/Projects/AI-models/embeddinggemma2/` on the workstation; none is committed.
+Scripts: `eg2_text.py` (exportable restatement), `export_embeddinggemma2_onnx.py`, `parity_embeddinggemma2_ort.py`, `compare_embeddinggemma2_csharp.py`. Graphs stay under `<models dir>/embeddinggemma2/` on the workstation; none is committed.
 
 `eg2_text.TextPath` restates `EmbeddingGemma2TextModel.forward` with the two masks built in the graph from the 2-D attention mask, as additive float32 masks (0 or the float32 minimum): a boolean mask would give NaN for a padded query whose window holds no valid key, and NaN survives a zero pooling weight. Outputs: `last_hidden_state` (512, after the final norm, diagnostic) and `token_embeddings` (768). It matches transformers' text model bit for bit (max abs 0 on random ids at 7, 600 and 1,300 tokens, with padding).
 

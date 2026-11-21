@@ -75,7 +75,7 @@ Padded batches of 8 images vs single images 2.3e-7; eager vs sdpa attention 2.4e
 
 ## 4. Export and parity
 
-Scripts: `export_embeddinggemma2_vision_onnx.py`, `parity_embeddinggemma2_image_ort.py`. Graphs stay under `/home/mark/Projects/AI-models/embeddinggemma2/image-spike/onnx/`; none is committed.
+Scripts: `export_embeddinggemma2_vision_onnx.py`, `parity_embeddinggemma2_image_ort.py`. Graphs stay under `<models dir>/embeddinggemma2/image-spike/onnx/`; none is committed.
 
 ### 4.1 Graph boundaries
 
@@ -115,7 +115,7 @@ Token embeddings reach about 2,000 to 3,900 and pooled soft tokens about 23,000,
 
 ## 5. Image preprocessing in C# (prototype)
 
-Throwaway console project outside the repository (`/home/mark/Projects/AI-models/embeddinggemma2/csharp-image`, .NET 10, ONNX Runtime 1.30.0): target size, resampler, rescale, patches and positions, the two graphs, scatter, pooling.
+Throwaway console project outside the repository (`<models dir>/embeddinggemma2/csharp-image`, .NET 10, ONNX Runtime 1.30.0): target size, resampler, rescale, patches and positions, the two graphs, scatter, pooling.
 
 ### 5.1 Resampler
 

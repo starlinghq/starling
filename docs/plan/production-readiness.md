@@ -2,7 +2,7 @@
 
 Goal: take every registered model to **Stable** (plan section 14): documented contract, all qualification gates G0 to G7 passed in full (plan section 10), a compatibility matrix, and regression support. The manifest validator enforces part of this already: a `stable` profile needs every gate `passed` and no `untested` capability (`model-pipeline/src/model_pipeline/manifest.py`).
 
-Audit date: 2026-10-13, at `fb27658`. Baseline on the workstation: 711 .NET tests, 473 pass, 0 fail, 238 skipped (weight-dependent tests skip without a local model cache).
+Audit date: 2026-10-13, at `fb27658`. Baseline on the development host: 711 .NET tests, 473 pass, 0 fail, 238 skipped (weight-dependent tests skip without a local model cache).
 
 ## Starting point
 
@@ -50,7 +50,7 @@ Status 2026-10-18: blockers 1 to 5 are closed (see the dated status entries unde
 2. **Hosting.** The GLiNER2, EmbeddingGemma 2 and Qwen graphs sit in private Hugging Face repositories (`source_status: placeholder`), so no clean install can acquire them (G0, G6).
 3. **No qualification CI (P-018).** CI is `ubuntu-latest` only, model tests skip there, there is no Windows job, and nothing runs on a schedule. That means no compatibility matrix evidence beyond Linux x64, and no regression support.
 4. **No soak harness (plan 10.2).** No one-hour repeated-request and load/unload run exists for any model (G4).
-5. **Benchmarks.** Only e5 has a benchmark (one uncontrolled workstation). GLiNER2, EmbeddingGemma 2 and Qwen have none (G5). Update: harnesses for all three are in draft PR #7. Controlled runs and budgets are still missing (M2, M6).
+5. **Benchmarks.** Only e5 has a benchmark (one uncontrolled development host). GLiNER2, EmbeddingGemma 2 and Qwen have none (G5). Update: harnesses for all three are in draft PR #7. Controlled runs and budgets are still missing (M2, M6).
 6. **Nothing is published.** The `release` environment, NuGet prefix reservation and branch protection are still manual steps (`docs/kickoff.md`).
 
 ## Order of promotion
@@ -145,7 +145,7 @@ Each workstream PR updates this document's tables when it lands. The catalog (R3
 ### Status 2026-10-15 (first promotion)
 
 - **First Stable profile: `gliner2-base-v1/onnx-fp32-cpu`** (#56 preconditions, then the maturity flip). Every gate passed; the weekly qualification workflow reruns its release-set G1 to G3 and a one-hour soak (with `MALLOC_MMAP_THRESHOLD_=65536`) on hosted runners, green. Single-owner exception recorded (M7 open).
-- **e5 `onnx-fp32-cpu` and EmbeddingGemma 2 text `onnx-fp32-cpu`: every gate passed, Stable blocked.** e5's hosted one-hour soak fails the growth rule (about 50 MB/h, undiagnosed; the workstation hour plateaued). EmbeddingGemma 2's G2 cannot rerun off the reference CPU (outside-Git reference embeddings; maintainer action: commit them under `protected/`, SOURCE.md decision 2); its hosted soak also fails (about 160 MB/h).
+- **e5 `onnx-fp32-cpu` and EmbeddingGemma 2 text `onnx-fp32-cpu`: every gate passed, Stable blocked.** e5's hosted one-hour soak fails the growth rule (about 50 MB/h, undiagnosed; the development host's hour plateaued). EmbeddingGemma 2's G2 cannot rerun off the reference CPU (outside-Git reference embeddings; maintainer action: commit them under `protected/`, SOURCE.md decision 2); its hosted soak also fails (about 160 MB/h).
 - **CUDA profiles:** EmbeddingGemma 2 text, Qwen fp32x and Qwen fp16x pass every gate where recorded; e5 CUDA has G4 failed. Promotion of any CUDA profile awaits scheduled GPU regression runs (M6).
 - **Versions:** maturity is per profile (generated README blocks); the next ai-dotnet version is `0.2.0` (`docs/kickoff.md`).
 

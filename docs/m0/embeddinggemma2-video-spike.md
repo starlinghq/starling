@@ -97,7 +97,7 @@ Reference: PyTorch fp32 CPU (`ref-clean`, 36 rows, 276 sampled frames). Row-rela
 
 ## 5. C# prototype (outside the repository)
 
-`/home/mark/Projects/AI-models/embeddinggemma2/csharp-video` (.NET 10, ProjectReference to `Starlings.Models.EmbeddingGemma2` for the image processor, resampler and tokenizer; ONNX Runtime 1.30.0; FFmpeg.AutoGen 8.1.0):
+`<models dir>/embeddinggemma2/csharp-video` (.NET 10, ProjectReference to `Starlings.Models.EmbeddingGemma2` for the image processor, resampler and tokenizer; ONNX Runtime 1.30.0; FFmpeg.AutoGen 8.1.0):
 
 - `VideoSampling.SampleIndices(totalFrames, fps?, duration?)`: section 2.2; 0 mismatches on 20,849 cases.
 - Preprocessing: `EmbeddingGemma2ImageProcessor.Preprocess(frame, maxSoftTokens: 140)` per frame, no change to product code.

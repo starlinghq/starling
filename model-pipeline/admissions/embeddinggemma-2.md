@@ -66,7 +66,7 @@ Planned: text tower plus pooling exported to ONNX and run on ONNX Runtime throug
 
 ## Hardware and compute estimate
 
-Text-tower spike on the workstation CPU (94 GB RAM) and RTX 4060 Ti. A few GB of disk for the snapshot and exported graphs.
+Text-tower spike on the workstation CPU and RTX 4060 Ti. A few GB of disk for the snapshot and exported graphs.
 
 ## Spike plan (P-014 style)
 
