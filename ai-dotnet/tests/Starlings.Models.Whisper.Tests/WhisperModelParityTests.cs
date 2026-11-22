@@ -90,6 +90,27 @@ public sealed class WhisperModelParityTests
     }
 
     [Fact]
+    public void DetectLanguageMatchesReference()
+    {
+        var (files, modelReason) = WhisperTestAssets.FindModel();
+        Assert.SkipWhen(files is null, modelReason);
+        float[] mel = Golden("golden-mel-numpy.f32", out string goldenReason);
+        Assert.SkipWhen(mel.Length == 0, goldenReason);
+        var (tokenPath, tokenReason) = WhisperTestAssets.FindGoldenFile("golden-detection-token.txt");
+        Assert.SkipWhen(tokenPath is null, tokenReason);
+        string[] tokenLine = File.ReadAllText(tokenPath!).Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        Assert.Equal(2, tokenLine.Length);
+        Assert.Equal("en", tokenLine[1]);
+
+        var cancellationToken = TestContext.Current.CancellationToken;
+        using var model = WhisperModel.Create(files!.EncoderPath, files.DecoderPath);
+        string detected = model.DetectLanguage(model.Encode(mel, cancellationToken), cancellationToken);
+
+        Assert.Equal(tokenLine[1], detected);
+        Assert.Equal(tokenLine[0], WhisperModel.LanguageToId[detected].ToString(System.Globalization.CultureInfo.InvariantCulture));
+    }
+
+    [Fact]
     public void GenerateMatchesTheStepwiseFullContextLoop()
     {
         // Generate reuses one ids buffer and one growing logits buffer; the ids must equal a loop that allocates fresh

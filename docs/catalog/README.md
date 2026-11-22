@@ -625,7 +625,7 @@ One table per family, one column per profile. Rows are every capability any prof
 | concurrent_calls | untested |
 | condition_on_previous_text | unsupported |
 | kv_cache | experimental |
-| language_detection | unsupported |
+| language_detection | experimental |
 | logprob_threshold | unsupported |
 | no_speech_detection | unsupported |
 | quantized | unsupported |
@@ -811,7 +811,7 @@ Informational (docs/kickoff.md, "Capability record fields"). Each value follows 
 - `qwen3.5-0.8b/ortgenai-int4-cpu`: The ONNX Runtime GenAI runtime version must equal the builder version that wrote the graph (0.17.1).
 - `qwen3.5-0.8b/ortgenai-int4-cpu`: Build in the environment of model-pipeline/reference/generation/requirements.txt. The same recipe gave a different model.onnx (766e49f3...) in M0 for an unexplained reason, and OpenDirectory checks SHA-256 by default, so a model.onnx digest mismatch means a different builder environment, not a corrupt download.
 - `whisper-large-v3-turbo/onnx-fp16-cpu`: No reference fixtures are adopted into protected/ and no gate has run; every capability is at most experimental.
-- `whisper-large-v3-turbo/onnx-fp16-cpu`: The evidence covers English only (eight LibriSpeech clips, 1.6 s to 59.1 s, asr-corpus-v3); other languages are untested.
+- `whisper-large-v3-turbo/onnx-fp16-cpu`: The evidence covers English only (eight LibriSpeech clips, 1.6 s to 59.1 s, asr-corpus-v3); other languages are untested. Language detection is reference-verified for English only (the golden clip detects `en`); a non-English detection reference clip is not yet in the corpus (#332).
 - `whisper-large-v3-turbo/onnx-fp16-cpu`: The fp16 encoder's hidden state drifts further from the fp32 reference on audio positions of 20 to 30 s clips (up to 0.498 in the #229 diagnostic, 0.110 on the 27.9 s composite of asr-corpus-v2, against 0.013 to 0.025 on 14 to 18 s clips), so hidden_max_abs was re-adopted at 0.6 (1.2 x the worst observed). Teacher-forced logits stay within logits_max_abs, and ids, transcripts and segment timestamps equal the reference.
 - `whisper-large-v3-turbo/onnx-fp16-cpu`: The KV-cache loop's logits are not bit-identical to the full-context loop's (up to about 1e-2: the fp16 graphs sum over the whole prefix in one product on one path and one row at a time on the other). The bound, kv_logits_max_abs 0.02 (2 x the worst observed 0.0101), is adopted into the protected tolerance file.
 - `whisper-large-v3-turbo/onnx-fp16-cpu`: The export repository has no license tag; see rights.notes.

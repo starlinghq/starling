@@ -20,7 +20,9 @@ public sealed record WhisperWindow(int SeekFrame, IReadOnlyList<int> Ids);
 /// <param name="Text">The transcript: every segment's ids decoded together without special or timestamp tokens.</param>
 /// <param name="Segments">The segments in time order.</param>
 /// <param name="Windows">The windows the sequential decode ran, in order.</param>
-public sealed record WhisperTranscription(string Text, IReadOnlyList<WhisperSegment> Segments, IReadOnlyList<WhisperWindow> Windows);
+/// <param name="DetectedLanguage">The detected language code, or <see langword="null"/> when an explicit language was given.</param>
+public sealed record WhisperTranscription(
+    string Text, IReadOnlyList<WhisperSegment> Segments, IReadOnlyList<WhisperWindow> Windows, string? DetectedLanguage = null);
 
 /// <summary>
 /// The split of one decoded window into segments and the seek advance, restated from transformers 5.18.0

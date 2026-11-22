@@ -30,7 +30,7 @@ public sealed class WhisperTranscriber : IDisposable
     /// (<see cref="WhisperModel.Create(WhisperModelFiles, WhisperOptions?)"/>), so the graphs are not read again.
     /// </summary>
     /// <exception cref="InvalidDataException">The tokenizer file is not the pinned one.</exception>
-    /// <exception cref="WhisperUnsupportedLanguageException"><see cref="WhisperOptions.Language"/> is <see langword="null"/> or not a language code of the model.</exception>
+    /// <exception cref="WhisperUnsupportedLanguageException"><see cref="WhisperOptions.Language"/> is a code that is not a key of <see cref="WhisperModel.LanguageToId"/> (<see langword="null"/> means detect).</exception>
     public static WhisperTranscriber Create(WhisperModelFiles files, WhisperOptions? options = null)
     {
         ArgumentNullException.ThrowIfNull(files);
@@ -48,7 +48,7 @@ public sealed class WhisperTranscriber : IDisposable
     /// only when <see cref="Starlings.Runtime.Onnx.OnnxSessionOptions.ExpectedModelSha256"/> is set on the session options.
     /// </summary>
     /// <exception cref="InvalidDataException">The tokenizer file is not the pinned one.</exception>
-    /// <exception cref="WhisperUnsupportedLanguageException"><see cref="WhisperOptions.Language"/> is <see langword="null"/> or not a language code of the model.</exception>
+    /// <exception cref="WhisperUnsupportedLanguageException"><see cref="WhisperOptions.Language"/> is a code that is not a key of <see cref="WhisperModel.LanguageToId"/> (<see langword="null"/> means detect).</exception>
     /// <exception cref="ArgumentException"><see cref="WhisperOptions.DecoderMode"/> is <see cref="WhisperDecoderMode.KvCache"/>, which needs the KV-cache graph (the four-path overload); checked before the tokenizer loads.</exception>
     public static WhisperTranscriber Create(string encoderPath, string decoderPath, string tokenizerPath, WhisperOptions? options = null)
     {
@@ -70,7 +70,7 @@ public sealed class WhisperTranscriber : IDisposable
     /// (<see cref="WhisperOptions.DecoderMode"/>).
     /// </summary>
     /// <exception cref="InvalidDataException">The tokenizer file is not the pinned one.</exception>
-    /// <exception cref="WhisperUnsupportedLanguageException"><see cref="WhisperOptions.Language"/> is <see langword="null"/> or not a language code of the model.</exception>
+    /// <exception cref="WhisperUnsupportedLanguageException"><see cref="WhisperOptions.Language"/> is a code that is not a key of <see cref="WhisperModel.LanguageToId"/> (<see langword="null"/> means detect).</exception>
     public static WhisperTranscriber Create(
         string encoderPath, string decoderPath, string decoderWithPastPath, string tokenizerPath, WhisperOptions? options = null)
     {
@@ -112,6 +112,20 @@ public sealed class WhisperTranscriber : IDisposable
     /// </summary>
     internal static bool IsLongForm(int samples) => samples / WhisperMelSpectrogram.HopLength > WhisperMelSpectrogram.NumFrames;
 
+    /// <summary>
+    /// Detects the language of a 16 kHz clip from its first 30 s window, as transformers does for
+    /// <c>generate()</c> with no <c>language</c> (<see cref="WhisperModel.DetectLanguage(float[], CancellationToken)"/>).
+    /// For a long clip the spectrogram is the whole clip, but only its first window is encoded for detection.
+    /// </summary>
+    /// <exception cref="ArgumentException">The clip is empty.</exception>
+    public string DetectLanguage(float[] waveform, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(waveform);
+        ObjectDisposedException.ThrowIf(Volatile.Read(ref _disposed) != 0, this);
+        cancellationToken.ThrowIfCancellationRequested();
+        return DetectLanguageMel(Features(waveform, cancellationToken), cancellationToken);
+    }
+
     /// <summary>The clip's spectrogram: zero-padded to 30 s up to 480,000 samples, otherwise over the whole clip.</summary>
     private static float[] Features(float[] waveform, CancellationToken cancellationToken) =>
         waveform.Length > WhisperMelSpectrogram.MaxSamples
@@ -131,7 +145,8 @@ public sealed class WhisperTranscriber : IDisposable
         }
 
         var hidden = _model.Encode(mel, cancellationToken);
-        var prompt = WhisperModel.Prompt(_options.Language!, transcribe: true, noTimestamps: true);
+        string language = _options.Language ?? _model.DetectLanguage(hidden, cancellationToken);
+        var prompt = WhisperModel.Prompt(language, transcribe: true, noTimestamps: true);
         var ids = _model.Generate(hidden, prompt, _options.MaxLength, cancellationToken);
         return _tokenizer.Decode(ids);
     }
@@ -173,7 +188,9 @@ public sealed class WhisperTranscriber : IDisposable
         }
 
         int totalFrames = mel.Length / WhisperModel.NumMelBins;
-        var prompt = WhisperModel.Prompt(_options.Language!, transcribe: true, noTimestamps: false);
+        string? detected = null;
+        string language = _options.Language ?? (detected = DetectLanguageMel(mel, cancellationToken));
+        var prompt = WhisperModel.Prompt(language, transcribe: true, noTimestamps: false);
         var windows = new List<WhisperWindow>();
         var segments = new List<WhisperSegment>();
         var allIds = new List<int>();
@@ -204,7 +221,34 @@ public sealed class WhisperTranscriber : IDisposable
             seek += advance;
         }
 
-        return new WhisperTranscription(_tokenizer.Decode(allIds), segments, windows);
+        return new WhisperTranscription(_tokenizer.Decode(allIds), segments, windows, detected);
+    }
+
+    /// <summary>
+    /// Detects the language of a clip's first 30 s window: the spectrogram's first <see cref="WhisperModel.NumFrames"/>
+    /// frames (zero-padded), encoded and passed to <see cref="WhisperModel.DetectLanguage(float[], CancellationToken)"/>,
+    /// as transformers detects from the first window only.
+    /// </summary>
+    /// <exception cref="ArgumentException">The spectrogram is empty or not a whole number of 128-bin frames.</exception>
+    public string DetectLanguageMel(float[] mel, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(mel);
+        ObjectDisposedException.ThrowIf(Volatile.Read(ref _disposed) != 0, this);
+        if (mel.Length == 0 || mel.Length % WhisperModel.NumMelBins != 0)
+        {
+            throw new ArgumentException($"Mel must hold a positive multiple of {WhisperModel.NumMelBins} floats, got {mel.Length}.", nameof(mel));
+        }
+
+        int totalFrames = mel.Length / WhisperModel.NumMelBins;
+        int frames = Math.Min(totalFrames, WhisperModel.NumFrames);
+        var window = new float[WhisperModel.NumMelBins * WhisperModel.NumFrames];
+        for (int m = 0; m < WhisperModel.NumMelBins; m++)
+        {
+            Array.Copy(mel, m * totalFrames, window, m * WhisperModel.NumFrames, frames);
+        }
+
+        var hidden = _model.Encode(window, cancellationToken);
+        return _model.DetectLanguage(hidden, cancellationToken);
     }
 
     /// <summary>The underlying model, for diagnostics.</summary>
