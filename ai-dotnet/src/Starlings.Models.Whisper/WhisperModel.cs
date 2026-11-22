@@ -20,8 +20,8 @@ namespace Starlings.Models.Whisper;
 /// that difference and checks that ids, segments and transcripts are identical.</para>
 /// <para><b>Prompt.</b> The decode prompt is <c>[&lt;|startoftranscript|&gt;, language, &lt;|transcribe|&gt;,
 /// &lt;|notimestamps|&gt;]</c>. The language token is the id of a language code (see <see cref="LanguageToId"/>).
-/// A language is required: language detection is unsupported (<see cref="WhisperCapabilities"/>,
-/// <c>language_detection</c>; starlinghq/starling#332).</para>
+/// A language is either given explicitly or detected first (<see cref="DetectLanguage(float[], CancellationToken)"/>,
+/// <c>language_detection</c> in <see cref="WhisperCapabilities"/>; starlinghq/starling#332).</para>
 /// <para><b>Suppression.</b> <see cref="SuppressTokens"/> are masked on every step; <see cref="BeginSuppressTokens"/>
 /// ([220, eos]) on the first step only, mirroring transformers <c>SuppressTokensLogitsProcessor</c> +
 /// <c>SuppressTokensAtBeginLogitsProcessor</c>.</para>
@@ -145,7 +145,7 @@ public sealed class WhisperModel : IDisposable
     /// Loads the encoder and the full-context decoder and owns the resulting sessions. Without the KV-cache graph the
     /// decoder loop is <see cref="WhisperDecoderMode.FullContext"/>.
     /// </summary>
-    /// <exception cref="WhisperUnsupportedLanguageException"><see cref="WhisperOptions.Language"/> is <see langword="null"/> or not a language code of the model (checked before any graph loads).</exception>
+    /// <exception cref="WhisperUnsupportedLanguageException"><see cref="WhisperOptions.Language"/> is a code that is not a key of <see cref="LanguageToId"/> (checked before any graph loads; <see langword="null"/> means detect).</exception>
     /// <exception cref="ArgumentException"><see cref="WhisperOptions.DecoderMode"/> is <see cref="WhisperDecoderMode.KvCache"/>, which needs the KV-cache graph.</exception>
     public static WhisperModel Create(string encoderPath, string decoderPath, WhisperOptions? options = null) =>
         Create(encoderPath, decoderPath, null, options);
@@ -155,7 +155,7 @@ public sealed class WhisperModel : IDisposable
     /// <see cref="WhisperDecoderMode.FullContext"/>, the KV-cache decoder (<c>decoder_with_past_model_fp16.onnx</c>), and
     /// owns the resulting sessions. With <paramref name="decoderWithPastPath"/> null the loop is full-context.
     /// </summary>
-    /// <exception cref="WhisperUnsupportedLanguageException"><see cref="WhisperOptions.Language"/> is <see langword="null"/> or not a language code of the model (checked before any graph loads).</exception>
+    /// <exception cref="WhisperUnsupportedLanguageException"><see cref="WhisperOptions.Language"/> is a code that is not a key of <see cref="LanguageToId"/> (checked before any graph loads; <see langword="null"/> means detect).</exception>
     /// <exception cref="ArgumentException"><see cref="WhisperOptions.DecoderMode"/> is <see cref="WhisperDecoderMode.KvCache"/> and <paramref name="decoderWithPastPath"/> is null.</exception>
     public static WhisperModel Create(string encoderPath, string decoderPath, string? decoderWithPastPath, WhisperOptions? options = null)
     {
@@ -217,6 +217,15 @@ public sealed class WhisperModel : IDisposable
         ["ba"] = 50355, ["jw"] = 50356, ["su"] = 50357, ["yue"] = 50358,
     };
 
+    /// <summary>The id of the first language token (<c>&lt;|en|&gt;</c>): language tokens occupy the contiguous range
+    /// <c>[LanguageIdFirst, LanguageIdLast]</c> (100 ids, <c>generation_config.lang_to_id</c> values).</summary>
+    public const int LanguageIdFirst = 50259;
+    /// <summary>The id of the last language token (<c>&lt;|yue|&gt;</c>); see <see cref="LanguageIdFirst"/>.</summary>
+    public const int LanguageIdLast = 50358;
+
+    /// <summary>Language token id to code, the inverse of <see cref="LanguageToId"/>.</summary>
+    public static IReadOnlyDictionary<int, string> IdToLanguage { get; } = LanguageToId.ToDictionary(pair => pair.Value, pair => pair.Key);
+
     /// <summary>Runs the encoder: <c>[128, 3000]</c> mel to <c>[1500, 1280]</c> last hidden state.</summary>
     public float[] Encode(float[] mel, CancellationToken cancellationToken = default)
     {
@@ -246,8 +255,66 @@ public sealed class WhisperModel : IDisposable
     }
 
     /// <summary>
-    /// Builds the decode prompt for the given language and task. The language is required: language detection is
-    /// unsupported (starlinghq/starling#332).
+    /// Detects the language of an encoded clip, as transformers 5.18.0
+    /// <c>WhisperGenerationMixin.detect_language</c> does with <c>generate()</c> and no <c>language</c>: run one decoder
+    /// step over the prompt <c>[&lt;|startoftranscript|&gt;]</c> (<see cref="StartOfTranscript"/>, the decoder start token),
+    /// mask every logit outside the language-token range <c>[<see cref="LanguageIdFirst"/>, <see cref="LanguageIdLast"/>]</c>,
+    /// and take the argmax. The detected token is returned as its two-letter code (<see cref="IdToLanguage"/>).
+    /// </summary>
+    /// <remarks>
+    /// <para>Like transformers, this runs on the first 30 s window only: for long-form audio the caller encodes the
+    /// first <see cref="NumFrames"/> frames and detects from that, then decodes the rest with the detected language
+    /// (transformers calls <c>detect_language</c> once, before the sequential decode, not per window).</para>
+    /// <para>The detection step applies no suppression or timestamp rules: transformers masks only the non-language
+    /// tokens, then argmaxes the raw logits.</para>
+    /// </remarks>
+    /// <exception cref="ArgumentException"><paramref name="encoderHidden"/> is not <see cref="EncoderSequenceLength"/> * <see cref="HiddenSize"/> floats.</exception>
+    public string DetectLanguage(float[] encoderHidden, CancellationToken cancellationToken = default)
+    {
+        ObjectDisposedException.ThrowIf(Volatile.Read(ref _disposed) != 0, this);
+        ArgumentNullException.ThrowIfNull(encoderHidden);
+        if (encoderHidden.Length != EncoderSequenceLength * HiddenSize)
+        {
+            throw new ArgumentException(
+                $"Encoder hidden state must be {EncoderSequenceLength * HiddenSize} floats, got {encoderHidden.Length}.",
+                nameof(encoderHidden));
+        }
+
+        var logits = DecodeLogits([StartOfTranscript], encoderHidden, cancellationToken);
+        int id = DetectLanguageToken(logits.AsSpan(logits.Length - VocabSize, VocabSize));
+        return IdToLanguage[id];
+    }
+
+    /// <summary>
+    /// The detected language token of one decoder-step logits row: every non-language token masked to
+    /// <c>-infinity</c>, then the argmax. The shared core of <see cref="DetectLanguage(float[], CancellationToken)"/>
+    /// and its tests; <paramref name="logits"/> is one row of <see cref="VocabSize"/> values.
+    /// </summary>
+    internal static int DetectLanguageToken(ReadOnlySpan<float> logits)
+    {
+        if (logits.Length != VocabSize)
+        {
+            throw new ArgumentException($"Expected {VocabSize} logits, got {logits.Length}.", nameof(logits));
+        }
+
+        int best = LanguageIdFirst;
+        float bestValue = float.NegativeInfinity;
+        for (int i = LanguageIdFirst; i <= LanguageIdLast; i++)
+        {
+            float value = logits[i];
+            if (value > bestValue)
+            {
+                bestValue = value;
+                best = i;
+            }
+        }
+
+        return best;
+    }
+
+    /// <summary>
+    /// Builds the decode prompt for the given language and task. The language must be given: detect it first with
+    /// <see cref="DetectLanguage(float[], CancellationToken)"/> when the caller has none (starlinghq/starling#332).
     /// </summary>
     /// <exception cref="WhisperUnsupportedLanguageException"><paramref name="language"/> is <see langword="null"/>, or not a key of <see cref="LanguageToId"/> (case-insensitive).</exception>
     public static int[] Prompt(string language, bool transcribe = true, bool noTimestamps = true)
@@ -313,7 +380,7 @@ public sealed class WhisperModel : IDisposable
     }
 
     /// <summary>The language-slot token of <paramref name="language"/>: its <see cref="LanguageToId"/> id.</summary>
-    /// <exception cref="WhisperUnsupportedLanguageException">The code is <see langword="null"/> (detection is unsupported), or not a key of <see cref="LanguageToId"/> (case-insensitive).</exception>
+    /// <exception cref="WhisperUnsupportedLanguageException">The code is <see langword="null"/> (detect it first with <see cref="DetectLanguage(float[], CancellationToken)"/>), or not a key of <see cref="LanguageToId"/> (case-insensitive).</exception>
     internal static int LanguageTokenId(string? language, string? paramName)
     {
         if (language is null)

@@ -99,13 +99,13 @@ foreach (WhisperSegment segment in result.Segments)
   precision; transformers computes it in float32. On a near-tie the two can pick differently (a timestamp against a
   text token); the route's replay of every reference window found no such tie on its corpus, but it is not a
   bit-for-bit guarantee.
-- Explicit language, a code of `WhisperModel.LanguageToId` (case-insensitive). `WhisperOptions.Language` defaults to
-  `"en"` (`WhisperOptions.DefaultLanguage`), the language the onboarding evidence covers. An unknown code throws
-  `WhisperUnsupportedLanguageException` (an `ArgumentException` that carries the code), from `WhisperTranscriber.Create`
-  and from `WhisperModel.Prompt`.
-- A language is required. `Language = null` throws `WhisperUnsupportedLanguageException` (with a null `Language`) from
-  `WhisperTranscriber.Create` and `WhisperModel.Create`, and `WhisperModel.Prompt(null)` throws it too: language
-  detection is unsupported (below).
+- A language may be given or detected. `WhisperOptions.Language` defaults to `"en"` (`WhisperOptions.DefaultLanguage`);
+  `null` detects it from the audio's first 30 s window, transformers 5.18.0 `detect_language` style (one decoder step
+  over `<|startoftranscript|>`, the language-token range masked, argmax; `WhisperModel.DetectLanguage`, and the detected
+  code on `WhisperTranscription.DetectedLanguage`). Detection is experimental and reference-verified for English; see
+  [#332](https://github.com/starlinghq/starling/issues/332).
+- An unknown code throws `WhisperUnsupportedLanguageException` (an `ArgumentException` that carries the code), from
+  `WhisperTranscriber.Create` and from `WhisperModel.Prompt`; `WhisperModel.Prompt(null)` throws it too (detect first).
 - `WhisperTranscriber.Create` checks `tokenizer.json` against `WhisperModelAssets.TokenizerSha256` before it loads the
   graphs, and throws `InvalidDataException` for any other file. The graphs are checked only when
   `OnnxSessionOptions.ExpectedModelSha256` is set.
@@ -113,9 +113,7 @@ foreach (WhisperSegment segment in result.Segments)
 
 ## Unsupported (for now)
 
-Language detection (transformers takes the most likely language token after `<|startoftranscript|>`; that is not
-implemented and has no reference case yet, [#332](https://github.com/starlinghq/starling/issues/332)), translation,
-word-level timestamps (the pinned graphs do not export the alignment heads' cross-attention), streaming,
+Translation, word-level timestamps (the pinned graphs do not export the alignment heads' cross-attention), streaming,
 the long-form temperature fallback and the compression-ratio, log-probability and no-speech thresholds, conditioning
 on earlier text or prompts, batching, the merged decoder graph, CUDA qualification, persistence, training.
 

@@ -36,10 +36,10 @@ public static class WhisperCapabilities
         // Log-mel spectrogram, encoder and greedy decoder verified bit-exact against the reference; not yet qualified.
         ["transcription"] = CapabilityStatus.Experimental,
         ["transcription.cuda"] = CapabilityStatus.Untested,
-        // A null language is rejected. transformers detects the language by taking the most likely language token after
-        // <|startoftranscript|>; that is not implemented, and no reference case covers it (the onboarding contract
-        // allows explicit languages only). starlinghq/starling#332 tracks it.
-        ["language_detection"] = CapabilityStatus.Unsupported,
+        // A null language detects it, transformers 5.18.0 detect_language style: one decoder step over
+        // <|startoftranscript|>, the language-token range masked, argmax. The detection token and ids match the
+        // reference on the route corpus; not yet qualified. starlinghq/starling#332.
+        ["language_detection"] = CapabilityStatus.Experimental,
         ["cancellation"] = CapabilityStatus.Experimental,
         ["concurrent_calls"] = CapabilityStatus.Untested,
         ["asset_acquisition"] = CapabilityStatus.Experimental,

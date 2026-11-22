@@ -183,7 +183,7 @@ capabilities:
   mlnet: unsupported
   transcription: experimental  # 8 LibriSpeech clips (1.6 s to 59.1 s): transcripts equal the PyTorch fp32 reference word for word
   transcription_cuda: untested
-  language_detection: unsupported  # a null language is rejected; transformers' detection has no reference case (#332)
+  language_detection: experimental  # a null language detects it (transformers detect_language); detection token + ids match the reference on the route corpus (#332)
   concurrent_calls: untested
   asset_acquisition: experimental  # the shared Starlings.Acquisition download and verification (pinned size and SHA-256)
   translation: unsupported
@@ -245,7 +245,8 @@ maintenance:
       experimental.
     - >-
       The evidence covers English only (eight LibriSpeech clips, 1.6 s to 59.1 s, asr-corpus-v3); other languages are
-      untested.
+      untested. Language detection is reference-verified for English only (the golden clip detects `en`); a non-English
+      detection reference clip is not yet in the corpus (#332).
     - >-
       The fp16 encoder's hidden state drifts further from the fp32 reference on audio positions of 20 to 30 s clips
       (up to 0.498 in the #229 diagnostic, 0.110 on the 27.9 s composite of asr-corpus-v2, against 0.013 to 0.025 on 14
