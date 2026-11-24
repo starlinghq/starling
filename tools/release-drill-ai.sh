@@ -10,7 +10,7 @@
 #      Models.Qwen35, Models.Qwen35.OnnxGenAI, Models.EmbeddingGemma2, Models.EmbeddingGemma2.Extensions.AI,
 #      Models.EmbeddingGemma2.MLNet, Models.EmbeddingGemma2.Imaging.SkiaSharp, Models.EmbeddingGemma2.Video.FFmpeg,
 #      Models.EmbeddingGemma2.Video.FFmpeg9, Models.Qwen35.Extensions.AI, Models.Kev, Models.Kev.Onnx, Models.QwenChat,
-#      Models.QwenChat.OnnxGenAI, Models.Bert, Models.Lfm3), locked restore, empty private NuGet cache,
+#      Models.QwenChat.OnnxGenAI, Models.Bert, Models.Lfm3, Models.PaddleOcr), locked restore, empty private NuGet cache,
 #   2. inspects every nuspec (version, MIT OR Apache-2.0 or, for Models.Lfm3, the packed LFM Open License file with
 #      license acceptance required, readme, repository commit, exact dependency list: no native ONNX Runtime or
 #      ONNX Runtime GenAI, no Microsoft.ML.Tokenizers, no FFmpeg bindings package), the packed files (no
@@ -351,6 +351,7 @@ projects=(
     ai-dotnet/src/Starlings.Models.QwenChat.OnnxGenAI
     ai-dotnet/src/Starlings.Models.Bert
     ai-dotnet/src/Starlings.Models.Lfm3
+    ai-dotnet/src/Starlings.Models.PaddleOcr
 )
 pack_sha="$sha"
 if [[ -z "$packages_from" ]]; then
@@ -477,6 +478,11 @@ expect_deps() {
             echo "Starlings.Generation.Abstractions [$ai_version]"
             echo "Starlings.Runtime.Onnx [$ai_version]"
             echo "Starlings.Tokenizers [$tok_version]" ;;
+        Starlings.Models.PaddleOcr)
+            # No tokenizer: the recognizer's dictionary comes from its pinned inference.yml.
+            echo "Starlings.Acquisition [$ai_version]"
+            echo "Starlings.Models.Abstractions [$ai_version]"
+            echo "Starlings.Runtime.Onnx [$ai_version]" ;;
     esac
 }
 for proj in "${projects[@]}"; do

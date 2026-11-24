@@ -89,7 +89,7 @@
         "tasks": {
           "type": "array",
           "minItems": 1,
-          "items": { "enum": ["embedding", "image-embedding", "video-embedding", "classification", "extraction", "reranking", "generation", "decision", "transcription"] }
+          "items": { "enum": ["embedding", "image-embedding", "video-embedding", "classification", "extraction", "reranking", "generation", "decision", "transcription", "ocr"] }
         },
         "max_input_tokens": { "type": "integer", "minimum": 1 },
         "offsets_unit": {
@@ -138,9 +138,9 @@
     },
 
     "processing": {
+      "description": "A profile whose model reads token ids has a tokenizer; an OCR profile has none and states its recognizer's character dictionary instead (the root-level if/then/else).",
       "type": "object",
       "additionalProperties": false,
-      "required": ["tokenizer"],
       "properties": {
         "tokenizer": {
           "type": "object",
@@ -166,6 +166,19 @@
           "properties": {
             "asset": { "$ref": "#/$defs/file" },
             "renderer": { "enum": ["owned", "backend"] }
+          }
+        },
+        "dictionary": {
+          "description": "Character dictionary of a CTC recognizer (OCR): the file it is read from, its entry count and the SHA-256 of its entries, and the label map's blank index and space entry.",
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["source", "entries", "sha256", "blank", "space"],
+          "properties": {
+            "source": { "$ref": "#/$defs/file" },
+            "entries": { "type": "integer", "minimum": 1 },
+            "sha256": { "$ref": "#/$defs/sha256" },
+            "blank": { "type": "integer", "minimum": 0 },
+            "space": { "type": "boolean" }
           }
         },
         "decoding": { "type": "object" },
@@ -294,6 +307,13 @@
       }
     }
   },
+
+  "if": {
+    "properties": { "behavior": { "properties": { "tasks": { "contains": { "const": "ocr" } } }, "required": ["tasks"] } },
+    "required": ["behavior"]
+  },
+  "then": { "properties": { "processing": { "required": ["dictionary"], "not": { "required": ["tokenizer"] } } } },
+  "else": { "properties": { "processing": { "required": ["tokenizer"], "not": { "required": ["dictionary"] } } } },
 
   "$defs": {
     "status": { "enum": ["supported", "unsupported", "experimental", "untested"] },

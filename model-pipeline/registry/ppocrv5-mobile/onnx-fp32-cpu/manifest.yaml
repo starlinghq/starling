@@ -1,0 +1,219 @@
+# PP-OCRv5 mobile OCR (Starlings.Models.PaddleOcr, design #224, model request #223): the official PaddlePaddle ONNX
+# exports of the DB text detector (PaddlePaddle/PP-OCRv5_mobile_det_onnx) and the CTC line recognizer
+# (PaddlePaddle/PP-OCRv5_mobile_rec_onnx) on ONNX Runtime 1.30.0, CPU provider, with owned C# pre- and post-processing
+# (PaddleOcrModelAssets.DetectorLock and RecognizerLock pin the same four files). Admission:
+# model-pipeline/admissions/ppocrv5-mobile.md (Experimental, 2026-11-23). Candidate contract:
+# model-pipeline/candidates/ppocrv5-mobile/profile.json (onboarding route ppocr-onnx-cpu-v1,
+# recipes/ppocrv5-mobile-cpu.yaml). Development evidence: the route's run of 2026-10-30 recorded in #228 (487 checks
+# passed on 10 images and 36 reference lines); no evidence directory is committed. References are proposed, nothing is
+# adopted into protected/, and no gate has run.
+schema_version: 1
+id: ppocrv5-mobile/onnx-fp32-cpu
+# Experimental: development parity on the onboarding route only (proposed references, predeclared candidate policy); no gate ran.
+maturity: experimental
+
+origin:
+  code:
+    # PaddleX at tag v3.7.2, whose PP-OCRv5 pre- and post-processing the package restates (ai-dotnet/PROVENANCE.md);
+    # the route's reference runs the paddlex 3.7.2 wheel hash-pinned in model-pipeline/reference/ppocr/requirements.txt.
+    url: https://github.com/PaddlePaddle/PaddleX
+    revision: "ffb64904d23708863ff5b8da312a5cbd52a7f462"
+  weights:
+    # The detector export the package runs, downloaded from this repository at the pinned commit.
+    url: https://huggingface.co/PaddlePaddle/PP-OCRv5_mobile_det_onnx
+    revision: "e6f4fa85f00e168c862bc462aebca69eef9b3d3d"
+  base:
+    # The recognizer export: the base/ files below are this repository at this revision. It is not a base model; the
+    # schema has one weights source, so a second repository's files are spelled base/... (as the Kev manifests do), and
+    # tools/check-provenance.py resolves them here.
+    url: https://huggingface.co/PaddlePaddle/PP-OCRv5_mobile_rec_onnx
+    revision: "ed152b8b495f84de93cda5709d768548a9127622"
+  files:
+    # PaddleOcrModelAssets.DetectorLock: PaddlePaddle/PP-OCRv5_mobile_det_onnx at the pinned commit.
+    - path: inference.onnx
+      sha256: "a431985659dc921974177a95adcfbb90fd9e51989a5e04d70d0b75f597b6e61d"
+      size: 4826518
+    - path: inference.yml
+      sha256: "98069072e1b6b37d727fd9d9f11725faa46d6ea0de012f2ed26caea011c37699"
+      size: 903
+    # PaddleOcrModelAssets.RecognizerLock: PaddlePaddle/PP-OCRv5_mobile_rec_onnx at the pinned commit (origin.base).
+    # The Paddle inference models the exports came from (PaddlePaddle/PP-OCRv5_mobile_det at 0d63e78e and
+    # PaddlePaddle/PP-OCRv5_mobile_rec at 682f2053) are the route's reference, pinned in the candidate contract
+    # (origin.components), not files of this profile.
+    - path: base/inference.onnx
+      sha256: "da72dc72ca4dc220df0dfde68c1dedc31c58d3e76a25871122e5056227d50092"
+      size: 16534782
+    - path: base/inference.yml
+      sha256: "5dfeb2777f6d0db8177d8128a8acfcf6e6276dc4ac73ea3bf0dc06d6a5e85d8e"
+      size: 148345
+  attribution: >-
+    PP-OCRv5_mobile_det and PP-OCRv5_mobile_rec by PaddlePaddle (PaddleOCR), official ONNX exports
+    PaddlePaddle/PP-OCRv5_mobile_det_onnx and PaddlePaddle/PP-OCRv5_mobile_rec_onnx, Apache-2.0.
+
+rights:
+  code_license: MIT OR Apache-2.0
+  weights_license: Apache-2.0
+  # No tokenizer: the recognizer's character dictionary is in its inference.yml, under the weights' license.
+  tokenizer_terms: Apache-2.0
+  redistribution: download
+  notes: >-
+    Weights and configuration: Apache-2.0 (license: apache-2.0 in the model card front matter of both export
+    repositories at the pinned commits). The package's code is MIT OR Apache-2.0; the PaddleX, OpenCV, Clipper and NumPy
+    behaviour it restates is recorded in ai-dotnet/THIRD-PARTY-NOTICES.md (packed) and ai-dotnet/PROVENANCE.md. Nothing
+    is bundled in the package: the application downloads the four pinned files explicitly
+    (PaddleOcrModelAssets.DownloadAsync) from the public PaddlePaddle repositories, verified by size and SHA-256.
+
+behavior:
+  tasks: [ocr]
+  # No token input. The recognizer's widest input in pixels (the CTC sequence it reads): a line crop is resized to
+  # height 48 and its width from the aspect ratio, at least 320 and at most 3,200.
+  max_input_tokens: 3200
+  offsets_unit: none
+  # Images above 32,767 pixels per side or 64 Mpx are refused (PaddleOcrImageTooLargeException). Nothing is truncated:
+  # the detector input is resized to the 960 side limit, and a line crop wider than 3,200 is resized to that width.
+  truncation: error
+  defaults:
+    input: decoded pixels (PaddleOcrImage.FromRgb24, FromBgr24, FromRgba32), held as BGR; no image file decoding
+    output: text lines in PaddleOCR's reading order, each with its quadrilateral, text, confidence and detection score
+    detection: >-
+      DB: probability > 0.3, box score (fast mode) >= 0.6, unclip ratio 1.5, quadrilateral boxes, at most 1,000
+      candidates, boxes shorter than 3 dropped
+    reading_order: top to bottom by the first corner, then left to right within 10 pixels of height
+    crop: min-area rectangle perspective warp (bicubic, replicated border); crops at least 1.5 times taller than wide are turned 90 degrees
+    recognition: greedy CTC, one crop per run; confidence = mean of the kept maxima; no score threshold
+  unsupported:
+    - "text-line orientation classification (upside-down lines are read as they stand)"
+    - "document orientation classification and document unwarping"
+    - "polygon (curved) boxes and word boxes"
+    - "batched recognition"
+    - "the PP-OCRv5 server models"
+    - "image file decoding (the caller decodes)"
+    - "GPU execution providers (CUDA untested)"
+    - "quantized graphs"
+    - "training and fine-tuning"
+    - "Microsoft.Extensions.AI and ML.NET adapters"
+
+processing:
+  dictionary:
+    # The recognizer's character_dict from its pinned inference.yml (PaddleOcrConfiguration checks size, uniqueness
+    # and digest). The digest is SHA-256 of the entries joined by "\n" (PaddleOcrContract.DictionarySha256). Label
+    # map: blank, the 18,383 entries, then the space character (18,385 classes).
+    source:
+      path: base/inference.yml
+      sha256: "5dfeb2777f6d0db8177d8128a8acfcf6e6276dc4ac73ea3bf0dc06d6a5e85d8e"
+      size: 148345
+    entries: 18383
+    sha256: "17665d27ed39f0deb82007859992d626d3105d0ee4578c120b7c72138dc04d05"
+    blank: 0
+    space: true
+  image_processor:
+    # Every constant is fixed by the contract and checked field by field against both inference.yml files.
+    color_order: BGR
+    detector_resize: >-
+      longer side limited to 960 (4,000 cap), sides rounded half to even to multiples of 32, OpenCV INTER_LINEAR
+      (fixed-point uint8, restated bit for bit); images under 32 x 32 zero-padded first
+    detector_normalize: "(x / 255 - mean) / std, mean (0.485, 0.456, 0.406), std (0.229, 0.224, 0.225)"
+    recognizer_resize: height 48, width from the aspect ratio (320 to 3,200), zero-padded
+    recognizer_normalize: "(x / 255 - 0.5) / 0.5"
+
+execution:
+  backend:
+    name: onnxruntime
+    version: 1.30.0
+    binding: Microsoft.ML.OnnxRuntime
+  precision: fp32
+  variant: reference
+  graph:
+    # Two graphs, run one after the other per image: the detector once, the recognizer once per line crop.
+    inputs:
+      - { name: x, type: float32, shape: [batch, 3, height, width], graph: inference.onnx }
+      - { name: x, type: float32, shape: [batch, 3, 48, width], graph: base/inference.onnx }
+    outputs:
+      - { name: fetch_name_0, type: float32, shape: [batch, 1, height, width], graph: inference.onnx }
+      - { name: fetch_name_0, type: float32, shape: [batch, steps, 18385], graph: base/inference.onnx }
+
+capabilities:
+  # Starlings.Models.PaddleOcr (PaddleOcrCapabilities.All, same statuses; the package key's "." is spelled "_" here,
+  # and ai-dotnet/tests/Starlings.Models.PaddleOcr.Tests RegistryContractTests keeps them equal). Experimental where the
+  # onboarding route compared the package with PaddleOCR on the Paddle inference engine and with Python ONNX Runtime (no
+  # adopted reference, no gate); unsupported where the package does not offer it; untested where no evidence exists.
+  batch: unsupported
+  streaming: unsupported
+  cancellation: experimental  # between lines; a cancelled token runs nothing (route evidence)
+  persistence: unsupported
+  training: unsupported
+  aot: untested
+  extensions_ai: unsupported
+  mlnet: unsupported
+  text_detection: experimental  # detector input byte for byte equal to the reference; boxes IoU 1 on the corpus
+  text_recognition: experimental  # every crop byte for byte equal; recognizer probabilities equal Python ONNX Runtime's
+  ocr: experimental  # end to end from the image: every box matches (IoU 1) and every line's text equals the reference
+  languages_zh_hans: experimental
+  languages_en: experimental
+  languages_zh_hant: untested  # in the dictionary; no corpus image
+  languages_ja: untested  # in the dictionary; no corpus image
+  rotated_text: experimental  # rotated, perspective-warped and sideways corpus images
+  asset_acquisition: untested
+  cuda: untested
+  concurrent_calls: untested
+  textline_orientation: unsupported
+  document_orientation: unsupported
+  document_unwarping: unsupported
+  polygon_boxes: unsupported
+  word_boxes: unsupported
+  batched_recognition: unsupported
+  server_models: unsupported
+  image_decoding: unsupported
+  quantized: unsupported
+
+compatibility:
+  # Linux x64 CPU: development evidence from the onboarding route on 2026-10-30 (#228). No gate.
+  - os: linux
+    arch: x64
+    provider: cpu
+    status: experimental
+    verified: 2026-10-30
+  - os: windows
+    arch: x64
+    provider: cpu
+    status: untested
+  - os: linux
+    arch: x64
+    provider: cuda
+    status: untested
+
+qualification:
+  reference_runner: model-pipeline/reference/ppocr/run_ppocr.py
+  # No protected fixtures exist for this profile: the proposed corpus the recipe runs (recipes/ppocrv5-mobile-cpu.yaml;
+  # ten rendered images, MIT OR Apache-2.0, fonts SIL OFL 1.1).
+  fixtures: model-pipeline/reference/corpus/ocr-corpus-v1.jsonl
+  # No protected tolerances: the predeclared candidate policy (evaluation.policy, status proposed). Adoption into
+  # protected/ is a separate change.
+  tolerances: model-pipeline/candidates/ppocrv5-mobile/profile.json
+  gates:
+    G0: { status: not-run }
+    G1: { status: not-run }
+    G2: { status: not-run }
+    G3: { status: not-run }
+    G4: { status: not-run }
+    G5: { status: not-run }
+    G6: { status: not-run }
+    G7: { status: not-run }
+
+maintenance:
+  # The detector export (origin.weights). The recognizer export's main is also its pin (ed152b8b) on 2026-11-23.
+  latest_known_upstream_revision: "e6f4fa85f00e168c862bc462aebca69eef9b3d3d"
+  latest_verified_upstream_revision: "e6f4fa85f00e168c862bc462aebca69eef9b3d3d"
+  last_checked: 2026-11-23
+  review_date: 2027-02-23
+  known_issues:
+    - >-
+      The references are proposed, not adopted into protected/, and no gate has run; every capability is at most
+      experimental.
+    - >-
+      The evidence covers English and Simplified Chinese on ten rendered images; Traditional Chinese and Japanese are in
+      the dictionary but untested, and no real scan or photograph is in the corpus.
+    - >-
+      Upside-down lines are read as they stand: the text-line orientation classifier is not implemented.
+    - >-
+      A single PaddleOcrEngine is not proven safe for concurrent calls.

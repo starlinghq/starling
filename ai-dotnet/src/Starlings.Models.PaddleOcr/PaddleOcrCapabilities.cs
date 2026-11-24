@@ -9,7 +9,7 @@ namespace Starlings.Models.PaddleOcr;
 /// </remarks>
 public static class PaddleOcrCapabilities
 {
-    /// <summary>The proposed profile of this package: fp32 graphs on the CPU provider. Experimental.</summary>
+    /// <summary>The registry profile of this package: fp32 graphs on the CPU provider. Experimental.</summary>
     public const string CpuProfile = "ppocrv5-mobile/onnx-fp32-cpu";
 
     /// <summary>Status per capability.</summary>
@@ -39,6 +39,11 @@ public static class PaddleOcrCapabilities
         ["polygon_boxes"] = CapabilityStatus.Unsupported,
         ["word_boxes"] = CapabilityStatus.Unsupported,
         ["batched_recognition"] = CapabilityStatus.Unsupported,
+        // Shared capability rows every registry manifest states (model-manifest.schema.json); not offered here.
+        ["batch"] = CapabilityStatus.Unsupported,
+        ["streaming"] = CapabilityStatus.Unsupported,
+        ["persistence"] = CapabilityStatus.Unsupported,
+        ["mlnet"] = CapabilityStatus.Unsupported,
         ["server_models"] = CapabilityStatus.Unsupported,
         ["image_decoding"] = CapabilityStatus.Unsupported,
         ["extensions_ai"] = CapabilityStatus.Unsupported,

@@ -6,7 +6,7 @@ ONNX Runtime session ownership for Starlings models: provider selection with no 
 
 ## Maturity
 
-<!-- catalog:maturity profiles=multilingual-e5-small/onnx-fp32-cpu,multilingual-e5-small/onnx-fp32-cuda,gliner2-base-v1/*,embeddinggemma-2/*,kev-0.8b/*,kev-4b/*,whisper-large-v3-turbo/*,all-minilm-l6-v2/*,bge-small-en-v1.5/*,bge-base-en-v1.5/*,bge-m3/*,ms-marco-minilm-l6-v2/*,bge-reranker-v2-m3/*,nomic-embed-text-v1.5/*,paraphrase-multilingual-minilm-l12-v2/*,gte-reranker-modernbert-base/* -->
+<!-- catalog:maturity profiles=multilingual-e5-small/onnx-fp32-cpu,multilingual-e5-small/onnx-fp32-cuda,gliner2-base-v1/*,embeddinggemma-2/*,kev-0.8b/*,kev-4b/*,whisper-large-v3-turbo/*,all-minilm-l6-v2/*,bge-small-en-v1.5/*,bge-base-en-v1.5/*,bge-m3/*,ms-marco-minilm-l6-v2/*,bge-reranker-v2-m3/*,nomic-embed-text-v1.5/*,paraphrase-multilingual-minilm-l12-v2/*,gte-reranker-modernbert-base/*,ppocrv5-mobile/* -->
 Maturity is per profile, generated from the registry manifests by `model-pipeline catalog` (do not edit this table by hand). Gates, evidence and capabilities per profile: the [model catalog](https://github.com/starlinghq/starling/blob/main/docs/catalog/README.md).
 
 | Profile | Maturity | Platforms |
@@ -34,6 +34,7 @@ Maturity is per profile, generated from the registry manifests by `model-pipelin
 | `multilingual-e5-small/onnx-fp32-cuda` | stable | linux-x64 cuda: supported; windows-x64 cuda: untested |
 | `nomic-embed-text-v1.5/onnx-fp32-cpu` | experimental | linux-x64 cpu: experimental; windows-x64 cpu: untested |
 | `paraphrase-multilingual-minilm-l12-v2/onnx-fp32-cpu` | experimental | linux-x64 cpu: experimental; windows-x64 cpu: untested |
+| `ppocrv5-mobile/onnx-fp32-cpu` | experimental | linux-x64 cpu: experimental; linux-x64 cuda: untested; windows-x64 cpu: untested |
 | `whisper-large-v3-turbo/onnx-fp16-cpu` | experimental | linux-x64 cpu: experimental; linux-x64 cuda: untested; windows-x64 cpu: untested |
 <!-- /catalog:maturity -->
 

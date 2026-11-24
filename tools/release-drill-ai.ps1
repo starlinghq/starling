@@ -197,7 +197,7 @@ try {
         'Starlings.Generation.Abstractions', 'Starlings.Generation.OnnxGenAI', 'Starlings.Models.Qwen35',
         'Starlings.Models.Qwen35.OnnxGenAI', 'Starlings.Models.Qwen35.Extensions.AI', 'Starlings.Models.Kev',
         'Starlings.Models.Kev.Onnx', 'Starlings.Models.QwenChat', 'Starlings.Models.QwenChat.OnnxGenAI', 'Starlings.Models.Bert',
-        'Starlings.Models.Lfm3')
+        'Starlings.Models.Lfm3', 'Starlings.Models.PaddleOcr')
     $env:CI = 'true'
     Push-Location $src
     foreach ($id in $projects) {
@@ -235,6 +235,7 @@ try {
         'Starlings.Models.QwenChat.OnnxGenAI'                = @("Starlings.Acquisition [$aiVersion]", "Starlings.Generation.OnnxGenAI [$aiVersion]", "Starlings.Models.Abstractions [$aiVersion]", "Starlings.Models.QwenChat [$aiVersion]", "Starlings.Tokenizers [$tokVersion]")
         'Starlings.Models.Bert'                              = @("Starlings.Acquisition [$aiVersion]", "Starlings.Models.Abstractions [$aiVersion]", "Starlings.Runtime.Onnx [$aiVersion]", "Starlings.Tokenizers [$tokVersion]")
         'Starlings.Models.Lfm3'                              = @("Starlings.Acquisition [$aiVersion]", "Starlings.Generation.Abstractions [$aiVersion]", "Starlings.Models.Abstractions [$aiVersion]", "Starlings.Runtime.Onnx [$aiVersion]", "Starlings.Tokenizers [$tokVersion]")
+        'Starlings.Models.PaddleOcr'                         = @("Starlings.Acquisition [$aiVersion]", "Starlings.Models.Abstractions [$aiVersion]", "Starlings.Runtime.Onnx [$aiVersion]")
     }
     Add-Type -AssemblyName System.IO.Compression.FileSystem
     function Read-Entry([string]$Zip, [string]$Name) {
