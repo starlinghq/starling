@@ -9,16 +9,30 @@ ships the asset locks, not the weights; acquire them explicitly. The application
 
 ⭐ If this package is useful, [star Starling on GitHub](https://github.com/starlinghq/starling).
 
-This library is **experimental** and not yet qualified. Its evidence is proposed: the model-pipeline route
-`ppocr-onnx-cpu-v1` (`model-pipeline/candidates/ppocrv5-mobile/`) compares it against PaddleOCR 3.7.0 on the Paddle
-inference engine on ten rendered images. No tolerances or reference fixtures are adopted, no registry manifest exists
-yet and no release gate has run.
+This library is **experimental** and not yet qualified: admitted at Experimental
+(`model-pipeline/admissions/ppocrv5-mobile.md`, model request #223), with development evidence and no release gate. The
+evidence is proposed: the model-pipeline route `ppocr-onnx-cpu-v1` (`model-pipeline/candidates/ppocrv5-mobile/`)
+compares it against PaddleOCR 3.7.0 on the Paddle inference engine on ten rendered images. No tolerances or reference
+fixtures are adopted and no release gate has run.
+
+## Maturity
+
+<!-- catalog:maturity profiles=ppocrv5-mobile/* -->
+Maturity is per profile, generated from the registry manifests by `model-pipeline catalog` (do not edit this table by hand). Gates, evidence and capabilities per profile: the [model catalog](https://github.com/starlinghq/starling/blob/main/docs/catalog/README.md).
+
+| Profile | Maturity | Platforms |
+| --- | --- | --- |
+| `ppocrv5-mobile/onnx-fp32-cpu` | experimental | linux-x64 cpu: experimental; linux-x64 cuda: untested; windows-x64 cpu: untested |
+<!-- /catalog:maturity -->
 
 ## Install
 
-Not published to nuget.org: the package is not in the 0.5.0 publishable set. Build it from this repository (a
-`ProjectReference` to `ai-dotnet/src/Starlings.Models.PaddleOcr/Starlings.Models.PaddleOcr.csproj`) and add
-`Microsoft.ML.OnnxRuntime` (CPU natives) to the application.
+Published to nuget.org from the next ai-dotnet release:
+
+```
+dotnet add package Starlings.Models.PaddleOcr
+dotnet add package Microsoft.ML.OnnxRuntime     # CPU native runtime
+```
 
 ## Quick start
 
@@ -96,8 +110,8 @@ safe for concurrent calls.
 ## Capabilities
 
 See `PaddleOcrCapabilities` (statuses are the shared `Starlings.Models.CapabilityStatus`): every capability has an
-explicit status, and none is `Supported`. The proposed profile
-is `PaddleOcrCapabilities.CpuProfile` (`ppocrv5-mobile/onnx-fp32-cpu`).
+explicit status, and none is `Supported`. The registry profile is `PaddleOcrCapabilities.CpuProfile`
+(`ppocrv5-mobile/onnx-fp32-cpu`).
 
 ## Third-party code
 

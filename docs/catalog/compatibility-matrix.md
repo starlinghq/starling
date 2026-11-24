@@ -32,6 +32,7 @@ Platform (OS, architecture) by runtime and execution provider by profile. A cell
 | multilingual-e5-small/onnx-fp32-cuda | 1.30.0 | stable | unrecorded | supported (2026-10-16) | unrecorded | unrecorded | unrecorded | unrecorded | unrecorded | unrecorded | unrecorded | untested | unrecorded | unrecorded |
 | nomic-embed-text-v1.5/onnx-fp32-cpu | 1.30.0 | experimental | experimental | unrecorded | unrecorded | unrecorded | unrecorded | unrecorded | unrecorded | unrecorded | untested | unrecorded | unrecorded | unrecorded |
 | paraphrase-multilingual-minilm-l12-v2/onnx-fp32-cpu | 1.30.0 | experimental | experimental | unrecorded | unrecorded | unrecorded | unrecorded | unrecorded | unrecorded | unrecorded | untested | unrecorded | unrecorded | unrecorded |
+| ppocrv5-mobile/onnx-fp32-cpu | 1.30.0 | experimental | experimental (2026-10-30) | untested | unrecorded | unrecorded | unrecorded | unrecorded | unrecorded | unrecorded | untested | unrecorded | unrecorded | unrecorded |
 | qwen3-embedding-0.6b/onnx-fp32-cpu | 1.30.0 | experimental | experimental (2026-11-02) | unsupported | unrecorded | unrecorded | unrecorded | unrecorded | unrecorded | unrecorded | untested | unrecorded | unrecorded | unrecorded |
 | whisper-large-v3-turbo/onnx-fp16-cpu | 1.30.0 | experimental | experimental (2026-10-23) | untested | unrecorded | unrecorded | unrecorded | unrecorded | unrecorded | unrecorded | untested | unrecorded | unrecorded | unrecorded |
 

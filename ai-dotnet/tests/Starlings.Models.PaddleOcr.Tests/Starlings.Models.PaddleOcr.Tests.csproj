@@ -17,6 +17,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Include="../Shared/Registry/*.cs" Link="Shared/Registry/%(Filename)%(Extension)" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="../../src/Starlings.Models.PaddleOcr/Starlings.Models.PaddleOcr.csproj" />
     <!-- Decodes the corpus PNGs for the model-gated end-to-end test. -->
     <ProjectReference Include="../../src/Starlings.Models.EmbeddingGemma2.Imaging.SkiaSharp/Starlings.Models.EmbeddingGemma2.Imaging.SkiaSharp.csproj" />

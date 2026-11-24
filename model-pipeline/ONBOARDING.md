@@ -253,8 +253,9 @@ accepts only the pinned official ONNX exports `PaddlePaddle/PP-OCRv5_mobile_det_
   must give no line). The reference stage must name the Paddle engine, CPU, oneDNN off and the pinned versions.
 - `--distribution` is refused, and the workflow command takes no extra snapshots, so PP-OCRv5 runs only through `run`.
 
-References and the comparison policy are proposals; no protected tolerances or fixtures exist for this profile, and
-there is no registry manifest yet (the maintainer adds it with the adopted tolerances).
+References and the comparison policy are proposals; no protected tolerances or fixtures exist for this profile. The
+registry manifest `registry/ppocrv5-mobile/onnx-fp32-cpu/manifest.yaml` is Experimental with every gate not run
+(admitted 2026-11-23, `admissions/ppocrv5-mobile.md`); its tolerances point at the candidate policy until adopted ones exist.
 
 ## GenAI chat route
 

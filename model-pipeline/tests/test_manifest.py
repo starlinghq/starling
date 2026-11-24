@@ -42,6 +42,50 @@ def test_mutable_or_short_revisions_are_rejected(tmp_path, revision):
     assert validate_file(path)
 
 
+DICTIONARY = {
+    "source": {"path": "inference.yml", "sha256": "0" * 64, "size": 1},
+    "entries": 2,
+    "sha256": "1" * 64,
+    "blank": 0,
+    "space": True,
+}
+
+
+def ocr(m):
+    m["behavior"]["tasks"] = ["ocr"]
+    del m["processing"]["tokenizer"]
+    m["processing"]["dictionary"] = dict(DICTIONARY)
+
+
+def test_an_ocr_profile_states_a_dictionary_instead_of_a_tokenizer(tmp_path):
+    assert validate_file(write_variant(tmp_path, ocr)) == []
+
+
+def test_an_ocr_profile_needs_its_dictionary_and_no_tokenizer(tmp_path):
+    def no_dictionary(m):
+        ocr(m)
+        del m["processing"]["dictionary"]
+
+    def tokenizer_too(m):
+        tokenizer = m["processing"]["tokenizer"]
+        ocr(m)
+        m["processing"]["tokenizer"] = tokenizer
+
+    assert any("dictionary" in p.message for p in validate_file(write_variant(tmp_path, no_dictionary)))
+    assert validate_file(write_variant(tmp_path, tokenizer_too))
+
+
+def test_other_profiles_need_a_tokenizer_and_no_dictionary(tmp_path):
+    def no_tokenizer(m):
+        del m["processing"]["tokenizer"]
+
+    def dictionary_too(m):
+        m["processing"]["dictionary"] = dict(DICTIONARY)
+
+    assert any("tokenizer" in p.message for p in validate_file(write_variant(tmp_path, no_tokenizer)))
+    assert validate_file(write_variant(tmp_path, dictionary_too))
+
+
 def generator(m):
     m["behavior"]["tasks"] = ["generation"]
     m["behavior"]["generation"] = {
