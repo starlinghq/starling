@@ -85,7 +85,7 @@ Experimental; registry manifests under `model-pipeline/registry/`).
 | `paraphrase-multilingual` | `paraphrase-multilingual-minilm-l12-v2/onnx-fp32-cpu` | embeddings | 128 | mean | 384 | none | `none` |
 | `gte-reranker-modernbert-base` | `gte-reranker-modernbert-base/onnx-fp32-cpu` | reranking | 8192 | none | 768 (one logit out) | none | `none` |
 
-paraphrase-multilingual (`sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2`) pairs the XLM-R Unigram tokenizer with BERT segment ids (all zero), mean pooling without L2 (normalize the vectors before cosine or dot-product comparison) and a 128-token limit, the `max_seq_length` sentence-transformers enforces. It needs `Starlings.Tokenizers` 0.3.5, so it is not in the `0.5.0` package, which pins 0.3.4.
+paraphrase-multilingual (`sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2`) pairs the XLM-R Unigram tokenizer with BERT segment ids (all zero), mean pooling without L2 (normalize the vectors before cosine or dot-product comparison) and a 128-token limit, the `max_seq_length` sentence-transformers enforces. It needs `Starlings.Tokenizers` 0.3.5 or later, so it is new in `0.6.0`; the `0.5.0` package pinned 0.3.4.
 
 nomic-embed-text-v1.5 vectors are not unit length; normalize them before cosine or dot-product comparison.
 Its profile declares only the `none` prompt, so `Embed(text, "query")` throws `ArgumentException`; any task
@@ -113,7 +113,7 @@ The upstream fp16 and quantized graphs, Flash Attention 2 and GPU providers are 
 
 ## CPU memory arena
 
-ONNX Runtime's CPU arena is off on every profile of this package since the release after `0.5.0`, where it was on. With
+ONNX Runtime's CPU arena is off on every profile of this package since `0.6.0`; up to `0.5.0` it was on. With
 it on, the arena keeps every buffer a run needed until the session is disposed. Measured on .NET through
 `BertReranker`, with gte-reranker-modernbert-base, four threads and one 8,192-token pair run repeatedly on one session:
 
