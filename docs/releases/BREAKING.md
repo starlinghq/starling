@@ -24,10 +24,21 @@ The [`Starlings.Models.Abstractions` README](../../ai-dotnet/src/Starlings.Model
 
 ## Unreleased
 
-Merged to `main` after 0.5.0; collected in [`unreleased.md`](unreleased.md). Nothing here is published yet.
+Merged to `main` after 0.6.0; collected in [`unreleased.md`](unreleased.md). Nothing here is published yet.
 
-- **`Starlings.Models.Whisper` (source only, not yet published): no language detection (#332).** `WhisperOptions.Language = null` now throws `WhisperUnsupportedLanguageException` from `WhisperTranscriber.Create` and `WhisperModel.Create` instead of decoding with `<|startoflm|>` in the language slot, and `WhisperModel.Prompt(string language, ...)` no longer has a null default: `Prompt()` with no language no longer compiles, and `Prompt(null)` throws. See `unreleased.md`.
-- **`Starlings.Models.QwenChat.OnnxGenAI`: hosting revision r2 (#278).** `QwenChatProfile.Qwen3` and `QwenChatProfile.Qwen25` pin new `model.onnx` digests of the same size. At the default SHA-256 verification, a cache acquired from r1 makes `QwenChatModelAssets.OpenLocal` throw `ModelAssetIntegrityException` on `model.onnx` until `DownloadAsync` runs again, which replaces that one file. With `CacheVerification` set to size only, `OpenLocal` passes and `QwenChatModel.Load` throws `InvalidDataException`. Earlier packages pin r1, which stays hosted, but both revisions share one cache path: see the upgrading note in `unreleased.md`.
+## 0.6.0
+
+Record: [`ai-0.6.0.md`](ai-0.6.0.md), "Upgrading from 0.5.0".
+
+- **`Starlings.Models.Qwen35.Extensions.AI`: tool results escaped by default.** `Qwen35ChatClient` rewrites the tokenizer's added-token strings in `FunctionResultContent` text before rendering (`Qwen35ChatClientOptions.EscapeToolResults`, default true), and `Qwen35ChatRequestMapper.MapMessages(messages, instructions)` follows that default. A tool result that contains such a string renders to a different prompt; set `EscapeToolResults = false` for the earlier rendering.
+- **`Starlings.Models.QwenChat.OnnxGenAI`: hosting revision r2 (#278).** `QwenChatProfile.Qwen3` and `QwenChatProfile.Qwen25` pin new `model.onnx` digests of the same size. At the default SHA-256 verification, a cache acquired from r1 makes `QwenChatModelAssets.OpenLocal` throw `ModelAssetIntegrityException` on `model.onnx` until `DownloadAsync` runs again, which replaces that one file. With `CacheVerification` set to size only, `OpenLocal` passes and `QwenChatModel.Load` throws `InvalidDataException`. Earlier packages pin r1, which stays hosted, but both revisions share one cache path: see the upgrading note in `ai-0.6.0.md`.
+- **`Starlings.Models.Qwen35.OnnxGenAI`: int4 at hosting revision r3 (#294).** The int4 lock pins a new `ortgenai-int4/model.onnx` digest: a cache acquired from r2 makes `Qwen35ModelAssets.OpenLocal` throw on that file until the int4 lock is downloaded again. fp32x and fp16x are unchanged.
+- **`Starlings.Models.E5` (and `.Extensions.AI`, `.MLNet`, `.Browser`): `MaxSequenceLength` bounded.** A value outside 2 to 512 throws `ArgumentOutOfRangeException` when the encoder, embedder, generator, transform or browser loader is created, instead of failing later (1) or passing an over-long sequence to the graph (above 512).
+- **`Starlings.Models.Bert`: CPU arena off.** Every profile runs with ONNX Runtime's CPU memory arena off; scores are unchanged, memory and latency change. The `AppContext` switch `Starlings.Models.Bert.CpuMemoryArena` restores the arena.
+- **`Starlings.Models.Whisper` (source only, not yet published): language detection (#332, #333, #344).** `WhisperOptions.Language = null` now detects the language (transformers' `detect_language`) instead of decoding with `<|startoflm|>` in the language slot; an unknown code still throws `WhisperUnsupportedLanguageException`. `WhisperModel.Prompt(string language, ...)` no longer has a null default: `Prompt()` with no language no longer compiles, and `Prompt(null)` throws.
+- **Tokenizer pin** `Starlings.Tokenizers [0.3.6]` (0.3.4 in 0.5.0): outputs of existing profiles are unchanged.
+- **Not removed:** the members marked `[Obsolete]` in 0.4.0 (see [Pending removals](#pending-removals)) are still present and behave as before.
+- No member was removed.
 
 ## 0.5.0
 

@@ -11,7 +11,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <!-- The release drill fails if this differs from the version it packs. -->
-    <StarlingsVersion>0.5.0</StarlingsVersion>
+    <StarlingsVersion>0.6.0</StarlingsVersion>
   </PropertyGroup>
 
   <ItemGroup>

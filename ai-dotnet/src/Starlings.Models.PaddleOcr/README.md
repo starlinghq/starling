@@ -27,7 +27,7 @@ Maturity is per profile, generated from the registry manifests by `model-pipelin
 
 ## Install
 
-Published to nuget.org from the next ai-dotnet release:
+Published to nuget.org from ai-dotnet 0.6.0:
 
 ```
 dotnet add package Starlings.Models.PaddleOcr
