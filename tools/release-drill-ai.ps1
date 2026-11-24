@@ -181,8 +181,16 @@ try {
         if ($csproj -notmatch '<StarlingsVersion>(.*)</StarlingsVersion>' -or $Matches[1] -ne $aiVersion) { Fail "$sample references another version than $aiVersion" }
     }
     foreach ($manifest in Get-ChildItem (Join-Path $src 'model-pipeline/registry') -Filter manifest.yaml -Recurse) {
-        $line = Select-String -Path $manifest.FullName -Pattern '^    version: (.*)$' | Select-Object -First 1
-        if ($line -and $line.Matches[0].Groups[1].Value -ne $tokVersion) { Fail "$($manifest.FullName) pins tokenizer $($line.Matches[0].Groups[1].Value), the tokenizer is $tokVersion" }
+        # The pin is the version inside processing.tokenizer. A profile without a tokenizer (OCR) pins none; other
+        # blocks (backend) have their own version keys, so only the tokenizer block is read.
+        $lines = @(Get-Content $manifest.FullName)
+        $start = [Array]::FindIndex($lines, [Predicate[string]] { param($l) $l -match '^  tokenizer:\s*$' })
+        if ($start -lt 0) { continue }
+        $pin = $null
+        for ($i = $start + 1; $i -lt $lines.Count -and $lines[$i] -match '^(    |\s*$)'; $i++) {
+            if ($lines[$i] -match '^    version: (.*)$') { $pin = $Matches[1]; break }
+        }
+        if ($pin -ne $tokVersion) { Fail "$($manifest.FullName) pins tokenizer $pin, the tokenizer is $tokVersion" }
     }
     Write-Host "ok:   samples reference $aiVersion; manifests pin tokenizer $tokVersion"
 
